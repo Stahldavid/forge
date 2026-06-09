@@ -1,3 +1,9 @@
+export interface ForgeContext {
+  db: Record<string, unknown>;
+  emit: (eventType: string, payload: unknown) => Promise<void>;
+  env: Record<string, string | undefined>;
+}
+
 export interface ForgeCommandMeta {
   kind: "command";
 }
@@ -14,16 +20,46 @@ export type ForgeAction<T> = (() => T | Promise<T>) & {
   __forge: ForgeActionMeta;
 };
 
-export function command<T>(fn: () => T | Promise<T>): ForgeCommand<T> {
-  const handler = fn as ForgeCommand<T>;
-  handler.__forge = { kind: "command" };
-  return handler;
+export interface ForgeCommandConfig<TArgs = unknown, TResult = unknown> {
+  handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 }
 
-export function action<T>(fn: () => T | Promise<T>): ForgeAction<T> {
-  const handler = fn as ForgeAction<T>;
-  handler.__forge = { kind: "action" };
-  return handler;
+export interface ForgeActionConfig<TArgs = unknown, TResult = unknown> {
+  handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
+}
+
+export function command<TArgs = unknown, TResult = unknown>(
+  fnOrConfig:
+    | (() => TResult | Promise<TResult>)
+    | ForgeCommandConfig<TArgs, TResult>,
+): ForgeCommand<TResult> | (ForgeCommandConfig<TArgs, TResult> & { __forge: ForgeCommandMeta }) {
+  if (typeof fnOrConfig === "function") {
+    const handler = fnOrConfig as ForgeCommand<TResult>;
+    handler.__forge = { kind: "command" };
+    return handler;
+  }
+
+  return {
+    ...fnOrConfig,
+    __forge: { kind: "command" },
+  };
+}
+
+export function action<TArgs = unknown, TResult = unknown>(
+  fnOrConfig:
+    | (() => TResult | Promise<TResult>)
+    | ForgeActionConfig<TArgs, TResult>,
+): ForgeAction<TResult> | (ForgeActionConfig<TArgs, TResult> & { __forge: ForgeActionMeta }) {
+  if (typeof fnOrConfig === "function") {
+    const handler = fnOrConfig as ForgeAction<TResult>;
+    handler.__forge = { kind: "action" };
+    return handler;
+  }
+
+  return {
+    ...fnOrConfig,
+    __forge: { kind: "action" },
+  };
 }
 
 export { defineTable } from "../schema/index.ts";

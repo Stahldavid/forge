@@ -23,7 +23,8 @@ bun run forge verify
 | `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
 | `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime/dev |
 | `forge run [name]` | List or execute local command/action handlers (`--list`, `--mock`) |
-| `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`) |
+| `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`, `--db`) |
+| `forge db <diff\|migrate\|reset\|status>` | SQL migrations against PGlite (default) or Postgres |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -91,6 +92,27 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 3. **H3** — DataGraph Compiler ✅
 4. **H4** — Local command/action runtime (`forge run`, runtimeGraph, mocks) ✅
 5. **H5** — Local dev server (`forge dev`, devManifest, watch mode) ✅
+6. **H6** — DataGraph-backed persistence runtime (PGlite, db CLI, transactional outbox) ✅
+
+### H6 deliverables (persistence runtime)
+
+| Artifact | Description |
+|----------|-------------|
+| `sqlPlan.json` / `sqlPlan.ts` | DataGraph → SQL DDL plan with system tables |
+| `db.json` / `db.ts` | Generated `tableMap` for typed DB client |
+| `forge db` | `diff`, `migrate`, `reset`, `status` subcommands |
+| PGlite adapter | Default local DB at `.forge/pglite` |
+| Command transactions | `command({ handler })` with `ctx.db` + `ctx.emit` outbox |
+
+```bash
+forge db migrate
+forge db reset --db pglite
+forge db status --json
+forge dev --db pglite
+forge dev --db postgres --database-url "$DATABASE_URL"
+```
+
+**Limitations:** no RLS, liveQuery, workflow engine, CDC, or destructive migration diff.
 
 ### H5 deliverables (dev server)
 
@@ -104,7 +126,8 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/health` | Server liveness and entry count |
+| `GET` | `/health` | Server liveness, entry count, and DB status |
+| `GET` | `/db/tables` | List migrated tables |
 | `GET` | `/entries` | Runtime graph entries |
 | `GET` | `/workflows` | Workflow symbols (list metadata only) |
 | `POST` | `/run/:name` | Invoke command or action by name |
@@ -118,7 +141,7 @@ forge dev --port 4000 --json
 forge inspect dev
 ```
 
-**Limitations:** local development only — not production deployment, no durable workflow execution engine, no Postgres runtime.
+**Limitations:** local development only — not production deployment, no durable workflow execution engine.
 
 ### H4 deliverables (local runtime)
 

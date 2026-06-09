@@ -6,16 +6,20 @@ import {
   FORGE_DEV_SERVER_ERROR,
   FORGE_RUNTIME_NOT_FOUND,
 } from "../compiler/diagnostics/codes.ts";
+import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
+import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { DevManifest } from "../compiler/types/dev-manifest.ts";
 import type { RuntimeGraph } from "../compiler/types/runtime-graph.ts";
+import { createDbAdapter } from "../runtime/db/factory.ts";
+import { applyMigrations } from "../runtime/db/migrate.ts";
 import {
   listEntries,
   prepareRuntimeEnvironment,
   runEntry,
 } from "../runtime/executor.ts";
-import type { DevServerHandle, DevServerOptions } from "./types.ts";
+import type { DevServerHandle, DevServerOptions, DevServerState } from "./types.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -60,6 +64,20 @@ function parseInvokeName(pathname: string, prefix: string): string | null {
   return name.length > 0 ? decodeURIComponent(name) : null;
 }
 
+async function parseRequestArgs(request: Request): Promise<unknown> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return {};
+  }
+
+  try {
+    const body = (await request.json()) as { args?: unknown };
+    return body.args ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export async function startDevServer(
   options: DevServerOptions,
 ): Promise<DevServerHandle> {
@@ -80,11 +98,55 @@ export async function startDevServer(
     );
   }
 
-  await prepareRuntimeEnvironment(workspaceRoot, { mock: options.mock });
+  const serverState: DevServerState = {
+    adapter: null,
+    db: {
+      kind: options.db,
+      connected: false,
+    },
+  };
+
+  if (options.db !== "none") {
+    const { adapter, diagnostics } = await createDbAdapter({
+      kind: options.db,
+      workspaceRoot,
+      databaseUrl: options.databaseUrl,
+    });
+
+    if (!adapter) {
+      const message = diagnostics.map((diagnostic) => diagnostic.message).join("; ");
+      throw new Error(message || "failed to create database adapter");
+    }
+
+    const sqlPlan = readGeneratedJson<SqlPlan>(
+      workspaceRoot,
+      `${GENERATED_DIR}/sqlPlan.json`,
+    );
+
+    if (sqlPlan) {
+      const migrationDiagnostics = await applyMigrations(adapter, sqlPlan);
+      const errors = migrationDiagnostics.filter(
+        (diagnostic) => diagnostic.severity === "error",
+      );
+      if (errors.length > 0) {
+        await adapter.close();
+        throw new Error(errors.map((diagnostic) => diagnostic.message).join("; "));
+      }
+    }
+
+    serverState.adapter = adapter;
+    serverState.db.connected = true;
+  }
+
+  await prepareRuntimeEnvironment(workspaceRoot, {
+    mock: options.mock,
+    db: serverState.adapter,
+  });
 
   function loadArtifacts(): {
     devManifest: DevManifest;
     runtimeGraph: RuntimeGraph;
+    tableMap: Record<string, TableMapEntry>;
   } {
     const freshDevManifest = readGeneratedJson<DevManifest>(
       workspaceRoot,
@@ -93,6 +155,10 @@ export async function startDevServer(
     const freshRuntimeGraph = readGeneratedJson<RuntimeGraph>(
       workspaceRoot,
       `${GENERATED_DIR}/runtimeGraph.json`,
+    );
+    const dbJson = readGeneratedJson<{ tableMap: Record<string, TableMapEntry> }>(
+      workspaceRoot,
+      `${GENERATED_DIR}/db.json`,
     );
 
     if (!freshRuntimeGraph || !freshDevManifest) {
@@ -104,6 +170,7 @@ export async function startDevServer(
     return {
       devManifest: freshDevManifest,
       runtimeGraph: freshRuntimeGraph,
+      tableMap: dbJson?.tableMap ?? {},
     };
   }
 
@@ -119,7 +186,7 @@ export async function startDevServer(
       const pathname = url.pathname;
 
       try {
-        const { devManifest: currentDevManifest, runtimeGraph: currentRuntimeGraph } =
+        const { devManifest: currentDevManifest, runtimeGraph: currentRuntimeGraph, tableMap } =
           loadArtifacts();
 
         if (request.method === "GET" && pathname === "/health") {
@@ -127,6 +194,7 @@ export async function startDevServer(
             ok: true,
             service: "forge-dev",
             entries: currentRuntimeGraph.entries.length,
+            db: serverState.db,
           });
         }
 
@@ -143,6 +211,23 @@ export async function startDevServer(
           return jsonResponse({
             ok: true,
             workflows: currentDevManifest.workflows,
+          });
+        }
+
+        if (request.method === "GET" && pathname === "/db/tables") {
+          if (serverState.adapter) {
+            const result = await serverState.adapter.query(
+              `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`,
+            );
+            return jsonResponse({
+              ok: true,
+              tables: result.rows.map((row) => String(row.table_name)),
+            });
+          }
+
+          return jsonResponse({
+            ok: true,
+            tables: Object.keys(tableMap).sort(),
           });
         }
 
@@ -197,9 +282,18 @@ export async function startDevServer(
               );
             }
 
+            const args = await parseRequestArgs(request);
+
+            await prepareRuntimeEnvironment(workspaceRoot, {
+              mock: options.mock,
+              db: serverState.adapter,
+            });
+
             const result = await runEntry(workspaceRoot, entryName, {
               json: options.json,
               mock: options.mock,
+              args,
+              db: serverState.adapter,
             });
 
             return jsonResponse(
@@ -256,8 +350,10 @@ export async function startDevServer(
     port,
     url,
     routes: devManifest.routes,
+    state: serverState,
     stop: () => {
       server.stop(true);
+      void serverState.adapter?.close();
     },
   };
 }

@@ -1,0 +1,93 @@
+import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
+import { FORGE_DB_ADAPTER_UNAVAILABLE } from "../../compiler/diagnostics/codes.ts";
+import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
+import type { DbAdapter, DbQueryResult, DbTransaction } from "./adapter.ts";
+
+interface PostgresClient {
+  query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
+  close(): Promise<void>;
+}
+
+function loadBunSql(databaseUrl: string): PostgresClient | null {
+  try {
+    const bunGlobal = globalThis as {
+      Bun?: {
+        SQL?: new (url: string) => {
+          unsafe: (sql: string, params?: unknown[]) => Promise<Record<string, unknown>[]>;
+          close: () => Promise<void>;
+        };
+      };
+    };
+
+    if (!bunGlobal.Bun?.SQL) {
+      return null;
+    }
+
+    const client = new bunGlobal.Bun.SQL(databaseUrl);
+    return {
+      query: async (sql, params = []) => {
+        const rows = await client.unsafe(sql, params);
+        return { rows: rows as Record<string, unknown>[] };
+      },
+      close: async () => {
+        await client.close();
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+export class PostgresAdapter implements DbAdapter {
+  readonly kind = "postgres" as const;
+  private client: PostgresClient;
+
+  constructor(client: PostgresClient) {
+    this.client = client;
+  }
+
+  async query(sql: string, params: unknown[] = []): Promise<DbQueryResult> {
+    const result = await this.client.query(sql, params);
+    return {
+      rows: result.rows,
+      rowCount: result.rows.length,
+    };
+  }
+
+  async begin(): Promise<DbTransaction> {
+    await this.query("BEGIN");
+    const adapter = this;
+
+    return {
+      query: (sql, params = []) => adapter.query(sql, params),
+      commit: async () => {
+        await adapter.query("COMMIT");
+      },
+      rollback: async () => {
+        await adapter.query("ROLLBACK");
+      },
+    };
+  }
+
+  async close(): Promise<void> {
+    await this.client.close();
+  }
+}
+
+export function createPostgresAdapter(
+  databaseUrl: string,
+): { adapter: DbAdapter } | { adapter: null; diagnostic: Diagnostic } {
+  const client = loadBunSql(databaseUrl);
+  if (!client) {
+    return {
+      adapter: null,
+      diagnostic: createDiagnostic({
+        severity: "error",
+        code: FORGE_DB_ADAPTER_UNAVAILABLE,
+        message: "Bun.SQL is unavailable; postgres adapter cannot be created",
+      }),
+    };
+  }
+
+  return { adapter: new PostgresAdapter(client) };
+}

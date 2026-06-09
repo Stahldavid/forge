@@ -12,6 +12,9 @@
     "forge:check": "bun ../../src/forge/cli/main.ts check",
     "forge:run": "bun ../../src/forge/cli/main.ts run",
     "forge:dev": "bun ../../src/forge/cli/main.ts dev --watch",
+    "forge:dev:db": "bun ../../src/forge/cli/main.ts dev --watch --db pglite",
+    "forge:db:migrate": "bun ../../src/forge/cli/main.ts db migrate --db pglite",
+    "forge:db:reset": "bun ../../src/forge/cli/main.ts db reset --db pglite",
     "verify": "bun ../../src/forge/cli/main.ts verify"
   },
   "dependencies": {

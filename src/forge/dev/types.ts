@@ -1,4 +1,7 @@
 import type { DevRoute } from "../compiler/types/dev-manifest.ts";
+import type { DbAdapter } from "../runtime/db/adapter.ts";
+
+export type DevDbMode = "pglite" | "postgres" | "none";
 
 export interface DevServerOptions {
   workspaceRoot: string;
@@ -6,6 +9,18 @@ export interface DevServerOptions {
   port: number;
   mock: boolean;
   json: boolean;
+  db: DevDbMode;
+  databaseUrl?: string;
+}
+
+export interface DevServerDbState {
+  kind: DevDbMode;
+  connected: boolean;
+}
+
+export interface DevServerState {
+  adapter: DbAdapter | null;
+  db: DevServerDbState;
 }
 
 export interface DevServerHandle {
@@ -13,6 +28,7 @@ export interface DevServerHandle {
   port: number;
   url: string;
   routes: DevRoute[];
+  state: DevServerState;
   stop: () => void;
 }
 

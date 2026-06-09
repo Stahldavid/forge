@@ -1,5 +1,7 @@
 import type { AddOptions, InspectTarget, VerifyOptions } from "../compiler/types/cli.ts";
 import type { SandboxBackend } from "../compiler/types/runtime.ts";
+import type { DbAdapterKind } from "../runtime/db/adapter.ts";
+import type { DbSubcommand } from "./db.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -14,6 +16,16 @@ export type ForgeCommand =
       port?: number;
       mock: boolean;
       watch: boolean;
+      json: boolean;
+      db: "pglite" | "postgres" | "none";
+      databaseUrl?: string;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "db";
+      subcommand: DbSubcommand;
+      db: DbAdapterKind;
+      databaseUrl?: string;
       json: boolean;
       workspaceRoot: string;
     };
@@ -46,6 +58,20 @@ function parseOptionValue(args: string[], flag: string): string | undefined {
   return args[index + 1];
 }
 
+function parseDbKind(value: string | undefined): "pglite" | "postgres" | "none" {
+  if (value === "postgres" || value === "none") {
+    return value;
+  }
+  return "pglite";
+}
+
+function parseAdapterKind(value: string | undefined): DbAdapterKind {
+  if (value === "postgres" || value === "memory") {
+    return value;
+  }
+  return "pglite";
+}
+
 function parseSandboxBackend(value: string | undefined): SandboxBackend {
   if (value === "child" || value === "docker" || value === "none") {
     return value;
@@ -75,7 +101,9 @@ export function parseCli(argv: string[]): ParsedCli {
   const workspaceRoot = process.cwd().replace(/\\/g, "/");
 
   if (positional.length === 0) {
-    errors.push("missing command; expected generate, add, inspect, check, verify, run, or dev");
+    errors.push(
+      "missing command; expected generate, add, inspect, check, verify, run, dev, or db",
+    );
     return { command: null, workspaceRoot, errors };
   }
 
@@ -190,6 +218,27 @@ export function parseCli(argv: string[]): ParsedCli {
           mock: parseFlag(argv, "--mock"),
           watch: parseFlag(argv, "--watch"),
           json: parseFlag(argv, "--json"),
+          db: parseDbKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "db": {
+      const subcommand = rest[0] as DbSubcommand | undefined;
+      if (!subcommand || !["diff", "migrate", "reset", "status"].includes(subcommand)) {
+        errors.push("forge db requires subcommand: diff, migrate, reset, or status");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "db",
+          subcommand,
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -219,6 +268,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--port",
     "--host",
     "--watch",
+    "--db",
+    "--database-url",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -227,7 +278,14 @@ export function hasUnknownOption(argv: string[]): string | null {
       continue;
     }
       if (known.has(arg)) {
-      if (arg === "--concurrency" || arg === "--sandbox-backend" || arg === "--port" || arg === "--host") {
+      if (
+        arg === "--concurrency" ||
+        arg === "--sandbox-backend" ||
+        arg === "--port" ||
+        arg === "--host" ||
+        arg === "--db" ||
+        arg === "--database-url"
+      ) {
         index += 1;
       }
       continue;

@@ -44,6 +44,7 @@ import {
   runRunCommand,
 } from "./run.ts";
 import { runDevCommand } from "./dev.ts";
+import { formatDbHuman, formatDbJson, runDbCommand } from "./db.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -262,7 +263,26 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         mock: command.mock,
         watch: command.watch,
         json: command.json,
+        db: command.db,
+        databaseUrl: command.databaseUrl,
       });
+      return result.exitCode;
+    }
+    case "db": {
+      const result = await runDbCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        db: command.db,
+        databaseUrl: command.databaseUrl,
+        json: command.json,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatDbJson(result));
+      } else {
+        process.stdout.write(formatDbHuman(command.subcommand, result));
+      }
+
       return result.exitCode;
     }
     default:

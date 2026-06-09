@@ -1,4 +1,5 @@
 import { buildDataGraph } from "../data-graph/build.ts";
+import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
 import type { AppGraph } from "../types/app-graph.ts";
@@ -39,6 +40,10 @@ import {
   serializeRuntimeRegistryTs,
   serializeDevManifestJson,
   serializeDevManifestTs,
+  serializeSqlPlanJsonExport,
+  serializeSqlPlanTsExport,
+  serializeDbJsonExport,
+  serializeDbTsExport,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -106,6 +111,7 @@ function buildForgeLock(input: PlanInput): ForgeLock {
 export function plan(input: PlanInput): EmitPlan {
   const matrix = buildRuntimeMatrix(input.classified);
   const dataGraph = buildDataGraph(input.appGraph);
+  const sqlPlan = buildSqlPlan(dataGraph);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -179,6 +185,16 @@ export function plan(input: PlanInput): EmitPlan {
       `${GENERATED_DIR}/devManifest.json`,
       serializeDevManifestJson(devManifest),
     ),
+    makeEmitFile(
+      `${GENERATED_DIR}/sqlPlan.ts`,
+      serializeSqlPlanTsExport(sqlPlan),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/sqlPlan.json`,
+      serializeSqlPlanJsonExport(sqlPlan),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/db.ts`, serializeDbTsExport(sqlPlan)),
+    makeEmitFile(`${GENERATED_DIR}/db.json`, serializeDbJsonExport(sqlPlan)),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);

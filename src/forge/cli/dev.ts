@@ -14,6 +14,8 @@ export interface DevCommandOptions {
   mock: boolean;
   watch: boolean;
   json: boolean;
+  db: "pglite" | "postgres" | "none";
+  databaseUrl?: string;
 }
 
 export interface DevCommandResult {
@@ -51,6 +53,8 @@ export async function runDevCommand(
       port,
       mock: options.mock,
       json: options.json,
+      db: options.db,
+      databaseUrl: options.databaseUrl,
     });
   } catch (error) {
     const message =

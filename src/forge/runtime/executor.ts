@@ -8,6 +8,7 @@ import {
   FORGE_RUNTIME_GUARD_BLOCKED,
   FORGE_RUNTIME_NOT_FOUND,
 } from "../compiler/diagnostics/codes.ts";
+import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import { GENERATED_DIR, FORGE_LOCK_PATH } from "../compiler/emitter/constants.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
 import { discover } from "../compiler/orchestrator/discover.ts";
@@ -20,10 +21,19 @@ import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { ForgeLock } from "../compiler/types/lock.ts";
 import type { RuntimeEntry, RuntimeGraph } from "../compiler/types/runtime-graph.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
+import type { DbAdapter } from "./db/adapter.ts";
+import {
+  executeResolvedEntry,
+  guardBlockedDiagnostics,
+  resolveHandlerFromModule,
+  type RunEntryRuntime,
+} from "./runner/run-entry.ts";
 
 export interface RunEntryOptions {
   json: boolean;
   mock: boolean;
+  args?: unknown;
+  db?: DbAdapter | null;
 }
 
 export interface RunEntryResult {
@@ -38,6 +48,11 @@ export interface ListEntriesResult {
   entries: RuntimeEntry[];
   diagnostics: Diagnostic[];
   exitCode: 0 | 1;
+}
+
+export interface PrepareRuntimeEnvironmentOptions {
+  mock: boolean;
+  db?: DbAdapter | null;
 }
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
@@ -73,6 +88,14 @@ function loadRuntimeGraph(workspaceRoot: string): {
   }
 
   return { graph, diagnostics: [...graph.diagnostics] };
+}
+
+function loadTableMap(workspaceRoot: string): Record<string, TableMapEntry> | null {
+  const dbJson = readGeneratedJson<{ tableMap: Record<string, TableMapEntry> }>(
+    workspaceRoot,
+    `${GENERATED_DIR}/db.json`,
+  );
+  return dbJson?.tableMap ?? null;
 }
 
 function moduleClosure(moduleGraph: ModuleGraph, rootModuleId: string): Set<string> {
@@ -216,14 +239,22 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
   }
 }
 
+let activeDbAdapter: DbAdapter | null = null;
+
 export async function prepareRuntimeEnvironment(
   workspaceRoot: string,
-  options: { mock: boolean },
+  options: PrepareRuntimeEnvironmentOptions,
 ): Promise<void> {
   const useMock = options.mock || process.env.FORGE_MOCK === "1";
   if (useMock) {
     await applyMocks(workspaceRoot, loadForgeLock(workspaceRoot));
   }
+
+  activeDbAdapter = options.db ?? null;
+}
+
+export function getActiveDbAdapter(): DbAdapter | null {
+  return activeDbAdapter;
 }
 
 async function guardPreflight(
@@ -293,27 +324,23 @@ export async function runEntry(
     return {
       ok: false,
       entry,
-      diagnostics: [
-        ...diagnostics,
-        ...guardViolations,
-        createDiagnostic({
-          severity: "error",
-          code: FORGE_RUNTIME_GUARD_BLOCKED,
-          message: `runtime entry '${name}' blocked by import guard violations`,
-          file: entry.file,
-        }),
-      ],
+      diagnostics: guardBlockedDiagnostics(entry, guardViolations, diagnostics),
       exitCode: 1,
     };
   }
 
-  await prepareRuntimeEnvironment(workspaceRoot, { mock: options.mock });
+  const db = options.db ?? activeDbAdapter;
+
+  await prepareRuntimeEnvironment(workspaceRoot, {
+    mock: options.mock,
+    db,
+  });
 
   const absolutePath = join(workspaceRoot, entry.file);
   const mod = (await import(absolutePath)) as Record<string, unknown>;
-  const handler = mod[entry.name];
+  const resolved = resolveHandlerFromModule(mod, entry.name);
 
-  if (typeof handler !== "function") {
+  if (!resolved) {
     return {
       ok: false,
       entry,
@@ -330,13 +357,24 @@ export async function runEntry(
     };
   }
 
-  const result = await (handler as () => unknown)();
+  const runtime: RunEntryRuntime = {
+    adapter: db,
+    tableMap: loadTableMap(workspaceRoot) ?? undefined,
+  };
+
+  const executed = await executeResolvedEntry(
+    workspaceRoot,
+    entry,
+    resolved,
+    options,
+    runtime,
+  );
 
   return {
-    ok: true,
-    result,
+    ok: executed.ok,
+    result: executed.result,
     entry,
-    diagnostics,
-    exitCode: 0,
+    diagnostics: [...diagnostics, ...executed.diagnostics],
+    exitCode: executed.ok ? 0 : 1,
   };
 }

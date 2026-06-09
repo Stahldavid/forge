@@ -1,0 +1,48 @@
+import { PGlite } from "@electric-sql/pglite";
+import type { DbAdapter, DbQueryResult, DbTransaction } from "./adapter.ts";
+
+function toQueryResult(result: { rows: Record<string, unknown>[] }): DbQueryResult {
+  return {
+    rows: result.rows,
+    rowCount: result.rows.length,
+  };
+}
+
+export class PgliteAdapter implements DbAdapter {
+  readonly kind = "pglite" as const;
+  private db: PGlite;
+
+  constructor(dataDir: string) {
+    this.db = new PGlite(dataDir);
+  }
+
+  async query(sql: string, params: unknown[] = []): Promise<DbQueryResult> {
+    const result = await this.db.query(sql, params);
+    return toQueryResult(result as { rows: Record<string, unknown>[] });
+  }
+
+  async begin(): Promise<DbTransaction> {
+    await this.db.query("BEGIN");
+    const adapter = this;
+
+    return {
+      query: (sql, params = []) => adapter.query(sql, params),
+      commit: async () => {
+        await adapter.query("COMMIT");
+      },
+      rollback: async () => {
+        await adapter.query("ROLLBACK");
+      },
+    };
+  }
+
+  async close(): Promise<void> {
+    await this.db.close();
+  }
+}
+
+export async function createPgliteAdapter(dataDir: string): Promise<DbAdapter> {
+  const adapter = new PgliteAdapter(dataDir);
+  await adapter.query("SELECT 1");
+  return adapter;
+}

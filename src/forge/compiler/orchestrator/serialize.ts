@@ -5,6 +5,13 @@ import type { RuntimeMatrix } from "../types/runtime-matrix.ts";
 import type { ImportGuardsArtifact } from "../types/import-guards.ts";
 import type { DevManifest } from "../types/dev-manifest.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
+import type { SqlPlan } from "../data-graph/sql/types.ts";
+import {
+  serializeDbJson,
+  serializeDbTs,
+  serializeSqlPlanJson,
+  serializeSqlPlanTs,
+} from "../data-graph/sql/serialize.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
 import { GENERATED_DIR } from "../emitter/constants.ts";
@@ -170,6 +177,22 @@ export function serializeDevManifestJson(manifest: DevManifest): string {
 export function serializeDevManifestTs(manifest: DevManifest): string {
   const parsed: unknown = JSON.parse(serializeDevManifestJson(manifest).trimEnd());
   return `export const devManifest = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeSqlPlanJsonExport(plan: SqlPlan): string {
+  return serializeSqlPlanJson(plan);
+}
+
+export function serializeSqlPlanTsExport(plan: SqlPlan): string {
+  return serializeSqlPlanTs(plan);
+}
+
+export function serializeDbJsonExport(plan: SqlPlan): string {
+  return serializeDbJson(plan);
+}
+
+export function serializeDbTsExport(plan: SqlPlan): string {
+  return serializeDbTs(plan);
 }
 
 export type { ImportGuardsArtifact };

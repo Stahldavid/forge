@@ -1,6 +1,20 @@
 node_modules/
 examples/**/node_modules/
 .forge/cache/
+.forge/pglite/
 tests/**/.tmp/
 *.log
 .DS_Store
+
+# Local debug outputs
+test-results*.txt
+test-run-output*.txt
+tsc-output*.txt
+cli-err.txt
+debug-*.txt
+tc-*.txt
+test-err.txt
+test-out.txt
+full-test-err.txt
+guard-test-err.txt
+smoke-result.txt
