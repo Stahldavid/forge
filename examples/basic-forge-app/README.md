@@ -28,6 +28,17 @@ bun run verify
 
 `src/actions/createCheckout.ts` is allowed: Stripe is compatible with the `action` context.
 
+## Run commands locally
+
+After `forge:generate`:
+
+```bash
+bun run forge:run -- --list
+bun run forge:run createTicket
+bun run forge:run badStripeCommand   # blocked by import guards
+bun run forge:run createCheckout --mock
+```
+
 ## Scripts
 
 | Script | Description |
@@ -35,4 +46,5 @@ bun run verify
 | `setup` | Seed `node_modules` from compiler test fixtures |
 | `forge:generate` | Run the Forge compiler against this app |
 | `forge:check` | Validate import guards |
+| `forge:run` | List or execute local command/action handlers |
 | `verify` | Run `generate --check`, `forge check`, and typecheck |

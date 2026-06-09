@@ -37,6 +37,12 @@ import {
 } from "./output.ts";
 import type { ForgeCommand } from "./parse.ts";
 import { runVerifyCommand } from "./verify.ts";
+import {
+  formatRunJson,
+  formatRunListHuman,
+  formatRunResultHuman,
+  runRunCommand,
+} from "./run.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -136,6 +142,7 @@ export async function runInspectCommand(
     capabilities: `${GENERATED_DIR}/runtimeMatrix.json`,
     "runtime-matrix": `${GENERATED_DIR}/runtimeMatrix.json`,
     data: `${GENERATED_DIR}/dataGraph.json`,
+    runtime: `${GENERATED_DIR}/runtimeGraph.json`,
   };
 
   const relative = dataPaths[target];
@@ -224,6 +231,25 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       } else {
         writeHumanVerify(result);
       }
+      return result.exitCode;
+    }
+    case "run": {
+      const result = await runRunCommand({
+        name: command.name,
+        list: command.list,
+        json: command.json,
+        mock: command.mock,
+        workspaceRoot: command.workspaceRoot,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatRunJson(result));
+      } else if (result.list) {
+        process.stdout.write(formatRunListHuman(result.list));
+      } else if (result.run) {
+        process.stdout.write(formatRunResultHuman(result.run));
+      }
+
       return result.exitCode;
     }
     default:

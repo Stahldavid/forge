@@ -6,7 +6,8 @@ export type ForgeCommand =
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
   | { kind: "check"; json: boolean; dryRun: boolean }
-  | { kind: "verify"; options: VerifyOptions };
+  | { kind: "verify"; options: VerifyOptions }
+  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; workspaceRoot: string };
 
 export interface ParsedCli {
   command: ForgeCommand | null;
@@ -20,6 +21,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "capabilities",
   "runtime-matrix",
   "data",
+  "runtime",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -63,7 +65,7 @@ export function parseCli(argv: string[]): ParsedCli {
   const workspaceRoot = process.cwd().replace(/\\/g, "/");
 
   if (positional.length === 0) {
-    errors.push("missing command; expected generate, add, inspect, check, or verify");
+    errors.push("missing command; expected generate, add, inspect, check, verify, or run");
     return { command: null, workspaceRoot, errors };
   }
 
@@ -148,6 +150,22 @@ export function parseCli(argv: string[]): ParsedCli {
         workspaceRoot,
         errors,
       };
+    case "run": {
+      const name = rest[0];
+      const list = parseFlag(argv, "--list") || !name;
+      return {
+        command: {
+          kind: "run",
+          name,
+          list,
+          json: parseFlag(argv, "--json"),
+          mock: parseFlag(argv, "--mock"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     default:
       errors.push(`unrecognized command '${commandName}'`);
       return { command: null, workspaceRoot, errors };
@@ -166,6 +184,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--skip-tests",
     "--skip-typecheck",
     "--skip-eslint",
+    "--mock",
+    "--list",
   ]);
 
   for (let index = 0; index < argv.length; index++) {

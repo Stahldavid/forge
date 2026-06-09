@@ -7,6 +7,7 @@ export type ForgeKind =
   | "query"
   | "liveQuery"
   | "command"
+  | "action"
   | "endpoint"
   | "policy"
   | "workflow"

@@ -3,6 +3,7 @@ export * from "./diagnostics/index.ts";
 export * from "./primitives/index.ts";
 export * from "./app-graph/index.ts";
 export * from "./data-graph/index.ts";
+export * from "./runtime-graph/index.ts";
 export * from "./recipes/index.ts";
 export * from "./classifier/index.ts";
 export * from "./package-graph/index.ts";

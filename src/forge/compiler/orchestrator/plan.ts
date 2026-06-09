@@ -1,4 +1,5 @@
 import { buildDataGraph } from "../data-graph/build.ts";
+import { buildRuntimeGraph } from "../runtime-graph/build.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type { EmitFile, EmitPlan } from "../types/emit.ts";
@@ -26,10 +27,16 @@ import {
   serializeDataGraphTs,
   serializeImportGuardsJson,
   serializeImportGuardsTs,
+  serializeMockMapJson,
+  serializeMockMapTs,
   serializePackageGraphJson,
   serializePackageGraphTs,
+  serializeRuntimeGraphJson,
+  serializeRuntimeGraphTs,
   serializeRuntimeMatrixJson,
   serializeRuntimeMatrixTs,
+  serializeRuntimeRegistryTs,
+  buildMockMapEntries,
 } from "./serialize.ts";
 
 export interface PlanInput {
@@ -96,6 +103,8 @@ function buildForgeLock(input: PlanInput): ForgeLock {
 export function plan(input: PlanInput): EmitPlan {
   const matrix = buildRuntimeMatrix(input.classified);
   const dataGraph = buildDataGraph(input.appGraph);
+  const runtimeGraph = buildRuntimeGraph(input.appGraph);
+  const mockMapEntries = buildMockMapEntries(input.classified);
 
   const files: EmitFile[] = [
     makeEmitFile(
@@ -137,6 +146,26 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/dataGraph.json`,
       serializeDataGraphJson(dataGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/runtimeGraph.ts`,
+      serializeRuntimeGraphTs(runtimeGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/runtimeGraph.json`,
+      serializeRuntimeGraphJson(runtimeGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/runtimeRegistry.ts`,
+      serializeRuntimeRegistryTs(runtimeGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/mockMap.ts`,
+      serializeMockMapTs(mockMapEntries),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/mockMap.json`,
+      serializeMockMapJson(mockMapEntries),
     ),
   ];
 

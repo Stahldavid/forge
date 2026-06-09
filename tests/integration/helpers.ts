@@ -98,6 +98,11 @@ export function scaffoldAddWorkspace(prefix: string): string {
     writeFileSync(join(srcDir, name), readFileSync(join(APP_GRAPH_FIXTURES, name), "utf8"), "utf8");
   }
 
+  cpSync(FIXTURE_PACKAGES, join(workspace, "node_modules"), {
+    recursive: true,
+    force: true,
+  });
+
   return workspace;
 }
 

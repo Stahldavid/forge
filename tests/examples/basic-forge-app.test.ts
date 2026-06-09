@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { FORGE_GUARD_VIOLATION } from "../../src/forge/compiler/diagnostics/codes.ts";
-import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import {
+  FORGE_GUARD_VIOLATION,
+  FORGE_RUNTIME_GUARD_BLOCKED,
+} from "../../src/forge/compiler/diagnostics/codes.ts";
 import { runCheckCommand } from "../../src/forge/cli/commands.ts";
+import { runEntry } from "../../src/forge/runtime/executor.ts";
+import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 
 const EXAMPLE_ROOT = join(import.meta.dir, "..", "..", "examples", "basic-forge-app");
 const REPO_ROOT = join(import.meta.dir, "..", "..");
@@ -20,7 +24,7 @@ async function setupExample(): Promise<void> {
 }
 
 describe("examples/basic-forge-app", () => {
-  test("generate and detect transitive stripe guard violation", async () => {
+  test("generate, check guards, and run commands locally", async () => {
     await setupExample();
 
     const generated = await run({
@@ -43,6 +47,24 @@ describe("examples/basic-forge-app", () => {
       ),
     ).toBe(true);
 
+    const createTicket = await runEntry(EXAMPLE_ROOT, "createTicket", {
+      json: false,
+      mock: false,
+    });
+    expect(createTicket.exitCode).toBe(0);
+    expect(createTicket.ok).toBe(true);
+
+    const badStripe = await runEntry(EXAMPLE_ROOT, "badStripeCommand", {
+      json: false,
+      mock: false,
+    });
+    expect(badStripe.exitCode).toBe(1);
+    expect(
+      badStripe.diagnostics.some(
+        (diagnostic) => diagnostic.code === FORGE_RUNTIME_GUARD_BLOCKED,
+      ),
+    ).toBe(true);
+
     const drift = await run({
       workspaceRoot: EXAMPLE_ROOT,
       check: true,
@@ -55,6 +77,9 @@ describe("examples/basic-forge-app", () => {
     expect(existsSync(join(EXAMPLE_ROOT, "forge.lock"))).toBe(true);
     expect(
       existsSync(join(EXAMPLE_ROOT, "src", "forge", "_generated", "importGuards.json")),
+    ).toBe(true);
+    expect(
+      existsSync(join(EXAMPLE_ROOT, "src", "forge", "_generated", "runtimeGraph.json")),
     ).toBe(true);
   }, 60_000);
 });

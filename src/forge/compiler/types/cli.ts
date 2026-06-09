@@ -47,7 +47,20 @@ export type InspectTarget =
   | "packages"
   | "capabilities"
   | "runtime-matrix"
-  | "data";
+  | "data"
+  | "runtime";
+
+export interface RunOptions extends CliCommonOptions {
+  name?: string;
+  list: boolean;
+  mock: boolean;
+  workspaceRoot: string;
+}
+
+export interface RunResult {
+  exitCode: 0 | 1;
+  failureKind?: string;
+}
 
 export interface PmAddOptions {
   ignoreScripts: boolean;

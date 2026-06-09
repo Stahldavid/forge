@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "forge:generate": "bun ../../src/forge/cli/main.ts generate",
     "forge:check": "bun ../../src/forge/cli/main.ts check",
+    "forge:run": "bun ../../src/forge/cli/main.ts run",
     "verify": "bun ../../src/forge/cli/main.ts verify"
   },
   "dependencies": {

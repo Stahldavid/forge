@@ -33,6 +33,12 @@ export type {
 } from "./app-graph.ts";
 export type { DataField, DataTable, DataGraph } from "./data-graph.ts";
 export type {
+  RuntimeEntry,
+  RuntimeGraph,
+  MockMapEntry,
+  MockMap,
+} from "./runtime-graph.ts";
+export type {
   JsDoc,
   ExportClassification,
   ExportKind,

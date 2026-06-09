@@ -21,7 +21,8 @@ bun run forge verify
 | `forge generate` | Analyze workspace and emit generated files |
 | `forge generate --check` | Fail on drift without writing |
 | `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
-| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data |
+| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime |
+| `forge run [name]` | List or execute local command/action handlers (`--list`, `--mock`) |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -87,7 +88,27 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 1. **H1** — Hardening, CI, examples ✅
 2. **H2** — Reference integration quality (recipe v2 templates) ✅
 3. **H3** — DataGraph Compiler ✅
-4. Runtime, `forge dev`, workflows
+4. **H4** — Local command/action runtime (`forge run`, runtimeGraph, mocks) ✅
+5. Runtime server, `forge dev`, workflows
+
+### H4 deliverables (local runtime)
+
+| Artifact | Description |
+|----------|-------------|
+| `runtimeGraph.json` | Command/action entries with module linkage |
+| `runtimeRegistry.ts` | Name → handler metadata map |
+| `mockMap.ts` | Package → testkit path for `--mock` runs |
+| `forge run` | Execute handlers locally with guard preflight |
+
+```bash
+forge run --list
+forge run createTicket
+forge run createTicket --mock
+```
+
+### H3 deliverables (DataGraph)
+
+- `dataGraph.json` / `dataGraph.ts` — schema.table extraction from AppGraph
 
 ### H2 deliverables (recipe v2.0.0)
 

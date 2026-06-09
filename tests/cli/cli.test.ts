@@ -27,6 +27,7 @@ describe("Forge CLI", () => {
       "capabilities",
       "runtime-matrix",
       "data",
+      "runtime",
     ]) {
       const parsed = parseCli(["inspect", target]);
       expect(parsed.errors).toEqual([]);

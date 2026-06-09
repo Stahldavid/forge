@@ -67,6 +67,9 @@ describe("plan", () => {
       expect(paths).toContain(`${GENERATED_DIR}/appGraph.ts`);
       expect(paths).toContain(`${GENERATED_DIR}/dataGraph.ts`);
       expect(paths).toContain(`${GENERATED_DIR}/dataGraph.json`);
+      expect(paths).toContain(`${GENERATED_DIR}/runtimeGraph.json`);
+      expect(paths).toContain(`${GENERATED_DIR}/runtimeRegistry.ts`);
+      expect(paths).toContain(`${GENERATED_DIR}/mockMap.ts`);
       expect(paths).toContain(`${GENERATED_DIR}/runtimeMatrix.json`);
       expect(paths).toContain(`${GENERATED_DIR}/importGuards.json`);
       expect(emitPlan.lock.packages.some((entry) => entry.name === "zod")).toBe(true);
