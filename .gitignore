@@ -1,0 +1,6 @@
+node_modules/
+examples/**/node_modules/
+.forge/cache/
+tests/**/.tmp/
+*.log
+.DS_Store

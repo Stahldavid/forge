@@ -1,0 +1,152 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { createDiagnostic } from "../compiler/diagnostics/create.ts";
+import type { Diagnostic } from "../compiler/types/diagnostic.ts";
+import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
+import { runCheckCommand, runGenerateCommand } from "./commands.ts";
+import { lintForgeGuards } from "./lint-forge.ts";
+
+interface PackageScripts {
+  typecheck?: string;
+  test?: string;
+  lint?: string;
+}
+
+function readPackageScripts(workspaceRoot: string): PackageScripts {
+  const packageJsonPath = join(workspaceRoot, "package.json");
+  if (!existsSync(packageJsonPath)) {
+    return {};
+  }
+
+  try {
+    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+      scripts?: PackageScripts;
+    };
+    return pkg.scripts ?? {};
+  } catch {
+    return {};
+  }
+}
+
+async function runPackageScript(
+  workspaceRoot: string,
+  scriptName: string,
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const proc = Bun.spawn(["bun", "run", scriptName], {
+    cwd: workspaceRoot,
+    stdout: "pipe",
+    stderr: "pipe",
+    env: process.env,
+  });
+
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+
+  return { exitCode, stdout, stderr };
+}
+
+function skippedStep(name: string, reason: string): VerifyStep {
+  return {
+    name,
+    ok: true,
+    skipped: true,
+    skipReason: reason,
+  };
+}
+
+export async function runVerifyCommand(
+  options: VerifyOptions,
+): Promise<VerifyResult> {
+  const steps: VerifyStep[] = [];
+  const diagnostics: Diagnostic[] = [];
+  const scripts = readPackageScripts(options.workspaceRoot);
+
+  const generateCheck = await runGenerateCommand({
+    workspaceRoot: options.workspaceRoot,
+    check: true,
+    dryRun: false,
+    json: false,
+    concurrency: 4,
+  });
+  steps.push({
+    name: "generate-check",
+    ok: generateCheck.exitCode === 0,
+    exitCode: generateCheck.exitCode,
+  });
+  diagnostics.push(...generateCheck.errors, ...generateCheck.warnings);
+
+  const forgeCheck = await runCheckCommand(options.workspaceRoot);
+  steps.push({
+    name: "forge-check",
+    ok: forgeCheck.exitCode === 0,
+    exitCode: forgeCheck.exitCode,
+  });
+  diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);
+
+  if (options.skipTypecheck) {
+    steps.push(skippedStep("typecheck", "--skip-typecheck"));
+  } else if (!scripts.typecheck) {
+    steps.push(skippedStep("typecheck", "no typecheck script in package.json"));
+  } else {
+    const typecheck = await runPackageScript(options.workspaceRoot, "typecheck");
+    steps.push({
+      name: "typecheck",
+      ok: typecheck.exitCode === 0,
+      exitCode: typecheck.exitCode,
+    });
+    if (typecheck.exitCode !== 0) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_VERIFY_TYPECHECK",
+          message: "typecheck script failed",
+        }),
+      );
+    }
+  }
+
+  if (options.skipTests) {
+    steps.push(skippedStep("tests", "--skip-tests"));
+  } else if (!scripts.test) {
+    steps.push(skippedStep("tests", "no test script in package.json"));
+  } else {
+    const tests = await runPackageScript(options.workspaceRoot, "test");
+    steps.push({
+      name: "tests",
+      ok: tests.exitCode === 0,
+      exitCode: tests.exitCode,
+    });
+    if (tests.exitCode !== 0) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_VERIFY_TESTS",
+          message: "test script failed",
+        }),
+      );
+    }
+  }
+
+  if (options.skipEslint) {
+    steps.push(skippedStep("eslint", "--skip-eslint"));
+  } else {
+    const lint = await lintForgeGuards(options.workspaceRoot);
+    steps.push({
+      name: "eslint",
+      ok: lint.exitCode === 0,
+      exitCode: lint.exitCode,
+    });
+    diagnostics.push(...lint.diagnostics);
+  }
+
+  const ok = steps.every((step) => step.ok);
+  return {
+    ok,
+    steps,
+    diagnostics,
+    exitCode: ok ? 0 : 1,
+  };
+}

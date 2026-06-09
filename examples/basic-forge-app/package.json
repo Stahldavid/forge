@@ -1,0 +1,21 @@
+{
+  "name": "basic-forge-app",
+  "private": true,
+  "type": "module",
+  "forge": {
+    "sourceRoots": ["src"]
+  },
+  "scripts": {
+    "setup": "node ../../scripts/setup-example.mjs",
+    "typecheck": "tsc --noEmit",
+    "forge:generate": "bun ../../src/forge/cli/main.ts generate",
+    "forge:check": "bun ../../src/forge/cli/main.ts check",
+    "verify": "bun ../../src/forge/cli/main.ts verify"
+  },
+  "dependencies": {
+    "zod": "^3.24.0",
+    "stripe": "^17.0.0",
+    "posthog-js": "^1.200.0",
+    "posthog-node": "^4.0.0"
+  }
+}

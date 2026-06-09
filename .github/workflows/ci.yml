@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --ignore-scripts
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Unit and integration tests
+        run: bun test
+
+      - name: Generate committed compiler output
+        run: bun run forge generate
+
+      - name: Verify compiler workspace
+        run: bun run forge verify --skip-tests
+
+      - name: Setup basic example
+        run: node scripts/setup-example.mjs
+
+      - name: Generate example output
+        working-directory: examples/basic-forge-app
+        run: bun ../../src/forge/cli/main.ts generate
+
+      - name: Example drift check
+        working-directory: examples/basic-forge-app
+        run: bun ../../src/forge/cli/main.ts generate --check

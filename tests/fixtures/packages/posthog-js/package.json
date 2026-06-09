@@ -1,0 +1,11 @@
+{
+  "name": "posthog-js",
+  "version": "1.200.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  }
+}

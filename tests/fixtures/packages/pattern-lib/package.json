@@ -1,0 +1,15 @@
+{
+  "name": "pattern-lib",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    },
+    "./features/*": {
+      "types": "./features/*.d.ts",
+      "import": "./features/*.js"
+    }
+  }
+}
