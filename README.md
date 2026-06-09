@@ -23,8 +23,9 @@ bun run forge verify
 | `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
 | `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime/dev |
 | `forge run [name]` | List or execute local command/action handlers (`--list`, `--mock`) |
-| `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`, `--db`) |
+| `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`, `--db`, `--worker`) |
 | `forge db <diff\|migrate\|reset\|status>` | SQL migrations against PGlite (default) or Postgres |
+| `forge outbox <list\|process\|retry\|dead\|clear>` | Inspect and process durable outbox deliveries |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -93,6 +94,30 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 4. **H4** — Local command/action runtime (`forge run`, runtimeGraph, mocks) ✅
 5. **H5** — Local dev server (`forge dev`, devManifest, watch mode) ✅
 6. **H6** — DataGraph-backed persistence runtime (PGlite, db CLI, transactional outbox) ✅
+7. **H7** — Durable outbox worker and event-driven actions ✅
+
+### H7 deliverables (outbox worker)
+
+| Artifact | Description |
+|----------|-------------|
+| `actionSubscriptions.json` / `.ts` | Static index of `action({ event })` subscriptions |
+| `_forge_outbox_deliveries` | Per-action delivery rows with retry/dead-letter state |
+| `forge outbox` | `list`, `process`, `retry`, `dead`, `clear` subcommands |
+| Outbox worker | Processes deliveries after command commit |
+| `forge dev --worker` | Background worker loop alongside HTTP server |
+
+```bash
+forge outbox list --json
+forge outbox process --once
+forge outbox retry 42
+forge outbox dead
+forge dev --worker --db pglite
+forge inspect subscriptions
+```
+
+**Architecture:** Option B — separate `_forge_outbox` (events) and `_forge_outbox_deliveries` (per-action retry). Commands stay transactional; subscribed actions run via worker after commit.
+
+**Limitations:** no Temporal/workflows, distributed workers, SKIP LOCKED, liveQuery, or production queue scaling.
 
 ### H6 deliverables (persistence runtime)
 
@@ -126,7 +151,9 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/health` | Server liveness, entry count, and DB status |
+| `GET` | `/health` | Server liveness, entry count, DB and outbox worker status |
+| `GET` | `/outbox` | Outbox summary and delivery list |
+| `POST` | `/outbox/process` | Process one outbox batch |
 | `GET` | `/db/tables` | List migrated tables |
 | `GET` | `/entries` | Runtime graph entries |
 | `GET` | `/workflows` | Workflow symbols (list metadata only) |
@@ -136,7 +163,7 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 
 ```bash
 forge dev
-forge dev --watch --mock
+forge dev --worker --watch --mock
 forge dev --port 4000 --json
 forge inspect dev
 ```

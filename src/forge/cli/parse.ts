@@ -2,6 +2,7 @@ import type { AddOptions, InspectTarget, VerifyOptions } from "../compiler/types
 import type { SandboxBackend } from "../compiler/types/runtime.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
 import type { DbSubcommand } from "./db.ts";
+import type { OutboxSubcommand } from "./outbox.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -19,6 +20,7 @@ export type ForgeCommand =
       json: boolean;
       db: "pglite" | "postgres" | "none";
       databaseUrl?: string;
+      worker: boolean;
       workspaceRoot: string;
     }
   | {
@@ -27,6 +29,19 @@ export type ForgeCommand =
       db: DbAdapterKind;
       databaseUrl?: string;
       json: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "outbox";
+      subcommand: OutboxSubcommand;
+      db: DbAdapterKind;
+      databaseUrl?: string;
+      json: boolean;
+      once: boolean;
+      watch: boolean;
+      limit?: number;
+      deliveryId?: number;
+      mock: boolean;
       workspaceRoot: string;
     };
 
@@ -44,6 +59,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "data",
   "runtime",
   "dev",
+  "subscriptions",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -102,7 +118,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, or db",
+      "missing command; expected generate, add, inspect, check, verify, run, dev, db, or outbox",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -220,6 +236,7 @@ export function parseCli(argv: string[]): ParsedCli {
           json: parseFlag(argv, "--json"),
           db: parseDbKind(parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
+          worker: parseFlag(argv, "--worker"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -239,6 +256,49 @@ export function parseCli(argv: string[]): ParsedCli {
           db: parseAdapterKind(parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
           json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "outbox": {
+      const subcommand = rest[0] as OutboxSubcommand | undefined;
+      if (
+        !subcommand ||
+        !["list", "process", "retry", "dead", "clear"].includes(subcommand)
+      ) {
+        errors.push(
+          "forge outbox requires subcommand: list, process, retry, dead, or clear",
+        );
+        return { command: null, workspaceRoot, errors };
+      }
+
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;
+      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
+        errors.push("--limit must be an integer >= 1");
+      }
+
+      const deliveryIdRaw = subcommand === "retry" ? rest[1] : undefined;
+      const deliveryId =
+        deliveryIdRaw !== undefined ? Number(deliveryIdRaw) : undefined;
+      if (deliveryIdRaw !== undefined && !Number.isFinite(deliveryId)) {
+        errors.push("delivery id must be a number");
+      }
+
+      return {
+        command: {
+          kind: "outbox",
+          subcommand,
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          once: parseFlag(argv, "--once"),
+          watch: parseFlag(argv, "--watch"),
+          limit,
+          deliveryId,
+          mock: parseFlag(argv, "--mock"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -270,6 +330,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--watch",
     "--db",
     "--database-url",
+    "--worker",
+    "--once",
+    "--limit",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -284,7 +347,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--port" ||
         arg === "--host" ||
         arg === "--db" ||
-        arg === "--database-url"
+        arg === "--database-url" ||
+        arg === "--limit"
       ) {
         index += 1;
       }

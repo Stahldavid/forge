@@ -10,6 +10,7 @@ export interface ForgeCommandMeta {
 
 export interface ForgeActionMeta {
   kind: "action";
+  event?: string;
 }
 
 export type ForgeCommand<T> = (() => T | Promise<T>) & {
@@ -25,6 +26,8 @@ export interface ForgeCommandConfig<TArgs = unknown, TResult = unknown> {
 }
 
 export interface ForgeActionConfig<TArgs = unknown, TResult = unknown> {
+  event?: string;
+  idempotencyKey?: (event: unknown) => string;
   handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 }
 
@@ -56,9 +59,14 @@ export function action<TArgs = unknown, TResult = unknown>(
     return handler;
   }
 
+  const meta: ForgeActionMeta = { kind: "action" };
+  if (fnOrConfig.event !== undefined) {
+    meta.event = fnOrConfig.event;
+  }
+
   return {
     ...fnOrConfig,
-    __forge: { kind: "action" },
+    __forge: meta,
   };
 }
 

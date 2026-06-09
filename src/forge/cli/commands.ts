@@ -45,6 +45,7 @@ import {
 } from "./run.ts";
 import { runDevCommand } from "./dev.ts";
 import { formatDbHuman, formatDbJson, runDbCommand } from "./db.ts";
+import { formatOutboxHuman, formatOutboxJson, runOutboxCommand } from "./outbox.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -146,6 +147,7 @@ export async function runInspectCommand(
     data: `${GENERATED_DIR}/dataGraph.json`,
     runtime: `${GENERATED_DIR}/runtimeGraph.json`,
     dev: `${GENERATED_DIR}/devManifest.json`,
+    subscriptions: `${GENERATED_DIR}/actionSubscriptions.json`,
   };
 
   const relative = dataPaths[target];
@@ -265,6 +267,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         json: command.json,
         db: command.db,
         databaseUrl: command.databaseUrl,
+        worker: command.worker,
       });
       return result.exitCode;
     }
@@ -281,6 +284,28 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatDbJson(result));
       } else {
         process.stdout.write(formatDbHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "outbox": {
+      const result = await runOutboxCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        db: command.db,
+        databaseUrl: command.databaseUrl,
+        json: command.json,
+        once: command.once,
+        watch: command.watch,
+        limit: command.limit,
+        deliveryId: command.deliveryId,
+        mock: command.mock,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatOutboxJson(result));
+      } else {
+        process.stdout.write(formatOutboxHuman(command.subcommand, result));
       }
 
       return result.exitCode;

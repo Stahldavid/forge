@@ -6,6 +6,7 @@ Demonstrates:
 - runtime matrix and import guards
 - transitive import guard (`badStripeCommand` → `stripeClient` → `stripe`)
 - package-aware adapters from `forge add`
+- event-driven actions via durable outbox (H7)
 
 ## Setup
 
@@ -39,6 +40,20 @@ bun run forge:run badStripeCommand   # blocked by import guards
 bun run forge:run createCheckout --mock
 ```
 
+## Event-driven flow (H7)
+
+1. `createTicket` command inserts a row and emits `ticket.created` into the transactional outbox.
+2. On commit, the compiler-generated subscriptions create delivery rows for `captureTicketCreated`.
+3. The outbox worker (CLI or `forge dev --worker`) runs the subscribed action with the event payload.
+
+```bash
+bun run forge:run createTicket
+bun run forge outbox list
+bun run forge outbox process --once
+```
+
+`src/actions/captureTicketCreated.ts` subscribes to `ticket.created` and returns `{ captured: true, ticketId }`.
+
 ## Database (H6)
 
 After `forge:generate`:
@@ -56,6 +71,8 @@ After `forge:generate`:
 
 ```bash
 bun run forge:dev:db
+# with background outbox worker:
+bun run forge:dev -- --worker --db pglite
 # or with mocks:
 bun run forge:dev -- --watch --mock --db pglite
 ```
@@ -66,6 +83,9 @@ Then invoke handlers over HTTP:
 curl -X POST http://127.0.0.1:3765/commands/createTicket \
   -H "Content-Type: application/json" \
   -d '{"args":{"title":"demo"}}'
+
+curl http://127.0.0.1:3765/outbox
+curl -X POST http://127.0.0.1:3765/outbox/process
 ```
 
 ## Scripts

@@ -19,6 +19,12 @@ import {
   prepareRuntimeEnvironment,
   runEntry,
 } from "../runtime/executor.ts";
+import {
+  getOutboxSummary,
+  listOutboxDeliveries,
+  processOutboxBatch,
+  startOutboxWorker,
+} from "../runtime/outbox/process.ts";
 import type { DevServerHandle, DevServerOptions, DevServerState } from "./types.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
@@ -174,6 +180,18 @@ export async function startDevServer(
     };
   }
 
+  const initialArtifacts = loadArtifacts();
+
+  if (options.worker && serverState.adapter) {
+    serverState.outboxWorker = startOutboxWorker(
+      serverState.adapter,
+      workspaceRoot,
+      initialArtifacts.tableMap,
+      runtimeGraph.entries,
+      { mock: options.mock, intervalMs: 2_000 },
+    );
+  }
+
   const server = Bun.serve({
     hostname: options.host,
     port: options.port,
@@ -190,12 +208,31 @@ export async function startDevServer(
           loadArtifacts();
 
         if (request.method === "GET" && pathname === "/health") {
+          const outboxSummary = serverState.adapter
+            ? await getOutboxSummary(serverState.adapter)
+            : { pending: 0, dead: 0, processing: 0, processed: 0, failed: 0, events: 0 };
+
           return jsonResponse({
             ok: true,
             service: "forge-dev",
             entries: currentRuntimeGraph.entries.length,
             db: serverState.db,
+            outbox: {
+              worker: serverState.outboxWorker?.isRunning() ? "running" : "stopped",
+              pending: outboxSummary.pending,
+              dead: outboxSummary.dead,
+            },
           });
+        }
+
+        if (request.method === "GET" && pathname === "/outbox") {
+          if (!serverState.adapter) {
+            return jsonResponse({ ok: true, summary: null, deliveries: [] });
+          }
+
+          const summary = await getOutboxSummary(serverState.adapter);
+          const deliveries = await listOutboxDeliveries(serverState.adapter);
+          return jsonResponse({ ok: true, summary, deliveries });
         }
 
         if (request.method === "GET" && pathname === "/entries") {
@@ -232,6 +269,34 @@ export async function startDevServer(
         }
 
         if (request.method === "POST") {
+          if (pathname === "/outbox/process") {
+            if (!serverState.adapter) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_DEV_SERVER_ERROR,
+                      message: "database not connected",
+                    }),
+                  ],
+                },
+                400,
+              );
+            }
+
+            const batch = await processOutboxBatch(
+              serverState.adapter,
+              workspaceRoot,
+              tableMap,
+              currentRuntimeGraph.entries,
+              { mock: options.mock },
+            );
+
+            return jsonResponse({ ok: true, batch });
+          }
+
           let entryName: string | null = null;
           let expectedKind: "command" | "action" | null = null;
 
@@ -351,7 +416,9 @@ export async function startDevServer(
     url,
     routes: devManifest.routes,
     state: serverState,
+    outboxWorker: serverState.outboxWorker,
     stop: () => {
+      serverState.outboxWorker?.stop();
       server.stop(true);
       void serverState.adapter?.close();
     },

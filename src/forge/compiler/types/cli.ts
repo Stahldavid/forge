@@ -49,7 +49,8 @@ export type InspectTarget =
   | "runtime-matrix"
   | "data"
   | "runtime"
-  | "dev";
+  | "dev"
+  | "subscriptions";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;

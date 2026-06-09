@@ -6,10 +6,12 @@ import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import type { DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
 import { createForgeContext } from "../context/create-context.ts";
+import { loadActionSubscriptions } from "../outbox/subscriptions.ts";
 
 export interface CommandRuntime {
   adapter: DbAdapter;
   tableMap: Record<string, TableMapEntry>;
+  workspaceRoot: string;
 }
 
 export interface CommandTransactionResult {
@@ -31,7 +33,8 @@ export async function runCommandWithTransaction(
 
   try {
     const db = createGeneratedDbClient(tx, runtime.tableMap);
-    const ctx = createForgeContext(tx, db);
+    const { subscriptions } = loadActionSubscriptions(runtime.workspaceRoot);
+    const ctx = createForgeContext(tx, db, subscriptions);
     const result = await handler(ctx, args);
     await tx.commit();
 

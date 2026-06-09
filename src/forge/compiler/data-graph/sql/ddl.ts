@@ -14,7 +14,9 @@ export const SQL_PLAN_SCHEMA_VERSION = "1.0.0";
 
 const SYSTEM_MIGRATIONS_SQL = `CREATE TABLE IF NOT EXISTS _forge_migrations (id text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())`;
 
-const SYSTEM_OUTBOX_SQL = `CREATE TABLE IF NOT EXISTS _forge_outbox (id bigserial PRIMARY KEY, event_type text NOT NULL, payload jsonb NOT NULL, status text NOT NULL DEFAULT 'pending', attempts integer NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now(), processed_at timestamptz)`;
+const SYSTEM_OUTBOX_SQL = `CREATE TABLE IF NOT EXISTS _forge_outbox (id bigserial PRIMARY KEY, event_type text NOT NULL, payload jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`;
+
+const SYSTEM_OUTBOX_DELIVERIES_SQL = `CREATE TABLE IF NOT EXISTS _forge_outbox_deliveries (id bigserial PRIMARY KEY, outbox_id bigint NOT NULL REFERENCES _forge_outbox(id), action_name text NOT NULL, status text NOT NULL DEFAULT 'pending', attempts integer NOT NULL DEFAULT 0, max_attempts integer NOT NULL DEFAULT 5, next_attempt_at timestamptz NOT NULL DEFAULT now(), locked_at timestamptz, locked_by text, last_error text, processed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(outbox_id, action_name))`;
 
 interface ParsedFieldType {
   sqlType: string;
@@ -267,6 +269,11 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
       kind: "create_table",
       table: "_forge_outbox",
       sql: SYSTEM_OUTBOX_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_outbox_deliveries",
+      sql: SYSTEM_OUTBOX_DELIVERIES_SQL,
     },
   ];
 

@@ -10,6 +10,7 @@ import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import { adapterAsTransaction, type DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
 import { createForgeContext } from "../context/create-context.ts";
+import { loadActionSubscriptions } from "../outbox/subscriptions.ts";
 import { runCommandWithTransaction } from "./command-transaction.ts";
 
 export interface RunEntryExecutionOptions {
@@ -21,6 +22,7 @@ export interface RunEntryExecutionOptions {
 export interface RunEntryRuntime {
   adapter?: DbAdapter | null;
   tableMap?: Record<string, TableMapEntry>;
+  workspaceRoot?: string;
 }
 
 export interface ResolvedHandler {
@@ -58,7 +60,9 @@ export function resolveHandlerFromModule(
         if (runtime?.adapter && runtime.tableMap) {
           const tx = adapterAsTransaction(runtime.adapter);
           const db = createGeneratedDbClient(tx, runtime.tableMap);
-          const ctx = createForgeContext(tx, db);
+          const workspaceRoot = runtime.workspaceRoot ?? process.cwd();
+          const { subscriptions } = loadActionSubscriptions(workspaceRoot);
+          const ctx = createForgeContext(tx, db, subscriptions);
           return handler(ctx, args);
         }
 
@@ -109,6 +113,7 @@ export async function executeResolvedEntry(
       {
         adapter: runtime.adapter,
         tableMap: runtime.tableMap,
+        workspaceRoot,
       },
     );
   }

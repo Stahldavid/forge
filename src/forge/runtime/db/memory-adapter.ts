@@ -16,12 +16,44 @@ function normalizeRows(rows: MemoryRow[]): DbQueryResult {
   };
 }
 
+function parseNow(): string {
+  return new Date().toISOString();
+}
+
+function compareValue(left: unknown, right: unknown): boolean {
+  if (left instanceof Date && typeof right === "string") {
+    return left.getTime() <= new Date(right).getTime();
+  }
+  if (typeof left === "string" && typeof right === "string") {
+    if (left.includes("T") && right.includes("T")) {
+      return new Date(left).getTime() <= new Date(right).getTime();
+    }
+  }
+  return left === right;
+}
+
+function parseTableName(sql: string): string | null {
+  const patterns = [
+    /FROM\s+"([^"]+)"/i,
+    /INTO\s+"([^"]+)"/i,
+    /UPDATE\s+"([^"]+)"/i,
+    /TABLE\s+"([^"]+)"/i,
+  ];
+  for (const pattern of patterns) {
+    const match = sql.match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
 export class MemoryAdapter implements DbAdapter {
   readonly kind = "memory" as const;
   private tables = new Map<string, MemoryTable>();
 
   async query(sql: string, params: unknown[] = []): Promise<DbQueryResult> {
-    const trimmed = sql.trim();
+    const trimmed = sql.trim().replace(/\s+/g, " ");
 
     if (trimmed.startsWith("CREATE TABLE")) {
       const match = trimmed.match(/CREATE TABLE IF NOT EXISTS "([^"]+)"/i);
@@ -49,107 +81,282 @@ export class MemoryAdapter implements DbAdapter {
         const table = this.tables.get(match[1]);
         if (table) {
           table.rows = [];
+          if (/RESTART IDENTITY/i.test(trimmed)) {
+            table.nextSerial = 1;
+          }
         }
       }
       return { rows: [], rowCount: 0 };
     }
 
     if (trimmed.startsWith("INSERT INTO")) {
-      const match = trimmed.match(/INSERT INTO "([^"]+)"/i);
-      const tableName = match?.[1];
-      if (!tableName) {
-        return { rows: [], rowCount: 0 };
-      }
-      const table = this.ensureTable(tableName);
-      const row: MemoryRow = {};
-      const columnsMatch = trimmed.match(/\(([^)]+)\)\s*VALUES/i);
-      const columns = columnsMatch?.[1]
-        ?.split(",")
-        .map((column) => column.trim().replace(/"/g, "")) ?? [];
-
-      columns.forEach((column, index) => {
-        row[column] = params[index];
-      });
-
-      if (tableName === "_forge_outbox" && row.id === undefined) {
-        row.id = table.nextSerial++;
-      }
-
-      table.rows.push(row);
-      return { rows: [{ ...row }], rowCount: 1 };
+      return this.handleInsert(trimmed, params);
     }
 
     if (trimmed.startsWith("SELECT")) {
-      const fromMatch = trimmed.match(/FROM "([^"]+)"/i);
-      const tableName = fromMatch?.[1];
-      if (!tableName) {
-        return { rows: [], rowCount: 0 };
-      }
-      const table = this.tables.get(tableName);
-      if (!table) {
-        return { rows: [], rowCount: 0 };
-      }
-
-      if (trimmed.includes("WHERE")) {
-        const whereMatch = trimmed.match(/WHERE "([^"]+)"\s*=\s*\$\d+/i);
-        const column = whereMatch?.[1];
-        if (column) {
-          const value = params[0];
-          const filtered = table.rows.filter((row) => row[column] === value);
-          return normalizeRows(filtered);
-        }
-      }
-
-      return normalizeRows(table.rows);
+      return this.handleSelect(trimmed, params);
     }
 
     if (trimmed.startsWith("UPDATE")) {
-      const match = trimmed.match(/UPDATE "([^"]+)"/i);
-      const tableName = match?.[1];
-      if (!tableName) {
-        return { rows: [], rowCount: 0 };
-      }
-      const table = this.tables.get(tableName);
-      if (!table) {
-        return { rows: [], rowCount: 0 };
-      }
-
-      const idIndex = params.length - 1;
-      const id = params[idIndex];
-      const row = table.rows.find((candidate) => candidate.id === id);
-      if (!row) {
-        return { rows: [], rowCount: 0 };
-      }
-
-      const setMatch = trimmed.match(/SET (.+?) WHERE/i);
-      const assignments = setMatch?.[1]?.split(",") ?? [];
-      assignments.forEach((assignment, index) => {
-        const column = assignment.trim().split("=")[0]?.trim().replace(/"/g, "");
-        if (column) {
-          row[column] = params[index];
-        }
-      });
-
-      return { rows: [{ ...row }], rowCount: 1 };
+      return this.handleUpdate(trimmed, params);
     }
 
     if (trimmed.startsWith("DELETE")) {
-      const match = trimmed.match(/DELETE FROM "([^"]+)"/i);
-      const tableName = match?.[1];
-      if (!tableName) {
-        return { rows: [], rowCount: 0 };
-      }
-      const table = this.tables.get(tableName);
-      if (!table) {
-        return { rows: [], rowCount: 0 };
-      }
-      const id = params[0];
-      const before = table.rows.length;
-      table.rows = table.rows.filter((row) => row.id !== id);
-      return { rows: [], rowCount: before - table.rows.length };
+      return this.handleDelete(trimmed, params);
     }
 
     return { rows: [], rowCount: 0 };
+  }
+
+  private handleInsert(sql: string, params: unknown[]): DbQueryResult {
+    const tableName = parseTableName(sql);
+    if (!tableName) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const table = this.ensureTable(tableName);
+    const row: MemoryRow = {};
+    const columnsMatch = sql.match(/\(([^)]+)\)\s*VALUES/i);
+    const columns =
+      columnsMatch?.[1]
+        ?.split(",")
+        .map((column) => column.trim().replace(/"/g, "")) ?? [];
+
+    columns.forEach((column, index) => {
+      let value = params[index];
+      if (value === undefined && /\bnow\(\)/i.test(sql)) {
+        value = parseNow();
+      }
+      row[column] = value;
+    });
+
+    if (row.id === undefined && (tableName.includes("outbox") || columns.includes("id") === false)) {
+      row.id = table.nextSerial++;
+    }
+
+    if (row.created_at === undefined && columns.includes("created_at")) {
+      row.created_at = parseNow();
+    }
+    if (row.next_attempt_at === undefined && columns.includes("next_attempt_at")) {
+      row.next_attempt_at = parseNow();
+    }
+
+    table.rows.push(row);
+
+    if (/RETURNING/i.test(sql)) {
+      const returningMatch = sql.match(/RETURNING\s+"?(\w+)"?/i);
+      const returningCol = returningMatch?.[1] ?? "id";
+      return { rows: [{ [returningCol]: row[returningCol] }], rowCount: 1 };
+    }
+
+    return { rows: [{ ...row }], rowCount: 1 };
+  }
+
+  private handleSelect(sql: string, params: unknown[]): DbQueryResult {
+    if (/information_schema\.tables/i.test(sql)) {
+      const tables = [...this.tables.keys()].sort().map((name) => ({ table_name: name }));
+      return normalizeRows(tables);
+    }
+
+    if (/COUNT\(\*\)/i.test(sql)) {
+      const tableName = parseTableName(sql);
+      if (!tableName) {
+        return { rows: [{ count: 0 }], rowCount: 1 };
+      }
+      const table = this.tables.get(tableName);
+      let rows = table?.rows ?? [];
+
+      if (/GROUP BY\s+"?status"?/i.test(sql)) {
+        const grouped = new Map<string, number>();
+        for (const row of rows) {
+          const status = String(row.status ?? "unknown");
+          grouped.set(status, (grouped.get(status) ?? 0) + 1);
+        }
+        return normalizeRows(
+          [...grouped.entries()].map(([status, count]) => ({ status, count })),
+        );
+      }
+
+      if (/WHERE/i.test(sql)) {
+        rows = this.filterRows(rows, sql, params);
+      }
+
+      return { rows: [{ count: rows.length }], rowCount: 1 };
+    }
+
+    if (/JOIN/i.test(sql)) {
+      return this.handleJoinSelect(sql, params);
+    }
+
+    const tableName = parseTableName(sql);
+    if (!tableName) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const table = this.tables.get(tableName);
+    if (!table) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    let rows = [...table.rows];
+
+    if (/WHERE/i.test(sql)) {
+      rows = this.filterRows(rows, sql, params);
+    }
+
+    if (/ORDER BY/i.test(sql)) {
+      const orderMatch = sql.match(/ORDER BY\s+"?(\w+)"?/i);
+      const column = orderMatch?.[1];
+      if (column) {
+        rows.sort((a, b) => {
+          const left = a[column];
+          const right = b[column];
+          if (left === right) return 0;
+          return (left as number) < (right as number) ? -1 : 1;
+        });
+      }
+    }
+
+    if (/LIMIT/i.test(sql)) {
+      const limit = Number(params[params.length - 1] ?? params[0]);
+      if (Number.isFinite(limit)) {
+        rows = rows.slice(0, limit);
+      }
+    }
+
+    return normalizeRows(rows);
+  }
+
+  private handleJoinSelect(sql: string, params: unknown[]): DbQueryResult {
+    const deliveryTable = this.tables.get("_forge_outbox_deliveries");
+    const outboxTable = this.tables.get("_forge_outbox");
+    if (!deliveryTable || !outboxTable) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    let rows = deliveryTable.rows.map((delivery) => {
+      const event = outboxTable.rows.find((row) => row.id === delivery.outbox_id);
+      return {
+        ...delivery,
+        event_type: event?.event_type,
+        event_created_at: event?.created_at,
+      };
+    });
+
+    if (/WHERE\s+d\.status\s*=\s*'dead'/i.test(sql)) {
+      rows = rows.filter((row) => row.status === "dead");
+    }
+
+    rows.sort((a, b) => Number(a.id) - Number(b.id));
+    return normalizeRows(rows);
+  }
+
+  private filterRows(rows: MemoryRow[], sql: string, params: unknown[]): MemoryRow[] {
+    let paramIndex = 0;
+
+    if (/status\s*=\s*'pending'\s+AND\s+next_attempt_at\s*<=\s*now\(\)/i.test(sql)) {
+      const now = parseNow();
+      return rows.filter(
+        (row) => row.status === "pending" && compareValue(row.next_attempt_at, now),
+      );
+    }
+
+    if (/status\s*=\s*'dead'/i.test(sql)) {
+      return rows.filter((row) => row.status === "dead");
+    }
+
+    const conditions = [...sql.matchAll(/"(\w+)"\s*(=|<=)\s*(?:\$\d+|now\(\))/gi)];
+
+    return rows.filter((row) => {
+      paramIndex = 0;
+      for (const condition of conditions) {
+        const column = condition[1]!;
+        const operator = condition[2]!;
+        const usesNow = /now\(\)/i.test(condition[0] ?? "");
+        const value = usesNow ? parseNow() : params[paramIndex++];
+
+        if (operator === "<=") {
+          if (!compareValue(row[column], value)) {
+            return false;
+          }
+        } else if (row[column] !== value) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  private handleUpdate(sql: string, params: unknown[]): DbQueryResult {
+    const tableName = parseTableName(sql);
+    if (!tableName) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const table = this.tables.get(tableName);
+    if (!table) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const setMatch = sql.match(/SET (.+?) WHERE/i);
+    const assignments = setMatch?.[1]?.split(",") ?? [];
+    const whereMatch = sql.match(/WHERE\s+"?(\w+)"?\s*=\s*\$\d+/i);
+    const whereColumn = whereMatch?.[1] ?? "id";
+    const whereValue = params[params.length - 1];
+
+    let updated = 0;
+    for (const row of table.rows) {
+      if (row[whereColumn] !== whereValue) {
+        continue;
+      }
+
+      if (/AND\s+"?status"?\s*=\s*'pending'/i.test(sql) && row.status !== "pending") {
+        continue;
+      }
+
+      let paramIdx = 0;
+      for (const assignment of assignments) {
+        const column = assignment.trim().split("=")[0]?.trim().replace(/"/g, "");
+        if (!column) {
+          continue;
+        }
+
+        if (/now\(\)/i.test(assignment)) {
+          row[column] = parseNow();
+        } else if (/NULL/i.test(assignment) && !/\$\d+/.test(assignment)) {
+          row[column] = null;
+        } else {
+          row[column] = params[paramIdx++];
+        }
+      }
+
+      updated += 1;
+    }
+
+    return { rows: [], rowCount: updated };
+  }
+
+  private handleDelete(sql: string, params: unknown[]): DbQueryResult {
+    const tableName = parseTableName(sql);
+    if (!tableName) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const table = this.tables.get(tableName);
+    if (!table) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    if (/WHERE\s+"?status"?\s*=\s*'dead'/i.test(sql)) {
+      const before = table.rows.length;
+      table.rows = table.rows.filter((row) => row.status !== "dead");
+      return { rows: [], rowCount: before - table.rows.length };
+    }
+
+    const id = params[0];
+    const before = table.rows.length;
+    table.rows = table.rows.filter((row) => row.id !== id);
+    return { rows: [], rowCount: before - table.rows.length };
   }
 
   async begin(): Promise<DbTransaction> {
@@ -164,9 +371,9 @@ export class MemoryAdapter implements DbAdapter {
     const adapter = this;
 
     return {
-      query: (sql, params) => adapter.query(sql, params),
+      query: (querySql, queryParams) => adapter.query(querySql, queryParams),
       async commit() {
-        // committed in place
+        /* committed in place */
       },
       async rollback() {
         adapter.tables = snapshot;

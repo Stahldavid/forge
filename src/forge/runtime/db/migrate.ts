@@ -75,7 +75,8 @@ export async function resetDatabase(
     }
 
     await adapter.query(`TRUNCATE TABLE _forge_migrations`);
-    await adapter.query(`TRUNCATE TABLE _forge_outbox RESTART IDENTITY`);
+    await adapter.query(`TRUNCATE TABLE _forge_outbox_deliveries RESTART IDENTITY CASCADE`);
+    await adapter.query(`TRUNCATE TABLE _forge_outbox RESTART IDENTITY CASCADE`);
 
     diagnostics.push(...(await applyMigrations(adapter, sqlPlan)));
   } catch (error) {

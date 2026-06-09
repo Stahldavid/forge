@@ -1,4 +1,5 @@
 import { buildDataGraph } from "../data-graph/build.ts";
+import { buildActionSubscriptions } from "../action-subscriptions/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -44,6 +45,8 @@ import {
   serializeSqlPlanTsExport,
   serializeDbJsonExport,
   serializeDbTsExport,
+  serializeActionSubscriptionsJson,
+  serializeActionSubscriptionsTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -112,6 +115,7 @@ export function plan(input: PlanInput): EmitPlan {
   const matrix = buildRuntimeMatrix(input.classified);
   const dataGraph = buildDataGraph(input.appGraph);
   const sqlPlan = buildSqlPlan(dataGraph);
+  const actionSubscriptions = buildActionSubscriptions(input.appGraph);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -195,6 +199,14 @@ export function plan(input: PlanInput): EmitPlan {
     ),
     makeEmitFile(`${GENERATED_DIR}/db.ts`, serializeDbTsExport(sqlPlan)),
     makeEmitFile(`${GENERATED_DIR}/db.json`, serializeDbJsonExport(sqlPlan)),
+    makeEmitFile(
+      `${GENERATED_DIR}/actionSubscriptions.ts`,
+      serializeActionSubscriptionsTs(actionSubscriptions),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/actionSubscriptions.json`,
+      serializeActionSubscriptionsJson(actionSubscriptions),
+    ),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);

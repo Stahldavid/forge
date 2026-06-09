@@ -4,6 +4,7 @@ import type { PackageGraph } from "../types/package-graph.ts";
 import type { RuntimeMatrix } from "../types/runtime-matrix.ts";
 import type { ImportGuardsArtifact } from "../types/import-guards.ts";
 import type { DevManifest } from "../types/dev-manifest.ts";
+import type { ActionSubscriptions } from "../types/action-subscriptions.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
 import type { SqlPlan } from "../data-graph/sql/types.ts";
 import {
@@ -193,6 +194,30 @@ export function serializeDbJsonExport(plan: SqlPlan): string {
 
 export function serializeDbTsExport(plan: SqlPlan): string {
   return serializeDbTs(plan);
+}
+
+export function serializeActionSubscriptionsJson(
+  subscriptions: ActionSubscriptions,
+): string {
+  const payload = {
+    schemaVersion: subscriptions.schemaVersion,
+    generatorVersion: subscriptions.generatorVersion,
+    analyzerVersion: subscriptions.analyzerVersion,
+    inputHash: subscriptions.inputHash,
+    subscriptions: subscriptions.subscriptions,
+    byEvent: subscriptions.byEvent,
+    diagnostics: subscriptions.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeActionSubscriptionsTs(
+  subscriptions: ActionSubscriptions,
+): string {
+  const parsed: unknown = JSON.parse(
+    serializeActionSubscriptionsJson(subscriptions).trimEnd(),
+  );
+  return `export const actionSubscriptions = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
 export type { ImportGuardsArtifact };

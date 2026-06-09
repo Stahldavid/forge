@@ -16,6 +16,7 @@ export interface DevCommandOptions {
   json: boolean;
   db: "pglite" | "postgres" | "none";
   databaseUrl?: string;
+  worker: boolean;
 }
 
 export interface DevCommandResult {
@@ -55,6 +56,7 @@ export async function runDevCommand(
       json: options.json,
       db: options.db,
       databaseUrl: options.databaseUrl,
+      worker: options.worker,
     });
   } catch (error) {
     const message =
@@ -76,6 +78,11 @@ export async function runDevCommand(
   }
 
   let watchHandle: { stop: () => void } | null = null;
+  let outboxWorkerHandle: { stop: () => void } | null = null;
+
+  if (options.worker && handle.outboxWorker) {
+    outboxWorkerHandle = handle.outboxWorker;
+  }
 
   if (options.watch) {
     watchHandle = startDevWatch(workspaceRoot, async (changedCount) => {
@@ -104,6 +111,7 @@ export async function runDevCommand(
   await new Promise<void>((resolve) => {
     const shutdown = () => {
       watchHandle?.stop();
+      outboxWorkerHandle?.stop();
       handle.stop();
       resolve();
     };

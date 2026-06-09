@@ -11,6 +11,7 @@ export interface DevServerOptions {
   json: boolean;
   db: DevDbMode;
   databaseUrl?: string;
+  worker?: boolean;
 }
 
 export interface DevServerDbState {
@@ -21,6 +22,10 @@ export interface DevServerDbState {
 export interface DevServerState {
   adapter: DbAdapter | null;
   db: DevServerDbState;
+  outboxWorker?: {
+    stop: () => void;
+    isRunning: () => boolean;
+  } | null;
 }
 
 export interface DevServerHandle {
@@ -29,6 +34,7 @@ export interface DevServerHandle {
   url: string;
   routes: DevRoute[];
   state: DevServerState;
+  outboxWorker?: DevServerState["outboxWorker"];
   stop: () => void;
 }
 

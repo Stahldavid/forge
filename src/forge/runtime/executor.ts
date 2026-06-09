@@ -360,6 +360,7 @@ export async function runEntry(
   const runtime: RunEntryRuntime = {
     adapter: db,
     tableMap: loadTableMap(workspaceRoot) ?? undefined,
+    workspaceRoot,
   };
 
   const executed = await executeResolvedEntry(
