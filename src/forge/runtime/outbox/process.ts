@@ -174,7 +174,8 @@ export function startOutboxWorker(
       return;
     }
     try {
-      await processOutboxBatch(adapter, workspaceRoot, tableMap, runtimeGraphEntries, options);
+      const { runWorkerTick } = await import("../workflows/process.ts");
+      await runWorkerTick(adapter, workspaceRoot, tableMap, runtimeGraphEntries, options);
     } catch {
       /* worker loop continues on batch errors */
     }

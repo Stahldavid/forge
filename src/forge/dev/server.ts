@@ -22,9 +22,20 @@ import {
 import {
   getOutboxSummary,
   listOutboxDeliveries,
-  processOutboxBatch,
   startOutboxWorker,
 } from "../runtime/outbox/process.ts";
+import { cancelWorkflowRun } from "../runtime/workflows/cancel.ts";
+import { createWorkflowRun } from "../runtime/workflows/create-run.ts";
+import {
+  getWorkflowSummary,
+  inspectWorkflowRun,
+  listWorkflowRuns,
+  runWorkerTick,
+} from "../runtime/workflows/process.ts";
+import { loadWorkflowRegistry } from "../runtime/workflows/registry.ts";
+import { retryWorkflowRun } from "../runtime/workflows/retry-run.ts";
+import { hashStable } from "../compiler/primitives/hash.ts";
+import { canonicalJson } from "../compiler/primitives/serialize.ts";
 import type { DevServerHandle, DevServerOptions, DevServerState } from "./types.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
@@ -211,6 +222,9 @@ export async function startDevServer(
           const outboxSummary = serverState.adapter
             ? await getOutboxSummary(serverState.adapter)
             : { pending: 0, dead: 0, processing: 0, processed: 0, failed: 0, events: 0 };
+          const workflowSummary = serverState.adapter
+            ? await getWorkflowSummary(serverState.adapter)
+            : { pending: 0, running: 0, completed: 0, failed: 0, dead: 0, canceled: 0 };
 
           return jsonResponse({
             ok: true,
@@ -221,6 +235,11 @@ export async function startDevServer(
               worker: serverState.outboxWorker?.isRunning() ? "running" : "stopped",
               pending: outboxSummary.pending,
               dead: outboxSummary.dead,
+            },
+            workflows: {
+              running: workflowSummary.running,
+              pending: workflowSummary.pending,
+              dead: workflowSummary.dead,
             },
           });
         }
@@ -245,10 +264,33 @@ export async function startDevServer(
         }
 
         if (request.method === "GET" && pathname === "/workflows") {
+          const { workflows } = loadWorkflowRegistry(workspaceRoot);
           return jsonResponse({
             ok: true,
             workflows: currentDevManifest.workflows,
+            registry: workflows,
           });
+        }
+
+        if (request.method === "GET" && pathname === "/workflows/runs") {
+          if (!serverState.adapter) {
+            return jsonResponse({ ok: true, runs: [], summary: null });
+          }
+
+          const runs = await listWorkflowRuns(serverState.adapter);
+          const summary = await getWorkflowSummary(serverState.adapter);
+          return jsonResponse({ ok: true, runs, summary });
+        }
+
+        const workflowRunMatch = pathname.match(/^\/workflows\/runs\/(\d+)$/);
+        if (request.method === "GET" && workflowRunMatch) {
+          if (!serverState.adapter) {
+            return jsonResponse({ ok: true, run: null, steps: [] });
+          }
+
+          const runId = Number(workflowRunMatch[1]);
+          const inspected = await inspectWorkflowRun(serverState.adapter, runId);
+          return jsonResponse({ ok: true, ...inspected });
         }
 
         if (request.method === "GET" && pathname === "/db/tables") {
@@ -286,7 +328,7 @@ export async function startDevServer(
               );
             }
 
-            const batch = await processOutboxBatch(
+            const batch = await runWorkerTick(
               serverState.adapter,
               workspaceRoot,
               tableMap,
@@ -295,6 +337,71 @@ export async function startDevServer(
             );
 
             return jsonResponse({ ok: true, batch });
+          }
+
+          if (pathname === "/workflows/process") {
+            if (!serverState.adapter) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_DEV_SERVER_ERROR,
+                      message: "database not connected",
+                    }),
+                  ],
+                },
+                400,
+              );
+            }
+
+            const batch = await runWorkerTick(
+              serverState.adapter,
+              workspaceRoot,
+              tableMap,
+              currentRuntimeGraph.entries,
+              { mock: options.mock },
+            );
+
+            return jsonResponse({ ok: true, batch });
+          }
+
+          const workflowRunPostMatch = pathname.match(/^\/workflows\/runs\/(\d+)\/(retry|cancel)$/);
+          if (workflowRunPostMatch && serverState.adapter) {
+            const runId = Number(workflowRunPostMatch[1]);
+            const action = workflowRunPostMatch[2];
+
+            if (action === "retry") {
+              const retried = await retryWorkflowRun(serverState.adapter, runId);
+              return jsonResponse({ ok: retried, runId, status: retried ? "pending" : "not_found" });
+            }
+
+            const canceled = await cancelWorkflowRun(serverState.adapter, runId);
+            return jsonResponse({ ok: canceled, runId, status: canceled ? "canceled" : "not_found" });
+          }
+
+          const workflowRunMatchPost = pathname.match(/^\/workflows\/([^/]+)\/run$/);
+          if (workflowRunMatchPost && serverState.adapter) {
+            const workflowName = decodeURIComponent(workflowRunMatchPost[1]!);
+            let bodyInput: unknown = {};
+            try {
+              const body = (await request.json()) as { input?: unknown };
+              bodyInput = body.input ?? {};
+            } catch {
+              bodyInput = {};
+            }
+
+            const { workflows } = loadWorkflowRegistry(workspaceRoot);
+            const idempotencyKey = `${workflowName}:manual:${hashStable(canonicalJson(bodyInput))}`;
+            const result = await createWorkflowRun(serverState.adapter, workflows, {
+              workflowName,
+              input: bodyInput,
+              triggerType: "manual",
+              idempotencyKey,
+            });
+
+            return jsonResponse({ ok: true, ...result });
           }
 
           let entryName: string | null = null;

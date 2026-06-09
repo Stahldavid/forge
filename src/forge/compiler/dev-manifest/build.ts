@@ -56,6 +56,8 @@ function buildRoutes(runtimeGraph: RuntimeGraph): DevRoute[] {
     { method: "GET", path: "/health", purpose: "health" },
     { method: "GET", path: "/entries", purpose: "entries" },
     { method: "GET", path: "/workflows", purpose: "workflows" },
+    { method: "GET", path: "/workflows/runs", purpose: "workflow-runs" },
+    { method: "POST", path: "/workflows/process", purpose: "workflow-process" },
   ];
 
   for (const entry of runtimeGraph.entries) {

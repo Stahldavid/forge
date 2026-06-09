@@ -5,6 +5,10 @@ import type { RuntimeMatrix } from "../types/runtime-matrix.ts";
 import type { ImportGuardsArtifact } from "../types/import-guards.ts";
 import type { DevManifest } from "../types/dev-manifest.ts";
 import type { ActionSubscriptions } from "../types/action-subscriptions.ts";
+import type {
+  WorkflowRegistry,
+  WorkflowSubscriptions,
+} from "../types/workflow-registry.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
 import type { SqlPlan } from "../data-graph/sql/types.ts";
 import {
@@ -218,6 +222,49 @@ export function serializeActionSubscriptionsTs(
     serializeActionSubscriptionsJson(subscriptions).trimEnd(),
   );
   return `export const actionSubscriptions = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeWorkflowRegistryJson(registry: WorkflowRegistry): string {
+  const payload = {
+    schemaVersion: registry.schemaVersion,
+    generatorVersion: registry.generatorVersion,
+    analyzerVersion: registry.analyzerVersion,
+    inputHash: registry.inputHash,
+    workflows: registry.workflows,
+    diagnostics: registry.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeWorkflowRegistryTs(registry: WorkflowRegistry): string {
+  const parsed: unknown = JSON.parse(
+    serializeWorkflowRegistryJson(registry).trimEnd(),
+  );
+  return `export const workflowRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeWorkflowSubscriptionsJson(
+  subscriptions: WorkflowSubscriptions,
+): string {
+  const payload = {
+    schemaVersion: subscriptions.schemaVersion,
+    generatorVersion: subscriptions.generatorVersion,
+    analyzerVersion: subscriptions.analyzerVersion,
+    inputHash: subscriptions.inputHash,
+    subscriptions: subscriptions.subscriptions,
+    byEvent: subscriptions.byEvent,
+    diagnostics: subscriptions.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeWorkflowSubscriptionsTs(
+  subscriptions: WorkflowSubscriptions,
+): string {
+  const parsed: unknown = JSON.parse(
+    serializeWorkflowSubscriptionsJson(subscriptions).trimEnd(),
+  );
+  return `export const workflowSubscriptions = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
 export type { ImportGuardsArtifact };

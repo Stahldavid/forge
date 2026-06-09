@@ -18,6 +18,10 @@ const SYSTEM_OUTBOX_SQL = `CREATE TABLE IF NOT EXISTS _forge_outbox (id bigseria
 
 const SYSTEM_OUTBOX_DELIVERIES_SQL = `CREATE TABLE IF NOT EXISTS _forge_outbox_deliveries (id bigserial PRIMARY KEY, outbox_id bigint NOT NULL REFERENCES _forge_outbox(id), action_name text NOT NULL, status text NOT NULL DEFAULT 'pending', attempts integer NOT NULL DEFAULT 0, max_attempts integer NOT NULL DEFAULT 5, next_attempt_at timestamptz NOT NULL DEFAULT now(), locked_at timestamptz, locked_by text, last_error text, processed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(outbox_id, action_name))`;
 
+const SYSTEM_WORKFLOW_RUNS_SQL = `CREATE TABLE IF NOT EXISTS _forge_workflow_runs (id bigserial PRIMARY KEY, workflow_name text NOT NULL, trigger_type text NOT NULL, trigger_outbox_id bigint, idempotency_key text NOT NULL UNIQUE, input jsonb NOT NULL, status text NOT NULL DEFAULT 'pending', current_step text, last_error text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), started_at timestamptz, completed_at timestamptz, canceled_at timestamptz)`;
+
+const SYSTEM_WORKFLOW_STEPS_SQL = `CREATE TABLE IF NOT EXISTS _forge_workflow_steps (id bigserial PRIMARY KEY, run_id bigint NOT NULL REFERENCES _forge_workflow_runs(id), step_name text NOT NULL, step_index integer NOT NULL, status text NOT NULL DEFAULT 'pending', input jsonb, output jsonb, attempts integer NOT NULL DEFAULT 0, max_attempts integer NOT NULL DEFAULT 5, next_attempt_at timestamptz NOT NULL DEFAULT now(), locked_at timestamptz, locked_by text, last_error text, started_at timestamptz, completed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(run_id, step_name))`;
+
 interface ParsedFieldType {
   sqlType: string;
   references?: { table: string; column: string };
@@ -274,6 +278,16 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
       kind: "create_table",
       table: "_forge_outbox_deliveries",
       sql: SYSTEM_OUTBOX_DELIVERIES_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_workflow_runs",
+      sql: SYSTEM_WORKFLOW_RUNS_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_workflow_steps",
+      sql: SYSTEM_WORKFLOW_STEPS_SQL,
     },
   ];
 

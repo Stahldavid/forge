@@ -130,12 +130,27 @@ export class MemoryAdapter implements DbAdapter {
       row[column] = value;
     });
 
-    if (row.id === undefined && (tableName.includes("outbox") || columns.includes("id") === false)) {
+    if (/ON CONFLICT/i.test(sql)) {
+      const conflictColumn = sql.match(/ON CONFLICT\s*\(\s*"?(\w+)"?\s*\)/i)?.[1];
+      if (conflictColumn) {
+        const existing = table.rows.find((candidate) => candidate[conflictColumn] === row[conflictColumn]);
+        if (existing) {
+          if (/DO NOTHING/i.test(sql)) {
+            return { rows: [], rowCount: 0 };
+          }
+        }
+      }
+    }
+
+    if (row.id === undefined && (tableName.includes("outbox") || tableName.includes("workflow") || columns.includes("id") === false)) {
       row.id = table.nextSerial++;
     }
 
     if (row.created_at === undefined && columns.includes("created_at")) {
       row.created_at = parseNow();
+    }
+    if (row.updated_at === undefined && columns.includes("updated_at")) {
+      row.updated_at = parseNow();
     }
     if (row.next_attempt_at === undefined && columns.includes("next_attempt_at")) {
       row.next_attempt_at = parseNow();
@@ -261,6 +276,37 @@ export class MemoryAdapter implements DbAdapter {
       );
     }
 
+    if (/status\s+IN\s*\(\s*'pending'\s*,\s*'running'\s*,\s*'failed'\s*\)/i.test(sql)) {
+      return rows.filter((row) =>
+        ["pending", "running", "failed"].includes(String(row.status)),
+      );
+    }
+
+    if (/status\s+NOT\s+IN\s*\(\s*'completed'\s*,\s*'skipped'\s*\)/i.test(sql)) {
+      return rows.filter(
+        (row) => !["completed", "skipped"].includes(String(row.status)),
+      );
+    }
+
+    if (/status\s*=\s*'dead'/i.test(sql) && /COUNT/i.test(sql)) {
+      return rows.filter((row) => row.status === "dead");
+    }
+
+    if (/step_index\s*<\s*\$\d+/i.test(sql) && /status\s*!=\s*'completed'/i.test(sql)) {
+      const threshold = Number(params[1]);
+      const runId = params[0];
+      return rows.filter(
+        (row) =>
+          row.run_id === runId &&
+          Number(row.step_index) < threshold &&
+          row.status !== "completed",
+      );
+    }
+
+    if (/idempotency_key\s*=\s*\$\d+/i.test(sql)) {
+      return rows.filter((row) => row.idempotency_key === params[0]);
+    }
+
     if (/status\s*=\s*'dead'/i.test(sql)) {
       return rows.filter((row) => row.status === "dead");
     }
@@ -311,6 +357,21 @@ export class MemoryAdapter implements DbAdapter {
       }
 
       if (/AND\s+"?status"?\s*=\s*'pending'/i.test(sql) && row.status !== "pending") {
+        continue;
+      }
+
+      if (
+        /status\s+NOT\s+IN\s*\(\s*'completed'\s*,\s*'canceled'\s*,\s*'dead'\s*\)/i.test(sql) &&
+        ["completed", "canceled", "dead"].includes(String(row.status))
+      ) {
+        continue;
+      }
+
+      if (/status\s+IN\s*\(\s*'pending'\s*,\s*'running'\s*\)/i.test(sql) && !["pending", "running"].includes(String(row.status))) {
+        continue;
+      }
+
+      if (/status\s+IN\s*\(\s*'failed'\s*,\s*'dead'\s*\)/i.test(sql) && !["failed", "dead"].includes(String(row.status))) {
         continue;
       }
 

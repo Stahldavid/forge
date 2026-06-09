@@ -70,4 +70,58 @@ export function action<TArgs = unknown, TResult = unknown>(
   };
 }
 
+export interface WorkflowRunRecord {
+  id: number;
+  workflowName: string;
+  status: string;
+  input: unknown;
+  currentStep: string | null;
+}
+
+export interface WorkflowRunContext {
+  input: unknown;
+  steps: Record<string, { output: unknown }>;
+  db: Record<string, unknown>;
+  env: Record<string, string | undefined>;
+}
+
+export interface WorkflowStepDefinition<T = unknown> {
+  name: string;
+  handler: (
+    ctx: WorkflowRunContext,
+    run: WorkflowRunRecord,
+  ) => T | Promise<T>;
+}
+
+export interface WorkflowDefinition {
+  trigger?: { type: "event"; eventType: string };
+  steps: WorkflowStepDefinition[];
+  idempotencyKey?: (input: unknown) => string;
+}
+
+export type ForgeWorkflow = WorkflowDefinition & {
+  __forge: { kind: "workflow" };
+};
+
+export function event(eventType: string): { type: "event"; eventType: string } {
+  return { type: "event", eventType };
+}
+
+export function step<T>(
+  name: string,
+  handler: (
+    ctx: WorkflowRunContext,
+    run: WorkflowRunRecord,
+  ) => T | Promise<T>,
+): WorkflowStepDefinition<T> {
+  return { name, handler };
+}
+
+export function workflow(config: WorkflowDefinition): ForgeWorkflow {
+  return {
+    ...config,
+    __forge: { kind: "workflow" },
+  };
+}
+
 export { defineTable } from "../schema/index.ts";

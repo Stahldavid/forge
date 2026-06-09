@@ -46,6 +46,11 @@ import {
 import { runDevCommand } from "./dev.ts";
 import { formatDbHuman, formatDbJson, runDbCommand } from "./db.ts";
 import { formatOutboxHuman, formatOutboxJson, runOutboxCommand } from "./outbox.ts";
+import {
+  formatWorkflowHuman,
+  formatWorkflowJson,
+  runWorkflowCommand,
+} from "./workflow.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -148,6 +153,7 @@ export async function runInspectCommand(
     runtime: `${GENERATED_DIR}/runtimeGraph.json`,
     dev: `${GENERATED_DIR}/devManifest.json`,
     subscriptions: `${GENERATED_DIR}/actionSubscriptions.json`,
+    workflows: `${GENERATED_DIR}/workflowRegistry.json`,
   };
 
   const relative = dataPaths[target];
@@ -306,6 +312,31 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatOutboxJson(result));
       } else {
         process.stdout.write(formatOutboxHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "workflow": {
+      const result = await runWorkflowCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        db: command.db,
+        databaseUrl: command.databaseUrl,
+        json: command.json,
+        once: command.once,
+        watch: command.watch,
+        limit: command.limit,
+        workflowName: command.workflowName,
+        runId: command.runId,
+        stepName: command.stepName,
+        input: command.input,
+        mock: command.mock,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatWorkflowJson(result));
+      } else {
+        process.stdout.write(formatWorkflowHuman(command.subcommand, result));
       }
 
       return result.exitCode;

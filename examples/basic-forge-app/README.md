@@ -7,6 +7,7 @@ Demonstrates:
 - transitive import guard (`badStripeCommand` → `stripeClient` → `stripe`)
 - package-aware adapters from `forge add`
 - event-driven actions via durable outbox (H7)
+- lightweight workflows triggered by outbox events (H8)
 
 ## Setup
 
@@ -54,6 +55,21 @@ bun run forge outbox process --once
 
 `src/actions/captureTicketCreated.ts` subscribes to `ticket.created` and returns `{ captured: true, ticketId }`.
 
+## Workflow flow (H8)
+
+1. `createTicket` emits `ticket.created` into the outbox (same as H7).
+2. The worker starts `triageTicketWorkflow` from `workflowSubscriptions`.
+3. Steps run sequentially: `loadTicket` → `triageWithAI` → `captureAnalytics`.
+
+```bash
+bun run forge:run createTicket
+bun run forge workflow list
+bun run forge workflow process --once
+bun run forge workflow inspect 1
+```
+
+`src/workflows/triageTicketWorkflow.ts` triggers on `ticket.created` and receives the outbox payload as run input.
+
 ## Database (H6)
 
 After `forge:generate`:
@@ -71,7 +87,7 @@ After `forge:generate`:
 
 ```bash
 bun run forge:dev:db
-# with background outbox worker:
+# with background worker (outbox + workflows):
 bun run forge:dev -- --worker --db pglite
 # or with mocks:
 bun run forge:dev -- --watch --mock --db pglite

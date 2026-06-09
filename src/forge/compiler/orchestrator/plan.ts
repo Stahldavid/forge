@@ -1,5 +1,9 @@
 import { buildDataGraph } from "../data-graph/build.ts";
 import { buildActionSubscriptions } from "../action-subscriptions/build.ts";
+import {
+  buildWorkflowRegistry,
+  buildWorkflowSubscriptions,
+} from "../workflow-registry/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -47,6 +51,10 @@ import {
   serializeDbTsExport,
   serializeActionSubscriptionsJson,
   serializeActionSubscriptionsTs,
+  serializeWorkflowRegistryJson,
+  serializeWorkflowRegistryTs,
+  serializeWorkflowSubscriptionsJson,
+  serializeWorkflowSubscriptionsTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -116,6 +124,8 @@ export function plan(input: PlanInput): EmitPlan {
   const dataGraph = buildDataGraph(input.appGraph);
   const sqlPlan = buildSqlPlan(dataGraph);
   const actionSubscriptions = buildActionSubscriptions(input.appGraph);
+  const workflowRegistry = buildWorkflowRegistry(input.appGraph);
+  const workflowSubscriptions = buildWorkflowSubscriptions(workflowRegistry);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -206,6 +216,22 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/actionSubscriptions.json`,
       serializeActionSubscriptionsJson(actionSubscriptions),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/workflowRegistry.ts`,
+      serializeWorkflowRegistryTs(workflowRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/workflowRegistry.json`,
+      serializeWorkflowRegistryJson(workflowRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/workflowSubscriptions.ts`,
+      serializeWorkflowSubscriptionsTs(workflowSubscriptions),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/workflowSubscriptions.json`,
+      serializeWorkflowSubscriptionsJson(workflowSubscriptions),
     ),
   ];
 

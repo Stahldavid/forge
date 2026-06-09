@@ -3,6 +3,7 @@ import type { SandboxBackend } from "../compiler/types/runtime.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
 import type { DbSubcommand } from "./db.ts";
 import type { OutboxSubcommand } from "./outbox.ts";
+import type { WorkflowSubcommand } from "./workflow.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -43,6 +44,22 @@ export type ForgeCommand =
       deliveryId?: number;
       mock: boolean;
       workspaceRoot: string;
+    }
+  | {
+      kind: "workflow";
+      subcommand: WorkflowSubcommand;
+      db: DbAdapterKind;
+      databaseUrl?: string;
+      json: boolean;
+      once: boolean;
+      watch: boolean;
+      limit?: number;
+      workflowName?: string;
+      runId?: number;
+      stepName?: string;
+      input?: unknown;
+      mock: boolean;
+      workspaceRoot: string;
     };
 
 export interface ParsedCli {
@@ -60,6 +77,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "runtime",
   "dev",
   "subscriptions",
+  "workflows",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -118,7 +136,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, db, or outbox",
+      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, or workflow",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -262,6 +280,75 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "workflow": {
+      const subcommand = rest[0] as WorkflowSubcommand | undefined;
+      if (
+        !subcommand ||
+        !["list", "run", "inspect", "process", "retry", "cancel"].includes(subcommand)
+      ) {
+        errors.push(
+          "forge workflow requires subcommand: list, run, inspect, process, retry, or cancel",
+        );
+        return { command: null, workspaceRoot, errors };
+      }
+
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;
+      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
+        errors.push("--limit must be an integer >= 1");
+      }
+
+      const inputRaw = parseOptionValue(argv, "--input");
+      let input: unknown;
+      if (inputRaw !== undefined) {
+        try {
+          input = JSON.parse(inputRaw);
+        } catch {
+          errors.push("--input must be valid JSON");
+        }
+      }
+
+      const stepName = parseOptionValue(argv, "--step");
+      let runId: number | undefined;
+      let workflowName: string | undefined;
+
+      if (subcommand === "run") {
+        workflowName = rest[1];
+        if (!workflowName) {
+          errors.push("forge workflow run requires a workflow name");
+        }
+      } else if (["inspect", "retry", "cancel"].includes(subcommand)) {
+        const runIdRaw = rest[1];
+        runId = runIdRaw !== undefined ? Number(runIdRaw) : undefined;
+        if (runIdRaw !== undefined && !Number.isFinite(runId)) {
+          errors.push("run id must be a number");
+        }
+        if (!runIdRaw) {
+          errors.push(`forge workflow ${subcommand} requires a run id`);
+        }
+      }
+
+      return {
+        command: {
+          kind: "workflow",
+          subcommand,
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          once: parseFlag(argv, "--once"),
+          watch: parseFlag(argv, "--watch"),
+          limit,
+          workflowName,
+          runId,
+          stepName,
+          input,
+          mock: parseFlag(argv, "--mock"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "outbox": {
       const subcommand = rest[0] as OutboxSubcommand | undefined;
       if (
@@ -333,6 +420,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--worker",
     "--once",
     "--limit",
+    "--input",
+    "--step",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -348,7 +437,9 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--host" ||
         arg === "--db" ||
         arg === "--database-url" ||
-        arg === "--limit"
+        arg === "--limit" ||
+        arg === "--input" ||
+        arg === "--step"
       ) {
         index += 1;
       }

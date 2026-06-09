@@ -50,7 +50,8 @@ export type InspectTarget =
   | "data"
   | "runtime"
   | "dev"
-  | "subscriptions";
+  | "subscriptions"
+  | "workflows";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;

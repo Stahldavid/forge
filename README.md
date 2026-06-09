@@ -26,6 +26,7 @@ bun run forge verify
 | `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`, `--db`, `--worker`) |
 | `forge db <diff\|migrate\|reset\|status>` | SQL migrations against PGlite (default) or Postgres |
 | `forge outbox <list\|process\|retry\|dead\|clear>` | Inspect and process durable outbox deliveries |
+| `forge workflow <list\|run\|inspect\|process\|retry\|cancel>` | Lightweight workflow engine (runs, steps, worker) |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -95,6 +96,30 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 5. **H5** — Local dev server (`forge dev`, devManifest, watch mode) ✅
 6. **H6** — DataGraph-backed persistence runtime (PGlite, db CLI, transactional outbox) ✅
 7. **H7** — Durable outbox worker and event-driven actions ✅
+8. **H8** — Lightweight workflow engine on outbox worker ✅
+
+### H8 deliverables (workflow engine)
+
+| Artifact | Description |
+|----------|-------------|
+| `workflowRegistry.json` / `.ts` | Static index of `workflow({ trigger, steps })` definitions |
+| `workflowSubscriptions.json` / `.ts` | Event → workflow subscription map |
+| `_forge_workflow_runs` / `_forge_workflow_steps` | Durable run and step state with retry/dead-letter |
+| `forge workflow` | `list`, `run`, `inspect`, `process`, `retry`, `cancel` subcommands |
+| Worker integration | `forge dev --worker` tick: start runs → outbox → workflow steps |
+
+```bash
+forge workflow list --json
+forge workflow run triageTicketWorkflow --input '{"id":"..."}'
+forge workflow inspect 1
+forge workflow process --once
+forge inspect workflows
+forge dev --worker --db pglite
+```
+
+**Architecture:** Commands emit outbox events transactionally. After commit, the worker starts workflow runs from subscriptions, processes outbox action deliveries (H7), then executes workflow steps sequentially with persisted outputs.
+
+**Limitations:** no Temporal/distributed orchestration, parallel step execution, human-in-the-loop, or production-grade workflow scaling.
 
 ### H7 deliverables (outbox worker)
 
@@ -117,7 +142,7 @@ forge inspect subscriptions
 
 **Architecture:** Option B — separate `_forge_outbox` (events) and `_forge_outbox_deliveries` (per-action retry). Commands stay transactional; subscribed actions run via worker after commit.
 
-**Limitations:** no Temporal/workflows, distributed workers, SKIP LOCKED, liveQuery, or production queue scaling.
+**Limitations:** no distributed workers, SKIP LOCKED, liveQuery, or production queue scaling.
 
 ### H6 deliverables (persistence runtime)
 
@@ -156,7 +181,13 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 | `POST` | `/outbox/process` | Process one outbox batch |
 | `GET` | `/db/tables` | List migrated tables |
 | `GET` | `/entries` | Runtime graph entries |
-| `GET` | `/workflows` | Workflow symbols (list metadata only) |
+| `GET` | `/workflows` | Workflow registry and manifest metadata |
+| `GET` | `/workflows/runs` | List workflow runs |
+| `GET` | `/workflows/runs/:id` | Inspect a workflow run and steps |
+| `POST` | `/workflows/:name/run` | Start a manual workflow run (`{ input }`) |
+| `POST` | `/workflows/process` | Run worker tick (start runs + outbox + steps) |
+| `POST` | `/workflows/runs/:id/retry` | Retry a failed/dead workflow run |
+| `POST` | `/workflows/runs/:id/cancel` | Cancel a workflow run |
 | `POST` | `/run/:name` | Invoke command or action by name |
 | `POST` | `/commands/:name` | Invoke command entry only |
 | `POST` | `/actions/:name` | Invoke action entry only |
@@ -168,7 +199,7 @@ forge dev --port 4000 --json
 forge inspect dev
 ```
 
-**Limitations:** local development only — not production deployment, no durable workflow execution engine.
+**Limitations:** local development only — not production deployment; workflow engine is lightweight (sequential steps, single-worker).
 
 ### H4 deliverables (local runtime)
 
