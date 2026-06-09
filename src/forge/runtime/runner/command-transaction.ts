@@ -86,7 +86,10 @@ export async function runCommandWithTransaction(
 
     const db = createGeneratedDbClient(tx, runtime.tableMap, { auth });
     const { subscriptions } = loadActionSubscriptions(runtime.workspaceRoot);
-    const ctx = createForgeContext(tx, db, subscriptions, telemetry, auth);
+    const ctx = createForgeContext(tx, db, subscriptions, telemetry, auth, {
+      workspaceRoot: runtime.workspaceRoot,
+      runtimeKind: "command",
+    });
     const result = await handler(ctx, args);
     await tx.commit();
 

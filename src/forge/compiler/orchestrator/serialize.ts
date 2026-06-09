@@ -361,4 +361,45 @@ export function serializeAuthContextTs(): string {
 `;
 }
 
+export function serializeSecretsContextTs(): string {
+  return `export interface SecretsContext {
+  get(name: string): string;
+  optional(name: string): string | undefined;
+  has(name: string): boolean;
+}
+
+export interface ConfigContext {
+  get(name: string): string;
+  optional(name: string): string | undefined;
+}
+`;
+}
+
+export function serializeSecretRegistryJson(registry: import("../types/secret-registry.ts").SecretRegistry): string {
+  return serializeCanonical({ secrets: registry.secrets });
+}
+
+export function serializeSecretRegistryTs(registry: import("../types/secret-registry.ts").SecretRegistry): string {
+  const parsed: unknown = JSON.parse(serializeSecretRegistryJson(registry).trimEnd());
+  return `export const secretRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeEnvSchemaJson(schema: import("../types/secret-registry.ts").EnvSchema): string {
+  return serializeCanonical({ variables: schema.variables });
+}
+
+export function serializeEnvSchemaTs(schema: import("../types/secret-registry.ts").EnvSchema): string {
+  const parsed: unknown = JSON.parse(serializeEnvSchemaJson(schema).trimEnd());
+  return `export const envSchema = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeConfigRegistryJson(registry: import("../types/secret-registry.ts").ConfigRegistry): string {
+  return serializeCanonical({ configs: registry.configs });
+}
+
+export function serializeConfigRegistryTs(registry: import("../types/secret-registry.ts").ConfigRegistry): string {
+  const parsed: unknown = JSON.parse(serializeConfigRegistryJson(registry).trimEnd());
+  return `export const configRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
 export type { ImportGuardsArtifact };

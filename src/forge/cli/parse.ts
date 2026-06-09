@@ -6,14 +6,16 @@ import type { OutboxSubcommand } from "./outbox.ts";
 import type { WorkflowSubcommand } from "./workflow.ts";
 import type { TelemetrySubcommand } from "./telemetry.ts";
 import type { PolicySubcommand } from "./policy.ts";
+import type { SecretsSubcommand } from "./secrets.ts";
+import type { EnvSubcommand } from "./secrets.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
-  | { kind: "check"; json: boolean; dryRun: boolean }
+  | { kind: "check"; json: boolean; dryRun: boolean; strictSecrets: boolean }
   | { kind: "verify"; options: VerifyOptions }
-  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; workspaceRoot: string }
+  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string }
   | {
       kind: "dev";
       host?: string;
@@ -25,6 +27,7 @@ export type ForgeCommand =
       databaseUrl?: string;
       worker: boolean;
       telemetry: string[];
+      envFile?: string;
       workspaceRoot: string;
     }
   | {
@@ -83,6 +86,22 @@ export type ForgeCommand =
       role?: string;
       strictPolicies: boolean;
       workspaceRoot: string;
+    }
+  | {
+      kind: "secrets";
+      subcommand: SecretsSubcommand;
+      json: boolean;
+      redacted: boolean;
+      name?: string;
+      value?: string;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "env";
+      subcommand: EnvSubcommand;
+      json: boolean;
+      redacted: boolean;
+      workspaceRoot: string;
     };
 
 export interface ParsedCli {
@@ -103,6 +122,8 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "workflows",
   "telemetry",
   "policies",
+  "secrets",
+  "env",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -161,7 +182,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, telemetry, or policy",
+      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, telemetry, policy, secrets, or env",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -228,6 +249,7 @@ export function parseCli(argv: string[]): ParsedCli {
           kind: "check",
           json: parseFlag(argv, "--json"),
           dryRun: parseFlag(argv, "--dry-run"),
+          strictSecrets: parseFlag(argv, "--strict-secrets"),
         },
         workspaceRoot,
         errors,
@@ -242,6 +264,7 @@ export function parseCli(argv: string[]): ParsedCli {
             skipTests: parseFlag(argv, "--skip-tests"),
             skipTypecheck: parseFlag(argv, "--skip-typecheck"),
             skipEslint: parseFlag(argv, "--skip-eslint"),
+            strict: parseFlag(argv, "--strict"),
           },
         },
         workspaceRoot,
@@ -260,6 +283,7 @@ export function parseCli(argv: string[]): ParsedCli {
           userId: parseOptionValue(argv, "--user-id"),
           tenantId: parseOptionValue(argv, "--tenant-id"),
           role: parseOptionValue(argv, "--role"),
+          envFile: parseOptionValue(argv, "--env-file"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -287,6 +311,7 @@ export function parseCli(argv: string[]): ParsedCli {
             .split(",")
             .map((value) => value.trim())
             .filter(Boolean),
+          envFile: parseOptionValue(argv, "--env-file"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -489,6 +514,51 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "secrets": {
+      const subcommand = rest[0] as SecretsSubcommand | undefined;
+      if (
+        !subcommand ||
+        !["list", "check", "print", "set", "unset"].includes(subcommand)
+      ) {
+        errors.push(
+          "forge secrets requires subcommand: list, check, print, set, or unset",
+        );
+        return { command: null, workspaceRoot, errors };
+      }
+
+      return {
+        command: {
+          kind: "secrets",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          redacted: parseFlag(argv, "--redacted"),
+          name: subcommand === "set" || subcommand === "unset" ? rest[1] : undefined,
+          value: subcommand === "set" ? rest[2] : undefined,
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "env": {
+      const subcommand = rest[0] as EnvSubcommand | undefined;
+      if (!subcommand || !["list", "check", "print"].includes(subcommand)) {
+        errors.push("forge env requires subcommand: list, check, or print");
+        return { command: null, workspaceRoot, errors };
+      }
+
+      return {
+        command: {
+          kind: "env",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          redacted: parseFlag(argv, "--redacted"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     default:
       errors.push(`unrecognized command '${commandName}'`);
       return { command: null, workspaceRoot, errors };
@@ -526,6 +596,10 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--tenant-id",
     "--role",
     "--strict-policies",
+    "--strict",
+    "--strict-secrets",
+    "--env-file",
+    "--redacted",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -550,7 +624,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--user-id" ||
         arg === "--tenant-id" ||
         arg === "--role" ||
-        arg === "--strict-policies"
+        arg === "--strict-policies" ||
+        arg === "--env-file"
       ) {
         index += 1;
       }

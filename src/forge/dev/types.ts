@@ -13,6 +13,7 @@ export interface DevServerOptions {
   databaseUrl?: string;
   worker?: boolean;
   telemetry?: string[];
+  envFile?: string;
 }
 
 export interface DevServerDbState {

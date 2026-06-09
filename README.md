@@ -29,10 +29,12 @@ bun run forge verify
 | `forge workflow <list\|run\|inspect\|process\|retry\|cancel>` | Lightweight workflow engine (runs, steps, worker) |
 | `forge telemetry <list\|inspect\|flush\|tail\|clear>` | Trace-correlated telemetry buffer, sinks, and inspection |
 | `forge policy <list\|matrix\|simulate\|check>` | RBAC policy registry, matrix, simulation, and checks |
-| `forge check` | Validate transitive import guards |
+| `forge secrets <list\|check\|print\|set\|unset>` | Secret registry inspection and local `.env.local` management |
+| `forge env <list\|check\|print>` | Environment schema inspection |
+| `forge check` | Validate transitive import guards and optional `--strict-secrets` |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
-Flags: `--json`, `--dry-run`, `--skip-tests`, `--skip-typecheck`, `--skip-eslint`.
+Flags: `--json`, `--dry-run`, `--skip-tests`, `--skip-typecheck`, `--skip-eslint`, `--strict` (verify), `--strict-secrets` (check), `--env-file`, `--redacted`.
 
 ## Example app
 
@@ -101,6 +103,53 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 8. **H8** — Lightweight workflow engine on outbox worker ✅
 9. **H9** — Telemetry bridge v1 ✅
 10. **H10** — Auth, policy engine & tenant isolation ✅
+11. **H10.5** — Security hardening (`forge verify --strict`) ✅
+12. **H11** — Secrets & environment runtime v1 ✅
+
+### H10.5 deliverables (security hardening)
+
+| Item | Description |
+|------|-------------|
+| Git tag | `h10-auth-policy` on H10 commit |
+| `forge verify --strict` | CI/prod gate: generate --check, forge check (strict secrets), policy check --strict-policies, typecheck, tests, eslint |
+| Default verify | Remains lenient (warnings OK) |
+
+```bash
+git tag h10-auth-policy 49af138
+bun run forge verify --skip-tests
+bun run forge verify --strict
+```
+
+Policy smoke scenarios (`member createTicket`, `manageBilling` denied, tenant isolation) are covered by `tests/policy/`.
+
+### H11 deliverables (secrets & environment runtime)
+
+| Artifact | Description |
+|----------|-------------|
+| `secretRegistry.json` / `.ts` | Required secrets from integration recipes |
+| `envSchema.json` / `.ts` | Secret vs config variable classification |
+| `configRegistry.json` / `.ts` | Non-secret config index |
+| `secretsContext.ts` | Generated `SecretsContext` / `ConfigContext` types |
+| `ctx.secrets` / `ctx.config` | Runtime accessors on command/action/workflow contexts |
+| `forge secrets` | `list`, `check`, `print --redacted`, `set`, `unset` |
+| `forge env` | `list`, `check`, `print --redacted` |
+| `forge check --strict-secrets` | Error on direct `process.env.SECRET` in app source |
+| Env loading | `forge dev/run --env-file` — `.env` then `.env.local`, `process.env` wins |
+
+```bash
+forge secrets list --json
+forge secrets check --json
+forge secrets print --redacted
+forge env list --json
+forge inspect secrets
+forge inspect env
+forge dev --env-file .env.local
+forge check --strict-secrets
+```
+
+**Architecture:** Integration recipe secrets compile into `secretRegistry`. Runtime loads env files without printing values. Generated H2 adapters use `ctx.secrets.get("STRIPE_SECRET_KEY")` instead of `process.env`. Commands may use `ctx.config` for non-secret vars; `ctx.secrets` is forbidden in command/client/query/liveQuery.
+
+**Limitations:** no cloud secret manager, KMS, encryption at rest, team secret permissions, rotation automation, or UI.
 
 ### H10 deliverables (auth & tenant isolation)
 

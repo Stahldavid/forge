@@ -18,6 +18,7 @@ export interface DevCommandOptions {
   databaseUrl?: string;
   worker: boolean;
   telemetry: string[];
+  envFile?: string;
 }
 
 export interface DevCommandResult {
@@ -59,6 +60,7 @@ export async function runDevCommand(
       databaseUrl: options.databaseUrl,
       worker: options.worker,
       telemetry: options.telemetry,
+      envFile: options.envFile,
     });
   } catch (error) {
     const message =

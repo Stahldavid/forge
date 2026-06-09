@@ -9,7 +9,10 @@ import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import { adapterAsTransaction, type DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
-import { createForgeContext, createNoopTelemetryContext } from "../context/create-context.ts";
+import { createForgeContext, createNoopTelemetryContext, getRuntimeEnvStore } from "../context/create-context.ts";
+import { createRuntimeSecretsBundle } from "../secrets/runtime-bundle.ts";
+import { loadEnvSchema, loadSecretRegistry } from "../secrets/check.ts";
+import type { RuntimeContext } from "../../compiler/types/runtime.ts";
 import { loadActionSubscriptions } from "../outbox/subscriptions.ts";
 import { runCommandWithTransaction } from "./command-transaction.ts";
 import { generateRequestId, generateTraceId } from "../telemetry/correlation.ts";
@@ -29,6 +32,7 @@ export interface RunEntryRuntime {
   workspaceRoot?: string;
   requestId?: string;
   auth?: AuthContext;
+  runtimeKind?: RuntimeContext;
 }
 
 export interface ResolvedHandler {
@@ -78,15 +82,30 @@ export function resolveHandlerFromModule(
             bufferInTransaction: false,
             workspaceRoot,
           });
-          const ctx = createForgeContext(tx, db, subscriptions, telemetry, runtime.auth ?? { kind: "anonymous" });
+          const runtimeKind = runtime.runtimeKind ?? "command";
+          const ctx = createForgeContext(tx, db, subscriptions, telemetry, runtime.auth ?? { kind: "anonymous" }, {
+            workspaceRoot,
+            runtimeKind,
+          });
           return handler(ctx, args);
         }
 
+        const workspaceRoot = runtime?.workspaceRoot ?? process.cwd();
+        const store = getRuntimeEnvStore(workspaceRoot);
+        const bundle = createRuntimeSecretsBundle({
+          store,
+          registry: loadSecretRegistry(workspaceRoot),
+          envSchema: loadEnvSchema(workspaceRoot),
+          runtimeKind: runtime?.runtimeKind ?? "command",
+        });
+
         const stubCtx = {
           db: {},
-          env: process.env as Record<string, string | undefined>,
+          env: store.snapshot(),
           telemetry: createNoopTelemetryContext(generateTraceId()),
           auth: runtime?.auth ?? { kind: "anonymous" as const },
+          secrets: bundle.secrets,
+          config: bundle.config,
           emit: async () => {
             /* no-op without db */
           },

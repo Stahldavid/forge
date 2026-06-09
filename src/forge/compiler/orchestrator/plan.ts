@@ -13,6 +13,12 @@ import {
   buildPolicyRegistry,
   buildTenantScope,
 } from "../policy-registry/build.ts";
+import {
+  augmentEnvSchemaWithPublicVars,
+  buildConfigRegistry,
+  buildEnvSchema,
+  buildSecretRegistry,
+} from "../secret-registry/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -75,6 +81,13 @@ import {
   serializeTenantScopeJson,
   serializeTenantScopeTs,
   serializeAuthContextTs,
+  serializeSecretsContextTs,
+  serializeSecretRegistryJson,
+  serializeSecretRegistryTs,
+  serializeEnvSchemaJson,
+  serializeEnvSchemaTs,
+  serializeConfigRegistryJson,
+  serializeConfigRegistryTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -151,6 +164,12 @@ export function plan(input: PlanInput): EmitPlan {
   const policyRegistry = buildPolicyRegistry(input.appGraph);
   const permissionMatrix = buildPermissionMatrixFromRegistry(policyRegistry);
   const tenantScope = buildTenantScope(dataGraph);
+  const secretRegistry = buildSecretRegistry(input.classified);
+  const envSchema = augmentEnvSchemaWithPublicVars(
+    buildEnvSchema(secretRegistry),
+    input.classified,
+  );
+  const configRegistry = buildConfigRegistry(secretRegistry);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -299,6 +318,25 @@ export function plan(input: PlanInput): EmitPlan {
       serializeTenantScopeJson(tenantScope),
     ),
     makeEmitFile(`${GENERATED_DIR}/authContext.ts`, serializeAuthContextTs()),
+    makeEmitFile(`${GENERATED_DIR}/secretsContext.ts`, serializeSecretsContextTs()),
+    makeEmitFile(
+      `${GENERATED_DIR}/secretRegistry.ts`,
+      serializeSecretRegistryTs(secretRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/secretRegistry.json`,
+      serializeSecretRegistryJson(secretRegistry),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/envSchema.ts`, serializeEnvSchemaTs(envSchema)),
+    makeEmitFile(`${GENERATED_DIR}/envSchema.json`, serializeEnvSchemaJson(envSchema)),
+    makeEmitFile(
+      `${GENERATED_DIR}/configRegistry.ts`,
+      serializeConfigRegistryTs(configRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/configRegistry.json`,
+      serializeConfigRegistryJson(configRegistry),
+    ),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);

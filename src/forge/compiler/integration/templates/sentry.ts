@@ -1,14 +1,18 @@
 import type { IntegrationTemplateInput } from "./types.ts";
 
+const SECRETS_IMPORT = 'import type { SecretsContext } from "../secretsContext.js";';
+const CONFIG_IMPORT = 'import type { ConfigContext } from "../secretsContext.js";';
+
 export function renderSentryClientAdapter(input: IntegrationTemplateInput): string {
   const framework = input.recipe.frameworkTarget ?? "nextjs";
   return [
     `/** Forge generated Sentry client adapter (${framework} target). */`,
     'import * as Sentry from "@sentry/nextjs";',
+    SECRETS_IMPORT,
     "",
-    "export function initSentryClient(options?: Sentry.BrowserOptions) {",
+    "export function initSentryClient(secrets: SecretsContext, options?: Sentry.BrowserOptions) {",
     "  Sentry.init({",
-    "    dsn: process.env.SENTRY_DSN,",
+    "    dsn: secrets.optional(\"SENTRY_DSN\"),",
     "    tracesSampleRate: 0.1,",
     "    ...options,",
     "  });",
@@ -24,10 +28,11 @@ export function renderSentryServerAdapter(input: IntegrationTemplateInput): stri
   return [
     `/** Forge generated Sentry server adapter (${framework} target). */`,
     'import * as Sentry from "@sentry/nextjs";',
+    SECRETS_IMPORT,
     "",
-    "export function initSentryServer(options?: Sentry.NodeOptions) {",
+    "export function initSentryServer(secrets: SecretsContext, options?: Sentry.NodeOptions) {",
     "  Sentry.init({",
-    "    dsn: process.env.SENTRY_DSN,",
+    "    dsn: secrets.optional(\"SENTRY_DSN\"),",
     "    tracesSampleRate: 0.1,",
     "    ...options,",
     "  });",
@@ -66,12 +71,10 @@ export function renderSentryErrors(_input: IntegrationTemplateInput): string {
 export function renderSentryReleases(_input: IntegrationTemplateInput): string {
   return [
     "/** Forge generated Sentry release tracking helpers. */",
+    CONFIG_IMPORT,
     "",
-    "export function resolveSentryRelease(",
-    "  release = process.env.SENTRY_RELEASE,",
-    "  commit = process.env.VERCEL_GIT_COMMIT_SHA,",
-    "): string | undefined {",
-    "  return release ?? commit;",
+    "export function resolveSentryRelease(config: ConfigContext): string | undefined {",
+    '  return config.optional("SENTRY_RELEASE") ?? config.optional("VERCEL_GIT_COMMIT_SHA");',
     "}",
     "",
     "export const sentryReleaseEnvVars = [",

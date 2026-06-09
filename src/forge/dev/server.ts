@@ -36,6 +36,11 @@ import { canonicalJson } from "../compiler/primitives/serialize.ts";
 import type { DevServerHandle, DevServerOptions, DevServerState } from "./types.ts";
 import { getTelemetrySummary, inspectTrace } from "../runtime/telemetry/flush.ts";
 import { processTelemetryBatch } from "../runtime/telemetry/process.ts";
+import { getRuntimeEnvStore } from "../runtime/context/create-context.ts";
+import {
+  countMissingRequiredSecrets,
+  loadSecretRegistry,
+} from "../runtime/secrets/check.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -230,6 +235,12 @@ export async function startDevServer(
             ? await getTelemetrySummary(serverState.adapter)
             : { pending: 0, failed: 0, processed: 0 };
 
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+          const secretRegistry = loadSecretRegistry(workspaceRoot);
+          const missingRequiredSecrets = secretRegistry
+            ? countMissingRequiredSecrets(envStore, secretRegistry)
+            : 0;
+
           return jsonResponse({
             ok: true,
             service: "forge-dev",
@@ -252,6 +263,10 @@ export async function startDevServer(
             },
             auth: {
               mode: "dev-headers",
+            },
+            env: {
+              loadedFiles: envStore.loadedFiles,
+              missingRequiredSecrets,
             },
           });
         }

@@ -1,17 +1,21 @@
 import type { IntegrationTemplateInput } from "./types.ts";
 
+const SECRETS_IMPORT = 'import type { SecretsContext } from "../secretsContext.js";';
+const CONFIG_IMPORT = 'import type { ConfigContext } from "../secretsContext.js";';
+
 export function renderPosthogClientAdapter(_input: IntegrationTemplateInput): string {
   return [
     "/** Forge generated PostHog browser adapter. */",
     'import posthog from "posthog-js";',
+    CONFIG_IMPORT,
     "",
     "export function createPosthogClient(",
-    "  apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY,",
+    "  config: ConfigContext,",
     '  options?: { api_host?: string; person_profiles?: "identified_only" | "always" },',
     ") {",
-    '  if (!apiKey) throw new Error("NEXT_PUBLIC_POSTHOG_KEY is required for client adapter");',
+    '  const apiKey = config.get("NEXT_PUBLIC_POSTHOG_KEY");',
     "  return posthog.init(apiKey, {",
-    '    api_host: options?.api_host ?? process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",',
+    '    api_host: options?.api_host ?? config.optional("NEXT_PUBLIC_POSTHOG_HOST") ?? "https://us.i.posthog.com",',
     "    person_profiles: options?.person_profiles ?? \"identified_only\",",
     "    ...options,",
     "  });",
@@ -26,15 +30,16 @@ export function renderPosthogServerAdapter(_input: IntegrationTemplateInput): st
   return [
     "/** Forge generated PostHog server adapter. */",
     'import { PostHog } from "posthog-node";',
+    SECRETS_IMPORT,
+    CONFIG_IMPORT,
     "",
     "export function createPosthogServer(",
-    "  apiKey = process.env.POSTHOG_KEY,",
-    "  host = process.env.POSTHOG_HOST,",
+    "  secrets: SecretsContext,",
+    "  config: ConfigContext,",
     "): PostHog {",
-    '  if (!apiKey) throw new Error("POSTHOG_KEY is required for server adapter");',
-    "  return new PostHog(apiKey, {",
-    '    host: host ?? "https://us.i.posthog.com",',
-    "  });",
+    '  const apiKey = secrets.get("POSTHOG_KEY");',
+    '  const host = config.optional("POSTHOG_HOST") ?? "https://us.i.posthog.com";',
+    "  return new PostHog(apiKey, { host });",
     "}",
     "",
     "export type ForgePosthogServer = PostHog;",

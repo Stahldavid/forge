@@ -1,16 +1,17 @@
 import type { IntegrationTemplateInput } from "./types.ts";
 
+const SECRETS_IMPORT = 'import type { SecretsContext } from "../secretsContext.js";';
+
 export function renderStripeServerAdapter(_input: IntegrationTemplateInput): string {
   return [
     "/** Forge generated Stripe server adapter — action/workflow/endpoint contexts. */",
     'import Stripe from "stripe";',
+    SECRETS_IMPORT,
     "",
     'const DEFAULT_API_VERSION = "2024-11-20.acacia" as Stripe.LatestApiVersion;',
     "",
-    "export function createStripeClient(",
-    "  secretKey = process.env.STRIPE_SECRET_KEY,",
-    "): Stripe {",
-    '  if (!secretKey) throw new Error("STRIPE_SECRET_KEY is required");',
+    "export function createStripeClient(secrets: SecretsContext): Stripe {",
+    '  const secretKey = secrets.get("STRIPE_SECRET_KEY");',
     "  return new Stripe(secretKey, { apiVersion: DEFAULT_API_VERSION });",
     "}",
     "",
@@ -24,9 +25,10 @@ export function renderStripeWorkflowAdapter(_input: IntegrationTemplateInput): s
     "/** Forge generated Stripe workflow adapter — durable workflow steps only. */",
     'import type Stripe from "stripe";',
     'import { createStripeClient } from "./stripe.server.js";',
+    SECRETS_IMPORT,
     "",
-    "export function createStripeWorkflowClient(): Stripe {",
-    "  return createStripeClient();",
+    "export function createStripeWorkflowClient(secrets: SecretsContext): Stripe {",
+    "  return createStripeClient(secrets);",
     "}",
     "",
   ].join("\n");
@@ -36,13 +38,14 @@ export function renderStripeWebhook(input: IntegrationTemplateInput): string {
   return [
     "/** Forge generated Stripe webhook verification helper. */",
     'import Stripe from "stripe";',
+    SECRETS_IMPORT,
     "",
     "export function constructStripeWebhookEvent(",
     "  payload: string | Buffer,",
     "  signature: string,",
-    "  secret = process.env.STRIPE_WEBHOOK_SECRET,",
+    "  secrets: SecretsContext,",
     "): Stripe.Event {",
-    '  if (!secret) throw new Error("STRIPE_WEBHOOK_SECRET is required");',
+    '  const secret = secrets.get("STRIPE_WEBHOOK_SECRET");',
     "  return Stripe.webhooks.constructEvent(payload, signature, secret);",
     "}",
     "",
@@ -85,7 +88,7 @@ export function renderStripeDoc(input: IntegrationTemplateInput): string {
     "",
     "## Adapters",
     "",
-    "- `packages/stripe.server.ts` — server/action client factory",
+    "- `packages/stripe.server.ts` — server/action client factory (`ctx.secrets`)",
     "- `packages/stripe.workflow.ts` — workflow-safe client",
     "- `integrations/stripe/webhook.ts` — webhook signature verification",
     "",

@@ -126,6 +126,7 @@ describe("Forge CLI", () => {
         skipTests: true,
         skipTypecheck: true,
         skipEslint: true,
+        strict: false,
       });
       expect(result.ok).toBe(true);
       expect(result.steps.some((step) => step.name === "generate-check")).toBe(

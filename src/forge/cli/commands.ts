@@ -7,6 +7,8 @@ import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { forgeAdd } from "../compiler/integration/add.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
+import { checkDirectProcessEnvUsage } from "../compiler/guards/check-process-env.ts";
+import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import { run } from "../compiler/orchestrator/run.ts";
 import { discover } from "../compiler/orchestrator/discover.ts";
 import { loadManifest } from "../compiler/orchestrator/manifest.ts";
@@ -44,6 +46,7 @@ import {
   runRunCommand,
 } from "./run.ts";
 import { runDevCommand } from "./dev.ts";
+import { initializeRuntimeEnv } from "../runtime/context/create-context.ts";
 import { formatDbHuman, formatDbJson, runDbCommand } from "./db.ts";
 import { formatOutboxHuman, formatOutboxJson, runOutboxCommand } from "./outbox.ts";
 import {
@@ -61,6 +64,14 @@ import {
   formatPolicyJson,
   runPolicyCommand,
 } from "./policy.ts";
+import {
+  formatEnvHuman,
+  formatEnvJson,
+  formatSecretsHuman,
+  formatSecretsJson,
+  runEnvCommand,
+  runSecretsCommand,
+} from "./secrets.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -121,6 +132,7 @@ async function loadRuntimeMatrixForCheck(
 
 export async function runCheckCommand(
   workspaceRoot: string,
+  options?: { strictSecrets?: boolean },
 ): Promise<GenerateResult> {
   const ctx = discover({ workspaceRoot });
   const manifest = loadManifest(ctx.cacheDir);
@@ -133,10 +145,18 @@ export async function runCheckCommand(
 
   const matrix = await loadRuntimeMatrixForCheck(workspaceRoot);
   const guardDiagnostics = checkImportGuards(appGraph.moduleGraph, matrix);
-  const errors = guardDiagnostics.filter(
+  const secretRegistry = loadSecretRegistry(workspaceRoot);
+  const processEnvDiagnostics = checkDirectProcessEnvUsage(
+    workspaceRoot,
+    secretRegistry,
+    options?.strictSecrets ?? false,
+  );
+
+  const allDiagnostics = [...guardDiagnostics, ...processEnvDiagnostics];
+  const errors = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
   );
-  const warnings = guardDiagnostics.filter(
+  const warnings = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "warning",
   );
 
@@ -166,6 +186,8 @@ export async function runInspectCommand(
     workflows: `${GENERATED_DIR}/workflowRegistry.json`,
     telemetry: `${GENERATED_DIR}/telemetryRegistry.json`,
     policies: `${GENERATED_DIR}/policyRegistry.json`,
+    secrets: `${GENERATED_DIR}/secretRegistry.json`,
+    env: `${GENERATED_DIR}/envSchema.json`,
   };
 
   const relative = dataPaths[target];
@@ -239,7 +261,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "check": {
-      const result = await runCheckCommand(process.cwd());
+      const result = await runCheckCommand(process.cwd(), {
+        strictSecrets: command.strictSecrets,
+      });
       if (command.json) {
         process.stdout.write(formatJsonResult(buildGenerateJson(result)));
       } else {
@@ -257,6 +281,10 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "run": {
+      initializeRuntimeEnv(
+        command.workspaceRoot,
+        command.envFile ? [command.envFile] : undefined,
+      );
       const result = await runRunCommand({
         name: command.name,
         list: command.list,
@@ -279,6 +307,10 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "dev": {
+      initializeRuntimeEnv(
+        command.workspaceRoot,
+        command.envFile ? [command.envFile] : undefined,
+      );
       const result = await runDevCommand({
         workspaceRoot: command.workspaceRoot,
         host: command.host,
@@ -290,6 +322,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         databaseUrl: command.databaseUrl,
         worker: command.worker,
         telemetry: command.telemetry,
+        envFile: command.envFile,
       });
       return result.exitCode;
     }
@@ -391,6 +424,40 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatPolicyJson(result));
       } else {
         process.stdout.write(formatPolicyHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "secrets": {
+      const result = await runSecretsCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        json: command.json,
+        redacted: command.redacted,
+        name: command.name,
+        value: command.value,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatSecretsJson(result));
+      } else {
+        process.stdout.write(formatSecretsHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "env": {
+      const result = await runEnvCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        json: command.json,
+        redacted: command.redacted,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatEnvJson(result));
+      } else {
+        process.stdout.write(formatEnvHuman(command.subcommand, result));
       }
 
       return result.exitCode;

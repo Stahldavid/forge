@@ -3,8 +3,10 @@ import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
+import { FORGE_VERIFY_POLICY } from "../compiler/diagnostics/codes.ts";
 import { runCheckCommand, runGenerateCommand } from "./commands.ts";
 import { lintForgeGuards } from "./lint-forge.ts";
+import { runPolicyCommand } from "./policy.ts";
 
 interface PackageScripts {
   typecheck?: string;
@@ -78,13 +80,41 @@ export async function runVerifyCommand(
   });
   diagnostics.push(...generateCheck.errors, ...generateCheck.warnings);
 
-  const forgeCheck = await runCheckCommand(options.workspaceRoot);
+  const forgeCheck = await runCheckCommand(options.workspaceRoot, {
+    strictSecrets: options.strict,
+  });
   steps.push({
     name: "forge-check",
     ok: forgeCheck.exitCode === 0,
     exitCode: forgeCheck.exitCode,
   });
   diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);
+
+  if (options.strict) {
+    const policyCheck = await runPolicyCommand({
+      subcommand: "check",
+      workspaceRoot: options.workspaceRoot,
+      json: false,
+      strictPolicies: true,
+    });
+    steps.push({
+      name: "policy-check-strict",
+      ok: policyCheck.exitCode === 0,
+      exitCode: policyCheck.exitCode,
+    });
+    if (policyCheck.diagnostics) {
+      diagnostics.push(...policyCheck.diagnostics);
+    }
+    if (policyCheck.exitCode !== 0) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_VERIFY_POLICY,
+          message: "forge policy check --strict-policies failed",
+        }),
+      );
+    }
+  }
 
   if (options.skipTypecheck) {
     steps.push(skippedStep("typecheck", "--skip-typecheck"));

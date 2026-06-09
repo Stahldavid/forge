@@ -53,7 +53,9 @@ export type InspectTarget =
   | "subscriptions"
   | "workflows"
   | "telemetry"
-  | "policies";
+  | "policies"
+  | "secrets"
+  | "env";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;
@@ -101,6 +103,7 @@ export interface VerifyOptions {
   skipTests: boolean;
   skipTypecheck: boolean;
   skipEslint: boolean;
+  strict: boolean;
 }
 
 export interface VerifyResult {
