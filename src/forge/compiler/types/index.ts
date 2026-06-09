@@ -33,6 +33,12 @@ export type {
 } from "./app-graph.ts";
 export type { DataField, DataTable, DataGraph } from "./data-graph.ts";
 export type {
+  DevManifest,
+  DevManifestEntry,
+  DevManifestWorkflow,
+  DevRoute,
+} from "./dev-manifest.ts";
+export type {
   RuntimeEntry,
   RuntimeGraph,
   MockMapEntry,

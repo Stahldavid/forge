@@ -39,6 +39,16 @@ bun run forge:run badStripeCommand   # blocked by import guards
 bun run forge:run createCheckout --mock
 ```
 
+## Dev server
+
+After `forge:generate`:
+
+```bash
+bun run forge:dev -- --watch --mock
+```
+
+Then invoke handlers over HTTP, for example `POST http://127.0.0.1:3765/run/createTicket`.
+
 ## Scripts
 
 | Script | Description |
@@ -47,4 +57,5 @@ bun run forge:run createCheckout --mock
 | `forge:generate` | Run the Forge compiler against this app |
 | `forge:check` | Validate import guards |
 | `forge:run` | List or execute local command/action handlers |
+| `forge:dev` | Start local HTTP dev server with optional watch mode |
 | `verify` | Run `generate --check`, `forge check`, and typecheck |

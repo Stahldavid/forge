@@ -28,6 +28,7 @@ describe("Forge CLI", () => {
       "runtime-matrix",
       "data",
       "runtime",
+      "dev",
     ]) {
       const parsed = parseCli(["inspect", target]);
       expect(parsed.errors).toEqual([]);
@@ -135,6 +136,17 @@ describe("Forge CLI", () => {
       );
     } finally {
       cleanupWorkspace(workspace);
+    }
+  });
+
+  test("parseCli accepts dev with port and watch flags", () => {
+    const parsed = parseCli(["dev", "--port", "4000", "--watch", "--mock"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command?.kind).toBe("dev");
+    if (parsed.command?.kind === "dev") {
+      expect(parsed.command.port).toBe(4000);
+      expect(parsed.command.watch).toBe(true);
+      expect(parsed.command.mock).toBe(true);
     }
   });
 

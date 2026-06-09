@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import { runEntry } from "../../src/forge/runtime/executor.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,

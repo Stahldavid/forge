@@ -8,6 +8,7 @@ import {
 import { runCheckCommand } from "../../src/forge/cli/commands.ts";
 import { runEntry } from "../../src/forge/runtime/executor.ts";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import { startDevServer } from "../../src/forge/dev/server.ts";
 
 const EXAMPLE_ROOT = join(import.meta.dir, "..", "..", "examples", "basic-forge-app");
 const REPO_ROOT = join(import.meta.dir, "..", "..");
@@ -81,5 +82,24 @@ describe("examples/basic-forge-app", () => {
     expect(
       existsSync(join(EXAMPLE_ROOT, "src", "forge", "_generated", "runtimeGraph.json")),
     ).toBe(true);
+
+    const devServer = await startDevServer({
+      workspaceRoot: EXAMPLE_ROOT,
+      host: "127.0.0.1",
+      port: 0,
+      mock: false,
+      json: false,
+    });
+
+    try {
+      const invoke = await fetch(`${devServer.url}/run/createTicket`, {
+        method: "POST",
+      });
+      expect(invoke.status).toBe(200);
+      const body = (await invoke.json()) as { ok: boolean };
+      expect(body.ok).toBe(true);
+    } finally {
+      devServer.stop();
+    }
   }, 60_000);
 });

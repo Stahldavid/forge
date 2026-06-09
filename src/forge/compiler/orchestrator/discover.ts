@@ -228,6 +228,10 @@ function computeInputFingerprint(parts: {
   return hashStable(canonicalJson(parts));
 }
 
+export function getSourceRoots(workspaceRoot: string, override?: string[]): string[] {
+  return resolveSourceRoots(workspaceRoot, override);
+}
+
 export interface DiscoverOptions {
   workspaceRoot: string;
   sourceRoots?: string[];

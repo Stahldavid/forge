@@ -43,6 +43,7 @@ import {
   formatRunResultHuman,
   runRunCommand,
 } from "./run.ts";
+import { runDevCommand } from "./dev.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -143,6 +144,7 @@ export async function runInspectCommand(
     "runtime-matrix": `${GENERATED_DIR}/runtimeMatrix.json`,
     data: `${GENERATED_DIR}/dataGraph.json`,
     runtime: `${GENERATED_DIR}/runtimeGraph.json`,
+    dev: `${GENERATED_DIR}/devManifest.json`,
   };
 
   const relative = dataPaths[target];
@@ -250,6 +252,17 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatRunResultHuman(result.run));
       }
 
+      return result.exitCode;
+    }
+    case "dev": {
+      const result = await runDevCommand({
+        workspaceRoot: command.workspaceRoot,
+        host: command.host,
+        port: command.port,
+        mock: command.mock,
+        watch: command.watch,
+        json: command.json,
+      });
       return result.exitCode;
     }
     default:

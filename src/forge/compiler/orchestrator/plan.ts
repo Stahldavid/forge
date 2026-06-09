@@ -1,4 +1,5 @@
 import { buildDataGraph } from "../data-graph/build.ts";
+import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
@@ -36,6 +37,8 @@ import {
   serializeRuntimeMatrixJson,
   serializeRuntimeMatrixTs,
   serializeRuntimeRegistryTs,
+  serializeDevManifestJson,
+  serializeDevManifestTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -104,6 +107,7 @@ export function plan(input: PlanInput): EmitPlan {
   const matrix = buildRuntimeMatrix(input.classified);
   const dataGraph = buildDataGraph(input.appGraph);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
+  const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
 
   const files: EmitFile[] = [
@@ -166,6 +170,14 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/mockMap.json`,
       serializeMockMapJson(mockMapEntries),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/devManifest.ts`,
+      serializeDevManifestTs(devManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/devManifest.json`,
+      serializeDevManifestJson(devManifest),
     ),
   ];
 

@@ -1,0 +1,281 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { createDiagnostic } from "../compiler/diagnostics/create.ts";
+import {
+  FORGE_DEV_INVOKE_FAILED,
+  FORGE_DEV_SERVER_ERROR,
+  FORGE_RUNTIME_NOT_FOUND,
+} from "../compiler/diagnostics/codes.ts";
+import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
+import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
+import type { DevManifest } from "../compiler/types/dev-manifest.ts";
+import type { RuntimeGraph } from "../compiler/types/runtime-graph.ts";
+import {
+  listEntries,
+  prepareRuntimeEnvironment,
+  runEntry,
+} from "../runtime/executor.ts";
+import type { DevServerHandle, DevServerOptions } from "./types.ts";
+
+function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
+  const absolute = join(workspaceRoot, relative);
+  if (!existsSync(absolute)) {
+    return null;
+  }
+  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  return JSON.parse(raw) as T;
+}
+
+function jsonResponse(
+  body: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      ...extraHeaders,
+    },
+  });
+}
+
+function corsPreflight(): Response {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
+function parseInvokeName(pathname: string, prefix: string): string | null {
+  if (!pathname.startsWith(prefix)) {
+    return null;
+  }
+  const name = pathname.slice(prefix.length);
+  return name.length > 0 ? decodeURIComponent(name) : null;
+}
+
+export async function startDevServer(
+  options: DevServerOptions,
+): Promise<DevServerHandle> {
+  const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
+
+  const devManifest = readGeneratedJson<DevManifest>(
+    workspaceRoot,
+    `${GENERATED_DIR}/devManifest.json`,
+  );
+  const runtimeGraph = readGeneratedJson<RuntimeGraph>(
+    workspaceRoot,
+    `${GENERATED_DIR}/runtimeGraph.json`,
+  );
+
+  if (!runtimeGraph || !devManifest) {
+    throw new Error(
+      `missing generated dev artifacts; run forge generate first (${GENERATED_DIR}/devManifest.json)`,
+    );
+  }
+
+  await prepareRuntimeEnvironment(workspaceRoot, { mock: options.mock });
+
+  function loadArtifacts(): {
+    devManifest: DevManifest;
+    runtimeGraph: RuntimeGraph;
+  } {
+    const freshDevManifest = readGeneratedJson<DevManifest>(
+      workspaceRoot,
+      `${GENERATED_DIR}/devManifest.json`,
+    );
+    const freshRuntimeGraph = readGeneratedJson<RuntimeGraph>(
+      workspaceRoot,
+      `${GENERATED_DIR}/runtimeGraph.json`,
+    );
+
+    if (!freshRuntimeGraph || !freshDevManifest) {
+      throw new Error(
+        `missing generated dev artifacts; run forge generate first (${GENERATED_DIR}/devManifest.json)`,
+      );
+    }
+
+    return {
+      devManifest: freshDevManifest,
+      runtimeGraph: freshRuntimeGraph,
+    };
+  }
+
+  const server = Bun.serve({
+    hostname: options.host,
+    port: options.port,
+    async fetch(request) {
+      if (request.method === "OPTIONS") {
+        return corsPreflight();
+      }
+
+      const url = new URL(request.url);
+      const pathname = url.pathname;
+
+      try {
+        const { devManifest: currentDevManifest, runtimeGraph: currentRuntimeGraph } =
+          loadArtifacts();
+
+        if (request.method === "GET" && pathname === "/health") {
+          return jsonResponse({
+            ok: true,
+            service: "forge-dev",
+            entries: currentRuntimeGraph.entries.length,
+          });
+        }
+
+        if (request.method === "GET" && pathname === "/entries") {
+          const listed = listEntries(workspaceRoot);
+          return jsonResponse({
+            ok: true,
+            entries: listed.entries,
+            diagnostics: listed.diagnostics,
+          });
+        }
+
+        if (request.method === "GET" && pathname === "/workflows") {
+          return jsonResponse({
+            ok: true,
+            workflows: currentDevManifest.workflows,
+          });
+        }
+
+        if (request.method === "POST") {
+          let entryName: string | null = null;
+          let expectedKind: "command" | "action" | null = null;
+
+          if (pathname.startsWith("/run/")) {
+            entryName = parseInvokeName(pathname, "/run/");
+          } else if (pathname.startsWith("/commands/")) {
+            entryName = parseInvokeName(pathname, "/commands/");
+            expectedKind = "command";
+          } else if (pathname.startsWith("/actions/")) {
+            entryName = parseInvokeName(pathname, "/actions/");
+            expectedKind = "action";
+          }
+
+          if (entryName) {
+            const entry = currentRuntimeGraph.entries.find(
+              (candidate) => candidate.name === entryName,
+            );
+
+            if (!entry) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_RUNTIME_NOT_FOUND,
+                      message: `runtime entry '${entryName}' not found`,
+                    }),
+                  ],
+                },
+                404,
+              );
+            }
+
+            if (expectedKind && entry.kind !== expectedKind) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_DEV_INVOKE_FAILED,
+                      message: `entry '${entryName}' is a ${entry.kind}, not ${expectedKind}`,
+                    }),
+                  ],
+                },
+                404,
+              );
+            }
+
+            const result = await runEntry(workspaceRoot, entryName, {
+              json: options.json,
+              mock: options.mock,
+            });
+
+            return jsonResponse(
+              {
+                ok: result.ok,
+                result: result.result,
+                diagnostics: result.diagnostics,
+              },
+              result.ok ? 200 : 400,
+            );
+          }
+        }
+
+        return jsonResponse(
+          {
+            ok: false,
+            diagnostics: [
+              createDiagnostic({
+                severity: "error",
+                code: FORGE_DEV_SERVER_ERROR,
+                message: `unknown route ${request.method} ${pathname}`,
+              }),
+            ],
+          },
+          404,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "dev server request failed";
+        return jsonResponse(
+          {
+            ok: false,
+            diagnostics: [
+              createDiagnostic({
+                severity: "error",
+                code: FORGE_DEV_SERVER_ERROR,
+                message,
+              }),
+            ],
+          },
+          500,
+        );
+      }
+    },
+  });
+
+  const host = server.hostname ?? options.host;
+  const port = server.port ?? options.port;
+  const protocol = "http";
+  const url = `${protocol}://${host}:${port}`;
+
+  return {
+    host,
+    port,
+    url,
+    routes: devManifest.routes,
+    stop: () => {
+      server.stop(true);
+    },
+  };
+}
+
+export function resolveDevPort(explicit?: number): number {
+  if (explicit !== undefined && Number.isFinite(explicit) && explicit >= 0) {
+    return explicit;
+  }
+  const fromEnv = process.env.FORGE_DEV_PORT;
+  if (fromEnv) {
+    const parsed = Number(fromEnv);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+  return 3765;
+}
+
+export function resolveDevHost(explicit?: string): string {
+  return explicit ?? "127.0.0.1";
+}

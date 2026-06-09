@@ -216,6 +216,16 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
   }
 }
 
+export async function prepareRuntimeEnvironment(
+  workspaceRoot: string,
+  options: { mock: boolean },
+): Promise<void> {
+  const useMock = options.mock || process.env.FORGE_MOCK === "1";
+  if (useMock) {
+    await applyMocks(workspaceRoot, loadForgeLock(workspaceRoot));
+  }
+}
+
 async function guardPreflight(
   workspaceRoot: string,
   entry: RuntimeEntry,
@@ -297,10 +307,7 @@ export async function runEntry(
     };
   }
 
-  const useMock = options.mock || process.env.FORGE_MOCK === "1";
-  if (useMock) {
-    await applyMocks(workspaceRoot, loadForgeLock(workspaceRoot));
-  }
+  await prepareRuntimeEnvironment(workspaceRoot, { mock: options.mock });
 
   const absolutePath = join(workspaceRoot, entry.file);
   const mod = (await import(absolutePath)) as Record<string, unknown>;

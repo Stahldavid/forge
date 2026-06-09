@@ -7,7 +7,16 @@ export type ForgeCommand =
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
   | { kind: "check"; json: boolean; dryRun: boolean }
   | { kind: "verify"; options: VerifyOptions }
-  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; workspaceRoot: string };
+  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; workspaceRoot: string }
+  | {
+      kind: "dev";
+      host?: string;
+      port?: number;
+      mock: boolean;
+      watch: boolean;
+      json: boolean;
+      workspaceRoot: string;
+    };
 
 export interface ParsedCli {
   command: ForgeCommand | null;
@@ -22,6 +31,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "runtime-matrix",
   "data",
   "runtime",
+  "dev",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -65,7 +75,7 @@ export function parseCli(argv: string[]): ParsedCli {
   const workspaceRoot = process.cwd().replace(/\\/g, "/");
 
   if (positional.length === 0) {
-    errors.push("missing command; expected generate, add, inspect, check, verify, or run");
+    errors.push("missing command; expected generate, add, inspect, check, verify, run, or dev");
     return { command: null, workspaceRoot, errors };
   }
 
@@ -166,6 +176,26 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "dev": {
+      const portRaw = parseOptionValue(argv, "--port");
+      const port = portRaw !== undefined ? Number(portRaw) : undefined;
+      if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {
+        errors.push("--port must be a non-negative integer");
+      }
+      return {
+        command: {
+          kind: "dev",
+          host: parseOptionValue(argv, "--host"),
+          port,
+          mock: parseFlag(argv, "--mock"),
+          watch: parseFlag(argv, "--watch"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     default:
       errors.push(`unrecognized command '${commandName}'`);
       return { command: null, workspaceRoot, errors };
@@ -186,6 +216,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--skip-eslint",
     "--mock",
     "--list",
+    "--port",
+    "--host",
+    "--watch",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -193,8 +226,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     if (!arg.startsWith("--")) {
       continue;
     }
-    if (known.has(arg)) {
-      if (arg === "--concurrency" || arg === "--sandbox-backend") {
+      if (known.has(arg)) {
+      if (arg === "--concurrency" || arg === "--sandbox-backend" || arg === "--port" || arg === "--host") {
         index += 1;
       }
       continue;

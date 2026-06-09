@@ -3,6 +3,7 @@ import type { DataGraph } from "../types/data-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type { RuntimeMatrix } from "../types/runtime-matrix.ts";
 import type { ImportGuardsArtifact } from "../types/import-guards.ts";
+import type { DevManifest } from "../types/dev-manifest.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
@@ -150,6 +151,25 @@ export function serializeMockMapTs(entries: MockMapEntry[]): string {
     map[entry.packageName] = entry.mockFile;
   }
   return `export const mockMap = ${JSON.stringify(map, null, 2)} as const;\n`;
+}
+
+export function serializeDevManifestJson(manifest: DevManifest): string {
+  const payload = {
+    schemaVersion: manifest.schemaVersion,
+    generatorVersion: manifest.generatorVersion,
+    analyzerVersion: manifest.analyzerVersion,
+    inputHash: manifest.inputHash,
+    routes: manifest.routes,
+    entries: manifest.entries,
+    workflows: manifest.workflows,
+    diagnostics: manifest.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeDevManifestTs(manifest: DevManifest): string {
+  const parsed: unknown = JSON.parse(serializeDevManifestJson(manifest).trimEnd());
+  return `export const devManifest = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
 export type { ImportGuardsArtifact };
