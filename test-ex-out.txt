@@ -1,2 +1,0 @@
-bun test v1.3.13 (bf2e2cec)
-seeded C:\Users\David\Documents\forge\examples\basic-forge-app\node_modules from C:\Users\David\Documents\forge\tests\fixtures\packages
