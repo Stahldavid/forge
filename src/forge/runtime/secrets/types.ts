@@ -10,6 +10,8 @@ export interface ConfigContext {
   get(name: string): string;
   optional(name: string): string | undefined;
 }
+
+export interface RuntimeEnvStore {
   loadedFiles: string[];
   resolve(name: string): string | undefined;
   snapshot(): Record<string, string | undefined>;

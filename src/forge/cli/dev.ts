@@ -12,6 +12,7 @@ export interface DevCommandOptions {
   host?: string;
   port?: number;
   mock: boolean;
+  mockAi?: boolean;
   watch: boolean;
   json: boolean;
   db: "pglite" | "postgres" | "none";
@@ -55,6 +56,7 @@ export async function runDevCommand(
       host,
       port,
       mock: options.mock,
+      mockAi: options.mockAi,
       json: options.json,
       db: options.db,
       databaseUrl: options.databaseUrl,

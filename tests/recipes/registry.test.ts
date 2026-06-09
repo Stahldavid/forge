@@ -65,8 +65,8 @@ describe("Integration Recipe Registry", () => {
   });
 
   test("classifies AI provider packages separately with their secrets", () => {
-    const openai = resolveRecipe("@ai-sdk/openai")!;
-    const anthropic = resolveRecipe("@ai-sdk/anthropic")!;
+    const openai = resolveRecipe("ai-provider-openai")!;
+    const anthropic = resolveRecipe("ai-provider-anthropic")!;
 
     expect(openai.packages[0]!.packageName).toBe("@ai-sdk/openai");
     expect(openai.secrets.map((s) => s.envVar)).toEqual(["OPENAI_API_KEY"]);
@@ -75,6 +75,7 @@ describe("Integration Recipe Registry", () => {
     expect(anthropic.secrets.map((s) => s.envVar)).toEqual(["ANTHROPIC_API_KEY"]);
 
     expect(AI_RECIPE.secrets.map((s) => s.envVar).sort()).toEqual([
+      "AI_GATEWAY_API_KEY",
       "ANTHROPIC_API_KEY",
       "OPENAI_API_KEY",
     ]);
@@ -84,7 +85,7 @@ describe("Integration Recipe Registry", () => {
   test("resolveByPackageName finds recipes by npm package name", () => {
     expect(resolveByPackageName("posthog-js")?.alias).toBe("posthog");
     expect(resolveByPackageName("posthog-node")?.alias).toBe("posthog");
-    expect(resolveByPackageName("@ai-sdk/openai")?.alias).toBe("@ai-sdk/openai");
+    expect(resolveByPackageName("@ai-sdk/openai")?.alias).toBe("ai-provider-openai");
     expect(resolveByPackageName("nonexistent")).toBeNull();
   });
 
@@ -96,8 +97,9 @@ describe("Integration Recipe Registry", () => {
     expect(aliases).toContain("sentry");
     expect(aliases).toContain("zod");
     expect(aliases).toContain("ai");
-    expect(aliases).toContain("@ai-sdk/openai");
-    expect(aliases).toContain("@ai-sdk/anthropic");
+    expect(aliases).toContain("ai-provider-openai");
+    expect(aliases).toContain("ai-provider-anthropic");
+    expect(aliases).toContain("ai-gateway");
     expect(recipes.length).toBe(5 + AI_PROVIDER_RECIPES.length);
   });
 

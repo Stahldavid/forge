@@ -8,6 +8,7 @@ import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { forgeAdd } from "../compiler/integration/add.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
 import { checkDirectProcessEnvUsage } from "../compiler/guards/check-process-env.ts";
+import { checkAiUsageInApp } from "../compiler/guards/check-ai-usage.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import { run } from "../compiler/orchestrator/run.ts";
 import { discover } from "../compiler/orchestrator/discover.ts";
@@ -72,6 +73,7 @@ import {
   runEnvCommand,
   runSecretsCommand,
 } from "./secrets.ts";
+import { formatAiHuman, formatAiJson, runAiCommand } from "./ai.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -151,8 +153,9 @@ export async function runCheckCommand(
     secretRegistry,
     options?.strictSecrets ?? false,
   );
+  const aiDiagnostics = checkAiUsageInApp(appGraph);
 
-  const allDiagnostics = [...guardDiagnostics, ...processEnvDiagnostics];
+  const allDiagnostics = [...guardDiagnostics, ...processEnvDiagnostics, ...aiDiagnostics];
   const errors = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
   );
@@ -188,6 +191,7 @@ export async function runInspectCommand(
     policies: `${GENERATED_DIR}/policyRegistry.json`,
     secrets: `${GENERATED_DIR}/secretRegistry.json`,
     env: `${GENERATED_DIR}/envSchema.json`,
+    ai: `${GENERATED_DIR}/aiRegistry.json`,
   };
 
   const relative = dataPaths[target];
@@ -316,6 +320,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         host: command.host,
         port: command.port,
         mock: command.mock,
+        mockAi: command.mockAi,
         watch: command.watch,
         json: command.json,
         db: command.db,
@@ -458,6 +463,25 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatEnvJson(result));
       } else {
         process.stdout.write(formatEnvHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "ai": {
+      const result = await runAiCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        json: command.json,
+        provider: command.provider,
+        model: command.model,
+        prompt: command.prompt,
+        mock: command.mock,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatAiJson(result));
+      } else {
+        process.stdout.write(formatAiHuman(command.subcommand, result));
       }
 
       return result.exitCode;

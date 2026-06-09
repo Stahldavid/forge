@@ -12,6 +12,9 @@ import type { RuntimeEnvStore } from "../secrets/types.ts";
 import { loadEnvFiles } from "../secrets/env-loader.ts";
 import { loadEnvSchema, loadSecretRegistry } from "../secrets/check.ts";
 import { createRuntimeSecretsBundle } from "../secrets/runtime-bundle.ts";
+import { createAiContext } from "../ai/context.ts";
+import type { AiContext } from "../ai/types.ts";
+import { isMockAiEnabled } from "../ai/state.ts";
 
 export interface ForgeContext {
   db: DbClient;
@@ -21,6 +24,7 @@ export interface ForgeContext {
   auth: AuthContext;
   secrets: SecretsContext;
   config: ConfigContext;
+  ai: AiContext;
 }
 
 let sharedEnvStore: RuntimeEnvStore | null = null;
@@ -54,11 +58,18 @@ export function getRuntimeEnvStore(workspaceRoot?: string): RuntimeEnvStore {
   };
 }
 
-function buildSecretsAndConfig(
+function buildSecretsConfigAndAi(
   workspaceRoot: string | undefined,
   runtimeKind: RuntimeContext,
   store: RuntimeEnvStore,
-): { secrets: SecretsContext; config: ConfigContext; env: Record<string, string | undefined> } {
+  telemetry: TelemetryContext,
+  options?: { mockAi?: boolean },
+): {
+  secrets: SecretsContext;
+  config: ConfigContext;
+  ai: AiContext;
+  env: Record<string, string | undefined>;
+} {
   const registry = workspaceRoot ? loadSecretRegistry(workspaceRoot) : null;
   const envSchema = workspaceRoot ? loadEnvSchema(workspaceRoot) : null;
   const bundle = createRuntimeSecretsBundle({
@@ -68,9 +79,22 @@ function buildSecretsAndConfig(
     runtimeKind,
   });
 
+  const ai = createAiContext({
+    secrets: bundle.secrets,
+    telemetry,
+    runtimeKind,
+    mockAi: options?.mockAi ?? isMockAiEnabled(),
+    envelope: {
+      traceId: telemetry.traceId,
+      tenantId:
+        undefined,
+    },
+  });
+
   return {
     secrets: bundle.secrets,
     config: bundle.config,
+    ai,
     env: store.snapshot(),
   };
 }
@@ -86,6 +110,7 @@ export function createForgeContext(
     runtimeKind?: RuntimeContext;
     workspaceRoot?: string;
     store?: RuntimeEnvStore;
+    mockAi?: boolean;
   },
 ): ForgeContext {
   const runtimeKind = options?.runtimeKind ?? "command";
@@ -94,10 +119,12 @@ export function createForgeContext(
     (options?.workspaceRoot
       ? getRuntimeEnvStore(options.workspaceRoot)
       : getRuntimeEnvStore());
-  const { secrets, config, env } = buildSecretsAndConfig(
+  const { secrets, config, ai, env } = buildSecretsConfigAndAi(
     options?.workspaceRoot,
     runtimeKind,
     store,
+    telemetry,
+    { mockAi: options?.mockAi },
   );
 
   return {
@@ -107,6 +134,7 @@ export function createForgeContext(
     auth,
     secrets,
     config,
+    ai,
     emit: async (eventType, payload) => {
       const enriched =
         payload && typeof payload === "object" && !Array.isArray(payload)
@@ -136,6 +164,7 @@ export function createActionContext(
     workspaceRoot?: string;
     store?: RuntimeEnvStore;
     runtimeKind?: RuntimeContext;
+    mockAi?: boolean;
   },
 ): ForgeContext {
   const runtimeKind = options?.runtimeKind ?? "action";
@@ -144,10 +173,12 @@ export function createActionContext(
     (options?.workspaceRoot
       ? getRuntimeEnvStore(options.workspaceRoot)
       : getRuntimeEnvStore());
-  const { secrets, config, env } = buildSecretsAndConfig(
+  const { secrets, config, ai, env } = buildSecretsConfigAndAi(
     options?.workspaceRoot,
     runtimeKind,
     store,
+    telemetry,
+    { mockAi: options?.mockAi },
   );
 
   return {
@@ -157,6 +188,7 @@ export function createActionContext(
     auth,
     secrets,
     config,
+    ai,
     emit: async () => {
       /* actions invoked by outbox worker do not emit */
     },

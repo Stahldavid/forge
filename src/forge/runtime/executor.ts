@@ -59,6 +59,7 @@ export interface ListEntriesResult {
 
 export interface PrepareRuntimeEnvironmentOptions {
   mock: boolean;
+  mockAi?: boolean;
   db?: DbAdapter | null;
 }
 
@@ -94,7 +95,7 @@ function loadRuntimeGraph(workspaceRoot: string): {
     };
   }
 
-  return { graph, diagnostics: [...graph.diagnostics] };
+  return { graph, diagnostics: [...(graph.diagnostics ?? [])] };
 }
 
 function loadTableMap(workspaceRoot: string): Record<string, TableMapEntry> | null {
@@ -255,6 +256,10 @@ export async function prepareRuntimeEnvironment(
   const useMock = options.mock || process.env.FORGE_MOCK === "1";
   if (useMock) {
     await applyMocks(workspaceRoot, loadForgeLock(workspaceRoot));
+  }
+
+  if (options.mockAi || process.env.FORGE_MOCK_AI === "1") {
+    process.env.FORGE_MOCK_AI = "1";
   }
 
   activeDbAdapter = options.db ?? null;

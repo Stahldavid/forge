@@ -55,7 +55,8 @@ export type InspectTarget =
   | "telemetry"
   | "policies"
   | "secrets"
-  | "env";
+  | "env"
+  | "ai";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;

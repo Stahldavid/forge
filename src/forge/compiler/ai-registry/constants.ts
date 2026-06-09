@@ -1,0 +1,2 @@
+export const AI_REGISTRY_SCHEMA_VERSION = "1";
+export const AI_REGISTRY_ANALYZER_VERSION = "1.0.0";

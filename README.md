@@ -31,10 +31,11 @@ bun run forge verify
 | `forge policy <list\|matrix\|simulate\|check>` | RBAC policy registry, matrix, simulation, and checks |
 | `forge secrets <list\|check\|print\|set\|unset>` | Secret registry inspection and local `.env.local` management |
 | `forge env <list\|check\|print>` | Environment schema inspection |
-| `forge check` | Validate transitive import guards and optional `--strict-secrets` |
+| `forge ai <providers\|check\|test\|models>` | AI provider registry, secret checks, mock/live test, model cost table |
+| `forge check` | Validate transitive import guards, AI context rules, and optional `--strict-secrets` |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
-Flags: `--json`, `--dry-run`, `--skip-tests`, `--skip-typecheck`, `--skip-eslint`, `--strict` (verify), `--strict-secrets` (check), `--env-file`, `--redacted`.
+Flags: `--json`, `--dry-run`, `--skip-tests`, `--skip-typecheck`, `--skip-eslint`, `--strict` (verify), `--strict-secrets` (check), `--env-file`, `--redacted`, `--mock-ai` / `--ai mock` (dev), `FORGE_MOCK_AI=1`.
 
 ## Example app
 
@@ -105,6 +106,32 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 10. **H10** — Auth, policy engine & tenant isolation ✅
 11. **H10.5** — Security hardening (`forge verify --strict`) ✅
 12. **H11** — Secrets & environment runtime v1 ✅
+13. **H12** — AI workflow integration & observability ✅
+
+### H12 deliverables (AI workflow integration)
+
+| Artifact | Description |
+|----------|-------------|
+| `aiRegistry.json` / `.ts` | Static index of `ctx.ai.*` calls |
+| `aiProviders.json` / `.ts` | Provider → secret mapping (`openai`, `anthropic`, `gateway`) |
+| `aiModels.json` / `.ts` | Known model cost table (MVP estimates) |
+| `aiContext.ts` | Generated `AiContext` types |
+| `ctx.ai` | Runtime wrapper around Vercel AI SDK on action/workflow/endpoint/server |
+| `forge ai` | `providers`, `check`, `test --mock`, `models` |
+| `forge inspect ai` | Inspect generated AI registry |
+| Mock mode | `forge dev --mock-ai`, `FORGE_MOCK_AI=1`, `forge ai test --mock` |
+
+```bash
+forge ai providers --json
+forge ai check --json
+forge ai test --provider openai --model gpt-4o-mini --prompt "ping" --mock
+forge inspect ai
+forge dev --mock-ai --worker --db pglite
+```
+
+**Architecture:** AI is a secure capability inside actions/workflows/endpoints/server only. Apps use `ctx.ai`, never raw Vercel AI SDK. Secrets load via `ctx.secrets.get("OPENAI_API_KEY")`. Telemetry records `forge.ai.generation.*` and `forge.ai.usage` without prompt/response bodies (`retainPrompts: false`, `retainOutputs: false`).
+
+**Limitations:** no Agent Runtime, tool calling, RAG, vector store, budget enforcement, OTLP, or prompt management UI.
 
 ### H10.5 deliverables (security hardening)
 

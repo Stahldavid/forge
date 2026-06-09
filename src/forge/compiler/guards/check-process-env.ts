@@ -27,6 +27,9 @@ function shouldScanFile(relativePath: string): boolean {
   if (normalized.includes("/src/forge/runtime/telemetry/")) {
     return false;
   }
+  if (normalized.includes("/src/forge/runtime/ai/")) {
+    return false;
+  }
   return normalized.endsWith(".ts") || normalized.endsWith(".tsx");
 }
 

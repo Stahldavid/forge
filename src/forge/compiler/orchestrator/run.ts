@@ -80,19 +80,28 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
     ctx,
   });
 
-  const matrix = buildRuntimeMatrix(classified);
-  const guardDiagnostics = checkImportGuards(appGraph.moduleGraph, matrix);
-  const qualityDiagnostics = collectQualityGateDiagnostics(
-    appGraph.diagnostics,
-    pkgResult.diagnostics,
-    guardDiagnostics,
-  );
-
   const mode = options.check
     ? "check"
     : options.dryRun
       ? "dry-run"
       : "write";
+
+  const matrix = buildRuntimeMatrix(classified);
+  const guardDiagnostics = checkImportGuards(appGraph.moduleGraph, matrix);
+  // Import guards fail `forge check`; generate/drift only surface them as warnings.
+  const guardDiagnosticsForGate =
+    mode === "check"
+      ? []
+      : guardDiagnostics.map((diagnostic) =>
+          diagnostic.severity === "error"
+            ? { ...diagnostic, severity: "warning" as const }
+            : diagnostic,
+        );
+  const qualityDiagnostics = collectQualityGateDiagnostics(
+    appGraph.diagnostics,
+    pkgResult.diagnostics,
+    guardDiagnosticsForGate,
+  );
 
   const emitResult = await emit(emitPlan, {
     workspaceRoot: ctx.workspaceRoot,

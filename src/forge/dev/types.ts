@@ -8,6 +8,7 @@ export interface DevServerOptions {
   host: string;
   port: number;
   mock: boolean;
+  mockAi?: boolean;
   json: boolean;
   db: DevDbMode;
   databaseUrl?: string;

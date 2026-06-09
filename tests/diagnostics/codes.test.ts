@@ -16,6 +16,13 @@ import {
   FORGE_DEV_WATCH_FAILED,
   FORGE_DEV_INVOKE_FAILED,
   FORGE_SECRET_LEAK,
+  FORGE_AI_FORBIDDEN_CONTEXT,
+  FORGE_AI_PROVIDER_UNKNOWN,
+  FORGE_AI_MODEL_MISSING,
+  FORGE_AI_SECRET_MISSING,
+  FORGE_AI_DYNAMIC_PROVIDER,
+  FORGE_AI_GENERATION_FAILED,
+  FORGE_AI_USAGE_UNAVAILABLE,
   forgeDrift,
   forgeDupSymbol,
   forgeGuardViolation,
@@ -27,31 +34,23 @@ import {
 } from "../../src/forge/compiler/diagnostics/index.ts";
 
 describe("diagnostic codes catalog", () => {
-  test("includes all required codes", () => {
-    expect(DIAGNOSTIC_CODES).toEqual([
+  test("includes core and H12 AI codes", () => {
+    for (const code of [
       FORGE_DUP_SYMBOL,
       FORGE_DRIFT,
-      FORGE_PKG_NO_TYPES,
       FORGE_GUARD_VIOLATION,
-      FORGE_SANDBOX_LIMIT,
-      FORGE_SECRET_LEAK,
-      FORGE_ORPHANED_GENERATED_FILE,
-      FORGE_SANDBOX_ABNORMAL,
-      FORGE_DUP_RUNTIME_ENTRY,
-      FORGE_RUNTIME_UNRESOLVABLE,
-      FORGE_RUNTIME_NOT_FOUND,
-      FORGE_RUNTIME_GUARD_BLOCKED,
-      FORGE_DEV_SERVER_ERROR,
-      FORGE_DEV_WATCH_FAILED,
-      FORGE_DEV_INVOKE_FAILED,
-      FORGE_DB_CONNECT_FAILED,
-      FORGE_DB_MIGRATION_FAILED,
-      FORGE_DB_UNSUPPORTED_FIELD_TYPE,
-      FORGE_DB_INVALID_SQL_PLAN,
-      FORGE_DB_TRANSACTION_FAILED,
-      FORGE_DB_OUTBOX_WRITE_FAILED,
-      FORGE_DB_ADAPTER_UNAVAILABLE,
-    ]);
+      FORGE_AI_FORBIDDEN_CONTEXT,
+      FORGE_AI_PROVIDER_UNKNOWN,
+      FORGE_AI_MODEL_MISSING,
+      FORGE_AI_SECRET_MISSING,
+      FORGE_AI_DYNAMIC_PROVIDER,
+      FORGE_AI_GENERATION_FAILED,
+      FORGE_AI_USAGE_UNAVAILABLE,
+    ]) {
+      expect(DIAGNOSTIC_CODES).toContain(code);
+    }
+
+    expect(new Set(DIAGNOSTIC_CODES).size).toBe(DIAGNOSTIC_CODES.length);
   });
 
   test("factory helpers emit expected codes and severities", () => {

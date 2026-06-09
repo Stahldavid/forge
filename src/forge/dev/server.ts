@@ -41,6 +41,12 @@ import {
   countMissingRequiredSecrets,
   loadSecretRegistry,
 } from "../runtime/secrets/check.ts";
+import { checkAiProviders, loadAiRegistry } from "../runtime/ai/check.ts";
+import { isMockAiEnabled } from "../runtime/ai/state.ts";
+import { createAiContext } from "../runtime/ai/context.ts";
+import { createRuntimeSecretsBundle } from "../runtime/secrets/runtime-bundle.ts";
+import { createNoopTelemetryContext } from "../runtime/telemetry/context.ts";
+import { generateTraceId } from "../runtime/telemetry/correlation.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -163,6 +169,7 @@ export async function startDevServer(
 
   await prepareRuntimeEnvironment(workspaceRoot, {
     mock: options.mock,
+    mockAi: options.mockAi,
     db: serverState.adapter,
   });
 
@@ -241,6 +248,10 @@ export async function startDevServer(
             ? countMissingRequiredSecrets(envStore, secretRegistry)
             : 0;
 
+          const aiRegistry = loadAiRegistry(workspaceRoot);
+          const aiCheck = checkAiProviders(envStore, aiRegistry, secretRegistry);
+          const mockAi = isMockAiEnabled({ mockAi: options.mockAi });
+
           return jsonResponse({
             ok: true,
             service: "forge-dev",
@@ -268,7 +279,56 @@ export async function startDevServer(
               loadedFiles: envStore.loadedFiles,
               missingRequiredSecrets,
             },
+            ai: {
+              enabled: true,
+              mode: mockAi ? "mock" : "live",
+              providers: aiCheck.providers,
+            },
           });
+        }
+
+        if (request.method === "GET" && pathname === "/ai/providers") {
+          const aiRegistry = loadAiRegistry(workspaceRoot);
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+          const secretRegistry = loadSecretRegistry(workspaceRoot);
+          const aiCheck = checkAiProviders(envStore, aiRegistry, secretRegistry);
+          return jsonResponse({ ok: true, providers: aiCheck.providers });
+        }
+
+        if (request.method === "POST" && pathname === "/ai/test") {
+          const body = (await request.json().catch(() => ({}))) as {
+            provider?: string;
+            model?: string;
+            prompt?: string;
+          };
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+          const secretRegistry = loadSecretRegistry(workspaceRoot);
+          const bundle = createRuntimeSecretsBundle({
+            store: envStore,
+            registry: secretRegistry,
+            envSchema: null,
+            runtimeKind: "server",
+          });
+          const telemetry = createNoopTelemetryContext(generateTraceId());
+          const ai = createAiContext({
+            secrets: bundle.secrets,
+            telemetry,
+            runtimeKind: "server",
+            mockAi: isMockAiEnabled({ mockAi: options.mockAi }),
+          });
+
+          try {
+            const result = await ai.generateText({
+              provider: (body.provider ?? "openai") as "openai" | "anthropic" | "gateway",
+              model: body.model ?? "gpt-4o-mini",
+              prompt: body.prompt ?? "ping",
+              purpose: "dev_test",
+            });
+            return jsonResponse({ ok: true, result });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return jsonResponse({ ok: false, error: message }, 400);
+          }
         }
 
         if (request.method === "GET" && pathname === "/telemetry") {

@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=f02cb0cd8ec6c6a8f2675bf5deb3827e2a80805097d4d1b4384a5435bb1cbe07
+{"configs":[{"integration":"posthog","name":"POSTHOG_HOST","required":false,"source":"recipe"}]}

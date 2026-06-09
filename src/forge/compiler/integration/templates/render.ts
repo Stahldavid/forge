@@ -43,9 +43,7 @@ const INTEGRATION_RENDERERS: Record<string, Record<string, TemplateRenderer>> = 
   },
   ai: {
     "ai/generations.ts": ai.renderAiGenerations,
-    "ai/evals.ts": ai.renderAiEvals,
-    "ai/providers/openai.ts": ai.renderAiOpenaiProvider,
-    "ai/providers/anthropic.ts": ai.renderAiAnthropicProvider,
+    "ai/testkit.ts": ai.renderAiTestkit,
   },
 };
 
@@ -54,7 +52,7 @@ const TESTKIT_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   stripe: { "stripe.mock.ts": stripe.renderStripeTestkit },
   posthog: { "posthog.mock.ts": posthog.renderPosthogTestkit },
   sentry: { "sentry.mock.ts": sentry.renderSentryTestkit },
-  ai: { "ai.mock.ts": ai.renderAiTestkit },
+  ai: { "ai.mock.ts": ai.renderAiTestkitLegacy },
 };
 
 const DOC_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {

@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=91c65f2137148e05ec8f6a3e4e0072c4fdf95e9469cd5473c569de068cd5e808
+{"entries":[{"mockFile":"src/forge/_generated/testkits/posthog.mock.ts","packageName":"posthog-js"},{"mockFile":"src/forge/_generated/testkits/stripe.mock.ts","packageName":"stripe"},{"mockFile":"src/forge/_generated/testkits/zod.mock.ts","packageName":"zod"}]}

@@ -36,8 +36,12 @@ function parseTableName(sql: string): string | null {
   const patterns = [
     /FROM\s+"([^"]+)"/i,
     /INTO\s+"([^"]+)"/i,
+    /INTO\s+([a-z_][a-z0-9_]*)/i,
+    /FROM\s+([a-z_][a-z0-9_]*)/i,
     /UPDATE\s+"([^"]+)"/i,
+    /UPDATE\s+([a-z_][a-z0-9_]*)/i,
     /TABLE\s+"([^"]+)"/i,
+    /TABLE\s+([a-z_][a-z0-9_]*)/i,
   ];
   for (const pattern of patterns) {
     const match = sql.match(pattern);
@@ -56,7 +60,9 @@ export class MemoryAdapter implements DbAdapter {
     const trimmed = sql.trim().replace(/\s+/g, " ");
 
     if (trimmed.startsWith("CREATE TABLE")) {
-      const match = trimmed.match(/CREATE TABLE IF NOT EXISTS "([^"]+)"/i);
+      const match =
+        trimmed.match(/CREATE TABLE IF NOT EXISTS "([^"]+)"/i) ??
+        trimmed.match(/CREATE TABLE IF NOT EXISTS ([a-z_][a-z0-9_]*)/i);
       if (match?.[1] && !this.tables.has(match[1])) {
         this.tables.set(match[1], { rows: [], nextSerial: 1 });
       }

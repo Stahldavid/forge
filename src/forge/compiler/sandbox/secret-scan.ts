@@ -1,7 +1,8 @@
 const TOKEN_PREFIXES = ["sk_", "pk_", "ghp_", "xoxb-", "xoxp-", "xoxa-"] as const;
 
+/** Match JSON object keys that may carry secret values — not substrings like "secrets". */
 const SECRET_KEY_JSON_PATTERN =
-  /"(?:api[_-]?key|secret|password|token|credential|private[_-]?key)"/i;
+  /"(?:api[_-]?key|secret|password|token|credential|private[_-]?key)"\s*:/i;
 
 const HIGH_ENTROPY_PATTERN = /[A-Za-z0-9+/]{40,}={0,2}/;
 

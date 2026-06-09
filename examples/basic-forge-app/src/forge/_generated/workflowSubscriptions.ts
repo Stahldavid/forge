@@ -1,0 +1,28 @@
+// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=b309bdb872f68066625b235504c929c6e504360b47e8fdbbf83f04661e8b4cff
+export const workflowSubscriptions = {
+  "analyzerVersion": "0.1.0",
+  "byEvent": {
+    "ticket.created": [
+      {
+        "eventType": "ticket.created",
+        "exportName": "triageTicketWorkflow",
+        "file": "src/workflows/triageTicketWorkflow.ts",
+        "symbolId": "bf2312cc6a628448ad8c940452c76c3c571159716fe30f73831865fcf5fcb84f",
+        "workflowName": "triageTicketWorkflow"
+      }
+    ]
+  },
+  "diagnostics": [],
+  "generatorVersion": "0.0.0",
+  "inputHash": "e3eefb2c625a3b005b7abe02a7261ea498f4a7833d21900ab73dd21a03a1af88",
+  "schemaVersion": "0.1.0",
+  "subscriptions": [
+    {
+      "eventType": "ticket.created",
+      "exportName": "triageTicketWorkflow",
+      "file": "src/workflows/triageTicketWorkflow.ts",
+      "symbolId": "bf2312cc6a628448ad8c940452c76c3c571159716fe30f73831865fcf5fcb84f",
+      "workflowName": "triageTicketWorkflow"
+    }
+  ]
+} as const;

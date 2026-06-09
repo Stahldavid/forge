@@ -3,12 +3,20 @@ import type { AuthRequirement } from "../policy/index.ts";
 
 export type { AuthContext };
 
+export type {
+  AiContext,
+  ForgeGenerateTextInput,
+  ForgeGenerateTextResult,
+} from "./ai.ts";
+
 export interface ForgeContext {
   db: Record<string, unknown>;
   emit: (eventType: string, payload: unknown) => Promise<void>;
   env: Record<string, string | undefined>;
   telemetry: import("./telemetry.ts").TelemetryContext;
   auth: AuthContext;
+  /** Injected by Forge runtime on server/action/workflow/endpoint contexts. */
+  ai: import("./ai.ts").AiContext;
 }
 
 export interface ForgeCommandMeta {
@@ -102,6 +110,7 @@ export interface WorkflowRunContext {
   env: Record<string, string | undefined>;
   telemetry: import("./telemetry.ts").TelemetryContext;
   auth: AuthContext;
+  ai: import("./ai.ts").AiContext;
 }
 
 export interface WorkflowStepDefinition<T = unknown> {

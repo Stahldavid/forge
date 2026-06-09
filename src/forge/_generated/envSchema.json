@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=a364a2ec435f1ad252c1d418c40d3d787ffd94db8ab078dc670d129e1ab2d4fd content=2b05a61f3aa50ce63ce5e26603d7be5de5a586e3e686148dfe5b2dc586054eec
+{"variables":[{"integration":"ai-gateway","kind":"secret","name":"AI_GATEWAY_API_KEY","public":false,"required":true,"source":"recipe"},{"integration":"ai-provider-anthropic","kind":"secret","name":"ANTHROPIC_API_KEY","public":false,"required":true,"source":"recipe"},{"integration":"ai-provider-openai","kind":"secret","name":"OPENAI_API_KEY","public":false,"required":true,"source":"recipe"}]}

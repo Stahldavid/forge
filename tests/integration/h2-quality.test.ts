@@ -143,7 +143,7 @@ describe("H2 reference integration quality", () => {
     }
   });
 
-  test("ai emits generations, evals, and provider modules", async () => {
+  test("ai emits generations and testkit modules", async () => {
     const workspace = scaffoldAddWorkspace("h2-ai");
     try {
       await forgeAdd("ai", {
@@ -158,19 +158,13 @@ describe("H2 reference integration quality", () => {
 
       expect(existsSync(join(workspace, GENERATED, "packages/ai.server.ts"))).toBe(true);
       expect(existsSync(join(workspace, GENERATED, "integrations/ai/generations.ts"))).toBe(true);
-      expect(existsSync(join(workspace, GENERATED, "integrations/ai/evals.ts"))).toBe(true);
-      expect(
-        existsSync(join(workspace, GENERATED, "integrations/ai/providers/openai.ts")),
-      ).toBe(true);
-      expect(
-        existsSync(join(workspace, GENERATED, "integrations/ai/providers/anthropic.ts")),
-      ).toBe(true);
+      expect(existsSync(join(workspace, GENERATED, "integrations/ai/testkit.ts"))).toBe(true);
 
-      const openai = readGenerated(
+      const generations = readGenerated(
         workspace,
-        `${GENERATED}/integrations/ai/providers/openai.ts`,
+        `${GENERATED}/integrations/ai/generations.ts`,
       );
-      expect(openai).toContain("OPENAI_API_KEY");
+      expect(generations).toContain("forge.ai.generation.started");
     } finally {
       cleanupWorkspace(workspace);
     }

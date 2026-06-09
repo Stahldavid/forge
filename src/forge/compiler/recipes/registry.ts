@@ -54,7 +54,10 @@ export function resolveRecipe(alias: string): IntegrationRecipe | null {
   if (direct) return direct;
 
   const provider = AI_PROVIDER_RECIPES.find(
-    (r) => r.alias.toLowerCase() === normalized || r.alias === alias,
+    (r) =>
+      r.alias.toLowerCase() === normalized ||
+      r.alias === alias ||
+      r.packages.some((pkg) => pkg.packageName.toLowerCase() === normalized),
   );
   if (provider) return provider;
 

@@ -10,6 +10,7 @@ import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import { adapterAsTransaction, type DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
 import { createForgeContext, createNoopTelemetryContext, getRuntimeEnvStore } from "../context/create-context.ts";
+import { createAiContext } from "../ai/context.ts";
 import { createRuntimeSecretsBundle } from "../secrets/runtime-bundle.ts";
 import { loadEnvSchema, loadSecretRegistry } from "../secrets/check.ts";
 import type { RuntimeContext } from "../../compiler/types/runtime.ts";
@@ -99,13 +100,19 @@ export function resolveHandlerFromModule(
           runtimeKind: runtime?.runtimeKind ?? "command",
         });
 
+        const stubTelemetry = createNoopTelemetryContext(generateTraceId());
         const stubCtx = {
           db: {},
           env: store.snapshot(),
-          telemetry: createNoopTelemetryContext(generateTraceId()),
+          telemetry: stubTelemetry,
           auth: runtime?.auth ?? { kind: "anonymous" as const },
           secrets: bundle.secrets,
           config: bundle.config,
+          ai: createAiContext({
+            secrets: bundle.secrets,
+            telemetry: stubTelemetry,
+            runtimeKind: runtime?.runtimeKind ?? "command",
+          }),
           emit: async () => {
             /* no-op without db */
           },

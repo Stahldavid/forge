@@ -19,6 +19,7 @@ import {
   buildEnvSchema,
   buildSecretRegistry,
 } from "../secret-registry/build.ts";
+import { buildAiModels, buildAiRegistry } from "../ai-registry/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -88,6 +89,13 @@ import {
   serializeEnvSchemaTs,
   serializeConfigRegistryJson,
   serializeConfigRegistryTs,
+  serializeAiRegistryJson,
+  serializeAiRegistryTs,
+  serializeAiProvidersJson,
+  serializeAiProvidersTs,
+  serializeAiModelsJson,
+  serializeAiModelsTs,
+  serializeAiContextTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -170,6 +178,8 @@ export function plan(input: PlanInput): EmitPlan {
     input.classified,
   );
   const configRegistry = buildConfigRegistry(secretRegistry);
+  const aiRegistry = buildAiRegistry(input.appGraph, input.classified);
+  const aiModels = buildAiModels();
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -337,6 +347,25 @@ export function plan(input: PlanInput): EmitPlan {
       `${GENERATED_DIR}/configRegistry.json`,
       serializeConfigRegistryJson(configRegistry),
     ),
+    makeEmitFile(
+      `${GENERATED_DIR}/aiRegistry.ts`,
+      serializeAiRegistryTs(aiRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/aiRegistry.json`,
+      serializeAiRegistryJson(aiRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/aiProviders.ts`,
+      serializeAiProvidersTs(aiRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/aiProviders.json`,
+      serializeAiProvidersJson(aiRegistry),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/aiModels.ts`, serializeAiModelsTs(aiModels)),
+    makeEmitFile(`${GENERATED_DIR}/aiModels.json`, serializeAiModelsJson(aiModels)),
+    makeEmitFile(`${GENERATED_DIR}/aiContext.ts`, serializeAiContextTs()),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);

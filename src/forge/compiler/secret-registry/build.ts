@@ -15,6 +15,8 @@ const SECRET_CONTEXTS: RuntimeContext[] = [
   "action",
   "workflow",
   "endpoint",
+  "test",
+  "build",
 ];
 
 const CONFIG_CONTEXTS: RuntimeContext[] = [

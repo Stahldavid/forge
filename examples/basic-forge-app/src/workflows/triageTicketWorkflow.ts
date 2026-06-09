@@ -17,16 +17,31 @@ export const triageTicketWorkflow = workflow({
     }),
     step("triageWithAI", async (ctx) => {
       const loaded = ctx.steps.loadTicket?.output as { ticket: { title: string } };
+      const result = await ctx.ai.generateText({
+        provider: "openai",
+        model: "gpt-4o-mini",
+        prompt: `Triage ticket: ${loaded.ticket.title}`,
+        purpose: "ticket_triage",
+      });
+      const priority = result.text.toLowerCase().includes("urgent") ? "high" : "normal";
       return {
-        priority: loaded.ticket.title.toLowerCase().includes("urgent") ? "high" : "normal",
-        model: "stub",
+        priority,
+        model: result.model,
+        usage: result.usage,
       };
     }),
-    step("captureAnalytics", async (ctx) => {
+    step("captureTriageAnalytics", async (ctx) => {
+      const triage = ctx.steps.triageWithAI?.output as {
+        priority: string;
+        model: string;
+        usage: { totalTokens: number };
+      };
       await ctx.telemetry.capture("workflow_ticket_triaged", {
         traceId: ctx.telemetry.traceId,
+        priority: triage.priority,
+        model: triage.model,
+        tokens: triage.usage?.totalTokens,
       });
-      const triage = ctx.steps.triageWithAI?.output as { priority: string };
       return { captured: true, priority: triage.priority };
     }),
   ],

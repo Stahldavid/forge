@@ -8,6 +8,8 @@ import type { TelemetrySubcommand } from "./telemetry.ts";
 import type { PolicySubcommand } from "./policy.ts";
 import type { SecretsSubcommand } from "./secrets.ts";
 import type { EnvSubcommand } from "./secrets.ts";
+import type { AiSubcommand } from "./ai.ts";
+import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -21,6 +23,7 @@ export type ForgeCommand =
       host?: string;
       port?: number;
       mock: boolean;
+      mockAi: boolean;
       watch: boolean;
       json: boolean;
       db: "pglite" | "postgres" | "none";
@@ -102,6 +105,16 @@ export type ForgeCommand =
       json: boolean;
       redacted: boolean;
       workspaceRoot: string;
+    }
+  | {
+      kind: "ai";
+      subcommand: AiSubcommand;
+      json: boolean;
+      provider?: ForgeAiProvider;
+      model?: string;
+      prompt?: string;
+      mock: boolean;
+      workspaceRoot: string;
     };
 
 export interface ParsedCli {
@@ -124,6 +137,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "policies",
   "secrets",
   "env",
+  "ai",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -182,7 +196,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, telemetry, policy, secrets, or env",
+      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -296,12 +310,16 @@ export function parseCli(argv: string[]): ParsedCli {
       if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {
         errors.push("--port must be a non-negative integer");
       }
+      const aiMode = parseOptionValue(argv, "--ai");
+      const mockAi =
+        parseFlag(argv, "--mock-ai") || aiMode === "mock" || process.env.FORGE_MOCK_AI === "1";
       return {
         command: {
           kind: "dev",
           host: parseOptionValue(argv, "--host"),
           port,
           mock: parseFlag(argv, "--mock"),
+          mockAi,
           watch: parseFlag(argv, "--watch"),
           json: parseFlag(argv, "--json"),
           db: parseDbKind(parseOptionValue(argv, "--db")),
@@ -559,6 +577,31 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "ai": {
+      const subcommand = rest[0] as AiSubcommand | undefined;
+      if (!subcommand || !["providers", "check", "test", "models"].includes(subcommand)) {
+        errors.push("forge ai requires subcommand: providers, check, test, or models");
+        return { command: null, workspaceRoot, errors };
+      }
+
+      const providerRaw = parseOptionValue(argv, "--provider");
+      const provider = providerRaw as ForgeAiProvider | undefined;
+
+      return {
+        command: {
+          kind: "ai",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          provider,
+          model: parseOptionValue(argv, "--model"),
+          prompt: parseOptionValue(argv, "--prompt"),
+          mock: parseFlag(argv, "--mock"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     default:
       errors.push(`unrecognized command '${commandName}'`);
       return { command: null, workspaceRoot, errors };
@@ -600,6 +643,11 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--strict-secrets",
     "--env-file",
     "--redacted",
+    "--mock-ai",
+    "--ai",
+    "--provider",
+    "--model",
+    "--prompt",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -625,7 +673,11 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--tenant-id" ||
         arg === "--role" ||
         arg === "--strict-policies" ||
-        arg === "--env-file"
+        arg === "--env-file" ||
+        arg === "--ai" ||
+        arg === "--provider" ||
+        arg === "--model" ||
+        arg === "--prompt"
       ) {
         index += 1;
       }

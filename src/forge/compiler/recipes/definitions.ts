@@ -12,6 +12,24 @@ const SERVER_CONTEXTS: RuntimeContext[] = [
   "endpoint",
 ];
 
+const AI_CONTEXTS: RuntimeContext[] = [
+  "server",
+  "action",
+  "workflow",
+  "endpoint",
+  "test",
+  "build",
+];
+
+const AI_DENIED_CONTEXTS: RuntimeContext[] = [
+  "shared",
+  "client",
+  "query",
+  "liveQuery",
+  "command",
+  "edge",
+];
+
 const CLIENT_CONTEXTS: RuntimeContext[] = ["client"];
 
 const ALL_CONTEXTS: RuntimeContext[] = [
@@ -175,58 +193,72 @@ export const ZOD_RECIPE: IntegrationRecipe = {
 export const AI_RECIPE: IntegrationRecipe = {
   alias: "ai",
   packages: [{ packageName: "ai" }],
-  supportedVersionRange: ">=4.0.0",
+  supportedVersionRange: ">=5.0.0",
   recipeVersion: "2.0.0",
   contexts: {
-    allowed: SERVER_CONTEXTS,
-    denied: ["client", "shared", "query", "liveQuery", "command"],
+    allowed: AI_CONTEXTS,
+    denied: AI_DENIED_CONTEXTS,
   },
   capabilities: networkCapability(
     ["provider-dependent"],
     ["recipe:ai", "provider packages classified separately"],
   ),
-  secrets: [secret("OPENAI_API_KEY"), secret("ANTHROPIC_API_KEY")],
-  adapters: ["ai.server.ts"],
-  integrations: [
-    "ai/generations.ts",
-    "ai/evals.ts",
-    "ai/providers/openai.ts",
-    "ai/providers/anthropic.ts",
+  secrets: [
+    secret("OPENAI_API_KEY"),
+    secret("ANTHROPIC_API_KEY"),
+    secret("AI_GATEWAY_API_KEY", false),
   ],
+  adapters: ["ai.server.ts"],
+  integrations: ["ai/generations.ts", "ai/testkit.ts"],
   testkits: ["ai.mock.ts"],
   docs: ["ai.md"],
 };
 
 export const AI_PROVIDER_RECIPES: IntegrationRecipe[] = [
   {
-    alias: "@ai-sdk/openai",
+    alias: "ai-provider-openai",
     packages: [{ packageName: "@ai-sdk/openai", role: "provider" }],
     supportedVersionRange: ">=1.0.0",
     recipeVersion: "1.0.0",
     contexts: {
-      allowed: SERVER_CONTEXTS,
-      denied: ["client", "shared", "query", "liveQuery", "command"],
+      allowed: AI_CONTEXTS,
+      denied: AI_DENIED_CONTEXTS,
     },
-    capabilities: networkCapability(["api.openai.com"], ["recipe:@ai-sdk/openai"]),
+    capabilities: networkCapability(["api.openai.com"], ["recipe:ai-provider-openai"]),
     secrets: [secret("OPENAI_API_KEY")],
     adapters: ["ai.openai.server.ts"],
     testkits: ["ai.openai.mock.ts"],
     docs: ["ai-openai.md"],
   },
   {
-    alias: "@ai-sdk/anthropic",
+    alias: "ai-provider-anthropic",
     packages: [{ packageName: "@ai-sdk/anthropic", role: "provider" }],
     supportedVersionRange: ">=1.0.0",
     recipeVersion: "1.0.0",
     contexts: {
-      allowed: SERVER_CONTEXTS,
-      denied: ["client", "shared", "query", "liveQuery", "command"],
+      allowed: AI_CONTEXTS,
+      denied: AI_DENIED_CONTEXTS,
     },
-    capabilities: networkCapability(["api.anthropic.com"], ["recipe:@ai-sdk/anthropic"]),
+    capabilities: networkCapability(["api.anthropic.com"], ["recipe:ai-provider-anthropic"]),
     secrets: [secret("ANTHROPIC_API_KEY")],
     adapters: ["ai.anthropic.server.ts"],
     testkits: ["ai.anthropic.mock.ts"],
     docs: ["ai-anthropic.md"],
+  },
+  {
+    alias: "ai-gateway",
+    packages: [{ packageName: "ai", role: "gateway" }],
+    supportedVersionRange: ">=5.0.0",
+    recipeVersion: "1.0.0",
+    contexts: {
+      allowed: AI_CONTEXTS,
+      denied: AI_DENIED_CONTEXTS,
+    },
+    capabilities: networkCapability(["gateway.ai.vercel.dev"], ["recipe:ai-gateway"]),
+    secrets: [secret("AI_GATEWAY_API_KEY")],
+    adapters: ["ai.gateway.server.ts"],
+    testkits: ["ai.gateway.mock.ts"],
+    docs: ["ai-gateway.md"],
   },
 ];
 

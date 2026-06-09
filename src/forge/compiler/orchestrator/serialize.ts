@@ -402,4 +402,98 @@ export function serializeConfigRegistryTs(registry: import("../types/secret-regi
   return `export const configRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+export function serializeAiRegistryJson(registry: import("../types/ai-registry.ts").AiRegistry): string {
+  const payload = {
+    schemaVersion: registry.schemaVersion,
+    generatorVersion: registry.generatorVersion,
+    analyzerVersion: registry.analyzerVersion,
+    inputHash: registry.inputHash,
+    providers: registry.providers,
+    generations: registry.generations,
+    diagnostics: registry.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeAiRegistryTs(registry: import("../types/ai-registry.ts").AiRegistry): string {
+  const parsed: unknown = JSON.parse(serializeAiRegistryJson(registry).trimEnd());
+  return `export const aiRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeAiProvidersJson(registry: import("../types/ai-registry.ts").AiRegistry): string {
+  return serializeCanonical({ providers: registry.providers });
+}
+
+export function serializeAiProvidersTs(registry: import("../types/ai-registry.ts").AiRegistry): string {
+  const parsed: unknown = JSON.parse(serializeAiProvidersJson(registry).trimEnd());
+  return `export const aiProviders = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeAiModelsJson(models: import("../types/ai-registry.ts").AiModelDefinition[]): string {
+  return serializeCanonical({ models });
+}
+
+export function serializeAiModelsTs(models: import("../types/ai-registry.ts").AiModelDefinition[]): string {
+  const parsed: unknown = JSON.parse(serializeAiModelsJson(models).trimEnd());
+  return `export const aiModels = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeAiContextTs(): string {
+  return `export type ForgeAiProvider = "openai" | "anthropic" | "gateway";
+
+export interface ForgeAiUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+export interface ForgeGenerateTextInput {
+  provider: ForgeAiProvider;
+  model: string;
+  prompt: string;
+  system?: string;
+  purpose?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ForgeGenerateTextResult {
+  text: string;
+  provider: ForgeAiProvider;
+  model: string;
+  purpose?: string;
+  usage: ForgeAiUsage;
+  latencyMs: number;
+  estimatedCostUsd?: number;
+}
+
+export interface ForgeStreamTextInput extends ForgeGenerateTextInput {}
+
+export interface ForgeStreamTextResult {
+  textStream: AsyncIterable<string>;
+  text: Promise<string>;
+  provider: ForgeAiProvider;
+  model: string;
+  purpose?: string;
+  usage: Promise<ForgeAiUsage>;
+  latencyMs: number;
+}
+
+export interface ForgeGenerateStructuredInput<T> {
+  provider: ForgeAiProvider;
+  model: string;
+  prompt: string;
+  system?: string;
+  purpose?: string;
+  schema: unknown;
+}
+
+export interface AiContext {
+  generateText(input: ForgeGenerateTextInput): Promise<ForgeGenerateTextResult>;
+  streamText(input: ForgeStreamTextInput): Promise<ForgeStreamTextResult>;
+  generateStructured<T>(input: ForgeGenerateStructuredInput<T>): Promise<T>;
+}
+`;
+}
+
 export type { ImportGuardsArtifact };

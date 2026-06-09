@@ -1,0 +1,15 @@
+// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=8b49ec392cd07a0c11baeba32c23303bd55818aa018d52e2063ad19b4abd445e
+export const tenantScope = {
+  "diagnostics": [
+    {
+      "code": "FORGE_TENANT_TABLE_WITHOUT_TENANT_ID",
+      "file": "src/forge/schema.ts",
+      "message": "table 'tenants' looks tenant-related but has no tenantId field",
+      "severity": "warning"
+    }
+  ],
+  "generatorVersion": "0.0.0",
+  "inputHash": "1d61307c4a61389453e41e59009f62958bc818df62031606085e8751cf70fabc",
+  "schemaVersion": "1.0.0",
+  "tables": []
+} as const;

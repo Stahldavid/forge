@@ -106,7 +106,11 @@ export async function processWorkflowStep(
       sinks: ["local"],
     });
 
-    const baseCtx = createActionContext(db, telemetry, auth);
+    const baseCtx = createActionContext(db, telemetry, auth, {
+      workspaceRoot,
+      runtimeKind: "workflow",
+      mockAi: mock,
+    });
 
     const ctx = {
       input: run.input,
@@ -115,6 +119,7 @@ export async function processWorkflowStep(
       env: baseCtx.env,
       telemetry,
       auth,
+      ai: baseCtx.ai,
     };
 
     const runRecord = {

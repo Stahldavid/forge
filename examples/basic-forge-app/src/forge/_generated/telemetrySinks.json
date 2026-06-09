@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=ae2e3f0e3607647acf44e6cc1ce9e858607cbefe58b8df2f73f0a13cbac6f6d3
+{"generatorVersion":"0.0.0","schemaVersion":"1.0.0","sinks":[{"id":"local","kind":"local"},{"id":"posthog","kind":"posthog"}]}

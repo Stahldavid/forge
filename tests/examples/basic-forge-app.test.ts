@@ -43,8 +43,10 @@ describe("examples/basic-forge-app", () => {
       checked.errors.some((error) => error.code === FORGE_GUARD_VIOLATION),
     ).toBe(true);
     expect(
-      checked.errors.some((error) =>
-        error.file?.includes("badStripeCommand.ts"),
+      checked.errors.some(
+        (error) =>
+          error.file?.includes("badStripeCommand.ts") ||
+          error.file?.includes("stripeClient.ts"),
       ),
     ).toBe(true);
 

@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=981608f177f838b5ea11b3a9862ec4e29e8f64e147e01d1ab001b4d005f9e987
+{"tableMap":{"tenants":{"columns":[{"name":"id","primaryKey":true,"sqlType":"uuid"}],"tableName":"tenants"},"tickets":{"columns":[{"name":"id","primaryKey":true,"sqlType":"uuid"}],"tableName":"tickets"}}}
