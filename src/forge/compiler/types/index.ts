@@ -31,6 +31,7 @@ export type {
   AppGraph,
   SourceFile,
 } from "./app-graph.ts";
+export type { DataField, DataTable, DataGraph } from "./data-graph.ts";
 export type {
   JsDoc,
   ExportClassification,

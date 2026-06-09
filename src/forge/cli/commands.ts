@@ -135,6 +135,7 @@ export async function runInspectCommand(
     packages: `${GENERATED_DIR}/packageGraph.json`,
     capabilities: `${GENERATED_DIR}/runtimeMatrix.json`,
     "runtime-matrix": `${GENERATED_DIR}/runtimeMatrix.json`,
+    data: `${GENERATED_DIR}/dataGraph.json`,
   };
 
   const relative = dataPaths[target];

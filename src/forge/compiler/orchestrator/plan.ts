@@ -1,3 +1,4 @@
+import { buildDataGraph } from "../data-graph/build.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type { EmitFile, EmitPlan } from "../types/emit.ts";
@@ -21,6 +22,8 @@ import type { DiscoverContext } from "./types.ts";
 import {
   serializeAppGraphJson,
   serializeAppGraphTs,
+  serializeDataGraphJson,
+  serializeDataGraphTs,
   serializeImportGuardsJson,
   serializeImportGuardsTs,
   serializePackageGraphJson,
@@ -92,6 +95,7 @@ function buildForgeLock(input: PlanInput): ForgeLock {
 
 export function plan(input: PlanInput): EmitPlan {
   const matrix = buildRuntimeMatrix(input.classified);
+  const dataGraph = buildDataGraph(input.appGraph);
 
   const files: EmitFile[] = [
     makeEmitFile(
@@ -125,6 +129,14 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/importGuards.json`,
       serializeImportGuardsJson(matrix, input.appGraph.moduleGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/dataGraph.ts`,
+      serializeDataGraphTs(dataGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/dataGraph.json`,
+      serializeDataGraphJson(dataGraph),
     ),
   ];
 

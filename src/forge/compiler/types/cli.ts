@@ -46,7 +46,8 @@ export type InspectTarget =
   | "app"
   | "packages"
   | "capabilities"
-  | "runtime-matrix";
+  | "runtime-matrix"
+  | "data";
 
 export interface PmAddOptions {
   ignoreScripts: boolean;

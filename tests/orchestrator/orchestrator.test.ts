@@ -65,6 +65,8 @@ describe("plan", () => {
       const sorted = [...paths].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
       expect(paths).toEqual(sorted);
       expect(paths).toContain(`${GENERATED_DIR}/appGraph.ts`);
+      expect(paths).toContain(`${GENERATED_DIR}/dataGraph.ts`);
+      expect(paths).toContain(`${GENERATED_DIR}/dataGraph.json`);
       expect(paths).toContain(`${GENERATED_DIR}/runtimeMatrix.json`);
       expect(paths).toContain(`${GENERATED_DIR}/importGuards.json`);
       expect(emitPlan.lock.packages.some((entry) => entry.name === "zod")).toBe(true);

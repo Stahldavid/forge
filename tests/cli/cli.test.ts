@@ -21,7 +21,13 @@ describe("Forge CLI", () => {
   });
 
   test("parseCli accepts supported inspect targets", () => {
-    for (const target of ["app", "packages", "capabilities", "runtime-matrix"]) {
+    for (const target of [
+      "app",
+      "packages",
+      "capabilities",
+      "runtime-matrix",
+      "data",
+    ]) {
       const parsed = parseCli(["inspect", target]);
       expect(parsed.errors).toEqual([]);
       expect(parsed.command?.kind).toBe("inspect");

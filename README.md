@@ -21,7 +21,7 @@ bun run forge verify
 | `forge generate` | Analyze workspace and emit generated files |
 | `forge generate --check` | Fail on drift without writing |
 | `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
-| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix |
+| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -86,7 +86,7 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 
 1. **H1** — Hardening, CI, examples ✅
 2. **H2** — Reference integration quality (recipe v2 templates) ✅
-3. **H3** — DataGraph Compiler
+3. **H3** — DataGraph Compiler ✅
 4. Runtime, `forge dev`, workflows
 
 ### H2 deliverables (recipe v2.0.0)

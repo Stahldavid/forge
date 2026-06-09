@@ -19,6 +19,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "packages",
   "capabilities",
   "runtime-matrix",
+  "data",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
