@@ -84,7 +84,17 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 
 ## Roadmap
 
-1. **H1** — Hardening, CI, examples (this phase)
-2. **H2** — Reference integration quality (stripe, posthog, sentry, zod, ai)
+1. **H1** — Hardening, CI, examples ✅
+2. **H2** — Reference integration quality (recipe v2 templates) ✅
 3. **H3** — DataGraph Compiler
 4. Runtime, `forge dev`, workflows
+
+### H2 deliverables (recipe v2.0.0)
+
+| Integration | Generated artifacts |
+|-------------|---------------------|
+| **zod** | `zod.shared.ts` with real `z` re-export |
+| **stripe** | `stripe.server.ts`, `stripe.workflow.ts`, `integrations/stripe/webhook.ts`, `stripe.mock.ts` |
+| **posthog** | client/server adapters, `integrations/posthog/events.ts`, `flags.ts` |
+| **sentry** | Next.js-target adapters, `errors.ts`, `releases.ts`, `sourcemaps.ts` |
+| **ai** | `ai.server.ts`, `generations.ts`, `evals.ts`, OpenAI/Anthropic provider modules |

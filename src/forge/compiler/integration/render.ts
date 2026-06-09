@@ -1,7 +1,16 @@
 import type { SecretRequirement } from "../types/capability.ts";
+import type { IntegrationRecipe } from "../types/integration.ts";
 import type { RuntimeContext } from "../types/runtime.ts";
 import { RUNTIME_CONTEXTS } from "../types/runtime.ts";
 import { serializeCanonical } from "../primitives/serialize.ts";
+import {
+  buildTemplateInput,
+  renderQualityAdapter,
+  renderQualityDoc,
+  renderQualityIntegration,
+  renderQualityTestkit,
+} from "./templates/index.ts";
+import type { IntegrationTemplateInput } from "./templates/types.ts";
 
 function capitalizeSegment(value: string): string {
   return value
@@ -21,12 +30,7 @@ export function parseAdapterContext(filename: string): RuntimeContext | null {
   return null;
 }
 
-export function renderAdapterModule(input: {
-  alias: string;
-  context: RuntimeContext;
-  packageName: string;
-  secrets: SecretRequirement[];
-}): string {
+function skeletonAdapter(input: IntegrationTemplateInput): string {
   const secretNames = input.secrets.map((secret) => secret.envVar).sort();
   const exportName = `forge${capitalizeSegment(input.alias)}${capitalizeSegment(input.context)}Adapter`;
 
@@ -42,7 +46,7 @@ export function renderAdapterModule(input: {
   ].join("\n");
 }
 
-export function renderTestkitModule(alias: string, packageName: string): string {
+function skeletonTestkit(alias: string, packageName: string): string {
   const exportName = `create${capitalizeSegment(alias)}Mock`;
   return [
     `/** Forge generated mock testkit for ${alias}. */`,
@@ -57,13 +61,7 @@ export function renderTestkitModule(alias: string, packageName: string): string 
   ].join("\n");
 }
 
-export function renderIntegrationDoc(input: {
-  alias: string;
-  packageNames: string[];
-  secrets: SecretRequirement[];
-  compatible: RuntimeContext[];
-  incompatible: RuntimeContext[];
-}): string {
+function skeletonDoc(input: IntegrationTemplateInput): string {
   const secretNames = input.secrets.map((secret) => secret.envVar).sort();
   const lines = [
     `# ${input.alias} integration`,
@@ -83,4 +81,109 @@ export function renderIntegrationDoc(input: {
   }
 
   return lines.join("\n");
+}
+
+export function createRenderContext(input: {
+  alias: string;
+  recipe: IntegrationRecipe;
+  context: RuntimeContext;
+  packageName: string;
+  packageNames: string[];
+  secrets: SecretRequirement[];
+  compatible: RuntimeContext[];
+  incompatible: RuntimeContext[];
+}): IntegrationTemplateInput {
+  return buildTemplateInput(input);
+}
+
+export function renderAdapterModule(input: {
+  alias: string;
+  recipe: IntegrationRecipe;
+  context: RuntimeContext;
+  packageName: string;
+  packageNames: string[];
+  secrets: SecretRequirement[];
+  compatible: RuntimeContext[];
+  incompatible: RuntimeContext[];
+}): string {
+  const ctx = createRenderContext(input);
+  const adapterFilename = `${input.alias}.${input.context}.ts`;
+  const quality = renderQualityAdapter(adapterFilename, ctx);
+  if (quality) {
+    return quality;
+  }
+
+  const resolvedName = input.recipe.adapters.find((name) =>
+    parseAdapterContext(name) === input.context,
+  );
+  if (resolvedName) {
+    const byName = renderQualityAdapter(resolvedName, ctx);
+    if (byName) {
+      return byName;
+    }
+  }
+
+  return skeletonAdapter(ctx);
+}
+
+export function renderIntegrationModule(
+  relativePath: string,
+  input: IntegrationTemplateInput,
+): string {
+  const quality = renderQualityIntegration(relativePath, input);
+  if (quality) {
+    return quality;
+  }
+
+  return [
+    `/** Forge generated integration module: ${relativePath} */`,
+    `export const forgeIntegration = ${serializeCanonical({
+      alias: input.alias,
+      module: relativePath,
+    }).trim()} as const;`,
+    "",
+  ].join("\n");
+}
+
+export function renderTestkitModule(
+  alias: string,
+  packageName: string,
+  input?: IntegrationTemplateInput,
+): string {
+  const filename = `${alias}.mock.ts`;
+  if (input) {
+    const quality = renderQualityTestkit(filename, input);
+    if (quality) {
+      return quality;
+    }
+  }
+  return skeletonTestkit(alias, packageName);
+}
+
+export function renderIntegrationDoc(input: {
+  alias: string;
+  recipe: IntegrationRecipe;
+  packageNames: string[];
+  secrets: SecretRequirement[];
+  compatible: RuntimeContext[];
+  incompatible: RuntimeContext[];
+}): string {
+  const ctx = buildTemplateInput({
+    alias: input.alias,
+    recipe: input.recipe,
+    context: "shared",
+    packageName: input.packageNames[0] ?? input.alias,
+    packageNames: input.packageNames,
+    secrets: input.secrets,
+    compatible: input.compatible,
+    incompatible: input.incompatible,
+  });
+
+  const docName = `${input.alias}.md`;
+  const quality = renderQualityDoc(docName, ctx);
+  if (quality) {
+    return quality;
+  }
+
+  return skeletonDoc(ctx);
 }

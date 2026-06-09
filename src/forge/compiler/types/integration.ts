@@ -17,7 +17,9 @@ export interface IntegrationRecipe {
   capabilities: CapabilitySet;
   secrets: SecretRequirement[];
   adapters: string[];
+  integrations?: string[];
   testkits: string[];
   docs: string[];
+  frameworkTarget?: string;
   importRewrites?: { from: string; to: string }[];
 }

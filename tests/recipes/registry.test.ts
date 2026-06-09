@@ -14,7 +14,7 @@ describe("Integration Recipe Registry", () => {
       const recipe = resolveRecipe(alias);
       expect(recipe).not.toBeNull();
       expect(recipe!.alias).toBe(alias);
-      expect(recipe!.recipeVersion).toBe("1.0.0");
+      expect(recipe!.recipeVersion).toBe("2.0.0");
     }
   });
 
@@ -74,7 +74,10 @@ describe("Integration Recipe Registry", () => {
     expect(anthropic.packages[0]!.packageName).toBe("@ai-sdk/anthropic");
     expect(anthropic.secrets.map((s) => s.envVar)).toEqual(["ANTHROPIC_API_KEY"]);
 
-    expect(AI_RECIPE.secrets).toEqual([]);
+    expect(AI_RECIPE.secrets.map((s) => s.envVar).sort()).toEqual([
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY",
+    ]);
     expect(openai.alias).not.toBe(AI_RECIPE.alias);
   });
 

@@ -58,7 +58,9 @@ describe("forge add integration", () => {
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
       ]);
-      expect(stripeEntry?.recipeVersion).toBe("1.0.0");
+      expect(stripeEntry?.recipeVersion).toBe("2.0.0");
+      expect(existsSync(join(workspace, "src/forge/_generated/packages/stripe.workflow.ts"))).toBe(true);
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/stripe/webhook.ts"))).toBe(true);
       expect(stripeEntry?.generatedFiles.every((path) => existsSync(join(workspace, path)))).toBe(true);
     } finally {
       cleanupWorkspace(workspace);

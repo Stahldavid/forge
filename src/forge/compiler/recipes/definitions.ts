@@ -44,7 +44,7 @@ export const STRIPE_RECIPE: IntegrationRecipe = {
   alias: "stripe",
   packages: [{ packageName: "stripe" }],
   supportedVersionRange: ">=17.0.0",
-  recipeVersion: "1.0.0",
+  recipeVersion: "2.0.0",
   contexts: {
     allowed: SERVER_CONTEXTS,
     denied: ["client", "shared", "query", "liveQuery", "command"],
@@ -54,7 +54,8 @@ export const STRIPE_RECIPE: IntegrationRecipe = {
     secret("STRIPE_SECRET_KEY"),
     secret("STRIPE_WEBHOOK_SECRET"),
   ],
-  adapters: ["stripe.server.ts"],
+  adapters: ["stripe.server.ts", "stripe.workflow.ts"],
+  integrations: ["stripe/webhook.ts"],
   testkits: ["stripe.mock.ts"],
   docs: ["stripe.md"],
 };
@@ -80,7 +81,7 @@ export const POSTHOG_RECIPE: IntegrationRecipe = {
     },
   ],
   supportedVersionRange: ">=3.0.0",
-  recipeVersion: "1.0.0",
+  recipeVersion: "2.0.0",
   contexts: {
     allowed: [...CLIENT_CONTEXTS, ...SERVER_CONTEXTS],
     denied: ["query", "liveQuery", "command"],
@@ -95,6 +96,7 @@ export const POSTHOG_RECIPE: IntegrationRecipe = {
     secret("POSTHOG_HOST", false),
   ],
   adapters: ["posthog.client.ts", "posthog.server.ts"],
+  integrations: ["posthog/events.ts", "posthog/flags.ts"],
   testkits: ["posthog.mock.ts"],
   docs: ["posthog.md"],
 };
@@ -128,7 +130,8 @@ export const SENTRY_RECIPE: IntegrationRecipe = {
     },
   ],
   supportedVersionRange: ">=8.0.0",
-  recipeVersion: "1.0.0",
+  recipeVersion: "2.0.0",
+  frameworkTarget: "nextjs",
   contexts: {
     allowed: [...CLIENT_CONTEXTS, ...SERVER_CONTEXTS, "edge"],
     denied: ["query", "liveQuery", "command"],
@@ -144,6 +147,11 @@ export const SENTRY_RECIPE: IntegrationRecipe = {
     secret("SENTRY_PROJECT", false),
   ],
   adapters: ["sentry.client.ts", "sentry.server.ts"],
+  integrations: [
+    "sentry/errors.ts",
+    "sentry/releases.ts",
+    "sentry/sourcemaps.ts",
+  ],
   testkits: ["sentry.mock.ts"],
   docs: ["sentry.md"],
 };
@@ -152,7 +160,7 @@ export const ZOD_RECIPE: IntegrationRecipe = {
   alias: "zod",
   packages: [{ packageName: "zod" }],
   supportedVersionRange: ">=3.0.0",
-  recipeVersion: "1.0.0",
+  recipeVersion: "2.0.0",
   contexts: {
     allowed: ALL_CONTEXTS,
     denied: [],
@@ -168,7 +176,7 @@ export const AI_RECIPE: IntegrationRecipe = {
   alias: "ai",
   packages: [{ packageName: "ai" }],
   supportedVersionRange: ">=4.0.0",
-  recipeVersion: "1.0.0",
+  recipeVersion: "2.0.0",
   contexts: {
     allowed: SERVER_CONTEXTS,
     denied: ["client", "shared", "query", "liveQuery", "command"],
@@ -177,8 +185,14 @@ export const AI_RECIPE: IntegrationRecipe = {
     ["provider-dependent"],
     ["recipe:ai", "provider packages classified separately"],
   ),
-  secrets: [],
+  secrets: [secret("OPENAI_API_KEY"), secret("ANTHROPIC_API_KEY")],
   adapters: ["ai.server.ts"],
+  integrations: [
+    "ai/generations.ts",
+    "ai/evals.ts",
+    "ai/providers/openai.ts",
+    "ai/providers/anthropic.ts",
+  ],
   testkits: ["ai.mock.ts"],
   docs: ["ai.md"],
 };

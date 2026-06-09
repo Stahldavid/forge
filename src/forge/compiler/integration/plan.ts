@@ -23,9 +23,11 @@ import { stableSortEmitFiles, stableSortStrings } from "../primitives/index.ts";
 import { detectOrphanedGeneratedFiles } from "../orchestrator/orphans.ts";
 import type { DiscoverContext } from "../orchestrator/types.ts";
 import {
+  createRenderContext,
   parseAdapterContext,
   renderAdapterModule,
   renderIntegrationDoc,
+  renderIntegrationModule,
   renderTestkitModule,
 } from "./render.ts";
 
@@ -101,6 +103,10 @@ function buildGeneratedPaths(
     paths.push(`${GENERATED_DIR}/docs/${doc}`);
   }
 
+  for (const integration of recipe.integrations ?? []) {
+    paths.push(`${GENERATED_DIR}/integrations/${integration}`);
+  }
+
   paths.push(
     `${GENERATED_DIR}/runtimeMatrix.ts`,
     `${GENERATED_DIR}/runtimeMatrix.json`,
@@ -171,6 +177,17 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
   const compatible = mergedCompatibleContexts(recipe, classified);
   const incompatible = primary.classification.incompatible;
   const secrets = detectSecrets(primary.api, recipe);
+  const packageNames = recipe.packages.map((pkg) => pkg.packageName);
+  const templateCtx = createRenderContext({
+    alias: recipe.alias,
+    recipe,
+    context: "server",
+    packageName: primaryPackageName(recipe),
+    packageNames,
+    secrets,
+    compatible,
+    incompatible,
+  });
 
   const files: EmitFile[] = [];
 
@@ -184,10 +201,23 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
         `${GENERATED_DIR}/packages/${adapter}`,
         renderAdapterModule({
           alias: recipe.alias,
+          recipe,
           context,
           packageName: primaryPackageName(recipe),
+          packageNames,
           secrets,
+          compatible,
+          incompatible,
         }),
+      ),
+    );
+  }
+
+  for (const integration of recipe.integrations ?? []) {
+    files.push(
+      makeEmitFile(
+        `${GENERATED_DIR}/integrations/${integration}`,
+        renderIntegrationModule(integration, templateCtx),
       ),
     );
   }
@@ -196,7 +226,7 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
     files.push(
       makeEmitFile(
         `${GENERATED_DIR}/testkits/${testkit}`,
-        renderTestkitModule(recipe.alias, primaryPackageName(recipe)),
+        renderTestkitModule(recipe.alias, primaryPackageName(recipe), templateCtx),
       ),
     );
   }
@@ -207,7 +237,8 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
         `${GENERATED_DIR}/docs/${doc}`,
         renderIntegrationDoc({
           alias: recipe.alias,
-          packageNames: recipe.packages.map((pkg) => pkg.packageName),
+          recipe,
+          packageNames,
           secrets,
           compatible,
           incompatible,
