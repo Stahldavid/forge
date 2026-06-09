@@ -48,6 +48,22 @@ export function parseCommandAuthFromSlice(sourceSlice: string):
   | { kind: "public" }
   | { kind: "system" }
   | { kind: "user" } {
+  return parseAuthFromSlice(sourceSlice);
+}
+
+export function parseQueryAuthFromSlice(sourceSlice: string):
+  | { kind: "policy"; policy: string }
+  | { kind: "public" }
+  | { kind: "system" }
+  | { kind: "user" } {
+  return parseAuthFromSlice(sourceSlice);
+}
+
+export function parseAuthFromSlice(sourceSlice: string):
+  | { kind: "policy"; policy: string }
+  | { kind: "public" }
+  | { kind: "system" }
+  | { kind: "user" } {
   const canMatch = sourceSlice.match(COMMAND_AUTH_CAN_PATTERN);
   if (canMatch?.[1]) {
     return { kind: "policy", policy: canMatch[1] };

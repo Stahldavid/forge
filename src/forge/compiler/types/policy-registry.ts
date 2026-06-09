@@ -19,6 +19,17 @@ export interface CommandAuthBinding {
     | { kind: "user" };
 }
 
+export interface QueryAuthBinding {
+  queryName: string;
+  file: string;
+  symbolId: string;
+  auth:
+    | { kind: "policy"; policy: string }
+    | { kind: "public" }
+    | { kind: "system" }
+    | { kind: "user" };
+}
+
 export interface PermissionMatrixEntry {
   policy: string;
   roles: string[];
@@ -38,6 +49,7 @@ export interface PolicyRegistry {
   inputHash: string;
   policies: PolicyRule[];
   commandAuth: CommandAuthBinding[];
+  queryAuth: QueryAuthBinding[];
   diagnostics: Diagnostic[];
 }
 

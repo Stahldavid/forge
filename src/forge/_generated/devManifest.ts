@@ -1,10 +1,10 @@
-// @forge-generated generator=0.0.0 input=a364a2ec435f1ad252c1d418c40d3d787ffd94db8ab078dc670d129e1ab2d4fd content=ffb96e6085e83783dabd5ebb96b8c3bb1ca4c8aa2b64018df45bb69ba619b258
+// @forge-generated generator=0.0.0 input=74d18b2b2cd4d5e4291dadc9c7cfe7fb14d285012b483defddf50f750d3153f4 content=467de3e1caf70a6ae8c349b333b5c3b7aa00ca98dca1b49702534f9da7c75be0
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
   "entries": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "1b26283afaabd321bf7bae8d4442dad62864dec16331ad6365acd97aa13d828c",
+  "inputHash": "f641f2ebb37af6339a63fe4ca2a2e22dada00adf1660e3c51a5b9f65bba28fd4",
   "routes": [
     {
       "method": "GET",
@@ -15,6 +15,11 @@ export const devManifest = {
       "method": "GET",
       "path": "/health",
       "purpose": "health"
+    },
+    {
+      "method": "GET",
+      "path": "/queries",
+      "purpose": "queries"
     },
     {
       "method": "GET",

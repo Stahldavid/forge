@@ -16,6 +16,7 @@ import {
   prepareRuntimeEnvironment,
   runEntry,
 } from "../runtime/executor.ts";
+import { listQueries, runQuery } from "../runtime/query/run-query.ts";
 import {
   getOutboxSummary,
   listOutboxDeliveries,
@@ -127,17 +128,19 @@ export async function startDevServer(
 
   const telemetrySinks = options.telemetry ?? ["local"];
 
+  const dbMode = options.db ?? "none";
+
   const serverState: DevServerState = {
     adapter: null,
     db: {
-      kind: options.db,
+      kind: dbMode,
       connected: false,
     },
   };
 
-  if (options.db !== "none") {
+  if (dbMode !== "none") {
     const { adapter, diagnostics } = await createDbAdapter({
-      kind: options.db,
+      kind: dbMode,
       workspaceRoot,
       databaseUrl: options.databaseUrl,
     });
@@ -361,10 +364,24 @@ export async function startDevServer(
 
         if (request.method === "GET" && pathname === "/entries") {
           const listed = listEntries(workspaceRoot);
+          const queries = listQueries(workspaceRoot);
           return jsonResponse({
             ok: true,
-            entries: listed.entries,
-            diagnostics: listed.diagnostics,
+            entries: [...queries.queries.map((query) => ({
+              name: query.name,
+              kind: "query",
+              file: query.file,
+            })), ...listed.entries],
+            diagnostics: [...listed.diagnostics, ...queries.diagnostics],
+          });
+        }
+
+        if (request.method === "GET" && pathname === "/queries") {
+          const queries = listQueries(workspaceRoot);
+          return jsonResponse({
+            ok: true,
+            queries: queries.queries,
+            diagnostics: queries.diagnostics,
           });
         }
 
@@ -546,8 +563,11 @@ export async function startDevServer(
 
           let entryName: string | null = null;
           let expectedKind: "command" | "action" | null = null;
+          let queryName: string | null = null;
 
-          if (pathname.startsWith("/run/")) {
+          if (pathname.startsWith("/queries/")) {
+            queryName = parseInvokeName(pathname, "/queries/");
+          } else if (pathname.startsWith("/run/")) {
             entryName = parseInvokeName(pathname, "/run/");
           } else if (pathname.startsWith("/commands/")) {
             entryName = parseInvokeName(pathname, "/commands/");
@@ -555,6 +575,52 @@ export async function startDevServer(
           } else if (pathname.startsWith("/actions/")) {
             entryName = parseInvokeName(pathname, "/actions/");
             expectedKind = "action";
+          }
+
+          if (queryName) {
+            if (!serverState.adapter) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_DEV_SERVER_ERROR,
+                      message: "database not connected",
+                    }),
+                  ],
+                },
+                400,
+              );
+            }
+
+            const args = await parseRequestArgs(request);
+            const auth = parseAuthHeaders(request.headers);
+
+            const result = await runQuery(
+              workspaceRoot,
+              queryName,
+              { args, auth },
+              {
+                adapter: serverState.adapter,
+                tableMap,
+              },
+            );
+
+            const policyDenied = result.diagnostics.some(
+              (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
+            );
+
+            return jsonResponse(
+              {
+                ok: result.ok,
+                result: result.result,
+                traceId: result.traceId,
+                diagnostics: result.diagnostics,
+              },
+              result.ok ? 200 : policyDenied ? 403 : 400,
+              result.traceId ? { "x-forge-trace-id": result.traceId } : {},
+            );
           }
 
           if (entryName) {

@@ -6,6 +6,7 @@ import type {
   CommandAuthBinding,
   PermissionMatrix,
   PolicyRegistry,
+  QueryAuthBinding,
   TenantScope,
 } from "../../compiler/types/policy-registry.ts";
 
@@ -44,4 +45,11 @@ export function findCommandAuthBinding(
   commandName: string,
 ): CommandAuthBinding | undefined {
   return registry?.commandAuth.find((binding) => binding.commandName === commandName);
+}
+
+export function findQueryAuthBinding(
+  registry: PolicyRegistry | null,
+  queryName: string,
+): QueryAuthBinding | undefined {
+  return registry?.queryAuth?.find((binding) => binding.queryName === queryName);
 }

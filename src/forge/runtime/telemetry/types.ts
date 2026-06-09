@@ -13,7 +13,8 @@ export type TelemetryRuntimeKind =
   | "action"
   | "workflow"
   | "endpoint"
-  | "dev";
+  | "dev"
+  | "query";
 
 export interface ForgeTelemetryEnvelope {
   schemaVersion: "0.1";

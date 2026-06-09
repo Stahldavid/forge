@@ -19,6 +19,13 @@ import type {
   TenantScope,
 } from "../types/policy-registry.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
+import type { QueryRegistry } from "../types/query-registry.ts";
+import type { ApiSurface } from "../api-surface/build.ts";
+import {
+  serializeApiTs,
+  serializeClientApiTs,
+  serializeServerApiTs,
+} from "../api-surface/build.ts";
 import type { SqlPlan } from "../data-graph/sql/types.ts";
 import {
   serializeDbJson,
@@ -312,6 +319,7 @@ export function serializePolicyRegistryJson(registry: PolicyRegistry): string {
     inputHash: registry.inputHash,
     policies: registry.policies,
     commandAuth: registry.commandAuth,
+    queryAuth: registry.queryAuth,
     diagnostics: registry.diagnostics,
   };
   return serializeCanonical(payload);
@@ -494,6 +502,47 @@ export interface AiContext {
   generateStructured<T>(input: ForgeGenerateStructuredInput<T>): Promise<T>;
 }
 `;
+}
+
+export function serializeQueryRegistryJson(registry: QueryRegistry): string {
+  const payload = {
+    schemaVersion: registry.schemaVersion,
+    generatorVersion: registry.generatorVersion,
+    analyzerVersion: registry.analyzerVersion,
+    inputHash: registry.inputHash,
+    queries: registry.queries,
+    diagnostics: registry.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeQueryRegistryTs(registry: QueryRegistry): string {
+  const parsed: unknown = JSON.parse(serializeQueryRegistryJson(registry).trimEnd());
+  return `export const queryRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeApiJson(surface: ApiSurface): string {
+  return serializeCanonical({
+    schemaVersion: surface.schemaVersion,
+    generatorVersion: surface.generatorVersion,
+    inputHash: surface.inputHash,
+    queries: surface.queries,
+    commands: surface.commands,
+    actions: surface.actions,
+    workflows: surface.workflows,
+  });
+}
+
+export function serializeApiTsExport(surface: ApiSurface): string {
+  return serializeApiTs(surface);
+}
+
+export function serializeServerApiTsExport(surface: ApiSurface): string {
+  return serializeServerApiTs(surface);
+}
+
+export function serializeClientApiTsExport(surface: ApiSurface): string {
+  return serializeClientApiTs(surface);
 }
 
 export type { ImportGuardsArtifact };

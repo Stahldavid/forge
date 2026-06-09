@@ -90,7 +90,7 @@ export function extractSymbolsFromTree(
   function visit(node: SyntaxNode): void {
     if (node.type === "call_expression") {
       const functionNode = node.childForFieldName("function");
-      if (functionNode) {
+      if (functionNode && functionNode.type === "identifier") {
         const callee = resolveCalleeName(functionNode);
         if (callee) {
           const kind = classifyForgeCallee(callee);

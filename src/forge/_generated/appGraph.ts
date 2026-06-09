@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=a364a2ec435f1ad252c1d418c40d3d787ffd94db8ab078dc670d129e1ab2d4fd content=541c12cce4c4b21b76e8f576c8560c58bb82e8898eff92bcc3df94bdc4be8468
+// @forge-generated generator=0.0.0 input=74d18b2b2cd4d5e4291dadc9c7cfe7fb14d285012b483defddf50f750d3153f4 content=0b6d21e7fd95f7339c1fd38cb0ad3c3e543de493aa55fc6f45ba1270f669e96c
 export const appGraph = {
-  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.0+tsconfig:030f09a33959639f937ae9801b67a1fdc674910c0f71abd923163f63425e6db3",
+  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:030f09a33959639f937ae9801b67a1fdc674910c0f71abd923163f63425e6db3",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "122cdcf96481590224781e98bcd4aff276aba7ec6440eb94eb90c2cdb8740966",
+  "inputHash": "b09c70951957be530c0059bb600490fe0789133bc5860062b6b2949de849b372",
   "moduleGraph": {
     "nodes": [
       {
@@ -317,157 +317,192 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 812,
-              "start": 783
+              "end": 826,
+              "start": 785
+            },
+            "toModuleId": "541c114bb608587e6e7e0a365408ee876ad656f135da73a7c48b0f07e038b21d"
+          },
+          {
+            "span": {
+              "end": 893,
+              "start": 864
             },
             "toModuleId": "01d67b71159ba1b140cc9d08bd3e1903026f17925573a983609473fb5f9c9334"
           },
           {
             "span": {
-              "end": 868,
-              "start": 835
+              "end": 949,
+              "start": 916
             },
             "toModuleId": "25a4b04874830471c7787323e9c049c1573f249b8cd01a8f5dfd7d321334a0f4"
           },
           {
             "span": {
-              "end": 934,
-              "start": 896
+              "end": 1015,
+              "start": 977
             },
             "toModuleId": "b46f86bb73ea7c83f3695efd7e03029353e314fd32b302a25633d539d40128a4"
           },
           {
             "span": {
-              "end": 1004,
-              "start": 966
+              "end": 1085,
+              "start": 1047
             },
             "toModuleId": "473e7f0e937c77d26b5db4e27ccd65571fd9c1f490efa17b5ba13ba67cace950"
           },
           {
             "span": {
-              "end": 1077,
-              "start": 1044
+              "end": 1158,
+              "start": 1125
             },
             "toModuleId": "a5e19b453b23188ca45916011457f083c9e4f42bb4552dd3370baa15153ce980"
           },
           {
             "span": {
-              "end": 1156,
-              "start": 1117
+              "end": 1237,
+              "start": 1198
             },
             "toModuleId": "4550dc72cebcc757a16f20cf831d6337e506cbebb6141fd62d6ef0afc66d555e"
           },
           {
             "span": {
-              "end": 1336,
-              "start": 1310
+              "end": 1417,
+              "start": 1391
             },
             "toModuleId": "35c0c542a638be063bff3277164cf8fd35966935a5d3be1a3ae8e606b5543c51"
           },
           {
             "span": {
-              "end": 1411,
-              "start": 1374
+              "end": 1492,
+              "start": 1455
             },
             "toModuleId": "7f21d6c26c66020be67d31ded8b6b72974ab5959f4e49a32fceeca13be8b0a13"
           },
           {
             "span": {
-              "end": 1478,
-              "start": 1444
+              "end": 1559,
+              "start": 1525
             },
             "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
           },
           {
             "span": {
-              "end": 1718,
-              "start": 1705
+              "end": 1799,
+              "start": 1786
             },
             "toModuleId": "89aae10e0c338a9eb43bd1e97a645e7986cb5ca4964a7abeeac8c152db79a47d"
           },
           {
             "span": {
-              "end": 1767,
-              "start": 1755
+              "end": 1848,
+              "start": 1836
             },
             "toModuleId": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb"
           },
           {
             "span": {
-              "end": 1816,
-              "start": 1803
+              "end": 1897,
+              "start": 1884
             },
             "toModuleId": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
           },
           {
             "span": {
-              "end": 1930,
-              "start": 1920
+              "end": 2011,
+              "start": 2001
             },
             "toModuleId": "344fde6f2f26dbb6d2c186a772dfeeba184cb04dca44dda0af27dd92825beef4"
           },
           {
             "span": {
-              "end": 1973,
-              "start": 1963
+              "end": 2054,
+              "start": 2044
             },
             "toModuleId": "aa50923b69999983b16597f383589fff028ebe3294050e34d91b5d1b86acb623"
           },
           {
             "span": {
-              "end": 2051,
-              "start": 2013
+              "end": 2132,
+              "start": 2094
             },
             "toModuleId": "8678528a60437818c73f5822ae95891388141210a5c48ebee6668ebbba26238e"
           },
           {
             "span": {
-              "end": 2121,
-              "start": 2112
+              "end": 2202,
+              "start": 2193
             },
             "toModuleId": "bde2ce165af50cb4cbec4712b3b44d5e84d128a57134de8f6630c93e9dad9299"
           },
           {
             "span": {
-              "end": 2207,
-              "start": 2194
+              "end": 2288,
+              "start": 2275
             },
             "toModuleId": "004d6d451ce52b8ef759dd03d467e207cac0a475a87db97558380b427ca00e2f"
           },
           {
             "span": {
-              "end": 2312,
-              "start": 2297
+              "end": 2393,
+              "start": 2378
             },
             "toModuleId": "dad6fae4970fa2b04ee659c9d5ef68742033980a47c886d1499d9b3d0bbfbd5c"
           },
           {
             "span": {
-              "end": 2421,
-              "start": 2405
+              "end": 2502,
+              "start": 2486
             },
             "toModuleId": "119a5f170ce50375ef50ab0ed0c9c1ca20f1a04490dddba264b22f02a580a455"
           },
           {
             "span": {
-              "end": 2518,
-              "start": 2505
+              "end": 2599,
+              "start": 2586
             },
             "toModuleId": "3d24067a2be1a95c3d3df9dc44c3ccb3855f7bd7c298fe4187e3489fff0e6199"
           },
           {
             "span": {
-              "end": 2674,
-              "start": 2660
+              "end": 2755,
+              "start": 2741
             },
             "toModuleId": "ff3f46f01c461e3cffd8ae00ed2ce9aa0dda58d3c6978891694317156cd529c9"
           },
           {
             "span": {
-              "end": 2744,
-              "start": 2735
+              "end": 2825,
+              "start": 2816
             },
             "toModuleId": "f26fd3c882388a6c64955ae46270336d64bfa202a441ad9c0fe7d5b6ad233380"
+          },
+          {
+            "span": {
+              "end": 2949,
+              "start": 2937
+            },
+            "toModuleId": "9a4ddb5a6cc116b1a18d2f14dc77ecb01c2915d46a15cd6712a55f22435108b2"
+          },
+          {
+            "span": {
+              "end": 3008,
+              "start": 2977
+            },
+            "toModuleId": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292"
+          },
+          {
+            "span": {
+              "end": 3074,
+              "start": 3046
+            },
+            "toModuleId": "f34e7ea37dce9d8303d66a65fc172b9d6fc9d9c879c8caa0ea988316113daa50"
+          },
+          {
+            "span": {
+              "end": 3136,
+              "start": 3112
+            },
+            "toModuleId": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
           }
         ]
       },
@@ -602,14 +637,70 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/compiler/query-registry/build.ts",
+        "id": "0d1e646751b63043d69a79115a2354de3b2fa0d3b63a6e64d0daa6c51933a420",
+        "localImports": [
+          {
+            "span": {
+              "end": 59,
+              "start": 33
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 120,
+              "start": 95
+            },
+            "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
+          },
+          {
+            "span": {
+              "end": 172,
+              "start": 149
+            },
+            "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
+          },
+          {
+            "span": {
+              "end": 232,
+              "start": 204
+            },
+            "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
+          },
+          {
+            "span": {
+              "end": 287,
+              "start": 264
+            },
+            "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
+          },
+          {
+            "span": {
+              "end": 369,
+              "start": 341
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
+          },
+          {
+            "span": {
+              "end": 471,
+              "start": 455
+            },
+            "toModuleId": "ef89ce69477f5d97bfce39bb3e5928ed3c284d851135619984a22d95a94fa68b"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/action-subscriptions/constants.ts",
         "id": "0d96ae23359f717c02c17cba2a5ae724e51b3b6f02258ec8a94144f730db4474",
         "localImports": []
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/telemetry/flush.ts",
@@ -775,9 +866,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/process-step.ts",
@@ -928,9 +1017,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [
           {
             "importKind": "static",
@@ -1028,9 +1115,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/outbox/process.ts",
@@ -1390,17 +1475,33 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 174,
-              "start": 133
+              "end": 192,
+              "start": 151
             },
             "toModuleId": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
           },
           {
             "span": {
-              "end": 221,
-              "start": 209
+              "end": 239,
+              "start": 227
             },
             "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/compiler/types/query-registry.ts",
+        "id": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957",
+        "localImports": [
+          {
+            "span": {
+              "end": 49,
+              "start": 32
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
           }
         ]
       },
@@ -1892,6 +1993,50 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/runtime/db/read-only-client.ts",
+        "id": "31be98bf7b4bba80a98736dc33e2307e0b9747836b64156a7d84b2da1a1b4f1d",
+        "localImports": [
+          {
+            "span": {
+              "end": 174,
+              "start": 137
+            },
+            "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          },
+          {
+            "span": {
+              "end": 255,
+              "start": 211
+            },
+            "toModuleId": "90426366d1d674d4b21539ff98842eeada68feb19fa145d26b44ffae56c0d0ea"
+          },
+          {
+            "span": {
+              "end": 306,
+              "start": 292
+            },
+            "toModuleId": "402469cb9347dab4920016fba636e93b4303c3469a31564560bfb9da8df39205"
+          },
+          {
+            "span": {
+              "end": 394,
+              "start": 371
+            },
+            "toModuleId": "a798b47fa9c77773220ac7c6c7bb775dd4aa7046dae3ccbb53e55a715f971309"
+          },
+          {
+            "span": {
+              "end": 447,
+              "start": 429
+            },
+            "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/cli/run.ts",
         "id": "344fde6f2f26dbb6d2c186a772dfeeba184cb04dca44dda0af27dd92825beef4",
         "localImports": [
@@ -1942,9 +2087,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/factory.ts",
@@ -2046,22 +2189,29 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 451,
-              "start": 436
+              "end": 436,
+              "start": 421
+            },
+            "toModuleId": "ae832893927c956b9953a0fe91765208c7e807adc277c3c2ad90f6f2c223bda9"
+          },
+          {
+            "span": {
+              "end": 505,
+              "start": 490
             },
             "toModuleId": "054003d90d83bcec53c9c183aeb1cc7f31aa142e257c26ae3f1d0456b6ade08e"
           },
           {
             "span": {
-              "end": 502,
-              "start": 485
+              "end": 556,
+              "start": 539
             },
             "toModuleId": "745731c8ca74bec8bcc3af901513cb9e9e0890c768f4771c45d68629428caca5"
           },
           {
             "span": {
-              "end": 550,
-              "start": 537
+              "end": 604,
+              "start": 591
             },
             "toModuleId": "3d24067a2be1a95c3d3df9dc44c3ccb3855f7bd7c298fe4187e3489fff0e6199"
           }
@@ -2338,9 +2488,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/adapter.ts",
@@ -2661,9 +2809,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/migrate.ts",
@@ -2917,9 +3063,44 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/compiler/guards/check-query-usage.ts",
+        "id": "541c114bb608587e6e7e0a365408ee876ad656f135da73a7c48b0f07e038b21d",
+        "localImports": [
+          {
+            "span": {
+              "end": 59,
+              "start": 33
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 223,
+              "start": 198
+            },
+            "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          },
+          {
+            "span": {
+              "end": 278,
+              "start": 255
+            },
+            "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
+          },
+          {
+            "span": {
+              "end": 336,
+              "start": 312
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/telemetry/spans.ts",
@@ -3037,6 +3218,36 @@ export const appGraph = {
               "start": 249
             },
             "toModuleId": "089f5c6e9f6b4f083d69332ccb973c358e39951f904611700cd669cf747f3343"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/runtime/query/registry.ts",
+        "id": "5ae48230f957489f8eac83514f26eae3f87b01d175df5150be08f9dc1190798f",
+        "localImports": [
+          {
+            "span": {
+              "end": 153,
+              "start": 116
+            },
+            "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
+          },
+          {
+            "span": {
+              "end": 233,
+              "start": 196
+            },
+            "toModuleId": "4792854bc77ff90623f63ddf2ec86eb6093131b82f500d1dec6ae8a9d1a4ac9f"
+          },
+          {
+            "span": {
+              "end": 310,
+              "start": 270
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
           }
         ]
       },
@@ -3351,9 +3562,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/process.ts",
@@ -4454,8 +4663,15 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 711,
+              "end": 699,
               "start": 687
+            },
+            "toModuleId": "9a4ddb5a6cc116b1a18d2f14dc77ecb01c2915d46a15cd6712a55f22435108b2"
+          },
+          {
+            "span": {
+              "end": 763,
+              "start": 739
             },
             "toModuleId": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
           }
@@ -4484,8 +4700,8 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 372,
-              "start": 331
+              "end": 392,
+              "start": 351
             },
             "toModuleId": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
           }
@@ -4572,9 +4788,7 @@ export const appGraph = {
         "localImports": []
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/telemetry/buffer.ts",
@@ -4846,9 +5060,7 @@ export const appGraph = {
         "localImports": []
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/create-run.ts",
@@ -5008,9 +5220,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/postgres-adapter.ts",
@@ -5084,9 +5294,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/outbox.ts",
@@ -5295,6 +5503,36 @@ export const appGraph = {
               "start": 1466
             },
             "toModuleId": "ab4238094289749b6eb5f6942feac1fba8b55f139e5433e8aafbdf9339af49be"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/cli/query.ts",
+        "id": "9a4ddb5a6cc116b1a18d2f14dc77ecb01c2915d46a15cd6712a55f22435108b2",
+        "localImports": [
+          {
+            "span": {
+              "end": 114,
+              "start": 83
+            },
+            "toModuleId": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292"
+          },
+          {
+            "span": {
+              "end": 179,
+              "start": 151
+            },
+            "toModuleId": "f34e7ea37dce9d8303d66a65fc172b9d6fc9d9c879c8caa0ea988316113daa50"
+          },
+          {
+            "span": {
+              "end": 249,
+              "start": 214
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
           }
         ]
       },
@@ -5622,9 +5860,7 @@ export const appGraph = {
         "localImports": []
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/memory-adapter.ts",
@@ -5763,59 +5999,78 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 902,
-              "start": 874
+              "end": 908,
+              "start": 880
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
+          },
+          {
+            "span": {
+              "end": 968,
+              "start": 943
+            },
+            "toModuleId": "d7c9c5d4b97feed0d2c6cd4719c91153f30cd5e0d05b66e1b198e6d16a9b5851"
+          },
+          {
+            "span": {
+              "end": 1082,
+              "start": 1057
+            },
+            "toModuleId": "d7c9c5d4b97feed0d2c6cd4719c91153f30cd5e0d05b66e1b198e6d16a9b5851"
+          },
+          {
+            "span": {
+              "end": 1142,
+              "start": 1114
             },
             "toModuleId": "83ec9c20a9730cd3fe0382497952e7839b049ca1660a658ab87a5b4a05a6a467"
           },
           {
             "span": {
-              "end": 1040,
-              "start": 1008
+              "end": 1280,
+              "start": 1248
             },
             "toModuleId": "90426366d1d674d4b21539ff98842eeada68feb19fa145d26b44ffae56c0d0ea"
           },
           {
             "span": {
-              "end": 1115,
-              "start": 1082
+              "end": 1355,
+              "start": 1322
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 1179,
-              "start": 1155
+              "end": 1419,
+              "start": 1395
             },
             "toModuleId": "a5e19b453b23188ca45916011457f083c9e4f42bb4552dd3370baa15153ce980"
           },
           {
             "span": {
-              "end": 1237,
-              "start": 1212
+              "end": 1477,
+              "start": 1452
             },
             "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
           },
           {
             "span": {
-              "end": 1303,
-              "start": 1275
+              "end": 1543,
+              "start": 1515
             },
             "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
           },
           {
             "span": {
-              "end": 1372,
-              "start": 1348
+              "end": 1612,
+              "start": 1588
             },
             "toModuleId": "df6b23e65e87b160c1d88d9c9a04c9b1313759256e1f38c8ec1047d6a7c7d015"
           }
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/db/generated-client.ts",
@@ -5890,9 +6145,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/process-run.ts",
@@ -6268,6 +6521,14 @@ export const appGraph = {
             "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
           }
         ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/cli/bun-exec.ts",
+        "id": "ae832893927c956b9953a0fe91765208c7e807adc277c3c2ad90f6f2c223bda9",
+        "localImports": []
       },
       {
         "declaredContexts": [],
@@ -6718,24 +6979,31 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 440,
-              "start": 419
+              "end": 459,
+              "start": 438
             },
             "toModuleId": "1b33496dd3d5f4066805536948d1fa2cfb55f4707ca3f2074e682cb6e87e7799"
           },
           {
             "span": {
-              "end": 493,
-              "start": 475
+              "end": 512,
+              "start": 494
             },
             "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
           },
           {
             "span": {
-              "end": 594,
-              "start": 583
+              "end": 637,
+              "start": 626
             },
             "toModuleId": "877bef24e8ee42830dee775de8ea0380adb118767e49c866ae63d1a72960dcae"
+          },
+          {
+            "span": {
+              "end": 716,
+              "start": 676
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
           }
         ]
       },
@@ -6969,9 +7237,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/cancel.ts",
@@ -6987,9 +7253,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/start-from-outbox.ts",
@@ -7110,9 +7374,7 @@ export const appGraph = {
         "localImports": []
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/dev/server.ts",
@@ -7204,141 +7466,148 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 1051,
-              "start": 1021
+              "end": 1009,
+              "start": 978
+            },
+            "toModuleId": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292"
+          },
+          {
+            "span": {
+              "end": 1122,
+              "start": 1092
             },
             "toModuleId": "16bcd669062982bdb20263ad0e7a0b4ea9a993db3a6fb36d11286476de8c33ff"
           },
           {
             "span": {
-              "end": 1119,
-              "start": 1087
+              "end": 1190,
+              "start": 1158
             },
             "toModuleId": "c2a4e1f61cb8cabe60145c3fed5e46d58d9b137c699e3bd6f7c06481b1a08e51"
           },
           {
             "span": {
-              "end": 1191,
-              "start": 1155
+              "end": 1262,
+              "start": 1226
             },
             "toModuleId": "91c8e4830ad4a69d96091816ca514bfdebed1720e1b1d2e9f57b9f316f88ee7e"
           },
           {
             "span": {
-              "end": 1323,
-              "start": 1290
+              "end": 1394,
+              "start": 1361
             },
             "toModuleId": "6452e83583bb9411e16ff7d9f89b32f6184f05012f1879f2cd2420ab087f85be"
           },
           {
             "span": {
-              "end": 1396,
-              "start": 1362
+              "end": 1467,
+              "start": 1433
             },
             "toModuleId": "6a14b99a8b6501da7c0e792b595afbbb636c8d5518527ba8b9feed91c67ff225"
           },
           {
             "span": {
-              "end": 1466,
-              "start": 1431
+              "end": 1537,
+              "start": 1502
             },
             "toModuleId": "cf8680ba2671740cd897332ca0ee6b03d18e6a47b31a472bc4244614f55691b0"
           },
           {
             "span": {
-              "end": 1527,
-              "start": 1495
+              "end": 1598,
+              "start": 1566
             },
             "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
           },
           {
             "span": {
-              "end": 1596,
-              "start": 1559
+              "end": 1667,
+              "start": 1630
             },
             "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
           },
           {
             "span": {
-              "end": 1681,
-              "start": 1669
+              "end": 1752,
+              "start": 1740
             },
             "toModuleId": "b5843f30d0693e864f4d0e7f2ce829a940c42546276fbc1bfa28c215b915ecf7"
           },
           {
             "span": {
-              "end": 1764,
-              "start": 1733
+              "end": 1835,
+              "start": 1804
             },
             "toModuleId": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
           },
           {
             "span": {
-              "end": 1837,
-              "start": 1804
+              "end": 1908,
+              "start": 1875
             },
             "toModuleId": "cda9efaf9f16397779fa240ab2a4b09ef26e6d55eb231d3020a962b511db6d47"
           },
           {
             "span": {
-              "end": 1912,
-              "start": 1874
+              "end": 1983,
+              "start": 1945
             },
             "toModuleId": "8678528a60437818c73f5822ae95891388141210a5c48ebee6668ebbba26238e"
           },
           {
             "span": {
-              "end": 2012,
-              "start": 1983
+              "end": 2083,
+              "start": 2054
             },
             "toModuleId": "01d67b71159ba1b140cc9d08bd3e1903026f17925573a983609473fb5f9c9334"
           },
           {
             "span": {
-              "end": 2087,
-              "start": 2063
+              "end": 2158,
+              "start": 2134
             },
             "toModuleId": "b4eaae1345c1d2145bbec21c2682f574f062ab7eb561757df1af5d310f220f69"
           },
           {
             "span": {
-              "end": 2145,
-              "start": 2121
+              "end": 2216,
+              "start": 2192
             },
             "toModuleId": "e44a53feb5677b92811c3d9a81f1305461679ebdfc812ee09a5df774a912bd75"
           },
           {
             "span": {
-              "end": 2205,
-              "start": 2179
+              "end": 2276,
+              "start": 2250
             },
             "toModuleId": "b764eba3e9902ccc3197d2c3d989f1dac943cb4201d77d864684776977e93354"
           },
           {
             "span": {
-              "end": 2288,
-              "start": 2250
+              "end": 2359,
+              "start": 2321
             },
             "toModuleId": "a0b99d88a43d44db4e8380595d93272a1c67d163c15de3078e9ef2773755f021"
           },
           {
             "span": {
-              "end": 2366,
-              "start": 2333
+              "end": 2437,
+              "start": 2404
             },
             "toModuleId": "16fd69cc83862d05a0758c75d1ba305ffcc49c898628e6997cdd878f2dff75fb"
           },
           {
             "span": {
-              "end": 2437,
-              "start": 2400
+              "end": 2508,
+              "start": 2471
             },
             "toModuleId": "72664ad7e42be15b76a7a8707e780e0f55cb9634cd60ce8e1b029e28b0f333e5"
           },
           {
             "span": {
-              "end": 11864,
-              "start": 11833
+              "end": 11963,
+              "start": 11932
             },
             "toModuleId": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
           }
@@ -7395,8 +7664,15 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 506,
-              "start": 490
+              "end": 473,
+              "start": 445
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
+          },
+          {
+            "span": {
+              "end": 571,
+              "start": 555
             },
             "toModuleId": "893855394eea42cbe598c0a76dc8151949b95300da582b5257de2d39d3a39849"
           }
@@ -7563,9 +7839,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/outbox/claim.ts",
@@ -7611,9 +7885,7 @@ export const appGraph = {
         ]
       },
       {
-        "declaredContexts": [
-          "query"
-        ],
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/retry-run.ts",
@@ -7656,6 +7928,57 @@ export const appGraph = {
               "start": 100
             },
             "toModuleId": "7812959aea5e0002d9459d6d9b481e7a4bd61a5455b09fa6f640b0bf65ded12a"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/compiler/api-surface/build.ts",
+        "id": "d7c9c5d4b97feed0d2c6cd4719c91153f30cd5e0d05b66e1b198e6d16a9b5851",
+        "localImports": [
+          {
+            "span": {
+              "end": 50,
+              "start": 27
+            },
+            "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
+          },
+          {
+            "span": {
+              "end": 110,
+              "start": 82
+            },
+            "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
+          },
+          {
+            "span": {
+              "end": 171,
+              "start": 146
+            },
+            "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
+          },
+          {
+            "span": {
+              "end": 236,
+              "start": 208
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
+          },
+          {
+            "span": {
+              "end": 299,
+              "start": 272
+            },
+            "toModuleId": "477a1f15499f3ccb0cb40d76c7429914eb8d1037916ed73867147f16eb62e0d5"
+          },
+          {
+            "span": {
+              "end": 370,
+              "start": 339
+            },
+            "toModuleId": "ff161cc50125c41e2c3321037a035bc62c58714648085a19fae5f676991c8fd9"
           }
         ]
       },
@@ -8193,141 +8516,155 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 760,
-              "start": 734
+              "end": 768,
+              "start": 740
+            },
+            "toModuleId": "0d1e646751b63043d69a79115a2354de3b2fa0d3b63a6e64d0daa6c51933a420"
+          },
+          {
+            "span": {
+              "end": 828,
+              "start": 803
+            },
+            "toModuleId": "d7c9c5d4b97feed0d2c6cd4719c91153f30cd5e0d05b66e1b198e6d16a9b5851"
+          },
+          {
+            "span": {
+              "end": 886,
+              "start": 860
             },
             "toModuleId": "ade91b617db2c5e623ea2728604b197af6fc21b4b6726f1e79b7c636b75882bb"
           },
           {
             "span": {
-              "end": 822,
-              "start": 796
+              "end": 948,
+              "start": 922
             },
             "toModuleId": "c7db664b9ba1116c780ca648ca5ab211cfe7623170e71705f34d6bffc9a0c09a"
           },
           {
             "span": {
-              "end": 886,
-              "start": 859
+              "end": 1012,
+              "start": 985
             },
             "toModuleId": "aaef51e4e11df6e1669ff6dd9496cf76dbbadb5ace6c4a9c52142a93503ab5e7"
           },
           {
             "span": {
-              "end": 942,
-              "start": 919
+              "end": 1068,
+              "start": 1045
             },
             "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
           },
           {
             "span": {
-              "end": 1006,
-              "start": 979
+              "end": 1132,
+              "start": 1105
             },
             "toModuleId": "7e52df7ee09de93c49fb00b88e7bc532ebb19a77344e13b623b022bc6c060fc9"
           },
           {
             "span": {
-              "end": 1067,
-              "start": 1049
+              "end": 1193,
+              "start": 1175
             },
             "toModuleId": "fdc330e9f569b5fa5fd6d7ad204e850f3c55d44e235ce519ca83d06c8ab220ed"
           },
           {
             "span": {
-              "end": 1135,
-              "start": 1117
+              "end": 1261,
+              "start": 1243
             },
             "toModuleId": "7ecbaea777d56e064e29bb257f5a45918f2e6f1ea1f24291275bde627a9d98bf"
           },
           {
             "span": {
-              "end": 1210,
-              "start": 1177
+              "end": 1336,
+              "start": 1303
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 1281,
-              "start": 1248
+              "end": 1407,
+              "start": 1374
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 1350,
-              "start": 1319
+              "end": 1476,
+              "start": 1445
             },
             "toModuleId": "c941bb0d49bbd15030980ad0c636793b6174606b7ff7098cc7f8d349f56e8861"
           },
           {
             "span": {
-              "end": 1409,
-              "start": 1383
+              "end": 1535,
+              "start": 1509
             },
             "toModuleId": "3d0332a04eb274727643ef01a23ec9243de865b53bce1ce92cc11ffeeec08313"
           },
           {
             "span": {
-              "end": 1473,
-              "start": 1449
+              "end": 1599,
+              "start": 1575
             },
             "toModuleId": "a5e19b453b23188ca45916011457f083c9e4f42bb4552dd3370baa15153ce980"
           },
           {
             "span": {
-              "end": 1541,
-              "start": 1514
+              "end": 1667,
+              "start": 1640
             },
             "toModuleId": "5194e753dfe17c025a21587e67d0e565e2b724a47cf73042cddaf6dae1663e0b"
           },
           {
             "span": {
-              "end": 1656,
-              "start": 1631
+              "end": 1782,
+              "start": 1757
             },
             "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
           },
           {
             "span": {
-              "end": 1731,
-              "start": 1700
+              "end": 1857,
+              "start": 1826
             },
             "toModuleId": "e5bfcf41b306994148ed71dc62c75e8049821a03c5855bf84b802c64442a994e"
           },
           {
             "span": {
-              "end": 1784,
-              "start": 1761
+              "end": 1910,
+              "start": 1887
             },
             "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
           },
           {
             "span": {
-              "end": 1846,
-              "start": 1823
+              "end": 1972,
+              "start": 1949
             },
             "toModuleId": "9c575b15948278713bbf63047eb4922f5d3b22564f371ad89d090600349bfbcb"
           },
           {
             "span": {
-              "end": 1908,
-              "start": 1894
+              "end": 2034,
+              "start": 2020
             },
             "toModuleId": "28a152a4ce65fa0711ad8db346b1c5174bee8dcc883012e285acb9446235c134"
           },
           {
             "span": {
-              "end": 1960,
-              "start": 1948
+              "end": 2086,
+              "start": 2074
             },
             "toModuleId": "ae38c66c1161bb4092b4b61588b3ef02337dba86008a055b485a401984b8949a"
           },
           {
             "span": {
-              "end": 3547,
-              "start": 3531
+              "end": 3841,
+              "start": 3825
             },
             "toModuleId": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
           }
@@ -8361,6 +8698,43 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/runtime/context/create-query-context.ts",
+        "id": "e8f11ab422d54840f88be379ad6d2c18477f6cce886a105735500aec208c1d59",
+        "localImports": [
+          {
+            "span": {
+              "end": 61,
+              "start": 38
+            },
+            "toModuleId": "aaa0a97dc2b84c51ae2c880c7965f3154cd072191f72c3632f1f604c0f4ac9f7"
+          },
+          {
+            "span": {
+              "end": 114,
+              "start": 96
+            },
+            "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
+          },
+          {
+            "span": {
+              "end": 181,
+              "start": 154
+            },
+            "toModuleId": "31be98bf7b4bba80a98736dc33e2307e0b9747836b64156a7d84b2da1a1b4f1d"
+          },
+          {
+            "span": {
+              "end": 254,
+              "start": 227
+            },
+            "toModuleId": "31be98bf7b4bba80a98736dc33e2307e0b9747836b64156a7d84b2da1a1b4f1d"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/emitter/constants.ts",
         "id": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41",
         "localImports": [
@@ -8372,6 +8746,14 @@ export const appGraph = {
             "toModuleId": "e5bfcf41b306994148ed71dc62c75e8049821a03c5855bf84b802c64442a994e"
           }
         ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/compiler/query-registry/constants.ts",
+        "id": "ef89ce69477f5d97bfce39bb3e5928ed3c284d851135619984a22d95a94fa68b",
+        "localImports": []
       },
       {
         "declaredContexts": [],
@@ -8644,22 +9026,22 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 749,
-              "start": 720
+              "end": 769,
+              "start": 740
             },
             "toModuleId": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
           },
           {
             "span": {
-              "end": 853,
-              "start": 837
+              "end": 873,
+              "start": 857
             },
             "toModuleId": "9ef7466661c8a496ff266647025fc7ac79586dce3a9a9234daf07779f2c732e9"
           },
           {
             "span": {
-              "end": 933,
-              "start": 921
+              "end": 946,
+              "start": 934
             },
             "toModuleId": "d31abe19c6873350dca1593bda049ac5254843b256c456be8d9f0934fad31790"
           }
@@ -8691,6 +9073,176 @@ export const appGraph = {
         "file": "src/forge/runtime/ai/types.ts",
         "id": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6",
         "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/runtime/query/run-query.ts",
+        "id": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292",
+        "localImports": [
+          {
+            "span": {
+              "end": 105,
+              "start": 67
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 330,
+              "start": 293
+            },
+            "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          },
+          {
+            "span": {
+              "end": 411,
+              "start": 367
+            },
+            "toModuleId": "90426366d1d674d4b21539ff98842eeada68feb19fa145d26b44ffae56c0d0ea"
+          },
+          {
+            "span": {
+              "end": 481,
+              "start": 445
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 560,
+              "start": 520
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
+          },
+          {
+            "span": {
+              "end": 611,
+              "start": 593
+            },
+            "toModuleId": "402469cb9347dab4920016fba636e93b4303c3469a31564560bfb9da8df39205"
+          },
+          {
+            "span": {
+              "end": 668,
+              "start": 650
+            },
+            "toModuleId": "402469cb9347dab4920016fba636e93b4303c3469a31564560bfb9da8df39205"
+          },
+          {
+            "span": {
+              "end": 736,
+              "start": 709
+            },
+            "toModuleId": "31be98bf7b4bba80a98736dc33e2307e0b9747836b64156a7d84b2da1a1b4f1d"
+          },
+          {
+            "span": {
+              "end": 807,
+              "start": 780
+            },
+            "toModuleId": "a798b47fa9c77773220ac7c6c7bb775dd4aa7046dae3ccbb53e55a715f971309"
+          },
+          {
+            "span": {
+              "end": 880,
+              "start": 844
+            },
+            "toModuleId": "e8f11ab422d54840f88be379ad6d2c18477f6cce886a105735500aec208c1d59"
+          },
+          {
+            "span": {
+              "end": 946,
+              "start": 921
+            },
+            "toModuleId": "16fd69cc83862d05a0758c75d1ba305ffcc49c898628e6997cdd878f2dff75fb"
+          },
+          {
+            "span": {
+              "end": 1009,
+              "start": 980
+            },
+            "toModuleId": "72664ad7e42be15b76a7a8707e780e0f55cb9634cd60ce8e1b029e28b0f333e5"
+          },
+          {
+            "span": {
+              "end": 1062,
+              "start": 1044
+            },
+            "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
+          },
+          {
+            "span": {
+              "end": 1119,
+              "start": 1099
+            },
+            "toModuleId": "f34e7ea37dce9d8303d66a65fc172b9d6fc9d9c879c8caa0ea988316113daa50"
+          },
+          {
+            "span": {
+              "end": 1174,
+              "start": 1154
+            },
+            "toModuleId": "b7bbc2fbd43920596d795ed9b7cdf50b0011aa68a7b03cd1f25a2c883ae52cd5"
+          },
+          {
+            "span": {
+              "end": 1225,
+              "start": 1210
+            },
+            "toModuleId": "5ae48230f957489f8eac83514f26eae3f87b01d175df5150be08f9dc1190798f"
+          },
+          {
+            "span": {
+              "end": 1307,
+              "start": 1261
+            },
+            "toModuleId": "238987a90cc61e81af0704e7eaaf9866f8f52d90bd2555634c52dad7180872b1"
+          },
+          {
+            "span": {
+              "end": 1374,
+              "start": 1339
+            },
+            "toModuleId": "de98a3ffc5400d39d00f03fd6b8e4df852910341873f2ce1deb2a2c49e757e33"
+          },
+          {
+            "span": {
+              "end": 1442,
+              "start": 1401
+            },
+            "toModuleId": "b46f86bb73ea7c83f3695efd7e03029353e314fd32b302a25633d539d40128a4"
+          },
+          {
+            "span": {
+              "end": 1514,
+              "start": 1473
+            },
+            "toModuleId": "473e7f0e937c77d26b5db4e27ccd65571fd9c1f490efa17b5ba13ba67cace950"
+          },
+          {
+            "span": {
+              "end": 1591,
+              "start": 1551
+            },
+            "toModuleId": "7f21d6c26c66020be67d31ded8b6b72974ab5959f4e49a32fceeca13be8b0a13"
+          },
+          {
+            "span": {
+              "end": 1660,
+              "start": 1623
+            },
+            "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
+          },
+          {
+            "span": {
+              "end": 1740,
+              "start": 1703
+            },
+            "toModuleId": "4792854bc77ff90623f63ddf2ec86eb6093131b82f500d1dec6ae8a9d1a4ac9f"
+          }
+        ]
       },
       {
         "declaredContexts": [],
@@ -8796,1634 +9348,5 @@ export const appGraph = {
     ]
   },
   "schemaVersion": "1.0.0",
-  "symbols": [
-    {
-      "contentHash": "dea09b752694ec032f7c13e6720645fec75c1ae6e2f2f8a720aeb93605c24a4c",
-      "file": "src/forge/runtime/telemetry/correlation.ts",
-      "id": "0b2669524d0d2e12e2fca534848c35e3b8e571b8c08b4a754db4fae67158fe26",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "14872121fbab5099ba6135e56747f8434abfc848eae3c41667e90a9ee0301eee",
-        "sourceSlice": "randomBytes(8).toString(\"hex\")"
-      },
-      "name": "__forge_11_9",
-      "qualifiedName": "__forge_11_9",
-      "span": {
-        "end": 305,
-        "start": 275
-      }
-    },
-    {
-      "contentHash": "0326448d825639e95185b2ab0ccf43704d2806c2fe658c0429427404ab235ae9",
-      "file": "src/forge/runtime/telemetry/correlation.ts",
-      "id": "688117207abed0ae31917ab7fe09055e67beae90db7a44c0c34b659c21d628bc",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "14872121fbab5099ba6135e56747f8434abfc848eae3c41667e90a9ee0301eee",
-        "sourceSlice": "randomBytes(16).toString(\"hex\")"
-      },
-      "name": "__forge_3_9",
-      "qualifiedName": "__forge_3_9",
-      "span": {
-        "end": 128,
-        "start": 97
-      }
-    },
-    {
-      "contentHash": "dea09b752694ec032f7c13e6720645fec75c1ae6e2f2f8a720aeb93605c24a4c",
-      "file": "src/forge/runtime/telemetry/correlation.ts",
-      "id": "fa2264223c26278894e47ca8f1ed94efcd4661166c8308c93eb368402172bfa5",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "14872121fbab5099ba6135e56747f8434abfc848eae3c41667e90a9ee0301eee",
-        "sourceSlice": "randomBytes(8).toString(\"hex\")"
-      },
-      "name": "__forge_7_9",
-      "qualifiedName": "__forge_7_9",
-      "span": {
-        "end": 215,
-        "start": 185
-      }
-    },
-    {
-      "contentHash": "3c2772d98bf20bfdd18cd8ef6cbee9944f7709e22fd5cfa6d9a86cae83bf3aa7",
-      "file": "src/forge/dev/watch.ts",
-      "id": "8eab1239a3be44868339e1005700f854cf5b1a3c25602a72a52f50d6294af911",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "59fc168aa67fed42ce3a39b95405885dcb23e625e175172b20659436a2b2289c",
-        "sourceSlice": "filename.toString()"
-      },
-      "name": "absolutePath",
-      "qualifiedName": "absolutePath",
-      "span": {
-        "end": 2035,
-        "start": 2016
-      }
-    },
-    {
-      "contentHash": "563a92bfd049854e0d4c308cc1b29326aa765f92acb73a80425138f098747ef5",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "f7a2769e8dec644af76c75c2362746493f7e58ce09a73cff7b86aad30d506870",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n          `UPDATE _forge_telemetry_events\n           SET attempts = $1, last_error = $2, next_attempt_at = $3, sink = $4\n           WHERE id = $5`,\n          [nextAttempts, message, nextAttemptAt, sink, id],\n        )"
-      },
-      "name": "__forge_104_14",
-      "qualifiedName": "__forge_104_14",
-      "span": {
-        "end": 3379,
-        "start": 3147
-      }
-    },
-    {
-      "contentHash": "d76d0c9cc61e523aef644d0f71a38158cbd15feaadff661ef370dcc1e37798c6",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "4f3b76d3fd3eaba6b58b30e198f0b8c0ad646f5ff216b9f337e16e624ed30a37",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_outbox_deliveries\n     SET status = 'pending', attempts = $1, last_error = $2, next_attempt_at = $3, locked_at = NULL, locked_by = NULL\n     WHERE id = $4`,\n    [attempts, lastError, nextAttemptAt, deliveryId],\n  )"
-      },
-      "name": "__forge_109_8",
-      "qualifiedName": "__forge_109_8",
-      "span": {
-        "end": 3361,
-        "start": 3113
-      }
-    },
-    {
-      "contentHash": "f0642683bbad42a323474a564bd41dc8d7f78e584270af6fad5caca4602b8702",
-      "file": "src/forge/runtime/telemetry/buffer.ts",
-      "id": "b1974b73430d1018ff590365a771e721f15949a7e94f304848354389e520f359",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "d9672a896c0b943610581b2d8b9311ce54c631327cb3c8d8c0177f28dbf32fd7",
-        "sourceSlice": "target.query(sql, params)"
-      },
-      "name": "__forge_11_9",
-      "qualifiedName": "__forge_11_9",
-      "span": {
-        "end": 348,
-        "start": 323
-      }
-    },
-    {
-      "contentHash": "cf2648c21bd618fc2ec8418cb9ba6492e4fe6256120179acbdb856ac936a2912",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "58271b719eb825d68965969c8f738bb1c52c38106495a544d23202877cce408f",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_outbox_deliveries\n     SET status = 'dead', last_error = $1, locked_at = NULL, locked_by = NULL\n     WHERE id = $2`,\n    [lastError, deliveryId],\n  )"
-      },
-      "name": "__forge_122_8",
-      "qualifiedName": "__forge_122_8",
-      "span": {
-        "end": 3681,
-        "start": 3498
-      }
-    },
-    {
-      "contentHash": "f8dddef972d5d49fcc76dc2c8e53bee1404abcc8aa1bb3650d70b89682444c88",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "235facd1bd60640cb3dddf06ffd26adb3c1f2f8f68a4a632ae299127eae0c0ce",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_runs\n     SET status = 'running', started_at = COALESCE(started_at, now()), current_step = $1, updated_at = now()\n     WHERE id = $2`,\n    [nextStep.step_name, run.id],\n  )"
-      },
-      "name": "__forge_131_8",
-      "qualifiedName": "__forge_131_8",
-      "span": {
-        "end": 4658,
-        "start": 4443
-      }
-    },
-    {
-      "contentHash": "b1a268560249cb69ddfeb1ae1fd74e7f3998dbd3820d7478b56397813b0569be",
-      "file": "src/forge/runtime/workflows/process-step.ts",
-      "id": "795f02c3a4d74e2f5ba6fbcc26c1498ec12d888276886f3d2c1e94a9139aef1f",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "d2db26e4b1cc1e64d8fff4cd8639b9f9d8f87118fd5229d7f5d31f400d984667",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_steps\n       SET status = 'completed', output = $1, completed_at = now(), locked_at = NULL, locked_by = NULL, last_error = NULL\n       WHERE id = $2`,\n      [JSON.stringify(output ?? null), step.id],\n    )"
-      },
-      "name": "__forge_136_10",
-      "qualifiedName": "__forge_136_10",
-      "span": {
-        "end": 4395,
-        "start": 4145
-      }
-    },
-    {
-      "contentHash": "a180d49b99f8408b4867c847e2c8b38fd4c66397437ce96697a9788e236b18bb",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "897ad9cdc84433b345ac8f8d36cff73b16daa21848a1889eee1086d6fbfb7223",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_runs\n       SET status = 'dead', last_error = $1, updated_at = now()\n       WHERE id = $2`,\n      [sanitizeWorkflowError(stepResult.error ?? \"step dead\"), run.id],\n    )"
-      },
-      "name": "__forge_149_10",
-      "qualifiedName": "__forge_149_10",
-      "span": {
-        "end": 5070,
-        "start": 4856
-      }
-    },
-    {
-      "contentHash": "a7463d6dd5214c76ab07235a0975038de00b325c27402361896b966a597ed014",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "83c9a2dab9c7678b1ee128a4a2fabe96cf4bfca0761e6441be0b451a6ef224cd",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_runs SET status = 'failed', last_error = $1, updated_at = now() WHERE id = $2`,\n      [sanitizeWorkflowError(stepResult.error ?? \"step failed\"), run.id],\n    )"
-      },
-      "name": "__forge_159_10",
-      "qualifiedName": "__forge_159_10",
-      "span": {
-        "end": 5349,
-        "start": 5145
-      }
-    },
-    {
-      "contentHash": "33438fa51b13793e854617ff7d467a2cf328c8343ffa935b058fec1709918c10",
-      "file": "src/forge/runtime/workflows/process-step.ts",
-      "id": "93db87ffe02470e1008833d08fa4f77453e50f3566d4442f7690d474e450510c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "d2db26e4b1cc1e64d8fff4cd8639b9f9d8f87118fd5229d7f5d31f400d984667",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_steps\n       SET status = 'dead', attempts = $1, last_error = $2, locked_at = NULL, locked_by = NULL\n       WHERE id = $3`,\n      [nextAttempts, errorMessage, step.id],\n    )"
-      },
-      "name": "__forge_159_10",
-      "qualifiedName": "__forge_159_10",
-      "span": {
-        "end": 5128,
-        "start": 4909
-      }
-    },
-    {
-      "contentHash": "6d1bfbb1c96f683525f72e07aa772f9aa1e967b9f5671732bb710f903fb806e9",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "9ca238f0cb38e21b055e0fc65d0974bbd0facb91ee75292d29454fb318340153",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_runs\n       SET status = 'completed', completed_at = now(), updated_at = now(), current_step = NULL, last_error = NULL\n       WHERE id = $1`,\n      [run.id],\n    )"
-      },
-      "name": "__forge_167_10",
-      "qualifiedName": "__forge_167_10",
-      "span": {
-        "end": 5644,
-        "start": 5436
-      }
-    },
-    {
-      "contentHash": "41e4a492b9453ee3ed9c1087779d29939def03e6929f1c64863997a0d10fe839",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "8e447df08e8f061a092035a01b199f1d64ba7fc8cc1f4e4b3b369e29470790d3",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_runs SET status = 'running', updated_at = now() WHERE id = $1`,\n    [run.id],\n  )"
-      },
-      "name": "__forge_176_8",
-      "qualifiedName": "__forge_176_8",
-      "span": {
-        "end": 5807,
-        "start": 5683
-      }
-    },
-    {
-      "contentHash": "6419638e13c45b69ff62ccbb79bd4730de3aa5edb4189050b68ff5ebef482060",
-      "file": "src/forge/runtime/workflows/process-step.ts",
-      "id": "7abb35bd69f8f2593e24e1448875712c738f525d42fb365dab2ea93a9de4b5c9",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "d2db26e4b1cc1e64d8fff4cd8639b9f9d8f87118fd5229d7f5d31f400d984667",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_steps\n     SET status = 'pending', attempts = $1, last_error = $2, next_attempt_at = $3, locked_at = NULL, locked_by = NULL\n     WHERE id = $4`,\n    [nextAttempts, errorMessage, nextAttemptAt, step.id],\n  )"
-      },
-      "name": "__forge_176_8",
-      "qualifiedName": "__forge_176_8",
-      "span": {
-        "end": 5722,
-        "start": 5473
-      }
-    },
-    {
-      "contentHash": "c1ffb575aa0c80285ad9910304494cb63028cba09dfd3686a75d909b53bfc336",
-      "file": "src/forge/runtime/telemetry/spans.ts",
-      "id": "0c8ad6fb996cffc9a42586f9c002601051b36ca0f33b9a769ae3afce1a3335e8",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "55607bd9392802113f68c12850a842c2771fce0ef3e7b1932e03ad9e12e3ad74",
-        "sourceSlice": "target.query(\n    `INSERT INTO _forge_trace_spans (trace_id, parent_span_id, span_id, name, kind, attributes, status, started_at)\n     VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'ok', $7)`,\n    [\n      input.traceId,\n      input.parentSpanId ?? null,\n      input.spanId,\n      input.name,\n      input.kind,\n      JSON.stringify(input.attributes ?? {}),\n      input.startedAt ?? new Date().toISOString(),\n    ],\n  )"
-      },
-      "name": "__forge_17_8",
-      "qualifiedName": "__forge_17_8",
-      "span": {
-        "end": 868,
-        "start": 458
-      }
-    },
-    {
-      "contentHash": "b8504eed336e10baf923104cd4a53e1a93f2aab4c73c0ca60c2551d987ad8150",
-      "file": "src/forge/runtime/workflows/cancel.ts",
-      "id": "d766043c63c8a15e884408889e011f162ebda9e7e801a2bc8a8b3ed48c739297",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "507a8f614d68514a0fd20cead9d2fd1a3ae1665da08f39a38692f4c9d642ee51",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_steps\n     SET status = 'skipped', locked_at = NULL, locked_by = NULL\n     WHERE run_id = $1 AND status IN ('pending', 'running')`,\n    [runId],\n  )"
-      },
-      "name": "__forge_17_8",
-      "qualifiedName": "__forge_17_8",
-      "span": {
-        "end": 640,
-        "start": 449
-      }
-    },
-    {
-      "contentHash": "940c22c95d7e62886da2e63ef5976cad6d212c4b69fd7e74be25cde5b0494052",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "2fe335ddb3724e86eb51362d7216a21219fcbc54c6570e434b33382ac9642852",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(`DELETE FROM _forge_trace_spans`)"
-      },
-      "name": "__forge_187_8",
-      "qualifiedName": "__forge_187_8",
-      "span": {
-        "end": 5490,
-        "start": 5443
-      }
-    },
-    {
-      "contentHash": "4f726eeeabe87a864380ed2225b8ff35047c6c55da6e063416e6f62261448e1e",
-      "file": "src/forge/runtime/db/adapter.ts",
-      "id": "e69f266c79010ca97f70f7dd7c5584c92e5e1d5553942de0719446e4fb35ecaa",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "61f86f8121b42cb9ae1237bac17bd9c284e97e8ee80393de854692c3d94793e5",
-        "sourceSlice": "adapter.query(sql, params)"
-      },
-      "name": "__forge_22_28",
-      "qualifiedName": "__forge_22_28",
-      "span": {
-        "end": 633,
-        "start": 607
-      }
-    },
-    {
-      "contentHash": "dfdc5f898483af09d91731427a95e585ddf5fcb7b3eac12d077499cc86fc67f5",
-      "file": "src/forge/runtime/db/pglite-adapter.ts",
-      "id": "89c640ad98a618a9131f03fb9f6e266f73f5d5717874bc31c3bb8f9be436ea6f",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "35a1f344203b6a25926259d804e75675cb7aa980f07d1bbd751f7061021391b2",
-        "sourceSlice": "this.db.query(\"BEGIN\")"
-      },
-      "name": "__forge_24_10",
-      "qualifiedName": "__forge_24_10",
-      "span": {
-        "end": 751,
-        "start": 729
-      }
-    },
-    {
-      "contentHash": "672deb9aa1fbc836e7d71d67b7584cc76dff8a459d51ad388f7ad735aa273bd8",
-      "file": "src/forge/runtime/workflows/retry-run.ts",
-      "id": "c45166a86dfe7142c7ca56f3d1633c6e634bc4aecb21a944861a6b3a0b59cbd8",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9420988417df440440c723050b300584b05d7a58b68d150dbeb9ce354de980d1",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_steps\n       SET status = 'pending', attempts = 0, next_attempt_at = now(), last_error = NULL, locked_at = NULL, locked_by = NULL\n       WHERE run_id = $1 AND status IN ('failed', 'dead')`,\n      [runId],\n    )"
-      },
-      "name": "__forge_27_10",
-      "qualifiedName": "__forge_27_10",
-      "span": {
-        "end": 1034,
-        "start": 779
-      }
-    },
-    {
-      "contentHash": "4f726eeeabe87a864380ed2225b8ff35047c6c55da6e063416e6f62261448e1e",
-      "file": "src/forge/runtime/db/pglite-adapter.ts",
-      "id": "09c778d82424cc6ac9de5e04a43ab649e89a0dd6c12dd3f295d3e4f529bf2d34",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "35a1f344203b6a25926259d804e75675cb7aa980f07d1bbd751f7061021391b2",
-        "sourceSlice": "adapter.query(sql, params)"
-      },
-      "name": "__forge_28_35",
-      "qualifiedName": "__forge_28_35",
-      "span": {
-        "end": 854,
-        "start": 828
-      }
-    },
-    {
-      "contentHash": "b5c88336b0dbec32da5eb7814c496033bebc96e7387cc6380eec5bba3816b7a7",
-      "file": "src/forge/runtime/db/pglite-adapter.ts",
-      "id": "c73341ecfd83ae7d9f4b55c612ecdb21e47684d164b5e230f640357245d589b7",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "35a1f344203b6a25926259d804e75675cb7aa980f07d1bbd751f7061021391b2",
-        "sourceSlice": "adapter.query(\"COMMIT\")"
-      },
-      "name": "__forge_30_14",
-      "qualifiedName": "__forge_30_14",
-      "span": {
-        "end": 921,
-        "start": 898
-      }
-    },
-    {
-      "contentHash": "77b3a7ef8462e992348928a257a4e92ee52028a8787a6ef2f6e465df5b777dd1",
-      "file": "src/forge/runtime/db/pglite-adapter.ts",
-      "id": "c50ea1f30362ac7ab4c988c999281502a5d4332d38967cc096ac0beeef9619b9",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "35a1f344203b6a25926259d804e75675cb7aa980f07d1bbd751f7061021391b2",
-        "sourceSlice": "adapter.query(\"ROLLBACK\")"
-      },
-      "name": "__forge_33_14",
-      "qualifiedName": "__forge_33_14",
-      "span": {
-        "end": 1001,
-        "start": 976
-      }
-    },
-    {
-      "contentHash": "1ebcc772aaf779d7be19424d3406e7a167216d1b80b14f17652e54d6420ee07b",
-      "file": "src/forge/runtime/db/outbox.ts",
-      "id": "0bb71ecbb5e44c22ddadb6b20219736b6256d281642180ac3e96908d9156315b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8b2843ac443fafaa5e23ddcd665ed405bcd8fee79d05915623586f67fb0c4afb",
-        "sourceSlice": "tx.query(\n        `INSERT INTO _forge_outbox_deliveries (outbox_id, action_name, status) VALUES ($1, $2, 'pending')`,\n        [outboxId, subscription.actionName],\n      )"
-      },
-      "name": "__forge_35_12",
-      "qualifiedName": "__forge_35_12",
-      "span": {
-        "end": 1435,
-        "start": 1265
-      }
-    },
-    {
-      "contentHash": "dac41d3f4891ef23fd00e89ce2a84f3f7a7f3287fde18bf855763d7fb41f352e",
-      "file": "src/forge/runtime/workflows/retry-run.ts",
-      "id": "6d1042f54acc75ecbd947e290491da6f4ca556a7f39682051a27ebbbdeaa5d4e",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9420988417df440440c723050b300584b05d7a58b68d150dbeb9ce354de980d1",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_runs\n     SET status = 'pending', last_error = NULL, completed_at = NULL, canceled_at = NULL, updated_at = now()\n     WHERE id = $1`,\n    [runId],\n  )"
-      },
-      "name": "__forge_35_8",
-      "qualifiedName": "__forge_35_8",
-      "span": {
-        "end": 1242,
-        "start": 1049
-      }
-    },
-    {
-      "contentHash": "f60b8d7ebf5e203b140058f6a2ffc3689fcebfa6bffe5837bc119163afda107e",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "c1abf1c993ff7f01db057257f1b4dc3da4bec46c85c4c6f65b65050ba9309ce5",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(sql)"
-      },
-      "name": "__forge_41_12",
-      "qualifiedName": "__forge_41_12",
-      "span": {
-        "end": 1150,
-        "start": 1132
-      }
-    },
-    {
-      "contentHash": "56a4353a7f935b6ffc265a73bb3566831654950a519ea5c9bd8e86ece4eb199a",
-      "file": "src/forge/runtime/telemetry/spans.ts",
-      "id": "dad7df36deac35b31d5fb602f42ef4e1087ab0482cd9249b8922a918174d5039",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "55607bd9392802113f68c12850a842c2771fce0ef3e7b1932e03ad9e12e3ad74",
-        "sourceSlice": "target.query(\n    `UPDATE _forge_trace_spans\n     SET ended_at = $1, status = $2, error = $3,\n         attributes = COALESCE(attributes, '{}'::jsonb) || $4::jsonb\n     WHERE trace_id = $5 AND span_id = $6`,\n    [\n      input.endedAt ?? new Date().toISOString(),\n      status,\n      input.error ?? null,\n      JSON.stringify(input.attributes ?? {}),\n      input.traceId,\n      input.spanId,\n    ],\n  )"
-      },
-      "name": "__forge_43_8",
-      "qualifiedName": "__forge_43_8",
-      "span": {
-        "end": 1547,
-        "start": 1147
-      }
-    },
-    {
-      "contentHash": "df267cbdf96e566fa369dad734bceee1bef01d50e43e4dadf50e4efd610bf86d",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "0a54c6d1ee365324b9c3d8b4d5866fec9ee0f061088ea509436f358e2f09eddb",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(\n      `INSERT INTO _forge_migrations (id, checksum) VALUES ($1, $2)\n       ON CONFLICT (id) DO UPDATE SET checksum = EXCLUDED.checksum, applied_at = now()`,\n      [sqlPlan.migrationId, sqlPlan.checksum],\n    )"
-      },
-      "name": "__forge_44_10",
-      "qualifiedName": "__forge_44_10",
-      "span": {
-        "end": 1393,
-        "start": 1169
-      }
-    },
-    {
-      "contentHash": "7ad9125097c2ce8032010aaf265b793677265567e2810725b3052f7db13d74fe",
-      "file": "src/forge/runtime/db/pglite-adapter.ts",
-      "id": "634b024e79de9c359354edd7786d59ef3222d6d2caaa7e270b09e2e9b584cfb8",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "35a1f344203b6a25926259d804e75675cb7aa980f07d1bbd751f7061021391b2",
-        "sourceSlice": "adapter.query(\"SELECT 1\")"
-      },
-      "name": "__forge_45_8",
-      "qualifiedName": "__forge_45_8",
-      "span": {
-        "end": 1251,
-        "start": 1226
-      }
-    },
-    {
-      "contentHash": "7bec9b149c36c13f886f33369a434fd25be1f8243b055049b1b70faffa07fa52",
-      "file": "src/forge/runtime/db/memory-adapter.ts",
-      "id": "bf5cadbfd189e6531352104948cfa57324c8fee5de952ebd5a67c6e3245bab59",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "6f4eb35331a943bd0b058c01f33aba34df3223771be71f37c1119b0c74f2f8ab",
-        "sourceSlice": "adapter.query(querySql, queryParams)"
-      },
-      "name": "__forge_463_40",
-      "qualifiedName": "__forge_463_40",
-      "span": {
-        "end": 13839,
-        "start": 13803
-      }
-    },
-    {
-      "contentHash": "435e8e6e3e405ae3b49cfd3a6e906b7a9f72b4e5b37abdddfd206e5b778f9ad8",
-      "file": "src/forge/runtime/db/postgres-adapter.ts",
-      "id": "39e073d25d0669252b915fa130dba613ad4c562788e4d4b5fa3e86ee8ba9ca8b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "93c45df6679c914c7f96612f65b979baaddbb76c6866c84379b65ef14dea5dc3",
-        "sourceSlice": "this.query(\"BEGIN\")"
-      },
-      "name": "__forge_57_10",
-      "qualifiedName": "__forge_57_10",
-      "span": {
-        "end": 1658,
-        "start": 1639
-      }
-    },
-    {
-      "contentHash": "3b7e1572cd39642c1eec45f95f077d1ecfa333aa552b53c00122a293459e9af1",
-      "file": "src/forge/runtime/db/factory.ts",
-      "id": "3ae6c2255b29b6dd867b618c9ad1fe79f8eb5b0efc81106d96b61a97f2af8d93",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "81610198e5a89549ef5f489f60f65bec0b93fef7b9efe9a2c3eee620e97f46f8",
-        "sourceSlice": "result.adapter.query(\"SELECT 1\")"
-      },
-      "name": "__forge_59_12",
-      "qualifiedName": "__forge_59_12",
-      "span": {
-        "end": 2003,
-        "start": 1971
-      }
-    },
-    {
-      "contentHash": "4f726eeeabe87a864380ed2225b8ff35047c6c55da6e063416e6f62261448e1e",
-      "file": "src/forge/runtime/db/postgres-adapter.ts",
-      "id": "0098e8f78294cb64ccd7489c1ef7ee853da89ce847ce69ef1d4007cc2e7159ad",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "93c45df6679c914c7f96612f65b979baaddbb76c6866c84379b65ef14dea5dc3",
-        "sourceSlice": "adapter.query(sql, params)"
-      },
-      "name": "__forge_61_35",
-      "qualifiedName": "__forge_61_35",
-      "span": {
-        "end": 1761,
-        "start": 1735
-      }
-    },
-    {
-      "contentHash": "b5c88336b0dbec32da5eb7814c496033bebc96e7387cc6380eec5bba3816b7a7",
-      "file": "src/forge/runtime/db/postgres-adapter.ts",
-      "id": "cc94626ad882fd6bb138defea47121d93c08287f0df8915a5c475af0acabf169",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "93c45df6679c914c7f96612f65b979baaddbb76c6866c84379b65ef14dea5dc3",
-        "sourceSlice": "adapter.query(\"COMMIT\")"
-      },
-      "name": "__forge_63_14",
-      "qualifiedName": "__forge_63_14",
-      "span": {
-        "end": 1828,
-        "start": 1805
-      }
-    },
-    {
-      "contentHash": "77b3a7ef8462e992348928a257a4e92ee52028a8787a6ef2f6e465df5b777dd1",
-      "file": "src/forge/runtime/db/postgres-adapter.ts",
-      "id": "06ef8f3c67a09ff1defc5a49bbb6083f20865710d9a2bcada914edb1aa5c11e4",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "93c45df6679c914c7f96612f65b979baaddbb76c6866c84379b65ef14dea5dc3",
-        "sourceSlice": "adapter.query(\"ROLLBACK\")"
-      },
-      "name": "__forge_66_14",
-      "qualifiedName": "__forge_66_14",
-      "span": {
-        "end": 1908,
-        "start": 1883
-      }
-    },
-    {
-      "contentHash": "9f304e34945042dcab3e0b68c3e6f628e40652eb887dd23fb9b502a89444befe",
-      "file": "src/forge/runtime/workflows/create-run.ts",
-      "id": "7a728b4bb767b3ffdd6a15b3d3291ef1b813a66f81680bb6dd049eeadb98bb4e",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "6c520825d47080998dc72c7e125425bdc33868da25b9f5cd18c871ef58a5beff",
-        "sourceSlice": "adapter.query(\n        `INSERT INTO _forge_workflow_steps (run_id, step_name, step_index, status)\n         VALUES ($1, $2, $3, 'pending')`,\n        [runId, step.name, step.index],\n      )"
-      },
-      "name": "__forge_68_12",
-      "qualifiedName": "__forge_68_12",
-      "span": {
-        "end": 2643,
-        "start": 2456
-      }
-    },
-    {
-      "contentHash": "86be68bcf2a5b56ad557f32cb6b2c2db3696ad59b4e4007d9d49675ade311237",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "88fcb875eb510d813f23b856d2c1976f614dc33e5a05606d1095347e6614ab2c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n        `UPDATE _forge_telemetry_events\n         SET status = 'processed', sink = $1, processed_at = now(), last_error = NULL\n         WHERE id = $2`,\n        [sink, id],\n      )"
-      },
-      "name": "__forge_72_12",
-      "qualifiedName": "__forge_72_12",
-      "span": {
-        "end": 2279,
-        "start": 2086
-      }
-    },
-    {
-      "contentHash": "7ee937255f96ed0b8d5309474f826c6ac8b0b8bc7cbce42904618c93759ac244",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "295f7cd6fef387179af3c233b67e3e80a2d001bc83b3a287af92f844d979500b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`DROP TABLE IF EXISTS \"${change.table}\" CASCADE`)"
-      },
-      "name": "__forge_72_14",
-      "qualifiedName": "__forge_72_14",
-      "span": {
-        "end": 1991,
-        "start": 1928
-      }
-    },
-    {
-      "contentHash": "ec694acd18ccf0d72372a60229a82c2276fcca1d539284401c744e20bc852e5c",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "317220d72839888da0c89981152fd61ec043bd872a0155536119546addb13019",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_migrations`)"
-      },
-      "name": "__forge_76_10",
-      "qualifiedName": "__forge_76_10",
-      "span": {
-        "end": 2067,
-        "start": 2018
-      }
-    },
-    {
-      "contentHash": "efc0e35d1bf8b1d58daa78e852b09217d8180b9098424340017a26f034331e05",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "e3d1bd48c1a7702da8008c065468fd6b08d3bbcf4806ea53d4933b7e092e46cb",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_trace_spans RESTART IDENTITY CASCADE`)"
-      },
-      "name": "__forge_77_10",
-      "qualifiedName": "__forge_77_10",
-      "span": {
-        "end": 2154,
-        "start": 2079
-      }
-    },
-    {
-      "contentHash": "044497e3bd1a21ac7af50dd1f23f2fbee29d9c472207ff7d3aa622115c01fdb8",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "329907e3ced8d5bbb9b51858eebab920052e0e93fc9524a6c23a2f521f330728",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_telemetry_events RESTART IDENTITY CASCADE`)"
-      },
-      "name": "__forge_78_10",
-      "qualifiedName": "__forge_78_10",
-      "span": {
-        "end": 2246,
-        "start": 2166
-      }
-    },
-    {
-      "contentHash": "bc094921efb204c40f6e3cdb89ee2daf3f145a0f6be8a8e38d55510c8f10f21c",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "578a7acd9daeac3496909e82624418be1f38b4d14b0b73ce433abeaf4cea23b2",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_workflow_steps RESTART IDENTITY CASCADE`)"
-      },
-      "name": "__forge_79_10",
-      "qualifiedName": "__forge_79_10",
-      "span": {
-        "end": 2336,
-        "start": 2258
-      }
-    },
-    {
-      "contentHash": "eb72d7c72b334bb9a4402221f647518fe770e74128b7c991213a2094ade84a9b",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "e7ebf43a162a4a167c62232f2982403b1a30af1584d3fa9745531748bafb5a0f",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_workflow_runs RESTART IDENTITY CASCADE`)"
-      },
-      "name": "__forge_80_10",
-      "qualifiedName": "__forge_80_10",
-      "span": {
-        "end": 2425,
-        "start": 2348
-      }
-    },
-    {
-      "contentHash": "ce5163fb12c9544b5df54e56321515707a484f82fe23adb112b793f4a3b000bb",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "f3868ee29dd0629cfeb3b89d2e15803ebb5239846fbe3f363077f6d22ac1f47e",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_outbox_deliveries RESTART IDENTITY CASCADE`)"
-      },
-      "name": "__forge_81_10",
-      "qualifiedName": "__forge_81_10",
-      "span": {
-        "end": 2518,
-        "start": 2437
-      }
-    },
-    {
-      "contentHash": "ae9671bdb499ad4c9e741c507871300319c57151b8972a88b64f0b2ca7f4ca44",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "ebb7d2516d45248288a182501df4805a3f339b219df0dc3d5116a05eaf05802c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(`TRUNCATE TABLE _forge_outbox RESTART IDENTITY CASCADE`)"
-      },
-      "name": "__forge_82_10",
-      "qualifiedName": "__forge_82_10",
-      "span": {
-        "end": 2600,
-        "start": 2530
-      }
-    },
-    {
-      "contentHash": "657799609a50f40c41e0b6a118ead8288e287866dfacb208814dc353cee52a56",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "bf3e54e9afd0b667ab44002bb16e12f77a91ac393e333f8c9a9011831c37c018",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n        `UPDATE _forge_workflow_runs SET status = 'dead', updated_at = now() WHERE id = $1`,\n        [run.id],\n      )"
-      },
-      "name": "__forge_91_12",
-      "qualifiedName": "__forge_91_12",
-      "span": {
-        "end": 3453,
-        "start": 3320
-      }
-    },
-    {
-      "contentHash": "4bf8f9a29aad1ea686d379544a05b674935fdba193a2507c4e9f535f95a8c1f9",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "a304da4a1b6042b73caaef209092c06d8066130dd76d6064017df0596c98f5f7",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_outbox_deliveries\n     SET status = 'processed', processed_at = now(), locked_at = NULL, locked_by = NULL\n     WHERE id = $1`,\n    [deliveryId],\n  )"
-      },
-      "name": "__forge_94_8",
-      "qualifiedName": "__forge_94_8",
-      "span": {
-        "end": 2930,
-        "start": 2748
-      }
-    },
-    {
-      "contentHash": "85cc452c20e4e94ea692d3cb0345654b78627c42c9b95e14eec186ce4076e6e9",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "9c554b796cd73b9d12fe18f8221a58b5a6fd90b5df96bdebf4ad1296ebee57a8",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n          `UPDATE _forge_telemetry_events\n           SET status = 'failed', sink = $1, attempts = $2, last_error = $3, processed_at = now()\n           WHERE id = $4`,\n          [sink, nextAttempts, message, id],\n        )"
-      },
-      "name": "__forge_96_14",
-      "qualifiedName": "__forge_96_14",
-      "span": {
-        "end": 3027,
-        "start": 2791
-      }
-    },
-    {
-      "contentHash": "eb1dd73e502b02f1c523ca247097dcea6af5597c818f2cd2c560945d0557c111",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "70edba2953a8a5610e58754a420f5fbfa8823675f3fa6468c53b4c592b39c66d",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n        `UPDATE _forge_workflow_runs\n         SET status = 'completed', completed_at = now(), updated_at = now(), current_step = NULL\n         WHERE id = $1`,\n        [run.id],\n      )"
-      },
-      "name": "__forge_99_12",
-      "qualifiedName": "__forge_99_12",
-      "span": {
-        "end": 3746,
-        "start": 3547
-      }
-    },
-    {
-      "contentHash": "687deffa70d1bfb63c197b606c0c1e0a586d23036be344c95d8885b571b2065e",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "df75df8c1e026a7dc45b49991f9bfaffecad3b54d0cfdb3fe6eef53b171c15a6",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_outbox_deliveries\n       SET status = 'processing', locked_at = now(), locked_by = $1\n       WHERE id = $2 AND status = 'pending'`,\n      [workerId, deliveryId],\n    )"
-      },
-      "name": "claimResult",
-      "qualifiedName": "claimResult",
-      "span": {
-        "end": 1660,
-        "start": 1457
-      }
-    },
-    {
-      "contentHash": "1a5661bda7d9905c239d1de58a56cdb78a9f5812a068cb7a505627b860529ff4",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "ad96eacce28d25d06d8324327e7597c3a5386a40519b0e70c44c964ca22fccfa",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_steps\n     SET status = 'running', locked_at = now(), locked_by = $1, started_at = COALESCE(started_at, now())\n     WHERE id = $2 AND status = 'pending'`,\n    [workerId, nextStep.id],\n  )"
-      },
-      "name": "claimResult",
-      "qualifiedName": "claimResult",
-      "span": {
-        "end": 4372,
-        "start": 4142
-      }
-    },
-    {
-      "contentHash": "d9a92956df50c088fb37226f724d4574f5b01953fc2c90672e218f7ecde8dd8a",
-      "file": "src/forge/runtime/outbox/process.ts",
-      "id": "92745e24cd5f93b104e06a5044b6a2d107cfb2f413e3504ca4c9baaab7159be4",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "89077e9f17434068d848143dbc01ace5d8470a2f615d1456ad3a5c17bf3b37df",
-        "sourceSlice": "adapter.query(\n    `SELECT status, COUNT(*)::int AS count FROM _forge_outbox_deliveries GROUP BY status`,\n  )"
-      },
-      "name": "deliveries",
-      "qualifiedName": "deliveries",
-      "span": {
-        "end": 7439,
-        "start": 7330
-      }
-    },
-    {
-      "contentHash": "1eeb14036c1519c9d5e96b9e9bcbcb95654dd104177ba9f759acf16312edf04c",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "a85448e81806e32bce9f833cd35a84a755f007a57e4b86e26eeecc7ba08da4cd",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n      `SELECT o.id, o.event_type, o.payload, o.auth_context, o.created_at\n       FROM _forge_outbox o\n       WHERE o.id = $1`,\n      [Number(row.outbox_id)],\n    )"
-      },
-      "name": "eventResult",
-      "qualifiedName": "eventResult",
-      "span": {
-        "end": 1932,
-        "start": 1754
-      }
-    },
-    {
-      "contentHash": "2d3e9eeb059807642905b7a04bfdf626b5fd1f1b54d927d0d146adfa2585c6f6",
-      "file": "src/forge/runtime/outbox/process.ts",
-      "id": "c0444a5a7be2d8315e9532f769dc5fbd073be6dda50dfd545f767201421b722e",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "89077e9f17434068d848143dbc01ace5d8470a2f615d1456ad3a5c17bf3b37df",
-        "sourceSlice": "adapter.query(`SELECT COUNT(*)::int AS count FROM _forge_outbox`)"
-      },
-      "name": "events",
-      "qualifiedName": "events",
-      "span": {
-        "end": 7529,
-        "start": 7464
-      }
-    },
-    {
-      "contentHash": "444054f65182621fda3a4864b65418b3844744c99b904aace26ee5760627190c",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "6c68cd0a6f0eca6177e097aa4ceef24c49104d46995ee72700291290b290cf9c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n    `SELECT id, trace_id, event_type, payload, status, created_at\n     FROM _forge_telemetry_events WHERE trace_id = $1 ORDER BY id`,\n    [traceId],\n  )"
-      },
-      "name": "events",
-      "qualifiedName": "events",
-      "span": {
-        "end": 4967,
-        "start": 4800
-      }
-    },
-    {
-      "contentHash": "1a4ced070a225fb3bdb82888c08a97f038e403d09e7c651b0584fbc9efba0cf7",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "6c68cd0a6f0eca6177e097aa4ceef24c49104d46995ee72700291290b290cf9c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(`DELETE FROM _forge_telemetry_events`)"
-      },
-      "name": "events",
-      "qualifiedName": "events",
-      "span": {
-        "end": 5433,
-        "start": 5381
-      }
-    },
-    {
-      "contentHash": "f5878fa971603ef4625d7954b9bea48ae5c99333a3df2f60f80b0af0d10ed4c1",
-      "file": "src/forge/runtime/workflows/create-run.ts",
-      "id": "c071753e7fb857c4ecd992be7c342d5023d46a83012cd23652653a4393f4514c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "6c520825d47080998dc72c7e125425bdc33868da25b9f5cd18c871ef58a5beff",
-        "sourceSlice": "adapter.query(\n    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at\n     FROM _forge_workflow_runs WHERE idempotency_key = $1`,\n    [input.idempotencyKey],\n  )"
-      },
-      "name": "existing",
-      "qualifiedName": "existing",
-      "span": {
-        "end": 3369,
-        "start": 3079
-      }
-    },
-    {
-      "contentHash": "237c46a703731eca9aa218b7453010cbe942961983a7179f5350135df6022aa5",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "714a46ac037f4c5e011d362544021d43050c2373f582e699c64b0cfc014d99d5",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `SELECT status, canceled_at FROM _forge_workflow_runs WHERE id = $1`,\n    [run.id],\n  )"
-      },
-      "name": "freshRun",
-      "qualifiedName": "freshRun",
-      "span": {
-        "end": 3054,
-        "start": 2948
-      }
-    },
-    {
-      "contentHash": "4651b48697f5130d2cbad0c1d9e52f6665e4a479d4ecfa079d3c05d765cc902a",
-      "file": "src/forge/runtime/workflows/create-run.ts",
-      "id": "8437db454897e3fbfa5568f275fada222050033b91c0c582f6202c6fb938077c",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "6c520825d47080998dc72c7e125425bdc33868da25b9f5cd18c871ef58a5beff",
-        "sourceSlice": "adapter.query(\n    `INSERT INTO _forge_workflow_runs (workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status)\n     VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'pending')\n     ON CONFLICT (idempotency_key) DO NOTHING\n     RETURNING id`,\n    [\n      input.workflowName,\n      input.triggerType,\n      input.triggerOutboxId ?? null,\n      input.idempotencyKey,\n      JSON.stringify(input.input),\n      JSON.stringify(input.authContext ?? null),\n    ],\n  )"
-      },
-      "name": "insertResult",
-      "qualifiedName": "insertResult",
-      "span": {
-        "end": 2291,
-        "start": 1806
-      }
-    },
-    {
-      "contentHash": "05cc0f7593eaa778d2dc7ff06eed519540f3feb67acd5bbc173d53c6c07a5af6",
-      "file": "src/forge/runtime/workflows/start-from-outbox.ts",
-      "id": "991a0852c292f302a3e2d54c3525e2c45e2210d92f3fd1da213e331f710ac706",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "a8cfe34fd96e28c5be400651130101c3f7550d311608542681bd478dca68a2be",
-        "sourceSlice": "adapter.query(\n    `SELECT o.id, o.event_type, o.payload, o.auth_context\n     FROM _forge_outbox o\n     ORDER BY o.id`,\n  )"
-      },
-      "name": "outboxEvents",
-      "qualifiedName": "outboxEvents",
-      "span": {
-        "end": 965,
-        "start": 842
-      }
-    },
-    {
-      "contentHash": "5d272ca02055205b5076c57e31b77d2507bf197dc5dd262ad2bce1ab6068f17a",
-      "file": "src/forge/runtime/db/outbox.ts",
-      "id": "eb57b0c45b49fb3cbdb40280405c441320af3514bc1f9df077831a5e74cc3d31",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8b2843ac443fafaa5e23ddcd665ed405bcd8fee79d05915623586f67fb0c4afb",
-        "sourceSlice": "tx.query(\n      `INSERT INTO _forge_outbox (event_type, payload, auth_context) VALUES ($1, $2::jsonb, $3::jsonb) RETURNING id`,\n      [eventType, JSON.stringify(payload), JSON.stringify(authContext ?? null)],\n    )"
-      },
-      "name": "outboxResult",
-      "qualifiedName": "outboxResult",
-      "span": {
-        "end": 936,
-        "start": 722
-      }
-    },
-    {
-      "contentHash": "22502f6d33e1fe25c59a1c78e8e89ae34682292e6ca6c5aec5106211572b7cbf",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "21b58ee96874710707e4bc90d38d38f7cf90da5366814ce052b4f6bcc372a457",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n    `SELECT id, outbox_id, action_name, status, attempts, max_attempts, next_attempt_at, locked_at, locked_by, last_error, processed_at, created_at\n     FROM _forge_outbox_deliveries\n     WHERE status = 'pending' AND next_attempt_at <= now()\n     ORDER BY id\n     LIMIT $1`,\n    [limit],\n  )"
-      },
-      "name": "pending",
-      "qualifiedName": "pending",
-      "span": {
-        "end": 1307,
-        "start": 1001
-      }
-    },
-    {
-      "contentHash": "34d9754e3f57fe1fda24e466b067e276a993a2a354412da420399f2545046fe3",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "637e02bfeb10ecc261af38b43cd7d517e65246b0436d9911d5d178512ab8d78f",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n    `SELECT id, payload, attempts, max_attempts FROM _forge_telemetry_events\n     WHERE status = 'pending' AND next_attempt_at <= now()\n     ORDER BY id\n     LIMIT $1`,\n    [limit],\n  )"
-      },
-      "name": "pending",
-      "qualifiedName": "pending",
-      "span": {
-        "end": 1779,
-        "start": 1579
-      }
-    },
-    {
-      "contentHash": "b5242713223d6bc17b8c390876d357a98b73074ab6999a363a09416e6a5e9cff",
-      "file": "src/forge/runtime/workflows/process.ts",
-      "id": "b525ebd569679c03e883898e9a680b509a2b4b87ad1e88f9e9c04a8356bcbc19",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f4bd953030571b951f39536f3f73696f7535637b0ca70f68f1f47d2f084864c3",
-        "sourceSlice": "adapter.query(\n    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at\n     FROM _forge_workflow_runs\n     WHERE status IN ('pending', 'running', 'failed')\n     ORDER BY id\n     LIMIT $1`,\n    [limit],\n  )"
-      },
-      "name": "pendingRuns",
-      "qualifiedName": "pendingRuns",
-      "span": {
-        "end": 2601,
-        "start": 2254
-      }
-    },
-    {
-      "contentHash": "e51055773cfbdff2fe0519289efb833b7e6caebb5a7b6929818009ef2d982610",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "aa71e4fd6b9224176144a3c10bb1475afed37c7ce403b6b572c1b33fb8d488ec",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `SELECT COUNT(*)::int AS incomplete FROM _forge_workflow_steps\n     WHERE run_id = $1 AND step_index < $2 AND status != 'completed'`,\n    [run.id, nextStep.step_index],\n  )"
-      },
-      "name": "priorCompleted",
-      "qualifiedName": "priorCompleted",
-      "span": {
-        "end": 4027,
-        "start": 3836
-      }
-    },
-    {
-      "contentHash": "567743e53fe71742bbb1248163594d433b36cca3c11a23e239daf4af0713a190",
-      "file": "src/forge/dev/server.ts",
-      "id": "6459291da842572af5396b258558a1a9badd219bd5e7808dde8c471ff6532ac4",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "1b05547ca4bfb02202ef37319c61d06ca2a6f1298064572f350fe4952890bfbc",
-        "sourceSlice": "serverState.adapter.query(\n              `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`,\n            )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 14616,
-        "start": 14430
-      }
-    },
-    {
-      "contentHash": "e2b124eb6da3318a2e0c4ff262731530e65ed93db2abf9403b18aa4d9f92fb00",
-      "file": "src/forge/runtime/db/generated-client.ts",
-      "id": "a7b0897b0199242d8b08418b21647a91a2efff1f4d02168763b9a17fa816a8a1",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9f0652e789dc46996acd7913f794e047bb8a057b74bc4429e63781fed80b9bd7",
-        "sourceSlice": "tx.query(\n        `SELECT * FROM ${quoteIdent(tableName)}${where}`,\n        tenantFilter.params,\n      )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 3334,
-        "start": 3230
-      }
-    },
-    {
-      "contentHash": "7ed51084c42b44640d5498f8c7038169481cad9baf588833bb364d1b1d692872",
-      "file": "src/forge/runtime/db/generated-client.ts",
-      "id": "a7b0897b0199242d8b08418b21647a91a2efff1f4d02168763b9a17fa816a8a1",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9f0652e789dc46996acd7913f794e047bb8a057b74bc4429e63781fed80b9bd7",
-        "sourceSlice": "tx.query(\n        `SELECT * FROM ${quoteIdent(tableName)} WHERE ${whereParts.join(\" AND \")} LIMIT 1`,\n        params,\n      )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 3843,
-        "start": 3718
-      }
-    },
-    {
-      "contentHash": "76667fa6491fdf79b31917425f5b0bb51e365fe1e7d3d23d8c375dc35b6fa5d4",
-      "file": "src/forge/runtime/db/generated-client.ts",
-      "id": "a7b0897b0199242d8b08418b21647a91a2efff1f4d02168763b9a17fa816a8a1",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9f0652e789dc46996acd7913f794e047bb8a057b74bc4429e63781fed80b9bd7",
-        "sourceSlice": "tx.query(\n        `INSERT INTO ${quoteIdent(tableName)} (${keys.map(quoteIdent).join(\", \")}) VALUES (${placeholders.join(\", \")}) RETURNING *`,\n        params,\n      )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 4378,
-        "start": 4212
-      }
-    },
-    {
-      "contentHash": "8fa38b4d620eb99d239d18f702772ab3c3169d6a210abe67d19dd4f22ed858e0",
-      "file": "src/forge/runtime/db/generated-client.ts",
-      "id": "a7b0897b0199242d8b08418b21647a91a2efff1f4d02168763b9a17fa816a8a1",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9f0652e789dc46996acd7913f794e047bb8a057b74bc4429e63781fed80b9bd7",
-        "sourceSlice": "tx.query(\n        `UPDATE ${quoteIdent(tableName)} SET ${assignments.join(\", \")} WHERE ${whereParts.join(\" AND \")} RETURNING *`,\n        params,\n      )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 5355,
-        "start": 5203
-      }
-    },
-    {
-      "contentHash": "f795798bcc4ae06fc29967be64f75632f79a9ebf19236e001bc23563c9d43d31",
-      "file": "src/forge/runtime/db/generated-client.ts",
-      "id": "a7b0897b0199242d8b08418b21647a91a2efff1f4d02168763b9a17fa816a8a1",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9f0652e789dc46996acd7913f794e047bb8a057b74bc4429e63781fed80b9bd7",
-        "sourceSlice": "tx.query(\n        `DELETE FROM ${quoteIdent(tableName)} WHERE ${whereParts.join(\" AND \")}`,\n        params,\n      )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 5868,
-        "start": 5753
-      }
-    },
-    {
-      "contentHash": "62ef9deb97f1c82dc5505b044d224502533f1ac1f40493383393b3fb695ad246",
-      "file": "src/forge/runtime/db/generated-client.ts",
-      "id": "a7b0897b0199242d8b08418b21647a91a2efff1f4d02168763b9a17fa816a8a1",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9f0652e789dc46996acd7913f794e047bb8a057b74bc4429e63781fed80b9bd7",
-        "sourceSlice": "tx.query(\n        `SELECT * FROM ${quoteIdent(tableName)} WHERE ${clauses.join(\" AND \")}`,\n        params,\n      )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 6770,
-        "start": 6656
-      }
-    },
-    {
-      "contentHash": "c72238dd5ee2cc5181ee8ab88b87e04372b07069bb034b2b04639f5ccaa46255",
-      "file": "src/forge/runtime/db/migrate.ts",
-      "id": "b7db5cfa22db652029dc7668b4063a976e5c76ad3825c04748acd4dd2ab01045",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "8cd9c147046696d36bd81f8b4fa9a2c983d89963124077dc98cbafc2fe7c366d",
-        "sourceSlice": "adapter.query(\n    `SELECT id, checksum, applied_at::text AS applied_at FROM _forge_migrations ORDER BY applied_at ASC`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 3192,
-        "start": 3068
-      }
-    },
-    {
-      "contentHash": "898040a71ac8f4b593c49ad6b99a26c3c7e405f44077fe9aaf7ee8835a59c02c",
-      "file": "src/forge/runtime/db/pglite-adapter.ts",
-      "id": "7bce03df9becda6c9fcea22547533d7e6c2f3640a58386911112057199c63236",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "35a1f344203b6a25926259d804e75675cb7aa980f07d1bbd751f7061021391b2",
-        "sourceSlice": "this.db.query(sql, params)"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 597,
-        "start": 571
-      }
-    },
-    {
-      "contentHash": "22c592bd9b6c2c1ef4b26421b0a8abffe55a3d68da9b50112a5aac99feb4fd5c",
-      "file": "src/forge/runtime/db/postgres-adapter.ts",
-      "id": "24beac36989a16b90907ba129d0485d0eb22f10a5d20c5139193cdb77fff922b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "93c45df6679c914c7f96612f65b979baaddbb76c6866c84379b65ef14dea5dc3",
-        "sourceSlice": "this.client.query(sql, params)"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 1499,
-        "start": 1469
-      }
-    },
-    {
-      "contentHash": "a069b8a57db5f43df5fe080d207ba3c4027a5a6d06c2d0f1bdcc3e68663d44d4",
-      "file": "src/forge/runtime/outbox/claim.ts",
-      "id": "3ce72120896115b69b07faf66e9ca141781e978ee7545e88795e140f04c67826",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "cabfeb9d9a008b8efdc81e0c10278cb24e1fa1240f236312230955d82781b04b",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_outbox_deliveries\n     SET status = 'pending', attempts = 0, next_attempt_at = now(), last_error = NULL, locked_at = NULL, locked_by = NULL, processed_at = NULL\n     WHERE id = $1`,\n    [deliveryId],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 4057,
-        "start": 3820
-      }
-    },
-    {
-      "contentHash": "db54362cdbf48f76b8c63b84db3dfbfeed6fd0c25fe082a355e3b54683443a10",
-      "file": "src/forge/runtime/outbox/process.ts",
-      "id": "e63e3c63aca545eef141fefef8f5ce9999d9cf2ce77d3c8593fd87e9d1d45fa2",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "89077e9f17434068d848143dbc01ace5d8470a2f615d1456ad3a5c17bf3b37df",
-        "sourceSlice": "adapter.query(\n    `SELECT d.id, d.outbox_id, d.action_name, d.status, d.attempts, d.max_attempts, d.next_attempt_at, d.last_error, d.processed_at, o.event_type, o.created_at AS event_created_at\n     FROM _forge_outbox_deliveries d\n     JOIN _forge_outbox o ON o.id = d.outbox_id\n     ORDER BY d.id`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 8345,
-        "start": 8041
-      }
-    },
-    {
-      "contentHash": "22e13f60163f85f9ba15cacee18a0ec7f637cb8996d28e4e689c7b96262b40b3",
-      "file": "src/forge/runtime/outbox/process.ts",
-      "id": "e63e3c63aca545eef141fefef8f5ce9999d9cf2ce77d3c8593fd87e9d1d45fa2",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "89077e9f17434068d848143dbc01ace5d8470a2f615d1456ad3a5c17bf3b37df",
-        "sourceSlice": "adapter.query(\n    `SELECT d.id, d.outbox_id, d.action_name, d.attempts, d.last_error, d.created_at, o.event_type\n     FROM _forge_outbox_deliveries d\n     JOIN _forge_outbox o ON o.id = d.outbox_id\n     WHERE d.status = 'dead'\n     ORDER BY d.id`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 8751,
-        "start": 8499
-      }
-    },
-    {
-      "contentHash": "de55261e1639df0e9e00a986ef5199cdd566e34ea7f2628b931a799f2cb2ce60",
-      "file": "src/forge/runtime/outbox/process.ts",
-      "id": "e63e3c63aca545eef141fefef8f5ce9999d9cf2ce77d3c8593fd87e9d1d45fa2",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "89077e9f17434068d848143dbc01ace5d8470a2f615d1456ad3a5c17bf3b37df",
-        "sourceSlice": "adapter.query(\n    `DELETE FROM _forge_outbox_deliveries WHERE status = 'dead'`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 8966,
-        "start": 8882
-      }
-    },
-    {
-      "contentHash": "6c1920aeb38d1721376c0b48886d1303fc9284b62a0461473de407df2595a45b",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "eb579b48e163c4ad7c09d5b8622bd9963e7a6910f92edb068acac0b4150a505d",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n    `SELECT status, COUNT(*)::int AS count FROM _forge_telemetry_events GROUP BY status`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 3965,
-        "start": 3857
-      }
-    },
-    {
-      "contentHash": "8003e85b0ddc0290734e251d8329adb6e88eb3ff5fe1f663eaff2dd349fd8cdf",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "eb579b48e163c4ad7c09d5b8622bd9963e7a6910f92edb068acac0b4150a505d",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n    `SELECT id, trace_id, event_type, payload, status, sink, attempts, last_error, created_at, processed_at\n     FROM _forge_telemetry_events\n     ORDER BY id DESC\n     LIMIT $1`,\n    [limit],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 4582,
-        "start": 4371
-      }
-    },
-    {
-      "contentHash": "fdbd9c997a7e3916f499234e192959cf019996a32c4e7288faaf941af531c0b0",
-      "file": "src/forge/runtime/workflows/cancel.ts",
-      "id": "c417bd8e1be18168e16da1f85d8722caa71b8c974fc161cc81fd2b40e9ff2595",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "507a8f614d68514a0fd20cead9d2fd1a3ae1665da08f39a38692f4c9d642ee51",
-        "sourceSlice": "adapter.query(\n    `UPDATE _forge_workflow_runs\n     SET status = 'canceled', canceled_at = now(), updated_at = now()\n     WHERE id = $1 AND status NOT IN ('completed', 'canceled', 'dead')`,\n    [runId],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 384,
-        "start": 177
-      }
-    },
-    {
-      "contentHash": "7375689bdb9161265d087554567a2a0a3b1b47a59c01416737d1a6d5ec13f50d",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "4023d7db28b87114da7dc337c9cf89f53378c6d6e2fd31f548a60139e4ff580b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `SELECT s.id, s.run_id, s.step_name, s.step_index, s.status, s.input, s.output, s.attempts, s.max_attempts, s.next_attempt_at, s.locked_at, s.locked_by, s.last_error, s.started_at, s.completed_at, s.created_at\n     FROM _forge_workflow_steps s\n     WHERE s.run_id = $1 AND s.status = 'pending' AND s.next_attempt_at <= now()\n     ORDER BY s.step_index\n     LIMIT 1`,\n    [runId],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 1792,
-        "start": 1390
-      }
-    },
-    {
-      "contentHash": "741b096e528abab79570a3a7aaae217c58bc0f829e202f200801d8faff3e0bbe",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "4023d7db28b87114da7dc337c9cf89f53378c6d6e2fd31f548a60139e4ff580b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `SELECT COUNT(*)::int AS pending FROM _forge_workflow_steps\n     WHERE run_id = $1 AND status NOT IN ('completed', 'skipped')`,\n    [runId],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 2165,
-        "start": 2002
-      }
-    },
-    {
-      "contentHash": "691cfb641793e621e8a515574715839f9648b05558911ff6f6d1b3013a714cc5",
-      "file": "src/forge/runtime/workflows/process-run.ts",
-      "id": "4023d7db28b87114da7dc337c9cf89f53378c6d6e2fd31f548a60139e4ff580b",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "06960070abd54d128fe62d631cfddb76f6324ca0f91987699f13859503806445",
-        "sourceSlice": "adapter.query(\n    `SELECT COUNT(*)::int AS dead FROM _forge_workflow_steps\n     WHERE run_id = $1 AND status = 'dead'`,\n    [runId],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 2465,
-        "start": 2328
-      }
-    },
-    {
-      "contentHash": "b97d551f1f5a262cdcdac2d53e1c018dd406abd1eabad2c79aef1c02a4f7a9c0",
-      "file": "src/forge/runtime/workflows/process-step.ts",
-      "id": "60299ad1c84fb4c5b27bc1a96943584f4eee8f88b463dafb7118717ccfad2b9d",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "d2db26e4b1cc1e64d8fff4cd8639b9f9d8f87118fd5229d7f5d31f400d984667",
-        "sourceSlice": "adapter.query(\n    `SELECT step_name, output FROM _forge_workflow_steps\n     WHERE run_id = $1 AND status = 'completed'\n     ORDER BY step_index`,\n    [runId],\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 1580,
-        "start": 1417
-      }
-    },
-    {
-      "contentHash": "2ab47625aad172138c3897114374054ce9087d3f369d6f7cf90b4a8d4a1d2f90",
-      "file": "src/forge/runtime/workflows/process.ts",
-      "id": "d6f9859d9b291deec8afd99347d1de4fb673769114d32f4e745b6c0cd7bc9c5a",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f4bd953030571b951f39536f3f73696f7535637b0ca70f68f1f47d2f084864c3",
-        "sourceSlice": "adapter.query(\n    `SELECT status, COUNT(*)::int AS count FROM _forge_workflow_runs GROUP BY status`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 4976,
-        "start": 4871
-      }
-    },
-    {
-      "contentHash": "89965d3dee7e61d0f8b2d04239d8d2ca9f723716966ffaa16015637bf2b4df9a",
-      "file": "src/forge/runtime/workflows/process.ts",
-      "id": "d6f9859d9b291deec8afd99347d1de4fb673769114d32f4e745b6c0cd7bc9c5a",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f4bd953030571b951f39536f3f73696f7535637b0ca70f68f1f47d2f084864c3",
-        "sourceSlice": "adapter.query(\n    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at\n     FROM _forge_workflow_runs\n     ORDER BY id`,\n  )"
-      },
-      "name": "result",
-      "qualifiedName": "result",
-      "span": {
-        "end": 5728,
-        "start": 5462
-      }
-    },
-    {
-      "contentHash": "f69f3df01859cb21e6265c95f42a24ac072a12d7190bce249af32efbf00ed8cb",
-      "file": "src/forge/runtime/workflows/create-run.ts",
-      "id": "c5f880bdb302765ebeed0b87e4ce1c52e2aeadb5697d38f25cfa8b7fc27e50eb",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "6c520825d47080998dc72c7e125425bdc33868da25b9f5cd18c871ef58a5beff",
-        "sourceSlice": "adapter.query(\n      `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at\n       FROM _forge_workflow_runs WHERE id = $1`,\n      [runId],\n    )"
-      },
-      "name": "runResult",
-      "qualifiedName": "runResult",
-      "span": {
-        "end": 2964,
-        "start": 2680
-      }
-    },
-    {
-      "contentHash": "4e4ae1851a6d2d98aa43156c2358fdd6bdb079f0eb07402cd400858f2e13366d",
-      "file": "src/forge/runtime/workflows/process.ts",
-      "id": "9468fc5a2a6f457e084ff162c24c27734c4ac05ea9be781e53d632eac15be495",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f4bd953030571b951f39536f3f73696f7535637b0ca70f68f1f47d2f084864c3",
-        "sourceSlice": "adapter.query(\n    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at\n     FROM _forge_workflow_runs WHERE id = $1`,\n    [runId],\n  )"
-      },
-      "name": "runResult",
-      "qualifiedName": "runResult",
-      "span": {
-        "end": 6226,
-        "start": 5950
-      }
-    },
-    {
-      "contentHash": "b3c30eba56a370b6875bc90b9ead12a40819adf8c513553ac88fbb5f34d8cd0e",
-      "file": "src/forge/runtime/workflows/retry-run.ts",
-      "id": "ac80ee97d81f87b5d285eb771a4de78d688c132829cfcbfe3fc3135c20a881f4",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9420988417df440440c723050b300584b05d7a58b68d150dbeb9ce354de980d1",
-        "sourceSlice": "adapter.query(\n    `SELECT id, status FROM _forge_workflow_runs WHERE id = $1`,\n    [runId],\n  )"
-      },
-      "name": "runResult",
-      "qualifiedName": "runResult",
-      "span": {
-        "end": 296,
-        "start": 200
-      }
-    },
-    {
-      "contentHash": "fa4b9edfa9a816514d57e8ed9a7f0dd9b7737cd368321ab6354c3f4030429dfc",
-      "file": "src/forge/runtime/telemetry/flush.ts",
-      "id": "68a58f142b18b75186c1a9aa0b517089a7c870d186fdeac71055b1863e2adbf6",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f806fd47a6da2ac7d055ec638ea3a778df82f1f7fd3077b6fa4be9e51bb8c94d",
-        "sourceSlice": "adapter.query(\n    `SELECT id, trace_id, parent_span_id, span_id, name, kind, attributes, status, started_at, ended_at, error\n     FROM _forge_trace_spans WHERE trace_id = $1 ORDER BY started_at`,\n    [traceId],\n  )"
-      },
-      "name": "spans",
-      "qualifiedName": "spans",
-      "span": {
-        "end": 5206,
-        "start": 4991
-      }
-    },
-    {
-      "contentHash": "3d80361d62fa9ec32e872d8cf1dbdcbd1ff996b55f79d7e856095393480653f0",
-      "file": "src/forge/runtime/workflows/retry-run.ts",
-      "id": "b5f971cc820aa5537d829544f22360568259d0c639aa00528f4abb11fd916a2f",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "9420988417df440440c723050b300584b05d7a58b68d150dbeb9ce354de980d1",
-        "sourceSlice": "adapter.query(\n      `UPDATE _forge_workflow_steps\n       SET status = 'pending', attempts = 0, next_attempt_at = now(), last_error = NULL, locked_at = NULL, locked_by = NULL, output = NULL, completed_at = NULL\n       WHERE run_id = $1 AND step_name = $2`,\n      [runId, stepName],\n    )"
-      },
-      "name": "stepResult",
-      "qualifiedName": "stepResult",
-      "span": {
-        "end": 693,
-        "start": 406
-      }
-    },
-    {
-      "contentHash": "85d6ebc13d815a9b3052f84c549277d5a3d6525d2a384211d9fdc32c34ec99ed",
-      "file": "src/forge/runtime/workflows/process.ts",
-      "id": "4de739e60176d538896ace7f4a68043bcaa0899710505f50fac8a3ae6af48b89",
-      "kind": "query",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "f4bd953030571b951f39536f3f73696f7535637b0ca70f68f1f47d2f084864c3",
-        "sourceSlice": "adapter.query(\n    `SELECT id, run_id, step_name, step_index, status, input, output, attempts, max_attempts, next_attempt_at, last_error, started_at, completed_at, created_at\n     FROM _forge_workflow_steps WHERE run_id = $1 ORDER BY step_index`,\n    [runId],\n  )"
-      },
-      "name": "stepsResult",
-      "qualifiedName": "stepsResult",
-      "span": {
-        "end": 6599,
-        "start": 6336
-      }
-    }
-  ]
+  "symbols": []
 } as const;

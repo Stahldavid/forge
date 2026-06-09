@@ -17,6 +17,7 @@ import type {
   PermissionMatrixEntry,
   PolicyRegistry,
   PolicyRule,
+  QueryAuthBinding,
   TenantScope,
   TenantScopeEntry,
 } from "../types/policy-registry.ts";
@@ -24,7 +25,7 @@ import {
   POLICY_REGISTRY_ANALYZER_VERSION,
   POLICY_REGISTRY_SCHEMA_VERSION,
 } from "./constants.ts";
-import { parseCommandAuthFromSlice, parsePoliciesFromSlice } from "./parse.ts";
+import { parseAuthFromSlice, parsePoliciesFromSlice } from "./parse.ts";
 
 function stableSortPolicies(policies: PolicyRule[]): PolicyRule[] {
   return [...policies].sort((a, b) => {
@@ -44,6 +45,15 @@ function stableSortCommandAuth(bindings: CommandAuthBinding[]): CommandAuthBindi
   });
 }
 
+function stableSortQueryAuth(bindings: QueryAuthBinding[]): QueryAuthBinding[] {
+  return [...bindings].sort((a, b) => {
+    if (a.queryName !== b.queryName) {
+      return a.queryName < b.queryName ? -1 : 1;
+    }
+    return a.file < b.file ? -1 : 1;
+  });
+}
+
 function buildPermissionMatrix(policies: PolicyRule[]): PermissionMatrixEntry[] {
   return policies
     .filter((policy) => policy.kind === "roles")
@@ -57,6 +67,7 @@ function buildPermissionMatrix(policies: PolicyRule[]): PermissionMatrixEntry[] 
 export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
   const policies: PolicyRule[] = [];
   const commandAuth: CommandAuthBinding[] = [];
+  const queryAuth: QueryAuthBinding[] = [];
   const diagnostics: PolicyRegistry["diagnostics"] = [];
   const seenPolicyNames = new Map<string, PolicyRule>();
 
@@ -113,7 +124,7 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
         typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
       const auth =
         sourceSlice.length > 0
-          ? parseCommandAuthFromSlice(sourceSlice)
+          ? parseAuthFromSlice(sourceSlice)
           : { kind: "user" as const };
 
       commandAuth.push({
@@ -123,10 +134,27 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
         auth,
       });
     }
+
+    if (symbol.kind === "query") {
+      const sourceSlice =
+        typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
+      const auth =
+        sourceSlice.length > 0
+          ? parseAuthFromSlice(sourceSlice)
+          : { kind: "user" as const };
+
+      queryAuth.push({
+        queryName: symbol.name,
+        file: symbol.file,
+        symbolId: symbol.id,
+        auth,
+      });
+    }
   }
 
   const sortedPolicies = stableSortPolicies(policies);
   const sortedCommandAuth = stableSortCommandAuth(commandAuth);
+  const sortedQueryAuth = stableSortQueryAuth(queryAuth);
 
   for (const binding of sortedCommandAuth) {
     if (binding.auth.kind !== "policy") {
@@ -138,6 +166,22 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
           severity: "warning",
           code: FORGE_POLICY_UNKNOWN,
           message: `command '${binding.commandName}' references unknown policy '${binding.auth.policy}'`,
+          file: binding.file,
+        }),
+      );
+    }
+  }
+
+  for (const binding of sortedQueryAuth) {
+    if (binding.auth.kind !== "policy") {
+      continue;
+    }
+    if (!seenPolicyNames.has(binding.auth.policy)) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "warning",
+          code: FORGE_POLICY_UNKNOWN,
+          message: `query '${binding.queryName}' references unknown policy '${binding.auth.policy}'`,
           file: binding.file,
         }),
       );
@@ -156,6 +200,7 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
     ),
     policies: sortedPolicies,
     commandAuth: sortedCommandAuth,
+    queryAuth: sortedQueryAuth,
     diagnostics: diagnostics.sort((a, b) => {
       const fileA = a.file ?? "";
       const fileB = b.file ?? "";

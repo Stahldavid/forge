@@ -23,6 +23,8 @@ bun run forge verify
 | `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
 | `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime/dev |
 | `forge run [name]` | List or execute local command/action handlers (`--list`, `--mock`) |
+| `forge run query <name>` | Execute a read-only query with `--args` and auth flags |
+| `forge query <list\|run>` | Query aliases (`forge query run listTickets`) |
 | `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`, `--db`, `--worker`) |
 | `forge db <diff\|migrate\|reset\|status>` | SQL migrations against PGlite (default) or Postgres |
 | `forge outbox <list\|process\|retry\|dead\|clear>` | Inspect and process durable outbox deliveries |
@@ -107,6 +109,40 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 11. **H10.5** — Security hardening (`forge verify --strict`) ✅
 12. **H11** — Secrets & environment runtime v1 ✅
 13. **H12** — AI workflow integration & observability ✅
+14. **H12.5** — Example artifacts, zod lockfile, verify Windows bun path, E2E telemetry ✅
+15. **H13** — Query runtime & typed API surface ✅
+
+### H13 deliverables (query runtime)
+
+| Artifact | Description |
+|----------|-------------|
+| `queryRegistry.json` / `.ts` | Static index of `query({ handler })` definitions |
+| `api.json` / `.ts` | Unified typed surface: queries, commands, actions, workflows |
+| `serverApi.ts` / `clientApi.ts` | Server/client API stubs |
+| `runQuery` | Read-only runtime with policy preflight and telemetry |
+| `forge run query` / `forge query` | CLI execution with `--args`, auth flags |
+| Dev server | `GET /queries`, `POST /queries/:name`, queries in `GET /entries` |
+
+```bash
+forge run query listTickets --args '{}' --user-id u1 --tenant-id t1 --role member --json
+forge query list
+forge query run getTicket --args '{"id":"..."}' --user-id u1 --tenant-id t1 --role member
+forge inspect queries
+forge inspect api
+```
+
+**Architecture:** Queries use a read-only `QueryContext` (`db.all/get/where/count` only). Policy auth matches commands. Telemetry emits `forge.query.started/completed/failed` with `traceId`. Static `forge check` rejects `ctx.emit`, `ctx.secrets`, `ctx.ai`, and DB writes in query handlers.
+
+**Limitations:** no liveQuery/reactivity, client SDK, caching, query dependency tracking, or SQL optimization.
+
+### H12.5 cleanup
+
+- Committed regenerated H12 artifacts in `examples/basic-forge-app`
+- Root `package-lock.json` ignored (Bun-first); example uses `forge add zod`
+- `forge verify` resolves Bun via `process.execPath` / `Bun.which` (Windows-safe)
+- Extended `tests/ai/ai-workflow.test.ts` to assert `forge.ai.generation.completed` telemetry
+
+Tag: `h12-ai-runtime` (post-cleanup)
 
 ### H12 deliverables (AI workflow integration)
 
@@ -311,7 +347,9 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 | `GET` | `/outbox` | Outbox summary and delivery list |
 | `POST` | `/outbox/process` | Process one outbox batch |
 | `GET` | `/db/tables` | List migrated tables |
-| `GET` | `/entries` | Runtime graph entries |
+| `GET` | `/entries` | Runtime graph entries and queries |
+| `GET` | `/queries` | Query registry |
+| `POST` | `/queries/:name` | Execute read-only query |
 | `GET` | `/workflows` | Workflow registry and manifest metadata |
 | `GET` | `/workflows/runs` | List workflow runs |
 | `GET` | `/workflows/runs/:id` | Inspect a workflow run and steps |

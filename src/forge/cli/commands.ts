@@ -9,6 +9,7 @@ import { forgeAdd } from "../compiler/integration/add.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
 import { checkDirectProcessEnvUsage } from "../compiler/guards/check-process-env.ts";
 import { checkAiUsageInApp } from "../compiler/guards/check-ai-usage.ts";
+import { checkQueryUsageInApp } from "../compiler/guards/check-query-usage.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import { run } from "../compiler/orchestrator/run.ts";
 import { discover } from "../compiler/orchestrator/discover.ts";
@@ -74,6 +75,15 @@ import {
   runSecretsCommand,
 } from "./secrets.ts";
 import { formatAiHuman, formatAiJson, runAiCommand } from "./ai.ts";
+import {
+  formatQueryJson,
+  formatQueryListHuman,
+  formatQueryResultHuman,
+  runQueryCommand,
+} from "./query.ts";
+import { runQuery } from "../runtime/query/run-query.ts";
+import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
+import { getActiveDbAdapter } from "../runtime/executor.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -154,8 +164,14 @@ export async function runCheckCommand(
     options?.strictSecrets ?? false,
   );
   const aiDiagnostics = checkAiUsageInApp(appGraph);
+  const queryDiagnostics = checkQueryUsageInApp(appGraph);
 
-  const allDiagnostics = [...guardDiagnostics, ...processEnvDiagnostics, ...aiDiagnostics];
+  const allDiagnostics = [
+    ...guardDiagnostics,
+    ...processEnvDiagnostics,
+    ...aiDiagnostics,
+    ...queryDiagnostics,
+  ];
   const errors = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
   );
@@ -192,6 +208,8 @@ export async function runInspectCommand(
     secrets: `${GENERATED_DIR}/secretRegistry.json`,
     env: `${GENERATED_DIR}/envSchema.json`,
     ai: `${GENERATED_DIR}/aiRegistry.json`,
+    queries: `${GENERATED_DIR}/queryRegistry.json`,
+    api: `${GENERATED_DIR}/api.json`,
   };
 
   const relative = dataPaths[target];
@@ -289,6 +307,38 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         command.workspaceRoot,
         command.envFile ? [command.envFile] : undefined,
       );
+
+      if (command.queryMode && command.name) {
+        const tableMap = readGeneratedJson<{ tableMap: Record<string, import("../compiler/data-graph/sql/serialize.ts").TableMapEntry> }>(
+          command.workspaceRoot,
+          `${GENERATED_DIR}/db.json`,
+        )?.tableMap;
+
+        const run = await runQuery(
+          command.workspaceRoot,
+          command.name,
+          {
+            args: command.args,
+            auth: resolveAuthFromCli({
+              userId: command.userId,
+              tenantId: command.tenantId,
+              role: command.role,
+            }),
+          },
+          {
+            adapter: getActiveDbAdapter(),
+            tableMap,
+          },
+        );
+
+        if (command.json) {
+          process.stdout.write(`${JSON.stringify({ run }, null, 2)}\n`);
+        } else {
+          process.stdout.write(formatQueryResultHuman(run));
+        }
+        return run.exitCode;
+      }
+
       const result = await runRunCommand({
         name: command.name,
         list: command.list,
@@ -463,6 +513,28 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatEnvJson(result));
       } else {
         process.stdout.write(formatEnvHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "query": {
+      const result = await runQueryCommand({
+        subcommand: command.subcommand,
+        name: command.name,
+        args: command.args,
+        json: command.json,
+        userId: command.userId,
+        tenantId: command.tenantId,
+        role: command.role,
+        workspaceRoot: command.workspaceRoot,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatQueryJson(result));
+      } else if (result.list) {
+        process.stdout.write(formatQueryListHuman(result.list));
+      } else if (result.run) {
+        process.stdout.write(formatQueryResultHuman(result.run));
       }
 
       return result.exitCode;

@@ -56,7 +56,9 @@ export type InspectTarget =
   | "policies"
   | "secrets"
   | "env"
-  | "ai";
+  | "ai"
+  | "queries"
+  | "api";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;

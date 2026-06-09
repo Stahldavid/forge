@@ -9,6 +9,7 @@ import type {
   DevRoute,
 } from "../types/dev-manifest.ts";
 import type { RuntimeGraph } from "../types/runtime-graph.ts";
+import type { QueryRegistry } from "../types/query-registry.ts";
 import {
   DEV_MANIFEST_ANALYZER_VERSION,
   DEV_MANIFEST_SCHEMA_VERSION,
@@ -51,14 +52,28 @@ function stableSortWorkflows(
   });
 }
 
-function buildRoutes(runtimeGraph: RuntimeGraph): DevRoute[] {
+function buildRoutes(
+  runtimeGraph: RuntimeGraph,
+  queryRegistry: QueryRegistry,
+): DevRoute[] {
   const routes: DevRoute[] = [
     { method: "GET", path: "/health", purpose: "health" },
     { method: "GET", path: "/entries", purpose: "entries" },
+    { method: "GET", path: "/queries", purpose: "queries" },
     { method: "GET", path: "/workflows", purpose: "workflows" },
     { method: "GET", path: "/workflows/runs", purpose: "workflow-runs" },
     { method: "POST", path: "/workflows/process", purpose: "workflow-process" },
   ];
+
+  for (const query of queryRegistry.queries) {
+    routes.push({
+      method: "POST",
+      path: `/queries/${query.name}`,
+      purpose: "query",
+      entryName: query.name,
+      entryKind: "query",
+    });
+  }
 
   for (const entry of runtimeGraph.entries) {
     routes.push({
@@ -91,7 +106,17 @@ function buildRoutes(runtimeGraph: RuntimeGraph): DevRoute[] {
   return stableSortRoutes(routes);
 }
 
-function buildEntries(runtimeGraph: RuntimeGraph): DevManifestEntry[] {
+function buildEntries(
+  runtimeGraph: RuntimeGraph,
+  queryRegistry: QueryRegistry,
+): DevManifestEntry[] {
+  const queryEntries = queryRegistry.queries.map((query) => ({
+    name: query.name,
+    kind: "query" as const,
+    invokePath: `/queries/${query.name}`,
+    semanticPath: `/queries/${query.name}`,
+  }));
+
   const entries = runtimeGraph.entries.map((entry) => ({
     name: entry.name,
     kind: entry.kind,
@@ -102,7 +127,7 @@ function buildEntries(runtimeGraph: RuntimeGraph): DevManifestEntry[] {
         : `/actions/${entry.name}`,
   }));
 
-  return stableSortEntries(entries);
+  return stableSortEntries([...queryEntries, ...entries]);
 }
 
 function buildWorkflows(appGraph?: AppGraph): DevManifestWorkflow[] {
@@ -122,6 +147,7 @@ function buildWorkflows(appGraph?: AppGraph): DevManifestWorkflow[] {
 
 export function buildDevManifest(
   runtimeGraph: RuntimeGraph,
+  queryRegistry: QueryRegistry,
   appGraph?: AppGraph,
 ): DevManifest {
   return {
@@ -131,12 +157,13 @@ export function buildDevManifest(
     inputHash: hashStable(
       canonicalJson({
         runtimeInputHash: runtimeGraph.inputHash,
+        queryInputHash: queryRegistry.inputHash,
         analyzerVersion: DEV_MANIFEST_ANALYZER_VERSION,
       }),
     ),
-    routes: buildRoutes(runtimeGraph),
-    entries: buildEntries(runtimeGraph),
+    routes: buildRoutes(runtimeGraph, queryRegistry),
+    entries: buildEntries(runtimeGraph, queryRegistry),
     workflows: buildWorkflows(appGraph),
-    diagnostics: [...runtimeGraph.diagnostics],
+    diagnostics: [...runtimeGraph.diagnostics, ...queryRegistry.diagnostics],
   };
 }

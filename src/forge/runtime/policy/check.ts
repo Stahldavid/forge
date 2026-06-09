@@ -6,13 +6,15 @@ import {
 import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import type { TelemetryContext } from "../telemetry/types.ts";
-import { evaluateCommandAuth } from "../auth/evaluate.ts";
+import { evaluateCommandAuth, evaluateQueryAuth } from "../auth/evaluate.ts";
 import type { AuthContext } from "../auth/types.ts";
 import {
   findCommandAuthBinding,
+  findQueryAuthBinding,
   loadPermissionMatrix,
   loadPolicyRegistry,
 } from "./load.ts";
+import type { QueryDefinition } from "../../compiler/types/query-registry.ts";
 
 export interface PolicyCheckResult {
   allowed: boolean;
@@ -75,6 +77,65 @@ export async function checkCommandPolicy(
       code: FORGE_POLICY_DENIED,
       message: evaluation.message ?? "policy denied",
       file: options.entry.file,
+    }),
+  );
+
+  return {
+    allowed: false,
+    diagnostics,
+    traceId: options.telemetry?.traceId,
+  };
+}
+
+export interface QueryPolicyCheckOptions {
+  workspaceRoot: string;
+  query: QueryDefinition;
+  auth: AuthContext;
+  telemetry?: TelemetryContext;
+  strictPolicies?: boolean;
+}
+
+export async function checkQueryPolicy(
+  options: QueryPolicyCheckOptions,
+): Promise<PolicyCheckResult> {
+  const diagnostics: Diagnostic[] = [];
+  const registry = loadPolicyRegistry(options.workspaceRoot);
+  const matrix =
+    loadPermissionMatrix(options.workspaceRoot) ??
+    ({ entries: [] } as NonNullable<ReturnType<typeof loadPermissionMatrix>>);
+  const binding = findQueryAuthBinding(registry, options.query.name);
+
+  if (binding?.auth.kind === "user") {
+    const severity = options.strictPolicies ? "error" : "warning";
+    diagnostics.push(
+      createDiagnostic({
+        severity,
+        code: FORGE_POLICY_MISSING,
+        message: `query '${options.query.name}' has no auth policy metadata`,
+        file: options.query.file,
+      }),
+    );
+  }
+
+  const evaluation = evaluateQueryAuth(options.auth, binding, matrix);
+  if (evaluation.allowed) {
+    return { allowed: true, diagnostics };
+  }
+
+  if (options.telemetry) {
+    await options.telemetry.capture("forge.policy.denied", {
+      policy: evaluation.policy ?? (binding?.auth.kind === "policy" ? binding.auth.policy : null),
+      role: options.auth.kind === "user" ? options.auth.role : null,
+      query: options.query.name,
+    });
+  }
+
+  diagnostics.push(
+    createDiagnostic({
+      severity: "error",
+      code: FORGE_POLICY_DENIED,
+      message: evaluation.message ?? "policy denied",
+      file: options.query.file,
     }),
   );
 

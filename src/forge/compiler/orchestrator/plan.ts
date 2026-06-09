@@ -20,6 +20,8 @@ import {
   buildSecretRegistry,
 } from "../secret-registry/build.ts";
 import { buildAiModels, buildAiRegistry } from "../ai-registry/build.ts";
+import { buildQueryRegistry } from "../query-registry/build.ts";
+import { buildApiSurface } from "../api-surface/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -96,6 +98,12 @@ import {
   serializeAiModelsJson,
   serializeAiModelsTs,
   serializeAiContextTs,
+  serializeQueryRegistryJson,
+  serializeQueryRegistryTs,
+  serializeApiJson,
+  serializeApiTsExport,
+  serializeServerApiTsExport,
+  serializeClientApiTsExport,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -180,8 +188,10 @@ export function plan(input: PlanInput): EmitPlan {
   const configRegistry = buildConfigRegistry(secretRegistry);
   const aiRegistry = buildAiRegistry(input.appGraph, input.classified);
   const aiModels = buildAiModels();
+  const queryRegistry = buildQueryRegistry(input.appGraph);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
-  const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
+  const apiSurface = buildApiSurface(runtimeGraph, queryRegistry, workflowRegistry);
+  const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
 
   const files: EmitFile[] = [
@@ -366,6 +376,18 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(`${GENERATED_DIR}/aiModels.ts`, serializeAiModelsTs(aiModels)),
     makeEmitFile(`${GENERATED_DIR}/aiModels.json`, serializeAiModelsJson(aiModels)),
     makeEmitFile(`${GENERATED_DIR}/aiContext.ts`, serializeAiContextTs()),
+    makeEmitFile(
+      `${GENERATED_DIR}/queryRegistry.ts`,
+      serializeQueryRegistryTs(queryRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/queryRegistry.json`,
+      serializeQueryRegistryJson(queryRegistry),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/api.ts`, serializeApiTsExport(apiSurface)),
+    makeEmitFile(`${GENERATED_DIR}/api.json`, serializeApiJson(apiSurface)),
+    makeEmitFile(`${GENERATED_DIR}/serverApi.ts`, serializeServerApiTsExport(apiSurface)),
+    makeEmitFile(`${GENERATED_DIR}/clientApi.ts`, serializeClientApiTsExport(apiSurface)),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);

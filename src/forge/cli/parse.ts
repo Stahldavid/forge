@@ -9,6 +9,7 @@ import type { PolicySubcommand } from "./policy.ts";
 import type { SecretsSubcommand } from "./secrets.ts";
 import type { EnvSubcommand } from "./secrets.ts";
 import type { AiSubcommand } from "./ai.ts";
+import type { QuerySubcommand } from "./query.ts";
 import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 
 export type ForgeCommand =
@@ -17,7 +18,7 @@ export type ForgeCommand =
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
   | { kind: "check"; json: boolean; dryRun: boolean; strictSecrets: boolean }
   | { kind: "verify"; options: VerifyOptions }
-  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string }
+  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string; queryMode?: boolean; args?: unknown }
   | {
       kind: "dev";
       host?: string;
@@ -107,6 +108,17 @@ export type ForgeCommand =
       workspaceRoot: string;
     }
   | {
+      kind: "query";
+      subcommand: QuerySubcommand;
+      name?: string;
+      args?: unknown;
+      json: boolean;
+      userId?: string;
+      tenantId?: string;
+      role?: string;
+      workspaceRoot: string;
+    }
+  | {
       kind: "ai";
       subcommand: AiSubcommand;
       json: boolean;
@@ -138,6 +150,8 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "secrets",
   "env",
   "ai",
+  "queries",
+  "api",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -196,7 +210,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected generate, add, inspect, check, verify, run, query, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -285,6 +299,40 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     case "run": {
+      if (rest[0] === "query") {
+        const queryName = rest[1];
+        if (!queryName) {
+          errors.push("forge run query requires a query name");
+        }
+        const argsRaw = parseOptionValue(argv, "--args");
+        let args: unknown = {};
+        if (argsRaw !== undefined) {
+          try {
+            args = JSON.parse(argsRaw);
+          } catch {
+            errors.push("--args must be valid JSON");
+          }
+        }
+        return {
+          command: {
+            kind: "run",
+            name: queryName,
+            list: false,
+            json: parseFlag(argv, "--json"),
+            mock: parseFlag(argv, "--mock"),
+            userId: parseOptionValue(argv, "--user-id"),
+            tenantId: parseOptionValue(argv, "--tenant-id"),
+            role: parseOptionValue(argv, "--role"),
+            envFile: parseOptionValue(argv, "--env-file"),
+            workspaceRoot,
+            queryMode: true,
+            args,
+          },
+          workspaceRoot,
+          errors,
+        };
+      }
+
       const name = rest[0];
       const list = parseFlag(argv, "--list") || !name;
       return {
@@ -298,6 +346,44 @@ export function parseCli(argv: string[]): ParsedCli {
           tenantId: parseOptionValue(argv, "--tenant-id"),
           role: parseOptionValue(argv, "--role"),
           envFile: parseOptionValue(argv, "--env-file"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "query": {
+      const subcommand = (rest[0] ?? "list") as QuerySubcommand;
+      if (!["list", "run"].includes(subcommand)) {
+        errors.push("forge query requires subcommand: list or run");
+        return { command: null, workspaceRoot, errors };
+      }
+
+      const queryName = subcommand === "run" ? rest[1] : undefined;
+      if (subcommand === "run" && !queryName) {
+        errors.push("forge query run requires a query name");
+      }
+
+      const argsRaw = parseOptionValue(argv, "--args");
+      let args: unknown = {};
+      if (argsRaw !== undefined) {
+        try {
+          args = JSON.parse(argsRaw);
+        } catch {
+          errors.push("--args must be valid JSON");
+        }
+      }
+
+      return {
+        command: {
+          kind: "query",
+          subcommand,
+          name: queryName,
+          args,
+          json: parseFlag(argv, "--json"),
+          userId: parseOptionValue(argv, "--user-id"),
+          tenantId: parseOptionValue(argv, "--tenant-id"),
+          role: parseOptionValue(argv, "--role"),
           workspaceRoot,
         },
         workspaceRoot,

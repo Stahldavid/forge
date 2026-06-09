@@ -3,14 +3,14 @@ import type { Diagnostic } from "./diagnostic.ts";
 export interface DevRoute {
   method: "GET" | "POST";
   path: string;
-  purpose: "health" | "entries" | "invoke" | "workflows";
+  purpose: "health" | "entries" | "invoke" | "workflows" | "queries" | "query";
   entryName?: string;
-  entryKind?: "command" | "action";
+  entryKind?: "command" | "action" | "query";
 }
 
 export interface DevManifestEntry {
   name: string;
-  kind: "command" | "action";
+  kind: "command" | "action" | "query";
   invokePath: string;
   semanticPath: string;
 }

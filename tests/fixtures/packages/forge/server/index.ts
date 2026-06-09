@@ -153,6 +153,43 @@ export function workflow(config: WorkflowDefinition): ForgeWorkflow {
   };
 }
 
+export interface ForgeQueryMeta {
+  kind: "query";
+  auth?: AuthRequirement;
+}
+
+export interface ForgeQueryConfig<TArgs = unknown, TResult = unknown> {
+  auth?: AuthRequirement;
+  handler: (
+    ctx: Pick<ForgeContext, "db" | "telemetry" | "auth">,
+    args: TArgs,
+  ) => TResult | Promise<TResult>;
+}
+
+export type ForgeQuery<TResult = unknown> = (() => TResult | Promise<TResult>) & {
+  __forge: ForgeQueryMeta;
+};
+
+export function query<TArgs = unknown, TResult = unknown>(
+  fnOrConfig:
+    | (() => TResult | Promise<TResult>)
+    | ForgeQueryConfig<TArgs, TResult>,
+): ForgeQuery<TResult> | (ForgeQueryConfig<TArgs, TResult> & { __forge: ForgeQueryMeta }) {
+  if (typeof fnOrConfig === "function") {
+    const handler = fnOrConfig as ForgeQuery<TResult>;
+    handler.__forge = { kind: "query" };
+    return handler;
+  }
+
+  return {
+    ...fnOrConfig,
+    __forge: {
+      kind: "query",
+      ...(fnOrConfig.auth ? { auth: fnOrConfig.auth } : {}),
+    },
+  };
+}
+
 export { defineTable } from "../schema/index.ts";
 export type { AuthRequirement, PolicyDefinition } from "../policy/index.ts";
 export { can, canRole, definePolicies, public_, system } from "../policy/index.ts";

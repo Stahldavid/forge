@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
 import { buildDevManifest } from "../../src/forge/compiler/dev-manifest/build.ts";
+import { buildQueryRegistry } from "../../src/forge/compiler/query-registry/build.ts";
 import { buildRuntimeGraph } from "../../src/forge/compiler/runtime-graph/build.ts";
 import {
   fixtureSource,
@@ -18,8 +19,9 @@ describe("buildDevManifest routes", () => {
     });
 
     const runtimeGraph = buildRuntimeGraph(appGraph);
-    const manifestA = buildDevManifest(runtimeGraph, appGraph);
-    const manifestB = buildDevManifest(runtimeGraph, appGraph);
+    const queryRegistry = buildQueryRegistry(appGraph);
+    const manifestA = buildDevManifest(runtimeGraph, queryRegistry, appGraph);
+    const manifestB = buildDevManifest(runtimeGraph, queryRegistry, appGraph);
 
     expect(manifestA.routes).toEqual(manifestB.routes);
     expect(manifestA.schemaVersion).toBe("1.0.0");
