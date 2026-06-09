@@ -22,6 +22,10 @@ const SYSTEM_WORKFLOW_RUNS_SQL = `CREATE TABLE IF NOT EXISTS _forge_workflow_run
 
 const SYSTEM_WORKFLOW_STEPS_SQL = `CREATE TABLE IF NOT EXISTS _forge_workflow_steps (id bigserial PRIMARY KEY, run_id bigint NOT NULL REFERENCES _forge_workflow_runs(id), step_name text NOT NULL, step_index integer NOT NULL, status text NOT NULL DEFAULT 'pending', input jsonb, output jsonb, attempts integer NOT NULL DEFAULT 0, max_attempts integer NOT NULL DEFAULT 5, next_attempt_at timestamptz NOT NULL DEFAULT now(), locked_at timestamptz, locked_by text, last_error text, started_at timestamptz, completed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(run_id, step_name))`;
 
+const SYSTEM_TELEMETRY_EVENTS_SQL = `CREATE TABLE IF NOT EXISTS _forge_telemetry_events (id bigserial PRIMARY KEY, trace_id text NOT NULL, event_type text NOT NULL, payload jsonb NOT NULL, status text NOT NULL DEFAULT 'pending', sink text, attempts integer NOT NULL DEFAULT 0, max_attempts integer NOT NULL DEFAULT 5, next_attempt_at timestamptz NOT NULL DEFAULT now(), last_error text, created_at timestamptz NOT NULL DEFAULT now(), processed_at timestamptz)`;
+
+const SYSTEM_TRACE_SPANS_SQL = `CREATE TABLE IF NOT EXISTS _forge_trace_spans (id bigserial PRIMARY KEY, trace_id text NOT NULL, parent_span_id text, span_id text NOT NULL, name text NOT NULL, kind text NOT NULL, attributes jsonb NOT NULL DEFAULT '{}', status text NOT NULL DEFAULT 'ok', started_at timestamptz NOT NULL, ended_at timestamptz, error text)`;
+
 interface ParsedFieldType {
   sqlType: string;
   references?: { table: string; column: string };
@@ -288,6 +292,16 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
       kind: "create_table",
       table: "_forge_workflow_steps",
       sql: SYSTEM_WORKFLOW_STEPS_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_telemetry_events",
+      sql: SYSTEM_TELEMETRY_EVENTS_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_trace_spans",
+      sql: SYSTEM_TRACE_SPANS_SQL,
     },
   ];
 

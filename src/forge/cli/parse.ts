@@ -4,6 +4,7 @@ import type { DbAdapterKind } from "../runtime/db/adapter.ts";
 import type { DbSubcommand } from "./db.ts";
 import type { OutboxSubcommand } from "./outbox.ts";
 import type { WorkflowSubcommand } from "./workflow.ts";
+import type { TelemetrySubcommand } from "./telemetry.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -22,6 +23,7 @@ export type ForgeCommand =
       db: "pglite" | "postgres" | "none";
       databaseUrl?: string;
       worker: boolean;
+      telemetry: string[];
       workspaceRoot: string;
     }
   | {
@@ -60,6 +62,17 @@ export type ForgeCommand =
       input?: unknown;
       mock: boolean;
       workspaceRoot: string;
+    }
+  | {
+      kind: "telemetry";
+      subcommand: TelemetrySubcommand;
+      db: DbAdapterKind;
+      databaseUrl?: string;
+      json: boolean;
+      traceId?: string;
+      sink?: string;
+      file?: "events" | "exceptions" | "spans";
+      workspaceRoot: string;
     };
 
 export interface ParsedCli {
@@ -78,6 +91,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "dev",
   "subscriptions",
   "workflows",
+  "telemetry",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -136,7 +150,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, or workflow",
+      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, or telemetry",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -255,6 +269,10 @@ export function parseCli(argv: string[]): ParsedCli {
           db: parseDbKind(parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
           worker: parseFlag(argv, "--worker"),
+          telemetry: (parseOptionValue(argv, "--telemetry") ?? "local")
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean),
           workspaceRoot,
         },
         workspaceRoot,
@@ -392,6 +410,42 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "telemetry": {
+      const subcommand = rest[0] as TelemetrySubcommand | undefined;
+      if (
+        !subcommand ||
+        !["list", "inspect", "flush", "tail", "clear"].includes(subcommand)
+      ) {
+        errors.push(
+          "forge telemetry requires subcommand: list, inspect, flush, tail, or clear",
+        );
+        return { command: null, workspaceRoot, errors };
+      }
+
+      let traceId: string | undefined;
+      if (subcommand === "inspect") {
+        traceId = rest[1];
+        if (!traceId) {
+          errors.push("forge telemetry inspect requires a trace id");
+        }
+      }
+
+      return {
+        command: {
+          kind: "telemetry",
+          subcommand,
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          traceId,
+          sink: parseOptionValue(argv, "--sink"),
+          file: parseOptionValue(argv, "--file") as "events" | "exceptions" | "spans" | undefined,
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     default:
       errors.push(`unrecognized command '${commandName}'`);
       return { command: null, workspaceRoot, errors };
@@ -422,6 +476,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--limit",
     "--input",
     "--step",
+    "--sink",
+    "--file",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -439,7 +495,10 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--database-url" ||
         arg === "--limit" ||
         arg === "--input" ||
-        arg === "--step"
+        arg === "--step" ||
+        arg === "--sink" ||
+        arg === "--file" ||
+        arg === "--telemetry"
       ) {
         index += 1;
       }

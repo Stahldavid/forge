@@ -9,9 +9,11 @@ import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import { adapterAsTransaction, type DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
-import { createForgeContext } from "../context/create-context.ts";
+import { createForgeContext, createNoopTelemetryContext } from "../context/create-context.ts";
 import { loadActionSubscriptions } from "../outbox/subscriptions.ts";
 import { runCommandWithTransaction } from "./command-transaction.ts";
+import { generateRequestId, generateTraceId } from "../telemetry/correlation.ts";
+import { createTelemetryContext } from "../telemetry/context.ts";
 
 export interface RunEntryExecutionOptions {
   json: boolean;
@@ -23,6 +25,7 @@ export interface RunEntryRuntime {
   adapter?: DbAdapter | null;
   tableMap?: Record<string, TableMapEntry>;
   workspaceRoot?: string;
+  requestId?: string;
 }
 
 export interface ResolvedHandler {
@@ -62,13 +65,24 @@ export function resolveHandlerFromModule(
           const db = createGeneratedDbClient(tx, runtime.tableMap);
           const workspaceRoot = runtime.workspaceRoot ?? process.cwd();
           const { subscriptions } = loadActionSubscriptions(workspaceRoot);
-          const ctx = createForgeContext(tx, db, subscriptions);
+          const traceId = generateTraceId();
+          const telemetry = createTelemetryContext({
+            adapter: runtime.adapter,
+            tx,
+            traceId,
+            requestId: runtime.requestId ?? generateRequestId(),
+            runtime: { kind: "command", name: entryName },
+            bufferInTransaction: false,
+            workspaceRoot,
+          });
+          const ctx = createForgeContext(tx, db, subscriptions, telemetry);
           return handler(ctx, args);
         }
 
         const stubCtx = {
           db: {},
           env: process.env as Record<string, string | undefined>,
+          telemetry: createNoopTelemetryContext(generateTraceId()),
           emit: async () => {
             /* no-op without db */
           },
@@ -114,6 +128,7 @@ export async function executeResolvedEntry(
         adapter: runtime.adapter,
         tableMap: runtime.tableMap,
         workspaceRoot,
+        requestId: runtime.requestId,
       },
     );
   }

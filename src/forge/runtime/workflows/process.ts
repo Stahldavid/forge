@@ -129,6 +129,11 @@ export async function runWorkerTick(
     options,
   );
 
+  if (options.telemetrySinks?.includes("local")) {
+    const { processTelemetryBatch } = await import("../telemetry/process.ts");
+    await processTelemetryBatch(adapter, workspaceRoot, ["local"]);
+  }
+
   return {
     workflows: workflowStart,
     outbox,

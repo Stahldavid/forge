@@ -37,6 +37,8 @@ import { retryWorkflowRun } from "../runtime/workflows/retry-run.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
 import { canonicalJson } from "../compiler/primitives/serialize.ts";
 import type { DevServerHandle, DevServerOptions, DevServerState } from "./types.ts";
+import { getTelemetrySummary, inspectTrace } from "../runtime/telemetry/flush.ts";
+import { processTelemetryBatch } from "../runtime/telemetry/process.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -114,6 +116,8 @@ export async function startDevServer(
       `missing generated dev artifacts; run forge generate first (${GENERATED_DIR}/devManifest.json)`,
     );
   }
+
+  const telemetrySinks = options.telemetry ?? ["local"];
 
   const serverState: DevServerState = {
     adapter: null,
@@ -199,7 +203,7 @@ export async function startDevServer(
       workspaceRoot,
       initialArtifacts.tableMap,
       runtimeGraph.entries,
-      { mock: options.mock, intervalMs: 2_000 },
+      { mock: options.mock, intervalMs: 2_000, telemetrySinks, workspaceRoot },
     );
   }
 
@@ -225,6 +229,9 @@ export async function startDevServer(
           const workflowSummary = serverState.adapter
             ? await getWorkflowSummary(serverState.adapter)
             : { pending: 0, running: 0, completed: 0, failed: 0, dead: 0, canceled: 0 };
+          const telemetrySummary = serverState.adapter
+            ? await getTelemetrySummary(serverState.adapter)
+            : { pending: 0, failed: 0, processed: 0 };
 
           return jsonResponse({
             ok: true,
@@ -241,7 +248,30 @@ export async function startDevServer(
               pending: workflowSummary.pending,
               dead: workflowSummary.dead,
             },
+            telemetry: {
+              pending: telemetrySummary.pending,
+              failed: telemetrySummary.failed,
+              sinks: telemetrySinks,
+            },
           });
+        }
+
+        if (request.method === "GET" && pathname === "/telemetry") {
+          if (!serverState.adapter) {
+            return jsonResponse({ ok: true, summary: null, events: [] });
+          }
+
+          const summary = await getTelemetrySummary(serverState.adapter);
+          const { listTelemetryEvents } = await import("../runtime/telemetry/flush.ts");
+          const events = await listTelemetryEvents(serverState.adapter);
+          return jsonResponse({ ok: true, summary, events });
+        }
+
+        const telemetryTraceMatch = pathname.match(/^\/telemetry\/traces\/([^/]+)$/);
+        if (request.method === "GET" && telemetryTraceMatch && serverState.adapter) {
+          const traceId = decodeURIComponent(telemetryTraceMatch[1]!);
+          const inspected = await inspectTrace(serverState.adapter, traceId);
+          return jsonResponse({ ok: true, traceId, ...inspected });
         }
 
         if (request.method === "GET" && pathname === "/outbox") {
@@ -311,6 +341,41 @@ export async function startDevServer(
         }
 
         if (request.method === "POST") {
+          if (pathname === "/telemetry/flush") {
+            if (!serverState.adapter) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_DEV_SERVER_ERROR,
+                      message: "database not connected",
+                    }),
+                  ],
+                },
+                400,
+              );
+            }
+
+            let bodySink: string | undefined;
+            try {
+              const body = (await request.json()) as { sink?: string };
+              bodySink = body.sink;
+            } catch {
+              bodySink = undefined;
+            }
+
+            const sinks = bodySink ? [bodySink] : telemetrySinks;
+            const batch = await processTelemetryBatch(
+              serverState.adapter,
+              workspaceRoot,
+              sinks,
+            );
+
+            return jsonResponse({ ok: true, batch });
+          }
+
           if (pathname === "/outbox/process") {
             if (!serverState.adapter) {
               return jsonResponse(

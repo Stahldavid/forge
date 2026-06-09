@@ -36,6 +36,8 @@ export interface ProcessOutboxBatchOptions {
   limit?: number;
   workerId?: string;
   mock?: boolean;
+  telemetrySinks?: string[];
+  workspaceRoot?: string;
 }
 
 export interface ProcessOutboxBatchResult {

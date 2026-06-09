@@ -27,6 +27,7 @@ bun run forge verify
 | `forge db <diff\|migrate\|reset\|status>` | SQL migrations against PGlite (default) or Postgres |
 | `forge outbox <list\|process\|retry\|dead\|clear>` | Inspect and process durable outbox deliveries |
 | `forge workflow <list\|run\|inspect\|process\|retry\|cancel>` | Lightweight workflow engine (runs, steps, worker) |
+| `forge telemetry <list\|inspect\|flush\|tail\|clear>` | Trace-correlated telemetry buffer, sinks, and inspection |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -97,6 +98,29 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 6. **H6** — DataGraph-backed persistence runtime (PGlite, db CLI, transactional outbox) ✅
 7. **H7** — Durable outbox worker and event-driven actions ✅
 8. **H8** — Lightweight workflow engine on outbox worker ✅
+
+### H9 deliverables (telemetry bridge v1)
+
+| Artifact | Description |
+|----------|-------------|
+| `telemetryRegistry.json` / `.ts` | Static index of `ctx.telemetry.capture("event")` calls |
+| `telemetrySinks.json` / `.ts` | Installed sink map (`local`, `posthog`, `sentry`) |
+| `_forge_telemetry_events` / `_forge_trace_spans` | Buffered events and OpenTelemetry-inspired spans |
+| `ctx.telemetry` | Runtime context on commands, actions, and workflow steps |
+| `forge telemetry` | `list`, `inspect`, `flush`, `tail`, `clear` subcommands |
+
+```bash
+forge telemetry list --json
+forge telemetry inspect <traceId>
+forge telemetry flush --sink local
+forge telemetry tail --file events
+forge inspect telemetry
+forge dev --telemetry local,posthog --worker --db pglite
+```
+
+**Architecture:** Commands buffer telemetry inside the DB transaction (rolls back with the tx). Runner-captured exceptions persist outside the tx after rollback. Actions and workflow steps write telemetry immediately and can flush to sinks. `traceId` propagates command → outbox payload → action → workflow steps.
+
+**Limitations:** no OTLP exporter, distributed trace backend, or production-grade telemetry pipeline — local JSONL + H2 adapter sinks only.
 
 ### H8 deliverables (workflow engine)
 
@@ -176,7 +200,7 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/health` | Server liveness, entry count, DB and outbox worker status |
+| `GET` | `/health` | Server liveness, entry count, DB, outbox, workflow, and telemetry status |
 | `GET` | `/outbox` | Outbox summary and delivery list |
 | `POST` | `/outbox/process` | Process one outbox batch |
 | `GET` | `/db/tables` | List migrated tables |
@@ -191,6 +215,9 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 | `POST` | `/run/:name` | Invoke command or action by name |
 | `POST` | `/commands/:name` | Invoke command entry only |
 | `POST` | `/actions/:name` | Invoke action entry only |
+| `GET` | `/telemetry` | Telemetry summary and buffered events |
+| `GET` | `/telemetry/traces/:traceId` | Inspect a trace (events + spans) |
+| `POST` | `/telemetry/flush` | Flush pending telemetry to configured sinks |
 
 ```bash
 forge dev

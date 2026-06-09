@@ -8,6 +8,7 @@ Demonstrates:
 - package-aware adapters from `forge add`
 - event-driven actions via durable outbox (H7)
 - lightweight workflows triggered by outbox events (H8)
+- trace-correlated telemetry via `ctx.telemetry` (H9)
 
 ## Setup
 
@@ -69,6 +70,22 @@ bun run forge workflow inspect 1
 ```
 
 `src/workflows/triageTicketWorkflow.ts` triggers on `ticket.created` and receives the outbox payload as run input.
+
+## Telemetry flow (H9)
+
+1. `createTicket` calls `ctx.telemetry.capture("ticket_create_started")` and `ticket_created` inside the command transaction.
+2. On commit, events land in `_forge_telemetry_events` with a shared `traceId` also embedded in the outbox payload.
+3. `captureTicketCreated` correlates via outbox `deliveryId` and inherited `traceId`.
+4. `triageTicketWorkflow` steps share the same trace and can open spans via `ctx.telemetry.span`.
+
+```bash
+bun run forge:run createTicket
+bun run forge telemetry list
+bun run forge telemetry flush --sink local
+bun run forge telemetry tail --file events
+```
+
+Local sink output: `.forge/local/telemetry/*.jsonl` (gitignored).
 
 ## Database (H6)
 

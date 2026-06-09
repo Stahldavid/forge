@@ -13,6 +13,8 @@ import { createActionContext } from "../context/create-context.ts";
 import { prepareRuntimeEnvironment } from "../executor.ts";
 import { resolveHandlerFromModule } from "../runner/run-entry.ts";
 import { loadActionSubscriptions } from "./subscriptions.ts";
+import { createTelemetryContext } from "../telemetry/context.ts";
+import { generateTraceId } from "../telemetry/correlation.ts";
 import {
   claimPendingDeliveries,
   markDeliveryDead,
@@ -74,8 +76,30 @@ async function runDeliveryAction(
   try {
     const tx = adapterAsTransaction(adapter);
     const db = createGeneratedDbClient(tx, tableMap);
-    const ctx = createActionContext(db);
+
+    const payloadObj =
+      delivery.payload && typeof delivery.payload === "object"
+        ? (delivery.payload as Record<string, unknown>)
+        : {};
+    const traceId =
+      typeof payloadObj.traceId === "string" ? payloadObj.traceId : generateTraceId();
+
+    const telemetry = createTelemetryContext({
+      adapter,
+      traceId,
+      runtime: { kind: "action", name: delivery.action_name },
+      outbox: {
+        eventId: String(delivery.outbox_id),
+        deliveryId: String(delivery.id),
+      },
+      bufferInTransaction: false,
+      workspaceRoot,
+      sinks: ["local"],
+    });
+
+    const ctx = createActionContext(db, telemetry);
     const result = await handler(ctx, delivery.payload);
+    await telemetry.flush("local");
     return { ok: true, result };
   } catch (error) {
     const message = error instanceof Error ? error.message : "action handler failed";

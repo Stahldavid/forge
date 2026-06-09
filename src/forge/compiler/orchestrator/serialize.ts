@@ -9,6 +9,10 @@ import type {
   WorkflowRegistry,
   WorkflowSubscriptions,
 } from "../types/workflow-registry.ts";
+import type {
+  TelemetryRegistry,
+  TelemetrySinks,
+} from "../types/telemetry-registry.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
 import type { SqlPlan } from "../data-graph/sql/types.ts";
 import {
@@ -265,6 +269,34 @@ export function serializeWorkflowSubscriptionsTs(
     serializeWorkflowSubscriptionsJson(subscriptions).trimEnd(),
   );
   return `export const workflowSubscriptions = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeTelemetryRegistryJson(registry: TelemetryRegistry): string {
+  const payload = {
+    schemaVersion: registry.schemaVersion,
+    generatorVersion: registry.generatorVersion,
+    analyzerVersion: registry.analyzerVersion,
+    inputHash: registry.inputHash,
+    events: registry.events,
+    diagnostics: registry.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeTelemetryRegistryTs(registry: TelemetryRegistry): string {
+  const parsed: unknown = JSON.parse(
+    serializeTelemetryRegistryJson(registry).trimEnd(),
+  );
+  return `export const telemetryRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeTelemetrySinksJson(sinks: TelemetrySinks): string {
+  return serializeCanonical(sinks);
+}
+
+export function serializeTelemetrySinksTs(sinks: TelemetrySinks): string {
+  const parsed: unknown = JSON.parse(serializeTelemetrySinksJson(sinks).trimEnd());
+  return `export const telemetrySinks = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
 export type { ImportGuardsArtifact };

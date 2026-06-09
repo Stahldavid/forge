@@ -142,7 +142,7 @@ export class MemoryAdapter implements DbAdapter {
       }
     }
 
-    if (row.id === undefined && (tableName.includes("outbox") || tableName.includes("workflow") || columns.includes("id") === false)) {
+    if (row.id === undefined && (tableName.includes("outbox") || tableName.includes("workflow") || tableName.includes("telemetry") || tableName.includes("trace_spans") || columns.includes("id") === false)) {
       row.id = table.nextSerial++;
     }
 
@@ -233,10 +233,15 @@ export class MemoryAdapter implements DbAdapter {
     }
 
     if (/LIMIT/i.test(sql)) {
-      const limit = Number(params[params.length - 1] ?? params[0]);
-      if (Number.isFinite(limit)) {
-        rows = rows.slice(0, limit);
+      const limitMatch = sql.match(/LIMIT\s+\$(\d+)/i);
+      const limitParam = limitMatch ? Number(params[Number(limitMatch[1]) - 1]) : Number(params[params.length - 1] ?? params[0]);
+      if (Number.isFinite(limitParam)) {
+        rows = rows.slice(0, limitParam);
       }
+    }
+
+    if (/ORDER BY\s+id\s+DESC/i.test(sql)) {
+      rows.sort((a, b) => Number(b.id) - Number(a.id));
     }
 
     return normalizeRows(rows);
@@ -274,6 +279,10 @@ export class MemoryAdapter implements DbAdapter {
       return rows.filter(
         (row) => row.status === "pending" && compareValue(row.next_attempt_at, now),
       );
+    }
+
+    if (/trace_id\s*=\s*\$\d+/i.test(sql)) {
+      return rows.filter((row) => row.trace_id === params[0]);
     }
 
     if (/status\s+IN\s*\(\s*'pending'\s*,\s*'running'\s*,\s*'failed'\s*\)/i.test(sql)) {
@@ -360,6 +369,14 @@ export class MemoryAdapter implements DbAdapter {
         continue;
       }
 
+      if (/trace_id\s*=\s*\$\d+\s+AND\s+span_id\s*=\s*\$\d+/i.test(sql)) {
+        const traceId = params[params.length - 2];
+        const spanId = params[params.length - 1];
+        if (row.trace_id !== traceId || row.span_id !== spanId) {
+          continue;
+        }
+      }
+
       if (
         /status\s+NOT\s+IN\s*\(\s*'completed'\s*,\s*'canceled'\s*,\s*'dead'\s*\)/i.test(sql) &&
         ["completed", "canceled", "dead"].includes(String(row.status))
@@ -406,6 +423,12 @@ export class MemoryAdapter implements DbAdapter {
     const table = this.tables.get(tableName);
     if (!table) {
       return { rows: [], rowCount: 0 };
+    }
+
+    if (!/WHERE/i.test(sql)) {
+      const before = table.rows.length;
+      table.rows = [];
+      return { rows: [], rowCount: before };
     }
 
     if (/WHERE\s+"?status"?\s*=\s*'dead'/i.test(sql)) {

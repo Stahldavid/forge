@@ -7,17 +7,22 @@ import type { DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
 import { createForgeContext } from "../context/create-context.ts";
 import { loadActionSubscriptions } from "../outbox/subscriptions.ts";
+import { createTelemetryContext } from "../telemetry/context.ts";
+import { recordExceptionOutsideTx } from "../telemetry/buffer.ts";
+import { generateTraceId } from "../telemetry/correlation.ts";
 
 export interface CommandRuntime {
   adapter: DbAdapter;
   tableMap: Record<string, TableMapEntry>;
   workspaceRoot: string;
+  requestId?: string;
 }
 
 export interface CommandTransactionResult {
   ok: boolean;
   result?: unknown;
   diagnostics: Diagnostic[];
+  traceId?: string;
 }
 
 type CtxHandler = (ctx: unknown, args: unknown) => unknown | Promise<unknown>;
@@ -29,12 +34,22 @@ export async function runCommandWithTransaction(
   runtime: CommandRuntime,
 ): Promise<CommandTransactionResult> {
   const diagnostics: Diagnostic[] = [];
+  const traceId = generateTraceId();
   const tx = await runtime.adapter.begin();
 
   try {
     const db = createGeneratedDbClient(tx, runtime.tableMap);
     const { subscriptions } = loadActionSubscriptions(runtime.workspaceRoot);
-    const ctx = createForgeContext(tx, db, subscriptions);
+    const telemetry = createTelemetryContext({
+      adapter: runtime.adapter,
+      tx,
+      traceId,
+      requestId: runtime.requestId,
+      runtime: { kind: "command", name: entry.name },
+      bufferInTransaction: true,
+      workspaceRoot: runtime.workspaceRoot,
+    });
+    const ctx = createForgeContext(tx, db, subscriptions, telemetry);
     const result = await handler(ctx, args);
     await tx.commit();
 
@@ -42,6 +57,7 @@ export async function runCommandWithTransaction(
       ok: true,
       result,
       diagnostics,
+      traceId,
     };
   } catch (error) {
     try {
@@ -49,6 +65,11 @@ export async function runCommandWithTransaction(
     } catch {
       // ignore rollback errors
     }
+
+    await recordExceptionOutsideTx(runtime.adapter, error, traceId, {
+      kind: "command",
+      name: entry.name,
+    }, { requestId: runtime.requestId });
 
     const message = error instanceof Error ? error.message : "command transaction failed";
     diagnostics.push(
@@ -63,6 +84,7 @@ export async function runCommandWithTransaction(
     return {
       ok: false,
       diagnostics,
+      traceId,
     };
   }
 }

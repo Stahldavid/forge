@@ -9,9 +9,18 @@ const ticketSchema = z.object({
 export const createTicket = command({
   handler: async (ctx, args) => {
     const parsed = ticketSchema.parse(args);
+    await ctx.telemetry.capture("ticket_create_started", {
+      title: parsed.title,
+    });
+
     const row = await ctx.db.tickets.insert({
       title: parsed.title,
       status: parsed.status ?? "open",
+    });
+
+    await ctx.telemetry.capture("ticket_created", {
+      ticketId: row.id,
+      title: row.title,
     });
 
     await ctx.emit("ticket.created", {

@@ -62,6 +62,7 @@ export interface ProcessWorkflowBatchOptions {
   limit?: number;
   workerId?: string;
   mock?: boolean;
+  telemetrySinks?: string[];
 }
 
 export interface ProcessWorkflowBatchResult {

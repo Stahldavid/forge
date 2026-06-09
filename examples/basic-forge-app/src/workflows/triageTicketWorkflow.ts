@@ -4,11 +4,16 @@ export const triageTicketWorkflow = workflow({
   trigger: event("ticket.created"),
   steps: [
     step("loadTicket", async (ctx) => {
-      const input = ctx.input as { id: string };
-      const ticket = await (ctx.db.tickets as { get: (id: string) => Promise<unknown> }).get(
-        input.id,
-      );
-      return { ticket };
+      const span = await ctx.telemetry.span("loadTicket");
+      try {
+        const input = ctx.input as { id: string };
+        const ticket = await (ctx.db.tickets as { get: (id: string) => Promise<unknown> }).get(
+          input.id,
+        );
+        return { ticket };
+      } finally {
+        await span.end();
+      }
     }),
     step("triageWithAI", async (ctx) => {
       const loaded = ctx.steps.loadTicket?.output as { ticket: { title: string } };
@@ -18,6 +23,9 @@ export const triageTicketWorkflow = workflow({
       };
     }),
     step("captureAnalytics", async (ctx) => {
+      await ctx.telemetry.capture("workflow_ticket_triaged", {
+        traceId: ctx.telemetry.traceId,
+      });
       const triage = ctx.steps.triageWithAI?.output as { priority: string };
       return { captured: true, priority: triage.priority };
     }),

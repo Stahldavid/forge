@@ -17,6 +17,7 @@ export interface DevCommandOptions {
   db: "pglite" | "postgres" | "none";
   databaseUrl?: string;
   worker: boolean;
+  telemetry: string[];
 }
 
 export interface DevCommandResult {
@@ -57,6 +58,7 @@ export async function runDevCommand(
       db: options.db,
       databaseUrl: options.databaseUrl,
       worker: options.worker,
+      telemetry: options.telemetry,
     });
   } catch (error) {
     const message =

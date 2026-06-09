@@ -12,6 +12,7 @@ export interface DevServerOptions {
   db: DevDbMode;
   databaseUrl?: string;
   worker?: boolean;
+  telemetry?: string[];
 }
 
 export interface DevServerDbState {

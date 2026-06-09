@@ -2,6 +2,8 @@ export interface ForgeContext {
   db: Record<string, unknown>;
   emit: (eventType: string, payload: unknown) => Promise<void>;
   env: Record<string, string | undefined>;
+  /** Injected at runtime by the Forge runner — stub in builder types only. */
+  telemetry: import("./telemetry.ts").TelemetryContext;
 }
 
 export interface ForgeCommandMeta {
@@ -83,6 +85,7 @@ export interface WorkflowRunContext {
   steps: Record<string, { output: unknown }>;
   db: Record<string, unknown>;
   env: Record<string, string | undefined>;
+  telemetry: import("./telemetry.ts").TelemetryContext;
 }
 
 export interface WorkflowStepDefinition<T = unknown> {

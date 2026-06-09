@@ -4,6 +4,10 @@ import {
   buildWorkflowRegistry,
   buildWorkflowSubscriptions,
 } from "../workflow-registry/build.ts";
+import {
+  buildTelemetryRegistry,
+  buildTelemetrySinks,
+} from "../telemetry-registry/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -55,6 +59,10 @@ import {
   serializeWorkflowRegistryTs,
   serializeWorkflowSubscriptionsJson,
   serializeWorkflowSubscriptionsTs,
+  serializeTelemetryRegistryJson,
+  serializeTelemetryRegistryTs,
+  serializeTelemetrySinksJson,
+  serializeTelemetrySinksTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -126,6 +134,8 @@ export function plan(input: PlanInput): EmitPlan {
   const actionSubscriptions = buildActionSubscriptions(input.appGraph);
   const workflowRegistry = buildWorkflowRegistry(input.appGraph);
   const workflowSubscriptions = buildWorkflowSubscriptions(workflowRegistry);
+  const telemetryRegistry = buildTelemetryRegistry(input.appGraph);
+  const telemetrySinks = buildTelemetrySinks(input.classified);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -232,6 +242,22 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/workflowSubscriptions.json`,
       serializeWorkflowSubscriptionsJson(workflowSubscriptions),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/telemetryRegistry.ts`,
+      serializeTelemetryRegistryTs(telemetryRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/telemetryRegistry.json`,
+      serializeTelemetryRegistryJson(telemetryRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/telemetrySinks.ts`,
+      serializeTelemetrySinksTs(telemetrySinks),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/telemetrySinks.json`,
+      serializeTelemetrySinksJson(telemetrySinks),
     ),
   ];
 

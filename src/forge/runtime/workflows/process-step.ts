@@ -13,6 +13,8 @@ import { createActionContext } from "../context/create-context.ts";
 import { resolveWorkflowStepHandler } from "./resolve-step.ts";
 import { computeNextAttemptAt, formatTimestamp } from "./retry.ts";
 import { sanitizeWorkflowError } from "./sanitize.ts";
+import { createTelemetryContext } from "../telemetry/context.ts";
+import { generateTraceId } from "../telemetry/correlation.ts";
 import type { WorkflowRunRow, WorkflowStepRow } from "./types.ts";
 
 export interface ProcessStepResult {
@@ -75,14 +77,33 @@ export async function processWorkflowStep(
   try {
     const tx = adapterAsTransaction(adapter);
     const db = createGeneratedDbClient(tx, tableMap);
-    const baseCtx = createActionContext(db);
     const completedSteps = await loadCompletedStepOutputs(adapter, run.id);
+
+    const inputObj =
+      run.input && typeof run.input === "object"
+        ? (run.input as Record<string, unknown>)
+        : {};
+    const traceId =
+      typeof inputObj.traceId === "string" ? inputObj.traceId : generateTraceId();
+
+    const telemetry = createTelemetryContext({
+      adapter,
+      traceId,
+      runtime: { kind: "workflow", name: run.workflow_name },
+      workflow: { runId: String(run.id), stepName: step.step_name },
+      bufferInTransaction: false,
+      workspaceRoot,
+      sinks: ["local"],
+    });
+
+    const baseCtx = createActionContext(db, telemetry);
 
     const ctx = {
       input: run.input,
       steps: completedSteps,
       db: baseCtx.db,
       env: baseCtx.env,
+      telemetry,
     };
 
     const runRecord = {
@@ -94,6 +115,8 @@ export async function processWorkflowStep(
     };
 
     const output = await resolved.handler(ctx, runRecord);
+
+    await telemetry.flush("local");
 
     await adapter.query(
       `UPDATE _forge_workflow_steps
