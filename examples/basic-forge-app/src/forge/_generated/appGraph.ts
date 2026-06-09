@@ -1,11 +1,32 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=07e1e401111caeb471b4704db1a92b49c8d45aa66f08710abeac97a73b6ee8c1
+// @forge-generated generator=0.0.0 input=2109cd49dea7ae4cd20f98fc0ce6dce0a08c3e3732a7d77f530851d6d134f995 content=112705d8648c328128845bd3256db5203e6a0152323d549f94c413c47c52205e
 export const appGraph = {
-  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.0+tsconfig:05b47690eb67a5815198c695333bb2c94178f799c0cff32741f782d2d4635e6d",
+  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:05b47690eb67a5815198c695333bb2c94178f799c0cff32741f782d2d4635e6d",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "93f362bad149432ca4bd47c12f6f3c314976fdb9cf9281d39c5424329fd94c1e",
+  "inputHash": "1dd149d517395587a8f781b9d98c5d70ba1769a1602b03590044d05f39031ab5",
   "moduleGraph": {
     "nodes": [
+      {
+        "declaredContexts": [
+          "query"
+        ],
+        "directPackageImports": [
+          {
+            "importKind": "static",
+            "packageName": "forge",
+            "span": {
+              "end": 41,
+              "start": 27
+            },
+            "specifier": "forge/server",
+            "subpath": "/server"
+          }
+        ],
+        "effectiveContexts": [],
+        "file": "src/queries/getTicket.ts",
+        "id": "038c8c820ad2a11b258c15700c6526cd7d1aff7d68a604f1432ba2507057f7dd",
+        "localImports": []
+      },
       {
         "declaredContexts": [],
         "directPackageImports": [
@@ -80,6 +101,27 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/forge/schema.ts",
         "id": "5e25b5f705f7c3058c237357f418a6c0effc4cc00aac40cd32ecff14329df3cb",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [
+          "query"
+        ],
+        "directPackageImports": [
+          {
+            "importKind": "static",
+            "packageName": "forge",
+            "span": {
+              "end": 41,
+              "start": 27
+            },
+            "specifier": "forge/server",
+            "subpath": "/server"
+          }
+        ],
+        "effectiveContexts": [],
+        "file": "src/queries/listTickets.ts",
+        "id": "69848f63f7ca63ae2b523a7345c56ad9fbfefba972713968412d67ea1d35a220",
         "localImports": []
       },
       {
@@ -403,6 +445,40 @@ export const appGraph = {
       "span": {
         "end": 259,
         "start": 81
+      }
+    },
+    {
+      "contentHash": "665033aeeeff6c3e0c89384ab939dd314b4ba7dc8e6b24bc709b25a8074d48bd",
+      "file": "src/queries/getTicket.ts",
+      "id": "1e727ed1e784d7d51df4f835bf7089d854c5ca6b9b41951f60fa02524eb1add8",
+      "kind": "query",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "fcf9e0546c0350ac158dbb4a4da4c88004f015a1d839868cb7e2206599ba97d5",
+        "sourceSlice": "query({\n  auth: can(\"tickets.read\"),\n  handler: async (ctx, args: { id: string }) => {\n    return ctx.db.tickets.get(args.id);\n  },\n})"
+      },
+      "name": "getTicket",
+      "qualifiedName": "getTicket",
+      "span": {
+        "end": 203,
+        "start": 69
+      }
+    },
+    {
+      "contentHash": "c1df954d222445530ddd6db895fd04d8d2a6ab37b8bb3e8935e3d3e944e5bf70",
+      "file": "src/queries/listTickets.ts",
+      "id": "b0a3ac02fbd7892a43ea9251936f3b3922249effde56636319d550480d443c28",
+      "kind": "query",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "63834800b7f64a81733b18ad1f9bf856ce8161fd318779f3e165cd28c8ced6e8",
+        "sourceSlice": "query({\n  auth: can(\"tickets.read\"),\n  handler: async (ctx) => {\n    return ctx.db.tickets.all();\n  },\n})"
+      },
+      "name": "listTickets",
+      "qualifiedName": "listTickets",
+      "span": {
+        "end": 176,
+        "start": 71
       }
     },
     {

@@ -4,6 +4,7 @@ import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
 import { FORGE_VERIFY_POLICY } from "../compiler/diagnostics/codes.ts";
+import { resolveBunExecutable } from "./bun-exec.ts";
 import { runCheckCommand, runGenerateCommand } from "./commands.ts";
 import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
@@ -30,24 +31,43 @@ function readPackageScripts(workspaceRoot: string): PackageScripts {
   }
 }
 
+import { spawn } from "node:child_process";
+
+async function spawnBunRun(
+  workspaceRoot: string,
+  scriptName: string,
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const bun = resolveBunExecutable();
+  const useShell = process.platform === "win32";
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(bun, ["run", scriptName], {
+      cwd: workspaceRoot,
+      env: process.env,
+      shell: useShell,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+    child.stdout?.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      resolve({ exitCode: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
 async function runPackageScript(
   workspaceRoot: string,
   scriptName: string,
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const proc = Bun.spawn(["bun", "run", scriptName], {
-    cwd: workspaceRoot,
-    stdout: "pipe",
-    stderr: "pipe",
-    env: process.env,
-  });
-
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
-
-  return { exitCode, stdout, stderr };
+  return spawnBunRun(workspaceRoot, scriptName);
 }
 
 function skippedStep(name: string, reason: string): VerifyStep {

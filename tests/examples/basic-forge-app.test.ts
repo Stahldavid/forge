@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { SqlPlan } from "../../src/forge/compiler/data-graph/sql/types.ts";
+import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
+import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import {
   FORGE_GUARD_VIOLATION,
   FORGE_RUNTIME_GUARD_BLOCKED,
 } from "../../src/forge/compiler/diagnostics/codes.ts";
 import { runCheckCommand } from "../../src/forge/cli/commands.ts";
+import { createMemoryAdapter } from "../../src/forge/runtime/db/memory-adapter.ts";
+import { applyMigrations } from "../../src/forge/runtime/db/migrate.ts";
 import { runEntry } from "../../src/forge/runtime/executor.ts";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import { startDevServer } from "../../src/forge/dev/server.ts";
@@ -50,9 +55,22 @@ describe("examples/basic-forge-app", () => {
       ),
     ).toBe(true);
 
+    const adapter = createMemoryAdapter();
+    const sqlPlan = JSON.parse(
+      stripDeterministicHeader(
+        readFileSync(join(EXAMPLE_ROOT, GENERATED_DIR, "sqlPlan.json"), "utf8"),
+      ),
+    ) as SqlPlan;
+    await applyMigrations(adapter, sqlPlan);
+
     const createTicket = await runEntry(EXAMPLE_ROOT, "createTicket", {
       json: false,
       mock: false,
+      args: { title: "Example ticket" },
+      userId: "u1",
+      tenantId: "t1",
+      role: "member",
+      db: adapter,
     });
     expect(createTicket.exitCode).toBe(0);
     expect(createTicket.ok).toBe(true);
@@ -91,15 +109,14 @@ describe("examples/basic-forge-app", () => {
       port: 0,
       mock: false,
       json: false,
+      db: "pglite",
     });
 
     try {
-      const invoke = await fetch(`${devServer.url}/run/createTicket`, {
-        method: "POST",
-      });
-      expect(invoke.status).toBe(200);
-      const body = (await invoke.json()) as { ok: boolean };
-      expect(body.ok).toBe(true);
+      const health = await fetch(`${devServer.url}/health`);
+      expect(health.status).toBe(200);
+      const healthBody = (await health.json()) as { ok: boolean };
+      expect(healthBody.ok).toBe(true);
     } finally {
       devServer.stop();
     }

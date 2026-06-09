@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=16f424bab04b27f0661557126e1d7da99fafd39ca46e51bb05ef05f10c224a06
+// @forge-generated generator=0.0.0 input=2109cd49dea7ae4cd20f98fc0ce6dce0a08c3e3732a7d77f530851d6d134f995 content=2f86d17366062524be5058393142f27697e84cb31c7149d3c57da4a32d545e26
 export const policyRegistry = {
   "analyzerVersion": "policy-registry@1.0.0",
   "commandAuth": [
@@ -31,7 +31,7 @@ export const policyRegistry = {
   ],
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "b2b048cc45d7656e965e5fb791a4451c12e8e1e738f6418534d26dac0ef44ce8",
+  "inputHash": "a9eefc477ae8ace40243eef4a6381f9343000a883be1c4fa4a5c1f5bfc9ad779",
   "policies": [
     {
       "file": "src/policies.ts",
@@ -64,6 +64,26 @@ export const policyRegistry = {
         "member"
       ],
       "symbolId": "e8dbd644a8a56f31a4019feb122c891dfd4d81220563ca7c0d38233a5fd54833"
+    }
+  ],
+  "queryAuth": [
+    {
+      "auth": {
+        "kind": "policy",
+        "policy": "tickets.read"
+      },
+      "file": "src/queries/getTicket.ts",
+      "queryName": "getTicket",
+      "symbolId": "1e727ed1e784d7d51df4f835bf7089d854c5ca6b9b41951f60fa02524eb1add8"
+    },
+    {
+      "auth": {
+        "kind": "policy",
+        "policy": "tickets.read"
+      },
+      "file": "src/queries/listTickets.ts",
+      "queryName": "listTickets",
+      "symbolId": "b0a3ac02fbd7892a43ea9251936f3b3922249effde56636319d550480d443c28"
     }
   ],
   "schemaVersion": "1.0.0"

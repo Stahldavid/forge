@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
+import { buildDataGraph } from "../../src/forge/compiler/data-graph/build.ts";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import { buildSqlPlan } from "../../src/forge/compiler/data-graph/sql/ddl.ts";
 import { createMemoryAdapter } from "../../src/forge/runtime/db/memory-adapter.ts";
 import { applyMigrations } from "../../src/forge/runtime/db/migrate.ts";
 import { processWorkflowStep } from "../../src/forge/runtime/workflows/process-step.ts";
 import { loadWorkflowRegistry } from "../../src/forge/runtime/workflows/registry.ts";
-import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
-import { buildDataGraph } from "../../src/forge/compiler/data-graph/build.ts";
-import { buildSqlPlan } from "../../src/forge/compiler/data-graph/sql/ddl.ts";
 import { enqueueMockAiResponse, resetMockAiQueue } from "../../src/forge/runtime/ai/mock.ts";
 import {
   cleanupWorkspace,
@@ -106,6 +106,11 @@ describe("ai workflow integration", () => {
         throw new Error(result.error ?? "workflow step failed");
       }
       expect((result.output as { priority: string }).priority).toBe("high");
+
+      const aiRows = await adapter.query(
+        `SELECT payload FROM _forge_telemetry_events WHERE payload::text LIKE '%forge.ai.generation.completed%'`,
+      );
+      expect(aiRows.rows.length).toBeGreaterThan(0);
     } finally {
       cleanupWorkspace(workspace);
     }

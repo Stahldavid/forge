@@ -1,5 +1,5 @@
+/package-lock.json
 node_modules/
-examples/**/node_modules/
 .forge/cache/
 .forge/pglite/
 .forge/local/

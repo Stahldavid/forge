@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { rmSync } from "node:fs";
+import { rmSync, mkdirSync } from "node:fs";
 import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 
 describe("pglite adapter", () => {
   test("connects and runs queries", async () => {
     const dataDir = join(import.meta.dir, ".tmp", `pglite-${Bun.randomUUIDv7()}`);
+    mkdirSync(join(import.meta.dir, ".tmp"), { recursive: true });
     const adapter = await createPgliteAdapter(dataDir);
 
     try {
@@ -19,6 +20,7 @@ describe("pglite adapter", () => {
 
   test("supports transactions", async () => {
     const dataDir = join(import.meta.dir, ".tmp", `pglite-tx-${Bun.randomUUIDv7()}`);
+    mkdirSync(join(import.meta.dir, ".tmp"), { recursive: true });
     const adapter = await createPgliteAdapter(dataDir);
 
     try {

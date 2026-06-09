@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=5eb5961771962959667cf37bc8b0cd0ebc078dcc234cd74401e556556c39bb4f
+// @forge-generated generator=0.0.0 input=2109cd49dea7ae4cd20f98fc0ce6dce0a08c3e3732a7d77f530851d6d134f995 content=31ad944f782d06d2bdcfe1bbc13b7290021bb3f80d9ad937588d486add331589
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
@@ -34,6 +34,18 @@ export const devManifest = {
       "semanticPath": "/commands/createTicket"
     },
     {
+      "invokePath": "/queries/getTicket",
+      "kind": "query",
+      "name": "getTicket",
+      "semanticPath": "/queries/getTicket"
+    },
+    {
+      "invokePath": "/queries/listTickets",
+      "kind": "query",
+      "name": "listTickets",
+      "semanticPath": "/queries/listTickets"
+    },
+    {
       "invokePath": "/run/manageBilling",
       "kind": "command",
       "name": "manageBilling",
@@ -41,7 +53,7 @@ export const devManifest = {
     }
   ],
   "generatorVersion": "0.0.0",
-  "inputHash": "9006a532b56d2b0da067c7d3e7ffca938dd5c67a59b97acb7a14e5e2b1938dd0",
+  "inputHash": "6a83a5a26b75d14ddcd04c09e0e7a90f68f0f680043ced8d3da5758f11603e98",
   "routes": [
     {
       "entryKind": "action",
@@ -94,6 +106,25 @@ export const devManifest = {
       "method": "GET",
       "path": "/health",
       "purpose": "health"
+    },
+    {
+      "method": "GET",
+      "path": "/queries",
+      "purpose": "queries"
+    },
+    {
+      "entryKind": "query",
+      "entryName": "getTicket",
+      "method": "POST",
+      "path": "/queries/getTicket",
+      "purpose": "query"
+    },
+    {
+      "entryKind": "query",
+      "entryName": "listTickets",
+      "method": "POST",
+      "path": "/queries/listTickets",
+      "purpose": "query"
     },
     {
       "entryKind": "command",

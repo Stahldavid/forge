@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=706f186c8fa8eedb1a379e522d5e9fc455aecc2c2e335b77b1d3b94d18f47a83
+// @forge-generated generator=0.0.0 input=8b9e3eedfc9e18645d0c38411668351c9b3b29c7026fb99dd849e9a95904f4cb content=73c83927a61fb2c53e21de95e2f89b9308d07c501e6a9c35522864350c8be2db
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -186,6 +186,18 @@ export const importGuards = {
       "effectiveContexts": [
         "action",
         "command"
+      ]
+    },
+    {
+      "file": "src/queries/getTicket.ts",
+      "effectiveContexts": [
+        "query"
+      ]
+    },
+    {
+      "file": "src/queries/listTickets.ts",
+      "effectiveContexts": [
+        "query"
       ]
     },
     {
