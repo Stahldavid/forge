@@ -22,6 +22,8 @@ import type { ForgeLock } from "../compiler/types/lock.ts";
 import type { RuntimeEntry, RuntimeGraph } from "../compiler/types/runtime-graph.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
 import type { DbAdapter } from "./db/adapter.ts";
+import type { AuthContext } from "./auth/types.ts";
+import { resolveAuthFromCli } from "./auth/resolve.ts";
 import {
   executeResolvedEntry,
   guardBlockedDiagnostics,
@@ -34,6 +36,10 @@ export interface RunEntryOptions {
   mock: boolean;
   args?: unknown;
   db?: DbAdapter | null;
+  auth?: AuthContext;
+  userId?: string;
+  tenantId?: string;
+  role?: string;
 }
 
 export interface RunEntryResult {
@@ -42,6 +48,7 @@ export interface RunEntryResult {
   entry?: RuntimeEntry;
   diagnostics: Diagnostic[];
   exitCode: 0 | 1;
+  traceId?: string;
 }
 
 export interface ListEntriesResult {
@@ -357,17 +364,26 @@ export async function runEntry(
     };
   }
 
+  const auth =
+    options.auth ??
+    resolveAuthFromCli({
+      userId: options.userId,
+      tenantId: options.tenantId,
+      role: options.role,
+    });
+
   const runtime: RunEntryRuntime = {
     adapter: db,
     tableMap: loadTableMap(workspaceRoot) ?? undefined,
     workspaceRoot,
+    auth,
   };
 
   const executed = await executeResolvedEntry(
     workspaceRoot,
     entry,
     resolved,
-    options,
+    { ...options, auth },
     runtime,
   );
 
@@ -377,5 +393,6 @@ export async function runEntry(
     entry,
     diagnostics: [...diagnostics, ...executed.diagnostics],
     exitCode: executed.ok ? 0 : 1,
+    traceId: "traceId" in executed ? (executed as { traceId?: string }).traceId : undefined,
   };
 }

@@ -1,11 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
-import {
-  FORGE_DEV_INVOKE_FAILED,
-  FORGE_DEV_SERVER_ERROR,
-  FORGE_RUNTIME_NOT_FOUND,
-} from "../compiler/diagnostics/codes.ts";
+import { FORGE_POLICY_DENIED } from "../compiler/diagnostics/codes.ts";
+import { parseAuthHeaders } from "../runtime/auth/resolve.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
@@ -70,7 +67,7 @@ function corsPreflight(): Response {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, x-forge-user-id, x-forge-tenant-id, x-forge-role",
     },
   });
 }
@@ -252,6 +249,9 @@ export async function startDevServer(
               pending: telemetrySummary.pending,
               failed: telemetrySummary.failed,
               sinks: telemetrySinks,
+            },
+            auth: {
+              mode: "dev-headers",
             },
           });
         }
@@ -520,6 +520,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
+            const auth = parseAuthHeaders(request.headers);
 
             await prepareRuntimeEnvironment(workspaceRoot, {
               mock: options.mock,
@@ -531,13 +532,37 @@ export async function startDevServer(
               mock: options.mock,
               args,
               db: serverState.adapter,
+              auth,
             });
+
+            const policyDenied = result.diagnostics.some(
+              (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
+            );
+
+            if (policyDenied) {
+              const denied = result.diagnostics.find(
+                (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
+              );
+              return jsonResponse(
+                {
+                  ok: false,
+                  error: {
+                    code: FORGE_POLICY_DENIED,
+                    message: denied?.message ?? "policy denied",
+                  },
+                  traceId: result.traceId,
+                  diagnostics: result.diagnostics,
+                },
+                403,
+              );
+            }
 
             return jsonResponse(
               {
                 ok: result.ok,
                 result: result.result,
                 diagnostics: result.diagnostics,
+                traceId: result.traceId,
               },
               result.ok ? 200 : 400,
             );

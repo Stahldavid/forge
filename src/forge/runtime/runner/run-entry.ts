@@ -14,11 +14,13 @@ import { loadActionSubscriptions } from "../outbox/subscriptions.ts";
 import { runCommandWithTransaction } from "./command-transaction.ts";
 import { generateRequestId, generateTraceId } from "../telemetry/correlation.ts";
 import { createTelemetryContext } from "../telemetry/context.ts";
+import type { AuthContext } from "../auth/types.ts";
 
 export interface RunEntryExecutionOptions {
   json: boolean;
   mock: boolean;
   args?: unknown;
+  auth?: AuthContext;
 }
 
 export interface RunEntryRuntime {
@@ -26,6 +28,7 @@ export interface RunEntryRuntime {
   tableMap?: Record<string, TableMapEntry>;
   workspaceRoot?: string;
   requestId?: string;
+  auth?: AuthContext;
 }
 
 export interface ResolvedHandler {
@@ -75,7 +78,7 @@ export function resolveHandlerFromModule(
             bufferInTransaction: false,
             workspaceRoot,
           });
-          const ctx = createForgeContext(tx, db, subscriptions, telemetry);
+          const ctx = createForgeContext(tx, db, subscriptions, telemetry, runtime.auth ?? { kind: "anonymous" });
           return handler(ctx, args);
         }
 
@@ -83,6 +86,7 @@ export function resolveHandlerFromModule(
           db: {},
           env: process.env as Record<string, string | undefined>,
           telemetry: createNoopTelemetryContext(generateTraceId()),
+          auth: runtime?.auth ?? { kind: "anonymous" as const },
           emit: async () => {
             /* no-op without db */
           },
@@ -129,6 +133,7 @@ export async function executeResolvedEntry(
         tableMap: runtime.tableMap,
         workspaceRoot,
         requestId: runtime.requestId,
+        auth: options.auth ?? runtime.auth,
       },
     );
   }

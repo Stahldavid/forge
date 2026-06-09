@@ -28,6 +28,7 @@ bun run forge verify
 | `forge outbox <list\|process\|retry\|dead\|clear>` | Inspect and process durable outbox deliveries |
 | `forge workflow <list\|run\|inspect\|process\|retry\|cancel>` | Lightweight workflow engine (runs, steps, worker) |
 | `forge telemetry <list\|inspect\|flush\|tail\|clear>` | Trace-correlated telemetry buffer, sinks, and inspection |
+| `forge policy <list\|matrix\|simulate\|check>` | RBAC policy registry, matrix, simulation, and checks |
 | `forge check` | Validate transitive import guards |
 | `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
 
@@ -98,6 +99,36 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 6. **H6** — DataGraph-backed persistence runtime (PGlite, db CLI, transactional outbox) ✅
 7. **H7** — Durable outbox worker and event-driven actions ✅
 8. **H8** — Lightweight workflow engine on outbox worker ✅
+9. **H9** — Telemetry bridge v1 ✅
+10. **H10** — Auth, policy engine & tenant isolation ✅
+
+### H10 deliverables (auth & tenant isolation)
+
+| Artifact | Description |
+|----------|-------------|
+| `policyRegistry.json` / `.ts` | RBAC policies and command→policy bindings |
+| `permissionMatrix.json` / `.ts` | Role×policy matrix |
+| `tenantScope.json` / `.ts` | Tenant-scoped tables (`tenantId` field) |
+| `authContext.ts` | Generated `AuthContext` type |
+| `ctx.auth` | User/system/anonymous auth on command/action/workflow contexts |
+| `forge/policy` | `definePolicies`, `canRole`, `can`, `public_`, `system` DSL |
+| `forge policy` | `list`, `matrix`, `simulate`, `check` subcommands |
+| Tenant-scoped DB client | Auto-inject/filter `tenant_id` for user auth |
+| Outbox `auth_context` | Auth snapshot propagated to actions/workflows |
+
+```bash
+forge policy list --json
+forge policy matrix --json
+forge policy simulate tickets.create --role member
+forge policy check --strict-policies
+forge inspect policies
+forge run createTicket --user-id u1 --tenant-id t1 --role member
+forge dev  # x-forge-user-id / x-forge-tenant-id / x-forge-role headers
+```
+
+**Architecture:** Commands declare `auth: can("policy")`. Dev server and `forge run` resolve user auth from headers/flags. Runtime preflight evaluates RBAC before handler execution. Tenant-scoped tables enforce row isolation via generated DB client. Outbox events store auth snapshots for system auth in workers.
+
+**Limitations:** RBAC only (no ABAC), no OIDC/OAuth/sessions, no Postgres RLS, no policy UI, no multi-role membership tables.
 
 ### H9 deliverables (telemetry bridge v1)
 
@@ -200,7 +231,7 @@ Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--hos
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `GET` | `/health` | Server liveness, entry count, DB, outbox, workflow, and telemetry status |
+| `GET` | `/health` | Server liveness, entry count, DB, outbox, workflow, telemetry, and auth status |
 | `GET` | `/outbox` | Outbox summary and delivery list |
 | `POST` | `/outbox/process` | Process one outbox batch |
 | `GET` | `/db/tables` | List migrated tables |

@@ -10,6 +10,7 @@ export const FORGE_BUILDER_APIS: Readonly<Record<string, ForgeKind>> = {
   action: "action",
   endpoint: "endpoint",
   policy: "policy",
+  definePolicies: "policy",
   workflow: "workflow",
   agent: "agent",
   telemetryEvent: "telemetryEvent",

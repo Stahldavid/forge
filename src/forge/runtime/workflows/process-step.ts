@@ -10,6 +10,8 @@ import { adapterAsTransaction } from "../db/adapter.ts";
 import type { DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
 import { createActionContext } from "../context/create-context.ts";
+import { systemAuthFromSnapshot } from "../auth/resolve.ts";
+import type { AuthContext } from "../auth/types.ts";
 import { resolveWorkflowStepHandler } from "./resolve-step.ts";
 import { computeNextAttemptAt, formatTimestamp } from "./retry.ts";
 import { sanitizeWorkflowError } from "./sanitize.ts";
@@ -76,7 +78,15 @@ export async function processWorkflowStep(
 
   try {
     const tx = adapterAsTransaction(adapter);
-    const db = createGeneratedDbClient(tx, tableMap);
+    const snapshot = (run.auth_context as AuthContext | undefined) ?? { kind: "anonymous" };
+    const tenantId =
+      snapshot.kind === "user"
+        ? snapshot.tenantId
+        : snapshot.kind === "system"
+          ? snapshot.tenantId
+          : undefined;
+    const auth = systemAuthFromSnapshot(snapshot, tenantId);
+    const db = createGeneratedDbClient(tx, tableMap, { auth });
     const completedSteps = await loadCompletedStepOutputs(adapter, run.id);
 
     const inputObj =
@@ -96,7 +106,7 @@ export async function processWorkflowStep(
       sinks: ["local"],
     });
 
-    const baseCtx = createActionContext(db, telemetry);
+    const baseCtx = createActionContext(db, telemetry, auth);
 
     const ctx = {
       input: run.input,
@@ -104,6 +114,7 @@ export async function processWorkflowStep(
       db: baseCtx.db,
       env: baseCtx.env,
       telemetry,
+      auth,
     };
 
     const runRecord = {

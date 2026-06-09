@@ -26,7 +26,7 @@ export async function startWorkflowRunsForPendingOutbox(
   }
 
   const outboxEvents = await adapter.query(
-    `SELECT o.id, o.event_type, o.payload
+    `SELECT o.id, o.event_type, o.payload, o.auth_context
      FROM _forge_outbox o
      ORDER BY o.id`,
   );
@@ -44,6 +44,7 @@ export async function startWorkflowRunsForPendingOutbox(
     }
 
     const payload = parsePayload(row.payload);
+    const authContext = parsePayload(row.auth_context);
 
     for (const subscription of subscriptions) {
       const idempotencyKey = `${subscription.workflowName}:outbox:${outboxId}`;
@@ -53,6 +54,7 @@ export async function startWorkflowRunsForPendingOutbox(
         triggerType: "event",
         triggerOutboxId: outboxId,
         idempotencyKey,
+        authContext,
       });
 
       if (result.created) {

@@ -23,6 +23,7 @@ function rowToRun(row: Record<string, unknown>): WorkflowRunRow {
       row.trigger_outbox_id != null ? Number(row.trigger_outbox_id) : null,
     idempotency_key: String(row.idempotency_key),
     input: parseJsonValue(row.input),
+    auth_context: parseJsonValue(row.auth_context),
     status: String(row.status) as WorkflowRunRow["status"],
     current_step: row.current_step != null ? String(row.current_step) : null,
     last_error: row.last_error != null ? String(row.last_error) : null,
@@ -45,8 +46,8 @@ export async function createWorkflowRun(
   }
 
   const insertResult = await adapter.query(
-    `INSERT INTO _forge_workflow_runs (workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, status)
-     VALUES ($1, $2, $3, $4, $5, 'pending')
+    `INSERT INTO _forge_workflow_runs (workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'pending')
      ON CONFLICT (idempotency_key) DO NOTHING
      RETURNING id`,
     [
@@ -55,6 +56,7 @@ export async function createWorkflowRun(
       input.triggerOutboxId ?? null,
       input.idempotencyKey,
       JSON.stringify(input.input),
+      JSON.stringify(input.authContext ?? null),
     ],
   );
 
@@ -72,7 +74,7 @@ export async function createWorkflowRun(
     }
 
     const runResult = await adapter.query(
-      `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
+      `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
        FROM _forge_workflow_runs WHERE id = $1`,
       [runId],
     );

@@ -21,6 +21,7 @@ export interface WorkflowRunRow {
   trigger_outbox_id: number | null;
   idempotency_key: string;
   input: unknown;
+  auth_context?: unknown;
   status: WorkflowRunStatus;
   current_step: string | null;
   last_error: string | null;
@@ -56,6 +57,7 @@ export interface CreateWorkflowRunInput {
   triggerType: string;
   triggerOutboxId?: number;
   idempotencyKey: string;
+  authContext?: unknown;
 }
 
 export interface ProcessWorkflowBatchOptions {

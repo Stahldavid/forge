@@ -52,7 +52,8 @@ export type InspectTarget =
   | "dev"
   | "subscriptions"
   | "workflows"
-  | "telemetry";
+  | "telemetry"
+  | "policies";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;

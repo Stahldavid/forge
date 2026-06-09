@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./server": "./server/index.ts",
-    "./schema": "./schema/index.ts"
+    "./schema": "./schema/index.ts",
+    "./policy": "./policy/index.ts"
   }
 }

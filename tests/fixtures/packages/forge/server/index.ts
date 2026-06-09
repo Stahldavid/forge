@@ -1,18 +1,25 @@
+import type { AuthContext } from "./auth.ts";
+import type { AuthRequirement } from "../policy/index.ts";
+
+export type { AuthContext };
+
 export interface ForgeContext {
   db: Record<string, unknown>;
   emit: (eventType: string, payload: unknown) => Promise<void>;
   env: Record<string, string | undefined>;
-  /** Injected at runtime by the Forge runner — stub in builder types only. */
   telemetry: import("./telemetry.ts").TelemetryContext;
+  auth: AuthContext;
 }
 
 export interface ForgeCommandMeta {
   kind: "command";
+  auth?: AuthRequirement;
 }
 
 export interface ForgeActionMeta {
   kind: "action";
   event?: string;
+  auth?: AuthRequirement;
 }
 
 export type ForgeCommand<T> = (() => T | Promise<T>) & {
@@ -24,11 +31,13 @@ export type ForgeAction<T> = (() => T | Promise<T>) & {
 };
 
 export interface ForgeCommandConfig<TArgs = unknown, TResult = unknown> {
+  auth?: AuthRequirement;
   handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 }
 
 export interface ForgeActionConfig<TArgs = unknown, TResult = unknown> {
   event?: string;
+  auth?: AuthRequirement;
   idempotencyKey?: (event: unknown) => string;
   handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 }
@@ -46,7 +55,10 @@ export function command<TArgs = unknown, TResult = unknown>(
 
   return {
     ...fnOrConfig,
-    __forge: { kind: "command" },
+    __forge: {
+      kind: "command",
+      ...(fnOrConfig.auth ? { auth: fnOrConfig.auth } : {}),
+    },
   };
 }
 
@@ -64,6 +76,9 @@ export function action<TArgs = unknown, TResult = unknown>(
   const meta: ForgeActionMeta = { kind: "action" };
   if (fnOrConfig.event !== undefined) {
     meta.event = fnOrConfig.event;
+  }
+  if (fnOrConfig.auth !== undefined) {
+    meta.auth = fnOrConfig.auth;
   }
 
   return {
@@ -86,6 +101,7 @@ export interface WorkflowRunContext {
   db: Record<string, unknown>;
   env: Record<string, string | undefined>;
   telemetry: import("./telemetry.ts").TelemetryContext;
+  auth: AuthContext;
 }
 
 export interface WorkflowStepDefinition<T = unknown> {
@@ -99,6 +115,7 @@ export interface WorkflowStepDefinition<T = unknown> {
 export interface WorkflowDefinition {
   trigger?: { type: "event"; eventType: string };
   steps: WorkflowStepDefinition[];
+  auth?: AuthRequirement;
   idempotencyKey?: (input: unknown) => string;
 }
 
@@ -128,3 +145,5 @@ export function workflow(config: WorkflowDefinition): ForgeWorkflow {
 }
 
 export { defineTable } from "../schema/index.ts";
+export type { AuthRequirement, PolicyDefinition } from "../policy/index.ts";
+export { can, canRole, definePolicies, public_, system } from "../policy/index.ts";

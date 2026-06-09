@@ -9,6 +9,7 @@ export interface OutboxEventRow {
   id: number;
   event_type: string;
   payload: unknown;
+  auth_context?: unknown;
   created_at: string;
 }
 
@@ -30,6 +31,7 @@ export interface OutboxDeliveryRow {
 export interface ClaimedDelivery extends OutboxDeliveryRow {
   payload: unknown;
   event_type: string;
+  auth_context?: unknown;
 }
 
 export interface ProcessOutboxBatchOptions {

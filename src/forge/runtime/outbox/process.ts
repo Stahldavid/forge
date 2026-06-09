@@ -10,6 +10,8 @@ import { adapterAsTransaction } from "../db/adapter.ts";
 import type { DbAdapter } from "../db/adapter.ts";
 import { createGeneratedDbClient } from "../db/generated-client.ts";
 import { createActionContext } from "../context/create-context.ts";
+import { systemAuthFromSnapshot } from "../auth/resolve.ts";
+import type { AuthContext } from "../auth/types.ts";
 import { prepareRuntimeEnvironment } from "../executor.ts";
 import { resolveHandlerFromModule } from "../runner/run-entry.ts";
 import { loadActionSubscriptions } from "./subscriptions.ts";
@@ -30,6 +32,17 @@ import type {
 
 function defaultWorkerId(): string {
   return `forge-worker-${process.pid}`;
+}
+
+function resolveSystemAuthFromDelivery(delivery: ClaimedDelivery): AuthContext {
+  const snapshot = (delivery.auth_context as AuthContext | undefined) ?? { kind: "anonymous" };
+  const tenantId =
+    snapshot.kind === "user"
+      ? snapshot.tenantId
+      : snapshot.kind === "system"
+        ? snapshot.tenantId
+        : undefined;
+  return systemAuthFromSnapshot(snapshot, tenantId);
 }
 
 async function runDeliveryAction(
@@ -75,7 +88,8 @@ async function runDeliveryAction(
 
   try {
     const tx = adapterAsTransaction(adapter);
-    const db = createGeneratedDbClient(tx, tableMap);
+    const auth = resolveSystemAuthFromDelivery(delivery);
+    const db = createGeneratedDbClient(tx, tableMap, { auth });
 
     const payloadObj =
       delivery.payload && typeof delivery.payload === "object"
@@ -97,7 +111,7 @@ async function runDeliveryAction(
       sinks: ["local"],
     });
 
-    const ctx = createActionContext(db, telemetry);
+    const ctx = createActionContext(db, telemetry, auth);
     const result = await handler(ctx, delivery.payload);
     await telemetry.flush("local");
     return { ok: true, result };

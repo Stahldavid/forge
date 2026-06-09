@@ -13,6 +13,17 @@ function defaultWorkerId(): string {
   return `forge-worker-${process.pid}`;
 }
 
+function parseJsonValue(value: unknown): unknown {
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
+  return value;
+}
+
 function rowToRun(row: Record<string, unknown>): WorkflowRunRow {
   let input: unknown = row.input;
   if (typeof input === "string") {
@@ -31,6 +42,7 @@ function rowToRun(row: Record<string, unknown>): WorkflowRunRow {
       row.trigger_outbox_id != null ? Number(row.trigger_outbox_id) : null,
     idempotency_key: String(row.idempotency_key),
     input,
+    auth_context: parseJsonValue(row.auth_context),
     status: String(row.status) as WorkflowRunRow["status"],
     current_step: row.current_step != null ? String(row.current_step) : null,
     last_error: row.last_error != null ? String(row.last_error) : null,
@@ -54,7 +66,7 @@ export async function processWorkflowBatch(
   const { workflows } = loadWorkflowRegistry(workspaceRoot);
 
   const pendingRuns = await adapter.query(
-    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
+    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
      FROM _forge_workflow_runs
      WHERE status IN ('pending', 'running', 'failed')
      ORDER BY id
@@ -175,7 +187,7 @@ export async function listWorkflowRuns(
   adapter: DbAdapter,
 ): Promise<Record<string, unknown>[]> {
   const result = await adapter.query(
-    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
+    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
      FROM _forge_workflow_runs
      ORDER BY id`,
   );
@@ -187,7 +199,7 @@ export async function inspectWorkflowRun(
   runId: number,
 ): Promise<{ run: Record<string, unknown> | null; steps: Record<string, unknown>[] }> {
   const runResult = await adapter.query(
-    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
+    `SELECT id, workflow_name, trigger_type, trigger_outbox_id, idempotency_key, input, auth_context, status, current_step, last_error, created_at, updated_at, started_at, completed_at, canceled_at
      FROM _forge_workflow_runs WHERE id = $1`,
     [runId],
   );

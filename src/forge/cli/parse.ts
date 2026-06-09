@@ -5,6 +5,7 @@ import type { DbSubcommand } from "./db.ts";
 import type { OutboxSubcommand } from "./outbox.ts";
 import type { WorkflowSubcommand } from "./workflow.ts";
 import type { TelemetrySubcommand } from "./telemetry.ts";
+import type { PolicySubcommand } from "./policy.ts";
 
 export type ForgeCommand =
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -12,7 +13,7 @@ export type ForgeCommand =
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
   | { kind: "check"; json: boolean; dryRun: boolean }
   | { kind: "verify"; options: VerifyOptions }
-  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; workspaceRoot: string }
+  | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; workspaceRoot: string }
   | {
       kind: "dev";
       host?: string;
@@ -73,6 +74,15 @@ export type ForgeCommand =
       sink?: string;
       file?: "events" | "exceptions" | "spans";
       workspaceRoot: string;
+    }
+  | {
+      kind: "policy";
+      subcommand: PolicySubcommand;
+      json: boolean;
+      policy?: string;
+      role?: string;
+      strictPolicies: boolean;
+      workspaceRoot: string;
     };
 
 export interface ParsedCli {
@@ -92,6 +102,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "subscriptions",
   "workflows",
   "telemetry",
+  "policies",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -150,7 +161,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, or telemetry",
+      "missing command; expected generate, add, inspect, check, verify, run, dev, db, outbox, workflow, telemetry, or policy",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -246,6 +257,9 @@ export function parseCli(argv: string[]): ParsedCli {
           list,
           json: parseFlag(argv, "--json"),
           mock: parseFlag(argv, "--mock"),
+          userId: parseOptionValue(argv, "--user-id"),
+          tenantId: parseOptionValue(argv, "--tenant-id"),
+          role: parseOptionValue(argv, "--role"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -446,6 +460,35 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "policy": {
+      const subcommand = rest[0] as PolicySubcommand | undefined;
+      if (!subcommand || !["list", "matrix", "simulate", "check"].includes(subcommand)) {
+        errors.push("forge policy requires subcommand: list, matrix, simulate, or check");
+        return { command: null, workspaceRoot, errors };
+      }
+
+      let policyName: string | undefined;
+      if (subcommand === "simulate") {
+        policyName = rest[1];
+        if (!policyName) {
+          errors.push("forge policy simulate requires a policy name");
+        }
+      }
+
+      return {
+        command: {
+          kind: "policy",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          policy: policyName,
+          role: parseOptionValue(argv, "--role"),
+          strictPolicies: parseFlag(argv, "--strict-policies"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     default:
       errors.push(`unrecognized command '${commandName}'`);
       return { command: null, workspaceRoot, errors };
@@ -478,6 +521,11 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--step",
     "--sink",
     "--file",
+    "--telemetry",
+    "--user-id",
+    "--tenant-id",
+    "--role",
+    "--strict-policies",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -498,7 +546,11 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--step" ||
         arg === "--sink" ||
         arg === "--file" ||
-        arg === "--telemetry"
+        arg === "--telemetry" ||
+        arg === "--user-id" ||
+        arg === "--tenant-id" ||
+        arg === "--role" ||
+        arg === "--strict-policies"
       ) {
         index += 1;
       }

@@ -56,6 +56,11 @@ import {
   formatTelemetryJson,
   runTelemetryCommand,
 } from "./telemetry.ts";
+import {
+  formatPolicyHuman,
+  formatPolicyJson,
+  runPolicyCommand,
+} from "./policy.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -160,6 +165,7 @@ export async function runInspectCommand(
     subscriptions: `${GENERATED_DIR}/actionSubscriptions.json`,
     workflows: `${GENERATED_DIR}/workflowRegistry.json`,
     telemetry: `${GENERATED_DIR}/telemetryRegistry.json`,
+    policies: `${GENERATED_DIR}/policyRegistry.json`,
   };
 
   const relative = dataPaths[target];
@@ -256,6 +262,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         list: command.list,
         json: command.json,
         mock: command.mock,
+        userId: command.userId,
+        tenantId: command.tenantId,
+        role: command.role,
         workspaceRoot: command.workspaceRoot,
       });
 
@@ -364,6 +373,24 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatTelemetryJson(result));
       } else {
         process.stdout.write(formatTelemetryHuman(command.subcommand, result));
+      }
+
+      return result.exitCode;
+    }
+    case "policy": {
+      const result = await runPolicyCommand({
+        subcommand: command.subcommand,
+        workspaceRoot: command.workspaceRoot,
+        json: command.json,
+        policy: command.policy,
+        role: command.role,
+        strictPolicies: command.strictPolicies,
+      });
+
+      if (command.json) {
+        process.stdout.write(formatPolicyJson(result));
+      } else {
+        process.stdout.write(formatPolicyHuman(command.subcommand, result));
       }
 
       return result.exitCode;

@@ -1,4 +1,4 @@
-import { command } from "forge/server";
+import { can, command } from "forge/server";
 import { z } from "zod";
 
 const ticketSchema = z.object({
@@ -7,6 +7,7 @@ const ticketSchema = z.object({
 });
 
 export const createTicket = command({
+  auth: can("tickets.create"),
   handler: async (ctx, args) => {
     const parsed = ticketSchema.parse(args);
     await ctx.telemetry.capture("ticket_create_started", {

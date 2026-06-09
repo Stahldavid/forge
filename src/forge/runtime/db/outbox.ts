@@ -13,13 +13,14 @@ export async function insertOutbox(
   eventType: string,
   payload: unknown,
   subscriptions: ActionSubscription[],
+  authContext?: unknown,
 ): Promise<
   { ok: true; outboxId: number } | { ok: false; diagnostic: Diagnostic }
 > {
   try {
     const outboxResult = await tx.query(
-      `INSERT INTO _forge_outbox (event_type, payload) VALUES ($1, $2::jsonb) RETURNING id`,
-      [eventType, JSON.stringify(payload)],
+      `INSERT INTO _forge_outbox (event_type, payload, auth_context) VALUES ($1, $2::jsonb, $3::jsonb) RETURNING id`,
+      [eventType, JSON.stringify(payload), JSON.stringify(authContext ?? null)],
     );
 
     const outboxId = Number(outboxResult.rows[0]?.id);

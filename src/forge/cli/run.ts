@@ -7,6 +7,9 @@ export interface RunCommandOptions {
   list: boolean;
   json: boolean;
   mock: boolean;
+  userId?: string;
+  tenantId?: string;
+  role?: string;
   workspaceRoot: string;
 }
 
@@ -29,6 +32,9 @@ export async function runRunCommand(
   const run = await runEntry(options.workspaceRoot, options.name!, {
     json: options.json,
     mock: options.mock,
+    userId: options.userId,
+    tenantId: options.tenantId,
+    role: options.role,
   });
 
   return { run, exitCode: run.exitCode };

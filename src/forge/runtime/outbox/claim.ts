@@ -48,7 +48,7 @@ export async function claimPendingDeliveries(
     }
 
     const eventResult = await adapter.query(
-      `SELECT o.id, o.event_type, o.payload, o.created_at
+      `SELECT o.id, o.event_type, o.payload, o.auth_context, o.created_at
        FROM _forge_outbox o
        WHERE o.id = $1`,
       [Number(row.outbox_id)],
@@ -68,10 +68,20 @@ export async function claimPendingDeliveries(
       }
     }
 
+    let authContext: unknown = eventRow.auth_context;
+    if (typeof authContext === "string") {
+      try {
+        authContext = JSON.parse(authContext);
+      } catch {
+        authContext = eventRow.auth_context;
+      }
+    }
+
     claimed.push({
       ...rowToDelivery(row),
       event_type: String(eventRow.event_type),
       payload,
+      auth_context: authContext,
     });
   }
 

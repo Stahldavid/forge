@@ -8,6 +8,11 @@ import {
   buildTelemetryRegistry,
   buildTelemetrySinks,
 } from "../telemetry-registry/build.ts";
+import {
+  buildPermissionMatrixFromRegistry,
+  buildPolicyRegistry,
+  buildTenantScope,
+} from "../policy-registry/build.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -63,6 +68,13 @@ import {
   serializeTelemetryRegistryTs,
   serializeTelemetrySinksJson,
   serializeTelemetrySinksTs,
+  serializePolicyRegistryJson,
+  serializePolicyRegistryTs,
+  serializePermissionMatrixJson,
+  serializePermissionMatrixTs,
+  serializeTenantScopeJson,
+  serializeTenantScopeTs,
+  serializeAuthContextTs,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -136,6 +148,9 @@ export function plan(input: PlanInput): EmitPlan {
   const workflowSubscriptions = buildWorkflowSubscriptions(workflowRegistry);
   const telemetryRegistry = buildTelemetryRegistry(input.appGraph);
   const telemetrySinks = buildTelemetrySinks(input.classified);
+  const policyRegistry = buildPolicyRegistry(input.appGraph);
+  const permissionMatrix = buildPermissionMatrixFromRegistry(policyRegistry);
+  const tenantScope = buildTenantScope(dataGraph);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const devManifest = buildDevManifest(runtimeGraph, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -217,8 +232,8 @@ export function plan(input: PlanInput): EmitPlan {
       `${GENERATED_DIR}/sqlPlan.json`,
       serializeSqlPlanJsonExport(sqlPlan),
     ),
-    makeEmitFile(`${GENERATED_DIR}/db.ts`, serializeDbTsExport(sqlPlan)),
-    makeEmitFile(`${GENERATED_DIR}/db.json`, serializeDbJsonExport(sqlPlan)),
+    makeEmitFile(`${GENERATED_DIR}/db.ts`, serializeDbTsExport(sqlPlan, tenantScope)),
+    makeEmitFile(`${GENERATED_DIR}/db.json`, serializeDbJsonExport(sqlPlan, tenantScope)),
     makeEmitFile(
       `${GENERATED_DIR}/actionSubscriptions.ts`,
       serializeActionSubscriptionsTs(actionSubscriptions),
@@ -259,6 +274,31 @@ export function plan(input: PlanInput): EmitPlan {
       `${GENERATED_DIR}/telemetrySinks.json`,
       serializeTelemetrySinksJson(telemetrySinks),
     ),
+    makeEmitFile(
+      `${GENERATED_DIR}/policyRegistry.ts`,
+      serializePolicyRegistryTs(policyRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/policyRegistry.json`,
+      serializePolicyRegistryJson(policyRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/permissionMatrix.ts`,
+      serializePermissionMatrixTs(permissionMatrix),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/permissionMatrix.json`,
+      serializePermissionMatrixJson(permissionMatrix),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/tenantScope.ts`,
+      serializeTenantScopeTs(tenantScope),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/tenantScope.json`,
+      serializeTenantScopeJson(tenantScope),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/authContext.ts`, serializeAuthContextTs()),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);

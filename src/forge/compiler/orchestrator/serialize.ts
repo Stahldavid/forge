@@ -13,6 +13,11 @@ import type {
   TelemetryRegistry,
   TelemetrySinks,
 } from "../types/telemetry-registry.ts";
+import type {
+  PermissionMatrix,
+  PolicyRegistry,
+  TenantScope,
+} from "../types/policy-registry.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
 import type { SqlPlan } from "../data-graph/sql/types.ts";
 import {
@@ -196,12 +201,12 @@ export function serializeSqlPlanTsExport(plan: SqlPlan): string {
   return serializeSqlPlanTs(plan);
 }
 
-export function serializeDbJsonExport(plan: SqlPlan): string {
-  return serializeDbJson(plan);
+export function serializeDbJsonExport(plan: SqlPlan, tenantScope?: TenantScope): string {
+  return serializeDbJson(plan, tenantScope);
 }
 
-export function serializeDbTsExport(plan: SqlPlan): string {
-  return serializeDbTs(plan);
+export function serializeDbTsExport(plan: SqlPlan, tenantScope?: TenantScope): string {
+  return serializeDbTs(plan, tenantScope);
 }
 
 export function serializeActionSubscriptionsJson(
@@ -297,6 +302,63 @@ export function serializeTelemetrySinksJson(sinks: TelemetrySinks): string {
 export function serializeTelemetrySinksTs(sinks: TelemetrySinks): string {
   const parsed: unknown = JSON.parse(serializeTelemetrySinksJson(sinks).trimEnd());
   return `export const telemetrySinks = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializePolicyRegistryJson(registry: PolicyRegistry): string {
+  const payload = {
+    schemaVersion: registry.schemaVersion,
+    generatorVersion: registry.generatorVersion,
+    analyzerVersion: registry.analyzerVersion,
+    inputHash: registry.inputHash,
+    policies: registry.policies,
+    commandAuth: registry.commandAuth,
+    diagnostics: registry.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializePolicyRegistryTs(registry: PolicyRegistry): string {
+  const parsed: unknown = JSON.parse(serializePolicyRegistryJson(registry).trimEnd());
+  return `export const policyRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializePermissionMatrixJson(matrix: PermissionMatrix): string {
+  const payload = {
+    schemaVersion: matrix.schemaVersion,
+    generatorVersion: matrix.generatorVersion,
+    inputHash: matrix.inputHash,
+    entries: matrix.entries,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializePermissionMatrixTs(matrix: PermissionMatrix): string {
+  const parsed: unknown = JSON.parse(serializePermissionMatrixJson(matrix).trimEnd());
+  return `export const permissionMatrix = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeTenantScopeJson(scope: TenantScope): string {
+  const payload = {
+    schemaVersion: scope.schemaVersion,
+    generatorVersion: scope.generatorVersion,
+    inputHash: scope.inputHash,
+    tables: scope.tables,
+    diagnostics: scope.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeTenantScopeTs(scope: TenantScope): string {
+  const parsed: unknown = JSON.parse(serializeTenantScopeJson(scope).trimEnd());
+  return `export const tenantScope = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeAuthContextTs(): string {
+  return `export type AuthContext =
+  | { kind: "user"; userId: string; tenantId: string; role: string; permissions?: string[] }
+  | { kind: "system"; tenantId?: string; triggeredBy?: { userId?: string; tenantId?: string; role?: string } }
+  | { kind: "anonymous" };
+`;
 }
 
 export type { ImportGuardsArtifact };
