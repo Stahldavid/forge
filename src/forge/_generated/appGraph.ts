@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=58ce779f1e2c5124e56b04cd4c3a1ae36cf613091a9f4fa2dd8d05a5243c64b1 content=dd02e55bbef2c72b0eae23d034850d773a3ceff62edc4c5b18f35e50dc24d9a0
+// @forge-generated generator=0.0.0 input=bb5d0f225b6751ee6b500f8b46cfaa2b4674b5e3697378a505d47e65d797ba83 content=d2bd526807674e243fb6222d04c2c9e0939ea30cf5597e0416e5e860775bcbb4
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "d37246e2ef8a2e517212009cab91578cb69fa9fbc7f372e6576b1041908cc052",
+  "inputHash": "fd0ffc1fa3f39dd952e00984936670a1d822abdfbaa00080f0639fa38c8743dc",
   "moduleGraph": {
     "nodes": [
       {
@@ -583,36 +583,43 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 4116,
-              "start": 4104
+              "end": 4097,
+              "start": 4077
+            },
+            "toModuleId": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884"
+          },
+          {
+            "span": {
+              "end": 4215,
+              "start": 4203
             },
             "toModuleId": "9a4ddb5a6cc116b1a18d2f14dc77ecb01c2915d46a15cd6712a55f22435108b2"
           },
           {
             "span": {
-              "end": 4160,
-              "start": 4149
+              "end": 4259,
+              "start": 4248
             },
             "toModuleId": "3fe52c3e22858aa259c5c5107efba290904b11240d7376d60cea1269bf504640"
           },
           {
             "span": {
-              "end": 4218,
-              "start": 4187
+              "end": 4317,
+              "start": 4286
             },
             "toModuleId": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292"
           },
           {
             "span": {
-              "end": 4284,
-              "start": 4256
+              "end": 4383,
+              "start": 4355
             },
             "toModuleId": "f34e7ea37dce9d8303d66a65fc172b9d6fc9d9c879c8caa0ea988316113daa50"
           },
           {
             "span": {
-              "end": 4346,
-              "start": 4322
+              "end": 4445,
+              "start": 4421
             },
             "toModuleId": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
           }
@@ -2141,6 +2148,29 @@ export const appGraph = {
               "start": 32
             },
             "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/repair/types.ts",
+        "id": "1f15f635930f6d16244228f349f2f4a58b710386cc833b276de750707dd0058b",
+        "localImports": [
+          {
+            "span": {
+              "end": 65,
+              "start": 32
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 132,
+              "start": 114
+            },
+            "toModuleId": "d9059ee2a34c418d3ad7c8bfa6b39a44ab3fa0a33de9e952c062db7e9e4216c7"
           }
         ]
       },
@@ -6711,6 +6741,13 @@ export const appGraph = {
               "start": 1600
             },
             "toModuleId": "61ecc97466750465fa1571fba5a6400881d869c65f5fb0783e5bd8942976ccbd"
+          },
+          {
+            "span": {
+              "end": 1715,
+              "start": 1695
+            },
+            "toModuleId": "1f15f635930f6d16244228f349f2f4a58b710386cc833b276de750707dd0058b"
           }
         ]
       },
@@ -7974,6 +8011,43 @@ export const appGraph = {
               "start": 980
             },
             "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/repair/rules/index.ts",
+        "id": "9ddcba1dcd9ef2ccf4150bc419995c9713e09017f89710ed3897b0e340fa6c2f",
+        "localImports": [
+          {
+            "span": {
+              "end": 71,
+              "start": 33
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 135,
+              "start": 100
+            },
+            "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
+          },
+          {
+            "span": {
+              "end": 205,
+              "start": 169
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 362,
+              "start": 349
+            },
+            "toModuleId": "1f15f635930f6d16244228f349f2f4a58b710386cc833b276de750707dd0058b"
           }
         ]
       },
@@ -12147,6 +12221,71 @@ export const appGraph = {
               "start": 576
             },
             "toModuleId": "61ecc97466750465fa1571fba5a6400881d869c65f5fb0783e5bd8942976ccbd"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/repair/index.ts",
+        "id": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884",
+        "localImports": [
+          {
+            "span": {
+              "end": 267,
+              "start": 232
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 328,
+              "start": 296
+            },
+            "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
+          },
+          {
+            "span": {
+              "end": 417,
+              "start": 380
+            },
+            "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
+          },
+          {
+            "span": {
+              "end": 484,
+              "start": 451
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 543,
+              "start": 523
+            },
+            "toModuleId": "ae832893927c956b9953a0fe91765208c7e807adc277c3c2ad90f6f2c223bda9"
+          },
+          {
+            "span": {
+              "end": 600,
+              "start": 580
+            },
+            "toModuleId": "a36f2dd97da72185e095cb806593a49c3221dcc9e2f187ea4efdbfc742167c60"
+          },
+          {
+            "span": {
+              "end": 667,
+              "start": 649
+            },
+            "toModuleId": "9ddcba1dcd9ef2ccf4150bc419995c9713e09017f89710ed3897b0e340fa6c2f"
+          },
+          {
+            "span": {
+              "end": 831,
+              "start": 819
+            },
+            "toModuleId": "1f15f635930f6d16244228f349f2f4a58b710386cc833b276de750707dd0058b"
           }
         ]
       },

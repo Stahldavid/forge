@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=58ce779f1e2c5124e56b04cd4c3a1ae36cf613091a9f4fa2dd8d05a5243c64b1 content=f3d91e2a19024afce4abbff346e6c46255c98eda283b2907d90e9f9d15d6bde8
+// @forge-generated generator=0.0.0 input=bb5d0f225b6751ee6b500f8b46cfaa2b4674b5e3697378a505d47e65d797ba83 content=2c4552df5997ff2c9422c390bb4585414bf412be4936485e28266b79b81c7854
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "58ce779f1e2c5124e56b04cd4c3a1ae36cf613091a9f4fa2dd8d05a5243c64b1",
+  "inputHash": "bb5d0f225b6751ee6b500f8b46cfaa2b4674b5e3697378a505d47e65d797ba83",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1909,6 +1909,28 @@ export const testGraph = {
       "file": "tests/release/h23-release.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repair/h29-repair.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages ai"
+      ]
     },
     {
       "confidence": "weak",

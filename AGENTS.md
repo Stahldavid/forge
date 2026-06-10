@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=05a8be475a1f8aca4d273e6adff403bd2c16314ef2f1f98f110e4e250a30ea0b
+// @forge-generated generator=0.0.0 input=bc5a09656f1c2dc63d25c906f58452be524b2118ee2d2b133e47d389b2ba9f81 content=3da1c4dcd461d2228cdcf2d9612b70d76dbdcf5cdd1d7078ecacd8c5f6c8286b
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -145,6 +145,17 @@ forge test run --changed --json
 ```
 
 Finish handoffs with `forge verify --strict` when the change is ready.
+
+### Repair a failing check
+
+When a Forge check fails, do not guess. Use:
+
+```bash
+forge repair diagnose --from-last-test-run --json
+forge repair plan --from-last-test-run --write
+```
+
+Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
 
 ### Add a package
 

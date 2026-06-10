@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=4062273eacb57275e01afca3c6391424c29eaf81adea214c38dd1f7852e85efe
+// @forge-generated generator=0.0.0 input=bc5a09656f1c2dc63d25c906f58452be524b2118ee2d2b133e47d389b2ba9f81 content=af4d1b3e01b1355118d9de6dfbdf34fac37a0a8d5a637fba4bfb29bfdfdc2355
 # Operation Playbooks
 
 ## Add a command
@@ -74,6 +74,15 @@
 3. Run forge test run --changed --json for targeted checks.
 4. Use forge verify --changed for the fast impact gate.
 5. Run forge verify --strict before final handoff.
+
+## Repair a failing check
+
+1. Run forge test run --changed --json.
+2. Run forge repair diagnose --from-last-test-run --json.
+3. Review the failureKind, likelyCause, suggestedRepairs, and confidence.
+4. Apply only high-confidence repairs automatically.
+5. Run forge verify --changed.
+6. Run forge verify --strict before final handoff.
 
 ## Add a package
 

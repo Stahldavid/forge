@@ -24,6 +24,7 @@ import type { FeatureAction, FeatureCommandOptions } from "../feature/types.ts";
 import type { RefactorAction, RefactorCommandOptions, RenameTarget } from "../refactor/types.ts";
 import type { ImpactCommandOptions, TestCommandOptions, TestSubcommand } from "../impact/types.ts";
 import type { TestCost } from "../compiler/types/test-graph.ts";
+import type { RepairCommandOptions, RepairSubcommand } from "../repair/types.ts";
 
 export type ForgeCommand =
   | {
@@ -122,6 +123,7 @@ export type ForgeCommand =
   | { kind: "refactor"; options: RefactorCommandOptions }
   | { kind: "impact"; options: ImpactCommandOptions }
   | { kind: "test"; options: TestCommandOptions }
+  | { kind: "repair"; options: RepairCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -378,6 +380,16 @@ const RENAME_TARGETS: RenameTarget[] = [
 ];
 const TEST_SUBCOMMANDS: TestSubcommand[] = ["plan", "run", "explain"];
 const TEST_COSTS: TestCost[] = ["instant", "fast", "standard", "slow", "docker", "browser"];
+const REPAIR_SUBCOMMANDS: RepairSubcommand[] = [
+  "diagnose",
+  "explain",
+  "plan",
+  "apply",
+  "run",
+  "list",
+  "inspect",
+  "rollback",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -462,7 +474,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, refactor, impact, test, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -975,6 +987,56 @@ export function parseCli(argv: string[]): ParsedCli {
             includeBrowser: parseFlag(argv, "--include-browser"),
             bail: parseFlag(argv, "--bail"),
             report: parseOptionValue(argv, "--report"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "repair": {
+      const subcommand = rest[0] as RepairSubcommand | undefined;
+      if (!subcommand || !REPAIR_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge repair requires subcommand: diagnose, explain, plan, apply, run, list, inspect, or rollback");
+        return { command: null, workspaceRoot, errors };
+      }
+      const positionalId =
+        subcommand === "explain" ||
+        subcommand === "apply" ||
+        subcommand === "inspect" ||
+        subcommand === "rollback"
+          ? rest[1]
+          : undefined;
+      const attemptsRaw = parseOptionValue(argv, "--max-attempts");
+      const maxAttempts = attemptsRaw ? Number(attemptsRaw) : 1;
+      if (!Number.isFinite(maxAttempts) || maxAttempts < 1) {
+        errors.push("--max-attempts must be a number >= 1");
+      }
+      return {
+        command: {
+          kind: "repair",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            fromLastTestRun: parseFlag(argv, "--from-last-test-run"),
+            from: parseOptionValue(argv, "--from"),
+            traceId: parseOptionValue(argv, "--trace"),
+            workflowRunId: parseOptionValue(argv, "--workflow-run"),
+            outboxDeliveryId: parseOptionValue(argv, "--outbox-delivery"),
+            diagnosticCode:
+              parseOptionValue(argv, "--diagnostic") ??
+              (subcommand === "explain" ? positionalId : undefined),
+            repairId:
+              subcommand === "apply" || subcommand === "inspect" || subcommand === "rollback"
+                ? positionalId
+                : undefined,
+            selectedRepair: parseOptionValue(argv, "--repair"),
+            write: parseFlag(argv, "--write"),
+            yes: parseFlag(argv, "--yes"),
+            keepFailed: parseFlag(argv, "--keep-failed"),
+            allowMediumConfidence: parseFlag(argv, "--allow-medium-confidence"),
+            maxAttempts: Math.floor(maxAttempts),
+            commitFriendly: parseFlag(argv, "--commit-friendly"),
           },
         },
         workspaceRoot,
@@ -1520,6 +1582,16 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--include-browser",
     "--bail",
     "--report",
+    "--from-last-test-run",
+    "--from",
+    "--trace",
+    "--workflow-run",
+    "--outbox-delivery",
+    "--diagnostic",
+    "--repair",
+    "--allow-medium-confidence",
+    "--max-attempts",
+    "--commit-friendly",
     "--fast",
     "--standard",
     "--apply",
@@ -1643,6 +1715,13 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--risk-threshold" ||
         arg === "--max-cost" ||
         arg === "--report" ||
+        arg === "--from" ||
+        arg === "--trace" ||
+        arg === "--workflow-run" ||
+        arg === "--outbox-delivery" ||
+        arg === "--diagnostic" ||
+        arg === "--repair" ||
+        arg === "--max-attempts" ||
         arg === "--write" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||

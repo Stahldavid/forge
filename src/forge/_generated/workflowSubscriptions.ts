@@ -1,10 +1,10 @@
-// @forge-generated generator=0.0.0 input=58ce779f1e2c5124e56b04cd4c3a1ae36cf613091a9f4fa2dd8d05a5243c64b1 content=4f31082c67575c4d2520dca7aaadbaf9d11e37f4d229db1f060c4c166a001385
+// @forge-generated generator=0.0.0 input=bb5d0f225b6751ee6b500f8b46cfaa2b4674b5e3697378a505d47e65d797ba83 content=8a154d53f03deba79baacfa2b92a9581b5683721216334ceae0049e16028e0b9
 export const workflowSubscriptions = {
   "analyzerVersion": "0.1.0",
   "byEvent": {},
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "adb051164fc67d654392735ef841f81e8c3bab68a23a4e5979b12825699e6e5e",
+  "inputHash": "40c7e8369c919957972e940efe1a0c9b355a5930a32be5455f5ab22c7506ced0",
   "schemaVersion": "0.1.0",
   "subscriptions": []
 } as const;

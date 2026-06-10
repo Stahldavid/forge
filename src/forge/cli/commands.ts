@@ -107,6 +107,11 @@ import {
   runTestCommand,
 } from "../impact/index.ts";
 import {
+  formatRepairHuman,
+  formatRepairJson,
+  runRepairCommand,
+} from "../repair/index.ts";
+import {
   formatQueryJson,
   formatQueryListHuman,
   formatQueryResultHuman,
@@ -529,6 +534,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatImpactJson(result));
       } else {
         process.stdout.write(formatImpactHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "repair": {
+      const result = await runRepairCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatRepairJson(result));
+      } else {
+        process.stdout.write(formatRepairHuman(result));
       }
       return result.exitCode;
     }

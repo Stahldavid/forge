@@ -18,6 +18,8 @@ node_modules/
 !.forge/test-plans/.gitkeep
 .forge/test-runs/*
 !.forge/test-runs/.gitkeep
+.forge/repairs/*
+!.forge/repairs/.gitkeep
 tests/**/.tmp/
 *.log
 .DS_Store

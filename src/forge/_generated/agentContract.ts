@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=d5ea82be2fe460d7838854315f647770e841b3fcb576dfc63021feca482bdaaa
+// @forge-generated generator=0.0.0 input=bc5a09656f1c2dc63d25c906f58452be524b2118ee2d2b133e47d389b2ba9f81 content=c8e271737cf3d34e68181743a866a863dac710e3321754307f05b66697c863f3
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -575,6 +575,17 @@ export const agentContract = {
         "Run forge verify --strict before final handoff."
       ],
       "title": "Plan impact-based tests"
+    },
+    {
+      "steps": [
+        "Run forge test run --changed --json.",
+        "Run forge repair diagnose --from-last-test-run --json.",
+        "Review the failureKind, likelyCause, suggestedRepairs, and confidence.",
+        "Apply only high-confidence repairs automatically.",
+        "Run forge verify --changed.",
+        "Run forge verify --strict before final handoff."
+      ],
+      "title": "Repair a failing check"
     },
     {
       "steps": [

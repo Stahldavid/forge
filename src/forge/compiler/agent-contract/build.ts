@@ -289,6 +289,17 @@ function playbooks(): AgentPlaybook[] {
       ],
     },
     {
+      title: "Repair a failing check",
+      steps: [
+        "Run forge test run --changed --json.",
+        "Run forge repair diagnose --from-last-test-run --json.",
+        "Review the failureKind, likelyCause, suggestedRepairs, and confidence.",
+        "Apply only high-confidence repairs automatically.",
+        "Run forge verify --changed.",
+        "Run forge verify --strict before final handoff.",
+      ],
+    },
+    {
       title: "Add a package",
       steps: [
         "Use forge add <alias>.",
@@ -736,6 +747,17 @@ forge test run --changed --json
 \`\`\`
 
 Finish handoffs with \`forge verify --strict\` when the change is ready.
+
+### Repair a failing check
+
+When a Forge check fails, do not guess. Use:
+
+\`\`\`bash
+forge repair diagnose --from-last-test-run --json
+forge repair plan --from-last-test-run --write
+\`\`\`
+
+Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
 
 ### Add a package
 
