@@ -41,6 +41,11 @@ import {
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
+import {
+  buildAgentContractArtifacts,
+  serializeAgentContractJson,
+  serializeAgentContractTs,
+} from "../agent-contract/build.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type { EmitFile, EmitPlan } from "../types/emit.ts";
@@ -224,8 +229,47 @@ export function plan(input: PlanInput): EmitPlan {
   const reactManifest = buildReactManifest(clientManifest);
   const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
+  const agentArtifacts = buildAgentContractArtifacts({
+    workspaceRoot: input.ctx.workspaceRoot,
+    appGraph: input.appGraph,
+    packageGraph: input.packageGraph,
+    classified: input.classified,
+    runtimeGraph,
+    dataGraph,
+    policyRegistry,
+    permissionMatrix,
+    tenantScope,
+    secretRegistry,
+    telemetryRegistry,
+    telemetrySinks,
+    aiRegistry,
+    queryRegistry,
+    liveQueryRegistry,
+    workflowRegistry,
+    apiSurface,
+    clientManifest,
+  });
 
   const files: EmitFile[] = [
+    makeEmitFile("AGENTS.md", agentArtifacts.agentsMd),
+    makeEmitFile(
+      `${GENERATED_DIR}/agentContract.ts`,
+      serializeAgentContractTs(agentArtifacts.contract),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/agentContract.json`,
+      serializeAgentContractJson(agentArtifacts.contract),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/appMap.md`, agentArtifacts.appMapMd),
+    makeEmitFile(`${GENERATED_DIR}/runtimeRules.md`, agentArtifacts.runtimeRulesMd),
+    makeEmitFile(
+      `${GENERATED_DIR}/operationPlaybooks.md`,
+      agentArtifacts.operationPlaybooksMd,
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/agentQuickstart.md`,
+      agentArtifacts.agentQuickstartMd,
+    ),
     makeEmitFile(
       `${GENERATED_DIR}/appGraph.ts`,
       serializeAppGraphTs(input.appGraph),
@@ -465,5 +509,6 @@ export function plan(input: PlanInput): EmitPlan {
     files: sortedFiles,
     orphanedFiles,
     lock,
+    diagnostics: agentArtifacts.diagnostics,
   };
 }

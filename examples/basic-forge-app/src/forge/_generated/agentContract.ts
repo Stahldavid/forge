@@ -1,0 +1,648 @@
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=0837ed0ebf97b2d7184750c7abd371e0406401c0d15dc6623c29d6776271b342
+export const agentContract = {
+  "actions": [
+    {
+      "allowedCapabilities": [
+        "network",
+        "secrets",
+        "ai",
+        "db"
+      ],
+      "allowedPackages": [
+        "forge"
+      ],
+      "file": "src/actions/capturePosthog.ts",
+      "forbiddenCapabilities": [],
+      "name": "capturePosthog"
+    },
+    {
+      "allowedCapabilities": [
+        "network",
+        "secrets",
+        "ai",
+        "db"
+      ],
+      "allowedPackages": [
+        "forge"
+      ],
+      "file": "src/actions/captureTicketCreated.ts",
+      "forbiddenCapabilities": [],
+      "name": "captureTicketCreated"
+    },
+    {
+      "allowedCapabilities": [
+        "network",
+        "secrets",
+        "ai",
+        "db"
+      ],
+      "allowedPackages": [
+        "forge"
+      ],
+      "file": "src/actions/createCheckout.ts",
+      "forbiddenCapabilities": [],
+      "name": "createCheckout"
+    }
+  ],
+  "ai": {
+    "generations": [
+      {
+        "file": "src/workflows/triageTicketWorkflow.ts",
+        "method": "generateText",
+        "model": "gpt-4o-mini",
+        "provider": "openai",
+        "purpose": "ticket_triage"
+      }
+    ],
+    "providers": [
+      "anthropic",
+      "gateway",
+      "openai"
+    ]
+  },
+  "client": {
+    "commands": [
+      "badStripeCommand",
+      "createTicket",
+      "manageBilling"
+    ],
+    "liveQueries": [
+      "liveTickets"
+    ],
+    "queries": [
+      "getTicket",
+      "listTickets"
+    ],
+    "reactHooks": [
+      "ForgeProvider",
+      "useForgeClient",
+      "useAuth",
+      "useQuery",
+      "useCommand",
+      "useLiveQuery"
+    ],
+    "transport": {
+      "commands": "POST /commands/:name",
+      "liveQueries": "GET /live/:name",
+      "queries": "POST /queries/:name"
+    }
+  },
+  "commands": [
+    {
+      "allowedPackages": [
+        "forge"
+      ],
+      "emits": [],
+      "file": "src/commands/badStripeCommand.ts",
+      "forbiddenCapabilities": [
+        "network",
+        "secrets"
+      ],
+      "name": "badStripeCommand",
+      "policy": "public",
+      "tablesWritten": []
+    },
+    {
+      "allowedPackages": [
+        "forge",
+        "zod"
+      ],
+      "emits": [],
+      "file": "src/commands/createTicket.ts",
+      "forbiddenCapabilities": [
+        "network",
+        "secrets"
+      ],
+      "name": "createTicket",
+      "policy": "tickets.create",
+      "tablesWritten": []
+    },
+    {
+      "allowedPackages": [
+        "forge"
+      ],
+      "emits": [],
+      "file": "src/commands/manageBilling.ts",
+      "forbiddenCapabilities": [
+        "network",
+        "secrets"
+      ],
+      "name": "manageBilling",
+      "policy": "billing.manage",
+      "tablesWritten": []
+    }
+  ],
+  "commandsToRun": {
+    "afterEditing": [
+      "forge generate",
+      "forge check",
+      "forge verify --strict"
+    ],
+    "beforeEditing": [
+      "forge inspect all --json",
+      "forge check --json"
+    ],
+    "dev": [
+      "forge dev --db pglite --worker --telemetry local --mock-ai"
+    ]
+  },
+  "data": {
+    "tables": [
+      {
+        "fields": [
+          "id"
+        ],
+        "file": "src/forge/schema.ts",
+        "name": "tenants",
+        "tenantScoped": false
+      },
+      {
+        "fields": [
+          "createdAt",
+          "id",
+          "status",
+          "tenantId",
+          "title"
+        ],
+        "file": "src/forge/schema.ts",
+        "name": "tickets",
+        "tenantField": "tenant_id",
+        "tenantScoped": true
+      }
+    ]
+  },
+  "deploy": {
+    "files": [
+      "deploy/docker-compose.yml",
+      "deploy/.env.example",
+      "deploy/deployManifest.json"
+    ],
+    "selfHost": true
+  },
+  "generatorVersion": "0.0.0",
+  "integrations": [
+    {
+      "alias": "posthog",
+      "allowedContexts": [
+        "client",
+        "server",
+        "action",
+        "workflow",
+        "endpoint"
+      ],
+      "deniedContexts": [
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "packages": [
+        "posthog-js",
+        "posthog-node"
+      ],
+      "secrets": [
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "POSTHOG_HOST",
+        "POSTHOG_KEY"
+      ]
+    },
+    {
+      "alias": "stripe",
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint"
+      ],
+      "deniedContexts": [
+        "client",
+        "shared",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "packages": [
+        "stripe"
+      ],
+      "secrets": [
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET"
+      ]
+    },
+    {
+      "alias": "zod",
+      "allowedContexts": [
+        "shared",
+        "client",
+        "server",
+        "query",
+        "liveQuery",
+        "command",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [],
+      "packages": [
+        "zod"
+      ],
+      "secrets": []
+    }
+  ],
+  "liveQueries": [
+    {
+      "allowedPackages": [
+        "forge"
+      ],
+      "dependencies": [
+        {
+          "scope": "tenant",
+          "table": "tickets"
+        }
+      ],
+      "file": "src/queries/liveTickets.ts",
+      "forbiddenCapabilities": [
+        "network",
+        "secrets"
+      ],
+      "name": "liveTickets",
+      "policy": "tickets.read"
+    }
+  ],
+  "packages": [
+    {
+      "allowedContexts": [
+        "shared",
+        "client",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "server",
+        "query",
+        "liveQuery",
+        "command",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge"
+      ],
+      "name": "posthog-js",
+      "version": "1.200.0"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command",
+        "edge",
+        "test",
+        "build"
+      ],
+      "name": "posthog-node",
+      "version": "4.0.0"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command",
+        "edge",
+        "test",
+        "build"
+      ],
+      "name": "stripe",
+      "version": "17.0.0"
+    },
+    {
+      "allowedContexts": [
+        "shared",
+        "client",
+        "server",
+        "query",
+        "liveQuery",
+        "command",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [],
+      "name": "zod",
+      "version": "3.24.0"
+    }
+  ],
+  "playbooks": [
+    {
+      "steps": [
+        "Add a file under src/commands.",
+        "Declare auth with can(\"policy.name\") unless intentionally public/system.",
+        "Use ctx.db for transactional writes.",
+        "Use ctx.emit for side effects.",
+        "Run forge generate.",
+        "Run forge verify --strict."
+      ],
+      "title": "Add a command"
+    },
+    {
+      "steps": [
+        "Add a file under src/queries.",
+        "Keep it read-only.",
+        "Declare auth explicitly.",
+        "Run forge generate.",
+        "Run forge check."
+      ],
+      "title": "Add a query"
+    },
+    {
+      "steps": [
+        "Add a liveQuery under src/queries.",
+        "Keep it read-only and tenant-scoped when reading tenant tables.",
+        "Run forge generate.",
+        "Use forge inspect client --json to confirm client exposure."
+      ],
+      "title": "Add a liveQuery"
+    },
+    {
+      "steps": [
+        "Edit src/forge/schema.ts.",
+        "Include tenantId for tenant-scoped data.",
+        "Run forge generate.",
+        "Run forge db diff.",
+        "Run forge verify --strict."
+      ],
+      "title": "Add a table"
+    },
+    {
+      "steps": [
+        "Use forge add <alias>.",
+        "Do not install packages manually unless the architecture exception is intentional.",
+        "Run forge generate.",
+        "Run forge check."
+      ],
+      "title": "Add a package"
+    },
+    {
+      "steps": [
+        "Capture the traceId from the response or frontend.",
+        "Run forge telemetry inspect <traceId>.",
+        "Run forge policy simulate <policy> --role <role>."
+      ],
+      "title": "Debug a policy error"
+    },
+    {
+      "steps": [
+        "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
+        "Use generated client and React hooks from src/forge/_generated."
+      ],
+      "title": "Run dev"
+    },
+    {
+      "steps": [
+        "Run forge self-host compose.",
+        "Review deploy/.env.example.",
+        "Run forge self-host check."
+      ],
+      "title": "Self-host"
+    }
+  ],
+  "policies": [
+    {
+      "file": "src/policies.ts",
+      "kind": "roles",
+      "name": "billing.manage",
+      "roles": [
+        "admin",
+        "owner"
+      ]
+    },
+    {
+      "file": "src/policies.ts",
+      "kind": "roles",
+      "name": "tickets.create",
+      "roles": [
+        "admin",
+        "member",
+        "owner"
+      ]
+    },
+    {
+      "file": "src/policies.ts",
+      "kind": "roles",
+      "name": "tickets.read",
+      "roles": [
+        "admin",
+        "member",
+        "owner"
+      ]
+    }
+  ],
+  "project": {
+    "name": "basic-forge-app",
+    "type": "forgeos-app"
+  },
+  "queries": [
+    {
+      "allowedPackages": [
+        "forge"
+      ],
+      "file": "src/queries/getTicket.ts",
+      "forbiddenCapabilities": [
+        "network",
+        "secrets"
+      ],
+      "name": "getTicket",
+      "policy": "tickets.read",
+      "readOnly": true,
+      "tenantScoped": true
+    },
+    {
+      "allowedPackages": [
+        "forge"
+      ],
+      "file": "src/queries/listTickets.ts",
+      "forbiddenCapabilities": [
+        "network",
+        "secrets"
+      ],
+      "name": "listTickets",
+      "policy": "tickets.read",
+      "readOnly": true,
+      "tenantScoped": true
+    }
+  ],
+  "rules": [
+    {
+      "allowed": [
+        "ctx.db writes",
+        "ctx.emit",
+        "ctx.telemetry buffered events"
+      ],
+      "context": "command",
+      "forbidden": [
+        "network packages",
+        "ctx.secrets",
+        "ctx.ai",
+        "process.env",
+        "filesystem access"
+      ]
+    },
+    {
+      "allowed": [
+        "ctx.db reads",
+        "ctx.telemetry buffered events"
+      ],
+      "context": "query",
+      "forbidden": [
+        "insert/update/delete",
+        "ctx.emit",
+        "ctx.secrets",
+        "ctx.ai",
+        "network integrations"
+      ]
+    },
+    {
+      "allowed": [
+        "ctx.db reads",
+        "tenant-scoped subscriptions"
+      ],
+      "context": "liveQuery",
+      "forbidden": [
+        "insert/update/delete",
+        "ctx.emit",
+        "ctx.secrets",
+        "ctx.ai",
+        "network integrations"
+      ]
+    },
+    {
+      "allowed": [
+        "ctx.secrets",
+        "integrations",
+        "ctx.ai",
+        "ctx.db reads/writes",
+        "network packages"
+      ],
+      "context": "action",
+      "forbidden": [
+        "uncommitted transactional side effects"
+      ]
+    },
+    {
+      "allowed": [
+        "durable steps",
+        "ctx.secrets",
+        "integrations",
+        "ctx.ai",
+        "retries"
+      ],
+      "context": "workflow",
+      "forbidden": [
+        "non-idempotent step behavior without guards"
+      ]
+    }
+  ],
+  "schemaVersion": "0.1.0",
+  "secrets": [
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "test",
+        "build"
+      ],
+      "integration": "posthog",
+      "name": "POSTHOG_HOST",
+      "public": false,
+      "required": false
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "test",
+        "build"
+      ],
+      "integration": "posthog",
+      "name": "POSTHOG_KEY",
+      "public": false,
+      "required": true
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "test",
+        "build"
+      ],
+      "integration": "stripe",
+      "name": "STRIPE_SECRET_KEY",
+      "public": false,
+      "required": true
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "test",
+        "build"
+      ],
+      "integration": "stripe",
+      "name": "STRIPE_WEBHOOK_SECRET",
+      "public": false,
+      "required": true
+    }
+  ],
+  "telemetry": {
+    "events": [
+      "ticket_create_started",
+      "ticket_created",
+      "ticket_created_action",
+      "workflow_ticket_triaged"
+    ],
+    "sinks": [
+      "local",
+      "posthog"
+    ]
+  },
+  "workflows": [
+    {
+      "file": "src/workflows/triageTicketWorkflow.ts",
+      "name": "triageTicketWorkflow",
+      "steps": [
+        "loadTicket",
+        "triageWithAI",
+        "captureTriageAnalytics"
+      ],
+      "trigger": "ticket.created"
+    }
+  ]
+} as const;

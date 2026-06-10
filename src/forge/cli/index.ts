@@ -6,6 +6,16 @@ export { runBuildCommand, type BuildCommandOptions } from "./build.ts";
 export { runServeCommand, type ServeCommandOptions } from "./serve.ts";
 export { runWorkerCommand, type WorkerCommandOptions } from "./worker.ts";
 export {
+  runAgentContractPrint,
+  type AgentContractCommandOptions,
+  type AgentContractSubcommand,
+} from "./agent-contract.ts";
+export {
+  runDoctorCommand,
+  type DoctorCheck,
+  type DoctorResult,
+} from "./doctor.ts";
+export {
   executeCommand,
   runGenerateCommand,
   runAddCommand,

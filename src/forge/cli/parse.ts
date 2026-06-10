@@ -14,6 +14,7 @@ import type { LiveSubcommand } from "./live.ts";
 import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 import type { NewPackageManager, NewTemplateName } from "./new.ts";
 import type { SelfHostSubcommand } from "./self-host.ts";
+import type { AgentContractSubcommand } from "./agent-contract.ts";
 
 export type ForgeCommand =
   | {
@@ -56,6 +57,13 @@ export type ForgeCommand =
       webPort: number;
       workspaceRoot: string;
     }
+  | {
+      kind: "agent-contract";
+      subcommand: AgentContractSubcommand;
+      json: boolean;
+      workspaceRoot: string;
+    }
+  | { kind: "doctor"; json: boolean; workspaceRoot: string }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -208,11 +216,19 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "queries",
   "api",
   "client",
+  "all",
+  "rules",
+  "map",
 ];
 
 const NEW_TEMPLATES: NewTemplateName[] = ["b2b-support-web"];
 const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
 const SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = ["compose", "env", "check", "clean"];
+const AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [
+  "generate",
+  "check",
+  "print",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -282,7 +298,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, add, inspect, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, add, inspect, agent-contract, doctor, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -412,6 +428,33 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "agent-contract": {
+      const subcommand = rest[0] as AgentContractSubcommand | undefined;
+      if (!subcommand || !AGENT_CONTRACT_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge agent-contract requires subcommand: generate, check, or print");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "agent-contract",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "doctor":
+      return {
+        command: {
+          kind: "doctor",
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
     case "generate": {
       const concurrencyRaw = parseOptionValue(argv, "--concurrency");
       const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;

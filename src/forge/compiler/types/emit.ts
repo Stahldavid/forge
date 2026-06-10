@@ -1,4 +1,5 @@
 import type { ForgeLock } from "./lock.ts";
+import type { Diagnostic } from "./diagnostic.ts";
 
 export interface EmitFile {
   path: string;
@@ -10,6 +11,7 @@ export interface EmitPlan {
   files: EmitFile[];
   orphanedFiles: string[];
   lock: ForgeLock;
+  diagnostics?: Diagnostic[];
 }
 
 export type EmitMode = "write" | "check" | "dry-run";

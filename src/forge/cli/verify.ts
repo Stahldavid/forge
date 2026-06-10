@@ -131,6 +131,20 @@ export async function runVerifyCommand(
         }),
       );
     }
+
+    const agentContractCheck = await runGenerateCommand({
+      workspaceRoot: options.workspaceRoot,
+      check: true,
+      dryRun: false,
+      json: false,
+      concurrency: 4,
+    });
+    steps.push({
+      name: "agent-contract-check",
+      ok: agentContractCheck.exitCode === 0,
+      exitCode: agentContractCheck.exitCode,
+    });
+    diagnostics.push(...agentContractCheck.errors, ...agentContractCheck.warnings);
   }
 
   if (options.skipTypecheck) {

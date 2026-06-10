@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=be0a4129920f48c42d269789fd5c26029f4132e224b712db2471797b6371dc78 content=4ae530b19fea07e8fcdac882ac75cb7e5cd748d2c4c0f156c755750ace5ef1c1
+// @forge-generated generator=0.0.0 input=219ea7f374e4f290890f7b468c21647187b05b8d10e11eb30d0b5207309cc615 content=38cafe16c2a601dbe664a8bde02c7d9adc500a33c0df04fd69faa56e6d08ad1e
 export const dataGraph = {
   "analyzerVersion": "0.1.0",
   "generatorVersion": "0.0.0",
@@ -7,7 +7,16 @@ export const dataGraph = {
   "tables": [
     {
       "exportName": "tenants",
-      "fields": [],
+      "fields": [
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "id",
+          "type": "uuid"
+        }
+      ],
       "file": "src/forge/schema.ts",
       "id": "0d0a210cf304cd2fa1ff7a7cc94944193f50178f4ad59fb9351d89d5d06c5dd5",
       "name": "tenants",
@@ -15,7 +24,40 @@ export const dataGraph = {
     },
     {
       "exportName": "tickets",
-      "fields": [],
+      "fields": [
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "severity",
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "type": "text"
+        },
+        {
+          "name": "tenantId",
+          "type": "ref:tenants"
+        },
+        {
+          "name": "title",
+          "type": "text"
+        },
+        {
+          "name": "triageSummary",
+          "type": "text"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
       "file": "src/forge/schema.ts",
       "id": "5fa408aa9f7118eef9985057c4626be105701754c12a1b01c8babf517e7f5d40",
       "name": "tickets",
@@ -23,7 +65,28 @@ export const dataGraph = {
     },
     {
       "exportName": "users",
-      "fields": [],
+      "fields": [
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "email",
+          "type": "text"
+        },
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "role",
+          "type": "text"
+        },
+        {
+          "name": "tenantId",
+          "type": "ref:tenants"
+        }
+      ],
       "file": "src/forge/schema.ts",
       "id": "c9c1f652e0a1cc6feec1ce9ce0d767007c702d7c841f91aa033b90abf2f5d1ab",
       "name": "users",

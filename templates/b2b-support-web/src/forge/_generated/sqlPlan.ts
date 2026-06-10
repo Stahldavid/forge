@@ -1,8 +1,33 @@
-// @forge-generated generator=0.0.0 input=be0a4129920f48c42d269789fd5c26029f4132e224b712db2471797b6371dc78 content=82fd4a5b796a7ddae62db7b0b87edf9953c6b6c76ceef402793b7a6a3d4d97e8
+// @forge-generated generator=0.0.0 input=219ea7f374e4f290890f7b468c21647187b05b8d10e11eb30d0b5207309cc615 content=dd611c42132ed9e29c6f3100d23eded64287d6f20a09ce20a87e8cd21cb8cec8
 export const sqlPlan = {
-  "checksum": "40efbdfe4b0abb53a8478cc8b1ade644000169c4adc857028b90b65e53502278",
-  "indexes": [],
-  "migrationId": "migration_40efbdfe4b0abb53",
+  "checksum": "ebfd05ef680bad8c10d6d698c94fd2d2d0c1cf010a846bf3a5ef2fdad9f60c5c",
+  "indexes": [
+    {
+      "index": {
+        "columns": [
+          "tenant_id"
+        ],
+        "name": "idx_tickets_tenant_id",
+        "table": "tickets"
+      },
+      "kind": "create_index",
+      "sql": "CREATE INDEX IF NOT EXISTS \"idx_tickets_tenant_id\" ON \"tickets\" (\"tenant_id\")",
+      "table": "tickets"
+    },
+    {
+      "index": {
+        "columns": [
+          "tenant_id"
+        ],
+        "name": "idx_users_tenant_id",
+        "table": "users"
+      },
+      "kind": "create_index",
+      "sql": "CREATE INDEX IF NOT EXISTS \"idx_users_tenant_id\" ON \"users\" (\"tenant_id\")",
+      "table": "users"
+    }
+  ],
+  "migrationId": "migration_ebfd05ef680bad8c",
   "schemaVersion": "1.0.0",
   "systemTables": [
     {
@@ -45,6 +70,13 @@ export const sqlPlan = {
     {
       "columns": [
         {
+          "defaultExpr": "now()",
+          "name": "created_at",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "timestamptz"
+        },
+        {
           "defaultExpr": "gen_random_uuid()",
           "name": "id",
           "nullable": false,
@@ -53,35 +85,112 @@ export const sqlPlan = {
         }
       ],
       "kind": "create_table",
-      "sql": "CREATE TABLE IF NOT EXISTS \"tenants\" (\"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY)",
+      "sql": "CREATE TABLE IF NOT EXISTS \"tenants\" (\"created_at\" timestamptz NOT NULL DEFAULT now(), \"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY)",
       "table": "tenants"
     },
     {
       "columns": [
         {
-          "defaultExpr": "gen_random_uuid()",
-          "name": "id",
+          "defaultExpr": "now()",
+          "name": "created_at",
           "nullable": false,
-          "primaryKey": true,
-          "sqlType": "uuid"
-        }
-      ],
-      "kind": "create_table",
-      "sql": "CREATE TABLE IF NOT EXISTS \"tickets\" (\"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY)",
-      "table": "tickets"
-    },
-    {
-      "columns": [
+          "primaryKey": false,
+          "sqlType": "timestamptz"
+        },
         {
           "defaultExpr": "gen_random_uuid()",
           "name": "id",
           "nullable": false,
           "primaryKey": true,
           "sqlType": "uuid"
+        },
+        {
+          "name": "severity",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "name": "status",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "name": "tenant_id",
+          "nullable": false,
+          "primaryKey": false,
+          "references": {
+            "column": "id",
+            "table": "tenants"
+          },
+          "sqlType": "uuid"
+        },
+        {
+          "name": "title",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "name": "triage_summary",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "defaultExpr": "now()",
+          "name": "updated_at",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "timestamptz"
         }
       ],
       "kind": "create_table",
-      "sql": "CREATE TABLE IF NOT EXISTS \"users\" (\"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY)",
+      "sql": "CREATE TABLE IF NOT EXISTS \"tickets\" (\"created_at\" timestamptz NOT NULL DEFAULT now(), \"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY, \"severity\" text NOT NULL, \"status\" text NOT NULL, \"tenant_id\" uuid NOT NULL REFERENCES \"tenants\" (\"id\"), \"title\" text NOT NULL, \"triage_summary\" text NOT NULL, \"updated_at\" timestamptz NOT NULL DEFAULT now())",
+      "table": "tickets"
+    },
+    {
+      "columns": [
+        {
+          "defaultExpr": "now()",
+          "name": "created_at",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "timestamptz"
+        },
+        {
+          "name": "email",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "defaultExpr": "gen_random_uuid()",
+          "name": "id",
+          "nullable": false,
+          "primaryKey": true,
+          "sqlType": "uuid"
+        },
+        {
+          "name": "role",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "name": "tenant_id",
+          "nullable": false,
+          "primaryKey": false,
+          "references": {
+            "column": "id",
+            "table": "tenants"
+          },
+          "sqlType": "uuid"
+        }
+      ],
+      "kind": "create_table",
+      "sql": "CREATE TABLE IF NOT EXISTS \"users\" (\"created_at\" timestamptz NOT NULL DEFAULT now(), \"email\" text NOT NULL, \"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY, \"role\" text NOT NULL, \"tenant_id\" uuid NOT NULL REFERENCES \"tenants\" (\"id\"))",
       "table": "users"
     }
   ]

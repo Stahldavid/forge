@@ -81,6 +81,15 @@ import { runServeCommand } from "./serve.ts";
 import { runWorkerCommand } from "./worker.ts";
 import { formatSelfHostHuman, runSelfHostCommand } from "./self-host.ts";
 import {
+  formatAgentContractHuman,
+  runAgentContractPrint,
+} from "./agent-contract.ts";
+import {
+  formatDoctorHuman,
+  formatDoctorJson,
+  runDoctorCommand,
+} from "./doctor.ts";
+import {
   formatQueryJson,
   formatQueryListHuman,
   formatQueryResultHuman,
@@ -98,6 +107,14 @@ function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null
   }
   const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
   return JSON.parse(raw) as T;
+}
+
+function readGeneratedText(workspaceRoot: string, relative: string): string | null {
+  const absolute = join(workspaceRoot, relative);
+  if (!existsSync(absolute)) {
+    return null;
+  }
+  return stripDeterministicHeader(readFileSync(absolute, "utf8"));
 }
 
 export async function runGenerateCommand(
@@ -199,7 +216,7 @@ export async function runInspectCommand(
   target: InspectTarget,
   workspaceRoot: string,
 ): Promise<InspectResult> {
-  const dataPaths: Record<InspectTarget, string> = {
+  const dataPaths: Partial<Record<InspectTarget, string>> = {
     app: `${GENERATED_DIR}/appGraph.json`,
     packages: `${GENERATED_DIR}/packageGraph.json`,
     capabilities: `${GENERATED_DIR}/runtimeMatrix.json`,
@@ -217,10 +234,74 @@ export async function runInspectCommand(
     queries: `${GENERATED_DIR}/queryRegistry.json`,
     api: `${GENERATED_DIR}/api.json`,
     client: `${GENERATED_DIR}/clientManifest.json`,
+    rules: `${GENERATED_DIR}/runtimeRules.md`,
+    map: `${GENERATED_DIR}/appMap.md`,
   };
 
+  if (target === "all") {
+    const aggregatePaths: Array<[string, string]> = [
+      ["app", `${GENERATED_DIR}/appGraph.json`],
+      ["data", `${GENERATED_DIR}/dataGraph.json`],
+      ["packages", `${GENERATED_DIR}/packageGraph.json`],
+      ["runtimeMatrix", `${GENERATED_DIR}/runtimeMatrix.json`],
+      ["runtime", `${GENERATED_DIR}/runtimeGraph.json`],
+      ["policies", `${GENERATED_DIR}/policyRegistry.json`],
+      ["secrets", `${GENERATED_DIR}/secretRegistry.json`],
+      ["workflows", `${GENERATED_DIR}/workflowRegistry.json`],
+      ["telemetry", `${GENERATED_DIR}/telemetryRegistry.json`],
+      ["ai", `${GENERATED_DIR}/aiRegistry.json`],
+      ["client", `${GENERATED_DIR}/clientManifest.json`],
+      ["agentContract", `${GENERATED_DIR}/agentContract.json`],
+    ];
+    const data: Record<string, unknown> = {};
+    const errors = [];
+    for (const [key, relative] of aggregatePaths) {
+      const value = readGeneratedJson<unknown>(workspaceRoot, relative);
+      if (value === null) {
+        errors.push(
+          createDiagnostic({
+            severity: "error",
+            code: "FORGE_INSPECT_MISSING",
+            message: `missing generated artifact: ${relative}; run forge generate first`,
+            file: relative,
+          }),
+        );
+      } else {
+        data[key] = value;
+      }
+    }
+    data.diagnostics = errors;
+    return {
+      target,
+      data,
+      warnings: [],
+      errors,
+      exitCode: errors.length > 0 ? 1 : 0,
+      failureKind: errors.length > 0 ? "missing_artifact" : undefined,
+    };
+  }
+
   const relative = dataPaths[target];
-  const data = readGeneratedJson<unknown>(workspaceRoot, relative);
+  if (!relative) {
+    return {
+      target,
+      data: null,
+      warnings: [],
+      errors: [
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_INSPECT_MISSING",
+          message: `unsupported inspect target: ${target}`,
+        }),
+      ],
+      exitCode: 1,
+      failureKind: "missing_artifact",
+    };
+  }
+  const data =
+    target === "rules" || target === "map"
+      ? readGeneratedText(workspaceRoot, relative)
+      : readGeneratedJson<unknown>(workspaceRoot, relative);
 
   if (data === null) {
     return {
@@ -290,6 +371,41 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return result.exitCode;
     }
+    case "agent-contract": {
+      if (command.subcommand === "print") {
+        const result = runAgentContractPrint(command.workspaceRoot);
+        if (command.json) {
+          process.stdout.write(`${JSON.stringify(result.data, null, 2)}\n`);
+        } else {
+          process.stdout.write(formatAgentContractHuman(command.subcommand, result));
+        }
+        return result.exitCode;
+      }
+
+      const result = await runGenerateCommand({
+        workspaceRoot: command.workspaceRoot,
+        check: command.subcommand === "check",
+        dryRun: false,
+        json: command.json,
+        concurrency: 4,
+      });
+      if (command.json) {
+        process.stdout.write(formatJsonResult(buildGenerateJson(result)));
+      } else {
+        process.stdout.write(formatAgentContractHuman(command.subcommand, result));
+        writeHumanGenerate(result);
+      }
+      return result.exitCode;
+    }
+    case "doctor": {
+      const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });
+      if (command.json) {
+        process.stdout.write(formatDoctorJson(result));
+      } else {
+        process.stdout.write(formatDoctorHuman(result));
+      }
+      return result.exitCode;
+    }
     case "generate": {
       const result = await runGenerateCommand({
         workspaceRoot: process.cwd(),
@@ -323,6 +439,8 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       );
       if (command.json) {
         process.stdout.write(formatJsonResult(buildInspectJson(result)));
+      } else if (typeof result.data === "string") {
+        process.stdout.write(result.data);
       } else {
         writeHumanInspect(result);
       }

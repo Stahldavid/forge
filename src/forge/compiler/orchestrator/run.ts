@@ -100,7 +100,7 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
   const qualityDiagnostics = collectQualityGateDiagnostics(
     appGraph.diagnostics,
     pkgResult.diagnostics,
-    guardDiagnosticsForGate,
+    [...guardDiagnosticsForGate, ...(emitPlan.diagnostics ?? [])],
   );
 
   const emitResult = await emit(emitPlan, {

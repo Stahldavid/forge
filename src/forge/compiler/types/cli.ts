@@ -59,7 +59,10 @@ export type InspectTarget =
   | "ai"
   | "queries"
   | "api"
-  | "client";
+  | "client"
+  | "all"
+  | "rules"
+  | "map";
 
 export interface RunOptions extends CliCommonOptions {
   name?: string;
