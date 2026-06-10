@@ -5,6 +5,7 @@
     "moduleResolution": "bundler",
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,6 +14,10 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
+      "forge/react": ["src/forge/react/index.ts"],
+      "forge/server": ["tests/fixtures/packages/forge/server/index.ts"],
+      "forge/schema": ["tests/fixtures/packages/forge/schema/index.ts"],
+      "forge/policy": ["tests/fixtures/packages/forge/policy/index.ts"],
       "@forge/*": ["src/forge/*"]
     },
     "types": ["bun"]

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=3bbb07ef4c7b99e8cc1cc765caf767138180d7899ad38da15457a73109bbaa09
+// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=e026a8948a8defb3990498907647007b4e495619b15c0ab8c9ea5bf693f87dc3
 export const aiRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
@@ -7,12 +7,11 @@ export const aiRegistry = {
       "file": "src/workflows/triageTicketWorkflow.ts",
       "method": "generateText",
       "model": "gpt-4o-mini",
-      "provider": "openai",
-      "purpose": "ticket_triage"
+      "provider": "openai"
     }
   ],
   "generatorVersion": "0.0.0",
-  "inputHash": "c424029689c38706271114f36cec0590e80057326f40e37513913a5780853c66",
+  "inputHash": "1ce1832db5759e9aa3c4095ab43b3f630f012c8416f196b1ab4234a2d82ad62c",
   "providers": [
     {
       "id": "openai",

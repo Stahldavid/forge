@@ -1,33 +1,45 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=260952033e467d4c227ca5c1857ce4449e155ca32c5a56b3a7836a777e70b6fe
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=a9db96d4f410c59ac863abb460583d12b657f24359630031bd20de8c46cca40f
 export type ForgeStaticAuth = {
   userId: string;
   tenantId: string;
   role: string;
+  headers?: Record<string, string>;
+  [key: string]: unknown;
+};
+
+export type ForgeResolvedAuth = {
+  userId?: string;
+  tenantId?: string;
+  role?: string;
+  headers?: Record<string, string>;
+  [key: string]: unknown;
 };
 
 export type ForgeAuthProvider =
-  | ForgeStaticAuth
-  | (() => Promise<Record<string, string>>);
+  | ForgeResolvedAuth
+  | (() => Promise<ForgeResolvedAuth>);
 
 export type ForgeClientConfig = {
   url: string;
-  auth: ForgeAuthProvider;
+  auth?: ForgeAuthProvider;
 };
 
 export class ForgeError extends Error {
   code: string;
   traceId?: string;
   status?: number;
+  details?: unknown;
 
   constructor(
     message: string,
-    options: { code: string; traceId?: string; status?: number },
+    options: { code: string; traceId?: string; status?: number; details?: unknown },
   ) {
     super(message);
     this.name = "ForgeError";
     this.code = options.code;
     this.traceId = options.traceId;
     this.status = options.status;
+    this.details = options.details;
   }
 }
 
@@ -49,6 +61,7 @@ export type LiveQueryOptions = {
 export type Unsubscribe = () => void;
 
 export type ForgeClient = {
+  readonly lastTraceId?: string;
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
   liveQuery<Name extends LiveQueryName>(

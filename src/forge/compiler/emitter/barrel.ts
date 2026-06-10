@@ -24,6 +24,7 @@ export function buildBarrelIndexBody(exportFilePaths: string[]): string {
       (path) =>
         path.startsWith(`${GENERATED_DIR}/`) &&
         (path.endsWith(".ts") || path.endsWith(".tsx")) &&
+        !path.endsWith(".d.ts") &&
         path !== BARREL_INDEX_PATH,
     );
 

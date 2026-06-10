@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=611398ccd69f329a6beb6ba4041cf98e01ffe4ec7a1c7d83a049f88041816b6e
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=8cc694e141313057bee17fec78922825d9034d68cbbebd689071ebee822ff8ca
 export * from "./actionSubscriptions";
 export * from "./aiContext";
 export * from "./aiModels";
@@ -23,6 +23,8 @@ export * from "./packageGraph";
 export * from "./permissionMatrix";
 export * from "./policyRegistry";
 export * from "./queryRegistry";
+export * from "./react";
+export * from "./reactManifest";
 export * from "./runtimeGraph";
 export * from "./runtimeMatrix";
 export * from "./runtimeRegistry";

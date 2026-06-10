@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=ca16c9f78f7962248c2fa71409006e29442f1f2cbc621c859db2694577a44d2e
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=2ed7910b6cc430cb9984345eed04637f94887297274f7e2981b0e16a7065d158
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
@@ -19,25 +19,77 @@ export type {
   QueryName,
   CommandName,
   LiveQueryName,
+  ForgeResolvedAuth,
   LiveQueryOptions,
   LiveSnapshot,
   Unsubscribe,
 } from "./clientTypes.ts";
 
 async function resolveAuthHeaders(
-  auth: ForgeAuthProvider,
+  auth?: ForgeAuthProvider,
 ): Promise<Record<string, string>> {
-  if (typeof auth === "function") {
-    return auth();
+  if (!auth) {
+    return {};
   }
-  return {
-    "x-forge-user-id": auth.userId,
-    "x-forge-tenant-id": auth.tenantId,
-    "x-forge-role": auth.role,
+
+  const resolved = typeof auth === "function" ? await auth() : auth;
+  const authRecord = resolved as Record<string, unknown>;
+  const headers: Record<string, string> = {
+    ...(resolved.headers ?? {}),
+  };
+
+  for (const [key, value] of Object.entries(authRecord)) {
+    if (
+      typeof value === "string" &&
+      key !== "userId" &&
+      key !== "tenantId" &&
+      key !== "role"
+    ) {
+      headers[key] = value;
+    }
+  }
+
+  if (resolved.userId) {
+    headers["x-forge-user-id"] = resolved.userId;
+  }
+  if (resolved.tenantId) {
+    headers["x-forge-tenant-id"] = resolved.tenantId;
+  }
+  if (resolved.role) {
+    headers["x-forge-role"] = resolved.role;
+  }
+
+  return headers;
+}
+
+function toForgeError(error: unknown, code: string): ForgeError {
+  if (error instanceof ForgeError) {
+    return error;
+  }
+  return new ForgeError(error instanceof Error ? error.message : String(error), {
+    code,
+  });
+}
+
+function parseJsonPayload(body: unknown): {
+  ok?: boolean;
+  result?: unknown;
+  traceId?: string;
+  error?: { code: string; message: string; details?: unknown };
+  diagnostics?: { code: string; message: string }[];
+} {
+  return body as {
+    ok?: boolean;
+    result?: unknown;
+    traceId?: string;
+    error?: { code: string; message: string; details?: unknown };
+    diagnostics?: { code: string; message: string }[];
   };
 }
 
 class ForgeHttpClient implements ForgeClient {
+  lastTraceId?: string;
+
   constructor(private readonly config: ForgeClientConfig) {}
 
   query(name: string, args: unknown): Promise<unknown> {
@@ -66,11 +118,7 @@ class ForgeHttpClient implements ForgeClient {
           return;
         }
         onError?.(
-          error instanceof ForgeError
-            ? error
-            : new ForgeError(error instanceof Error ? error.message : String(error), {
-                code: "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
-              }),
+          toForgeError(error, "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED"),
         );
       })
       .finally(() => externalSignal?.removeEventListener("abort", abort));
@@ -106,13 +154,8 @@ class ForgeHttpClient implements ForgeClient {
       });
     }
 
-    const payload = body as {
-      ok?: boolean;
-      result?: unknown;
-      traceId?: string;
-      error?: { code: string; message: string };
-      diagnostics?: { code: string; message: string }[];
-    };
+    const payload = parseJsonPayload(body);
+    this.lastTraceId = payload.traceId;
 
     if (!response.ok || payload.ok === false) {
       const diagnostic = payload.diagnostics?.find((entry) => entry.code);
@@ -126,6 +169,7 @@ class ForgeHttpClient implements ForgeClient {
         code,
         traceId: payload.traceId,
         status: response.status,
+        details: payload.error?.details ?? payload.diagnostics,
       });
     }
 
@@ -202,6 +246,7 @@ class ForgeHttpClient implements ForgeClient {
     };
 
     if (event === "snapshot" || payload.type === "snapshot") {
+      this.lastTraceId = payload.traceId;
       onSnapshot({
         subscriptionId: String(payload.subscriptionId),
         revision: Number(payload.revision),
@@ -216,6 +261,7 @@ class ForgeHttpClient implements ForgeClient {
         new ForgeError(payload.error?.message ?? "liveQuery failed", {
           code: payload.error?.code ?? "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
           traceId: payload.error?.traceId,
+          details: payload.error,
         }),
       );
     }

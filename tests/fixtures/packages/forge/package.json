@@ -6,6 +6,7 @@
   "exports": {
     "./server": "./server/index.ts",
     "./schema": "./schema/index.ts",
-    "./policy": "./policy/index.ts"
+    "./policy": "./policy/index.ts",
+    "./react": "./react/index.ts"
   }
 }

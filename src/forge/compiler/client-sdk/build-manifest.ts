@@ -12,12 +12,33 @@ export interface ClientManifest {
   queries: string[];
   commands: string[];
   liveQueries: string[];
+  transport: {
+    queries: string;
+    commands: string;
+    liveQueries: string;
+  };
+  react: {
+    entrypoint: string;
+    hooks: string[];
+  };
   excluded: {
     actions: string[];
     workflows: string[];
     serverAdapters: string[];
     serverPackages: string[];
   };
+}
+
+export interface ReactManifest {
+  schemaVersion: string;
+  generatorVersion: string;
+  inputHash: string;
+  entrypoint: string;
+  hooks: string[];
+  queries: string[];
+  commands: string[];
+  liveQueries: string[];
+  clientSafe: true;
 }
 
 const SERVER_ADAPTER_SUFFIX = ".server.ts";
@@ -76,11 +97,55 @@ export function buildClientManifest(
     queries,
     commands,
     liveQueries,
+    transport: {
+      queries: "POST /queries/:name",
+      commands: "POST /commands/:name",
+      liveQueries: "GET /live/:name",
+    },
+    react: {
+      entrypoint: "src/forge/_generated/react.ts",
+      hooks: [
+        "ForgeProvider",
+        "useForgeClient",
+        "useAuth",
+        "useQuery",
+        "useCommand",
+        "useLiveQuery",
+      ],
+    },
     excluded: {
       actions,
       workflows,
       serverAdapters: collectServerAdapters(classified),
       serverPackages: collectServerPackages(classified),
     },
+  };
+}
+
+export function buildReactManifest(clientManifest: ClientManifest): ReactManifest {
+  const hooks = [
+    "ForgeProvider",
+    "useForgeClient",
+    "useAuth",
+    "useQuery",
+    "useCommand",
+    "useLiveQuery",
+  ];
+
+  return {
+    schemaVersion: "1.0.0",
+    generatorVersion: GENERATOR_VERSION,
+    inputHash: hashStable(
+      canonicalJson({
+        clientInputHash: clientManifest.inputHash,
+        hooks,
+      }),
+    ),
+    entrypoint: "src/forge/_generated/react.ts",
+    hooks,
+    queries: clientManifest.queries,
+    commands: clientManifest.commands,
+    liveQueries: clientManifest.liveQueries,
+    clientSafe: true,
   };
 }

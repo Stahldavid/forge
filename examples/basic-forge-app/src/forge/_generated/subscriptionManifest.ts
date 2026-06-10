@@ -1,7 +1,7 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=00f13c05fd8b6acf7873ca66ba5e8cf072ee2ac3c20c06f1d1377d944a17f0eb
+// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=b23d31c59711743a9c299175aeb377d18f07a678ff3796766a6978af8f5f0839
 export const subscriptionManifest = {
   "generatorVersion": "0.0.0",
-  "inputHash": "d38ffcfb01c0bf9928fc4c92eb4f6804857fbcfab2893621a1c62ff75887990a",
+  "inputHash": "a66bb00b097d81a704e85a0e73b4b387e71154a25fee34da417be89c9eb28622",
   "liveQueries": [
     {
       "exportName": "liveTickets",

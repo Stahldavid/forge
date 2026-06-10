@@ -37,6 +37,11 @@ describe("client api generation", () => {
       expect(clientTypes).toContain("ForgeError");
       expect(clientTypes).toContain("LiveSnapshot");
       expect(clientTypes).toContain("liveQuery");
+
+      const reactTs = readFileSync(join(root, GENERATED_DIR, "react.ts"), "utf8");
+      expect(reactTs).toContain('"use client"');
+      expect(reactTs).toContain("ForgeProvider");
+      expect(reactTs).toContain("useLiveQuery");
     } finally {
       cleanupWorkspace(root);
     }

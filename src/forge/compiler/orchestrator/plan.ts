@@ -26,11 +26,17 @@ import {
   buildSubscriptionManifest,
 } from "../live-query-registry/build.ts";
 import { buildApiSurface } from "../api-surface/build.ts";
-import { buildClientManifest } from "../client-sdk/build-manifest.ts";
+import {
+  buildClientManifest,
+  buildReactManifest,
+} from "../client-sdk/build-manifest.ts";
 import {
   renderClientManifestTs,
   renderClientTs,
   renderClientTypesTs,
+  renderReactDts,
+  renderReactManifestTs,
+  renderReactTs,
 } from "../client-sdk/render-client.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
@@ -119,6 +125,7 @@ import {
   serializeServerApiTsExport,
   serializeClientApiTsExport,
   serializeClientManifestJson,
+  serializeReactManifestJson,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -214,6 +221,7 @@ export function plan(input: PlanInput): EmitPlan {
     workflowRegistry,
   );
   const clientManifest = buildClientManifest(apiSurface, input.classified);
+  const reactManifest = buildReactManifest(clientManifest);
   const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
 
@@ -433,6 +441,13 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/clientManifest.json`,
       serializeClientManifestJson(clientManifest),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/react.ts`, renderReactTs()),
+    makeEmitFile(`${GENERATED_DIR}/react.d.ts`, renderReactDts()),
+    makeEmitFile(`${GENERATED_DIR}/reactManifest.ts`, renderReactManifestTs(reactManifest)),
+    makeEmitFile(
+      `${GENERATED_DIR}/reactManifest.json`,
+      serializeReactManifestJson(reactManifest),
     ),
   ];
 

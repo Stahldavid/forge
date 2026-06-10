@@ -597,4 +597,10 @@ export function serializeClientManifestTs(
   return `export const clientManifest = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+export function serializeReactManifestJson(
+  manifest: import("../client-sdk/build-manifest.ts").ReactManifest,
+): string {
+  return serializeCanonical(manifest);
+}
+
 export type { ImportGuardsArtifact };

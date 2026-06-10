@@ -1,8 +1,8 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=5cc6420638f90aa843417d86696e66364c1e784bb818ee189119c47f786cadfb
+// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=a38a5e55d6b059271f8adee920bf4ca310c500ec315ade801126c1cf7e7db0a0
 export const clientManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.0.0",
-  "inputHash": "eaf0c9fdcc2e3e5fa73fe28c984c325ec0de2c973368deb12648c7ce2efeb67f",
+  "inputHash": "757e72269d800f66851fd270d70d42458e8346958585bf0d29f2571291207f00",
   "queries": [
     "getTicket",
     "listTickets"
@@ -15,6 +15,22 @@ export const clientManifest = {
   "liveQueries": [
     "liveTickets"
   ],
+  "transport": {
+    "queries": "POST /queries/:name",
+    "commands": "POST /commands/:name",
+    "liveQueries": "GET /live/:name"
+  },
+  "react": {
+    "entrypoint": "src/forge/_generated/react.ts",
+    "hooks": [
+      "ForgeProvider",
+      "useForgeClient",
+      "useAuth",
+      "useQuery",
+      "useCommand",
+      "useLiveQuery"
+    ]
+  },
   "excluded": {
     "actions": [
       "capturePosthog",

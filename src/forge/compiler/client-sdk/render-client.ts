@@ -1,35 +1,47 @@
-import type { ClientManifest } from "./build-manifest.ts";
+import type { ClientManifest, ReactManifest } from "./build-manifest.ts";
 
 export function renderClientTypesTs(): string {
   return `export type ForgeStaticAuth = {
   userId: string;
   tenantId: string;
   role: string;
+  headers?: Record<string, string>;
+  [key: string]: unknown;
+};
+
+export type ForgeResolvedAuth = {
+  userId?: string;
+  tenantId?: string;
+  role?: string;
+  headers?: Record<string, string>;
+  [key: string]: unknown;
 };
 
 export type ForgeAuthProvider =
-  | ForgeStaticAuth
-  | (() => Promise<Record<string, string>>);
+  | ForgeResolvedAuth
+  | (() => Promise<ForgeResolvedAuth>);
 
 export type ForgeClientConfig = {
   url: string;
-  auth: ForgeAuthProvider;
+  auth?: ForgeAuthProvider;
 };
 
 export class ForgeError extends Error {
   code: string;
   traceId?: string;
   status?: number;
+  details?: unknown;
 
   constructor(
     message: string,
-    options: { code: string; traceId?: string; status?: number },
+    options: { code: string; traceId?: string; status?: number; details?: unknown },
   ) {
     super(message);
     this.name = "ForgeError";
     this.code = options.code;
     this.traceId = options.traceId;
     this.status = options.status;
+    this.details = options.details;
   }
 }
 
@@ -51,6 +63,7 @@ export type LiveQueryOptions = {
 export type Unsubscribe = () => void;
 
 export type ForgeClient = {
+  readonly lastTraceId?: string;
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
   liveQuery<Name extends LiveQueryName>(
@@ -85,25 +98,77 @@ export type {
   QueryName,
   CommandName,
   LiveQueryName,
+  ForgeResolvedAuth,
   LiveQueryOptions,
   LiveSnapshot,
   Unsubscribe,
 } from "./clientTypes.ts";
 
 async function resolveAuthHeaders(
-  auth: ForgeAuthProvider,
+  auth?: ForgeAuthProvider,
 ): Promise<Record<string, string>> {
-  if (typeof auth === "function") {
-    return auth();
+  if (!auth) {
+    return {};
   }
-  return {
-    "x-forge-user-id": auth.userId,
-    "x-forge-tenant-id": auth.tenantId,
-    "x-forge-role": auth.role,
+
+  const resolved = typeof auth === "function" ? await auth() : auth;
+  const authRecord = resolved as Record<string, unknown>;
+  const headers: Record<string, string> = {
+    ...(resolved.headers ?? {}),
+  };
+
+  for (const [key, value] of Object.entries(authRecord)) {
+    if (
+      typeof value === "string" &&
+      key !== "userId" &&
+      key !== "tenantId" &&
+      key !== "role"
+    ) {
+      headers[key] = value;
+    }
+  }
+
+  if (resolved.userId) {
+    headers["x-forge-user-id"] = resolved.userId;
+  }
+  if (resolved.tenantId) {
+    headers["x-forge-tenant-id"] = resolved.tenantId;
+  }
+  if (resolved.role) {
+    headers["x-forge-role"] = resolved.role;
+  }
+
+  return headers;
+}
+
+function toForgeError(error: unknown, code: string): ForgeError {
+  if (error instanceof ForgeError) {
+    return error;
+  }
+  return new ForgeError(error instanceof Error ? error.message : String(error), {
+    code,
+  });
+}
+
+function parseJsonPayload(body: unknown): {
+  ok?: boolean;
+  result?: unknown;
+  traceId?: string;
+  error?: { code: string; message: string; details?: unknown };
+  diagnostics?: { code: string; message: string }[];
+} {
+  return body as {
+    ok?: boolean;
+    result?: unknown;
+    traceId?: string;
+    error?: { code: string; message: string; details?: unknown };
+    diagnostics?: { code: string; message: string }[];
   };
 }
 
 class ForgeHttpClient implements ForgeClient {
+  lastTraceId?: string;
+
   constructor(private readonly config: ForgeClientConfig) {}
 
   query(name: string, args: unknown): Promise<unknown> {
@@ -132,11 +197,7 @@ class ForgeHttpClient implements ForgeClient {
           return;
         }
         onError?.(
-          error instanceof ForgeError
-            ? error
-            : new ForgeError(error instanceof Error ? error.message : String(error), {
-                code: "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
-              }),
+          toForgeError(error, "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED"),
         );
       })
       .finally(() => externalSignal?.removeEventListener("abort", abort));
@@ -172,13 +233,8 @@ class ForgeHttpClient implements ForgeClient {
       });
     }
 
-    const payload = body as {
-      ok?: boolean;
-      result?: unknown;
-      traceId?: string;
-      error?: { code: string; message: string };
-      diagnostics?: { code: string; message: string }[];
-    };
+    const payload = parseJsonPayload(body);
+    this.lastTraceId = payload.traceId;
 
     if (!response.ok || payload.ok === false) {
       const diagnostic = payload.diagnostics?.find((entry) => entry.code);
@@ -192,6 +248,7 @@ class ForgeHttpClient implements ForgeClient {
         code,
         traceId: payload.traceId,
         status: response.status,
+        details: payload.error?.details ?? payload.diagnostics,
       });
     }
 
@@ -268,6 +325,7 @@ class ForgeHttpClient implements ForgeClient {
     };
 
     if (event === "snapshot" || payload.type === "snapshot") {
+      this.lastTraceId = payload.traceId;
       onSnapshot({
         subscriptionId: String(payload.subscriptionId),
         revision: Number(payload.revision),
@@ -282,6 +340,7 @@ class ForgeHttpClient implements ForgeClient {
         new ForgeError(payload.error?.message ?? "liveQuery failed", {
           code: payload.error?.code ?? "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
           traceId: payload.error?.traceId,
+          details: payload.error,
         }),
       );
     }
@@ -296,4 +355,63 @@ export function createForgeClient(config: ForgeClientConfig): ForgeClient {
 
 export function renderClientManifestTs(manifest: ClientManifest): string {
   return `export const clientManifest = ${JSON.stringify(manifest, null, 2)} as const;\n`;
+}
+
+export function renderReactTs(): string {
+  return `"use client";
+
+import { createForgeReactBindings } from "forge/react";
+import { createForgeClient } from "./client.ts";
+
+export type {
+  ForgeProviderProps,
+  ForgeReactAuth,
+  ForgeReactAuthProvider,
+  ForgeReactClient,
+  ForgeReactError,
+  UseCommandOptions,
+  UseCommandResult,
+  UseLiveQueryOptions,
+  UseLiveQueryResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from "forge/react";
+
+const forgeReact = createForgeReactBindings(createForgeClient);
+
+export const ForgeProvider = forgeReact.ForgeProvider;
+export const useForgeClient = forgeReact.useForgeClient;
+export const useAuth = forgeReact.useAuth;
+export const useQuery = forgeReact.useQuery;
+export const useCommand = forgeReact.useCommand;
+export const useLiveQuery = forgeReact.useLiveQuery;
+`;
+}
+
+export function renderReactDts(): string {
+  return `export type {
+  ForgeProviderProps,
+  ForgeReactAuth,
+  ForgeReactAuthProvider,
+  ForgeReactClient,
+  ForgeReactError,
+  UseCommandOptions,
+  UseCommandResult,
+  UseLiveQueryOptions,
+  UseLiveQueryResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from "forge/react";
+
+export declare const ForgeProvider: import("forge/react").ForgeReactBindings["ForgeProvider"];
+export declare const useForgeClient: import("forge/react").ForgeReactBindings["useForgeClient"];
+export declare const useAuth: import("forge/react").ForgeReactBindings["useAuth"];
+export declare const useQuery: import("forge/react").ForgeReactBindings["useQuery"];
+export declare const useCommand: import("forge/react").ForgeReactBindings["useCommand"];
+export declare const useLiveQuery: import("forge/react").ForgeReactBindings["useLiveQuery"];
+`;
+}
+
+export function renderReactManifestTs(manifest: ReactManifest): string {
+  return `export const reactManifest = ${JSON.stringify(manifest, null, 2)} as const;\n`;
 }
