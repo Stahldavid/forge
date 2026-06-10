@@ -4,11 +4,11 @@ const AI_METHOD_PATTERN =
   /(?:ctx\.ai|ai)\.(generateText|streamText|generateStructured)\s*\(/g;
 
 const PROVIDER_PATTERN =
-  /provider\s*:\s*["'](openai|anthropic|gateway)["']/g;
+  /provider\s*:\s*["'](openai|anthropic|gateway)["']/;
 
-const MODEL_PATTERN = /model\s*:\s*["']([^"']+)["']/g;
+const MODEL_PATTERN = /model\s*:\s*["']([^"']+)["']/;
 
-const PURPOSE_PATTERN = /purpose\s*:\s*["']([^"']+)["']/g;
+const PURPOSE_PATTERN = /purpose\s*:\s*["']([^"']+)["']/;
 
 export interface ParsedAiCall {
   method: "generateText" | "streamText" | "generateStructured";
@@ -49,7 +49,7 @@ export function parseAiCallsFromSlice(sourceSlice: string): ParsedAiCall[] {
   return calls;
 }
 
-const FORBIDDEN_AI_CONTEXT_PATTERN = /ctx\.ai\./g;
+const FORBIDDEN_AI_CONTEXT_PATTERN = /ctx\.ai\./;
 
 export function detectCtxAiUsage(sourceSlice: string): boolean {
   return FORBIDDEN_AI_CONTEXT_PATTERN.test(sourceSlice);

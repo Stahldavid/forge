@@ -75,6 +75,7 @@ import {
   runSecretsCommand,
 } from "./secrets.ts";
 import { formatAiHuman, formatAiJson, runAiCommand } from "./ai.ts";
+import { formatNewHuman, runNewCommand } from "./new.ts";
 import {
   formatQueryJson,
   formatQueryListHuman,
@@ -246,6 +247,18 @@ export async function runInspectCommand(
 
 export async function executeCommand(command: ForgeCommand): Promise<number> {
   switch (command.kind) {
+    case "new": {
+      const result = await runNewCommand({
+        name: command.name,
+        template: command.template,
+        packageManager: command.packageManager,
+        install: command.install,
+        git: command.git,
+        workspaceRoot: command.workspaceRoot,
+      });
+      process.stdout.write(formatNewHuman(result));
+      return result.exitCode;
+    }
     case "generate": {
       const result = await runGenerateCommand({
         workspaceRoot: process.cwd(),

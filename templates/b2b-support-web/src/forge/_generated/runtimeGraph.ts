@@ -1,0 +1,49 @@
+// @forge-generated generator=0.0.0 input=be0a4129920f48c42d269789fd5c26029f4132e224b712db2471797b6371dc78 content=bb21668c3047dc9f87bd22c36f028ea79e948382c38e82616b0ff43abc2c717e
+export const runtimeGraph = {
+  "analyzerVersion": "0.1.0",
+  "entries": [
+    {
+      "dependencies": [],
+      "file": "src/actions/captureTicketCreated.ts",
+      "id": "94de7c51d9d99e648614b085057fdc41f08c496a4d61e6cd5885b012759516f6",
+      "kind": "action",
+      "moduleId": "f1b0f1d42704608330486af77d29c76d483ead7d3f985457cdfc8b59b8d931c2",
+      "name": "captureTicketCreated",
+      "qualifiedName": "captureTicketCreated",
+      "runtimeContext": "action"
+    },
+    {
+      "dependencies": [],
+      "file": "src/commands/closeTicket.ts",
+      "id": "2d71a15b417661c77cc98dcf3cf2405ab6384349cb130b9d4077c4a157b1b968",
+      "kind": "command",
+      "moduleId": "f4afced64793aa6250ccbaba00ee3aa0f3f0fe7617c17358912ef9255f4f68cb",
+      "name": "closeTicket",
+      "qualifiedName": "closeTicket",
+      "runtimeContext": "command"
+    },
+    {
+      "dependencies": [],
+      "file": "src/commands/createTicket.ts",
+      "id": "9ce1769e06fe6bb452c729de0eb31289857eb6d48d3336bcc53af8ec79ddb226",
+      "kind": "command",
+      "moduleId": "c26dc30a11c44c4f59dee7ba17a1488f7e41d3785d7671029aa455d2f6685d3c",
+      "name": "createTicket",
+      "qualifiedName": "createTicket",
+      "runtimeContext": "command"
+    },
+    {
+      "dependencies": [],
+      "file": "src/commands/manageBilling.ts",
+      "id": "5a384aee569b45ccaedc3c1645bcf675565a329390b4a45536f974026554e6ec",
+      "kind": "command",
+      "moduleId": "feae8a13bd96eca18ffc440467627460e964e63556a94a6e2d20eb751ec87040",
+      "name": "manageBilling",
+      "qualifiedName": "manageBilling",
+      "runtimeContext": "command"
+    }
+  ],
+  "generatorVersion": "0.0.0",
+  "inputHash": "8f9aa6776c2e76637c1290e082a14d1d6759b3f06f607e432eebcf13d6fa24fd",
+  "schemaVersion": "1.0.0"
+} as const;

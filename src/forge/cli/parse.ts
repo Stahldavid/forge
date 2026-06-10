@@ -12,8 +12,18 @@ import type { AiSubcommand } from "./ai.ts";
 import type { QuerySubcommand } from "./query.ts";
 import type { LiveSubcommand } from "./live.ts";
 import type { ForgeAiProvider } from "../runtime/ai/types.ts";
+import type { NewPackageManager, NewTemplateName } from "./new.ts";
 
 export type ForgeCommand =
+  | {
+      kind: "new";
+      name: string;
+      template: NewTemplateName;
+      packageManager: NewPackageManager;
+      install: boolean;
+      git: boolean;
+      workspaceRoot: string;
+    }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -168,6 +178,9 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "client",
 ];
 
+const NEW_TEMPLATES: NewTemplateName[] = ["b2b-support-web"];
+const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
+
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
@@ -217,6 +230,18 @@ function parseAddOptions(
   };
 }
 
+function parseNewTemplate(value: string | undefined): NewTemplateName {
+  return NEW_TEMPLATES.includes(value as NewTemplateName)
+    ? (value as NewTemplateName)
+    : "b2b-support-web";
+}
+
+function parseNewPackageManager(value: string | undefined): NewPackageManager {
+  return NEW_PACKAGE_MANAGERS.includes(value as NewPackageManager)
+    ? (value as NewPackageManager)
+    : "bun";
+}
+
 export function parseCli(argv: string[]): ParsedCli {
   const errors: string[] = [];
   const positional = argv.filter((arg) => !arg.startsWith("-"));
@@ -224,7 +249,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, add, inspect, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -232,6 +257,40 @@ export function parseCli(argv: string[]): ParsedCli {
   const [commandName, ...rest] = positional;
 
   switch (commandName) {
+    case "new": {
+      const name = rest[0];
+      if (!name) {
+        errors.push("forge new requires a project name");
+        return { command: null, workspaceRoot, errors };
+      }
+      const templateRaw = parseOptionValue(argv, "--template");
+      if (templateRaw && !NEW_TEMPLATES.includes(templateRaw as NewTemplateName)) {
+        errors.push(`unsupported template '${templateRaw}'; supported: ${NEW_TEMPLATES.join(", ")}`);
+      }
+      const packageManagerRaw = parseOptionValue(argv, "--package-manager");
+      if (
+        packageManagerRaw &&
+        !NEW_PACKAGE_MANAGERS.includes(packageManagerRaw as NewPackageManager)
+      ) {
+        errors.push(
+          `unsupported package manager '${packageManagerRaw}'; supported: ${NEW_PACKAGE_MANAGERS.join(", ")}`,
+        );
+      }
+
+      return {
+        command: {
+          kind: "new",
+          name,
+          template: parseNewTemplate(templateRaw),
+          packageManager: parseNewPackageManager(packageManagerRaw),
+          install: !parseFlag(argv, "--no-install"),
+          git: !parseFlag(argv, "--no-git"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "generate": {
       const concurrencyRaw = parseOptionValue(argv, "--concurrency");
       const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;
@@ -780,6 +839,10 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--model",
     "--prompt",
     "--url",
+    "--template",
+    "--package-manager",
+    "--no-install",
+    "--no-git",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -811,7 +874,9 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--provider" ||
         arg === "--model" ||
         arg === "--prompt" ||
-        arg === "--url"
+        arg === "--url" ||
+        arg === "--template" ||
+        arg === "--package-manager"
       ) {
         index += 1;
       }
