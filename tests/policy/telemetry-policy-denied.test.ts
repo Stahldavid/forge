@@ -47,9 +47,10 @@ describe("telemetry policy denied", () => {
         typeof denied?.payload === "string"
           ? JSON.parse(String(denied.payload))
           : denied?.payload;
-      expect(payload.command).toBe("manageBilling");
-      expect(payload.policy).toBe("billing.manage");
-      expect(payload.role).toBe("member");
+      const properties = payload.event.properties;
+      expect(properties.command).toBe("manageBilling");
+      expect(properties.policy).toBe("billing.manage");
+      expect(properties.role).toBe("member");
     } finally {
       cleanupWorkspace(root);
     }

@@ -109,7 +109,7 @@ export async function runGenerateCommand(
 
 export async function runAddCommand(
   alias: string,
-  options: ForgeCommand extends { kind: "add" } ? ForgeCommand["options"] : never,
+  options: Extract<ForgeCommand, { kind: "add" }>["options"],
 ): Promise<ForgeAddResult> {
   const result = await forgeAdd(alias, options);
   return attachFailureKind(result);

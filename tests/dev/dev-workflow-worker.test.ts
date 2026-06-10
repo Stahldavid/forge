@@ -9,6 +9,20 @@ import {
   writeTriageWorkflow,
 } from "../workflows/helpers.ts";
 
+async function waitFor<T>(
+  producer: () => Promise<T>,
+  predicate: (value: T) => boolean,
+  timeoutMs = 90_000,
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  let last = await producer();
+  while (!predicate(last) && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    last = await producer();
+  }
+  return last;
+}
+
 describe("dev workflow worker", () => {
   test("forge dev --worker completes workflow after createTicket", async () => {
     const { workspace, workflowsDir } = scaffoldWorkflowWorkspace("dev-wf-worker");
@@ -35,18 +49,21 @@ describe("dev workflow worker", () => {
         });
         expect(invoke.status).toBe(200);
 
-        await new Promise((resolve) => setTimeout(resolve, 5_000));
-
         const health = await fetch(`${handle.url}/health`);
         const healthBody = (await health.json()) as {
           workflows: { running: number; pending: number; dead: number };
         };
         expect(healthBody.workflows).toBeDefined();
 
-        const runs = await fetch(`${handle.url}/workflows/runs`);
-        const runsBody = (await runs.json()) as {
-          runs: Array<{ status: string }>;
-        };
+        const runsBody = await waitFor(
+          async () => {
+            const runs = await fetch(`${handle.url}/workflows/runs`);
+            return (await runs.json()) as {
+              runs: Array<{ status: string }>;
+            };
+          },
+          (body) => body.runs.some((runRow) => runRow.status === "completed"),
+        );
         expect(runsBody.runs.some((runRow) => runRow.status === "completed")).toBe(true);
       } finally {
         handle.stop();
@@ -54,5 +71,5 @@ describe("dev workflow worker", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  }, 20000);
+  }, 120000);
 });

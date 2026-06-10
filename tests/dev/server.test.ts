@@ -20,6 +20,7 @@ describe("dev server", () => {
         port: 0,
         mock: false,
         json: false,
+        db: "none",
       });
 
       try {

@@ -37,7 +37,7 @@ export async function checkCommandPolicy(
   const registry = loadPolicyRegistry(options.workspaceRoot);
   const matrix =
     loadPermissionMatrix(options.workspaceRoot) ??
-    ({ entries: [] } as NonNullable<ReturnType<typeof loadPermissionMatrix>>);
+    ({ entries: [] } as unknown as NonNullable<ReturnType<typeof loadPermissionMatrix>>);
   const binding = findCommandAuthBinding(registry, options.entry.name);
 
   if (binding?.auth.kind === "user") {
@@ -102,7 +102,7 @@ export async function checkQueryPolicy(
   const registry = loadPolicyRegistry(options.workspaceRoot);
   const matrix =
     loadPermissionMatrix(options.workspaceRoot) ??
-    ({ entries: [] } as NonNullable<ReturnType<typeof loadPermissionMatrix>>);
+    ({ entries: [] } as unknown as NonNullable<ReturnType<typeof loadPermissionMatrix>>);
   const binding = findQueryAuthBinding(registry, options.query.name);
 
   if (binding?.auth.kind === "user") {

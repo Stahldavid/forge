@@ -1,8 +1,21 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=c490a0850ca93cbe96d606b6f2c276d5cb9853d36c67379d8184b724a82f1335
+// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=b96368f619c35efb9aac917d7221700851827a2dba8bb35368e6bcd2d4f54bf2
 export const sqlPlan = {
-  "checksum": "c46fae933aea6b73c899a49e6bf65abd4ae6210ce333729de600d96db212fcd0",
-  "indexes": [],
-  "migrationId": "migration_c46fae933aea6b73",
+  "checksum": "b6564fb46c4c389d9e7d23948cc6dcaca657a75ef3faf19a333910eda21e600c",
+  "indexes": [
+    {
+      "index": {
+        "columns": [
+          "tenant_id"
+        ],
+        "name": "idx_tickets_tenant_id",
+        "table": "tickets"
+      },
+      "kind": "create_index",
+      "sql": "CREATE INDEX IF NOT EXISTS \"idx_tickets_tenant_id\" ON \"tickets\" (\"tenant_id\")",
+      "table": "tickets"
+    }
+  ],
+  "migrationId": "migration_b6564fb46c4c389d",
   "schemaVersion": "1.0.0",
   "systemTables": [
     {
@@ -59,15 +72,45 @@ export const sqlPlan = {
     {
       "columns": [
         {
+          "defaultExpr": "now()",
+          "name": "created_at",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "timestamptz"
+        },
+        {
           "defaultExpr": "gen_random_uuid()",
           "name": "id",
           "nullable": false,
           "primaryKey": true,
           "sqlType": "uuid"
+        },
+        {
+          "checkConstraint": "\"status\" IN ('open', 'pending', 'closed')",
+          "name": "status",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
+        },
+        {
+          "name": "tenant_id",
+          "nullable": false,
+          "primaryKey": false,
+          "references": {
+            "column": "id",
+            "table": "tenants"
+          },
+          "sqlType": "uuid"
+        },
+        {
+          "name": "title",
+          "nullable": false,
+          "primaryKey": false,
+          "sqlType": "text"
         }
       ],
       "kind": "create_table",
-      "sql": "CREATE TABLE IF NOT EXISTS \"tickets\" (\"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY)",
+      "sql": "CREATE TABLE IF NOT EXISTS \"tickets\" (\"created_at\" timestamptz NOT NULL DEFAULT now(), \"id\" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY, \"status\" text NOT NULL CHECK (\"status\" IN ('open', 'pending', 'closed')), \"tenant_id\" uuid NOT NULL REFERENCES \"tenants\" (\"id\"), \"title\" text NOT NULL)",
       "table": "tickets"
     }
   ]

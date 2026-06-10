@@ -17,13 +17,19 @@ export async function insertTelemetryEvent(
   envelope: ForgeTelemetryEnvelope,
 ): Promise<number> {
   const { value } = scrubEnvelopePayload(envelope as unknown as Record<string, unknown>);
+  const eventName =
+    typeof value.event === "object" &&
+    value.event !== null &&
+    "name" in value.event
+      ? String((value.event as { name: unknown }).name)
+      : undefined;
 
   const result = await runQuery(
     target,
     `INSERT INTO _forge_telemetry_events (trace_id, event_type, payload, status)
      VALUES ($1, $2, $3::jsonb, 'pending')
      RETURNING id`,
-    [value.traceId, value.type, JSON.stringify(value)],
+    [value.traceId, eventName ?? value.type, JSON.stringify(value)],
   );
 
   const id = Number(result.rows[0]?.id);

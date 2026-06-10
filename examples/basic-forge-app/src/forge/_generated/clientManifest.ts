@@ -1,8 +1,8 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=a38a5e55d6b059271f8adee920bf4ca310c500ec315ade801126c1cf7e7db0a0
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=7ed9464e45a7a7a851216ad3ed138cf3472c8ab5267e2d9b7543b855e5e48bee
 export const clientManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.0.0",
-  "inputHash": "757e72269d800f66851fd270d70d42458e8346958585bf0d29f2571291207f00",
+  "inputHash": "5e7901a9929baf08d2d67fec8dc591aae9debaba8bd62d54829e1a5ffe525915",
   "queries": [
     "getTicket",
     "listTickets"

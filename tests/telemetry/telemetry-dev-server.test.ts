@@ -20,6 +20,7 @@ describe("telemetry dev server", () => {
         port: 0,
         mock: false,
         json: false,
+        db: "none",
         telemetry: ["local"],
       });
 

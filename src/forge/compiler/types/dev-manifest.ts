@@ -3,7 +3,15 @@ import type { Diagnostic } from "./diagnostic.ts";
 export interface DevRoute {
   method: "GET" | "POST";
   path: string;
-  purpose: "health" | "entries" | "invoke" | "workflows" | "queries" | "query";
+  purpose:
+    | "health"
+    | "entries"
+    | "invoke"
+    | "workflows"
+    | "workflow-runs"
+    | "workflow-process"
+    | "queries"
+    | "query";
   entryName?: string;
   entryKind?: "command" | "action" | "query";
 }

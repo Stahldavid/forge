@@ -28,7 +28,7 @@ export function seedInstalledPackage(
   name: string,
   version: string,
 ): void {
-  const segments = name.startsWith("@") ? name.slice(1).split("/") : [name];
+  const segments = name.startsWith("@") ? name.split("/") : [name];
   const pkgDir = join(cwd, "node_modules", ...segments);
   mkdirSync(pkgDir, { recursive: true });
 
@@ -109,6 +109,14 @@ export function scaffoldAddWorkspace(prefix: string): string {
 export function createFixturePmAdapter(
   onAdd?: (spec: string, cwd: string) => void,
 ): PackageManagerAdapter {
+  function packageNameFromSpec(pkg: string): string {
+    if (pkg.startsWith("@")) {
+      const [scope, name] = pkg.split("/");
+      return `${scope}/${name?.split("@")[0] ?? ""}`;
+    }
+    return pkg.split("@")[0]!;
+  }
+
   function extractSpecFromArgv(argv: string[]): string {
     if (argv[0] === "npm" && argv[1] === "install" && argv[2]) {
       return argv[2];
@@ -125,7 +133,7 @@ export function createFixturePmAdapter(
       onAdd?.(spec, options.cwd);
 
       for (const pkg of spec.split(/\s+/).filter(Boolean)) {
-        const name = pkg.split("@")[0]!;
+        const name = packageNameFromSpec(pkg);
         seedInstalledPackage(options.cwd, name, "1.0.0");
       }
 
@@ -134,7 +142,7 @@ export function createFixturePmAdapter(
         dependencies?: Record<string, string>;
       };
       for (const pkgName of spec.split(/\s+/).filter(Boolean)) {
-        const name = pkgName.split("@")[0]!;
+        const name = packageNameFromSpec(pkgName);
         pkg.dependencies = { ...pkg.dependencies, [name]: "^1.0.0" };
       }
       writeFileSync(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");

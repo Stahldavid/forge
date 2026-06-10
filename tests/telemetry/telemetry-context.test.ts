@@ -36,7 +36,7 @@ describe("telemetry context", () => {
     );
     expect(rows.rows).toHaveLength(1);
     expect(rows.rows[0]?.trace_id).toBe(traceId);
-    expect(rows.rows[0]?.event_type).toBe("event");
+    expect(rows.rows[0]?.event_type).toBe("ticket_created");
   });
 
   test("transaction rollback clears buffered telemetry", async () => {

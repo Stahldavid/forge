@@ -52,6 +52,147 @@ function parseTableName(sql: string): string | null {
   return null;
 }
 
+function splitSqlList(value: string): string[] {
+  const parts: string[] = [];
+  let current = "";
+  let quote: "'" | "\"" | null = null;
+
+  for (const char of value) {
+    if (char === "(" && quote === null) {
+      current += char;
+      continue;
+    }
+    if (char === ")" && quote === null) {
+      current += char;
+      continue;
+    }
+    if ((char === "'" || char === "\"") && quote === null) {
+      quote = char;
+    } else if (char === quote) {
+      quote = null;
+    }
+
+    const openParens = (current.match(/\(/g) ?? []).length;
+    const closeParens = (current.match(/\)/g) ?? []).length;
+    if (char === "," && quote === null && openParens === closeParens) {
+      parts.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim().length > 0) {
+    parts.push(current.trim());
+  }
+
+  return parts;
+}
+
+function parseSqlLiteral(token: string, params: unknown[]): unknown {
+  const paramMatch = token.match(/^\$(\d+)/);
+  if (paramMatch?.[1]) {
+    return params[Number(paramMatch[1]) - 1];
+  }
+  if (/^now\(\)$/i.test(token)) {
+    return parseNow();
+  }
+  if (/^null$/i.test(token)) {
+    return null;
+  }
+  if (
+    (token.startsWith("'") && token.endsWith("'")) ||
+    (token.startsWith("\"") && token.endsWith("\""))
+  ) {
+    return token.slice(1, -1);
+  }
+  const numeric = Number(token);
+  return Number.isFinite(numeric) ? numeric : token;
+}
+
+function deterministicUuid(serial: number): string {
+  return `00000000-0000-0000-0000-${String(serial).padStart(12, "0")}`;
+}
+
+function applySystemDefaults(tableName: string, row: MemoryRow): void {
+  const now = parseNow();
+
+  if (tableName === "_forge_outbox") {
+    row.created_at ??= now;
+    row.processed_at ??= null;
+  }
+
+  if (tableName === "_forge_outbox_deliveries") {
+    row.status ??= "pending";
+    row.attempts ??= 0;
+    row.max_attempts ??= 5;
+    row.next_attempt_at ??= now;
+    row.locked_at ??= null;
+    row.locked_by ??= null;
+    row.last_error ??= null;
+    row.processed_at ??= null;
+    row.created_at ??= now;
+  }
+
+  if (tableName === "_forge_workflow_runs") {
+    row.status ??= "pending";
+    row.current_step ??= null;
+    row.last_error ??= null;
+    row.created_at ??= now;
+    row.updated_at ??= now;
+    row.started_at ??= null;
+    row.completed_at ??= null;
+    row.canceled_at ??= null;
+  }
+
+  if (tableName === "_forge_workflow_steps") {
+    row.status ??= "pending";
+    row.input ??= null;
+    row.output ??= null;
+    row.attempts ??= 0;
+    row.max_attempts ??= 5;
+    row.next_attempt_at ??= now;
+    row.locked_at ??= null;
+    row.locked_by ??= null;
+    row.last_error ??= null;
+    row.started_at ??= null;
+    row.completed_at ??= null;
+    row.created_at ??= now;
+  }
+
+  if (tableName === "_forge_telemetry_events") {
+    row.status ??= "pending";
+    row.created_at ??= now;
+    row.next_attempt_at ??= now;
+    row.attempts ??= 0;
+  }
+
+  if (tableName === "_forge_trace_spans") {
+    row.started_at ??= now;
+  }
+}
+
+function projectRows(sql: string, rows: MemoryRow[]): MemoryRow[] {
+  const selectMatch = sql.match(/^SELECT\s+(.+?)\s+FROM\s/i);
+  const selectList = selectMatch?.[1]?.trim();
+  if (!selectList || selectList === "*" || /COUNT\(\*\)/i.test(selectList)) {
+    return rows;
+  }
+
+  const columns = splitSqlList(selectList)
+    .map((column) => column.replace(/\s+AS\s+\w+$/i, "").trim())
+    .map((column) => column.replace(/^[\w.]+\./, "").replace(/"/g, ""));
+
+  return rows.map((row) => {
+    const projected: MemoryRow = {};
+    for (const column of columns) {
+      projected[column] = row[column];
+    }
+    return projected;
+  });
+}
+
 export class MemoryAdapter implements DbAdapter {
   readonly kind = "memory" as const;
   private tables = new Map<string, MemoryTable>();
@@ -82,7 +223,9 @@ export class MemoryAdapter implements DbAdapter {
     }
 
     if (trimmed.startsWith("TRUNCATE")) {
-      const match = trimmed.match(/TRUNCATE TABLE "([^"]+)"/i);
+      const match =
+        trimmed.match(/TRUNCATE TABLE "([^"]+)"/i) ??
+        trimmed.match(/TRUNCATE TABLE ([a-z_][a-z0-9_]*)/i);
       if (match?.[1]) {
         const table = this.tables.get(match[1]);
         if (table) {
@@ -128,12 +271,12 @@ export class MemoryAdapter implements DbAdapter {
         ?.split(",")
         .map((column) => column.trim().replace(/"/g, "")) ?? [];
 
+    const valuesMatch = sql.match(/\)\s*VALUES\s*\((.+?)\)(?:\s|$)/i);
+    const values = valuesMatch?.[1] ? splitSqlList(valuesMatch[1]) : [];
+
     columns.forEach((column, index) => {
-      let value = params[index];
-      if (value === undefined && /\bnow\(\)/i.test(sql)) {
-        value = parseNow();
-      }
-      row[column] = value;
+      const token = values[index];
+      row[column] = token ? parseSqlLiteral(token, params) : params[index];
     });
 
     if (/ON CONFLICT/i.test(sql)) {
@@ -148,8 +291,11 @@ export class MemoryAdapter implements DbAdapter {
       }
     }
 
-    if (row.id === undefined && (tableName.includes("outbox") || tableName.includes("workflow") || tableName.includes("telemetry") || tableName.includes("trace_spans") || columns.includes("id") === false)) {
-      row.id = table.nextSerial++;
+    if (row.id === undefined && columns.includes("id") === false) {
+      row.id =
+        tableName.startsWith("_forge_") || tableName.includes("outbox")
+          ? table.nextSerial++
+          : deterministicUuid(table.nextSerial++);
     }
 
     if (row.created_at === undefined && columns.includes("created_at")) {
@@ -162,9 +308,14 @@ export class MemoryAdapter implements DbAdapter {
       row.next_attempt_at = parseNow();
     }
 
+    applySystemDefaults(tableName, row);
+
     table.rows.push(row);
 
     if (/RETURNING/i.test(sql)) {
+      if (/RETURNING\s+\*/i.test(sql)) {
+        return { rows: [{ ...row }], rowCount: 1 };
+      }
       const returningMatch = sql.match(/RETURNING\s+"?(\w+)"?/i);
       const returningCol = returningMatch?.[1] ?? "id";
       return { rows: [{ [returningCol]: row[returningCol] }], rowCount: 1 };
@@ -202,7 +353,8 @@ export class MemoryAdapter implements DbAdapter {
         rows = this.filterRows(rows, sql, params);
       }
 
-      return { rows: [{ count: rows.length }], rowCount: 1 };
+      const alias = sql.match(/COUNT\(\*\)(?:::int)?\s+AS\s+"?(\w+)"?/i)?.[1] ?? "count";
+      return { rows: [{ [alias]: rows.length, count: rows.length }], rowCount: 1 };
     }
 
     if (/JOIN/i.test(sql)) {
@@ -250,7 +402,7 @@ export class MemoryAdapter implements DbAdapter {
       rows.sort((a, b) => Number(b.id) - Number(a.id));
     }
 
-    return normalizeRows(rows);
+    return normalizeRows(projectRows(sql, rows));
   }
 
   private handleJoinSelect(sql: string, params: unknown[]): DbQueryResult {
@@ -260,7 +412,7 @@ export class MemoryAdapter implements DbAdapter {
       return { rows: [], rowCount: 0 };
     }
 
-    let rows = deliveryTable.rows.map((delivery) => {
+    let rows: MemoryRow[] = deliveryTable.rows.map((delivery) => {
       const event = outboxTable.rows.find((row) => row.id === delivery.outbox_id);
       return {
         ...delivery,
@@ -274,17 +426,14 @@ export class MemoryAdapter implements DbAdapter {
     }
 
     rows.sort((a, b) => Number(a.id) - Number(b.id));
-    return normalizeRows(rows);
+    return normalizeRows(projectRows(sql, rows));
   }
 
   private filterRows(rows: MemoryRow[], sql: string, params: unknown[]): MemoryRow[] {
     let paramIndex = 0;
 
-    if (/status\s*=\s*'pending'\s+AND\s+next_attempt_at\s*<=\s*now\(\)/i.test(sql)) {
-      const now = parseNow();
-      return rows.filter(
-        (row) => row.status === "pending" && compareValue(row.next_attempt_at, now),
-      );
+    if (/status\s*=\s*'pending'/i.test(sql) && /next_attempt_at\s*<=\s*now\(\)/i.test(sql)) {
+      return rows.filter((row) => row.status === "pending");
     }
 
     if (/trace_id\s*=\s*\$\d+/i.test(sql)) {
@@ -326,18 +475,25 @@ export class MemoryAdapter implements DbAdapter {
       return rows.filter((row) => row.status === "dead");
     }
 
-    const conditions = [...sql.matchAll(/"(\w+)"\s*(=|<=)\s*(?:\$\d+|now\(\))/gi)];
+    const conditions = [
+      ...sql.matchAll(
+        /(?:^|\s|AND\s)(?:\w+\.)?"?(\w+)"?\s*(=|<=|!=)\s*(\$\d+|now\(\)|'[^']*'|"[^"]*"|\d+)/gi,
+      ),
+    ];
 
     return rows.filter((row) => {
       paramIndex = 0;
       for (const condition of conditions) {
         const column = condition[1]!;
         const operator = condition[2]!;
-        const usesNow = /now\(\)/i.test(condition[0] ?? "");
-        const value = usesNow ? parseNow() : params[paramIndex++];
+        const value = parseSqlLiteral(condition[3]!, params);
 
         if (operator === "<=") {
           if (!compareValue(row[column], value)) {
+            return false;
+          }
+        } else if (operator === "!=") {
+          if (row[column] === value) {
             return false;
           }
         } else if (row[column] !== value) {
@@ -398,19 +554,23 @@ export class MemoryAdapter implements DbAdapter {
         continue;
       }
 
-      let paramIdx = 0;
       for (const assignment of assignments) {
-        const column = assignment.trim().split("=")[0]?.trim().replace(/"/g, "");
+        const [rawColumn, rawExpression] = assignment.split("=");
+        const column = rawColumn?.trim().replace(/"/g, "");
         if (!column) {
           continue;
         }
 
-        if (/now\(\)/i.test(assignment)) {
-          row[column] = parseNow();
-        } else if (/NULL/i.test(assignment) && !/\$\d+/.test(assignment)) {
-          row[column] = null;
+        const expression = rawExpression?.trim() ?? "";
+        const paramMatch = expression.match(/\$(\d+)/);
+        const normalizedExpression = expression.replace(/"/g, "").replace(/\s+/g, " ");
+
+        if (normalizedExpression.toLowerCase() === `${column.toLowerCase()} + 1`) {
+          row[column] = Number(row[column] ?? 0) + 1;
+        } else if (paramMatch?.[1]) {
+          row[column] = params[Number(paramMatch[1]) - 1];
         } else {
-          row[column] = params[paramIdx++];
+          row[column] = parseSqlLiteral(expression, params);
         }
       }
 

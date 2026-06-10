@@ -47,7 +47,7 @@ function evaluateAuthRequirement(
   matrix: PermissionMatrix,
   entryKind: "command" | "query",
 ): PolicyEvaluationResult {
-  const resolved = requirement ?? { kind: "user" as const };
+  const resolved = requirement ?? { kind: "public" as const };
 
   if (resolved.kind === "public") {
     return { allowed: true };

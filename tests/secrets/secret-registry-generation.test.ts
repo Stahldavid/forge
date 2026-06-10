@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { buildSecretRegistry, buildEnvSchema } from "../../src/forge/compiler/secret-registry/build.ts";
 import { classify } from "../../src/forge/compiler/classifier/classify.ts";
 import { PackageGraphCompiler } from "../../src/forge/compiler/package-graph/compiler.ts";
@@ -14,6 +15,8 @@ import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import { readFileSync } from "node:fs";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 describe("secret registry generation", () => {
   test("emits secretRegistry and envSchema from stripe recipe", async () => {
@@ -56,8 +59,9 @@ describe("secret registry generation", () => {
     const dep = {
       name: "stripe",
       version: "17.0.0",
-      path: ".",
-      integrity: undefined as string | undefined,
+      packageManager: "bun" as const,
+      installPath: join(repoRoot, "tests", "fixtures", "packages", "stripe"),
+      packageIntegrity: undefined as string | undefined,
     };
     const api = await compiler.analyze(dep, {
       runtimeInspect: false,

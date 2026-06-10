@@ -1,14 +1,11 @@
 export {
   PACKAGE_GRAPH_SCHEMA_VERSION,
   PACKAGE_ANALYZER_VERSION,
-  GENERATOR_VERSION,
   DEFAULT_PATTERN_EXPANSION_LIMIT,
 } from "./constants.ts";
 export {
   PackageGraphCompiler,
   recomputeFromInputs,
-  buildPackageCacheKey,
-  cacheKeysEqual,
 } from "./compiler.ts";
 export type {
   BuildOptions,

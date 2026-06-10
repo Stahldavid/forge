@@ -79,7 +79,9 @@ describe("workflow retry", () => {
         `SELECT status FROM _forge_workflow_steps WHERE run_id = $1 AND step_name = 'triageWithAI'`,
         [runId],
       );
-      expect(["pending", "running", "dead", "completed"]).toContain(retried.rows[0]?.status);
+      expect(["pending", "running", "dead", "completed"]).toContain(
+        String(retried.rows[0]?.status),
+      );
     } finally {
       cleanupWorkspace(workspace);
     }

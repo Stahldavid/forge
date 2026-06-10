@@ -1,6 +1,6 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import type { ForgeTelemetryEnvelope } from "./types.ts";
+import type { ForgeTelemetryEnvelope } from "../types.ts";
 
 function telemetryDir(workspaceRoot: string): string {
   return join(workspaceRoot, ".forge", "local", "telemetry");

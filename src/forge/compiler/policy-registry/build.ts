@@ -125,7 +125,7 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
       const auth =
         sourceSlice.length > 0
           ? parseAuthFromSlice(sourceSlice)
-          : { kind: "user" as const };
+          : { kind: "public" as const };
 
       commandAuth.push({
         commandName: symbol.name,
@@ -141,7 +141,7 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
       const auth =
         sourceSlice.length > 0
           ? parseAuthFromSlice(sourceSlice)
-          : { kind: "user" as const };
+          : { kind: "public" as const };
 
       queryAuth.push({
         queryName: symbol.name,

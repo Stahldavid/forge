@@ -350,7 +350,7 @@ export function createAiContext(options: CreateAiContextOptions): AiContext {
           model: languageModel,
           prompt: input.prompt,
           system: input.system,
-          experimental_output: Output.object({ schema: input.schema }),
+          experimental_output: Output.object({ schema: input.schema as never }),
         });
 
         const usage = mapUsage(result.usage);

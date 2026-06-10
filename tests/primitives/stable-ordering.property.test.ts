@@ -15,12 +15,13 @@ const forgeKindArb = fc.constantFrom(
   "query",
   "liveQuery",
   "command",
+  "action",
   "endpoint",
   "policy",
   "workflow",
   "agent",
   "telemetryEvent",
-);
+) satisfies fc.Arbitrary<ForgeSymbol["kind"]>;
 
 const symbolArb: fc.Arbitrary<ForgeSymbol> = fc.record({
   id: fc.uuid(),

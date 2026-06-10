@@ -130,7 +130,7 @@ function buildLockEntry(
     name: recipe.alias,
     version: primary.api.version,
     recipeVersion: recipe.recipeVersion,
-    runtimeContexts: stableSortStrings([...primary.classification.compatible]),
+    runtimeContexts: stableSortStrings([...primary.classification.compatible]) as ForgeLockEntry["runtimeContexts"],
     capabilities: {
       ...capabilities,
       secrets,

@@ -8,7 +8,7 @@ export function readInstalledVersion(
 ): string | null {
   const name = parsePackageName(specOrName);
   const segments = name.startsWith("@")
-    ? name.slice(1).split("/")
+    ? name.split("/")
     : [name];
   const pkgJsonPath = join(cwd, "node_modules", ...segments, "package.json");
 

@@ -119,7 +119,18 @@ export async function markDeliveryDead(
   adapter: DbAdapter,
   deliveryId: number,
   lastError: string,
+  attempts?: number,
 ): Promise<void> {
+  if (attempts !== undefined) {
+    await adapter.query(
+      `UPDATE _forge_outbox_deliveries
+       SET status = 'dead', attempts = $1, last_error = $2, locked_at = NULL, locked_by = NULL
+       WHERE id = $3`,
+      [attempts, lastError, deliveryId],
+    );
+    return;
+  }
+
   await adapter.query(
     `UPDATE _forge_outbox_deliveries
      SET status = 'dead', last_error = $1, locked_at = NULL, locked_by = NULL

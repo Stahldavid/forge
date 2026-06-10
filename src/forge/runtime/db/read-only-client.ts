@@ -19,9 +19,6 @@ export interface ReadOnlyTableClient {
   get(id: string): Promise<Record<string, unknown> | null>;
   where(partial: Partial<Record<string, unknown>>): Promise<Record<string, unknown>[]>;
   count(): Promise<number>;
-  insert(value: Record<string, unknown>): never;
-  update(id: string, patch: Partial<Record<string, unknown>>): never;
-  delete(id: string): never;
 }
 
 export type ReadOnlyDbClient = Record<string, ReadOnlyTableClient>;
@@ -50,8 +47,6 @@ function wrapReadOnlyTable(
   },
 ): ReadOnlyTableClient {
   const recordRead = () => options?.onRead?.(tableName, options.tenantId ?? null);
-  const forbiddenWrite = (operation: string): never => forbidden(operation, options?.liveQuery);
-
   return {
     all: () => {
       recordRead();
@@ -70,9 +65,6 @@ function wrapReadOnlyTable(
       const rows = await table.all();
       return rows.length;
     },
-    insert: () => forbiddenWrite("insert"),
-    update: () => forbiddenWrite("update"),
-    delete: () => forbiddenWrite("delete"),
   };
 }
 
@@ -100,6 +92,6 @@ export function createReadOnlyDbClient(
   return client;
 }
 
-export function assertQueryContextForbidden(property: "emit" | "secrets" | "ai"): void {
+export function assertQueryContextForbidden(property: "emit" | "secrets" | "ai"): never {
   forbidden(property);
 }

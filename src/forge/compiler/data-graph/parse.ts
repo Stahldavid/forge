@@ -59,6 +59,11 @@ function extractFieldsFromObject(objectNode: SyntaxNode): DataField[] {
       continue;
     }
 
+    if (key === "fields" && valueNode.type === "object") {
+      fields.push(...extractFieldsFromObject(valueNode));
+      continue;
+    }
+
     const typeValue = unwrapStringLiteral(valueNode);
     if (typeValue !== null) {
       fields.push({ name: key, type: typeValue });

@@ -178,7 +178,7 @@ export async function startDevServer(
     serverState.db.connected = true;
   }
 
-  await prepareRuntimeEnvironment(workspaceRoot, {
+  const restoreRuntimeEnvironment = await prepareRuntimeEnvironment(workspaceRoot, {
     mock: options.mock,
     mockAi: options.mockAi,
     db: serverState.adapter,
@@ -420,7 +420,11 @@ export async function startDevServer(
 
         if (request.method === "GET" && pathname === "/telemetry") {
           if (!serverState.adapter) {
-            return jsonResponse({ ok: true, summary: null, events: [] });
+            return jsonResponse({
+              ok: true,
+              summary: { pending: 0, failed: 0, processed: 0 },
+              events: [],
+            });
           }
 
           const summary = await getTelemetrySummary(serverState.adapter);
@@ -857,6 +861,7 @@ export async function startDevServer(
     stop: () => {
       serverState.outboxWorker?.stop();
       server.stop(true);
+      restoreRuntimeEnvironment();
       const adapter = serverState.adapter;
       serverState.adapter = null;
       void adapter?.close().catch(() => undefined);

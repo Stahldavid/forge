@@ -8,6 +8,7 @@ describe("generated adapters secrets", () => {
     const source = renderStripeServerAdapter({
       alias: "stripe",
       recipe: STRIPE_RECIPE,
+      context: "action",
       packageName: "stripe",
       packageNames: ["stripe"],
       secrets: STRIPE_RECIPE.secrets,
@@ -23,6 +24,7 @@ describe("generated adapters secrets", () => {
     const source = renderPosthogServerAdapter({
       alias: "posthog",
       recipe: STRIPE_RECIPE,
+      context: "action",
       packageName: "posthog-node",
       packageNames: ["posthog-node"],
       secrets: [],

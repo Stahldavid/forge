@@ -26,7 +26,7 @@ export function checkQueryUsageInApp(appGraph: AppGraph): Diagnostic[] {
     const sourceSlice =
       typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
 
-    const checks: Array<{ pattern: RegExp; code: typeof FORGE_QUERY_WRITE_FORBIDDEN; message: string }> = [
+    const checks: Array<{ pattern: RegExp; code: Diagnostic["code"]; message: string }> = [
       {
         pattern: WRITE_PATTERN,
         code: FORGE_QUERY_WRITE_FORBIDDEN,

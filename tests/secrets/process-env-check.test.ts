@@ -29,7 +29,7 @@ describe("process.env check", () => {
 
     try {
       await run(defaultGenerateOptions(workspace));
-      const registry = { secrets: [{ name: "STRIPE_SECRET_KEY", required: true, source: "recipe" as const, allowedContexts: ["action"] as const[] }] };
+      const registry = { secrets: [{ name: "STRIPE_SECRET_KEY", required: true, source: "recipe" as const, allowedContexts: ["action"] as const }] };
       const warnings = checkDirectProcessEnvUsage(workspace, registry as never, false);
       expect(warnings.some((d) => d.code === FORGE_SECRET_DIRECT_PROCESS_ENV)).toBe(true);
 

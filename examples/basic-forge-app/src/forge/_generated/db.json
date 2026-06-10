@@ -1,2 +1,2 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=981608f177f838b5ea11b3a9862ec4e29e8f64e147e01d1ab001b4d005f9e987
-{"tableMap":{"tenants":{"columns":[{"name":"id","primaryKey":true,"sqlType":"uuid"}],"tableName":"tenants"},"tickets":{"columns":[{"name":"id","primaryKey":true,"sqlType":"uuid"}],"tableName":"tickets"}}}
+// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=e1c4d4541f4e8fba68a8fe4e0b3df965acf1e2794b78927af1c7edfaed07e64f
+{"tableMap":{"tenants":{"columns":[{"name":"id","primaryKey":true,"sqlType":"uuid"}],"tableName":"tenants"},"tickets":{"columns":[{"name":"created_at","sqlType":"timestamptz"},{"name":"id","primaryKey":true,"sqlType":"uuid"},{"name":"status","sqlType":"text"},{"name":"tenant_id","sqlType":"uuid"},{"name":"title","sqlType":"text"}],"tableName":"tickets","tenantIdColumn":"tenant_id","tenantScoped":true}}}

@@ -28,7 +28,7 @@ describe("client surface security", () => {
 
       expect(manifest.queries).toContain("listTickets");
       expect(manifest.commands).toContain("createTicket");
-      expect(manifest.liveQueries).toEqual([]);
+      expect(manifest.liveQueries).toEqual(["watchUser"]);
 
       const clientTs = readFileSync(join(root, GENERATED_DIR, "client.ts"), "utf8");
       const clientTypes = readFileSync(join(root, GENERATED_DIR, "clientTypes.ts"), "utf8");
@@ -56,17 +56,19 @@ describe("client surface security", () => {
     const { root } = await scaffoldClientWorkspace("client-inspect");
     try {
       const previousCwd = process.cwd();
-      process.chdir(root);
+      try {
+        process.chdir(root);
 
-      const result = await runInspectCommand("client", root);
-      expect(result.exitCode).toBe(0);
-      expect(result.data).toMatchObject({
-        queries: expect.arrayContaining(["listTickets", "getTicket"]),
-        commands: expect.arrayContaining(["createTicket", "manageBilling"]),
-        liveQueries: [],
-      });
-
-      process.chdir(previousCwd);
+        const result = await runInspectCommand("client", root);
+        expect(result.exitCode).toBe(0);
+        expect(result.data).toMatchObject({
+          queries: expect.arrayContaining(["listTickets", "getTicket"]),
+          commands: expect.arrayContaining(["createTicket", "manageBilling"]),
+          liveQueries: ["watchUser"],
+        });
+      } finally {
+        process.chdir(previousCwd);
+      }
     } finally {
       cleanupWorkspace(root);
     }

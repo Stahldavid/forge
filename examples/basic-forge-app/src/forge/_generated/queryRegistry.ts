@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=0bea1fe3fa8abe9ecc0c13ff095f1fddd0973af41f12b8f4007cb870cd9e6aa1
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=a246dad2dfeddb4f3f4bad7f32599400715f8c3804221908beafd1120ff53035
 export const queryRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "1ce1832db5759e9aa3c4095ab43b3f630f012c8416f196b1ab4234a2d82ad62c",
+  "inputHash": "9fd30c0bf90c6d93ecbef410e861aa6362de0361f3eda6a1a41f79b7bb0a9990",
   "queries": [
     {
       "file": "src/queries/getTicket.ts",

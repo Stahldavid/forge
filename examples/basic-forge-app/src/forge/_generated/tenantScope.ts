@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=f427383cbd344727fb7f334b5632f6a033e7c472f887a735f38edca511e3418b
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=8d68610441dbf28cbd43229ebec883556cb15909c08c688a56fe8eaf55329008
 export const tenantScope = {
   "diagnostics": [
     {
@@ -9,7 +9,14 @@ export const tenantScope = {
     }
   ],
   "generatorVersion": "0.0.0",
-  "inputHash": "0dc4d0bf14cfc36c951d60446af3bc039a77a0b6540ae2a12397ca8eecba2f9f",
+  "inputHash": "5c8ab223231f44f0540bf05c447e2fd745fc7d71359a672095570c36fa8a0633",
   "schemaVersion": "1.0.0",
-  "tables": []
+  "tables": [
+    {
+      "exportName": "tickets",
+      "file": "src/forge/schema.ts",
+      "table": "tickets",
+      "tenantIdColumn": "tenant_id"
+    }
+  ]
 } as const;

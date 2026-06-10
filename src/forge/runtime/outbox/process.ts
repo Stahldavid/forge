@@ -163,7 +163,7 @@ export async function processOutboxBatch(
     const errorMessage = executed.error;
 
     if (nextAttempts >= delivery.max_attempts) {
-      await markDeliveryDead(adapter, delivery.id, errorMessage);
+      await markDeliveryDead(adapter, delivery.id, errorMessage, nextAttempts);
       result.dead += 1;
       result.errors.push(
         createDiagnostic({

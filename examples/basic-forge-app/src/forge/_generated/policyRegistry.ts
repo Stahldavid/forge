@@ -1,10 +1,10 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=0f1b4b8048c832cee59bec0966547ac353283a4bb6be82292bb5980dab96d7f6
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=932f3e51cdf56f36191ae1063765a5769f10b39e55b87e89aae0b47888fb564f
 export const policyRegistry = {
   "analyzerVersion": "policy-registry@1.0.0",
   "commandAuth": [
     {
       "auth": {
-        "kind": "user"
+        "kind": "public"
       },
       "commandName": "badStripeCommand",
       "file": "src/commands/badStripeCommand.ts",
@@ -31,7 +31,7 @@ export const policyRegistry = {
   ],
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "9db57332358013a77beb1e7cd2bfacbd938a4b9a6728ee3a48e07058261425d6",
+  "inputHash": "4dc19c5a6cd295803940f938f4397aca8ddbf1d7051a012232e72ef0739d41e5",
   "policies": [
     {
       "file": "src/policies.ts",

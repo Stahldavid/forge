@@ -53,11 +53,11 @@ describe("workflow cancel", () => {
 
       await processWorkflowBatch(adapter, workspace, dbJson.tableMap, { limit: 10 });
 
-      const run = await adapter.query(
+      const runResult = await adapter.query(
         `SELECT status FROM _forge_workflow_runs WHERE id = $1`,
         [created.run.id],
       );
-      expect(run.rows[0]?.status).toBe("canceled");
+      expect(runResult.rows[0]?.status).toBe("canceled");
 
       const steps = await adapter.query(
         `SELECT status FROM _forge_workflow_steps WHERE run_id = $1`,

@@ -223,7 +223,11 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
     const factoryName = `create${capitalizeSegment(packageName)}Mock`;
     const factory = mod[factoryName];
 
-    Bun.mock.module(packageName, () => {
+    const bunMock = Bun as typeof Bun & {
+      mock: { module: (specifier: string, factory: () => unknown) => void };
+    };
+
+    bunMock.mock.module(packageName, () => {
       if (typeof factory === "function") {
         const mockValue = (factory as () => unknown)();
         if (typeof mockValue === "function") {
@@ -251,10 +255,32 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
 
 let activeDbAdapter: DbAdapter | null = null;
 
+function snapshotEnv(): Record<string, string | undefined> {
+  return { ...process.env };
+}
+
+function restoreEnv(snapshot: Record<string, string | undefined>): void {
+  for (const key of Object.keys(process.env)) {
+    if (!(key in snapshot)) {
+      delete process.env[key];
+    }
+  }
+  for (const [key, value] of Object.entries(snapshot)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+}
+
 export async function prepareRuntimeEnvironment(
   workspaceRoot: string,
   options: PrepareRuntimeEnvironmentOptions,
-): Promise<void> {
+): Promise<() => void> {
+  const envSnapshot = snapshotEnv();
+  const previousActiveDbAdapter = activeDbAdapter;
+
   const useMock = options.mock || process.env.FORGE_MOCK === "1";
   if (useMock) {
     await applyMocks(workspaceRoot, loadForgeLock(workspaceRoot));
@@ -265,6 +291,11 @@ export async function prepareRuntimeEnvironment(
   }
 
   activeDbAdapter = options.db ?? null;
+
+  return () => {
+    activeDbAdapter = previousActiveDbAdapter;
+    restoreEnv(envSnapshot);
+  };
 }
 
 export function getActiveDbAdapter(): DbAdapter | null {
@@ -345,62 +376,70 @@ export async function runEntry(
 
   const db = options.db ?? activeDbAdapter;
 
-  await prepareRuntimeEnvironment(workspaceRoot, {
-    mock: options.mock,
-    db,
-  });
+  const envSnapshot = snapshotEnv();
+  const previousActiveDbAdapter = activeDbAdapter;
 
-  const absolutePath = join(workspaceRoot, entry.file);
-  const mod = (await import(absolutePath)) as Record<string, unknown>;
-  const resolved = resolveHandlerFromModule(mod, entry.name);
-
-  if (!resolved) {
-    return {
-      ok: false,
-      entry,
-      diagnostics: [
-        ...diagnostics,
-        createDiagnostic({
-          severity: "error",
-          code: FORGE_RUNTIME_NOT_FOUND,
-          message: `export '${entry.name}' is not a callable handler`,
-          file: entry.file,
-        }),
-      ],
-      exitCode: 1,
-    };
-  }
-
-  const auth =
-    options.auth ??
-    resolveAuthFromCli({
-      userId: options.userId,
-      tenantId: options.tenantId,
-      role: options.role,
+  try {
+    await prepareRuntimeEnvironment(workspaceRoot, {
+      mock: options.mock,
+      db,
     });
 
-  const runtime: RunEntryRuntime = {
-    adapter: db,
-    tableMap: loadTableMap(workspaceRoot) ?? undefined,
-    workspaceRoot,
-    auth,
-    liveManager: options.liveManager,
-  };
+    const absolutePath = join(workspaceRoot, entry.file);
+    const mod = (await import(absolutePath)) as Record<string, unknown>;
+    const resolved = resolveHandlerFromModule(mod, entry.name);
 
-  const executed = await executeResolvedEntry(
-    workspaceRoot,
-    entry,
-    resolved,
-    { ...options, auth },
-    runtime,
-  );
+    if (!resolved) {
+      return {
+        ok: false,
+        entry,
+        diagnostics: [
+          ...diagnostics,
+          createDiagnostic({
+            severity: "error",
+            code: FORGE_RUNTIME_NOT_FOUND,
+            message: `export '${entry.name}' is not a callable handler`,
+            file: entry.file,
+          }),
+        ],
+        exitCode: 1,
+      };
+    }
 
-  return {
-    ok: executed.ok,
-    result: executed.result,
-    entry,
-    diagnostics: [...diagnostics, ...executed.diagnostics],
-    exitCode: executed.ok ? 0 : 1,
-    traceId: "traceId" in executed ? (executed as { traceId?: string }).traceId : undefined,
-  };
+    const auth =
+      options.auth ??
+      resolveAuthFromCli({
+        userId: options.userId,
+        tenantId: options.tenantId,
+        role: options.role,
+      });
+
+    const runtime: RunEntryRuntime = {
+      adapter: db,
+      tableMap: loadTableMap(workspaceRoot) ?? undefined,
+      workspaceRoot,
+      auth,
+      liveManager: options.liveManager,
+    };
+
+    const executed = await executeResolvedEntry(
+      workspaceRoot,
+      entry,
+      resolved,
+      { ...options, auth },
+      runtime,
+    );
+
+    return {
+      ok: executed.ok,
+      result: executed.result,
+      entry,
+      diagnostics: [...diagnostics, ...executed.diagnostics],
+      exitCode: executed.ok ? 0 : 1,
+      traceId: "traceId" in executed ? (executed as { traceId?: string }).traceId : undefined,
+    };
+  } finally {
+    activeDbAdapter = previousActiveDbAdapter;
+    restoreEnv(envSnapshot);
+  }
 }

@@ -1,10 +1,13 @@
 import { PGlite } from "@electric-sql/pglite";
 import type { DbAdapter, DbQueryResult, DbTransaction } from "./adapter.ts";
 
-function toQueryResult(result: { rows: Record<string, unknown>[] }): DbQueryResult {
+function toQueryResult(result: {
+  rows: Record<string, unknown>[];
+  affectedRows?: number;
+}): DbQueryResult {
   return {
     rows: result.rows,
-    rowCount: result.rows.length,
+    rowCount: result.affectedRows ?? result.rows.length,
   };
 }
 
@@ -18,7 +21,7 @@ export class PgliteAdapter implements DbAdapter {
 
   async query(sql: string, params: unknown[] = []): Promise<DbQueryResult> {
     const result = await this.db.query(sql, params);
-    return toQueryResult(result as { rows: Record<string, unknown>[] });
+    return toQueryResult(result as { rows: Record<string, unknown>[]; affectedRows?: number });
   }
 
   async begin(): Promise<DbTransaction> {

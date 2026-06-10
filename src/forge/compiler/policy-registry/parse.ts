@@ -77,5 +77,5 @@ export function parseAuthFromSlice(sourceSlice: string):
     return { kind: "system" };
   }
 
-  return { kind: "user" };
+  return { kind: "public" };
 }

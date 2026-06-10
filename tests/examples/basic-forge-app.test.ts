@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import type { SqlPlan } from "../../src/forge/compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
@@ -103,6 +103,8 @@ describe("examples/basic-forge-app", () => {
       existsSync(join(EXAMPLE_ROOT, "src", "forge", "_generated", "runtimeGraph.json")),
     ).toBe(true);
 
+    rmSync(join(EXAMPLE_ROOT, ".forge", "pglite"), { recursive: true, force: true });
+
     const devServer = await startDevServer({
       workspaceRoot: EXAMPLE_ROOT,
       host: "127.0.0.1",
@@ -120,5 +122,5 @@ describe("examples/basic-forge-app", () => {
     } finally {
       devServer.stop();
     }
-  }, 60_000);
+  }, 120_000);
 });

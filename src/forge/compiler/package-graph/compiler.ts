@@ -17,7 +17,7 @@ import {
   PackageCacheStore,
   forgeCacheDiscardedMessage,
 } from "../cache/store.ts";
-import { buildPackageCacheKey } from "../cache/key.ts";
+import { buildPackageCacheKey, cacheKeysEqual } from "../cache/key.ts";
 import { runWithConcurrency } from "../cache/scheduler.ts";
 import {
   GENERATOR_VERSION,
@@ -51,7 +51,6 @@ import type { SandboxBackend } from "../types/runtime.ts";
 export interface BuildOptions extends AnalyzeOptions {
   concurrency?: number;
   patternExpansionLimit?: number;
-  recipeVersion?: string;
   /** Informational only — does not invalidate per-package cache entries. */
   lockfileHash?: string;
 }

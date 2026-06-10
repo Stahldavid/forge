@@ -30,7 +30,7 @@ function canonicalizeLockEntry(entry: ForgeLockEntry): ForgeLockEntry {
     ...(entry.recipeVersion !== undefined
       ? { recipeVersion: entry.recipeVersion }
       : {}),
-    runtimeContexts: stableSortStrings([...entry.runtimeContexts]),
+    runtimeContexts: stableSortStrings([...entry.runtimeContexts]) as ForgeLockEntry["runtimeContexts"],
     capabilities: {
       ...entry.capabilities,
       secrets: stableSortSecrets([...entry.capabilities.secrets]),

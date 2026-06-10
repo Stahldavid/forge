@@ -28,6 +28,7 @@ export interface ForgeContext {
 }
 
 let sharedEnvStore: RuntimeEnvStore | null = null;
+let sharedEnvWorkspaceRoot: string | null = null;
 
 export function initializeRuntimeEnv(
   workspaceRoot: string,
@@ -35,11 +36,12 @@ export function initializeRuntimeEnv(
 ): RuntimeEnvStore {
   const { store } = loadEnvFiles({ workspaceRoot, envFiles });
   sharedEnvStore = store;
+  sharedEnvWorkspaceRoot = workspaceRoot;
   return store;
 }
 
 export function getRuntimeEnvStore(workspaceRoot?: string): RuntimeEnvStore {
-  if (sharedEnvStore) {
+  if (sharedEnvStore && (!workspaceRoot || workspaceRoot === sharedEnvWorkspaceRoot)) {
     return sharedEnvStore;
   }
 

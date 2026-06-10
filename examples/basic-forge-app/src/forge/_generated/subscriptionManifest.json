@@ -1,2 +1,2 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=65c83bbb7de6753c8a4c750b3a62a9003bbd243f6268a142c9bde5bfb74eb90f
-{"generatorVersion":"0.0.0","inputHash":"a66bb00b097d81a704e85a0e73b4b387e71154a25fee34da417be89c9eb28622","liveQueries":[{"exportName":"liveTickets","file":"src/queries/liveTickets.ts","name":"liveTickets","policy":"tickets.read"}],"schemaVersion":"0.1.0"}
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=9a4ba8abe4c8332c2771f8cfdcc8271755df4605f83b54ffc2f5e87357e10912
+{"generatorVersion":"0.0.0","inputHash":"f060c9dc0ce85058b7352a7cfeafdecd281f43168ee76f0fa3d831fabd38e1b0","liveQueries":[{"exportName":"liveTickets","file":"src/queries/liveTickets.ts","name":"liveTickets","policy":"tickets.read"}],"schemaVersion":"0.1.0"}

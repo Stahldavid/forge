@@ -80,4 +80,5 @@ export interface AnalyzeOptions {
   sandboxBackend?: SandboxBackend;
   resolutionMode: ResolutionMode;
   cacheDir: string;
+  recipeVersion?: string;
 }

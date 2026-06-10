@@ -13,6 +13,8 @@ const DEBOUNCE_MS = 400;
 export function shouldSkipWatchPath(absolutePath: string): boolean {
   const normalized = absolutePath.replace(/\\/g, "/");
   return SKIP_PATH_SEGMENTS.some((segment) =>
+    normalized === segment ||
+    normalized.startsWith(`${segment}/`) ||
     normalized.includes(`/${segment}/`),
   );
 }

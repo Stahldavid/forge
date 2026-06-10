@@ -1,12 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import type { SqlPlan } from "../../src/forge/compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { createMemoryAdapter } from "../../src/forge/runtime/db/memory-adapter.ts";
 import { applyMigrations } from "../../src/forge/runtime/db/migrate.ts";
 import { runEntry } from "../../src/forge/runtime/executor.ts";

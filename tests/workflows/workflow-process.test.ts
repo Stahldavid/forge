@@ -63,10 +63,10 @@ describe("workflow process", () => {
         }
       }
 
-      const run = await adapter.query(
+      const runResult = await adapter.query(
         `SELECT status FROM _forge_workflow_runs ORDER BY id DESC LIMIT 1`,
       );
-      expect(run.rows[0]?.status).toBe("completed");
+      expect(runResult.rows[0]?.status).toBe("completed");
 
       const steps = await adapter.query(
         `SELECT step_name, status, output FROM _forge_workflow_steps ORDER BY step_index`,

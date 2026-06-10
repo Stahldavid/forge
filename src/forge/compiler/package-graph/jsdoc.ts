@@ -6,7 +6,10 @@ function tagText(tag: ts.JSDocTag): string {
     return tag.comment.trim();
   }
   if (tag.comment) {
-    return ts.displayPartsToString(tag.comment).trim();
+    return tag.comment
+      .map((part) => part.text)
+      .join("")
+      .trim();
   }
   return "";
 }

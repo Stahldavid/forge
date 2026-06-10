@@ -1,6 +1,8 @@
-import type { FlexibleSchema } from "ai";
-
 export type ForgeAiProvider = "openai" | "anthropic" | "gateway";
+
+export type ForgeFlexibleSchema<T> = unknown & {
+  readonly __forgeStructuredOutput?: T;
+};
 
 export interface ForgeAiUsage {
   promptTokens: number;
@@ -46,7 +48,7 @@ export interface ForgeGenerateStructuredInput<T> {
   prompt: string;
   system?: string;
   purpose?: string;
-  schema: FlexibleSchema<T>;
+  schema: ForgeFlexibleSchema<T>;
 }
 
 export interface AiContext {
