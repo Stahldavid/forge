@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "support-sla",
+  "description": "Add SLA policy data for support tickets.",
+  "mode": "modify",
+  "changes": [
+    {
+      "kind": "addField",
+      "table": "tickets",
+      "field": {
+        "name": "slaDueAt",
+        "type": "timestamp",
+        "optional": true,
+        "indexed": true
+      }
+    },
+    {
+      "kind": "addField",
+      "table": "tickets",
+      "field": {
+        "name": "slaStatus",
+        "type": "enum",
+        "values": ["on_track", "at_risk", "breached"],
+        "default": "on_track",
+        "indexed": true
+      }
+    }
+  ]
+}

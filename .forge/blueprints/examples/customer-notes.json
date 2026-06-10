@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "customer-notes",
+  "description": "Add customer notes resource for support context.",
+  "mode": "create",
+  "resources": [
+    {
+      "name": "customerNotes",
+      "tenantScoped": true,
+      "fields": [
+        { "name": "customerId", "type": "ref", "refTable": "customers", "required": true },
+        { "name": "body", "type": "text", "required": true },
+        {
+          "name": "visibility",
+          "type": "enum",
+          "values": ["internal", "shared"],
+          "default": "internal"
+        }
+      ],
+      "crud": true,
+      "liveQuery": true,
+      "react": false,
+      "tests": true
+    }
+  ]
+}

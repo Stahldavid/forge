@@ -257,6 +257,17 @@ function playbooks(): AgentPlaybook[] {
       ],
     },
     {
+      title: "Apply a feature blueprint",
+      steps: [
+        "Write a JSON blueprint under .forge/blueprints.",
+        "Run forge feature validate <blueprint> --json.",
+        "Run forge feature plan <blueprint>.",
+        "Review the plan, impact, and risk.",
+        "Run forge feature apply <blueprint> --yes.",
+        "Run forge verify --strict.",
+      ],
+    },
+    {
       title: "Add a package",
       steps: [
         "Use forge add <alias>.",
@@ -669,6 +680,18 @@ forge make resource <name> --fields title:text,status:enum(open,closed) --yes
 \`\`\`
 
 Review the plan before applying when the resource touches schema or policies.
+
+### Apply a feature blueprint
+
+Use:
+
+\`\`\`bash
+forge feature validate .forge/blueprints/<name>.json --json
+forge feature plan .forge/blueprints/<name>.json
+forge feature apply .forge/blueprints/<name>.json --yes
+\`\`\`
+
+Review high-risk plans before applying. Use \`--allow-high-risk\` only when intentional.
 
 ### Add a package
 

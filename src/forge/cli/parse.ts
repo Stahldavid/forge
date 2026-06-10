@@ -20,6 +20,7 @@ import type { RlsSubcommand } from "./rls.ts";
 import type { DepsSubcommand } from "./deps.ts";
 import type { ReleaseAction, ReleaseArea } from "./release.ts";
 import type { MakeCommandOptions, MakePrimitive } from "../make/types.ts";
+import type { FeatureAction, FeatureCommandOptions } from "../feature/types.ts";
 
 export type ForgeCommand =
   | {
@@ -114,6 +115,7 @@ export type ForgeCommand =
       workspaceRoot: string;
     }
   | { kind: "make"; options: MakeCommandOptions }
+  | { kind: "feature"; options: FeatureCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -333,6 +335,16 @@ const MAKE_PRIMITIVES: MakePrimitive[] = [
   "apply",
   "rollback",
 ];
+const FEATURE_ACTIONS: FeatureAction[] = [
+  "validate",
+  "plan",
+  "diff",
+  "apply",
+  "list",
+  "inspect",
+  "rollback",
+  "examples",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -413,7 +425,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -736,6 +748,47 @@ export function parseCli(argv: string[]): ParsedCli {
             withReact: parseFlag(argv, "--with-react"),
             withTests: parseFlag(argv, "--with-tests"),
             withCreateForm: parseFlag(argv, "--with-create-form"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "feature": {
+      const action = rest[0] as FeatureAction | undefined;
+      if (!action || !FEATURE_ACTIONS.includes(action)) {
+        errors.push(`forge feature requires action: ${FEATURE_ACTIONS.join(", ")}`);
+        return { command: null, workspaceRoot, errors };
+      }
+      const blueprintPath =
+        ["validate", "plan", "diff", "apply"].includes(action) ? rest[1] : undefined;
+      const featureId =
+        ["inspect", "rollback"].includes(action) ? rest[1] : undefined;
+      const exampleName = action === "examples" ? rest[1] : undefined;
+      if (["validate", "plan", "diff", "apply"].includes(action) && !blueprintPath) {
+        errors.push(`forge feature ${action} requires a blueprint path`);
+      }
+      if (["inspect", "rollback"].includes(action) && !featureId) {
+        errors.push(`forge feature ${action} requires a feature id`);
+      }
+      return {
+        command: {
+          kind: "feature",
+          options: {
+            action,
+            blueprintPath,
+            featureId,
+            exampleName,
+            writePath: parseOptionValue(argv, "--write"),
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            dryRun: parseFlag(argv, "--dry-run"),
+            yes: parseFlag(argv, "--yes"),
+            noGenerate: parseFlag(argv, "--no-generate"),
+            noVerify: parseFlag(argv, "--no-verify"),
+            keepFailed: parseFlag(argv, "--keep-failed"),
+            update: parseFlag(argv, "--update"),
+            allowHighRisk: parseFlag(argv, "--allow-high-risk"),
           },
         },
         workspaceRoot,
@@ -1293,6 +1346,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--with-react",
     "--with-tests",
     "--with-create-form",
+    "--write",
+    "--update",
+    "--allow-high-risk",
     "--to",
     "--changed",
     "--env",
@@ -1372,6 +1428,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--event" ||
         arg === "--trigger" ||
         arg === "--component" ||
+        arg === "--write" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||
         arg === "--host" ||

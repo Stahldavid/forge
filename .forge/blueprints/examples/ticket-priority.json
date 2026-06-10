@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "ticket-priority",
+  "description": "Add priority field, update command, liveQuery and badge component.",
+  "mode": "modify",
+  "changes": [
+    {
+      "kind": "addField",
+      "table": "tickets",
+      "field": {
+        "name": "priority",
+        "type": "enum",
+        "values": ["low", "medium", "high"],
+        "default": "medium",
+        "indexed": true
+      }
+    },
+    {
+      "kind": "addCommand",
+      "name": "updateTicketPriority",
+      "table": "tickets",
+      "policy": "tickets.update",
+      "emits": "ticket.priorityUpdated"
+    },
+    {
+      "kind": "addLiveQuery",
+      "name": "liveTicketsByPriority",
+      "table": "tickets",
+      "policy": "tickets.read"
+    },
+    {
+      "kind": "addComponent",
+      "name": "PriorityBadge",
+      "table": "tickets",
+      "fields": ["priority"]
+    }
+  ]
+}

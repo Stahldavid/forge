@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=a7d16d11442ec294033d6f6c5745f3d05275c67221ab40c01ff470ccb2dc627e content=09c0653cf0771f6f591c02f7934e5ce5ce58529e45606542b18fab54dfd4240f
+// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=6721392c7f5870898e76f6de947ecc55dcacfe23afb7e7e72572fe6762358dc3
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -543,6 +543,17 @@ export const agentContract = {
         "Run forge verify --strict."
       ],
       "title": "Scaffold a resource"
+    },
+    {
+      "steps": [
+        "Write a JSON blueprint under .forge/blueprints.",
+        "Run forge feature validate <blueprint> --json.",
+        "Run forge feature plan <blueprint>.",
+        "Review the plan, impact, and risk.",
+        "Run forge feature apply <blueprint> --yes.",
+        "Run forge verify --strict."
+      ],
+      "title": "Apply a feature blueprint"
     },
     {
       "steps": [

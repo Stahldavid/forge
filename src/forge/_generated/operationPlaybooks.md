@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=a7d16d11442ec294033d6f6c5745f3d05275c67221ab40c01ff470ccb2dc627e content=61a349b54f5d0e9cb408bc4e3e53e5125635de68797f1b1a4ab2814213c4b2df
+// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=279ab7f4cc8810e8847c64c471144c5e77014c3eed108cfce773b592e7ee798c
 # Operation Playbooks
 
 ## Add a command
@@ -48,6 +48,15 @@
 3. Run forge make resource <name> --fields name:type --yes.
 4. Run forge generate.
 5. Run forge verify --strict.
+
+## Apply a feature blueprint
+
+1. Write a JSON blueprint under .forge/blueprints.
+2. Run forge feature validate <blueprint> --json.
+3. Run forge feature plan <blueprint>.
+4. Review the plan, impact, and risk.
+5. Run forge feature apply <blueprint> --yes.
+6. Run forge verify --strict.
 
 ## Add a package
 

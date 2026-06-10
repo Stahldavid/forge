@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "invoices",
+  "description": "Add invoices resource with CRUD, live list and React page.",
+  "mode": "create",
+  "resources": [
+    {
+      "name": "invoices",
+      "tenantScoped": true,
+      "fields": [
+        { "name": "amount", "type": "number", "required": true },
+        {
+          "name": "status",
+          "type": "enum",
+          "values": ["draft", "paid", "void"],
+          "default": "draft",
+          "indexed": true
+        },
+        { "name": "dueDate", "type": "timestamp", "optional": true }
+      ],
+      "policies": {
+        "read": ["owner", "admin", "member"],
+        "create": ["owner", "admin"],
+        "update": ["owner", "admin"],
+        "delete": ["owner"]
+      },
+      "crud": true,
+      "liveQuery": true,
+      "react": true,
+      "frontend": {
+        "react": true,
+        "page": "/invoices",
+        "components": ["list", "createForm"]
+      },
+      "tests": true
+    }
+  ]
+}

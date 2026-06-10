@@ -10,6 +10,8 @@ node_modules/
 !.forge/upgrades/.gitkeep
 .forge/make-plans/*
 !.forge/make-plans/.gitkeep
+.forge/features/plans/*
+!.forge/features/plans/.gitkeep
 tests/**/.tmp/
 *.log
 .DS_Store

@@ -98,6 +98,7 @@ import {
   runReleaseCommand,
 } from "./release.ts";
 import { formatMakeHuman, formatMakeJson, runMakeCommand } from "./make.ts";
+import { formatFeatureHuman, formatFeatureJson, runFeatureCommand } from "./feature.ts";
 import {
   formatQueryJson,
   formatQueryListHuman,
@@ -481,6 +482,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatMakeJson(result));
       } else {
         process.stdout.write(formatMakeHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "feature": {
+      const result = await runFeatureCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatFeatureJson(result));
+      } else {
+        process.stdout.write(formatFeatureHuman(result));
       }
       return result.exitCode;
     }

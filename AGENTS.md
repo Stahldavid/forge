@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=a7d16d11442ec294033d6f6c5745f3d05275c67221ab40c01ff470ccb2dc627e content=f6fdd399bade35c2ce326d4e157567ddbfe63e449eb0f1a287138c1c9b99b784
+// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=0c24210eaeca1752b6d55a6c30c69b14d468c66f634aa5101f3aae5a24d20853
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -110,6 +110,18 @@ forge make resource <name> --fields title:text,status:enum(open,closed) --yes
 ```
 
 Review the plan before applying when the resource touches schema or policies.
+
+### Apply a feature blueprint
+
+Use:
+
+```bash
+forge feature validate .forge/blueprints/<name>.json --json
+forge feature plan .forge/blueprints/<name>.json
+forge feature apply .forge/blueprints/<name>.json --yes
+```
+
+Review high-risk plans before applying. Use `--allow-high-risk` only when intentional.
 
 ### Add a package
 
