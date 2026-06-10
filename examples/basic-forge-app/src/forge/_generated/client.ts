@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=2ed7910b6cc430cb9984345eed04637f94887297274f7e2981b0e16a7065d158
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=9b27e66a63e6abbf0c65ca5d8c1d64c7992fc7249842a9174b97b4a99c72a4bd
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
@@ -38,12 +38,21 @@ async function resolveAuthHeaders(
     ...(resolved.headers ?? {}),
   };
 
+  const token =
+    typeof resolved.getToken === "function"
+      ? await resolved.getToken()
+      : resolved.token;
+  if (typeof token === "string" && token.length > 0) {
+    headers.authorization = `Bearer ${token}`;
+  }
+
   for (const [key, value] of Object.entries(authRecord)) {
     if (
       typeof value === "string" &&
       key !== "userId" &&
       key !== "tenantId" &&
-      key !== "role"
+      key !== "role" &&
+      key !== "token"
     ) {
       headers[key] = value;
     }

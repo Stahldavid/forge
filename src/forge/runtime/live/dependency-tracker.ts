@@ -24,7 +24,7 @@ export class DependencyTracker {
 
 export function tenantIdFromAuth(auth: AuthContext | undefined): string | null {
   if (auth?.kind === "user") {
-    return auth.tenantId;
+    return auth.tenantId ?? null;
   }
   if (auth?.kind === "system" && auth.tenantId) {
     return auth.tenantId;

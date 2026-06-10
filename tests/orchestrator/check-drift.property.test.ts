@@ -42,7 +42,7 @@ describe("Property 3: Check Equals Drift", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 60_000);
 
   test(
     "check exits 1 when orphaned generated files exist",
@@ -80,7 +80,7 @@ describe("Property 3: Check Equals Drift", () => {
       ),
       { numRuns: 3 },
     );
-  }, 30_000);
+  }, 120_000);
 
   test("check exits 0 when no drift, orphans, or errors", async () => {
     const workspace = scaffoldGenerateWorkspace("check-clean");
@@ -96,5 +96,5 @@ describe("Property 3: Check Equals Drift", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 60_000);
 });

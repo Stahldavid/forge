@@ -15,7 +15,21 @@ export interface CliAuthInput {
 export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
   const { userId, tenantId, role } = input;
   if (userId && tenantId && role) {
-    return { kind: "user", userId, tenantId, role };
+    return {
+      kind: "user",
+      userId,
+      tenantId,
+      role,
+      roles: [role],
+      permissions: [],
+      token: {
+        issuer: "dev-headers",
+        audience: "dev",
+        subject: userId,
+        authProvider: "dev-headers",
+      },
+      claims: {},
+    };
   }
   return { kind: "anonymous" };
 }
@@ -40,12 +54,7 @@ export function systemAuthFromSnapshot(
     return {
       kind: "system",
       tenantId: tenantId ?? snapshot.tenantId,
-      triggeredBy: {
-        userId: snapshot.userId,
-        tenantId: snapshot.tenantId,
-        role: snapshot.role,
-        kind: "user",
-      },
+      triggeredBy: snapshot,
     };
   }
 

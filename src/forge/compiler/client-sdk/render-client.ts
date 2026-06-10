@@ -2,9 +2,11 @@ import type { ClientManifest, ReactManifest } from "./build-manifest.ts";
 
 export function renderClientTypesTs(): string {
   return `export type ForgeStaticAuth = {
-  userId: string;
-  tenantId: string;
-  role: string;
+  userId?: string;
+  tenantId?: string;
+  role?: string;
+  token?: string;
+  getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
   [key: string]: unknown;
 };
@@ -13,6 +15,8 @@ export type ForgeResolvedAuth = {
   userId?: string;
   tenantId?: string;
   role?: string;
+  token?: string;
+  getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
   [key: string]: unknown;
 };
@@ -117,12 +121,21 @@ async function resolveAuthHeaders(
     ...(resolved.headers ?? {}),
   };
 
+  const token =
+    typeof resolved.getToken === "function"
+      ? await resolved.getToken()
+      : resolved.token;
+  if (typeof token === "string" && token.length > 0) {
+    headers.authorization = \`Bearer \${token}\`;
+  }
+
   for (const [key, value] of Object.entries(authRecord)) {
     if (
       typeof value === "string" &&
       key !== "userId" &&
       key !== "tenantId" &&
-      key !== "role"
+      key !== "role" &&
+      key !== "token"
     ) {
       headers[key] = value;
     }

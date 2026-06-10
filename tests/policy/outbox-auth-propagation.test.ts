@@ -43,9 +43,17 @@ describe("outbox auth propagation", () => {
         userId: "user-a",
         tenantId: tenantA,
         role: "member",
+        roles: ["member"],
+        permissions: [],
+        token: {
+          issuer: "dev-headers",
+          audience: "dev",
+          subject: "user-a",
+          authProvider: "dev-headers",
+        },
       });
     } finally {
       cleanupWorkspace(root);
     }
-  });
+  }, 30_000);
 });

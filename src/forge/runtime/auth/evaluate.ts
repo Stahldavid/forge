@@ -13,13 +13,21 @@ export interface PolicyEvaluationResult {
 function roleAllowed(
   matrix: PermissionMatrix,
   policy: string,
-  role: string,
+  roles: string[],
 ): boolean {
   const entry = matrix.entries.find((candidate) => candidate.policy === policy);
   if (!entry) {
     return false;
   }
-  return entry.roles.includes(role);
+  return roles.some((role) => entry.roles.includes(role));
+}
+
+function authRoles(auth: Extract<AuthContext, { kind: "user" }>): string[] {
+  return [...new Set([...(auth.role ? [auth.role] : []), ...(auth.roles ?? [])])];
+}
+
+function primaryRole(roles: string[]): string {
+  return roles[0] ?? "unknown";
 }
 
 export function evaluateCommandAuth(
@@ -84,17 +92,19 @@ function evaluateAuthRequirement(
     return { allowed: true };
   }
 
-  const allowed = roleAllowed(matrix, resolved.policy, auth.role);
+  const roles = authRoles(auth);
+  const allowed = roleAllowed(matrix, resolved.policy, roles);
+  const role = primaryRole(roles);
   if (allowed) {
-    return { allowed: true, policy: resolved.policy, role: auth.role };
+    return { allowed: true, policy: resolved.policy, role };
   }
 
   return {
     allowed: false,
     code: FORGE_POLICY_DENIED,
-    message: `role '${auth.role}' denied for policy '${resolved.policy}'`,
+    message: `role '${role}' denied for policy '${resolved.policy}'`,
     policy: resolved.policy,
-    role: auth.role,
+    role,
   };
 }
 
@@ -103,7 +113,7 @@ export function simulatePolicy(
   policy: string,
   role: string,
 ): PolicyEvaluationResult {
-  const allowed = roleAllowed(matrix, policy, role);
+  const allowed = roleAllowed(matrix, policy, [role]);
   return allowed
     ? { allowed: true, policy, role }
     : {

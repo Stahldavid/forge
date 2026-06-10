@@ -42,6 +42,7 @@ import { resolveByPackageName } from "../recipes/registry.ts";
 import { GENERATED_DIR } from "../emitter/constants.ts";
 import { serializeCanonical } from "../primitives/serialize.ts";
 import { buildImportGuardsArtifact } from "../guards/artifacts.ts";
+import type { AuthRegistryArtifact } from "../../runtime/auth/config.ts";
 
 export function serializeAppGraphJson(graph: AppGraph): string {
   const payload = {
@@ -365,10 +366,68 @@ export function serializeTenantScopeTs(scope: TenantScope): string {
   return `export const tenantScope = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+export function serializeAuthRegistryJson(registry: AuthRegistryArtifact): string {
+  return serializeCanonical(registry);
+}
+
+export function serializeAuthRegistryTs(registry: AuthRegistryArtifact): string {
+  const parsed: unknown = JSON.parse(serializeAuthRegistryJson(registry).trimEnd());
+  return `export const authRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeAuthConfigJson(registry: AuthRegistryArtifact): string {
+  return serializeCanonical({
+    schemaVersion: registry.schemaVersion,
+    modeEnv: "FORGE_AUTH_MODE",
+    defaultMode: registry.defaultMode,
+    modes: registry.modes,
+    issuerEnv: registry.issuerEnv,
+    audienceEnv: registry.audienceEnv,
+    jwksUriEnv: registry.jwksUriEnv,
+    algorithmsEnv: registry.algorithmsEnv,
+    requiresTenant: registry.requiresTenant,
+  });
+}
+
+export function serializeAuthConfigTs(registry: AuthRegistryArtifact): string {
+  const parsed: unknown = JSON.parse(serializeAuthConfigJson(registry).trimEnd());
+  return `export const authConfig = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeAuthClaimsJson(registry: AuthRegistryArtifact): string {
+  return serializeCanonical({
+    schemaVersion: registry.schemaVersion,
+    claims: registry.claims,
+  });
+}
+
+export function serializeAuthClaimsTs(registry: AuthRegistryArtifact): string {
+  const parsed: unknown = JSON.parse(serializeAuthClaimsJson(registry).trimEnd());
+  return `export const authClaims = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
 export function serializeAuthContextTs(): string {
   return `export type AuthContext =
-  | { kind: "user"; userId: string; tenantId: string; role: string; permissions?: string[] }
-  | { kind: "system"; tenantId?: string; triggeredBy?: { userId?: string; tenantId?: string; role?: string } }
+  | {
+      kind: "user";
+      userId: string;
+      tenantId?: string;
+      role?: string;
+      roles?: string[];
+      permissions?: string[];
+      email?: string;
+      name?: string;
+      token?: {
+        issuer: string;
+        audience: string | string[];
+        subject: string;
+        expiresAt?: number;
+        issuedAt?: number;
+        authProvider: string;
+      };
+      claims?: Record<string, unknown>;
+    }
+  | { kind: "system"; tenantId?: string; triggeredBy?: AuthContext }
   | { kind: "anonymous" };
 `;
 }

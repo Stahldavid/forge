@@ -9,6 +9,7 @@ import { resolveBunExecutable } from "./bun-exec.ts";
 import { runCheckCommand, runGenerateCommand } from "./commands.ts";
 import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
+import { runAuthCommand } from "./auth.ts";
 
 interface PackageScripts {
   typecheck?: string;
@@ -145,6 +146,26 @@ export async function runVerifyCommand(
       exitCode: agentContractCheck.exitCode,
     });
     diagnostics.push(...agentContractCheck.errors, ...agentContractCheck.warnings);
+
+    const authCheck = await runAuthCommand({
+      subcommand: "check",
+      workspaceRoot: options.workspaceRoot,
+      json: false,
+    });
+    steps.push({
+      name: "auth-check",
+      ok: authCheck.exitCode === 0,
+      exitCode: authCheck.exitCode,
+    });
+    if (!authCheck.ok && authCheck.error) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: authCheck.error.code,
+          message: authCheck.error.message,
+        }),
+      );
+    }
   }
 
   if (options.skipTypecheck) {

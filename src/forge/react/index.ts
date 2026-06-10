@@ -4,6 +4,8 @@ export type ForgeReactAuth = {
   userId?: string;
   tenantId?: string;
   role?: string;
+  token?: string;
+  getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
   [key: string]: unknown;
 };

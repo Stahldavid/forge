@@ -104,7 +104,13 @@ import {
   serializePermissionMatrixTs,
   serializeTenantScopeJson,
   serializeTenantScopeTs,
+  serializeAuthClaimsJson,
+  serializeAuthClaimsTs,
+  serializeAuthConfigJson,
+  serializeAuthConfigTs,
   serializeAuthContextTs,
+  serializeAuthRegistryJson,
+  serializeAuthRegistryTs,
   serializeSecretsContextTs,
   serializeSecretRegistryJson,
   serializeSecretRegistryTs,
@@ -133,6 +139,8 @@ import {
   serializeReactManifestJson,
   buildMockMapEntries,
 } from "./serialize.ts";
+import { buildDefaultAuthRegistry, AUTH_ENV } from "../../runtime/auth/config.ts";
+import type { EnvSchema } from "../types/secret-registry.ts";
 
 export interface PlanInput {
   appGraph: AppGraph;
@@ -195,6 +203,29 @@ function buildForgeLock(input: PlanInput): ForgeLock {
   };
 }
 
+function augmentEnvSchemaWithAuthVars(schema: EnvSchema): EnvSchema {
+  const byName = new Map(schema.variables.map((variable) => [variable.name, variable]));
+  for (const name of [
+    AUTH_ENV.mode,
+    AUTH_ENV.issuer,
+    AUTH_ENV.audience,
+    AUTH_ENV.jwksUri,
+    AUTH_ENV.algorithms,
+  ]) {
+    if (!byName.has(name)) {
+      byName.set(name, {
+        name,
+        kind: "config",
+        required: false,
+        source: "auth",
+      });
+    }
+  }
+  return {
+    variables: [...byName.values()].sort((a, b) => a.name.localeCompare(b.name)),
+  };
+}
+
 export function plan(input: PlanInput): EmitPlan {
   const matrix = buildRuntimeMatrix(input.classified);
   const dataGraph = buildDataGraph(input.appGraph);
@@ -208,11 +239,14 @@ export function plan(input: PlanInput): EmitPlan {
   const permissionMatrix = buildPermissionMatrixFromRegistry(policyRegistry);
   const tenantScope = buildTenantScope(dataGraph);
   const secretRegistry = buildSecretRegistry(input.classified);
-  const envSchema = augmentEnvSchemaWithPublicVars(
-    buildEnvSchema(secretRegistry),
-    input.classified,
+  const envSchema = augmentEnvSchemaWithAuthVars(
+    augmentEnvSchemaWithPublicVars(
+      buildEnvSchema(secretRegistry),
+      input.classified,
+    ),
   );
   const configRegistry = buildConfigRegistry(secretRegistry);
+  const authRegistry = buildDefaultAuthRegistry(tenantScope.tables.length > 0);
   const aiRegistry = buildAiRegistry(input.appGraph, input.classified);
   const aiModels = buildAiModels();
   const queryRegistry = buildQueryRegistry(input.appGraph);
@@ -411,6 +445,30 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/tenantScope.json`,
       serializeTenantScopeJson(tenantScope),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/authRegistry.ts`,
+      serializeAuthRegistryTs(authRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/authRegistry.json`,
+      serializeAuthRegistryJson(authRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/authConfig.ts`,
+      serializeAuthConfigTs(authRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/authConfig.json`,
+      serializeAuthConfigJson(authRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/authClaims.ts`,
+      serializeAuthClaimsTs(authRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/authClaims.json`,
+      serializeAuthClaimsJson(authRegistry),
     ),
     makeEmitFile(`${GENERATED_DIR}/authContext.ts`, serializeAuthContextTs()),
     makeEmitFile(`${GENERATED_DIR}/secretsContext.ts`, serializeSecretsContextTs()),

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=3dca8512d9791aca68400cfc59bb3ddc0654faa8040d530afba050fc105a74dc content=ff2e8b763079c41c1b07c517c14dfffed8230fcfa8bd9b69f5c6dbdd1902befe
+// @forge-generated generator=0.0.0 input=7171fcf9ca7de84a957a459b54022eb79e88a37d5572ddc6f5c425365f9b334d content=d179b02d36f3dda944386294ec6680e10d2b8f648e3172532b662d9d53bd5b13
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -262,6 +262,40 @@ export const importGuards = {
       "rationale": {
         "shared": "insufficient signals to prove shared-safe purity",
         "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "jose",
+      "alias": "jose",
+      "compatible": [
+        "client",
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "shared context requires pure code without network/fs/process",
+        "client": "client may perform network egress",
         "server": "server-side context allows IO capabilities",
         "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
         "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",

@@ -31,6 +31,7 @@ import type { QueryRegistry } from "../types/query-registry.ts";
 import type { LiveQueryRegistry } from "../types/live-query-registry.ts";
 import type { ClientManifest } from "../client-sdk/build-manifest.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
+import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
 import type {
   AgentContract,
   AgentIntegrationInfo,
@@ -426,6 +427,21 @@ export function buildAgentContractArtifacts(
       reactHooks: input.clientManifest.react.hooks,
       transport: input.clientManifest.transport,
     },
+    auth: {
+      modes: ["dev-headers", "jwt", "oidc", "disabled"],
+      defaultMode: "dev-headers",
+      productionDefaultAllowed: false,
+      bearerTokenHeader: "Authorization",
+      env: {
+        mode: AUTH_ENV.mode,
+        issuer: AUTH_ENV.issuer,
+        audience: AUTH_ENV.audience,
+        jwksUri: AUTH_ENV.jwksUri,
+        algorithms: AUTH_ENV.algorithms,
+      },
+      claims: DEFAULT_AUTH_CLAIMS,
+      requiresTenant: input.tenantScope.tables.length > 0,
+    },
     deploy: {
       selfHost: true,
       files: [
@@ -544,6 +560,8 @@ Do not:
 - Queries and liveQueries are read-only.
 - Actions perform side effects after commit.
 - Workflows orchestrate durable steps.
+- Production API calls use \`Authorization: Bearer <JWT>\` in \`jwt\` or \`oidc\` auth mode.
+- \`dev-headers\` auth is for \`forge dev\`, tests, and local agent workflows only.
 - AI is only allowed in actions, workflows, endpoints, and server code.
 - Secrets are accessed through \`ctx.secrets\`.
 
@@ -560,6 +578,7 @@ Do not:
 \`\`\`bash
 forge inspect app --json
 forge inspect all --json
+forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
@@ -580,6 +599,13 @@ ${renderList(policies)}
 ## Secrets
 
 ${renderList(secrets)}
+
+## Auth
+
+- Modes: ${contract.auth.modes.join(", ")}
+- Production auth: \`jwt\` or \`oidc\`
+- Bearer header: \`${contract.auth.bearerTokenHeader}: Bearer <token>\`
+- Tenant claim: \`${contract.auth.claims.tenantId ?? "not configured"}\`
 
 ## Common tasks
 

@@ -50,7 +50,7 @@ function resolveTenantId(
   }
 
   if (auth?.kind === "user") {
-    return auth.tenantId;
+    return auth.tenantId ?? null;
   }
 
   if (auth?.kind === "system" && auth.tenantId) {

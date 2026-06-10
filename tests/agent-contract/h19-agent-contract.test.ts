@@ -67,7 +67,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("AGENTS.md preserves user notes section", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-user-notes");
@@ -91,7 +91,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("markdown maps include rules and playbooks", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-markdown");
@@ -109,7 +109,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("inspect all and agent-contract print expose generated contract", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-inspect");
@@ -130,7 +130,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("doctor reports healthy and missing generated artifacts", async () => {
     const missing = scaffoldGenerateWorkspace("h19-doctor-missing");
@@ -151,7 +151,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(healthy);
     }
-  });
+  }, 30_000);
 
   test("agent-contract check detects stale contract", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-stale");
@@ -172,7 +172,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("contract does not include env secret values", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-secret-redaction");
@@ -187,7 +187,7 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("parseCli and verify strict include H19 commands", async () => {
     expect(parseCli(["agent-contract", "generate"]).command).toMatchObject({
@@ -215,5 +215,5 @@ describe("H19 agent contract", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 });

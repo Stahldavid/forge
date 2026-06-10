@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=0837ed0ebf97b2d7184750c7abd371e0406401c0d15dc6623c29d6776271b342
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=069f1a325e70321fb77ac4457ff138a3ece8c3aaf6f40957833b3fcbab5f4bad
 export const agentContract = {
   "actions": [
     {
@@ -59,6 +59,34 @@ export const agentContract = {
       "gateway",
       "openai"
     ]
+  },
+  "auth": {
+    "bearerTokenHeader": "Authorization",
+    "claims": {
+      "email": "email",
+      "name": "name",
+      "permissions": "permissions",
+      "role": "role",
+      "roles": "roles",
+      "tenantId": "tenant_id",
+      "userId": "sub"
+    },
+    "defaultMode": "dev-headers",
+    "env": {
+      "algorithms": "FORGE_AUTH_ALGORITHMS",
+      "audience": "FORGE_AUTH_AUDIENCE",
+      "issuer": "FORGE_AUTH_ISSUER",
+      "jwksUri": "FORGE_AUTH_JWKS_URI",
+      "mode": "FORGE_AUTH_MODE"
+    },
+    "modes": [
+      "dev-headers",
+      "jwt",
+      "oidc",
+      "disabled"
+    ],
+    "productionDefaultAllowed": false,
+    "requiresTenant": true
   },
   "client": {
     "commands": [

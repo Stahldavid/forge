@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=911c586e7f196a7a348ddac47babd4e40988c4175b7ae1c5fe6024bc911ed217
+{"algorithmsEnv":"FORGE_AUTH_ALGORITHMS","audienceEnv":"FORGE_AUTH_AUDIENCE","defaultMode":"dev-headers","issuerEnv":"FORGE_AUTH_ISSUER","jwksUriEnv":"FORGE_AUTH_JWKS_URI","modeEnv":"FORGE_AUTH_MODE","modes":["dev-headers","jwt","oidc","disabled"],"requiresTenant":true,"schemaVersion":"0.1.0"}

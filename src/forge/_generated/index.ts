@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=eb8969e9c73c889933f582f8b790851a06d3bd49089208206f420481bbd031a9 content=c19d3258f955855807ca35f3e895f53db0f58fe4a6d61bcc8bab2b95b3435423
+// @forge-generated generator=0.0.0 input=7171fcf9ca7de84a957a459b54022eb79e88a37d5572ddc6f5c425365f9b334d content=7d1fbe1812e772eb3c77da418753cfedc2e4f31219d2ab00b3d7d494063f16c2
 export * from "./actionSubscriptions";
 export * from "./agentContract";
 export * from "./aiContext";
@@ -7,7 +7,10 @@ export * from "./aiProviders";
 export * from "./aiRegistry";
 export * from "./api";
 export * from "./appGraph";
+export * from "./authClaims";
+export * from "./authConfig";
 export * from "./authContext";
+export * from "./authRegistry";
 export * from "./client";
 export * from "./clientApi";
 export * from "./clientManifest";

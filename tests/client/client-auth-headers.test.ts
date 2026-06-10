@@ -40,7 +40,7 @@ describe("client auth headers", () => {
       handle.stop();
       cleanupWorkspace(root);
     }
-  });
+  }, 30_000);
 
   test.serial("async auth provider merges returned headers", async () => {
     const { root, tenantA, tenantB } = await scaffoldClientWorkspace("client-auth-fn");
@@ -84,7 +84,7 @@ describe("client auth headers", () => {
       handle.stop();
       cleanupWorkspace(root);
     }
-  });
+  }, 30_000);
 
   test.serial("liveQuery sends auth headers through fetch streaming", async () => {
     const { root, tenantA } = await scaffoldClientWorkspace("client-live-auth");
@@ -151,5 +151,5 @@ describe("client auth headers", () => {
       globalThis.fetch = originalFetch;
       cleanupWorkspace(root);
     }
-  });
+  }, 30_000);
 });

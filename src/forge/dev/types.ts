@@ -16,6 +16,7 @@ export interface DevServerOptions {
   telemetry?: string[];
   envFile?: string;
   mode?: "dev" | "serve";
+  allowDevAuth?: boolean;
 }
 
 export interface DevServerDbState {

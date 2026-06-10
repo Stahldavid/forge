@@ -1,8 +1,10 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=a9db96d4f410c59ac863abb460583d12b657f24359630031bd20de8c46cca40f
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=39ad42ec98ed7aebc56e061aa399738c1175f0a7b4261b5bf2df70eb59afcfe2
 export type ForgeStaticAuth = {
-  userId: string;
-  tenantId: string;
-  role: string;
+  userId?: string;
+  tenantId?: string;
+  role?: string;
+  token?: string;
+  getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
   [key: string]: unknown;
 };
@@ -11,6 +13,8 @@ export type ForgeResolvedAuth = {
   userId?: string;
   tenantId?: string;
   role?: string;
+  token?: string;
+  getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
   [key: string]: unknown;
 };

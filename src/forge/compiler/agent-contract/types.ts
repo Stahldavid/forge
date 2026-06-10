@@ -106,6 +106,30 @@ export interface AgentClientInfo {
   transport: Record<string, string>;
 }
 
+export interface AgentAuthInfo {
+  modes: Array<"dev-headers" | "jwt" | "oidc" | "disabled">;
+  defaultMode: "dev-headers";
+  productionDefaultAllowed: false;
+  bearerTokenHeader: "Authorization";
+  env: {
+    mode: string;
+    issuer: string;
+    audience: string;
+    jwksUri: string;
+    algorithms: string;
+  };
+  claims: {
+    userId: string;
+    tenantId?: string;
+    role?: string;
+    roles?: string;
+    permissions?: string;
+    email?: string;
+    name?: string;
+  };
+  requiresTenant: boolean;
+}
+
 export interface AgentDeployInfo {
   selfHost: boolean;
   files: string[];
@@ -139,6 +163,7 @@ export interface AgentContract {
   telemetry: AgentTelemetryInfo;
   ai: AgentAiInfo;
   client: AgentClientInfo;
+  auth: AgentAuthInfo;
   deploy?: AgentDeployInfo;
   rules: AgentRuntimeRule[];
   playbooks: AgentPlaybook[];

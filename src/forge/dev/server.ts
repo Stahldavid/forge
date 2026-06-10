@@ -2,12 +2,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
+  FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION,
   FORGE_DEV_INVOKE_FAILED,
   FORGE_DEV_SERVER_ERROR,
   FORGE_POLICY_DENIED,
   FORGE_RUNTIME_NOT_FOUND,
 } from "../compiler/diagnostics/codes.ts";
-import { parseAuthHeaders } from "../runtime/auth/resolve.ts";
+import { authenticateHeaders } from "../runtime/auth/authenticate.ts";
+import { loadAuthConfigFromEnv } from "../runtime/auth/config.ts";
+import { ForgeAuthError } from "../runtime/auth/errors.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
@@ -87,7 +90,7 @@ function corsPreflight(): Response {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, x-forge-user-id, x-forge-tenant-id, x-forge-role",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type, x-forge-user-id, x-forge-tenant-id, x-forge-role",
     },
   });
 }
@@ -118,6 +121,20 @@ export async function startDevServer(
   options: DevServerOptions,
 ): Promise<DevServerHandle> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
+  const authConfig = loadAuthConfigFromEnv(workspaceRoot, {
+    defaultMode: "dev-headers",
+  });
+  if (
+    options.mode === "serve" &&
+    authConfig.mode === "dev-headers" &&
+    !options.allowDevAuth
+  ) {
+    throw new ForgeAuthError(
+      FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION,
+      "forge serve rejects FORGE_AUTH_MODE=dev-headers unless --allow-dev-auth is set",
+      { status: 403 },
+    );
+  }
 
   const devManifest = readGeneratedJson<DevManifest>(
     workspaceRoot,
@@ -292,7 +309,11 @@ export async function startDevServer(
               sinks: telemetrySinks,
             },
             auth: {
-              mode: "dev-headers",
+              mode: authConfig.mode,
+              issuerConfigured: Boolean(authConfig.issuer),
+              audienceConfigured: Boolean(authConfig.audience),
+              jwksConfigured: Boolean(authConfig.jwksUri),
+              requiresTenant: authConfig.requiresTenant,
             },
             env: {
               loadedFiles: envStore.loadedFiles,
@@ -347,7 +368,7 @@ export async function startDevServer(
             }
           }
 
-          const auth = parseAuthHeaders(request.headers);
+          const auth = await authenticateHeaders(request.headers, authConfig);
           let subscriptionId: string | null = null;
 
           return createSseResponse(
@@ -697,7 +718,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
-            const auth = parseAuthHeaders(request.headers);
+            const auth = await authenticateHeaders(request.headers, authConfig);
 
             const result = await runQuery(
               workspaceRoot,
@@ -763,7 +784,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
-            const auth = parseAuthHeaders(request.headers);
+            const auth = await authenticateHeaders(request.headers, authConfig);
 
             await prepareRuntimeEnvironment(workspaceRoot, {
               mock: options.mock,
@@ -827,6 +848,21 @@ export async function startDevServer(
           404,
         );
       } catch (error) {
+        if (error instanceof ForgeAuthError) {
+          return jsonResponse(
+            {
+              ok: false,
+              diagnostics: [
+                createDiagnostic({
+                  severity: "error",
+                  code: error.code,
+                  message: error.message,
+                }),
+              ],
+            },
+            error.status,
+          );
+        }
         const message =
           error instanceof Error ? error.message : "dev server request failed";
         return jsonResponse(

@@ -21,6 +21,7 @@ export interface DevCommandOptions {
   telemetry: string[];
   envFile?: string;
   mode?: "dev" | "serve";
+  allowDevAuth?: boolean;
 }
 
 export interface DevCommandResult {
@@ -65,6 +66,7 @@ export async function runDevCommand(
       telemetry: options.telemetry,
       envFile: options.envFile,
       mode: options.mode,
+      allowDevAuth: options.allowDevAuth,
     });
   } catch (error) {
     const message =

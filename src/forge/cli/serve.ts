@@ -1,6 +1,9 @@
 import { existsSync } from "node:fs";
 import { runGenerateCommand } from "./commands.ts";
 import { runDevCommand } from "./dev.ts";
+import { initializeRuntimeEnv } from "../runtime/context/create-context.ts";
+import { loadAuthConfigFromEnv } from "../runtime/auth/config.ts";
+import { FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION } from "../compiler/diagnostics/codes.ts";
 
 export interface ServeCommandOptions {
   workspaceRoot: string;
@@ -9,9 +12,34 @@ export interface ServeCommandOptions {
   databaseUrl?: string;
   json: boolean;
   envFile?: string;
+  allowDevAuth?: boolean;
 }
 
 export async function runServeCommand(options: ServeCommandOptions): Promise<number> {
+  initializeRuntimeEnv(
+    options.workspaceRoot,
+    options.envFile ? [options.envFile] : undefined,
+  );
+
+  const authConfig = loadAuthConfigFromEnv(options.workspaceRoot);
+  if (authConfig.mode === "dev-headers" && !options.allowDevAuth) {
+    const message =
+      "forge serve requires FORGE_AUTH_MODE=jwt|oidc|disabled or --allow-dev-auth";
+    if (options.json) {
+      process.stdout.write(
+        `${JSON.stringify({
+          ok: false,
+          code: FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION,
+          error: message,
+          exitCode: 1,
+        })}\n`,
+      );
+    } else {
+      console.error(`error ${FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION}: ${message}`);
+    }
+    return 1;
+  }
+
   const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
   if (!databaseUrl) {
     const message = "forge serve requires DATABASE_URL or --database-url";
@@ -58,6 +86,7 @@ export async function runServeCommand(options: ServeCommandOptions): Promise<num
     telemetry: ["local"],
     envFile: options.envFile,
     mode: "serve",
+    allowDevAuth: options.allowDevAuth,
   });
 
   return result.exitCode;

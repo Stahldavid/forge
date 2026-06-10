@@ -1,5 +1,23 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=b1a42bda2c7bc6922a9cc83b8586cda9377d9f18a5feb5c4bf5c2f1953e80d07
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=cf170e035d456c3ac698211e5b5a5b65a5743332654a8d5987281c050002cf99
 export type AuthContext =
-  | { kind: "user"; userId: string; tenantId: string; role: string; permissions?: string[] }
-  | { kind: "system"; tenantId?: string; triggeredBy?: { userId?: string; tenantId?: string; role?: string } }
+  | {
+      kind: "user";
+      userId: string;
+      tenantId?: string;
+      role?: string;
+      roles?: string[];
+      permissions?: string[];
+      email?: string;
+      name?: string;
+      token?: {
+        issuer: string;
+        audience: string | string[];
+        subject: string;
+        expiresAt?: number;
+        issuedAt?: number;
+        authProvider: string;
+      };
+      claims?: Record<string, unknown>;
+    }
+  | { kind: "system"; tenantId?: string; triggeredBy?: AuthContext }
   | { kind: "anonymous" };

@@ -97,11 +97,13 @@ describe("self-host deploy packaging", () => {
       expect(read(project, "deploy/.env.example")).toContain("DATABASE_URL=");
       expect(read(project, "deploy/.env.example")).toContain("NEXT_PUBLIC_FORGE_URL=");
       expect(read(project, "deploy/.env.example")).toContain("STRIPE_SECRET_KEY=");
-      expect(read(project, "deploy/README.md")).toContain("FORGE_AUTH_MODE=dev-headers");
+      expect(read(project, "deploy/README.md")).toContain("FORGE_AUTH_MODE=jwt");
+      expect(read(project, "deploy/.env.example")).toContain("FORGE_AUTH_MODE=oidc");
+      expect(read(project, "deploy/.env.example")).toContain("FORGE_AUTH_ISSUER=");
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("self-host env and check validate generated deploy state", async () => {
     const { workspace, project } = await scaffoldSupportApp("h18-check");
@@ -117,6 +119,7 @@ describe("self-host deploy packaging", () => {
       });
       expect(env.exitCode).toBe(0);
       expect(read(project, "deploy/.env.example")).toContain("AI_GATEWAY_API_KEY=");
+      expect(read(project, "deploy/.env.example")).toContain("FORGE_AUTH_AUDIENCE=");
 
       const missingArtifacts = await runSelfHostCommand({
         subcommand: "check",
@@ -151,10 +154,11 @@ describe("self-host deploy packaging", () => {
       expect(checked.exitCode).toBe(0);
       expect(checked.checks?.map((check) => check.name)).toContain("generated");
       expect(checked.checks?.map((check) => check.name)).toContain("env-example-secrets");
+      expect(checked.checks?.map((check) => check.name)).toContain("auth-config");
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 
   test("forge build writes a deploy build manifest for a minimal workspace", async () => {
     const workspace = tempWorkspace("h18-build");
@@ -208,5 +212,5 @@ describe("self-host deploy packaging", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 });

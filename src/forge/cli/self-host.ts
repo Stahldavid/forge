@@ -57,6 +57,10 @@ function requiredEnvNames(workspaceRoot: string): string[] {
     "FORGE_ENV",
     "FORGE_PORT",
     "FORGE_AUTH_MODE",
+    "FORGE_AUTH_ISSUER",
+    "FORGE_AUTH_AUDIENCE",
+    "FORGE_AUTH_JWKS_URI",
+    "FORGE_AUTH_ALGORITHMS",
     "NEXT_PUBLIC_FORGE_URL",
     "POSTHOG_KEY",
     "POSTHOG_HOST",
@@ -86,7 +90,11 @@ function renderEnvExample(workspaceRoot: string): string {
     DATABASE_URL: "postgres://forge:forge@postgres:5432/forge_app",
     FORGE_ENV: "production",
     FORGE_PORT: "3765",
-    FORGE_AUTH_MODE: "dev-headers",
+    FORGE_AUTH_MODE: "oidc",
+    FORGE_AUTH_ISSUER: "",
+    FORGE_AUTH_AUDIENCE: "",
+    FORGE_AUTH_JWKS_URI: "",
+    FORGE_AUTH_ALGORITHMS: "RS256",
     NEXT_PUBLIC_FORGE_URL: "http://localhost:3765",
   };
 
@@ -97,7 +105,13 @@ function renderEnvExample(workspaceRoot: string): string {
     "# Forge runtime",
     `FORGE_ENV=${values.FORGE_ENV}`,
     `FORGE_PORT=${values.FORGE_PORT}`,
+    "",
+    "# Auth",
     `FORGE_AUTH_MODE=${values.FORGE_AUTH_MODE}`,
+    `FORGE_AUTH_ISSUER=${values.FORGE_AUTH_ISSUER}`,
+    `FORGE_AUTH_AUDIENCE=${values.FORGE_AUTH_AUDIENCE}`,
+    `FORGE_AUTH_JWKS_URI=${values.FORGE_AUTH_JWKS_URI}`,
+    `FORGE_AUTH_ALGORITHMS=${values.FORGE_AUTH_ALGORITHMS}`,
     "",
     "# Frontend",
     `NEXT_PUBLIC_FORGE_URL=${values.NEXT_PUBLIC_FORGE_URL}`,
@@ -171,7 +185,6 @@ function renderCompose(options: SelfHostCommandOptions): string {
     environment:
       DATABASE_URL: postgres://forge:forge@postgres:5432/forge_app
       FORGE_ENV: production
-      FORGE_AUTH_MODE: dev-headers
     depends_on:
       postgres:
         condition: service_healthy
@@ -190,7 +203,6 @@ function renderCompose(options: SelfHostCommandOptions): string {
     environment:
       DATABASE_URL: postgres://forge:forge@postgres:5432/forge_app
       FORGE_ENV: production
-      FORGE_AUTH_MODE: dev-headers
     depends_on:
       postgres:
         condition: service_healthy
@@ -299,7 +311,7 @@ Services:
 
 Notes:
 - The runtime does not apply migrations on boot; \`forge-migrate\` does that explicitly.
-- H18 uses \`FORGE_AUTH_MODE=dev-headers\`; put this stack behind your own auth proxy for real production use.
+- H20 expects \`FORGE_AUTH_MODE=jwt\` or \`oidc\` for production. Use access tokens with the Forge API audience.
 - LiveQuery is supported with one \`forge-runtime\` instance. Multiple runtime replicas need sticky sessions or a distributed subscription manager.
 `;
 }
@@ -387,6 +399,18 @@ export async function runSelfHostCommand(
     name: "env-example-secrets",
     ok: missingEnv.length === 0,
     details: missingEnv.length > 0 ? { missing: missingEnv } : undefined,
+  });
+  const authEnvNames = [
+    "FORGE_AUTH_MODE",
+    "FORGE_AUTH_ISSUER",
+    "FORGE_AUTH_AUDIENCE",
+    "FORGE_AUTH_JWKS_URI",
+    "FORGE_AUTH_ALGORITHMS",
+  ];
+  checks.push({
+    name: "auth-config",
+    ok: authEnvNames.every((name) => envExample.includes(`${name}=`)) &&
+      !envExample.includes("FORGE_AUTH_MODE=dev-headers"),
   });
   checks.push({
     name: "dockerignore-excludes-env",

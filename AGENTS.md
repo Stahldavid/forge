@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=f920ff0aa4c0125a423c57656801547afa5c89b30c164045aae1359c81f59f56 content=ceb9cc77c6986e2d6e3e42ced952ccd0c11f44bbdcde613a662ff56a044f3738
+// @forge-generated generator=0.0.0 input=7171fcf9ca7de84a957a459b54022eb79e88a37d5572ddc6f5c425365f9b334d content=47d08f4766545f1321c85d8af12705c365163558278160afe718827190273391
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -38,6 +38,8 @@ Do not:
 - Queries and liveQueries are read-only.
 - Actions perform side effects after commit.
 - Workflows orchestrate durable steps.
+- Production API calls use `Authorization: Bearer <JWT>` in `jwt` or `oidc` auth mode.
+- `dev-headers` auth is for `forge dev`, tests, and local agent workflows only.
 - AI is only allowed in actions, workflows, endpoints, and server code.
 - Secrets are accessed through `ctx.secrets`.
 
@@ -54,6 +56,7 @@ Do not:
 ```bash
 forge inspect app --json
 forge inspect all --json
+forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
@@ -76,6 +79,13 @@ Tenant-scoped tables:
 - AI_GATEWAY_API_KEY (required)
 - ANTHROPIC_API_KEY (required)
 - OPENAI_API_KEY (required)
+
+## Auth
+
+- Modes: dev-headers, jwt, oidc, disabled
+- Production auth: `jwt` or `oidc`
+- Bearer header: `Authorization: Bearer <token>`
+- Tenant claim: `tenant_id`
 
 ## Common tasks
 

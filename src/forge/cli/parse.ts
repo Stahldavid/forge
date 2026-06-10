@@ -15,6 +15,7 @@ import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 import type { NewPackageManager, NewTemplateName } from "./new.ts";
 import type { SelfHostSubcommand } from "./self-host.ts";
 import type { AgentContractSubcommand } from "./agent-contract.ts";
+import type { AuthSubcommand } from "./auth.ts";
 
 export type ForgeCommand =
   | {
@@ -34,6 +35,7 @@ export type ForgeCommand =
       databaseUrl?: string;
       json: boolean;
       envFile?: string;
+      allowDevAuth: boolean;
       workspaceRoot: string;
     }
   | {
@@ -64,6 +66,13 @@ export type ForgeCommand =
       workspaceRoot: string;
     }
   | { kind: "doctor"; json: boolean; workspaceRoot: string }
+  | {
+      kind: "auth";
+      subcommand: AuthSubcommand;
+      json: boolean;
+      token?: string;
+      workspaceRoot: string;
+    }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -216,6 +225,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "queries",
   "api",
   "client",
+  "auth",
   "all",
   "rules",
   "map",
@@ -228,6 +238,13 @@ const AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [
   "generate",
   "check",
   "print",
+];
+const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
+  "check",
+  "config",
+  "decode",
+  "test-token",
+  "jwks",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -364,6 +381,7 @@ export function parseCli(argv: string[]): ParsedCli {
           databaseUrl: parseOptionValue(argv, "--database-url"),
           json: parseFlag(argv, "--json"),
           envFile: parseOptionValue(argv, "--env-file"),
+          allowDevAuth: parseFlag(argv, "--allow-dev-auth"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -455,6 +473,24 @@ export function parseCli(argv: string[]): ParsedCli {
         workspaceRoot,
         errors,
       };
+    case "auth": {
+      const subcommand = rest[0] as AuthSubcommand | undefined;
+      if (!subcommand || !AUTH_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge auth requires subcommand: check, config, decode, test-token, or jwks");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "auth",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          token: parseOptionValue(argv, "--token"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "generate": {
       const concurrencyRaw = parseOptionValue(argv, "--concurrency");
       const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;
@@ -1013,6 +1049,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--runtime-port",
     "--web-port",
     "--poll-interval",
+    "--allow-dev-auth",
+    "--token",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -1020,7 +1058,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     if (!arg.startsWith("--")) {
       continue;
     }
-      if (known.has(arg)) {
+    if (known.has(arg)) {
       if (
         arg === "--concurrency" ||
         arg === "--sandbox-backend" ||
@@ -1050,7 +1088,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--postgres-version" ||
         arg === "--runtime-port" ||
         arg === "--web-port" ||
-        arg === "--poll-interval"
+        arg === "--poll-interval" ||
+        arg === "--token"
       ) {
         index += 1;
       }

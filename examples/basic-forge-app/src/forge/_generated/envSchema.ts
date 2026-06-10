@@ -1,6 +1,36 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=05bbcea077461ede699c362052883108bfcd4bf34d8b7bd0323e30555b8e426a
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=41284c8bae02191e47cfb572e51d54a38d403792687efc32897c0a316d02df33
 export const envSchema = {
   "variables": [
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_ALGORITHMS",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_AUDIENCE",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_ISSUER",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_JWKS_URI",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_MODE",
+      "required": false,
+      "source": "auth"
+    },
     {
       "integration": "posthog",
       "kind": "config",

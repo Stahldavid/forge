@@ -2,23 +2,55 @@ export type AuthContext =
   | {
       kind: "user";
       userId: string;
-      tenantId: string;
-      role: string;
+      tenantId?: string;
+      role?: string;
+      roles?: string[];
       permissions?: string[];
+      email?: string;
+      name?: string;
+      token?: {
+        issuer: string;
+        audience: string | string[];
+        subject: string;
+        expiresAt?: number;
+        issuedAt?: number;
+        authProvider: string;
+      };
+      claims?: Record<string, unknown>;
     }
   | {
       kind: "system";
       tenantId?: string;
-      triggeredBy?: {
-        userId?: string;
-        tenantId?: string;
-        role?: string;
-        kind?: string;
-      };
+      triggeredBy?: AuthSnapshot;
     }
   | { kind: "anonymous" };
 
-export type AuthSnapshot = AuthContext;
+export type AuthSnapshot =
+  | {
+      kind: "user";
+      userId: string;
+      tenantId?: string;
+      role?: string;
+      roles?: string[];
+      permissions?: string[];
+      email?: string;
+      name?: string;
+      token?: {
+        issuer: string;
+        audience: string | string[];
+        subject: string;
+        expiresAt?: number;
+        issuedAt?: number;
+        authProvider: string;
+      };
+      claims?: Record<string, unknown>;
+    }
+  | {
+      kind: "system";
+      tenantId?: string;
+      triggeredBy?: AuthSnapshot;
+    }
+  | { kind: "anonymous" };
 
 export function isUserAuth(auth: AuthContext): auth is Extract<AuthContext, { kind: "user" }> {
   return auth.kind === "user";
@@ -33,9 +65,13 @@ export function snapshotAuth(auth: AuthContext): AuthSnapshot {
     return {
       kind: "user",
       userId: auth.userId,
-      tenantId: auth.tenantId,
-      role: auth.role,
+      ...(auth.tenantId ? { tenantId: auth.tenantId } : {}),
+      ...(auth.role ? { role: auth.role } : {}),
+      ...(auth.roles ? { roles: auth.roles } : {}),
       ...(auth.permissions ? { permissions: auth.permissions } : {}),
+      ...(auth.email ? { email: auth.email } : {}),
+      ...(auth.name ? { name: auth.name } : {}),
+      ...(auth.token ? { token: auth.token } : {}),
     };
   }
 

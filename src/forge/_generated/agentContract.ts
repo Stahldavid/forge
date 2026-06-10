@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=6150c990a1bbec7ece2dccbfce3a5ded3cdf2f3c56d53e499ebbab314dcbf93e content=10ff9179a5e88e5269c50cca28432efe96aedb162d1ce9d8728ab5df8949d4b4
+// @forge-generated generator=0.0.0 input=7171fcf9ca7de84a957a459b54022eb79e88a37d5572ddc6f5c425365f9b334d content=2149af6ec2e6af80c4147689fad6369f1b390a9f703e9bdea2050132d0db9574
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -8,6 +8,34 @@ export const agentContract = {
       "gateway",
       "openai"
     ]
+  },
+  "auth": {
+    "bearerTokenHeader": "Authorization",
+    "claims": {
+      "email": "email",
+      "name": "name",
+      "permissions": "permissions",
+      "role": "role",
+      "roles": "roles",
+      "tenantId": "tenant_id",
+      "userId": "sub"
+    },
+    "defaultMode": "dev-headers",
+    "env": {
+      "algorithms": "FORGE_AUTH_ALGORITHMS",
+      "audience": "FORGE_AUTH_AUDIENCE",
+      "issuer": "FORGE_AUTH_ISSUER",
+      "jwksUri": "FORGE_AUTH_JWKS_URI",
+      "mode": "FORGE_AUTH_MODE"
+    },
+    "modes": [
+      "dev-headers",
+      "jwt",
+      "oidc",
+      "disabled"
+    ],
+    "productionDefaultAllowed": false,
+    "requiresTenant": false
   },
   "client": {
     "commands": [],
@@ -314,6 +342,26 @@ export const agentContract = {
       ],
       "name": "fast-check",
       "version": "3.23.2"
+    },
+    {
+      "allowedContexts": [
+        "client",
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "jose",
+      "version": "6.2.3"
     },
     {
       "allowedContexts": [

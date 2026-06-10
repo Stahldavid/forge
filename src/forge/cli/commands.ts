@@ -89,6 +89,7 @@ import {
   formatDoctorJson,
   runDoctorCommand,
 } from "./doctor.ts";
+import { formatAuthHuman, formatAuthJson, runAuthCommand } from "./auth.ts";
 import {
   formatQueryJson,
   formatQueryListHuman,
@@ -234,6 +235,7 @@ export async function runInspectCommand(
     queries: `${GENERATED_DIR}/queryRegistry.json`,
     api: `${GENERATED_DIR}/api.json`,
     client: `${GENERATED_DIR}/clientManifest.json`,
+    auth: `${GENERATED_DIR}/authRegistry.json`,
     rules: `${GENERATED_DIR}/runtimeRules.md`,
     map: `${GENERATED_DIR}/appMap.md`,
   };
@@ -251,6 +253,7 @@ export async function runInspectCommand(
       ["telemetry", `${GENERATED_DIR}/telemetryRegistry.json`],
       ["ai", `${GENERATED_DIR}/aiRegistry.json`],
       ["client", `${GENERATED_DIR}/clientManifest.json`],
+      ["auth", `${GENERATED_DIR}/authRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
     ];
     const data: Record<string, unknown> = {};
@@ -403,6 +406,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatDoctorJson(result));
       } else {
         process.stdout.write(formatDoctorHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "auth": {
+      const result = await runAuthCommand(command);
+      if (command.json) {
+        process.stdout.write(formatAuthJson(result));
+      } else {
+        process.stdout.write(formatAuthHuman(result));
       }
       return result.exitCode;
     }

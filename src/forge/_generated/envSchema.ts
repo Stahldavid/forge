@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=a364a2ec435f1ad252c1d418c40d3d787ffd94db8ab078dc670d129e1ab2d4fd content=557d2095834261f131ab56f8697729fe0d4bb42d5937bb37c537e5cb7c1b695f
+// @forge-generated generator=0.0.0 input=7171fcf9ca7de84a957a459b54022eb79e88a37d5572ddc6f5c425365f9b334d content=a3d1351f5a64cfe2964d5140049c55de5620e2abfb8187bbb244990852cfbbef
 export const envSchema = {
   "variables": [
     {
@@ -16,6 +16,36 @@ export const envSchema = {
       "public": false,
       "required": true,
       "source": "recipe"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_ALGORITHMS",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_AUDIENCE",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_ISSUER",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_JWKS_URI",
+      "required": false,
+      "source": "auth"
+    },
+    {
+      "kind": "config",
+      "name": "FORGE_AUTH_MODE",
+      "required": false,
+      "source": "auth"
     },
     {
       "integration": "ai-provider-openai",
