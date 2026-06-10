@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=d9eed53ada520862b635a3f38698cdca25d4e13ed2b468b7d38c75e3a94bb7d2
+// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=4062273eacb57275e01afca3c6391424c29eaf81adea214c38dd1f7852e85efe
 # Operation Playbooks
 
 ## Add a command
@@ -66,6 +66,14 @@
 4. Apply with forge refactor rename field <table.field> <table.field> --yes.
 5. Run forge generate.
 6. Run forge verify --strict.
+
+## Plan impact-based tests
+
+1. Run forge impact --changed --json.
+2. Run forge test plan --changed --json.
+3. Run forge test run --changed --json for targeted checks.
+4. Use forge verify --changed for the fast impact gate.
+5. Run forge verify --strict before final handoff.
 
 ## Add a package
 

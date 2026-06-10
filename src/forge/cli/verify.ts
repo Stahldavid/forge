@@ -11,6 +11,7 @@ import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
 import { runAuthCommand } from "./auth.ts";
 import { runRlsCommand } from "./rls.ts";
+import { buildImpactTestPlan, runImpactTestPlan } from "../impact/index.ts";
 
 interface PackageScripts {
   typecheck?: string;
@@ -85,6 +86,40 @@ export async function runVerifyCommand(
   const diagnostics: Diagnostic[] = [];
   const scripts = readPackageScripts(options.workspaceRoot);
 
+  if (options.changed) {
+    const plan = buildImpactTestPlan({
+      subcommand: "run",
+      workspaceRoot: options.workspaceRoot,
+      json: options.json,
+      write: false,
+      changed: true,
+      staged: false,
+      maxCost: "standard",
+      includeDocker: false,
+      includeBrowser: false,
+      bail: false,
+    });
+    const record = await runImpactTestPlan(options.workspaceRoot, plan, { bail: false });
+    for (const result of record.results) {
+      steps.push({
+        name: result.command,
+        ok: result.ok,
+        exitCode: result.exitCode,
+      });
+    }
+    if (record.failed.length > 0) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_VERIFY_CHANGED_INCOMPLETE",
+          message: "impact-based verification failed; run forge test run --changed --json for details",
+        }),
+      );
+    }
+    const ok = record.failed.length === 0;
+    return { ok, steps, diagnostics, exitCode: ok ? 0 : 1 };
+  }
+
   const generateCheck = await runGenerateCommand({
     workspaceRoot: options.workspaceRoot,
     check: true,
@@ -109,7 +144,7 @@ export async function runVerifyCommand(
   });
   diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);
 
-  if (options.strict) {
+  if (options.strict || options.standard) {
     const policyCheck = await runPolicyCommand({
       subcommand: "check",
       workspaceRoot: options.workspaceRoot,
@@ -204,7 +239,9 @@ export async function runVerifyCommand(
     }
   }
 
-  if (options.skipTests) {
+  if (options.fast) {
+    steps.push(skippedStep("tests", "--fast"));
+  } else if (options.skipTests) {
     steps.push(skippedStep("tests", "--skip-tests"));
   } else if (!scripts.test) {
     steps.push(skippedStep("tests", "no test script in package.json"));
@@ -226,7 +263,9 @@ export async function runVerifyCommand(
     }
   }
 
-  if (options.skipEslint) {
+  if (options.fast) {
+    steps.push(skippedStep("eslint", "--fast"));
+  } else if (options.skipEslint) {
     steps.push(skippedStep("eslint", "--skip-eslint"));
   } else {
     const lint = await lintForgeGuards(options.workspaceRoot);

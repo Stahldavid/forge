@@ -14,6 +14,10 @@ node_modules/
 !.forge/features/plans/.gitkeep
 .forge/refactors/*
 !.forge/refactors/.gitkeep
+.forge/test-plans/*
+!.forge/test-plans/.gitkeep
+.forge/test-runs/*
+!.forge/test-runs/.gitkeep
 tests/**/.tmp/
 *.log
 .DS_Store

@@ -60,6 +60,7 @@ import type {
   MakeRegistryArtifact,
   MakeTemplateArtifact,
 } from "../make-registry/build.ts";
+import type { TestGraph, TestPlanRegistry } from "../types/test-graph.ts";
 import {
   serializeMakeRegistryJson as serializeMakeRegistryJsonArtifact,
   serializeMakeRegistryTs as serializeMakeRegistryTsArtifact,
@@ -846,6 +847,24 @@ export function serializeReactManifestJson(
   manifest: import("../client-sdk/build-manifest.ts").ReactManifest,
 ): string {
   return serializeCanonical(manifest);
+}
+
+export function serializeTestGraphJson(graph: TestGraph): string {
+  return serializeCanonical(graph);
+}
+
+export function serializeTestGraphTs(graph: TestGraph): string {
+  const parsed: unknown = JSON.parse(serializeTestGraphJson(graph).trimEnd());
+  return `export const testGraph = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeTestPlanRegistryJson(registry: TestPlanRegistry): string {
+  return serializeCanonical(registry);
+}
+
+export function serializeTestPlanRegistryTs(registry: TestPlanRegistry): string {
+  const parsed: unknown = JSON.parse(serializeTestPlanRegistryJson(registry).trimEnd());
+  return `export const testPlanRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
 export type { ImportGuardsArtifact };

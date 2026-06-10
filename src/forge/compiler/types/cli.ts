@@ -70,6 +70,8 @@ export type InspectTarget =
   | "live-protocol"
   | "live-transport"
   | "make"
+  | "test-graph"
+  | "test-plans"
   | "all"
   | "rules"
   | "map";
@@ -121,6 +123,9 @@ export interface VerifyOptions {
   skipTypecheck: boolean;
   skipEslint: boolean;
   strict: boolean;
+  changed?: boolean;
+  fast?: boolean;
+  standard?: boolean;
 }
 
 export interface VerifyResult {

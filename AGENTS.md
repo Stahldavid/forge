@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=d790ac4911fd50f6745e85abd4efb4f5d3f4e253cd0e906cbb52d8adc7b5240f
+// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=05a8be475a1f8aca4d273e6adff403bd2c16314ef2f1f98f110e4e250a30ea0b
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -133,6 +133,18 @@ forge refactor rename field tickets.priority tickets.urgency --yes
 ```
 
 Never edit `src/forge/_generated/**` directly. Review migration hints before applying field or table renames.
+
+### Plan impact-based tests
+
+Use:
+
+```bash
+forge impact --changed --json
+forge test plan --changed --json
+forge test run --changed --json
+```
+
+Finish handoffs with `forge verify --strict` when the change is ready.
 
 ### Add a package
 

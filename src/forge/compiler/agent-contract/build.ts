@@ -279,6 +279,16 @@ function playbooks(): AgentPlaybook[] {
       ],
     },
     {
+      title: "Plan impact-based tests",
+      steps: [
+        "Run forge impact --changed --json.",
+        "Run forge test plan --changed --json.",
+        "Run forge test run --changed --json for targeted checks.",
+        "Use forge verify --changed for the fast impact gate.",
+        "Run forge verify --strict before final handoff.",
+      ],
+    },
+    {
       title: "Add a package",
       steps: [
         "Use forge add <alias>.",
@@ -714,6 +724,18 @@ forge refactor rename field tickets.priority tickets.urgency --yes
 \`\`\`
 
 Never edit \`src/forge/_generated/**\` directly. Review migration hints before applying field or table renames.
+
+### Plan impact-based tests
+
+Use:
+
+\`\`\`bash
+forge impact --changed --json
+forge test plan --changed --json
+forge test run --changed --json
+\`\`\`
+
+Finish handoffs with \`forge verify --strict\` when the change is ready.
 
 ### Add a package
 

@@ -22,6 +22,8 @@ import type { ReleaseAction, ReleaseArea } from "./release.ts";
 import type { MakeCommandOptions, MakePrimitive } from "../make/types.ts";
 import type { FeatureAction, FeatureCommandOptions } from "../feature/types.ts";
 import type { RefactorAction, RefactorCommandOptions, RenameTarget } from "../refactor/types.ts";
+import type { ImpactCommandOptions, TestCommandOptions, TestSubcommand } from "../impact/types.ts";
+import type { TestCost } from "../compiler/types/test-graph.ts";
 
 export type ForgeCommand =
   | {
@@ -118,6 +120,8 @@ export type ForgeCommand =
   | { kind: "make"; options: MakeCommandOptions }
   | { kind: "feature"; options: FeatureCommandOptions }
   | { kind: "refactor"; options: RefactorCommandOptions }
+  | { kind: "impact"; options: ImpactCommandOptions }
+  | { kind: "test"; options: TestCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -280,6 +284,8 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "live-protocol",
   "live-transport",
   "make",
+  "test-graph",
+  "test-plans",
   "all",
   "rules",
   "map",
@@ -370,6 +376,8 @@ const RENAME_TARGETS: RenameTarget[] = [
   "workflow",
   "event",
 ];
+const TEST_SUBCOMMANDS: TestSubcommand[] = ["plan", "run", "explain"];
+const TEST_COSTS: TestCost[] = ["instant", "fast", "standard", "slow", "docker", "browser"];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -431,6 +439,10 @@ function parseAddOptions(
   };
 }
 
+function parseTestCost(value: string | undefined): TestCost {
+  return TEST_COSTS.includes(value as TestCost) ? (value as TestCost) : "standard";
+}
+
 function parseNewTemplate(value: string | undefined): NewTemplateName {
   return NEW_TEMPLATES.includes(value as NewTemplateName)
     ? (value as NewTemplateName)
@@ -450,7 +462,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, refactor, impact, test, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -913,6 +925,62 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "impact": {
+      return {
+        command: {
+          kind: "impact",
+          options: {
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            write: parseFlag(argv, "--write"),
+            changed: parseFlag(argv, "--changed") || (!parseFlag(argv, "--staged") && !parseOptionValue(argv, "--since") && !parseOptionValue(argv, "--feature") && !parseOptionValue(argv, "--refactor") && !parseOptionValue(argv, "--upgrade")),
+            staged: parseFlag(argv, "--staged"),
+            since: parseOptionValue(argv, "--since"),
+            featureId: parseOptionValue(argv, "--feature"),
+            refactorId: parseOptionValue(argv, "--refactor"),
+            upgradeId: parseOptionValue(argv, "--upgrade"),
+            includeGenerated: parseFlag(argv, "--include-generated"),
+            excludeTests: parseFlag(argv, "--exclude-tests"),
+            riskThreshold: parseOptionValue(argv, "--risk-threshold") as ImpactCommandOptions["riskThreshold"],
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "test": {
+      const subcommand = rest[0] as TestSubcommand | undefined;
+      if (!subcommand || !TEST_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge test requires subcommand: plan, run, or explain");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "test",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            write: parseFlag(argv, "--write"),
+            changed: parseFlag(argv, "--changed") || (!parseFlag(argv, "--staged") && !parseOptionValue(argv, "--since") && !parseOptionValue(argv, "--feature") && !parseOptionValue(argv, "--refactor") && !parseOptionValue(argv, "--upgrade") && !parseOptionValue(argv, "--plan") && subcommand !== "explain"),
+            staged: parseFlag(argv, "--staged"),
+            since: parseOptionValue(argv, "--since"),
+            featureId: parseOptionValue(argv, "--feature"),
+            refactorId: parseOptionValue(argv, "--refactor"),
+            upgradeId: parseOptionValue(argv, "--upgrade"),
+            planPath: parseOptionValue(argv, "--plan"),
+            testFile: subcommand === "explain" ? rest[1] : undefined,
+            maxCost: parseTestCost(parseOptionValue(argv, "--max-cost")),
+            includeDocker: parseFlag(argv, "--include-docker"),
+            includeBrowser: parseFlag(argv, "--include-browser"),
+            bail: parseFlag(argv, "--bail"),
+            report: parseOptionValue(argv, "--report"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "generate": {
       const concurrencyRaw = parseOptionValue(argv, "--concurrency");
       const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;
@@ -988,6 +1056,9 @@ export function parseCli(argv: string[]): ParsedCli {
             skipTypecheck: parseFlag(argv, "--skip-typecheck"),
             skipEslint: parseFlag(argv, "--skip-eslint"),
             strict: parseFlag(argv, "--strict"),
+            changed: parseFlag(argv, "--changed"),
+            fast: parseFlag(argv, "--fast"),
+            standard: parseFlag(argv, "--standard"),
           },
         },
         workspaceRoot,
@@ -1436,6 +1507,21 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--json",
     "--dry-run",
     "--plan",
+    "--staged",
+    "--since",
+    "--feature",
+    "--refactor",
+    "--upgrade",
+    "--include-generated",
+    "--exclude-tests",
+    "--risk-threshold",
+    "--max-cost",
+    "--include-docker",
+    "--include-browser",
+    "--bail",
+    "--report",
+    "--fast",
+    "--standard",
     "--apply",
     "--runtime-inspect",
     "--allow-scripts",
@@ -1550,6 +1636,13 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--component" ||
         arg === "--package" ||
         arg === "--action" ||
+        arg === "--since" ||
+        arg === "--feature" ||
+        arg === "--refactor" ||
+        arg === "--upgrade" ||
+        arg === "--risk-threshold" ||
+        arg === "--max-cost" ||
+        arg === "--report" ||
         arg === "--write" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||

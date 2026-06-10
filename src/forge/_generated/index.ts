@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=a7d16d11442ec294033d6f6c5745f3d05275c67221ab40c01ff470ccb2dc627e content=b8fe2df0f8bfea88a176d39b00fe48fc698c0205d004dd46ebfe1d18d2367d01
+// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=6366339204c93fca43252ecd1e0ccb7dcdb68537f9e6a216a4a3c414cf56154e
 export * from "./actionSubscriptions";
 export * from "./agentContract";
 export * from "./aiContext";
@@ -55,5 +55,7 @@ export * from "./symbolicationManifest";
 export * from "./telemetryRegistry";
 export * from "./telemetrySinks";
 export * from "./tenantScope";
+export * from "./testGraph";
+export * from "./testPlanRegistry";
 export * from "./workflowRegistry";
 export * from "./workflowSubscriptions";

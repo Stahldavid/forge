@@ -43,6 +43,7 @@ import { buildRlsArtifacts } from "../data-graph/rls/build.ts";
 import { buildGeneratedReleaseArtifacts } from "../release/build.ts";
 import { buildLiveProductionArtifacts } from "../live-production/types.ts";
 import { buildMakeRegistry, buildMakeTemplates } from "../make-registry/build.ts";
+import { buildTestGraph, buildTestPlanRegistry } from "../test-graph/build.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
 import {
@@ -123,6 +124,10 @@ import {
   serializeMakeRegistryTs,
   serializeMakeTemplatesJson,
   serializeMakeTemplatesTs,
+  serializeTestGraphJson,
+  serializeTestGraphTs,
+  serializeTestPlanRegistryJson,
+  serializeTestPlanRegistryTs,
   serializeActionSubscriptionsJson,
   serializeActionSubscriptionsTs,
   serializeWorkflowRegistryJson,
@@ -340,6 +345,14 @@ export function plan(input: PlanInput): EmitPlan {
   const liveProductionArtifacts = buildLiveProductionArtifacts(liveQueryRegistry);
   const makeRegistry = buildMakeRegistry(GENERATOR_VERSION);
   const makeTemplates = buildMakeTemplates();
+  const testGraph = buildTestGraph({
+    workspaceRoot: input.ctx.workspaceRoot,
+    inputHash: input.ctx.inputFingerprint,
+    appGraph: input.appGraph,
+    packageGraph: input.packageGraph,
+    sources: input.ctx.sources,
+  });
+  const testPlanRegistry = buildTestPlanRegistry();
 
   const files: EmitFile[] = [
     makeEmitFile("AGENTS.md", agentArtifacts.agentsMd),
@@ -562,6 +575,22 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/makeTemplates.json`,
       serializeMakeTemplatesJson(makeTemplates),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/testGraph.ts`,
+      serializeTestGraphTs(testGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/testGraph.json`,
+      serializeTestGraphJson(testGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/testPlanRegistry.ts`,
+      serializeTestPlanRegistryTs(testPlanRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/testPlanRegistry.json`,
+      serializeTestPlanRegistryJson(testPlanRegistry),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/actionSubscriptions.ts`,

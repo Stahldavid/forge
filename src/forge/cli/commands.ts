@@ -101,6 +101,12 @@ import { formatMakeHuman, formatMakeJson, runMakeCommand } from "./make.ts";
 import { formatFeatureHuman, formatFeatureJson, runFeatureCommand } from "./feature.ts";
 import { formatRefactorHuman, formatRefactorJson, runRefactorCommand } from "./refactor.ts";
 import {
+  formatImpactHuman,
+  formatImpactJson,
+  runImpactCommand,
+  runTestCommand,
+} from "../impact/index.ts";
+import {
   formatQueryJson,
   formatQueryListHuman,
   formatQueryResultHuman,
@@ -255,6 +261,8 @@ export async function runInspectCommand(
     "live-protocol": `${GENERATED_DIR}/liveProtocol.json`,
     "live-transport": `${GENERATED_DIR}/liveTransportConfig.json`,
     make: `${GENERATED_DIR}/makeRegistry.json`,
+    "test-graph": `${GENERATED_DIR}/testGraph.json`,
+    "test-plans": `${GENERATED_DIR}/testPlanRegistry.json`,
     rules: `${GENERATED_DIR}/runtimeRules.md`,
     map: `${GENERATED_DIR}/appMap.md`,
   };
@@ -282,6 +290,8 @@ export async function runInspectCommand(
       ["liveProtocol", `${GENERATED_DIR}/liveProtocol.json`],
       ["liveTransport", `${GENERATED_DIR}/liveTransportConfig.json`],
       ["make", `${GENERATED_DIR}/makeRegistry.json`],
+      ["testGraph", `${GENERATED_DIR}/testGraph.json`],
+      ["testPlanRegistry", `${GENERATED_DIR}/testPlanRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
     ];
     const data: Record<string, unknown> = {};
@@ -501,6 +511,24 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatRefactorJson(result));
       } else {
         process.stdout.write(formatRefactorHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "impact": {
+      const result = runImpactCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatImpactJson(result));
+      } else {
+        process.stdout.write(formatImpactHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "test": {
+      const result = await runTestCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatImpactJson(result));
+      } else {
+        process.stdout.write(formatImpactHuman(result));
       }
       return result.exitCode;
     }

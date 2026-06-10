@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=99343ac28033ea88e22827889c71bc985765fa7048e50e97112062204224962a
+// @forge-generated generator=0.0.0 input=cd9b831271a551d36663da8d52f67c98863f60c0f327ed98195651e2f8b795b4 content=d5ea82be2fe460d7838854315f647770e841b3fcb576dfc63021feca482bdaaa
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -565,6 +565,16 @@ export const agentContract = {
         "Run forge verify --strict."
       ],
       "title": "Safely refactor a feature"
+    },
+    {
+      "steps": [
+        "Run forge impact --changed --json.",
+        "Run forge test plan --changed --json.",
+        "Run forge test run --changed --json for targeted checks.",
+        "Use forge verify --changed for the fast impact gate.",
+        "Run forge verify --strict before final handoff."
+      ],
+      "title": "Plan impact-based tests"
     },
     {
       "steps": [
