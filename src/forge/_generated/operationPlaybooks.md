@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=279ab7f4cc8810e8847c64c471144c5e77014c3eed108cfce773b592e7ee798c
+// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=d9eed53ada520862b635a3f38698cdca25d4e13ed2b468b7d38c75e3a94bb7d2
 # Operation Playbooks
 
 ## Add a command
@@ -56,6 +56,15 @@
 3. Run forge feature plan <blueprint>.
 4. Review the plan, impact, and risk.
 5. Run forge feature apply <blueprint> --yes.
+6. Run forge verify --strict.
+
+## Safely refactor a feature
+
+1. Run forge refactor rename field <table.field> <table.field> --dry-run --json.
+2. Review filesToModify, migrationPlan, diagnostics, and risk.
+3. Use --allow-high-risk only for intentional high-risk refactors.
+4. Apply with forge refactor rename field <table.field> <table.field> --yes.
+5. Run forge generate.
 6. Run forge verify --strict.
 
 ## Add a package

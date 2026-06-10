@@ -99,6 +99,7 @@ import {
 } from "./release.ts";
 import { formatMakeHuman, formatMakeJson, runMakeCommand } from "./make.ts";
 import { formatFeatureHuman, formatFeatureJson, runFeatureCommand } from "./feature.ts";
+import { formatRefactorHuman, formatRefactorJson, runRefactorCommand } from "./refactor.ts";
 import {
   formatQueryJson,
   formatQueryListHuman,
@@ -491,6 +492,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatFeatureJson(result));
       } else {
         process.stdout.write(formatFeatureHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "refactor": {
+      const result = await runRefactorCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatRefactorJson(result));
+      } else {
+        process.stdout.write(formatRefactorHuman(result));
       }
       return result.exitCode;
     }

@@ -1,8 +1,8 @@
-// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=a727cc1e3a718cf92d82bf1a4415b64cc5717aba86c736134f0209724348b0cf
+// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=9620a7fbf26c484bdffa6efab600fb06efe2f891bfd74c62e74151888e4941bd
 export const tenantScope = {
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "ba59664c7bc384fe73d4b8958a2b2c6d3fdf7470fadc25fd102420e50aabacd0",
+  "inputHash": "87e4f01d47c07fb0402513137839551351529474ce9374bdde0b84b3c93105c8",
   "schemaVersion": "1.0.0",
   "tables": []
 } as const;

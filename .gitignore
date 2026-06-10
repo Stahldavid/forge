@@ -12,6 +12,8 @@ node_modules/
 !.forge/make-plans/.gitkeep
 .forge/features/plans/*
 !.forge/features/plans/.gitkeep
+.forge/refactors/*
+!.forge/refactors/.gitkeep
 tests/**/.tmp/
 *.log
 .DS_Store

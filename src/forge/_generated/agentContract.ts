@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=6721392c7f5870898e76f6de947ecc55dcacfe23afb7e7e72572fe6762358dc3
+// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=99343ac28033ea88e22827889c71bc985765fa7048e50e97112062204224962a
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -554,6 +554,17 @@ export const agentContract = {
         "Run forge verify --strict."
       ],
       "title": "Apply a feature blueprint"
+    },
+    {
+      "steps": [
+        "Run forge refactor rename field <table.field> <table.field> --dry-run --json.",
+        "Review filesToModify, migrationPlan, diagnostics, and risk.",
+        "Use --allow-high-risk only for intentional high-risk refactors.",
+        "Apply with forge refactor rename field <table.field> <table.field> --yes.",
+        "Run forge generate.",
+        "Run forge verify --strict."
+      ],
+      "title": "Safely refactor a feature"
     },
     {
       "steps": [

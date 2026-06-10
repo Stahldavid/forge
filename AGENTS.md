@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=6b7aee4a8b6c6948b038e96c5f9e8ce00867dd83453b7db1b9e5076d6b834c9f content=0c24210eaeca1752b6d55a6c30c69b14d468c66f634aa5101f3aae5a24d20853
+// @forge-generated generator=0.0.0 input=73411733ee4b2adeaa331f0cdfd5f207efa0f149c37c2770aee30c1b71a96c1b content=d790ac4911fd50f6745e85abd4efb4f5d3f4e253cd0e906cbb52d8adc7b5240f
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -122,6 +122,17 @@ forge feature apply .forge/blueprints/<name>.json --yes
 ```
 
 Review high-risk plans before applying. Use `--allow-high-risk` only when intentional.
+
+### Safely refactor a feature
+
+Use:
+
+```bash
+forge refactor rename field tickets.priority tickets.urgency --dry-run --json
+forge refactor rename field tickets.priority tickets.urgency --yes
+```
+
+Never edit `src/forge/_generated/**` directly. Review migration hints before applying field or table renames.
 
 ### Add a package
 

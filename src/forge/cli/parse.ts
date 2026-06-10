@@ -21,6 +21,7 @@ import type { DepsSubcommand } from "./deps.ts";
 import type { ReleaseAction, ReleaseArea } from "./release.ts";
 import type { MakeCommandOptions, MakePrimitive } from "../make/types.ts";
 import type { FeatureAction, FeatureCommandOptions } from "../feature/types.ts";
+import type { RefactorAction, RefactorCommandOptions, RenameTarget } from "../refactor/types.ts";
 
 export type ForgeCommand =
   | {
@@ -116,6 +117,7 @@ export type ForgeCommand =
     }
   | { kind: "make"; options: MakeCommandOptions }
   | { kind: "feature"; options: FeatureCommandOptions }
+  | { kind: "refactor"; options: RefactorCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -344,6 +346,29 @@ const FEATURE_ACTIONS: FeatureAction[] = [
   "inspect",
   "rollback",
   "examples",
+];
+const REFACTOR_ACTIONS: RefactorAction[] = [
+  "plan",
+  "apply",
+  "diff",
+  "rollback",
+  "list",
+  "rename",
+  "move",
+  "extract-action",
+  "replace-process-env",
+  "replace-import",
+];
+const RENAME_TARGETS: RenameTarget[] = [
+  "table",
+  "field",
+  "policy",
+  "command",
+  "query",
+  "livequery",
+  "action",
+  "workflow",
+  "event",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {
@@ -789,6 +814,99 @@ export function parseCli(argv: string[]): ParsedCli {
             keepFailed: parseFlag(argv, "--keep-failed"),
             update: parseFlag(argv, "--update"),
             allowHighRisk: parseFlag(argv, "--allow-high-risk"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "refactor": {
+      const action = rest[0] as RefactorAction | undefined;
+      if (!action || !REFACTOR_ACTIONS.includes(action)) {
+        errors.push(`forge refactor requires action: ${REFACTOR_ACTIONS.join(", ")}`);
+        return { command: null, workspaceRoot, errors };
+      }
+      let renameTarget: RenameTarget | undefined;
+      let from: string | undefined;
+      let to: string | undefined;
+      let planId: string | undefined;
+      let componentName: string | undefined;
+
+      if (action === "rename") {
+        renameTarget = rest[1] as RenameTarget | undefined;
+        if (!renameTarget || !RENAME_TARGETS.includes(renameTarget)) {
+          errors.push(`forge refactor rename requires target: ${RENAME_TARGETS.join(", ")}`);
+        }
+        from = rest[2];
+        to = rest[3];
+        if (!from || !to) {
+          errors.push("forge refactor rename requires <from> <to>");
+        }
+      } else if (action === "move") {
+        renameTarget = rest[1] as RenameTarget | undefined;
+        if (renameTarget !== "field" && rest[1] !== "component") {
+          errors.push("forge refactor move requires target: component");
+        }
+        componentName = rest[2];
+        to = rest[3];
+        if (!componentName || !to) {
+          errors.push("forge refactor move component requires <name> <path>");
+        }
+      } else if (action === "extract-action") {
+        from = rest[1];
+        if (!from) {
+          errors.push("forge refactor extract-action requires a command name");
+        }
+      } else if (action === "replace-process-env") {
+        from = rest[1];
+        if (!from) {
+          errors.push("forge refactor replace-process-env requires an env var");
+        }
+      } else if (action === "replace-import") {
+        from = rest[1];
+        to = rest[2];
+        if (!from || !to) {
+          errors.push("forge refactor replace-import requires <from> <to>");
+        }
+      } else if (action === "apply" || action === "diff" || action === "rollback") {
+        planId = rest[1];
+        if (!planId) {
+          errors.push(`forge refactor ${action} requires a plan id`);
+        }
+      } else if (action === "plan") {
+        const nestedAction = rest[1] as RefactorAction | undefined;
+        if (nestedAction === "rename") {
+          renameTarget = rest[2] as RenameTarget | undefined;
+          from = rest[3];
+          to = rest[4];
+        } else {
+          errors.push("forge refactor plan currently supports: rename <target> <from> <to>");
+        }
+      }
+
+      return {
+        command: {
+          kind: "refactor",
+          options: {
+            action: action === "plan" && rest[1] === "rename" ? "rename" : action,
+            renameTarget,
+            from,
+            to,
+            planId,
+            componentName,
+            packageName: parseOptionValue(argv, "--package"),
+            eventName: parseOptionValue(argv, "--event"),
+            actionName: parseOptionValue(argv, "--action"),
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            dryRun: parseFlag(argv, "--dry-run"),
+            plan: action === "plan" || parseFlag(argv, "--plan"),
+            yes: parseFlag(argv, "--yes"),
+            force: parseFlag(argv, "--force"),
+            allowHighRisk: parseFlag(argv, "--allow-high-risk"),
+            noGenerate: parseFlag(argv, "--no-generate"),
+            noVerify: parseFlag(argv, "--no-verify"),
+            keepFailed: parseFlag(argv, "--keep-failed"),
           },
         },
         workspaceRoot,
@@ -1340,6 +1458,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--event",
     "--trigger",
     "--component",
+    "--package",
+    "--action",
     "--with-ai",
     "--with-crud",
     "--with-livequery",
@@ -1428,6 +1548,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--event" ||
         arg === "--trigger" ||
         arg === "--component" ||
+        arg === "--package" ||
+        arg === "--action" ||
         arg === "--write" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||

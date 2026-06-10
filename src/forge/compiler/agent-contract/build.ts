@@ -268,6 +268,17 @@ function playbooks(): AgentPlaybook[] {
       ],
     },
     {
+      title: "Safely refactor a feature",
+      steps: [
+        "Run forge refactor rename field <table.field> <table.field> --dry-run --json.",
+        "Review filesToModify, migrationPlan, diagnostics, and risk.",
+        "Use --allow-high-risk only for intentional high-risk refactors.",
+        "Apply with forge refactor rename field <table.field> <table.field> --yes.",
+        "Run forge generate.",
+        "Run forge verify --strict.",
+      ],
+    },
+    {
       title: "Add a package",
       steps: [
         "Use forge add <alias>.",
@@ -692,6 +703,17 @@ forge feature apply .forge/blueprints/<name>.json --yes
 \`\`\`
 
 Review high-risk plans before applying. Use \`--allow-high-risk\` only when intentional.
+
+### Safely refactor a feature
+
+Use:
+
+\`\`\`bash
+forge refactor rename field tickets.priority tickets.urgency --dry-run --json
+forge refactor rename field tickets.priority tickets.urgency --yes
+\`\`\`
+
+Never edit \`src/forge/_generated/**\` directly. Review migration hints before applying field or table renames.
 
 ### Add a package
 
