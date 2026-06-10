@@ -1,10 +1,10 @@
-// @forge-generated generator=0.0.0 input=481ffa610c5cbb0ef8370ed7373686bc25fa51098fa75f82e48d114759c58c90 content=3ec5b228c5817fa23f7f055df95e02c3c7b23c66a053bf55a249692157402ffb
+// @forge-generated generator=0.0.0 input=599ea226bf5bd821e0f149e2735ad55710baa7c45683bce4b2702a98f8216a58 content=34b03b3d55da6a3336e1a816e09ce983a4ff5362032d34e7365850fecae87732
 export const policyRegistry = {
   "analyzerVersion": "policy-registry@1.0.0",
   "commandAuth": [],
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "3a209aa53c0f22bd61aeb1a0839da5517aac93fbf8f99a3864f89f412bbf9ca3",
+  "inputHash": "86906b799b98927bdad7ebcffe24e96ee98cb4ae3d54ece04d963a21d0d064e6",
   "policies": [],
   "queryAuth": [],
   "schemaVersion": "1.0.0"

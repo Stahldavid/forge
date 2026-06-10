@@ -13,6 +13,7 @@ import type { QuerySubcommand } from "./query.ts";
 import type { LiveSubcommand } from "./live.ts";
 import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 import type { NewPackageManager, NewTemplateName } from "./new.ts";
+import type { SelfHostSubcommand } from "./self-host.ts";
 
 export type ForgeCommand =
   | {
@@ -22,6 +23,37 @@ export type ForgeCommand =
       packageManager: NewPackageManager;
       install: boolean;
       git: boolean;
+      workspaceRoot: string;
+    }
+  | { kind: "build"; json: boolean; workspaceRoot: string }
+  | {
+      kind: "serve";
+      host?: string;
+      port?: number;
+      databaseUrl?: string;
+      json: boolean;
+      envFile?: string;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "worker";
+      db: DbAdapterKind;
+      databaseUrl?: string;
+      json: boolean;
+      once: boolean;
+      pollIntervalMs: number;
+      limit: number;
+      mock: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "self-host";
+      subcommand: SelfHostSubcommand;
+      json: boolean;
+      withWeb: boolean;
+      postgresVersion: string;
+      runtimePort: number;
+      webPort: number;
       workspaceRoot: string;
     }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
@@ -180,6 +212,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
 
 const NEW_TEMPLATES: NewTemplateName[] = ["b2b-support-web"];
 const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
+const SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = ["compose", "env", "check", "clean"];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -285,6 +318,94 @@ export function parseCli(argv: string[]): ParsedCli {
           packageManager: parseNewPackageManager(packageManagerRaw),
           install: !parseFlag(argv, "--no-install"),
           git: !parseFlag(argv, "--no-git"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "build":
+      return {
+        command: {
+          kind: "build",
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    case "serve": {
+      const portRaw = parseOptionValue(argv, "--port");
+      const port = portRaw ? Number(portRaw) : undefined;
+      if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {
+        errors.push("--port must be a number >= 0");
+      }
+      return {
+        command: {
+          kind: "serve",
+          host: parseOptionValue(argv, "--host"),
+          port,
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          envFile: parseOptionValue(argv, "--env-file"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "worker": {
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const limit = limitRaw ? Number(limitRaw) : 10;
+      if (!Number.isFinite(limit) || limit < 1) {
+        errors.push("--limit must be a number >= 1");
+      }
+      const pollRaw = parseOptionValue(argv, "--poll-interval");
+      const pollIntervalMs = pollRaw ? Number(pollRaw) : 1_000;
+      if (!Number.isFinite(pollIntervalMs) || pollIntervalMs < 1) {
+        errors.push("--poll-interval must be a number >= 1");
+      }
+      return {
+        command: {
+          kind: "worker",
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          once: parseFlag(argv, "--once"),
+          pollIntervalMs,
+          limit: Math.floor(limit),
+          mock: parseFlag(argv, "--mock"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "self-host": {
+      const subcommand = rest[0] as SelfHostSubcommand | undefined;
+      if (!subcommand || !SELF_HOST_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge self-host requires subcommand: compose, env, check, or clean");
+        return { command: null, workspaceRoot, errors };
+      }
+      const runtimePortRaw = parseOptionValue(argv, "--runtime-port");
+      const runtimePort = runtimePortRaw ? Number(runtimePortRaw) : 3765;
+      if (!Number.isFinite(runtimePort) || runtimePort < 1) {
+        errors.push("--runtime-port must be a number >= 1");
+      }
+      const webPortRaw = parseOptionValue(argv, "--web-port");
+      const webPort = webPortRaw ? Number(webPortRaw) : 3000;
+      if (!Number.isFinite(webPort) || webPort < 1) {
+        errors.push("--web-port must be a number >= 1");
+      }
+      return {
+        command: {
+          kind: "self-host",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          withWeb: !parseFlag(argv, "--no-web"),
+          postgresVersion: parseOptionValue(argv, "--postgres-version") ?? "16",
+          runtimePort: Math.floor(runtimePort),
+          webPort: Math.floor(webPort),
           workspaceRoot,
         },
         workspaceRoot,
@@ -843,6 +964,12 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--package-manager",
     "--no-install",
     "--no-git",
+    "--with-web",
+    "--no-web",
+    "--postgres-version",
+    "--runtime-port",
+    "--web-port",
+    "--poll-interval",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -876,7 +1003,11 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--prompt" ||
         arg === "--url" ||
         arg === "--template" ||
-        arg === "--package-manager"
+        arg === "--package-manager" ||
+        arg === "--postgres-version" ||
+        arg === "--runtime-port" ||
+        arg === "--web-port" ||
+        arg === "--poll-interval"
       ) {
         index += 1;
       }

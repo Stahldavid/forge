@@ -15,6 +15,7 @@ export interface DevServerOptions {
   worker?: boolean;
   telemetry?: string[];
   envFile?: string;
+  mode?: "dev" | "serve";
 }
 
 export interface DevServerDbState {

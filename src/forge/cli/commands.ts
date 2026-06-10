@@ -76,6 +76,10 @@ import {
 } from "./secrets.ts";
 import { formatAiHuman, formatAiJson, runAiCommand } from "./ai.ts";
 import { formatNewHuman, runNewCommand } from "./new.ts";
+import { formatBuildHuman, runBuildCommand } from "./build.ts";
+import { runServeCommand } from "./serve.ts";
+import { runWorkerCommand } from "./worker.ts";
+import { formatSelfHostHuman, runSelfHostCommand } from "./self-host.ts";
 import {
   formatQueryJson,
   formatQueryListHuman,
@@ -257,6 +261,33 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         workspaceRoot: command.workspaceRoot,
       });
       process.stdout.write(formatNewHuman(result));
+      return result.exitCode;
+    }
+    case "build": {
+      const result = await runBuildCommand({
+        workspaceRoot: command.workspaceRoot,
+        json: command.json,
+      });
+      if (command.json) {
+        process.stdout.write(`${JSON.stringify(result)}\n`);
+      } else {
+        process.stdout.write(formatBuildHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "serve":
+      return runServeCommand(command);
+    case "worker": {
+      const result = await runWorkerCommand(command);
+      return result.exitCode;
+    }
+    case "self-host": {
+      const result = await runSelfHostCommand(command);
+      if (command.json) {
+        process.stdout.write(`${JSON.stringify(result)}\n`);
+      } else {
+        process.stdout.write(formatSelfHostHuman(result));
+      }
       return result.exitCode;
     }
     case "generate": {

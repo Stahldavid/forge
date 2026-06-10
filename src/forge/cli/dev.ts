@@ -20,6 +20,7 @@ export interface DevCommandOptions {
   worker: boolean;
   telemetry: string[];
   envFile?: string;
+  mode?: "dev" | "serve";
 }
 
 export interface DevCommandResult {
@@ -63,6 +64,7 @@ export async function runDevCommand(
       worker: options.worker,
       telemetry: options.telemetry,
       envFile: options.envFile,
+      mode: options.mode,
     });
   } catch (error) {
     const message =

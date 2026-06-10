@@ -272,7 +272,8 @@ export async function startDevServer(
 
           return jsonResponse({
             ok: true,
-            service: "forge-dev",
+            service: options.mode === "serve" ? "forge-serve" : "forge-dev",
+            mode: options.mode ?? "dev",
             entries: currentRuntimeGraph.entries.length,
             db: serverState.db,
             outbox: {
