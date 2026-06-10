@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=8a19e2a63936d6a797c1b59e262d1b428845c88e38157a19d0c967a180c126aa content=7d60715f4e8130dd6e4c759962bd43c9f5140009800ee0a17478e82a0f98bed7
+{"commands":[],"excluded":{"actions":[],"serverAdapters":["ai.anthropic.server.ts","ai.gateway.server.ts","ai.openai.server.ts"],"serverPackages":["@ai-sdk/anthropic","@ai-sdk/openai","ai"],"workflows":[]},"generatorVersion":"0.0.0","inputHash":"00c8a3342b4c14023443be03fd1957018122adbec5744c84dcc98931f5164438","liveQueries":[],"queries":[],"schemaVersion":"1.0.0"}

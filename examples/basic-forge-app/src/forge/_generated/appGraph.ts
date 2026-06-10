@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=2109cd49dea7ae4cd20f98fc0ce6dce0a08c3e3732a7d77f530851d6d134f995 content=112705d8648c328128845bd3256db5203e6a0152323d549f94c413c47c52205e
+// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=f44059cd851bec74563a30b29a43cc5b7e0370e3d7ccbb0ea99f23238b15b3a9
 export const appGraph = {
-  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:05b47690eb67a5815198c695333bb2c94178f799c0cff32741f782d2d4635e6d",
+  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:1f504cc65fab2d1800e60c8ff24157b19f45220ad696693eb503e8ab31454ea2",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "1dd149d517395587a8f781b9d98c5d70ba1769a1602b03590044d05f39031ab5",
+  "inputHash": "14f24acd9a4da1dcab32354a1d5c3c79b498ed2bd56e009b57dd9f18b505d00b",
   "moduleGraph": {
     "nodes": [
       {
@@ -141,6 +141,14 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/policies.ts",
         "id": "6e05030c6494caf63b5fd788687d27f653bf7222354f313d4934515784df3812",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/client/demo.ts",
+        "id": "7780c27948b924b91b7f84619f162a9e881f68cc2697144ceb21190aa10f6f16",
         "localImports": []
       },
       {

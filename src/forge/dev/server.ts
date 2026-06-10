@@ -758,7 +758,9 @@ export async function startDevServer(
     stop: () => {
       serverState.outboxWorker?.stop();
       server.stop(true);
-      void serverState.adapter?.close();
+      const adapter = serverState.adapter;
+      serverState.adapter = null;
+      void adapter?.close().catch(() => undefined);
     },
   };
 }

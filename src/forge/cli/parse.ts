@@ -152,6 +152,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "ai",
   "queries",
   "api",
+  "client",
 ];
 
 function parseFlag(args: string[], flag: string): boolean {

@@ -528,6 +528,7 @@ export function serializeApiJson(surface: ApiSurface): string {
     inputHash: surface.inputHash,
     queries: surface.queries,
     commands: surface.commands,
+    liveQueries: {},
     actions: surface.actions,
     workflows: surface.workflows,
   });
@@ -543,6 +544,19 @@ export function serializeServerApiTsExport(surface: ApiSurface): string {
 
 export function serializeClientApiTsExport(surface: ApiSurface): string {
   return serializeClientApiTs(surface);
+}
+
+export function serializeClientManifestJson(
+  manifest: import("../client-sdk/build-manifest.ts").ClientManifest,
+): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeClientManifestTs(
+  manifest: import("../client-sdk/build-manifest.ts").ClientManifest,
+): string {
+  const parsed: unknown = JSON.parse(serializeClientManifestJson(manifest).trimEnd());
+  return `export const clientManifest = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
 export type { ImportGuardsArtifact };

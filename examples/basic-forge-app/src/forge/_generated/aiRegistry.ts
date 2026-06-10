@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=2109cd49dea7ae4cd20f98fc0ce6dce0a08c3e3732a7d77f530851d6d134f995 content=510ad8baf690da831bea9a00d7865ea6fad76f6343f9ee07cb2e7670f17e1fb1
+// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=a585cf1f80016a8bae077f95e3746cd2fcac184903c1802ca4f32f53eb2925d5
 export const aiRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
@@ -12,7 +12,7 @@ export const aiRegistry = {
     }
   ],
   "generatorVersion": "0.0.0",
-  "inputHash": "5bbc588feb430fe38f9af7f968a5808a866066ad0ff50c7e15d569af12fc55a6",
+  "inputHash": "58f25e4388fa53b2cf9b9b5dbb46d0f406c62b5b085155d7d42d1a10f8057ae9",
   "providers": [
     {
       "id": "openai",

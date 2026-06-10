@@ -62,6 +62,7 @@ export function serializeApiTs(surface: ApiSurface): string {
     {
       queries: surface.queries,
       commands: surface.commands,
+      liveQueries: {},
       actions: surface.actions,
       workflows: surface.workflows,
     },
@@ -85,9 +86,11 @@ export const serverApi = {
 export function serializeClientApiTs(surface: ApiSurface): string {
   return `import { api } from "./api.ts";
 
-/** Client-side typed API surface (read-only query names for H13). */
+/** Client-side typed API surface (queries, commands; no server adapters). */
 export const clientApi = {
   queries: api.queries,
+  commands: api.commands,
+  liveQueries: api.liveQueries,
 } as const;
 `;
 }

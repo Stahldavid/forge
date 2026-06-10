@@ -210,6 +210,7 @@ export async function runInspectCommand(
     ai: `${GENERATED_DIR}/aiRegistry.json`,
     queries: `${GENERATED_DIR}/queryRegistry.json`,
     api: `${GENERATED_DIR}/api.json`,
+    client: `${GENERATED_DIR}/clientManifest.json`,
   };
 
   const relative = dataPaths[target];

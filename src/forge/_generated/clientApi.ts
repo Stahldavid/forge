@@ -1,7 +1,9 @@
-// @forge-generated generator=0.0.0 input=d68c28d156524da05d9c01a1be17dbf4ec0bd99d813b1a2c86349c3f54e0b5f8 content=ce09258262bd29a1cc6e3e6ca3aab5ebafd3cdf0c75f677cf77058a99b4e6979
+// @forge-generated generator=0.0.0 input=8f74d80244f472bdbd28e32d310c3754a3301ecc0276cb8fb06d23335cf21d46 content=d331e860feeb8e9f3bcdcf45c3ff0ab2ebcd41bb96fbf204bb83dc7fcfda1ab3
 import { api } from "./api.ts";
 
-/** Client-side typed API surface (read-only query names for H13). */
+/** Client-side typed API surface (queries, commands; no server adapters). */
 export const clientApi = {
   queries: api.queries,
+  commands: api.commands,
+  liveQueries: api.liveQueries,
 } as const;

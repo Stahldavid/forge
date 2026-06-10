@@ -21,7 +21,7 @@ bun run forge verify
 | `forge generate` | Analyze workspace and emit generated files |
 | `forge generate --check` | Fail on drift without writing |
 | `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
-| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime/dev |
+| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime/dev/client |
 | `forge run [name]` | List or execute local command/action handlers (`--list`, `--mock`) |
 | `forge run query <name>` | Execute a read-only query with `--args` and auth flags |
 | `forge query <list\|run>` | Query aliases (`forge query run listTickets`) |
@@ -111,6 +111,40 @@ FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
 13. **H12** — AI workflow integration & observability ✅
 14. **H12.5** — Example artifacts, zod lockfile, verify Windows bun path, E2E telemetry ✅
 15. **H13** — Query runtime & typed API surface ✅
+16. **H14** — Frontend client SDK core ✅
+
+### H14 deliverables (frontend client SDK)
+
+| Artifact | Description |
+|----------|-------------|
+| `client.ts` | `createForgeClient()` — fetch-based HTTP client for queries/commands |
+| `clientTypes.ts` | `ForgeClient`, `ForgeClientConfig`, `ForgeError`, auth types |
+| `clientManifest.json` / `.ts` | Safe client surface manifest (excludes server adapters) |
+| `api.ts` | Extended with `liveQueries: {}` placeholder for H15 |
+| `clientApi.ts` | Client-safe query/command/liveQuery name constants |
+| Dev server CORS | `Access-Control-Allow-Origin: *` for local browser clients |
+| `forge inspect client` | Lists queries, commands, liveQueries from manifest |
+
+```ts
+import { createForgeClient, api } from "./forge/_generated/client";
+
+const client = createForgeClient({
+  url: "http://127.0.0.1:3765",
+  auth: { userId: "u1", tenantId: "t1", role: "member" },
+});
+
+const tickets = await client.query(api.queries.listTickets, {});
+await client.command(api.commands.createTicket, { title: "Bug" });
+```
+
+```bash
+forge inspect client --json
+bun test tests/client
+```
+
+**Architecture:** Generated client uses `fetch` (browser + Bun). Static auth sends `x-forge-user-id`, `x-forge-tenant-id`, `x-forge-role`. Async auth providers merge custom headers. Policy denials throw `ForgeError` with `code` and `traceId`. Client manifest excludes server-only adapters (`*.server.ts`) and packages denied in `client` context.
+
+**Limitations:** no liveQuery/SSE, React hooks, SSR, caching, or optimistic updates.
 
 ### H13 deliverables (query runtime)
 

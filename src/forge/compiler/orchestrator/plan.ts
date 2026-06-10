@@ -22,6 +22,12 @@ import {
 import { buildAiModels, buildAiRegistry } from "../ai-registry/build.ts";
 import { buildQueryRegistry } from "../query-registry/build.ts";
 import { buildApiSurface } from "../api-surface/build.ts";
+import { buildClientManifest } from "../client-sdk/build-manifest.ts";
+import {
+  renderClientManifestTs,
+  renderClientTs,
+  renderClientTypesTs,
+} from "../client-sdk/render-client.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
@@ -104,6 +110,7 @@ import {
   serializeApiTsExport,
   serializeServerApiTsExport,
   serializeClientApiTsExport,
+  serializeClientManifestJson,
   buildMockMapEntries,
 } from "./serialize.ts";
 
@@ -191,6 +198,7 @@ export function plan(input: PlanInput): EmitPlan {
   const queryRegistry = buildQueryRegistry(input.appGraph);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
   const apiSurface = buildApiSurface(runtimeGraph, queryRegistry, workflowRegistry);
+  const clientManifest = buildClientManifest(apiSurface, input.classified);
   const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
 
@@ -388,6 +396,13 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(`${GENERATED_DIR}/api.json`, serializeApiJson(apiSurface)),
     makeEmitFile(`${GENERATED_DIR}/serverApi.ts`, serializeServerApiTsExport(apiSurface)),
     makeEmitFile(`${GENERATED_DIR}/clientApi.ts`, serializeClientApiTsExport(apiSurface)),
+    makeEmitFile(`${GENERATED_DIR}/clientTypes.ts`, renderClientTypesTs()),
+    makeEmitFile(`${GENERATED_DIR}/client.ts`, renderClientTs()),
+    makeEmitFile(`${GENERATED_DIR}/clientManifest.ts`, renderClientManifestTs(clientManifest)),
+    makeEmitFile(
+      `${GENERATED_DIR}/clientManifest.json`,
+      serializeClientManifestJson(clientManifest),
+    ),
   ];
 
   const sortedFiles = stableSortEmitFiles(files);
