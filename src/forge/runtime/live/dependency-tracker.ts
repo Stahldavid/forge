@@ -46,12 +46,12 @@ export function createWriteTracker(): WriteTracker {
         return a.tenantId < b.tenantId ? -1 : a.tenantId > b.tenantId ? 1 : 0;
       });
     },
-    record(table, tenantId) {
+    record(table, tenantId, operation = "write") {
       if (!tenantId) {
         return;
       }
-      const key = `${table}:${tenantId}`;
-      byKey.set(key, { tables: [table], tenantId });
+      const key = `${table}:${tenantId}:${operation}`;
+      byKey.set(key, { tables: [table], tenantId, operation });
     },
   };
 }

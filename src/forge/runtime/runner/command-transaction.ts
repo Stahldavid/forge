@@ -8,6 +8,7 @@ import type { TableMapEntry } from "../../compiler/data-graph/sql/serialize.ts";
 import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type { RuntimeEntry } from "../../compiler/types/runtime-graph.ts";
 import type { DbAdapter } from "../db/adapter.ts";
+import { setDbSessionContext } from "../db/session-context.ts";
 import {
   createGeneratedDbClient,
   TenantScopeViolationError,
@@ -20,6 +21,10 @@ import { generateTraceId } from "../telemetry/correlation.ts";
 import type { AuthContext } from "../auth/types.ts";
 import { checkCommandPolicy } from "../policy/check.ts";
 import { createWriteTracker } from "../live/dependency-tracker.ts";
+import {
+  notifyLiveWakeup,
+  writeLiveInvalidations,
+} from "../live/invalidation-log.ts";
 import type { LiveSubscriptionManager } from "../live/types.ts";
 
 export interface CommandRuntime {
@@ -77,6 +82,8 @@ export async function runCommandWithTransaction(
   const tx = await runtime.adapter.begin();
 
   try {
+    await setDbSessionContext(tx, auth);
+
     const telemetry = createTelemetryContext({
       adapter: runtime.adapter,
       tx,
@@ -98,10 +105,29 @@ export async function runCommandWithTransaction(
       runtimeKind: "command",
     });
     const result = await handler(ctx, args);
+    const invalidations = await writeLiveInvalidations(tx, {
+      changes: writeTracker.changes.map((change) => ({ ...change, traceId })),
+      sourceKind: "command",
+      sourceName: entry.name,
+      traceId,
+    });
     await tx.commit();
 
-    for (const change of writeTracker.changes) {
-      await runtime.liveManager?.notifyDataChanged(change);
+    const latestRevision = Math.max(
+      0,
+      ...invalidations.map((invalidation) => invalidation.revision),
+    );
+    if (latestRevision > 0) {
+      await notifyLiveWakeup(runtime.adapter, latestRevision);
+      if (runtime.liveManager) {
+        for (const change of writeTracker.changes) {
+          await runtime.liveManager.notifyDataChanged(change);
+        }
+      }
+    } else {
+      for (const change of writeTracker.changes) {
+        await runtime.liveManager?.notifyDataChanged(change);
+      }
     }
 
     return {

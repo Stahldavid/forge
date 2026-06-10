@@ -1,4 +1,11 @@
-export type LiveSubcommand = "list" | "subscribe";
+export type LiveSubcommand =
+  | "list"
+  | "subscribe"
+  | "status"
+  | "debug"
+  | "invalidations"
+  | "test"
+  | "load-test";
 
 export interface RunLiveCommandOptions {
   subcommand: LiveSubcommand;
@@ -39,6 +46,45 @@ export async function runLiveCommand(options: RunLiveCommandOptions): Promise<nu
         process.stdout.write(`${name}\n`);
       }
     }
+    return response.ok ? 0 : 1;
+  }
+
+  if (options.subcommand === "status") {
+    const response = await fetch(`${baseUrl(options)}/live/status`);
+    const body = await response.json().catch(() => ({}));
+    process.stdout.write(options.json ? `${JSON.stringify(body)}\n` : `${JSON.stringify(body, null, 2)}\n`);
+    return response.ok ? 0 : 1;
+  }
+
+  if (options.subcommand === "invalidations") {
+    const response = await fetch(`${baseUrl(options)}/live/invalidations`);
+    const body = await response.json().catch(() => ({}));
+    process.stdout.write(options.json ? `${JSON.stringify(body)}\n` : `${JSON.stringify(body, null, 2)}\n`);
+    return response.ok ? 0 : 1;
+  }
+
+  if (options.subcommand === "debug") {
+    if (!options.name) {
+      throw new Error("forge live debug requires a subscription id");
+    }
+    const response = await fetch(
+      `${baseUrl(options)}/live/debug/${encodeURIComponent(options.name)}`,
+    );
+    const body = await response.json().catch(() => ({}));
+    process.stdout.write(options.json ? `${JSON.stringify(body)}\n` : `${JSON.stringify(body, null, 2)}\n`);
+    return response.ok ? 0 : 1;
+  }
+
+  if (options.subcommand === "test" || options.subcommand === "load-test") {
+    const response = await fetch(`${baseUrl(options)}/live/status`);
+    const body = await response.json().catch(() => ({}));
+    process.stdout.write(
+      `${JSON.stringify({
+        ok: response.ok,
+        mode: options.subcommand,
+        status: body,
+      })}\n`,
+    );
     return response.ok ? 0 : 1;
   }
 

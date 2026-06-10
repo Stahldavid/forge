@@ -171,6 +171,16 @@ function applySystemDefaults(tableName: string, row: MemoryRow): void {
   if (tableName === "_forge_trace_spans") {
     row.started_at ??= now;
   }
+
+  if (tableName === "_forge_live_invalidations") {
+    row.payload ??= {};
+    row.created_at ??= now;
+  }
+
+  if (tableName === "_forge_live_subscription_debug") {
+    row.created_at ??= now;
+    row.updated_at ??= now;
+  }
 }
 
 function projectRows(sql: string, rows: MemoryRow[]): MemoryRow[] {
@@ -196,6 +206,7 @@ function projectRows(sql: string, rows: MemoryRow[]): MemoryRow[] {
 export class MemoryAdapter implements DbAdapter {
   readonly kind = "memory" as const;
   private tables = new Map<string, MemoryTable>();
+  private sequences = new Map<string, number>();
 
   async query(sql: string, params: unknown[] = []): Promise<DbQueryResult> {
     const trimmed = sql.trim().replace(/\s+/g, " ");
@@ -206,6 +217,17 @@ export class MemoryAdapter implements DbAdapter {
         trimmed.match(/CREATE TABLE IF NOT EXISTS ([a-z_][a-z0-9_]*)/i);
       if (match?.[1] && !this.tables.has(match[1])) {
         this.tables.set(match[1], { rows: [], nextSerial: 1 });
+      }
+      return { rows: [], rowCount: 0 };
+    }
+
+    if (trimmed.startsWith("CREATE SEQUENCE")) {
+      const match =
+        trimmed.match(/CREATE SEQUENCE IF NOT EXISTS "([^"]+)"/i) ??
+        trimmed.match(/CREATE SEQUENCE IF NOT EXISTS ([a-z_][a-z0-9_]*)/i);
+      if (match?.[1] && !this.sequences.has(match[1])) {
+        const start = Number(trimmed.match(/START WITH\s+(\d+)/i)?.[1] ?? 1);
+        this.sequences.set(match[1], Number.isFinite(start) ? start : 1);
       }
       return { rows: [], rowCount: 0 };
     }
@@ -325,6 +347,24 @@ export class MemoryAdapter implements DbAdapter {
   }
 
   private handleSelect(sql: string, params: unknown[]): DbQueryResult {
+    const nextvalMatch = sql.match(/nextval\(\s*'([^']+)'\s*\)/i);
+    if (nextvalMatch?.[1]) {
+      const name = nextvalMatch[1];
+      const current = this.sequences.get(name) ?? 1;
+      this.sequences.set(name, current + 1);
+      return { rows: [{ revision: current, nextval: current }], rowCount: 1 };
+    }
+
+    if (/MAX\(\s*revision\s*\)/i.test(sql)) {
+      const table = this.tables.get("_forge_live_invalidations");
+      const max = Math.max(
+        0,
+        ...((table?.rows ?? []).map((row) => Number(row.revision)).filter(Number.isFinite)),
+      );
+      const alias = sql.match(/AS\s+"?(\w+)"?/i)?.[1] ?? "revision";
+      return { rows: [{ [alias]: max, revision: max }], rowCount: 1 };
+    }
+
     if (/information_schema\.tables/i.test(sql)) {
       const tables = [...this.tables.keys()].sort().map((name) => ({ table_name: name }));
       return normalizeRows(tables);
@@ -388,6 +428,10 @@ export class MemoryAdapter implements DbAdapter {
           return (left as number) < (right as number) ? -1 : 1;
         });
       }
+    }
+
+    if (/ORDER BY\s+revision/i.test(sql)) {
+      rows.sort((a, b) => Number(a.revision) - Number(b.revision));
     }
 
     if (/LIMIT/i.test(sql)) {
@@ -477,7 +521,7 @@ export class MemoryAdapter implements DbAdapter {
 
     const conditions = [
       ...sql.matchAll(
-        /(?:^|\s|AND\s)(?:\w+\.)?"?(\w+)"?\s*(=|<=|!=)\s*(\$\d+|now\(\)|'[^']*'|"[^"]*"|\d+)/gi,
+        /(?:^|\s|AND\s)(?:\w+\.)?"?(\w+)"?\s*(=|<=|>=|>|<|!=)\s*(\$\d+|now\(\)|'[^']*'|"[^"]*"|\d+)/gi,
       ),
     ];
 
@@ -490,6 +534,18 @@ export class MemoryAdapter implements DbAdapter {
 
         if (operator === "<=") {
           if (!compareValue(row[column], value)) {
+            return false;
+          }
+        } else if (operator === ">") {
+          if (!(Number(row[column]) > Number(value))) {
+            return false;
+          }
+        } else if (operator === ">=") {
+          if (!(Number(row[column]) >= Number(value))) {
+            return false;
+          }
+        } else if (operator === "<") {
+          if (!(Number(row[column]) < Number(value))) {
             return false;
           }
         } else if (operator === "!=") {
@@ -617,6 +673,7 @@ export class MemoryAdapter implements DbAdapter {
         nextSerial: table.nextSerial,
       });
     }
+    const sequenceSnapshot = new Map(this.sequences);
 
     const adapter = this;
 
@@ -627,6 +684,7 @@ export class MemoryAdapter implements DbAdapter {
       },
       async rollback() {
         adapter.tables = snapshot;
+        adapter.sequences = sequenceSnapshot;
       },
     };
   }

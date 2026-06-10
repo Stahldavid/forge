@@ -227,6 +227,16 @@ function playbooks(): AgentPlaybook[] {
       ],
     },
     {
+      title: "Debug a stale liveQuery",
+      steps: [
+        "Run forge live status --json.",
+        "Run forge live invalidations list --json and confirm the table and tenant changed.",
+        "Run forge live debug <subscriptionId> --json when a subscription id is available.",
+        "Check that _forge_live_invalidations has revisions newer than the last sent snapshot.",
+        "Reconnect with Last-Event-ID or ?lastRevision=<revision> to verify resume behavior.",
+      ],
+    },
+    {
       title: "Add a table",
       steps: [
         "Edit src/forge/schema.ts.",
@@ -237,12 +247,32 @@ function playbooks(): AgentPlaybook[] {
       ],
     },
     {
+      title: "Scaffold a resource",
+      steps: [
+        "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
+        "Review the plan and diagnostics.",
+        "Run forge make resource <name> --fields name:type --yes.",
+        "Run forge generate.",
+        "Run forge verify --strict.",
+      ],
+    },
+    {
       title: "Add a package",
       steps: [
         "Use forge add <alias>.",
         "Do not install packages manually unless the architecture exception is intentional.",
         "Run forge generate.",
         "Run forge check.",
+      ],
+    },
+    {
+      title: "Upgrade a package",
+      steps: [
+        "Run forge deps upgrade-plan <package> --to latest.",
+        "Read .forge/upgrades/.../plan.md.",
+        "If risk is high, inspect affected files and generated adapters before applying.",
+        "Apply with forge deps upgrade-apply <plan>.",
+        "Finish with forge verify --strict.",
       ],
     },
     {
@@ -266,6 +296,15 @@ function playbooks(): AgentPlaybook[] {
         "Run forge self-host compose.",
         "Review deploy/.env.example.",
         "Run forge self-host check.",
+      ],
+    },
+    {
+      title: "Debug a production stack trace",
+      steps: [
+        "Run forge release inspect <releaseId> --json.",
+        "Run forge release sourcemaps symbolicate --input stacktrace.json --json.",
+        "Open the original source file and line from the symbolicated frame.",
+        "Use forge telemetry inspect <traceId> --with-release --json when a trace id is available.",
       ],
     },
   ];
@@ -560,6 +599,7 @@ Do not:
 - Queries and liveQueries are read-only.
 - Actions perform side effects after commit.
 - Workflows orchestrate durable steps.
+- Production liveQuery uses a durable invalidation log; polling/notify are wakeups only.
 - Production API calls use \`Authorization: Bearer <JWT>\` in \`jwt\` or \`oidc\` auth mode.
 - \`dev-headers\` auth is for \`forge dev\`, tests, and local agent workflows only.
 - AI is only allowed in actions, workflows, endpoints, and server code.
@@ -572,6 +612,7 @@ Do not:
 - Do not access cross-tenant data.
 - Commands must use \`ctx.emit\` for side effects.
 - Actions and workflows handle side effects after commit.
+- Do not rely on in-memory Pub/Sub as the source of truth for liveQuery invalidation.
 
 ## Useful commands
 
@@ -582,6 +623,8 @@ forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
+forge inspect live-production --json
+forge live status --json
 forge doctor
 forge verify --strict
 \`\`\`
@@ -616,6 +659,17 @@ ${renderList(secrets)}
 3. Run \`forge generate\`.
 4. Run \`forge verify --strict\`.
 
+### Scaffold a resource
+
+Use:
+
+\`\`\`bash
+forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
+forge make resource <name> --fields title:text,status:enum(open,closed) --yes
+\`\`\`
+
+Review the plan before applying when the resource touches schema or policies.
+
 ### Add a package
 
 Use:
@@ -625,6 +679,30 @@ forge add <alias>
 \`\`\`
 
 Do not install packages manually unless intentional.
+
+### Upgrade a package
+
+Use:
+
+\`\`\`bash
+forge deps upgrade-plan <package> --to latest
+forge deps upgrade-apply <plan>
+forge verify --strict
+\`\`\`
+
+Do not manually edit \`package.json\` for package upgrades unless necessary.
+
+### Debug liveQuery
+
+Use:
+
+\`\`\`bash
+forge live status --json
+forge live invalidations list --json
+forge live debug <subscriptionId> --json
+\`\`\`
+
+Durable invalidations live in \`_forge_live_invalidations\`.
 
 <!-- forge-generated:end -->
 
@@ -675,7 +753,23 @@ function renderAppMapMd(contract: AgentContract): string {
 }
 
 function renderRuntimeRulesMd(rules: AgentRuntimeRule[]): string {
-  const lines = ["# Runtime Rules", ""];
+  const lines = [
+    "# Runtime Rules",
+    "",
+    "## LiveQuery Production",
+    "",
+    "Allowed:",
+    "- durable invalidation rows in _forge_live_invalidations",
+    "- polling fallback",
+    "- Postgres notify wakeups",
+    "- SSE heartbeats and Last-Event-ID resume",
+    "",
+    "Forbidden:",
+    "- treating Pub/Sub or in-memory notification as the source of truth",
+    "- unbounded snapshot queues",
+    "- cross-tenant invalidation fanout",
+    "",
+  ];
   for (const rule of rules) {
     lines.push(`## ${rule.context}`, "", "Allowed:", ...renderList(rule.allowed).split("\n"), "", "Forbidden:", ...renderList(rule.forbidden).split("\n"), "");
   }

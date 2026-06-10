@@ -25,6 +25,7 @@ export interface ForgeTelemetryEnvelope {
   runtime: { kind: TelemetryRuntimeKind; name?: string };
   workflow?: { runId?: string; stepName?: string };
   outbox?: { eventId?: string; deliveryId?: string };
+  release?: { releaseId?: string; deployId?: string; environment?: string };
   event?: { name: string; properties: Record<string, unknown> };
   exception?: { name?: string; message: string; stack?: string };
   log?: { level: string; message: string; fields?: Record<string, unknown> };

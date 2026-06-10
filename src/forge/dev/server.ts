@@ -59,6 +59,12 @@ import { generateTraceId } from "../runtime/telemetry/correlation.ts";
 import { loadLiveQueryRegistry } from "../runtime/live/registry.ts";
 import { createLiveSubscriptionManager } from "../runtime/live/subscription-manager.ts";
 import { createSseResponse } from "../runtime/live/sse.ts";
+import {
+  ensureLiveInvalidationSchema,
+  listLiveInvalidations,
+} from "../runtime/live/invalidation-log.ts";
+import { currentReleaseInfo } from "../runtime/release/runtime.ts";
+import { DEFAULT_LIVE_LIMITS } from "../runtime/live/types.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -190,6 +196,7 @@ export async function startDevServer(
         throw new Error(errors.map((diagnostic) => diagnostic.message).join("; "));
       }
     }
+    await ensureLiveInvalidationSchema(adapter);
 
     serverState.adapter = adapter;
     serverState.db.connected = true;
@@ -238,6 +245,8 @@ export async function startDevServer(
         workspaceRoot,
         adapter: serverState.adapter,
         loadTableMap: () => loadArtifacts().tableMap,
+        enablePolling: true,
+        pollIntervalMs: Number(process.env.FORGE_LIVE_POLL_INTERVAL_MS ?? "1000"),
       })
     : null;
 
@@ -327,7 +336,9 @@ export async function startDevServer(
             live: liveManager?.stats() ?? {
               subscriptions: 0,
               liveQueries: loadLiveQueryRegistry(workspaceRoot).liveQueries.length,
+              lastRevision: 0,
             },
+            liveStatus: liveManager?.status() ?? null,
           });
         }
 
@@ -337,6 +348,59 @@ export async function startDevServer(
             ok: true,
             liveQueries: liveQueries.map((liveQuery) => liveQuery.name),
           });
+        }
+
+        if (request.method === "GET" && pathname === "/live/status") {
+          return jsonResponse({
+            ok: true,
+            status: liveManager?.status() ?? {
+              runtime: { id: "runtime_unavailable", transport: "sse", subscriptions: 0 },
+              invalidation: {
+                lastSeenRevision: 0,
+                lastProcessedRevision: 0,
+                polling: false,
+                postgresNotify: false,
+              },
+              limits: DEFAULT_LIVE_LIMITS,
+            },
+          });
+        }
+
+        if (request.method === "GET" && pathname === "/live/invalidations") {
+          if (!serverState.adapter) {
+            return jsonResponse({ ok: true, invalidations: [] });
+          }
+          const limit = Number(url.searchParams.get("limit") ?? "50");
+          return jsonResponse({
+            ok: true,
+            invalidations: await listLiveInvalidations(serverState.adapter, limit),
+          });
+        }
+
+        const liveDebugMatch = pathname.match(/^\/live\/debug\/([^/]+)$/);
+        if (request.method === "GET" && liveDebugMatch) {
+          const subscriptionId = decodeURIComponent(liveDebugMatch[1]!);
+          const subscription = liveManager?.debug(subscriptionId);
+          return jsonResponse({
+            ok: Boolean(subscription),
+            subscription: subscription
+              ? {
+                  id: subscription.id,
+                  name: subscription.name,
+                  tenantId:
+                    subscription.auth.kind === "user"
+                      ? subscription.auth.tenantId
+                      : subscription.auth.kind === "system"
+                        ? subscription.auth.tenantId
+                        : undefined,
+                  dependencies: subscription.dependencies,
+                  lastSentRevision: subscription.lastSentRevision,
+                  status: subscription.status,
+                  createdAt: subscription.createdAt,
+                  lastSentAt: subscription.lastSentAt,
+                }
+              : null,
+          }, subscription ? 200 : 404);
         }
 
         const liveMatch = pathname.match(/^\/live\/([^/]+)$/);
@@ -369,6 +433,11 @@ export async function startDevServer(
           }
 
           const auth = await authenticateHeaders(request.headers, authConfig);
+          const lastRevision = Number(
+            request.headers.get("last-event-id") ??
+              url.searchParams.get("lastRevision") ??
+              "NaN",
+          );
           let subscriptionId: string | null = null;
 
           return createSseResponse(
@@ -377,6 +446,7 @@ export async function startDevServer(
                 name,
                 args,
                 auth,
+                lastRevision: Number.isFinite(lastRevision) ? lastRevision : undefined,
                 send,
               });
               subscriptionId = subscription.id;
@@ -391,6 +461,16 @@ export async function startDevServer(
               if (subscriptionId) {
                 liveManager.unsubscribe(subscriptionId);
               }
+            },
+            {
+              heartbeatIntervalMs: Number(process.env.FORGE_LIVE_HEARTBEAT_MS ?? "15000"),
+              hello: {
+                type: "hello",
+                protocolVersion: "0.1.0",
+                releaseId: currentReleaseInfo().releaseId,
+                deployId: currentReleaseInfo().deployId,
+                serverTime: new Date().toISOString(),
+              },
             },
           );
         }
@@ -896,6 +976,7 @@ export async function startDevServer(
     outboxWorker: serverState.outboxWorker,
     stop: () => {
       serverState.outboxWorker?.stop();
+      liveManager?.stop();
       server.stop(true);
       restoreRuntimeEnvironment();
       const adapter = serverState.adapter;

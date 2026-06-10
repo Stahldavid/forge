@@ -10,6 +10,7 @@ import { runCheckCommand, runGenerateCommand } from "./commands.ts";
 import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
 import { runAuthCommand } from "./auth.ts";
+import { runRlsCommand } from "./rls.ts";
 
 interface PackageScripts {
   typecheck?: string;
@@ -166,6 +167,19 @@ export async function runVerifyCommand(
         }),
       );
     }
+
+    const rlsCheck = await runRlsCommand({
+      subcommand: "check",
+      workspaceRoot: options.workspaceRoot,
+      db: "pglite",
+      json: false,
+    });
+    steps.push({
+      name: "rls-check",
+      ok: rlsCheck.exitCode === 0,
+      exitCode: rlsCheck.exitCode,
+    });
+    diagnostics.push(...rlsCheck.diagnostics);
   }
 
   if (options.skipTypecheck) {

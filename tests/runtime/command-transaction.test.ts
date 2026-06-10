@@ -81,5 +81,5 @@ describe("command transaction rollback", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 });

@@ -18,7 +18,7 @@ export interface IndexDef {
 }
 
 export interface SqlChange {
-  kind: "create_table" | "create_index";
+  kind: "create_table" | "create_index" | "create_sequence";
   table?: string;
   columns?: ColumnDef[];
   index?: IndexDef;

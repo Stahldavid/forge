@@ -12,9 +12,9 @@ import type { TableMapEntry } from "../../compiler/data-graph/sql/serialize.ts";
 import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type { QueryDefinition } from "../../compiler/types/query-registry.ts";
 import type { DbAdapter } from "../db/adapter.ts";
-import { adapterAsTransaction } from "../db/adapter.ts";
 import { createReadOnlyDbClient } from "../db/read-only-client.ts";
 import { TenantScopeViolationError } from "../db/generated-client.ts";
+import { setDbSessionContext } from "../db/session-context.ts";
 import { createQueryContext } from "../context/create-query-context.ts";
 import { createTelemetryContext } from "../telemetry/context.ts";
 import { generateTraceId } from "../telemetry/correlation.ts";
@@ -243,7 +243,11 @@ export async function runQuery(
     query: query.name,
   });
 
+  const tx = await adapter.begin();
+
   try {
+    await setDbSessionContext(tx, auth);
+
     const absolutePath = join(workspaceRoot, query.file);
     const mod = (await import(absolutePath)) as Record<string, unknown>;
     const exported = mod[query.name];
@@ -261,10 +265,11 @@ export async function runQuery(
       handler: (ctx: unknown, args: unknown) => unknown | Promise<unknown>;
     }).handler;
 
-    const db = createReadOnlyDbClient(adapterAsTransaction(adapter), tableMap, { auth });
+    const db = createReadOnlyDbClient(tx, tableMap, { auth });
     const ctx = createQueryContext(db, preflightTelemetry, auth);
     const result = await handler(ctx, options.args ?? {});
 
+    await tx.commit();
     await preflightTelemetry.capture("forge.query.completed", {
       query: query.name,
     });
@@ -278,6 +283,12 @@ export async function runQuery(
       traceId,
     };
   } catch (error) {
+    try {
+      await tx.rollback();
+    } catch {
+      // ignore rollback errors
+    }
+
     if (error instanceof TenantScopeViolationError) {
       await preflightTelemetry.capture("forge.tenant_scope.denied", {
         table: error.table,

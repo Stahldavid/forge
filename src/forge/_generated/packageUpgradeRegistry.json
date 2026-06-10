@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=5218512cdec2311e17d4b1dc480d6a6452a6574b5cef32195bb11218ee04b842 content=4828922ca36995526c3c1c446ee91f554d9e40fffc6fb68c5097224093261a11
+{"commands":["forge deps outdated --json","forge deps inspect <package> --json","forge deps diff <package> --to latest --json","forge deps upgrade-plan <package> --to latest","forge deps upgrade-apply <plan>","forge deps upgrade-check --json","forge deps upgrade-rollback <planId>"],"planDirectory":".forge/upgrades","plannerVersion":"0.0.0","schemaVersion":"0.1.0"}

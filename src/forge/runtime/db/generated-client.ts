@@ -149,7 +149,7 @@ function createTableClient(
         `INSERT INTO ${quoteIdent(tableName)} (${keys.map(quoteIdent).join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`,
         params,
       );
-      options?.writeTracker?.record(tableName, writeTenantId);
+      options?.writeTracker?.record(tableName, writeTenantId, "insert");
       return result.rows[0] ?? normalized;
     },
 
@@ -177,7 +177,7 @@ function createTableClient(
         params,
       );
       if ((result.rowCount ?? result.rows.length) > 0) {
-        options?.writeTracker?.record(tableName, writeTenantId);
+        options?.writeTracker?.record(tableName, writeTenantId, "update");
       }
       return result.rows[0] ?? null;
     },
@@ -196,7 +196,7 @@ function createTableClient(
         params,
       );
       if (result.rowCount > 0) {
-        options?.writeTracker?.record(tableName, writeTenantId);
+        options?.writeTracker?.record(tableName, writeTenantId, "delete");
       }
       return result.rowCount > 0;
     },

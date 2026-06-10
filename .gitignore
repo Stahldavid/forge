@@ -3,6 +3,13 @@ node_modules/
 .forge/cache/
 .forge/pglite/
 .forge/local/
+.forge/test-cache/
+.forge/releases/*
+!.forge/releases/.gitkeep
+.forge/upgrades/*
+!.forge/upgrades/.gitkeep
+.forge/make-plans/*
+!.forge/make-plans/.gitkeep
 tests/**/.tmp/
 *.log
 .DS_Store

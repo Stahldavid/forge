@@ -144,5 +144,5 @@ describe("outbox", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 });

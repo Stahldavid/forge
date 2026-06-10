@@ -37,6 +37,35 @@ import {
   serializeSqlPlanJson,
   serializeSqlPlanTs,
 } from "../data-graph/sql/serialize.ts";
+import type {
+  DbSecurityManifest,
+  DbSessionContextArtifact,
+  RlsPoliciesArtifact,
+} from "../data-graph/rls/types.ts";
+import type { PackageUpgradeRegistry } from "../package-upgrades/types.ts";
+import type {
+  ArtifactManifest,
+  BuildInfo,
+  DeployManifest,
+  ReleaseManifest,
+  SourceMapManifest,
+  SymbolicationManifest,
+} from "../release/types.ts";
+import type {
+  LiveProductionManifest,
+  LiveProtocolManifest,
+  LiveTransportConfig,
+} from "../live-production/types.ts";
+import type {
+  MakeRegistryArtifact,
+  MakeTemplateArtifact,
+} from "../make-registry/build.ts";
+import {
+  serializeMakeRegistryJson as serializeMakeRegistryJsonArtifact,
+  serializeMakeRegistryTs as serializeMakeRegistryTsArtifact,
+  serializeMakeTemplatesJson as serializeMakeTemplatesJsonArtifact,
+  serializeMakeTemplatesTs as serializeMakeTemplatesTsArtifact,
+} from "../make-registry/build.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
 import { GENERATED_DIR } from "../emitter/constants.ts";
@@ -219,6 +248,163 @@ export function serializeDbJsonExport(plan: SqlPlan, tenantScope?: TenantScope):
 
 export function serializeDbTsExport(plan: SqlPlan, tenantScope?: TenantScope): string {
   return serializeDbTs(plan, tenantScope);
+}
+
+export function serializeRlsPoliciesSql(artifact: RlsPoliciesArtifact): string {
+  return artifact.sql;
+}
+
+export function serializeRlsPoliciesJson(artifact: RlsPoliciesArtifact): string {
+  return serializeCanonical({
+    schemaVersion: artifact.schemaVersion,
+    tables: artifact.tables,
+    diagnostics: artifact.diagnostics,
+  });
+}
+
+export function serializeRlsPoliciesTs(artifact: RlsPoliciesArtifact): string {
+  const parsed: unknown = JSON.parse(serializeRlsPoliciesJson(artifact).trimEnd());
+  return `export const rlsPolicies = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeDbSecurityManifestJson(manifest: DbSecurityManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeDbSecurityManifestTs(manifest: DbSecurityManifest): string {
+  const parsed: unknown = JSON.parse(
+    serializeDbSecurityManifestJson(manifest).trimEnd(),
+  );
+  return `export const dbSecurityManifest = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeDbSessionContextJson(context: DbSessionContextArtifact): string {
+  return serializeCanonical(context);
+}
+
+export function serializeDbSessionContextTs(context: DbSessionContextArtifact): string {
+  const parsed: unknown = JSON.parse(serializeDbSessionContextJson(context).trimEnd());
+  return `export const dbSessionContext = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializePackageUpgradeRegistryJson(
+  registry: PackageUpgradeRegistry,
+): string {
+  return serializeCanonical(registry);
+}
+
+export function serializePackageUpgradeRegistryTs(registry: PackageUpgradeRegistry): string {
+  const parsed: unknown = JSON.parse(
+    serializePackageUpgradeRegistryJson(registry).trimEnd(),
+  );
+  return `export const packageUpgradeRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+function tsConst(name: string, value: unknown): string {
+  return `export const ${name} = ${JSON.stringify(value, null, 2)} as const;\n`;
+}
+
+export function serializeReleaseManifestJson(manifest: ReleaseManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeReleaseManifestTs(manifest: ReleaseManifest): string {
+  return tsConst("releaseManifest", JSON.parse(serializeReleaseManifestJson(manifest)));
+}
+
+export function serializeDeployManifestJson(manifest: DeployManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeDeployManifestTs(manifest: DeployManifest): string {
+  return tsConst("deployManifest", JSON.parse(serializeDeployManifestJson(manifest)));
+}
+
+export function serializeArtifactManifestJson(manifest: ArtifactManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeArtifactManifestTs(manifest: ArtifactManifest): string {
+  return tsConst("artifactManifest", JSON.parse(serializeArtifactManifestJson(manifest)));
+}
+
+export function serializeSourceMapManifestJson(manifest: SourceMapManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeSourceMapManifestTs(manifest: SourceMapManifest): string {
+  return tsConst("sourceMapManifest", JSON.parse(serializeSourceMapManifestJson(manifest)));
+}
+
+export function serializeSymbolicationManifestJson(manifest: SymbolicationManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeSymbolicationManifestTs(manifest: SymbolicationManifest): string {
+  return tsConst(
+    "symbolicationManifest",
+    JSON.parse(serializeSymbolicationManifestJson(manifest)),
+  );
+}
+
+export function serializeBuildInfoJson(info: BuildInfo): string {
+  return serializeCanonical(info);
+}
+
+export function serializeBuildInfoTs(info: BuildInfo): string {
+  return tsConst("buildInfo", JSON.parse(serializeBuildInfoJson(info)));
+}
+
+export function serializeLiveProductionManifestJson(
+  manifest: LiveProductionManifest,
+): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeLiveProductionManifestTs(
+  manifest: LiveProductionManifest,
+): string {
+  return tsConst(
+    "liveProductionManifest",
+    JSON.parse(serializeLiveProductionManifestJson(manifest)),
+  );
+}
+
+export function serializeLiveProtocolJson(manifest: LiveProtocolManifest): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeLiveProtocolTs(manifest: LiveProtocolManifest): string {
+  return tsConst("liveProtocol", JSON.parse(serializeLiveProtocolJson(manifest)));
+}
+
+export function serializeLiveTransportConfigJson(
+  config: LiveTransportConfig,
+): string {
+  return serializeCanonical(config);
+}
+
+export function serializeLiveTransportConfigTs(config: LiveTransportConfig): string {
+  return tsConst(
+    "liveTransportConfig",
+    JSON.parse(serializeLiveTransportConfigJson(config)),
+  );
+}
+
+export function serializeMakeRegistryJson(registry: MakeRegistryArtifact): string {
+  return serializeMakeRegistryJsonArtifact(registry);
+}
+
+export function serializeMakeRegistryTs(registry: MakeRegistryArtifact): string {
+  return serializeMakeRegistryTsArtifact(registry);
+}
+
+export function serializeMakeTemplatesJson(templates: MakeTemplateArtifact): string {
+  return serializeMakeTemplatesJsonArtifact(templates);
+}
+
+export function serializeMakeTemplatesTs(templates: MakeTemplateArtifact): string {
+  return serializeMakeTemplatesTsArtifact(templates);
 }
 
 export function serializeActionSubscriptionsJson(

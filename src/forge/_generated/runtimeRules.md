@@ -1,5 +1,18 @@
-// @forge-generated generator=0.0.0 input=eb8969e9c73c889933f582f8b790851a06d3bd49089208206f420481bbd031a9 content=60219a0216fb803bae9be477960e36b13491239896d23c89398d6f8ff895cfb5
+// @forge-generated generator=0.0.0 input=aa83a281b88ff3a9f4a31b32eac900a871c22a23247ea26b36b46bd6bd1fe9d4 content=7f09595afb7106f9024085f103c559078fd03bd0f2bb80554f0b57c6464354a2
 # Runtime Rules
+
+## LiveQuery Production
+
+Allowed:
+- durable invalidation rows in _forge_live_invalidations
+- polling fallback
+- Postgres notify wakeups
+- SSE heartbeats and Last-Event-ID resume
+
+Forbidden:
+- treating Pub/Sub or in-memory notification as the source of truth
+- unbounded snapshot queues
+- cross-tenant invalidation fanout
 
 ## command
 

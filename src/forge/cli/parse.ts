@@ -16,6 +16,10 @@ import type { NewPackageManager, NewTemplateName } from "./new.ts";
 import type { SelfHostSubcommand } from "./self-host.ts";
 import type { AgentContractSubcommand } from "./agent-contract.ts";
 import type { AuthSubcommand } from "./auth.ts";
+import type { RlsSubcommand } from "./rls.ts";
+import type { DepsSubcommand } from "./deps.ts";
+import type { ReleaseAction, ReleaseArea } from "./release.ts";
+import type { MakeCommandOptions, MakePrimitive } from "../make/types.ts";
 
 export type ForgeCommand =
   | {
@@ -73,6 +77,43 @@ export type ForgeCommand =
       token?: string;
       workspaceRoot: string;
     }
+  | {
+      kind: "rls";
+      subcommand: RlsSubcommand;
+      db: DbAdapterKind;
+      databaseUrl?: string;
+      json: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "deps";
+      subcommand: DepsSubcommand;
+      packageName?: string;
+      planPath?: string;
+      target?: string;
+      json: boolean;
+      yes: boolean;
+      allowScripts: boolean;
+      skipTests: boolean;
+      dryRun: boolean;
+      changed: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "release";
+      area: ReleaseArea;
+      action: ReleaseAction;
+      releaseId?: string;
+      input?: string;
+      provider?: string;
+      target?: string;
+      env: string;
+      json: boolean;
+      allowDirty: boolean;
+      allowPublicSourcemaps: boolean;
+      workspaceRoot: string;
+    }
+  | { kind: "make"; options: MakeCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -226,6 +267,15 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "api",
   "client",
   "auth",
+  "rls",
+  "db-security",
+  "release",
+  "artifacts",
+  "sourcemaps",
+  "live-production",
+  "live-protocol",
+  "live-transport",
+  "make",
   "all",
   "rules",
   "map",
@@ -246,6 +296,43 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
   "test-token",
   "jwks",
 ];
+const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test"];
+const DEPS_SUBCOMMANDS: DepsSubcommand[] = [
+  "outdated",
+  "inspect",
+  "diff",
+  "upgrade-plan",
+  "upgrade-apply",
+  "upgrade-check",
+  "upgrade-rollback",
+  "risk",
+];
+const LIVE_SUBCOMMANDS: LiveSubcommand[] = [
+  "list",
+  "subscribe",
+  "status",
+  "debug",
+  "invalidations",
+  "test",
+  "load-test",
+];
+const MAKE_PRIMITIVES: MakePrimitive[] = [
+  "list",
+  "explain",
+  "table",
+  "field",
+  "policy",
+  "command",
+  "query",
+  "livequery",
+  "action",
+  "workflow",
+  "component",
+  "page",
+  "resource",
+  "apply",
+  "rollback",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -257,6 +344,17 @@ function parseOptionValue(args: string[], flag: string): string | undefined {
     return undefined;
   }
   return args[index + 1];
+}
+
+function parseOptionValues(args: string[], flag: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < args.length; index++) {
+    if (args[index] === flag && index + 1 < args.length) {
+      values.push(args[index + 1]);
+      index += 1;
+    }
+  }
+  return values;
 }
 
 function parseDbKind(value: string | undefined): "pglite" | "postgres" | "none" {
@@ -315,7 +413,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, add, inspect, agent-contract, doctor, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -486,6 +584,159 @@ export function parseCli(argv: string[]): ParsedCli {
           json: parseFlag(argv, "--json"),
           token: parseOptionValue(argv, "--token"),
           workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "rls": {
+      const subcommand = rest[0] as RlsSubcommand | undefined;
+      if (!subcommand || !RLS_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge rls requires subcommand: generate, check, apply, or test");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "rls",
+          subcommand,
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "deps": {
+      const subcommand = rest[0] as DepsSubcommand | undefined;
+      if (!subcommand || !DEPS_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge deps requires subcommand: outdated, inspect, diff, upgrade-plan, upgrade-apply, upgrade-check, upgrade-rollback, or risk");
+        return { command: null, workspaceRoot, errors };
+      }
+      const packageName =
+        subcommand === "outdated" || subcommand === "upgrade-check" ? undefined : rest[1];
+      const planPath =
+        subcommand === "upgrade-apply" || subcommand === "upgrade-rollback"
+          ? rest[1]
+          : undefined;
+      return {
+        command: {
+          kind: "deps",
+          subcommand,
+          packageName,
+          planPath,
+          target: parseOptionValue(argv, "--to"),
+          json: parseFlag(argv, "--json"),
+          yes: parseFlag(argv, "--yes"),
+          allowScripts: parseFlag(argv, "--allow-scripts"),
+          skipTests: parseFlag(argv, "--skip-tests"),
+          dryRun: parseFlag(argv, "--dry-run"),
+          changed: parseFlag(argv, "--changed"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "release": {
+      const first = rest[0] ?? "prepare";
+      const area =
+        first === "artifacts" || first === "sourcemaps"
+          ? (first as ReleaseArea)
+          : "release";
+      const action = (area === "release" ? first : rest[1]) as ReleaseAction;
+      const releaseId =
+        area === "release" && action === "inspect"
+          ? rest[1]
+          : parseOptionValue(argv, "--release");
+      return {
+        command: {
+          kind: "release",
+          area,
+          action,
+          releaseId,
+          input: parseOptionValue(argv, "--input"),
+          provider: parseOptionValue(argv, "--provider"),
+          target: parseOptionValue(argv, "--target"),
+          env: parseOptionValue(argv, "--env") ?? "production",
+          json: parseFlag(argv, "--json"),
+          allowDirty: parseFlag(argv, "--allow-dirty"),
+          allowPublicSourcemaps: parseFlag(argv, "--allow-public-sourcemaps"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "make": {
+      const primitive = rest[0] as MakePrimitive | undefined;
+      if (!primitive || !MAKE_PRIMITIVES.includes(primitive)) {
+        errors.push(`forge make requires primitive: ${MAKE_PRIMITIVES.join(", ")}`);
+        return { command: null, workspaceRoot, errors };
+      }
+      const name =
+        primitive === "explain"
+          ? undefined
+          : primitive === "list"
+            ? undefined
+            : rest[1];
+      const explainPrimitive =
+        primitive === "explain" ? (rest[1] as MakePrimitive | undefined) : undefined;
+      if (
+        primitive === "explain" &&
+        (!explainPrimitive || !MAKE_PRIMITIVES.includes(explainPrimitive))
+      ) {
+        errors.push("forge make explain requires a known primitive");
+      }
+      if (
+        !["list", "explain"].includes(primitive) &&
+        !name
+      ) {
+        errors.push(`forge make ${primitive} requires a name or plan id`);
+      }
+
+      return {
+        command: {
+          kind: "make",
+          options: {
+            primitive,
+            name,
+            explainPrimitive,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            dryRun: parseFlag(argv, "--dry-run"),
+            plan: parseFlag(argv, "--plan"),
+            apply:
+              primitive === "apply" ||
+              parseFlag(argv, "--apply") ||
+              parseFlag(argv, "--yes"),
+            yes: parseFlag(argv, "--yes"),
+            force: parseFlag(argv, "--force"),
+            noGenerate: parseFlag(argv, "--no-generate"),
+            noVerify: parseFlag(argv, "--no-verify"),
+            keepFailed: parseFlag(argv, "--keep-failed"),
+            tenantScoped: parseFlag(argv, "--tenant-scoped"),
+            fieldSpecs: parseOptionValues(argv, "--field"),
+            fieldsRaw: parseOptionValue(argv, "--fields"),
+            type: parseOptionValue(argv, "--type"),
+            values: parseOptionValue(argv, "--values"),
+            defaultValue: parseOptionValue(argv, "--default"),
+            index: parseFlag(argv, "--index"),
+            roles: parseOptionValue(argv, "--roles"),
+            table: parseOptionValue(argv, "--table"),
+            policy: parseOptionValue(argv, "--policy"),
+            emit: parseOptionValue(argv, "--emit"),
+            event: parseOptionValue(argv, "--event"),
+            trigger: parseOptionValue(argv, "--trigger"),
+            component: parseOptionValue(argv, "--component"),
+            withAi: parseFlag(argv, "--with-ai"),
+            withCrud: parseFlag(argv, "--with-crud"),
+            withLiveQuery: parseFlag(argv, "--with-livequery"),
+            withReact: parseFlag(argv, "--with-react"),
+            withTests: parseFlag(argv, "--with-tests"),
+            withCreateForm: parseFlag(argv, "--with-create-form"),
+          },
         },
         workspaceRoot,
         errors,
@@ -664,8 +915,19 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "live": {
-      const subcommand = rest[0] === "list" || !rest[0] ? "list" : "subscribe";
-      const name = subcommand === "subscribe" ? rest[0] : undefined;
+      const requested = rest[0] as LiveSubcommand | undefined;
+      const subcommand =
+        !requested
+          ? "list"
+          : LIVE_SUBCOMMANDS.includes(requested)
+            ? requested
+            : "subscribe";
+      const name =
+        subcommand === "subscribe"
+          ? rest[0]
+          : subcommand === "debug"
+            ? rest[1]
+            : undefined;
       const argsRaw = parseOptionValue(argv, "--args");
       let args: unknown = {};
       if (argsRaw !== undefined) {
@@ -727,8 +989,8 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "db": {
       const subcommand = rest[0] as DbSubcommand | undefined;
-      if (!subcommand || !["diff", "migrate", "reset", "status"].includes(subcommand)) {
-        errors.push("forge db requires subcommand: diff, migrate, reset, or status");
+      if (!subcommand || !["diff", "migrate", "reset", "status", "rls-check"].includes(subcommand)) {
+        errors.push("forge db requires subcommand: diff, migrate, reset, status, or rls-check");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -860,16 +1122,16 @@ export function parseCli(argv: string[]): ParsedCli {
       const subcommand = rest[0] as TelemetrySubcommand | undefined;
       if (
         !subcommand ||
-        !["list", "inspect", "flush", "tail", "clear"].includes(subcommand)
+        !["list", "inspect", "symbolicate", "flush", "tail", "clear"].includes(subcommand)
       ) {
         errors.push(
-          "forge telemetry requires subcommand: list, inspect, flush, tail, or clear",
+          "forge telemetry requires subcommand: list, inspect, symbolicate, flush, tail, or clear",
         );
         return { command: null, workspaceRoot, errors };
       }
 
       let traceId: string | undefined;
-      if (subcommand === "inspect") {
+      if (subcommand === "inspect" || subcommand === "symbolicate") {
         traceId = rest[1];
         if (!traceId) {
           errors.push("forge telemetry inspect requires a trace id");
@@ -1002,8 +1264,45 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--check",
     "--json",
     "--dry-run",
+    "--plan",
+    "--apply",
     "--runtime-inspect",
     "--allow-scripts",
+    "--yes",
+    "--force",
+    "--no-generate",
+    "--no-verify",
+    "--keep-failed",
+    "--tenant-scoped",
+    "--field",
+    "--fields",
+    "--type",
+    "--values",
+    "--default",
+    "--index",
+    "--roles",
+    "--table",
+    "--policy",
+    "--emit",
+    "--event",
+    "--trigger",
+    "--component",
+    "--with-ai",
+    "--with-crud",
+    "--with-livequery",
+    "--with-react",
+    "--with-tests",
+    "--with-create-form",
+    "--to",
+    "--changed",
+    "--env",
+    "--input",
+    "--provider",
+    "--target",
+    "--release",
+    "--allow-dirty",
+    "--allow-public-sourcemaps",
+    "--with-release",
     "--concurrency",
     "--sandbox-backend",
     "--skip-tests",
@@ -1061,6 +1360,18 @@ export function hasUnknownOption(argv: string[]): string | null {
     if (known.has(arg)) {
       if (
         arg === "--concurrency" ||
+        arg === "--field" ||
+        arg === "--fields" ||
+        arg === "--type" ||
+        arg === "--values" ||
+        arg === "--default" ||
+        arg === "--roles" ||
+        arg === "--table" ||
+        arg === "--policy" ||
+        arg === "--emit" ||
+        arg === "--event" ||
+        arg === "--trigger" ||
+        arg === "--component" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||
         arg === "--host" ||
@@ -1090,6 +1401,12 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--web-port" ||
         arg === "--poll-interval" ||
         arg === "--token"
+        || arg === "--to" ||
+        arg === "--env" ||
+        arg === "--input" ||
+        arg === "--provider" ||
+        arg === "--target" ||
+        arg === "--release"
       ) {
         index += 1;
       }

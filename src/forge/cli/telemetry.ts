@@ -19,7 +19,7 @@ import {
 } from "../runtime/telemetry/flush.ts";
 import { localJsonlPaths } from "../runtime/telemetry/sinks/local-jsonl.ts";
 
-export type TelemetrySubcommand = "list" | "inspect" | "flush" | "tail" | "clear";
+export type TelemetrySubcommand = "list" | "inspect" | "symbolicate" | "flush" | "tail" | "clear";
 
 export interface TelemetryCommandOptions {
   subcommand: TelemetrySubcommand;
@@ -116,7 +116,7 @@ export async function runTelemetryCommand(
       };
     }
 
-    if (options.subcommand === "inspect") {
+    if (options.subcommand === "inspect" || options.subcommand === "symbolicate") {
       if (!options.traceId) {
         return {
           ok: false,
@@ -124,7 +124,7 @@ export async function runTelemetryCommand(
             createDiagnostic({
               severity: "error",
               code: FORGE_RUNTIME_NOT_FOUND,
-              message: "forge telemetry inspect requires a trace id",
+              message: `forge telemetry ${options.subcommand} requires a trace id`,
             }),
           ],
           exitCode: 1,
@@ -132,6 +132,17 @@ export async function runTelemetryCommand(
       }
 
       const inspected = await inspectTrace(adapter, options.traceId);
+      if (options.subcommand === "symbolicate") {
+        const releases = inspected.events
+          .map((event) => (event.payload as { release?: unknown } | undefined)?.release)
+          .filter(Boolean);
+        return {
+          ok: true,
+          data: { traceId: options.traceId, releases, events: inspected.events },
+          diagnostics: [],
+          exitCode: 0,
+        };
+      }
       return {
         ok: true,
         data: { traceId: options.traceId, ...inspected },

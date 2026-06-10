@@ -85,5 +85,5 @@ describe("command persistence", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 });

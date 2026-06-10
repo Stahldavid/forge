@@ -26,6 +26,12 @@ const SYSTEM_TELEMETRY_EVENTS_SQL = `CREATE TABLE IF NOT EXISTS _forge_telemetry
 
 const SYSTEM_TRACE_SPANS_SQL = `CREATE TABLE IF NOT EXISTS _forge_trace_spans (id bigserial PRIMARY KEY, trace_id text NOT NULL, parent_span_id text, span_id text NOT NULL, name text NOT NULL, kind text NOT NULL, attributes jsonb NOT NULL DEFAULT '{}', status text NOT NULL DEFAULT 'ok', started_at timestamptz NOT NULL, ended_at timestamptz, error text)`;
 
+const SYSTEM_LIVE_REVISION_SEQUENCE_SQL = `CREATE SEQUENCE IF NOT EXISTS _forge_live_revision_seq START WITH 2`;
+
+const SYSTEM_LIVE_INVALIDATIONS_SQL = `CREATE TABLE IF NOT EXISTS _forge_live_invalidations (id bigserial PRIMARY KEY, revision bigint NOT NULL, table_name text NOT NULL, tenant_id text, operation text NOT NULL, source_kind text NOT NULL, source_name text, trace_id text, release_id text, deploy_id text, payload jsonb NOT NULL DEFAULT '{}', created_at timestamptz NOT NULL DEFAULT now())`;
+
+const SYSTEM_LIVE_SUBSCRIPTION_DEBUG_SQL = `CREATE TABLE IF NOT EXISTS _forge_live_subscription_debug (id text PRIMARY KEY, name text NOT NULL, tenant_id text, dependencies jsonb NOT NULL, last_revision bigint, runtime_id text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`;
+
 interface ParsedFieldType {
   sqlType: string;
   references?: { table: string; column: string };
@@ -303,6 +309,21 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
       table: "_forge_trace_spans",
       sql: SYSTEM_TRACE_SPANS_SQL,
     },
+    {
+      kind: "create_sequence",
+      table: "_forge_live_revision_seq",
+      sql: SYSTEM_LIVE_REVISION_SEQUENCE_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_live_invalidations",
+      sql: SYSTEM_LIVE_INVALIDATIONS_SQL,
+    },
+    {
+      kind: "create_table",
+      table: "_forge_live_subscription_debug",
+      sql: SYSTEM_LIVE_SUBSCRIPTION_DEBUG_SQL,
+    },
   ];
 
   for (const table of stableSortTables(dataGraph.tables)) {
@@ -324,6 +345,19 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
     const nameB = b.index?.name ?? "";
     return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
   });
+
+  indexes.push(
+    buildIndexChange({
+      name: "forge_live_invalidations_revision_idx",
+      table: "_forge_live_invalidations",
+      columns: ["revision"],
+    }),
+    buildIndexChange({
+      name: "forge_live_invalidations_table_tenant_revision_idx",
+      table: "_forge_live_invalidations",
+      columns: ["table_name", "tenant_id", "revision"],
+    }),
+  );
 
   const payload = {
     schemaVersion: SQL_PLAN_SCHEMA_VERSION,

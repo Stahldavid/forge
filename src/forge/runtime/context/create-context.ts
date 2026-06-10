@@ -15,6 +15,7 @@ import { createRuntimeSecretsBundle } from "../secrets/runtime-bundle.ts";
 import { createAiContext } from "../ai/context.ts";
 import type { AiContext } from "../ai/types.ts";
 import { isMockAiEnabled } from "../ai/state.ts";
+import { currentReleaseInfo, type RuntimeReleaseInfo } from "../release/runtime.ts";
 
 export interface ForgeContext {
   db: DbClient;
@@ -25,6 +26,7 @@ export interface ForgeContext {
   secrets: SecretsContext;
   config: ConfigContext;
   ai: AiContext;
+  release: RuntimeReleaseInfo;
 }
 
 let sharedEnvStore: RuntimeEnvStore | null = null;
@@ -137,6 +139,7 @@ export function createForgeContext(
     secrets,
     config,
     ai,
+    release: currentReleaseInfo(),
     emit: async (eventType, payload) => {
       const enriched =
         payload && typeof payload === "object" && !Array.isArray(payload)
@@ -191,6 +194,7 @@ export function createActionContext(
     secrets,
     config,
     ai,
+    release: currentReleaseInfo(),
     emit: async () => {
       /* actions invoked by outbox worker do not emit */
     },

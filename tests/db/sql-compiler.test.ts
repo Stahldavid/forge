@@ -19,7 +19,10 @@ describe("sql compiler", () => {
     expect(plan.tables[0]?.table).toBe("tickets");
     expect(plan.tables[0]?.sql).toContain("CREATE TABLE IF NOT EXISTS \"tickets\"");
     expect(plan.tables[0]?.sql).toContain("\"status\" text NOT NULL");
-    expect(plan.systemTables).toHaveLength(7);
+    expect(plan.systemTables).toHaveLength(10);
+    expect(plan.systemTables.map((entry) => entry.sql).join("\n")).toContain(
+      "_forge_live_invalidations",
+    );
     expect(plan.migrationId).toMatch(/^migration_/);
     expect(plan.checksum.length).toBeGreaterThan(0);
   });

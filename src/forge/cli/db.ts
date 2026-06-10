@@ -5,7 +5,10 @@ import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { buildDataGraph } from "../compiler/data-graph/build.ts";
 import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
-import { FORGE_RUNTIME_NOT_FOUND } from "../compiler/diagnostics/codes.ts";
+import {
+  FORGE_RLS_APPLY_FAILED,
+  FORGE_RUNTIME_NOT_FOUND,
+} from "../compiler/diagnostics/codes.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { discover } from "../compiler/orchestrator/discover.ts";
 import { loadManifest } from "../compiler/orchestrator/manifest.ts";
@@ -21,7 +24,7 @@ import {
 } from "../runtime/db/migrate.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
 
-export type DbSubcommand = "diff" | "migrate" | "reset" | "status";
+export type DbSubcommand = "diff" | "migrate" | "reset" | "status" | "rls-check";
 
 export interface DbCommandOptions {
   subcommand: DbSubcommand;
@@ -45,6 +48,77 @@ function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null
   }
   const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
   return JSON.parse(raw) as T;
+}
+
+function readGeneratedText(workspaceRoot: string, relative: string): string | null {
+  const absolute = join(workspaceRoot, relative);
+  if (!existsSync(absolute)) {
+    return null;
+  }
+  return stripDeterministicHeader(readFileSync(absolute, "utf8"));
+}
+
+function splitSqlStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let current = "";
+  let inDollarQuote = false;
+
+  for (let index = 0; index < sql.length; index++) {
+    const char = sql[index];
+    const next = sql[index + 1];
+    if (char === "$" && next === "$") {
+      inDollarQuote = !inDollarQuote;
+      current += "$$";
+      index += 1;
+      continue;
+    }
+    if (char === ";" && !inDollarQuote) {
+      const trimmed = current.trim();
+      if (trimmed) {
+        statements.push(trimmed);
+      }
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+
+  const tail = current.trim();
+  if (tail) {
+    statements.push(tail);
+  }
+  return statements;
+}
+
+async function applyRlsSqlIfPostgres(
+  adapter: Awaited<ReturnType<typeof createDbAdapter>>["adapter"],
+  workspaceRoot: string,
+): Promise<Diagnostic[]> {
+  const diagnostics: Diagnostic[] = [];
+  if (!adapter || adapter.kind !== "postgres") {
+    return diagnostics;
+  }
+
+  const sql = readGeneratedText(workspaceRoot, `${GENERATED_DIR}/rlsPolicies.sql`);
+  if (!sql) {
+    return diagnostics;
+  }
+
+  try {
+    for (const statement of splitSqlStatements(sql)) {
+      await adapter.query(statement);
+    }
+  } catch (error) {
+    diagnostics.push(
+      createDiagnostic({
+        severity: "error",
+        code: FORGE_RLS_APPLY_FAILED,
+        message: error instanceof Error ? error.message : "failed to apply RLS policies",
+      }),
+    );
+  }
+
+  return diagnostics;
 }
 
 async function loadSqlPlan(workspaceRoot: string): Promise<{
@@ -149,14 +223,23 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
   try {
     if (options.subcommand === "migrate") {
       const migrationDiagnostics = await applyMigrations(adapter, plan);
+      const rlsDiagnostics = await applyRlsSqlIfPostgres(adapter, options.workspaceRoot);
       const errors = migrationDiagnostics.filter(
         (diagnostic) => diagnostic.severity === "error",
       );
+      const rlsErrors = rlsDiagnostics.filter(
+        (diagnostic) => diagnostic.severity === "error",
+      );
       return {
-        ok: errors.length === 0,
+        ok: errors.length === 0 && rlsErrors.length === 0,
         data: { migrationId: plan.migrationId, checksum: plan.checksum },
-        diagnostics: [...plan.diagnostics, ...planDiagnostics, ...migrationDiagnostics],
-        exitCode: errors.length === 0 ? 0 : 1,
+        diagnostics: [
+          ...plan.diagnostics,
+          ...planDiagnostics,
+          ...migrationDiagnostics,
+          ...rlsDiagnostics,
+        ],
+        exitCode: errors.length === 0 && rlsErrors.length === 0 ? 0 : 1,
       };
     }
 

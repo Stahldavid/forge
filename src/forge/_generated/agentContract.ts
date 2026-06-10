@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=7171fcf9ca7de84a957a459b54022eb79e88a37d5572ddc6f5c425365f9b334d content=2149af6ec2e6af80c4147689fad6369f1b390a9f703e9bdea2050132d0db9574
+// @forge-generated generator=0.0.0 input=a7d16d11442ec294033d6f6c5745f3d05275c67221ab40c01ff470ccb2dc627e content=09c0653cf0771f6f591c02f7934e5ce5ce58529e45606542b18fab54dfd4240f
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -516,6 +516,16 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge live status --json.",
+        "Run forge live invalidations list --json and confirm the table and tenant changed.",
+        "Run forge live debug <subscriptionId> --json when a subscription id is available.",
+        "Check that _forge_live_invalidations has revisions newer than the last sent snapshot.",
+        "Reconnect with Last-Event-ID or ?lastRevision=<revision> to verify resume behavior."
+      ],
+      "title": "Debug a stale liveQuery"
+    },
+    {
+      "steps": [
         "Edit src/forge/schema.ts.",
         "Include tenantId for tenant-scoped data.",
         "Run forge generate.",
@@ -526,12 +536,32 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
+        "Review the plan and diagnostics.",
+        "Run forge make resource <name> --fields name:type --yes.",
+        "Run forge generate.",
+        "Run forge verify --strict."
+      ],
+      "title": "Scaffold a resource"
+    },
+    {
+      "steps": [
         "Use forge add <alias>.",
         "Do not install packages manually unless the architecture exception is intentional.",
         "Run forge generate.",
         "Run forge check."
       ],
       "title": "Add a package"
+    },
+    {
+      "steps": [
+        "Run forge deps upgrade-plan <package> --to latest.",
+        "Read .forge/upgrades/.../plan.md.",
+        "If risk is high, inspect affected files and generated adapters before applying.",
+        "Apply with forge deps upgrade-apply <plan>.",
+        "Finish with forge verify --strict."
+      ],
+      "title": "Upgrade a package"
     },
     {
       "steps": [
@@ -555,6 +585,15 @@ export const agentContract = {
         "Run forge self-host check."
       ],
       "title": "Self-host"
+    },
+    {
+      "steps": [
+        "Run forge release inspect <releaseId> --json.",
+        "Run forge release sourcemaps symbolicate --input stacktrace.json --json.",
+        "Open the original source file and line from the symbolicated frame.",
+        "Use forge telemetry inspect <traceId> --with-release --json when a trace id is available."
+      ],
+      "title": "Debug a production stack trace"
     }
   ],
   "policies": [],

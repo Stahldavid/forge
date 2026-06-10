@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=eb8969e9c73c889933f582f8b790851a06d3bd49089208206f420481bbd031a9 content=d09acc77af9a4b4ed0a025f110096eef47086945b89e0578c1eec004f27cb4d6
+// @forge-generated generator=0.0.0 input=a7d16d11442ec294033d6f6c5745f3d05275c67221ab40c01ff470ccb2dc627e content=61a349b54f5d0e9cb408bc4e3e53e5125635de68797f1b1a4ab2814213c4b2df
 # Operation Playbooks
 
 ## Add a command
@@ -25,6 +25,14 @@
 3. Run forge generate.
 4. Use forge inspect client --json to confirm client exposure.
 
+## Debug a stale liveQuery
+
+1. Run forge live status --json.
+2. Run forge live invalidations list --json and confirm the table and tenant changed.
+3. Run forge live debug <subscriptionId> --json when a subscription id is available.
+4. Check that _forge_live_invalidations has revisions newer than the last sent snapshot.
+5. Reconnect with Last-Event-ID or ?lastRevision=<revision> to verify resume behavior.
+
 ## Add a table
 
 1. Edit src/forge/schema.ts.
@@ -33,12 +41,28 @@
 4. Run forge db diff.
 5. Run forge verify --strict.
 
+## Scaffold a resource
+
+1. Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.
+2. Review the plan and diagnostics.
+3. Run forge make resource <name> --fields name:type --yes.
+4. Run forge generate.
+5. Run forge verify --strict.
+
 ## Add a package
 
 1. Use forge add <alias>.
 2. Do not install packages manually unless the architecture exception is intentional.
 3. Run forge generate.
 4. Run forge check.
+
+## Upgrade a package
+
+1. Run forge deps upgrade-plan <package> --to latest.
+2. Read .forge/upgrades/.../plan.md.
+3. If risk is high, inspect affected files and generated adapters before applying.
+4. Apply with forge deps upgrade-apply <plan>.
+5. Finish with forge verify --strict.
 
 ## Debug a policy error
 
@@ -56,3 +80,10 @@
 1. Run forge self-host compose.
 2. Review deploy/.env.example.
 3. Run forge self-host check.
+
+## Debug a production stack trace
+
+1. Run forge release inspect <releaseId> --json.
+2. Run forge release sourcemaps symbolicate --input stacktrace.json --json.
+3. Open the original source file and line from the symbolicated frame.
+4. Use forge telemetry inspect <traceId> --with-release --json when a trace id is available.

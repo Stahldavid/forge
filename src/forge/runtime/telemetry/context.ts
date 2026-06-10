@@ -9,6 +9,7 @@ import type {
   TelemetryRuntimeKind,
 } from "./types.ts";
 import { flushPendingTelemetry } from "./flush.ts";
+import { currentReleaseInfo } from "../release/runtime.ts";
 
 export interface CreateTelemetryContextOptions {
   adapter: DbAdapter;
@@ -59,6 +60,7 @@ function baseEnvelope(
     runtime: options.runtime,
     ...(options.workflow ? { workflow: options.workflow } : {}),
     ...(options.outbox ? { outbox: options.outbox } : {}),
+    release: currentReleaseInfo(),
     createdAt: new Date().toISOString(),
   };
 }

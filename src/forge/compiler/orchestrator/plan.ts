@@ -39,6 +39,10 @@ import {
   renderReactTs,
 } from "../client-sdk/render-client.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
+import { buildRlsArtifacts } from "../data-graph/rls/build.ts";
+import { buildGeneratedReleaseArtifacts } from "../release/build.ts";
+import { buildLiveProductionArtifacts } from "../live-production/types.ts";
+import { buildMakeRegistry, buildMakeTemplates } from "../make-registry/build.ts";
 import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
 import {
@@ -88,6 +92,37 @@ import {
   serializeSqlPlanTsExport,
   serializeDbJsonExport,
   serializeDbTsExport,
+  serializeRlsPoliciesSql,
+  serializeRlsPoliciesJson,
+  serializeRlsPoliciesTs,
+  serializeDbSecurityManifestJson,
+  serializeDbSecurityManifestTs,
+  serializeDbSessionContextJson,
+  serializeDbSessionContextTs,
+  serializePackageUpgradeRegistryJson,
+  serializePackageUpgradeRegistryTs,
+  serializeReleaseManifestJson,
+  serializeReleaseManifestTs,
+  serializeDeployManifestJson,
+  serializeDeployManifestTs,
+  serializeArtifactManifestJson,
+  serializeArtifactManifestTs,
+  serializeSourceMapManifestJson,
+  serializeSourceMapManifestTs,
+  serializeSymbolicationManifestJson,
+  serializeSymbolicationManifestTs,
+  serializeBuildInfoJson,
+  serializeBuildInfoTs,
+  serializeLiveProductionManifestJson,
+  serializeLiveProductionManifestTs,
+  serializeLiveProtocolJson,
+  serializeLiveProtocolTs,
+  serializeLiveTransportConfigJson,
+  serializeLiveTransportConfigTs,
+  serializeMakeRegistryJson,
+  serializeMakeRegistryTs,
+  serializeMakeTemplatesJson,
+  serializeMakeTemplatesTs,
   serializeActionSubscriptionsJson,
   serializeActionSubscriptionsTs,
   serializeWorkflowRegistryJson,
@@ -283,6 +318,28 @@ export function plan(input: PlanInput): EmitPlan {
     apiSurface,
     clientManifest,
   });
+  const rlsArtifacts = buildRlsArtifacts(sqlPlan, tenantScope);
+  const packageUpgradeRegistry = {
+    schemaVersion: "0.1.0" as const,
+    plannerVersion: GENERATOR_VERSION,
+    commands: [
+      "forge deps outdated --json",
+      "forge deps inspect <package> --json",
+      "forge deps diff <package> --to latest --json",
+      "forge deps upgrade-plan <package> --to latest",
+      "forge deps upgrade-apply <plan>",
+      "forge deps upgrade-check --json",
+      "forge deps upgrade-rollback <planId>",
+    ],
+    planDirectory: ".forge/upgrades" as const,
+  };
+  const releaseArtifacts = buildGeneratedReleaseArtifacts({
+    workspaceRoot: input.ctx.workspaceRoot,
+    generatedHash: input.ctx.inputFingerprint,
+  });
+  const liveProductionArtifacts = buildLiveProductionArtifacts(liveQueryRegistry);
+  const makeRegistry = buildMakeRegistry(GENERATOR_VERSION);
+  const makeTemplates = buildMakeTemplates();
 
   const files: EmitFile[] = [
     makeEmitFile("AGENTS.md", agentArtifacts.agentsMd),
@@ -382,6 +439,130 @@ export function plan(input: PlanInput): EmitPlan {
     ),
     makeEmitFile(`${GENERATED_DIR}/db.ts`, serializeDbTsExport(sqlPlan, tenantScope)),
     makeEmitFile(`${GENERATED_DIR}/db.json`, serializeDbJsonExport(sqlPlan, tenantScope)),
+    makeEmitFile(
+      `${GENERATED_DIR}/rlsPolicies.sql`,
+      serializeRlsPoliciesSql(rlsArtifacts.policies),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/rlsPolicies.ts`,
+      serializeRlsPoliciesTs(rlsArtifacts.policies),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/rlsPolicies.json`,
+      serializeRlsPoliciesJson(rlsArtifacts.policies),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/dbSecurityManifest.ts`,
+      serializeDbSecurityManifestTs(rlsArtifacts.dbSecurityManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/dbSecurityManifest.json`,
+      serializeDbSecurityManifestJson(rlsArtifacts.dbSecurityManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/dbSessionContext.ts`,
+      serializeDbSessionContextTs(rlsArtifacts.dbSessionContext),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/dbSessionContext.json`,
+      serializeDbSessionContextJson(rlsArtifacts.dbSessionContext),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/packageUpgradeRegistry.ts`,
+      serializePackageUpgradeRegistryTs(packageUpgradeRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/packageUpgradeRegistry.json`,
+      serializePackageUpgradeRegistryJson(packageUpgradeRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/releaseManifest.ts`,
+      serializeReleaseManifestTs(releaseArtifacts.releaseManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/releaseManifest.json`,
+      serializeReleaseManifestJson(releaseArtifacts.releaseManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/deployManifest.ts`,
+      serializeDeployManifestTs(releaseArtifacts.deployManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/deployManifest.json`,
+      serializeDeployManifestJson(releaseArtifacts.deployManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/artifactManifest.ts`,
+      serializeArtifactManifestTs(releaseArtifacts.artifactManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/artifactManifest.json`,
+      serializeArtifactManifestJson(releaseArtifacts.artifactManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/sourceMapManifest.ts`,
+      serializeSourceMapManifestTs(releaseArtifacts.sourceMapManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/sourceMapManifest.json`,
+      serializeSourceMapManifestJson(releaseArtifacts.sourceMapManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/symbolicationManifest.ts`,
+      serializeSymbolicationManifestTs(releaseArtifacts.symbolicationManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/symbolicationManifest.json`,
+      serializeSymbolicationManifestJson(releaseArtifacts.symbolicationManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/buildInfo.ts`,
+      serializeBuildInfoTs(releaseArtifacts.buildInfo),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/buildInfo.json`,
+      serializeBuildInfoJson(releaseArtifacts.buildInfo),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveProductionManifest.ts`,
+      serializeLiveProductionManifestTs(liveProductionArtifacts.liveProductionManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveProductionManifest.json`,
+      serializeLiveProductionManifestJson(liveProductionArtifacts.liveProductionManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveProtocol.ts`,
+      serializeLiveProtocolTs(liveProductionArtifacts.liveProtocol),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveProtocol.json`,
+      serializeLiveProtocolJson(liveProductionArtifacts.liveProtocol),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveTransportConfig.ts`,
+      serializeLiveTransportConfigTs(liveProductionArtifacts.liveTransportConfig),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveTransportConfig.json`,
+      serializeLiveTransportConfigJson(liveProductionArtifacts.liveTransportConfig),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/makeRegistry.ts`,
+      serializeMakeRegistryTs(makeRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/makeRegistry.json`,
+      serializeMakeRegistryJson(makeRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/makeTemplates.ts`,
+      serializeMakeTemplatesTs(makeTemplates),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/makeTemplates.json`,
+      serializeMakeTemplatesJson(makeTemplates),
+    ),
     makeEmitFile(
       `${GENERATED_DIR}/actionSubscriptions.ts`,
       serializeActionSubscriptionsTs(actionSubscriptions),
@@ -567,6 +748,6 @@ export function plan(input: PlanInput): EmitPlan {
     files: sortedFiles,
     orphanedFiles,
     lock,
-    diagnostics: agentArtifacts.diagnostics,
+    diagnostics: [...agentArtifacts.diagnostics, ...rlsArtifacts.diagnostics],
   };
 }

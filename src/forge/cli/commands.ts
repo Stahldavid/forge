@@ -90,6 +90,14 @@ import {
   runDoctorCommand,
 } from "./doctor.ts";
 import { formatAuthHuman, formatAuthJson, runAuthCommand } from "./auth.ts";
+import { formatRlsHuman, formatRlsJson, runRlsCommand } from "./rls.ts";
+import { formatDepsHuman, formatDepsJson, runDepsCommand } from "./deps.ts";
+import {
+  formatReleaseHuman,
+  formatReleaseJson,
+  runReleaseCommand,
+} from "./release.ts";
+import { formatMakeHuman, formatMakeJson, runMakeCommand } from "./make.ts";
 import {
   formatQueryJson,
   formatQueryListHuman,
@@ -236,6 +244,15 @@ export async function runInspectCommand(
     api: `${GENERATED_DIR}/api.json`,
     client: `${GENERATED_DIR}/clientManifest.json`,
     auth: `${GENERATED_DIR}/authRegistry.json`,
+    rls: `${GENERATED_DIR}/rlsPolicies.json`,
+    "db-security": `${GENERATED_DIR}/dbSecurityManifest.json`,
+    release: `${GENERATED_DIR}/releaseManifest.json`,
+    artifacts: `${GENERATED_DIR}/artifactManifest.json`,
+    sourcemaps: `${GENERATED_DIR}/sourceMapManifest.json`,
+    "live-production": `${GENERATED_DIR}/liveProductionManifest.json`,
+    "live-protocol": `${GENERATED_DIR}/liveProtocol.json`,
+    "live-transport": `${GENERATED_DIR}/liveTransportConfig.json`,
+    make: `${GENERATED_DIR}/makeRegistry.json`,
     rules: `${GENERATED_DIR}/runtimeRules.md`,
     map: `${GENERATED_DIR}/appMap.md`,
   };
@@ -254,6 +271,15 @@ export async function runInspectCommand(
       ["ai", `${GENERATED_DIR}/aiRegistry.json`],
       ["client", `${GENERATED_DIR}/clientManifest.json`],
       ["auth", `${GENERATED_DIR}/authRegistry.json`],
+      ["rls", `${GENERATED_DIR}/rlsPolicies.json`],
+      ["dbSecurity", `${GENERATED_DIR}/dbSecurityManifest.json`],
+      ["release", `${GENERATED_DIR}/releaseManifest.json`],
+      ["artifacts", `${GENERATED_DIR}/artifactManifest.json`],
+      ["sourceMaps", `${GENERATED_DIR}/sourceMapManifest.json`],
+      ["liveProduction", `${GENERATED_DIR}/liveProductionManifest.json`],
+      ["liveProtocol", `${GENERATED_DIR}/liveProtocol.json`],
+      ["liveTransport", `${GENERATED_DIR}/liveTransportConfig.json`],
+      ["make", `${GENERATED_DIR}/makeRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
     ];
     const data: Record<string, unknown> = {};
@@ -418,6 +444,46 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return result.exitCode;
     }
+    case "rls": {
+      const result = await runRlsCommand(command);
+      if (command.json) {
+        process.stdout.write(formatRlsJson(result));
+      } else {
+        process.stdout.write(formatRlsHuman(command.subcommand, result));
+      }
+      return result.exitCode;
+    }
+    case "deps": {
+      const result = await runDepsCommand(command);
+      if (command.json) {
+        process.stdout.write(formatDepsJson(result));
+      } else {
+        process.stdout.write(formatDepsHuman(command.subcommand, result));
+      }
+      return result.exitCode;
+    }
+    case "release": {
+      const result = await runReleaseCommand({
+        ...command,
+        provider: command.provider as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
+        target: command.target as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
+      });
+      if (command.json) {
+        process.stdout.write(formatReleaseJson(result));
+      } else {
+        process.stdout.write(formatReleaseHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "make": {
+      const result = await runMakeCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatMakeJson(result));
+      } else {
+        process.stdout.write(formatMakeHuman(result));
+      }
+      return result.exitCode;
+    }
     case "generate": {
       const result = await runGenerateCommand({
         workspaceRoot: process.cwd(),
@@ -558,6 +624,22 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "db": {
+      if (command.subcommand === "rls-check") {
+        const result = await runRlsCommand({
+          subcommand: "check",
+          workspaceRoot: command.workspaceRoot,
+          db: command.db,
+          databaseUrl: command.databaseUrl,
+          json: command.json,
+        });
+        if (command.json) {
+          process.stdout.write(formatRlsJson(result));
+        } else {
+          process.stdout.write(formatRlsHuman("check", result));
+        }
+        return result.exitCode;
+      }
+
       const result = await runDbCommand({
         subcommand: command.subcommand,
         workspaceRoot: command.workspaceRoot,

@@ -56,12 +56,20 @@ function requiredEnvNames(workspaceRoot: string): string[] {
     "DATABASE_URL",
     "FORGE_ENV",
     "FORGE_PORT",
+    "FORGE_RELEASE_ID",
+    "FORGE_DEPLOY_ID",
+    "FORGE_DEPLOY_ENV",
+    "FORGE_LIVE_TRANSPORT",
+    "FORGE_LIVE_INVALIDATION",
+    "FORGE_LIVE_POLL_INTERVAL_MS",
+    "FORGE_LIVE_HEARTBEAT_MS",
     "FORGE_AUTH_MODE",
     "FORGE_AUTH_ISSUER",
     "FORGE_AUTH_AUDIENCE",
     "FORGE_AUTH_JWKS_URI",
     "FORGE_AUTH_ALGORITHMS",
     "NEXT_PUBLIC_FORGE_URL",
+    "NEXT_PUBLIC_FORGE_RELEASE_ID",
     "POSTHOG_KEY",
     "POSTHOG_HOST",
     "SENTRY_DSN",
@@ -90,12 +98,20 @@ function renderEnvExample(workspaceRoot: string): string {
     DATABASE_URL: "postgres://forge:forge@postgres:5432/forge_app",
     FORGE_ENV: "production",
     FORGE_PORT: "3765",
+    FORGE_RELEASE_ID: "",
+    FORGE_DEPLOY_ID: "",
+    FORGE_DEPLOY_ENV: "production",
+    FORGE_LIVE_TRANSPORT: "sse",
+    FORGE_LIVE_INVALIDATION: "polling,postgres-notify",
+    FORGE_LIVE_POLL_INTERVAL_MS: "1000",
+    FORGE_LIVE_HEARTBEAT_MS: "15000",
     FORGE_AUTH_MODE: "oidc",
     FORGE_AUTH_ISSUER: "",
     FORGE_AUTH_AUDIENCE: "",
     FORGE_AUTH_JWKS_URI: "",
     FORGE_AUTH_ALGORITHMS: "RS256",
     NEXT_PUBLIC_FORGE_URL: "http://localhost:3765",
+    NEXT_PUBLIC_FORGE_RELEASE_ID: "",
   };
 
   const lines = [
@@ -105,6 +121,15 @@ function renderEnvExample(workspaceRoot: string): string {
     "# Forge runtime",
     `FORGE_ENV=${values.FORGE_ENV}`,
     `FORGE_PORT=${values.FORGE_PORT}`,
+    `FORGE_RELEASE_ID=${values.FORGE_RELEASE_ID}`,
+    `FORGE_DEPLOY_ID=${values.FORGE_DEPLOY_ID}`,
+    `FORGE_DEPLOY_ENV=${values.FORGE_DEPLOY_ENV}`,
+    "",
+    "# LiveQuery production hardening",
+    `FORGE_LIVE_TRANSPORT=${values.FORGE_LIVE_TRANSPORT}`,
+    `FORGE_LIVE_INVALIDATION=${values.FORGE_LIVE_INVALIDATION}`,
+    `FORGE_LIVE_POLL_INTERVAL_MS=${values.FORGE_LIVE_POLL_INTERVAL_MS}`,
+    `FORGE_LIVE_HEARTBEAT_MS=${values.FORGE_LIVE_HEARTBEAT_MS}`,
     "",
     "# Auth",
     `FORGE_AUTH_MODE=${values.FORGE_AUTH_MODE}`,
@@ -115,6 +140,7 @@ function renderEnvExample(workspaceRoot: string): string {
     "",
     "# Frontend",
     `NEXT_PUBLIC_FORGE_URL=${values.NEXT_PUBLIC_FORGE_URL}`,
+    `NEXT_PUBLIC_FORGE_RELEASE_ID=${values.NEXT_PUBLIC_FORGE_RELEASE_ID}`,
     "",
     "# Secrets and integrations",
   ];
@@ -185,6 +211,11 @@ function renderCompose(options: SelfHostCommandOptions): string {
     environment:
       DATABASE_URL: postgres://forge:forge@postgres:5432/forge_app
       FORGE_ENV: production
+      FORGE_DEPLOY_ENV: production
+      FORGE_LIVE_TRANSPORT: sse
+      FORGE_LIVE_INVALIDATION: polling,postgres-notify
+      FORGE_LIVE_POLL_INTERVAL_MS: 1000
+      FORGE_LIVE_HEARTBEAT_MS: 15000
     depends_on:
       postgres:
         condition: service_healthy
@@ -203,6 +234,8 @@ function renderCompose(options: SelfHostCommandOptions): string {
     environment:
       DATABASE_URL: postgres://forge:forge@postgres:5432/forge_app
       FORGE_ENV: production
+      FORGE_DEPLOY_ENV: production
+      FORGE_LIVE_INVALIDATION: polling,postgres-notify
     depends_on:
       postgres:
         condition: service_healthy
@@ -312,7 +345,7 @@ Services:
 Notes:
 - The runtime does not apply migrations on boot; \`forge-migrate\` does that explicitly.
 - H20 expects \`FORGE_AUTH_MODE=jwt\` or \`oidc\` for production. Use access tokens with the Forge API audience.
-- LiveQuery is supported with one \`forge-runtime\` instance. Multiple runtime replicas need sticky sessions or a distributed subscription manager.
+- LiveQuery uses a durable invalidation table plus polling and optional Postgres notify wakeups. Sticky sessions are recommended for smoother SSE reconnects, but any runtime can recover from the durable log.
 `;
 }
 
