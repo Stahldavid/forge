@@ -23,6 +23,7 @@ import type { RuntimeEntry, RuntimeGraph } from "../compiler/types/runtime-graph
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
 import type { DbAdapter } from "./db/adapter.ts";
 import type { AuthContext } from "./auth/types.ts";
+import type { LiveSubscriptionManager } from "./live/types.ts";
 import { resolveAuthFromCli } from "./auth/resolve.ts";
 import {
   executeResolvedEntry,
@@ -40,6 +41,7 @@ export interface RunEntryOptions {
   userId?: string;
   tenantId?: string;
   role?: string;
+  liveManager?: LiveSubscriptionManager;
 }
 
 export interface RunEntryResult {
@@ -382,6 +384,7 @@ export async function runEntry(
     tableMap: loadTableMap(workspaceRoot) ?? undefined,
     workspaceRoot,
     auth,
+    liveManager: options.liveManager,
   };
 
   const executed = await executeResolvedEntry(

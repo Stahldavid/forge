@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=e20a8dcd91683b6e6c4396590167b7272faf1eab10568762fcd09eea847125bc
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=e20a8dcd91683b6e6c4396590167b7272faf1eab10568762fcd09eea847125bc
 export const runtimeRegistry = {
   "badStripeCommand": {
     "kind": "command",

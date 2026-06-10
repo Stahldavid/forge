@@ -20,6 +20,10 @@ import type {
 } from "../types/policy-registry.ts";
 import type { MockMapEntry, RuntimeGraph } from "../types/runtime-graph.ts";
 import type { QueryRegistry } from "../types/query-registry.ts";
+import type {
+  LiveQueryRegistry,
+  SubscriptionManifest,
+} from "../types/live-query-registry.ts";
 import type { ApiSurface } from "../api-surface/build.ts";
 import {
   serializeApiTs,
@@ -521,6 +525,40 @@ export function serializeQueryRegistryTs(registry: QueryRegistry): string {
   return `export const queryRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+export function serializeLiveQueryRegistryJson(registry: LiveQueryRegistry): string {
+  const payload = {
+    schemaVersion: registry.schemaVersion,
+    generatorVersion: registry.generatorVersion,
+    analyzerVersion: registry.analyzerVersion,
+    inputHash: registry.inputHash,
+    liveQueries: registry.liveQueries,
+    diagnostics: registry.diagnostics,
+  };
+  return serializeCanonical(payload);
+}
+
+export function serializeLiveQueryRegistryTs(registry: LiveQueryRegistry): string {
+  const parsed: unknown = JSON.parse(
+    serializeLiveQueryRegistryJson(registry).trimEnd(),
+  );
+  return `export const liveQueryRegistry = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
+export function serializeSubscriptionManifestJson(
+  manifest: SubscriptionManifest,
+): string {
+  return serializeCanonical(manifest);
+}
+
+export function serializeSubscriptionManifestTs(
+  manifest: SubscriptionManifest,
+): string {
+  const parsed: unknown = JSON.parse(
+    serializeSubscriptionManifestJson(manifest).trimEnd(),
+  );
+  return `export const subscriptionManifest = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
 export function serializeApiJson(surface: ApiSurface): string {
   return serializeCanonical({
     schemaVersion: surface.schemaVersion,
@@ -528,7 +566,7 @@ export function serializeApiJson(surface: ApiSurface): string {
     inputHash: surface.inputHash,
     queries: surface.queries,
     commands: surface.commands,
-    liveQueries: {},
+    liveQueries: surface.liveQueries,
     actions: surface.actions,
     workflows: surface.workflows,
   });

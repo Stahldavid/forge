@@ -1,3 +1,8 @@
+import {
+  resolveBunExecutable,
+  type BunExecutableResolutionOptions,
+} from "./bun-executable.ts";
+
 export interface CommandRunOptions {
   cwd: string;
   env?: Record<string, string | undefined>;
@@ -11,6 +16,17 @@ export interface CommandRunResult {
 
 export interface CommandExecutor {
   run(argv: string[], options: CommandRunOptions): Promise<CommandRunResult>;
+}
+
+export function resolvePackageManagerArgv(
+  argv: string[],
+  bunOptions?: BunExecutableResolutionOptions,
+): string[] {
+  if (argv[0]?.toLowerCase() === "bun" || argv[0]?.toLowerCase() === "bun.exe") {
+    return [resolveBunExecutable(bunOptions), ...argv.slice(1)];
+  }
+
+  return argv;
 }
 
 export class PackageManagerCommandError extends Error {
@@ -35,7 +51,8 @@ export class PackageManagerCommandError extends Error {
 
 export const defaultCommandExecutor: CommandExecutor = {
   async run(argv, options) {
-    const proc = Bun.spawn(argv, {
+    const resolvedArgv = resolvePackageManagerArgv(argv);
+    const proc = Bun.spawn(resolvedArgv, {
       cwd: options.cwd,
       env: options.env ?? process.env,
       stdout: "pipe",

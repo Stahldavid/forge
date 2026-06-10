@@ -19,6 +19,7 @@ import { runCommandWithTransaction } from "./command-transaction.ts";
 import { generateRequestId, generateTraceId } from "../telemetry/correlation.ts";
 import { createTelemetryContext } from "../telemetry/context.ts";
 import type { AuthContext } from "../auth/types.ts";
+import type { LiveSubscriptionManager } from "../live/types.ts";
 
 export interface RunEntryExecutionOptions {
   json: boolean;
@@ -34,6 +35,7 @@ export interface RunEntryRuntime {
   requestId?: string;
   auth?: AuthContext;
   runtimeKind?: RuntimeContext;
+  liveManager?: LiveSubscriptionManager;
 }
 
 export interface ResolvedHandler {
@@ -70,7 +72,9 @@ export function resolveHandlerFromModule(
       invoke: async (args) => {
         if (runtime?.adapter && runtime.tableMap) {
           const tx = adapterAsTransaction(runtime.adapter);
-          const db = createGeneratedDbClient(tx, runtime.tableMap);
+          const db = createGeneratedDbClient(tx, runtime.tableMap, {
+            auth: runtime.auth,
+          });
           const workspaceRoot = runtime.workspaceRoot ?? process.cwd();
           const { subscriptions } = loadActionSubscriptions(workspaceRoot);
           const traceId = generateTraceId();
@@ -160,6 +164,7 @@ export async function executeResolvedEntry(
         workspaceRoot,
         requestId: runtime.requestId,
         auth: options.auth ?? runtime.auth,
+        liveManager: runtime.liveManager,
       },
     );
   }

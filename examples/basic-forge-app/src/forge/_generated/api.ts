@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=2dfe17b49351b60402ce094b5332dd54cf7d47cd8228c1c76f25f925c9c5b155
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=2cfe7989ec471f4003ca61aa9e65d37ea035ddc7f5ec6679c3763c646cdb5e22
 export const api = {
   "queries": {
     "getTicket": "getTicket",
@@ -9,7 +9,9 @@ export const api = {
     "createTicket": "createTicket",
     "manageBilling": "manageBilling"
   },
-  "liveQueries": {},
+  "liveQueries": {
+    "liveTickets": "liveTickets"
+  },
   "actions": {
     "capturePosthog": "capturePosthog",
     "captureTicketCreated": "captureTicketCreated",

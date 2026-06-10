@@ -135,7 +135,7 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
       });
     }
 
-    if (symbol.kind === "query") {
+    if (symbol.kind === "query" || symbol.kind === "liveQuery") {
       const sourceSlice =
         typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
       const auth =

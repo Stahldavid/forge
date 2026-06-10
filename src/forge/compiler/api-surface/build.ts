@@ -2,6 +2,7 @@ import { hashStable } from "../primitives/hash.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
 import { GENERATOR_VERSION } from "../emitter/constants.ts";
 import type { QueryRegistry } from "../types/query-registry.ts";
+import type { LiveQueryRegistry } from "../types/live-query-registry.ts";
 import type { RuntimeGraph } from "../types/runtime-graph.ts";
 import type { WorkflowRegistry } from "../types/workflow-registry.ts";
 
@@ -11,6 +12,7 @@ export interface ApiSurface {
   inputHash: string;
   queries: Record<string, string>;
   commands: Record<string, string>;
+  liveQueries: Record<string, string>;
   actions: Record<string, string>;
   workflows: Record<string, string>;
 }
@@ -18,11 +20,17 @@ export interface ApiSurface {
 export function buildApiSurface(
   runtimeGraph: RuntimeGraph,
   queryRegistry: QueryRegistry,
+  liveQueryRegistry: LiveQueryRegistry,
   workflowRegistry: WorkflowRegistry,
 ): ApiSurface {
   const queries: Record<string, string> = {};
   for (const query of queryRegistry.queries) {
     queries[query.name] = query.name;
+  }
+
+  const liveQueries: Record<string, string> = {};
+  for (const liveQuery of liveQueryRegistry.liveQueries) {
+    liveQueries[liveQuery.name] = liveQuery.name;
   }
 
   const commands: Record<string, string> = {};
@@ -47,11 +55,13 @@ export function buildApiSurface(
       canonicalJson({
         runtimeInputHash: runtimeGraph.inputHash,
         queryInputHash: queryRegistry.inputHash,
+        liveQueryInputHash: liveQueryRegistry.inputHash,
         workflowInputHash: workflowRegistry.inputHash,
       }),
     ),
     queries,
     commands,
+    liveQueries,
     actions,
     workflows,
   };
@@ -62,7 +72,7 @@ export function serializeApiTs(surface: ApiSurface): string {
     {
       queries: surface.queries,
       commands: surface.commands,
-      liveQueries: {},
+      liveQueries: surface.liveQueries,
       actions: surface.actions,
       workflows: surface.workflows,
     },
@@ -77,6 +87,7 @@ export function serializeServerApiTs(surface: ApiSurface): string {
 export const serverApi = {
   queries: api.queries,
   commands: api.commands,
+  liveQueries: api.liveQueries,
   actions: api.actions,
   workflows: api.workflows,
 } as const;

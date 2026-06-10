@@ -81,6 +81,7 @@ import {
   formatQueryResultHuman,
   runQueryCommand,
 } from "./query.ts";
+import { runLiveCommand } from "./live.ts";
 import { runQuery } from "../runtime/query/run-query.ts";
 import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
 import { getActiveDbAdapter } from "../runtime/executor.ts";
@@ -539,6 +540,18 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
 
       return result.exitCode;
+    }
+    case "live": {
+      return runLiveCommand({
+        subcommand: command.subcommand,
+        name: command.name,
+        args: command.args,
+        json: command.json,
+        userId: command.userId,
+        tenantId: command.tenantId,
+        role: command.role,
+        url: command.url,
+      });
     }
     case "ai": {
       const result = await runAiCommand({

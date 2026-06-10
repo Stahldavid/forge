@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=8f74d80244f472bdbd28e32d310c3754a3301ecc0276cb8fb06d23335cf21d46 content=0c6b5f63d726374b1e3919162cbab8b922554512bfe5f4807afc08d7e54178a7
+// @forge-generated generator=0.0.0 input=2a69f73608c9994a8f39399567eecc24ebaaec48af7e2f818a41da7acbc1bfac content=260952033e467d4c227ca5c1857ce4449e155ca32c5a56b3a7836a777e70b6fe
 export type ForgeStaticAuth = {
   userId: string;
   tenantId: string;
@@ -33,8 +33,29 @@ export class ForgeError extends Error {
 
 export type QueryName = keyof typeof import("./api.ts").api.queries;
 export type CommandName = keyof typeof import("./api.ts").api.commands;
+export type LiveQueryName = keyof typeof import("./api.ts").api.liveQueries;
+
+export type LiveSnapshot<T> = {
+  subscriptionId: string;
+  revision: number;
+  data: T;
+  traceId?: string;
+};
+
+export type LiveQueryOptions = {
+  signal?: AbortSignal;
+};
+
+export type Unsubscribe = () => void;
 
 export type ForgeClient = {
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
+  liveQuery<Name extends LiveQueryName>(
+    name: Name,
+    args: unknown,
+    onSnapshot: (snapshot: LiveSnapshot<unknown>) => void,
+    onError?: (error: ForgeError) => void,
+    options?: LiveQueryOptions,
+  ): Unsubscribe;
 };

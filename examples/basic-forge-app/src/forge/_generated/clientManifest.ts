@@ -1,8 +1,8 @@
-// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=66a1bb4c0ff347ce3105d777bcd057337f59dffd529d28cf2d1db133cac29411
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=5cc6420638f90aa843417d86696e66364c1e784bb818ee189119c47f786cadfb
 export const clientManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.0.0",
-  "inputHash": "0102fd7166668c952d21d040ef610832db354a239b9157a33718dc00e15139c7",
+  "inputHash": "eaf0c9fdcc2e3e5fa73fe28c984c325ec0de2c973368deb12648c7ce2efeb67f",
   "queries": [
     "getTicket",
     "listTickets"
@@ -12,7 +12,9 @@ export const clientManifest = {
     "createTicket",
     "manageBilling"
   ],
-  "liveQueries": [],
+  "liveQueries": [
+    "liveTickets"
+  ],
   "excluded": {
     "actions": [
       "capturePosthog",

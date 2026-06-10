@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=0e46a49a4c8d2d9cfded80a5a8c8c3d3650b5870dfa79d2355b1b87e53979206
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=d38442f8a254104ac5bc3ab21c3c94c69f8e868c1d882203f044af6fb317d104
 export const actionSubscriptions = {
   "analyzerVersion": "0.1.0",
   "byEvent": {
@@ -14,7 +14,7 @@ export const actionSubscriptions = {
   },
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "568d2b4ceb9ab9bffb08c83a892315ec8aee172cce7ceefbf39d7258325201e2",
+  "inputHash": "d38ffcfb01c0bf9928fc4c92eb4f6804857fbcfab2893621a1c62ff75887990a",
   "schemaVersion": "0.1.0",
   "subscriptions": [
     {

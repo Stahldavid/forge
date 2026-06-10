@@ -1,9 +1,11 @@
-// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=cd9bae8a0236b92d2946d2468f1370cd417c0367dea58cca2242adab044c0be9
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=ca16c9f78f7962248c2fa71409006e29442f1f2cbc621c859db2694577a44d2e
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
   ForgeClient,
   ForgeClientConfig,
+  LiveQueryOptions,
+  LiveSnapshot,
 } from "./clientTypes.ts";
 import { ForgeError } from "./clientTypes.ts";
 
@@ -16,6 +18,10 @@ export type {
   ForgeStaticAuth,
   QueryName,
   CommandName,
+  LiveQueryName,
+  LiveQueryOptions,
+  LiveSnapshot,
+  Unsubscribe,
 } from "./clientTypes.ts";
 
 async function resolveAuthHeaders(
@@ -40,6 +46,36 @@ class ForgeHttpClient implements ForgeClient {
 
   command(name: string, args: unknown): Promise<unknown> {
     return this.invoke("commands", name, args);
+  }
+
+  liveQuery(
+    name: string,
+    args: unknown,
+    onSnapshot: (snapshot: LiveSnapshot<unknown>) => void,
+    onError?: (error: ForgeError) => void,
+    options?: LiveQueryOptions,
+  ) {
+    const controller = new AbortController();
+    const externalSignal = options?.signal;
+    const abort = () => controller.abort();
+    externalSignal?.addEventListener("abort", abort, { once: true });
+
+    void this.openLiveQuery(name, args, onSnapshot, onError, controller.signal)
+      .catch((error) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        onError?.(
+          error instanceof ForgeError
+            ? error
+            : new ForgeError(error instanceof Error ? error.message : String(error), {
+                code: "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
+              }),
+        );
+      })
+      .finally(() => externalSignal?.removeEventListener("abort", abort));
+
+    return () => controller.abort();
   }
 
   private async invoke(
@@ -94,6 +130,95 @@ class ForgeHttpClient implements ForgeClient {
     }
 
     return payload.result;
+  }
+
+  private async openLiveQuery(
+    name: string,
+    args: unknown,
+    onSnapshot: (snapshot: LiveSnapshot<unknown>) => void,
+    onError: ((error: ForgeError) => void) | undefined,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const baseUrl = this.config.url.replace(/\/$/, "");
+    const encodedArgs = encodeURIComponent(JSON.stringify(args ?? {}));
+    const url = `${baseUrl}/live/${encodeURIComponent(name)}?args=${encodedArgs}`;
+    const authHeaders = await resolveAuthHeaders(this.config.auth);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: authHeaders,
+      signal,
+    });
+
+    if (!response.ok || !response.body) {
+      throw new ForgeError(`Live query failed with status ${response.status}`, {
+        code: "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
+        status: response.status,
+      });
+    }
+
+    const decoder = new TextDecoder();
+    const reader = response.body.getReader();
+    let buffer = "";
+
+    while (!signal.aborted) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      let boundary = buffer.indexOf("\n\n");
+      while (boundary !== -1) {
+        const frame = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        this.handleSseFrame(frame, onSnapshot, onError);
+        boundary = buffer.indexOf("\n\n");
+      }
+    }
+  }
+
+  private handleSseFrame(
+    frame: string,
+    onSnapshot: (snapshot: LiveSnapshot<unknown>) => void,
+    onError?: (error: ForgeError) => void,
+  ): void {
+    const lines = frame.split(/\r?\n/);
+    const event = lines.find((line) => line.startsWith("event:"))?.slice(6).trim();
+    const data = lines
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice(5).trimStart())
+      .join("\n");
+    if (!data) {
+      return;
+    }
+
+    const payload = JSON.parse(data) as {
+      type?: string;
+      subscriptionId?: string;
+      revision?: number;
+      data?: unknown;
+      traceId?: string;
+      error?: { code: string; message: string; traceId?: string };
+    };
+
+    if (event === "snapshot" || payload.type === "snapshot") {
+      onSnapshot({
+        subscriptionId: String(payload.subscriptionId),
+        revision: Number(payload.revision),
+        data: payload.data,
+        traceId: payload.traceId,
+      });
+      return;
+    }
+
+    if (event === "error" || payload.type === "error") {
+      onError?.(
+        new ForgeError(payload.error?.message ?? "liveQuery failed", {
+          code: payload.error?.code ?? "FORGE_LIVEQUERY_SUBSCRIPTION_FAILED",
+          traceId: payload.error?.traceId,
+        }),
+      );
+    }
   }
 }
 

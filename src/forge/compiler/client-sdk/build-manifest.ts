@@ -58,6 +58,7 @@ export function buildClientManifest(
 ): ClientManifest {
   const queries = Object.keys(surface.queries).sort();
   const commands = Object.keys(surface.commands).sort();
+  const liveQueries = Object.keys(surface.liveQueries).sort();
   const actions = Object.keys(surface.actions).sort();
   const workflows = Object.keys(surface.workflows).sort();
 
@@ -69,11 +70,12 @@ export function buildClientManifest(
         apiInputHash: surface.inputHash,
         queries,
         commands,
+        liveQueries,
       }),
     ),
     queries,
     commands,
-    liveQueries: [],
+    liveQueries,
     excluded: {
       actions,
       workflows,

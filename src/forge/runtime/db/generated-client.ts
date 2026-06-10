@@ -2,6 +2,8 @@ import { FORGE_TENANT_SCOPE_VIOLATION } from "../../compiler/diagnostics/codes.t
 import type { TableMapEntry } from "../../compiler/data-graph/sql/serialize.ts";
 import type { DbTransaction } from "./adapter.ts";
 import type { AuthContext } from "../auth/types.ts";
+import type { WriteTracker } from "../live/types.ts";
+import { tenantIdFromAuth } from "../live/dependency-tracker.ts";
 
 export class TenantScopeViolationError extends Error {
   readonly code = FORGE_TENANT_SCOPE_VIOLATION;
@@ -32,6 +34,7 @@ export type DbClient = Record<string, TableClient>;
 
 export interface GeneratedDbClientOptions {
   auth?: AuthContext;
+  writeTracker?: WriteTracker;
 }
 
 function quoteIdent(ident: string): string {
@@ -67,6 +70,7 @@ function createTableClient(
   const primaryKey = entry.columns.find((column) => column.primaryKey)?.name ?? "id";
   const tenantColumn = entry.tenantIdColumn;
   const tenantId = resolveTenantId(options?.auth, entry);
+  const writeTenantId = tenantId ?? tenantIdFromAuth(options?.auth);
 
   function tenantViolation(operation: string): never {
     throw new TenantScopeViolationError(
@@ -145,6 +149,7 @@ function createTableClient(
         `INSERT INTO ${quoteIdent(tableName)} (${keys.map(quoteIdent).join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`,
         params,
       );
+      options?.writeTracker?.record(tableName, writeTenantId);
       return result.rows[0] ?? normalized;
     },
 
@@ -171,6 +176,9 @@ function createTableClient(
         `UPDATE ${quoteIdent(tableName)} SET ${assignments.join(", ")} WHERE ${whereParts.join(" AND ")} RETURNING *`,
         params,
       );
+      if ((result.rowCount ?? result.rows.length) > 0) {
+        options?.writeTracker?.record(tableName, writeTenantId);
+      }
       return result.rows[0] ?? null;
     },
 
@@ -187,6 +195,9 @@ function createTableClient(
         `DELETE FROM ${quoteIdent(tableName)} WHERE ${whereParts.join(" AND ")}`,
         params,
       );
+      if (result.rowCount > 0) {
+        options?.writeTracker?.record(tableName, writeTenantId);
+      }
       return result.rowCount > 0;
     },
 

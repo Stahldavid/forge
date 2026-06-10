@@ -1,9 +1,10 @@
-// @forge-generated generator=0.0.0 input=8b9e3eedfc9e18645d0c38411668351c9b3b29c7026fb99dd849e9a95904f4cb content=241b2e502fa2e5531ad5c338acd2719f9eea54f43009749f6e20b937f62c05e0
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=ee2db579330ea2ab0b97114ee7ccc943251367a8b6997d75d8987fff521b92bd
 import { api } from "./api.ts";
 
 export const serverApi = {
   queries: api.queries,
   commands: api.commands,
+  liveQueries: api.liveQueries,
   actions: api.actions,
   workflows: api.workflows,
 } as const;

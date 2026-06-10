@@ -21,6 +21,10 @@ import {
 } from "../secret-registry/build.ts";
 import { buildAiModels, buildAiRegistry } from "../ai-registry/build.ts";
 import { buildQueryRegistry } from "../query-registry/build.ts";
+import {
+  buildLiveQueryRegistry,
+  buildSubscriptionManifest,
+} from "../live-query-registry/build.ts";
 import { buildApiSurface } from "../api-surface/build.ts";
 import { buildClientManifest } from "../client-sdk/build-manifest.ts";
 import {
@@ -106,6 +110,10 @@ import {
   serializeAiContextTs,
   serializeQueryRegistryJson,
   serializeQueryRegistryTs,
+  serializeLiveQueryRegistryJson,
+  serializeLiveQueryRegistryTs,
+  serializeSubscriptionManifestJson,
+  serializeSubscriptionManifestTs,
   serializeApiJson,
   serializeApiTsExport,
   serializeServerApiTsExport,
@@ -196,8 +204,15 @@ export function plan(input: PlanInput): EmitPlan {
   const aiRegistry = buildAiRegistry(input.appGraph, input.classified);
   const aiModels = buildAiModels();
   const queryRegistry = buildQueryRegistry(input.appGraph);
+  const liveQueryRegistry = buildLiveQueryRegistry(input.appGraph);
+  const subscriptionManifest = buildSubscriptionManifest(liveQueryRegistry);
   const runtimeGraph = buildRuntimeGraph(input.appGraph);
-  const apiSurface = buildApiSurface(runtimeGraph, queryRegistry, workflowRegistry);
+  const apiSurface = buildApiSurface(
+    runtimeGraph,
+    queryRegistry,
+    liveQueryRegistry,
+    workflowRegistry,
+  );
   const clientManifest = buildClientManifest(apiSurface, input.classified);
   const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
@@ -391,6 +406,22 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/queryRegistry.json`,
       serializeQueryRegistryJson(queryRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveQueryRegistry.ts`,
+      serializeLiveQueryRegistryTs(liveQueryRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/liveQueryRegistry.json`,
+      serializeLiveQueryRegistryJson(liveQueryRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/subscriptionManifest.ts`,
+      serializeSubscriptionManifestTs(subscriptionManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/subscriptionManifest.json`,
+      serializeSubscriptionManifestJson(subscriptionManifest),
     ),
     makeEmitFile(`${GENERATED_DIR}/api.ts`, serializeApiTsExport(apiSurface)),
     makeEmitFile(`${GENERATED_DIR}/api.json`, serializeApiJson(apiSurface)),

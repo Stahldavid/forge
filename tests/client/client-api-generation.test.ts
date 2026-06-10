@@ -6,7 +6,7 @@ import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/he
 import { cleanupWorkspace, scaffoldClientWorkspace } from "./helpers.ts";
 
 describe("client api generation", () => {
-  test("api.ts includes queries, commands, and liveQueries placeholder", async () => {
+  test("api.ts includes queries, commands, and liveQueries", async () => {
     const { root } = await scaffoldClientWorkspace("client-api-gen");
     try {
       const apiTs = readFileSync(join(root, GENERATED_DIR, "api.ts"), "utf8");
@@ -26,7 +26,7 @@ describe("client api generation", () => {
 
       expect(apiJson.queries.listTickets).toBe("listTickets");
       expect(apiJson.commands.createTicket).toBe("createTicket");
-      expect(apiJson.liveQueries).toEqual({});
+      expect(apiJson.liveQueries.watchUser).toBe("watchUser");
 
       const clientTs = readFileSync(join(root, GENERATED_DIR, "client.ts"), "utf8");
       expect(clientTs).toContain("createForgeClient");
@@ -35,8 +35,10 @@ describe("client api generation", () => {
       const clientTypes = readFileSync(join(root, GENERATED_DIR, "clientTypes.ts"), "utf8");
       expect(clientTypes).toContain("ForgeClient");
       expect(clientTypes).toContain("ForgeError");
+      expect(clientTypes).toContain("LiveSnapshot");
+      expect(clientTypes).toContain("liveQuery");
     } finally {
       cleanupWorkspace(root);
     }
-  });
+  }, 30_000);
 });

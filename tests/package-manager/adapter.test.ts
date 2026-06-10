@@ -11,6 +11,7 @@ import type {
   CommandExecutor,
   CommandRunResult,
 } from "../../src/forge/compiler/package-manager/executor.ts";
+import { resolvePackageManagerArgv } from "../../src/forge/compiler/package-manager/executor.ts";
 
 const tempRoots: string[] = [];
 
@@ -71,6 +72,21 @@ describe("readInstalledVersion", () => {
 });
 
 describe("PackageManagerAdapter with mock executor", () => {
+  test("default executor resolution ignores extensionless Windows bun PATH entries", () => {
+    const kiroShim = "C:\\Users\\David\\AppData\\Local\\Kiro-Cli\\bun";
+    const realBun = "C:\\Users\\David\\.bun\\bin\\bun.exe";
+
+    const resolved = resolvePackageManagerArgv(["bun", "add", "zod"], {
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: (path) => path === realBun,
+      homeDir: "C:\\Users\\David",
+      platform: "win32",
+      which: () => kiroShim,
+    });
+
+    expect(resolved).toEqual([realBun, "add", "zod"]);
+  });
+
   test("add runs PM command with ignoreScripts default true", async () => {
     const root = makeTempWorkspace();
     writeFileSync(

@@ -1,7 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
-import { FORGE_POLICY_DENIED } from "../compiler/diagnostics/codes.ts";
+import {
+  FORGE_DEV_INVOKE_FAILED,
+  FORGE_DEV_SERVER_ERROR,
+  FORGE_POLICY_DENIED,
+  FORGE_RUNTIME_NOT_FOUND,
+} from "../compiler/diagnostics/codes.ts";
 import { parseAuthHeaders } from "../runtime/auth/resolve.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
@@ -48,6 +53,9 @@ import { createAiContext } from "../runtime/ai/context.ts";
 import { createRuntimeSecretsBundle } from "../runtime/secrets/runtime-bundle.ts";
 import { createNoopTelemetryContext } from "../runtime/telemetry/context.ts";
 import { generateTraceId } from "../runtime/telemetry/correlation.ts";
+import { loadLiveQueryRegistry } from "../runtime/live/registry.ts";
+import { createLiveSubscriptionManager } from "../runtime/live/subscription-manager.ts";
+import { createSseResponse } from "../runtime/live/sse.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -208,6 +216,13 @@ export async function startDevServer(
   }
 
   const initialArtifacts = loadArtifacts();
+  const liveManager = serverState.adapter
+    ? createLiveSubscriptionManager({
+        workspaceRoot,
+        adapter: serverState.adapter,
+        loadTableMap: () => loadArtifacts().tableMap,
+      })
+    : null;
 
   if (options.worker && serverState.adapter) {
     serverState.outboxWorker = startOutboxWorker(
@@ -287,7 +302,75 @@ export async function startDevServer(
               mode: mockAi ? "mock" : "live",
               providers: aiCheck.providers,
             },
+            live: liveManager?.stats() ?? {
+              subscriptions: 0,
+              liveQueries: loadLiveQueryRegistry(workspaceRoot).liveQueries.length,
+            },
           });
+        }
+
+        if (request.method === "GET" && pathname === "/live") {
+          const liveQueries = loadLiveQueryRegistry(workspaceRoot).liveQueries;
+          return jsonResponse({
+            ok: true,
+            liveQueries: liveQueries.map((liveQuery) => liveQuery.name),
+          });
+        }
+
+        const liveMatch = pathname.match(/^\/live\/([^/]+)$/);
+        if (request.method === "GET" && liveMatch) {
+          if (!serverState.adapter || !liveManager) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_DEV_SERVER_ERROR,
+                    message: "database not connected",
+                  }),
+                ],
+              },
+              400,
+            );
+          }
+
+          const name = decodeURIComponent(liveMatch[1]!);
+          let args: unknown = {};
+          const argsRaw = url.searchParams.get("args");
+          if (argsRaw) {
+            try {
+              args = JSON.parse(argsRaw);
+            } catch {
+              args = {};
+            }
+          }
+
+          const auth = parseAuthHeaders(request.headers);
+          let subscriptionId: string | null = null;
+
+          return createSseResponse(
+            async (send, close) => {
+              const subscription = await liveManager.subscribe({
+                name,
+                args,
+                auth,
+                send,
+              });
+              subscriptionId = subscription.id;
+              const known = loadLiveQueryRegistry(workspaceRoot).liveQueries.some(
+                (liveQuery) => liveQuery.name === name,
+              );
+              if (!known) {
+                close();
+              }
+            },
+            () => {
+              if (subscriptionId) {
+                liveManager.unsubscribe(subscriptionId);
+              }
+            },
+          );
         }
 
         if (request.method === "GET" && pathname === "/ai/providers") {
@@ -365,14 +448,28 @@ export async function startDevServer(
         if (request.method === "GET" && pathname === "/entries") {
           const listed = listEntries(workspaceRoot);
           const queries = listQueries(workspaceRoot);
+          const liveQueries = loadLiveQueryRegistry(workspaceRoot);
           return jsonResponse({
             ok: true,
-            entries: [...queries.queries.map((query) => ({
-              name: query.name,
-              kind: "query",
-              file: query.file,
-            })), ...listed.entries],
-            diagnostics: [...listed.diagnostics, ...queries.diagnostics],
+            entries: [
+              ...queries.queries.map((query) => ({
+                name: query.name,
+                kind: "query",
+                file: query.file,
+              })),
+              ...liveQueries.liveQueries.map((liveQuery) => ({
+                name: liveQuery.name,
+                kind: "liveQuery",
+                file: liveQuery.file,
+              })),
+              ...listed.entries,
+            ],
+            liveQueries: liveQueries.liveQueries,
+            diagnostics: [
+              ...listed.diagnostics,
+              ...queries.diagnostics,
+              ...(liveQueries.registry?.diagnostics ?? []),
+            ],
           });
         }
 
@@ -674,6 +771,7 @@ export async function startDevServer(
               args,
               db: serverState.adapter,
               auth,
+              liveManager: liveManager ?? undefined,
             });
 
             const policyDenied = result.diagnostics.some(

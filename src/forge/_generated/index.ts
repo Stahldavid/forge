@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=8f74d80244f472bdbd28e32d310c3754a3301ecc0276cb8fb06d23335cf21d46 content=ef29f2b3012663d9775fb35587ce86cb5d5c368b2f1d1ac1069f8fa2105f98c8
+// @forge-generated generator=0.0.0 input=2a69f73608c9994a8f39399567eecc24ebaaec48af7e2f818a41da7acbc1bfac content=611398ccd69f329a6beb6ba4041cf98e01ffe4ec7a1c7d83a049f88041816b6e
 export * from "./actionSubscriptions";
 export * from "./aiContext";
 export * from "./aiModels";
@@ -17,6 +17,7 @@ export * from "./db";
 export * from "./devManifest";
 export * from "./envSchema";
 export * from "./importGuards";
+export * from "./liveQueryRegistry";
 export * from "./mockMap";
 export * from "./packageGraph";
 export * from "./permissionMatrix";
@@ -29,6 +30,7 @@ export * from "./secretRegistry";
 export * from "./secretsContext";
 export * from "./serverApi";
 export * from "./sqlPlan";
+export * from "./subscriptionManifest";
 export * from "./telemetryRegistry";
 export * from "./telemetrySinks";
 export * from "./tenantScope";

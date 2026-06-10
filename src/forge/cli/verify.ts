@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { spawn } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
@@ -31,20 +32,16 @@ function readPackageScripts(workspaceRoot: string): PackageScripts {
   }
 }
 
-import { spawn } from "node:child_process";
-
 async function spawnBunRun(
   workspaceRoot: string,
   scriptName: string,
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
   const bun = resolveBunExecutable();
-  const useShell = process.platform === "win32";
 
   return new Promise((resolve, reject) => {
     const child = spawn(bun, ["run", scriptName], {
       cwd: workspaceRoot,
       env: process.env,
-      shell: useShell,
       stdio: ["ignore", "pipe", "pipe"],
     });
 

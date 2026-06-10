@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { main } from "../../src/forge/cli/main.ts";
+import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
 import {
   runCheckCommand,
   runGenerateCommand,
@@ -114,6 +115,35 @@ describe("Forge CLI", () => {
       expect(parsed.command.options.skipTests).toBe(true);
       expect(parsed.command.options.skipEslint).toBe(true);
     }
+  });
+
+  test("resolveBunExecutable ignores extensionless Windows PATH entries", () => {
+    const kiroShim = "C:\\Users\\David\\AppData\\Local\\Kiro-Cli\\bun";
+    const realBun = "C:\\Users\\David\\.bun\\bin\\bun.exe";
+
+    const resolved = resolveBunExecutable({
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: (path) => path === realBun,
+      homeDir: "C:\\Users\\David",
+      platform: "win32",
+      which: () => kiroShim,
+    });
+
+    expect(resolved).toBe(realBun);
+  });
+
+  test("resolveBunExecutable normalizes Windows bun shims with an exe sibling", () => {
+    const bunShim = "C:\\Users\\David\\.bun\\bin\\bun";
+    const realBun = "C:\\Users\\David\\.bun\\bin\\bun.exe";
+
+    const resolved = resolveBunExecutable({
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: (path) => path === realBun,
+      platform: "win32",
+      which: () => bunShim,
+    });
+
+    expect(resolved).toBe(realBun);
   });
 
   test("verify runs generate-check and forge-check in scaffold workspace", async () => {

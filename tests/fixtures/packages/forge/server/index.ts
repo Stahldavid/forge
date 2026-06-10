@@ -158,6 +158,11 @@ export interface ForgeQueryMeta {
   auth?: AuthRequirement;
 }
 
+export interface ForgeLiveQueryMeta {
+  kind: "liveQuery";
+  auth?: AuthRequirement;
+}
+
 export interface ForgeQueryConfig<TArgs = unknown, TResult = unknown> {
   auth?: AuthRequirement;
   handler: (
@@ -168,6 +173,10 @@ export interface ForgeQueryConfig<TArgs = unknown, TResult = unknown> {
 
 export type ForgeQuery<TResult = unknown> = (() => TResult | Promise<TResult>) & {
   __forge: ForgeQueryMeta;
+};
+
+export type ForgeLiveQuery<TResult = unknown> = (() => TResult | Promise<TResult>) & {
+  __forge: ForgeLiveQueryMeta;
 };
 
 export function query<TArgs = unknown, TResult = unknown>(
@@ -185,6 +194,26 @@ export function query<TArgs = unknown, TResult = unknown>(
     ...fnOrConfig,
     __forge: {
       kind: "query",
+      ...(fnOrConfig.auth ? { auth: fnOrConfig.auth } : {}),
+    },
+  };
+}
+
+export function liveQuery<TArgs = unknown, TResult = unknown>(
+  fnOrConfig:
+    | (() => TResult | Promise<TResult>)
+    | ForgeQueryConfig<TArgs, TResult>,
+): ForgeLiveQuery<TResult> | (ForgeQueryConfig<TArgs, TResult> & { __forge: ForgeLiveQueryMeta }) {
+  if (typeof fnOrConfig === "function") {
+    const handler = fnOrConfig as ForgeLiveQuery<TResult>;
+    handler.__forge = { kind: "liveQuery" };
+    return handler;
+  }
+
+  return {
+    ...fnOrConfig,
+    __forge: {
+      kind: "liveQuery",
       ...(fnOrConfig.auth ? { auth: fnOrConfig.auth } : {}),
     },
   };

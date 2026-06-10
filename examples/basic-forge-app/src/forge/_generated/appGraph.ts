@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=54f3f6b66f87a575bff2d09c80de50b1bfca193d6bbbd7adb6204ec0df01c245 content=f44059cd851bec74563a30b29a43cc5b7e0370e3d7ccbb0ea99f23238b15b3a9
+// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=b4987cfe5ebada27c331f1c48c42fa9f295eb41cb9fa892fc7d7c6d599e8327e
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:1f504cc65fab2d1800e60c8ff24157b19f45220ad696693eb503e8ab31454ea2",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "14f24acd9a4da1dcab32354a1d5c3c79b498ed2bd56e009b57dd9f18b505d00b",
+  "inputHash": "7218b77a73dab341afbed399cf0468a8e612ff275687006fa08347ddc0b9cf3f",
   "moduleGraph": {
     "nodes": [
       {
@@ -149,7 +149,15 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/client/demo.ts",
         "id": "7780c27948b924b91b7f84619f162a9e881f68cc2697144ceb21190aa10f6f16",
-        "localImports": []
+        "localImports": [
+          {
+            "span": {
+              "end": 70,
+              "start": 39
+            },
+            "toModuleId": "31300e47ba6516d98164469de2bdba418e3421f24133d44db38f2be44685e204"
+          }
+        ]
       },
       {
         "declaredContexts": [
@@ -267,6 +275,27 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/commands/createTicket.ts",
         "id": "c26dc30a11c44c4f59dee7ba17a1488f7e41d3785d7671029aa455d2f6685d3c",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [
+          "liveQuery"
+        ],
+        "directPackageImports": [
+          {
+            "importKind": "static",
+            "packageName": "forge",
+            "span": {
+              "end": 45,
+              "start": 31
+            },
+            "specifier": "forge/server",
+            "subpath": "/server"
+          }
+        ],
+        "effectiveContexts": [],
+        "file": "src/queries/liveTickets.ts",
+        "id": "d12ed153cf5b22762d6bf2974fd6367da48d9b5524c8f790bd6880585c3bc5b3",
         "localImports": []
       },
       {
@@ -435,6 +464,23 @@ export const appGraph = {
       "qualifiedName": "manageBilling",
       "span": {
         "end": 239,
+        "start": 75
+      }
+    },
+    {
+      "contentHash": "f37c1512d37dbdf0dc0bd8c07512b7e14b56289d977adcd71edc015f6b48d120",
+      "file": "src/queries/liveTickets.ts",
+      "id": "f0ec05ae27f05d878b9857863da6013269c57f29f07d4b2f3b59ea84d5878ff5",
+      "kind": "liveQuery",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "ecaf5ddf72cd63058a2056d170d7764ce5ccef9028d2f5c65d2f897d5ff27de6",
+        "sourceSlice": "liveQuery({\n  auth: can(\"tickets.read\"),\n  handler: async (ctx) => {\n    return ctx.db.tickets.where({ status: \"open\" });\n  },\n})"
+      },
+      "name": "liveTickets",
+      "qualifiedName": "liveTickets",
+      "span": {
+        "end": 204,
         "start": 75
       }
     },

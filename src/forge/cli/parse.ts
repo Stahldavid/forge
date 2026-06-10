@@ -10,6 +10,7 @@ import type { SecretsSubcommand } from "./secrets.ts";
 import type { EnvSubcommand } from "./secrets.ts";
 import type { AiSubcommand } from "./ai.ts";
 import type { QuerySubcommand } from "./query.ts";
+import type { LiveSubcommand } from "./live.ts";
 import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 
 export type ForgeCommand =
@@ -119,6 +120,18 @@ export type ForgeCommand =
       workspaceRoot: string;
     }
   | {
+      kind: "live";
+      subcommand: LiveSubcommand;
+      name?: string;
+      args?: unknown;
+      json: boolean;
+      userId?: string;
+      tenantId?: string;
+      role?: string;
+      url?: string;
+      workspaceRoot: string;
+    }
+  | {
       kind: "ai";
       subcommand: AiSubcommand;
       json: boolean;
@@ -211,7 +224,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected generate, add, inspect, check, verify, run, query, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected generate, add, inspect, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -385,6 +398,36 @@ export function parseCli(argv: string[]): ParsedCli {
           userId: parseOptionValue(argv, "--user-id"),
           tenantId: parseOptionValue(argv, "--tenant-id"),
           role: parseOptionValue(argv, "--role"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "live": {
+      const subcommand = rest[0] === "list" || !rest[0] ? "list" : "subscribe";
+      const name = subcommand === "subscribe" ? rest[0] : undefined;
+      const argsRaw = parseOptionValue(argv, "--args");
+      let args: unknown = {};
+      if (argsRaw !== undefined) {
+        try {
+          args = JSON.parse(argsRaw);
+        } catch {
+          errors.push("--args must be valid JSON");
+        }
+      }
+
+      return {
+        command: {
+          kind: "live",
+          subcommand,
+          name,
+          args,
+          json: parseFlag(argv, "--json"),
+          userId: parseOptionValue(argv, "--user-id"),
+          tenantId: parseOptionValue(argv, "--tenant-id"),
+          role: parseOptionValue(argv, "--role"),
+          url: parseOptionValue(argv, "--url"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -718,6 +761,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--once",
     "--limit",
     "--input",
+    "--args",
     "--step",
     "--sink",
     "--file",
@@ -735,6 +779,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--provider",
     "--model",
     "--prompt",
+    "--url",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -752,6 +797,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--database-url" ||
         arg === "--limit" ||
         arg === "--input" ||
+        arg === "--args" ||
         arg === "--step" ||
         arg === "--sink" ||
         arg === "--file" ||
@@ -764,7 +810,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--ai" ||
         arg === "--provider" ||
         arg === "--model" ||
-        arg === "--prompt"
+        arg === "--prompt" ||
+        arg === "--url"
       ) {
         index += 1;
       }

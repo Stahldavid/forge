@@ -19,6 +19,8 @@ import { recordExceptionOutsideTx } from "../telemetry/buffer.ts";
 import { generateTraceId } from "../telemetry/correlation.ts";
 import type { AuthContext } from "../auth/types.ts";
 import { checkCommandPolicy } from "../policy/check.ts";
+import { createWriteTracker } from "../live/dependency-tracker.ts";
+import type { LiveSubscriptionManager } from "../live/types.ts";
 
 export interface CommandRuntime {
   adapter: DbAdapter;
@@ -26,6 +28,7 @@ export interface CommandRuntime {
   workspaceRoot: string;
   requestId?: string;
   auth?: AuthContext;
+  liveManager?: LiveSubscriptionManager;
 }
 
 export interface CommandTransactionResult {
@@ -84,7 +87,11 @@ export async function runCommandWithTransaction(
       workspaceRoot: runtime.workspaceRoot,
     });
 
-    const db = createGeneratedDbClient(tx, runtime.tableMap, { auth });
+    const writeTracker = createWriteTracker();
+    const db = createGeneratedDbClient(tx, runtime.tableMap, {
+      auth,
+      writeTracker,
+    });
     const { subscriptions } = loadActionSubscriptions(runtime.workspaceRoot);
     const ctx = createForgeContext(tx, db, subscriptions, telemetry, auth, {
       workspaceRoot: runtime.workspaceRoot,
@@ -92,6 +99,10 @@ export async function runCommandWithTransaction(
     });
     const result = await handler(ctx, args);
     await tx.commit();
+
+    for (const change of writeTracker.changes) {
+      await runtime.liveManager?.notifyDataChanged(change);
+    }
 
     return {
       ok: true,
