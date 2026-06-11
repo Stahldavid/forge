@@ -1,6 +1,6 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=b96368f619c35efb9aac917d7221700851827a2dba8bb35368e6bcd2d4f54bf2
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=1290ebb9edadafd5099f359201c00307da5e79a9ce02304e81a298d61c4999e5
 export const sqlPlan = {
-  "checksum": "b6564fb46c4c389d9e7d23948cc6dcaca657a75ef3faf19a333910eda21e600c",
+  "checksum": "418e7965808fba344799c6ed1489ae11c907a69a376ecc3b15345d4247b52bee",
   "indexes": [
     {
       "index": {
@@ -13,9 +13,35 @@ export const sqlPlan = {
       "kind": "create_index",
       "sql": "CREATE INDEX IF NOT EXISTS \"idx_tickets_tenant_id\" ON \"tickets\" (\"tenant_id\")",
       "table": "tickets"
+    },
+    {
+      "index": {
+        "columns": [
+          "revision"
+        ],
+        "name": "forge_live_invalidations_revision_idx",
+        "table": "_forge_live_invalidations"
+      },
+      "kind": "create_index",
+      "sql": "CREATE INDEX IF NOT EXISTS \"forge_live_invalidations_revision_idx\" ON \"_forge_live_invalidations\" (\"revision\")",
+      "table": "_forge_live_invalidations"
+    },
+    {
+      "index": {
+        "columns": [
+          "table_name",
+          "tenant_id",
+          "revision"
+        ],
+        "name": "forge_live_invalidations_table_tenant_revision_idx",
+        "table": "_forge_live_invalidations"
+      },
+      "kind": "create_index",
+      "sql": "CREATE INDEX IF NOT EXISTS \"forge_live_invalidations_table_tenant_revision_idx\" ON \"_forge_live_invalidations\" (\"table_name\", \"tenant_id\", \"revision\")",
+      "table": "_forge_live_invalidations"
     }
   ],
-  "migrationId": "migration_b6564fb46c4c389d",
+  "migrationId": "migration_418e7965808fba34",
   "schemaVersion": "1.0.0",
   "systemTables": [
     {
@@ -52,6 +78,21 @@ export const sqlPlan = {
       "kind": "create_table",
       "sql": "CREATE TABLE IF NOT EXISTS _forge_trace_spans (id bigserial PRIMARY KEY, trace_id text NOT NULL, parent_span_id text, span_id text NOT NULL, name text NOT NULL, kind text NOT NULL, attributes jsonb NOT NULL DEFAULT '{}', status text NOT NULL DEFAULT 'ok', started_at timestamptz NOT NULL, ended_at timestamptz, error text)",
       "table": "_forge_trace_spans"
+    },
+    {
+      "kind": "create_sequence",
+      "sql": "CREATE SEQUENCE IF NOT EXISTS _forge_live_revision_seq START WITH 2",
+      "table": "_forge_live_revision_seq"
+    },
+    {
+      "kind": "create_table",
+      "sql": "CREATE TABLE IF NOT EXISTS _forge_live_invalidations (id bigserial PRIMARY KEY, revision bigint NOT NULL, table_name text NOT NULL, tenant_id text, operation text NOT NULL, source_kind text NOT NULL, source_name text, trace_id text, release_id text, deploy_id text, payload jsonb NOT NULL DEFAULT '{}', created_at timestamptz NOT NULL DEFAULT now())",
+      "table": "_forge_live_invalidations"
+    },
+    {
+      "kind": "create_table",
+      "sql": "CREATE TABLE IF NOT EXISTS _forge_live_subscription_debug (id text PRIMARY KEY, name text NOT NULL, tenant_id text, dependencies jsonb NOT NULL, last_revision bigint, runtime_id text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())",
+      "table": "_forge_live_subscription_debug"
     }
   ],
   "tables": [

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=069f1a325e70321fb77ac4457ff138a3ece8c3aaf6f40957833b3fcbab5f4bad
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=5cb4996179b023b156483b19954a61349c1bb5028fda12d1f61bec79c027926b
 export const agentContract = {
   "actions": [
     {
@@ -413,6 +413,16 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge live status --json.",
+        "Run forge live invalidations list --json and confirm the table and tenant changed.",
+        "Run forge live debug <subscriptionId> --json when a subscription id is available.",
+        "Check that _forge_live_invalidations has revisions newer than the last sent snapshot.",
+        "Reconnect with Last-Event-ID or ?lastRevision=<revision> to verify resume behavior."
+      ],
+      "title": "Debug a stale liveQuery"
+    },
+    {
+      "steps": [
         "Edit src/forge/schema.ts.",
         "Include tenantId for tenant-scoped data.",
         "Run forge generate.",
@@ -423,12 +433,75 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
+        "Review the plan and diagnostics.",
+        "Run forge make resource <name> --fields name:type --yes.",
+        "Run forge generate.",
+        "Run forge verify --strict."
+      ],
+      "title": "Scaffold a resource"
+    },
+    {
+      "steps": [
+        "Write a JSON blueprint under .forge/blueprints.",
+        "Run forge feature validate <blueprint> --json.",
+        "Run forge feature plan <blueprint>.",
+        "Review the plan, impact, and risk.",
+        "Run forge feature apply <blueprint> --yes.",
+        "Run forge verify --strict."
+      ],
+      "title": "Apply a feature blueprint"
+    },
+    {
+      "steps": [
+        "Run forge refactor rename field <table.field> <table.field> --dry-run --json.",
+        "Review filesToModify, migrationPlan, diagnostics, and risk.",
+        "Use --allow-high-risk only for intentional high-risk refactors.",
+        "Apply with forge refactor rename field <table.field> <table.field> --yes.",
+        "Run forge generate.",
+        "Run forge verify --strict."
+      ],
+      "title": "Safely refactor a feature"
+    },
+    {
+      "steps": [
+        "Run forge impact --changed --json.",
+        "Run forge test plan --changed --json.",
+        "Run forge test run --changed --json for targeted checks.",
+        "Use forge verify --changed for the fast impact gate.",
+        "Run forge verify --strict before final handoff."
+      ],
+      "title": "Plan impact-based tests"
+    },
+    {
+      "steps": [
+        "Run forge test run --changed --json.",
+        "Run forge repair diagnose --from-last-test-run --json.",
+        "Review the failureKind, likelyCause, suggestedRepairs, and confidence.",
+        "Apply only high-confidence repairs automatically.",
+        "Run forge verify --changed.",
+        "Run forge verify --strict before final handoff."
+      ],
+      "title": "Repair a failing check"
+    },
+    {
+      "steps": [
         "Use forge add <alias>.",
         "Do not install packages manually unless the architecture exception is intentional.",
         "Run forge generate.",
         "Run forge check."
       ],
       "title": "Add a package"
+    },
+    {
+      "steps": [
+        "Run forge deps upgrade-plan <package> --to latest.",
+        "Read .forge/upgrades/.../plan.md.",
+        "If risk is high, inspect affected files and generated adapters before applying.",
+        "Apply with forge deps upgrade-apply <plan>.",
+        "Finish with forge verify --strict."
+      ],
+      "title": "Upgrade a package"
     },
     {
       "steps": [
@@ -452,6 +525,15 @@ export const agentContract = {
         "Run forge self-host check."
       ],
       "title": "Self-host"
+    },
+    {
+      "steps": [
+        "Run forge release inspect <releaseId> --json.",
+        "Run forge release sourcemaps symbolicate --input stacktrace.json --json.",
+        "Open the original source file and line from the symbolicated frame.",
+        "Use forge telemetry inspect <traceId> --with-release --json when a trace id is available."
+      ],
+      "title": "Debug a production stack trace"
     }
   ],
   "policies": [
