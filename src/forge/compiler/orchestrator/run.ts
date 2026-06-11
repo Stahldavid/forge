@@ -1,13 +1,15 @@
+import {
+  formatFileSystemProfile,
+  getFileSystemProfile,
+} from "../fs/index.ts";
 import type { GenerateOptions, GenerateResult } from "../types/cli.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
-import { buildAppGraph } from "../app-graph/build.ts";
 import { classify } from "../classifier/classify.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { buildRuntimeMatrix } from "../classifier/runtime-matrix.ts";
 import { emit } from "../emitter/emit.ts";
 import { PackageGraphCompiler } from "../package-graph/compiler.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
-import { discover } from "./discover.ts";
 import { checkImportGuards } from "./guards.ts";
 import {
   loadManifest,
@@ -16,7 +18,18 @@ import {
 } from "./manifest.ts";
 import { buildManifestFileHashes } from "./manifest-hashes.ts";
 import { runFastGenerateCheck } from "./fast-check.ts";
+import {
+  formatCompileTimings,
+  isCompileProfileEnabled,
+  recordCompileTimings,
+} from "./profile.ts";
 import { plan } from "./plan.ts";
+import {
+  buildAppGraphForSession,
+  discoverForSession,
+  getCompileSession,
+  loadManifestForSession,
+} from "./session.ts";
 import { verifyLockIntegrity } from "./verify.ts";
 
 function classifyPackages(
@@ -41,6 +54,9 @@ function collectQualityGateDiagnostics(
 }
 
 export async function run(options: GenerateOptions): Promise<GenerateResult> {
+  const profileEnabled = isCompileProfileEnabled();
+  const runStarted = profileEnabled ? performance.now() : 0;
+
   if (options.check && !options.dryRun) {
     const fastCheck = runFastGenerateCheck(options.workspaceRoot);
     if (fastCheck.kind === "hit") {
@@ -48,18 +64,18 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
     }
   }
 
-  const ctx = discover({ workspaceRoot: options.workspaceRoot });
-  const manifest = loadManifest(ctx.cacheDir);
+  const session = getCompileSession(options.workspaceRoot);
+
+  const discoverStarted = profileEnabled ? performance.now() : 0;
+  const ctx = discoverForSession(session);
+  const manifest = loadManifestForSession(session);
+  const discoverMs = profileEnabled ? performance.now() - discoverStarted : 0;
 
   const pkgCompiler = new PackageGraphCompiler();
 
+  const graphStarted = profileEnabled ? performance.now() : 0;
   const [appGraph, pkgResult] = await Promise.all([
-    buildAppGraph({
-      workspaceRoot: ctx.workspaceRoot,
-      sources: ctx.sources,
-      prior: manifest.priorAppGraph,
-      tsconfigPath: ctx.tsconfigPath ?? undefined,
-    }),
+    buildAppGraphForSession(session),
     pkgCompiler.build(ctx.dependencies, {
       runtimeInspect: false,
       resolutionMode: "nodenext",
@@ -68,14 +84,18 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
       lockfileHash: ctx.lockfileHash,
     }),
   ]);
+  const graphMs = profileEnabled ? performance.now() - graphStarted : 0;
 
   const classified = classifyPackages(pkgResult.graph);
+
+  const planStarted = profileEnabled ? performance.now() : 0;
   const emitPlan = plan({
     appGraph,
     packageGraph: pkgResult.graph,
     classified,
     ctx,
   });
+  const planMs = profileEnabled ? performance.now() - planStarted : 0;
 
   const mode = options.check
     ? "check"
@@ -100,10 +120,12 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
     [...guardDiagnosticsForGate, ...(emitPlan.diagnostics ?? [])],
   );
 
+  const emitStarted = profileEnabled ? performance.now() : 0;
   const emitResult = await emit(emitPlan, {
     workspaceRoot: ctx.workspaceRoot,
     mode,
   });
+  const emitMs = profileEnabled ? performance.now() - emitStarted : 0;
 
   const warnings: Diagnostic[] = [
     ...qualityDiagnostics.filter((d) => d.severity === "warning"),
@@ -128,8 +150,33 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
           fileHashes,
           appGraph,
           ctx.inputFingerprint,
+          ctx.sourceFileIndex,
         ),
       );
+    }
+  }
+
+  if (profileEnabled) {
+    const totalMs = performance.now() - runStarted;
+    recordCompileTimings({
+      discoverMs,
+      appGraphMs: graphMs,
+      packageGraphMs: 0,
+      planMs,
+      emitMs,
+      totalMs,
+    });
+    const fsProfile = getFileSystemProfile();
+    process.stderr.write(`${formatCompileTimings({
+      discoverMs,
+      appGraphMs: graphMs,
+      packageGraphMs: 0,
+      planMs,
+      emitMs,
+      totalMs,
+    })}\n`);
+    if (fsProfile) {
+      process.stderr.write(`${formatFileSystemProfile(fsProfile)}\n`);
     }
   }
 

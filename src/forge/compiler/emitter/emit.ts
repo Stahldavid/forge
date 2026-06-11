@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import type { EmitFile, EmitMode, EmitPlan } from "../types/emit.ts";
+import { runWithConcurrency } from "../cache/scheduler.ts";
 import { nodeFileSystem } from "../fs/index.ts";
 import type { FileSystem } from "../fs/index.ts";
 import {
@@ -108,12 +109,22 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
   const warnings: Diagnostic[] = [];
   const errors: Diagnostic[] = [];
 
-  for (const file of plannedFiles) {
-    const rendered = render(file, context);
-    const absolutePath = resolveWorkspacePath(workspaceRoot, file.path);
-    const onDisk = await readTextFileIfExists(absolutePath, fs);
-    const differs = bodiesDiffer(rendered, onDisk);
+  const classifications = await runWithConcurrency(
+    plannedFiles,
+    8,
+    async (file) => {
+      const rendered = render(file, context);
+      const absolutePath = resolveWorkspacePath(workspaceRoot, file.path);
+      const onDisk = await readTextFileIfExists(absolutePath, fs);
+      return {
+        file,
+        rendered,
+        differs: bodiesDiffer(rendered, onDisk),
+      };
+    },
+  );
 
+  for (const { file, rendered, differs } of classifications) {
     if (differs) {
       changed.push(file.path);
       wouldChange.push(file.path);
@@ -124,6 +135,7 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
       }
 
       try {
+        const absolutePath = resolveWorkspacePath(workspaceRoot, file.path);
         await writeFileAtomic(absolutePath, rendered, fs);
       } catch {
         errors.push(forgeWriteError(file.path));

@@ -1,7 +1,6 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
-import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { classify } from "../compiler/classifier/classify.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -12,8 +11,11 @@ import { checkAiUsageInApp } from "../compiler/guards/check-ai-usage.ts";
 import { checkQueryUsageInApp } from "../compiler/guards/check-query-usage.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import { run } from "../compiler/orchestrator/run.ts";
-import { discover } from "../compiler/orchestrator/discover.ts";
-import { loadManifest } from "../compiler/orchestrator/manifest.ts";
+import {
+  buildAppGraphForSession,
+  discoverForSession,
+  getCompileSession,
+} from "../compiler/orchestrator/session.ts";
 import { resolveByPackageName } from "../compiler/recipes/registry.ts";
 import { PackageGraphCompiler } from "../compiler/package-graph/compiler.ts";
 import type {
@@ -209,14 +211,9 @@ export async function runCheckCommand(
   workspaceRoot: string,
   options?: { strictSecrets?: boolean },
 ): Promise<GenerateResult> {
-  const ctx = discover({ workspaceRoot });
-  const manifest = loadManifest(ctx.cacheDir);
-  const appGraph = await buildAppGraph({
-    workspaceRoot: ctx.workspaceRoot,
-    sources: ctx.sources,
-    prior: manifest.priorAppGraph,
-    tsconfigPath: ctx.tsconfigPath ?? undefined,
-  });
+  const session = getCompileSession(workspaceRoot);
+  const ctx = discoverForSession(session);
+  const appGraph = await buildAppGraphForSession(session);
 
   const matrix = await loadRuntimeMatrixForCheck(workspaceRoot);
   const guardDiagnostics = checkImportGuards(appGraph.moduleGraph, matrix);

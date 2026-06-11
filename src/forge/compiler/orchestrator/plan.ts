@@ -208,6 +208,7 @@ function makeEmitFile(path: string, content: string): EmitFile {
     path,
     content,
     contentHash: hashStable(content),
+    canonical: path.endsWith(".json"),
   };
 }
 

@@ -28,13 +28,15 @@ import {
 import {
   computeContentChecksum,
   hashDtsFiles,
+  hashDtsFilesForCache,
   hashPackageJson,
+  hashPackageJsonForCache,
 } from "./checksum.ts";
 import {
   discoverSubpathsFromExports,
   expandPatternSubpaths,
 } from "./exports-discovery.ts";
-import { extractDtsSignatures } from "./extract-dts.ts";
+import { DtsSignatureExtractor } from "./dts-extractor.ts";
 import { readTextFile } from "./read-file.ts";
 import {
   resolveEntrypointTypes,
@@ -115,16 +117,13 @@ export class PackageGraphCompiler {
     opts: BuildOptions,
     cache: PackageCacheStore,
   ): Promise<AnalyzeResult> {
-    const packageJsonHash = hashPackageJson(dep.installPath);
-    const dtsFilesHash = hashDtsFiles(dep.installPath);
-
     const cacheKey = buildPackageCacheKey({
       name: dep.name,
       version: dep.version,
       packageManager: dep.packageManager,
       packageIntegrity: dep.packageIntegrity,
-      packageJsonHash,
-      dtsFilesHash,
+      packageJsonHash: hashPackageJsonForCache(dep.installPath),
+      dtsFilesHash: hashDtsFilesForCache(dep.installPath),
       analyzerVersion: PACKAGE_ANALYZER_VERSION,
       typescriptVersion: ts.version,
       resolutionMode: opts.resolutionMode,
@@ -147,7 +146,10 @@ export class PackageGraphCompiler {
       );
     }
 
-    const analyzed = await this.analyzeWithOptionalRuntime(dep, opts);
+    const analyzed = await this.analyzeWithOptionalRuntime(dep, opts, {
+      packageJsonHash: hashPackageJson(dep.installPath),
+      dtsFilesHash: hashDtsFiles(dep.installPath),
+    });
     diagnostics.push(...analyzed.diagnostics);
     assertPackageApiSecretSafe(analyzed.api);
     await cache.put(cacheKey, analyzed.api);
@@ -157,8 +159,9 @@ export class PackageGraphCompiler {
   private async analyzeWithOptionalRuntime(
     dep: Dependency,
     opts: BuildOptions,
+    packageHashes: { packageJsonHash: string; dtsFilesHash: string },
   ): Promise<{ api: PackageApi; diagnostics: Diagnostic[] }> {
-    const staticResult = this.analyzeStatic(dep, opts);
+    const staticResult = this.analyzeStatic(dep, opts, packageHashes);
     if (!opts.runtimeInspect) {
       return staticResult;
     }
@@ -183,8 +186,8 @@ export class PackageGraphCompiler {
       source: "static+runtime",
       runtimeShape: sandbox.shape,
       contentChecksum: computeContentChecksum(
-        hashPackageJson(dep.installPath),
-        hashDtsFiles(dep.installPath),
+        packageHashes.packageJsonHash,
+        packageHashes.dtsFilesHash,
         {
           ...staticResult.api,
           source: "static+runtime",
@@ -199,6 +202,7 @@ export class PackageGraphCompiler {
   analyzeStatic(
     dep: Dependency,
     opts: BuildOptions,
+    packageHashes?: { packageJsonHash: string; dtsFilesHash: string },
   ): { api: PackageApi; diagnostics: Diagnostic[] } {
     const diagnostics: Diagnostic[] = [];
     const packageJson = readPackageJson(dep.installPath);
@@ -230,6 +234,7 @@ export class PackageGraphCompiler {
     }
 
     const entrypoints: Entrypoint[] = [];
+    const dtsExtractor = new DtsSignatureExtractor(opts.resolutionMode);
 
     for (const { subpath, patternBacked } of subpathsToAnalyze) {
       const entry = this.analyzeEntrypoint(
@@ -238,13 +243,16 @@ export class PackageGraphCompiler {
         patternBacked,
         opts.resolutionMode,
         diagnostics,
+        dtsExtractor,
       );
       entrypoints.push(entry);
     }
 
     const sortedEntrypoints = stableSortEntrypoints(entrypoints);
-    const packageJsonHash = hashPackageJson(dep.installPath);
-    const dtsFilesHash = hashDtsFiles(dep.installPath);
+    const packageJsonHash =
+      packageHashes?.packageJsonHash ?? hashPackageJson(dep.installPath);
+    const dtsFilesHash =
+      packageHashes?.dtsFilesHash ?? hashDtsFiles(dep.installPath);
 
     const partialApi = {
       name: dep.name,
@@ -273,6 +281,7 @@ export class PackageGraphCompiler {
     patternBacked: boolean,
     mode: ResolutionMode,
     diagnostics: Diagnostic[],
+    dtsExtractor: DtsSignatureExtractor,
   ): Entrypoint {
     let resolved = resolveEntrypointTypes(
       dep.installPath,
@@ -304,13 +313,12 @@ export class PackageGraphCompiler {
       };
     }
 
-    let exports: ReturnType<typeof extractDtsSignatures>;
+    let exports: Entrypoint["exports"];
     try {
-      exports = extractDtsSignatures(
+      exports = dtsExtractor.extract(
         resolved.dtsPath,
         dep.name,
         subpath,
-        mode,
       );
     } catch {
       diagnostics.push(forgePkgNoTypes(dep.name, subpath));

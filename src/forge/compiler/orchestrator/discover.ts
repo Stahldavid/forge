@@ -1,10 +1,8 @@
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { nodeFileSystem } from "../fs/index.ts";
 import type { Dependency } from "../types/package-graph.ts";
-import type { SourceFile } from "../types/app-graph.ts";
 import { hashTsconfigForWorkspace } from "../app-graph/tsconfig-hash.ts";
 import { hashStable } from "../primitives/hash.ts";
-import { normalizePath } from "../primitives/paths.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
 import { detectPackageManager } from "../package-manager/detect.ts";
 import {
@@ -13,16 +11,10 @@ import {
 } from "../package-manager/detect.ts";
 import { GENERATED_DIR } from "../emitter/constants.ts";
 import type { DiscoverContext } from "./types.ts";
-
-const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
-const SKIP_DIR_NAMES = new Set([
-  "node_modules",
-  "_generated",
-  ".forge",
-  "dist",
-  "build",
-  ".git",
-]);
+import {
+  type SourceFileIndex,
+  walkWorkspaceSources,
+} from "./workspace-index.ts";
 
 const DEFAULT_SOURCE_ROOTS = ["src", "tests"];
 
@@ -49,62 +41,6 @@ function resolveLockfilePath(workspaceRoot: string): string | null {
 
   const fallback = join(workspaceRoot, getLockfileForPm(pm));
   return nodeFileSystem.exists(fallback) ? fallback : null;
-}
-
-function collectSourceFiles(
-  workspaceRoot: string,
-  roots: string[],
-): SourceFile[] {
-  const sources: SourceFile[] = [];
-
-  function walkDirectory(absoluteDir: string): void {
-    for (const entry of nodeFileSystem.readDir(absoluteDir)) {
-      const absolutePath = join(absoluteDir, entry.name);
-
-      if (entry.isDirectory) {
-        if (SKIP_DIR_NAMES.has(entry.name)) {
-          continue;
-        }
-        walkDirectory(absolutePath);
-        continue;
-      }
-
-      if (!entry.isFile) {
-        continue;
-      }
-
-      const ext = entry.name.includes(".")
-        ? `.${entry.name.split(".").pop()}`
-        : "";
-      if (!SOURCE_EXTENSIONS.has(ext)) {
-        continue;
-      }
-
-      const relativePath = normalizePath(
-        relative(workspaceRoot, absolutePath),
-      );
-      if (relativePath.includes(`${GENERATED_DIR}/`)) {
-        continue;
-      }
-
-      const text = (nodeFileSystem.readText(absolutePath) ?? "");
-      sources.push({
-        path: relativePath,
-        text,
-        contentHash: hashStable(text),
-      });
-    }
-  }
-
-  for (const root of roots) {
-    const absoluteRoot = join(workspaceRoot, root);
-    if (nodeFileSystem.exists(absoluteRoot)) {
-      walkDirectory(absoluteRoot);
-    }
-  }
-
-  sources.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  return sources;
 }
 
 interface WorkspacePackageJson {
@@ -170,7 +106,7 @@ function resolveDependency(
     name,
     version,
     packageManager,
-    installPath: normalizePath(installPath),
+    installPath: installPath.replace(/\\/g, "/"),
   };
 }
 
@@ -199,7 +135,7 @@ function collectDependencies(workspaceRoot: string): Dependency[] {
   return deps;
 }
 
-function computeSourceFingerprint(sources: SourceFile[]): string {
+function computeSourceFingerprint(sources: import("../types/app-graph.ts").SourceFile[]): string {
   const payload = sources.map((source) => ({
     path: source.path,
     contentHash: source.contentHash,
@@ -224,15 +160,20 @@ export function getSourceRoots(workspaceRoot: string, override?: string[]): stri
 export interface DiscoverOptions {
   workspaceRoot: string;
   sourceRoots?: string[];
+  priorSourceIndex?: SourceFileIndex;
+  priorSourcesByPath?: Map<string, import("../types/app-graph.ts").SourceFile>;
 }
 
 export function discover(options: DiscoverOptions): DiscoverContext {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
   const packageManager = detectPackageManager(workspaceRoot);
-  const sources = collectSourceFiles(
+  const walked = walkWorkspaceSources({
     workspaceRoot,
-    resolveSourceRoots(workspaceRoot, options.sourceRoots),
-  );
+    roots: resolveSourceRoots(workspaceRoot, options.sourceRoots),
+    priorIndex: options.priorSourceIndex,
+    priorSourcesByPath: options.priorSourcesByPath,
+  });
+
   const dependencies = collectDependencies(workspaceRoot);
 
   const packageJsonHash = hashFileIfExists(join(workspaceRoot, "package.json"));
@@ -242,7 +183,7 @@ export function discover(options: DiscoverOptions): DiscoverContext {
     ? "tsconfig.json"
     : null;
   const tsconfigHash = hashTsconfigForWorkspace(workspaceRoot, tsconfigPath ?? undefined);
-  const sourceFingerprint = computeSourceFingerprint(sources);
+  const sourceFingerprint = computeSourceFingerprint(walked.sources);
 
   const inputFingerprint = computeInputFingerprint({
     sourceFingerprint,
@@ -260,7 +201,7 @@ export function discover(options: DiscoverOptions): DiscoverContext {
     cacheDir: join(workspaceRoot, ".forge", "cache"),
     generatedDir: GENERATED_DIR,
     packageManager,
-    sources,
+    sources: walked.sources,
     dependencies,
     tsconfigPath,
     packageJsonHash,
@@ -268,5 +209,6 @@ export function discover(options: DiscoverOptions): DiscoverContext {
     tsconfigHash,
     sourceFingerprint,
     inputFingerprint,
+    sourceFileIndex: walked.index,
   };
 }

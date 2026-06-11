@@ -7,8 +7,11 @@ import {
   buildPermissionMatrixFromRegistry,
   buildPolicyRegistry,
 } from "../compiler/policy-registry/build.ts";
-import { discover } from "../compiler/orchestrator/discover.ts";
-import { loadManifest } from "../compiler/orchestrator/manifest.ts";
+import {
+  buildAppGraphForSession,
+  discoverForSession,
+  getCompileSession,
+} from "../compiler/orchestrator/session.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import type { PermissionMatrix, PolicyRegistry } from "../compiler/types/policy-registry.ts";
@@ -133,14 +136,9 @@ export async function runPolicyCommand(
       return { exitCode: result.allowed ? 0 : 1, data: result };
     }
     case "check": {
-      const ctx = discover({ workspaceRoot: options.workspaceRoot });
-      const manifest = loadManifest(ctx.cacheDir);
-      const appGraph = await buildAppGraph({
-        workspaceRoot: ctx.workspaceRoot,
-        sources: ctx.sources,
-        prior: manifest.priorAppGraph,
-        tsconfigPath: ctx.tsconfigPath ?? undefined,
-      });
+      const session = getCompileSession(options.workspaceRoot);
+      discoverForSession(session);
+      const appGraph = await buildAppGraphForSession(session);
       const registry = buildPolicyRegistry(appGraph);
       const diagnostics = [...registry.diagnostics];
 

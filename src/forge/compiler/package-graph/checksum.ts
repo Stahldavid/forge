@@ -10,6 +10,16 @@ export function hashPackageJson(installPath: string): string {
   return hashStable(readTextFile(packageJsonPath));
 }
 
+/** Fast cache-key fingerprint: one stat per package.json instead of reading contents. */
+export function hashPackageJsonForCache(installPath: string): string {
+  const packageJsonPath = join(installPath, "package.json");
+  const stat = nodeFileSystem.stat(packageJsonPath);
+  if (stat !== null) {
+    return hashStable(`stat:${stat.size}:${stat.mtimeMs}`);
+  }
+  return hashPackageJson(installPath);
+}
+
 export function hashDtsFiles(installPath: string): string {
   const files = collectDtsFiles(installPath).sort((a, b) => a.localeCompare(b));
   const parts: string[] = [];
@@ -17,6 +27,19 @@ export function hashDtsFiles(installPath: string): string {
     const rel = relative(installPath, file).replace(/\\/g, "/");
     parts.push(rel);
     parts.push(hashStable(readTextFile(file)));
+  }
+  return hashStable(parts.join("\0"));
+}
+
+/** Fast cache-key fingerprint using file stat metadata instead of reading every .d.ts body. */
+export function hashDtsFilesForCache(installPath: string): string {
+  const files = collectDtsFiles(installPath).sort((a, b) => a.localeCompare(b));
+  const parts: string[] = [];
+  for (const file of files) {
+    const rel = relative(installPath, file).replace(/\\/g, "/");
+    const stat = nodeFileSystem.stat(file);
+    parts.push(rel);
+    parts.push(`${stat?.size ?? 0}:${stat?.mtimeMs ?? 0}`);
   }
   return hashStable(parts.join("\0"));
 }

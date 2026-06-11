@@ -6,7 +6,7 @@
  * (any ancestor of a written file). This mirrors the observable behaviour of
  * {@link NodeFileSystem} closely enough for compiler/authoring unit tests.
  */
-import type { DirEntry, FileSystem } from "./types.ts";
+import type { DirEntry, FileStat, FileSystem } from "./types.ts";
 
 function normalize(path: string): string {
   const slashed = path.replace(/\\/g, "/").replace(/\/+/g, "/");
@@ -207,5 +207,27 @@ export class InMemoryFileSystem implements FileSystem {
     const dir = `${normalize(prefix)}${this.tempCounter.toString(36)}${Date.now().toString(36)}`;
     this.mkdirp(dir);
     return dir;
+  }
+
+  stat(path: string): FileStat | null {
+    const key = normalize(path);
+    if (this.files.has(key)) {
+      const content = this.files.get(key) as string;
+      return {
+        size: content.length,
+        mtimeMs: 0,
+        isDirectory: false,
+        isFile: true,
+      };
+    }
+    if (this.isDirectory(key)) {
+      return {
+        size: 0,
+        mtimeMs: 0,
+        isDirectory: true,
+        isFile: false,
+      };
+    }
+    return null;
   }
 }

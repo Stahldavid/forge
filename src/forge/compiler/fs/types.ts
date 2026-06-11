@@ -17,6 +17,13 @@ export interface DirEntry {
   isFile: boolean;
 }
 
+export interface FileStat {
+  size: number;
+  mtimeMs: number;
+  isDirectory: boolean;
+  isFile: boolean;
+}
+
 export interface FileSystem {
   /** Return file contents as UTF-8, or `null` when the path does not exist. */
   readText(path: string): string | null;
@@ -40,4 +47,6 @@ export interface FileSystem {
   remove(path: string): void;
   /** Whether the path exists and is a directory. */
   isDirectory(path: string): boolean;
+  /** Metadata for an existing path, or `null` when absent. */
+  stat(path: string): FileStat | null;
 }

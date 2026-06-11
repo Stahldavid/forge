@@ -1,8 +1,7 @@
-import { basename, join, relative } from "node:path";
-import { nodeFileSystem } from "../fs/index.ts";
+import { basename } from "node:path";
 import { GENERATOR_VERSION } from "../emitter/constants.ts";
+import { walkWorkspaceSources } from "../orchestrator/workspace-index.ts";
 import { stableSortStrings } from "../primitives/sort.ts";
-import { normalizePath } from "../primitives/paths.ts";
 import type { AppGraph, ForgeKind, SourceFile } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type {
@@ -16,8 +15,6 @@ import type {
 } from "../types/test-graph.ts";
 
 const TEST_RE = /\.(test|spec)\.(ts|tsx)$/;
-const TEST_ROOTS = ["tests", "src", "web"];
-const SKIP_DIRS = new Set(["node_modules", ".git", ".forge", "_generated", "dist", "build"]);
 
 function emptyCoverage(): TestCoverage {
   return {
@@ -39,35 +36,13 @@ function pushUnique(values: string[], value: string): void {
   }
 }
 
-function collectTestsFromDisk(workspaceRoot: string): SourceFile[] {
-  const tests: SourceFile[] = [];
-
-  function walk(dir: string): void {
-    for (const entry of nodeFileSystem.readDir(dir)) {
-      const absolute = join(dir, entry.name);
-      if (entry.isDirectory) {
-        if (!SKIP_DIRS.has(entry.name)) {
-          walk(absolute);
-        }
-        continue;
-      }
-      if (!entry.isFile || !TEST_RE.test(entry.name)) {
-        continue;
-      }
-      const path = normalizePath(relative(workspaceRoot, absolute));
-      const text = (nodeFileSystem.readText(absolute) ?? "");
-      tests.push({ path, text, contentHash: "" });
-    }
-  }
-
-  for (const root of TEST_ROOTS) {
-    const absolute = join(workspaceRoot, root);
-    if (nodeFileSystem.exists(absolute)) {
-      walk(absolute);
-    }
-  }
-
-  return tests.sort((a, b) => a.path.localeCompare(b.path));
+function collectWebTestsFromDisk(workspaceRoot: string): SourceFile[] {
+  const { sources } = walkWorkspaceSources({
+    workspaceRoot,
+    roots: ["web"],
+    excludeRelativePath: (path) => !TEST_RE.test(path),
+  });
+  return sources.sort((a, b) => a.path.localeCompare(b.path));
 }
 
 function symbolsByKind(appGraph: AppGraph, kind: ForgeKind): string[] {
@@ -200,15 +175,18 @@ export function buildTestGraph(input: {
   packageGraph: PackageGraph;
   sources: SourceFile[];
 }): TestGraph {
-  const diskTests = collectTestsFromDisk(input.workspaceRoot);
+  const diskTests = collectWebTestsFromDisk(input.workspaceRoot);
   const byPath = new Map<string, SourceFile>();
-  for (const source of [...input.sources, ...diskTests]) {
+  for (const source of input.sources) {
     if (TEST_RE.test(source.path)) {
       byPath.set(source.path, source);
     }
   }
+  for (const source of diskTests) {
+    byPath.set(source.path, source);
+  }
 
-  const allSources = [...input.sources, ...diskTests];
+  const allSources = [...input.sources.filter((s) => TEST_RE.test(s.path)), ...diskTests];
   const tests: TestGraphEntry[] = [...byPath.values()]
     .sort((a, b) => a.path.localeCompare(b.path))
     .map((source) => {

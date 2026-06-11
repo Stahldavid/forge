@@ -5,6 +5,8 @@ export interface EmitFile {
   path: string;
   content: string;
   contentHash: string;
+  /** Skip JSON canonicalization round-trip when content is already canonical. */
+  canonical?: boolean;
 }
 
 export interface EmitPlan {

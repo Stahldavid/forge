@@ -5,6 +5,7 @@ import { hashStable } from "../primitives/hash.ts";
 import { normalizePath } from "../primitives/paths.ts";
 import { stableSortStrings } from "../primitives/sort.ts";
 import type {
+  AppGraph,
   ImportKind,
   LocalImport,
   ModuleGraph,
@@ -234,12 +235,38 @@ function collectImports(
   return { packageImports, localImports };
 }
 
+function sourcesUnchangedSincePrior(
+  sources: SourceFile[],
+  prior?: AppGraph,
+): boolean {
+  if (!prior) {
+    return false;
+  }
+  const priorHashes = new Map(
+    prior.sources.map((source) => [source.path, source.contentHash]),
+  );
+  if (priorHashes.size !== sources.length) {
+    return false;
+  }
+  for (const source of sources) {
+    if (priorHashes.get(source.path) !== source.contentHash) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function buildModuleGraph(
   sources: SourceFile[],
   rawSymbols: RawSymbol[],
   workspaceRoot: string,
   tsconfigPath?: string,
+  prior?: AppGraph,
 ): ModuleGraph {
+  if (sourcesUnchangedSincePrior(sources, prior)) {
+    return prior!.moduleGraph;
+  }
+
   const parsedConfig = loadTsconfig(workspaceRoot, tsconfigPath);
   const fileNames = sources.map((source) =>
     path.resolve(workspaceRoot, source.path).replace(/\\/g, "/"),

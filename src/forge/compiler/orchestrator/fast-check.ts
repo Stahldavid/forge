@@ -51,8 +51,8 @@ function walkGeneratedFiles(workspaceRoot: string, dir = GENERATED_DIR): string[
 
 export function runFastGenerateCheck(workspaceRootInput: string): FastGenerateCheckResult {
   const workspaceRoot = workspaceRootInput.replace(/\\/g, "/");
-  const ctx = discover({ workspaceRoot });
-  const manifest = loadManifest(ctx.cacheDir);
+  const cacheDir = join(workspaceRoot, ".forge", "cache");
+  const manifest = loadManifest(cacheDir);
   const trackedFiles = Object.keys(manifest.fileHashes).sort();
 
   if (!manifest.inputFingerprint || trackedFiles.length === 0) {
@@ -61,6 +61,16 @@ export function runFastGenerateCheck(workspaceRootInput: string): FastGenerateCh
   if (!manifest.fileHashes[BARREL_INDEX_PATH] || !manifest.fileHashes[FORGE_LOCK_PATH]) {
     return { kind: "miss", reason: "manifest missing critical generated file hashes" };
   }
+
+  const priorSourcesByPath = new Map(
+    (manifest.priorAppGraph?.sources ?? []).map((source) => [source.path, source]),
+  );
+  const ctx = discover({
+    workspaceRoot,
+    priorSourceIndex: manifest.sourceFileIndex,
+    priorSourcesByPath,
+  });
+
   if (manifest.inputFingerprint !== ctx.inputFingerprint) {
     return { kind: "miss", reason: "workspace input fingerprint changed" };
   }

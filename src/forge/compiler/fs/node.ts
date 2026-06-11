@@ -19,7 +19,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import type { DirEntry, FileSystem } from "./types.ts";
+import type { DirEntry, FileStat, FileSystem } from "./types.ts";
 
 export class NodeFileSystem implements FileSystem {
   readText(path: string): string | null {
@@ -105,6 +105,24 @@ export class NodeFileSystem implements FileSystem {
 
   isDirectory(path: string): boolean {
     return existsSync(path) && statSync(path).isDirectory();
+  }
+
+  stat(path: string): FileStat | null {
+    try {
+      const entry = statSync(path);
+      return {
+        size: entry.size,
+        mtimeMs: entry.mtimeMs,
+        isDirectory: entry.isDirectory(),
+        isFile: entry.isFile(),
+      };
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "ENOENT") {
+        return null;
+      }
+      throw error;
+    }
   }
 }
 

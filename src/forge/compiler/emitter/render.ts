@@ -41,6 +41,9 @@ export function renderBody(file: EmitFile): string {
 
   switch (kind) {
     case "json":
+      if (file.canonical) {
+        return normalizeNewlines(file.content);
+      }
       return renderJsonBody(file.content);
     case "typescript":
       return renderTypeScriptBody(file.content);

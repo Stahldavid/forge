@@ -22,6 +22,8 @@ export interface AppGraphBuildOptions {
   sources: SourceFile[];
   prior?: AppGraph;
   tsconfigPath?: string;
+  /** When provided, skips re-reading and hashing tsconfig.json. */
+  tsconfigHash?: string;
 }
 
 function normalizeSources(sources: SourceFile[]): SourceFile[] {
@@ -67,10 +69,12 @@ export async function buildAppGraph(
   options: AppGraphBuildOptions,
 ): Promise<AppGraph> {
   const sources = normalizeSources(options.sources);
-  const tsconfigHash = hashTsconfigForWorkspace(
-    options.workspaceRoot,
-    options.tsconfigPath,
-  );
+  const tsconfigHash =
+    options.tsconfigHash ??
+    hashTsconfigForWorkspace(
+      options.workspaceRoot,
+      options.tsconfigPath,
+    );
 
   const invalidation: ParseInvalidationKey = {
     schemaVersion: APP_GRAPH_SCHEMA_VERSION,
@@ -98,6 +102,7 @@ export async function buildAppGraph(
     rawSymbols,
     options.workspaceRoot,
     options.tsconfigPath,
+    options.prior,
   );
 
   return {
