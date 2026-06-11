@@ -1,5 +1,10 @@
 import { run } from "../compiler/orchestrator/run.ts";
 import {
+  formatDevConsoleHuman,
+  formatDevConsoleJson,
+  runDevConsoleCycle,
+} from "../dev-console/cycle.ts";
+import {
   resolveDevHost,
   resolveDevPort,
   startDevServer,
@@ -13,6 +18,7 @@ export interface DevCommandOptions {
   port?: number;
   mock: boolean;
   mockAi?: boolean;
+  once?: boolean;
   watch: boolean;
   json: boolean;
   db: "pglite" | "postgres" | "none";
@@ -48,8 +54,32 @@ export async function runDevCommand(
   options: DevCommandOptions,
 ): Promise<DevCommandResult> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
+
+  if (options.once) {
+    const cycle = await runDevConsoleCycle({
+      workspaceRoot,
+      mode: "once",
+      strictSecrets: true,
+      includeImpact: true,
+    });
+    process.stdout.write(options.json ? formatDevConsoleJson(cycle) : formatDevConsoleHuman(cycle));
+    return { exitCode: cycle.exitCode };
+  }
+
   const host = resolveDevHost(options.host);
   const port = resolveDevPort(options.port);
+
+  const startupCycle = await runDevConsoleCycle({
+    workspaceRoot,
+    mode: "startup",
+    strictSecrets: false,
+    includeImpact: true,
+  });
+  if (options.json) {
+    process.stdout.write(formatDevConsoleJson(startupCycle));
+  } else {
+    process.stdout.write(formatDevConsoleHuman(startupCycle));
+  }
 
   let handle: DevServerHandle;
   try {
@@ -114,6 +144,18 @@ export async function runDevCommand(
         for (const diagnostic of result.errors) {
           console.error(`error ${diagnostic.code}: ${diagnostic.message}`);
         }
+      }
+
+      const cycle = await runDevConsoleCycle({
+        workspaceRoot,
+        mode: "watch",
+        strictSecrets: false,
+        includeImpact: true,
+      });
+      if (options.json) {
+        process.stdout.write(formatDevConsoleJson(cycle));
+      } else {
+        process.stdout.write(formatDevConsoleHuman(cycle));
       }
     });
   }

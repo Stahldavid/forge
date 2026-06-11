@@ -159,6 +159,7 @@ export type ForgeCommand =
       port?: number;
       mock: boolean;
       mockAi: boolean;
+      once: boolean;
       watch: boolean;
       json: boolean;
       db: "pglite" | "postgres" | "none";
@@ -1493,6 +1494,7 @@ export function parseCli(argv: string[]): ParsedCli {
           port,
           mock: parseFlag(argv, "--mock"),
           mockAi,
+          once: parseFlag(argv, "--once"),
           watch: parseFlag(argv, "--watch"),
           json: parseFlag(argv, "--json"),
           db: parseDbKind(parseOptionValue(argv, "--db")),

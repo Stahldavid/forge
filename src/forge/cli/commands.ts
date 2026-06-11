@@ -735,6 +735,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         port: command.port,
         mock: command.mock,
         mockAi: command.mockAi,
+        once: command.once,
         watch: command.watch,
         json: command.json,
         db: command.db,

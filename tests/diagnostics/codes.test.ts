@@ -71,6 +71,8 @@ describe("diagnostic codes catalog", () => {
     );
     expect(guard.code).toBe(FORGE_GUARD_VIOLATION);
     expect(guard.severity).toBe("error");
+    expect(guard.fixHint).toContain("Move 'stripe' usage");
+    expect(guard.suggestedCommands?.some((command) => command.includes("forge refactor extract-action"))).toBe(true);
 
     expect(forgeSandboxLimit("ai").code).toBe(FORGE_SANDBOX_LIMIT);
     expect(forgeSandboxAbnormal("stripe").code).toBe(FORGE_SANDBOX_ABNORMAL);

@@ -1,9 +1,10 @@
-// @forge-generated generator=0.0.0 input=eb8969e9c73c889933f582f8b790851a06d3bd49089208206f420481bbd031a9 content=4cbd26171d302919faed045ae1e46c58c34e950063abd3e58ebaf49109672b00
+// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=5e19f27c0eb131c63719a8aaf478855b9bee4ce2b7a98c995b62c2121767086a
 # Agent Quickstart
 
 Run:
 
 ```bash
+forge dev --once --json
 forge inspect all --json
 forge check --json
 ```

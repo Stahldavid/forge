@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=07cba84a875e2016e4ff32acea89827fbd9286ec0970d1c5faa5c821e25604b5 content=a3af185443f56d6a6a1df31a4d120dd7909f41a2ce495d01c7c52425b86fd4bd
+// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=15156baf3b583a93b265be0b3e74cd296b9984465b3ace8f926c79cf02557507
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -12,6 +12,7 @@ This is a ForgeOS application named `forge`.
 Before editing:
 
 ```bash
+forge dev --once --json
 forge inspect all --json
 forge check --json
 ```
@@ -56,6 +57,7 @@ Do not:
 ## Useful commands
 
 ```bash
+forge dev --once --json
 forge inspect app --json
 forge inspect all --json
 forge auth check --json

@@ -282,4 +282,37 @@ describe("H27 safe refactor", () => {
       cleanupWorkspace(root);
     }
   });
+
+  test("extract-action refuses unsafe non-block handlers with inline fix hints", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-unsafe");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import Stripe from "stripe";
+          import { command } from "forge/server";
+          export const createCheckout = command({
+            handler: async (ctx, input: { planId: string }) => new Stripe("sk_test").checkout.sessions.create({ mode: "payment" }),
+          });
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          dryRun: true,
+        }),
+      );
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_PATCH_UNSAFE");
+      expect(result.diagnostics[0]?.fixHint).toBeTruthy();
+      expect(existsSync(join(root, "src", "actions", "createCheckoutSession.ts"))).toBe(false);
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
 });

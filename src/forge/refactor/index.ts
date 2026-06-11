@@ -8,6 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
+import ts from "typescript";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
@@ -181,6 +182,24 @@ function makeFile(
   };
 }
 
+function makePatchFromContent(
+  file: string,
+  description: string,
+  before: string,
+  after: string,
+): PlannedPatch | null {
+  if (before === after) {
+    return null;
+  }
+  return {
+    file,
+    kind: "replace-section",
+    description,
+    beforeHash: hashStable(before),
+    afterPreview: after,
+  };
+}
+
 function parseTableField(value: string | undefined): { table: string; field: string } | null {
   const [table, field] = (value ?? "").split(".");
   if (!table || !field) {
@@ -345,6 +364,192 @@ function findCommandFile(workspaceRoot: string, command: string): string | null 
     }
   }
   return null;
+}
+
+function propertyNameText(name: ts.PropertyName): string | null {
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
+    return name.text;
+  }
+  return null;
+}
+
+function isCommandCall(node: ts.Node): node is ts.CallExpression {
+  return ts.isCallExpression(node) &&
+    ((ts.isIdentifier(node.expression) && node.expression.text === "command") ||
+      (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "command"));
+}
+
+function findCommandObject(sourceFile: ts.SourceFile, commandName: string): ts.ObjectLiteralExpression | null {
+  let found: ts.ObjectLiteralExpression | null = null;
+
+  function visit(node: ts.Node): void {
+    if (found) {
+      return;
+    }
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === commandName) {
+      const initializer = node.initializer;
+      if (initializer && isCommandCall(initializer) && ts.isObjectLiteralExpression(initializer.arguments[0])) {
+        found = initializer.arguments[0];
+        return;
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return found;
+}
+
+function findHandlerProperty(commandObject: ts.ObjectLiteralExpression): ts.PropertyAssignment | null {
+  for (const property of commandObject.properties) {
+    if (!ts.isPropertyAssignment(property)) {
+      continue;
+    }
+    if (propertyNameText(property.name) === "handler") {
+      return property;
+    }
+  }
+  return null;
+}
+
+function packageNameFromSpecifier(specifier: string): string {
+  if (specifier.startsWith("@")) {
+    const [scope, name] = specifier.split("/");
+    return scope && name ? `${scope}/${name}` : specifier;
+  }
+  return specifier.split("/")[0] ?? specifier;
+}
+
+function removeImportForPackage(
+  sourceFile: ts.SourceFile,
+  source: string,
+  packageName: string,
+): { spans: Array<{ start: number; end: number }>; found: boolean } {
+  const spans: Array<{ start: number; end: number }> = [];
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
+      continue;
+    }
+    if (packageNameFromSpecifier(statement.moduleSpecifier.text) !== packageName) {
+      continue;
+    }
+    let end = statement.getEnd();
+    if (source.slice(end, end + 2) === "\r\n") {
+      end += 2;
+    } else if (source[end] === "\n") {
+      end += 1;
+    }
+    spans.push({ start: statement.getStart(sourceFile), end });
+  }
+  return { spans, found: spans.length > 0 };
+}
+
+function lineIndentAt(source: string, position: number): string {
+  const lineStart = source.lastIndexOf("\n", position) + 1;
+  const match = /^[ \t]*/.exec(source.slice(lineStart, position));
+  return match?.[0] ?? "";
+}
+
+function applyTextReplacements(
+  source: string,
+  replacements: Array<{ start: number; end: number; text: string }>,
+): string {
+  let next = source;
+  for (const replacement of [...replacements].sort((a, b) => b.start - a.start)) {
+    next = `${next.slice(0, replacement.start)}${replacement.text}${next.slice(replacement.end)}`;
+  }
+  return next;
+}
+
+function rewriteExtractActionCommand(
+  source: string,
+  commandFile: string,
+  intent: Extract<RefactorIntent, { kind: "extractAction" }>,
+): { after?: string; diagnostics: Diagnostic[] } {
+  const sourceFile = ts.createSourceFile(commandFile, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const commandObject = findCommandObject(sourceFile, intent.command);
+  if (!commandObject) {
+    return {
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_REFACTOR_PATCH_UNSAFE",
+          message: `could not find command(${intent.command}) object literal for AST rewrite`,
+          file: commandFile,
+          fixHint: "Ensure the command is declared as `export const name = command({ handler: ... })`, then re-run extract-action.",
+          suggestedCommands: [`forge refactor extract-action ${intent.command} --package ${intent.packageName} --dry-run --json`],
+        }),
+      ],
+    };
+  }
+
+  const handlerProperty = findHandlerProperty(commandObject);
+  if (!handlerProperty) {
+    return {
+      diagnostics: [
+        diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `command '${intent.command}' has no handler property`, commandFile),
+      ],
+    };
+  }
+
+  const handler = handlerProperty.initializer;
+  if (!ts.isArrowFunction(handler) && !ts.isFunctionExpression(handler)) {
+    return {
+      diagnostics: [
+        diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `command '${intent.command}' handler is not a function expression`, commandFile),
+      ],
+    };
+  }
+  if (!ts.isBlock(handler.body)) {
+    return {
+      diagnostics: [
+        diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `command '${intent.command}' handler must use a block body`, commandFile),
+      ],
+    };
+  }
+  const ctxParam = handler.parameters[0]?.name;
+  if (!ctxParam || !ts.isIdentifier(ctxParam)) {
+    return {
+      diagnostics: [
+        diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `command '${intent.command}' handler must have an identifier ctx parameter`, commandFile),
+      ],
+    };
+  }
+  const inputParam = handler.parameters[1]?.name;
+  if (inputParam && !ts.isIdentifier(inputParam)) {
+    return {
+      diagnostics: [
+        diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `command '${intent.command}' input parameter must be an identifier`, commandFile),
+      ],
+    };
+  }
+
+  const imports = removeImportForPackage(sourceFile, source, intent.packageName);
+  if (!imports.found) {
+    return {
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_REFACTOR_TARGET_NOT_FOUND",
+          message: `package import '${intent.packageName}' was not found in ${commandFile}`,
+          file: commandFile,
+          fixHint: "extract-action currently rewrites direct imports in the command file. Move the forbidden import into the command or extract the helper manually first.",
+          suggestedCommands: ["forge inspect runtime-matrix --json", "forge repair diagnose --diagnostic FORGE_GUARD_VIOLATION --json"],
+        }),
+      ],
+    };
+  }
+
+  const handlerIndent = lineIndentAt(source, handlerProperty.getStart(sourceFile));
+  const bodyIndent = `${handlerIndent}  `;
+  const payload = inputParam ? inputParam.text : "{}";
+  const replacementBody = `{\n${bodyIndent}await ${ctxParam.text}.emit(${JSON.stringify(intent.eventName)}, ${payload});\n${bodyIndent}return { emitted: ${JSON.stringify(intent.eventName)} };\n${handlerIndent}}`;
+  const after = applyTextReplacements(source, [
+    { start: handler.body.getStart(sourceFile), end: handler.body.getEnd(), text: replacementBody },
+    ...imports.spans.map((span) => ({ ...span, text: "" })),
+  ]);
+
+  return { after, diagnostics: [] };
 }
 
 function buildRenameFieldPlan(workspaceRoot: string, intent: Extract<RefactorIntent, { kind: "renameField" }>): {
@@ -533,17 +738,25 @@ function buildExtractActionPlan(workspaceRoot: string, intent: Extract<RefactorI
       ],
     };
   }
-  const commandPatch = patchFile(
-    workspaceRoot,
-    commandFile,
-    `Extract ${intent.packageName} side effect from ${intent.command}`,
-    (source) => {
-      const importPattern = new RegExp(`^\\s*import\\s+.*?from\\s+["']${escapeRegExp(intent.packageName)}["'];?\\r?\\n`, "m");
-      const withoutImport = source.replace(importPattern, "");
-      const emitSnippet = `await ctx.emit(${JSON.stringify(intent.eventName)}, input);\n    return { emitted: ${JSON.stringify(intent.eventName)} };`;
-      return withoutImport.replace(/handler:\s*async\s*\((ctx,\s*input[^)]*)\)\s*=>\s*\{[\s\S]*?\n\s*\},/m, `handler: async ($1) => {\n    ${emitSnippet}\n  },`);
-    },
-  );
+  const commandSource = readText(workspaceRoot, commandFile);
+  if (commandSource === null) {
+    return {
+      patches: [],
+      filesToCreate: [],
+      diagnostics: [
+        diagnostic("error", "FORGE_REFACTOR_TARGET_NOT_FOUND", `command file '${commandFile}' was not found`, commandFile),
+      ],
+    };
+  }
+  const rewrite = rewriteExtractActionCommand(commandSource, commandFile, intent);
+  const commandPatch = rewrite.after
+    ? makePatchFromContent(
+      commandFile,
+      `Extract ${intent.packageName} side effect from ${intent.command}`,
+      commandSource,
+      rewrite.after,
+    )
+    : null;
   const actionFile = `src/actions/${intent.actionName}.ts`;
   const actionContent = `import { action } from "forge/server";
 import ${intent.packageName === "stripe" ? "Stripe" : intent.packageName} from ${JSON.stringify(intent.packageName)};
@@ -562,10 +775,14 @@ export const ${intent.actionName} = action({
 `;
   return {
     patches: commandPatch ? [commandPatch] : [],
-    filesToCreate: [makeFile(workspaceRoot, actionFile, `Create extracted action ${intent.actionName}`, actionContent)],
+    filesToCreate: commandPatch
+      ? [makeFile(workspaceRoot, actionFile, `Create extracted action ${intent.actionName}`, actionContent)]
+      : [],
     diagnostics: commandPatch
-      ? []
-      : [diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `could not safely rewrite command '${intent.command}'`, commandFile)],
+      ? rewrite.diagnostics
+      : rewrite.diagnostics.length > 0
+        ? rewrite.diagnostics
+        : [diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `could not safely rewrite command '${intent.command}'`, commandFile)],
   };
 }
 

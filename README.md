@@ -1,51 +1,156 @@
-# Forge Compiler
+# ForgeOS
 
-Deterministic codegen compiler for Forge apps. Parses Forge builder APIs, analyzes package integrations statically, classifies runtime contexts, and emits `src/forge/_generated/` plus `forge.lock`.
+Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** MVP compiler implementation complete. Needs hardening before public release.
+**Status:** private MVP, implemented through H32. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, and UI test bridge are present. Public release still needs packaging hardening, broader Node compatibility, and more AST-first codemods.
 
-## Quickstart
+## Agent-First Quickstart
 
 ```bash
 bun install --ignore-scripts
-bun run typecheck
-bun test
 bun run forge generate
-bun run forge verify
+bun run forge dev --once --json
+bun run forge inspect all --json
+bun run forge doctor
+bun run forge verify --strict
 ```
 
-## CLI
+When working as an AI coder, read:
 
-| Command | Description |
-|---------|-------------|
-| `forge generate` | Analyze workspace and emit generated files |
-| `forge generate --check` | Fail on drift without writing |
-| `forge add <alias>` | Add a reference integration (`stripe`, `posthog`, `sentry`, `zod`, `ai`) |
-| `forge inspect <target>` | Inspect generated app/packages/runtime-matrix/data/runtime/dev/client |
-| `forge run [name]` | List or execute local command/action handlers (`--list`, `--mock`) |
-| `forge run query <name>` | Execute a read-only query with `--args` and auth flags |
-| `forge query <list\|run>` | Query aliases (`forge query run listTickets`) |
-| `forge dev` | Local HTTP dev server with invoke routes (`--watch`, `--mock`, `--port`, `--db`, `--worker`) |
-| `forge db <diff\|migrate\|reset\|status>` | SQL migrations against PGlite (default) or Postgres |
-| `forge outbox <list\|process\|retry\|dead\|clear>` | Inspect and process durable outbox deliveries |
-| `forge workflow <list\|run\|inspect\|process\|retry\|cancel>` | Lightweight workflow engine (runs, steps, worker) |
-| `forge telemetry <list\|inspect\|flush\|tail\|clear>` | Trace-correlated telemetry buffer, sinks, and inspection |
-| `forge policy <list\|matrix\|simulate\|check>` | RBAC policy registry, matrix, simulation, and checks |
-| `forge secrets <list\|check\|print\|set\|unset>` | Secret registry inspection and local `.env.local` management |
-| `forge env <list\|check\|print>` | Environment schema inspection |
-| `forge ai <providers\|check\|test\|models>` | AI provider registry, secret checks, mock/live test, model cost table |
-| `forge check` | Validate transitive import guards, AI context rules, and optional `--strict-secrets` |
-| `forge verify` | CI/dogfood aggregator (`generate --check`, `forge check`, typecheck, tests, guard lint) |
+```txt
+AGENTS.md
+src/forge/_generated/agentContract.json
+src/forge/_generated/runtimeRules.md
+src/forge/_generated/appMap.md
+src/forge/_generated/operationPlaybooks.md
+```
 
-Flags: `--json`, `--dry-run`, `--skip-tests`, `--skip-typecheck`, `--skip-eslint`, `--strict` (verify), `--strict-secrets` (check), `--env-file`, `--redacted`, `--mock-ai` / `--ai mock` (dev), `FORGE_MOCK_AI=1`.
+These files describe the app surface, runtime rules, generated files, policies, secrets, workflows, UI routes, commands to run, and common repair/refactor playbooks.
 
-## Example app
+## What ForgeOS Generates
 
-See [`examples/basic-forge-app`](examples/basic-forge-app/README.md) for a minimal app with:
+```txt
+src/forge/_generated/
+  api.ts/json
+  client.ts, clientTypes.ts, clientApi.ts
+  react.ts, reactManifest.ts/json
+  appGraph.ts/json
+  dataGraph.ts/json
+  runtimeGraph.ts/json
+  runtimeMatrix.ts/json
+  policyRegistry.ts/json
+  permissionMatrix.ts/json
+  tenantScope.ts/json
+  secretRegistry.ts/json
+  aiRegistry.ts/json
+  workflowRegistry.ts/json
+  liveQueryRegistry.ts/json
+  agentContract.ts/json
+  agentAdapterManifest.ts/json
+  testGraph.ts/json
+  uiTestManifest.ts/json
+  uiRoutes.ts/json
+  uiScenarios.ts/json
+```
 
-- Zod in a `command` (allowed)
-- Stripe in an `action` (allowed)
-- Stripe transitively in a `command` (`FORGE_GUARD_VIOLATION`)
+Project-level generated context:
+
+```txt
+AGENTS.md
+forge.lock
+.forge/test-plans/**
+.forge/repairs/**
+.forge/refactors/**
+.forge/ui-runs/**
+```
+
+## Core Capabilities
+
+| Area | What exists now |
+| --- | --- |
+| Compiler | AppGraph, DataGraph, RuntimeGraph, PackageGraph, deterministic generated artifacts, drift checks |
+| Runtime | commands, queries, liveQueries, actions, workflows, durable outbox, local dev server |
+| Data | schema compiler, SQL DDL, migrations, PGlite/Postgres adapter, tenant scope metadata |
+| Policies | RBAC policy registry, permission matrix, simulation, strict policy checks |
+| Auth | dev headers, JWT, OIDC discovery/JWKS verification via `jose`, production-mode guardrails |
+| RLS | Postgres RLS SQL compiler/checks for DB-enforced tenant isolation |
+| Secrets/env | secret registry, env schema, redaction, strict `process.env` checks |
+| AI | provider registry, `ctx.ai`, mock mode, telemetry without prompt/output retention by default |
+| Frontend | generated client SDK, React/Next hooks, template app, liveQuery client support |
+| LiveQuery | durable invalidation log, reconnect/resume semantics, production hardening checks |
+| Self-host | compose/deploy artifacts and self-host checks |
+| Agent contract | `AGENTS.md`, `agentContract.json`, app maps, runtime rules, playbooks, inspect/doctor |
+| Authoring | `forge make`, feature blueprints, safe refactor plans, package upgrade plans |
+| Testing/repair | impact-based test planner, repair loop, structured review, UI/browser test bridge |
+| Adapters | agent adapter export for external AI tools |
+
+## Command Map
+
+Prefer task-oriented commands first:
+
+```bash
+forge dev --once --json
+forge dev --watch
+forge inspect all --json
+forge doctor
+forge verify --strict
+forge impact --changed --json
+forge test plan --changed --json
+forge repair diagnose --from-last-test-run --json
+forge repair diagnose --from-last-ui-run --json
+forge review run --changed --json
+forge ui smoke --json
+```
+
+Common command groups:
+
+| Command | Purpose |
+| --- | --- |
+| `forge generate` | Analyze source and emit generated artifacts |
+| `forge generate --check` | Fail on generated drift |
+| `forge check --json` | Validate guardrails and emit diagnostics with fix hints |
+| `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
+| `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
+| `forge doctor --json` | Human/agent health check for project coherence |
+| `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generate/check/doctor/impact/reports/next actions |
+| `forge dev --watch` | Interactive dev console plus local runtime server, worker, telemetry, mock AI options |
+| `forge run`, `forge query`, `forge live` | Execute and inspect runtime entries locally |
+| `forge db`, `forge rls` | Diff/migrate/status and inspect/check RLS |
+| `forge policy`, `forge secrets`, `forge env`, `forge auth` | Security and configuration operations |
+| `forge make` | Scaffold resources, commands, queries, policies, actions, workflows |
+| `forge feature` | Validate/plan/apply feature blueprints |
+| `forge refactor` | Plan/apply/rollback safe refactors and targeted codemods |
+| `forge impact`, `forge test` | Compute change impact and run targeted checks |
+| `forge repair` | Diagnose failures and produce repair plans |
+| `forge review` | Structured code review with findings and suggested commands |
+| `forge ui` | Browser/UI smoke, scenario, route, snapshot, doctor, and reports |
+| `forge deps` | Package upgrade planning and application |
+| `forge release` | Release/source-map bridge and symbolication |
+| `forge agent`, `forge agent-contract` | Agent-facing contract and adapter exports |
+| `forge self-host` | Self-host packaging and checks |
+
+## Runtime Rules
+
+Commands are transactional and deterministic:
+
+- allowed: `ctx.db`, `ctx.emit`, buffered telemetry
+- forbidden: network packages, direct integrations, `ctx.secrets`, `ctx.ai`, direct `process.env`
+
+Queries and liveQueries are read-only:
+
+- allowed: scoped DB reads
+- forbidden: writes, emits, secrets, AI, network integrations
+
+Actions and workflows handle side effects after commit:
+
+- allowed: integrations, secrets, AI, network packages, retries
+- expected: idempotent behavior and traceable telemetry
+
+Use `src/forge/_generated/runtimeRules.md` as the canonical generated version.
+
+## Example App
+
+See [`examples/basic-forge-app`](examples/basic-forge-app/README.md).
 
 ```bash
 cd examples/basic-forge-app
@@ -54,384 +159,86 @@ bun run forge:generate
 bun run forge:check
 ```
 
-## Platform support
+The example covers allowed command dependencies, forbidden transitive imports, generated APIs, and guard diagnostics.
+
+## Platform Support
 
 | Platform | Support |
-|----------|---------|
-| Linux | Supported |
-| macOS | Supported |
-| Windows (native) | Experimental — use WSL for MVP |
-| Windows (WSL) | Supported |
+| --- | --- |
+| Linux | Supported for MVP development |
+| macOS | Supported for MVP development |
+| Windows (WSL) | Supported for MVP development |
+| Windows (native) | Experimental |
 
-### Known issues
+Known Windows note: invoke Bun from the real install path if `bun` on PATH is hijacked by another app association:
 
-1. **tree-sitter native postinstall** — On some Windows setups, `bun install` fails on the native `tree-sitter` postinstall script. Use:
+```powershell
+& "$env:USERPROFILE\.bun\bin\bun.exe"
+```
 
-   ```bash
-   bun install --ignore-scripts
-   ```
+ForgeOS is still Bun-first. The current repo uses Bun scripts and Bun tests; Node-compatible CLI packaging remains a future hardening item.
 
-   The compiler requires Bun (uses `Bun.CryptoHasher` and tree-sitter). Track: evaluate `web-tree-sitter` backend to avoid native postinstall problems.
+## Verification
 
-2. **`bun` PATH on Windows** — Ensure Bun is on your PATH, or invoke it by full path.
-
-## CI
-
-GitHub Actions runs:
+Fast focused checks:
 
 ```bash
-bun install --ignore-scripts
 bun run typecheck
-bun test
-bun run forge generate
-bun run forge verify --skip-tests
-# example app setup + generate --check
+bun run lint
+bun test tests/<area>
+bun run forge generate --check
 ```
 
-## Optional smoke tests (real network installs)
+Full gate:
 
 ```bash
-FORGE_SMOKE_REAL=1 bun test tests/smoke --timeout 120000
-```
-
-## Roadmap
-
-1. **H1** — Hardening, CI, examples ✅
-2. **H2** — Reference integration quality (recipe v2 templates) ✅
-3. **H3** — DataGraph Compiler ✅
-4. **H4** — Local command/action runtime (`forge run`, runtimeGraph, mocks) ✅
-5. **H5** — Local dev server (`forge dev`, devManifest, watch mode) ✅
-6. **H6** — DataGraph-backed persistence runtime (PGlite, db CLI, transactional outbox) ✅
-7. **H7** — Durable outbox worker and event-driven actions ✅
-8. **H8** — Lightweight workflow engine on outbox worker ✅
-9. **H9** — Telemetry bridge v1 ✅
-10. **H10** — Auth, policy engine & tenant isolation ✅
-11. **H10.5** — Security hardening (`forge verify --strict`) ✅
-12. **H11** — Secrets & environment runtime v1 ✅
-13. **H12** — AI workflow integration & observability ✅
-14. **H12.5** — Example artifacts, zod lockfile, verify Windows bun path, E2E telemetry ✅
-15. **H13** — Query runtime & typed API surface ✅
-16. **H14** — Frontend client SDK core ✅
-
-### H14 deliverables (frontend client SDK)
-
-| Artifact | Description |
-|----------|-------------|
-| `client.ts` | `createForgeClient()` — fetch-based HTTP client for queries/commands |
-| `clientTypes.ts` | `ForgeClient`, `ForgeClientConfig`, `ForgeError`, auth types |
-| `clientManifest.json` / `.ts` | Safe client surface manifest (excludes server adapters) |
-| `api.ts` | Extended with `liveQueries: {}` placeholder for H15 |
-| `clientApi.ts` | Client-safe query/command/liveQuery name constants |
-| Dev server CORS | `Access-Control-Allow-Origin: *` for local browser clients |
-| `forge inspect client` | Lists queries, commands, liveQueries from manifest |
-
-```ts
-import { createForgeClient, api } from "./forge/_generated/client";
-
-const client = createForgeClient({
-  url: "http://127.0.0.1:3765",
-  auth: { userId: "u1", tenantId: "t1", role: "member" },
-});
-
-const tickets = await client.query(api.queries.listTickets, {});
-await client.command(api.commands.createTicket, { title: "Bug" });
-```
-
-```bash
-forge inspect client --json
-bun test tests/client
-```
-
-**Architecture:** Generated client uses `fetch` (browser + Bun). Static auth sends `x-forge-user-id`, `x-forge-tenant-id`, `x-forge-role`. Async auth providers merge custom headers. Policy denials throw `ForgeError` with `code` and `traceId`. Client manifest excludes server-only adapters (`*.server.ts`) and packages denied in `client` context.
-
-**Limitations:** no liveQuery/SSE, React hooks, SSR, caching, or optimistic updates.
-
-### H13 deliverables (query runtime)
-
-| Artifact | Description |
-|----------|-------------|
-| `queryRegistry.json` / `.ts` | Static index of `query({ handler })` definitions |
-| `api.json` / `.ts` | Unified typed surface: queries, commands, actions, workflows |
-| `serverApi.ts` / `clientApi.ts` | Server/client API stubs |
-| `runQuery` | Read-only runtime with policy preflight and telemetry |
-| `forge run query` / `forge query` | CLI execution with `--args`, auth flags |
-| Dev server | `GET /queries`, `POST /queries/:name`, queries in `GET /entries` |
-
-```bash
-forge run query listTickets --args '{}' --user-id u1 --tenant-id t1 --role member --json
-forge query list
-forge query run getTicket --args '{"id":"..."}' --user-id u1 --tenant-id t1 --role member
-forge inspect queries
-forge inspect api
-```
-
-**Architecture:** Queries use a read-only `QueryContext` (`db.all/get/where/count` only). Policy auth matches commands. Telemetry emits `forge.query.started/completed/failed` with `traceId`. Static `forge check` rejects `ctx.emit`, `ctx.secrets`, `ctx.ai`, and DB writes in query handlers.
-
-**Limitations:** no liveQuery/reactivity, client SDK, caching, query dependency tracking, or SQL optimization.
-
-### H12.5 cleanup
-
-- Committed regenerated H12 artifacts in `examples/basic-forge-app`
-- Root `package-lock.json` ignored (Bun-first); example uses `forge add zod`
-- `forge verify` resolves Bun via `process.execPath` / `Bun.which` (Windows-safe)
-- Extended `tests/ai/ai-workflow.test.ts` to assert `forge.ai.generation.completed` telemetry
-
-Tag: `h12-ai-runtime` (post-cleanup)
-
-### H12 deliverables (AI workflow integration)
-
-| Artifact | Description |
-|----------|-------------|
-| `aiRegistry.json` / `.ts` | Static index of `ctx.ai.*` calls |
-| `aiProviders.json` / `.ts` | Provider → secret mapping (`openai`, `anthropic`, `gateway`) |
-| `aiModels.json` / `.ts` | Known model cost table (MVP estimates) |
-| `aiContext.ts` | Generated `AiContext` types |
-| `ctx.ai` | Runtime wrapper around Vercel AI SDK on action/workflow/endpoint/server |
-| `forge ai` | `providers`, `check`, `test --mock`, `models` |
-| `forge inspect ai` | Inspect generated AI registry |
-| Mock mode | `forge dev --mock-ai`, `FORGE_MOCK_AI=1`, `forge ai test --mock` |
-
-```bash
-forge ai providers --json
-forge ai check --json
-forge ai test --provider openai --model gpt-4o-mini --prompt "ping" --mock
-forge inspect ai
-forge dev --mock-ai --worker --db pglite
-```
-
-**Architecture:** AI is a secure capability inside actions/workflows/endpoints/server only. Apps use `ctx.ai`, never raw Vercel AI SDK. Secrets load via `ctx.secrets.get("OPENAI_API_KEY")`. Telemetry records `forge.ai.generation.*` and `forge.ai.usage` without prompt/response bodies (`retainPrompts: false`, `retainOutputs: false`).
-
-**Limitations:** no Agent Runtime, tool calling, RAG, vector store, budget enforcement, OTLP, or prompt management UI.
-
-### H10.5 deliverables (security hardening)
-
-| Item | Description |
-|------|-------------|
-| Git tag | `h10-auth-policy` on H10 commit |
-| `forge verify --strict` | CI/prod gate: generate --check, forge check (strict secrets), policy check --strict-policies, typecheck, tests, eslint |
-| Default verify | Remains lenient (warnings OK) |
-
-```bash
-git tag h10-auth-policy 49af138
-bun run forge verify --skip-tests
+bun test --timeout 120000
 bun run forge verify --strict
 ```
 
-Policy smoke scenarios (`member createTicket`, `manageBilling` denied, tenant isolation) are covered by `tests/policy/`.
+UI bridge note: `forge ui` uses Playwright when installed. Without Playwright, `forge ui doctor --json` reports `FORGE_UI_PLAYWRIGHT_MISSING` with fix hints instead of silently failing.
 
-### H11 deliverables (secrets & environment runtime)
+## Milestone History
 
-| Artifact | Description |
-|----------|-------------|
-| `secretRegistry.json` / `.ts` | Required secrets from integration recipes |
-| `envSchema.json` / `.ts` | Secret vs config variable classification |
-| `configRegistry.json` / `.ts` | Non-secret config index |
-| `secretsContext.ts` | Generated `SecretsContext` / `ConfigContext` types |
-| `ctx.secrets` / `ctx.config` | Runtime accessors on command/action/workflow contexts |
-| `forge secrets` | `list`, `check`, `print --redacted`, `set`, `unset` |
-| `forge env` | `list`, `check`, `print --redacted` |
-| `forge check --strict-secrets` | Error on direct `process.env.SECRET` in app source |
-| Env loading | `forge dev/run --env-file` — `.env` then `.env.local`, `process.env` wins |
-
-```bash
-forge secrets list --json
-forge secrets check --json
-forge secrets print --redacted
-forge env list --json
-forge inspect secrets
-forge inspect env
-forge dev --env-file .env.local
-forge check --strict-secrets
+```txt
+H1   Hardening, CI, examples
+H2   Reference integration quality
+H3   DataGraph Compiler
+H4   Local command/action runtime
+H5   Local dev server
+H6   DataGraph-backed persistence runtime
+H7   Durable outbox worker
+H8   Lightweight workflow engine
+H9   Telemetry bridge
+H10  Auth, policy engine, tenant isolation
+H11  Secrets & environment runtime
+H12  AI workflow integration
+H13  Query runtime & typed API surface
+H14  Frontend client SDK core
+H15  LiveQuery/Reactivity MVP
+H16  React/Next hooks
+H17  Minimal frontend app template
+H18  Self-host packaging
+H19  Agent Contract & Project Introspection Layer
+H20  Production Auth / JWT & OIDC v1
+H21  Postgres RLS Compiler & DB-enforced tenant isolation
+H22  Package Upgrade Planner
+H23  Release / Source Map Bridge
+H24  Production LiveQuery Hardening
+H25  Authoring primitives: forge make
+H26  Feature Blueprint Compiler
+H27  Safe Refactor / Codemod Engine
+H28  Impact-Based Test Planner
+H29  Repair Loop
+H30  Agent Adapter Export
+H31  Forge Review / Structured Code Review
+H32  UI / Browser Test Bridge
 ```
 
-**Architecture:** Integration recipe secrets compile into `secretRegistry`. Runtime loads env files without printing values. Generated H2 adapters use `ctx.secrets.get("STRIPE_SECRET_KEY")` instead of `process.env`. Commands may use `ctx.config` for non-secret vars; `ctx.secrets` is forbidden in command/client/query/liveQuery.
+## Remaining Hardening Before Public Release
 
-**Limitations:** no cloud secret manager, KMS, encryption at rest, team secret permissions, rotation automation, or UI.
-
-### H10 deliverables (auth & tenant isolation)
-
-| Artifact | Description |
-|----------|-------------|
-| `policyRegistry.json` / `.ts` | RBAC policies and command→policy bindings |
-| `permissionMatrix.json` / `.ts` | Role×policy matrix |
-| `tenantScope.json` / `.ts` | Tenant-scoped tables (`tenantId` field) |
-| `authContext.ts` | Generated `AuthContext` type |
-| `ctx.auth` | User/system/anonymous auth on command/action/workflow contexts |
-| `forge/policy` | `definePolicies`, `canRole`, `can`, `public_`, `system` DSL |
-| `forge policy` | `list`, `matrix`, `simulate`, `check` subcommands |
-| Tenant-scoped DB client | Auto-inject/filter `tenant_id` for user auth |
-| Outbox `auth_context` | Auth snapshot propagated to actions/workflows |
-
-```bash
-forge policy list --json
-forge policy matrix --json
-forge policy simulate tickets.create --role member
-forge policy check --strict-policies
-forge inspect policies
-forge run createTicket --user-id u1 --tenant-id t1 --role member
-forge dev  # x-forge-user-id / x-forge-tenant-id / x-forge-role headers
-```
-
-**Architecture:** Commands declare `auth: can("policy")`. Dev server and `forge run` resolve user auth from headers/flags. Runtime preflight evaluates RBAC before handler execution. Tenant-scoped tables enforce row isolation via generated DB client. Outbox events store auth snapshots for system auth in workers.
-
-**Limitations:** RBAC only (no ABAC), no OIDC/OAuth/sessions, no Postgres RLS, no policy UI, no multi-role membership tables.
-
-### H9 deliverables (telemetry bridge v1)
-
-| Artifact | Description |
-|----------|-------------|
-| `telemetryRegistry.json` / `.ts` | Static index of `ctx.telemetry.capture("event")` calls |
-| `telemetrySinks.json` / `.ts` | Installed sink map (`local`, `posthog`, `sentry`) |
-| `_forge_telemetry_events` / `_forge_trace_spans` | Buffered events and OpenTelemetry-inspired spans |
-| `ctx.telemetry` | Runtime context on commands, actions, and workflow steps |
-| `forge telemetry` | `list`, `inspect`, `flush`, `tail`, `clear` subcommands |
-
-```bash
-forge telemetry list --json
-forge telemetry inspect <traceId>
-forge telemetry flush --sink local
-forge telemetry tail --file events
-forge inspect telemetry
-forge dev --telemetry local,posthog --worker --db pglite
-```
-
-**Architecture:** Commands buffer telemetry inside the DB transaction (rolls back with the tx). Runner-captured exceptions persist outside the tx after rollback. Actions and workflow steps write telemetry immediately and can flush to sinks. `traceId` propagates command → outbox payload → action → workflow steps.
-
-**Limitations:** no OTLP exporter, distributed trace backend, or production-grade telemetry pipeline — local JSONL + H2 adapter sinks only.
-
-### H8 deliverables (workflow engine)
-
-| Artifact | Description |
-|----------|-------------|
-| `workflowRegistry.json` / `.ts` | Static index of `workflow({ trigger, steps })` definitions |
-| `workflowSubscriptions.json` / `.ts` | Event → workflow subscription map |
-| `_forge_workflow_runs` / `_forge_workflow_steps` | Durable run and step state with retry/dead-letter |
-| `forge workflow` | `list`, `run`, `inspect`, `process`, `retry`, `cancel` subcommands |
-| Worker integration | `forge dev --worker` tick: start runs → outbox → workflow steps |
-
-```bash
-forge workflow list --json
-forge workflow run triageTicketWorkflow --input '{"id":"..."}'
-forge workflow inspect 1
-forge workflow process --once
-forge inspect workflows
-forge dev --worker --db pglite
-```
-
-**Architecture:** Commands emit outbox events transactionally. After commit, the worker starts workflow runs from subscriptions, processes outbox action deliveries (H7), then executes workflow steps sequentially with persisted outputs.
-
-**Limitations:** no Temporal/distributed orchestration, parallel step execution, human-in-the-loop, or production-grade workflow scaling.
-
-### H7 deliverables (outbox worker)
-
-| Artifact | Description |
-|----------|-------------|
-| `actionSubscriptions.json` / `.ts` | Static index of `action({ event })` subscriptions |
-| `_forge_outbox_deliveries` | Per-action delivery rows with retry/dead-letter state |
-| `forge outbox` | `list`, `process`, `retry`, `dead`, `clear` subcommands |
-| Outbox worker | Processes deliveries after command commit |
-| `forge dev --worker` | Background worker loop alongside HTTP server |
-
-```bash
-forge outbox list --json
-forge outbox process --once
-forge outbox retry 42
-forge outbox dead
-forge dev --worker --db pglite
-forge inspect subscriptions
-```
-
-**Architecture:** Option B — separate `_forge_outbox` (events) and `_forge_outbox_deliveries` (per-action retry). Commands stay transactional; subscribed actions run via worker after commit.
-
-**Limitations:** no distributed workers, SKIP LOCKED, liveQuery, or production queue scaling.
-
-### H6 deliverables (persistence runtime)
-
-| Artifact | Description |
-|----------|-------------|
-| `sqlPlan.json` / `sqlPlan.ts` | DataGraph → SQL DDL plan with system tables |
-| `db.json` / `db.ts` | Generated `tableMap` for typed DB client |
-| `forge db` | `diff`, `migrate`, `reset`, `status` subcommands |
-| PGlite adapter | Default local DB at `.forge/pglite` |
-| Command transactions | `command({ handler })` with `ctx.db` + `ctx.emit` outbox |
-
-```bash
-forge db migrate
-forge db reset --db pglite
-forge db status --json
-forge dev --db pglite
-forge dev --db postgres --database-url "$DATABASE_URL"
-```
-
-**Limitations:** no RLS, liveQuery, workflow engine, CDC, or destructive migration diff.
-
-### H5 deliverables (dev server)
-
-| Artifact | Description |
-|----------|-------------|
-| `devManifest.json` | Stable HTTP route manifest for local dev |
-| `devManifest.ts` | Typed export of dev routes and entry metadata |
-| `forge dev` | Bun HTTP server exposing runtime invoke over HTTP |
-
-Default listen address: `http://127.0.0.1:3765` (override with `--port` / `--host` or `FORGE_DEV_PORT`).
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| `GET` | `/health` | Server liveness, entry count, DB, outbox, workflow, telemetry, and auth status |
-| `GET` | `/outbox` | Outbox summary and delivery list |
-| `POST` | `/outbox/process` | Process one outbox batch |
-| `GET` | `/db/tables` | List migrated tables |
-| `GET` | `/entries` | Runtime graph entries and queries |
-| `GET` | `/queries` | Query registry |
-| `POST` | `/queries/:name` | Execute read-only query |
-| `GET` | `/workflows` | Workflow registry and manifest metadata |
-| `GET` | `/workflows/runs` | List workflow runs |
-| `GET` | `/workflows/runs/:id` | Inspect a workflow run and steps |
-| `POST` | `/workflows/:name/run` | Start a manual workflow run (`{ input }`) |
-| `POST` | `/workflows/process` | Run worker tick (start runs + outbox + steps) |
-| `POST` | `/workflows/runs/:id/retry` | Retry a failed/dead workflow run |
-| `POST` | `/workflows/runs/:id/cancel` | Cancel a workflow run |
-| `POST` | `/run/:name` | Invoke command or action by name |
-| `POST` | `/commands/:name` | Invoke command entry only |
-| `POST` | `/actions/:name` | Invoke action entry only |
-| `GET` | `/telemetry` | Telemetry summary and buffered events |
-| `GET` | `/telemetry/traces/:traceId` | Inspect a trace (events + spans) |
-| `POST` | `/telemetry/flush` | Flush pending telemetry to configured sinks |
-
-```bash
-forge dev
-forge dev --worker --watch --mock
-forge dev --port 4000 --json
-forge inspect dev
-```
-
-**Limitations:** local development only — not production deployment; workflow engine is lightweight (sequential steps, single-worker).
-
-### H4 deliverables (local runtime)
-
-| Artifact | Description |
-|----------|-------------|
-| `runtimeGraph.json` | Command/action entries with module linkage |
-| `runtimeRegistry.ts` | Name → handler metadata map |
-| `mockMap.ts` | Package → testkit path for `--mock` runs |
-| `forge run` | Execute handlers locally with guard preflight |
-
-```bash
-forge run --list
-forge run createTicket
-forge run createTicket --mock
-```
-
-### H3 deliverables (DataGraph)
-
-- `dataGraph.json` / `dataGraph.ts` — schema.table extraction from AppGraph
-
-### H2 deliverables (recipe v2.0.0)
-
-| Integration | Generated artifacts |
-|-------------|---------------------|
-| **zod** | `zod.shared.ts` with real `z` re-export |
-| **stripe** | `stripe.server.ts`, `stripe.workflow.ts`, `integrations/stripe/webhook.ts`, `stripe.mock.ts` |
-| **posthog** | client/server adapters, `integrations/posthog/events.ts`, `flags.ts` |
-| **sentry** | Next.js-target adapters, `errors.ts`, `releases.ts`, `sourcemaps.ts` |
-| **ai** | `ai.server.ts`, `generations.ts`, `evals.ts`, OpenAI/Anthropic provider modules |
+- Keep expanding AST-first refactors; avoid broad regex rewrites for semantic TypeScript changes.
+- Reduce command-selection risk with more task routers and richer inline diagnostics.
+- Improve native Windows setup and package the CLI so broken PATH/app associations cannot block usage.
+- Add Node-compatible paths for Bun-specific internals where practical.
+- Broaden UI bridge coverage with installed Playwright browsers in CI.

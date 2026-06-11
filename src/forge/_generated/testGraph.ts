@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=d696decdcd326b4db3110ac75b5d3a35fc07db7cc9a986cb88d4a9166c899188 content=2e285d202d28125e77c346e7f6b8ddcd634431fcc105a40c4f919ee29a395ea8
+// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=4742bd8471b1e212ac5e3efad43bd8fa27bf8a4d6bdd1a0e25bb958391eae0aa
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "d696decdcd326b4db3110ac75b5d3a35fc07db7cc9a986cb88d4a9166c899188",
+  "inputHash": "8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -737,6 +737,24 @@ export const testGraph = {
       "reasons": [
         "probable: packages zod"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/dev/dev-console.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "weak",

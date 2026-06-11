@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=bc5a09656f1c2dc63d25c906f58452be524b2118ee2d2b133e47d389b2ba9f81 content=af4d1b3e01b1355118d9de6dfbdf34fac37a0a8d5a637fba4bfb29bfdfdc2355
+// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=54c2feb6ec33d5912825ee6deec3924def6fdba6644bcfc75d2936ee2333f664
 # Operation Playbooks
 
 ## Add a command
@@ -107,8 +107,9 @@
 
 ## Run dev
 
-1. Run forge dev --db pglite --worker --telemetry local --mock-ai.
-2. Use generated client and React hooks from src/forge/_generated.
+1. Run forge dev --once --json for a one-shot diagnostic cycle.
+2. Run forge dev --db pglite --worker --telemetry local --mock-ai.
+3. Use generated client and React hooks from src/forge/_generated.
 
 ## Self-host
 

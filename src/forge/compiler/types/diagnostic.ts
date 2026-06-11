@@ -6,4 +6,7 @@ export interface Diagnostic {
   message: string;
   file?: string;
   span?: { start: number; end: number };
+  fixHint?: string;
+  suggestedCommands?: string[];
+  docs?: string[];
 }

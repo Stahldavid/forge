@@ -329,6 +329,7 @@ function playbooks(): AgentPlaybook[] {
     {
       title: "Run dev",
       steps: [
+        "Run forge dev --once --json for a one-shot diagnostic cycle.",
         "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
         "Use generated client and React hooks from src/forge/_generated.",
       ],
@@ -535,9 +536,9 @@ export function buildAgentContractArtifacts(
     rules: runtimeRules(),
     playbooks: playbooks(),
     commandsToRun: {
-      beforeEditing: ["forge inspect all --json", "forge check --json"],
+      beforeEditing: ["forge dev --once --json", "forge inspect all --json", "forge check --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --strict"],
-      dev: ["forge dev --db pglite --worker --telemetry local --mock-ai"],
+      dev: ["forge dev --once --json", "forge dev --db pglite --worker --telemetry local --mock-ai"],
     },
   };
 
@@ -616,6 +617,7 @@ This is a ForgeOS application named \`${contract.project.name}\`.
 Before editing:
 
 \`\`\`bash
+forge dev --once --json
 forge inspect all --json
 forge check --json
 \`\`\`
@@ -660,6 +662,7 @@ Do not:
 ## Useful commands
 
 \`\`\`bash
+forge dev --once --json
 forge inspect app --json
 forge inspect all --json
 forge auth check --json
@@ -897,6 +900,7 @@ function renderAgentQuickstartMd(): string {
 Run:
 
 \`\`\`bash
+forge dev --once --json
 forge inspect all --json
 forge check --json
 \`\`\`
