@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { parsePackageName } from "./parse-spec.ts";
 
 export function readInstalledVersion(

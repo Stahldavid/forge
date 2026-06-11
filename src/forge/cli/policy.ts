@@ -2,7 +2,6 @@ import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { FORGE_POLICY_MISSING } from "../compiler/diagnostics/codes.ts";
-import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import {
   buildPermissionMatrixFromRegistry,
   buildPolicyRegistry,

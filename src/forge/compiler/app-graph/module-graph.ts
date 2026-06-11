@@ -242,9 +242,7 @@ function sourcesUnchangedSincePrior(
   if (!prior) {
     return false;
   }
-  const priorHashes = new Map(
-    prior.sources.map((source) => [source.path, source.contentHash]),
-  );
+  const priorHashes = new Map(Object.entries(prior.sourceHashes ?? {}));
   if (priorHashes.size !== sources.length) {
     return false;
   }

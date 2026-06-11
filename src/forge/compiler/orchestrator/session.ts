@@ -43,7 +43,7 @@ export function discoverForSession(
 
   const manifest = loadManifestForSession(session);
   const priorSourcesByPath = new Map(
-    (manifest.priorAppGraph?.sources ?? []).map((source) => [source.path, source]),
+    (manifest.sourceSnapshot ?? []).map((source) => [source.path, source]),
   );
   const ctx = discover({
     workspaceRoot: session.workspaceRoot,

@@ -33,6 +33,9 @@ export function loadManifest(cacheDir: string): OrchestratorManifest {
         ...(parsed.sourceFileIndex !== undefined
           ? { sourceFileIndex: parsed.sourceFileIndex }
           : {}),
+        ...(parsed.sourceSnapshot !== undefined
+          ? { sourceSnapshot: parsed.sourceSnapshot }
+          : {}),
       };
     } catch {
       // fall through to the default manifest below
@@ -62,6 +65,9 @@ export function saveManifest(
     ...(manifest.sourceFileIndex !== undefined
       ? { sourceFileIndex: manifest.sourceFileIndex }
       : {}),
+    ...(manifest.sourceSnapshot !== undefined
+      ? { sourceSnapshot: manifest.sourceSnapshot }
+      : {}),
   };
 
   nodeFileSystem.writeText(path, `${canonicalJson(payload)}\n`);
@@ -73,6 +79,7 @@ export function updateManifestAfterWrite(
   priorAppGraph: AppGraph,
   inputFingerprint: string,
   sourceFileIndex?: OrchestratorManifest["sourceFileIndex"],
+  sourceSnapshot?: OrchestratorManifest["sourceSnapshot"],
 ): OrchestratorManifest {
   return {
     ...manifest,
@@ -80,5 +87,6 @@ export function updateManifestAfterWrite(
     priorAppGraph,
     inputFingerprint,
     ...(sourceFileIndex !== undefined ? { sourceFileIndex } : {}),
+    ...(sourceSnapshot !== undefined ? { sourceSnapshot } : {}),
   };
 }

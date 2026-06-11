@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { PackageManager } from "../types/runtime.ts";
 
 /** Lockfiles checked in priority order when `packageManager` is absent. */

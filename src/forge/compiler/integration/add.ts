@@ -1,5 +1,5 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { AddOptions } from "../types/cli.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import type { Dependency } from "../types/package-graph.ts";

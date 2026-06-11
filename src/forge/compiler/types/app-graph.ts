@@ -66,6 +66,7 @@ export interface AppGraph {
   generatorVersion: string;
   analyzerVersion: string;
   inputHash: string;
+  sourceHashes?: Record<string, string>;
   symbols: ForgeSymbol[];
   edges: ForgeEdge[];
   moduleGraph: ModuleGraph;

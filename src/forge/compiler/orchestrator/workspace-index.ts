@@ -39,7 +39,6 @@ export interface WalkWorkspaceSourcesResult {
 
 function resolveSourceContent(
   absolutePath: string,
-  relativePath: string,
   priorEntry?: SourceFileIndexEntry,
   priorSource?: SourceFile,
 ): { text: string; contentHash: string; size: number; mtimeMs: number } {
@@ -118,7 +117,6 @@ export function walkWorkspaceSources(
       const priorSource = options.priorSourcesByPath?.get(relativePath);
       const resolved = resolveSourceContent(
         absolutePath,
-        relativePath,
         priorEntry,
         priorSource,
       );

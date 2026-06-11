@@ -185,7 +185,7 @@ async function loadRuntimeMatrixForCheck(
     return fromDisk;
   }
 
-  const ctx = discover({ workspaceRoot });
+  const ctx = discoverForSession(getCompileSession(workspaceRoot));
   const compiler = new PackageGraphCompiler();
   const classified = await Promise.all(
     ctx.dependencies.map(async (dep) => {
@@ -212,7 +212,6 @@ export async function runCheckCommand(
   options?: { strictSecrets?: boolean },
 ): Promise<GenerateResult> {
   const session = getCompileSession(workspaceRoot);
-  const ctx = discoverForSession(session);
   const appGraph = await buildAppGraphForSession(session);
 
   const matrix = await loadRuntimeMatrixForCheck(workspaceRoot);

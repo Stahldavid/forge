@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import {
   FORGE_DEPS_PACKAGE_NOT_INSTALLED,

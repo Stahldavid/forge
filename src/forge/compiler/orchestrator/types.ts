@@ -27,4 +27,5 @@ export interface OrchestratorManifest {
   priorAppGraph?: AppGraph;
   inputFingerprint?: string;
   sourceFileIndex?: SourceFileIndex;
+  sourceSnapshot?: SourceFile[];
 }

@@ -110,6 +110,9 @@ export async function buildAppGraph(
     generatorVersion: GENERATOR_VERSION,
     analyzerVersion: buildAnalyzerVersion(invalidation),
     inputHash: computeInputHash(sources, invalidation),
+    sourceHashes: Object.fromEntries(
+      sources.map((source) => [source.path, source.contentHash]),
+    ),
     symbols: stableSortSymbols(forgeSymbols),
     edges: stableSortEdges([]),
     moduleGraph,

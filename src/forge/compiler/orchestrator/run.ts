@@ -12,7 +12,6 @@ import { PackageGraphCompiler } from "../package-graph/compiler.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
 import { checkImportGuards } from "./guards.ts";
 import {
-  loadManifest,
   saveManifest,
   updateManifestAfterWrite,
 } from "./manifest.ts";
@@ -51,6 +50,23 @@ function collectQualityGateDiagnostics(
   guardDiagnostics: Diagnostic[],
 ): Diagnostic[] {
   return [...appDiagnostics, ...packageDiagnostics, ...guardDiagnostics];
+}
+
+function appGraphForManifest(
+  appGraph: Awaited<ReturnType<typeof buildAppGraphForSession>>,
+): Awaited<ReturnType<typeof buildAppGraphForSession>> {
+  return {
+    ...appGraph,
+    moduleGraph: {
+      nodes: appGraph.moduleGraph.nodes.map((node) => ({
+        ...node,
+        directPackageImports: [...node.directPackageImports],
+        localImports: [...node.localImports],
+        declaredContexts: [...node.declaredContexts],
+        effectiveContexts: [],
+      })),
+    },
+  };
 }
 
 export async function run(options: GenerateOptions): Promise<GenerateResult> {
@@ -148,9 +164,10 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
         updateManifestAfterWrite(
           manifest,
           fileHashes,
-          appGraph,
+          appGraphForManifest(appGraph),
           ctx.inputFingerprint,
           ctx.sourceFileIndex,
+          ctx.sources,
         ),
       );
     }

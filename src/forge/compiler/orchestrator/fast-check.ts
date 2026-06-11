@@ -63,7 +63,7 @@ export function runFastGenerateCheck(workspaceRootInput: string): FastGenerateCh
   }
 
   const priorSourcesByPath = new Map(
-    (manifest.priorAppGraph?.sources ?? []).map((source) => [source.path, source]),
+    (manifest.sourceSnapshot ?? []).map((source) => [source.path, source]),
   );
   const ctx = discover({
     workspaceRoot,

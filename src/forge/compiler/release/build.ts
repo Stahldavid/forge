@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { GENERATOR_VERSION } from "../emitter/constants.ts";
 import type { GeneratedReleaseArtifacts, ReleaseExportProvider } from "./types.ts";
 

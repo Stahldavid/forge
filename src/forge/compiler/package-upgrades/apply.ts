@@ -1,5 +1,5 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import {
   FORGE_DEPS_APPLY_FAILED,

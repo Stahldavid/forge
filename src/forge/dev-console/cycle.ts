@@ -11,6 +11,7 @@ import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
 import { checkDirectProcessEnvUsage } from "../compiler/guards/check-process-env.ts";
 import { checkQueryUsageInApp } from "../compiler/guards/check-query-usage.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
+import { resetCompileSessions } from "../compiler/orchestrator/session.ts";
 import { discover } from "../compiler/orchestrator/discover.ts";
 import { loadManifest } from "../compiler/orchestrator/manifest.ts";
 import { PackageGraphCompiler } from "../compiler/package-graph/compiler.ts";
@@ -359,6 +360,7 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
 }
 
 export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<DevConsoleCycle> {
+  resetCompileSessions();
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
   const phases: DevConsolePhase[] = [];
   const generated = await runGeneratedPhase(workspaceRoot);

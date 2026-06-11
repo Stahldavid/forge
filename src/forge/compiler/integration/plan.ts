@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { EmitFile, EmitPlan } from "../types/emit.ts";
 import type { ForgeLock, ForgeLockEntry } from "../types/lock.ts";

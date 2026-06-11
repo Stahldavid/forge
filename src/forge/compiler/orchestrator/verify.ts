@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import type { ForgeLock } from "../types/lock.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";

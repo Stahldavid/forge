@@ -74,6 +74,18 @@ import { serializeCanonical } from "../primitives/serialize.ts";
 import { buildImportGuardsArtifact } from "../guards/artifacts.ts";
 import type { AuthRegistryArtifact } from "../../runtime/auth/config.ts";
 
+function moduleGraphForAppGraphSnapshot(graph: AppGraph): AppGraph["moduleGraph"] {
+  return {
+    nodes: graph.moduleGraph.nodes.map((node) => ({
+      ...node,
+      directPackageImports: [...node.directPackageImports],
+      localImports: [...node.localImports],
+      declaredContexts: [...node.declaredContexts],
+      effectiveContexts: [],
+    })),
+  };
+}
+
 export function serializeAppGraphJson(graph: AppGraph): string {
   const payload = {
     schemaVersion: graph.schemaVersion,
@@ -82,7 +94,7 @@ export function serializeAppGraphJson(graph: AppGraph): string {
     inputHash: graph.inputHash,
     symbols: graph.symbols,
     edges: graph.edges,
-    moduleGraph: graph.moduleGraph,
+    moduleGraph: moduleGraphForAppGraphSnapshot(graph),
   };
   return serializeCanonical(payload);
 }
