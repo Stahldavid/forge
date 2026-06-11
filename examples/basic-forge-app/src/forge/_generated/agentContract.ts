@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=5cb4996179b023b156483b19954a61349c1bb5028fda12d1f61bec79c027926b
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=5a518e664c930a2bf55560687ee6a00f1ec70b49401d81c3c833542a425cfed3
 export const agentContract = {
   "actions": [
     {
@@ -167,10 +167,12 @@ export const agentContract = {
       "forge verify --strict"
     ],
     "beforeEditing": [
+      "forge dev --once --json",
       "forge inspect all --json",
       "forge check --json"
     ],
     "dev": [
+      "forge dev --once --json",
       "forge dev --db pglite --worker --telemetry local --mock-ai"
     ]
   },
@@ -513,6 +515,7 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge dev --once --json for a one-shot diagnostic cycle.",
         "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
         "Use generated client and React hooks from src/forge/_generated."
       ],

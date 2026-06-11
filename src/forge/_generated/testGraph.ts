@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=e3aac12cf3579fdd72c83a62dc7bfccf02deb235f7b566a6afffb37f538b1de1 content=5ff2cc552fd9acd13f99f792e659ccba4a1e3f14806aead489b6dda9603f1750
+// @forge-generated generator=0.0.0 input=4c29ce2e8b8d2562ab263e34db7d7d40557d80f6e2ef6a9712fe7bab4b0e04dc content=149c0fcfba687942b83baa5f965b7d9397980ca6dd6d313ceacd5c051908925a
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "e3aac12cf3579fdd72c83a62dc7bfccf02deb235f7b566a6afffb37f538b1de1",
+  "inputHash": "4c29ce2e8b8d2562ab263e34db7d7d40557d80f6e2ef6a9712fe7bab4b0e04dc",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1006,6 +1006,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/fs/file-system.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/guards/eslint-plugin.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -1667,6 +1685,28 @@ export const testGraph = {
       "file": "tests/primitives/hash.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "fast-check"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/primitives/result.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages fast-check"
+      ]
     },
     {
       "confidence": "weak",
