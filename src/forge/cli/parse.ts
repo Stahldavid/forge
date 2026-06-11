@@ -30,6 +30,13 @@ import type {
   AgentCommandOptions,
   AgentSubcommand,
 } from "../agent-adapters/types.ts";
+import type {
+  ReviewCommandOptions,
+  ReviewFailOn,
+  ReviewFindingCategory,
+  ReviewMode,
+  ReviewSubcommand,
+} from "../review/types.ts";
 
 export type ForgeCommand =
   | {
@@ -130,6 +137,7 @@ export type ForgeCommand =
   | { kind: "test"; options: TestCommandOptions }
   | { kind: "repair"; options: RepairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
+  | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -405,6 +413,23 @@ const AGENT_SUBCOMMANDS: AgentSubcommand[] = [
   "print-context",
   "clean",
 ];
+const REVIEW_SUBCOMMANDS: ReviewSubcommand[] = ["inspect", "list", "explain"];
+const REVIEW_MODES: ReviewMode[] = ["quick", "standard", "strict"];
+const REVIEW_FAIL_ON: ReviewFailOn[] = ["warning", "error", "blocking"];
+const REVIEW_CATEGORIES: ReviewFindingCategory[] = [
+  "runtime",
+  "data",
+  "policy",
+  "secrets",
+  "package",
+  "workflow",
+  "livequery",
+  "frontend",
+  "test",
+  "deploy",
+  "release",
+  "agent",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -470,6 +495,22 @@ function parseTestCost(value: string | undefined): TestCost {
   return TEST_COSTS.includes(value as TestCost) ? (value as TestCost) : "standard";
 }
 
+function parseReviewMode(value: string | undefined): ReviewMode {
+  return REVIEW_MODES.includes(value as ReviewMode) ? (value as ReviewMode) : "standard";
+}
+
+function parseReviewFailOn(value: string | undefined): ReviewFailOn | undefined {
+  return REVIEW_FAIL_ON.includes(value as ReviewFailOn) ? (value as ReviewFailOn) : undefined;
+}
+
+function parseReviewCategories(value: string | undefined): ReviewFindingCategory[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item): item is ReviewFindingCategory => REVIEW_CATEGORIES.includes(item as ReviewFindingCategory));
+}
+
 function parseNewTemplate(value: string | undefined): NewTemplateName {
   return NEW_TEMPLATES.includes(value as NewTemplateName)
     ? (value as NewTemplateName)
@@ -489,7 +530,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, agent, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, agent, review, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -659,6 +700,48 @@ export function parseCli(argv: string[]): ParsedCli {
             preserveUserSections: !parseFlag(argv, "--no-preserve-user-sections"),
             skills: !parseFlag(argv, "--no-skills"),
             rules: !parseFlag(argv, "--no-rules"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "review": {
+      const requested = rest[0] as ReviewSubcommand | undefined;
+      const subcommand =
+        requested && REVIEW_SUBCOMMANDS.includes(requested) ? requested : "run";
+      const positionalWrite = rest[0] === "write";
+      const noSourceFlag =
+        !parseFlag(argv, "--changed") &&
+        !parseFlag(argv, "--staged") &&
+        !parseOptionValue(argv, "--base") &&
+        !parseOptionValue(argv, "--feature") &&
+        !parseOptionValue(argv, "--refactor") &&
+        !parseOptionValue(argv, "--upgrade") &&
+        !parseOptionValue(argv, "--release");
+      return {
+        command: {
+          kind: "review",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            md: parseFlag(argv, "--md"),
+            sarif: parseFlag(argv, "--sarif"),
+            write: positionalWrite || parseFlag(argv, "--write"),
+            changed: parseFlag(argv, "--changed") || noSourceFlag,
+            staged: parseFlag(argv, "--staged"),
+            base: parseOptionValue(argv, "--base"),
+            featureId: parseOptionValue(argv, "--feature"),
+            refactorId: parseOptionValue(argv, "--refactor"),
+            upgradeId: parseOptionValue(argv, "--upgrade"),
+            releaseId: parseOptionValue(argv, "--release"),
+            failOn: parseReviewFailOn(parseOptionValue(argv, "--fail-on")),
+            mode: parseReviewMode(parseOptionValue(argv, "--mode")),
+            include: parseReviewCategories(parseOptionValue(argv, "--include")),
+            exclude: parseReviewCategories(parseOptionValue(argv, "--exclude")),
+            reviewId: subcommand === "inspect" ? rest[1] : undefined,
+            ruleId: subcommand === "explain" ? rest[1] : undefined,
           },
         },
         workspaceRoot,
@@ -1668,6 +1751,13 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--with-tests",
     "--with-create-form",
     "--write",
+    "--md",
+    "--sarif",
+    "--fail-on",
+    "--mode",
+    "--include",
+    "--exclude",
+    "--base",
     "--update",
     "--allow-high-risk",
     "--to",
@@ -1769,6 +1859,11 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--repair" ||
         arg === "--max-attempts" ||
         arg === "--write" ||
+        arg === "--fail-on" ||
+        arg === "--mode" ||
+        arg === "--include" ||
+        arg === "--exclude" ||
+        arg === "--base" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||
         arg === "--host" ||

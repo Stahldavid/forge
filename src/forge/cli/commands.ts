@@ -117,6 +117,13 @@ import {
   runAgentCommand,
 } from "../agent-adapters/index.ts";
 import {
+  formatReviewHuman,
+  formatReviewJson,
+  runReviewCommand,
+  renderReviewMarkdown,
+  renderSarif,
+} from "../review/index.ts";
+import {
   formatQueryJson,
   formatQueryListHuman,
   formatQueryResultHuman,
@@ -559,6 +566,19 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatAgentJson(result));
       } else {
         process.stdout.write(formatAgentHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "review": {
+      const result = runReviewCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatReviewJson(result));
+      } else if (command.options.md && result.report) {
+        process.stdout.write(renderReviewMarkdown(result.report));
+      } else if (command.options.sarif && result.report && !command.options.write) {
+        process.stdout.write(renderSarif(result.report));
+      } else {
+        process.stdout.write(formatReviewHuman(result));
       }
       return result.exitCode;
     }
