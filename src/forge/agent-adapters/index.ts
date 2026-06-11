@@ -1,11 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { dirname, join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATED_DIR, GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
@@ -37,7 +30,6 @@ import type {
   AgentPrintContextResult,
   AgentTargetsResult,
   CustomAdapterConfig,
-  BuiltInAgentAdapterTarget,
   AgentCheckResult,
 } from "./types.ts";
 
@@ -49,13 +41,6 @@ const USER_END = "<!-- user-notes:end -->";
 const GENERATED_START = "<!-- forge-generated:start -->";
 const GENERATED_END = "<!-- forge-generated:end -->";
 const CUSTOM_ADAPTERS_DIR = ".forge/agent-adapters";
-
-const BUILT_IN_TARGETS: BuiltInAgentAdapterTarget[] = [
-  "generic",
-  "codex",
-  "cursor",
-  "claude",
-];
 
 function sorted(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))].sort();
@@ -72,10 +57,10 @@ function diagnostic(
 
 function readText(workspaceRoot: string, relative: string): string | null {
   const path = join(workspaceRoot, relative);
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return null;
   }
-  return stripDeterministicHeader(readFileSync(path, "utf8"));
+  return stripDeterministicHeader((nodeFileSystem.readText(path) ?? ""));
 }
 
 function readJson<T>(workspaceRoot: string, relative: string): T | null {
@@ -88,8 +73,8 @@ function readJson<T>(workspaceRoot: string, relative: string): T | null {
 
 function writeText(workspaceRoot: string, relative: string, content: string): void {
   const path = join(workspaceRoot, relative);
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, content, "utf8");
+  nodeFileSystem.mkdirp(dirname(path));
+  nodeFileSystem.writeText(path, content);
 }
 
 function renderJson(value: unknown): string {
@@ -875,11 +860,13 @@ export function runAgentPrintContext(workspaceRoot: string): AgentPrintContextRe
 
 export function listCustomTargets(workspaceRoot: string): string[] {
   const dir = join(workspaceRoot, CUSTOM_ADAPTERS_DIR);
-  if (!existsSync(dir)) {
+  if (!nodeFileSystem.exists(dir)) {
     return [];
   }
-  return readdirSync(dir)
-    .filter((entry) => existsSync(join(dir, entry, "adapter.json")))
+  return nodeFileSystem
+    .readDir(dir)
+    .map((entry) => entry.name)
+    .filter((entry) => nodeFileSystem.exists(join(dir, entry, "adapter.json")))
     .sort();
 }
 
@@ -932,7 +919,7 @@ export function runAgentClean(options: AgentCommandOptions): AgentExportResult {
   }
   if (!options.dryRun) {
     for (const relative of planned) {
-      rmSync(join(options.workspaceRoot, relative), { recursive: true, force: true });
+      nodeFileSystem.remove(join(options.workspaceRoot, relative));
     }
   }
   return {

@@ -13,7 +13,6 @@ import { createActionContext } from "../context/create-context.ts";
 import { systemAuthFromSnapshot } from "../auth/resolve.ts";
 import type { AuthContext } from "../auth/types.ts";
 import { prepareRuntimeEnvironment } from "../executor.ts";
-import { resolveHandlerFromModule } from "../runner/run-entry.ts";
 import { loadActionSubscriptions } from "./subscriptions.ts";
 import { createTelemetryContext } from "../telemetry/context.ts";
 import { generateTraceId } from "../telemetry/correlation.ts";

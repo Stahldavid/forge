@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join, normalize, relative, resolve } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { run } from "../compiler/orchestrator/run.ts";
@@ -9,7 +9,6 @@ import {
   buildFeaturePlan,
   FEATURE_APPLIED_DIR,
   FEATURE_PLAN_DIR,
-  normalizeFeatureId,
   parseFeatureBlueprint,
   readFeaturePlan,
   renderFeatureDiff,
@@ -63,10 +62,10 @@ function absPath(workspaceRoot: string, file: string): string {
 
 function readText(workspaceRoot: string, file: string): string | null {
   const absolute = absPath(workspaceRoot, file);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  return readFileSync(absolute, "utf8");
+  return (nodeFileSystem.readText(absolute) ?? "");
 }
 
 function snapshotPath(plan: FeaturePlan): string {
@@ -84,13 +83,15 @@ function readAppliedRecord(workspaceRoot: string, featureId: string): FeatureApp
 
 function listAppliedRecords(workspaceRoot: string): FeatureApplyRecord[] {
   const dir = absPath(workspaceRoot, FEATURE_APPLIED_DIR);
-  if (!existsSync(dir)) {
+  if (!nodeFileSystem.exists(dir)) {
     return [];
   }
-  return readdirSync(dir)
+  return nodeFileSystem
+    .readDir(dir)
+    .map((entry) => entry.name)
     .filter((file) => file.endsWith(".json"))
     .sort()
-    .map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as FeatureApplyRecord);
+    .map((file) => JSON.parse((nodeFileSystem.readText(join(dir, file)) ?? "")) as FeatureApplyRecord);
 }
 
 function writeSnapshot(workspaceRoot: string, plan: FeaturePlan): void {
@@ -126,7 +127,7 @@ function restoreSnapshot(workspaceRoot: string, plan: FeaturePlan): Diagnostic[]
     if (file.existed) {
       writeText(workspaceRoot, file.file, file.content ?? "");
     } else {
-      rmSync(absPath(workspaceRoot, file.file), { force: true });
+      nodeFileSystem.remove(absPath(workspaceRoot, file.file));
     }
   }
   return [];

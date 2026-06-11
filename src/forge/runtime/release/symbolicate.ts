@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 import { join, normalize } from "node:path";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import { FORGE_SOURCEMAP_SYMBOLICATION_FAILED } from "../../compiler/diagnostics/codes.ts";
@@ -108,7 +108,7 @@ function findSourceMap(
     return null;
   }
   const absolute = join(workspaceRoot, match.sourceMapFile);
-  return existsSync(absolute) ? absolute : null;
+  return nodeFileSystem.exists(absolute) ? absolute : null;
 }
 
 function symbolicateFrame(map: SourceMapV3, frame: { line: number; column: number }): SymbolicatedFrame["original"] {
@@ -154,7 +154,7 @@ export function symbolicateStacktrace(input: {
     }
 
     try {
-      const map = JSON.parse(readFileSync(sourceMapPath, "utf8")) as SourceMapV3;
+      const map = JSON.parse((nodeFileSystem.readText(sourceMapPath) ?? "")) as SourceMapV3;
       frames.push({
         generated: frame,
         original: symbolicateFrame(map, frame),

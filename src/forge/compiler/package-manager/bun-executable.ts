@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
 import { homedir } from "node:os";
+import { nodeFileSystem } from "../fs/index.ts";
 import { basename, join, win32 } from "node:path";
 
 export interface BunExecutableResolutionOptions {
@@ -34,7 +34,7 @@ function normalizeWindowsBunCandidate(
 /** Resolve the Bun executable for spawning child processes (Windows-safe). */
 export function resolveBunExecutable(options: BunExecutableResolutionOptions = {}): string {
   const platform = options.platform ?? process.platform;
-  const exists = options.exists ?? existsSync;
+  const exists = options.exists ?? nodeFileSystem.exists;
   const execPath = options.execPath ?? process.execPath;
 
   if (isBunExecutablePath(execPath, platform) && exists(execPath)) {

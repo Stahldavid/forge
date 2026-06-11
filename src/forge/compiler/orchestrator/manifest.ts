@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
 import {
@@ -14,37 +14,38 @@ export function manifestPath(cacheDir: string): string {
 }
 
 export function loadManifest(cacheDir: string): OrchestratorManifest {
-  mkdirSync(cacheDir, { recursive: true });
+  nodeFileSystem.mkdirp(cacheDir);
   const path = manifestPath(cacheDir);
 
-  try {
-    const raw = readFileSync(path, "utf8");
-    const parsed = JSON.parse(raw) as OrchestratorManifest;
-    return {
-      schemaVersion: parsed.schemaVersion ?? ORCHESTRATOR_MANIFEST_VERSION,
-      fileHashes: parsed.fileHashes ?? {},
-      ...(parsed.priorAppGraph !== undefined
-        ? { priorAppGraph: parsed.priorAppGraph }
-        : {}),
-      ...(parsed.inputFingerprint !== undefined
-        ? { inputFingerprint: parsed.inputFingerprint }
-        : {}),
-    };
-  } catch {
-    return {
-      schemaVersion: ORCHESTRATOR_MANIFEST_VERSION,
-      fileHashes: {},
-    };
+  const raw = nodeFileSystem.readText(path);
+  if (raw !== null) {
+    try {
+      const parsed = JSON.parse(raw) as OrchestratorManifest;
+      return {
+        schemaVersion: parsed.schemaVersion ?? ORCHESTRATOR_MANIFEST_VERSION,
+        fileHashes: parsed.fileHashes ?? {},
+        ...(parsed.priorAppGraph !== undefined
+          ? { priorAppGraph: parsed.priorAppGraph }
+          : {}),
+        ...(parsed.inputFingerprint !== undefined
+          ? { inputFingerprint: parsed.inputFingerprint }
+          : {}),
+      };
+    } catch {
+      // fall through to the default manifest below
+    }
   }
+  return {
+    schemaVersion: ORCHESTRATOR_MANIFEST_VERSION,
+    fileHashes: {},
+  };
 }
 
 export function saveManifest(
   cacheDir: string,
   manifest: OrchestratorManifest,
 ): void {
-  mkdirSync(cacheDir, { recursive: true });
   const path = manifestPath(cacheDir);
-  const tempPath = `${path}.tmp`;
 
   const payload: OrchestratorManifest = {
     schemaVersion: ORCHESTRATOR_MANIFEST_VERSION,
@@ -57,12 +58,7 @@ export function saveManifest(
       : {}),
   };
 
-  writeFileSync(tempPath, `${canonicalJson(payload)}\n`, "utf8");
-  try {
-    renameSync(tempPath, path);
-  } catch {
-    writeFileSync(path, `${canonicalJson(payload)}\n`, "utf8");
-  }
+  nodeFileSystem.writeText(path, `${canonicalJson(payload)}\n`);
 }
 
 export function updateManifestAfterWrite(

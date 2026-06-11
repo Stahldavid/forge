@@ -1,6 +1,8 @@
 import { join } from "node:path";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import type { EmitFile, EmitMode, EmitPlan } from "../types/emit.ts";
+import { nodeFileSystem } from "../fs/index.ts";
+import type { FileSystem } from "../fs/index.ts";
 import {
   forgeDrift,
   forgeOrphanedGeneratedFile,
@@ -30,6 +32,7 @@ import {
 export interface EmitOptions {
   workspaceRoot: string;
   mode: EmitMode;
+  fs?: FileSystem;
 }
 
 export interface EmitResult {
@@ -83,15 +86,17 @@ async function classifyFile(
   file: EmitFile,
   context: RenderContext,
   workspaceRoot: string,
+  fs: FileSystem = nodeFileSystem,
 ): Promise<"changed" | "unchanged"> {
   const rendered = render(file, context);
   const absolutePath = resolveWorkspacePath(workspaceRoot, file.path);
-  const onDisk = await readTextFileIfExists(absolutePath);
+  const onDisk = await readTextFileIfExists(absolutePath, fs);
   return bodiesDiffer(rendered, onDisk) ? "changed" : "unchanged";
 }
 
 export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitResult> {
   const { workspaceRoot, mode } = options;
+  const fs = options.fs ?? nodeFileSystem;
   const context = buildRenderContext(plan);
   const plannedFiles = preparePlannedFiles(plan);
   const sortedOrphans = stableSortByPath([...plan.orphanedFiles]);
@@ -106,7 +111,7 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
   for (const file of plannedFiles) {
     const rendered = render(file, context);
     const absolutePath = resolveWorkspacePath(workspaceRoot, file.path);
-    const onDisk = await readTextFileIfExists(absolutePath);
+    const onDisk = await readTextFileIfExists(absolutePath, fs);
     const differs = bodiesDiffer(rendered, onDisk);
 
     if (differs) {
@@ -119,7 +124,7 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
       }
 
       try {
-        await writeFileAtomic(absolutePath, rendered);
+        await writeFileAtomic(absolutePath, rendered, fs);
       } catch {
         errors.push(forgeWriteError(file.path));
       }
@@ -146,13 +151,13 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
       continue;
     }
 
-    const removedOrphan = await removeFileIfExists(absoluteOrphan);
+    const removedOrphan = await removeFileIfExists(absoluteOrphan, fs);
     if (removedOrphan) {
       removed.push(normalizedOrphan);
     }
   }
 
-  const lockDiffers = await lockWouldChange(plan, workspaceRoot);
+  const lockDiffers = await lockWouldChange(plan, workspaceRoot, fs);
 
   if (lockDiffers) {
     wouldChange.push(FORGE_LOCK_PATH);
@@ -167,7 +172,7 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
 
     try {
       if (lockDiffers) {
-        await writeFileAtomic(lockAbsolutePath, lockContent);
+        await writeFileAtomic(lockAbsolutePath, lockContent, fs);
         changed.push(FORGE_LOCK_PATH);
       } else {
         unchanged.push(FORGE_LOCK_PATH);
@@ -194,10 +199,14 @@ export async function emit(plan: EmitPlan, options: EmitOptions): Promise<EmitRe
   };
 }
 
-async function lockWouldChange(plan: EmitPlan, workspaceRoot: string): Promise<boolean> {
+async function lockWouldChange(
+  plan: EmitPlan,
+  workspaceRoot: string,
+  fs: FileSystem = nodeFileSystem,
+): Promise<boolean> {
   const lockContent = serializeForgeLock(plan.lock);
   const lockAbsolutePath = resolveWorkspacePath(workspaceRoot, FORGE_LOCK_PATH);
-  const onDisk = await readTextFileIfExists(lockAbsolutePath);
+  const onDisk = await readTextFileIfExists(lockAbsolutePath, fs);
   return onDisk !== lockContent;
 }
 
@@ -208,8 +217,9 @@ export async function classifyPlannedFile(
   file: EmitFile,
   context: RenderContext,
   workspaceRoot: string,
+  fs: FileSystem = nodeFileSystem,
 ): Promise<"changed" | "unchanged"> {
-  return classifyFile(file, context, workspaceRoot);
+  return classifyFile(file, context, workspaceRoot, fs);
 }
 
 export { render, renderBody, serializeForgeLock, buildBarrelIndexBody };

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
@@ -21,10 +21,10 @@ export function runAgentContractPrint(
   workspaceRoot: string,
 ): AgentContractPrintResult {
   const path = join(workspaceRoot, GENERATED_DIR, "agentContract.json");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return { data: null, exitCode: 1 };
   }
-  const raw = stripDeterministicHeader(readFileSync(path, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(path) ?? ""));
   return {
     data: JSON.parse(raw) as unknown,
     exitCode: 0,

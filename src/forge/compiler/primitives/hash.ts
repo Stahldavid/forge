@@ -1,7 +1,5 @@
 import { stripDeterministicHeader } from "./header.ts";
 
-const encoder = new TextEncoder();
-
 /**
  * SHA-256 hash of UTF-8 content, returned as lowercase hex.
  */

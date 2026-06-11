@@ -21,7 +21,7 @@ export function verifyLockIntegrity(
       seen.add(normalized);
 
       const absolute = join(workspaceRoot, normalized);
-      if (!existsSync(absolute)) {
+      if (!nodeFileSystem.exists(absolute)) {
         diagnostics.push(
           createDiagnostic({
             severity: "error",

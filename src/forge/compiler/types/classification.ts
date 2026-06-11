@@ -1,4 +1,3 @@
-import type { CapabilitySet } from "./capability.ts";
 import type { ExportClassification } from "./package-graph.ts";
 import type { RuntimeContext } from "./runtime.ts";
 

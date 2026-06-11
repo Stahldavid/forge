@@ -1,3 +1,5 @@
+export { Result, ok, err, isOk, isErr } from "./result.ts";
+export type { Ok, Err } from "./result.ts";
 export {
   compareBytes,
   compareBytesAsc,

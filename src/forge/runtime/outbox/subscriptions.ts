@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 import { join } from "node:path";
 import type { ActionSubscription } from "../../compiler/types/action-subscriptions.ts";
 import { GENERATED_DIR } from "../../compiler/emitter/constants.ts";
@@ -13,11 +13,11 @@ export function loadActionSubscriptions(
   workspaceRoot: string,
 ): ActionSubscriptionsJson {
   const absolute = join(workspaceRoot, GENERATED_DIR, "actionSubscriptions.json");
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return { subscriptions: [], byEvent: {} };
   }
 
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   const parsed = JSON.parse(raw) as ActionSubscriptionsJson;
   return {
     subscriptions: parsed.subscriptions ?? [],

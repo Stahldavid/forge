@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { runGenerateCommand } from "./commands.ts";
 import { runVerifyCommand } from "./verify.ts";
@@ -21,7 +21,7 @@ async function runOptionalScript(
   scriptName: string,
 ): Promise<{ skipped: boolean; exitCode: number }> {
   const packageJsonPath = join(workspaceRoot, "package.json");
-  if (!existsSync(packageJsonPath)) {
+  if (!nodeFileSystem.exists(packageJsonPath)) {
     return { skipped: true, exitCode: 0 };
   }
   const pkg = await Bun.file(packageJsonPath).json() as { scripts?: Record<string, string> };
@@ -64,7 +64,7 @@ export async function runBuildCommand(options: BuildCommandOptions): Promise<Bui
     return { ok: false, exitCode: 1, steps };
   }
 
-  const webBuild = existsSync(join(options.workspaceRoot, "web", "package.json"))
+  const webBuild = nodeFileSystem.exists(join(options.workspaceRoot, "web", "package.json"))
     ? await runOptionalScript(join(options.workspaceRoot, "web"), "build")
     : { skipped: true, exitCode: 0 };
   steps.push({
@@ -77,17 +77,13 @@ export async function runBuildCommand(options: BuildCommandOptions): Promise<Bui
   }
 
   const distDir = join(options.workspaceRoot, "dist", "forge");
-  mkdirSync(distDir, { recursive: true });
+  nodeFileSystem.mkdirp(distDir);
   const manifestPath = join(distDir, "build-info.json");
-  writeFileSync(
-    manifestPath,
-    `${JSON.stringify({
-      schemaVersion: "0.1.0",
-      builtAt: new Date(0).toISOString(),
-      steps,
-    }, null, 2)}\n`,
-    "utf8",
-  );
+  nodeFileSystem.writeText(manifestPath, `${JSON.stringify({
+    schemaVersion: "0.1.0",
+    builtAt: new Date(0).toISOString(),
+    steps,
+  }, null, 2)}\n`);
 
   return { ok: true, exitCode: 0, steps, manifestPath };
 }

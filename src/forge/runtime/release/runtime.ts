@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 import { spawnSync } from "node:child_process";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
@@ -38,7 +39,7 @@ export function currentReleaseInfo(): RuntimeReleaseInfo {
 }
 
 function packageInfo(workspaceRoot: string): { name: string; version: string } {
-  const pkg = JSON.parse(readFileSync(join(workspaceRoot, "package.json"), "utf8")) as {
+  const pkg = JSON.parse((nodeFileSystem.readText(join(workspaceRoot, "package.json")) ?? "")) as {
     name?: string;
     version?: string;
   };
@@ -72,18 +73,17 @@ function sha256(path: string): string {
 function listFiles(root: string): string[] {
   const files: string[] = [];
   function walk(dir: string): void {
-    if (!existsSync(dir)) {
+    if (!nodeFileSystem.exists(dir)) {
       return;
     }
-    for (const entry of readdirSync(dir)) {
-      const absolute = join(dir, entry);
-      const stat = statSync(absolute);
-      if (stat.isDirectory()) {
-        if (entry === "node_modules" || entry === ".forge" || entry === ".git") {
+    for (const entry of nodeFileSystem.readDir(dir)) {
+      const absolute = join(dir, entry.name);
+      if (entry.isDirectory) {
+        if (entry.name === "node_modules" || entry.name === ".forge" || entry.name === ".git") {
           continue;
         }
         walk(absolute);
-      } else if (stat.isFile()) {
+      } else if (entry.isFile) {
         files.push(absolute);
       }
     }
@@ -136,7 +136,7 @@ export function collectReleaseArtifacts(workspaceRoot: string, releaseId: string
         sizeBytes: stat.size,
         sha256: sha256(absolute),
       };
-      if (rel.endsWith(".js") && existsSync(join(workspaceRoot, `${rel}.map`))) {
+      if (rel.endsWith(".js") && nodeFileSystem.exists(join(workspaceRoot, `${rel}.map`))) {
         artifact.sourceMap = `${rel}.map`;
       }
       artifacts.push(artifact);
@@ -152,7 +152,7 @@ export function collectReleaseArtifacts(workspaceRoot: string, releaseId: string
           );
         }
         try {
-          const map = JSON.parse(readFileSync(absolute, "utf8")) as {
+          const map = JSON.parse((nodeFileSystem.readText(absolute) ?? "")) as {
             file?: string;
             sources?: string[];
             debug_id?: string;
@@ -224,7 +224,7 @@ export function prepareRelease(options: {
   const releaseId = `${pkg.name}@${pkg.version}+${sha}`;
   const deployId = `${options.env}-${releaseId}`;
   const dir = releaseDir(options.workspaceRoot, releaseId);
-  mkdirSync(dir, { recursive: true });
+  nodeFileSystem.mkdirp(dir);
 
   const collected = collectReleaseArtifacts(options.workspaceRoot, releaseId);
   const releaseManifest: ReleaseManifest = {
@@ -286,7 +286,7 @@ export function prepareRelease(options: {
     ["build-info.json", buildInfo],
   ];
   for (const [name, value] of files) {
-    writeFileSync(join(dir, name), serializeCanonical(value), "utf8");
+    nodeFileSystem.writeText(join(dir, name), serializeCanonical(value));
   }
 
   return {
@@ -299,7 +299,7 @@ export function prepareRelease(options: {
 
 function fileHash(workspaceRoot: string, relativePath: string): string | null {
   const absolute = join(workspaceRoot, relativePath);
-  return existsSync(absolute) ? sha256(absolute) : null;
+  return nodeFileSystem.exists(absolute) ? sha256(absolute) : null;
 }
 
 export function providerConfigDiagnostics(provider: ReleaseExportProvider): Diagnostic[] {

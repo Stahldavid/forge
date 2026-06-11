@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, join, relative } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { GENERATOR_VERSION } from "../emitter/constants.ts";
 import { stableSortStrings } from "../primitives/sort.ts";
 import { normalizePath } from "../primitives/paths.ts";
@@ -43,38 +43,26 @@ function collectTestsFromDisk(workspaceRoot: string): SourceFile[] {
   const tests: SourceFile[] = [];
 
   function walk(dir: string): void {
-    let entries: string[];
-    try {
-      entries = readdirSync(dir);
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const absolute = join(dir, entry);
-      let stat;
-      try {
-        stat = statSync(absolute);
-      } catch {
-        continue;
-      }
-      if (stat.isDirectory()) {
-        if (!SKIP_DIRS.has(entry)) {
+    for (const entry of nodeFileSystem.readDir(dir)) {
+      const absolute = join(dir, entry.name);
+      if (entry.isDirectory) {
+        if (!SKIP_DIRS.has(entry.name)) {
           walk(absolute);
         }
         continue;
       }
-      if (!stat.isFile() || !TEST_RE.test(entry)) {
+      if (!entry.isFile || !TEST_RE.test(entry.name)) {
         continue;
       }
       const path = normalizePath(relative(workspaceRoot, absolute));
-      const text = readFileSync(absolute, "utf8");
+      const text = (nodeFileSystem.readText(absolute) ?? "");
       tests.push({ path, text, contentHash: "" });
     }
   }
 
   for (const root of TEST_ROOTS) {
     const absolute = join(workspaceRoot, root);
-    if (existsSync(absolute)) {
+    if (nodeFileSystem.exists(absolute)) {
       walk(absolute);
     }
   }

@@ -43,7 +43,7 @@ export function detectPackageManagerFromLockfiles(
   workspaceRoot: string,
 ): PackageManager | null {
   for (const { file, pm } of LOCKFILE_PM_MAP) {
-    if (existsSync(join(workspaceRoot, file))) {
+    if (nodeFileSystem.exists(join(workspaceRoot, file))) {
       return pm;
     }
   }
@@ -56,9 +56,9 @@ export function detectPackageManagerFromLockfiles(
  */
 export function detectPackageManager(workspaceRoot: string): PackageManager {
   const pkgPath = join(workspaceRoot, "package.json");
-  if (existsSync(pkgPath)) {
+  if (nodeFileSystem.exists(pkgPath)) {
     try {
-      const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+      const pkg = JSON.parse((nodeFileSystem.readText(pkgPath) ?? "")) as {
         packageManager?: string;
       };
       if (pkg.packageManager) {

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { run } from "../compiler/orchestrator/run.ts";
@@ -50,19 +50,19 @@ export interface DepsCommandResult {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 
 function planPathFor(workspaceRoot: string, planIdOrPath: string): string {
-  if (existsSync(planIdOrPath)) {
+  if (nodeFileSystem.exists(planIdOrPath)) {
     return planIdOrPath;
   }
   const direct = join(workspaceRoot, planIdOrPath);
-  if (existsSync(direct)) {
+  if (nodeFileSystem.exists(direct)) {
     return direct;
   }
   return join(workspaceRoot, ".forge", "upgrades", planIdOrPath, "plan.json");
@@ -70,8 +70,8 @@ function planPathFor(workspaceRoot: string, planIdOrPath: string): string {
 
 function inspectPackage(workspaceRoot: string, packageName: string): DepsCommandResult {
   const graph = readGeneratedJson<PackageGraph>(workspaceRoot, `${GENERATED_DIR}/packageGraph.json`);
-  const lock = existsSync(join(workspaceRoot, "forge.lock"))
-    ? (JSON.parse(readFileSync(join(workspaceRoot, "forge.lock"), "utf8")) as ForgeLock)
+  const lock = nodeFileSystem.exists(join(workspaceRoot, "forge.lock"))
+    ? (JSON.parse((nodeFileSystem.readText(join(workspaceRoot, "forge.lock")) ?? "")) as ForgeLock)
     : null;
   const pkg = graph?.packages.find((candidate) => candidate.name === packageName);
   const lockEntry = lock?.packages.find((candidate) => candidate.name === packageName);

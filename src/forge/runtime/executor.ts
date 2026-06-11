@@ -1,11 +1,10 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import { classify } from "../compiler/classifier/classify.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
-  FORGE_RUNTIME_GUARD_BLOCKED,
   FORGE_RUNTIME_NOT_FOUND,
 } from "../compiler/diagnostics/codes.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
@@ -67,10 +66,10 @@ export interface PrepareRuntimeEnvironmentOptions {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 
@@ -179,10 +178,10 @@ async function loadRuntimeMatrix(workspaceRoot: string): Promise<RuntimeMatrix> 
 
 function loadForgeLock(workspaceRoot: string): ForgeLock | null {
   const absolute = join(workspaceRoot, FORGE_LOCK_PATH);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as ForgeLock;
 }
 
@@ -215,7 +214,7 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
 
   for (const [packageName, relativePath] of Object.entries(mockMap).sort()) {
     const absolute = join(workspaceRoot, relativePath);
-    if (!existsSync(absolute)) {
+    if (!nodeFileSystem.exists(absolute)) {
       continue;
     }
 

@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
@@ -17,7 +17,7 @@ export interface DoctorResult {
 }
 
 function present(workspaceRoot: string, name: string, relative: string): DoctorCheck {
-  const ok = existsSync(join(workspaceRoot, relative));
+  const ok = nodeFileSystem.exists(join(workspaceRoot, relative));
   return {
     name,
     ok,
@@ -59,7 +59,7 @@ export async function runDoctorCommand(options: {
   });
 
   const deployManifest = join(options.workspaceRoot, "deploy", "deployManifest.json");
-  if (existsSync(deployManifest)) {
+  if (nodeFileSystem.exists(deployManifest)) {
     checks.push(
       present(options.workspaceRoot, "self-host-compose", "deploy/docker-compose.yml"),
       present(options.workspaceRoot, "self-host-env", "deploy/.env.example"),

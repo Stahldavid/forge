@@ -1,8 +1,5 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { SqlPlan } from "../../src/forge/compiler/data-graph/sql/types.ts";
-import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
-import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import { startDevServer } from "../../src/forge/dev/server.ts";
 import type { DevServerHandle } from "../../src/forge/dev/types.ts";

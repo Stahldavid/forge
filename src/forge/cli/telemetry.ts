@@ -1,8 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { FORGE_RUNTIME_NOT_FOUND } from "../compiler/diagnostics/codes.ts";
-import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
@@ -41,10 +40,10 @@ export interface TelemetryCommandResult {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 
@@ -57,10 +56,10 @@ function adapterOptions(options: TelemetryCommandOptions): CreateDbAdapterOption
 }
 
 function tailJsonl(path: string, lines = 20): string[] {
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return [];
   }
-  const content = readFileSync(path, "utf8");
+  const content = (nodeFileSystem.readText(path) ?? "");
   return content
     .split("\n")
     .filter((line) => line.trim().length > 0)

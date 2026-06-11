@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { Dependency } from "../types/package-graph.ts";
 import type { SourceFile } from "../types/app-graph.ts";
 import { hashTsconfigForWorkspace } from "../app-graph/tsconfig-hash.ts";
@@ -27,11 +27,11 @@ const SKIP_DIR_NAMES = new Set([
 const DEFAULT_SOURCE_ROOTS = ["src", "tests"];
 
 function readTextHash(absolutePath: string): string {
-  return hashStable(readFileSync(absolutePath, "utf8"));
+  return hashStable((nodeFileSystem.readText(absolutePath) ?? ""));
 }
 
 function hashFileIfExists(absolutePath: string): string {
-  if (!existsSync(absolutePath)) {
+  if (!nodeFileSystem.exists(absolutePath)) {
     return "";
   }
   return readTextHash(absolutePath);
@@ -42,13 +42,13 @@ function resolveLockfilePath(workspaceRoot: string): string | null {
   const candidates = getLockfileCandidates(pm);
   for (const file of candidates) {
     const absolute = join(workspaceRoot, file);
-    if (existsSync(absolute)) {
+    if (nodeFileSystem.exists(absolute)) {
       return absolute;
     }
   }
 
   const fallback = join(workspaceRoot, getLockfileForPm(pm));
-  return existsSync(fallback) ? fallback : null;
+  return nodeFileSystem.exists(fallback) ? fallback : null;
 }
 
 function collectSourceFiles(
@@ -58,35 +58,24 @@ function collectSourceFiles(
   const sources: SourceFile[] = [];
 
   function walkDirectory(absoluteDir: string): void {
-    let entries: string[];
-    try {
-      entries = readdirSync(absoluteDir);
-    } catch {
-      return;
-    }
+    for (const entry of nodeFileSystem.readDir(absoluteDir)) {
+      const absolutePath = join(absoluteDir, entry.name);
 
-    for (const entry of entries) {
-      const absolutePath = join(absoluteDir, entry);
-      let stat;
-      try {
-        stat = statSync(absolutePath);
-      } catch {
-        continue;
-      }
-
-      if (stat.isDirectory()) {
-        if (SKIP_DIR_NAMES.has(entry)) {
+      if (entry.isDirectory) {
+        if (SKIP_DIR_NAMES.has(entry.name)) {
           continue;
         }
         walkDirectory(absolutePath);
         continue;
       }
 
-      if (!stat.isFile()) {
+      if (!entry.isFile) {
         continue;
       }
 
-      const ext = entry.includes(".") ? `.${entry.split(".").pop()}` : "";
+      const ext = entry.name.includes(".")
+        ? `.${entry.name.split(".").pop()}`
+        : "";
       if (!SOURCE_EXTENSIONS.has(ext)) {
         continue;
       }
@@ -98,7 +87,7 @@ function collectSourceFiles(
         continue;
       }
 
-      const text = readFileSync(absolutePath, "utf8");
+      const text = (nodeFileSystem.readText(absolutePath) ?? "");
       sources.push({
         path: relativePath,
         text,
@@ -109,7 +98,7 @@ function collectSourceFiles(
 
   for (const root of roots) {
     const absoluteRoot = join(workspaceRoot, root);
-    if (existsSync(absoluteRoot)) {
+    if (nodeFileSystem.exists(absoluteRoot)) {
       walkDirectory(absoluteRoot);
     }
   }
@@ -127,7 +116,7 @@ interface WorkspacePackageJson {
 }
 
 function readPackageJson(workspaceRoot: string): WorkspacePackageJson {
-  const raw = readFileSync(join(workspaceRoot, "package.json"), "utf8");
+  const raw = (nodeFileSystem.readText(join(workspaceRoot, "package.json")) ?? "");
   return JSON.parse(raw) as WorkspacePackageJson;
 }
 
@@ -158,15 +147,15 @@ function resolveDependency(
   packageManager: ReturnType<typeof detectPackageManager>,
 ): Dependency | null {
   const installPath = join(workspaceRoot, "node_modules", name);
-  if (!existsSync(installPath)) {
+  if (!nodeFileSystem.exists(installPath)) {
     return null;
   }
 
   let version = specifier.replace(/^[\^~>=<]*/, "").trim();
   const pkgJsonPath = join(installPath, "package.json");
-  if (existsSync(pkgJsonPath)) {
+  if (nodeFileSystem.exists(pkgJsonPath)) {
     try {
-      const installed = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
+      const installed = JSON.parse((nodeFileSystem.readText(pkgJsonPath) ?? "")) as {
         version?: string;
       };
       if (installed.version) {
@@ -249,7 +238,7 @@ export function discover(options: DiscoverOptions): DiscoverContext {
   const packageJsonHash = hashFileIfExists(join(workspaceRoot, "package.json"));
   const lockfilePath = resolveLockfilePath(workspaceRoot);
   const lockfileHash = lockfilePath ? readTextHash(lockfilePath) : "";
-  const tsconfigPath = existsSync(join(workspaceRoot, "tsconfig.json"))
+  const tsconfigPath = nodeFileSystem.exists(join(workspaceRoot, "tsconfig.json"))
     ? "tsconfig.json"
     : null;
   const tsconfigHash = hashTsconfigForWorkspace(workspaceRoot, tsconfigPath ?? undefined);

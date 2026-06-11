@@ -1,10 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -43,8 +37,8 @@ function diagnostic(severity: Diagnostic["severity"], code: string, message: str
 
 function readText(workspaceRoot: string, relative: string): string {
   const absolute = join(workspaceRoot, normalize(relative));
-  if (!existsSync(absolute)) return "";
-  return readFileSync(absolute, "utf8");
+  if (!nodeFileSystem.exists(absolute)) return "";
+  return (nodeFileSystem.readText(absolute) ?? "");
 }
 
 function readJson<T>(workspaceRoot: string, relative: string, fallback: T): T {
@@ -55,8 +49,8 @@ function readJson<T>(workspaceRoot: string, relative: string, fallback: T): T {
 
 function writeText(workspaceRoot: string, relative: string, content: string): void {
   const absolute = join(workspaceRoot, normalize(relative));
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, content, "utf8");
+  nodeFileSystem.mkdirp(dirname(absolute));
+  nodeFileSystem.writeText(absolute, content);
 }
 
 function uniqueSorted(values: Array<string | undefined>): string[] {
@@ -469,7 +463,7 @@ async function runWithPlaywright(options: UiCommandOptions, scenarios: UiScenari
     } catch (error) {
       const screenshot = `${UI_RUN_DIR}/${makeRunId(scenario.name)}/screenshots/failure-${scenario.name}.png`;
       const absolute = join(options.workspaceRoot, screenshot);
-      mkdirSync(dirname(absolute), { recursive: true });
+      nodeFileSystem.mkdirp(dirname(absolute));
       try {
         await page.screenshot({ path: absolute, fullPage: true });
         screenshots.push(screenshot);
@@ -536,7 +530,7 @@ async function executeStep(page: {
   if (step.kind === "captureScreenshot") {
     const path = `${UI_RUN_DIR}/snapshots/${step.name}.png`;
     const absolute = join(options.workspaceRoot, path);
-    mkdirSync(dirname(absolute), { recursive: true });
+    nodeFileSystem.mkdirp(dirname(absolute));
     await page.screenshot({ path: absolute, fullPage: true });
   }
 }
@@ -681,8 +675,8 @@ function runUiDoctor(options: UiCommandOptions): UiCommandResult {
   const manifest = loadUiManifest(options.workspaceRoot);
   const diagnostics: Diagnostic[] = [];
   const checks = [
-    existsSync(join(options.workspaceRoot, "node_modules/playwright")) ||
-      existsSync(join(options.workspaceRoot, "node_modules/@playwright/test")),
+    nodeFileSystem.exists(join(options.workspaceRoot, "node_modules/playwright")) ||
+      nodeFileSystem.exists(join(options.workspaceRoot, "node_modules/@playwright/test")),
     manifest.routes.length > 0,
     manifest.scenarios.length > 0,
   ];
@@ -709,19 +703,20 @@ function readUiReport(workspaceRoot: string, id: string): UiCommandResult {
       ? `${UI_RUN_DIR}/last.json`
       : `${UI_RUN_DIR}/${id}/report.json`;
   const absolute = join(workspaceRoot, path);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     const diag = diagnostic("error", "FORGE_UI_REPORT_NOT_FOUND", `UI report not found: ${id}`, path);
     return { ok: false, diagnostics: [diag], exitCode: 1 };
   }
-  const report = JSON.parse(readFileSync(absolute, "utf8")) as UiRunReport;
+  const report = JSON.parse((nodeFileSystem.readText(absolute) ?? "")) as UiRunReport;
   return { ok: report.summary.ok, report, diagnostics: report.diagnostics, exitCode: report.summary.ok ? 0 : 1 };
 }
 
 export function listUiRuns(workspaceRoot: string): Array<{ id: string; path: string }> {
   const dir = join(workspaceRoot, UI_RUN_DIR);
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+  if (!nodeFileSystem.exists(dir)) return [];
+  return nodeFileSystem
+    .readDir(dir)
+    .filter((entry) => entry.isDirectory)
     .map((entry) => ({ id: entry.name, path: `${UI_RUN_DIR}/${entry.name}/report.json` }))
     .sort((a, b) => a.id.localeCompare(b.id));
 }

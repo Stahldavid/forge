@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import * as fc from "fast-check";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { FORGE_ORPHANED_GENERATED_FILE } from "../../src/forge/compiler/diagnostics/codes.ts";
 import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";

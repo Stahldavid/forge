@@ -12,12 +12,12 @@ export function readInstalledVersion(
     : [name];
   const pkgJsonPath = join(cwd, "node_modules", ...segments, "package.json");
 
-  if (!existsSync(pkgJsonPath)) {
+  if (!nodeFileSystem.exists(pkgJsonPath)) {
     return null;
   }
 
   try {
-    const pkg = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
+    const pkg = JSON.parse((nodeFileSystem.readText(pkgJsonPath) ?? "")) as {
       version?: string;
     };
     return typeof pkg.version === "string" ? pkg.version : null;

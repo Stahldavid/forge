@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { run } from "../compiler/orchestrator/run.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -42,10 +42,10 @@ const REQUIRED_RLS_FILES = [
 
 function readGeneratedText(workspaceRoot: string, relative: string): string | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  return stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  return stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
 }
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
@@ -117,7 +117,7 @@ function dbWarnings(options: RlsCommandOptions): Diagnostic[] {
 function checkGeneratedArtifacts(options: RlsCommandOptions): RlsCommandResult {
   const diagnostics: Diagnostic[] = [...dbWarnings(options)];
   for (const relative of REQUIRED_RLS_FILES) {
-    if (!existsSync(join(options.workspaceRoot, relative))) {
+    if (!nodeFileSystem.exists(join(options.workspaceRoot, relative))) {
       diagnostics.push(
         createDiagnostic({
           severity: "error",

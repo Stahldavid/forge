@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 import { join } from "node:path";
 import type { RuntimeEnvStore } from "./types.ts";
 
@@ -57,12 +57,12 @@ export function loadEnvFiles(options: LoadEnvFilesOptions): LoadedEnvResult {
 
   for (const file of ordered) {
     const absolute = join(workspaceRoot, file);
-    if (!existsSync(absolute)) {
+    if (!nodeFileSystem.exists(absolute)) {
       continue;
     }
 
     loadedFiles.push(file);
-    const parsed = parseEnvFile(readFileSync(absolute, "utf8"));
+    const parsed = parseEnvFile((nodeFileSystem.readText(absolute) ?? ""));
     Object.assign(merged, parsed);
   }
 

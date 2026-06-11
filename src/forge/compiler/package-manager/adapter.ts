@@ -40,7 +40,7 @@ export interface CreatePackageManagerAdapterOptions {
 }
 
 function hashFile(path: string): string | null {
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return null;
   }
   const content = readFileSync(path);
@@ -70,7 +70,7 @@ function lockfileChanged(
   // Lockfile may be created on first install.
   if (before === null) {
     return getLockfileCandidates(pm).some((f) =>
-      existsSync(join(cwd, f)),
+      nodeFileSystem.exists(join(cwd, f)),
     );
   }
   return false;
@@ -135,7 +135,7 @@ class PackageManagerAdapterImpl implements PackageManagerAdapter {
     const result = await this.dryRunAddWithPath(spec, opts);
     if (!this.retainDryRunDir) {
       try {
-        rmSync(result.installPath, { recursive: true, force: true });
+        nodeFileSystem.remove(result.installPath);
       } catch {
         // best-effort cleanup
       }
@@ -153,8 +153,8 @@ class PackageManagerAdapterImpl implements PackageManagerAdapter {
     opts: PmAddOptions,
   ): Promise<DryRunAddResult> {
     const cacheBase = join(opts.cwd, ".forge", "cache", "dry-run");
-    mkdirSync(cacheBase, { recursive: true });
-    const tempDir = mkdtempSync(join(cacheBase, "add-"));
+    nodeFileSystem.mkdirp(cacheBase);
+    const tempDir = nodeFileSystem.makeTempDir(join(cacheBase, "add-"));
 
     const minimalPkg = {
       name: "forge-dry-run",

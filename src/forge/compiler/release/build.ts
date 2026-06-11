@@ -5,10 +5,10 @@ import type { GeneratedReleaseArtifacts, ReleaseExportProvider } from "./types.t
 
 function readPackageInfo(workspaceRoot: string): { name: string; version: string } {
   const path = join(workspaceRoot, "package.json");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return { name: "forge-app", version: "0.0.0" };
   }
-  const pkg = JSON.parse(readFileSync(path, "utf8")) as {
+  const pkg = JSON.parse((nodeFileSystem.readText(path) ?? "")) as {
     name?: string;
     version?: string;
   };

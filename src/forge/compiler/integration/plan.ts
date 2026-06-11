@@ -271,12 +271,12 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
 
 export function loadExistingForgeLock(workspaceRoot: string): ForgeLock | null {
   const absolute = join(workspaceRoot, FORGE_LOCK_PATH);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
 
   try {
-    return JSON.parse(readFileSync(absolute, "utf8")) as ForgeLock;
+    return JSON.parse((nodeFileSystem.readText(absolute) ?? "")) as ForgeLock;
   } catch {
     return null;
   }

@@ -1,11 +1,6 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
-import { dirname, join, normalize, relative, resolve } from "node:path";
+import { dirname, normalize, relative, resolve } from "node:path";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
+import type { FileSystem } from "../compiler/fs/index.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
@@ -137,35 +132,54 @@ function absPath(workspaceRoot: string, file: string): string {
   return absolute;
 }
 
-function readIfExists(workspaceRoot: string, file: string): string | null {
-  const absolute = absPath(workspaceRoot, file);
-  if (!existsSync(absolute)) {
-    return null;
-  }
-  return readFileSync(absolute, "utf8");
+function readIfExists(
+  workspaceRoot: string,
+  file: string,
+  fs: FileSystem = nodeFileSystem,
+): string | null {
+  return fs.readText(absPath(workspaceRoot, file));
 }
 
-function writeText(workspaceRoot: string, file: string, content: string): void {
-  const absolute = absPath(workspaceRoot, file);
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, content, "utf8");
+function writeText(
+  workspaceRoot: string,
+  file: string,
+  content: string,
+  fs: FileSystem = nodeFileSystem,
+): void {
+  fs.writeText(absPath(workspaceRoot, file), content);
+}
+
+function fileExists(
+  workspaceRoot: string,
+  file: string,
+  fs: FileSystem = nodeFileSystem,
+): boolean {
+  return fs.exists(absPath(workspaceRoot, file));
+}
+
+function removeFile(
+  workspaceRoot: string,
+  file: string,
+  fs: FileSystem = nodeFileSystem,
+): void {
+  fs.remove(absPath(workspaceRoot, file));
 }
 
 function chooseSchemaFile(workspaceRoot: string): string {
-  if (existsSync(absPath(workspaceRoot, "src/forge/schema.ts"))) {
+  if (fileExists(workspaceRoot, "src/forge/schema.ts")) {
     return "src/forge/schema.ts";
   }
-  if (existsSync(absPath(workspaceRoot, "src/schema.ts"))) {
+  if (fileExists(workspaceRoot, "src/schema.ts")) {
     return "src/schema.ts";
   }
   return "src/forge/schema.ts";
 }
 
 function choosePolicyFile(workspaceRoot: string): string {
-  if (existsSync(absPath(workspaceRoot, "src/policies.ts"))) {
+  if (fileExists(workspaceRoot, "src/policies.ts")) {
     return "src/policies.ts";
   }
-  if (existsSync(absPath(workspaceRoot, "src/forge/policies.ts"))) {
+  if (fileExists(workspaceRoot, "src/forge/policies.ts")) {
     return "src/forge/policies.ts";
   }
   return "src/policies.ts";
@@ -402,7 +416,7 @@ function createFile(
     file,
     description,
     content,
-    exists: existsSync(absPath(workspaceRoot, file)),
+    exists: fileExists(workspaceRoot, file),
   };
 }
 
@@ -849,11 +863,11 @@ function buildPlan(options: MakeCommandOptions): MakePlan {
   return plan;
 }
 
-function planPath(workspaceRoot: string, planId: string): string {
+function planPath(_workspaceRoot: string, planId: string): string {
   return `${PLAN_DIR}/${planId}/plan.json`;
 }
 
-function snapshotPath(workspaceRoot: string, planId: string): string {
+function snapshotPath(_workspaceRoot: string, planId: string): string {
   return `${PLAN_DIR}/${planId}/snapshot.json`;
 }
 
@@ -912,7 +926,7 @@ function applyPlan(workspaceRoot: string, plan: MakePlan, force: boolean): Diagn
   writeSnapshot(workspaceRoot, plan);
 
   for (const file of plan.filesToCreate) {
-    const exists = existsSync(absPath(workspaceRoot, file.file));
+    const exists = fileExists(workspaceRoot, file.file);
     if (exists && !force) {
       diagnostics.push(
         diagnostic("error", "FORGE_MAKE_FILE_EXISTS", `file already exists: ${file.file}`, file.file),
@@ -956,7 +970,7 @@ export function rollbackMakePlan(workspaceRoot: string, idOrPath: string): MakeR
     if (file.existed) {
       writeText(workspaceRoot, file.file, file.content ?? "");
     } else {
-      rmSync(absPath(workspaceRoot, file.file), { force: true });
+      removeFile(workspaceRoot, file.file);
     }
   }
   return okResult({ applied: true, explanation: `rolled back ${snapshot.planId}` });

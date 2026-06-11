@@ -14,7 +14,6 @@ import {
   cleanupWorkspace,
   defaultGenerateOptions,
   scaffoldWorkflowWorkspace,
-  writeTriageWorkflow,
 } from "../workflows/helpers.ts";
 
 describe("ai workflow integration", () => {

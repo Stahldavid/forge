@@ -3,7 +3,6 @@ import { hashStable } from "../primitives/hash.ts";
 import { normalizePath } from "../primitives/paths.ts";
 import { stableSortEdges, stableSortSymbols } from "../primitives/sort.ts";
 import type { AppGraph, SourceFile } from "../types/app-graph.ts";
-import { classifyForgeCallee } from "./classify.ts";
 import { detectDuplicateSymbols } from "./dup-symbol.ts";
 import { buildModuleGraph } from "./module-graph.ts";
 import { incrementalParse } from "./parser.ts";

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
@@ -59,7 +59,7 @@ function releaseDir(workspaceRoot: string, releaseId: string): string {
 
 function latestReleaseDir(workspaceRoot: string): string | null {
   const root = join(workspaceRoot, ".forge", "releases");
-  if (!existsSync(root)) {
+  if (!nodeFileSystem.exists(root)) {
     return null;
   }
   const entries = Array.from(new Bun.Glob("*").scanSync({ cwd: root, onlyFiles: false }))
@@ -69,10 +69,10 @@ function latestReleaseDir(workspaceRoot: string): string | null {
 }
 
 function readJson<T>(path: string): T | null {
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return null;
   }
-  return JSON.parse(readFileSync(path, "utf8")) as T;
+  return JSON.parse((nodeFileSystem.readText(path) ?? "")) as T;
 }
 
 function sourceMapManifestFor(options: ReleaseCommandOptions): SourceMapManifest | null {
@@ -123,7 +123,7 @@ export async function runReleaseCommand(
   if (options.area === "release" && (options.action === "check" || options.action === "finalize")) {
     const dir = latestReleaseDir(options.workspaceRoot);
     const diagnostics: Diagnostic[] = [];
-    if (!dir || !existsSync(join(dir, "release.json"))) {
+    if (!dir || !nodeFileSystem.exists(join(dir, "release.json"))) {
       diagnostics.push(
         createDiagnostic({
           severity: "error",

@@ -1,5 +1,5 @@
-import { readdirSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { compareBytes } from "../primitives/compare.ts";
 import { DEFAULT_PATTERN_EXPANSION_LIMIT } from "./constants.ts";
 
@@ -68,14 +68,12 @@ export function expandPatternSubpaths(
 }
 
 function listFilesRecursive(dir: string, relative = ""): string[] {
-  const entries = readdirSync(dir);
   const files: string[] = [];
 
-  for (const entry of entries) {
-    const full = join(dir, entry);
-    const rel = relative ? posix.join(relative, entry) : entry;
-    const stat = statSync(full);
-    if (stat.isDirectory()) {
+  for (const entry of nodeFileSystem.readDir(dir)) {
+    const full = join(dir, entry.name);
+    const rel = relative ? posix.join(relative, entry.name) : entry.name;
+    if (entry.isDirectory) {
       files.push(...listFilesRecursive(full, rel));
     } else {
       files.push(rel);

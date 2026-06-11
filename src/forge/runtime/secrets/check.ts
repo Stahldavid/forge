@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 import { join } from "node:path";
 import { GENERATED_DIR } from "../../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../compiler/primitives/header.ts";
@@ -17,21 +17,21 @@ export interface SecretsCheckResult {
 
 export function loadSecretRegistry(workspaceRoot: string): SecretRegistry | null {
   const absolute = join(workspaceRoot, GENERATED_DIR, "secretRegistry.json");
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
 
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as SecretRegistry;
 }
 
 export function loadEnvSchema(workspaceRoot: string): EnvSchema | null {
   const absolute = join(workspaceRoot, GENERATED_DIR, "envSchema.json");
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
 
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as EnvSchema;
 }
 

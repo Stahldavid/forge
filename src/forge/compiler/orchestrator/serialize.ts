@@ -699,6 +699,10 @@ export function serializeAiModelsTs(models: import("../types/ai-registry.ts").Ai
 export function serializeAiContextTs(): string {
   return `export type ForgeAiProvider = "openai" | "anthropic" | "gateway";
 
+export type ForgeFlexibleSchema<T> = unknown & {
+  readonly __forgeStructuredOutput?: T;
+};
+
 export interface ForgeAiUsage {
   promptTokens: number;
   completionTokens: number;
@@ -743,7 +747,7 @@ export interface ForgeGenerateStructuredInput<T> {
   prompt: string;
   system?: string;
   purpose?: string;
-  schema: unknown;
+  schema: ForgeFlexibleSchema<T>;
 }
 
 export interface AiContext {

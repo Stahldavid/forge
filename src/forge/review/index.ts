@@ -1,11 +1,5 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from "node:fs";
 import { basename, join } from "node:path";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
 import { serializeCanonical } from "../compiler/primitives/serialize.ts";
@@ -87,10 +81,8 @@ function normalize(path: string): string {
 }
 
 function readText(workspaceRoot: string, relative: string): string {
-  const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) return "";
   try {
-    return readFileSync(absolute, "utf8");
+    return nodeFileSystem.readText(join(workspaceRoot, relative)) ?? "";
   } catch {
     return "";
   }
@@ -164,7 +156,7 @@ function loadContext(options: ReviewCommandOptions): ReviewContext {
       workflowSubscriptions: readJson(options.workspaceRoot, `${GENERATED}/workflowSubscriptions.json`, {}),
       policyRegistry: readJson(options.workspaceRoot, `${GENERATED}/policyRegistry.json`, {}),
       secretRegistry: readJson(options.workspaceRoot, `${GENERATED}/secretRegistry.json`, {}),
-      agentContract: existsSync(join(options.workspaceRoot, `${GENERATED}/agentContract.json`))
+      agentContract: nodeFileSystem.exists(join(options.workspaceRoot, `${GENERATED}/agentContract.json`))
         ? readJson(options.workspaceRoot, `${GENERATED}/agentContract.json`, null)
         : null,
     },
@@ -404,7 +396,7 @@ function secretRules(ctx: ReviewContext): ReviewFinding[] {
 
 function packageRules(ctx: ReviewContext): ReviewFinding[] {
   if (ctx.changed.packageFiles.length === 0) return [];
-  const hasPlan = existsSync(join(ctx.workspaceRoot, ".forge/upgrades"));
+  const hasPlan = nodeFileSystem.exists(join(ctx.workspaceRoot, ".forge/upgrades"));
   return [finding({
     severity: hasPlan ? "info" : "warning",
     category: "package",
@@ -519,8 +511,8 @@ function frontendRules(ctx: ReviewContext): ReviewFinding[] {
 
 function testRules(ctx: ReviewContext, preliminaryRisk: ReviewRisk): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
-  const hasLastPlan = existsSync(join(ctx.workspaceRoot, ".forge/test-plans")) || existsSync(join(ctx.workspaceRoot, ".forge/test-runs/last.json"));
-  const hasUiRun = existsSync(join(ctx.workspaceRoot, ".forge/ui-runs/last.json"));
+  const hasLastPlan = nodeFileSystem.exists(join(ctx.workspaceRoot, ".forge/test-plans")) || nodeFileSystem.exists(join(ctx.workspaceRoot, ".forge/test-runs/last.json"));
+  const hasUiRun = nodeFileSystem.exists(join(ctx.workspaceRoot, ".forge/ui-runs/last.json"));
   if ((ctx.impacted.frontend.components.length > 0 || ctx.impacted.frontend.pages.length > 0) && !hasUiRun) {
     findings.push(finding({
       severity: "warning",
@@ -861,7 +853,7 @@ export function renderSarif(report: ReviewReport): string {
 export function writeReviewReport(workspaceRoot: string, report: ReviewReport, includeSarif: boolean): ReviewWriteResult {
   const relativeDir = join(REVIEW_DIR, report.id).replace(/\\/g, "/");
   const dir = join(workspaceRoot, relativeDir);
-  mkdirSync(dir, { recursive: true });
+  nodeFileSystem.mkdirp(dir);
   const files: Array<[string, string]> = [
     ["review.json", serializeCanonical(report)],
     ["review.md", renderReviewMarkdown(report)],
@@ -872,7 +864,7 @@ export function writeReviewReport(workspaceRoot: string, report: ReviewReport, i
   ];
   if (includeSarif) files.push(["review.sarif", renderSarif(report)]);
   for (const [file, content] of files) {
-    writeFileSync(join(dir, file), content, "utf8");
+    nodeFileSystem.writeText(join(dir, file), content);
   }
   return {
     dir: relativeDir,
@@ -908,9 +900,10 @@ ${doc.relatedCommands.map((command) => `  - ${command}`).join("\n")}
 
 export function listReviews(workspaceRoot: string): ReviewResult {
   const dir = join(workspaceRoot, REVIEW_DIR);
-  if (!existsSync(dir)) return { ok: true, reports: [], diagnostics: [], exitCode: 0 };
-  const reports = readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+  if (!nodeFileSystem.exists(dir)) return { ok: true, reports: [], diagnostics: [], exitCode: 0 };
+  const reports = nodeFileSystem
+    .readDir(dir)
+    .filter((entry) => entry.isDirectory)
     .map((entry) => ({ id: entry.name, dir: `${REVIEW_DIR}/${entry.name}` }))
     .sort((a, b) => a.id.localeCompare(b.id));
   return { ok: true, reports, diagnostics: [], exitCode: 0 };
@@ -918,7 +911,7 @@ export function listReviews(workspaceRoot: string): ReviewResult {
 
 export function inspectReview(workspaceRoot: string, reviewId: string): ReviewResult {
   const path = join(workspaceRoot, REVIEW_DIR, reviewId, "review.json");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return {
       ok: false,
       diagnostics: [createDiagnostic({ severity: "error", code: "FORGE_REVIEW_NOT_FOUND", message: `review not found: ${reviewId}` })],
@@ -927,7 +920,7 @@ export function inspectReview(workspaceRoot: string, reviewId: string): ReviewRe
   }
   return {
     ok: true,
-    report: JSON.parse(readFileSync(path, "utf8")) as ReviewReport,
+    report: JSON.parse(nodeFileSystem.readText(path) ?? "{}") as ReviewReport,
     diagnostics: [],
     exitCode: 0,
   };

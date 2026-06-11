@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { classify } from "../compiler/classifier/classify.ts";
@@ -38,11 +38,11 @@ function msSince(start: number): number {
 
 function readJson<T>(workspaceRoot: string, relativePath: string): T | null {
   const absolute = join(workspaceRoot, relativePath);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
   try {
-    return JSON.parse(stripDeterministicHeader(readFileSync(absolute, "utf8"))) as T;
+    return JSON.parse(stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""))) as T;
   } catch {
     return null;
   }
@@ -169,14 +169,14 @@ async function runCheckPhase(workspaceRoot: string, strictSecrets: boolean): Pro
 
 function requiredGeneratedArtifacts(workspaceRoot: string): Array<{ name: string; path: string; ok: boolean }> {
   return [
-    { name: "agents-md", path: "AGENTS.md", ok: existsSync(join(workspaceRoot, "AGENTS.md")) },
-    { name: "forge-lock", path: "forge.lock", ok: existsSync(join(workspaceRoot, "forge.lock")) },
-    { name: "agent-contract", path: `${GENERATED_DIR}/agentContract.json`, ok: existsSync(join(workspaceRoot, GENERATED_DIR, "agentContract.json")) },
-    { name: "runtime-matrix", path: `${GENERATED_DIR}/runtimeMatrix.json`, ok: existsSync(join(workspaceRoot, GENERATED_DIR, "runtimeMatrix.json")) },
-    { name: "data-graph", path: `${GENERATED_DIR}/dataGraph.json`, ok: existsSync(join(workspaceRoot, GENERATED_DIR, "dataGraph.json")) },
-    { name: "policies", path: `${GENERATED_DIR}/policyRegistry.json`, ok: existsSync(join(workspaceRoot, GENERATED_DIR, "policyRegistry.json")) },
-    { name: "client", path: `${GENERATED_DIR}/clientManifest.json`, ok: existsSync(join(workspaceRoot, GENERATED_DIR, "clientManifest.json")) },
-    { name: "ui", path: `${GENERATED_DIR}/uiTestManifest.json`, ok: existsSync(join(workspaceRoot, GENERATED_DIR, "uiTestManifest.json")) },
+    { name: "agents-md", path: "AGENTS.md", ok: nodeFileSystem.exists(join(workspaceRoot, "AGENTS.md")) },
+    { name: "forge-lock", path: "forge.lock", ok: nodeFileSystem.exists(join(workspaceRoot, "forge.lock")) },
+    { name: "agent-contract", path: `${GENERATED_DIR}/agentContract.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "agentContract.json")) },
+    { name: "runtime-matrix", path: `${GENERATED_DIR}/runtimeMatrix.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "runtimeMatrix.json")) },
+    { name: "data-graph", path: `${GENERATED_DIR}/dataGraph.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "dataGraph.json")) },
+    { name: "policies", path: `${GENERATED_DIR}/policyRegistry.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "policyRegistry.json")) },
+    { name: "client", path: `${GENERATED_DIR}/clientManifest.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "clientManifest.json")) },
+    { name: "ui", path: `${GENERATED_DIR}/uiTestManifest.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "uiTestManifest.json")) },
   ];
 }
 

@@ -5,7 +5,6 @@ import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import { checkSecrets } from "../../src/forge/runtime/secrets/check.ts";
 import { loadEnvFiles } from "../../src/forge/runtime/secrets/env-loader.ts";
 import { buildSecretRegistry } from "../../src/forge/compiler/secret-registry/build.ts";
-import { STRIPE_RECIPE } from "../../src/forge/compiler/recipes/definitions.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,

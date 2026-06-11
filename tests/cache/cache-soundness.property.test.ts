@@ -139,7 +139,6 @@ describe("cache invalidation and integrity", () => {
       resolutionMode: "nodenext",
     });
 
-    const store = new PackageCacheStore(cacheDir);
     const entryPath = join(
       cacheDir,
       "packages",

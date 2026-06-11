@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { FORGE_POLICY_MISSING } from "../compiler/diagnostics/codes.ts";
@@ -37,19 +37,19 @@ export interface PolicyCommandResult {
 
 function readGeneratedPolicyRegistry(workspaceRoot: string): PolicyRegistry | null {
   const absolute = join(workspaceRoot, GENERATED_DIR, "policyRegistry.json");
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as PolicyRegistry;
 }
 
 function readGeneratedPermissionMatrix(workspaceRoot: string): PermissionMatrix | null {
   const absolute = join(workspaceRoot, GENERATED_DIR, "permissionMatrix.json");
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as PermissionMatrix;
 }
 

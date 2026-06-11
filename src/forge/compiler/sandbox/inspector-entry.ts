@@ -2,8 +2,8 @@
  * Spawnable entry for sandbox runtime export inspection.
  * Reads install path from argv[2] and prints JSON RuntimeExportShape to stdout.
  */
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 interface PackageJson {
@@ -71,7 +71,12 @@ async function main(): Promise<void> {
   }
 
   const pkgPath = join(installPath, "package.json");
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as PackageJson;
+  const pkgRaw = nodeFileSystem.readText(pkgPath);
+  if (pkgRaw === null) {
+    process.stderr.write(`missing package.json at ${pkgPath}\n`);
+    process.exit(2);
+  }
+  const pkg = JSON.parse(pkgRaw) as PackageJson;
   const mainFile = resolveMainFile(installPath, pkg);
   const mod = await import(pathToFileURL(mainFile).href);
 

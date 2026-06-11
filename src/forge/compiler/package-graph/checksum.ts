@@ -1,5 +1,5 @@
-import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { hashStable } from "../primitives/hash.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
 import type { PackageApi } from "../types/package-graph.ts";
@@ -23,27 +23,15 @@ export function hashDtsFiles(installPath: string): string {
 
 function collectDtsFiles(dir: string): string[] {
   const files: string[] = [];
-  let entries: string[];
-  try {
-    entries = readdirSync(dir);
-  } catch {
-    return files;
-  }
 
-  for (const entry of entries) {
-    const full = join(dir, entry);
-    let stat;
-    try {
-      stat = statSync(full);
-    } catch {
-      continue;
-    }
-    if (stat.isDirectory()) {
-      if (entry === "node_modules") {
+  for (const entry of nodeFileSystem.readDir(dir)) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory) {
+      if (entry.name === "node_modules") {
         continue;
       }
       files.push(...collectDtsFiles(full));
-    } else if (entry.endsWith(".d.ts")) {
+    } else if (entry.name.endsWith(".d.ts")) {
       files.push(full);
     }
   }

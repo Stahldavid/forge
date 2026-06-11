@@ -31,10 +31,6 @@ function isPublicEnvVar(name: string): boolean {
   return name.startsWith("NEXT_PUBLIC_") || name.startsWith("PUBLIC_");
 }
 
-function integrationForPackage(packageName: string, alias?: string): string | undefined {
-  return alias ?? packageName;
-}
-
 export function buildSecretRegistry(classified: ClassifiedPackage[]): SecretRegistry {
   const entries = new Map<string, SecretRegistryEntry>();
 

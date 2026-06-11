@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { forgeDrift, forgeOrphanedGeneratedFile } from "../diagnostics/create.ts";
 import { BARREL_INDEX_PATH, FORGE_LOCK_PATH, GENERATED_DIR } from "../emitter/constants.ts";
 import { hashStable } from "../primitives/hash.ts";
@@ -25,22 +25,22 @@ function normalizePath(path: string): string {
 
 function readBodyHash(workspaceRoot: string, relativePath: string): string | null {
   const absolute = join(workspaceRoot, relativePath);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  return hashStable(stripDeterministicHeader(readFileSync(absolute, "utf8")));
+  return hashStable(stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? "")));
 }
 
 function walkGeneratedFiles(workspaceRoot: string, dir = GENERATED_DIR): string[] {
   const absolute = join(workspaceRoot, dir);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return [];
   }
   const files: string[] = [];
-  for (const entry of readdirSync(absolute, { withFileTypes: true })) {
+  for (const entry of nodeFileSystem.readDir(absolute)) {
     const child = join(absolute, entry.name);
     const rel = normalizePath(relative(workspaceRoot, child));
-    if (entry.isDirectory()) {
+    if (entry.isDirectory) {
       files.push(...walkGeneratedFiles(workspaceRoot, rel));
     } else {
       files.push(rel);

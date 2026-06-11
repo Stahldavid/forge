@@ -81,7 +81,7 @@ export function serializeApiTs(surface: ApiSurface): string {
   )} as const;\n`;
 }
 
-export function serializeServerApiTs(surface: ApiSurface): string {
+export function serializeServerApiTs(_surface: ApiSurface): string {
   return `import { api } from "./api.ts";
 
 export const serverApi = {
@@ -94,7 +94,7 @@ export const serverApi = {
 `;
 }
 
-export function serializeClientApiTs(surface: ApiSurface): string {
+export function serializeClientApiTs(_surface: ApiSurface): string {
   return `import { api } from "./api.ts";
 
 /** Client-side typed API surface (queries, commands; no server adapters). */

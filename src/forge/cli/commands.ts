@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { buildAppGraph } from "../compiler/app-graph/build.ts";
@@ -142,19 +142,19 @@ import { getActiveDbAdapter } from "../runtime/executor.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 
 function readGeneratedText(workspaceRoot: string, relative: string): string | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  return stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  return stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
 }
 
 export async function runGenerateCommand(

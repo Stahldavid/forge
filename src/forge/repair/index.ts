@@ -1,12 +1,5 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { spawn } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
@@ -43,17 +36,15 @@ function diagnostic(
 }
 
 function readJson<T>(workspaceRoot: string, relative: string): T | null {
-  const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  const content = nodeFileSystem.readText(join(workspaceRoot, relative));
+  if (content === null) {
     return null;
   }
-  return JSON.parse(readFileSync(absolute, "utf8")) as T;
+  return JSON.parse(content) as T;
 }
 
 function writeJson(workspaceRoot: string, relative: string, value: unknown): void {
-  const absolute = join(workspaceRoot, relative);
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, serializeCanonical(value), "utf8");
+  nodeFileSystem.writeText(join(workspaceRoot, relative), serializeCanonical(value));
 }
 
 function repairPath(id: string, file: string): string {
@@ -314,9 +305,7 @@ export function writeRepairPlan(workspaceRoot: string, plan: RepairPlan): void {
   writeJson(workspaceRoot, repairPath(plan.id, "diagnosis.json"), plan.diagnosis);
   writeJson(workspaceRoot, repairPath(plan.id, "plan.json"), plan);
   const md = renderRepairPlanMarkdown(plan);
-  const absolute = join(workspaceRoot, repairPath(plan.id, "plan.md"));
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, md, "utf8");
+  nodeFileSystem.writeText(join(workspaceRoot, repairPath(plan.id, "plan.md")), md);
 }
 
 export function buildRepairPlan(options: RepairCommandOptions): RepairResult {
@@ -353,11 +342,9 @@ function loadRepairPlan(workspaceRoot: string, idOrPath: string): RepairPlan | n
 
 export function listRepairPlans(workspaceRoot: string): RepairPlan[] {
   const absolute = join(workspaceRoot, REPAIR_DIR);
-  if (!existsSync(absolute)) {
-    return [];
-  }
-  return readdirSync(absolute)
-    .map((entry) => readJson<RepairPlan>(workspaceRoot, repairPath(entry, "plan.json")))
+  return nodeFileSystem
+    .readDir(absolute)
+    .map((entry) => readJson<RepairPlan>(workspaceRoot, repairPath(entry.name, "plan.json")))
     .filter((plan): plan is RepairPlan => Boolean(plan))
     .sort((a, b) => a.id.localeCompare(b.id));
 }
@@ -404,10 +391,11 @@ function snapshotFiles(workspaceRoot: string, plan: RepairPlan): void {
   const files = plan.rollback.files.filter(Boolean);
   const snapshot = files.map((file) => {
     const absolute = join(workspaceRoot, normalize(file));
+    const content = nodeFileSystem.readText(absolute);
     return {
       file: normalize(file),
-      existed: existsSync(absolute),
-      content: existsSync(absolute) ? readFileSync(absolute, "utf8") : null,
+      existed: content !== null,
+      content,
     };
   });
   writeJson(workspaceRoot, plan.rollback.snapshotFile, { files: snapshot });
@@ -424,13 +412,10 @@ function restoreSnapshot(workspaceRoot: string, plan: RepairPlan): void {
   for (const file of snapshot.files) {
     const absolute = join(workspaceRoot, normalize(file.file));
     if (!file.existed) {
-      if (existsSync(absolute)) {
-        rmSync(absolute, { force: true });
-      }
+      nodeFileSystem.remove(absolute);
       continue;
     }
-    mkdirSync(dirname(absolute), { recursive: true });
-    writeFileSync(absolute, file.content ?? "", "utf8");
+    nodeFileSystem.writeText(absolute, file.content ?? "");
   }
 }
 

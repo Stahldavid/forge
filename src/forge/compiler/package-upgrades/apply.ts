@@ -42,21 +42,21 @@ function assertInside(root: string, target: string): string {
 }
 
 function readPlan(path: string): PackageUpgradePlan {
-  return JSON.parse(readFileSync(path, "utf8")) as PackageUpgradePlan;
+  return JSON.parse((nodeFileSystem.readText(path) ?? "")) as PackageUpgradePlan;
 }
 
 function snapshotFiles(workspaceRoot: string, plan: PackageUpgradePlan): string {
   const snapshotDir = assertInside(workspaceRoot, plan.rollback.snapshotDir);
-  rmSync(snapshotDir, { recursive: true, force: true });
-  mkdirSync(snapshotDir, { recursive: true });
+  nodeFileSystem.remove(snapshotDir);
+  nodeFileSystem.mkdirp(snapshotDir);
 
   for (const file of plan.rollback.files) {
     const source = assertInside(workspaceRoot, file);
-    if (!existsSync(source)) {
+    if (!nodeFileSystem.exists(source)) {
       continue;
     }
     const target = join(snapshotDir, basename(file));
-    cpSync(source, target, { recursive: true, force: true });
+    nodeFileSystem.copy(source, target);
   }
 
   return snapshotDir;
@@ -66,12 +66,12 @@ function restoreSnapshot(workspaceRoot: string, plan: PackageUpgradePlan): void 
   const snapshotDir = assertInside(workspaceRoot, plan.rollback.snapshotDir);
   for (const file of plan.rollback.files) {
     const snapshot = join(snapshotDir, basename(file));
-    if (!existsSync(snapshot)) {
+    if (!nodeFileSystem.exists(snapshot)) {
       continue;
     }
     const target = assertInside(workspaceRoot, file);
-    rmSync(target, { recursive: true, force: true });
-    cpSync(snapshot, target, { recursive: true, force: true });
+    nodeFileSystem.remove(target);
+    nodeFileSystem.copy(snapshot, target);
   }
 }
 

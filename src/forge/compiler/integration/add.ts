@@ -139,8 +139,8 @@ async function analyzeRecipePackages(
     );
 
     const pkgJsonPath = join(dep.installPath, "package.json");
-    if (existsSync(pkgJsonPath)) {
-      const installed = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
+    if (nodeFileSystem.exists(pkgJsonPath)) {
+      const installed = JSON.parse((nodeFileSystem.readText(pkgJsonPath) ?? "")) as {
         version?: string;
       };
       if (installed.version) {
@@ -481,16 +481,16 @@ export function seedWorkspacePackage(
     ? packageName.slice(1).split("/")
     : [packageName];
   const target = join(workspaceRoot, "node_modules", ...segments);
-  mkdirSync(target, { recursive: true });
-  cpSync(join(fixtureRoot, ...segments), target, { recursive: true, force: true });
+  nodeFileSystem.mkdirp(target);
+  nodeFileSystem.copy(join(fixtureRoot, ...segments), target);
 
   const pkgJsonPath = join(workspaceRoot, "package.json");
-  const pkg = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
+  const pkg = JSON.parse((nodeFileSystem.readText(pkgJsonPath) ?? "")) as {
     dependencies?: Record<string, string>;
   };
   pkg.dependencies = {
     ...pkg.dependencies,
     [packageName]: "1.0.0",
   };
-  writeFileSync(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+  nodeFileSystem.writeText(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }

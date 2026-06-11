@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { runGenerateCommand } from "./commands.ts";
 import { runDevCommand } from "./dev.ts";
 import { initializeRuntimeEnv } from "../runtime/context/create-context.ts";
@@ -65,7 +65,7 @@ export async function runServeCommand(options: ServeCommandOptions): Promise<num
     return 1;
   }
 
-  if (!existsSync(`${options.workspaceRoot}/forge.lock`)) {
+  if (!nodeFileSystem.exists(`${options.workspaceRoot}/forge.lock`)) {
     if (!options.json) {
       console.error("error: missing forge.lock; run forge generate");
     }

@@ -449,7 +449,7 @@ export class MemoryAdapter implements DbAdapter {
     return normalizeRows(projectRows(sql, rows));
   }
 
-  private handleJoinSelect(sql: string, params: unknown[]): DbQueryResult {
+  private handleJoinSelect(sql: string, _params: unknown[]): DbQueryResult {
     const deliveryTable = this.tables.get("_forge_outbox_deliveries");
     const outboxTable = this.tables.get("_forge_outbox");
     if (!deliveryTable || !outboxTable) {
@@ -474,8 +474,6 @@ export class MemoryAdapter implements DbAdapter {
   }
 
   private filterRows(rows: MemoryRow[], sql: string, params: unknown[]): MemoryRow[] {
-    let paramIndex = 0;
-
     if (/status\s*=\s*'pending'/i.test(sql) && /next_attempt_at\s*<=\s*now\(\)/i.test(sql)) {
       return rows.filter((row) => row.status === "pending");
     }
@@ -526,7 +524,6 @@ export class MemoryAdapter implements DbAdapter {
     ];
 
     return rows.filter((row) => {
-      paramIndex = 0;
       for (const condition of conditions) {
         const column = condition[1]!;
         const operator = condition[2]!;

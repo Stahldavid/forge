@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -23,12 +23,12 @@ interface PackageScripts {
 
 function readPackageScripts(workspaceRoot: string): PackageScripts {
   const packageJsonPath = join(workspaceRoot, "package.json");
-  if (!existsSync(packageJsonPath)) {
+  if (!nodeFileSystem.exists(packageJsonPath)) {
     return {};
   }
 
   try {
-    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+    const pkg = JSON.parse((nodeFileSystem.readText(packageJsonPath) ?? "")) as {
       scripts?: PackageScripts;
     };
     return pkg.scripts ?? {};
@@ -83,16 +83,16 @@ function skippedStep(name: string, reason: string): VerifyStep {
 
 export function configuredAgentTargets(workspaceRoot: string): AgentAdapterTarget[] {
   const targets: AgentAdapterTarget[] = [];
-  if (existsSync(join(workspaceRoot, ".forge/agent/context.json"))) {
+  if (nodeFileSystem.exists(join(workspaceRoot, ".forge/agent/context.json"))) {
     targets.push("generic");
   }
-  if (existsSync(join(workspaceRoot, ".codex"))) {
+  if (nodeFileSystem.exists(join(workspaceRoot, ".codex"))) {
     targets.push("codex");
   }
-  if (existsSync(join(workspaceRoot, ".cursor"))) {
+  if (nodeFileSystem.exists(join(workspaceRoot, ".cursor"))) {
     targets.push("cursor");
   }
-  if (existsSync(join(workspaceRoot, "CLAUDE.md")) || existsSync(join(workspaceRoot, ".claude"))) {
+  if (nodeFileSystem.exists(join(workspaceRoot, "CLAUDE.md")) || nodeFileSystem.exists(join(workspaceRoot, ".claude"))) {
     targets.push("claude");
   }
   return targets;

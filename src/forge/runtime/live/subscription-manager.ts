@@ -13,7 +13,6 @@ import type {
   DataChange,
   DataDependency,
   LiveInvalidation,
-  LiveMessage,
   LiveProductionLimits,
   LiveSubscribeInput,
   LiveSubscription,

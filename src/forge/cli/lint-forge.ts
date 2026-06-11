@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join, relative } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { FORGE_GUARD_VIOLATION } from "../compiler/diagnostics/codes.ts";
@@ -14,25 +14,24 @@ const SKIP_DIRS = new Set(["node_modules", "_generated", ".forge", "dist", "buil
 
 function collectSourceFiles(workspaceRoot: string, root: string): string[] {
   const absoluteRoot = join(workspaceRoot, root);
-  if (!existsSync(absoluteRoot)) {
+  if (!nodeFileSystem.exists(absoluteRoot)) {
     return [];
   }
 
   const files: string[] = [];
 
   function walk(dir: string): void {
-    for (const entry of readdirSync(dir)) {
-      const absolute = join(dir, entry);
-      const stat = statSync(absolute);
-      if (stat.isDirectory()) {
-        if (SKIP_DIRS.has(entry)) {
+    for (const entry of nodeFileSystem.readDir(dir)) {
+      const absolute = join(dir, entry.name);
+      if (entry.isDirectory) {
+        if (SKIP_DIRS.has(entry.name)) {
           continue;
         }
         walk(absolute);
         continue;
       }
 
-      if (SOURCE_EXTENSIONS.has(entry.slice(entry.lastIndexOf(".")))) {
+      if (SOURCE_EXTENSIONS.has(entry.name.slice(entry.name.lastIndexOf(".")))) {
         files.push(relative(workspaceRoot, absolute).replace(/\\/g, "/"));
       }
     }
@@ -57,7 +56,7 @@ export async function lintForgeGuards(workspaceRoot: string): Promise<{
     "runtimeMatrix.json",
   );
 
-  if (!existsSync(importGuardsPath) || !existsSync(runtimeMatrixPath)) {
+  if (!nodeFileSystem.exists(importGuardsPath) || !nodeFileSystem.exists(runtimeMatrixPath)) {
     return {
       exitCode: 0,
       diagnostics: [
@@ -76,7 +75,7 @@ export async function lintForgeGuards(workspaceRoot: string): Promise<{
 
   for (const root of ["src", "tests", "examples"]) {
     for (const file of collectSourceFiles(workspaceRoot, root)) {
-      const source = readFileSync(join(workspaceRoot, file), "utf8");
+      const source = (nodeFileSystem.readText(join(workspaceRoot, file)) ?? "");
       const violations = checkSourceForgeGuards(
         file,
         source,

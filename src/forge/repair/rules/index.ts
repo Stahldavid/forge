@@ -1,6 +1,5 @@
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import { hashStable } from "../../compiler/primitives/hash.ts";
-import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type {
   FailureInput,
   FailureKind,

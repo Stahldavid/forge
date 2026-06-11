@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
@@ -36,10 +36,10 @@ function deployDir(workspaceRoot: string): string {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  return JSON.parse(stripDeterministicHeader(readFileSync(absolute, "utf8"))) as T;
+  return JSON.parse(stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""))) as T;
 }
 
 function requiredEnvNames(workspaceRoot: string): string[] {
@@ -367,12 +367,12 @@ export async function runSelfHostCommand(
   const dir = deployDir(options.workspaceRoot);
 
   if (options.subcommand === "clean") {
-    rmSync(dir, { recursive: true, force: true });
+    nodeFileSystem.remove(dir);
     return { ok: true, exitCode: 0, files: [] };
   }
 
   if (options.subcommand === "compose" || options.subcommand === "env") {
-    mkdirSync(dir, { recursive: true });
+    nodeFileSystem.mkdirp(dir);
     const files: Array<[string, string]> = [];
     if (options.subcommand === "compose") {
       files.push(
@@ -386,7 +386,7 @@ export async function runSelfHostCommand(
     }
     files.push([".env.example", renderEnvExample(options.workspaceRoot)]);
     for (const [file, contents] of files) {
-      writeFileSync(join(dir, file), contents, "utf8");
+      nodeFileSystem.writeText(join(dir, file), contents);
     }
     return { ok: true, exitCode: 0, files: files.map(([file]) => `deploy/${file}`) };
   }
@@ -419,11 +419,11 @@ export async function runSelfHostCommand(
     ".env.example",
     "README.md",
   ]) {
-    checks.push({ name: `deploy/${file}`, ok: existsSync(join(dir, file)) });
+    checks.push({ name: `deploy/${file}`, ok: nodeFileSystem.exists(join(dir, file)) });
   }
 
-  const envExample = existsSync(join(dir, ".env.example"))
-    ? readFileSync(join(dir, ".env.example"), "utf8")
+  const envExample = nodeFileSystem.exists(join(dir, ".env.example"))
+    ? (nodeFileSystem.readText(join(dir, ".env.example")) ?? "")
     : "";
   const missingEnv = requiredEnvNames(options.workspaceRoot).filter(
     (name) => !envExample.includes(`${name}=`),
@@ -447,8 +447,8 @@ export async function runSelfHostCommand(
   });
   checks.push({
     name: "dockerignore-excludes-env",
-    ok: existsSync(join(dir, ".dockerignore")) &&
-      readFileSync(join(dir, ".dockerignore"), "utf8").includes(".env"),
+    ok: nodeFileSystem.exists(join(dir, ".dockerignore")) &&
+      (nodeFileSystem.readText(join(dir, ".dockerignore")) ?? "").includes(".env"),
   });
 
   const ok = checks.every((check) => check.ok);

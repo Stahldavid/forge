@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildTableMap } from "../../src/forge/compiler/data-graph/sql/serialize.ts";
-import { buildSqlPlan } from "../../src/forge/compiler/data-graph/sql/ddl.ts";
-import { buildDataGraph } from "../../src/forge/compiler/data-graph/build.ts";
-import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
 import type { SqlPlan } from "../../src/forge/compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";

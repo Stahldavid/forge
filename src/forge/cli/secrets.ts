@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
@@ -7,7 +7,7 @@ import {
   loadSecretRegistry,
 } from "../runtime/secrets/check.ts";
 import { getRuntimeEnvStore, initializeRuntimeEnv } from "../runtime/context/create-context.ts";
-import { loadEnvFiles, redactSecretValue } from "../runtime/secrets/env-loader.ts";
+import { redactSecretValue } from "../runtime/secrets/env-loader.ts";
 
 export type SecretsSubcommand = "list" | "check" | "print" | "set" | "unset";
 
@@ -28,12 +28,12 @@ export interface SecretsCommandResult {
 
 function parseEnvLocal(workspaceRoot: string): Record<string, string> {
   const path = join(workspaceRoot, ".env.local");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return {};
   }
 
   const values: Record<string, string> = {};
-  for (const rawLine of readFileSync(path, "utf8").split(/\r?\n/)) {
+  for (const rawLine of (nodeFileSystem.readText(path) ?? "").split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith("#")) continue;
     const eq = line.indexOf("=");
@@ -47,7 +47,7 @@ function writeEnvLocal(workspaceRoot: string, values: Record<string, string>): v
   const lines = Object.entries(values)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}=${value}`);
-  writeFileSync(join(workspaceRoot, ".env.local"), `${lines.join("\n")}\n`, "utf8");
+  nodeFileSystem.writeText(join(workspaceRoot, ".env.local"), `${lines.join("\n")}\n`);
 }
 
 export async function runSecretsCommand(

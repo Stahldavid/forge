@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { buildSqlPlan } from "../compiler/data-graph/sql/ddl.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
@@ -43,19 +43,19 @@ export interface DbCommandResult {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 
 function readGeneratedText(workspaceRoot: string, relative: string): string | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  return stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  return stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
 }
 
 function splitSqlStatements(sql: string): string[] {

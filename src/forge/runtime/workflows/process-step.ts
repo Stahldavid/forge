@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import type { TableMapEntry } from "../../compiler/data-graph/sql/serialize.ts";
 import type { WorkflowDefinition } from "../../compiler/types/workflow-registry.ts";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";

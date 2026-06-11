@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, normalize, relative, resolve } from "node:path";
+import { normalize, relative, resolve } from "node:path";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
@@ -57,17 +57,11 @@ function absPath(workspaceRoot: string, file: string): string {
 }
 
 function readText(workspaceRoot: string, file: string): string | null {
-  const absolute = absPath(workspaceRoot, file);
-  if (!existsSync(absolute)) {
-    return null;
-  }
-  return readFileSync(absolute, "utf8");
+  return nodeFileSystem.readText(absPath(workspaceRoot, file));
 }
 
 export function writeText(workspaceRoot: string, file: string, content: string): void {
-  const absolute = absPath(workspaceRoot, file);
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, content, "utf8");
+  nodeFileSystem.writeText(absPath(workspaceRoot, file), content);
 }
 
 export function blueprintHash(blueprint: FeatureBlueprint): string {
@@ -87,7 +81,8 @@ export function parseFeatureBlueprint(
   blueprintPath: string,
 ): { blueprint?: FeatureBlueprint; diagnostics: Diagnostic[] } {
   const absolute = absPath(workspaceRoot, blueprintPath);
-  if (!existsSync(absolute)) {
+  const raw = nodeFileSystem.readText(absolute);
+  if (raw === null) {
     return {
       diagnostics: [
         diagnostic(
@@ -101,7 +96,7 @@ export function parseFeatureBlueprint(
   }
 
   try {
-    const parsed = JSON.parse(readFileSync(absolute, "utf8")) as FeatureBlueprint;
+    const parsed = JSON.parse(raw) as FeatureBlueprint;
     return { blueprint: parsed, diagnostics: validateFeatureBlueprint(workspaceRoot, parsed, blueprintPath) };
   } catch (error) {
     return {

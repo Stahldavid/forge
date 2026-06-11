@@ -1,13 +1,3 @@
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
-import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
 import ts from "typescript";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
@@ -23,9 +13,24 @@ import type {
   RefactorRecord,
   RefactorResult,
 } from "./types.ts";
+import {
+  isGenerated,
+  makeFile,
+  makePatchFromContent,
+  patchFile,
+  readDirEntries,
+  readText,
+  removeFile,
+  walkFiles,
+  writeText,
+} from "./workspace-fs.ts";
+import {
+  parseTableField,
+  pushUnique,
+  wordReplace,
+} from "./text-utils.ts";
 
 const REFACTOR_DIR = ".forge/refactors";
-const SUPPORTED_EXTENSIONS = new Set([".ts", ".tsx", ".json", ".md"]);
 
 interface SnapshotFile {
   file: string;
@@ -53,72 +58,6 @@ function diagnostic(
   });
 }
 
-function absPath(workspaceRoot: string, file: string): string {
-  const root = resolve(workspaceRoot);
-  const absolute = resolve(root, normalize(file));
-  const rel = relative(root, absolute);
-  if (rel.startsWith("..") || resolve(rel) === rel) {
-    throw new Error(`refusing to access outside workspace: ${file}`);
-  }
-  return absolute;
-}
-
-function normalizeRel(file: string): string {
-  return file.replace(/\\/g, "/").replace(/^\/+/, "");
-}
-
-function readText(workspaceRoot: string, file: string): string | null {
-  const absolute = absPath(workspaceRoot, file);
-  if (!existsSync(absolute)) {
-    return null;
-  }
-  return readFileSync(absolute, "utf8");
-}
-
-function writeText(workspaceRoot: string, file: string, content: string): void {
-  const absolute = absPath(workspaceRoot, file);
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, content, "utf8");
-}
-
-function isGenerated(file: string): boolean {
-  return normalizeRel(file).startsWith("src/forge/_generated/");
-}
-
-function walkFiles(workspaceRoot: string, dir = "."): string[] {
-  const absolute = absPath(workspaceRoot, dir);
-  if (!existsSync(absolute)) {
-    return [];
-  }
-  const files: string[] = [];
-  for (const entry of readdirSync(absolute, { withFileTypes: true })) {
-    const rel = normalizeRel(join(dir, entry.name));
-    if (
-      entry.name === "node_modules" ||
-      rel.startsWith(".forge/cache") ||
-      rel.startsWith(".forge/refactors") ||
-      rel.startsWith(".forge/features/plans") ||
-      rel.startsWith("src/forge/_generated")
-    ) {
-      continue;
-    }
-    if (entry.isDirectory()) {
-      files.push(...walkFiles(workspaceRoot, rel));
-    } else if (SUPPORTED_EXTENSIONS.has(extname(entry.name))) {
-      files.push(rel);
-    }
-  }
-  return files.sort();
-}
-
-function wordReplace(content: string, from: string, to: string): string {
-  return content.replace(new RegExp(`\\b${escapeRegExp(from)}\\b`, "g"), to);
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function emptyImpact(): RefactorImpact {
   return {
     data: { tables: [], fields: [], refs: [], indexes: [], rlsPolicies: [] },
@@ -134,78 +73,6 @@ function emptyImpact(): RefactorImpact {
       "src/forge/_generated/agentContract.json",
     ],
   };
-}
-
-function pushUnique(values: string[], value: string): void {
-  if (!values.includes(value)) {
-    values.push(value);
-  }
-}
-
-function patchFile(
-  workspaceRoot: string,
-  file: string,
-  description: string,
-  transform: (content: string) => string,
-): PlannedPatch | null {
-  if (isGenerated(file)) {
-    return null;
-  }
-  const before = readText(workspaceRoot, file);
-  if (before === null) {
-    return null;
-  }
-  const after = transform(before);
-  if (after === before) {
-    return null;
-  }
-  return {
-    file,
-    kind: "replace-section",
-    description,
-    beforeHash: hashStable(before),
-    afterPreview: after,
-  };
-}
-
-function makeFile(
-  workspaceRoot: string,
-  file: string,
-  description: string,
-  content: string,
-): PlannedFile {
-  return {
-    file,
-    description,
-    content,
-    exists: existsSync(absPath(workspaceRoot, file)),
-  };
-}
-
-function makePatchFromContent(
-  file: string,
-  description: string,
-  before: string,
-  after: string,
-): PlannedPatch | null {
-  if (before === after) {
-    return null;
-  }
-  return {
-    file,
-    kind: "replace-section",
-    description,
-    beforeHash: hashStable(before),
-    afterPreview: after,
-  };
-}
-
-function parseTableField(value: string | undefined): { table: string; field: string } | null {
-  const [table, field] = (value ?? "").split(".");
-  if (!table || !field) {
-    return null;
-  }
-  return { table, field };
 }
 
 function inferIntent(options: RefactorCommandOptions): {
@@ -1030,7 +897,7 @@ export function buildRefactorPlan(options: RefactorCommandOptions): RefactorResu
   return { ok, plan, diagnostics: plan.diagnostics, exitCode: ok ? 0 : 1 };
 }
 
-function planPath(workspaceRoot: string, id: string): string {
+function planPath(_workspaceRoot: string, id: string): string {
   return `${REFACTOR_DIR}/${id}/plan.json`;
 }
 
@@ -1086,7 +953,7 @@ export function rollbackRefactor(workspaceRoot: string, id: string): RefactorRes
     if (file.existed) {
       writeText(workspaceRoot, file.file, file.content ?? "");
     } else {
-      rmSync(absPath(workspaceRoot, file.file), { force: true });
+      removeFile(workspaceRoot, file.file);
     }
   }
   const record: RefactorRecord = {
@@ -1125,7 +992,7 @@ export function applyRefactorPlan(workspaceRoot: string, plan: RefactorPlan, for
     writeText(workspaceRoot, patch.file, patch.afterPreview);
   }
   for (const file of plan.filesToDelete) {
-    rmSync(absPath(workspaceRoot, file.file), { force: true });
+    removeFile(workspaceRoot, file.file);
   }
   const ok = !diagnostics.some((diag) => diag.severity === "error");
   const record: RefactorRecord = {
@@ -1142,13 +1009,9 @@ export function applyRefactorPlan(workspaceRoot: string, plan: RefactorPlan, for
 }
 
 export function listRefactors(workspaceRoot: string): RefactorRecord[] {
-  const dir = absPath(workspaceRoot, REFACTOR_DIR);
-  if (!existsSync(dir)) {
-    return [];
-  }
   const records: RefactorRecord[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) {
+  for (const entry of readDirEntries(workspaceRoot, REFACTOR_DIR)) {
+    if (!entry.isDirectory) {
       continue;
     }
     const record = readText(workspaceRoot, `${REFACTOR_DIR}/${entry.name}/applied.json`);

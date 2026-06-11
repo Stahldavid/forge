@@ -1,5 +1,5 @@
-import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../../../compiler/fs/index.ts";
 import type { ForgeTelemetryEnvelope } from "../types.ts";
 
 function telemetryDir(workspaceRoot: string): string {
@@ -21,10 +21,8 @@ export async function writeLocalJsonl(
   envelope: ForgeTelemetryEnvelope,
   workspaceRoot: string,
 ): Promise<void> {
-  const dir = telemetryDir(workspaceRoot);
-  mkdirSync(dir, { recursive: true });
   const file = fileForType(envelope.type, workspaceRoot);
-  appendFileSync(file, `${JSON.stringify(envelope)}\n`, "utf8");
+  nodeFileSystem.appendText(file, `${JSON.stringify(envelope)}\n`);
 }
 
 export function localJsonlPaths(workspaceRoot: string): {

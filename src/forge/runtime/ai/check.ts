@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 import { join } from "node:path";
 import { GENERATED_DIR } from "../../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../compiler/primitives/header.ts";
@@ -10,10 +10,10 @@ import type { ForgeAiProvider } from "./types.ts";
 
 export function loadAiRegistry(workspaceRoot: string): AiRegistry | null {
   const path = join(workspaceRoot, GENERATED_DIR, "aiRegistry.json");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(path, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(path) ?? ""));
   return JSON.parse(raw) as AiRegistry;
 }
 
@@ -24,10 +24,10 @@ export function loadAiProviders(workspaceRoot: string) {
 
 export function loadAiModels(workspaceRoot: string) {
   const path = join(workspaceRoot, GENERATED_DIR, "aiModels.json");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return [];
   }
-  const raw = stripDeterministicHeader(readFileSync(path, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(path) ?? ""));
   const parsed = JSON.parse(raw) as { models: unknown[] };
   return parsed.models;
 }

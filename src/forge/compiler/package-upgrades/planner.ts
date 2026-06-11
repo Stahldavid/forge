@@ -62,10 +62,10 @@ export interface OutdatedPackage {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 
@@ -96,7 +96,7 @@ function readPackageJson(workspaceRoot: string): {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
 } {
-  return JSON.parse(readFileSync(join(workspaceRoot, "package.json"), "utf8")) as {
+  return JSON.parse((nodeFileSystem.readText(join(workspaceRoot, "package.json")) ?? "")) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
@@ -125,10 +125,10 @@ function fixtureMetadata(registryDir: string | undefined, packageName: string): 
     return null;
   }
   const path = join(registryDir, packageKey(packageName), "metadata.json");
-  if (!existsSync(path)) {
+  if (!nodeFileSystem.exists(path)) {
     return null;
   }
-  return JSON.parse(readFileSync(path, "utf8")) as {
+  return JSON.parse((nodeFileSystem.readText(path) ?? "")) as {
     name: string;
     "dist-tags"?: Record<string, string>;
     versions?: Record<string, unknown>;
@@ -218,7 +218,7 @@ async function analyzeTargetPackage(input: {
     ? join(input.registryDir, packageKey(input.packageName), input.versionInfo.version)
     : null;
 
-  if (fixturePath && existsSync(join(fixturePath, "package.json"))) {
+  if (fixturePath && nodeFileSystem.exists(join(fixturePath, "package.json"))) {
     const api = await compiler.analyze(
       {
         name: input.packageName,
@@ -273,7 +273,7 @@ async function analyzeTargetPackage(input: {
     };
   } finally {
     if (tempDir) {
-      rmSync(tempDir, { recursive: true, force: true });
+      nodeFileSystem.remove(tempDir);
     }
   }
 }
@@ -334,13 +334,13 @@ function reinstallCommand(packageManager: PackageManager): string {
 }
 
 function writePlanArtifacts(plan: PackageUpgradePlan, planDir: string): void {
-  mkdirSync(planDir, { recursive: true });
-  writeFileSync(join(planDir, "plan.json"), serializeCanonical(plan), "utf8");
-  writeFileSync(join(planDir, "plan.md"), renderUpgradePlanMarkdown(plan), "utf8");
-  writeFileSync(join(planDir, "package-api-diff.json"), serializeCanonical(plan.apiDiff), "utf8");
-  writeFileSync(join(planDir, "affected-symbols.json"), serializeCanonical(plan.affected), "utf8");
-  writeFileSync(join(planDir, "test-plan.json"), serializeCanonical(plan.testPlan), "utf8");
-  writeFileSync(join(planDir, "rollback.json"), serializeCanonical(plan.rollback), "utf8");
+  nodeFileSystem.mkdirp(planDir);
+  nodeFileSystem.writeText(join(planDir, "plan.json"), serializeCanonical(plan));
+  nodeFileSystem.writeText(join(planDir, "plan.md"), renderUpgradePlanMarkdown(plan));
+  nodeFileSystem.writeText(join(planDir, "package-api-diff.json"), serializeCanonical(plan.apiDiff));
+  nodeFileSystem.writeText(join(planDir, "affected-symbols.json"), serializeCanonical(plan.affected));
+  nodeFileSystem.writeText(join(planDir, "test-plan.json"), serializeCanonical(plan.testPlan));
+  nodeFileSystem.writeText(join(planDir, "rollback.json"), serializeCanonical(plan.rollback));
 }
 
 export async function createUpgradePlan(

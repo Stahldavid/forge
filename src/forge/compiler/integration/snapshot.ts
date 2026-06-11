@@ -1,11 +1,5 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { detectPackageManager, getLockfileForPm } from "../package-manager/detect.ts";
 import { FORGE_LOCK_PATH } from "../emitter/constants.ts";
 import { manifestPath } from "../orchestrator/manifest.ts";
@@ -15,10 +9,7 @@ export interface VersionControlledSnapshot {
 }
 
 function readOptional(path: string): string | null {
-  if (!existsSync(path)) {
-    return null;
-  }
-  return readFileSync(path, "utf8");
+  return nodeFileSystem.readText(path);
 }
 
 export function snapshotVersionControlled(
@@ -52,17 +43,10 @@ export function restoreVersionControlledSnapshot(
   for (const [relative, content] of snapshot.files) {
     const absolute = join(workspaceRoot, relative);
     if (content === null) {
-      if (existsSync(absolute)) {
-        try {
-          unlinkSync(absolute);
-        } catch {
-          // best-effort
-        }
-      }
+      nodeFileSystem.remove(absolute);
       continue;
     }
 
-    mkdirSync(dirname(absolute), { recursive: true });
-    writeFileSync(absolute, content, "utf8");
+    nodeFileSystem.writeText(absolute, content);
   }
 }

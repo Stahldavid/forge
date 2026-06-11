@@ -1,12 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
 import { canonicalJson, serializeCanonical } from "../compiler/primitives/serialize.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
-import type { AppGraph, ForgeSymbol } from "../compiler/types/app-graph.ts";
+import type { AppGraph } from "../compiler/types/app-graph.ts";
 import type { DataGraph } from "../compiler/types/data-graph.ts";
 import type { PackageGraph } from "../compiler/types/package-graph.ts";
 import type { PolicyRegistry } from "../compiler/types/policy-registry.ts";
@@ -47,10 +47,11 @@ function normalize(path: string): string {
 
 function readJson<T>(workspaceRoot: string, relative: string, fallback: T): T {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  const content = nodeFileSystem.readText(absolute);
+  if (content === null) {
     return fallback;
   }
-  return JSON.parse(stripDeterministicHeader(readFileSync(absolute, "utf8"))) as T;
+  return JSON.parse(stripDeterministicHeader(content)) as T;
 }
 
 function emptyImpacted(): ImpactedSystems {
@@ -92,17 +93,9 @@ function sortImpact(impact: ImpactedSystems): ImpactedSystems {
   return impact;
 }
 
-function symbolNames(appGraph: AppGraph, kind: ForgeSymbol["kind"]): string[] {
-  return appGraph.symbols.filter((symbol) => symbol.kind === kind).map((symbol) => symbol.name).sort();
-}
-
 function fileText(workspaceRoot: string, file: string): string {
-  const absolute = join(workspaceRoot, file);
-  if (!existsSync(absolute)) {
-    return "";
-  }
   try {
-    return readFileSync(absolute, "utf8");
+    return nodeFileSystem.readText(join(workspaceRoot, file)) ?? "";
   } catch {
     return "";
   }
@@ -158,8 +151,9 @@ function readPlanFiles(workspaceRoot: string, source: ImpactSource): string[] {
   for (const candidate of candidates) {
     if (!candidate) continue;
     const absolute = join(workspaceRoot, candidate);
-    if (!existsSync(absolute)) continue;
-    const parsed = JSON.parse(readFileSync(absolute, "utf8")) as Record<string, unknown>;
+    const raw = nodeFileSystem.readText(absolute);
+    if (raw === null) continue;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
     const files = [
       ...(((parsed.filesToCreate as Array<{ file?: string }>) ?? []).map((file) => file.file)),
       ...(((parsed.filesToModify as Array<{ file?: string }>) ?? []).map((file) => file.file)),
@@ -560,10 +554,10 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
 
 export function writeTestPlan(workspaceRoot: string, plan: ImpactTestPlan): string {
   const dir = join(workspaceRoot, TEST_PLAN_DIR, plan.source.mode);
-  mkdirSync(dir, { recursive: true });
+  nodeFileSystem.mkdirp(dir);
   const jsonPath = join(dir, "plan.json");
-  writeFileSync(jsonPath, serializeCanonical(plan), "utf8");
-  writeFileSync(join(dir, "plan.md"), renderTestPlanMarkdown(plan), "utf8");
+  nodeFileSystem.writeText(jsonPath, serializeCanonical(plan));
+  nodeFileSystem.writeText(join(dir, "plan.md"), renderTestPlanMarkdown(plan));
   return normalize(jsonPath.replace(`${workspaceRoot}/`, ""));
 }
 
@@ -679,11 +673,11 @@ export async function runImpactTestPlan(
   };
   const reportPath = options.report ?? join(TEST_RUN_DIR, "last.json");
   const absolute = join(workspaceRoot, reportPath);
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, serializeCanonical(record), "utf8");
+  nodeFileSystem.mkdirp(dirname(absolute));
+  nodeFileSystem.writeText(absolute, serializeCanonical(record));
   if (!options.report) {
     const archive = join(workspaceRoot, TEST_RUN_DIR, `${record.id}.json`);
-    writeFileSync(archive, serializeCanonical(record), "utf8");
+    nodeFileSystem.writeText(archive, serializeCanonical(record));
   }
   return record;
 }
@@ -708,7 +702,8 @@ export async function runTestCommand(options: TestCommandOptions): Promise<Impac
   }
   let plan: ImpactTestPlan;
   if (options.subcommand === "run" && options.planPath) {
-    plan = JSON.parse(readFileSync(join(options.workspaceRoot, options.planPath), "utf8")) as ImpactTestPlan;
+    const raw = nodeFileSystem.readText(join(options.workspaceRoot, options.planPath));
+    plan = JSON.parse(raw ?? "{}") as ImpactTestPlan;
   } else {
     plan = buildImpactTestPlan(options);
   }

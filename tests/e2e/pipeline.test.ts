@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { forgeAdd } from "../../src/forge/compiler/integration/add.ts";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import { checkImportGuards } from "../../src/forge/compiler/guards/check-import-guards.ts";
-import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
 import { buildRuntimeMatrix } from "../../src/forge/compiler/classifier/runtime-matrix.ts";
 import { classify } from "../../src/forge/compiler/classifier/classify.ts";
 import { resolveRecipe } from "../../src/forge/compiler/recipes/registry.ts";

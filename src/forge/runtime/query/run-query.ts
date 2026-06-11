@@ -29,7 +29,7 @@ import { loadManifest } from "../../compiler/orchestrator/manifest.ts";
 import type { RuntimeMatrix } from "../../compiler/types/runtime-matrix.ts";
 import { GENERATED_DIR } from "../../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../compiler/primitives/header.ts";
-import { readFileSync, existsSync } from "node:fs";
+import { nodeFileSystem } from "../../compiler/fs/index.ts";
 
 export interface RunQueryOptions {
   args?: unknown;
@@ -57,10 +57,10 @@ export interface ListQueriesResult {
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
-  if (!existsSync(absolute)) {
+  if (!nodeFileSystem.exists(absolute)) {
     return null;
   }
-  const raw = stripDeterministicHeader(readFileSync(absolute, "utf8"));
+  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
   return JSON.parse(raw) as T;
 }
 

@@ -57,10 +57,6 @@ describe("Deterministic Emitter", () => {
   test("write mode writes only changed files and forge.lock last", async () => {
     const workspace = tempWorkspace("write");
     const plan = makeSampleEmitPlan();
-    const context = {
-      generatorVersion: plan.lock.generatorVersion,
-      inputHash: plan.lock.inputHash,
-    };
 
     try {
       const first = await emit(plan, { workspaceRoot: workspace, mode: "write" });

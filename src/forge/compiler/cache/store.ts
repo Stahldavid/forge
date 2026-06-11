@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import type { PackageApi } from "../types/package-graph.ts";
 import type { PackageCacheKey } from "../types/lock.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
@@ -20,7 +20,7 @@ export class PackageCacheStore {
 
   constructor(cacheDir: string) {
     this.packagesDir = join(cacheDir, "packages");
-    mkdirSync(this.packagesDir, { recursive: true });
+    nodeFileSystem.mkdirp(this.packagesDir);
   }
 
   private entryPath(key: PackageCacheKey): string {
@@ -33,10 +33,8 @@ export class PackageCacheStore {
     const normalizedKey = buildPackageCacheKey(key);
     const path = this.entryPath(normalizedKey);
 
-    let raw: string;
-    try {
-      raw = readFileSync(path, "utf8");
-    } catch {
+    const raw = nodeFileSystem.readText(path);
+    if (raw === null) {
       return { miss: true };
     }
 
@@ -57,24 +55,13 @@ export class PackageCacheStore {
   async put(key: PackageCacheKey, result: PackageApi): Promise<void> {
     const normalizedKey = buildPackageCacheKey(key);
     const path = this.entryPath(normalizedKey);
-    const tempPath = `${path}.tmp`;
 
     const entry: CacheEntry = {
       key: normalizedKey,
       result,
     };
 
-    writeFileSync(tempPath, serializeCacheEntry(entry), "utf8");
-    try {
-      renameSync(tempPath, path);
-    } catch {
-      writeFileSync(path, serializeCacheEntry(entry), "utf8");
-      try {
-        unlinkSync(tempPath);
-      } catch {
-        // ignore
-      }
-    }
+    nodeFileSystem.writeText(path, serializeCacheEntry(entry));
   }
 
   serializeKey(key: PackageCacheKey): string {

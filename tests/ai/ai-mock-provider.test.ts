@@ -2,8 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   createMockAiProvider,
   dequeueMockAiResponse,
-  enqueueMockAiResponse,
-  resetMockAiQueue,
 } from "../../src/forge/runtime/ai/mock.ts";
 import { estimateCostUsd } from "../../src/forge/runtime/ai/cost-estimator.ts";
 

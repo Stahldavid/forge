@@ -1,13 +1,6 @@
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { cpSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 
 export type NewTemplateName = "b2b-support-web";
@@ -74,22 +67,21 @@ function displayName(name: string): string {
 
 function replaceTokens(targetDir: string, appName: string, packageManager: string): void {
   function walk(dir: string): void {
-    for (const entry of readdirSync(dir)) {
-      const absolute = join(dir, entry);
-      const stat = statSync(absolute);
-      if (stat.isDirectory()) {
+    for (const entry of nodeFileSystem.readDir(dir)) {
+      const absolute = join(dir, entry.name);
+      if (entry.isDirectory) {
         walk(absolute);
         continue;
       }
-      if (!stat.isFile() || !isTextFile(absolute)) {
+      if (!entry.isFile || !isTextFile(absolute)) {
         continue;
       }
 
-      const text = readFileSync(absolute, "utf8")
+      const text = (nodeFileSystem.readText(absolute) ?? "")
         .replaceAll("__FORGE_APP_NAME__", appName)
         .replaceAll("__FORGE_APP_TITLE__", displayName(appName))
         .replaceAll("__PACKAGE_MANAGER__", packageManager);
-      writeFileSync(absolute, text, "utf8");
+      nodeFileSystem.writeText(absolute, text);
     }
   }
 
@@ -138,7 +130,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
   }
 
   const source = templateRoot(options.template);
-  if (!existsSync(source)) {
+  if (!nodeFileSystem.exists(source)) {
     return {
       name: options.name,
       template: options.template,
@@ -154,7 +146,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
   }
 
   const targetDir = resolve(options.workspaceRoot, options.name);
-  if (existsSync(targetDir)) {
+  if (nodeFileSystem.exists(targetDir)) {
     return {
       name: options.name,
       template: options.template,
@@ -169,7 +161,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     };
   }
 
-  mkdirSync(targetDir, { recursive: true });
+  nodeFileSystem.mkdirp(targetDir);
   cpSync(source, targetDir, { recursive: true, force: true });
   replaceTokens(targetDir, options.name, options.packageManager);
 
@@ -194,7 +186,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
   }
 
   let generated = false;
-  if (existsSync(join(targetDir, "node_modules"))) {
+  if (nodeFileSystem.exists(join(targetDir, "node_modules"))) {
     const generate = await runGenerate({
       workspaceRoot: targetDir,
       check: false,

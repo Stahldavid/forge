@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { nodeFileSystem } from "../fs/index.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import { FORGE_SECRET_DIRECT_PROCESS_ENV } from "../diagnostics/codes.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
@@ -34,24 +34,11 @@ function shouldScanFile(relativePath: string): boolean {
 }
 
 function collectSourceFiles(root: string, dir: string, files: string[]): void {
-  let entries: string[];
-  try {
-    entries = readdirSync(dir);
-  } catch {
-    return;
-  }
+  for (const entry of nodeFileSystem.readDir(dir)) {
+    const absolute = join(dir, entry.name);
 
-  for (const entry of entries) {
-    const absolute = join(dir, entry);
-    let stat;
-    try {
-      stat = statSync(absolute);
-    } catch {
-      continue;
-    }
-
-    if (stat.isDirectory()) {
-      if (SKIP_DIRS.has(entry)) {
+    if (entry.isDirectory) {
+      if (SKIP_DIRS.has(entry.name)) {
         continue;
       }
       collectSourceFiles(root, absolute, files);
@@ -79,7 +66,7 @@ export function checkDirectProcessEnvUsage(
   const recorded = new Set<string>();
 
   for (const file of files) {
-    const content = readFileSync(file, "utf8");
+    const content = (nodeFileSystem.readText(file) ?? "");
     let match: RegExpExecArray | null;
     PROCESS_ENV_PATTERN.lastIndex = 0;
 

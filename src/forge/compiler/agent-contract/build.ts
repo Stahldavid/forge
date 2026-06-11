@@ -84,12 +84,12 @@ function uniqueSorted(items: string[]): string[] {
 
 function readPackageInfo(workspaceRoot: string): { name: string; template?: string } {
   const packagePath = join(workspaceRoot, "package.json");
-  if (!existsSync(packagePath)) {
+  if (!nodeFileSystem.exists(packagePath)) {
     return { name: "forge-app" };
   }
 
   try {
-    const pkg = JSON.parse(readFileSync(packagePath, "utf8")) as {
+    const pkg = JSON.parse((nodeFileSystem.readText(packagePath) ?? "")) as {
       name?: string;
       forge?: { template?: string };
     };
@@ -543,8 +543,8 @@ export function buildAgentContractArtifacts(
   };
 
   const existingAgentsPath = join(input.workspaceRoot, "AGENTS.md");
-  const existingAgents = existsSync(existingAgentsPath)
-    ? readFileSync(existingAgentsPath, "utf8")
+  const existingAgents = nodeFileSystem.exists(existingAgentsPath)
+    ? (nodeFileSystem.readText(existingAgentsPath) ?? "")
     : null;
   const userNotes = extractUserNotes(existingAgents);
   const agentsMd = renderAgentsMd(contract, userNotes);
