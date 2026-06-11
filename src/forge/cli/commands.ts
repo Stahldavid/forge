@@ -124,6 +124,12 @@ import {
   renderSarif,
 } from "../review/index.ts";
 import {
+  formatUiHuman,
+  formatUiJson,
+  runUiCommand,
+  runUiListCommand,
+} from "../ui/index.ts";
+import {
   formatQueryJson,
   formatQueryListHuman,
   formatQueryResultHuman,
@@ -281,6 +287,9 @@ export async function runInspectCommand(
     "test-graph": `${GENERATED_DIR}/testGraph.json`,
     "test-plans": `${GENERATED_DIR}/testPlanRegistry.json`,
     "agent-adapters": `${GENERATED_DIR}/agentAdapterManifest.json`,
+    ui: `${GENERATED_DIR}/uiTestManifest.json`,
+    "ui-scenarios": `${GENERATED_DIR}/uiScenarios.json`,
+    "ui-routes": `${GENERATED_DIR}/uiRoutes.json`,
     rules: `${GENERATED_DIR}/runtimeRules.md`,
     map: `${GENERATED_DIR}/appMap.md`,
   };
@@ -312,6 +321,9 @@ export async function runInspectCommand(
       ["testPlanRegistry", `${GENERATED_DIR}/testPlanRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
       ["agentAdapters", `${GENERATED_DIR}/agentAdapterManifest.json`],
+      ["ui", `${GENERATED_DIR}/uiTestManifest.json`],
+      ["uiScenarios", `${GENERATED_DIR}/uiScenarios.json`],
+      ["uiRoutes", `${GENERATED_DIR}/uiRoutes.json`],
     ];
     const data: Record<string, unknown> = {};
     const errors = [];
@@ -579,6 +591,18 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(renderSarif(result.report));
       } else {
         process.stdout.write(formatReviewHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "ui": {
+      const result =
+        command.options.subcommand === "list"
+          ? runUiListCommand(command.options.workspaceRoot)
+          : await runUiCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatUiJson(result));
+      } else {
+        process.stdout.write(formatUiHuman(result));
       }
       return result.exitCode;
     }

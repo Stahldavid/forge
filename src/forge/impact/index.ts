@@ -455,6 +455,40 @@ function selectTests(
   return selected.sort((a, b) => a.file.localeCompare(b.file));
 }
 
+function selectUiScenarioChecks(
+  impact: ImpactedSystems,
+  includeBrowser: boolean,
+): TestPlanCheck[] {
+  if (!includeBrowser) return [];
+  const checks: TestPlanCheck[] = [];
+  const hasFrontend = impact.frontend.components.length > 0 || impact.frontend.pages.length > 0;
+  if (hasFrontend) {
+    checks.push({
+      kind: "forge",
+      command: "forge ui smoke --scenario home-loads",
+      cost: "browser",
+      reason: "frontend impact should load in a browser",
+    });
+  }
+  if (impact.runtime.liveQueries.length > 0 || impact.data.tables.length > 0) {
+    checks.push({
+      kind: "forge",
+      command: "forge ui smoke --scenario tickets-live-update",
+      cost: "browser",
+      reason: "liveQuery/data impact should verify browser reactivity",
+    });
+  }
+  if (impact.policies.length > 0) {
+    checks.push({
+      kind: "forge",
+      command: "forge ui smoke --scenario policy-denied-visible",
+      cost: "browser",
+      reason: "policy impact should verify browser error/traceId handling",
+    });
+  }
+  return checks;
+}
+
 export function analyzeImpact(options: ImpactCommandOptions): ImpactReport {
   const source = sourceFromOptions(options);
   const detected = detectChangedFiles(options.workspaceRoot, source);
@@ -508,7 +542,10 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
     changedFiles: report.changedFiles,
     impacted: report.impacted,
     risk: report.risk,
-    requiredChecks: requiredChecks(report.impacted).filter((check) =>
+    requiredChecks: [
+      ...requiredChecks(report.impacted),
+      ...selectUiScenarioChecks(report.impacted, options.includeBrowser),
+    ].filter((check) =>
       costAllowed(check.cost, options.maxCost, options.includeDocker, options.includeBrowser),
     ),
     tests,

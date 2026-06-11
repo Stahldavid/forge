@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=b6baa3f87cf59a92d753b0498d11bc5bbba50c63a365e78a2061ede482e0e725 content=1f675de94effe14f9a5e1b3b7814515456cce3e88e4dc5640eeb064f2308784e
+// @forge-generated generator=0.0.0 input=d696decdcd326b4db3110ac75b5d3a35fc07db7cc9a986cb88d4a9166c899188 content=2e285d202d28125e77c346e7f6b8ddcd634431fcc105a40c4f919ee29a395ea8
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "b6baa3f87cf59a92d753b0498d11bc5bbba50c63a365e78a2061ede482e0e725",
+  "inputHash": "d696decdcd326b4db3110ac75b5d3a35fc07db7cc9a986cb88d4a9166c899188",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1970,6 +1970,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/review/h31-review.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "docker",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/rls/h21-rls.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -2479,6 +2497,24 @@ export const testGraph = {
         "probable: packages ai",
         "probable: packages react"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "browser",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ui/h32-ui.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "weak",

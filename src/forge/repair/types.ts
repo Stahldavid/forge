@@ -38,6 +38,7 @@ export type RepairRiskLevel = "low" | "medium" | "high";
 export interface RepairSource {
   kind:
     | "test-run"
+    | "ui-run"
     | "trace"
     | "workflow-run"
     | "outbox-delivery"
@@ -146,6 +147,7 @@ export interface RepairCommandOptions {
   workspaceRoot: string;
   json: boolean;
   fromLastTestRun: boolean;
+  fromLastUiRun?: boolean;
   from?: string;
   traceId?: string;
   workflowRunId?: string;

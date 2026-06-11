@@ -37,6 +37,14 @@ import type {
   ReviewMode,
   ReviewSubcommand,
 } from "../review/types.ts";
+import type {
+  UiBrowserName,
+  UiCommandOptions,
+  UiScreenshotMode,
+  UiSubcommand,
+  UiTraceMode,
+  UiVideoMode,
+} from "../ui/types.ts";
 
 export type ForgeCommand =
   | {
@@ -138,6 +146,7 @@ export type ForgeCommand =
   | { kind: "repair"; options: RepairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "review"; options: ReviewCommandOptions }
+  | { kind: "ui"; options: UiCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -303,6 +312,9 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "test-graph",
   "test-plans",
   "agent-adapters",
+  "ui",
+  "ui-scenarios",
+  "ui-routes",
   "all",
   "rules",
   "map",
@@ -430,6 +442,20 @@ const REVIEW_CATEGORIES: ReviewFindingCategory[] = [
   "release",
   "agent",
 ];
+const UI_SUBCOMMANDS: UiSubcommand[] = [
+  "smoke",
+  "test",
+  "scenario",
+  "route",
+  "snapshot",
+  "report",
+  "doctor",
+  "list",
+];
+const UI_BROWSERS: UiBrowserName[] = ["chromium", "firefox", "webkit"];
+const UI_TRACE_MODES: UiTraceMode[] = ["on", "off", "retain-on-failure"];
+const UI_SCREENSHOT_MODES: UiScreenshotMode[] = ["on", "off", "only-on-failure"];
+const UI_VIDEO_MODES: UiVideoMode[] = ["on", "off", "retain-on-failure"];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -511,6 +537,22 @@ function parseReviewCategories(value: string | undefined): ReviewFindingCategory
     .filter((item): item is ReviewFindingCategory => REVIEW_CATEGORIES.includes(item as ReviewFindingCategory));
 }
 
+function parseUiBrowser(value: string | undefined): UiBrowserName {
+  return UI_BROWSERS.includes(value as UiBrowserName) ? (value as UiBrowserName) : "chromium";
+}
+
+function parseUiTrace(value: string | undefined): UiTraceMode {
+  return UI_TRACE_MODES.includes(value as UiTraceMode) ? (value as UiTraceMode) : "retain-on-failure";
+}
+
+function parseUiScreenshot(value: string | undefined): UiScreenshotMode {
+  return UI_SCREENSHOT_MODES.includes(value as UiScreenshotMode) ? (value as UiScreenshotMode) : "only-on-failure";
+}
+
+function parseUiVideo(value: string | undefined): UiVideoMode {
+  return UI_VIDEO_MODES.includes(value as UiVideoMode) ? (value as UiVideoMode) : "retain-on-failure";
+}
+
 function parseNewTemplate(value: string | undefined): NewTemplateName {
   return NEW_TEMPLATES.includes(value as NewTemplateName)
     ? (value as NewTemplateName)
@@ -530,7 +572,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, agent, review, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, agent, review, ui, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -742,6 +784,55 @@ export function parseCli(argv: string[]): ParsedCli {
             exclude: parseReviewCategories(parseOptionValue(argv, "--exclude")),
             reviewId: subcommand === "inspect" ? rest[1] : undefined,
             ruleId: subcommand === "explain" ? rest[1] : undefined,
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "ui": {
+      const subcommand = (rest[0] ?? "smoke") as UiSubcommand;
+      if (!UI_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge ui requires subcommand: smoke, test, scenario, route, snapshot, report, doctor, or list");
+        return { command: null, workspaceRoot, errors };
+      }
+      const timeoutRaw = parseOptionValue(argv, "--timeout");
+      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 30_000;
+      if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {
+        errors.push("--timeout must be a number >= 1");
+      }
+      const scenarioName =
+        parseOptionValue(argv, "--scenario") ??
+        (subcommand === "scenario" ? rest[1] : undefined);
+      const routePath =
+        subcommand === "route" || subcommand === "snapshot"
+          ? rest[1] ?? "/"
+          : undefined;
+      return {
+        command: {
+          kind: "ui",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            headed: parseFlag(argv, "--headed"),
+            browser: parseUiBrowser(parseOptionValue(argv, "--browser")),
+            trace: parseUiTrace(parseOptionValue(argv, "--trace")),
+            screenshot: parseUiScreenshot(parseOptionValue(argv, "--screenshot")),
+            video: parseUiVideo(parseOptionValue(argv, "--video")),
+            baseUrl: parseOptionValue(argv, "--base-url") ?? "http://127.0.0.1:3000",
+            runtimeUrl: parseOptionValue(argv, "--runtime-url") ?? "http://127.0.0.1:3765",
+            reuseServers: parseFlag(argv, "--reuse-servers"),
+            startServers: parseFlag(argv, "--start-servers"),
+            scenarioName,
+            routePath,
+            snapshotName: parseOptionValue(argv, "--name"),
+            reportId: subcommand === "report" ? rest[1] ?? "last" : undefined,
+            all: parseFlag(argv, "--all"),
+            changed: parseFlag(argv, "--changed"),
+            ci: parseFlag(argv, "--ci"),
+            timeoutMs: Math.floor(timeoutMs),
+            authToken: parseOptionValue(argv, "--auth-token"),
           },
         },
         workspaceRoot,
@@ -1145,6 +1236,7 @@ export function parseCli(argv: string[]): ParsedCli {
             workspaceRoot,
             json: parseFlag(argv, "--json"),
             fromLastTestRun: parseFlag(argv, "--from-last-test-run"),
+            fromLastUiRun: parseFlag(argv, "--from-last-ui-run"),
             from: parseOptionValue(argv, "--from"),
             traceId: parseOptionValue(argv, "--trace"),
             workflowRunId: parseOptionValue(argv, "--workflow-run"),
@@ -1709,6 +1801,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--bail",
     "--report",
     "--from-last-test-run",
+    "--from-last-ui-run",
     "--from",
     "--trace",
     "--workflow-run",
@@ -1758,6 +1851,21 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--include",
     "--exclude",
     "--base",
+    "--headed",
+    "--browser",
+    "--trace",
+    "--screenshot",
+    "--video",
+    "--base-url",
+    "--runtime-url",
+    "--reuse-servers",
+    "--start-servers",
+    "--scenario",
+    "--all",
+    "--ci",
+    "--timeout",
+    "--name",
+    "--auth-token",
     "--update",
     "--allow-high-risk",
     "--to",
@@ -1864,6 +1972,16 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--include" ||
         arg === "--exclude" ||
         arg === "--base" ||
+        arg === "--browser" ||
+        arg === "--trace" ||
+        arg === "--screenshot" ||
+        arg === "--video" ||
+        arg === "--base-url" ||
+        arg === "--runtime-url" ||
+        arg === "--scenario" ||
+        arg === "--timeout" ||
+        arg === "--name" ||
+        arg === "--auth-token" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||
         arg === "--host" ||

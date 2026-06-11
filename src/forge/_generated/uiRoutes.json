@@ -1,0 +1,2 @@
+// @forge-generated generator=0.0.0 input=eb05b012a029786182ed915d4256238ce1df7207ac035ce94552768ee6b17aab content=ee392737c9b303f31760703df861e9531e257c16ea13ca016405233cbdef540b
+{"routes":[{"name":"home","path":"/","uses":{"commands":[],"components":[],"liveQueries":[],"queries":[]}}],"schemaVersion":"0.1.0"}

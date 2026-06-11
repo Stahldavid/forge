@@ -56,6 +56,15 @@ import {
   serializeAgentAdapterManifestJson,
   serializeAgentAdapterManifestTs,
 } from "../../agent-adapters/index.ts";
+import {
+  buildUiGeneratedArtifacts,
+  serializeUiRoutesJson,
+  serializeUiRoutesTs,
+  serializeUiScenariosJson,
+  serializeUiScenariosTs,
+  serializeUiTestManifestJson,
+  serializeUiTestManifestTs,
+} from "../../ui/index.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type { EmitFile, EmitPlan } from "../types/emit.ts";
@@ -359,6 +368,11 @@ export function plan(input: PlanInput): EmitPlan {
     sources: input.ctx.sources,
   });
   const testPlanRegistry = buildTestPlanRegistry();
+  const uiArtifacts = buildUiGeneratedArtifacts({
+    appGraph: input.appGraph,
+    apiSurface,
+    sources: input.ctx.sources,
+  });
 
   const files: EmitFile[] = [
     makeEmitFile("AGENTS.md", agentArtifacts.agentsMd),
@@ -605,6 +619,30 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/testPlanRegistry.json`,
       serializeTestPlanRegistryJson(testPlanRegistry),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/uiTestManifest.ts`,
+      serializeUiTestManifestTs(uiArtifacts.manifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/uiTestManifest.json`,
+      serializeUiTestManifestJson(uiArtifacts.manifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/uiScenarios.ts`,
+      serializeUiScenariosTs(uiArtifacts.scenarios),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/uiScenarios.json`,
+      serializeUiScenariosJson(uiArtifacts.scenarios),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/uiRoutes.ts`,
+      serializeUiRoutesTs(uiArtifacts.routes),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/uiRoutes.json`,
+      serializeUiRoutesJson(uiArtifacts.routes),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/actionSubscriptions.ts`,

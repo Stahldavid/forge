@@ -73,6 +73,9 @@ export type InspectTarget =
   | "test-graph"
   | "test-plans"
   | "agent-adapters"
+  | "ui"
+  | "ui-scenarios"
+  | "ui-routes"
   | "all"
   | "rules"
   | "map";

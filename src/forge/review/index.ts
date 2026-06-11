@@ -518,18 +518,30 @@ function frontendRules(ctx: ReviewContext): ReviewFinding[] {
 }
 
 function testRules(ctx: ReviewContext, preliminaryRisk: ReviewRisk): ReviewFinding[] {
+  const findings: ReviewFinding[] = [];
   const hasLastPlan = existsSync(join(ctx.workspaceRoot, ".forge/test-plans")) || existsSync(join(ctx.workspaceRoot, ".forge/test-runs/last.json"));
+  const hasUiRun = existsSync(join(ctx.workspaceRoot, ".forge/ui-runs/last.json"));
+  if ((ctx.impacted.frontend.components.length > 0 || ctx.impacted.frontend.pages.length > 0) && !hasUiRun) {
+    findings.push(finding({
+      severity: "warning",
+      category: "test",
+      code: "review-ui-smoke-missing",
+      title: "Frontend change lacks UI smoke evidence",
+      message: "Frontend impact detected but no .forge/ui-runs/last.json report exists.",
+      suggestedCommands: ["forge ui smoke --json", "forge ui report last --json"],
+    }));
+  }
   if ((preliminaryRisk.level === "high" || preliminaryRisk.level === "critical") && ctx.changed.tests.length === 0 && !hasLastPlan) {
-    return [finding({
+    findings.push(finding({
       severity: "warning",
       category: "test",
       code: "test-high-risk-untested",
       title: "High risk change lacks test evidence",
       message: "High risk impact detected with no changed tests or stored H28 test plan/run evidence.",
       suggestedCommands: ["forge test plan --changed", "forge test run --changed", "forge verify --strict"],
-    })];
+    }));
   }
-  return [];
+  return findings;
 }
 
 function deployRules(ctx: ReviewContext): ReviewFinding[] {

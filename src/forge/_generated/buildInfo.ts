@@ -1,6 +1,6 @@
-// @forge-generated generator=0.0.0 input=b6baa3f87cf59a92d753b0498d11bc5bbba50c63a365e78a2061ede482e0e725 content=1931049a7d572204aae62aab3c39463dc41448d41525cd401813e9877815a8de
+// @forge-generated generator=0.0.0 input=d696decdcd326b4db3110ac75b5d3a35fc07db7cc9a986cb88d4a9166c899188 content=885b3bec723b2035f483388fb5b5539d8470d50a458c0b751c68a43f8752f7f8
 export const buildInfo = {
-  "generatedHash": "b6baa3f87cf59a92d753b0498d11bc5bbba50c63a365e78a2061ede482e0e725",
+  "generatedHash": "d696decdcd326b4db3110ac75b5d3a35fc07db7cc9a986cb88d4a9166c899188",
   "gitSha": "unknown",
   "packageName": "forge",
   "packageVersion": "0.0.0",

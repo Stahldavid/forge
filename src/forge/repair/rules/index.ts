@@ -317,7 +317,7 @@ export const repairRules: RepairRule[] = [
   {
     id: "livequery",
     matches: (input) =>
-      hasCode(input, "FORGE_LIVE_INVALIDATION_MISSING", "FORGE_LIVE_RERUN_FAILED", "FORGE_LIVE_SNAPSHOT_TOO_LARGE", "FORGE_LIVEQUERY_UNKNOWN"),
+      hasCode(input, "FORGE_LIVE_INVALIDATION_MISSING", "FORGE_LIVE_RERUN_FAILED", "FORGE_LIVE_SNAPSHOT_TOO_LARGE", "FORGE_LIVEQUERY_UNKNOWN", "FORGE_UI_LIVE_UPDATE_TIMEOUT"),
     diagnose: (input) =>
       diagnosis(input, {
         failureKind: "livequery-reactivity",
@@ -414,7 +414,7 @@ export const repairRules: RepairRule[] = [
   },
   {
     id: "frontend-client",
-    matches: (input) => hasCode(input, "server-only", "client", "ForgeError", "React"),
+    matches: (input) => hasCode(input, "server-only", "client", "ForgeError", "React", "FORGE_UI_EXPECTATION_FAILED", "FORGE_UI_SELECTOR_NOT_FOUND", "FORGE_UI_CONSOLE_ERROR", "FORGE_UI_NETWORK_ERROR"),
     diagnose: (input) =>
       diagnosis(input, {
         failureKind: "frontend-client",

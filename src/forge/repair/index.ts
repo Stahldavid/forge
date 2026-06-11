@@ -14,6 +14,7 @@ import { canonicalJson, serializeCanonical } from "../compiler/primitives/serial
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import { resolveBunExecutable } from "../cli/bun-exec.ts";
 import type { TestRunRecord } from "../impact/types.ts";
+import type { UiRunReport } from "../ui/types.ts";
 import { explainDiagnostic, repairRules } from "./rules/index.ts";
 import type {
   FailureInput,
@@ -105,6 +106,34 @@ function inputFromTestRun(record: TestRunRecord, file: string): FailureInput {
   };
 }
 
+function inputFromUiRun(record: UiRunReport, file: string): FailureInput {
+  const failed = record.scenarios.filter((scenario) => !scenario.ok);
+  const stdout = failed
+    .map((scenario) => `${scenario.name}: ${scenario.failure?.kind ?? "ui-failure"} ${scenario.failure?.message ?? ""} ${scenario.traceId ?? ""}`)
+    .join("\n");
+  const diagnostics = failed.map((scenario) =>
+    diagnostic(
+      "error",
+      scenario.failure?.kind === "live-query-no-update"
+        ? "FORGE_UI_LIVE_UPDATE_TIMEOUT"
+        : scenario.failure?.kind === "network-error"
+          ? "FORGE_UI_NETWORK_ERROR"
+          : scenario.failure?.kind === "browser-console-error"
+            ? "FORGE_UI_CONSOLE_ERROR"
+            : "FORGE_UI_EXPECTATION_FAILED",
+      scenario.failure?.message ?? `UI scenario failed: ${scenario.name}`,
+      file,
+    ),
+  );
+  return {
+    source: { kind: "ui-run", id: record.id, file },
+    diagnostics,
+    failedCommands: ["forge ui smoke"],
+    stdout,
+    stderr: "",
+  };
+}
+
 function collectFailureInput(options: RepairCommandOptions): FailureInput | null {
   if (options.diagnosticCode) {
     return {
@@ -150,6 +179,15 @@ function collectFailureInput(options: RepairCommandOptions): FailureInput | null
       ],
       stdout: `FORGE_OUTBOX_PROCESS_FAILED delivery ${options.outboxDeliveryId}`,
     };
+  }
+
+  if (options.fromLastUiRun) {
+    const file = ".forge/ui-runs/last.json";
+    const record = readJson<UiRunReport>(options.workspaceRoot, file);
+    if (!record) {
+      return null;
+    }
+    return inputFromUiRun(record, file);
   }
 
   const file = options.fromLastTestRun ? ".forge/test-runs/last.json" : options.from;
@@ -219,7 +257,11 @@ function fallbackDiagnosis(input: FailureInput): RepairDiagnosis {
 export function diagnoseRepair(options: RepairCommandOptions): RepairResult {
   const input = collectFailureInput(options);
   if (!input) {
-    const source = options.fromLastTestRun ? ".forge/test-runs/last.json" : options.from ?? "<unknown>";
+    const source = options.fromLastUiRun
+      ? ".forge/ui-runs/last.json"
+      : options.fromLastTestRun
+        ? ".forge/test-runs/last.json"
+        : options.from ?? "<unknown>";
     const diag = diagnostic(
       "error",
       "FORGE_REPAIR_SOURCE_NOT_FOUND",
