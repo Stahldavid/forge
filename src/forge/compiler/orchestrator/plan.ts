@@ -51,6 +51,11 @@ import {
   serializeAgentContractJson,
   serializeAgentContractTs,
 } from "../agent-contract/build.ts";
+import {
+  buildAgentAdapterManifest,
+  serializeAgentAdapterManifestJson,
+  serializeAgentAdapterManifestTs,
+} from "../../agent-adapters/index.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { PackageGraph } from "../types/package-graph.ts";
 import type { EmitFile, EmitPlan } from "../types/emit.ts";
@@ -323,6 +328,7 @@ export function plan(input: PlanInput): EmitPlan {
     apiSurface,
     clientManifest,
   });
+  const agentAdapterManifest = buildAgentAdapterManifest(agentArtifacts.contract);
   const rlsArtifacts = buildRlsArtifacts(sqlPlan, tenantScope);
   const packageUpgradeRegistry = {
     schemaVersion: "0.1.0" as const,
@@ -373,6 +379,14 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/agentQuickstart.md`,
       agentArtifacts.agentQuickstartMd,
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/agentAdapterManifest.ts`,
+      serializeAgentAdapterManifestTs(agentAdapterManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/agentAdapterManifest.json`,
+      serializeAgentAdapterManifestJson(agentAdapterManifest),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/appGraph.ts`,

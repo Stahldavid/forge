@@ -12,6 +12,8 @@ import { runPolicyCommand } from "./policy.ts";
 import { runAuthCommand } from "./auth.ts";
 import { runRlsCommand } from "./rls.ts";
 import { buildImpactTestPlan, runImpactTestPlan } from "../impact/index.ts";
+import { runAgentCheck } from "../agent-adapters/index.ts";
+import type { AgentAdapterTarget } from "../agent-adapters/types.ts";
 
 interface PackageScripts {
   typecheck?: string;
@@ -77,6 +79,23 @@ function skippedStep(name: string, reason: string): VerifyStep {
     skipped: true,
     skipReason: reason,
   };
+}
+
+export function configuredAgentTargets(workspaceRoot: string): AgentAdapterTarget[] {
+  const targets: AgentAdapterTarget[] = [];
+  if (existsSync(join(workspaceRoot, ".forge/agent/context.json"))) {
+    targets.push("generic");
+  }
+  if (existsSync(join(workspaceRoot, ".codex"))) {
+    targets.push("codex");
+  }
+  if (existsSync(join(workspaceRoot, ".cursor"))) {
+    targets.push("cursor");
+  }
+  if (existsSync(join(workspaceRoot, "CLAUDE.md")) || existsSync(join(workspaceRoot, ".claude"))) {
+    targets.push("claude");
+  }
+  return targets;
 }
 
 export async function runVerifyCommand(
@@ -215,6 +234,31 @@ export async function runVerifyCommand(
       exitCode: rlsCheck.exitCode,
     });
     diagnostics.push(...rlsCheck.diagnostics);
+
+    const agentTargets = configuredAgentTargets(options.workspaceRoot);
+    if (agentTargets.length === 0) {
+      steps.push(skippedStep("agent-adapter-check", "no agent adapter exports configured"));
+    } else {
+      for (const target of agentTargets) {
+        const agentCheck = runAgentCheck({
+          subcommand: "check",
+          workspaceRoot: options.workspaceRoot,
+          json: false,
+          target,
+          dryRun: false,
+          force: false,
+          preserveUserSections: true,
+          skills: true,
+          rules: true,
+        });
+        steps.push({
+          name: `agent-adapter-check:${target}`,
+          ok: agentCheck.exitCode === 0,
+          exitCode: agentCheck.exitCode,
+        });
+        diagnostics.push(...agentCheck.diagnostics);
+      }
+    }
   }
 
   if (options.skipTypecheck) {

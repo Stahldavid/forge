@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=bc5a09656f1c2dc63d25c906f58452be524b2118ee2d2b133e47d389b2ba9f81 content=3da1c4dcd461d2228cdcf2d9612b70d76dbdcf5cdd1d7078ecacd8c5f6c8286b
+// @forge-generated generator=0.0.0 input=07cba84a875e2016e4ff32acea89827fbd9286ec0970d1c5faa5c821e25604b5 content=a3af185443f56d6a6a1df31a4d120dd7909f41a2ce495d01c7c52425b86fd4bd
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -65,6 +65,7 @@ forge inspect client --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
+forge agent print-context --json
 forge verify --strict
 ```
 
@@ -156,6 +157,19 @@ forge repair plan --from-last-test-run --write
 ```
 
 Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
+
+### Export agent adapters
+
+Use:
+
+```bash
+forge agent export --target generic
+forge agent export --target codex
+forge agent export --target cursor
+forge agent export --target claude
+```
+
+Adapter files are derived from `agentContract.json`, `appMap.md`, `runtimeRules.md`, `operationPlaybooks.md`, and this `AGENTS.md`. Do not treat Codex, Cursor, Claude, or custom adapter files as the source of truth.
 
 ### Add a package
 

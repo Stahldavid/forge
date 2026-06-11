@@ -72,6 +72,7 @@ export type InspectTarget =
   | "make"
   | "test-graph"
   | "test-plans"
+  | "agent-adapters"
   | "all"
   | "rules"
   | "map";

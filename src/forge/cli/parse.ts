@@ -25,6 +25,11 @@ import type { RefactorAction, RefactorCommandOptions, RenameTarget } from "../re
 import type { ImpactCommandOptions, TestCommandOptions, TestSubcommand } from "../impact/types.ts";
 import type { TestCost } from "../compiler/types/test-graph.ts";
 import type { RepairCommandOptions, RepairSubcommand } from "../repair/types.ts";
+import type {
+  AgentAdapterTarget,
+  AgentCommandOptions,
+  AgentSubcommand,
+} from "../agent-adapters/types.ts";
 
 export type ForgeCommand =
   | {
@@ -124,6 +129,7 @@ export type ForgeCommand =
   | { kind: "impact"; options: ImpactCommandOptions }
   | { kind: "test"; options: TestCommandOptions }
   | { kind: "repair"; options: RepairCommandOptions }
+  | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -288,6 +294,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "make",
   "test-graph",
   "test-plans",
+  "agent-adapters",
   "all",
   "rules",
   "map",
@@ -390,6 +397,14 @@ const REPAIR_SUBCOMMANDS: RepairSubcommand[] = [
   "inspect",
   "rollback",
 ];
+const AGENT_SUBCOMMANDS: AgentSubcommand[] = [
+  "list-targets",
+  "export",
+  "check",
+  "doctor",
+  "print-context",
+  "clean",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -474,7 +489,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, agent, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -617,6 +632,34 @@ export function parseCli(argv: string[]): ParsedCli {
           subcommand,
           json: parseFlag(argv, "--json"),
           workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "agent": {
+      const subcommand = rest[0] as AgentSubcommand | undefined;
+      if (!subcommand || !AGENT_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge agent requires subcommand: list-targets, export, check, doctor, print-context, or clean");
+        return { command: null, workspaceRoot, errors };
+      }
+      const target =
+        (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ??
+        (subcommand === "export" || subcommand === "clean" ? "generic" : "generic");
+      return {
+        command: {
+          kind: "agent",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            target,
+            dryRun: parseFlag(argv, "--dry-run"),
+            force: parseFlag(argv, "--force"),
+            preserveUserSections: !parseFlag(argv, "--no-preserve-user-sections"),
+            skills: !parseFlag(argv, "--no-skills"),
+            rules: !parseFlag(argv, "--no-rules"),
+          },
         },
         workspaceRoot,
         errors,
@@ -1684,6 +1727,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--poll-interval",
     "--allow-dev-auth",
     "--token",
+    "--no-preserve-user-sections",
+    "--no-skills",
+    "--no-rules",
   ]);
 
   for (let index = 0; index < argv.length; index++) {

@@ -669,6 +669,7 @@ forge inspect client --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
+forge agent print-context --json
 forge verify --strict
 \`\`\`
 
@@ -758,6 +759,19 @@ forge repair plan --from-last-test-run --write
 \`\`\`
 
 Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
+
+### Export agent adapters
+
+Use:
+
+\`\`\`bash
+forge agent export --target generic
+forge agent export --target codex
+forge agent export --target cursor
+forge agent export --target claude
+\`\`\`
+
+Adapter files are derived from \`agentContract.json\`, \`appMap.md\`, \`runtimeRules.md\`, \`operationPlaybooks.md\`, and this \`AGENTS.md\`. Do not treat Codex, Cursor, Claude, or custom adapter files as the source of truth.
 
 ### Add a package
 

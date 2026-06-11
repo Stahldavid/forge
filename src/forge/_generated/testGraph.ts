@@ -1,11 +1,35 @@
-// @forge-generated generator=0.0.0 input=bb5d0f225b6751ee6b500f8b46cfaa2b4674b5e3697378a505d47e65d797ba83 content=2c4552df5997ff2c9422c390bb4585414bf412be4936485e28266b79b81c7854
+// @forge-generated generator=0.0.0 input=b6baa3f87cf59a92d753b0498d11bc5bbba50c63a365e78a2061ede482e0e725 content=1f675de94effe14f9a5e1b3b7814515456cce3e88e4dc5640eeb064f2308784e
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "bb5d0f225b6751ee6b500f8b46cfaa2b4674b5e3697378a505d47e65d797ba83",
+  "inputHash": "b6baa3f87cf59a92d753b0498d11bc5bbba50c63a365e78a2061ede482e0e725",
   "schemaVersion": "0.1.0",
   "tests": [
+    {
+      "confidence": "probable",
+      "cost": "docker",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai",
+          "zod"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-adapters/h30-agent-adapters.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages ai",
+        "probable: packages zod"
+      ]
+    },
     {
       "confidence": "weak",
       "cost": "fast",

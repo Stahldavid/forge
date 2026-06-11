@@ -112,6 +112,11 @@ import {
   runRepairCommand,
 } from "../repair/index.ts";
 import {
+  formatAgentHuman,
+  formatAgentJson,
+  runAgentCommand,
+} from "../agent-adapters/index.ts";
+import {
   formatQueryJson,
   formatQueryListHuman,
   formatQueryResultHuman,
@@ -268,6 +273,7 @@ export async function runInspectCommand(
     make: `${GENERATED_DIR}/makeRegistry.json`,
     "test-graph": `${GENERATED_DIR}/testGraph.json`,
     "test-plans": `${GENERATED_DIR}/testPlanRegistry.json`,
+    "agent-adapters": `${GENERATED_DIR}/agentAdapterManifest.json`,
     rules: `${GENERATED_DIR}/runtimeRules.md`,
     map: `${GENERATED_DIR}/appMap.md`,
   };
@@ -298,6 +304,7 @@ export async function runInspectCommand(
       ["testGraph", `${GENERATED_DIR}/testGraph.json`],
       ["testPlanRegistry", `${GENERATED_DIR}/testPlanRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
+      ["agentAdapters", `${GENERATED_DIR}/agentAdapterManifest.json`],
     ];
     const data: Record<string, unknown> = {};
     const errors = [];
@@ -543,6 +550,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatRepairJson(result));
       } else {
         process.stdout.write(formatRepairHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "agent": {
+      const result = await runAgentCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatAgentJson(result));
+      } else {
+        process.stdout.write(formatAgentHuman(result));
       }
       return result.exitCode;
     }
