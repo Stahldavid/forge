@@ -36,6 +36,7 @@ describe("H33 forge dev console", () => {
       });
       expect(cycle.ok).toBe(false);
       expect(cycle.phases.find((phase) => phase.name === "generated")?.ok).toBe(false);
+      expect(cycle.phases.find((phase) => phase.name === "check")?.status).toBe("skipped");
       expect(cycle.nextActions.map((action) => action.command)).toContain("forge generate");
       expect(JSON.parse(formatDevConsoleJson(cycle)).schemaVersion).toBe("0.1.0");
     } finally {
@@ -53,6 +54,7 @@ describe("H33 forge dev console", () => {
         includeImpact: false,
       });
       expect(cycle.phases.find((phase) => phase.name === "generated")?.ok).toBe(true);
+      expect(cycle.phases.find((phase) => phase.name === "check")?.status).not.toBe("skipped");
       expect(cycle.nextActions.length).toBeGreaterThan(0);
     } finally {
       cleanupWorkspace(workspace);

@@ -15,6 +15,7 @@ import { discover } from "../compiler/orchestrator/discover.ts";
 import { loadManifest } from "../compiler/orchestrator/manifest.ts";
 import { PackageGraphCompiler } from "../compiler/package-graph/compiler.ts";
 import { resolveByPackageName } from "../compiler/recipes/registry.ts";
+import type { AppGraph } from "../compiler/types/app-graph.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
 import { runImpactCommand } from "../impact/index.ts";
@@ -95,6 +96,21 @@ function phase(
   };
 }
 
+function skippedPhase(
+  name: DevConsolePhase["name"],
+  message: string,
+  durationMs = 0,
+): DevConsolePhase {
+  return {
+    name,
+    ok: true,
+    status: "skipped",
+    message,
+    diagnostics: [],
+    durationMs,
+  };
+}
+
 async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase> {
   const start = performance.now();
   const result = await runGenerate({
@@ -120,16 +136,26 @@ async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase
   };
 }
 
-async function runCheckPhase(workspaceRoot: string, strictSecrets: boolean): Promise<DevConsolePhase> {
-  const start = performance.now();
+async function buildAppGraphForDevConsole(workspaceRoot: string): Promise<AppGraph> {
   const ctx = discover({ workspaceRoot });
   const manifest = loadManifest(ctx.cacheDir);
-  const appGraph = await buildAppGraph({
+  return buildAppGraph({
     workspaceRoot: ctx.workspaceRoot,
     sources: ctx.sources,
     prior: manifest.priorAppGraph,
     tsconfigPath: ctx.tsconfigPath ?? undefined,
   });
+}
+
+function loadGeneratedAppGraphForDevConsole(workspaceRoot: string): AppGraph | null {
+  return readJson<AppGraph>(workspaceRoot, `${GENERATED_DIR}/appGraph.json`);
+}
+
+async function runCheckPhase(workspaceRoot: string, strictSecrets: boolean): Promise<DevConsolePhase> {
+  const start = performance.now();
+  const appGraph =
+    loadGeneratedAppGraphForDevConsole(workspaceRoot) ??
+    (await buildAppGraphForDevConsole(workspaceRoot));
   const matrix = await loadRuntimeMatrixForDevConsole(workspaceRoot);
   const secretRegistry = loadSecretRegistry(workspaceRoot);
   const diagnostics = [
@@ -335,8 +361,18 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
 export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<DevConsoleCycle> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
   const phases: DevConsolePhase[] = [];
-  phases.push(await runGeneratedPhase(workspaceRoot));
-  phases.push(await runCheckPhase(workspaceRoot, options.strictSecrets ?? false));
+  const generated = await runGeneratedPhase(workspaceRoot);
+  phases.push(generated);
+  if (generated.ok) {
+    phases.push(await runCheckPhase(workspaceRoot, options.strictSecrets ?? false));
+  } else {
+    phases.push(
+      skippedPhase(
+        "check",
+        "skipped until generated artifacts are in sync",
+      ),
+    );
+  }
   phases.push(runDoctorPhase(workspaceRoot));
   if (options.includeImpact ?? true) {
     phases.push(runImpactPhase(workspaceRoot));

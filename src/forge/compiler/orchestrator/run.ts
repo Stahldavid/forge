@@ -5,8 +5,6 @@ import { classify } from "../classifier/classify.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { buildRuntimeMatrix } from "../classifier/runtime-matrix.ts";
 import { emit } from "../emitter/emit.ts";
-import { renderBody } from "../emitter/render.ts";
-import { hashStable } from "../primitives/hash.ts";
 import { PackageGraphCompiler } from "../package-graph/compiler.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
 import { discover } from "./discover.ts";
@@ -16,6 +14,8 @@ import {
   saveManifest,
   updateManifestAfterWrite,
 } from "./manifest.ts";
+import { buildManifestFileHashes } from "./manifest-hashes.ts";
+import { runFastGenerateCheck } from "./fast-check.ts";
 import { plan } from "./plan.ts";
 import { verifyLockIntegrity } from "./verify.ts";
 
@@ -40,17 +40,14 @@ function collectQualityGateDiagnostics(
   return [...appDiagnostics, ...packageDiagnostics, ...guardDiagnostics];
 }
 
-function buildFileHashManifest(
-  plannedFiles: Array<{ path: string; content: string }>,
-): Record<string, string> {
-  const hashes: Record<string, string> = {};
-  for (const file of plannedFiles) {
-    hashes[file.path] = hashStable(file.content);
-  }
-  return hashes;
-}
-
 export async function run(options: GenerateOptions): Promise<GenerateResult> {
+  if (options.check && !options.dryRun) {
+    const fastCheck = runFastGenerateCheck(options.workspaceRoot);
+    if (fastCheck.kind === "hit") {
+      return fastCheck.result;
+    }
+  }
+
   const ctx = discover({ workspaceRoot: options.workspaceRoot });
   const manifest = loadManifest(ctx.cacheDir);
 
@@ -122,12 +119,7 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
     errors.push(...integrityErrors);
 
     if (integrityErrors.length === 0) {
-      const fileHashes = buildFileHashManifest(
-        emitPlan.files.map((file) => ({
-          path: file.path,
-          content: renderBody(file),
-        })),
-      );
+      const fileHashes = buildManifestFileHashes(emitPlan);
 
       saveManifest(
         ctx.cacheDir,

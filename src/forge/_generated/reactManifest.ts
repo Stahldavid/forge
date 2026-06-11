@@ -1,8 +1,8 @@
-// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=d7b1d976d2ab0810a0ab499964268abce9a16183cde9e19f42d980721b3ed241
+// @forge-generated generator=0.0.0 input=e3aac12cf3579fdd72c83a62dc7bfccf02deb235f7b566a6afffb37f538b1de1 content=a5b87f2b55e366362509e8511eca1c59d665d7deda7c5aaa4dbd765c08d0f088
 export const reactManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.0.0",
-  "inputHash": "c5ac8552032fe8766701ea593544b88ff55f3dd4c30ee5360fe888424acc057e",
+  "inputHash": "c0459de75d6102522bd310afd3e2560f0d14bb4fa07e297e3bbbdde245126f34",
   "entrypoint": "src/forge/_generated/react.ts",
   "hooks": [
     "ForgeProvider",

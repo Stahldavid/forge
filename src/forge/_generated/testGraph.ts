@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=4742bd8471b1e212ac5e3efad43bd8fa27bf8a4d6bdd1a0e25bb958391eae0aa
+// @forge-generated generator=0.0.0 input=e3aac12cf3579fdd72c83a62dc7bfccf02deb235f7b566a6afffb37f538b1de1 content=5ff2cc552fd9acd13f99f792e659ccba4a1e3f14806aead489b6dda9603f1750
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093",
+  "inputHash": "e3aac12cf3579fdd72c83a62dc7bfccf02deb235f7b566a6afffb37f538b1de1",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1217,6 +1217,28 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/orchestrator/check-drift.property.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages fast-check"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "fast-check"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/orchestrator/fast-check.test.ts",
       "kind": "unknown",
       "reasons": [
         "confirmed: packages fast-check"

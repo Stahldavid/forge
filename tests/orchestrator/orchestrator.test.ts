@@ -5,7 +5,11 @@ import {
   FORGE_DRIFT,
   FORGE_ORPHANED_GENERATED_FILE,
 } from "../../src/forge/compiler/diagnostics/codes.ts";
-import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
+import {
+  BARREL_INDEX_PATH,
+  FORGE_LOCK_PATH,
+  GENERATED_DIR,
+} from "../../src/forge/compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/index.ts";
 import { discover } from "../../src/forge/compiler/orchestrator/discover.ts";
 import { plan } from "../../src/forge/compiler/orchestrator/plan.ts";
@@ -95,6 +99,8 @@ describe("run", () => {
 
       const manifest = loadManifest(join(workspace, ".forge", "cache"));
       expect(Object.keys(manifest.fileHashes).length).toBeGreaterThan(0);
+      expect(manifest.fileHashes[FORGE_LOCK_PATH]).toBeDefined();
+      expect(manifest.fileHashes[BARREL_INDEX_PATH]).toBeDefined();
       expect(manifest.priorAppGraph).toBeDefined();
 
       const second = await run(defaultGenerateOptions(workspace));
