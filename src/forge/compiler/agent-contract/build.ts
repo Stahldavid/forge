@@ -35,6 +35,8 @@ import { createDiagnostic } from "../diagnostics/create.ts";
 import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
 import type {
   AgentContract,
+  AgentFrontendUsageInfo,
+  AgentHttpEndpointInfo,
   AgentIntegrationInfo,
   AgentRuntimeRule,
   AgentPlaybook,
@@ -388,6 +390,67 @@ function renderList(items: string[], empty = "none"): string {
   return items.map((item) => `- ${item}`).join("\n");
 }
 
+function jsAccess(group: string, name: string): string {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)
+    ? `api.${group}.${name}`
+    : `api.${group}[${JSON.stringify(name)}]`;
+}
+
+function frontendHookFor(kind: "command" | "query" | "liveQuery" | "action", name: string): string {
+  if (kind === "command") {
+    return `useCommand(${jsAccess("commands", name)})`;
+  }
+  if (kind === "query") {
+    return `useQuery(${jsAccess("queries", name)}, args)`;
+  }
+  if (kind === "liveQuery") {
+    return `useLiveQuery(${jsAccess("liveQueries", name)}, args)`;
+  }
+  return "no generated React hook; invoke from server/action code";
+}
+
+function httpEndpointFor(
+  kind: "command" | "query" | "liveQuery" | "action",
+  name: string,
+): AgentHttpEndpointInfo {
+  const encoded = encodeURIComponent(name);
+  if (kind === "liveQuery") {
+    return {
+      method: "GET",
+      path: `/live/${encoded}`,
+      exampleUrl: `/live/${encoded}?args={}`,
+    };
+  }
+  const collection = kind === "action" ? "actions" : kind === "query" ? "queries" : "commands";
+  return {
+    method: "POST",
+    path: `/${collection}/${encoded}`,
+    exampleBody: { args: {} },
+  };
+}
+
+function frontendUsageFor(
+  frontendGraph: FrontendGraph,
+  kind: "command" | "query" | "liveQuery" | "action",
+  name: string,
+): AgentFrontendUsageInfo {
+  if (kind === "action") {
+    return {
+      hook: frontendHookFor(kind, name),
+      routes: [],
+      components: [],
+    };
+  }
+  const bindings = frontendGraph.clientBindings.filter(
+    (binding) => binding.kind === kind && binding.name === name,
+  );
+  return {
+    hook: frontendHookFor(kind, name),
+    routes: uniqueSorted(bindings.map((binding) => binding.route ?? "")),
+    components: uniqueSorted(bindings.map((binding) => binding.component ?? "")),
+  };
+}
+
 export function buildAgentContractArtifacts(
   input: AgentContractInput,
 ): AgentContractArtifacts {
@@ -424,6 +487,8 @@ export function buildAgentContractArtifacts(
         emits: [],
         allowedPackages: entry ? packageNamesForModule(input.appGraph, entry.moduleId) : [],
         forbiddenCapabilities: forbiddenForContext(input.classified, "command"),
+        http: httpEndpointFor("command", name),
+        frontend: frontendUsageFor(input.frontendGraph, "command", name),
       };
     }),
     queries: sorted(input.queryRegistry.queries, (query) => query.name).map((query) => ({
@@ -434,6 +499,8 @@ export function buildAgentContractArtifacts(
       tenantScoped: input.tenantScope.tables.length > 0,
       allowedPackages: packageNamesForModule(input.appGraph, query.moduleId),
       forbiddenCapabilities: forbiddenForContext(input.classified, "query"),
+      http: httpEndpointFor("query", query.name),
+      frontend: frontendUsageFor(input.frontendGraph, "query", query.name),
     })),
     liveQueries: sorted(input.liveQueryRegistry.liveQueries, (liveQuery) => liveQuery.name).map(
       (liveQuery) => ({
@@ -446,6 +513,8 @@ export function buildAgentContractArtifacts(
         })),
         allowedPackages: packageNamesForModule(input.appGraph, liveQuery.moduleId),
         forbiddenCapabilities: forbiddenForContext(input.classified, "liveQuery"),
+        http: httpEndpointFor("liveQuery", liveQuery.name),
+        frontend: frontendUsageFor(input.frontendGraph, "liveQuery", liveQuery.name),
       }),
     ),
     actions: sorted(
@@ -457,6 +526,8 @@ export function buildAgentContractArtifacts(
       allowedPackages: packageNamesForModule(input.appGraph, entry.moduleId),
       forbiddenCapabilities: [],
       allowedCapabilities: ["network", "secrets", "ai", "db"],
+      http: httpEndpointFor("action", entry.name),
+      frontend: frontendUsageFor(input.frontendGraph, "action", entry.name),
     })),
     workflows: sorted(input.workflowRegistry.workflows, (workflow) => workflow.name).map(
       (workflow) => ({
@@ -535,6 +606,28 @@ export function buildAgentContractArtifacts(
       bridgeFiles: input.frontendGraph.bridgeFiles,
       webManifest: input.frontendGraph.webManifest,
       clientBindings: input.frontendGraph.clientBindings,
+      runtimeEndpoints: [
+        ...sorted(Object.keys(input.apiSurface.commands), (name) => name).map((name) => ({
+          kind: "command" as const,
+          name,
+          http: httpEndpointFor("command", name),
+          frontend: frontendUsageFor(input.frontendGraph, "command", name),
+        })),
+        ...sorted(input.queryRegistry.queries, (query) => query.name).map((query) => ({
+          kind: "query" as const,
+          name: query.name,
+          http: httpEndpointFor("query", query.name),
+          frontend: frontendUsageFor(input.frontendGraph, "query", query.name),
+        })),
+        ...sorted(input.liveQueryRegistry.liveQueries, (liveQuery) => liveQuery.name).map(
+          (liveQuery) => ({
+            kind: "liveQuery" as const,
+            name: liveQuery.name,
+            http: httpEndpointFor("liveQuery", liveQuery.name),
+            frontend: frontendUsageFor(input.frontendGraph, "liveQuery", liveQuery.name),
+          }),
+        ),
+      ].sort((a, b) => `${a.kind}:${a.name}`.localeCompare(`${b.kind}:${b.name}`)),
       diagnostics: input.frontendGraph.diagnostics,
     },
     auth: {
@@ -738,6 +831,7 @@ ${contract.frontend.dev ? `- Web URL: ${contract.frontend.dev.url}
 - Routes: ${contract.frontend.routes.length}
 - Components: ${contract.frontend.components.length}
 - Client bindings: ${contract.frontend.clientBindings.length}
+- Runtime endpoints: ${contract.frontend.runtimeEndpoints.length}
 
 Rules:
 
@@ -893,17 +987,54 @@ function renderAppMapMd(contract: AgentContract): string {
 
   lines.push("## Commands", "");
   for (const command of contract.commands) {
-    lines.push(`### ${command.name}`, `Policy: ${command.policy ?? "none"}`, "Writes:", ...renderList(command.tablesWritten).split("\n"), "Emits:", ...renderList(command.emits).split("\n"), "");
+    lines.push(
+      `### ${command.name}`,
+      `Policy: ${command.policy ?? "none"}`,
+      `HTTP: ${command.http.method} ${command.http.path}`,
+      `Frontend hook: \`${command.frontend.hook}\``,
+      "Frontend routes:",
+      ...renderList(command.frontend.routes).split("\n"),
+      "Frontend components:",
+      ...renderList(command.frontend.components).split("\n"),
+      "Writes:",
+      ...renderList(command.tablesWritten).split("\n"),
+      "Emits:",
+      ...renderList(command.emits).split("\n"),
+      "",
+    );
   }
 
   lines.push("## Queries", "");
   for (const query of contract.queries) {
-    lines.push(`### ${query.name}`, `Policy: ${query.policy ?? "none"}`, `Read-only: ${query.readOnly ? "yes" : "no"}`, "");
+    lines.push(
+      `### ${query.name}`,
+      `Policy: ${query.policy ?? "none"}`,
+      `HTTP: ${query.http.method} ${query.http.path}`,
+      `Frontend hook: \`${query.frontend.hook}\``,
+      `Read-only: ${query.readOnly ? "yes" : "no"}`,
+      "Frontend routes:",
+      ...renderList(query.frontend.routes).split("\n"),
+      "Frontend components:",
+      ...renderList(query.frontend.components).split("\n"),
+      "",
+    );
   }
 
   lines.push("## Live Queries", "");
   for (const liveQuery of contract.liveQueries) {
-    lines.push(`### ${liveQuery.name}`, `Policy: ${liveQuery.policy ?? "none"}`, "Dependencies:", ...renderList(liveQuery.dependencies.map((dep) => `${dep.table} (${dep.scope})`)).split("\n"), "");
+    lines.push(
+      `### ${liveQuery.name}`,
+      `Policy: ${liveQuery.policy ?? "none"}`,
+      `HTTP: ${liveQuery.http.method} ${liveQuery.http.path}`,
+      `Frontend hook: \`${liveQuery.frontend.hook}\``,
+      "Frontend routes:",
+      ...renderList(liveQuery.frontend.routes).split("\n"),
+      "Frontend components:",
+      ...renderList(liveQuery.frontend.components).split("\n"),
+      "Dependencies:",
+      ...renderList(liveQuery.dependencies.map((dep) => `${dep.table} (${dep.scope})`)).split("\n"),
+      "",
+    );
   }
 
   lines.push("## Actions", "");
@@ -969,6 +1100,17 @@ function renderAppMapMd(contract: AgentContract): string {
     );
   }
   if (contract.frontend.clientBindings.length === 0) {
+    lines.push("- none");
+  }
+  lines.push("");
+
+  lines.push("### Runtime Endpoints", "");
+  for (const endpoint of contract.frontend.runtimeEndpoints) {
+    lines.push(
+      `- ${endpoint.kind} ${endpoint.name}: ${endpoint.http.method} ${endpoint.http.path}; ${endpoint.frontend.hook}`,
+    );
+  }
+  if (contract.frontend.runtimeEndpoints.length === 0) {
     lines.push("- none");
   }
   lines.push("");

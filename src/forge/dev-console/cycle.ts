@@ -5,6 +5,7 @@ import { classify } from "../compiler/classifier/classify.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
+import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { checkAiUsageInApp } from "../compiler/guards/check-ai-usage.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
@@ -184,10 +185,25 @@ function requiredGeneratedArtifacts(workspaceRoot: string): Array<{ name: string
   ];
 }
 
+function isUuidLike(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function hasUuidTenantColumns(tableMap: Record<string, TableMapEntry>): boolean {
+  return Object.values(tableMap).some((entry) => {
+    if (!entry.tenantScoped || !entry.tenantIdColumn) {
+      return false;
+    }
+    return entry.columns.some(
+      (column) => column.name === entry.tenantIdColumn && column.sqlType === "uuid",
+    );
+  });
+}
+
 function runDoctorPhase(workspaceRoot: string): DevConsolePhase {
   const start = performance.now();
   const artifacts = requiredGeneratedArtifacts(workspaceRoot);
-  const diagnostics = artifacts
+  const diagnostics: Diagnostic[] = artifacts
     .filter((artifact) => !artifact.ok)
     .map((artifact) =>
       createDiagnostic({
@@ -200,7 +216,39 @@ function runDoctorPhase(workspaceRoot: string): DevConsolePhase {
         docs: ["AGENTS.md"],
       }),
     );
-  return phase("doctor", diagnostics, msSince(start), { artifacts }, diagnostics.length === 0 ? "project shape looks coherent" : "project is missing required artifacts");
+  const frontend = readJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);
+  diagnostics.push(...(frontend?.diagnostics ?? []));
+  const dbJson = readJson<{ tableMap: Record<string, TableMapEntry> }>(
+    workspaceRoot,
+    `${GENERATED_DIR}/db.json`,
+  );
+  if (frontend && hasUuidTenantColumns(dbJson?.tableMap ?? {})) {
+    for (const provider of frontend.providers) {
+      if (provider.devAuthTenantId && !isUuidLike(provider.devAuthTenantId)) {
+        diagnostics.push(createDiagnostic({
+          severity: "warning",
+          code: "FORGE_FRONTEND_DEV_AUTH_TENANT_MISMATCH",
+          message: `${provider.file} devAuth tenantId '${provider.devAuthTenantId}' is not UUID-like, but tenant tables use uuid tenant ids`,
+          file: provider.file,
+          fixHint: "Use a UUID-like local tenant id in ForgeProvider devAuth, or seed a matching tenant row for local development.",
+          suggestedCommands: ["forge inspect frontend --json", "forge dev --once --json"],
+          docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
+        }));
+      }
+    }
+  }
+  const missingArtifacts = artifacts.some((artifact) => !artifact.ok);
+  return phase(
+    "doctor",
+    diagnostics,
+    msSince(start),
+    { artifacts },
+    diagnostics.length === 0
+      ? "project shape looks coherent"
+      : missingArtifacts
+        ? "project is missing required artifacts"
+        : "project has frontend/runtime warnings",
+  );
 }
 
 function runFrontendPhase(workspaceRoot: string): DevConsolePhase {

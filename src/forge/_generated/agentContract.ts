@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=c2a6cac44f4bbf76bd07a53286d820df7cf4df14c2cfb6b6522c74fecb94eb44
+// @forge-generated generator=0.0.0 input=189335882cdc93cf4367de9ce956c1651e737cb3477bea96e54267a702e352bc content=acef47ef79ecaba45cafdc1745c1f1703863ad49a27ff4be8fd2e2c0ed593e10
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -92,6 +92,7 @@ export const agentContract = {
     "present": false,
     "providers": [],
     "routes": [],
+    "runtimeEndpoints": [],
     "webManifest": {
       "bridge": {
         "files": [],

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=cd54785b6ab00ae831e2d50088ef52fb68801367e50beec632b9ce67132b2d8b content=422e08653aebf190161f7af38fa0f92cfea4c7dd32610b24e906ba30ec251c22
+// @forge-generated generator=0.0.0 input=189335882cdc93cf4367de9ce956c1651e737cb3477bea96e54267a702e352bc content=d660df364b77b430050990444f6deb39e2d25f71f19ef2e1da18148899364bc5
 # App Map
 
 ## Data
@@ -23,5 +23,9 @@ Framework: none
 ### Components
 
 ### Client Bindings
+
+- none
+
+### Runtime Endpoints
 
 - none

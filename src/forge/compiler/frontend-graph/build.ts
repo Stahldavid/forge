@@ -209,6 +209,20 @@ function apiEnvFor(framework: FrontendGraph["framework"]): string {
   return framework === "vite" || framework === "static" ? VITE_API_URL_ENV : API_URL_ENV;
 }
 
+function stringProp(text: string, prop: "userId" | "tenantId" | "role"): string | undefined {
+  const literal = text.match(new RegExp(`${prop}\\s*:\\s*["'\`]([^"'\`]+)["'\`]`));
+  if (literal?.[1]) {
+    return literal[1];
+  }
+  const identifier = text.match(new RegExp(`${prop}\\s*:\\s*([A-Za-z_$][A-Za-z0-9_$]*)`));
+  const name = identifier?.[1];
+  if (!name) {
+    return undefined;
+  }
+  const constant = text.match(new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*["'\`]([^"'\`]+)["'\`]`));
+  return constant?.[1];
+}
+
 function defaultWebPort(framework: FrontendGraph["framework"]): number {
   return framework === "next" ? 3000 : 5173;
 }
@@ -307,14 +321,18 @@ export function buildFrontendGraph(input: {
       components.push({ name: componentNameForText(file, text), file: rel, ...uses });
     }
     if (!isBridgeFile && text.includes("ForgeProvider")) {
+      const devAuth =
+        text.includes("devAuth") ||
+        (text.includes("userId") && text.includes("tenantId") && text.includes("role"));
       providers.push({
         name: "ForgeProvider",
         file: rel,
         ...(text.includes(API_URL_ENV) ? { apiUrlEnv: API_URL_ENV } : {}),
         ...(text.includes(VITE_API_URL_ENV) ? { apiUrlEnv: VITE_API_URL_ENV } : {}),
-        devAuth:
-          text.includes("devAuth") ||
-          (text.includes("userId") && text.includes("tenantId") && text.includes("role")),
+        devAuth,
+        ...(devAuth && stringProp(text, "userId") ? { devAuthUserId: stringProp(text, "userId") } : {}),
+        ...(devAuth && stringProp(text, "tenantId") ? { devAuthTenantId: stringProp(text, "tenantId") } : {}),
+        ...(devAuth && stringProp(text, "role") ? { devAuthRole: stringProp(text, "role") } : {}),
       });
     }
     if (

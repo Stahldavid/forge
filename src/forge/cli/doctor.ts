@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
+import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 
 export interface DoctorCheck {
@@ -38,6 +39,47 @@ function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null
   } catch {
     return null;
   }
+}
+
+function isUuidLike(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function hasUuidTenantColumns(tableMap: Record<string, TableMapEntry>): boolean {
+  return Object.values(tableMap).some((entry) => {
+    if (!entry.tenantScoped || !entry.tenantIdColumn) {
+      return false;
+    }
+    return entry.columns.some(
+      (column) => column.name === entry.tenantIdColumn && column.sqlType === "uuid",
+    );
+  });
+}
+
+function frontendDiagnosticChecks(frontendGraph: FrontendGraph | null): DoctorCheck[] {
+  return (frontendGraph?.diagnostics ?? []).map((diagnostic, index) => ({
+    name: `frontend-diagnostic-${index + 1}`,
+    ok: false,
+    severity: diagnostic.severity === "error" ? "error" : "warning",
+    message: `${diagnostic.code}: ${diagnostic.fixHint ?? diagnostic.message}`,
+  }));
+}
+
+function frontendDevAuthChecks(
+  frontendGraph: FrontendGraph | null,
+  tableMap: Record<string, TableMapEntry>,
+): DoctorCheck[] {
+  if (!frontendGraph || !hasUuidTenantColumns(tableMap)) {
+    return [];
+  }
+  return frontendGraph.providers
+    .filter((provider) => provider.devAuthTenantId && !isUuidLike(provider.devAuthTenantId))
+    .map((provider) => ({
+      name: "frontend-dev-auth-tenant",
+      ok: false,
+      severity: "warning" as const,
+      message: `${provider.file} devAuth tenantId '${provider.devAuthTenantId}' is not UUID-like, but tenant tables use uuid tenant ids`,
+    }));
 }
 
 export async function runDoctorCommand(options: {
@@ -87,6 +129,10 @@ export async function runDoctorCommand(options: {
       options.workspaceRoot,
       `${GENERATED_DIR}/frontendGraph.json`,
     );
+    const dbJson = readGeneratedJson<{ tableMap: Record<string, TableMapEntry> }>(
+      options.workspaceRoot,
+      `${GENERATED_DIR}/db.json`,
+    );
     checks.push({
       name: "frontend-root",
       ok: frontendGraph?.present === true,
@@ -120,6 +166,8 @@ export async function runDoctorCommand(options: {
           ? undefined
           : "no frontend routes detected in web/",
     });
+    checks.push(...frontendDiagnosticChecks(frontendGraph));
+    checks.push(...frontendDevAuthChecks(frontendGraph, dbJson?.tableMap ?? {}));
   }
 
   const ok = checks.every((check) => check.ok || check.severity === "warning");

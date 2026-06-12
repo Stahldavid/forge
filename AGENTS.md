@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=3bd69464bca8ba76465bcc266b6d03ee2a6761067a71b53ebdd04ee04dfefd02 content=3ef8469e4b93bd4d4d3247241e6cbb07392344acf549c9033917231c2a68b1d0
+// @forge-generated generator=0.0.0 input=189335882cdc93cf4367de9ce956c1651e737cb3477bea96e54267a702e352bc content=1804876bd95b866c0d635f3c8348f87e5b8bd1bde188114e5f07d727dfa308be
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -105,6 +105,7 @@ Tenant-scoped tables:
 - Routes: 0
 - Components: 0
 - Client bindings: 0
+- Runtime endpoints: 0
 
 Rules:
 

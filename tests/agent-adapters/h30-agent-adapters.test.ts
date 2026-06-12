@@ -29,6 +29,8 @@ function contract(): AgentContract {
         emits: ["ticket.created"],
         allowedPackages: ["zod"],
         forbiddenCapabilities: ["network", "secrets", "ai"],
+        http: { method: "POST", path: "/commands/createTicket", exampleBody: { args: {} } },
+        frontend: { hook: "useCommand(api.commands.createTicket)", routes: ["/tickets"], components: [] },
       },
     ],
     queries: [
@@ -40,6 +42,8 @@ function contract(): AgentContract {
         forbiddenCapabilities: ["network"],
         readOnly: true,
         tenantScoped: true,
+        http: { method: "POST", path: "/queries/listTickets", exampleBody: { args: {} } },
+        frontend: { hook: "useQuery(api.queries.listTickets, args)", routes: ["/tickets"], components: [] },
       },
     ],
     liveQueries: [
@@ -50,6 +54,8 @@ function contract(): AgentContract {
         allowedPackages: [],
         forbiddenCapabilities: ["network"],
         dependencies: [{ table: "tickets", scope: "tenant" }],
+        http: { method: "GET", path: "/live/liveTickets", exampleUrl: "/live/liveTickets?args={}" },
+        frontend: { hook: "useLiveQuery(api.liveQueries.liveTickets, args)", routes: ["/tickets"], components: [] },
       },
     ],
     actions: [
@@ -61,6 +67,8 @@ function contract(): AgentContract {
         allowedPackages: ["resend"],
         forbiddenCapabilities: [],
         allowedCapabilities: ["network", "secrets"],
+        http: { method: "POST", path: "/actions/captureTicketCreated", exampleBody: { args: {} } },
+        frontend: { hook: "no generated React hook; invoke from server/action code", routes: [], components: [] },
       },
     ],
     workflows: [
@@ -190,6 +198,26 @@ function contract(): AgentContract {
           name: "liveTickets",
           file: "web/app/tickets/page.tsx",
           route: "/tickets",
+        },
+      ],
+      runtimeEndpoints: [
+        {
+          kind: "command",
+          name: "createTicket",
+          http: { method: "POST", path: "/commands/createTicket", exampleBody: { args: {} } },
+          frontend: { hook: "useCommand(api.commands.createTicket)", routes: ["/tickets"], components: [] },
+        },
+        {
+          kind: "query",
+          name: "listTickets",
+          http: { method: "POST", path: "/queries/listTickets", exampleBody: { args: {} } },
+          frontend: { hook: "useQuery(api.queries.listTickets, args)", routes: ["/tickets"], components: [] },
+        },
+        {
+          kind: "liveQuery",
+          name: "liveTickets",
+          http: { method: "GET", path: "/live/liveTickets", exampleUrl: "/live/liveTickets?args={}" },
+          frontend: { hook: "useLiveQuery(api.liveQueries.liveTickets, args)", routes: ["/tickets"], components: [] },
         },
       ],
       diagnostics: [],

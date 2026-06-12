@@ -13,6 +13,21 @@ export interface AgentEntryInfo {
   policy?: string;
   allowedPackages: string[];
   forbiddenCapabilities: string[];
+  http: AgentHttpEndpointInfo;
+  frontend: AgentFrontendUsageInfo;
+}
+
+export interface AgentHttpEndpointInfo {
+  method: "GET" | "POST";
+  path: string;
+  exampleUrl?: string;
+  exampleBody?: unknown;
+}
+
+export interface AgentFrontendUsageInfo {
+  hook: string;
+  routes: string[];
+  components: string[];
 }
 
 export interface AgentCommandInfo extends AgentEntryInfo {
@@ -139,6 +154,9 @@ export interface AgentFrontendInfo {
     file: string;
     apiUrlEnv?: string;
     devAuth: boolean;
+    devAuthUserId?: string;
+    devAuthTenantId?: string;
+    devAuthRole?: string;
   }>;
   bridgeFiles: string[];
   webManifest: {
@@ -169,6 +187,12 @@ export interface AgentFrontendInfo {
     file: string;
     route?: string;
     component?: string;
+  }>;
+  runtimeEndpoints: Array<{
+    kind: "command" | "query" | "liveQuery";
+    name: string;
+    http: AgentHttpEndpointInfo;
+    frontend: AgentFrontendUsageInfo;
   }>;
   diagnostics: Diagnostic[];
 }

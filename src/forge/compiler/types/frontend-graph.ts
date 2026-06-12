@@ -24,6 +24,9 @@ export interface FrontendProviderInfo {
   file: string;
   apiUrlEnv?: string;
   devAuth: boolean;
+  devAuthUserId?: string;
+  devAuthTenantId?: string;
+  devAuthRole?: string;
 }
 
 export interface FrontendWebManifest {

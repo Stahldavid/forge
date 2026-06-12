@@ -48,15 +48,15 @@ describe("H19 agent contract", () => {
       }
 
       const contract = readJson<{
-        commands: unknown[];
-        queries: unknown[];
-        liveQueries: unknown[];
+        commands: Array<{ http?: { method: string; path: string }; frontend?: { hook: string } }>;
+        queries: Array<{ http?: { method: string; path: string }; frontend?: { hook: string } }>;
+        liveQueries: Array<{ http?: { method: string; path: string }; frontend?: { hook: string } }>;
         actions: unknown[];
         workflows: unknown[];
         data: { tables: unknown[] };
         policies: unknown[];
         secrets: unknown[];
-        frontend: { present: boolean; routes: unknown[]; components: unknown[] };
+        frontend: { present: boolean; routes: unknown[]; components: unknown[]; runtimeEndpoints: unknown[] };
       }>(workspace, `${GENERATED}/agentContract.json`);
 
       expect(contract.commands.length).toBeGreaterThan(0);
@@ -69,6 +69,12 @@ describe("H19 agent contract", () => {
       expect(contract.secrets).toBeArray();
       expect(contract.frontend.present).toBeBoolean();
       expect(contract.frontend.routes).toBeArray();
+      expect(contract.frontend.runtimeEndpoints.length).toBeGreaterThan(0);
+      expect(contract.commands[0]?.http?.method).toBe("POST");
+      expect(contract.commands[0]?.http?.path.startsWith("/commands/")).toBe(true);
+      expect(contract.commands[0]?.frontend?.hook).toContain("useCommand");
+      expect(contract.queries[0]?.http?.path.startsWith("/queries/")).toBe(true);
+      expect(contract.liveQueries[0]?.http?.method).toBe("GET");
     } finally {
       cleanupWorkspace(workspace);
     }
