@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=189335882cdc93cf4367de9ce956c1651e737cb3477bea96e54267a702e352bc content=acef47ef79ecaba45cafdc1745c1f1703863ad49a27ff4be8fd2e2c0ed593e10
+// @forge-generated generator=0.0.0 input=537011f87b172c6227564e7de4126c7fa71d75ea6be6b45476a4c2c9dcbd5e36 content=40fb4424b93c87372ea08989e0ea723a7a186ea29f9a220a4d9b55ad0df753fa
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -68,8 +68,10 @@ export const agentContract = {
       "forge check --json"
     ],
     "dev": [
+      "forge dev",
       "forge dev --once --json",
-      "forge dev --db pglite --worker --telemetry local --mock-ai"
+      "forge dev --api-only",
+      "forge dev --web-only"
     ]
   },
   "data": {
@@ -644,9 +646,10 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge dev for the full local loop: generated checks, API runtime, web app, DB, worker, watch, and startup URLs.",
         "Run forge dev --once --json for a one-shot diagnostic cycle.",
-        "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
-        "When a web app exists, forge dev starts the API runtime and the web dev server together.",
+        "Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.",
+        "When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.",
         "Use generated client and React hooks through web/lib/forge.ts."
       ],
       "title": "Run dev"

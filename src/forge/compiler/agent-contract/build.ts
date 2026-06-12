@@ -333,9 +333,10 @@ function playbooks(): AgentPlaybook[] {
     {
       title: "Run dev",
       steps: [
+        "Run forge dev for the full local loop: generated checks, API runtime, web app, DB, worker, watch, and startup URLs.",
         "Run forge dev --once --json for a one-shot diagnostic cycle.",
-        "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
-        "When a web app exists, forge dev starts the API runtime and the web dev server together.",
+        "Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.",
+        "When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.",
         "Use generated client and React hooks through web/lib/forge.ts.",
       ],
     },
@@ -658,7 +659,7 @@ export function buildAgentContractArtifacts(
     commandsToRun: {
       beforeEditing: ["forge dev --once --json", "forge inspect all --json", "forge check --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --strict"],
-      dev: ["forge dev --once --json", "forge dev --db pglite --worker --telemetry local --mock-ai"],
+      dev: ["forge dev", "forge dev --once --json", "forge dev --api-only", "forge dev --web-only"],
     },
   };
 
@@ -785,6 +786,7 @@ Template apps may ignore \`src/forge/_generated/**\` and \`forge.lock\` in git t
 
 \`\`\`bash
 forge dev --once --json
+forge dev
 forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
@@ -867,10 +869,11 @@ Use:
 
 \`\`\`bash
 forge dev --once --json
+forge dev
 forge inspect frontend --json
 \`\`\`
 
-These commands report routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
+\`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
 
 ### Apply a feature blueprint
 
@@ -1161,6 +1164,7 @@ Run:
 
 \`\`\`bash
 forge dev --once --json
+forge dev
 forge inspect all --json
 forge inspect frontend --json
 forge check --json

@@ -25,7 +25,32 @@ describe("H33 forge dev console", () => {
     expect(parsed.command.once).toBe(true);
     expect(parsed.command.json).toBe(true);
     expect(parsed.command.watch).toBe(true);
+    expect(parsed.command.worker).toBe(true);
     expect(parsed.command.withWeb).toBe(true);
+  });
+
+  test("parseCli makes forge dev the full local loop by default", () => {
+    const parsed = parseCli(["dev"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "dev",
+      db: "pglite",
+      watch: true,
+      worker: true,
+      withWeb: true,
+      apiOnly: false,
+      webOnly: false,
+    });
+
+    const narrowed = parseCli(["dev", "--no-watch", "--no-worker", "--api-only"]);
+    expect(narrowed.errors).toEqual([]);
+    expect(narrowed.command).toMatchObject({
+      kind: "dev",
+      watch: false,
+      worker: false,
+      withWeb: false,
+      apiOnly: true,
+    });
   });
 
   test("parseCli accepts forge dev web controls", () => {

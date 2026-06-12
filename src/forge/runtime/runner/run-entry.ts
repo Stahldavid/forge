@@ -197,10 +197,10 @@ export async function executeResolvedEntry(
           : `runtime entry '${entry.name}' failed: ${message}`,
         file: entry.file,
         fixHint: dbHint
-          ? "Start `forge dev --db pglite --worker` and invoke the HTTP endpoint, or run database-backed entries from a DB-enabled workflow/test."
+          ? "Start `forge dev` and invoke the HTTP endpoint, or run database-backed entries from a DB-enabled workflow/test."
           : undefined,
         suggestedCommands: dbHint
-          ? ["forge dev --db pglite --worker", "forge dev --once --json"]
+          ? ["forge dev", "forge dev --once --json"]
           : undefined,
       }),
     );

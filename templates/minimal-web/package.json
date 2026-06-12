@@ -11,8 +11,8 @@
     "generate": "forge generate",
     "check": "forge check",
     "verify": "forge verify --strict",
-    "dev": "forge dev --db pglite --worker --telemetry local --mock-ai",
-    "dev:api": "forge dev --db pglite --worker --telemetry local --mock-ai --no-web",
+    "dev": "forge dev",
+    "dev:api": "forge dev --api-only",
     "dev:web": "cd web && __PACKAGE_MANAGER__ run dev",
     "typecheck": "tsc --noEmit && cd web && __PACKAGE_MANAGER__ run typecheck"
   },

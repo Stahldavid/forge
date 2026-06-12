@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=189335882cdc93cf4367de9ce956c1651e737cb3477bea96e54267a702e352bc content=1804876bd95b866c0d635f3c8348f87e5b8bd1bde188114e5f07d727dfa308be
+// @forge-generated generator=0.0.0 input=537011f87b172c6227564e7de4126c7fa71d75ea6be6b45476a4c2c9dcbd5e36 content=1713e61488821497d66b1c8827858c039a94a6b7377a66686e316b930a0ee0fd
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -60,6 +60,7 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 
 ```bash
 forge dev --once --json
+forge dev
 forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
@@ -141,10 +142,11 @@ Use:
 
 ```bash
 forge dev --once --json
+forge dev
 forge inspect frontend --json
 ```
 
-These commands report routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
+`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
 
 ### Apply a feature blueprint
 

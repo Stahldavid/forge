@@ -59,7 +59,8 @@ describe("runtime executor", () => {
       const diagnostic = executed.diagnostics.find(
         (candidate) => candidate.code === FORGE_DB_ADAPTER_UNAVAILABLE,
       );
-      expect(diagnostic?.fixHint).toContain("forge dev --db pglite --worker");
+      expect(diagnostic?.fixHint).toContain("forge dev");
+      expect(diagnostic?.suggestedCommands).toContain("forge dev");
       expect(diagnostic?.suggestedCommands).toContain("forge dev --once --json");
     } finally {
       cleanupWorkspace(workspace);

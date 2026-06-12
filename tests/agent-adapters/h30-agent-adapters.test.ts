@@ -243,7 +243,7 @@ function contract(): AgentContract {
     commandsToRun: {
       beforeEditing: ["forge inspect all --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --strict"],
-      dev: ["forge dev --db pglite --worker --telemetry local --mock-ai"],
+      dev: ["forge dev"],
     },
   };
 }

@@ -440,7 +440,7 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
 
   if (actions.length === 0) {
     actions.push({
-      command: "forge dev --watch",
+      command: "forge dev",
       reason: "project diagnostics are clean; keep the dev console watching for changes",
       confidence: "medium",
     });

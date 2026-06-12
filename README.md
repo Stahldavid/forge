@@ -9,6 +9,7 @@ Agent-native application framework and compiler for building Forge apps without 
 ```bash
 bun install --ignore-scripts
 bun run forge generate
+bun run forge dev
 bun run forge dev --once --json
 bun run forge inspect all --json
 bun run forge doctor
@@ -102,7 +103,7 @@ Prefer task-oriented commands first:
 
 ```bash
 forge dev --once --json
-forge dev --watch
+forge dev
 forge inspect all --json
 forge doctor
 forge verify --strict
@@ -124,8 +125,8 @@ Common command groups:
 | `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
 | `forge doctor --json` | Human/agent health check for project coherence |
+| `forge dev` | Interactive local loop: generated checks, API runtime, DB, worker, watch mode, frontend server, URLs, and next agent checks |
 | `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generated drift, check, frontend, doctor, impact, reports, next actions |
-| `forge dev --watch` | Interactive dev console plus local runtime server, worker, frontend server, telemetry, mock AI options |
 | `forge run`, `forge query`, `forge live` | Execute and inspect runtime entries locally |
 | `forge db`, `forge rls` | Diff/migrate/status and inspect/check RLS |
 | `forge policy`, `forge secrets`, `forge env`, `forge auth` | Security and configuration operations |

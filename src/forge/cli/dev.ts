@@ -1,6 +1,9 @@
 import { run } from "../compiler/orchestrator/run.ts";
 import { join } from "node:path";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
+import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
+import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
+import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 import { resolveBunExecutable } from "./bun-exec.ts";
 import {
   formatDevConsoleHuman,
@@ -49,6 +52,61 @@ interface WebDevServerHandle {
   port: number;
   command: string[];
   stop: () => void;
+}
+
+interface DevStartupSummary {
+  schemaVersion: "0.1.0";
+  ok: true;
+  mode: "dev";
+  api: {
+    url: string;
+    host: string;
+    port: number;
+    db: { kind: string; connected: boolean };
+    worker: "running" | "stopped";
+  };
+  web: null | {
+    url: string;
+    port: number;
+    command: string[];
+    framework: string;
+    routes: string[];
+    bridgeFiles: string[];
+    apiUrlEnv?: string;
+  };
+  watch: {
+    enabled: boolean;
+  };
+  runtime: {
+    routes: Array<{ method: string; path: string; purpose: string }>;
+  };
+  frontend: {
+    present: boolean;
+    framework: string;
+    routes: string[];
+    bindings: string[];
+    bridgeFiles: string[];
+    diagnostics: number;
+  };
+  next: {
+    browserUrl: string;
+    apiIndex: string;
+    inspect: string;
+    verify: string;
+  };
+  pid: number;
+}
+
+function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
+  const absolute = join(workspaceRoot, relative);
+  if (!nodeFileSystem.exists(absolute)) {
+    return null;
+  }
+  try {
+    return JSON.parse(stripDeterministicHeader(nodeFileSystem.readText(absolute) ?? "")) as T;
+  } catch {
+    return null;
+  }
 }
 
 function readPackageJson(workspaceRoot: string): { scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> } | null {
@@ -133,29 +191,114 @@ function startWebDevServer(input: {
   };
 }
 
-function printStartupJson(handle: DevServerHandle, web?: WebDevServerHandle | null): void {
-  process.stdout.write(
-    `${JSON.stringify({
-      host: handle.host,
-      port: handle.port,
-      routes: handle.routes,
-      web: web
-        ? {
-            url: web.url,
-            port: web.port,
-            command: web.command,
-          }
-        : null,
-      pid: process.pid,
-    })}\n`,
+function buildStartupSummary(input: {
+  workspaceRoot: string;
+  handle: DevServerHandle;
+  web?: WebDevServerHandle | null;
+  watch: boolean;
+}): DevStartupSummary {
+  const frontend = readGeneratedJson<FrontendGraph>(
+    input.workspaceRoot,
+    `${GENERATED_DIR}/frontendGraph.json`,
   );
+  const bindings = frontend
+    ? [...new Set(frontend.clientBindings.map((binding) => `${binding.kind}:${binding.name}`))].sort()
+    : [];
+  const browserUrl = input.web?.url ?? input.handle.url;
+  return {
+    schemaVersion: "0.1.0",
+    ok: true,
+    mode: "dev",
+    api: {
+      url: input.handle.url,
+      host: input.handle.host,
+      port: input.handle.port,
+      db: input.handle.state.db,
+      worker: input.handle.outboxWorker?.isRunning() ? "running" : "stopped",
+    },
+    web: input.web
+      ? {
+          url: input.web.url,
+          port: input.web.port,
+          command: input.web.command,
+          framework: frontend?.framework ?? "unknown",
+          routes: frontend?.routes.map((route) => route.path) ?? [],
+          bridgeFiles: frontend?.bridgeFiles ?? [],
+          ...(frontend?.dev?.apiUrlEnv ? { apiUrlEnv: frontend.dev.apiUrlEnv } : {}),
+        }
+      : null,
+    watch: {
+      enabled: input.watch,
+    },
+    runtime: {
+      routes: input.handle.routes.map((route) => ({
+        method: route.method,
+        path: route.path,
+        purpose: route.purpose,
+      })),
+    },
+    frontend: {
+      present: frontend?.present ?? false,
+      framework: frontend?.framework ?? "none",
+      routes: frontend?.routes.map((route) => route.path) ?? [],
+      bindings,
+      bridgeFiles: frontend?.bridgeFiles ?? [],
+      diagnostics: frontend?.diagnostics.length ?? 0,
+    },
+    next: {
+      browserUrl,
+      apiIndex: input.handle.url,
+      inspect: "forge inspect all --json",
+      verify: "forge dev --once --json",
+    },
+    pid: process.pid,
+  };
 }
 
-function printStartupHuman(handle: DevServerHandle, web?: WebDevServerHandle | null): void {
-  process.stdout.write(`forge dev listening on ${handle.url}\n`);
-  if (web) {
-    process.stdout.write(`forge web listening on ${web.url}\n`);
+function printStartupJson(summary: DevStartupSummary): void {
+  process.stdout.write(`${JSON.stringify(summary)}\n`);
+}
+
+function printStartupHuman(summary: DevStartupSummary): void {
+  const lines = ["Forge Dev", ""];
+  lines.push("API runtime");
+  lines.push(`  URL: ${summary.api.url}`);
+  lines.push(`  DB: ${summary.api.db.kind} ${summary.api.db.connected ? "connected" : "not connected"}`);
+  lines.push(`  Worker: ${summary.api.worker}`);
+  lines.push(`  Watch: ${summary.watch.enabled ? "on" : "off"}`);
+  lines.push("");
+
+  lines.push("Web app");
+  if (summary.web) {
+    lines.push(`  URL: ${summary.web.url}`);
+    lines.push(`  Framework: ${summary.web.framework}`);
+    lines.push(`  API env: ${summary.web.apiUrlEnv ?? "unknown"}=${summary.api.url}`);
+    lines.push(`  Bridge: ${summary.web.bridgeFiles.length > 0 ? summary.web.bridgeFiles.join(", ") : "missing"}`);
+    lines.push(`  Routes: ${summary.web.routes.length > 0 ? summary.web.routes.join(", ") : "none detected"}`);
+  } else {
+    lines.push("  none detected; running API only");
   }
+  lines.push("");
+
+  lines.push("Runtime endpoints");
+  for (const route of summary.runtime.routes.slice(0, 16)) {
+    lines.push(`  ${route.method.padEnd(4)} ${route.path}  ${route.purpose}`);
+  }
+  if (summary.runtime.routes.length > 16) {
+    lines.push(`  ... ${summary.runtime.routes.length - 16} more`);
+  }
+  lines.push("");
+
+  lines.push("Open");
+  lines.push(`  Browser: ${summary.next.browserUrl}`);
+  lines.push(`  API index: ${summary.next.apiIndex}`);
+  lines.push("");
+  lines.push("Agent checks");
+  lines.push(`  ${summary.next.verify}`);
+  lines.push(`  ${summary.next.inspect}`);
+  lines.push("");
+
+  process.stdout.write(`${lines.join("\n")}\n`);
 }
 
 function openBrowser(url: string): void {
@@ -308,10 +451,16 @@ export async function runDevCommand(
         json: options.json,
       });
 
+  const startupSummary = buildStartupSummary({
+    workspaceRoot,
+    handle,
+    web: webHandle,
+    watch: options.watch,
+  });
   if (options.json) {
-    printStartupJson(handle, webHandle);
+    printStartupJson(startupSummary);
   } else {
-    printStartupHuman(handle, webHandle);
+    printStartupHuman(startupSummary);
   }
   if (options.open) {
     openBrowser(webHandle?.url ?? handle.url);

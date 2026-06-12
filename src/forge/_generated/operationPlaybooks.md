@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=7d4ea92a8b22c6574ccf8e1ec1dab675aae8b8db8fe8e38686713fd2200c79f9
+// @forge-generated generator=0.0.0 input=537011f87b172c6227564e7de4126c7fa71d75ea6be6b45476a4c2c9dcbd5e36 content=ec25ec102e77fb5be99c8048a2d3ff26b188e7e6a4103f4bd583706b972699fe
 # Operation Playbooks
 
 ## Add a command
@@ -107,10 +107,11 @@
 
 ## Run dev
 
-1. Run forge dev --once --json for a one-shot diagnostic cycle.
-2. Run forge dev --db pglite --worker --telemetry local --mock-ai.
-3. When a web app exists, forge dev starts the API runtime and the web dev server together.
-4. Use generated client and React hooks through web/lib/forge.ts.
+1. Run forge dev for the full local loop: generated checks, API runtime, web app, DB, worker, watch, and startup URLs.
+2. Run forge dev --once --json for a one-shot diagnostic cycle.
+3. Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.
+4. When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.
+5. Use generated client and React hooks through web/lib/forge.ts.
 
 ## Add or update frontend
 

@@ -183,10 +183,7 @@ export function buildAgentContext(contract: AgentContract): AgentContext {
 export function buildAgentCommandsMap(): AgentCommandsMap {
   return {
     setup: ["bun install"],
-    dev: [
-      "forge dev --db pglite --worker --telemetry local --mock-ai",
-      "cd web && bun run dev",
-    ],
+    dev: ["forge dev"],
     generate: ["forge generate"],
     check: ["forge check"],
     verify: ["forge verify --strict"],
