@@ -213,6 +213,26 @@ function methodHelpResponse(input: {
   );
 }
 
+function errorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string" &&
+    (error as { message: string }).message.length > 0
+  ) {
+    return (error as { message: string }).message;
+  }
+  if (typeof error === "string" && error.length > 0) {
+    return error;
+  }
+  const stringified = String(error);
+  return stringified && stringified !== "[object Object]" ? stringified : fallback;
+}
+
 function parseInvokeName(pathname: string, prefix: string): string | null {
   if (!pathname.startsWith(prefix)) {
     return null;
@@ -1147,8 +1167,7 @@ export async function startDevServer(
             error.status,
           );
         }
-        const message =
-          error instanceof Error ? error.message : "dev server request failed";
+        const message = errorMessage(error, "dev server request failed");
         return jsonResponse(
           {
             ok: false,

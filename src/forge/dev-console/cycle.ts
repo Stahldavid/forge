@@ -211,6 +211,16 @@ function runImpactPhase(workspaceRoot: string): DevConsolePhase {
     includeGenerated: false,
     excludeTests: false,
   });
+  const gitUnavailable = result.diagnostics.some(
+    (diagnostic) => diagnostic.code === "FORGE_IMPACT_GIT_UNAVAILABLE",
+  );
+  if (gitUnavailable) {
+    return skippedPhase(
+      "impact",
+      "impact skipped because workspace is not a git repository",
+      msSince(start),
+    );
+  }
   const report = result.report;
   const summary: ImpactSummary | undefined = report
     ? {

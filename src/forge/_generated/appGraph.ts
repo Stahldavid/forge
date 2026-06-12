@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=362c40bfad163f0ffec72eb98ff5363cc0c6f86be1a9e5c2040b39ed0a41ed91 content=9d247ee085f57c0b0b644ea21ead814a55a519e27229a9668f13a3ae65eecb07
+// @forge-generated generator=0.0.0 input=195809293a439823b98727047e17f305f3e31553eb586957c631cc4b644e3552 content=147fe08dcac162e6bb5e27d3dc45c49db13428c4428135766c7d412ad420182c
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "8bc4e843797886878328d8ca4080abf2442779777ae5d07ce75c5e0a0ca1a211",
+  "inputHash": "499b0c1a39a6c468d3d7481546571eeec6958bb28b69ae05069a3197ef88d385",
   "moduleGraph": {
     "nodes": [
       {
@@ -11340,8 +11340,8 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 24791,
-              "start": 24760
+              "end": 25399,
+              "start": 25368
             },
             "toModuleId": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
           }
