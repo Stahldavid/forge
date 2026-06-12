@@ -52,6 +52,7 @@ describe("runtime executor", () => {
       const executed = await runEntry(workspace, "createUser", {
         json: false,
         mock: false,
+        db: null,
       });
 
       expect(executed.exitCode).toBe(1);

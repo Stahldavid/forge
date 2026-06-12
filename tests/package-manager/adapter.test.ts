@@ -87,6 +87,21 @@ describe("PackageManagerAdapter with mock executor", () => {
     expect(resolved).toEqual([realBun, "add", "zod"]);
   });
 
+  test("default executor resolution ignores Kiro-Cli bun.exe PATH entries", () => {
+    const kiroExe = "C:\\Users\\David\\AppData\\Local\\Kiro-Cli\\bun.exe";
+    const realBun = "C:\\Users\\David\\.bun\\bin\\bun.exe";
+
+    const resolved = resolvePackageManagerArgv(["bun", "install"], {
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: (path) => path === realBun || path === kiroExe,
+      homeDir: "C:\\Users\\David",
+      platform: "win32",
+      which: () => kiroExe,
+    });
+
+    expect(resolved).toEqual([realBun, "install"]);
+  });
+
   test("add runs PM command with ignoreScripts default true", async () => {
     const root = makeTempWorkspace();
     writeFileSync(

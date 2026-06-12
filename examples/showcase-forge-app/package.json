@@ -1,0 +1,34 @@
+{
+  "name": "showcase-forge-app",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "web"
+  ],
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "forge": "forge",
+    "generate": "forge generate",
+    "verify": "forge verify --strict",
+    "self-host:compose": "forge self-host compose",
+    "self-host:check": "forge self-host check",
+    "dev:api": "forge dev --api-only",
+    "dev:web": "cd web && bun run dev",
+    "dev": "forge dev",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "forge": "latest",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "forge": {
+    "sourceRoots": [
+      "src"
+    ]
+  }
+}

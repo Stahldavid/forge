@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=5a518e664c930a2bf55560687ee6a00f1ec70b49401d81c3c833542a425cfed3
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=082e6a1652475c1de1ff3422c17fcd3988979f7b53d770f0d42e1cb59c6b0822
 export const agentContract = {
   "actions": [
     {
@@ -13,6 +13,18 @@ export const agentContract = {
       ],
       "file": "src/actions/capturePosthog.ts",
       "forbiddenCapabilities": [],
+      "frontend": {
+        "components": [],
+        "hook": "no generated React hook; invoke from server/action code",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/actions/capturePosthog"
+      },
       "name": "capturePosthog"
     },
     {
@@ -27,6 +39,18 @@ export const agentContract = {
       ],
       "file": "src/actions/captureTicketCreated.ts",
       "forbiddenCapabilities": [],
+      "frontend": {
+        "components": [],
+        "hook": "no generated React hook; invoke from server/action code",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/actions/captureTicketCreated"
+      },
       "name": "captureTicketCreated"
     },
     {
@@ -41,6 +65,18 @@ export const agentContract = {
       ],
       "file": "src/actions/createCheckout.ts",
       "forbiddenCapabilities": [],
+      "frontend": {
+        "components": [],
+        "hook": "no generated React hook; invoke from server/action code",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/actions/createCheckout"
+      },
       "name": "createCheckout"
     }
   ],
@@ -126,8 +162,21 @@ export const agentContract = {
         "network",
         "secrets"
       ],
+      "frontend": {
+        "components": [],
+        "hook": "useCommand(api.commands.badStripeCommand)",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/commands/badStripeCommand"
+      },
       "name": "badStripeCommand",
       "policy": "public",
+      "tablesRead": [],
       "tablesWritten": []
     },
     {
@@ -135,15 +184,32 @@ export const agentContract = {
         "forge",
         "zod"
       ],
-      "emits": [],
+      "emits": [
+        "ticket.created"
+      ],
       "file": "src/commands/createTicket.ts",
       "forbiddenCapabilities": [
         "network",
         "secrets"
       ],
+      "frontend": {
+        "components": [],
+        "hook": "useCommand(api.commands.createTicket)",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/commands/createTicket"
+      },
       "name": "createTicket",
       "policy": "tickets.create",
-      "tablesWritten": []
+      "tablesRead": [],
+      "tablesWritten": [
+        "tickets"
+      ]
     },
     {
       "allowedPackages": [
@@ -155,8 +221,21 @@ export const agentContract = {
         "network",
         "secrets"
       ],
+      "frontend": {
+        "components": [],
+        "hook": "useCommand(api.commands.manageBilling)",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/commands/manageBilling"
+      },
       "name": "manageBilling",
       "policy": "billing.manage",
+      "tablesRead": [],
       "tablesWritten": []
     }
   ],
@@ -167,13 +246,18 @@ export const agentContract = {
       "forge verify --strict"
     ],
     "beforeEditing": [
+      "forge do inspect --json",
       "forge dev --once --json",
       "forge inspect all --json",
       "forge check --json"
     ],
     "dev": [
+      "forge dev",
       "forge dev --once --json",
-      "forge dev --db pglite --worker --telemetry local --mock-ai"
+      "forge do fix --json",
+      "forge do verify --json",
+      "forge dev --api-only",
+      "forge dev --web-only"
     ]
   },
   "data": {
@@ -208,6 +292,129 @@ export const agentContract = {
       "deploy/deployManifest.json"
     ],
     "selfHost": true
+  },
+  "frontend": {
+    "bridgeFiles": [],
+    "clientBindings": [],
+    "componentBindings": [],
+    "components": [],
+    "diagnostics": [],
+    "framework": "none",
+    "present": false,
+    "providers": [],
+    "routeBindings": [],
+    "routes": [],
+    "runtimeEndpoints": [
+      {
+        "frontend": {
+          "components": [],
+          "hook": "useCommand(api.commands.badStripeCommand)",
+          "routes": []
+        },
+        "http": {
+          "exampleBody": {
+            "args": {}
+          },
+          "method": "POST",
+          "path": "/commands/badStripeCommand"
+        },
+        "kind": "command",
+        "name": "badStripeCommand"
+      },
+      {
+        "frontend": {
+          "components": [],
+          "hook": "useCommand(api.commands.createTicket)",
+          "routes": []
+        },
+        "http": {
+          "exampleBody": {
+            "args": {}
+          },
+          "method": "POST",
+          "path": "/commands/createTicket"
+        },
+        "kind": "command",
+        "name": "createTicket"
+      },
+      {
+        "frontend": {
+          "components": [],
+          "hook": "useCommand(api.commands.manageBilling)",
+          "routes": []
+        },
+        "http": {
+          "exampleBody": {
+            "args": {}
+          },
+          "method": "POST",
+          "path": "/commands/manageBilling"
+        },
+        "kind": "command",
+        "name": "manageBilling"
+      },
+      {
+        "frontend": {
+          "components": [],
+          "hook": "useLiveQuery(api.liveQueries.liveTickets, args)",
+          "routes": []
+        },
+        "http": {
+          "exampleUrl": "/live/liveTickets?args={}",
+          "method": "GET",
+          "path": "/live/liveTickets"
+        },
+        "kind": "liveQuery",
+        "name": "liveTickets"
+      },
+      {
+        "frontend": {
+          "components": [],
+          "hook": "useQuery(api.queries.getTicket, args)",
+          "routes": []
+        },
+        "http": {
+          "exampleBody": {
+            "args": {}
+          },
+          "method": "POST",
+          "path": "/queries/getTicket"
+        },
+        "kind": "query",
+        "name": "getTicket"
+      },
+      {
+        "frontend": {
+          "components": [],
+          "hook": "useQuery(api.queries.listTickets, args)",
+          "routes": []
+        },
+        "http": {
+          "exampleBody": {
+            "args": {}
+          },
+          "method": "POST",
+          "path": "/queries/listTickets"
+        },
+        "kind": "query",
+        "name": "listTickets"
+      }
+    ],
+    "webManifest": {
+      "bridge": {
+        "files": [],
+        "valid": false
+      },
+      "env": {
+        "apiUrl": "NEXT_PUBLIC_FORGE_URL"
+      },
+      "framework": "none",
+      "present": false,
+      "scripts": {},
+      "urls": {
+        "api": "http://127.0.0.1:3765"
+      }
+    }
   },
   "generatorVersion": "0.0.0",
   "integrations": [
@@ -297,8 +504,21 @@ export const agentContract = {
         "network",
         "secrets"
       ],
+      "frontend": {
+        "components": [],
+        "hook": "useLiveQuery(api.liveQueries.liveTickets, args)",
+        "routes": []
+      },
+      "http": {
+        "exampleUrl": "/live/liveTickets?args={}",
+        "method": "GET",
+        "path": "/live/liveTickets"
+      },
       "name": "liveTickets",
-      "policy": "tickets.read"
+      "policy": "tickets.read",
+      "tablesRead": [
+        "tickets"
+      ]
     }
   ],
   "packages": [
@@ -385,6 +605,14 @@ export const agentContract = {
   "playbooks": [
     {
       "steps": [
+        "Run forge do \"<objective>\" --json when the next command is not obvious.",
+        "Use forge do fix --json for failures, forge do verify --json before handoff, and forge do connect-ui --json for frontend wiring.",
+        "Follow the returned plan, filesToInspect, risks, and nextAction before using lower-level commands directly."
+      ],
+      "title": "Choose the right workflow"
+    },
+    {
+      "steps": [
         "Add a file under src/commands.",
         "Declare auth with can(\"policy.name\") unless intentionally public/system.",
         "Use ctx.db for transactional writes.",
@@ -437,7 +665,7 @@ export const agentContract = {
       "steps": [
         "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
         "Review the plan and diagnostics.",
-        "Run forge make resource <name> --fields name:type --yes.",
+        "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",
         "Run forge verify --strict."
       ],
@@ -515,11 +743,25 @@ export const agentContract = {
     },
     {
       "steps": [
+        "Run forge dev for the full local loop: generated checks, API runtime, web app, DB, worker, watch, and startup URLs.",
         "Run forge dev --once --json for a one-shot diagnostic cycle.",
-        "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
-        "Use generated client and React hooks from src/forge/_generated."
+        "Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.",
+        "When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.",
+        "Use generated client and React hooks through web/lib/forge.ts."
       ],
       "title": "Run dev"
+    },
+    {
+      "steps": [
+        "Run forge make ui --framework vite --dry-run --json when the app does not have a web root.",
+        "Use web/lib/forge.ts as the generated client bridge.",
+        "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
+        "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
+        "Run forge generate so frontendGraph and agentContract include routes and bindings.",
+        "Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.",
+        "Run forge dev --once --json and forge doctor --json."
+      ],
+      "title": "Add or update frontend"
     },
     {
       "steps": [
@@ -584,9 +826,24 @@ export const agentContract = {
         "network",
         "secrets"
       ],
+      "frontend": {
+        "components": [],
+        "hook": "useQuery(api.queries.getTicket, args)",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/queries/getTicket"
+      },
       "name": "getTicket",
       "policy": "tickets.read",
       "readOnly": true,
+      "tablesRead": [
+        "tickets"
+      ],
       "tenantScoped": true
     },
     {
@@ -598,9 +855,24 @@ export const agentContract = {
         "network",
         "secrets"
       ],
+      "frontend": {
+        "components": [],
+        "hook": "useQuery(api.queries.listTickets, args)",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/queries/listTickets"
+      },
       "name": "listTickets",
       "policy": "tickets.read",
       "readOnly": true,
+      "tablesRead": [
+        "tickets"
+      ],
       "tenantScoped": true
     }
   ],

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=537011f87b172c6227564e7de4126c7fa71d75ea6be6b45476a4c2c9dcbd5e36 content=1713e61488821497d66b1c8827858c039a94a6b7377a66686e316b930a0ee0fd
+// @forge-generated generator=0.0.0 input=6c20676780d2128492bff9f4ba9f149b0cb26d7bf18f682568c96e4ef5a91a56 content=99ebb79c397ed849aa1f5d7c7b479973dee97fae319c7dc16c0742d0ea2bc982
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -12,6 +12,7 @@ This is a ForgeOS application named `forge`.
 Before editing:
 
 ```bash
+forge do inspect --json
 forge dev --once --json
 forge inspect all --json
 forge check --json
@@ -59,11 +60,15 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 ## Useful commands
 
 ```bash
+forge do "<objective>" --json
+forge do fix --json
+forge do verify --json
 forge dev --once --json
 forge dev
 forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
+forge inspect capability-map --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -107,6 +112,7 @@ Tenant-scoped tables:
 - Components: 0
 - Client bindings: 0
 - Runtime endpoints: 0
+- Full-stack route bindings: 0
 
 Rules:
 
@@ -116,6 +122,19 @@ Rules:
 - Keep frontend routes reflected in `src/forge/_generated/frontendGraph.json`.
 
 ## Common tasks
+
+### Choose the right workflow
+
+Use:
+
+```bash
+forge do "<objective>" --json
+forge do fix --json
+forge do connect-ui --json
+forge do verify --json
+```
+
+`forge do` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
 
 ### Add a command
 
@@ -144,9 +163,10 @@ Use:
 forge dev --once --json
 forge dev
 forge inspect frontend --json
+forge inspect capability-map --json
 ```
 
-`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
+`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
 
 ### Apply a feature blueprint
 

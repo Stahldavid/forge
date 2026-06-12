@@ -373,7 +373,9 @@ export async function runEntry(
     };
   }
 
-  const db = options.db ?? activeDbAdapter;
+  const db = Object.prototype.hasOwnProperty.call(options, "db")
+    ? (options.db ?? null)
+    : activeDbAdapter;
 
   const envSnapshot = snapshotEnv();
   const previousActiveDbAdapter = activeDbAdapter;

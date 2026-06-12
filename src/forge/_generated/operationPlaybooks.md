@@ -1,5 +1,11 @@
-// @forge-generated generator=0.0.0 input=537011f87b172c6227564e7de4126c7fa71d75ea6be6b45476a4c2c9dcbd5e36 content=ec25ec102e77fb5be99c8048a2d3ff26b188e7e6a4103f4bd583706b972699fe
+// @forge-generated generator=0.0.0 input=6c20676780d2128492bff9f4ba9f149b0cb26d7bf18f682568c96e4ef5a91a56 content=3304bdebc0078b9cd07a6c9742580ad42cd948350c5356486127b2b9c2843420
 # Operation Playbooks
+
+## Choose the right workflow
+
+1. Run forge do "<objective>" --json when the next command is not obvious.
+2. Use forge do fix --json for failures, forge do verify --json before handoff, and forge do connect-ui --json for frontend wiring.
+3. Follow the returned plan, filesToInspect, risks, and nextAction before using lower-level commands directly.
 
 ## Add a command
 
@@ -120,7 +126,8 @@
 3. Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.
 4. Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.
 5. Run forge generate so frontendGraph and agentContract include routes and bindings.
-6. Run forge dev --once --json and forge doctor --json.
+6. Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.
+7. Run forge dev --once --json and forge doctor --json.
 
 ## Self-host
 

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=1047502378202cb8715dd460adc88b090062d134b3908d436ffe5bc9c08a692a
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=bec3e76f4a2feb0f6a1f4e3fb74d038a13ce13c7da0796fe16f4567ca0594f6e
 export const makeTemplates = {
   "schemaVersion": "0.1.0",
   "templates": [
@@ -45,6 +45,11 @@ export const makeTemplates = {
     {
       "name": "page",
       "outputPattern": "web/app/<route>/page.tsx",
+      "sourceKind": "frontend"
+    },
+    {
+      "name": "ui",
+      "outputPattern": "web/src/App.tsx",
       "sourceKind": "frontend"
     },
     {

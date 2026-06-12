@@ -10,3 +10,9 @@ forge.lock
 .forge/test-cache/
 .forge/test-runs/
 .forge/ui-runs/
+.forge/repairs/
+.forge/refactors/
+.forge/upgrades/
+.forge/reviews/
+.forge/impact/
+.forge/agent-adapters/

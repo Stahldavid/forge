@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=6276bee87859f96ac4dbe75a2451e9ecdc126d2642d892629dc052369c078b1a
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=fc6c4052b40c2c2adb830fb16fffe07c63c70142489b18cb3519516311fc86b9
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -12,6 +12,7 @@ This is a ForgeOS application named `basic-forge-app`.
 Before editing:
 
 ```bash
+forge do inspect --json
 forge dev --once --json
 forge inspect all --json
 forge check --json
@@ -32,6 +33,8 @@ Do not:
 - `src/forge/_generated/**`
 - `forge.lock`
 - `deploy/docker-compose.yml`, unless changing deployment config intentionally
+
+Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to reduce visual noise. Recreate them with `forge generate` before checking, testing, or handing work off.
 
 ## Runtime model
 
@@ -57,9 +60,15 @@ Do not:
 ## Useful commands
 
 ```bash
+forge do "<objective>" --json
+forge do fix --json
+forge do verify --json
 forge dev --once --json
+forge dev
 forge inspect app --json
 forge inspect all --json
+forge inspect frontend --json
+forge inspect capability-map --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -97,7 +106,38 @@ Tenant-scoped tables:
 - Bearer header: `Authorization: Bearer <token>`
 - Tenant claim: `tenant_id`
 
+## Frontend
+
+- Present: no
+- Framework: none
+- Web URL: none
+- Routes: 0
+- Components: 0
+- Client bindings: 0
+- Runtime endpoints: 6
+- Full-stack route bindings: 0
+
+Rules:
+
+- Use the local `web/**/lib/forge.ts` bridge to generated hooks.
+- Mount `<ForgeProvider devAuth>` in local development.
+- Use `useQuery`, `useCommand`, and `useLiveQuery` instead of raw Forge endpoint fetches in React components.
+- Keep frontend routes reflected in `src/forge/_generated/frontendGraph.json`.
+
 ## Common tasks
+
+### Choose the right workflow
+
+Use:
+
+```bash
+forge do "<objective>" --json
+forge do fix --json
+forge do connect-ui --json
+forge do verify --json
+```
+
+`forge do` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
 
 ### Add a command
 
@@ -112,10 +152,24 @@ Use:
 
 ```bash
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
-forge make resource <name> --fields title:text,status:enum(open,closed) --yes
+forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
+forge make ui --framework vite --dry-run --json
 ```
 
 Review the plan before applying when the resource touches schema or policies.
+
+### Check frontend wiring
+
+Use:
+
+```bash
+forge dev --once --json
+forge dev
+forge inspect frontend --json
+forge inspect capability-map --json
+```
+
+`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
 
 ### Apply a feature blueprint
 

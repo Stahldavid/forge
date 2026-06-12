@@ -11,6 +11,7 @@ import { startWorkflowRunsForPendingOutbox } from "../../src/forge/runtime/workf
 import { cleanupWorkspace, scaffoldPolicyWorkspace } from "./helpers.ts";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import { resetCompileSessions } from "../../src/forge/compiler/orchestrator/session.ts";
 import { defaultGenerateOptions } from "../orchestrator/helpers.ts";
 
 describe("workflow auth context", () => {
@@ -31,6 +32,7 @@ describe("workflow auth context", () => {
       `,
       "utf8",
     );
+    resetCompileSessions();
     await run(defaultGenerateOptions(root));
 
     try {

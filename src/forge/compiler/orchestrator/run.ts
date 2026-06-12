@@ -72,12 +72,25 @@ function appGraphForManifest(
 export async function run(options: GenerateOptions): Promise<GenerateResult> {
   const profileEnabled = isCompileProfileEnabled();
   const runStarted = profileEnabled ? performance.now() : 0;
+  let generateCheckCache: GenerateResult["cache"] =
+    options.check && !options.dryRun
+      ? {
+          strategy: "generated-check",
+          result: "skipped",
+          reason: "fast check not attempted",
+        }
+      : undefined;
 
   if (options.check && !options.dryRun) {
     const fastCheck = runFastGenerateCheck(options.workspaceRoot);
     if (fastCheck.kind === "hit") {
       return fastCheck.result;
     }
+    generateCheckCache = {
+      strategy: "generated-check",
+      result: "miss",
+      reason: fastCheck.reason,
+    };
   }
 
   const session = getCompileSession(options.workspaceRoot);
@@ -222,6 +235,7 @@ export async function run(options: GenerateOptions): Promise<GenerateResult> {
     unchanged,
     warnings,
     errors,
+    ...(generateCheckCache ? { cache: generateCheckCache } : {}),
     exitCode,
   };
 }

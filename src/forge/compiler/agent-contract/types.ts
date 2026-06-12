@@ -30,7 +30,23 @@ export interface AgentFrontendUsageInfo {
   components: string[];
 }
 
+export interface AgentFrontendRuntimeBindingInfo {
+  kind: "command" | "query" | "liveQuery";
+  name: string;
+  file: string;
+  route?: string;
+  component?: string;
+  hook: string;
+  http: AgentHttpEndpointInfo;
+  policy?: string;
+  tablesRead: string[];
+  tablesWritten: string[];
+  emits: string[];
+  dependencies: Array<{ table: string; scope: "tenant" | "global" }>;
+}
+
 export interface AgentCommandInfo extends AgentEntryInfo {
+  tablesRead: string[];
   tablesWritten: string[];
   emits: string[];
 }
@@ -38,9 +54,11 @@ export interface AgentCommandInfo extends AgentEntryInfo {
 export interface AgentQueryInfo extends AgentEntryInfo {
   readOnly: true;
   tenantScoped: boolean;
+  tablesRead: string[];
 }
 
 export interface AgentLiveQueryInfo extends AgentEntryInfo {
+  tablesRead: string[];
   dependencies: Array<{ table: string; scope: "tenant" | "global" }>;
 }
 
@@ -194,6 +212,8 @@ export interface AgentFrontendInfo {
     http: AgentHttpEndpointInfo;
     frontend: AgentFrontendUsageInfo;
   }>;
+  routeBindings: AgentFrontendRuntimeBindingInfo[];
+  componentBindings: AgentFrontendRuntimeBindingInfo[];
   diagnostics: Diagnostic[];
 }
 
@@ -230,6 +250,45 @@ export interface AgentRuntimeRule {
   context: "command" | "query" | "liveQuery" | "action" | "workflow";
   allowed: string[];
   forbidden: string[];
+}
+
+export type AgentCapabilityStatus = "covered" | "backend-only" | "frontend-only" | "warning";
+
+export interface AgentCapabilityMapEntry {
+  id: string;
+  status: AgentCapabilityStatus;
+  userAction: string;
+  ui?: {
+    route?: string;
+    component?: string;
+    file: string;
+  };
+  runtime?: {
+    kind: "command" | "query" | "liveQuery";
+    name: string;
+    hook: string;
+    http: AgentHttpEndpointInfo;
+    policy?: string;
+    tablesRead: string[];
+    tablesWritten: string[];
+    emits: string[];
+    dependencies: Array<{ table: string; scope: "tenant" | "global" }>;
+  };
+  notes: string[];
+}
+
+export interface AgentCapabilityMap {
+  schemaVersion: "0.1.0";
+  generatorVersion: string;
+  project: AgentProjectInfo;
+  summary: {
+    covered: number;
+    backendOnly: number;
+    frontendOnly: number;
+    warnings: number;
+  };
+  entries: AgentCapabilityMapEntry[];
+  diagnostics: Diagnostic[];
 }
 
 export interface AgentPlaybook {

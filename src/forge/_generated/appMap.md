@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=189335882cdc93cf4367de9ce956c1651e737cb3477bea96e54267a702e352bc content=d660df364b77b430050990444f6deb39e2d25f71f19ef2e1da18148899364bc5
+// @forge-generated generator=0.0.0 input=0f239a86204cc7defecd480434184061126bd738c7c4e908a7fe1cf56725e059 content=39b5a42a6214087649bb1cc5ff26437a6d01243fefef6a28b6233d983cd1e731
 # App Map
 
 ## Data
@@ -27,5 +27,9 @@ Framework: none
 - none
 
 ### Runtime Endpoints
+
+- none
+
+### Full-Stack Route Bindings
 
 - none

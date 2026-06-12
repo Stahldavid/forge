@@ -45,6 +45,7 @@ import type {
   UiTraceMode,
   UiVideoMode,
 } from "../ui/types.ts";
+import type { ForgeDoOptions } from "../intent/types.ts";
 
 export type ForgeCommand =
   | {
@@ -144,6 +145,7 @@ export type ForgeCommand =
   | { kind: "impact"; options: ImpactCommandOptions }
   | { kind: "test"; options: TestCommandOptions }
   | { kind: "repair"; options: RepairCommandOptions }
+  | { kind: "do"; options: ForgeDoOptions }
   | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
@@ -319,6 +321,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "test-graph",
   "test-plans",
   "agent-adapters",
+  "capability-map",
   "ui",
   "ui-scenarios",
   "ui-routes",
@@ -580,7 +583,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, agent, review, ui, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, do, agent, review, ui, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
     );
     return { command: null, workspaceRoot, errors };
   }
@@ -1267,6 +1270,21 @@ export function parseCli(argv: string[]): ParsedCli {
             allowMediumConfidence: parseFlag(argv, "--allow-medium-confidence"),
             maxAttempts: Math.floor(maxAttempts),
             commitFriendly: parseFlag(argv, "--commit-friendly"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "do": {
+      const objective = rest.join(" ").trim() || "inspect project";
+      return {
+        command: {
+          kind: "do",
+          options: {
+            workspaceRoot,
+            objective,
+            json: parseFlag(argv, "--json"),
           },
         },
         workspaceRoot,

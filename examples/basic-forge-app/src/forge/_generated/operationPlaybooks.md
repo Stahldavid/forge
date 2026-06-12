@@ -1,5 +1,11 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=54c2feb6ec33d5912825ee6deec3924def6fdba6644bcfc75d2936ee2333f664
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=3304bdebc0078b9cd07a6c9742580ad42cd948350c5356486127b2b9c2843420
 # Operation Playbooks
+
+## Choose the right workflow
+
+1. Run forge do "<objective>" --json when the next command is not obvious.
+2. Use forge do fix --json for failures, forge do verify --json before handoff, and forge do connect-ui --json for frontend wiring.
+3. Follow the returned plan, filesToInspect, risks, and nextAction before using lower-level commands directly.
 
 ## Add a command
 
@@ -45,7 +51,7 @@
 
 1. Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.
 2. Review the plan and diagnostics.
-3. Run forge make resource <name> --fields name:type --yes.
+3. Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.
 4. Run forge generate.
 5. Run forge verify --strict.
 
@@ -107,9 +113,21 @@
 
 ## Run dev
 
-1. Run forge dev --once --json for a one-shot diagnostic cycle.
-2. Run forge dev --db pglite --worker --telemetry local --mock-ai.
-3. Use generated client and React hooks from src/forge/_generated.
+1. Run forge dev for the full local loop: generated checks, API runtime, web app, DB, worker, watch, and startup URLs.
+2. Run forge dev --once --json for a one-shot diagnostic cycle.
+3. Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.
+4. When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.
+5. Use generated client and React hooks through web/lib/forge.ts.
+
+## Add or update frontend
+
+1. Run forge make ui --framework vite --dry-run --json when the app does not have a web root.
+2. Use web/lib/forge.ts as the generated client bridge.
+3. Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.
+4. Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.
+5. Run forge generate so frontendGraph and agentContract include routes and bindings.
+6. Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.
+7. Run forge dev --once --json and forge doctor --json.
 
 ## Self-host
 

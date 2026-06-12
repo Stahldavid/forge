@@ -36,10 +36,10 @@ function pushUnique(values: string[], value: string): void {
   }
 }
 
-function collectWebTestsFromDisk(workspaceRoot: string): SourceFile[] {
+function collectTestsFromDisk(workspaceRoot: string): SourceFile[] {
   const { sources } = walkWorkspaceSources({
     workspaceRoot,
-    roots: ["web"],
+    roots: ["tests", "web"],
     excludeRelativePath: (path) => !TEST_RE.test(path),
   });
   return sources.sort((a, b) => a.path.localeCompare(b.path));
@@ -175,7 +175,7 @@ export function buildTestGraph(input: {
   packageGraph: PackageGraph;
   sources: SourceFile[];
 }): TestGraph {
-  const diskTests = collectWebTestsFromDisk(input.workspaceRoot);
+  const diskTests = collectTestsFromDisk(input.workspaceRoot);
   const byPath = new Map<string, SourceFile>();
   for (const source of input.sources) {
     if (TEST_RE.test(source.path)) {

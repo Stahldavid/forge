@@ -12,7 +12,10 @@ import {
   PackageGraphCompiler,
   recomputeFromInputs,
 } from "../../src/forge/compiler/package-graph/compiler.ts";
-import { hashDtsFiles, hashPackageJson } from "../../src/forge/compiler/package-graph/checksum.ts";
+import {
+  hashDtsFilesForCache,
+  hashPackageJsonForCache,
+} from "../../src/forge/compiler/package-graph/checksum.ts";
 import { PACKAGE_ANALYZER_VERSION } from "../../src/forge/compiler/package-graph/constants.ts";
 import ts from "typescript";
 import { FIXTURE_PACKAGES, tempCacheDir } from "../package-graph/helpers.ts";
@@ -102,8 +105,9 @@ describe("cache invalidation and integrity", () => {
       name: dep.name,
       version: dep.version,
       packageManager: dep.packageManager,
-      packageJsonHash: hashPackageJson(dep.installPath),
-      dtsFilesHash: hashDtsFiles(dep.installPath),
+      packageIntegrity: dep.packageIntegrity,
+      packageJsonHash: hashPackageJsonForCache(dep.installPath),
+      dtsFilesHash: hashDtsFilesForCache(dep.installPath),
       analyzerVersion: PACKAGE_ANALYZER_VERSION,
       typescriptVersion: ts.version,
       resolutionMode: "nodenext",
@@ -132,8 +136,9 @@ describe("cache invalidation and integrity", () => {
       name: dep.name,
       version: dep.version,
       packageManager: dep.packageManager,
-      packageJsonHash: hashPackageJson(dep.installPath),
-      dtsFilesHash: hashDtsFiles(dep.installPath),
+      packageIntegrity: dep.packageIntegrity,
+      packageJsonHash: hashPackageJsonForCache(dep.installPath),
+      dtsFilesHash: hashDtsFilesForCache(dep.installPath),
       analyzerVersion: PACKAGE_ANALYZER_VERSION,
       typescriptVersion: ts.version,
       resolutionMode: "nodenext",
@@ -144,6 +149,7 @@ describe("cache invalidation and integrity", () => {
       "packages",
       `${fingerprintPackageCacheKey(key)}.json`,
     );
+    mkdirSync(join(cacheDir, "packages"), { recursive: true });
     writeFileSync(entryPath, "{not-json", "utf8");
 
     const compiler = new PackageGraphCompiler();

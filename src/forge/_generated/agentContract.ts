@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=537011f87b172c6227564e7de4126c7fa71d75ea6be6b45476a4c2c9dcbd5e36 content=40fb4424b93c87372ea08989e0ea723a7a186ea29f9a220a4d9b55ad0df753fa
+// @forge-generated generator=0.0.0 input=6c20676780d2128492bff9f4ba9f149b0cb26d7bf18f682568c96e4ef5a91a56 content=abbd24e00db96596957689d952b1b69bdedd39576080e522af433d97a3fa6c4a
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -63,6 +63,7 @@ export const agentContract = {
       "forge verify --strict"
     ],
     "beforeEditing": [
+      "forge do inspect --json",
       "forge dev --once --json",
       "forge inspect all --json",
       "forge check --json"
@@ -70,6 +71,8 @@ export const agentContract = {
     "dev": [
       "forge dev",
       "forge dev --once --json",
+      "forge do fix --json",
+      "forge do verify --json",
       "forge dev --api-only",
       "forge dev --web-only"
     ]
@@ -88,11 +91,13 @@ export const agentContract = {
   "frontend": {
     "bridgeFiles": [],
     "clientBindings": [],
+    "componentBindings": [],
     "components": [],
     "diagnostics": [],
     "framework": "none",
     "present": false,
     "providers": [],
+    "routeBindings": [],
     "routes": [],
     "runtimeEndpoints": [],
     "webManifest": {
@@ -516,6 +521,14 @@ export const agentContract = {
   "playbooks": [
     {
       "steps": [
+        "Run forge do \"<objective>\" --json when the next command is not obvious.",
+        "Use forge do fix --json for failures, forge do verify --json before handoff, and forge do connect-ui --json for frontend wiring.",
+        "Follow the returned plan, filesToInspect, risks, and nextAction before using lower-level commands directly."
+      ],
+      "title": "Choose the right workflow"
+    },
+    {
+      "steps": [
         "Add a file under src/commands.",
         "Declare auth with can(\"policy.name\") unless intentionally public/system.",
         "Use ctx.db for transactional writes.",
@@ -661,6 +674,7 @@ export const agentContract = {
         "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
         "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
         "Run forge generate so frontendGraph and agentContract include routes and bindings.",
+        "Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.",
         "Run forge dev --once --json and forge doctor --json."
       ],
       "title": "Add or update frontend"

@@ -23,6 +23,11 @@ function normalizeWindowsBunCandidate(
     return null;
   }
 
+  const normalizedForMatch = candidate.replace(/\//g, "\\").toLowerCase();
+  if (normalizedForMatch.includes("\\kiro-cli\\")) {
+    return null;
+  }
+
   if (candidate.toLowerCase().endsWith(".exe")) {
     return exists(candidate) ? candidate : null;
   }

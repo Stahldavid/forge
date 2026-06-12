@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=29c465aa99c565a33f1791f67479f0a14e777a1d1f833108f3e668b833b1845b
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=f2c8c8da0a3c64099501be2db7c1c399baf25aad781316b5bb3a8243ca1b0b3d
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
@@ -55,6 +55,11 @@ export const devManifest = {
   "generatorVersion": "0.0.0",
   "inputHash": "78217281e9380c2b64c42ef28bca07e7f65c106772a83da98f25a3c30855d9c7",
   "routes": [
+    {
+      "method": "GET",
+      "path": "/",
+      "purpose": "home"
+    },
     {
       "entryKind": "action",
       "entryName": "capturePosthog",

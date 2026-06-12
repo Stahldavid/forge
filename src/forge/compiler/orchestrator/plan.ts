@@ -54,6 +54,8 @@ import { buildDevManifest } from "../dev-manifest/build.ts";
 import { buildRuntimeGraph } from "../runtime-graph/build.ts";
 import {
   buildAgentContractArtifacts,
+  serializeCapabilityMapJson,
+  serializeCapabilityMapTs,
   serializeAgentContractJson,
   serializeAgentContractTs,
 } from "../agent-contract/build.ts";
@@ -397,6 +399,15 @@ export function plan(input: PlanInput): EmitPlan {
       serializeAgentContractJson(agentArtifacts.contract),
     ),
     makeEmitFile(`${GENERATED_DIR}/appMap.md`, agentArtifacts.appMapMd),
+    makeEmitFile(
+      `${GENERATED_DIR}/capabilityMap.ts`,
+      serializeCapabilityMapTs(agentArtifacts.capabilityMap),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/capabilityMap.json`,
+      serializeCapabilityMapJson(agentArtifacts.capabilityMap),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/capabilityMap.md`, agentArtifacts.capabilityMapMd),
     makeEmitFile(`${GENERATED_DIR}/runtimeRules.md`, agentArtifacts.runtimeRulesMd),
     makeEmitFile(
       `${GENERATED_DIR}/operationPlaybooks.md`,

@@ -14,6 +14,11 @@ export interface GenerateResult {
   unchanged: string[];
   warnings: Diagnostic[];
   errors: Diagnostic[];
+  cache?: {
+    strategy: "generated-check";
+    result: "hit" | "miss" | "skipped";
+    reason?: string;
+  };
   exitCode: 0 | 1;
   failureKind?: string;
 }
@@ -74,6 +79,7 @@ export type InspectTarget =
   | "test-graph"
   | "test-plans"
   | "agent-adapters"
+  | "capability-map"
   | "ui"
   | "ui-scenarios"
   | "ui-routes"

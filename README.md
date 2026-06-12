@@ -2,13 +2,14 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private MVP, implemented through H32. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, and UI test bridge are present. Public release still needs packaging hardening, broader Node compatibility, and more AST-first codemods.
+**Status:** private MVP, implemented through H40. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, and Windows-safe Bun resolution are present. Public release still needs packaging hardening, broader Node compatibility, and deeper AST-first codemods.
 
 ## Agent-First Quickstart
 
 ```bash
 bun install --ignore-scripts
 bun run forge generate
+bun run forge do inspect --json
 bun run forge dev
 bun run forge dev --once --json
 bun run forge inspect all --json
@@ -38,7 +39,7 @@ bun run dev -- --open
 
 `forge dev` starts the API runtime and the web dev server together when a `web/` app exists. The `--once --json` mode is the central agent/CI diagnostic entrypoint: it checks generated drift, guardrails, frontend routes/bindings, doctor status, impact, and the last test/UI reports in one deterministic response.
 
-Template apps ignore `src/forge/_generated/` and `forge.lock` by default so a freshly created app does not flood git with generated files. Run `forge generate` after checkout or before verification to recreate the agent contract, client SDK, frontend graph, and runtime manifests.
+Template apps ignore `src/forge/_generated/`, `forge.lock`, and operational `.forge/**` work dirs by default so a freshly created app does not flood git or the editor with generated files. Run `forge generate` after checkout or before verification to recreate the agent contract, client SDK, frontend graph, capability map, and runtime manifests.
 
 ## What ForgeOS Generates
 
@@ -59,6 +60,7 @@ src/forge/_generated/
   workflowRegistry.ts/json
   liveQueryRegistry.ts/json
   agentContract.ts/json
+  capabilityMap.ts/json/md
   agentAdapterManifest.ts/json
   testGraph.ts/json
   uiTestManifest.ts/json
@@ -96,15 +98,24 @@ forge.lock
 | Authoring | `forge make`, feature blueprints, safe refactor plans, package upgrade plans |
 | Testing/repair | impact-based test planner, repair loop, structured review, UI/browser test bridge |
 | Adapters | agent adapter export for external AI tools |
+| Intent router | `forge do` maps objectives like fix, verify, connect UI, and add feature into plans, files, risks, and next commands |
+| Full-stack map | `frontendGraph` + `capabilityMap` connect routes, components, hooks, runtime entries, tables, policies, and gaps |
+| Dev loop | `forge dev` prints API/Web URLs, phase health, capability coverage, cache status, diagnostics, and next action |
+| Templates | source-only templates and showcase app avoid committing generated artifacts by default |
 
 ## Command Map
 
 Prefer task-oriented commands first:
 
 ```bash
+forge do "<objective>" --json
+forge do fix --json
+forge do connect-ui --json
+forge do verify --json
 forge dev --once --json
 forge dev
 forge inspect all --json
+forge inspect capability-map --json
 forge doctor
 forge verify --strict
 forge impact --changed --json
@@ -123,10 +134,11 @@ Common command groups:
 | `forge generate --check` | Fail on generated drift |
 | `forge check --json` | Validate guardrails and emit diagnostics with fix hints |
 | `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
+| `forge do "<objective>" --json` | Guided intent router: choose the right workflow, files, risks, and next action |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
 | `forge doctor --json` | Human/agent health check for project coherence |
 | `forge dev` | Interactive local loop: generated checks, API runtime, DB, worker, watch mode, frontend server, URLs, and next agent checks |
-| `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generated drift, check, frontend, doctor, impact, reports, next actions |
+| `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generated drift/cache hit, check, frontend, capability map, doctor, impact, reports, next actions |
 | `forge run`, `forge query`, `forge live` | Execute and inspect runtime entries locally |
 | `forge db`, `forge rls` | Diff/migrate/status and inspect/check RLS |
 | `forge policy`, `forge secrets`, `forge env`, `forge auth` | Security and configuration operations |
@@ -161,18 +173,18 @@ Actions and workflows handle side effects after commit:
 
 Use `src/forge/_generated/runtimeRules.md` as the canonical generated version.
 
-## Example App
+## Showcase App
 
-See [`examples/basic-forge-app`](examples/basic-forge-app/README.md).
+See [`examples/showcase-forge-app`](examples/showcase-forge-app/README.md).
 
 ```bash
-cd examples/basic-forge-app
-bun run setup
-bun run forge:generate
-bun run forge:check
+cd examples/showcase-forge-app
+bun install
+bun run generate
+bun run dev
 ```
 
-The example covers allowed command dependencies, forbidden transitive imports, generated APIs, and guard diagnostics.
+The showcase is source-only and demonstrates tenant-scoped data, policies, commands, queries, liveQueries, outbox actions, workflows, mock AI, telemetry trace IDs, generated React hooks, `agentContract`, `frontendGraph`, and `capabilityMap`.
 
 ## Platform Support
 
@@ -183,7 +195,7 @@ The example covers allowed command dependencies, forbidden transitive imports, g
 | Windows (WSL) | Supported for MVP development |
 | Windows (native) | Experimental |
 
-Known Windows note: invoke Bun from the real install path if `bun` on PATH is hijacked by another app association:
+Known Windows note: ForgeOS resolves Bun through a Windows-safe resolver and ignores known non-Bun `Kiro-Cli\bun` shims. If your shell still resolves a broken app association, invoke Bun from the real install path:
 
 ```powershell
 & "$env:USERPROFILE\.bun\bin\bun.exe"
@@ -248,6 +260,14 @@ H29  Repair Loop
 H30  Agent Adapter Export
 H31  Forge Review / Structured Code Review
 H32  UI / Browser Test Bridge
+H33  Intent Router / Guided Dev Loop
+H34  Full-Stack App Contract v2
+H35  Capability Map
+H36  Template hygiene / git noise
+H37  Convex-style forge dev panel
+H38  Fast generated check visibility
+H39  Showcase app
+H40  Windows/runtime hardening
 ```
 
 ## Remaining Hardening Before Public Release

@@ -5,6 +5,7 @@ import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
+import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 
 export interface DoctorCheck {
   name: string;
@@ -65,6 +66,15 @@ function frontendDiagnosticChecks(frontendGraph: FrontendGraph | null): DoctorCh
   }));
 }
 
+function capabilityDiagnosticChecks(capabilityMap: { diagnostics?: Diagnostic[] } | null): DoctorCheck[] {
+  return (capabilityMap?.diagnostics ?? []).map((diagnostic, index) => ({
+    name: `capability-diagnostic-${index + 1}`,
+    ok: false,
+    severity: diagnostic.severity === "error" ? "error" as const : "warning" as const,
+    message: `${diagnostic.code}: ${diagnostic.fixHint ?? diagnostic.message}`,
+  }));
+}
+
 function frontendDevAuthChecks(
   frontendGraph: FrontendGraph | null,
   tableMap: Record<string, TableMapEntry>,
@@ -89,6 +99,7 @@ export async function runDoctorCommand(options: {
     present(options.workspaceRoot, "agents-md", "AGENTS.md"),
     present(options.workspaceRoot, "forge-lock", "forge.lock"),
     present(options.workspaceRoot, "agent-contract", `${GENERATED_DIR}/agentContract.json`),
+    present(options.workspaceRoot, "capability-map", `${GENERATED_DIR}/capabilityMap.json`),
     present(options.workspaceRoot, "runtime-matrix", `${GENERATED_DIR}/runtimeMatrix.json`),
     present(options.workspaceRoot, "data-graph", `${GENERATED_DIR}/dataGraph.json`),
     present(options.workspaceRoot, "policies", `${GENERATED_DIR}/policyRegistry.json`),
@@ -167,6 +178,10 @@ export async function runDoctorCommand(options: {
           : "no frontend routes detected in web/",
     });
     checks.push(...frontendDiagnosticChecks(frontendGraph));
+    checks.push(...capabilityDiagnosticChecks(readGeneratedJson<{ diagnostics?: Diagnostic[] }>(
+      options.workspaceRoot,
+      `${GENERATED_DIR}/capabilityMap.json`,
+    )));
     checks.push(...frontendDevAuthChecks(frontendGraph, dbJson?.tableMap ?? {}));
   }
 

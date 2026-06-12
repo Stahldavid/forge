@@ -1,10 +1,11 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=2c876dd1a089b59db46135f3d31ed577017648eb36c31849d33aca95cc62c691
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=983a7102a05fff669953a71b674b5e38d26dcca6c8beb120da6ea22efd5e43da
 export const makeRegistry = {
   "commands": [
     "forge make list --json",
     "forge make explain <primitive> --json",
+    "forge make ui --framework vite --dry-run --json",
     "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
-    "forge make resource <name> --fields title:text --yes",
+    "forge make resource <name> --fields title:text --with-ui --yes",
     "forge make apply <planId>",
     "forge make rollback <planId>"
   ],
@@ -125,6 +126,21 @@ export const makeRegistry = {
     },
     {
       "creates": [
+        "web/package.json",
+        "web/index.html",
+        "web/src/lib/forge.ts",
+        "web/src/main.tsx",
+        "web/src/App.tsx"
+      ],
+      "examples": [
+        "forge make ui --framework vite --yes"
+      ],
+      "modifies": [],
+      "name": "ui",
+      "summary": "Add a Vite React frontend shell with ForgeProvider devAuth and a generated client bridge."
+    },
+    {
+      "creates": [
         "src/commands/*",
         "src/queries/*",
         "src/actions/*",
@@ -133,14 +149,14 @@ export const makeRegistry = {
         "tests/make-generated/*"
       ],
       "examples": [
-        "forge make resource invoices --fields amount:number,status:enum(draft,paid) --with-react --yes"
+        "forge make resource invoices --fields amount:number,status:enum(draft,paid) --with-ui --yes"
       ],
       "modifies": [
         "src/forge/schema.ts",
         "src/policies.ts"
       ],
       "name": "resource",
-      "summary": "Add schema, policies, CRUD, queries, liveQuery, optional React, and tests."
+      "summary": "Add schema, policies, CRUD, queries, liveQuery, optional UI, and tests."
     }
   ],
   "schemaVersion": "0.1.0"

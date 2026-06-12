@@ -1,6 +1,7 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=588f99eae8fcd404e88f66664f07d5c25624442e6551d77b2095f713c3b98d29
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=9102d932447fda59df2c631296c23b758a6e452ad289bf4dedccdc4b66ff3d04
 export type {
   ForgeProviderProps,
+  ForgeDevAuthConfig,
   ForgeReactAuth,
   ForgeReactAuthProvider,
   ForgeReactClient,

@@ -132,6 +132,21 @@ describe("Forge CLI", () => {
     expect(resolved).toBe(realBun);
   });
 
+  test("resolveBunExecutable ignores Kiro-Cli Windows bun executables", () => {
+    const kiroExe = "C:\\Users\\David\\AppData\\Local\\Kiro-Cli\\bun.exe";
+    const realBun = "C:\\Users\\David\\.bun\\bin\\bun.exe";
+
+    const resolved = resolveBunExecutable({
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: (path) => path === realBun || path === kiroExe,
+      homeDir: "C:\\Users\\David",
+      platform: "win32",
+      which: () => kiroExe,
+    });
+
+    expect(resolved).toBe(realBun);
+  });
+
   test("resolveBunExecutable normalizes Windows bun shims with an exe sibling", () => {
     const bunShim = "C:\\Users\\David\\.bun\\bin\\bun";
     const realBun = "C:\\Users\\David\\.bun\\bin\\bun.exe";

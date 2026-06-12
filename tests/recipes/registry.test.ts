@@ -96,11 +96,12 @@ describe("Integration Recipe Registry", () => {
     expect(aliases).toContain("posthog");
     expect(aliases).toContain("sentry");
     expect(aliases).toContain("zod");
+    expect(aliases).toContain("forge");
     expect(aliases).toContain("ai");
     expect(aliases).toContain("ai-provider-openai");
     expect(aliases).toContain("ai-provider-anthropic");
     expect(aliases).toContain("ai-gateway");
-    expect(recipes.length).toBe(5 + AI_PROVIDER_RECIPES.length);
+    expect(recipes.length).toBe(6 + AI_PROVIDER_RECIPES.length);
   });
 
   test("recipeVersion is exposed for cache key and forge.lock tracking", () => {

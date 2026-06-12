@@ -2,6 +2,7 @@ import { cpSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
+import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 
 export type NewTemplateName = "b2b-support-web" | "minimal-web";
 export type NewPackageManager = "bun" | "npm" | "pnpm" | "yarn";
@@ -23,10 +24,32 @@ export interface NewCommandResult {
   installed: boolean;
   gitInitialized: boolean;
   generated: boolean;
+  gitHygiene: {
+    ok: boolean;
+    ignoredPaths: string[];
+    missingPaths: string[];
+  };
   exitCode: 0 | 1;
   message: string;
   nextSteps: string[];
 }
+
+const REQUIRED_GITIGNORE_PATHS = [
+  "src/forge/_generated/",
+  "forge.lock",
+  ".forge/cache/",
+  ".forge/pglite/",
+  ".forge/local/",
+  ".forge/test-cache/",
+  ".forge/test-runs/",
+  ".forge/ui-runs/",
+  ".forge/repairs/",
+  ".forge/refactors/",
+  ".forge/upgrades/",
+  ".forge/reviews/",
+  ".forge/impact/",
+  ".forge/agent-adapters/",
+] as const;
 
 const TEXT_EXTENSIONS = new Set([
   "",
@@ -101,12 +124,27 @@ function ensureProjectName(name: string): string | null {
   return null;
 }
 
+function analyzeGitHygiene(targetDir: string): NewCommandResult["gitHygiene"] {
+  const gitignorePath = join(targetDir, ".gitignore");
+  const gitignore = nodeFileSystem.exists(gitignorePath)
+    ? (nodeFileSystem.readText(gitignorePath) ?? "")
+    : "";
+  const missingPaths = REQUIRED_GITIGNORE_PATHS.filter(
+    (path) => !gitignore.includes(path),
+  );
+  return {
+    ok: missingPaths.length === 0,
+    ignoredPaths: [...REQUIRED_GITIGNORE_PATHS],
+    missingPaths,
+  };
+}
+
 async function spawnCommand(
   command: string,
   args: string[],
   cwd: string,
 ): Promise<number> {
-  const child = Bun.spawn([command, ...args], {
+  const child = Bun.spawn(resolvePackageManagerArgv([command, ...args]), {
     cwd,
     stdout: "inherit",
     stderr: "inherit",
@@ -126,6 +164,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
       installed: false,
       gitInitialized: false,
       generated: false,
+      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
       exitCode: 1,
       message: projectNameError,
       nextSteps: [],
@@ -142,6 +181,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
       installed: false,
       gitInitialized: false,
       generated: false,
+      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
       exitCode: 1,
       message: `unknown template '${options.template}'`,
       nextSteps: [],
@@ -158,6 +198,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
       installed: false,
       gitInitialized: false,
       generated: false,
+      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
       exitCode: 1,
       message: `target directory already exists: ${relative(options.workspaceRoot, targetDir)}`,
       nextSteps: [],
@@ -181,6 +222,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
         installed,
         gitInitialized: false,
         generated: false,
+        gitHygiene: analyzeGitHygiene(targetDir),
         exitCode: 1,
         message: `${options.packageManager} install failed`,
         nextSteps: [],
@@ -207,6 +249,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
         installed,
         gitInitialized: false,
         generated,
+        gitHygiene: analyzeGitHygiene(targetDir),
         exitCode: 1,
         message: `forge generate failed: ${generate.errors.map((error) => error.message).join("; ")}`,
         nextSteps: [],
@@ -227,6 +270,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     `${options.packageManager} run dev -- --open`,
     `${options.packageManager} run verify`,
   ];
+  const gitHygiene = analyzeGitHygiene(targetDir);
 
   return {
     name: options.name,
@@ -236,6 +280,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     installed,
     gitInitialized,
     generated,
+    gitHygiene,
     exitCode: 0,
     message: `Created ${options.name} from template ${options.template}.`,
     nextSteps,
@@ -249,6 +294,11 @@ export function formatNewHuman(result: NewCommandResult): string {
 
   return [
     result.message,
+    ...(result.gitHygiene.ok
+      ? ["Generated and operational Forge files are ignored by git."]
+      : [
+          `warning: template is missing gitignore entries: ${result.gitHygiene.missingPaths.join(", ")}`,
+        ]),
     "",
     "Next steps:",
     ...result.nextSteps.map((step) => `  ${step}`),

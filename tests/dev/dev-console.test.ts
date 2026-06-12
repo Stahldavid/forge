@@ -85,6 +85,8 @@ describe("H33 forge dev console", () => {
           includeImpact: false,
         });
         expect(cycle.ok).toBe(false);
+        expect(cycle.summary.health.ok).toBe(false);
+        expect(cycle.summary.primaryAction?.command).toBe("forge do fix --json");
         expect(cycle.phases.find((phase) => phase.name === "generated")?.ok).toBe(false);
         expect(cycle.phases.find((phase) => phase.name === "check")?.status).toBe("skipped");
         expect(cycle.phases.find((phase) => phase.name === "frontend")?.status).toBe("skipped");
@@ -109,6 +111,11 @@ describe("H33 forge dev console", () => {
           includeImpact: false,
         });
         expect(cycle.phases.find((phase) => phase.name === "generated")?.ok).toBe(true);
+        expect(cycle.summary.health.errors).toBe(0);
+        expect(cycle.phases.find((phase) => phase.name === "generated")?.details?.cache).toMatchObject({
+          strategy: "generated-check",
+          result: "hit",
+        });
         expect(cycle.phases.find((phase) => phase.name === "check")?.status).not.toBe("skipped");
         expect(cycle.phases.find((phase) => phase.name === "frontend")?.status).not.toBe("skipped");
         expect(cycle.nextActions.length).toBeGreaterThan(0);
@@ -176,6 +183,14 @@ describe("H33 forge dev console", () => {
           routes: ["/"],
           bridgeFiles: ["web/src/lib/forge.ts"],
         });
+        expect(cycle.summary.frontend).toMatchObject({
+          present: true,
+          framework: "vite",
+          routes: ["/"],
+          bridgeFiles: ["web/src/lib/forge.ts"],
+        });
+        expect(cycle.summary.capabilities.covered).toBeGreaterThanOrEqual(1);
+        expect(cycle.summary.urls.web).toBe("http://127.0.0.1:5173");
         expect(JSON.stringify(frontend?.details?.summary)).toContain("command:createNote");
         expect(JSON.stringify(frontend?.details?.summary)).toContain("liveQuery:liveNotes");
         expect(formatDevConsoleJson(cycle)).toContain("\"frontend\"");

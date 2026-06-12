@@ -34,7 +34,10 @@ import type { FrontendGraph } from "../types/frontend-graph.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
 import type {
+  AgentCapabilityMap,
+  AgentCapabilityMapEntry,
   AgentContract,
+  AgentFrontendRuntimeBindingInfo,
   AgentFrontendUsageInfo,
   AgentHttpEndpointInfo,
   AgentIntegrationInfo,
@@ -70,8 +73,10 @@ export interface AgentContractInput {
 
 export interface AgentContractArtifacts {
   contract: AgentContract;
+  capabilityMap: AgentCapabilityMap;
   agentsMd: string;
   appMapMd: string;
+  capabilityMapMd: string;
   runtimeRulesMd: string;
   operationPlaybooksMd: string;
   agentQuickstartMd: string;
@@ -144,6 +149,53 @@ function forbiddenForContext(
   return uniqueSorted([...forbidden]);
 }
 
+const DB_READ_OPS = new Set(["all", "count", "find", "first", "get", "list", "where"]);
+const DB_WRITE_OPS = new Set(["delete", "insert", "patch", "replace", "update", "upsert"]);
+
+function sourceText(workspaceRoot: string, file: string | undefined): string {
+  if (!file) {
+    return "";
+  }
+  const absolute = join(workspaceRoot, file);
+  if (!nodeFileSystem.exists(absolute)) {
+    return "";
+  }
+  return nodeFileSystem.readText(absolute) ?? "";
+}
+
+function dbTablesForText(
+  text: string,
+  tableNames: Set<string>,
+  ops: Set<string>,
+): string[] {
+  const tables: string[] = [];
+  for (const match of text.matchAll(/ctx\.db\.([A-Za-z_$][A-Za-z0-9_$]*)\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+    const table = match[1] ?? "";
+    const op = match[2] ?? "";
+    if (tableNames.has(table) && ops.has(op)) {
+      tables.push(table);
+    }
+  }
+  return uniqueSorted(tables);
+}
+
+function dbTablesForFile(
+  workspaceRoot: string,
+  file: string | undefined,
+  tableNames: Set<string>,
+  ops: Set<string>,
+): string[] {
+  return dbTablesForText(sourceText(workspaceRoot, file), tableNames, ops);
+}
+
+function emittedEventsForFile(workspaceRoot: string, file: string | undefined): string[] {
+  const text = sourceText(workspaceRoot, file);
+  return uniqueSorted(
+    [...text.matchAll(/ctx\.emit\s*\(\s*["'`]([^"'`]+)["'`]/g)]
+      .map((match) => match[1] ?? ""),
+  );
+}
+
 function buildIntegrations(classified: ClassifiedPackage[]): AgentIntegrationInfo[] {
   const byAlias = new Map<string, AgentIntegrationInfo>();
   for (const pkg of classified) {
@@ -200,6 +252,14 @@ function runtimeRules(): AgentRuntimeRule[] {
 
 function playbooks(): AgentPlaybook[] {
   return [
+    {
+      title: "Choose the right workflow",
+      steps: [
+        "Run forge do \"<objective>\" --json when the next command is not obvious.",
+        "Use forge do fix --json for failures, forge do verify --json before handoff, and forge do connect-ui --json for frontend wiring.",
+        "Follow the returned plan, filesToInspect, risks, and nextAction before using lower-level commands directly.",
+      ],
+    },
     {
       title: "Add a command",
       steps: [
@@ -348,6 +408,7 @@ function playbooks(): AgentPlaybook[] {
         "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
         "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
         "Run forge generate so frontendGraph and agentContract include routes and bindings.",
+        "Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.",
         "Run forge dev --once --json and forge doctor --json.",
       ],
     },
@@ -389,6 +450,186 @@ function renderList(items: string[], empty = "none"): string {
     return `- ${empty}`;
   }
   return items.map((item) => `- ${item}`).join("\n");
+}
+
+function runtimeSummaryFromBinding(binding: AgentFrontendRuntimeBindingInfo): AgentCapabilityMapEntry["runtime"] {
+  return {
+    kind: binding.kind,
+    name: binding.name,
+    hook: binding.hook,
+    http: binding.http,
+    ...(binding.policy ? { policy: binding.policy } : {}),
+    tablesRead: binding.tablesRead,
+    tablesWritten: binding.tablesWritten,
+    emits: binding.emits,
+    dependencies: binding.dependencies,
+  };
+}
+
+function runtimeEntriesWithoutFrontend(contract: AgentContract): AgentCapabilityMapEntry[] {
+  const entries: AgentCapabilityMapEntry[] = [];
+  for (const commandEntry of contract.commands) {
+    if (commandEntry.frontend.routes.length === 0 && commandEntry.frontend.components.length === 0) {
+      entries.push({
+        id: `runtime:command:${commandEntry.name}`,
+        status: "backend-only",
+        userAction: `Call command ${commandEntry.name}`,
+        runtime: {
+          kind: "command",
+          name: commandEntry.name,
+          hook: commandEntry.frontend.hook,
+          http: commandEntry.http,
+          ...(commandEntry.policy ? { policy: commandEntry.policy } : {}),
+          tablesRead: commandEntry.tablesRead,
+          tablesWritten: commandEntry.tablesWritten,
+          emits: commandEntry.emits,
+          dependencies: [],
+        },
+        notes: ["Runtime entry is available to agents even though no frontend usage was detected."],
+      });
+    }
+  }
+  for (const queryEntry of contract.queries) {
+    if (queryEntry.frontend.routes.length === 0 && queryEntry.frontend.components.length === 0) {
+      entries.push({
+        id: `runtime:query:${queryEntry.name}`,
+        status: "backend-only",
+        userAction: `Read query ${queryEntry.name}`,
+        runtime: {
+          kind: "query",
+          name: queryEntry.name,
+          hook: queryEntry.frontend.hook,
+          http: queryEntry.http,
+          ...(queryEntry.policy ? { policy: queryEntry.policy } : {}),
+          tablesRead: queryEntry.tablesRead,
+          tablesWritten: [],
+          emits: [],
+          dependencies: [],
+        },
+        notes: ["Runtime entry is available to agents even though no frontend usage was detected."],
+      });
+    }
+  }
+  for (const liveQueryEntry of contract.liveQueries) {
+    if (liveQueryEntry.frontend.routes.length === 0 && liveQueryEntry.frontend.components.length === 0) {
+      entries.push({
+        id: `runtime:liveQuery:${liveQueryEntry.name}`,
+        status: "backend-only",
+        userAction: `Subscribe to liveQuery ${liveQueryEntry.name}`,
+        runtime: {
+          kind: "liveQuery",
+          name: liveQueryEntry.name,
+          hook: liveQueryEntry.frontend.hook,
+          http: liveQueryEntry.http,
+          ...(liveQueryEntry.policy ? { policy: liveQueryEntry.policy } : {}),
+          tablesRead: liveQueryEntry.tablesRead,
+          tablesWritten: [],
+          emits: [],
+          dependencies: liveQueryEntry.dependencies,
+        },
+        notes: ["Runtime entry is available to agents even though no frontend usage was detected."],
+      });
+    }
+  }
+  return entries;
+}
+
+function buildCapabilityMap(contract: AgentContract): AgentCapabilityMap {
+  const diagnostics: Diagnostic[] = [];
+  const coveredEntries: AgentCapabilityMapEntry[] = contract.frontend.routeBindings.map((binding) => ({
+    id: `ui:${binding.route ?? "route"}:${binding.kind}:${binding.name}:${binding.file}`,
+    status: "covered",
+    userAction: `${binding.route ?? "route"} uses ${binding.kind} ${binding.name}`,
+    ui: {
+      ...(binding.route ? { route: binding.route } : {}),
+      ...(binding.component ? { component: binding.component } : {}),
+      file: binding.file,
+    },
+    runtime: runtimeSummaryFromBinding(binding),
+    notes: ["Frontend route is connected to a generated Forge runtime hook."],
+  }));
+
+  const componentOnlyEntries = contract.frontend.componentBindings
+    .filter((binding) => !contract.frontend.routeBindings.some(
+      (routeBinding) =>
+        routeBinding.kind === binding.kind &&
+        routeBinding.name === binding.name &&
+        routeBinding.file === binding.file,
+    ))
+    .map((binding) => ({
+      id: `component:${binding.component ?? "component"}:${binding.kind}:${binding.name}:${binding.file}`,
+      status: "covered" as const,
+      userAction: `${binding.component ?? "component"} uses ${binding.kind} ${binding.name}`,
+      ui: {
+        ...(binding.component ? { component: binding.component } : {}),
+        file: binding.file,
+      },
+      runtime: runtimeSummaryFromBinding(binding),
+      notes: ["Frontend component is connected to a generated Forge runtime hook."],
+    }));
+
+  const rawFetchEntries: AgentCapabilityMapEntry[] = contract.frontend.clientBindings
+    .filter((binding) => binding.kind === "rawFetch")
+    .map((binding) => {
+      diagnostics.push(createDiagnostic({
+        severity: "warning",
+        code: "FORGE_CAPABILITY_RAW_RUNTIME_FETCH",
+        message: "frontend uses a raw Forge runtime endpoint instead of generated hooks",
+        file: binding.file,
+        fixHint: "Replace raw runtime fetches with useCommand, useQuery, or useLiveQuery through the local Forge bridge.",
+        suggestedCommands: ["forge do connect-ui --json", "forge inspect capability-map --json"],
+        docs: ["src/forge/_generated/capabilityMap.md", "src/forge/_generated/frontendGraph.json"],
+      }));
+      return {
+        id: `raw:${binding.file}:${binding.name}`,
+        status: "warning",
+        userAction: `Raw runtime fetch ${binding.name}`,
+        ui: {
+          ...(binding.route ? { route: binding.route } : {}),
+          ...(binding.component ? { component: binding.component } : {}),
+          file: binding.file,
+        },
+        notes: ["Raw runtime fetch detected; generated hook parity is not proven."],
+      };
+    });
+
+  const boundRoutes = new Set(contract.frontend.routeBindings.map((binding) => binding.route).filter(Boolean));
+  const routeOnlyEntries: AgentCapabilityMapEntry[] = contract.frontend.routes
+    .filter((route) => !boundRoutes.has(route.path))
+    .map((route) => ({
+      id: `route:${route.path}:${route.file}`,
+      status: "frontend-only",
+      userAction: `View route ${route.path}`,
+      ui: {
+        route: route.path,
+        file: route.file,
+      },
+      notes: ["Route has no detected Forge runtime binding. This is fine for static pages, but agents cannot infer a data/action capability from it."],
+    }));
+
+  const entries = sorted(
+    [
+      ...coveredEntries,
+      ...componentOnlyEntries,
+      ...runtimeEntriesWithoutFrontend(contract),
+      ...rawFetchEntries,
+      ...routeOnlyEntries,
+    ],
+    (entry) => entry.id,
+  );
+  return {
+    schemaVersion: "0.1.0",
+    generatorVersion: GENERATOR_VERSION,
+    project: contract.project,
+    summary: {
+      covered: entries.filter((entry) => entry.status === "covered").length,
+      backendOnly: entries.filter((entry) => entry.status === "backend-only").length,
+      frontendOnly: entries.filter((entry) => entry.status === "frontend-only").length,
+      warnings: entries.filter((entry) => entry.status === "warning").length,
+    },
+    entries,
+    diagnostics,
+  };
 }
 
 function jsAccess(group: string, name: string): string {
@@ -452,6 +693,87 @@ function frontendUsageFor(
   };
 }
 
+function frontendRuntimeBindingFor(
+  binding: FrontendGraph["clientBindings"][number],
+  entries: {
+    commands: AgentContract["commands"];
+    queries: AgentContract["queries"];
+    liveQueries: AgentContract["liveQueries"];
+  },
+): AgentFrontendRuntimeBindingInfo | null {
+  if (binding.kind === "rawFetch") {
+    return null;
+  }
+  if (binding.kind === "command") {
+    const entry = entries.commands.find((candidate) => candidate.name === binding.name);
+    if (!entry) return null;
+    return {
+      kind: "command",
+      name: binding.name,
+      file: binding.file,
+      ...(binding.route ? { route: binding.route } : {}),
+      ...(binding.component ? { component: binding.component } : {}),
+      hook: entry.frontend.hook,
+      http: entry.http,
+      ...(entry.policy ? { policy: entry.policy } : {}),
+      tablesRead: entry.tablesRead,
+      tablesWritten: entry.tablesWritten,
+      emits: entry.emits,
+      dependencies: [],
+    };
+  }
+  if (binding.kind === "query") {
+    const entry = entries.queries.find((candidate) => candidate.name === binding.name);
+    if (!entry) return null;
+    return {
+      kind: "query",
+      name: binding.name,
+      file: binding.file,
+      ...(binding.route ? { route: binding.route } : {}),
+      ...(binding.component ? { component: binding.component } : {}),
+      hook: entry.frontend.hook,
+      http: entry.http,
+      ...(entry.policy ? { policy: entry.policy } : {}),
+      tablesRead: entry.tablesRead,
+      tablesWritten: [],
+      emits: [],
+      dependencies: [],
+    };
+  }
+  const entry = entries.liveQueries.find((candidate) => candidate.name === binding.name);
+  if (!entry) return null;
+  return {
+    kind: "liveQuery",
+    name: binding.name,
+    file: binding.file,
+    ...(binding.route ? { route: binding.route } : {}),
+    ...(binding.component ? { component: binding.component } : {}),
+    hook: entry.frontend.hook,
+    http: entry.http,
+    ...(entry.policy ? { policy: entry.policy } : {}),
+    tablesRead: entry.tablesRead,
+    tablesWritten: [],
+    emits: [],
+    dependencies: entry.dependencies,
+  };
+}
+
+function frontendRuntimeBindings(
+  frontendGraph: FrontendGraph,
+  entries: {
+    commands: AgentContract["commands"];
+    queries: AgentContract["queries"];
+    liveQueries: AgentContract["liveQueries"];
+  },
+): AgentFrontendRuntimeBindingInfo[] {
+  return uniqueSorted(
+    frontendGraph.clientBindings
+      .map((binding) => frontendRuntimeBindingFor(binding, entries))
+      .filter((binding): binding is AgentFrontendRuntimeBindingInfo => binding !== null)
+      .map((binding) => JSON.stringify(binding)),
+  ).map((binding) => JSON.parse(binding) as AgentFrontendRuntimeBindingInfo);
+}
+
 export function buildAgentContractArtifacts(
   input: AgentContractInput,
 ): AgentContractArtifacts {
@@ -470,6 +792,59 @@ export function buildAgentContractArtifacts(
   );
 
   const runtimeEntries = new Map(input.runtimeGraph.entries.map((entry) => [entry.name, entry]));
+  const tableNames = new Set(input.dataGraph.tables.map((table) => table.name));
+  const commandInfos: AgentContract["commands"] = sorted(Object.keys(input.apiSurface.commands), (name) => name).map((name) => {
+    const entry = runtimeEntries.get(name);
+    const file = entry?.file ?? "";
+    return {
+      name,
+      file,
+      policy: authPolicy(commandAuth.get(name)),
+      tablesRead: dbTablesForFile(input.workspaceRoot, file, tableNames, DB_READ_OPS),
+      tablesWritten: dbTablesForFile(input.workspaceRoot, file, tableNames, DB_WRITE_OPS),
+      emits: emittedEventsForFile(input.workspaceRoot, file),
+      allowedPackages: entry ? packageNamesForModule(input.appGraph, entry.moduleId) : [],
+      forbiddenCapabilities: forbiddenForContext(input.classified, "command"),
+      http: httpEndpointFor("command", name),
+      frontend: frontendUsageFor(input.frontendGraph, "command", name),
+    };
+  });
+  const queryInfos: AgentContract["queries"] = sorted(input.queryRegistry.queries, (query) => query.name).map((query) => ({
+    name: query.name,
+    file: query.file,
+    policy: authPolicy(queryAuth.get(query.name)),
+    readOnly: true,
+    tenantScoped: input.tenantScope.tables.length > 0,
+    tablesRead: dbTablesForFile(input.workspaceRoot, query.file, tableNames, DB_READ_OPS),
+    allowedPackages: packageNamesForModule(input.appGraph, query.moduleId),
+    forbiddenCapabilities: forbiddenForContext(input.classified, "query"),
+    http: httpEndpointFor("query", query.name),
+    frontend: frontendUsageFor(input.frontendGraph, "query", query.name),
+  }));
+  const liveQueryInfos: AgentContract["liveQueries"] = sorted(input.liveQueryRegistry.liveQueries, (liveQuery) => liveQuery.name).map(
+    (liveQuery) => {
+      const tablesRead = dbTablesForFile(input.workspaceRoot, liveQuery.file, tableNames, DB_READ_OPS);
+      return {
+        name: liveQuery.name,
+        file: liveQuery.file,
+        policy: liveQueryPolicy.get(liveQuery.name),
+        tablesRead,
+        dependencies: (tablesRead.length > 0 ? tablesRead : input.tenantScope.tables.map((table) => table.table)).map((tableName) => ({
+          table: tableName,
+          scope: tenantTables.has(tableName) ? "tenant" as const : "global" as const,
+        })),
+        allowedPackages: packageNamesForModule(input.appGraph, liveQuery.moduleId),
+        forbiddenCapabilities: forbiddenForContext(input.classified, "liveQuery"),
+        http: httpEndpointFor("liveQuery", liveQuery.name),
+        frontend: frontendUsageFor(input.frontendGraph, "liveQuery", liveQuery.name),
+      };
+    },
+  );
+  const fullStackBindings = frontendRuntimeBindings(input.frontendGraph, {
+    commands: commandInfos,
+    queries: queryInfos,
+    liveQueries: liveQueryInfos,
+  });
   const contract: AgentContract = {
     schemaVersion: "0.1.0",
     generatorVersion: GENERATOR_VERSION,
@@ -478,46 +853,9 @@ export function buildAgentContractArtifacts(
       type: "forgeos-app",
       ...(project.template ? { template: project.template } : {}),
     },
-    commands: sorted(Object.keys(input.apiSurface.commands), (name) => name).map((name) => {
-      const entry = runtimeEntries.get(name);
-      return {
-        name,
-        file: entry?.file ?? "",
-        policy: authPolicy(commandAuth.get(name)),
-        tablesWritten: [],
-        emits: [],
-        allowedPackages: entry ? packageNamesForModule(input.appGraph, entry.moduleId) : [],
-        forbiddenCapabilities: forbiddenForContext(input.classified, "command"),
-        http: httpEndpointFor("command", name),
-        frontend: frontendUsageFor(input.frontendGraph, "command", name),
-      };
-    }),
-    queries: sorted(input.queryRegistry.queries, (query) => query.name).map((query) => ({
-      name: query.name,
-      file: query.file,
-      policy: authPolicy(queryAuth.get(query.name)),
-      readOnly: true,
-      tenantScoped: input.tenantScope.tables.length > 0,
-      allowedPackages: packageNamesForModule(input.appGraph, query.moduleId),
-      forbiddenCapabilities: forbiddenForContext(input.classified, "query"),
-      http: httpEndpointFor("query", query.name),
-      frontend: frontendUsageFor(input.frontendGraph, "query", query.name),
-    })),
-    liveQueries: sorted(input.liveQueryRegistry.liveQueries, (liveQuery) => liveQuery.name).map(
-      (liveQuery) => ({
-        name: liveQuery.name,
-        file: liveQuery.file,
-        policy: liveQueryPolicy.get(liveQuery.name),
-        dependencies: input.tenantScope.tables.map((table) => ({
-          table: table.table,
-          scope: "tenant" as const,
-        })),
-        allowedPackages: packageNamesForModule(input.appGraph, liveQuery.moduleId),
-        forbiddenCapabilities: forbiddenForContext(input.classified, "liveQuery"),
-        http: httpEndpointFor("liveQuery", liveQuery.name),
-        frontend: frontendUsageFor(input.frontendGraph, "liveQuery", liveQuery.name),
-      }),
-    ),
+    commands: commandInfos,
+    queries: queryInfos,
+    liveQueries: liveQueryInfos,
     actions: sorted(
       input.runtimeGraph.entries.filter((entry) => entry.kind === "action"),
       (entry) => entry.name,
@@ -629,6 +967,12 @@ export function buildAgentContractArtifacts(
           }),
         ),
       ].sort((a, b) => `${a.kind}:${a.name}`.localeCompare(`${b.kind}:${b.name}`)),
+      routeBindings: fullStackBindings
+        .filter((binding) => binding.route)
+        .sort((a, b) => `${a.route}:${a.kind}:${a.name}:${a.file}`.localeCompare(`${b.route}:${b.kind}:${b.name}:${b.file}`)),
+      componentBindings: fullStackBindings
+        .filter((binding) => binding.component)
+        .sort((a, b) => `${a.component}:${a.kind}:${a.name}:${a.file}`.localeCompare(`${b.component}:${b.kind}:${b.name}:${b.file}`)),
       diagnostics: input.frontendGraph.diagnostics,
     },
     auth: {
@@ -657,9 +1001,9 @@ export function buildAgentContractArtifacts(
     rules: runtimeRules(),
     playbooks: playbooks(),
     commandsToRun: {
-      beforeEditing: ["forge dev --once --json", "forge inspect all --json", "forge check --json"],
+      beforeEditing: ["forge do inspect --json", "forge dev --once --json", "forge inspect all --json", "forge check --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --strict"],
-      dev: ["forge dev", "forge dev --once --json", "forge dev --api-only", "forge dev --web-only"],
+      dev: ["forge dev", "forge dev --once --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"],
     },
   };
 
@@ -669,12 +1013,15 @@ export function buildAgentContractArtifacts(
     : null;
   const userNotes = extractUserNotes(existingAgents);
   const agentsMd = renderAgentsMd(contract, userNotes);
+  const capabilityMap = buildCapabilityMap(contract);
+  const capabilityMapMd = renderCapabilityMapMd(capabilityMap);
   const appMapMd = renderAppMapMd(contract);
   const runtimeRulesMd = renderRuntimeRulesMd(contract.rules);
   const operationPlaybooksMd = renderOperationPlaybooksMd(contract.playbooks);
   const agentQuickstartMd = renderAgentQuickstartMd();
   const diagnostics = scanAgentContractForLeaks(contract, [
     agentsMd,
+    capabilityMapMd,
     appMapMd,
     runtimeRulesMd,
     operationPlaybooksMd,
@@ -683,12 +1030,14 @@ export function buildAgentContractArtifacts(
 
   return {
     contract,
+    capabilityMap,
     agentsMd,
     appMapMd,
+    capabilityMapMd,
     runtimeRulesMd,
     operationPlaybooksMd,
     agentQuickstartMd,
-    diagnostics,
+    diagnostics: [...diagnostics, ...capabilityMap.diagnostics],
   };
 }
 
@@ -716,6 +1065,15 @@ export function serializeAgentContractTs(contract: AgentContract): string {
   return `export const agentContract = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+export function serializeCapabilityMapJson(capabilityMap: AgentCapabilityMap): string {
+  return serializeCanonical(capabilityMap);
+}
+
+export function serializeCapabilityMapTs(capabilityMap: AgentCapabilityMap): string {
+  const parsed = JSON.parse(serializeCapabilityMapJson(capabilityMap)) as unknown;
+  return `export const capabilityMap = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
 function renderAgentsMd(contract: AgentContract, userNotes: string): string {
   const tenantTables = contract.data.tables
     .filter((table) => table.tenantScoped)
@@ -738,6 +1096,7 @@ This is a ForgeOS application named \`${contract.project.name}\`.
 Before editing:
 
 \`\`\`bash
+forge do inspect --json
 forge dev --once --json
 forge inspect all --json
 forge check --json
@@ -785,11 +1144,15 @@ Template apps may ignore \`src/forge/_generated/**\` and \`forge.lock\` in git t
 ## Useful commands
 
 \`\`\`bash
+forge do "<objective>" --json
+forge do fix --json
+forge do verify --json
 forge dev --once --json
 forge dev
 forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
+forge inspect capability-map --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -834,6 +1197,7 @@ ${contract.frontend.dev ? `- Web URL: ${contract.frontend.dev.url}
 - Components: ${contract.frontend.components.length}
 - Client bindings: ${contract.frontend.clientBindings.length}
 - Runtime endpoints: ${contract.frontend.runtimeEndpoints.length}
+- Full-stack route bindings: ${contract.frontend.routeBindings.length}
 
 Rules:
 
@@ -843,6 +1207,19 @@ Rules:
 - Keep frontend routes reflected in \`src/forge/_generated/frontendGraph.json\`.
 
 ## Common tasks
+
+### Choose the right workflow
+
+Use:
+
+\`\`\`bash
+forge do "<objective>" --json
+forge do fix --json
+forge do connect-ui --json
+forge do verify --json
+\`\`\`
+
+\`forge do\` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
 
 ### Add a command
 
@@ -871,9 +1248,10 @@ Use:
 forge dev --once --json
 forge dev
 forge inspect frontend --json
+forge inspect capability-map --json
 \`\`\`
 
-\`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
+\`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
 
 ### Apply a feature blueprint
 
@@ -1001,6 +1379,8 @@ function renderAppMapMd(contract: AgentContract): string {
       ...renderList(command.frontend.components).split("\n"),
       "Writes:",
       ...renderList(command.tablesWritten).split("\n"),
+      "Reads:",
+      ...renderList(command.tablesRead).split("\n"),
       "Emits:",
       ...renderList(command.emits).split("\n"),
       "",
@@ -1015,6 +1395,8 @@ function renderAppMapMd(contract: AgentContract): string {
       `HTTP: ${query.http.method} ${query.http.path}`,
       `Frontend hook: \`${query.frontend.hook}\``,
       `Read-only: ${query.readOnly ? "yes" : "no"}`,
+      "Reads:",
+      ...renderList(query.tablesRead).split("\n"),
       "Frontend routes:",
       ...renderList(query.frontend.routes).split("\n"),
       "Frontend components:",
@@ -1030,6 +1412,8 @@ function renderAppMapMd(contract: AgentContract): string {
       `Policy: ${liveQuery.policy ?? "none"}`,
       `HTTP: ${liveQuery.http.method} ${liveQuery.http.path}`,
       `Frontend hook: \`${liveQuery.frontend.hook}\``,
+      "Reads:",
+      ...renderList(liveQuery.tablesRead).split("\n"),
       "Frontend routes:",
       ...renderList(liveQuery.frontend.routes).split("\n"),
       "Frontend components:",
@@ -1118,6 +1502,23 @@ function renderAppMapMd(contract: AgentContract): string {
   }
   lines.push("");
 
+  lines.push("### Full-Stack Route Bindings", "");
+  for (const binding of contract.frontend.routeBindings) {
+    lines.push(
+      `- ${binding.route ?? "unknown route"} -> ${binding.hook} -> ${binding.kind} ${binding.name}`,
+      `  File: ${binding.file}`,
+      `  HTTP: ${binding.http.method} ${binding.http.path}`,
+      `  Policy: ${binding.policy ?? "none"}`,
+      `  Reads: ${binding.tablesRead.length > 0 ? binding.tablesRead.join(", ") : "none"}`,
+      `  Writes: ${binding.tablesWritten.length > 0 ? binding.tablesWritten.join(", ") : "none"}`,
+      `  Emits: ${binding.emits.length > 0 ? binding.emits.join(", ") : "none"}`,
+    );
+  }
+  if (contract.frontend.routeBindings.length === 0) {
+    lines.push("- none");
+  }
+  lines.push("");
+
   return normalizeNewlines(lines.join("\n"));
 }
 
@@ -1145,6 +1546,54 @@ function renderRuntimeRulesMd(rules: AgentRuntimeRule[]): string {
   return normalizeNewlines(lines.join("\n"));
 }
 
+function renderCapabilityMapMd(capabilityMap: AgentCapabilityMap): string {
+  const lines = [
+    "# Capability Map",
+    "",
+    `Project: ${capabilityMap.project.name}`,
+    "",
+    "## Summary",
+    "",
+    `- Covered: ${capabilityMap.summary.covered}`,
+    `- Backend-only: ${capabilityMap.summary.backendOnly}`,
+    `- Frontend-only: ${capabilityMap.summary.frontendOnly}`,
+    `- Warnings: ${capabilityMap.summary.warnings}`,
+    "",
+    "## Capabilities",
+    "",
+  ];
+  for (const entry of capabilityMap.entries) {
+    lines.push(`### ${entry.id}`, `Status: ${entry.status}`, `User action: ${entry.userAction}`);
+    if (entry.ui) {
+      lines.push(`UI file: ${entry.ui.file}`);
+      if (entry.ui.route) lines.push(`Route: ${entry.ui.route}`);
+      if (entry.ui.component) lines.push(`Component: ${entry.ui.component}`);
+    }
+    if (entry.runtime) {
+      lines.push(
+        `Runtime: ${entry.runtime.kind} ${entry.runtime.name}`,
+        `Hook: ${entry.runtime.hook}`,
+        `HTTP: ${entry.runtime.http.method} ${entry.runtime.http.path}`,
+        `Policy: ${entry.runtime.policy ?? "none"}`,
+        `Reads: ${entry.runtime.tablesRead.length > 0 ? entry.runtime.tablesRead.join(", ") : "none"}`,
+        `Writes: ${entry.runtime.tablesWritten.length > 0 ? entry.runtime.tablesWritten.join(", ") : "none"}`,
+        `Emits: ${entry.runtime.emits.length > 0 ? entry.runtime.emits.join(", ") : "none"}`,
+      );
+    }
+    lines.push("Notes:", ...renderList(entry.notes).split("\n"), "");
+  }
+  if (capabilityMap.entries.length === 0) {
+    lines.push("- none", "");
+  }
+  if (capabilityMap.diagnostics.length > 0) {
+    lines.push("## Diagnostics", "");
+    for (const diagnostic of capabilityMap.diagnostics) {
+      lines.push(`- ${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`);
+    }
+  }
+  return normalizeNewlines(lines.join("\n"));
+}
+
 function renderOperationPlaybooksMd(playbookEntries: AgentPlaybook[]): string {
   const lines = ["# Operation Playbooks", ""];
   for (const playbook of playbookEntries) {
@@ -1163,10 +1612,14 @@ function renderAgentQuickstartMd(): string {
 Run:
 
 \`\`\`bash
+forge do inspect --json
+forge do fix --json
+forge do verify --json
 forge dev --once --json
 forge dev
 forge inspect all --json
 forge inspect frontend --json
+forge inspect capability-map --json
 forge check --json
 \`\`\`
 

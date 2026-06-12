@@ -20,6 +20,7 @@ import { resolveByPackageName } from "../compiler/recipes/registry.ts";
 import type { AppGraph } from "../compiler/types/app-graph.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
+import type { AgentCapabilityMap } from "../compiler/agent-contract/types.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
 import { runImpactCommand } from "../impact/index.ts";
 import type { TestRunRecord } from "../impact/types.ts";
@@ -30,6 +31,7 @@ import type {
   DevConsoleNextAction,
   DevConsoleOptions,
   DevConsolePhase,
+  DevConsoleSummary,
   FrontendSummary,
   ImpactSummary,
   LastTestRunSummary,
@@ -135,6 +137,7 @@ async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase
     details: {
       changed: result.changed,
       unchangedCount: result.unchanged.length,
+      ...(result.cache ? { cache: result.cache } : {}),
     },
     message: result.exitCode === 0 ? "generated artifacts are up to date" : "generated artifacts are stale",
   };
@@ -176,6 +179,7 @@ function requiredGeneratedArtifacts(workspaceRoot: string): Array<{ name: string
     { name: "agents-md", path: "AGENTS.md", ok: nodeFileSystem.exists(join(workspaceRoot, "AGENTS.md")) },
     { name: "forge-lock", path: "forge.lock", ok: nodeFileSystem.exists(join(workspaceRoot, "forge.lock")) },
     { name: "agent-contract", path: `${GENERATED_DIR}/agentContract.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "agentContract.json")) },
+    { name: "capability-map", path: `${GENERATED_DIR}/capabilityMap.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "capabilityMap.json")) },
     { name: "runtime-matrix", path: `${GENERATED_DIR}/runtimeMatrix.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "runtimeMatrix.json")) },
     { name: "data-graph", path: `${GENERATED_DIR}/dataGraph.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "dataGraph.json")) },
     { name: "policies", path: `${GENERATED_DIR}/policyRegistry.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "policyRegistry.json")) },
@@ -218,6 +222,11 @@ function runDoctorPhase(workspaceRoot: string): DevConsolePhase {
     );
   const frontend = readJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);
   diagnostics.push(...(frontend?.diagnostics ?? []));
+  const capabilityMap = readJson<{ diagnostics?: Diagnostic[] }>(
+    workspaceRoot,
+    `${GENERATED_DIR}/capabilityMap.json`,
+  );
+  diagnostics.push(...(capabilityMap?.diagnostics ?? []));
   const dbJson = readJson<{ tableMap: Record<string, TableMapEntry> }>(
     workspaceRoot,
     `${GENERATED_DIR}/db.json`,
@@ -271,6 +280,7 @@ function runFrontendPhase(workspaceRoot: string): DevConsolePhase {
     routes: frontend.routes.map((route) => route.path),
     bindings: [...new Set(frontend.clientBindings.map((binding) => `${binding.kind}:${binding.name}`))].sort(),
     bridgeFiles: frontend.bridgeFiles,
+    apiUrl: frontend.webManifest.urls.api,
     ...(frontend.dev ? { devUrl: frontend.dev.url, apiUrlEnv: frontend.dev.apiUrlEnv } : {}),
   };
   const diagnostics = frontend.diagnostics ?? [];
@@ -278,6 +288,63 @@ function runFrontendPhase(workspaceRoot: string): DevConsolePhase {
     ? `frontend ${frontend.framework} with ${frontend.routes.length} routes and ${frontend.clientBindings.length} bindings`
     : "no frontend app detected";
   return phase("frontend", diagnostics, msSince(start), { summary }, message);
+}
+
+function defaultFrontendSummary(workspaceRoot: string): FrontendSummary {
+  const frontend = readJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);
+  return {
+    present: frontend?.present ?? false,
+    framework: frontend?.framework ?? "none",
+    routes: frontend?.routes.map((route) => route.path) ?? [],
+    bindings: frontend
+      ? [...new Set(frontend.clientBindings.map((binding) => `${binding.kind}:${binding.name}`))].sort()
+      : [],
+    bridgeFiles: frontend?.bridgeFiles ?? [],
+    apiUrl: frontend?.webManifest.urls.api ?? "http://127.0.0.1:3765",
+    ...(frontend?.dev ? { devUrl: frontend.dev.url, apiUrlEnv: frontend.dev.apiUrlEnv } : {}),
+  };
+}
+
+function buildDevSummary(input: {
+  workspaceRoot: string;
+  ok: boolean;
+  phases: DevConsolePhase[];
+  diagnostics: Diagnostic[];
+  nextActions: DevConsoleNextAction[];
+}): DevConsoleSummary {
+  const frontendPhase = input.phases.find((item) => item.name === "frontend");
+  const frontend =
+    (frontendPhase?.details?.summary as FrontendSummary | undefined) ??
+    defaultFrontendSummary(input.workspaceRoot);
+  const capabilityMap = readJson<AgentCapabilityMap>(
+    input.workspaceRoot,
+    `${GENERATED_DIR}/capabilityMap.json`,
+  );
+  const warnings = input.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
+  const errors = input.diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
+  return {
+    project: {
+      root: input.workspaceRoot,
+    },
+    health: {
+      ok: input.ok,
+      errors,
+      warnings,
+      skipped: input.phases.filter((item) => item.status === "skipped").length,
+    },
+    urls: {
+      api: frontend.apiUrl ?? "http://127.0.0.1:3765",
+      ...(frontend.devUrl ? { web: frontend.devUrl } : {}),
+    },
+    frontend,
+    capabilities: capabilityMap?.summary ?? {
+      covered: 0,
+      backendOnly: 0,
+      frontendOnly: 0,
+      warnings: 0,
+    },
+    ...(input.nextActions[0] ? { primaryAction: input.nextActions[0] } : {}),
+  };
 }
 
 function runImpactPhase(workspaceRoot: string): DevConsolePhase {
@@ -404,8 +471,28 @@ function uniqueActions(actions: DevConsoleNextAction[]): DevConsoleNextAction[] 
 
 function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[] {
   const actions: DevConsoleNextAction[] = [];
+  const diagnostics = phases.flatMap((item) => item.diagnostics);
+  if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+    actions.push({
+      command: "forge do fix --json",
+      reason: "centralize the repair path before choosing lower-level commands",
+      confidence: "high",
+    });
+  }
+  if (diagnostics.some((diagnostic) => diagnostic.code.startsWith("FORGE_FRONTEND_"))) {
+    actions.push({
+      command: "forge do connect-ui --json",
+      reason: "frontend diagnostics are present; inspect bridge/routes/hooks as one workflow",
+      confidence: "high",
+    });
+  }
   const generated = phases.find((item) => item.name === "generated");
   if (generated && !generated.ok) {
+    actions.push({
+      command: "forge do fix --json",
+      reason: "generated artifacts are stale; use the guided repair path before lower-level commands",
+      confidence: "high",
+    });
     actions.push({
       command: "forge generate",
       reason: "generated artifacts are stale",
@@ -426,6 +513,11 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
   const impact = phases.find((item) => item.name === "impact");
   const summary = impact?.details?.summary as ImpactSummary | undefined;
   if (summary && summary.changedFiles.length > 0) {
+    actions.push({
+      command: "forge do verify --json",
+      reason: "changed files were detected; use the guided verification path",
+      confidence: "high",
+    });
     actions.push({
       command: "forge test plan --changed --json",
       reason: "changed files were detected; plan targeted checks",
@@ -481,13 +573,22 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
 
   const diagnostics = phases.flatMap((item) => item.diagnostics);
   const ok = phases.every((item) => item.ok);
+  const nextActions = nextActionsFromPhases(phases);
+  const summary = buildDevSummary({
+    workspaceRoot,
+    ok,
+    phases,
+    diagnostics,
+    nextActions,
+  });
   return {
     schemaVersion: "0.1.0",
     ok,
     mode: options.mode,
+    summary,
     phases,
     diagnostics,
-    nextActions: nextActionsFromPhases(phases),
+    nextActions,
     exitCode: ok ? 0 : 1,
   };
 }
@@ -498,6 +599,29 @@ export function formatDevConsoleJson(cycle: DevConsoleCycle): string {
 
 export function formatDevConsoleHuman(cycle: DevConsoleCycle): string {
   const lines = ["Forge Dev Console", ""];
+  lines.push(cycle.ok ? "Status: OK" : "Status: Needs attention");
+  lines.push(`Project: ${cycle.summary.project.root}`);
+  lines.push(`API: ${cycle.summary.urls.api}`);
+  lines.push(`Web: ${cycle.summary.urls.web ?? "none detected"}`);
+  lines.push(
+    `Frontend: ${cycle.summary.frontend.present ? cycle.summary.frontend.framework : "none"} ` +
+      `(${cycle.summary.frontend.routes.length} routes, ${cycle.summary.frontend.bindings.length} bindings)`,
+  );
+  lines.push(
+    `Capabilities: ${cycle.summary.capabilities.covered} covered, ` +
+      `${cycle.summary.capabilities.backendOnly} backend-only, ` +
+      `${cycle.summary.capabilities.frontendOnly} frontend-only, ` +
+      `${cycle.summary.capabilities.warnings} warnings`,
+  );
+  lines.push(
+    `Diagnostics: ${cycle.summary.health.errors} errors, ${cycle.summary.health.warnings} warnings, ${cycle.summary.health.skipped} skipped`,
+  );
+  if (cycle.summary.primaryAction) {
+    lines.push(`Next: ${cycle.summary.primaryAction.command}`);
+    lines.push(`  ${cycle.summary.primaryAction.reason}`);
+  }
+  lines.push("");
+  lines.push("Phases");
   for (const phaseItem of cycle.phases) {
     const marker = phaseItem.status === "ok" ? "OK" : phaseItem.status === "warning" ? "WARN" : phaseItem.status === "skipped" ? "SKIP" : "FAIL";
     lines.push(`${marker} ${phaseItem.name}${phaseItem.message ? ` - ${phaseItem.message}` : ""}`);

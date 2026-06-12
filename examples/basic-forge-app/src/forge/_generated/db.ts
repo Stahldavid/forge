@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=dbed69e6d72dbc70c4da980e189c370546d6773f069f0b210a3b192dab421887 content=6b553a5a6ef32e20b0445282243953224a617b1bb4d8ac3a785d3ae3912419ff
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=832273aa503a8f94333280bb364ca1b3292cc3b62ae4dfc97aa0eb282ad2f27a
 export const tableMap = {
   "tenants": {
     "tableName": "tenants",
@@ -15,6 +15,7 @@ export const tableMap = {
     "columns": [
       {
         "name": "created_at",
+        "fieldName": "createdAt",
         "sqlType": "timestamptz"
       },
       {
@@ -28,6 +29,7 @@ export const tableMap = {
       },
       {
         "name": "tenant_id",
+        "fieldName": "tenantId",
         "sqlType": "uuid"
       },
       {

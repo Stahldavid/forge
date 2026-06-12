@@ -23,6 +23,7 @@ const REFERENCE_RECIPES: Record<string, IntegrationRecipe> = {
   posthog: POSTHOG_RECIPE,
   sentry: SENTRY_RECIPE,
   zod: ZOD_RECIPE,
+  forge: FORGE_RECIPE,
   ai: AI_RECIPE,
 };
 

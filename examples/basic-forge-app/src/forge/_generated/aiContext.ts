@@ -1,5 +1,9 @@
-// @forge-generated generator=0.0.0 input=9255ba138ae80878f8ea821fed168d05fd040cb5d5f09ec1dae92c86cfbdf974 content=1a7f35fa6df0033ab837112f39b4684bbc4d255334885c29434ebddf169351e1
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=344fae7ce3db1aebe47436636186f05e893b4368a1cc186e40430aa4e6f33294
 export type ForgeAiProvider = "openai" | "anthropic" | "gateway";
+
+export type ForgeFlexibleSchema<T> = unknown & {
+  readonly __forgeStructuredOutput?: T;
+};
 
 export interface ForgeAiUsage {
   promptTokens: number;
@@ -45,7 +49,7 @@ export interface ForgeGenerateStructuredInput<T> {
   prompt: string;
   system?: string;
   purpose?: string;
-  schema: unknown;
+  schema: ForgeFlexibleSchema<T>;
 }
 
 export interface AiContext {

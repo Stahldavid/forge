@@ -51,6 +51,10 @@ describe("b2b-support-web template", () => {
       });
 
       expect(result.exitCode).toBe(0);
+      expect(result.gitHygiene).toMatchObject({
+        ok: true,
+        missingPaths: [],
+      });
       expect(result.message).toBe(
         "Created support-app from template b2b-support-web.",
       );
@@ -59,6 +63,8 @@ describe("b2b-support-web template", () => {
       expect(existsSync(join(project, "AGENTS.md"))).toBe(true);
       expect(existsSync(join(project, ".gitignore"))).toBe(true);
       expect(existsSync(join(project, ".env.example"))).toBe(true);
+      expect(existsSync(join(project, "forge.lock"))).toBe(false);
+      expect(existsSync(join(project, "src", "forge", "_generated"))).toBe(false);
       expect(existsSync(join(project, "web", "app", "tickets", "page.tsx"))).toBe(true);
       expect(existsSync(join(project, "src", "workflows", "triageTicketWorkflow.ts"))).toBe(true);
 
@@ -69,6 +75,12 @@ describe("b2b-support-web template", () => {
       expect(read(project, ".gitignore")).toContain(".forge/pglite/");
       expect(read(project, ".gitignore")).toContain("src/forge/_generated/");
       expect(read(project, ".gitignore")).toContain("forge.lock");
+      expect(read(project, ".gitignore")).toContain(".forge/repairs/");
+      expect(read(project, ".gitignore")).toContain(".forge/refactors/");
+      expect(read(project, ".gitignore")).toContain(".forge/upgrades/");
+      expect(read(project, ".gitignore")).toContain(".forge/reviews/");
+      expect(read(project, ".gitignore")).toContain(".forge/impact/");
+      expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
 
       expect(read(project, "src/forge/schema.ts")).toContain("tickets");
       expect(read(project, "src/policies.ts")).toContain("billing.manage");

@@ -26,10 +26,35 @@ export interface DevConsoleNextAction {
   confidence: "high" | "medium" | "low";
 }
 
+export interface DevConsoleSummary {
+  project: {
+    root: string;
+  };
+  health: {
+    ok: boolean;
+    errors: number;
+    warnings: number;
+    skipped: number;
+  };
+  urls: {
+    api: string;
+    web?: string;
+  };
+  frontend: FrontendSummary;
+  capabilities: {
+    covered: number;
+    backendOnly: number;
+    frontendOnly: number;
+    warnings: number;
+  };
+  primaryAction?: DevConsoleNextAction;
+}
+
 export interface DevConsoleCycle {
   schemaVersion: "0.1.0";
   ok: boolean;
   mode: "once" | "startup" | "watch";
+  summary: DevConsoleSummary;
   phases: DevConsolePhase[];
   diagnostics: Diagnostic[];
   nextActions: DevConsoleNextAction[];
@@ -69,5 +94,6 @@ export interface FrontendSummary {
   bindings: string[];
   bridgeFiles: string[];
   devUrl?: string;
+  apiUrl?: string;
   apiUrlEnv?: string;
 }

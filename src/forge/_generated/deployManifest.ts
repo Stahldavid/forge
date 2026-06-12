@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=498ae106c5515160f62c588c022c49b74d8c8010e752bf89723c14e54321364d content=fcf0c52f50e3e502850927cd253182330a230edc6bbcc9494fedbbe469ccd517
+// @forge-generated generator=0.0.0 input=c993235bac641e26d1c764366c2f0bc976f1395f3160be4d219c0f6e6817cb42 content=338072d538c5f836e6f0031bd262b435fd2a109dc612cab527f7d582b6160b83
 export const deployManifest = {
   "attributes": {
     "deployment.environment": "local",
     "forge.deploy_id": "local-forge@0.0.0+unknown",
-    "forge.generated_hash": "498ae106c5515160f62c588c022c49b74d8c8010e752bf89723c14e54321364d",
+    "forge.generated_hash": "c993235bac641e26d1c764366c2f0bc976f1395f3160be4d219c0f6e6817cb42",
     "forge.release_id": "forge@0.0.0+unknown",
     "service.version": "forge@0.0.0+unknown"
   },

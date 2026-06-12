@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import { resetCompileSessions } from "../../src/forge/compiler/orchestrator/session.ts";
 import {
   FORGE_QUERY_EMIT_FORBIDDEN,
   FORGE_QUERY_WRITE_FORBIDDEN,
@@ -48,6 +49,7 @@ describe("query read-only enforcement", () => {
     );
 
     try {
+      resetCompileSessions();
       await run(defaultGenerateOptions(root));
       const checked = await import("../../src/forge/cli/commands.ts").then((m) =>
         m.runCheckCommand(root),

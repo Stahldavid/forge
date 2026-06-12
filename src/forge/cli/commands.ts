@@ -115,6 +115,11 @@ import {
   runRepairCommand,
 } from "../repair/index.ts";
 import {
+  formatForgeDoHuman,
+  formatForgeDoJson,
+  runForgeDoCommand,
+} from "../intent/index.ts";
+import {
   formatAgentHuman,
   formatAgentJson,
   runAgentCommand,
@@ -228,6 +233,11 @@ export async function runCheckCommand(
   const frontendDiagnostics =
     readGeneratedJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`)
       ?.diagnostics ?? [];
+  const capabilityDiagnostics =
+    readGeneratedJson<{ diagnostics?: import("../compiler/types/diagnostic.ts").Diagnostic[] }>(
+      workspaceRoot,
+      `${GENERATED_DIR}/capabilityMap.json`,
+    )?.diagnostics ?? [];
 
   const allDiagnostics = [
     ...guardDiagnostics,
@@ -235,6 +245,7 @@ export async function runCheckCommand(
     ...aiDiagnostics,
     ...queryDiagnostics,
     ...frontendDiagnostics,
+    ...capabilityDiagnostics,
   ];
   const errors = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
@@ -289,6 +300,7 @@ export async function runInspectCommand(
     "test-graph": `${GENERATED_DIR}/testGraph.json`,
     "test-plans": `${GENERATED_DIR}/testPlanRegistry.json`,
     "agent-adapters": `${GENERATED_DIR}/agentAdapterManifest.json`,
+    "capability-map": `${GENERATED_DIR}/capabilityMap.json`,
     ui: `${GENERATED_DIR}/uiTestManifest.json`,
     "ui-scenarios": `${GENERATED_DIR}/uiScenarios.json`,
     "ui-routes": `${GENERATED_DIR}/uiRoutes.json`,
@@ -324,6 +336,7 @@ export async function runInspectCommand(
       ["testPlanRegistry", `${GENERATED_DIR}/testPlanRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
       ["agentAdapters", `${GENERATED_DIR}/agentAdapterManifest.json`],
+      ["capabilityMap", `${GENERATED_DIR}/capabilityMap.json`],
       ["ui", `${GENERATED_DIR}/uiTestManifest.json`],
       ["uiScenarios", `${GENERATED_DIR}/uiScenarios.json`],
       ["uiRoutes", `${GENERATED_DIR}/uiRoutes.json`],
@@ -572,6 +585,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatRepairJson(result));
       } else {
         process.stdout.write(formatRepairHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "do": {
+      const result = runForgeDoCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatForgeDoJson(result));
+      } else {
+        process.stdout.write(formatForgeDoHuman(result));
       }
       return result.exitCode;
     }

@@ -106,6 +106,10 @@ export function runFastGenerateCheck(workspaceRootInput: string): FastGenerateCh
       unchanged,
       warnings,
       errors,
+      cache: {
+        strategy: "generated-check",
+        result: "hit",
+      },
       exitCode: changed.length > 0 || errors.length > 0 ? 1 : 0,
       ...(changed.length > 0 || errors.length > 0 ? { failureKind: "generated_drift" } : {}),
     },

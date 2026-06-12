@@ -30,6 +30,10 @@ describe("fast generated check", () => {
       if (checked.kind !== "hit") return;
 
       expect(checked.result.exitCode).toBe(0);
+      expect(checked.result.cache).toMatchObject({
+        strategy: "generated-check",
+        result: "hit",
+      });
       expect(checked.result.changed).toEqual([]);
       expect(checked.result.unchanged).toContain(FORGE_LOCK_PATH);
       expect(checked.result.unchanged).toContain(BARREL_INDEX_PATH);
@@ -56,6 +60,7 @@ describe("fast generated check", () => {
       if (checked.kind !== "hit") return;
 
       expect(checked.result.exitCode).toBe(1);
+      expect(checked.result.cache?.result).toBe("hit");
       expect(checked.result.changed).toContain(`${GENERATED_DIR}/appGraph.ts`);
       expect(checked.result.warnings.some((diag) => diag.code === FORGE_DRIFT)).toBe(true);
       expect(checked.result.errors).toEqual([]);
@@ -79,6 +84,7 @@ describe("fast generated check", () => {
       if (checked.kind !== "hit") return;
 
       expect(checked.result.exitCode).toBe(1);
+      expect(checked.result.cache?.result).toBe("hit");
       expect(
         checked.result.errors.some(
           (diag) => diag.code === FORGE_ORPHANED_GENERATED_FILE,

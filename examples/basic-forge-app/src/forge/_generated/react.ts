@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d4c04bb50918289504020c384505fe134421a7b93d98da721b1dc7d12103c611 content=432498839579d179427aaff0644195e66e29eb4aa96a9da26145834740208e17
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=7a3f50ffd129a6969d3bea362759c9e28714bb74d46746f402c2e2ab01b9853c
 "use client";
 
 import { createForgeReactBindings } from "forge/react";
@@ -6,6 +6,7 @@ import { createForgeClient } from "./client.ts";
 
 export type {
   ForgeProviderProps,
+  ForgeDevAuthConfig,
   ForgeReactAuth,
   ForgeReactAuthProvider,
   ForgeReactClient,

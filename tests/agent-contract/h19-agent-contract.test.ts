@@ -38,6 +38,9 @@ describe("H19 agent contract", () => {
         "agentContract.json",
         "agentContract.ts",
         "appMap.md",
+        "capabilityMap.json",
+        "capabilityMap.ts",
+        "capabilityMap.md",
         "runtimeRules.md",
         "operationPlaybooks.md",
         "agentQuickstart.md",
@@ -57,6 +60,7 @@ describe("H19 agent contract", () => {
         policies: unknown[];
         secrets: unknown[];
         frontend: { present: boolean; routes: unknown[]; components: unknown[]; runtimeEndpoints: unknown[] };
+        capabilityMap?: unknown;
       }>(workspace, `${GENERATED}/agentContract.json`);
 
       expect(contract.commands.length).toBeGreaterThan(0);
@@ -216,6 +220,7 @@ describe("H19 agent contract", () => {
     });
     expect(parseCli(["inspect", "all", "--json"]).errors).toEqual([]);
     expect(parseCli(["inspect", "frontend", "--json"]).errors).toEqual([]);
+    expect(parseCli(["inspect", "capability-map", "--json"]).errors).toEqual([]);
 
     const workspace = scaffoldGenerateWorkspace("h19-verify");
     try {

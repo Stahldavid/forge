@@ -1,6 +1,7 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=1290ebb9edadafd5099f359201c00307da5e79a9ce02304e81a298d61c4999e5
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=76d5d621f1c198e1fe4c4639e6fcecbeb279b6172d6b588fa9b51dba0c57b00e
 export const sqlPlan = {
   "checksum": "418e7965808fba344799c6ed1489ae11c907a69a376ecc3b15345d4247b52bee",
+  "diagnostics": [],
   "indexes": [
     {
       "index": {
@@ -100,6 +101,7 @@ export const sqlPlan = {
       "columns": [
         {
           "defaultExpr": "gen_random_uuid()",
+          "fieldName": "id",
           "name": "id",
           "nullable": false,
           "primaryKey": true,
@@ -114,6 +116,7 @@ export const sqlPlan = {
       "columns": [
         {
           "defaultExpr": "now()",
+          "fieldName": "createdAt",
           "name": "created_at",
           "nullable": false,
           "primaryKey": false,
@@ -121,6 +124,7 @@ export const sqlPlan = {
         },
         {
           "defaultExpr": "gen_random_uuid()",
+          "fieldName": "id",
           "name": "id",
           "nullable": false,
           "primaryKey": true,
@@ -128,12 +132,14 @@ export const sqlPlan = {
         },
         {
           "checkConstraint": "\"status\" IN ('open', 'pending', 'closed')",
+          "fieldName": "status",
           "name": "status",
           "nullable": false,
           "primaryKey": false,
           "sqlType": "text"
         },
         {
+          "fieldName": "tenantId",
           "name": "tenant_id",
           "nullable": false,
           "primaryKey": false,
@@ -144,6 +150,7 @@ export const sqlPlan = {
           "sqlType": "uuid"
         },
         {
+          "fieldName": "title",
           "name": "title",
           "nullable": false,
           "primaryKey": false,

@@ -42,6 +42,10 @@ describe("minimal-web template", () => {
         workspaceRoot: workspace,
       });
       expect(result.exitCode).toBe(0);
+      expect(result.gitHygiene).toMatchObject({
+        ok: true,
+        missingPaths: [],
+      });
 
       const project = join(workspace, "notes-app");
       expect(existsSync(join(project, "web", "index.html"))).toBe(true);
@@ -49,6 +53,10 @@ describe("minimal-web template", () => {
       expect(existsSync(join(project, "web", "src", "lib", "forge.ts"))).toBe(true);
       expect(read(project, ".gitignore")).toContain("src/forge/_generated/");
       expect(read(project, ".gitignore")).toContain("forge.lock");
+      expect(read(project, ".gitignore")).toContain(".forge/repairs/");
+      expect(read(project, ".gitignore")).toContain(".forge/refactors/");
+      expect(read(project, ".gitignore")).toContain(".forge/upgrades/");
+      expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
       expect(read(project, "src/commands/createNote.ts")).toContain("note.created");
       expect(read(project, "src/queries/listNotes.ts")).toContain("listNotes");
       expect(read(project, "src/queries/liveNotes.ts")).toContain("liveNotes");

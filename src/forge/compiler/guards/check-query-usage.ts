@@ -9,7 +9,7 @@ import type { AppGraph } from "../types/app-graph.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
 
 const WRITE_PATTERN =
-  /ctx\.db\.[\w$]+\.(insert|update|delete)\s*\(/;
+  /ctx\.db(?:\.[\w$]+)?\.(insert|update|delete)\s*\(/;
 const EMIT_PATTERN = /ctx\.emit\s*\(/;
 const SECRETS_PATTERN = /ctx\.secrets\b/;
 const AI_PATTERN = /ctx\.ai\b/;
