@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=97ddf6cf2327c0d99719894eeb3543f19eb4f093a0a00e97fb6dd127a5f2cc72
+// @forge-generated generator=0.0.0 input=2190d56a1db1355810806f497ad3a2e68f900245ae47a7cdc651f0cd2c949f50 content=60b10092bbf3fc20a934cb36c0e0067f3926697a2c909bf3b1cfc77d49309245
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "2e6492504d79ce60465408f45130f5a72854571b737041fce842de98b628c2bd",
+  "inputHash": "b1d71cddf8542d6ee2c0cd7ff6395e744c04c03621d944f5a9f537d9101523d4",
   "moduleGraph": {
     "nodes": [
       {
@@ -4816,6 +4816,14 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/policy.ts",
+        "id": "54fe0c4a4f8b2bced7bde688f55f03263bea2f7a3eafe9a96811f033e7cc4242",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/cache/key.ts",
         "id": "558c96f0ca11cce537f63cb5ed6c80fd1818b29662219a8525a3f6358cb45d0b",
         "localImports": [
@@ -6245,6 +6253,14 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/forge/compiler/runtime-graph/index.ts",
         "id": "78b95052f95ccb3ed91d62a890bd866898cd6dd4154cd77ce6a28373d2b00ab6",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/server.ts",
+        "id": "792c48b261fe786acf87988aca68eed21fe9de5b5fbac4a069c28fee6baf70dd",
         "localImports": []
       },
       {
@@ -9199,8 +9215,8 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 295,
-              "start": 277
+              "end": 308,
+              "start": 290
             },
             "toModuleId": "5194e753dfe17c025a21587e67d0e565e2b724a47cf73042cddaf6dae1663e0b"
           }
@@ -11412,8 +11428,8 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 25643,
-              "start": 25612
+              "end": 25665,
+              "start": 25634
             },
             "toModuleId": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
           }

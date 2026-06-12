@@ -397,6 +397,7 @@ export async function startDevServer(
   const server = Bun.serve({
     hostname: options.host,
     port: options.port,
+    idleTimeout: 255,
     async fetch(request) {
       if (request.method === "OPTIONS") {
         return corsPreflight();

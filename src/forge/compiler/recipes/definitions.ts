@@ -190,6 +190,22 @@ export const ZOD_RECIPE: IntegrationRecipe = {
   docs: ["zod.md"],
 };
 
+export const FORGE_RECIPE: IntegrationRecipe = {
+  alias: "forge",
+  packages: [{ packageName: "forge" }],
+  supportedVersionRange: ">=0.0.0",
+  recipeVersion: "1.0.0",
+  contexts: {
+    allowed: ALL_CONTEXTS,
+    denied: [],
+  },
+  capabilities: emptyCapabilitySet(),
+  secrets: [],
+  adapters: [],
+  testkits: [],
+  docs: ["AGENTS.md"],
+};
+
 export const AI_RECIPE: IntegrationRecipe = {
   alias: "ai",
   packages: [{ packageName: "ai" }],

@@ -3,6 +3,7 @@ import type { PackageRecipe } from "../types/integration.ts";
 import {
   AI_PROVIDER_RECIPES,
   AI_RECIPE,
+  FORGE_RECIPE,
   POSTHOG_RECIPE,
   REFERENCE_ALIASES,
   SENTRY_RECIPE,
@@ -30,6 +31,7 @@ const ALL_RECIPES: IntegrationRecipe[] = [
   POSTHOG_RECIPE,
   SENTRY_RECIPE,
   ZOD_RECIPE,
+  FORGE_RECIPE,
   AI_RECIPE,
   ...AI_PROVIDER_RECIPES,
 ];

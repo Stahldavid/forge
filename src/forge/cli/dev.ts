@@ -94,10 +94,11 @@ function startWebDevServer(input: {
     ...Bun.env,
     PORT: String(input.port),
     NEXT_PUBLIC_FORGE_URL: input.apiUrl,
+    VITE_FORGE_URL: input.apiUrl,
   };
   const command =
     pkg?.scripts?.dev
-      ? [bun, "run", "dev", "--", "--port", String(input.port), "--hostname", input.host]
+      ? [bun, "run", "dev", "--", "--port", String(input.port), "--host", input.host]
       : [bun, "server.ts"];
   const cwd = pkg?.scripts?.dev ? webRoot : webRoot;
   const child = Bun.spawn(command, {
