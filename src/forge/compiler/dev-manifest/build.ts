@@ -57,6 +57,7 @@ function buildRoutes(
   queryRegistry: QueryRegistry,
 ): DevRoute[] {
   const routes: DevRoute[] = [
+    { method: "GET", path: "/", purpose: "home" },
     { method: "GET", path: "/health", purpose: "health" },
     { method: "GET", path: "/entries", purpose: "entries" },
     { method: "GET", path: "/queries", purpose: "queries" },

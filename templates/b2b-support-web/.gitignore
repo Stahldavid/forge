@@ -1,0 +1,16 @@
+node_modules/
+web/node_modules/
+
+dist/
+web/.next/
+web/out/
+
+.env
+.env.local
+
+.forge/cache/
+.forge/pglite/
+.forge/local/
+.forge/test-cache/
+.forge/test-runs/
+.forge/ui-runs/

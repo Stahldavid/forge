@@ -1,6 +1,7 @@
-// @forge-generated generator=0.0.0 input=688a8f80ae64b3520539b60ed79d8f0dde426f02cd0d42dec906896865312d99 content=30801947cf81817a16767e3f51aa42c70f9407441ea869f09a345f3ac4d9e5f9
+// @forge-generated generator=0.0.0 input=b20eb68e1cea2bf422356daa854f8f1e6b9529fb789ab44800b13b83a169d0af content=d5967c203c4ecb427d0cf694931a3cc8dc6dd88726fcd4b71b79c2ab0c464e10
 export const sqlPlan = {
   "checksum": "e00b135de6e380256e8116fb3ac28f4d925aef552528a58b4dc5285782737654",
+  "diagnostics": [],
   "indexes": [
     {
       "index": {

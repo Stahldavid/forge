@@ -24,6 +24,7 @@ export function serializeSqlPlanJson(plan: SqlPlan): string {
       index: change.index,
       sql: change.sql,
     })),
+    diagnostics: plan.diagnostics,
   };
   return serializeCanonical(payload);
 }

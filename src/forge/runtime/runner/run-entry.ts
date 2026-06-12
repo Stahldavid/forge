@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
+  FORGE_DB_ADAPTER_UNAVAILABLE,
   FORGE_RUNTIME_GUARD_BLOCKED,
   FORGE_RUNTIME_NOT_FOUND,
 } from "../../compiler/diagnostics/codes.ts";
@@ -41,6 +42,18 @@ export interface RunEntryRuntime {
 export interface ResolvedHandler {
   invoke: (args: unknown) => Promise<unknown>;
   usesContext: boolean;
+}
+
+function needsDatabaseHint(
+  entry: RuntimeEntry,
+  resolved: ResolvedHandler,
+  runtime?: RunEntryRuntime,
+): boolean {
+  return (
+    resolved.usesContext &&
+    !runtime?.adapter &&
+    (entry.kind === "command" || entry.kind === "action")
+  );
 }
 
 export function resolveHandlerFromModule(
@@ -174,12 +187,21 @@ export async function executeResolvedEntry(
     return { ok: true, result, diagnostics };
   } catch (error) {
     const message = error instanceof Error ? error.message : "handler execution failed";
+    const dbHint = needsDatabaseHint(entry, resolved, runtime);
     diagnostics.push(
       createDiagnostic({
         severity: "error",
-        code: FORGE_RUNTIME_NOT_FOUND,
-        message: `runtime entry '${entry.name}' failed: ${message}`,
+        code: dbHint ? FORGE_DB_ADAPTER_UNAVAILABLE : FORGE_RUNTIME_NOT_FOUND,
+        message: dbHint
+          ? `runtime entry '${entry.name}' needs a database adapter: ${message}`
+          : `runtime entry '${entry.name}' failed: ${message}`,
         file: entry.file,
+        fixHint: dbHint
+          ? "Start `forge dev --db pglite --worker` and invoke the HTTP endpoint, or run database-backed entries from a DB-enabled workflow/test."
+          : undefined,
+        suggestedCommands: dbHint
+          ? ["forge dev --db pglite --worker", "forge dev --once --json"]
+          : undefined,
       }),
     );
     return { ok: false, diagnostics };

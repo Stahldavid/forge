@@ -57,6 +57,7 @@ describe("b2b-support-web template", () => {
 
       const project = join(workspace, "support-app");
       expect(existsSync(join(project, "AGENTS.md"))).toBe(true);
+      expect(existsSync(join(project, ".gitignore"))).toBe(true);
       expect(existsSync(join(project, ".env.example"))).toBe(true);
       expect(existsSync(join(project, "web", "app", "tickets", "page.tsx"))).toBe(true);
       expect(existsSync(join(project, "src", "workflows", "triageTicketWorkflow.ts"))).toBe(true);
@@ -65,6 +66,7 @@ describe("b2b-support-web template", () => {
       expect(read(project, ".env.example")).toContain("NEXT_PUBLIC_FORGE_URL");
       expect(read(project, ".env.example")).toContain("STRIPE_SECRET_KEY");
       expect(read(project, "AGENTS.md")).toContain("Do not:");
+      expect(read(project, ".gitignore")).toContain(".forge/pglite/");
 
       expect(read(project, "src/forge/schema.ts")).toContain("tickets");
       expect(read(project, "src/policies.ts")).toContain("billing.manage");

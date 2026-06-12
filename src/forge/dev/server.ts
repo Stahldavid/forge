@@ -90,6 +90,16 @@ function jsonResponse(
   });
 }
 
+function htmlResponse(body: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
 function corsPreflight(): Response {
   return new Response(null, {
     status: 204,
@@ -99,6 +109,108 @@ function corsPreflight(): Response {
       "Access-Control-Allow-Headers": "Authorization, Content-Type, x-forge-user-id, x-forge-tenant-id, x-forge-role",
     },
   });
+}
+
+function acceptsHtml(request: Request): boolean {
+  return (request.headers.get("accept") ?? "").includes("text/html");
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderDevHome(input: {
+  service: string;
+  db: unknown;
+  entries: Array<{ name: string; kind: string; path: string; method: string }>;
+  routes: Array<{ method: string; path: string; purpose: string }>;
+}): string {
+  const entries = input.entries
+    .map(
+      (entry) =>
+        `<li><code>${escapeHtml(entry.method)} ${escapeHtml(entry.path)}</code> <span>${escapeHtml(entry.kind)}:${escapeHtml(entry.name)}</span></li>`,
+    )
+    .join("");
+  const routes = input.routes
+    .slice(0, 20)
+    .map(
+      (route) =>
+        `<li><code>${escapeHtml(route.method)} ${escapeHtml(route.path)}</code> <span>${escapeHtml(route.purpose)}</span></li>`,
+    )
+    .join("");
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forge Dev</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0; padding: 32px; line-height: 1.5; background: Canvas; color: CanvasText; }
+    main { max-width: 920px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    h2 { margin-top: 28px; font-size: 18px; }
+    p { color: color-mix(in srgb, CanvasText 75%, Canvas 25%); }
+    ul { padding-left: 20px; }
+    li { margin: 8px 0; }
+    code { padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, CanvasText 10%, Canvas 90%); }
+    .meta { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
+    .pill { border: 1px solid color-mix(in srgb, CanvasText 18%, Canvas 82%); border-radius: 999px; padding: 4px 10px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Forge Dev</h1>
+    <p>This server is an API surface for Forge commands, queries, liveQueries, workflows, telemetry, and health checks.</p>
+    <div class="meta">
+      <span class="pill">service: ${escapeHtml(input.service)}</span>
+      <span class="pill">db: ${escapeHtml(input.db)}</span>
+    </div>
+    <h2>Start Here</h2>
+    <ul>
+      <li><code>GET /health</code> checks server, DB, worker, auth, env, AI, and liveQuery state.</li>
+      <li><code>GET /entries</code> lists callable commands, actions, queries, and liveQueries.</li>
+      <li>Commands and queries require <code>POST</code> with JSON body <code>{"args":{}}</code>.</li>
+    </ul>
+    <h2>Entries</h2>
+    <ul>${entries || "<li>No entries generated yet.</li>"}</ul>
+    <h2>Routes</h2>
+    <ul>${routes || "<li>No routes generated yet.</li>"}</ul>
+  </main>
+</body>
+</html>`;
+}
+
+function methodHelpResponse(input: {
+  kind: "command" | "action" | "query";
+  name: string;
+  path: string;
+}): Response {
+  return jsonResponse(
+    {
+      ok: false,
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_DEV_INVOKE_FAILED,
+          message: `${input.kind} '${input.name}' requires POST ${input.path}`,
+          fixHint: `Send JSON like {"args":{}} to POST ${input.path}.`,
+        }),
+      ],
+      example: {
+        method: "POST",
+        path: input.path,
+        body: { args: {} },
+      },
+    },
+    405,
+    { Allow: "POST, OPTIONS" },
+  );
 }
 
 function parseInvokeName(pathname: string, prefix: string): string | null {
@@ -274,6 +386,69 @@ export async function startDevServer(
       try {
         const { devManifest: currentDevManifest, runtimeGraph: currentRuntimeGraph, tableMap } =
           loadArtifacts();
+
+        if (request.method === "GET" && pathname === "/") {
+          const listed = listEntries(workspaceRoot);
+          const queries = listQueries(workspaceRoot);
+          const liveQueries = loadLiveQueryRegistry(workspaceRoot);
+          const entries = [
+            ...queries.queries.map((query) => ({
+              name: query.name,
+              kind: "query",
+              path: `/queries/${query.name}`,
+              method: "POST",
+            })),
+            ...liveQueries.liveQueries.map((liveQuery) => ({
+              name: liveQuery.name,
+              kind: "liveQuery",
+              path: `/live/${liveQuery.name}`,
+              method: "GET",
+            })),
+            ...listed.entries.map((entry) => ({
+              name: entry.name,
+              kind: entry.kind,
+              path:
+                entry.kind === "command"
+                  ? `/commands/${entry.name}`
+                  : `/actions/${entry.name}`,
+              method: "POST",
+            })),
+          ].sort((a, b) =>
+            a.path === b.path ? a.kind.localeCompare(b.kind) : a.path.localeCompare(b.path),
+          );
+          const routes = currentDevManifest.routes.map((route) => ({
+            method: route.method,
+            path: route.path,
+            purpose: route.purpose,
+          }));
+          const payload = {
+            ok: true,
+            service: options.mode === "serve" ? "forge-serve" : "forge-dev",
+            message: "Forge dev is an API server. Use POST for commands and queries.",
+            health: "/health",
+            entries,
+            routes,
+            db: serverState.db,
+            diagnostics: [
+              ...listed.diagnostics,
+              ...queries.diagnostics,
+              ...(liveQueries.registry?.diagnostics ?? []),
+            ],
+          };
+
+          if (acceptsHtml(request)) {
+            return htmlResponse(
+              renderDevHome({
+                service: payload.service,
+                db: payload.db,
+                entries,
+                routes,
+              }),
+            );
+          }
+
+          return jsonResponse(payload);
+        }
 
         if (request.method === "GET" && pathname === "/health") {
           const outboxSummary = serverState.adapter
@@ -633,6 +808,35 @@ export async function startDevServer(
             ok: true,
             tables: Object.keys(tableMap).sort(),
           });
+        }
+
+        if (request.method === "GET") {
+          const queryName = parseInvokeName(pathname, "/queries/");
+          if (queryName) {
+            return methodHelpResponse({
+              kind: "query",
+              name: queryName,
+              path: `/queries/${queryName}`,
+            });
+          }
+
+          const commandName = parseInvokeName(pathname, "/commands/");
+          if (commandName) {
+            return methodHelpResponse({
+              kind: "command",
+              name: commandName,
+              path: `/commands/${commandName}`,
+            });
+          }
+
+          const actionName = parseInvokeName(pathname, "/actions/");
+          if (actionName) {
+            return methodHelpResponse({
+              kind: "action",
+              name: actionName,
+              path: `/actions/${actionName}`,
+            });
+          }
         }
 
         if (request.method === "POST") {

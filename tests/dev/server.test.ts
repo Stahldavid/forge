@@ -24,6 +24,12 @@ describe("dev server", () => {
       });
 
       try {
+        const home = await fetch(`${handle.url}/`, {
+          headers: { Accept: "text/html" },
+        });
+        expect(home.status).toBe(200);
+        expect(await home.text()).toContain("Forge Dev");
+
         const health = await fetch(`${handle.url}/health`);
         expect(health.status).toBe(200);
         const healthBody = (await health.json()) as {
@@ -45,6 +51,16 @@ describe("dev server", () => {
         expect(entriesBody.entries.some((entry) => entry.name === "charge")).toBe(
           true,
         );
+
+        const getCommand = await fetch(`${handle.url}/commands/charge`);
+        expect(getCommand.status).toBe(405);
+        const getCommandBody = (await getCommand.json()) as {
+          example: { method: string; path: string };
+        };
+        expect(getCommandBody.example).toMatchObject({
+          method: "POST",
+          path: "/commands/charge",
+        });
 
         const invoke = await fetch(`${handle.url}/run/charge`, {
           method: "POST",

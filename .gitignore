@@ -4,6 +4,12 @@ node_modules/
 .forge/pglite/
 .forge/local/
 .forge/test-cache/
+**/.forge/cache/
+**/.forge/pglite/
+**/.forge/local/
+**/.forge/test-cache/
+**/.forge/test-runs/
+**/.forge/ui-runs/
 .forge/releases/*
 !.forge/releases/.gitkeep
 .forge/upgrades/*

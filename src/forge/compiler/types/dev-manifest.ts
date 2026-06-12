@@ -4,6 +4,7 @@ export interface DevRoute {
   method: "GET" | "POST";
   path: string;
   purpose:
+    | "home"
     | "health"
     | "entries"
     | "invoke"

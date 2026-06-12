@@ -38,6 +38,7 @@ describe("sql compiler", () => {
     const second = serializeSqlPlanJson(buildSqlPlan(buildDataGraph(appGraph)));
 
     expect(first).toBe(second);
+    expect(JSON.parse(first).diagnostics).toEqual([]);
   });
 
   test.skip("reports unsupported field types", async () => {

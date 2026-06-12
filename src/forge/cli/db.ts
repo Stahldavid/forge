@@ -167,6 +167,10 @@ function adapterOptions(options: DbCommandOptions): CreateDbAdapterOptions {
   };
 }
 
+function sqlPlanDiagnostics(plan: SqlPlan): Diagnostic[] {
+  return Array.isArray(plan.diagnostics) ? plan.diagnostics : [];
+}
+
 export async function runDbCommand(options: DbCommandOptions): Promise<DbCommandResult> {
   const { plan, diagnostics: planDiagnostics } = await loadSqlPlan(options.workspaceRoot);
 
@@ -186,6 +190,7 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
   }
 
   if (options.subcommand === "diff") {
+    const diagnostics = sqlPlanDiagnostics(plan);
     const { adapter } = await createDbAdapter(adapterOptions(options));
     let appliedChecksum: string | null = null;
 
@@ -203,11 +208,12 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
     return {
       ok: true,
       data: diff,
-      diagnostics: [...plan.diagnostics, ...planDiagnostics],
+      diagnostics: [...diagnostics, ...planDiagnostics],
       exitCode: 0,
     };
   }
 
+  const diagnostics = sqlPlanDiagnostics(plan);
   const { adapter, diagnostics: adapterDiagnostics } = await createDbAdapter(
     adapterOptions(options),
   );
@@ -215,7 +221,7 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
   if (!adapter) {
     return {
       ok: false,
-      diagnostics: [...plan.diagnostics, ...planDiagnostics, ...adapterDiagnostics],
+      diagnostics: [...diagnostics, ...planDiagnostics, ...adapterDiagnostics],
       exitCode: 1,
     };
   }
@@ -234,7 +240,7 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
         ok: errors.length === 0 && rlsErrors.length === 0,
         data: { migrationId: plan.migrationId, checksum: plan.checksum },
         diagnostics: [
-          ...plan.diagnostics,
+          ...diagnostics,
           ...planDiagnostics,
           ...migrationDiagnostics,
           ...rlsDiagnostics,
@@ -251,7 +257,7 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
       return {
         ok: errors.length === 0,
         data: { reset: true, migrationId: plan.migrationId },
-        diagnostics: [...plan.diagnostics, ...planDiagnostics, ...migrationDiagnostics],
+        diagnostics: [...diagnostics, ...planDiagnostics, ...migrationDiagnostics],
         exitCode: errors.length === 0 ? 0 : 1,
       };
     }
@@ -262,7 +268,7 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
       return {
         ok: true,
         data: status,
-        diagnostics: [...plan.diagnostics, ...planDiagnostics],
+        diagnostics: [...diagnostics, ...planDiagnostics],
         exitCode: 0,
       };
     }
