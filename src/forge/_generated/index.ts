@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=eb05b012a029786182ed915d4256238ce1df7207ac035ce94552768ee6b17aab content=d30f95195a7c76db42e9c24d3b6e655ab035a015c7b849445bd3c4970031149d
+// @forge-generated generator=0.0.0 input=05c48fd895693708fdcf8eac3e8ec26f3888cbb3090e27364d2db8077883013b content=cc630cb0c9dd7374f4cb78bfb8a759ba250878eba92b8741adbc8d8e26328788
 export * from "./actionSubscriptions";
 export * from "./agentAdapterManifest";
 export * from "./agentContract";
@@ -26,6 +26,7 @@ export * from "./dbSessionContext";
 export * from "./deployManifest";
 export * from "./devManifest";
 export * from "./envSchema";
+export * from "./frontendGraph";
 export * from "./importGuards";
 export * from "./liveProductionManifest";
 export * from "./liveProtocol";

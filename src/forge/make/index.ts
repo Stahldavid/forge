@@ -22,6 +22,14 @@ import {
   renderPolicyFile,
   renderSchemaTable,
   renderUpdateCommand,
+  renderViteApp,
+  renderViteIndex,
+  renderViteMain,
+  renderVitePackage,
+  renderViteStyles,
+  renderViteTsconfig,
+  renderWebBridge,
+  renderWebRootBridge,
   renderWorkflow,
 } from "./templates.ts";
 import type {
@@ -48,6 +56,7 @@ export const MAKE_PRIMITIVES: MakePrimitive[] = [
   "workflow",
   "component",
   "page",
+  "ui",
   "resource",
   "apply",
   "rollback",
@@ -92,6 +101,8 @@ const EXPLANATIONS: Record<MakeIntent["kind"], string> = {
     "Adds a React client component under web/components wired to generated Forge hooks.",
   page:
     "Adds a minimal app page under web/app/<route>/page.tsx.",
+  ui:
+    "Adds a minimal Vite React web app with ForgeProvider devAuth and a generated client bridge.",
   resource:
     "Creates a full resource slice: table, policies, CRUD commands, queries, liveQuery, action, optional React, and tests.",
 };
@@ -495,8 +506,22 @@ function buildIntent(options: MakeCommandOptions): {
   const kind = options.primitive as MakeIntent["kind"];
   const fieldOptions = parseFieldOptions(options);
   const diagnostics = [...fieldOptions.diagnostics];
+  if (options.framework && !["vite", "next"].includes(options.framework)) {
+    diagnostics.push(
+      diagnostic("error", "FORGE_MAKE_PATCH_UNSAFE", `unsupported frontend framework '${options.framework}'`),
+    );
+  }
+  if (kind === "ui" && options.framework === "next") {
+    diagnostics.push(
+      diagnostic(
+        "warning",
+        "FORGE_MAKE_UI_FRAMEWORK_EXPERIMENTAL",
+        "forge make ui currently generates the Vite React bridge; Next support should use the b2b-support-web template",
+      ),
+    );
+  }
   const name = options.name ?? (kind === "field" ? "" : undefined);
-  if (!name && !["component", "page"].includes(kind)) {
+  if (!name && !["component", "page", "ui"].includes(kind)) {
     diagnostics.push(
       diagnostic("error", "FORGE_MAKE_PATCH_UNSAFE", `forge make ${kind} requires a name`),
     );
@@ -524,7 +549,13 @@ function buildIntent(options: MakeCommandOptions): {
       tenantScoped: options.tenantScoped || kind === "resource",
       crud: options.withCrud || kind === "resource",
       liveQuery: options.withLiveQuery || kind === "resource" || kind === "livequery",
-      react: options.withReact || kind === "resource" || kind === "component" || kind === "page",
+      react:
+        options.withReact ||
+        options.withUi ||
+        kind === "resource" ||
+        kind === "component" ||
+        kind === "page" ||
+        kind === "ui",
       tests: options.withTests || kind === "resource",
       policy:
         options.policy ??
@@ -639,6 +670,18 @@ function addFrontendFiles(plan: MakePlan, workspaceRoot: string, intent: MakeInt
   const table = intent.table ?? intent.name;
   const singular = singularize(table);
   const pascal = pascalCase(singular);
+  if (intent.kind === "ui") {
+    plan.filesToCreate.push(
+      createFile(workspaceRoot, "web/package.json", "Add Vite React web package", renderVitePackage(intent.name)),
+      createFile(workspaceRoot, "web/tsconfig.json", "Add web TypeScript config", renderViteTsconfig()),
+      createFile(workspaceRoot, "web/index.html", "Add web HTML entry", renderViteIndex("ForgeOS App")),
+      createFile(workspaceRoot, "web/src/lib/forge.ts", "Add Forge client bridge", renderWebBridge()),
+      createFile(workspaceRoot, "web/src/main.tsx", "Add React entrypoint", renderViteMain()),
+      createFile(workspaceRoot, "web/src/App.tsx", "Add starter app", renderViteApp()),
+      createFile(workspaceRoot, "web/src/styles.css", "Add starter styles", renderViteStyles()),
+    );
+    return;
+  }
   if (intent.kind === "component") {
     const component = intent.component ?? `${pascal}List`;
     plan.filesToCreate.push(
@@ -667,6 +710,16 @@ function addFrontendFiles(plan: MakePlan, workspaceRoot: string, intent: MakeInt
   }
 
   if (intent.react) {
+    if (!fileExists(workspaceRoot, "web/lib/forge.ts")) {
+      plan.filesToCreate.push(
+        createFile(
+          workspaceRoot,
+          "web/lib/forge.ts",
+          "Add Forge client bridge",
+          renderWebRootBridge(),
+        ),
+      );
+    }
     plan.filesToCreate.push(
       createFile(
         workspaceRoot,

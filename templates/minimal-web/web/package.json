@@ -1,0 +1,21 @@
+{
+  "name": "__FORGE_APP_NAME__-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^latest",
+    "vite": "^latest",
+    "react": "^latest",
+    "react-dom": "^latest"
+  },
+  "devDependencies": {
+    "@types/react": "^latest",
+    "@types/react-dom": "^latest",
+    "typescript": "^latest"
+  }
+}

@@ -13,6 +13,7 @@ export type MakePrimitive =
   | "workflow"
   | "component"
   | "page"
+  | "ui"
   | "resource"
   | "apply"
   | "rollback";
@@ -128,10 +129,12 @@ export interface MakeCommandOptions {
   event?: string;
   trigger?: string;
   component?: string;
+  framework?: "vite" | "next";
   withAi: boolean;
   withCrud: boolean;
   withLiveQuery: boolean;
   withReact: boolean;
+  withUi: boolean;
   withTests: boolean;
   withCreateForm: boolean;
 }

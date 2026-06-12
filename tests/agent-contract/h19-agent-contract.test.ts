@@ -41,6 +41,8 @@ describe("H19 agent contract", () => {
         "runtimeRules.md",
         "operationPlaybooks.md",
         "agentQuickstart.md",
+        "frontendGraph.json",
+        "frontendGraph.ts",
       ]) {
         expect(existsSync(join(workspace, GENERATED, artifact))).toBe(true);
       }
@@ -54,6 +56,7 @@ describe("H19 agent contract", () => {
         data: { tables: unknown[] };
         policies: unknown[];
         secrets: unknown[];
+        frontend: { present: boolean; routes: unknown[]; components: unknown[] };
       }>(workspace, `${GENERATED}/agentContract.json`);
 
       expect(contract.commands.length).toBeGreaterThan(0);
@@ -64,6 +67,8 @@ describe("H19 agent contract", () => {
       expect(contract.data.tables.length).toBeGreaterThan(0);
       expect(contract.policies).toBeArray();
       expect(contract.secrets).toBeArray();
+      expect(contract.frontend.present).toBeBoolean();
+      expect(contract.frontend.routes).toBeArray();
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -119,6 +124,11 @@ describe("H19 agent contract", () => {
       const inspect = await runInspectCommand("all", workspace);
       expect(inspect.exitCode).toBe(0);
       expect((inspect.data as { agentContract?: unknown }).agentContract).toBeTruthy();
+      expect((inspect.data as { frontend?: unknown }).frontend).toBeTruthy();
+
+      const frontend = await runInspectCommand("frontend", workspace);
+      expect(frontend.exitCode).toBe(0);
+      expect((frontend.data as { schemaVersion?: string }).schemaVersion).toBe("0.1.0");
 
       const rules = await runInspectCommand("rules", workspace);
       expect(rules.exitCode).toBe(0);
@@ -199,6 +209,7 @@ describe("H19 agent contract", () => {
       json: true,
     });
     expect(parseCli(["inspect", "all", "--json"]).errors).toEqual([]);
+    expect(parseCli(["inspect", "frontend", "--json"]).errors).toEqual([]);
 
     const workspace = scaffoldGenerateWorkspace("h19-verify");
     try {

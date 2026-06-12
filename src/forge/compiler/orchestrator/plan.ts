@@ -1,4 +1,5 @@
 import { buildDataGraph } from "../data-graph/build.ts";
+import { createDiagnostic } from "../diagnostics/create.ts";
 import { buildActionSubscriptions } from "../action-subscriptions/build.ts";
 import {
   buildWorkflowRegistry,
@@ -30,6 +31,11 @@ import {
   buildClientManifest,
   buildReactManifest,
 } from "../client-sdk/build-manifest.ts";
+import {
+  buildFrontendGraph,
+  serializeFrontendGraphJson,
+  serializeFrontendGraphTs,
+} from "../frontend-graph/build.ts";
 import {
   renderClientManifestTs,
   renderClientTs,
@@ -316,6 +322,10 @@ export function plan(input: PlanInput): EmitPlan {
   );
   const clientManifest = buildClientManifest(apiSurface, input.classified);
   const reactManifest = buildReactManifest(clientManifest);
+  const frontendGraph = buildFrontendGraph({
+    workspaceRoot: input.ctx.workspaceRoot,
+    clientManifest,
+  });
   const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
   const agentArtifacts = buildAgentContractArtifacts({
@@ -337,6 +347,7 @@ export function plan(input: PlanInput): EmitPlan {
     workflowRegistry,
     apiSurface,
     clientManifest,
+    frontendGraph,
   });
   const agentAdapterManifest = buildAgentAdapterManifest(agentArtifacts.contract);
   const rlsArtifacts = buildRlsArtifacts(sqlPlan, tenantScope);
@@ -402,6 +413,14 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/agentAdapterManifest.json`,
       serializeAgentAdapterManifestJson(agentAdapterManifest),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/frontendGraph.ts`,
+      serializeFrontendGraphTs(frontendGraph),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/frontendGraph.json`,
+      serializeFrontendGraphJson(frontendGraph),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/appGraph.ts`,
@@ -830,6 +849,17 @@ export function plan(input: PlanInput): EmitPlan {
     files: sortedFiles,
     orphanedFiles,
     lock,
-    diagnostics: [...agentArtifacts.diagnostics, ...rlsArtifacts.diagnostics],
+    diagnostics: [
+      ...agentArtifacts.diagnostics,
+      ...rlsArtifacts.diagnostics,
+      ...frontendGraph.diagnostics.map((diagnostic) =>
+        createDiagnostic({
+          severity: diagnostic.severity,
+          code: diagnostic.code,
+          message: diagnostic.message,
+          ...(diagnostic.file ? { file: diagnostic.file } : {}),
+        }),
+      ),
+    ],
   };
 }

@@ -19,6 +19,15 @@ export type ForgeReactClientConfig = {
   auth?: ForgeReactAuthProvider;
 };
 
+export type ForgeDevAuthConfig =
+  | boolean
+  | {
+      userId?: string;
+      tenantId?: string;
+      role?: string;
+      headers?: Record<string, string>;
+    };
+
 export type ForgeReactError = Error & {
   code?: string;
   status?: number;
@@ -48,6 +57,7 @@ export type ForgeReactClient = {
 
 export type ForgeProviderProps = ForgeReactClientConfig & {
   children?: React.ReactNode;
+  devAuth?: ForgeDevAuthConfig;
 };
 
 export type UseQueryOptions = {
@@ -145,6 +155,19 @@ function toForgeError(error: unknown): ForgeReactError {
   return wrapped;
 }
 
+function resolveDevAuth(devAuth: ForgeDevAuthConfig | undefined): ForgeReactAuthProvider | undefined {
+  if (!devAuth) {
+    return undefined;
+  }
+  const config = typeof devAuth === "object" ? devAuth : {};
+  return {
+    userId: config.userId ?? "dev-user",
+    tenantId: config.tenantId ?? "dev-tenant",
+    role: config.role ?? "owner",
+    headers: config.headers,
+  };
+}
+
 export function createForgeReactBindings<TClient extends ForgeReactClient>(
   createForgeClient: (config: ForgeReactClientConfig) => TClient,
 ): ForgeReactBindings<TClient> {
@@ -166,12 +189,16 @@ export function createForgeReactBindings<TClient extends ForgeReactClient>(
   }
 
   function ForgeProvider(props: ForgeProviderProps): React.ReactElement {
-    const { url, auth, children } = props;
-    const client = React.useMemo(
-      () => createForgeClient({ url, auth }),
-      [url, auth],
+    const { url, auth, devAuth, children } = props;
+    const resolvedAuth = React.useMemo(
+      () => auth ?? resolveDevAuth(devAuth),
+      [auth, devAuth],
     );
-    const value = React.useMemo(() => ({ client, auth }), [client, auth]);
+    const client = React.useMemo(
+      () => createForgeClient({ url, auth: resolvedAuth }),
+      [url, resolvedAuth],
+    );
+    const value = React.useMemo(() => ({ client, auth: resolvedAuth }), [client, resolvedAuth]);
     return React.createElement(ForgeContext.Provider, { value }, children);
   }
 

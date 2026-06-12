@@ -378,6 +378,7 @@ import { createForgeClient } from "./client.ts";
 
 export type {
   ForgeProviderProps,
+  ForgeDevAuthConfig,
   ForgeReactAuth,
   ForgeReactAuthProvider,
   ForgeReactClient,
@@ -404,6 +405,7 @@ export const useLiveQuery = forgeReact.useLiveQuery;
 export function renderReactDts(): string {
   return `export type {
   ForgeProviderProps,
+  ForgeDevAuthConfig,
   ForgeReactAuth,
   ForgeReactAuthProvider,
   ForgeReactClient,

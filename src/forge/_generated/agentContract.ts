@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=2bd70b2ab7ded53421e969a516a1d798f4b6ad6c28cb8fa992043d369a92184a
+// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=c2a6cac44f4bbf76bd07a53286d820df7cf4df14c2cfb6b6522c74fecb94eb44
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -82,6 +82,31 @@ export const agentContract = {
       "deploy/deployManifest.json"
     ],
     "selfHost": true
+  },
+  "frontend": {
+    "bridgeFiles": [],
+    "clientBindings": [],
+    "components": [],
+    "diagnostics": [],
+    "framework": "none",
+    "present": false,
+    "providers": [],
+    "routes": [],
+    "webManifest": {
+      "bridge": {
+        "files": [],
+        "valid": false
+      },
+      "env": {
+        "apiUrl": "NEXT_PUBLIC_FORGE_URL"
+      },
+      "framework": "none",
+      "present": false,
+      "scripts": {},
+      "urls": {
+        "api": "http://127.0.0.1:3765"
+      }
+    }
   },
   "generatorVersion": "0.0.0",
   "integrations": [
@@ -540,7 +565,7 @@ export const agentContract = {
       "steps": [
         "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
         "Review the plan and diagnostics.",
-        "Run forge make resource <name> --fields name:type --yes.",
+        "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",
         "Run forge verify --strict."
       ],
@@ -620,9 +645,21 @@ export const agentContract = {
       "steps": [
         "Run forge dev --once --json for a one-shot diagnostic cycle.",
         "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
-        "Use generated client and React hooks from src/forge/_generated."
+        "When a web app exists, forge dev starts the API runtime and the web dev server together.",
+        "Use generated client and React hooks through web/lib/forge.ts."
       ],
       "title": "Run dev"
+    },
+    {
+      "steps": [
+        "Run forge make ui --framework vite --dry-run --json when the app does not have a web root.",
+        "Use web/lib/forge.ts as the generated client bridge.",
+        "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
+        "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
+        "Run forge generate so frontendGraph and agentContract include routes and bindings.",
+        "Run forge dev --once --json and forge doctor --json."
+      ],
+      "title": "Add or update frontend"
     },
     {
       "steps": [

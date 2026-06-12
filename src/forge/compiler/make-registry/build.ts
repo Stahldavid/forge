@@ -33,8 +33,9 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
     commands: [
       "forge make list --json",
       "forge make explain <primitive> --json",
+      "forge make ui --framework vite --dry-run --json",
       "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
-      "forge make resource <name> --fields title:text --yes",
+      "forge make resource <name> --fields title:text --with-ui --yes",
       "forge make apply <planId>",
       "forge make rollback <planId>",
     ],
@@ -110,8 +111,21 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
         examples: ["forge make page invoices --table invoices --with-create-form"],
       },
       {
+        name: "ui",
+        summary: "Add a Vite React frontend shell with ForgeProvider devAuth and a generated client bridge.",
+        creates: [
+          "web/package.json",
+          "web/index.html",
+          "web/src/lib/forge.ts",
+          "web/src/main.tsx",
+          "web/src/App.tsx",
+        ],
+        modifies: [],
+        examples: ["forge make ui --framework vite --yes"],
+      },
+      {
         name: "resource",
-        summary: "Add schema, policies, CRUD, queries, liveQuery, optional React, and tests.",
+        summary: "Add schema, policies, CRUD, queries, liveQuery, optional UI, and tests.",
         creates: [
           "src/commands/*",
           "src/queries/*",
@@ -121,7 +135,7 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
           "tests/make-generated/*",
         ],
         modifies: ["src/forge/schema.ts", "src/policies.ts"],
-        examples: ["forge make resource invoices --fields amount:number,status:enum(draft,paid) --with-react --yes"],
+        examples: ["forge make resource invoices --fields amount:number,status:enum(draft,paid) --with-ui --yes"],
       },
     ],
   };
@@ -140,6 +154,7 @@ export function buildMakeTemplates(): MakeTemplateArtifact {
       { name: "workflow", sourceKind: "runtime", outputPattern: "src/workflows/<name>.ts" },
       { name: "component", sourceKind: "frontend", outputPattern: "web/components/<name>.tsx" },
       { name: "page", sourceKind: "frontend", outputPattern: "web/app/<route>/page.tsx" },
+      { name: "ui", sourceKind: "frontend", outputPattern: "web/src/App.tsx" },
       { name: "placeholder-test", sourceKind: "test", outputPattern: "tests/make-generated/<name>.test.ts" },
     ],
   };

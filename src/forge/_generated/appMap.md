@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=eb8969e9c73c889933f582f8b790851a06d3bd49089208206f420481bbd031a9 content=78b263989a96c5470ff659f038bac19efc0d82a6c284eb39234f1a8e538e2430
+// @forge-generated generator=0.0.0 input=cd54785b6ab00ae831e2d50088ef52fb68801367e50beec632b9ce67132b2d8b content=422e08653aebf190161f7af38fa0f92cfea4c7dd32610b24e906ba30ec251c22
 # App Map
 
 ## Data
@@ -12,3 +12,16 @@
 ## Actions
 
 ## Workflows
+
+## Frontend
+
+Present: no
+Framework: none
+
+### Routes
+
+### Components
+
+### Client Bindings
+
+- none

@@ -30,6 +30,7 @@ import type { WorkflowRegistry } from "../types/workflow-registry.ts";
 import type { QueryRegistry } from "../types/query-registry.ts";
 import type { LiveQueryRegistry } from "../types/live-query-registry.ts";
 import type { ClientManifest } from "../client-sdk/build-manifest.ts";
+import type { FrontendGraph } from "../types/frontend-graph.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
 import type {
@@ -62,6 +63,7 @@ export interface AgentContractInput {
   workflowRegistry: WorkflowRegistry;
   apiSurface: ApiSurface;
   clientManifest: ClientManifest;
+  frontendGraph: FrontendGraph;
 }
 
 export interface AgentContractArtifacts {
@@ -251,7 +253,7 @@ function playbooks(): AgentPlaybook[] {
       steps: [
         "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
         "Review the plan and diagnostics.",
-        "Run forge make resource <name> --fields name:type --yes.",
+        "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",
         "Run forge verify --strict.",
       ],
@@ -331,7 +333,19 @@ function playbooks(): AgentPlaybook[] {
       steps: [
         "Run forge dev --once --json for a one-shot diagnostic cycle.",
         "Run forge dev --db pglite --worker --telemetry local --mock-ai.",
-        "Use generated client and React hooks from src/forge/_generated.",
+        "When a web app exists, forge dev starts the API runtime and the web dev server together.",
+        "Use generated client and React hooks through web/lib/forge.ts.",
+      ],
+    },
+    {
+      title: "Add or update frontend",
+      steps: [
+        "Run forge make ui --framework vite --dry-run --json when the app does not have a web root.",
+        "Use web/lib/forge.ts as the generated client bridge.",
+        "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
+        "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
+        "Run forge generate so frontendGraph and agentContract include routes and bindings.",
+        "Run forge dev --once --json and forge doctor --json.",
       ],
     },
     {
@@ -510,6 +524,19 @@ export function buildAgentContractArtifacts(
       reactHooks: input.clientManifest.react.hooks,
       transport: input.clientManifest.transport,
     },
+    frontend: {
+      present: input.frontendGraph.present,
+      framework: input.frontendGraph.framework,
+      ...(input.frontendGraph.root ? { root: input.frontendGraph.root } : {}),
+      ...(input.frontendGraph.dev ? { dev: input.frontendGraph.dev } : {}),
+      routes: input.frontendGraph.routes,
+      components: input.frontendGraph.components,
+      providers: input.frontendGraph.providers,
+      bridgeFiles: input.frontendGraph.bridgeFiles,
+      webManifest: input.frontendGraph.webManifest,
+      clientBindings: input.frontendGraph.clientBindings,
+      diagnostics: input.frontendGraph.diagnostics,
+    },
     auth: {
       modes: ["dev-headers", "jwt", "oidc", "disabled"],
       defaultMode: "dev-headers",
@@ -669,6 +696,7 @@ forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
+forge inspect frontend --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
@@ -697,6 +725,25 @@ ${renderList(secrets)}
 - Bearer header: \`${contract.auth.bearerTokenHeader}: Bearer <token>\`
 - Tenant claim: \`${contract.auth.claims.tenantId ?? "not configured"}\`
 
+## Frontend
+
+- Present: ${contract.frontend.present ? "yes" : "no"}
+- Framework: ${contract.frontend.framework}
+${contract.frontend.dev ? `- Web URL: ${contract.frontend.dev.url}
+- API URL env: \`${contract.frontend.dev.apiUrlEnv}\`
+- Web bridge valid: ${contract.frontend.webManifest.bridge.valid ? "yes" : "no"}
+- Client bridge: ${contract.frontend.bridgeFiles.length > 0 ? contract.frontend.bridgeFiles.map((file) => `\`${file}\``).join(", ") : "missing"}` : "- Web URL: none"}
+- Routes: ${contract.frontend.routes.length}
+- Components: ${contract.frontend.components.length}
+- Client bindings: ${contract.frontend.clientBindings.length}
+
+Rules:
+
+- Use the local \`web/**/lib/forge.ts\` bridge to generated hooks.
+- Mount \`<ForgeProvider devAuth>\` in local development.
+- Use \`useQuery\`, \`useCommand\`, and \`useLiveQuery\` instead of raw Forge endpoint fetches in React components.
+- Keep frontend routes reflected in \`src/forge/_generated/frontendGraph.json\`.
+
 ## Common tasks
 
 ### Add a command
@@ -712,7 +759,8 @@ Use:
 
 \`\`\`bash
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
-forge make resource <name> --fields title:text,status:enum(open,closed) --yes
+forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
+forge make ui --framework vite --dry-run --json
 \`\`\`
 
 Review the plan before applying when the resource touches schema or policies.
@@ -854,6 +902,63 @@ function renderAppMapMd(contract: AgentContract): string {
   for (const workflow of contract.workflows) {
     lines.push(`### ${workflow.name}`, `Trigger: ${workflow.trigger ?? "manual"}`, "Steps:", ...renderList(workflow.steps).split("\n"), "");
   }
+
+  lines.push("## Frontend", "");
+  lines.push(`Present: ${contract.frontend.present ? "yes" : "no"}`);
+  lines.push(`Framework: ${contract.frontend.framework}`);
+  if (contract.frontend.root) {
+    lines.push(`Root: ${contract.frontend.root}`);
+  }
+  if (contract.frontend.dev) {
+    lines.push(`Dev URL: ${contract.frontend.dev.url}`);
+    lines.push(`API URL env: ${contract.frontend.dev.apiUrlEnv}`);
+  }
+  lines.push("");
+
+  lines.push("### Routes", "");
+  for (const route of contract.frontend.routes) {
+    lines.push(
+      `#### ${route.path}`,
+      `File: ${route.file}`,
+      "Components:",
+      ...renderList(route.components).split("\n"),
+      "Uses commands:",
+      ...renderList(route.usesCommands).split("\n"),
+      "Uses queries:",
+      ...renderList(route.usesQueries).split("\n"),
+      "Uses liveQueries:",
+      ...renderList(route.usesLiveQueries).split("\n"),
+      "Raw Forge fetches:",
+      ...renderList(route.rawForgeFetches).split("\n"),
+      "",
+    );
+  }
+
+  lines.push("### Components", "");
+  for (const component of contract.frontend.components) {
+    lines.push(
+      `#### ${component.name}`,
+      `File: ${component.file}`,
+      "Uses commands:",
+      ...renderList(component.usesCommands).split("\n"),
+      "Uses queries:",
+      ...renderList(component.usesQueries).split("\n"),
+      "Uses liveQueries:",
+      ...renderList(component.usesLiveQueries).split("\n"),
+      "",
+    );
+  }
+
+  lines.push("### Client Bindings", "");
+  for (const binding of contract.frontend.clientBindings) {
+    lines.push(
+      `- ${binding.kind} ${binding.name} in ${binding.file}${binding.route ? ` (route ${binding.route})` : ""}${binding.component ? ` (${binding.component})` : ""}`,
+    );
+  }
+  if (contract.frontend.clientBindings.length === 0) {
+    lines.push("- none");
+  }
+  lines.push("");
 
   return normalizeNewlines(lines.join("\n"));
 }

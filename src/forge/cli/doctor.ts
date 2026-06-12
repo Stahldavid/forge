@@ -2,6 +2,8 @@ import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
+import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
+import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 
 export interface DoctorCheck {
   name: string;
@@ -26,6 +28,18 @@ function present(workspaceRoot: string, name: string, relative: string): DoctorC
   };
 }
 
+function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
+  const absolute = join(workspaceRoot, relative);
+  if (!nodeFileSystem.exists(absolute)) {
+    return null;
+  }
+  try {
+    return JSON.parse(stripDeterministicHeader(nodeFileSystem.readText(absolute) ?? "")) as T;
+  } catch {
+    return null;
+  }
+}
+
 export async function runDoctorCommand(options: {
   workspaceRoot: string;
 }): Promise<DoctorResult> {
@@ -38,6 +52,7 @@ export async function runDoctorCommand(options: {
     present(options.workspaceRoot, "policies", `${GENERATED_DIR}/policyRegistry.json`),
     present(options.workspaceRoot, "secrets", `${GENERATED_DIR}/secretRegistry.json`),
     present(options.workspaceRoot, "client", `${GENERATED_DIR}/clientManifest.json`),
+    present(options.workspaceRoot, "frontend", `${GENERATED_DIR}/frontendGraph.json`),
     present(options.workspaceRoot, "live-query", `${GENERATED_DIR}/liveQueryRegistry.json`),
   ];
 
@@ -64,6 +79,47 @@ export async function runDoctorCommand(options: {
       present(options.workspaceRoot, "self-host-compose", "deploy/docker-compose.yml"),
       present(options.workspaceRoot, "self-host-env", "deploy/.env.example"),
     );
+  }
+
+  const webRoot = join(options.workspaceRoot, "web");
+  if (nodeFileSystem.exists(webRoot)) {
+    const frontendGraph = readGeneratedJson<FrontendGraph>(
+      options.workspaceRoot,
+      `${GENERATED_DIR}/frontendGraph.json`,
+    );
+    checks.push({
+      name: "frontend-root",
+      ok: frontendGraph?.present === true,
+      severity: "error",
+      message: frontendGraph?.present === true ? undefined : "web/ exists but frontendGraph does not detect it",
+    });
+    checks.push({
+      name: "frontend-bridge",
+      ok: (frontendGraph?.bridgeFiles.length ?? 0) > 0,
+      severity: "warning",
+      message:
+        (frontendGraph?.bridgeFiles.length ?? 0) > 0
+          ? undefined
+          : "missing web/lib/forge.ts bridge to generated client",
+    });
+    checks.push({
+      name: "frontend-provider",
+      ok: (frontendGraph?.providers.length ?? 0) > 0 || frontendGraph?.framework === "static",
+      severity: "warning",
+      message:
+        (frontendGraph?.providers.length ?? 0) > 0 || frontendGraph?.framework === "static"
+          ? undefined
+          : "missing ForgeProvider in web app",
+    });
+    checks.push({
+      name: "frontend-routes",
+      ok: (frontendGraph?.routes.length ?? 0) > 0,
+      severity: "warning",
+      message:
+        (frontendGraph?.routes.length ?? 0) > 0
+          ? undefined
+          : "no frontend routes detected in web/",
+    });
   }
 
   const ok = checks.every((check) => check.ok || check.severity === "warning");

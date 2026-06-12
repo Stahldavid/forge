@@ -17,6 +17,7 @@ export interface DevServerOptions {
   envFile?: string;
   mode?: "dev" | "serve";
   allowDevAuth?: boolean;
+  webUrl?: string;
 }
 
 export interface DevServerDbState {

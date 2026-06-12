@@ -14,11 +14,11 @@ export interface CliAuthInput {
 
 export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
   const { userId, tenantId, role } = input;
-  if (userId && tenantId && role) {
+  if (userId && role) {
     return {
       kind: "user",
       userId,
-      tenantId,
+      ...(tenantId ? { tenantId } : {}),
       role,
       roles: [role],
       permissions: [],

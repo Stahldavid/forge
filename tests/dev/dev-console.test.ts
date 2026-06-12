@@ -23,6 +23,26 @@ describe("H33 forge dev console", () => {
     expect(parsed.command.once).toBe(true);
     expect(parsed.command.json).toBe(true);
     expect(parsed.command.watch).toBe(true);
+    expect(parsed.command.withWeb).toBe(true);
+  });
+
+  test("parseCli accepts forge dev web controls", () => {
+    const parsed = parseCli(["dev", "--api-only", "--web-port", "5173"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "dev",
+      withWeb: false,
+      apiOnly: true,
+      webPort: 5173,
+    });
+
+    const webOnly = parseCli(["dev", "--web-only", "--open"]);
+    expect(webOnly.errors).toEqual([]);
+    expect(webOnly.command).toMatchObject({
+      kind: "dev",
+      webOnly: true,
+      open: true,
+    });
   });
 
   test(

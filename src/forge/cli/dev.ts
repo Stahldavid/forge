@@ -1,4 +1,7 @@
 import { run } from "../compiler/orchestrator/run.ts";
+import { join } from "node:path";
+import { nodeFileSystem } from "../compiler/fs/index.ts";
+import { resolveBunExecutable } from "./bun-exec.ts";
 import {
   formatDevConsoleHuman,
   formatDevConsoleJson,
@@ -24,6 +27,11 @@ export interface DevCommandOptions {
   db: "pglite" | "postgres" | "none";
   databaseUrl?: string;
   worker: boolean;
+  withWeb?: boolean;
+  apiOnly?: boolean;
+  webOnly?: boolean;
+  open?: boolean;
+  webPort?: number;
   telemetry: string[];
   envFile?: string;
   mode?: "dev" | "serve";
@@ -32,22 +40,129 @@ export interface DevCommandOptions {
 
 export interface DevCommandResult {
   handle?: DevServerHandle;
+  web?: WebDevServerHandle;
   exitCode: 0 | 1;
 }
 
-function printStartupJson(handle: DevServerHandle): void {
+interface WebDevServerHandle {
+  url: string;
+  port: number;
+  command: string[];
+  stop: () => void;
+}
+
+function readPackageJson(workspaceRoot: string): { scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> } | null {
+  const path = join(workspaceRoot, "web", "package.json");
+  if (!nodeFileSystem.exists(path)) {
+    return null;
+  }
+  try {
+    return JSON.parse(nodeFileSystem.readText(path) ?? "{}") as { scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  } catch {
+    return null;
+  }
+}
+
+function detectDefaultWebPort(workspaceRoot: string): number {
+  const pkg = readPackageJson(workspaceRoot);
+  const deps = { ...(pkg?.dependencies ?? {}), ...(pkg?.devDependencies ?? {}) };
+  return deps.next ? 3000 : 5173;
+}
+
+function hasWebApp(workspaceRoot: string): boolean {
+  return (
+    nodeFileSystem.exists(join(workspaceRoot, "web", "package.json")) ||
+    nodeFileSystem.exists(join(workspaceRoot, "web", "server.ts"))
+  );
+}
+
+function startWebDevServer(input: {
+  workspaceRoot: string;
+  host: string;
+  port: number;
+  apiUrl: string;
+  json: boolean;
+}): WebDevServerHandle | null {
+  const webRoot = join(input.workspaceRoot, "web");
+  if (!hasWebApp(input.workspaceRoot)) {
+    return null;
+  }
+
+  const pkg = readPackageJson(input.workspaceRoot);
+  const bun = resolveBunExecutable();
+  const env = {
+    ...Bun.env,
+    PORT: String(input.port),
+    NEXT_PUBLIC_FORGE_URL: input.apiUrl,
+  };
+  const command =
+    pkg?.scripts?.dev
+      ? [bun, "run", "dev", "--", "--port", String(input.port), "--hostname", input.host]
+      : [bun, "server.ts"];
+  const cwd = pkg?.scripts?.dev ? webRoot : webRoot;
+  const child = Bun.spawn(command, {
+    cwd,
+    stdin: "ignore",
+    stdout: input.json ? "pipe" : "inherit",
+    stderr: input.json ? "pipe" : "inherit",
+    env,
+  });
+  return {
+    url: `http://${input.host}:${input.port}`,
+    port: input.port,
+    command,
+    stop: () => {
+      try {
+        child.kill();
+      } catch {
+        // Process may already have exited.
+      }
+    },
+  };
+}
+
+function printStartupJson(handle: DevServerHandle, web?: WebDevServerHandle | null): void {
   process.stdout.write(
     `${JSON.stringify({
       host: handle.host,
       port: handle.port,
       routes: handle.routes,
+      web: web
+        ? {
+            url: web.url,
+            port: web.port,
+            command: web.command,
+          }
+        : null,
       pid: process.pid,
     })}\n`,
   );
 }
 
-function printStartupHuman(handle: DevServerHandle): void {
+function printStartupHuman(handle: DevServerHandle, web?: WebDevServerHandle | null): void {
   process.stdout.write(`forge dev listening on ${handle.url}\n`);
+  if (web) {
+    process.stdout.write(`forge web listening on ${web.url}\n`);
+  }
+}
+
+function openBrowser(url: string): void {
+  const platform = process.platform;
+  const command =
+    platform === "win32"
+      ? ["cmd", "/c", "start", "", url]
+      : platform === "darwin"
+        ? ["open", url]
+        : ["xdg-open", url];
+  try {
+    Bun.spawn(command, {
+      stdin: "ignore",
+      stdout: "ignore",
+      stderr: "ignore",
+    });
+  } catch {
+    // Opening a browser is best-effort; dev server startup should not fail.
+  }
 }
 
 export async function runDevCommand(
@@ -68,6 +183,11 @@ export async function runDevCommand(
 
   const host = resolveDevHost(options.host);
   const port = resolveDevPort(options.port);
+  const webPort = options.webPort ?? detectDefaultWebPort(workspaceRoot);
+  const shouldStartWeb =
+    options.webOnly === true ||
+    (options.withWeb !== false && !options.apiOnly && hasWebApp(workspaceRoot));
+  const webUrl = shouldStartWeb ? `http://${host}:${webPort}` : undefined;
 
   const startupCycle = await runDevConsoleCycle({
     workspaceRoot,
@@ -79,6 +199,60 @@ export async function runDevCommand(
     process.stdout.write(formatDevConsoleJson(startupCycle));
   } else {
     process.stdout.write(formatDevConsoleHuman(startupCycle));
+  }
+
+  if (options.webOnly) {
+    const apiUrl = `http://${host}:${port}`;
+    const webHandle = startWebDevServer({
+      workspaceRoot,
+      host,
+      port: webPort,
+      apiUrl,
+      json: options.json,
+    });
+    if (!webHandle) {
+      const message = "web-only requested but no web app was found";
+      if (options.json) {
+        process.stdout.write(`${JSON.stringify({ ok: false, error: message, exitCode: 1 })}\n`);
+      } else {
+        console.error(`error: ${message}`);
+      }
+      return { exitCode: 1 };
+    }
+    if (options.json) {
+      process.stdout.write(
+        `${JSON.stringify({
+          host,
+          port,
+          routes: [],
+          web: {
+            url: webHandle.url,
+            port: webHandle.port,
+            command: webHandle.command,
+          },
+          api: {
+            url: apiUrl,
+            running: false,
+          },
+          pid: process.pid,
+        })}\n`,
+      );
+    } else {
+      process.stdout.write(`forge web listening on ${webHandle.url}\n`);
+      process.stdout.write(`forge api expected at ${apiUrl}\n`);
+    }
+    if (options.open) {
+      openBrowser(webHandle.url);
+    }
+    await new Promise<void>((resolve) => {
+      const shutdown = () => {
+        webHandle.stop();
+        resolve();
+      };
+      process.once("SIGINT", shutdown);
+      process.once("SIGTERM", shutdown);
+    });
+    return { web: webHandle, exitCode: 0 };
   }
 
   let handle: DevServerHandle;
@@ -97,6 +271,7 @@ export async function runDevCommand(
       envFile: options.envFile,
       mode: options.mode,
       allowDevAuth: options.allowDevAuth,
+      webUrl,
     });
   } catch (error) {
     const message =
@@ -111,10 +286,23 @@ export async function runDevCommand(
     return { exitCode: 1 };
   }
 
+  const webHandle = !shouldStartWeb
+    ? null
+    : startWebDevServer({
+        workspaceRoot,
+        host,
+        port: webPort,
+        apiUrl: handle.url,
+        json: options.json,
+      });
+
   if (options.json) {
-    printStartupJson(handle);
+    printStartupJson(handle, webHandle);
   } else {
-    printStartupHuman(handle);
+    printStartupHuman(handle, webHandle);
+  }
+  if (options.open) {
+    openBrowser(webHandle?.url ?? handle.url);
   }
 
   let watchHandle: { stop: () => void } | null = null;
@@ -164,6 +352,7 @@ export async function runDevCommand(
     const shutdown = () => {
       watchHandle?.stop();
       outboxWorkerHandle?.stop();
+      webHandle?.stop();
       handle.stop();
       resolve();
     };
@@ -172,5 +361,5 @@ export async function runDevCommand(
     process.once("SIGTERM", shutdown);
   });
 
-  return { handle, exitCode: 0 };
+  return { handle, web: webHandle ?? undefined, exitCode: 0 };
 }

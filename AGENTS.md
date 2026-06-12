@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=8e67943779820480d6e429bbc8b315f3905a1a001ce5bf71e6e562619eec6093 content=15156baf3b583a93b265be0b3e74cd296b9984465b3ace8f926c79cf02557507
+// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=9bc0f792863e9046901eec4de47c40e42c4425b1b27a46dfb1ae518007a993d2
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -64,6 +64,7 @@ forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
+forge inspect frontend --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
@@ -94,6 +95,22 @@ Tenant-scoped tables:
 - Bearer header: `Authorization: Bearer <token>`
 - Tenant claim: `tenant_id`
 
+## Frontend
+
+- Present: no
+- Framework: none
+- Web URL: none
+- Routes: 0
+- Components: 0
+- Client bindings: 0
+
+Rules:
+
+- Use the local `web/**/lib/forge.ts` bridge to generated hooks.
+- Mount `<ForgeProvider devAuth>` in local development.
+- Use `useQuery`, `useCommand`, and `useLiveQuery` instead of raw Forge endpoint fetches in React components.
+- Keep frontend routes reflected in `src/forge/_generated/frontendGraph.json`.
+
 ## Common tasks
 
 ### Add a command
@@ -109,7 +126,8 @@ Use:
 
 ```bash
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
-forge make resource <name> --fields title:text,status:enum(open,closed) --yes
+forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
+forge make ui --framework vite --dry-run --json
 ```
 
 Review the plan before applying when the resource touches schema or policies.

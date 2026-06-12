@@ -177,6 +177,7 @@ function requiredGeneratedArtifacts(workspaceRoot: string): Array<{ name: string
     { name: "data-graph", path: `${GENERATED_DIR}/dataGraph.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "dataGraph.json")) },
     { name: "policies", path: `${GENERATED_DIR}/policyRegistry.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "policyRegistry.json")) },
     { name: "client", path: `${GENERATED_DIR}/clientManifest.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "clientManifest.json")) },
+    { name: "frontend", path: `${GENERATED_DIR}/frontendGraph.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "frontendGraph.json")) },
     { name: "ui", path: `${GENERATED_DIR}/uiTestManifest.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "uiTestManifest.json")) },
   ];
 }

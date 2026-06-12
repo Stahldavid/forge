@@ -3,7 +3,7 @@ import { join, relative, resolve } from "node:path";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 
-export type NewTemplateName = "b2b-support-web";
+export type NewTemplateName = "b2b-support-web" | "minimal-web";
 export type NewPackageManager = "bun" | "npm" | "pnpm" | "yarn";
 
 export interface NewCommandOptions {
@@ -70,6 +70,9 @@ function replaceTokens(targetDir: string, appName: string, packageManager: strin
     for (const entry of nodeFileSystem.readDir(dir)) {
       const absolute = join(dir, entry.name);
       if (entry.isDirectory) {
+        if (entry.name === "_generated" || entry.name === "node_modules" || entry.name === ".git") {
+          continue;
+        }
         walk(absolute);
         continue;
       }
@@ -222,8 +225,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     `${options.packageManager} install`,
     `${options.packageManager} run generate`,
     `${options.packageManager} run verify`,
-    `${options.packageManager} run dev:api`,
-    `${options.packageManager} run dev:web`,
+    `${options.packageManager} run dev`,
   ];
 
   return {

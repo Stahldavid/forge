@@ -126,6 +126,7 @@ function escapeHtml(value: unknown): string {
 function renderDevHome(input: {
   service: string;
   db: unknown;
+  webUrl?: string;
   entries: Array<{ name: string; kind: string; path: string; method: string }>;
   routes: Array<{ method: string; path: string; purpose: string }>;
 }): string {
@@ -170,6 +171,7 @@ function renderDevHome(input: {
     <div class="meta">
       <span class="pill">service: ${escapeHtml(input.service)}</span>
       <span class="pill">db: ${escapeHtml(input.db)}</span>
+      ${input.webUrl ? `<a class="pill" href="${escapeHtml(input.webUrl)}">web: ${escapeHtml(input.webUrl)}</a>` : ""}
     </div>
     <h2>Start Here</h2>
     <ul>
@@ -449,6 +451,7 @@ export async function startDevServer(
             entries,
             routes,
             db: serverState.db,
+            web: options.webUrl ? { url: options.webUrl } : null,
             diagnostics: [
               ...listed.diagnostics,
               ...queries.diagnostics,
@@ -461,6 +464,7 @@ export async function startDevServer(
               renderDevHome({
                 service: payload.service,
                 db: payload.db,
+                webUrl: options.webUrl,
                 entries,
                 routes,
               }),

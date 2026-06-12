@@ -60,6 +60,7 @@ export type InspectTarget =
   | "queries"
   | "api"
   | "client"
+  | "frontend"
   | "auth"
   | "rls"
   | "db-security"

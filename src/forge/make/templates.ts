@@ -276,8 +276,7 @@ export function renderListComponent(tableName: string): string {
   const component = `${pascalCase(singularize(tableName))}List`;
   return `"use client";
 
-import { api } from "../../src/forge/_generated/api";
-import { useLiveQuery } from "../../src/forge/_generated/react";
+import { api, useLiveQuery } from "../lib/forge";
 
 export function ${component}() {
   const ${camelCase(tableName)} = useLiveQuery(api.liveQueries.live${pascalPlural}, {});
@@ -308,8 +307,7 @@ export function renderCreateForm(tableName: string, fields: MakeFieldSpec[]): st
   const firstField = field?.name ?? "title";
   return `"use client";
 
-import { api } from "../../src/forge/_generated/api";
-import { useCommand } from "../../src/forge/_generated/react";
+import { api, useCommand } from "../lib/forge";
 
 export function Create${pascal}Form() {
   const create${pascal} = useCommand(api.commands.create${pascal});
@@ -349,6 +347,166 @@ export default function ${pascal}Page() {
       <${pascal}List />
     </main>
   );
+}
+`;
+}
+
+export function renderWebBridge(): string {
+  return `export const forgeUrl =
+  import.meta.env.VITE_FORGE_URL ?? "http://127.0.0.1:3765";
+
+export { api } from "../../../src/forge/_generated/api";
+export { createForgeClient, ForgeError } from "../../../src/forge/_generated/client";
+export {
+  ForgeProvider,
+  useAuth,
+  useCommand,
+  useForgeClient,
+  useLiveQuery,
+  useQuery,
+} from "../../../src/forge/_generated/react";
+`;
+}
+
+export function renderWebRootBridge(): string {
+  return `export const forgeUrl =
+  process.env.NEXT_PUBLIC_FORGE_URL ?? "http://127.0.0.1:3765";
+
+export { api } from "../../src/forge/_generated/api";
+export { createForgeClient, ForgeError } from "../../src/forge/_generated/client";
+export {
+  ForgeProvider,
+  useAuth,
+  useCommand,
+  useForgeClient,
+  useLiveQuery,
+  useQuery,
+} from "../../src/forge/_generated/react";
+`;
+}
+
+export function renderViteMain(): string {
+  return `import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { App } from "./App";
+import { ForgeProvider, forgeUrl } from "./lib/forge";
+import "./styles.css";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <ForgeProvider url={forgeUrl} devAuth>
+      <App />
+    </ForgeProvider>
+  </StrictMode>,
+);
+`;
+}
+
+export function renderViteApp(): string {
+  return `export function App() {
+  return (
+    <main className="shell">
+      <p className="eyebrow">ForgeOS web app</p>
+      <h1>Full-stack loop ready</h1>
+      <p>
+        Add a resource with <code>forge make resource notes --with-ui</code> and use
+        generated hooks from <code>web/src/lib/forge.ts</code>.
+      </p>
+    </main>
+  );
+}
+`;
+}
+
+export function renderViteStyles(): string {
+  return `:root {
+  color: #17211d;
+  background: #f6f5ef;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  width: min(760px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.eyebrow {
+  color: #58655f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 2.2rem;
+}
+`;
+}
+
+export function renderViteIndex(title: string): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`;
+}
+
+export function renderVitePackage(appName: string): string {
+  return `{
+  "name": "${kebabCase(appName)}-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^latest",
+    "vite": "^latest",
+    "react": "^latest",
+    "react-dom": "^latest"
+  },
+  "devDependencies": {
+    "@types/react": "^latest",
+    "@types/react-dom": "^latest",
+    "typescript": "^latest"
+  }
+}
+`;
+}
+
+export function renderViteTsconfig(): string {
+  return `{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [
+      "vite/client"
+    ]
+  },
+  "include": [
+    "src"
+  ]
 }
 `;
 }

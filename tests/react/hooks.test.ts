@@ -65,6 +65,41 @@ describe("React hooks", () => {
     expect(seenAuth).toEqual({ userId: "u1", tenantId: "t1", role: "member" });
   });
 
+  test("ForgeProvider devAuth supplies local development identity", async () => {
+    let seenConfig: ForgeReactClientConfig | undefined;
+    const bindings = createForgeReactBindings((config) => {
+      seenConfig = config;
+      return createMockClient();
+    });
+    let seenAuth: unknown;
+
+    function Harness() {
+      seenAuth = bindings.useAuth();
+      return null;
+    }
+
+    await act(async () => {
+      create(
+        React.createElement(
+          bindings.ForgeProvider,
+          {
+            url: "http://127.0.0.1:3765",
+            devAuth: true,
+          },
+          React.createElement(Harness),
+        ),
+      );
+    });
+
+    expect(seenConfig?.auth).toEqual({
+      userId: "dev-user",
+      tenantId: "dev-tenant",
+      role: "owner",
+      headers: undefined,
+    });
+    expect(seenAuth).toEqual(seenConfig?.auth);
+  });
+
   test("useForgeClient fails clearly outside ForgeProvider", () => {
     const bindings = createForgeReactBindings(() => createMockClient());
     let caught: unknown;

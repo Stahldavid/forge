@@ -1,10 +1,10 @@
-// @forge-generated generator=0.0.0 input=195809293a439823b98727047e17f305f3e31553eb586957c631cc4b644e3552 content=0690e90eade7722e49585e6be5847e528ec7a2c2686f5260a3b238a428450bec
+// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=0f3bf5d91a51c90ea1c677edaf86b7bd07c5fc20e115d0549ef4c98a4dfc8d4c
 export const aiRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
   "generations": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "62974adc5416619ca08d456ffcd3c8754690212f74346bb0f84a5269077b6335",
+  "inputHash": "c6c35622f17c6bc44ce7f73abd373533d9e4c7c30099abdee310d78f3e434a1c",
   "providers": [
     {
       "id": "anthropic",

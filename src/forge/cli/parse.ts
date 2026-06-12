@@ -165,6 +165,11 @@ export type ForgeCommand =
       db: "pglite" | "postgres" | "none";
       databaseUrl?: string;
       worker: boolean;
+      withWeb: boolean;
+      apiOnly: boolean;
+      webOnly: boolean;
+      open: boolean;
+      webPort?: number;
       telemetry: string[];
       envFile?: string;
       workspaceRoot: string;
@@ -300,6 +305,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "queries",
   "api",
   "client",
+  "frontend",
   "auth",
   "rls",
   "db-security",
@@ -321,7 +327,7 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "map",
 ];
 
-const NEW_TEMPLATES: NewTemplateName[] = ["b2b-support-web"];
+const NEW_TEMPLATES: NewTemplateName[] = ["b2b-support-web", "minimal-web"];
 const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
 const SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = ["compose", "env", "check", "clean"];
 const AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [
@@ -369,6 +375,7 @@ const MAKE_PRIMITIVES: MakePrimitive[] = [
   "workflow",
   "component",
   "page",
+  "ui",
   "resource",
   "apply",
   "rollback",
@@ -959,7 +966,9 @@ export function parseCli(argv: string[]): ParsedCli {
           ? undefined
           : primitive === "list"
             ? undefined
-            : rest[1];
+            : primitive === "ui"
+              ? rest[1] ?? "ui"
+              : rest[1];
       const explainPrimitive =
         primitive === "explain" ? (rest[1] as MakePrimitive | undefined) : undefined;
       if (
@@ -969,7 +978,7 @@ export function parseCli(argv: string[]): ParsedCli {
         errors.push("forge make explain requires a known primitive");
       }
       if (
-        !["list", "explain"].includes(primitive) &&
+        !["list", "explain", "ui"].includes(primitive) &&
         !name
       ) {
         errors.push(`forge make ${primitive} requires a name or plan id`);
@@ -1009,10 +1018,12 @@ export function parseCli(argv: string[]): ParsedCli {
             event: parseOptionValue(argv, "--event"),
             trigger: parseOptionValue(argv, "--trigger"),
             component: parseOptionValue(argv, "--component"),
+            framework: parseOptionValue(argv, "--framework") as "vite" | "next" | undefined,
             withAi: parseFlag(argv, "--with-ai"),
             withCrud: parseFlag(argv, "--with-crud"),
             withLiveQuery: parseFlag(argv, "--with-livequery"),
-            withReact: parseFlag(argv, "--with-react"),
+            withReact: parseFlag(argv, "--with-react") || parseFlag(argv, "--with-ui"),
+            withUi: parseFlag(argv, "--with-ui"),
             withTests: parseFlag(argv, "--with-tests"),
             withCreateForm: parseFlag(argv, "--with-create-form"),
           },
@@ -1484,6 +1495,11 @@ export function parseCli(argv: string[]): ParsedCli {
       if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {
         errors.push("--port must be a non-negative integer");
       }
+      const webPortRaw = parseOptionValue(argv, "--web-port");
+      const webPort = webPortRaw !== undefined ? Number(webPortRaw) : undefined;
+      if (webPortRaw !== undefined && (!Number.isFinite(webPort) || webPort! < 1)) {
+        errors.push("--web-port must be a positive integer");
+      }
       const aiMode = parseOptionValue(argv, "--ai");
       const mockAi =
         parseFlag(argv, "--mock-ai") || aiMode === "mock" || process.env.FORGE_MOCK_AI === "1";
@@ -1500,6 +1516,11 @@ export function parseCli(argv: string[]): ParsedCli {
           db: parseDbKind(parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
           worker: parseFlag(argv, "--worker"),
+          withWeb: !parseFlag(argv, "--no-web") && !parseFlag(argv, "--api-only"),
+          apiOnly: parseFlag(argv, "--api-only"),
+          webOnly: parseFlag(argv, "--web-only"),
+          open: parseFlag(argv, "--open"),
+          webPort,
           telemetry: (parseOptionValue(argv, "--telemetry") ?? "local")
             .split(",")
             .map((value) => value.trim())
@@ -1837,12 +1858,14 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--event",
     "--trigger",
     "--component",
+    "--framework",
     "--package",
     "--action",
     "--with-ai",
     "--with-crud",
     "--with-livequery",
     "--with-react",
+    "--with-ui",
     "--with-tests",
     "--with-create-form",
     "--write",
@@ -1921,6 +1944,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-git",
     "--with-web",
     "--no-web",
+    "--api-only",
+    "--web-only",
+    "--open",
     "--postgres-version",
     "--runtime-port",
     "--web-port",

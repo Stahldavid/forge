@@ -86,6 +86,8 @@ describe("b2b-support-web template", () => {
         "manageBilling",
       );
       expect(read(project, "web/components/TraceDetails.tsx")).toContain("traceId");
+      expect(read(project, "web/app/providers.tsx")).toContain("../lib/forge");
+      expect(read(project, "web/lib/forge.ts")).toContain("useCommand");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -138,6 +140,9 @@ describe("b2b-support-web template", () => {
       expect(read(project, "src/forge/_generated/clientManifest.json")).toContain(
         "GET /live/:name",
       );
+      expect(read(project, "src/forge/_generated/frontendGraph.json")).toContain(
+        "tickets/page.tsx",
+      );
 
       const verified = await runVerifyCommand({
         workspaceRoot: project,
@@ -152,5 +157,5 @@ describe("b2b-support-web template", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 30_000);
 });

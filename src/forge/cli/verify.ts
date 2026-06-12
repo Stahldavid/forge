@@ -151,6 +151,11 @@ export async function runVerifyCommand(
     ok: generateCheck.exitCode === 0,
     exitCode: generateCheck.exitCode,
   });
+  steps.push({
+    name: "agent-contract-check",
+    ok: generateCheck.exitCode === 0,
+    exitCode: generateCheck.exitCode,
+  });
   diagnostics.push(...generateCheck.errors, ...generateCheck.warnings);
 
   const forgeCheck = await runCheckCommand(options.workspaceRoot, {

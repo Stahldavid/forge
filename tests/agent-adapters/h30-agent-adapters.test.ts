@@ -121,6 +121,79 @@ function contract(): AgentContract {
       reactHooks: ["useQuery", "useLiveQuery", "useCommand"],
       transport: { mode: "fetch" },
     },
+    frontend: {
+      present: true,
+      framework: "next",
+      root: "web",
+      dev: {
+        command: "cd web && bun run dev",
+        url: "http://127.0.0.1:3000",
+        apiUrlEnv: "NEXT_PUBLIC_FORGE_URL",
+        defaultApiUrl: "http://127.0.0.1:3765",
+      },
+      routes: [
+        {
+          path: "/tickets",
+          file: "web/app/tickets/page.tsx",
+          components: [],
+          usesCommands: ["createTicket"],
+          usesQueries: ["listTickets"],
+          usesLiveQueries: ["liveTickets"],
+          rawForgeFetches: [],
+        },
+      ],
+      components: [],
+      providers: [
+        {
+          name: "ForgeProvider",
+          file: "web/app/providers.tsx",
+          apiUrlEnv: "NEXT_PUBLIC_FORGE_URL",
+          devAuth: true,
+        },
+      ],
+      bridgeFiles: ["web/lib/forge.ts"],
+      webManifest: {
+        present: true,
+        framework: "next",
+        root: "web",
+        packageManager: "bun",
+        scripts: {
+          dev: "next dev",
+        },
+        urls: {
+          dev: "http://127.0.0.1:3000",
+          api: "http://127.0.0.1:3765",
+        },
+        env: {
+          apiUrl: "NEXT_PUBLIC_FORGE_URL",
+        },
+        bridge: {
+          files: ["web/lib/forge.ts"],
+          valid: true,
+        },
+      },
+      clientBindings: [
+        {
+          kind: "command",
+          name: "createTicket",
+          file: "web/app/tickets/page.tsx",
+          route: "/tickets",
+        },
+        {
+          kind: "query",
+          name: "listTickets",
+          file: "web/app/tickets/page.tsx",
+          route: "/tickets",
+        },
+        {
+          kind: "liveQuery",
+          name: "liveTickets",
+          file: "web/app/tickets/page.tsx",
+          route: "/tickets",
+        },
+      ],
+      diagnostics: [],
+    },
     auth: {
       modes: ["dev-headers", "jwt", "oidc", "disabled"],
       defaultMode: "dev-headers",

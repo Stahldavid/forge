@@ -68,6 +68,13 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       docs: ["src/forge/_generated/uiTestManifest.json"],
     };
   }
+  if (code.startsWith("FORGE_FRONTEND_")) {
+    return {
+      fixHint: "Use the generated frontend bridge and inspect src/forge/_generated/frontendGraph.json before editing UI wiring.",
+      suggestedCommands: ["forge inspect frontend --json", "forge make ui --framework vite --dry-run --json", "forge generate"],
+      docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
+    };
+  }
   if (code.startsWith("FORGE_REFACTOR_")) {
     return {
       fixHint: "Review the refactor plan, lower the scope if diagnostics are unsafe, and re-run in dry-run mode before applying.",

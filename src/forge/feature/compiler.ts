@@ -327,6 +327,7 @@ function baseMakeOptions(
     withCrud: false,
     withLiveQuery: false,
     withReact: false,
+    withUi: false,
     withTests: false,
     withCreateForm: false,
   };

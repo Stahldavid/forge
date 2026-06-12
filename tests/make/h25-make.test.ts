@@ -33,6 +33,7 @@ function makeOptions(
     withCrud: false,
     withLiveQuery: false,
     withReact: false,
+    withUi: false,
     withTests: false,
     withCreateForm: false,
     ...overrides,
@@ -74,6 +75,7 @@ describe("H25 forge make", () => {
       const list = await runMakeCommand(makeOptions(root, { primitive: "list" }));
       expect(list.ok).toBe(true);
       expect(list.primitives).toContain("resource");
+      expect(list.primitives).toContain("ui");
 
       const explain = await runMakeCommand(
         makeOptions(root, {
@@ -117,55 +119,86 @@ describe("H25 forge make", () => {
     }
   });
 
-  test("applies a resource, generates make registry, and rolls back source files", async () => {
-    const root = scaffoldMakeWorkspace("h25-apply");
+  test("plans a Vite UI shell with ForgeProvider devAuth and bridge", async () => {
+    const root = scaffoldMakeWorkspace("h25-ui");
     try {
-      const applied = await runMakeCommand(
+      const result = await runMakeCommand(
         makeOptions(root, {
-          name: "invoices",
-          fieldsRaw: "amount:number,status:enum(draft,paid):default=draft:index",
-          apply: true,
-          yes: true,
-          plan: true,
-          withReact: true,
-          withTests: true,
-          noGenerate: false,
+          primitive: "ui",
+          name: "ui",
+          dryRun: true,
+          framework: "vite",
         }),
       );
 
-      expect(applied.ok).toBe(true);
-      expect(applied.applied).toBe(true);
-      expect(existsSync(join(root, "src", "commands", "createInvoice.ts"))).toBe(true);
-      expect(readFileSync(join(root, "src", "forge", "schema.ts"), "utf8")).toContain(
-        'name: "invoices"',
+      expect(result.ok).toBe(true);
+      expect(result.plan?.filesToCreate.map((file) => file.file)).toContain(
+        "web/src/lib/forge.ts",
       );
-      expect(readFileSync(join(root, "src", "policies.ts"), "utf8")).toContain(
-        '"invoices.read"',
+      expect(result.plan?.filesToCreate.map((file) => file.file)).toContain(
+        "web/src/main.tsx",
       );
-
-      const makeRegistry = JSON.parse(
-        stripDeterministicHeader(
-          readFileSync(join(root, "src", "forge", "_generated", "makeRegistry.json"), "utf8"),
-        ),
-      ) as { primitives: Array<{ name: string }> };
-      expect(makeRegistry.primitives.map((primitive) => primitive.name)).toContain("resource");
-
-      const inspect = await runInspectCommand("make", root);
-      expect(inspect.exitCode).toBe(0);
-
-      const rollback = await runMakeCommand(
-        makeOptions(root, {
-          primitive: "rollback",
-          name: applied.plan?.id,
-        }),
-      );
-      expect(rollback.ok).toBe(true);
-      expect(existsSync(join(root, "src", "commands", "createInvoice.ts"))).toBe(false);
-      expect(readFileSync(join(root, "src", "forge", "schema.ts"), "utf8")).not.toContain(
-        'name: "invoices"',
-      );
+      expect(
+        result.plan?.filesToCreate.find((file) => file.file === "web/src/main.tsx")?.content,
+      ).toContain("devAuth");
     } finally {
       cleanupWorkspace(root);
     }
   });
+
+  test(
+    "applies a resource, generates make registry, and rolls back source files",
+    async () => {
+      const root = scaffoldMakeWorkspace("h25-apply");
+      try {
+        const applied = await runMakeCommand(
+          makeOptions(root, {
+            name: "invoices",
+            fieldsRaw: "amount:number,status:enum(draft,paid):default=draft:index",
+            apply: true,
+            yes: true,
+            plan: true,
+            withReact: true,
+            withTests: true,
+            noGenerate: false,
+          }),
+        );
+
+        expect(applied.ok).toBe(true);
+        expect(applied.applied).toBe(true);
+        expect(existsSync(join(root, "src", "commands", "createInvoice.ts"))).toBe(true);
+        expect(readFileSync(join(root, "src", "forge", "schema.ts"), "utf8")).toContain(
+          'name: "invoices"',
+        );
+        expect(readFileSync(join(root, "src", "policies.ts"), "utf8")).toContain(
+          '"invoices.read"',
+        );
+
+        const makeRegistry = JSON.parse(
+          stripDeterministicHeader(
+            readFileSync(join(root, "src", "forge", "_generated", "makeRegistry.json"), "utf8"),
+          ),
+        ) as { primitives: Array<{ name: string }> };
+        expect(makeRegistry.primitives.map((primitive) => primitive.name)).toContain("resource");
+
+        const inspect = await runInspectCommand("make", root);
+        expect(inspect.exitCode).toBe(0);
+
+        const rollback = await runMakeCommand(
+          makeOptions(root, {
+            primitive: "rollback",
+            name: applied.plan?.id,
+          }),
+        );
+        expect(rollback.ok).toBe(true);
+        expect(existsSync(join(root, "src", "commands", "createInvoice.ts"))).toBe(false);
+        expect(readFileSync(join(root, "src", "forge", "schema.ts"), "utf8")).not.toContain(
+          'name: "invoices"',
+        );
+      } finally {
+        cleanupWorkspace(root);
+      }
+    },
+    15_000,
+  );
 });

@@ -106,6 +106,77 @@ export interface AgentClientInfo {
   transport: Record<string, string>;
 }
 
+export interface AgentFrontendInfo {
+  present: boolean;
+  framework: string;
+  root?: string;
+  dev?: {
+    command: string;
+    url: string;
+    apiUrlEnv: string;
+    defaultApiUrl: string;
+  };
+  routes: Array<{
+    path: string;
+    file: string;
+    components: string[];
+    usesCommands: string[];
+    usesQueries: string[];
+    usesLiveQueries: string[];
+    rawForgeFetches: string[];
+  }>;
+  components: Array<{
+    name: string;
+    file: string;
+    usesCommands: string[];
+    usesQueries: string[];
+    usesLiveQueries: string[];
+    rawForgeFetches: string[];
+  }>;
+  providers: Array<{
+    name: string;
+    file: string;
+    apiUrlEnv?: string;
+    devAuth: boolean;
+  }>;
+  bridgeFiles: string[];
+  webManifest: {
+    present: boolean;
+    framework: string;
+    root?: string;
+    packageManager?: string;
+    scripts: {
+      dev?: string;
+      build?: string;
+      typecheck?: string;
+    };
+    urls: {
+      dev?: string;
+      api: string;
+    };
+    env: {
+      apiUrl: string;
+    };
+    bridge: {
+      files: string[];
+      valid: boolean;
+    };
+  };
+  clientBindings: Array<{
+    kind: "command" | "query" | "liveQuery" | "rawFetch";
+    name: string;
+    file: string;
+    route?: string;
+    component?: string;
+  }>;
+  diagnostics: Array<{
+    severity: "warning" | "error";
+    code: string;
+    message: string;
+    file?: string;
+  }>;
+}
+
 export interface AgentAuthInfo {
   modes: Array<"dev-headers" | "jwt" | "oidc" | "disabled">;
   defaultMode: "dev-headers";
@@ -163,6 +234,7 @@ export interface AgentContract {
   telemetry: AgentTelemetryInfo;
   ai: AgentAiInfo;
   client: AgentClientInfo;
+  frontend: AgentFrontendInfo;
   auth: AgentAuthInfo;
   deploy?: AgentDeployInfo;
   rules: AgentRuntimeRule[];
