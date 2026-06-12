@@ -4,6 +4,8 @@ web/node_modules/
 dist/
 web/.next/
 web/out/
+src/forge/_generated/
+forge.lock
 
 .env
 .env.local

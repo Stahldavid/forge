@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=caf049950405a6022290d7ace56f44ae9b4892557c40e94a08bf463799a04c24 content=9bc0f792863e9046901eec4de47c40e42c4425b1b27a46dfb1ae518007a993d2
+// @forge-generated generator=0.0.0 input=3bd69464bca8ba76465bcc266b6d03ee2a6761067a71b53ebdd04ee04dfefd02 content=3ef8469e4b93bd4d4d3247241e6cbb07392344acf549c9033917231c2a68b1d0
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -33,6 +33,8 @@ Do not:
 - `forge.lock`
 - `deploy/docker-compose.yml`, unless changing deployment config intentionally
 
+Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to reduce visual noise. Recreate them with `forge generate` before checking, testing, or handing work off.
+
 ## Runtime model
 
 - Commands are transactional writes.
@@ -60,11 +62,11 @@ Do not:
 forge dev --once --json
 forge inspect app --json
 forge inspect all --json
+forge inspect frontend --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
-forge inspect frontend --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
@@ -131,6 +133,17 @@ forge make ui --framework vite --dry-run --json
 ```
 
 Review the plan before applying when the resource touches schema or policies.
+
+### Check frontend wiring
+
+Use:
+
+```bash
+forge dev --once --json
+forge inspect frontend --json
+```
+
+These commands report routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
 
 ### Apply a feature blueprint
 

@@ -2,6 +2,7 @@ import type { Diagnostic } from "../../types/diagnostic.ts";
 
 export interface ColumnDef {
   name: string;
+  fieldName?: string;
   sqlType: string;
   nullable: boolean;
   primaryKey?: boolean;

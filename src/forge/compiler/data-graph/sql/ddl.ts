@@ -161,6 +161,7 @@ function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] 
   if (!hasIdField) {
     columns.push({
       name: "id",
+      fieldName: "id",
       sqlType: "uuid",
       nullable: false,
       primaryKey: true,
@@ -180,6 +181,7 @@ function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] 
 
     columns.push({
       name: snakeName,
+      fieldName: field.name,
       sqlType: parsed.sqlType,
       nullable: false,
       primaryKey: isPrimaryKey,

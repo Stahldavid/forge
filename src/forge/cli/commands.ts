@@ -28,6 +28,7 @@ import type {
   VerifyResult,
 } from "../compiler/types/cli.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
+import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import {
   attachFailureKind,
@@ -224,12 +225,16 @@ export async function runCheckCommand(
   );
   const aiDiagnostics = checkAiUsageInApp(appGraph);
   const queryDiagnostics = checkQueryUsageInApp(appGraph);
+  const frontendDiagnostics =
+    readGeneratedJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`)
+      ?.diagnostics ?? [];
 
   const allDiagnostics = [
     ...guardDiagnostics,
     ...processEnvDiagnostics,
     ...aiDiagnostics,
     ...queryDiagnostics,
+    ...frontendDiagnostics,
   ];
   const errors = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",

@@ -67,6 +67,15 @@ function createTableClient(
   options?: GeneratedDbClientOptions,
 ): TableClient {
   const columns = entry.columns.map((column) => column.name);
+  const columnByInputName = new Map<string, string>();
+  const fieldNameByColumn = new Map<string, string>();
+  for (const column of entry.columns) {
+    columnByInputName.set(column.name, column.name);
+    if (column.fieldName) {
+      columnByInputName.set(column.fieldName, column.name);
+      fieldNameByColumn.set(column.name, column.fieldName);
+    }
+  }
   const primaryKey = entry.columns.find((column) => column.primaryKey)?.name ?? "id";
   const tenantColumn = entry.tenantIdColumn;
   const tenantId = resolveTenantId(options?.auth, entry);
@@ -78,6 +87,35 @@ function createTableClient(
       operation,
       `tenant scope violation on ${tableName}.${operation}`,
     );
+  }
+
+  function normalizeInput(value: Record<string, unknown>): Record<string, unknown> {
+    const normalized: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      const column = columnByInputName.get(key);
+      if (column) {
+        normalized[column] = item;
+      }
+    }
+    return normalized;
+  }
+
+  function normalizeRow(row: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+    if (!row) {
+      return undefined;
+    }
+
+    const normalized = { ...row };
+    for (const [column, fieldName] of fieldNameByColumn) {
+      if (normalized[fieldName] === undefined && normalized[column] !== undefined) {
+        normalized[fieldName] = normalized[column];
+      }
+    }
+    return normalized;
+  }
+
+  function normalizeRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+    return rows.map((row) => normalizeRow(row) ?? row);
   }
 
   function enforceTenantValue(value: Record<string, unknown>, operation: string): Record<string, unknown> {
@@ -120,7 +158,7 @@ function createTableClient(
         `SELECT * FROM ${quoteIdent(tableName)}${where}`,
         tenantFilter.params,
       );
-      return result.rows;
+      return normalizeRows(result.rows);
     },
 
     async get(id) {
@@ -136,11 +174,11 @@ function createTableClient(
         `SELECT * FROM ${quoteIdent(tableName)} WHERE ${whereParts.join(" AND ")} LIMIT 1`,
         params,
       );
-      return result.rows[0] ?? null;
+      return normalizeRow(result.rows[0]) ?? null;
     },
 
     async insert(value) {
-      const normalized = enforceTenantValue(value, "insert");
+      const normalized = enforceTenantValue(normalizeInput(value), "insert");
       const keys = columns.filter((column) => normalized[column] !== undefined);
       const placeholders = keys.map((_, index) => `$${index + 1}`);
       const params = keys.map((key) => normalized[key]);
@@ -150,22 +188,27 @@ function createTableClient(
         params,
       );
       options?.writeTracker?.record(tableName, writeTenantId, "insert");
-      return result.rows[0] ?? normalized;
+      return normalizeRow(result.rows[0]) ?? normalizeRow(normalized) ?? normalized;
     },
 
     async update(id, patch) {
-      if (tenantColumn && patch[tenantColumn] !== undefined && patch[tenantColumn] !== tenantId) {
+      const normalizedPatch = normalizeInput(patch);
+      if (
+        tenantColumn &&
+        normalizedPatch[tenantColumn] !== undefined &&
+        normalizedPatch[tenantColumn] !== tenantId
+      ) {
         tenantViolation("update");
       }
 
-      const keys = Object.keys(patch).filter((key) => columns.includes(key));
+      const keys = Object.keys(normalizedPatch).filter((key) => columns.includes(key));
       if (keys.length === 0) {
         return this.get(id);
       }
 
       const tenantFilter = tenantWhereClause(keys.length + 2);
       const assignments = keys.map((key, index) => `${quoteIdent(key)} = $${index + 1}`);
-      const params = [...keys.map((key) => patch[key]), id];
+      const params = [...keys.map((key) => normalizedPatch[key]), id];
       const whereParts = [`${quoteIdent(primaryKey)} = $${keys.length + 1}`];
       if (tenantFilter.clause) {
         whereParts.push(tenantFilter.clause);
@@ -178,8 +221,11 @@ function createTableClient(
       );
       if ((result.rowCount ?? result.rows.length) > 0) {
         options?.writeTracker?.record(tableName, writeTenantId, "update");
+        if (!result.rows[0]) {
+          return this.get(id);
+        }
       }
-      return result.rows[0] ?? null;
+      return normalizeRow(result.rows[0]) ?? null;
     },
 
     async delete(id) {
@@ -202,14 +248,19 @@ function createTableClient(
     },
 
     async where(partial) {
-      if (tenantColumn && partial[tenantColumn] !== undefined && partial[tenantColumn] !== tenantId) {
+      const normalizedPartial = normalizeInput(partial);
+      if (
+        tenantColumn &&
+        normalizedPartial[tenantColumn] !== undefined &&
+        normalizedPartial[tenantColumn] !== tenantId
+      ) {
         tenantViolation("where");
       }
 
-      const keys = Object.keys(partial).filter((key) => columns.includes(key));
+      const keys = Object.keys(normalizedPartial).filter((key) => columns.includes(key));
       const tenantFilter = tenantWhereClause(keys.length + 1);
       const clauses = keys.map((key, index) => `${quoteIdent(key)} = $${index + 1}`);
-      const params = keys.map((key) => partial[key]);
+      const params = keys.map((key) => normalizedPartial[key]);
       if (tenantFilter.clause) {
         clauses.push(tenantFilter.clause.replace("$1", `$${keys.length + 1}`));
         params.push(...tenantFilter.params);
@@ -223,7 +274,7 @@ function createTableClient(
         `SELECT * FROM ${quoteIdent(tableName)} WHERE ${clauses.join(" AND ")}`,
         params,
       );
-      return result.rows;
+      return normalizeRows(result.rows);
     },
   };
 }

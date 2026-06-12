@@ -1,5 +1,7 @@
 node_modules/
 dist/
+src/forge/_generated/
+forge.lock
 .env
 .env.local
 .forge/cache/

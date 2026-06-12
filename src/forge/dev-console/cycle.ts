@@ -18,6 +18,7 @@ import { PackageGraphCompiler } from "../compiler/package-graph/compiler.ts";
 import { resolveByPackageName } from "../compiler/recipes/registry.ts";
 import type { AppGraph } from "../compiler/types/app-graph.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
+import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
 import { runImpactCommand } from "../impact/index.ts";
 import type { TestRunRecord } from "../impact/types.ts";
@@ -28,6 +29,7 @@ import type {
   DevConsoleNextAction,
   DevConsoleOptions,
   DevConsolePhase,
+  FrontendSummary,
   ImpactSummary,
   LastTestRunSummary,
   LastUiRunSummary,
@@ -199,6 +201,35 @@ function runDoctorPhase(workspaceRoot: string): DevConsolePhase {
       }),
     );
   return phase("doctor", diagnostics, msSince(start), { artifacts }, diagnostics.length === 0 ? "project shape looks coherent" : "project is missing required artifacts");
+}
+
+function runFrontendPhase(workspaceRoot: string): DevConsolePhase {
+  const start = performance.now();
+  const frontend = readJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);
+  if (!frontend) {
+    return {
+      name: "frontend",
+      ok: true,
+      status: "skipped",
+      message: "no generated frontend graph found",
+      diagnostics: [],
+      durationMs: msSince(start),
+    };
+  }
+
+  const summary: FrontendSummary = {
+    present: frontend.present,
+    framework: frontend.framework,
+    routes: frontend.routes.map((route) => route.path),
+    bindings: [...new Set(frontend.clientBindings.map((binding) => `${binding.kind}:${binding.name}`))].sort(),
+    bridgeFiles: frontend.bridgeFiles,
+    ...(frontend.dev ? { devUrl: frontend.dev.url, apiUrlEnv: frontend.dev.apiUrlEnv } : {}),
+  };
+  const diagnostics = frontend.diagnostics ?? [];
+  const message = frontend.present
+    ? `frontend ${frontend.framework} with ${frontend.routes.length} routes and ${frontend.clientBindings.length} bindings`
+    : "no frontend app detected";
+  return phase("frontend", diagnostics, msSince(start), { summary }, message);
 }
 
 function runImpactPhase(workspaceRoot: string): DevConsolePhase {
@@ -378,11 +409,18 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
   phases.push(generated);
   if (generated.ok) {
     phases.push(await runCheckPhase(workspaceRoot, options.strictSecrets ?? false));
+    phases.push(runFrontendPhase(workspaceRoot));
   } else {
     phases.push(
       skippedPhase(
         "check",
         "skipped until generated artifacts are in sync",
+      ),
+    );
+    phases.push(
+      skippedPhase(
+        "frontend",
+        "skipped until generated frontend graph is in sync",
       ),
     );
   }
@@ -419,6 +457,14 @@ export function formatDevConsoleHuman(cycle: DevConsoleCycle): string {
       lines.push(`  ${diagnostic.code}: ${diagnostic.message}`);
       if (diagnostic.fixHint) {
         lines.push(`  Fix: ${diagnostic.fixHint}`);
+      }
+    }
+    if (phaseItem.name === "frontend") {
+      const summary = phaseItem.details?.summary as FrontendSummary | undefined;
+      if (summary?.present) {
+        lines.push(`  URL: ${summary.devUrl ?? "unknown"}`);
+        lines.push(`  Bridge: ${summary.bridgeFiles.length > 0 ? summary.bridgeFiles.join(", ") : "missing"}`);
+        lines.push(`  Bindings: ${summary.bindings.length}`);
       }
     }
   }

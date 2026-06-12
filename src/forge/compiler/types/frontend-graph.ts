@@ -1,3 +1,5 @@
+import type { Diagnostic } from "./diagnostic.ts";
+
 export interface FrontendRouteInfo {
   path: string;
   file: string;
@@ -72,10 +74,5 @@ export interface FrontendGraph {
   bridgeFiles: string[];
   webManifest: FrontendWebManifest;
   clientBindings: FrontendClientBindingInfo[];
-  diagnostics: Array<{
-    severity: "warning" | "error";
-    code: string;
-    message: string;
-    file?: string;
-  }>;
+  diagnostics: Diagnostic[];
 }

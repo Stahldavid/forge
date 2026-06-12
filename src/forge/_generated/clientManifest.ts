@@ -1,8 +1,8 @@
-// @forge-generated generator=0.0.0 input=2190d56a1db1355810806f497ad3a2e68f900245ae47a7cdc651f0cd2c949f50 content=a7c57b63aeb3d1070961696093ab42dd93b4bcbd35ffb32855a91c1f2e8465e5
+// @forge-generated generator=0.0.0 input=8f5553c2c0025eb9c0a596bb153787d0ccb8e0782cf6c0b8be14806581f906e6 content=be1ae115bdd83a83dad11c8267b49d396e24998d458c905f6dd321d56224a6d4
 export const clientManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.0.0",
-  "inputHash": "54568ed1972e1c6cf803652c791067680b61dc063176ef01ff420fe620125897",
+  "inputHash": "910511a194f0b0277d690d000551ff9a04f8633a3190eb463d9cace03aaa3724",
   "queries": [],
   "commands": [],
   "liveQueries": [],

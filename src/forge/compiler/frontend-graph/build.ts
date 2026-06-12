@@ -9,6 +9,7 @@ import type {
   FrontendRouteInfo,
 } from "../types/frontend-graph.ts";
 import { serializeCanonical } from "../primitives/serialize.ts";
+import { createDiagnostic } from "../diagnostics/create.ts";
 
 const WEB_ROOT = "web";
 const API_URL_ENV = "NEXT_PUBLIC_FORGE_URL";
@@ -325,20 +326,26 @@ export function buildFrontendGraph(input: {
       bridgeFiles.push(rel);
     }
     if (!isBridgeFile && (/from\s+["']\.\.\/\.\.\/src\/forge\/_generated/.test(text) || /from\s+["'][^"']*\/src\/forge\/_generated/.test(text))) {
-      diagnostics.push({
+      diagnostics.push(createDiagnostic({
         severity: "warning",
         code: "FORGE_FRONTEND_SERVER_IMPORT",
         message: "frontend imports generated files directly; prefer the local web/lib/forge bridge",
         file: rel,
-      });
+        fixHint: "Import generated client APIs through web/lib/forge.ts so agents and humans have one stable frontend bridge.",
+        suggestedCommands: ["forge inspect frontend --json", "forge make ui --framework vite --dry-run --json"],
+        docs: ["src/forge/_generated/frontendGraph.json", "src/forge/_generated/appMap.md"],
+      }));
     }
     if (uses.rawForgeFetches.length > 0) {
-      diagnostics.push({
+      diagnostics.push(createDiagnostic({
         severity: "warning",
         code: "FORGE_FRONTEND_DIRECT_RUNTIME_FETCH",
         message: "frontend calls Forge runtime endpoints directly; prefer generated hooks from the web bridge",
         file: rel,
-      });
+        fixHint: "Replace raw /commands, /queries, or /live fetches with useCommand, useQuery, or useLiveQuery from the local Forge bridge.",
+        suggestedCommands: ["forge inspect frontend --json", "forge repair diagnose --diagnostic FORGE_FRONTEND_DIRECT_RUNTIME_FETCH --json"],
+        docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
+      }));
     }
   }
 
@@ -373,18 +380,24 @@ export function buildFrontendGraph(input: {
   }
 
   if (providers.length === 0 && framework !== "static") {
-    diagnostics.push({
+    diagnostics.push(createDiagnostic({
       severity: "warning",
       code: "FORGE_FRONTEND_PROVIDER_MISSING",
       message: "web app does not expose a ForgeProvider; generated hooks may not be wired",
-    });
+      fixHint: "Mount ForgeProvider once in the web app root/provider layer and pass devAuth for local development.",
+      suggestedCommands: ["forge inspect frontend --json", "forge make ui --framework vite --dry-run --json"],
+      docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
+    }));
   }
   if (bridgeFiles.length === 0 && framework !== "static") {
-    diagnostics.push({
+    diagnostics.push(createDiagnostic({
       severity: "warning",
       code: "FORGE_FRONTEND_BRIDGE_MISSING",
       message: "web/**/lib/forge.ts bridge is missing; agents may use fragile generated import paths",
-    });
+      fixHint: "Create web/lib/forge.ts or web/src/lib/forge.ts and re-export api, client, ForgeProvider, and generated hooks from src/forge/_generated.",
+      suggestedCommands: ["forge make ui --framework vite --dry-run --json", "forge generate"],
+      docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
+    }));
   }
 
   const clientBindings = uniqueSorted([

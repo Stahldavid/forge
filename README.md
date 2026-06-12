@@ -27,6 +27,18 @@ src/forge/_generated/operationPlaybooks.md
 
 These files describe the app surface, runtime rules, generated files, policies, secrets, workflows, UI routes, commands to run, and common repair/refactor playbooks.
 
+## Create a Test App
+
+```bash
+forge new notes-app --template minimal-web
+cd notes-app
+bun run dev -- --open
+```
+
+`forge dev` starts the API runtime and the web dev server together when a `web/` app exists. The `--once --json` mode is the central agent/CI diagnostic entrypoint: it checks generated drift, guardrails, frontend routes/bindings, doctor status, impact, and the last test/UI reports in one deterministic response.
+
+Template apps ignore `src/forge/_generated/` and `forge.lock` by default so a freshly created app does not flood git with generated files. Run `forge generate` after checkout or before verification to recreate the agent contract, client SDK, frontend graph, and runtime manifests.
+
 ## What ForgeOS Generates
 
 ```txt
@@ -112,8 +124,8 @@ Common command groups:
 | `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
 | `forge doctor --json` | Human/agent health check for project coherence |
-| `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generate/check/doctor/impact/reports/next actions |
-| `forge dev --watch` | Interactive dev console plus local runtime server, worker, telemetry, mock AI options |
+| `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generated drift, check, frontend, doctor, impact, reports, next actions |
+| `forge dev --watch` | Interactive dev console plus local runtime server, worker, frontend server, telemetry, mock AI options |
 | `forge run`, `forge query`, `forge live` | Execute and inspect runtime entries locally |
 | `forge db`, `forge rls` | Diff/migrate/status and inspect/check RLS |
 | `forge policy`, `forge secrets`, `forge env`, `forge auth` | Security and configuration operations |
@@ -197,6 +209,8 @@ bun run forge verify --strict
 ```
 
 UI bridge note: `forge ui` uses Playwright when installed. Without Playwright, `forge ui doctor --json` reports `FORGE_UI_PLAYWRIGHT_MISSING` with fix hints instead of silently failing.
+
+Frontend bridge note: `forge inspect frontend --json` and `forge dev --once --json` expose routes, components, `ForgeProvider`, generated client bindings, raw runtime fetch warnings, and fix hints. Agents should use this before editing UI wiring.
 
 ## Milestone History
 

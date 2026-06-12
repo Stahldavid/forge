@@ -69,6 +69,17 @@ function detectDefaultWebPort(workspaceRoot: string): number {
   return deps.next ? 3000 : 5173;
 }
 
+function webDevArgsForPackage(
+  pkg: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } | null,
+  input: { host: string; port: number },
+): string[] {
+  const deps = { ...(pkg?.dependencies ?? {}), ...(pkg?.devDependencies ?? {}) };
+  if (deps.next) {
+    return ["--port", String(input.port), "--hostname", input.host];
+  }
+  return ["--port", String(input.port), "--host", input.host];
+}
+
 function hasWebApp(workspaceRoot: string): boolean {
   return (
     nodeFileSystem.exists(join(workspaceRoot, "web", "package.json")) ||
@@ -98,7 +109,7 @@ function startWebDevServer(input: {
   };
   const command =
     pkg?.scripts?.dev
-      ? [bun, "run", "dev", "--", "--port", String(input.port), "--host", input.host]
+      ? [bun, "run", "dev", "--", ...webDevArgsForPackage(pkg, input)]
       : [bun, "server.ts"];
   const cwd = pkg?.scripts?.dev ? webRoot : webRoot;
   const child = Bun.spawn(command, {

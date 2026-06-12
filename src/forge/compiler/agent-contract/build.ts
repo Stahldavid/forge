@@ -665,6 +665,8 @@ Do not:
 - \`forge.lock\`
 - \`deploy/docker-compose.yml\`, unless changing deployment config intentionally
 
+Template apps may ignore \`src/forge/_generated/**\` and \`forge.lock\` in git to reduce visual noise. Recreate them with \`forge generate\` before checking, testing, or handing work off.
+
 ## Runtime model
 
 - Commands are transactional writes.
@@ -692,11 +694,11 @@ Do not:
 forge dev --once --json
 forge inspect app --json
 forge inspect all --json
+forge inspect frontend --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
 forge inspect client --json
-forge inspect frontend --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
@@ -764,6 +766,17 @@ forge make ui --framework vite --dry-run --json
 \`\`\`
 
 Review the plan before applying when the resource touches schema or policies.
+
+### Check frontend wiring
+
+Use:
+
+\`\`\`bash
+forge dev --once --json
+forge inspect frontend --json
+\`\`\`
+
+These commands report routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, and fix hints.
 
 ### Apply a feature blueprint
 
@@ -1007,6 +1020,7 @@ Run:
 \`\`\`bash
 forge dev --once --json
 forge inspect all --json
+forge inspect frontend --json
 forge check --json
 \`\`\`
 
@@ -1014,7 +1028,10 @@ Never edit:
 
 \`\`\`txt
 src/forge/_generated/**
+forge.lock
 \`\`\`
+
+If generated files are ignored by git, recreate them with \`forge generate\`.
 
 Always finish with:
 

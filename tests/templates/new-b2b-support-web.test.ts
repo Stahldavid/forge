@@ -67,6 +67,8 @@ describe("b2b-support-web template", () => {
       expect(read(project, ".env.example")).toContain("STRIPE_SECRET_KEY");
       expect(read(project, "AGENTS.md")).toContain("Do not:");
       expect(read(project, ".gitignore")).toContain(".forge/pglite/");
+      expect(read(project, ".gitignore")).toContain("src/forge/_generated/");
+      expect(read(project, ".gitignore")).toContain("forge.lock");
 
       expect(read(project, "src/forge/schema.ts")).toContain("tickets");
       expect(read(project, "src/policies.ts")).toContain("billing.manage");

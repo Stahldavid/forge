@@ -222,10 +222,10 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
 
   const nextSteps = [
     `cd ${options.name}`,
-    `${options.packageManager} install`,
-    `${options.packageManager} run generate`,
+    ...(installed ? [] : [`${options.packageManager} install`]),
+    ...(generated ? [] : [`${options.packageManager} run generate`]),
+    `${options.packageManager} run dev -- --open`,
     `${options.packageManager} run verify`,
-    `${options.packageManager} run dev`,
   ];
 
   return {

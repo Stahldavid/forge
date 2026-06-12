@@ -39,7 +39,11 @@ export const triageTicketWorkflow = workflow({
       const updated = await ctx.db.tickets.update(input.ticketId, {
         triageSummary: triage ?? "Mock AI triage complete.",
         severity: "medium",
+        updatedAt: new Date(),
       });
+      if (!updated) {
+        throw new Error("ticket not found");
+      }
 
       return {
         ticketId: updated.id,

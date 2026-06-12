@@ -47,7 +47,16 @@ export class NodeFileSystem implements FileSystem {
     );
     try {
       writeFileSync(temporaryPath, content, "utf8");
-      renameSync(temporaryPath, path);
+      try {
+        renameSync(temporaryPath, path);
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (process.platform !== "win32" || (code !== "EEXIST" && code !== "EPERM")) {
+          throw error;
+        }
+        rmSync(path, { force: true });
+        renameSync(temporaryPath, path);
+      }
     } catch (error) {
       try {
         rmSync(temporaryPath, { force: true });

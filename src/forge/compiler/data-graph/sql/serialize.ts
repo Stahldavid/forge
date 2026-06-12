@@ -36,7 +36,7 @@ export function serializeSqlPlanTs(plan: SqlPlan): string {
 
 export interface TableMapEntry {
   tableName: string;
-  columns: { name: string; sqlType: string; primaryKey?: boolean }[];
+  columns: { name: string; fieldName?: string; sqlType: string; primaryKey?: boolean }[];
   tenantScoped?: boolean;
   tenantIdColumn?: string;
 }
@@ -59,6 +59,9 @@ export function buildTableMap(
       tableName: change.table,
       columns: change.columns.map((column) => ({
         name: column.name,
+        ...(column.fieldName && column.fieldName !== column.name
+          ? { fieldName: column.fieldName }
+          : {}),
         sqlType: column.sqlType,
         ...(column.primaryKey ? { primaryKey: true } : {}),
       })),

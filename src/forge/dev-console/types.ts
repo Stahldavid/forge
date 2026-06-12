@@ -4,6 +4,7 @@ import type { ImpactRiskLevel } from "../impact/types.ts";
 export type DevConsolePhaseName =
   | "generated"
   | "check"
+  | "frontend"
   | "doctor"
   | "impact"
   | "last-test-run"
@@ -59,4 +60,14 @@ export interface ImpactSummary {
   changedFiles: string[];
   risk: ImpactRiskLevel;
   recommendedChecks: string[];
+}
+
+export interface FrontendSummary {
+  present: boolean;
+  framework: string;
+  routes: string[];
+  bindings: string[];
+  bridgeFiles: string[];
+  devUrl?: string;
+  apiUrlEnv?: string;
 }

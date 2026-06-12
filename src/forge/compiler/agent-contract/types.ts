@@ -1,3 +1,4 @@
+import type { Diagnostic } from "../types/diagnostic.ts";
 import type { RuntimeContext } from "../types/runtime.ts";
 
 export interface AgentProjectInfo {
@@ -169,12 +170,7 @@ export interface AgentFrontendInfo {
     route?: string;
     component?: string;
   }>;
-  diagnostics: Array<{
-    severity: "warning" | "error";
-    code: string;
-    message: string;
-    file?: string;
-  }>;
+  diagnostics: Diagnostic[];
 }
 
 export interface AgentAuthInfo {
