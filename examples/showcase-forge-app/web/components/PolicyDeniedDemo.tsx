@@ -15,6 +15,7 @@ export function PolicyDeniedDemo() {
       </div>
 
       <button
+        data-forge-testid="billing-policy-denied-button"
         disabled={manageBilling.loading}
         onClick={() => {
           void manageBilling.run({});

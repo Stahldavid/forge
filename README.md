@@ -115,7 +115,7 @@ forge do verify --json
 forge dev --once --json
 forge dev
 forge inspect all --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 forge doctor
 forge verify --strict
 forge impact --changed --json

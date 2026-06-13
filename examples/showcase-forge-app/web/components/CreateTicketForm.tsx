@@ -25,13 +25,14 @@ export function CreateTicketForm() {
       <label>
         Ticket title
         <input
+          data-forge-testid="ticket-title-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Describe the support issue"
         />
       </label>
 
-      <button disabled={createTicket.loading}>
+      <button data-forge-testid="create-ticket-button" disabled={createTicket.loading}>
         {createTicket.loading ? "Creating..." : "Create ticket"}
       </button>
 

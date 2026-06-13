@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=6c20676780d2128492bff9f4ba9f149b0cb26d7bf18f682568c96e4ef5a91a56 content=3304bdebc0078b9cd07a6c9742580ad42cd948350c5356486127b2b9c2843420
+// @forge-generated generator=0.0.0 input=69418484de69a159bdbb79b216f3f22ffd9b6248efdbc7597ea784e01145e4cb content=34ec15790f8f8ee6122a8637e1d90086a2ad5d24f26d9a169d454d84a97f8f28
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -126,7 +126,7 @@
 3. Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.
 4. Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.
 5. Run forge generate so frontendGraph and agentContract include routes and bindings.
-6. Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.
+6. Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.
 7. Run forge dev --once --json and forge doctor --json.
 
 ## Self-host

@@ -18,6 +18,7 @@ import type {
 const STOPWORDS = new Set([
   "a",
   "add",
+  "add-resource",
   "adicionar",
   "app",
   "com",
@@ -81,16 +82,16 @@ function classifyIntent(tokens: string[]): { kind: ForgeIntentKind; confidence: 
   if (includesAny(tokens, ["ship", "handoff", "release", "commit", "pr", "push", "entregar"])) {
     return { kind: "ship", confidence: "medium" };
   }
-  if (includesAny(tokens, ["frontend", "ui", "route", "rota", "component", "page", "hook", "connect", "conectar"])) {
-    if (includesAny(tokens, ["add", "create", "criar", "crie", "resource", "feature", "nova", "novo"])) {
+  if (includesAny(tokens, ["frontend", "ui", "route", "rota", "component", "page", "hook", "connect", "connect-ui", "conectar"])) {
+    if (includesAny(tokens, ["add", "add-resource", "create", "criar", "crie", "resource", "feature", "nova", "novo"])) {
       return { kind: "add-feature", confidence: "high" };
     }
     return { kind: "connect-ui", confidence: "high" };
   }
-  if (includesAny(tokens, ["add", "create", "criar", "crie", "make", "resource", "feature", "table", "command", "query"])) {
+  if (includesAny(tokens, ["add", "add-resource", "create", "criar", "crie", "make", "resource", "feature", "table", "command", "query"])) {
     return { kind: "add-feature", confidence: "medium" };
   }
-  if (includesAny(tokens, ["explain", "explicar", "entender", "describe", "mapa", "architecture", "arquitetura"])) {
+  if (includesAny(tokens, ["explain", "understand", "explicar", "entender", "describe", "mapa", "architecture", "arquitetura"])) {
     return { kind: "explain", confidence: "high" };
   }
   return { kind: "inspect", confidence: "medium" };
@@ -117,7 +118,7 @@ function labelFor(kind: ForgeIntentKind): string {
 
 function extractResourceName(tokens: string[]): string {
   const afterTrigger = tokens.findIndex((token) =>
-    ["add", "create", "criar", "crie", "make", "resource", "feature", "table"].includes(token),
+    ["add", "add-resource", "create", "criar", "crie", "make", "resource", "feature", "table"].includes(token),
   );
   const candidates = tokens
     .slice(afterTrigger >= 0 ? afterTrigger + 1 : 0)

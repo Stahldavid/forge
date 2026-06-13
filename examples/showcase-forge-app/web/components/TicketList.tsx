@@ -28,7 +28,7 @@ export function TicketList() {
   }
 
   return (
-    <section className="panel stack">
+    <section className="panel stack" data-forge-testid="ticket-list">
       <div>
         <h2>Open tickets</h2>
         <p className="muted">

@@ -408,7 +408,7 @@ function playbooks(): AgentPlaybook[] {
         "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
         "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
         "Run forge generate so frontendGraph and agentContract include routes and bindings.",
-        "Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.",
+        "Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.",
         "Run forge dev --once --json and forge doctor --json.",
       ],
     },
@@ -577,7 +577,7 @@ function buildCapabilityMap(contract: AgentContract): AgentCapabilityMap {
         message: "frontend uses a raw Forge runtime endpoint instead of generated hooks",
         file: binding.file,
         fixHint: "Replace raw runtime fetches with useCommand, useQuery, or useLiveQuery through the local Forge bridge.",
-        suggestedCommands: ["forge do connect-ui --json", "forge inspect capability-map --json"],
+        suggestedCommands: ["forge do connect-ui --json", "forge inspect capabilities --json"],
         docs: ["src/forge/_generated/capabilityMap.md", "src/forge/_generated/frontendGraph.json"],
       }));
       return {
@@ -1152,7 +1152,7 @@ forge dev
 forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -1248,7 +1248,7 @@ Use:
 forge dev --once --json
 forge dev
 forge inspect frontend --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 \`\`\`
 
 \`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
@@ -1619,7 +1619,7 @@ forge dev --once --json
 forge dev
 forge inspect all --json
 forge inspect frontend --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 forge check --json
 \`\`\`
 

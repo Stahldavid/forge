@@ -271,7 +271,7 @@ export async function runInspectCommand(
   const dataPaths: Partial<Record<InspectTarget, string>> = {
     app: `${GENERATED_DIR}/appGraph.json`,
     packages: `${GENERATED_DIR}/packageGraph.json`,
-    capabilities: `${GENERATED_DIR}/runtimeMatrix.json`,
+    capabilities: `${GENERATED_DIR}/capabilityMap.json`,
     "runtime-matrix": `${GENERATED_DIR}/runtimeMatrix.json`,
     data: `${GENERATED_DIR}/dataGraph.json`,
     runtime: `${GENERATED_DIR}/runtimeGraph.json`,

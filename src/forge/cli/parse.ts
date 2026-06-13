@@ -576,6 +576,29 @@ function parseNewPackageManager(value: string | undefined): NewPackageManager {
     : "bun";
 }
 
+function parseDoObjective(rest: string[], argv: string[]): string {
+  const [action, name, ...tail] = rest;
+  if (action === "add-resource") {
+    return [
+      "add",
+      "resource",
+      name ?? "<name>",
+      parseFlag(argv, "--with-ui") ? "with ui" : "",
+      tail.join(" "),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+  }
+  if (action === "understand") {
+    return tail.length > 0 ? ["understand", ...tail].join(" ").trim() : "understand project";
+  }
+  if (action === "connect-ui") {
+    return ["connect", "ui", name, ...tail].filter(Boolean).join(" ").trim();
+  }
+  return rest.join(" ").trim() || "inspect project";
+}
+
 export function parseCli(argv: string[]): ParsedCli {
   const errors: string[] = [];
   const positional = argv.filter((arg) => !arg.startsWith("-"));
@@ -1277,7 +1300,7 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "do": {
-      const objective = rest.join(" ").trim() || "inspect project";
+      const objective = parseDoObjective(rest, argv);
       return {
         command: {
           kind: "do",

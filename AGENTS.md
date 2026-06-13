@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=6c20676780d2128492bff9f4ba9f149b0cb26d7bf18f682568c96e4ef5a91a56 content=99ebb79c397ed849aa1f5d7c7b479973dee97fae319c7dc16c0742d0ea2bc982
+// @forge-generated generator=0.0.0 input=69418484de69a159bdbb79b216f3f22ffd9b6248efdbc7597ea784e01145e4cb content=0205635631ebfdb3324176c54dc9414750278f81d1fcbfb310856f20d4eb4348
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -68,7 +68,7 @@ forge dev
 forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -163,7 +163,7 @@ Use:
 forge dev --once --json
 forge dev
 forge inspect frontend --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 ```
 
 `forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.

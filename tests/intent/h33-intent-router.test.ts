@@ -25,6 +25,30 @@ describe("H33 intent router", () => {
     });
   });
 
+  test("parseCli normalizes structured forge do add-resource", () => {
+    const parsed = parseCli(["do", "add-resource", "notes", "--with-ui", "--json"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "do",
+      options: {
+        objective: "add resource notes with ui",
+        json: true,
+      },
+    });
+  });
+
+  test("parseCli recognizes structured understand intent", () => {
+    const parsed = parseCli(["do", "understand", "--json"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "do",
+      options: {
+        objective: "understand project",
+        json: true,
+      },
+    });
+  });
+
   test("forge do plans a UI-backed resource workflow", async () => {
     const workspace = tempWorkspace("intent-router-resource");
     try {
@@ -42,7 +66,7 @@ describe("H33 intent router", () => {
 
       const result = runForgeDoCommand({
         workspaceRoot: project,
-        objective: "add notes with ui",
+        objective: "add resource notes with ui",
         json: true,
       });
 
