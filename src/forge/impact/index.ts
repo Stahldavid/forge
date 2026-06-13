@@ -1,4 +1,4 @@
-import { dirname, join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -125,6 +125,41 @@ function git(args: string[], workspaceRoot: string): { ok: boolean; files: strin
   };
 }
 
+function gitRoot(workspaceRoot: string): string | null {
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout.trim() || null;
+}
+
+function scopeGitFilesToWorkspace(workspaceRoot: string, files: string[]): string[] {
+  const root = gitRoot(workspaceRoot);
+  if (!root) {
+    return files;
+  }
+  const gitTop = normalize(resolve(root));
+  const workspace = normalize(resolve(workspaceRoot));
+  if (gitTop === workspace) {
+    return files;
+  }
+
+  const prefix = normalize(relative(gitTop, workspace));
+  if (!prefix || prefix.startsWith("..") || prefix.includes(":")) {
+    return files;
+  }
+
+  return files
+    .filter((file) => file.startsWith(`${prefix}/`))
+    .map((file) => file.slice(prefix.length + 1))
+    .filter(Boolean)
+    .sort();
+}
+
 function untrackedFiles(workspaceRoot: string): string[] {
   const result = git(["ls-files", "--others", "--exclude-standard"], workspaceRoot);
   return result.ok ? result.files : [];
@@ -190,7 +225,7 @@ export function detectChangedFiles(
       files.add(file);
     }
   }
-  return { files: [...files].sort(), diagnostics };
+  return { files: scopeGitFilesToWorkspace(workspaceRoot, [...files].sort()), diagnostics };
 }
 
 function addRuntimeUsingTables(args: {

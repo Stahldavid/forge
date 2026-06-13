@@ -98,8 +98,24 @@ function localForgePackageSpec(targetDir: string): string {
   return `file:${relativeRoot.startsWith(".") ? relativeRoot : `./${relativeRoot}`}`;
 }
 
+function packageManagerSpec(packageManager: string): string {
+  switch (packageManager) {
+    case "bun":
+      return "bun@1.3.14";
+    case "npm":
+      return "npm@10.9.0";
+    case "pnpm":
+      return "pnpm@9.15.4";
+    case "yarn":
+      return "yarn@4.6.0";
+    default:
+      return packageManager;
+  }
+}
+
 function replaceTokens(targetDir: string, appName: string, packageManager: string): void {
   const forgePackageSpec = localForgePackageSpec(targetDir);
+  const packageManagerWithVersion = packageManagerSpec(packageManager);
   function walk(dir: string): void {
     for (const entry of nodeFileSystem.readDir(dir)) {
       const absolute = join(dir, entry.name);
@@ -118,6 +134,7 @@ function replaceTokens(targetDir: string, appName: string, packageManager: strin
         .replaceAll("__FORGE_APP_NAME__", appName)
         .replaceAll("__FORGE_APP_TITLE__", displayName(appName))
         .replaceAll("__PACKAGE_MANAGER__", packageManager)
+        .replaceAll("__PACKAGE_MANAGER_SPEC__", packageManagerWithVersion)
         .replaceAll("__FORGE_PACKAGE_SPEC__", forgePackageSpec);
       nodeFileSystem.writeText(absolute, text);
     }
@@ -178,9 +195,9 @@ function lockfileNamesFor(packageManager: NewPackageManager): string[] {
   }
 }
 
-function declaredDependencyNames(targetDir: string): string[] {
+function readPackageDependencyNames(packageJsonPath: string): string[] {
   try {
-    const parsed = JSON.parse(nodeFileSystem.readText(join(targetDir, "package.json")) ?? "{}") as {
+    const parsed = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
     };
@@ -193,20 +210,57 @@ function declaredDependencyNames(targetDir: string): string[] {
   }
 }
 
+function workspacePackageDirs(targetDir: string): string[] {
+  try {
+    const parsed = JSON.parse(nodeFileSystem.readText(join(targetDir, "package.json")) ?? "{}") as {
+      workspaces?: string[] | { packages?: string[] };
+    };
+    const workspaces = Array.isArray(parsed.workspaces)
+      ? parsed.workspaces
+      : Array.isArray(parsed.workspaces?.packages)
+        ? parsed.workspaces.packages
+        : [];
+    return workspaces
+      .filter((workspace) => !workspace.includes("*"))
+      .map((workspace) => join(targetDir, workspace))
+      .filter((workspaceDir) => nodeFileSystem.exists(join(workspaceDir, "package.json")));
+  } catch {
+    return [];
+  }
+}
+
+function dependencyInstallChecks(targetDir: string): Array<{ name: string; candidates: string[] }> {
+  const packageDirs = [targetDir, ...workspacePackageDirs(targetDir)];
+  const checks = new Map<string, string[]>();
+  for (const packageDir of packageDirs) {
+    for (const name of readPackageDependencyNames(join(packageDir, "package.json"))) {
+      const candidates = checks.get(name) ?? [];
+      candidates.push(join(targetDir, "node_modules", name));
+      candidates.push(join(packageDir, "node_modules", name));
+      checks.set(name, candidates);
+    }
+  }
+  return [...checks.entries()]
+    .map(([name, candidates]) => ({
+      name,
+      candidates: [...new Set(candidates)].sort(),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 async function waitForInstallArtifacts(
   targetDir: string,
   packageManager: NewPackageManager,
 ): Promise<void> {
   const lockfiles = lockfileNamesFor(packageManager).map((name) => join(targetDir, name));
-  const dependencyNames = declaredDependencyNames(targetDir);
+  const dependencyChecks = dependencyInstallChecks(targetDir);
   let previousSignature = "";
   let stableReads = 0;
 
   for (let attempt = 0; attempt < 80; attempt++) {
-    const dependencySignature = dependencyNames.map((name) => {
-      const dependencyPath = join(targetDir, "node_modules", name);
-      return `${name}:${nodeFileSystem.exists(dependencyPath) ? "1" : "0"}`;
-    });
+    const dependencySignature = dependencyChecks.map((check) => `${check.name}:${
+      check.candidates.some((candidate) => nodeFileSystem.exists(candidate)) ? "1" : "0"
+    }`);
     const signature = [
       nodeFileSystem.exists(join(targetDir, "node_modules")) ? "node_modules:1" : "node_modules:0",
       ...dependencySignature,

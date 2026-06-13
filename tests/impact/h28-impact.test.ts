@@ -138,6 +138,34 @@ describe("H28 impact-based test planner", () => {
     expect(plan.requiredChecks.map((check) => check.command)).toContain("forge check");
   });
 
+  test("changed files are scoped to nested Forge workspace inside a parent git repo", () => {
+    const parent = workspace();
+    const app = join(parent, "apps", "notes");
+    spawnSync("git", ["init"], { cwd: parent, windowsHide: true });
+    write(parent, "README.md", "parent change");
+    write(app, "src/commands/createTicket.ts", `export async function createTicket(ctx) { await ctx.db.insert("tickets", {}); }`);
+    spawnSync("git", ["add", "README.md", "apps/notes/src/commands/createTicket.ts"], {
+      cwd: parent,
+      windowsHide: true,
+    });
+
+    const graph = buildTestGraph({ workspaceRoot: app, inputHash: "hash", appGraph, packageGraph, sources: [] });
+    writeGenerated(app, graph);
+
+    const report = analyzeImpact({
+      workspaceRoot: app,
+      json: true,
+      write: false,
+      changed: false,
+      staged: true,
+      includeGenerated: false,
+      excludeTests: false,
+    });
+
+    expect(report.changedFiles).toEqual(["src/commands/createTicket.ts"]);
+    expect(report.impacted.runtime.commands).toContain("createTicket");
+  });
+
   test("cost filtering excludes browser tests unless explicitly included", () => {
     const root = workspace();
     spawnSync("git", ["init"], { cwd: root, windowsHide: true });

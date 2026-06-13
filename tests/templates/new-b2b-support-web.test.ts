@@ -71,6 +71,8 @@ describe("b2b-support-web template", () => {
       expect(read(project, "package.json")).toContain('"name": "support-app"');
       expect(read(project, "package.json")).toContain('"forge": "file:');
       expect(read(project, "package.json")).not.toContain('"forge": "latest"');
+      expect(read(project, "package.json")).toContain('"packageManager": "bun@1.3.14"');
+      expect(read(project, "web/package.json")).not.toContain("latest");
       expect(read(project, ".env.example")).toContain("NEXT_PUBLIC_FORGE_URL");
       expect(read(project, ".env.example")).toContain("STRIPE_SECRET_KEY");
       expect(read(project, "AGENTS.md")).toContain("Do not:");

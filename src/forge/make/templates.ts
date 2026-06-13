@@ -476,15 +476,15 @@ export function renderVitePackage(appName: string): string {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^latest",
-    "vite": "^latest",
-    "react": "^latest",
-    "react-dom": "^latest"
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^latest",
-    "@types/react-dom": "^latest",
-    "typescript": "^latest"
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.3"
   }
 }
 `;
