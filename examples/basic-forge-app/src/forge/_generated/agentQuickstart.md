@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=739ba0f87c12550fad1b45ad71912f50583ae738c3e734138d63e8fee290a394
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=fa1107464c1de08135410251aeff7e759a69b11801f8704e9d324b4036fbfa7b
 # Agent Quickstart
 
 Run:
@@ -11,7 +11,7 @@ forge dev --once --json
 forge dev
 forge inspect all --json
 forge inspect frontend --json
-forge inspect capability-map --json
+forge inspect capabilities --json
 forge check --json
 ```
 

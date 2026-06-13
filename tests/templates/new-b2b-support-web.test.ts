@@ -69,6 +69,8 @@ describe("b2b-support-web template", () => {
       expect(existsSync(join(project, "src", "workflows", "triageTicketWorkflow.ts"))).toBe(true);
 
       expect(read(project, "package.json")).toContain('"name": "support-app"');
+      expect(read(project, "package.json")).toContain('"forge": "file:');
+      expect(read(project, "package.json")).not.toContain('"forge": "latest"');
       expect(read(project, ".env.example")).toContain("NEXT_PUBLIC_FORGE_URL");
       expect(read(project, ".env.example")).toContain("STRIPE_SECRET_KEY");
       expect(read(project, "AGENTS.md")).toContain("Do not:");

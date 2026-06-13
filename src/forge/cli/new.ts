@@ -1,5 +1,6 @@
 import { cpSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
@@ -88,7 +89,17 @@ function displayName(name: string): string {
     .join(" ");
 }
 
+function localForgePackageSpec(targetDir: string): string {
+  const root = repoRoot();
+  const relativeRoot = relative(targetDir, root).replace(/\\/g, "/");
+  if (!relativeRoot || relativeRoot.includes(":")) {
+    return pathToFileURL(root).href;
+  }
+  return `file:${relativeRoot.startsWith(".") ? relativeRoot : `./${relativeRoot}`}`;
+}
+
 function replaceTokens(targetDir: string, appName: string, packageManager: string): void {
+  const forgePackageSpec = localForgePackageSpec(targetDir);
   function walk(dir: string): void {
     for (const entry of nodeFileSystem.readDir(dir)) {
       const absolute = join(dir, entry.name);
@@ -106,7 +117,8 @@ function replaceTokens(targetDir: string, appName: string, packageManager: strin
       const text = (nodeFileSystem.readText(absolute) ?? "")
         .replaceAll("__FORGE_APP_NAME__", appName)
         .replaceAll("__FORGE_APP_TITLE__", displayName(appName))
-        .replaceAll("__PACKAGE_MANAGER__", packageManager);
+        .replaceAll("__PACKAGE_MANAGER__", packageManager)
+        .replaceAll("__FORGE_PACKAGE_SPEC__", forgePackageSpec);
       nodeFileSystem.writeText(absolute, text);
     }
   }
@@ -151,6 +163,75 @@ async function spawnCommand(
     stdin: "ignore",
   });
   return child.exited;
+}
+
+function lockfileNamesFor(packageManager: NewPackageManager): string[] {
+  switch (packageManager) {
+    case "bun":
+      return ["bun.lock", "bun.lockb"];
+    case "npm":
+      return ["package-lock.json"];
+    case "pnpm":
+      return ["pnpm-lock.yaml"];
+    case "yarn":
+      return ["yarn.lock"];
+  }
+}
+
+function declaredDependencyNames(targetDir: string): string[] {
+  try {
+    const parsed = JSON.parse(nodeFileSystem.readText(join(targetDir, "package.json")) ?? "{}") as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    return Object.keys({
+      ...(parsed.dependencies ?? {}),
+      ...(parsed.devDependencies ?? {}),
+    }).sort();
+  } catch {
+    return [];
+  }
+}
+
+async function waitForInstallArtifacts(
+  targetDir: string,
+  packageManager: NewPackageManager,
+): Promise<void> {
+  const lockfiles = lockfileNamesFor(packageManager).map((name) => join(targetDir, name));
+  const dependencyNames = declaredDependencyNames(targetDir);
+  let previousSignature = "";
+  let stableReads = 0;
+
+  for (let attempt = 0; attempt < 80; attempt++) {
+    const dependencySignature = dependencyNames.map((name) => {
+      const dependencyPath = join(targetDir, "node_modules", name);
+      return `${name}:${nodeFileSystem.exists(dependencyPath) ? "1" : "0"}`;
+    });
+    const signature = [
+      nodeFileSystem.exists(join(targetDir, "node_modules")) ? "node_modules:1" : "node_modules:0",
+      ...dependencySignature,
+      ...lockfiles.map((path) => {
+        if (!nodeFileSystem.exists(path)) {
+          return `${path}:missing`;
+        }
+        const file = Bun.file(path);
+        return `${path}:${file.size}`;
+      }),
+    ].join("|");
+
+    const dependenciesReady = dependencySignature.every((entry) => entry.endsWith(":1"));
+    if (signature === previousSignature && signature.includes("node_modules:1") && dependenciesReady) {
+      stableReads += 1;
+      if (stableReads >= 2) {
+        return;
+      }
+    } else {
+      stableReads = 0;
+      previousSignature = signature;
+    }
+
+    await Bun.sleep(100);
+  }
 }
 
 export async function runNewCommand(options: NewCommandOptions): Promise<NewCommandResult> {
@@ -228,18 +309,25 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
         nextSteps: [],
       };
     }
+    await waitForInstallArtifacts(targetDir, options.packageManager);
   }
 
   let generated = false;
   if (nodeFileSystem.exists(join(targetDir, "node_modules"))) {
-    const generate = await runGenerate({
-      workspaceRoot: targetDir,
-      check: false,
-      dryRun: false,
-      json: false,
-      concurrency: 4,
-    });
-    generated = generate.exitCode === 0;
+    if (installed) {
+      await waitForInstallArtifacts(targetDir, options.packageManager);
+      const generateCode = await spawnCommand(options.packageManager, ["run", "generate"], targetDir);
+      generated = generateCode === 0;
+    } else {
+      const generate = await runGenerate({
+        workspaceRoot: targetDir,
+        check: false,
+        dryRun: false,
+        json: false,
+        concurrency: 4,
+      });
+      generated = generate.exitCode === 0;
+    }
     if (!generated) {
       return {
         name: options.name,
@@ -251,7 +339,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
         generated,
         gitHygiene: analyzeGitHygiene(targetDir),
         exitCode: 1,
-        message: `forge generate failed: ${generate.errors.map((error) => error.message).join("; ")}`,
+        message: "forge generate failed",
         nextSteps: [],
       };
     }

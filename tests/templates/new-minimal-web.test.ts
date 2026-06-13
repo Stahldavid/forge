@@ -57,6 +57,8 @@ describe("minimal-web template", () => {
       expect(read(project, ".gitignore")).toContain(".forge/refactors/");
       expect(read(project, ".gitignore")).toContain(".forge/upgrades/");
       expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
+      expect(read(project, "package.json")).toContain('"forge": "file:');
+      expect(read(project, "package.json")).not.toContain('"forge": "latest"');
       expect(read(project, "src/commands/createNote.ts")).toContain("note.created");
       expect(read(project, "src/queries/listNotes.ts")).toContain("listNotes");
       expect(read(project, "src/queries/liveNotes.ts")).toContain("liveNotes");

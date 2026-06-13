@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=082e6a1652475c1de1ff3422c17fcd3988979f7b53d770f0d42e1cb59c6b0822
+// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=944f9f0e36cef8cc9cacaea035fdbd6be6a9587eec5bdd6584add634a6fbc31c
 export const agentContract = {
   "actions": [
     {
@@ -758,7 +758,7 @@ export const agentContract = {
         "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
         "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
         "Run forge generate so frontendGraph and agentContract include routes and bindings.",
-        "Run forge inspect capability-map --json to confirm UI actions map to runtime capabilities.",
+        "Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.",
         "Run forge dev --once --json and forge doctor --json."
       ],
       "title": "Add or update frontend"
