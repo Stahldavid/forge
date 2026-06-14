@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=d73a07e98759afd88ec9ac2c9a84b02052fb0c60a58b8f4da57fce02830b8f58 content=dc8782edd332c31786f4fef322384d566de8d4f56d5a042a04755e342d4da6bb
+// @forge-generated generator=0.0.0 input=c66c98a8c537973af073e7571f522683b815b3f5adafa2cc9a3135b370a91b9e content=02a245c1275eb50b8662f6ce09b9cb2506c03f0c2db2b7b6456ae50f72a327ee
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -192,6 +192,8 @@ Use:
 forge refactor rename field tickets.priority tickets.urgency --dry-run --json
 forge refactor rename field tickets.priority tickets.urgency --yes
 ```
+
+These codemods are AST-aware for `extract-action`, `rename field`, and `rename table`. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
 
 Never edit `src/forge/_generated/**` directly. Review migration hints before applying field or table renames.
 

@@ -165,9 +165,36 @@ describe("H27 safe refactor", () => {
     }
   });
 
-  test("rename field rewrites structured TS/JSX/JSON references without renaming locals", async () => {
+  test("rename field rewrites only table-scoped TS/JSON references without renaming locals", async () => {
     const root = scaffoldRefactorWorkspace("h27-field-ast");
     try {
+      writeFileSync(
+        join(root, "src", "forge", "schema.ts"),
+        `
+          import { defineTable } from "forge/server";
+          export const tenants = defineTable({
+            name: "tenants",
+            fields: { id: "uuid", name: "text" },
+          });
+          export const tickets = defineTable({
+            name: "tickets",
+            fields: {
+              id: "uuid",
+              tenantId: "ref:tenants",
+              title: "text",
+              priority: "text",
+            },
+          });
+          export const projects = defineTable({
+            name: "projects",
+            fields: {
+              id: "uuid",
+              priority: "text",
+            },
+          });
+        `,
+        "utf8",
+      );
       writeFileSync(
         join(root, "src", "commands", "updateTicketPriority.ts"),
         `
@@ -197,6 +224,17 @@ describe("H27 safe refactor", () => {
         `,
         "utf8",
       );
+      writeFileSync(
+        join(root, ".forge", "blueprints", "project-priority.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          name: "project-priority",
+          changes: [
+            { kind: "addField", table: "projects", field: { name: "priority", type: "text" } },
+          ],
+        }),
+        "utf8",
+      );
 
       const applied = await runRefactorCommand(
         refactorOptions(root, {
@@ -208,6 +246,14 @@ describe("H27 safe refactor", () => {
       );
 
       expect(applied.ok).toBe(true);
+      const modifiedFiles = applied.plan?.filesToModify.map((patch) => patch.file) ?? [];
+      expect(modifiedFiles).not.toContain("web/components/PriorityBadge.tsx");
+
+      const schemaSource = readFileSync(join(root, "src", "forge", "schema.ts"), "utf8");
+      expect(schemaSource).toContain('urgency: "text"');
+      expect(schemaSource).toContain("export const projects = defineTable");
+      expect(schemaSource).toContain('priority: "text"');
+
       const commandSource = readFileSync(join(root, "src", "commands", "updateTicketPriority.ts"), "utf8");
       expect(commandSource).toContain("const priority = input.urgency;");
       expect(commandSource).toContain("const { urgency: existingPriority } = input;");
@@ -216,14 +262,21 @@ describe("H27 safe refactor", () => {
       expect(commandSource).not.toContain("const urgency = input");
 
       const componentSource = readFileSync(join(root, "web", "components", "PriorityBadge.tsx"), "utf8");
-      expect(componentSource).toMatch(/props:\s*{\s*urgency:\s*string;\s*}/);
-      expect(componentSource).toContain("const priority = props.urgency;");
-      expect(componentSource).toContain('data-field="urgency"');
-      expect(componentSource).toContain("urgency={priority}");
+      expect(componentSource).toContain("props: { priority: string }");
+      expect(componentSource).toContain("const priority = props.priority;");
+      expect(componentSource).toContain('data-field="priority"');
+      expect(componentSource).toContain("priority={priority}");
 
       const blueprintSource = readFileSync(join(root, ".forge", "blueprints", "ticket-priority.json"), "utf8");
       expect(blueprintSource).toContain('"name": "urgency"');
       expect(blueprintSource).not.toContain('"name": "priority"');
+
+      const projectBlueprintSource = readFileSync(join(root, ".forge", "blueprints", "project-priority.json"), "utf8");
+      const projectBlueprint = JSON.parse(projectBlueprintSource) as {
+        changes: Array<{ table: string; field: { name: string } }>;
+      };
+      expect(projectBlueprint.changes[0]?.table).toBe("projects");
+      expect(projectBlueprint.changes[0]?.field.name).toBe("priority");
     } finally {
       cleanupWorkspace(root);
     }

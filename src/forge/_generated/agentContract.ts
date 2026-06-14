@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=c4a632bc3eaecde8bbb6cfeafa34d7b57bcf50b598fc3ade3b96502edb9f1df8 content=c3abf39b00df567744cf27a30425da53b57ae8109c67abafd96ef0eb79781c14
+// @forge-generated generator=0.0.0 input=c66c98a8c537973af073e7571f522683b815b3f5adafa2cc9a3135b370a91b9e content=77f23fe592c8928e54ced514e3ed96f97ff92e9729e49007a28f50acef127e59
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -642,6 +642,8 @@ export const agentContract = {
     {
       "steps": [
         "Run forge refactor rename field <table.field> <table.field> --dry-run --json.",
+        "Rename codemods are AST-aware for extract-action, rename field, and rename table.",
+        "Field renames are scoped to the target table, so tickets.priority only rewrites references linked to tickets.",
         "Review filesToModify, migrationPlan, diagnostics, and risk.",
         "Use --allow-high-risk only for intentional high-risk refactors.",
         "Apply with forge refactor rename field <table.field> <table.field> --yes.",

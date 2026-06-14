@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=c4a632bc3eaecde8bbb6cfeafa34d7b57bcf50b598fc3ade3b96502edb9f1df8 content=37bb960957bf8b52e67f1b6c698246a21a53489af4fdda945402c226f10364d6
+// @forge-generated generator=0.0.0 input=c66c98a8c537973af073e7571f522683b815b3f5adafa2cc9a3135b370a91b9e content=6dd405e3d1dbf89a38afa243593c1f4443d1ce9e86fb69fa12c16140ff3c5dad
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -67,11 +67,13 @@
 ## Safely refactor a feature
 
 1. Run forge refactor rename field <table.field> <table.field> --dry-run --json.
-2. Review filesToModify, migrationPlan, diagnostics, and risk.
-3. Use --allow-high-risk only for intentional high-risk refactors.
-4. Apply with forge refactor rename field <table.field> <table.field> --yes.
-5. Run forge generate.
-6. Run forge verify --strict.
+2. Rename codemods are AST-aware for extract-action, rename field, and rename table.
+3. Field renames are scoped to the target table, so tickets.priority only rewrites references linked to tickets.
+4. Review filesToModify, migrationPlan, diagnostics, and risk.
+5. Use --allow-high-risk only for intentional high-risk refactors.
+6. Apply with forge refactor rename field <table.field> <table.field> --yes.
+7. Run forge generate.
+8. Run forge verify --strict.
 
 ## Plan impact-based tests
 

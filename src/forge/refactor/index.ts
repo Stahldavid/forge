@@ -957,10 +957,89 @@ function isDefineTableCall(expression: ts.Expression | undefined): boolean {
   );
 }
 
-function renameFieldInSource(source: string, file: string, from: string, to: string): string {
+function objectLiteralHasStringProperty(node: ts.ObjectLiteralExpression, key: string, value: string): boolean {
+  return node.properties.some((property) => {
+    if (!ts.isPropertyAssignment(property)) {
+      return false;
+    }
+    if (!ts.isIdentifier(property.name) && !ts.isStringLiteral(property.name)) {
+      return false;
+    }
+    if (property.name.text !== key) {
+      return false;
+    }
+    return ts.isStringLiteralLike(property.initializer) && property.initializer.text === value;
+  });
+}
+
+function callDefinesTable(node: ts.CallExpression, table: string): boolean {
+  if (!isDefineTableCall(node)) {
+    return false;
+  }
+  const firstArg = node.arguments[0];
+  return ts.isObjectLiteralExpression(firstArg) && objectLiteralHasStringProperty(firstArg, "name", table);
+}
+
+function sourceHasDefineTable(source: string, file: string): boolean {
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKindForFile(file));
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (found) {
+      return;
+    }
+    if (ts.isCallExpression(node) && isDefineTableCall(node)) {
+      found = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
+}
+
+function sourceHasFieldTableScope(source: string, file: string, table: string): boolean {
+  if (file.endsWith(".json")) {
+    try {
+      return jsonHasTableScope(JSON.parse(source) as unknown, table);
+    } catch {
+      return source.includes(table);
+    }
+  }
+  if (!isTypeScriptLike(file)) {
+    return source.includes(table);
+  }
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKindForFile(file));
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (found) {
+      return;
+    }
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === table && isDefineTableCall(node.initializer)) {
+      found = true;
+      return;
+    }
+    if (ts.isCallExpression(node) && callDefinesTable(node, table)) {
+      found = true;
+      return;
+    }
+    if (ts.isPropertyAccessExpression(node) && node.name.text === table) {
+      found = true;
+      return;
+    }
+    if (ts.isStringLiteralLike(node) && (node.text === table || node.text.startsWith(`${table}.`))) {
+      found = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
+}
+
+function renameFieldInSource(source: string, file: string, table: string, from: string, to: string): string {
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKindForFile(file));
   const transform: ts.TransformerFactory<ts.SourceFile> = (context) => {
-    const visit: ts.Visitor = (node) => {
+    const renameVisit: ts.Visitor = (node) => {
       if (ts.isPropertyAccessExpression(node) && node.name.text === from) {
         return ts.factory.updatePropertyAccessExpression(node, node.expression, renameIdentifierNode(to));
       }
@@ -968,7 +1047,7 @@ function renameFieldInSource(source: string, file: string, from: string, to: str
         return ts.factory.updatePropertyAssignment(
           node,
           renamePropertyName(node.name, from, to),
-          ts.visitNode(node.initializer, visit, ts.isExpression) ?? node.initializer,
+          ts.visitNode(node.initializer, renameVisit, ts.isExpression) ?? node.initializer,
         );
       }
       if (ts.isShorthandPropertyAssignment(node) && node.name.text === from) {
@@ -1007,9 +1086,36 @@ function renameFieldInSource(source: string, file: string, from: string, to: str
       if (ts.isJsxAttribute(node) && ts.isIdentifier(node.name) && node.name.text === from) {
         return ts.factory.updateJsxAttribute(node, ts.factory.createIdentifier(to), node.initializer);
       }
-      return ts.visitEachChild(node, visit, context);
+      return ts.visitEachChild(node, renameVisit, context);
     };
-    return (node) => ts.visitNode(node, visit) as ts.SourceFile;
+    const hasDefineTable = sourceHasDefineTable(source, file);
+    const visit: ts.Visitor = (node) => {
+      if (
+        hasDefineTable &&
+        ts.isVariableDeclaration(node) &&
+        ts.isIdentifier(node.name) &&
+        node.name.text === table &&
+        isDefineTableCall(node.initializer)
+      ) {
+        return ts.factory.updateVariableDeclaration(
+          node,
+          node.name,
+          node.exclamationToken,
+          node.type,
+          ts.visitNode(node.initializer, renameVisit, ts.isExpression) ?? node.initializer,
+        );
+      }
+      if (hasDefineTable && ts.isCallExpression(node) && callDefinesTable(node, table)) {
+        const firstArg = node.arguments[0];
+        const updatedFirstArg = ts.visitNode(firstArg, renameVisit, ts.isExpression) ?? firstArg;
+        return ts.factory.updateCallExpression(node, node.expression, node.typeArguments, [
+          updatedFirstArg,
+          ...node.arguments.slice(1),
+        ]);
+      }
+      return ts.visitEachChild(node, hasDefineTable ? visit : renameVisit, context);
+    };
+    return (node) => ts.visitNode(node, hasDefineTable ? visit : renameVisit) as ts.SourceFile;
   };
   const result = ts.transform(sourceFile, [transform]);
   try {
@@ -1123,12 +1229,59 @@ function renameInJson(source: string, from: string, to: string, prefixMode: bool
   return `${JSON.stringify(renameJsonValue(parsed, from, to, prefixMode), null, 2)}\n`;
 }
 
+function jsonHasTableScope(value: unknown, table: string): boolean {
+  if (typeof value === "string") {
+    return value === table || value.startsWith(`${table}.`);
+  }
+  if (Array.isArray(value)) {
+    return value.some((entry) => jsonHasTableScope(entry, table));
+  }
+  if (value && typeof value === "object") {
+    return Object.entries(value).some(([key, entry]) => key === table || jsonHasTableScope(entry, table));
+  }
+  return false;
+}
+
+function objectHasTableScope(value: Record<string, unknown>, table: string): boolean {
+  const tableValue = value.table;
+  if (typeof tableValue === "string" && tableValue === table) {
+    return true;
+  }
+  const nameValue = value.name;
+  return typeof nameValue === "string" && nameValue === table;
+}
+
+function renameFieldJsonValue(value: unknown, table: string, from: string, to: string, inTableScope: boolean): unknown {
+  if (typeof value === "string") {
+    return inTableScope ? renameStringValue(value, from, to, false) : value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => renameFieldJsonValue(entry, table, from, to, inTableScope));
+  }
+  if (value && typeof value === "object") {
+    const source = value as Record<string, unknown>;
+    const scoped = inTableScope || objectHasTableScope(source, table);
+    const output: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(source)) {
+      const nextKey = scoped ? renameStringValue(key, from, to, false) : key;
+      output[nextKey] = renameFieldJsonValue(entry, table, from, to, scoped);
+    }
+    return output;
+  }
+  return value;
+}
+
+function renameFieldInJson(source: string, table: string, from: string, to: string): string {
+  const parsed = JSON.parse(source) as unknown;
+  return `${JSON.stringify(renameFieldJsonValue(parsed, table, from, to, false), null, 2)}\n`;
+}
+
 function renameFieldContent(source: string, file: string, intent: Extract<RefactorIntent, { kind: "renameField" }>): string {
   if (isTypeScriptLike(file)) {
-    return renameFieldInSource(source, file, intent.from.field, intent.to.field);
+    return renameFieldInSource(source, file, intent.table, intent.from.field, intent.to.field);
   }
   if (file.endsWith(".json")) {
-    return renameInJson(source, intent.from.field, intent.to.field, false);
+    return renameFieldInJson(source, intent.table, intent.from.field, intent.to.field);
   }
   return wordReplace(source, intent.from.field, intent.to.field);
 }
@@ -1154,6 +1307,9 @@ function buildRenameFieldPlan(workspaceRoot: string, intent: Extract<RefactorInt
   for (const file of files) {
     const content = readText(workspaceRoot, file) ?? "";
     if (!content.includes(intent.from.field)) {
+      continue;
+    }
+    if (!sourceHasFieldTableScope(content, file, intent.table)) {
       continue;
     }
     if (file.endsWith(".md") && !content.includes(intent.table)) {

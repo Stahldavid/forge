@@ -335,6 +335,8 @@ function playbooks(): AgentPlaybook[] {
       title: "Safely refactor a feature",
       steps: [
         "Run forge refactor rename field <table.field> <table.field> --dry-run --json.",
+        "Rename codemods are AST-aware for extract-action, rename field, and rename table.",
+        "Field renames are scoped to the target table, so tickets.priority only rewrites references linked to tickets.",
         "Review filesToModify, migrationPlan, diagnostics, and risk.",
         "Use --allow-high-risk only for intentional high-risk refactors.",
         "Apply with forge refactor rename field <table.field> <table.field> --yes.",
@@ -1277,6 +1279,8 @@ Use:
 forge refactor rename field tickets.priority tickets.urgency --dry-run --json
 forge refactor rename field tickets.priority tickets.urgency --yes
 \`\`\`
+
+These codemods are AST-aware for \`extract-action\`, \`rename field\`, and \`rename table\`. Field renames are scoped to the target table, so \`tickets.priority\` only rewrites references linked to \`tickets\`.
 
 Never edit \`src/forge/_generated/**\` directly. Review migration hints before applying field or table renames.
 
