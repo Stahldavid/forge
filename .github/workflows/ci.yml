@@ -25,7 +25,7 @@ jobs:
       - name: Node CLI smoke
         run: |
           node ./bin/forge.mjs inspect framework --json
-          node ./bin/forge.mjs doctor --json
+          node ./bin/forge.mjs inspect capabilities --json
 
       - name: Typecheck
         run: bun run typecheck
@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           node ./bin/forge.mjs inspect framework --json
-          node ./bin/forge.mjs doctor --json
+          node ./bin/forge.mjs inspect capabilities --json
 
       - name: Windows native diagnostics
         if: runner.os == 'Windows'
