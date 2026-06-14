@@ -4,7 +4,10 @@ import { spawn } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
-import { FORGE_VERIFY_POLICY } from "../compiler/diagnostics/codes.ts";
+import {
+  FORGE_VERIFY_POLICY,
+  FORGE_VERIFY_SCRIPT_TIMEOUT,
+} from "../compiler/diagnostics/codes.ts";
 import { detectPackageManager } from "../compiler/package-manager/detect.ts";
 import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 import { runCheckCommand, runGenerateCommand } from "./commands.ts";
@@ -21,6 +24,8 @@ interface PackageScripts {
   test?: string;
   lint?: string;
 }
+
+const DEFAULT_SCRIPT_TIMEOUT_MS = 30 * 60 * 1000;
 
 function readPackageScripts(workspaceRoot: string): PackageScripts {
   const packageJsonPath = join(workspaceRoot, "package.json");
@@ -41,11 +46,22 @@ function readPackageScripts(workspaceRoot: string): PackageScripts {
 async function spawnPackageRun(
   workspaceRoot: string,
   scriptName: string,
-): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  timeoutMs: number,
+): Promise<{
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  command: string;
+  durationMs: number;
+  timedOut: boolean;
+}> {
   const packageManager = detectPackageManager(workspaceRoot);
   const argv = resolvePackageManagerArgv([packageManager, "run", scriptName]);
+  const started = Date.now();
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+    let timedOut = false;
     const child = spawn(argv[0]!, argv.slice(1), {
       cwd: workspaceRoot,
       env: process.env,
@@ -55,15 +71,41 @@ async function spawnPackageRun(
 
     let stdout = "";
     let stderr = "";
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try {
+        child.kill();
+      } catch {
+        // Process may already have exited.
+      }
+    }, timeoutMs);
+
     child.stdout?.on("data", (chunk) => {
       stdout += String(chunk);
     });
     child.stderr?.on("data", (chunk) => {
       stderr += String(chunk);
     });
-    child.on("error", reject);
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    });
     child.on("close", (code) => {
-      resolve({ exitCode: code ?? 1, stdout, stderr });
+      clearTimeout(timer);
+      if (!settled) {
+        settled = true;
+        resolve({
+          exitCode: timedOut ? 1 : code ?? 1,
+          stdout,
+          stderr,
+          command: argv.join(" "),
+          durationMs: Date.now() - started,
+          timedOut,
+        });
+      }
     });
   });
 }
@@ -71,8 +113,16 @@ async function spawnPackageRun(
 async function runPackageScript(
   workspaceRoot: string,
   scriptName: string,
-): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  return spawnPackageRun(workspaceRoot, scriptName);
+  timeoutMs: number,
+): Promise<{
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  command: string;
+  durationMs: number;
+  timedOut: boolean;
+}> {
+  return spawnPackageRun(workspaceRoot, scriptName, timeoutMs);
 }
 
 function skippedStep(name: string, reason: string): VerifyStep {
@@ -82,6 +132,39 @@ function skippedStep(name: string, reason: string): VerifyStep {
     skipped: true,
     skipReason: reason,
   };
+}
+
+function resolveScriptTimeoutMs(options: VerifyOptions): number {
+  if (options.scriptTimeoutMs && Number.isFinite(options.scriptTimeoutMs)) {
+    return options.scriptTimeoutMs;
+  }
+  const fromEnv = process.env.FORGE_VERIFY_SCRIPT_TIMEOUT_MS;
+  if (fromEnv) {
+    const parsed = Number(fromEnv);
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      return Math.floor(parsed);
+    }
+  }
+  return DEFAULT_SCRIPT_TIMEOUT_MS;
+}
+
+function printProgress(options: VerifyOptions, message: string): void {
+  if (!options.json) {
+    console.error(message);
+  }
+}
+
+function timedOutDiagnostic(scriptName: string, timeoutMs: number): Diagnostic {
+  return createDiagnostic({
+    severity: "error",
+    code: FORGE_VERIFY_SCRIPT_TIMEOUT,
+    message: `${scriptName} script timed out after ${timeoutMs}ms`,
+    suggestedCommands: [
+      `forge verify --skip-tests --skip-eslint --script-timeout-ms ${timeoutMs}`,
+      "forge test plan --changed --json",
+      "forge verify --changed",
+    ],
+  });
 }
 
 export function configuredAgentTargets(workspaceRoot: string): AgentAdapterTarget[] {
@@ -104,9 +187,11 @@ export function configuredAgentTargets(workspaceRoot: string): AgentAdapterTarge
 export async function runVerifyCommand(
   options: VerifyOptions,
 ): Promise<VerifyResult> {
+  const started = Date.now();
   const steps: VerifyStep[] = [];
   const diagnostics: Diagnostic[] = [];
   const scripts = readPackageScripts(options.workspaceRoot);
+  const scriptTimeoutMs = resolveScriptTimeoutMs(options);
 
   if (options.changed) {
     const plan = buildImpactTestPlan({
@@ -139,9 +224,11 @@ export async function runVerifyCommand(
       );
     }
     const ok = record.failed.length === 0;
-    return { ok, steps, diagnostics, exitCode: ok ? 0 : 1 };
+    return { ok, steps, diagnostics, durationMs: Date.now() - started, exitCode: ok ? 0 : 1 };
   }
 
+  printProgress(options, "verify: generate-check");
+  const generateStarted = Date.now();
   const generateCheck = await runGenerateCommand({
     workspaceRoot: options.workspaceRoot,
     check: true,
@@ -153,14 +240,18 @@ export async function runVerifyCommand(
     name: "generate-check",
     ok: generateCheck.exitCode === 0,
     exitCode: generateCheck.exitCode,
+    durationMs: Date.now() - generateStarted,
   });
   steps.push({
     name: "agent-contract-check",
     ok: generateCheck.exitCode === 0,
     exitCode: generateCheck.exitCode,
+    durationMs: Date.now() - generateStarted,
   });
   diagnostics.push(...generateCheck.errors, ...generateCheck.warnings);
 
+  printProgress(options, "verify: forge-check");
+  const checkStarted = Date.now();
   const forgeCheck = await runCheckCommand(options.workspaceRoot, {
     strictSecrets: options.strict,
   });
@@ -168,10 +259,13 @@ export async function runVerifyCommand(
     name: "forge-check",
     ok: forgeCheck.exitCode === 0,
     exitCode: forgeCheck.exitCode,
+    durationMs: Date.now() - checkStarted,
   });
   diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);
 
   if (options.strict || options.standard) {
+    printProgress(options, "verify: policy-check-strict");
+    const policyStarted = Date.now();
     const policyCheck = await runPolicyCommand({
       subcommand: "check",
       workspaceRoot: options.workspaceRoot,
@@ -182,6 +276,7 @@ export async function runVerifyCommand(
       name: "policy-check-strict",
       ok: policyCheck.exitCode === 0,
       exitCode: policyCheck.exitCode,
+      durationMs: Date.now() - policyStarted,
     });
     if (policyCheck.diagnostics) {
       diagnostics.push(...policyCheck.diagnostics);
@@ -196,6 +291,8 @@ export async function runVerifyCommand(
       );
     }
 
+    printProgress(options, "verify: auth-check");
+    const authStarted = Date.now();
     const authCheck = await runAuthCommand({
       subcommand: "check",
       workspaceRoot: options.workspaceRoot,
@@ -205,6 +302,7 @@ export async function runVerifyCommand(
       name: "auth-check",
       ok: authCheck.exitCode === 0,
       exitCode: authCheck.exitCode,
+      durationMs: Date.now() - authStarted,
     });
     if (!authCheck.ok && authCheck.error) {
       diagnostics.push(
@@ -216,6 +314,8 @@ export async function runVerifyCommand(
       );
     }
 
+    printProgress(options, "verify: rls-check");
+    const rlsStarted = Date.now();
     const rlsCheck = await runRlsCommand({
       subcommand: "check",
       workspaceRoot: options.workspaceRoot,
@@ -226,6 +326,7 @@ export async function runVerifyCommand(
       name: "rls-check",
       ok: rlsCheck.exitCode === 0,
       exitCode: rlsCheck.exitCode,
+      durationMs: Date.now() - rlsStarted,
     });
     diagnostics.push(...rlsCheck.diagnostics);
 
@@ -260,12 +361,19 @@ export async function runVerifyCommand(
   } else if (!scripts.typecheck) {
     steps.push(skippedStep("typecheck", "no typecheck script in package.json"));
   } else {
-    const typecheck = await runPackageScript(options.workspaceRoot, "typecheck");
+    printProgress(options, `verify: typecheck (${scriptTimeoutMs}ms timeout)`);
+    const typecheck = await runPackageScript(options.workspaceRoot, "typecheck", scriptTimeoutMs);
     steps.push({
       name: "typecheck",
       ok: typecheck.exitCode === 0,
       exitCode: typecheck.exitCode,
+      command: typecheck.command,
+      durationMs: typecheck.durationMs,
+      timedOut: typecheck.timedOut,
     });
+    if (typecheck.timedOut) {
+      diagnostics.push(timedOutDiagnostic("typecheck", scriptTimeoutMs));
+    }
     if (typecheck.exitCode !== 0) {
       diagnostics.push(
         createDiagnostic({
@@ -284,12 +392,19 @@ export async function runVerifyCommand(
   } else if (!scripts.test) {
     steps.push(skippedStep("tests", "no test script in package.json"));
   } else {
-    const tests = await runPackageScript(options.workspaceRoot, "test");
+    printProgress(options, `verify: tests (${scriptTimeoutMs}ms timeout)`);
+    const tests = await runPackageScript(options.workspaceRoot, "test", scriptTimeoutMs);
     steps.push({
       name: "tests",
       ok: tests.exitCode === 0,
       exitCode: tests.exitCode,
+      command: tests.command,
+      durationMs: tests.durationMs,
+      timedOut: tests.timedOut,
     });
+    if (tests.timedOut) {
+      diagnostics.push(timedOutDiagnostic("test", scriptTimeoutMs));
+    }
     if (tests.exitCode !== 0) {
       diagnostics.push(
         createDiagnostic({
@@ -320,6 +435,7 @@ export async function runVerifyCommand(
     ok,
     steps,
     diagnostics,
+    durationMs: Date.now() - started,
     exitCode: ok ? 0 : 1,
   };
 }

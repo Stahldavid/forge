@@ -5,7 +5,30 @@ import { executeCommand } from "./commands.ts";
 import { hasUnknownOption, parseCli } from "./parse.ts";
 import { formatJsonResult } from "./output.ts";
 
+function formatHelp(): string {
+  return [
+    "ForgeOS",
+    "",
+    "Start with one of these:",
+    "  forge dev                 Run API, DB/worker, watch, and web app when present",
+    "  forge dev --once --json   One-shot health/diagnostic loop for agents and CI",
+    "  forge do \"fix\" --json     Ask ForgeOS for the right workflow and commands",
+    "  forge inspect all --json  Read the generated machine contract",
+    "",
+    "Useful next commands:",
+    "  forge generate",
+    "  forge check --json",
+    "  forge verify --strict",
+    "",
+  ].join("\n");
+}
+
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
+  if (argv.length === 0 || argv.includes("--help") || argv.includes("-h")) {
+    process.stdout.write(formatHelp());
+    return 0;
+  }
+
   const unknown = hasUnknownOption(argv);
   if (unknown) {
     const diagnostic = createDiagnostic({

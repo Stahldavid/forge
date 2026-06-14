@@ -127,6 +127,9 @@ export interface VerifyStep {
   skipped?: boolean;
   skipReason?: string;
   exitCode?: number;
+  command?: string;
+  durationMs?: number;
+  timedOut?: boolean;
 }
 
 export interface VerifyOptions {
@@ -139,11 +142,13 @@ export interface VerifyOptions {
   changed?: boolean;
   fast?: boolean;
   standard?: boolean;
+  scriptTimeoutMs?: number;
 }
 
 export interface VerifyResult {
   ok: boolean;
   steps: VerifyStep[];
   diagnostics: Diagnostic[];
+  durationMs?: number;
   exitCode: 0 | 1;
 }

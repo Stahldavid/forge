@@ -1422,6 +1422,15 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     case "verify":
+      {
+        const scriptTimeoutRaw = parseOptionValue(argv, "--script-timeout-ms");
+        const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;
+        if (
+          scriptTimeoutRaw !== undefined &&
+          (!Number.isFinite(scriptTimeoutMs) || scriptTimeoutMs! < 1)
+        ) {
+          errors.push("--script-timeout-ms must be a number >= 1");
+        }
       return {
         command: {
           kind: "verify",
@@ -1435,11 +1444,13 @@ export function parseCli(argv: string[]): ParsedCli {
             changed: parseFlag(argv, "--changed"),
             fast: parseFlag(argv, "--fast"),
             standard: parseFlag(argv, "--standard"),
+            scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,
           },
         },
         workspaceRoot,
         errors,
       };
+      }
     case "run": {
       if (rest[0] === "query") {
         const queryName = rest[1];
@@ -1920,6 +1931,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--commit-friendly",
     "--fast",
     "--standard",
+    "--script-timeout-ms",
     "--apply",
     "--runtime-inspect",
     "--allow-scripts",

@@ -49,6 +49,7 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
     ok: result.ok,
     steps: result.steps,
     diagnostics: result.diagnostics,
+    durationMs: result.durationMs ?? null,
     exitCode: result.exitCode,
   };
 }
@@ -59,7 +60,12 @@ export function writeHumanVerify(result: VerifyResult): void {
       console.log(`skip ${step.name}: ${step.skipReason}`);
       continue;
     }
-    console.log(`${step.ok ? "ok" : "fail"} ${step.name}`);
+    const suffix = [
+      step.durationMs !== undefined ? `${step.durationMs}ms` : null,
+      step.timedOut ? "timed out" : null,
+      step.command ? step.command : null,
+    ].filter(Boolean).join(" ");
+    console.log(`${step.ok ? "ok" : "fail"} ${step.name}${suffix ? ` (${suffix})` : ""}`);
   }
 
   for (const diagnostic of result.diagnostics) {

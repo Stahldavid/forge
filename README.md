@@ -2,7 +2,7 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private MVP, implemented through H41. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, and Node-compatible CLI/runtime paths are present. Public release still needs packaging hardening and deeper AST-first codemods.
+**Status:** private MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, Node-compatible CLI/runtime paths, observable verify timeouts, and quieter template workspaces are present. Public release still needs packaging hardening and deeper AST-first codemods.
 
 ## Agent-First Quickstart
 
@@ -50,6 +50,7 @@ npm run dev -- --open
 `forge dev` starts the API runtime and the web dev server together when a `web/` app exists. The `--once --json` mode is the central agent/CI diagnostic entrypoint: it checks generated drift, guardrails, frontend routes/bindings, doctor status, impact, and the last test/UI reports in one deterministic response.
 
 Template apps ignore `src/forge/_generated/`, `forge.lock`, and operational `.forge/**` work dirs by default so a freshly created app does not flood git or the editor with generated files. Run `forge generate` after checkout or before verification to recreate the agent contract, client SDK, frontend graph, capability map, and runtime manifests.
+Templates also include workspace editor excludes for generated/runtime directories so source files stay visually prominent.
 
 ## What ForgeOS Generates
 
@@ -112,6 +113,7 @@ forge.lock
 | Full-stack map | `frontendGraph` + `capabilityMap` connect routes, components, hooks, runtime entries, tables, policies, and gaps |
 | Dev loop | `forge dev` prints API/Web URLs, phase health, capability coverage, cache status, diagnostics, and next action |
 | Templates | source-only templates and showcase app avoid committing generated artifacts by default |
+| Verification | `forge verify` reports per-step duration/command metadata and times out package scripts predictably |
 
 ## Command Map
 
@@ -145,6 +147,7 @@ Common command groups:
 | `forge generate --check` | Fail on generated drift |
 | `forge check --json` | Validate guardrails and emit diagnostics with fix hints |
 | `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
+| `forge verify --script-timeout-ms <ms>` | Run package scripts with a predictable timeout and machine-readable timeout diagnostics |
 | `forge do "<objective>" --json` | Guided intent router: choose the right workflow, files, risks, and next action |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
 | `forge inspect framework --json` | Inspect ForgeOS framework modules, CLI commands, templates, examples, tests, and preferred entrypoints |
@@ -231,6 +234,7 @@ bun run typecheck
 bun run lint
 bun test tests/<area>
 bun run forge generate --check
+forge verify --changed
 ```
 
 Full gate:
@@ -288,6 +292,7 @@ H38  Fast generated check visibility
 H39  Showcase app
 H40  Windows/runtime hardening
 H41  Node-compatible CLI/runtime
+H42  Verify observability and quieter app workspaces
 ```
 
 ## Remaining Hardening Before Public Release
@@ -295,5 +300,5 @@ H41  Node-compatible CLI/runtime
 - Keep expanding AST-first refactors; avoid broad regex rewrites for semantic TypeScript changes.
 - Reduce command-selection risk with more task routers and richer inline diagnostics.
 - Keep improving native Windows setup and package install smoke coverage.
-- Broaden Node CI coverage across npm, pnpm, and yarn template apps.
+- Broaden package manager CI coverage across pnpm and yarn template apps.
 - Broaden UI bridge coverage with installed Playwright browsers in CI.

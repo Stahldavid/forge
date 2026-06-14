@@ -68,6 +68,13 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       docs: ["src/forge/_generated/uiTestManifest.json"],
     };
   }
+  if (code === "FORGE_VERIFY_SCRIPT_TIMEOUT") {
+    return {
+      fixHint: "Run the timed-out script directly, or use impact-based verification to narrow the check before retrying the full gate.",
+      suggestedCommands: ["forge test plan --changed --json", "forge verify --changed", "forge dev --once --json"],
+      docs: ["AGENTS.md"],
+    };
+  }
   if (code.startsWith("FORGE_FRONTEND_")) {
     return {
       fixHint: "Use the generated frontend bridge and inspect src/forge/_generated/frontendGraph.json before editing UI wiring.",

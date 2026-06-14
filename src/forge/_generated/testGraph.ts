@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=67e4134f97ec6632a76819bf1f852cce2ec4a57aaf9aba200dd198d61999db44
+// @forge-generated generator=0.0.0 input=a0ec79f76048165ca69946760a48c354d4cafd97cbb5596284bd204134ee73b9 content=b197fd696fa2688b48189eecccc03da0feb4b8f02817532db841371cdfa26720
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7",
+  "inputHash": "a0ec79f76048165ca69946760a48c354d4cafd97cbb5596284bd204134ee73b9",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -463,14 +463,16 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "zod"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -478,7 +480,9 @@ export const testGraph = {
       },
       "file": "tests/cli/cli.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages zod"
+      ]
     },
     {
       "confidence": "weak",

@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
+import { writeFileSync } from "node:fs";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
@@ -47,6 +49,24 @@ describe("Forge CLI", () => {
   test("main returns exit 1 for unrecognized command", async () => {
     const code = await main(["not-a-command"]);
     expect(code).toBe(1);
+  });
+
+  test("main prints focused help for empty command", async () => {
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let output = "";
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      output += String(chunk);
+      return true;
+    }) as typeof process.stdout.write;
+
+    try {
+      const code = await main([]);
+      expect(code).toBe(0);
+      expect(output).toContain("forge dev --once --json");
+      expect(output).toContain("forge do \"fix\" --json");
+    } finally {
+      process.stdout.write = originalWrite;
+    }
   });
 
   test("generate --json emits one JSON document on stdout", async () => {
@@ -110,12 +130,15 @@ describe("Forge CLI", () => {
       "--json",
       "--skip-tests",
       "--skip-eslint",
+      "--script-timeout-ms",
+      "1234",
     ]);
     expect(parsed.errors).toEqual([]);
     expect(parsed.command?.kind).toBe("verify");
     if (parsed.command?.kind === "verify") {
       expect(parsed.command.options.skipTests).toBe(true);
       expect(parsed.command.options.skipEslint).toBe(true);
+      expect(parsed.command.options.scriptTimeoutMs).toBe(1234);
     }
   });
 
@@ -204,6 +227,47 @@ describe("Forge CLI", () => {
       const result = await runInspectCommand("app", workspace);
       expect(result.exitCode).toBe(1);
       expect(result.errors[0]?.code).toBe("FORGE_INSPECT_MISSING");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("verify reports package script timeouts", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-verify-timeout");
+    try {
+      const pkgPath = join(workspace, "package.json");
+      writeFileSync(
+        pkgPath,
+        JSON.stringify(
+          {
+            name: "forge-verify-timeout-test",
+            private: true,
+            type: "module",
+            packageManager: "npm@10.9.0",
+            scripts: {
+              typecheck: "node -e \"setTimeout(() => {}, 5000)\"",
+            },
+            dependencies: { zod: "^3.24.0" },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      const result = await runVerifyCommand({
+        workspaceRoot: workspace,
+        json: true,
+        skipTests: true,
+        skipTypecheck: false,
+        skipEslint: true,
+        strict: false,
+        scriptTimeoutMs: 50,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.steps.find((step) => step.name === "typecheck")?.timedOut).toBe(true);
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_SCRIPT_TIMEOUT")).toBe(true);
     } finally {
       cleanupWorkspace(workspace);
     }

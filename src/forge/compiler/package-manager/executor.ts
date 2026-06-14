@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { delimiter, isAbsolute, join } from "node:path";
 import {
   resolveBunExecutable,
   type BunExecutableResolutionOptions,
@@ -27,7 +29,36 @@ export function resolvePackageManagerArgv(
     return [resolveBunExecutable(bunOptions), ...argv.slice(1)];
   }
 
+  const command = argv[0];
+  if (command && process.platform === "win32") {
+    return [resolveWindowsCommand(command), ...argv.slice(1)];
+  }
+
   return argv;
+}
+
+function resolveWindowsCommand(command: string): string {
+  if (
+    command.includes("\\") ||
+    command.includes("/") ||
+    isAbsolute(command) ||
+    /\.[a-z0-9]+$/i.test(command)
+  ) {
+    return command;
+  }
+
+  const pathEntries = (process.env.PATH ?? "").split(delimiter).filter(Boolean);
+  const extensions = [".exe", ".cmd", ".bat", ""];
+  for (const dir of pathEntries) {
+    for (const extension of extensions) {
+      const candidate = join(dir, `${command}${extension}`);
+      if (existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return command;
 }
 
 export class PackageManagerCommandError extends Error {

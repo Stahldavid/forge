@@ -1,0 +1,14 @@
+{
+  "files.exclude": {
+    "**/.forge": true,
+    "**/node_modules": true,
+    "**/src/forge/_generated": true,
+    "**/forge.lock": true
+  },
+  "search.exclude": {
+    "**/.forge": true,
+    "**/node_modules": true,
+    "**/src/forge/_generated": true,
+    "**/forge.lock": true
+  }
+}

@@ -14,6 +14,7 @@ bun run dev
 ```
 
 `forge dev` starts the Forge API, PGlite, worker, watcher, and the Next.js web app together.
+This is the two-minute proof path: install, generate, run `forge dev`, open the web URL, then run `forge dev --once --json` for the machine-readable diagnosis.
 
 Open:
 
@@ -70,3 +71,4 @@ forge.lock
 ```
 
 If these files appear locally, that is normal. They are recreated by ForgeOS.
+The included workspace settings also hide generated/runtime directories from editor search so agents focus on source files first.
