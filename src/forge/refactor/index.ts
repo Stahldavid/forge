@@ -336,6 +336,68 @@ function removeImportForPackage(
   return { spans, found: spans.length > 0 };
 }
 
+function sideEffectImportDiagnostics(
+  sourceFile: ts.SourceFile,
+  commandFile: string,
+  packageName: string,
+): Diagnostic[] {
+  const sideEffectImports = sourceFile.statements.filter(
+    (statement) => isPackageImportDeclaration(statement, packageName) && !statement.importClause,
+  );
+  if (sideEffectImports.length === 0) {
+    return [];
+  }
+  return [
+    createDiagnostic({
+      severity: "error",
+      code: "FORGE_REFACTOR_PATCH_UNSAFE",
+      message: `package '${packageName}' has side-effect import(s) in ${commandFile}`,
+      file: commandFile,
+      fixHint: "Move or remove side-effect imports manually before running extract-action; they cannot be proven local to a command handler.",
+    }),
+  ];
+}
+
+function typeOnlyImportFromMixedPackageImport(
+  statement: ts.ImportDeclaration,
+  packageName: string,
+): ts.ImportDeclaration | undefined {
+  if (!isPackageImportDeclaration(statement, packageName)) {
+    return statement;
+  }
+  const clause = statement.importClause;
+  if (!clause) {
+    return undefined;
+  }
+  if (clause.isTypeOnly) {
+    return statement;
+  }
+  if (!clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) {
+    return undefined;
+  }
+  const typeElements = clause.namedBindings.elements
+    .filter((element) => element.isTypeOnly)
+    .map((element) => ts.factory.createImportSpecifier(
+      false,
+      element.propertyName ? ts.factory.createIdentifier(element.propertyName.text) : undefined,
+      ts.factory.createIdentifier(element.name.text),
+    ));
+  if (typeElements.length === 0) {
+    return undefined;
+  }
+  return ts.factory.updateImportDeclaration(
+    statement,
+    statement.modifiers,
+    ts.factory.createImportClause(
+      true,
+      undefined,
+      ts.factory.createNamedImports(typeElements),
+    ),
+    statement.moduleSpecifier,
+    statement.attributes,
+  );
+}
+
 interface ImportBinding {
   name: string;
   node: ts.Identifier;
@@ -584,11 +646,8 @@ function rewriteExtractActionSource(
   const newBody = createExtractedHandlerBody(ctxName, inputName, intent.eventName);
   const transform: ts.TransformerFactory<ts.SourceFile> = (context) => {
     const visit: ts.Visitor = (node) => {
-      if (
-        ts.isImportDeclaration(node) &&
-        isValueImportDeclarationForPackage(node, intent.packageName)
-      ) {
-        return undefined;
+      if (ts.isImportDeclaration(node) && isPackageImportDeclaration(node, intent.packageName)) {
+        return typeOnlyImportFromMixedPackageImport(node, intent.packageName);
       }
       if (node === handler) {
         if (ts.isArrowFunction(node)) {
@@ -709,6 +768,11 @@ function rewriteExtractActionCommand(
     };
   }
 
+  const sideEffectDiagnostics = sideEffectImportDiagnostics(sourceFile, commandFile, intent.packageName);
+  if (sideEffectDiagnostics.length > 0) {
+    return { diagnostics: sideEffectDiagnostics };
+  }
+
   const usageDiagnostics = importedPackageUsageDiagnostics(sourceFile, checker, commandFile, intent.command, intent.packageName, handler);
   if (usageDiagnostics.length > 0) {
     return { diagnostics: usageDiagnostics };
@@ -723,6 +787,112 @@ function rewriteExtractActionCommand(
   );
 
   return { after, diagnostics: [] };
+}
+
+function safePackageIdentifier(packageName: string): string {
+  const base = packageName
+    .replace(/^@/, "")
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join("");
+  const identifier = `${base || "Package"}Integration`;
+  return /^[A-Za-z_$]/.test(identifier) ? identifier : `Package${identifier}`;
+}
+
+function renderSourceFile(statements: ts.Statement[]): string {
+  const file = ts.factory.createSourceFile(
+    statements,
+    ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+    ts.NodeFlags.None,
+  );
+  const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+  return `${printer.printFile(file)}\n`;
+}
+
+function buildExtractedActionContent(intent: Extract<RefactorIntent, { kind: "extractAction" }>): string {
+  const packageIdentifier = safePackageIdentifier(intent.packageName);
+  const eventType = ts.factory.createTypeReferenceNode("Record", [
+    ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+  ]);
+  const handler = ts.factory.createArrowFunction(
+    [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)],
+    undefined,
+    [
+      ts.factory.createParameterDeclaration(undefined, undefined, "ctx"),
+      ts.factory.createParameterDeclaration(undefined, undefined, "event", undefined, eventType),
+    ],
+    undefined,
+    ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+    ts.factory.createBlock([
+      ts.factory.createExpressionStatement(
+        ts.factory.createVoidExpression(ts.factory.createIdentifier(packageIdentifier)),
+      ),
+      ts.factory.createExpressionStatement(
+        ts.factory.createAwaitExpression(
+          ts.factory.createCallExpression(
+            ts.factory.createPropertyAccessExpression(
+              ts.factory.createPropertyAccessExpression(ts.factory.createIdentifier("ctx"), "telemetry"),
+              "capture",
+            ),
+            undefined,
+            [
+              ts.factory.createStringLiteral(`${intent.actionName}_requested`),
+              ts.factory.createObjectLiteralExpression([
+                ts.factory.createShorthandPropertyAssignment("event"),
+                ts.factory.createPropertyAssignment("integration", ts.factory.createStringLiteral(intent.packageName)),
+              ], true),
+            ],
+          ),
+        ),
+      ),
+      ts.factory.createReturnStatement(
+        ts.factory.createObjectLiteralExpression([
+          ts.factory.createPropertyAssignment("processed", ts.factory.createTrue()),
+        ], false),
+      ),
+    ], true),
+  );
+
+  return renderSourceFile([
+    ts.factory.createImportDeclaration(
+      undefined,
+      ts.factory.createImportClause(
+        false,
+        undefined,
+        ts.factory.createNamedImports([
+          ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("action")),
+        ]),
+      ),
+      ts.factory.createStringLiteral("forge/server"),
+    ),
+    ts.factory.createImportDeclaration(
+      undefined,
+      ts.factory.createImportClause(
+        false,
+        undefined,
+        ts.factory.createNamespaceImport(ts.factory.createIdentifier(packageIdentifier)),
+      ),
+      ts.factory.createStringLiteral(intent.packageName),
+    ),
+    ts.factory.createVariableStatement(
+      [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+      ts.factory.createVariableDeclarationList([
+        ts.factory.createVariableDeclaration(
+          intent.actionName,
+          undefined,
+          undefined,
+          ts.factory.createCallExpression(ts.factory.createIdentifier("action"), undefined, [
+            ts.factory.createObjectLiteralExpression([
+              ts.factory.createPropertyAssignment("event", ts.factory.createStringLiteral(intent.eventName)),
+              ts.factory.createPropertyAssignment("handler", handler),
+            ], true),
+          ]),
+        ),
+      ], ts.NodeFlags.Const),
+    ),
+  ]);
 }
 
 function buildRenameFieldPlan(workspaceRoot: string, intent: Extract<RefactorIntent, { kind: "renameField" }>): {
@@ -931,21 +1101,7 @@ function buildExtractActionPlan(workspaceRoot: string, intent: Extract<RefactorI
     )
     : null;
   const actionFile = `src/actions/${intent.actionName}.ts`;
-  const actionContent = `import { action } from "forge/server";
-import ${intent.packageName === "stripe" ? "Stripe" : intent.packageName} from ${JSON.stringify(intent.packageName)};
-
-export const ${intent.actionName} = action({
-  event: ${JSON.stringify(intent.eventName)},
-
-  handler: async (ctx, event: Record<string, unknown>) => {
-    await ctx.telemetry.capture(${JSON.stringify(`${intent.actionName}_requested`)}, {
-      event,
-    });
-
-    return { processed: true };
-  },
-});
-`;
+  const actionContent = buildExtractedActionContent(intent);
   return {
     patches: commandPatch ? [commandPatch] : [],
     filesToCreate: commandPatch

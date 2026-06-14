@@ -278,6 +278,10 @@ describe("H27 safe refactor", () => {
         'ctx.emit("checkout.requested"',
       );
       expect(existsSync(join(root, "src", "actions", "createCheckoutSession.ts"))).toBe(true);
+      const actionSource = readFileSync(join(root, "src", "actions", "createCheckoutSession.ts"), "utf8");
+      expect(actionSource).toContain('import * as StripeIntegration from "stripe";');
+      expect(actionSource).toContain("void StripeIntegration");
+      expect(actionSource).toContain('integration: "stripe"');
     } finally {
       cleanupWorkspace(root);
     }
@@ -488,7 +492,46 @@ describe("H27 safe refactor", () => {
 
       expect(result.ok).toBe(false);
       expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_PATCH_UNSAFE");
-      expect(result.diagnostics[0]?.message).toContain("no value binding");
+      expect(result.diagnostics[0]?.message).toContain("side-effect import");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("extract-action preserves type-only specifiers from mixed imports", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-preserve-type-import");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import Stripe, { type StripeConfig } from "stripe";
+          import { command } from "forge/server";
+          export const createCheckout = command({
+            handler: async (ctx, input: { planId: string; config: StripeConfig }) => {
+              const stripe = new Stripe("sk_test");
+              return stripe.checkout.sessions.create({ mode: "payment" });
+            },
+          });
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          yes: true,
+        }),
+      );
+
+      expect(result.ok).toBe(true);
+      const commandSource = readFileSync(join(root, "src", "commands", "createCheckout.ts"), "utf8");
+      expect(commandSource).toContain('import type { StripeConfig } from "stripe";');
+      expect(commandSource).not.toContain("import Stripe");
+      expect(commandSource).toContain("config: StripeConfig");
+      expect(commandSource).toContain('ctx.emit("checkout.requested"');
     } finally {
       cleanupWorkspace(root);
     }
