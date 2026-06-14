@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 describe("CI workflow breadth", () => {
   test("covers Node smoke across OS and supported Node majors", () => {
     const workflow = readFileSync(join(process.cwd(), ".github", "workflows", "ci.yml"), "utf8");
+    const npmrc = readFileSync(join(process.cwd(), ".npmrc"), "utf8");
 
     expect(workflow).toContain("node-breadth:");
     expect(workflow).toContain("ubuntu-latest");
@@ -18,5 +19,6 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("--forge-spec \"file:$GITHUB_WORKSPACE\"");
     expect(workflow).toContain("npm run forge -- dev --once --json");
     expect(workflow).toContain("npm run forge -- verify --smoke --json --script-timeout-ms 120000");
+    expect(npmrc).toContain("legacy-peer-deps=true");
   });
 });

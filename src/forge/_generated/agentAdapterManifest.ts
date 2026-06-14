@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=c66c98a8c537973af073e7571f522683b815b3f5adafa2cc9a3135b370a91b9e content=8f6231123a02b0486889b943b62b306eddc91a581f0ac3cf6f489c7c0be1d68b
+// @forge-generated generator=0.0.0 input=2e37c493504bbe4631f1d4fef498ef95e0dd4fab2bf9a7f632bac2e9c60d2178 content=8f6231123a02b0486889b943b62b306eddc91a581f0ac3cf6f489c7c0be1d68b
 export const agentAdapterManifest = {
   "generatorVersion": "0.0.0",
   "schemaVersion": "0.1.0",
