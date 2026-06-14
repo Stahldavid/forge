@@ -30,6 +30,18 @@ async function setupExample(): Promise<void> {
 }
 
 describe("examples/basic-forge-app", () => {
+  test("documents Node-first scripts instead of raw Bun commands", () => {
+    const pkg = JSON.parse(readFileSync(join(EXAMPLE_ROOT, "package.json"), "utf8")) as {
+      scripts?: Record<string, string>;
+    };
+    const readme = readFileSync(join(EXAMPLE_ROOT, "README.md"), "utf8");
+
+    expect(pkg.scripts?.forge).toBe("node ../../bin/forge.mjs");
+    expect(Object.values(pkg.scripts ?? {}).some((script) => script.startsWith("bun "))).toBe(false);
+    expect(readme).toContain("npm run forge:generate");
+    expect(readme).not.toContain("bun run");
+  });
+
   test("generate, check guards, and run commands locally", async () => {
     await setupExample();
 

@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
@@ -7,7 +7,9 @@ import { buildTestGraph } from "../../src/forge/compiler/test-graph/build.ts";
 import type { AppGraph } from "../../src/forge/compiler/types/app-graph.ts";
 import type { PackageGraph } from "../../src/forge/compiler/types/package-graph.ts";
 import type { TestGraph } from "../../src/forge/compiler/types/test-graph.ts";
-import { analyzeImpact, buildImpactTestPlan, formatImpactHuman, formatImpactJson, runImpactTestPlan, runTestCommand } from "../../src/forge/impact/index.ts";
+import { analyzeImpact, buildImpactTestPlan, diagnosticsForImpactTestRun, formatImpactHuman, formatImpactJson, runImpactTestPlan, runTestCommand } from "../../src/forge/impact/index.ts";
+import { run as runGenerate } from "../../src/forge/compiler/orchestrator/run.ts";
+import { cleanupWorkspace, defaultGenerateOptions, scaffoldGenerateWorkspace } from "../orchestrator/helpers.ts";
 
 function workspace(): string {
   const root = join(tmpdir(), `forge-h28-${crypto.randomUUID()}`);
@@ -47,7 +49,7 @@ const packageGraph: PackageGraph = {
   packages: [],
 };
 
-function writeGenerated(root: string, testGraph: TestGraph): void {
+function writeGenerated(root: string, testGraph: TestGraph, packages: PackageGraph = packageGraph): void {
   write(root, "src/forge/_generated/appGraph.json", JSON.stringify(appGraph));
   write(root, "src/forge/_generated/dataGraph.json", JSON.stringify({
     schemaVersion: "0.1.0",
@@ -57,7 +59,7 @@ function writeGenerated(root: string, testGraph: TestGraph): void {
     tables: [{ id: "tickets", name: "tickets", symbolId: "table:tickets", exportName: "tickets", file: "src/forge/schema.ts", fields: [{ name: "title", type: "text" }] }],
     diagnostics: [],
   }));
-  write(root, "src/forge/_generated/packageGraph.json", JSON.stringify(packageGraph));
+  write(root, "src/forge/_generated/packageGraph.json", JSON.stringify(packages));
   write(root, "src/forge/_generated/runtimeGraph.json", JSON.stringify({
     schemaVersion: "0.1.0",
     generatorVersion: "0.0.0",
@@ -207,6 +209,112 @@ describe("H28 impact-based test planner", () => {
     expect(report.impacted.packages).toEqual([]);
   });
 
+  test("volatile Forge runtime state is ignored by changed-file detection", () => {
+    const root = workspace();
+    spawnSync("git", ["init"], { cwd: root, windowsHide: true });
+    write(root, ".forge/locks/generate.lock/owner.json", JSON.stringify({ pid: 123 }));
+    write(root, ".forge/test-runs/last.json", JSON.stringify({ ok: true }));
+    writeGenerated(root, {
+      schemaVersion: "0.1.0",
+      generatorVersion: "0.0.0",
+      analyzerVersion: "test",
+      inputHash: "hash",
+      diagnostics: [],
+      tests: [],
+    });
+
+    const report = analyzeImpact({
+      workspaceRoot: root,
+      json: true,
+      write: false,
+      changed: true,
+      staged: false,
+      includeGenerated: false,
+      excludeTests: false,
+    });
+
+    expect(report.changedFiles).not.toContain(".forge/locks/generate.lock/owner.json");
+    expect(report.changedFiles).not.toContain(".forge/test-runs/last.json");
+  });
+
+  test("package.json script-only changes do not impact every package", () => {
+    const root = workspace();
+    spawnSync("git", ["init"], { cwd: root, windowsHide: true });
+    spawnSync("git", ["config", "user.email", "forge@example.test"], { cwd: root, windowsHide: true });
+    spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: root, windowsHide: true });
+    write(root, "package.json", JSON.stringify({
+      name: "impact-package-json",
+      scripts: { verify: "bun run forge verify" },
+      dependencies: { zod: "^3.25.0" },
+    }, null, 2));
+    const packages: PackageGraph = {
+      ...packageGraph,
+      packages: [{
+        name: "zod",
+        version: "3.25.0",
+        packageManager: "npm",
+        resolutionMode: "nodenext",
+        entrypoints: [],
+        source: "static",
+        contentChecksum: "zod-checksum",
+      }],
+    };
+    writeGenerated(root, {
+      schemaVersion: "0.1.0",
+      generatorVersion: "0.0.0",
+      analyzerVersion: "test",
+      inputHash: "hash",
+      diagnostics: [],
+      tests: [{
+        file: "tests/package/zod.test.ts",
+        kind: "unit",
+        covers: { commands: [], queries: [], liveQueries: [], actions: [], workflows: [], tables: [], policies: [], packages: ["zod"], components: [] },
+        cost: "fast",
+        confidence: "confirmed",
+        reasons: ["covers zod"],
+      }],
+    }, packages);
+    spawnSync("git", ["add", "."], { cwd: root, windowsHide: true });
+    spawnSync("git", ["commit", "-m", "baseline"], { cwd: root, windowsHide: true });
+
+    write(root, "package.json", JSON.stringify({
+      name: "impact-package-json",
+      scripts: { verify: "node ./bin/forge.mjs verify" },
+      dependencies: { zod: "^3.25.0" },
+    }, null, 2));
+
+    const report = analyzeImpact({
+      workspaceRoot: root,
+      json: true,
+      write: false,
+      changed: true,
+      staged: false,
+      includeGenerated: false,
+      excludeTests: false,
+    });
+
+    expect(report.changedFiles).toEqual(["package.json"]);
+    expect(report.impacted.packages).toEqual([]);
+    expect(report.risk.level).not.toBe("high");
+
+    const plan = buildImpactTestPlan({
+      subcommand: "plan",
+      workspaceRoot: root,
+      json: true,
+      write: false,
+      changed: true,
+      staged: false,
+      maxCost: "standard",
+      includeDocker: false,
+      includeBrowser: false,
+      bail: false,
+    });
+    expect(plan.tests.map((test) => test.file)).not.toContain("tests/package/zod.test.ts");
+    expect(plan.requiredChecks.map((check) => check.command)).not.toContain("forge deps upgrade-check --json");
+    expect(plan.optionalChecks.map((check) => check.command)).toContain("forge verify --standard");
+    expect(plan.optionalChecks.some((check) => check.command.includes("bun run"))).toBe(false);
+  });
+
   test("changed weak-confidence test files are still selected", () => {
     const root = workspace();
     spawnSync("git", ["init"], { cwd: root, windowsHide: true });
@@ -242,6 +350,41 @@ describe("H28 impact-based test planner", () => {
     });
 
     expect(plan.tests.map((test) => test.file)).toContain("tests/impact/h28-impact.test.ts");
+  });
+
+  test("test plans use the Node-safe Bun wrapper when it exists", () => {
+    const root = workspace();
+    spawnSync("git", ["init"], { cwd: root, windowsHide: true });
+    write(root, "bin/forge-bun.mjs", "#!/usr/bin/env node\nprocess.exit(0);\n");
+    write(root, "tests/commands/createTicket.test.ts", `test("create ticket", () => {});`);
+    spawnSync("git", ["add", "tests/commands/createTicket.test.ts"], {
+      cwd: root,
+      windowsHide: true,
+    });
+    const graph = buildTestGraph({
+      workspaceRoot: root,
+      inputHash: "hash",
+      appGraph,
+      packageGraph,
+      sources: [],
+    });
+    writeGenerated(root, graph);
+
+    const plan = buildImpactTestPlan({
+      subcommand: "plan",
+      workspaceRoot: root,
+      json: true,
+      write: false,
+      changed: false,
+      staged: true,
+      maxCost: "standard",
+      includeDocker: false,
+      includeBrowser: false,
+      bail: false,
+    });
+
+    expect(plan.tests.find((test) => test.file === "tests/commands/createTicket.test.ts")?.command)
+      .toBe("node ./bin/forge-bun.mjs test tests/commands/createTicket.test.ts");
   });
 
   test("cost filtering excludes browser tests unless explicitly included", () => {
@@ -341,6 +484,34 @@ describe("H28 impact-based test planner", () => {
       } else {
         process.env.FORGE_BUN = previous;
       }
+    }
+  });
+
+  test("targeted runner classifies generated drift", async () => {
+    const root = scaffoldGenerateWorkspace("h28-generated-drift");
+    try {
+      await runGenerate(defaultGenerateOptions(root));
+      const schemaPath = join(root, "src/forge/schema.ts");
+      writeFileSync(schemaPath, `${readFileSync(schemaPath, "utf8")}\n// drift\n`, "utf8");
+      const record = await runImpactTestPlan(root, {
+        schemaVersion: "0.1.0",
+        source: { mode: "changed", base: "HEAD" },
+        changedFiles: ["src/forge/schema.ts"],
+        impacted: { data: { tables: [], fields: [] }, runtime: { commands: [], queries: [], liveQueries: [], actions: [], workflows: [] }, frontend: { components: [], pages: [] }, policies: [], packages: [], generatedArtifacts: [], deploy: [] },
+        risk: { level: "low", reasons: [] },
+        requiredChecks: [{ kind: "forge", command: "forge generate --check", cost: "fast", reason: "generated drift test" }],
+        tests: [],
+        optionalChecks: [],
+        finalVerification: ["forge verify --strict"],
+      }, { bail: false, timeoutMs: 120000 });
+
+      expect(record.failed).toEqual(["forge generate --check"]);
+      expect(record.results[0].failureKind).toBe("generated-drift");
+      expect(diagnosticsForImpactTestRun(record)[0]?.code).toBe("FORGE_IMPACT_GENERATED_DRIFT");
+      expect(diagnosticsForImpactTestRun(record)[0]?.fixHint).toContain("forge generate");
+      expect(diagnosticsForImpactTestRun(record)[0]?.suggestedCommands).toContain("forge verify --changed --json");
+    } finally {
+      cleanupWorkspace(root);
     }
   });
 

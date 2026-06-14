@@ -167,6 +167,12 @@ function untrackedFiles(workspaceRoot: string): string[] {
   return result.ok ? result.files : [];
 }
 
+function isVolatileForgeState(file: string): boolean {
+  const normalized = normalize(file);
+  return normalized.startsWith(".forge/locks/") ||
+    normalized.startsWith(".forge/test-runs/");
+}
+
 function sourceFromOptions(options: ImpactCommandOptions | TestCommandOptions): ImpactSource {
   if (options.staged) return { mode: "staged", base: "index" };
   if (options.since) return { mode: "since", base: options.since };
@@ -227,7 +233,12 @@ export function detectChangedFiles(
       files.add(file);
     }
   }
-  return { files: scopeGitFilesToWorkspace(workspaceRoot, [...files].sort()), diagnostics };
+  return {
+    files: scopeGitFilesToWorkspace(workspaceRoot, [...files].sort()).filter(
+      (file) => !isVolatileForgeState(file),
+    ),
+    diagnostics,
+  };
 }
 
 function addRuntimeUsingTables(args: {
@@ -291,6 +302,80 @@ function isPackageDependencyFile(file: string): boolean {
   ].includes(normalize(file));
 }
 
+const PACKAGE_JSON_DEPENDENCY_KEYS = [
+  "dependencies",
+  "devDependencies",
+  "optionalDependencies",
+  "peerDependencies",
+  "packageManager",
+  "overrides",
+  "resolutions",
+  "engines",
+] as const;
+
+function readHeadFile(workspaceRoot: string, file: string): string | null {
+  const root = gitRoot(workspaceRoot);
+  if (!root) {
+    return null;
+  }
+
+  const relativeToGitRoot = normalize(relative(resolve(root), resolve(workspaceRoot, file)));
+  if (!relativeToGitRoot || relativeToGitRoot.startsWith("..") || relativeToGitRoot.includes(":")) {
+    return null;
+  }
+
+  const result = spawnSync("git", ["show", `HEAD:${relativeToGitRoot}`], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout;
+}
+
+function packageJsonDependencyFingerprint(raw: string): string | null {
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const relevant: Record<string, unknown> = {};
+    for (const key of PACKAGE_JSON_DEPENDENCY_KEYS) {
+      if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+        relevant[key] = parsed[key];
+      }
+    }
+    return canonicalJson(relevant);
+  } catch {
+    return null;
+  }
+}
+
+function packageJsonHasDependencyImpact(workspaceRoot: string): boolean {
+  const current = nodeFileSystem.readText(join(workspaceRoot, "package.json"));
+  const previous = readHeadFile(workspaceRoot, "package.json");
+  if (current === null || previous === null) {
+    return true;
+  }
+
+  const currentFingerprint = packageJsonDependencyFingerprint(current);
+  const previousFingerprint = packageJsonDependencyFingerprint(previous);
+  if (currentFingerprint === null || previousFingerprint === null) {
+    return true;
+  }
+  return currentFingerprint !== previousFingerprint;
+}
+
+function packageDependencyFileImpactsPackages(workspaceRoot: string, file: string): boolean {
+  const normalized = normalize(file);
+  if (!isPackageDependencyFile(normalized)) {
+    return false;
+  }
+  if (normalized !== "package.json") {
+    return true;
+  }
+  return packageJsonHasDependencyImpact(workspaceRoot);
+}
+
 function analyzeFiles(args: {
   workspaceRoot: string;
   files: string[];
@@ -326,6 +411,7 @@ function analyzeFiles(args: {
     }
     const text = fileText(args.workspaceRoot, file);
     const lowered = file.toLowerCase();
+    const packageDependencyImpact = packageDependencyFileImpactsPackages(args.workspaceRoot, file);
 
     if (file === "src/schema.ts" || file === "src/forge/schema.ts" || lowered.includes("datagraph")) {
       for (const table of tableNames) push(impact.data.tables, table);
@@ -346,7 +432,7 @@ function analyzeFiles(args: {
       }
     }
     for (const pkg of packageNames) {
-      if (importsPackage(text, pkg) || isPackageDependencyFile(file)) {
+      if (importsPackage(text, pkg) || packageDependencyImpact) {
         push(impact.packages, pkg);
       }
     }
@@ -488,6 +574,7 @@ function selectTests(
   impact: ImpactedSystems,
   changedFiles: string[],
   options: {
+    workspaceRoot: string;
     maxCost: TestCost;
     includeDocker: boolean;
     includeBrowser: boolean;
@@ -510,8 +597,10 @@ function selectTests(
       intersects(test.covers.components, impact.frontend.components)?.replace(/^/, "covers impacted component ") ??
       intersects(test.covers.packages, impact.packages)?.replace(/^/, "covers impacted package ");
     if (!reason && !changedTestFile) continue;
-    const command = `bun test ${test.file}`;
-    const lastRun = options.lastRunByCommand.get(command);
+    const command = testCommandForFile(options.workspaceRoot, test.file);
+    const legacyCommand = legacyBunTestCommand(test.file);
+    const lastRun =
+      options.lastRunByCommand.get(command) ?? options.lastRunByCommand.get(legacyCommand);
     selected.push({
       file: test.file,
       command,
@@ -530,6 +619,17 @@ function selectTests(
     if (durationBias !== 0) return durationBias;
     return a.file.localeCompare(b.file);
   });
+}
+
+function legacyBunTestCommand(file: string): string {
+  return `bun test ${file}`;
+}
+
+function testCommandForFile(workspaceRoot: string, file: string): string {
+  if (nodeFileSystem.exists(join(workspaceRoot, "bin", "forge-bun.mjs"))) {
+    return `node ./bin/forge-bun.mjs test ${file}`;
+  }
+  return legacyBunTestCommand(file);
 }
 
 function selectUiScenarioChecks(
@@ -610,6 +710,7 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
   const artifacts = loadArtifacts(options.workspaceRoot);
   const lastRunByCommand = readLastRunByCommand(options.workspaceRoot);
   const tests = selectTests(artifacts.testGraph, report.impacted, report.changedFiles, {
+    workspaceRoot: options.workspaceRoot,
     maxCost: options.maxCost,
     includeDocker: options.includeDocker,
     includeBrowser: options.includeBrowser,
@@ -629,7 +730,7 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
     ),
     tests,
     optionalChecks: ([
-      { kind: "script", command: "bun run typecheck", cost: "standard", reason: "TypeScript surface changed" },
+      { kind: "forge", command: "forge verify --standard", cost: "standard", reason: "TypeScript surface changed" },
     ] satisfies TestPlanCheck[]).filter((check) =>
       costAllowed(check.cost, options.maxCost, options.includeDocker, options.includeBrowser),
     ),
@@ -716,9 +817,12 @@ function nodeForgeArgs(binPath: string, args: string[]): { executable: string; a
 
 function addBunTestTimeout(command: string, timeoutMs: number): string {
   const parts = command.split(/\s+/).filter(Boolean);
+  const usesBunWrapper =
+    parts[0] === "node" &&
+    parts[1]?.replace(/\\/g, "/").endsWith("bin/forge-bun.mjs") &&
+    parts[2] === "test";
   if (
-    parts[0] === "bun" &&
-    parts[1] === "test" &&
+    ((parts[0] === "bun" && parts[1] === "test") || usesBunWrapper) &&
     !parts.some((part) => part === "--timeout" || part.startsWith("--timeout="))
   ) {
     return `${command} --timeout ${timeoutMs}`;
@@ -762,6 +866,20 @@ function resolveTestCommandTimeoutMs(timeoutMs?: number): number {
     }
   }
   return DEFAULT_TEST_COMMAND_TIMEOUT_MS;
+}
+
+function inferFailureKind(command: string, exitCode: number, stdout: string, stderr: string): string | undefined {
+  if (exitCode === 0) {
+    return undefined;
+  }
+  const output = `${stdout}\n${stderr}`;
+  if (
+    command.startsWith("forge generate --check") &&
+    output.includes("FORGE_DRIFT")
+  ) {
+    return "generated-drift";
+  }
+  return "test-failure";
 }
 
 function runCommand(workspaceRoot: string, command: string, timeoutMs: number): Promise<TestRunStep> {
@@ -825,7 +943,7 @@ function runCommand(workspaceRoot: string, command: string, timeoutMs: number): 
         exitCode: timedOut ? 1 : code ?? 1,
         durationMs: Date.now() - started,
         timedOut,
-        failureKind: timedOut ? "timeout" : (code ?? 1) === 0 ? undefined : "test-failure",
+        failureKind: timedOut ? "timeout" : inferFailureKind(effectiveCommand, code ?? 1, stdout, stderr),
         stdout,
         stderr,
       });
@@ -901,6 +1019,15 @@ export function diagnosticsForImpactTestRun(run: TestRunRecord): Diagnostic[] {
       "error",
       "FORGE_TEST_COMMAND_RESOLUTION_FAILED",
       `impact-selected command could not be resolved: ${resolutionFailures.map((result) => result.command).join(", ")}`,
+    )];
+  }
+
+  const generatedDrift = run.results.filter((result) => result.failureKind === "generated-drift");
+  if (generatedDrift.length > 0) {
+    return [diag(
+      "error",
+      "FORGE_IMPACT_GENERATED_DRIFT",
+      `generated artifacts are stale: ${generatedDrift.map((result) => result.command).join(", ")}`,
     )];
   }
 

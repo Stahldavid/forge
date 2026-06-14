@@ -130,6 +130,7 @@ export interface VerifyStep {
   command?: string;
   durationMs?: number;
   timedOut?: boolean;
+  failureKind?: string;
 }
 
 export interface VerifyOptions {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildSecretRegistry, buildEnvSchema } from "../../src/forge/compiler/secret-registry/build.ts";
@@ -56,6 +57,7 @@ describe("secret registry generation", () => {
 
   test("buildSecretRegistry collects recipe secrets", async () => {
     const compiler = new PackageGraphCompiler();
+    const cacheDir = mkdtempSync(join(tmpdir(), "forge-secret-registry-cache-"));
     const dep = {
       name: "stripe",
       version: "17.0.0",
@@ -63,23 +65,27 @@ describe("secret registry generation", () => {
       installPath: join(repoRoot, "tests", "fixtures", "packages", "stripe"),
       packageIntegrity: undefined as string | undefined,
     };
-    const api = await compiler.analyze(dep, {
-      runtimeInspect: false,
-      resolutionMode: "nodenext",
-      cacheDir: join(process.cwd(), ".forge-cache-test"),
-      recipeVersion: STRIPE_RECIPE.recipeVersion,
-    });
+    try {
+      const api = await compiler.analyze(dep, {
+        runtimeInspect: false,
+        resolutionMode: "nodenext",
+        cacheDir,
+        recipeVersion: STRIPE_RECIPE.recipeVersion,
+      });
 
-    const classified = {
-      api,
-      classification: classify(api, STRIPE_RECIPE),
-      recipe: STRIPE_RECIPE,
-    };
+      const classified = {
+        api,
+        classification: classify(api, STRIPE_RECIPE),
+        recipe: STRIPE_RECIPE,
+      };
 
-    const registry = buildSecretRegistry([classified]);
-    expect(registry.secrets.map((entry) => entry.name)).toContain("STRIPE_SECRET_KEY");
+      const registry = buildSecretRegistry([classified]);
+      expect(registry.secrets.map((entry) => entry.name)).toContain("STRIPE_SECRET_KEY");
 
-    const envSchema = buildEnvSchema(registry);
-    expect(envSchema.variables.every((variable) => variable.kind === "secret")).toBe(true);
+      const envSchema = buildEnvSchema(registry);
+      expect(envSchema.variables.every((variable) => variable.kind === "secret")).toBe(true);
+    } finally {
+      rmSync(cacheDir, { recursive: true, force: true });
+    }
   });
 });

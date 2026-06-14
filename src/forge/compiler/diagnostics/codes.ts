@@ -1,5 +1,6 @@
 export const FORGE_DUP_SYMBOL = "FORGE_DUP_SYMBOL" as const;
 export const FORGE_DRIFT = "FORGE_DRIFT" as const;
+export const FORGE_GENERATE_LOCKED = "FORGE_GENERATE_LOCKED" as const;
 export const FORGE_PKG_NO_TYPES = "FORGE_PKG_NO_TYPES" as const;
 export const FORGE_GUARD_VIOLATION = "FORGE_GUARD_VIOLATION" as const;
 export const FORGE_SANDBOX_LIMIT = "FORGE_SANDBOX_LIMIT" as const;

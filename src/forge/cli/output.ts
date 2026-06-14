@@ -64,6 +64,7 @@ export function writeHumanVerify(result: VerifyResult): void {
     const suffix = [
       step.durationMs !== undefined ? `${step.durationMs}ms` : null,
       step.timedOut ? "timed out" : null,
+      step.failureKind ? step.failureKind : null,
       step.command ? step.command : null,
     ].filter(Boolean).join(" ");
     console.log(`${step.ok ? "ok" : "fail"} ${step.name}${suffix ? ` (${suffix})` : ""}`);

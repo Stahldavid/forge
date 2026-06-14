@@ -303,7 +303,53 @@ describe("Forge CLI", () => {
 
       expect(result.ok).toBe(false);
       expect(result.steps.find((step) => step.name === "typecheck")?.timedOut).toBe(true);
+      expect(result.steps.find((step) => step.name === "typecheck")?.failureKind).toBe("timeout");
       expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_SCRIPT_TIMEOUT")).toBe(true);
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_TYPECHECK")).toBe(false);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("verify reports package script failure output", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-verify-script-failure");
+    try {
+      const pkgPath = join(workspace, "package.json");
+      writeFileSync(
+        pkgPath,
+        JSON.stringify(
+          {
+            name: "forge-verify-script-failure-test",
+            private: true,
+            type: "module",
+            packageManager: "npm@10.9.0",
+            scripts: {
+              typecheck: "node -e \"console.error('typecheck exploded'); process.exit(7)\"",
+            },
+            dependencies: { zod: "^3.24.0" },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      const result = await runVerifyCommand({
+        workspaceRoot: workspace,
+        json: true,
+        skipTests: true,
+        skipTypecheck: false,
+        skipEslint: true,
+        strict: false,
+        scriptTimeoutMs: 120000,
+      });
+
+      const typecheck = result.steps.find((step) => step.name === "typecheck");
+      const diagnostic = result.diagnostics.find((item) => item.code === "FORGE_VERIFY_TYPECHECK");
+      expect(result.ok).toBe(false);
+      expect(typecheck?.failureKind).toBe("script-failure");
+      expect(diagnostic?.message).toContain("exit code 7");
+      expect(diagnostic?.fixHint).toContain("typecheck exploded");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -346,6 +392,8 @@ describe("Forge CLI", () => {
       expect(result.ok).toBe(false);
       expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_TEST_COMMAND_RESOLUTION_FAILED")).toBe(true);
       expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_CHANGED_INCOMPLETE")).toBe(true);
+      expect(result.steps.find((step) => step.command?.startsWith("bun test tests/changed.test.ts"))?.failureKind)
+        .toBe("command-resolution-error");
     } finally {
       if (previous === undefined) {
         delete process.env.FORGE_BUN;
@@ -354,7 +402,7 @@ describe("Forge CLI", () => {
       }
       cleanupWorkspace(workspace);
     }
-  }, 30000);
+  }, 60_000);
 
   test("verify --standard uses impact tests instead of the full test script", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-verify-standard");

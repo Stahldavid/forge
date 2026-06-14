@@ -92,10 +92,10 @@ describe("detectPackageManager", () => {
     expect(detectPackageManager(root)).toBe("yarn");
   });
 
-  test("defaults to bun when nothing matches", () => {
+  test("defaults to npm when nothing matches", () => {
     const root = makeTempWorkspace();
     writeFileSync(join(root, "package.json"), JSON.stringify({ name: "x" }), "utf8");
-    expect(detectPackageManager(root)).toBe("bun");
+    expect(detectPackageManager(root)).toBe("npm");
   });
 });
 

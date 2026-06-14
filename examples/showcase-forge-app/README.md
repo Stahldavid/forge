@@ -3,14 +3,14 @@
 This is the canonical small app for testing ForgeOS as an agent-native full-stack framework.
 
 It is intentionally source-only: generated files and `forge.lock` are not committed here.
-Run `bun run generate` to recreate them.
+Run `npm run generate` to recreate them.
 
 ## Run
 
 ```bash
-bun install
-bun run generate
-bun run dev
+npm install
+npm run generate
+npm run dev
 ```
 
 `forge dev` starts the Forge API, PGlite, worker, watcher, and the Next.js web app together.
@@ -38,10 +38,10 @@ Open:
 ## Agent Loop
 
 ```bash
-bun run forge do inspect --json
-bun run forge dev --once --json
-bun run forge inspect capability-map --json
-bun run forge verify --strict
+npm run forge -- do inspect --json
+npm run forge -- dev --once --json
+npm run forge -- inspect capability-map --json
+npm run forge -- verify --strict
 ```
 
 The expected happy path is:

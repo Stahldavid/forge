@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   FORGE_DRIFT,
+  FORGE_GENERATE_LOCKED,
   FORGE_ORPHANED_GENERATED_FILE,
 } from "../../src/forge/compiler/diagnostics/codes.ts";
 import {
@@ -172,6 +173,54 @@ describe("run", () => {
       expect(dry.changed.length).toBeGreaterThan(0);
       expect(existsSync(join(workspace, GENERATED_DIR, "appGraph.ts"))).toBe(false);
     } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("reports a clear diagnostic when another generate holds the lock", async () => {
+    const workspace = scaffoldGenerateWorkspace("generate-lock");
+    const priorTimeout = process.env.FORGE_GENERATE_LOCK_TIMEOUT_MS;
+    try {
+      mkdirSync(join(workspace, ".forge", "locks", "generate.lock"), {
+        recursive: true,
+      });
+      process.env.FORGE_GENERATE_LOCK_TIMEOUT_MS = "5";
+
+      const locked = await run(defaultGenerateOptions(workspace));
+      expect(locked.exitCode).toBe(1);
+      expect(locked.failureKind).toBe("generate-lock-timeout");
+      expect(locked.errors.some((d) => d.code === FORGE_GENERATE_LOCKED)).toBe(
+        true,
+      );
+      expect(locked.errors[0]?.fixHint).toContain(".forge/locks/generate.lock");
+    } finally {
+      if (priorTimeout === undefined) {
+        delete process.env.FORGE_GENERATE_LOCK_TIMEOUT_MS;
+      } else {
+        process.env.FORGE_GENERATE_LOCK_TIMEOUT_MS = priorTimeout;
+      }
+      rmSync(join(workspace, ".forge", "locks", "generate.lock"), {
+        recursive: true,
+        force: true,
+      });
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("recovers a stale generate lock when the owner process is gone", async () => {
+    const workspace = scaffoldGenerateWorkspace("generate-stale-lock");
+    const lockPath = join(workspace, ".forge", "locks", "generate.lock");
+    try {
+      mkdirSync(lockPath, { recursive: true });
+      writeFileSync(join(lockPath, "owner.json"), `${JSON.stringify({ pid: 0 })}\n`, "utf8");
+
+      const generated = await run(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+      expect(generated.errors).toHaveLength(0);
+      expect(generated.changed.length).toBeGreaterThan(0);
+      expect(existsSync(lockPath)).toBe(false);
+    } finally {
+      rmSync(lockPath, { recursive: true, force: true });
       cleanupWorkspace(workspace);
     }
   });

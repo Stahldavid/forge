@@ -15,8 +15,8 @@ Demonstrates:
 From this directory:
 
 ```bash
-bun run setup
-bun run forge:generate
+npm run setup
+npm run forge:generate
 ```
 
 `setup` copies vendored type fixtures from the parent repo into `node_modules/` so the example works offline in CI.
@@ -26,7 +26,7 @@ This example is source-only. `src/forge/_generated/`, `forge.lock`, `bun.lock`, 
 ## Verify
 
 ```bash
-bun run verify
+npm run verify
 ```
 
 `forge check` reports `FORGE_GUARD_VIOLATION` for `src/commands/badStripeCommand.ts` because it transitively imports Stripe in a `command` context.
@@ -38,10 +38,10 @@ bun run verify
 After `forge:generate`:
 
 ```bash
-bun run forge:run -- --list
-bun run forge:run createTicket
-bun run forge:run badStripeCommand   # blocked by import guards
-bun run forge:run createCheckout --mock
+npm run forge:run -- --list
+npm run forge:run -- createTicket
+npm run forge:run -- badStripeCommand   # blocked by import guards
+npm run forge:run -- createCheckout --mock
 ```
 
 ## Event-driven flow (H7)
@@ -51,9 +51,9 @@ bun run forge:run createCheckout --mock
 3. The outbox worker (CLI or `forge dev --worker`) runs the subscribed action with the event payload.
 
 ```bash
-bun run forge:run createTicket
-bun run forge outbox list
-bun run forge outbox process --once
+npm run forge:run -- createTicket
+npm run forge -- outbox list
+npm run forge -- outbox process --once
 ```
 
 `src/actions/captureTicketCreated.ts` subscribes to `ticket.created` and returns `{ captured: true, ticketId }`.
@@ -65,10 +65,10 @@ bun run forge outbox process --once
 3. Steps run sequentially: `loadTicket` → `triageWithAI` → `captureAnalytics`.
 
 ```bash
-bun run forge:run createTicket
-bun run forge workflow list
-bun run forge workflow process --once
-bun run forge workflow inspect 1
+npm run forge:run -- createTicket
+npm run forge -- workflow list
+npm run forge -- workflow process --once
+npm run forge -- workflow inspect 1
 ```
 
 `src/workflows/triageTicketWorkflow.ts` triggers on `ticket.created` and receives the outbox payload as run input.
@@ -81,10 +81,10 @@ bun run forge workflow inspect 1
 4. `triageTicketWorkflow` steps share the same trace and can open spans via `ctx.telemetry.span`.
 
 ```bash
-bun run forge:run createTicket
-bun run forge telemetry list
-bun run forge telemetry flush --sink local
-bun run forge telemetry tail --file events
+npm run forge:run -- createTicket
+npm run forge -- telemetry list
+npm run forge -- telemetry flush --sink local
+npm run forge -- telemetry tail --file events
 ```
 
 Local sink output: `.forge/local/telemetry/*.jsonl` (gitignored).
@@ -94,8 +94,8 @@ Local sink output: `.forge/local/telemetry/*.jsonl` (gitignored).
 After `forge:generate`:
 
 ```bash
-bun run forge:db:migrate
-bun run forge:db:reset
+npm run forge:db:migrate
+npm run forge:db:reset
 ```
 
 `createTicket` persists rows to the `tickets` table and writes `ticket.created` to the transactional outbox.
@@ -105,11 +105,11 @@ bun run forge:db:reset
 After `forge:generate`:
 
 ```bash
-bun run forge:dev:db
+npm run forge:dev:db
 # with background worker (outbox + workflows):
-bun run forge:dev -- --worker --db pglite
+npm run forge:dev -- --worker --db pglite
 # or with mocks:
-bun run forge:dev -- --watch --mock --db pglite
+npm run forge:dev -- --watch --mock --db pglite
 ```
 
 Then invoke handlers over HTTP:

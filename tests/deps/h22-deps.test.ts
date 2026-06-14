@@ -108,6 +108,9 @@ describe("H22 package upgrade planner", () => {
       expect(result.plan?.affected.actions).toContain("createCheckout");
       expect(result.plan?.affected.workflows).toContain("billingWorkflow");
       expect(result.plan?.affected.generatedAdapters.length).toBeGreaterThan(0);
+      expect(result.plan?.recommendedCommands).toContain("forge test run --changed --json");
+      expect(result.plan?.recommendedCommands).toContain("forge verify --standard");
+      expect(result.plan?.recommendedCommands.some((command) => command.startsWith("bun test"))).toBe(false);
 
       const planMd = readFileSync(join(result.planDir!, "plan.md"), "utf8");
       expect(planMd).toContain("# Package Upgrade Plan: stripe 18.0.0 -> 19.0.0");

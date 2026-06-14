@@ -52,7 +52,10 @@ export function detectPackageManagerFromLockfiles(
 
 /**
  * Detect the active package manager via `package.json#packageManager` or lockfile presence.
- * Defaults to `bun` (primary runtime per design).
+ * Defaults to `npm` when the project has not declared a package manager.
+ * Bun remains first-class when selected via `packageManager`, `bun.lock`, or
+ * `bun.lockb`; the neutral fallback avoids surprising Windows app-picker
+ * launches from ambiguous `bun` associations.
  */
 export function detectPackageManager(workspaceRoot: string): PackageManager {
   const pkgPath = join(workspaceRoot, "package.json");
@@ -72,5 +75,5 @@ export function detectPackageManager(workspaceRoot: string): PackageManager {
     }
   }
 
-  return detectPackageManagerFromLockfiles(workspaceRoot) ?? "bun";
+  return detectPackageManagerFromLockfiles(workspaceRoot) ?? "npm";
 }

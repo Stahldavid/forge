@@ -13,9 +13,9 @@
     "self-host:compose": "forge self-host compose",
     "self-host:check": "forge self-host check",
     "dev:api": "forge dev --api-only",
-    "dev:web": "cd web && bun run dev",
+    "dev:web": "cd web && npm run dev",
     "dev": "forge dev",
-    "test": "bun test",
+    "test": "node ../../bin/forge-bun.mjs test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

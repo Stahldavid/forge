@@ -8,14 +8,15 @@
   "scripts": {
     "setup": "node ../../scripts/setup-example.mjs",
     "typecheck": "tsc --noEmit",
-    "forge:generate": "bun ../../src/forge/cli/main.ts generate",
-    "forge:check": "bun ../../src/forge/cli/main.ts check",
-    "forge:run": "bun ../../src/forge/cli/main.ts run",
-    "forge:dev": "bun ../../src/forge/cli/main.ts dev --watch",
-    "forge:dev:db": "bun ../../src/forge/cli/main.ts dev --watch --db pglite",
-    "forge:db:migrate": "bun ../../src/forge/cli/main.ts db migrate --db pglite",
-    "forge:db:reset": "bun ../../src/forge/cli/main.ts db reset --db pglite",
-    "verify": "bun ../../src/forge/cli/main.ts verify"
+    "forge": "node ../../bin/forge.mjs",
+    "forge:generate": "node ../../bin/forge.mjs generate",
+    "forge:check": "node ../../bin/forge.mjs check",
+    "forge:run": "node ../../bin/forge.mjs run",
+    "forge:dev": "node ../../bin/forge.mjs dev --watch",
+    "forge:dev:db": "node ../../bin/forge.mjs dev --watch --db pglite",
+    "forge:db:migrate": "node ../../bin/forge.mjs db migrate --db pglite",
+    "forge:db:reset": "node ../../bin/forge.mjs db reset --db pglite",
+    "verify": "node ../../bin/forge.mjs verify"
   },
   "dependencies": {
     "zod": "^3.24.0",

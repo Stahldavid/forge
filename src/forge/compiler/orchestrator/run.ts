@@ -18,6 +18,10 @@ import {
 import { buildManifestFileHashes } from "./manifest-hashes.ts";
 import { runFastGenerateCheck } from "./fast-check.ts";
 import {
+  acquireGenerateLock,
+  GENERATE_LOCK_FAILURE_KIND,
+} from "./generate-lock.ts";
+import {
   formatCompileTimings,
   isCompileProfileEnabled,
   recordCompileTimings,
@@ -70,6 +74,30 @@ function appGraphForManifest(
 }
 
 export async function run(options: GenerateOptions): Promise<GenerateResult> {
+  if (process.env.FORGE_GENERATE_LOCK_DISABLED !== "1") {
+    const lock = await acquireGenerateLock(options.workspaceRoot);
+    if (!lock.ok) {
+      return {
+        changed: [],
+        unchanged: [],
+        warnings: [],
+        errors: [lock.diagnostic],
+        exitCode: 1,
+        failureKind: GENERATE_LOCK_FAILURE_KIND,
+      };
+    }
+
+    try {
+      return await runUnlocked(options);
+    } finally {
+      lock.handle.release();
+    }
+  }
+
+  return runUnlocked(options);
+}
+
+async function runUnlocked(options: GenerateOptions): Promise<GenerateResult> {
   const profileEnabled = isCompileProfileEnabled();
   const runStarted = profileEnabled ? performance.now() : 0;
   let generateCheckCache: GenerateResult["cache"] =

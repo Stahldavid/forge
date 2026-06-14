@@ -201,7 +201,8 @@ export function recommendedCommands(impact: UpgradeImpact): string[] {
   return [
     "forge generate",
     "forge check",
+    ...(impact.tests.length > 0 ? ["forge test run --changed --json"] : []),
+    "forge verify --standard",
     "forge verify --strict",
-    ...impact.tests.map((test) => `bun test ${test}`),
   ];
 }

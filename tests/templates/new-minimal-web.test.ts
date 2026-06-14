@@ -53,6 +53,7 @@ describe("minimal-web template", () => {
       expect(existsSync(join(project, "web", "src", "lib", "forge.ts"))).toBe(true);
       expect(read(project, ".gitignore")).toContain("src/forge/_generated/");
       expect(read(project, ".gitignore")).toContain("forge.lock");
+      expect(read(project, ".gitignore")).toContain(".forge/locks/");
       expect(read(project, ".gitignore")).toContain(".forge/repairs/");
       expect(read(project, ".gitignore")).toContain(".forge/refactors/");
       expect(read(project, ".gitignore")).toContain(".forge/upgrades/");

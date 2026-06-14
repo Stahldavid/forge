@@ -134,6 +134,10 @@ function skippedStep(name: string, reason: string): VerifyStep {
   };
 }
 
+function firstFailureKind(results: Array<{ ok: boolean; timedOut?: boolean; failureKind?: string }>): string | undefined {
+  return results.find((result) => !result.ok)?.failureKind;
+}
+
 function resolveScriptTimeoutMs(options: VerifyOptions): number {
   if (options.scriptTimeoutMs && Number.isFinite(options.scriptTimeoutMs)) {
     return options.scriptTimeoutMs;
@@ -163,6 +167,41 @@ function timedOutDiagnostic(scriptName: string, timeoutMs: number): Diagnostic {
       `forge verify --skip-tests --skip-eslint --script-timeout-ms ${timeoutMs}`,
       "forge test plan --changed --json",
       "forge verify --changed",
+    ],
+  });
+}
+
+function outputExcerpt(stdout: string, stderr: string): string {
+  const combined = [stderr.trim(), stdout.trim()].filter(Boolean).join("\n");
+  if (!combined) {
+    return "";
+  }
+  const normalized = combined.replace(/\s+/g, " ").trim();
+  return normalized.length > 300 ? `${normalized.slice(0, 297)}...` : normalized;
+}
+
+function packageScriptFailureKind(result: { exitCode: number; timedOut?: boolean }): string | undefined {
+  if (result.timedOut) {
+    return "timeout";
+  }
+  return result.exitCode === 0 ? undefined : "script-failure";
+}
+
+function packageScriptFailureDiagnostic(
+  scriptName: string,
+  code: string,
+  result: { exitCode: number; stdout: string; stderr: string; command: string },
+): Diagnostic {
+  const excerpt = outputExcerpt(result.stdout, result.stderr);
+  return createDiagnostic({
+    severity: "error",
+    code,
+    message: `${scriptName} script failed with exit code ${result.exitCode}`,
+    fixHint: excerpt ? `Last output: ${excerpt}` : undefined,
+    suggestedCommands: [
+      result.command,
+      `forge verify --skip-${scriptName === "test" ? "tests" : scriptName}`,
+      "forge dev --once --json",
     ],
   });
 }
@@ -222,6 +261,8 @@ async function runStandardImpactTests(
     exitCode: record.failed.length === 0 ? 0 : 1,
     command: "forge test run --changed --max-cost standard --json",
     durationMs: Date.now() - started,
+    timedOut: record.results.some((result) => result.timedOut),
+    failureKind: firstFailureKind(record.results),
   });
   if (record.failed.length > 0) {
     diagnostics.push(...diagnosticsForImpactTestRun(record));
@@ -292,6 +333,8 @@ export async function runVerifyCommand(
         exitCode: result.exitCode,
         command: result.command,
         durationMs: result.durationMs,
+        timedOut: result.timedOut,
+        failureKind: result.failureKind,
       });
     }
     if (record.failed.length > 0) {
@@ -451,17 +494,13 @@ export async function runVerifyCommand(
       command: typecheck.command,
       durationMs: typecheck.durationMs,
       timedOut: typecheck.timedOut,
+      failureKind: packageScriptFailureKind(typecheck),
     });
     if (typecheck.timedOut) {
       diagnostics.push(timedOutDiagnostic("typecheck", scriptTimeoutMs));
-    }
-    if (typecheck.exitCode !== 0) {
+    } else if (typecheck.exitCode !== 0) {
       diagnostics.push(
-        createDiagnostic({
-          severity: "error",
-          code: "FORGE_VERIFY_TYPECHECK",
-          message: "typecheck script failed",
-        }),
+        packageScriptFailureDiagnostic("typecheck", "FORGE_VERIFY_TYPECHECK", typecheck),
       );
     }
   }
@@ -488,17 +527,13 @@ export async function runVerifyCommand(
       command: tests.command,
       durationMs: tests.durationMs,
       timedOut: tests.timedOut,
+      failureKind: packageScriptFailureKind(tests),
     });
     if (tests.timedOut) {
       diagnostics.push(timedOutDiagnostic("test", scriptTimeoutMs));
-    }
-    if (tests.exitCode !== 0) {
+    } else if (tests.exitCode !== 0) {
       diagnostics.push(
-        createDiagnostic({
-          severity: "error",
-          code: "FORGE_VERIFY_TESTS",
-          message: "test script failed",
-        }),
+        packageScriptFailureDiagnostic("test", "FORGE_VERIFY_TESTS", tests),
       );
     }
   }

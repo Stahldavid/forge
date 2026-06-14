@@ -13,6 +13,7 @@ forge.lock
 .forge/cache/
 .forge/pglite/
 .forge/local/
+.forge/locks/
 .forge/test-cache/
 .forge/test-runs/
 .forge/ui-runs/

@@ -26,6 +26,20 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       docs: ["AGENTS.md"],
     };
   }
+  if (code === "FORGE_IMPACT_GENERATED_DRIFT") {
+    return {
+      fixHint: "Generated artifacts are stale. Run forge generate, then re-run the impact or verify command.",
+      suggestedCommands: ["forge generate", "forge generate --check", "forge verify --changed --json"],
+      docs: ["AGENTS.md", "src/forge/_generated/agentContract.json"],
+    };
+  }
+  if (code === "FORGE_GENERATE_LOCKED") {
+    return {
+      fixHint: "Wait for the active forge generate command to finish. If no Forge process is running, delete .forge/locks/generate.lock and retry.",
+      suggestedCommands: ["forge generate", "forge generate --check", "forge dev --once --json"],
+      docs: ["AGENTS.md"],
+    };
+  }
   if (code === "FORGE_GUARD_VIOLATION" || code === "FORGE_RUNTIME_GUARD_BLOCKED") {
     return {
       fixHint: "Move forbidden side effects into an action/workflow, or replace the package with an allowed adapter for this runtime.",

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=8acc6fc3b51ea46ef5b755a0ada1649d1ef382eb176e67d6b08795bf52326e66 content=f26ad10bcc6a98eb480cef065455f09e6a47371f28fc297250274dc13dd2ef7b
+// @forge-generated generator=0.0.0 input=892c076b902f6a9986304095ff389c9c0914f58520887962a99025b48031349d content=97f040f1601653564ea75ec781afa753cfc3f8239a57c931c5d31987ec40ecd7
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "102e9f96daa683fd6d2a995f56415c9ca0d32c558c30e7d62cd718b765e73f08",
+  "inputHash": "983206a6e606f5de55ec7865ce982283d181f2511af54949abbdef1b3d4bb363",
   "moduleGraph": {
     "nodes": [
       {
@@ -2775,29 +2775,36 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 957,
-              "start": 943
+              "end": 936,
+              "start": 916
+            },
+            "toModuleId": "9dc8dd8db0bb067ca55126fe84e6344905569cdc0b935d27c2408ceeae6e7f61"
+          },
+          {
+            "span": {
+              "end": 1047,
+              "start": 1033
             },
             "toModuleId": "fb6d66c51109df7a87de2144aca524ada21d06db8dddc92c319c9fac63629aeb"
           },
           {
             "span": {
-              "end": 992,
-              "start": 981
+              "end": 1082,
+              "start": 1071
             },
             "toModuleId": "e2e1402c6d40396a061488174eb8161b1d4ec65ccac5d12bd9c2c61f74ebd91e"
           },
           {
             "span": {
-              "end": 1126,
-              "start": 1112
+              "end": 1216,
+              "start": 1202
             },
             "toModuleId": "aa851e70bc745f624138a0d17e7f51b449e39822ace073f92b1ec1e7522f7d97"
           },
           {
             "span": {
-              "end": 1178,
-              "start": 1165
+              "end": 1268,
+              "start": 1255
             },
             "toModuleId": "67f2d5cb52ec26c60b482d241870888d6e694d573aba5c45df275a73c6efdb48"
           }
@@ -8973,6 +8980,29 @@ export const appGraph = {
               "start": 965
             },
             "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/compiler/orchestrator/generate-lock.ts",
+        "id": "9dc8dd8db0bb067ca55126fe84e6344905569cdc0b935d27c2408ceeae6e7f61",
+        "localImports": [
+          {
+            "span": {
+              "end": 167,
+              "start": 141
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 225,
+              "start": 201
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
           }
         ]
       },

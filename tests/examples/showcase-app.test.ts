@@ -19,6 +19,10 @@ describe("ForgeOS showcase app", () => {
     expect(read(".gitignore")).toContain(".forge/agent-adapters/");
     expect(read("README.md")).toContain("ForgeOS Showcase App");
     expect(read("README.md")).toContain("capabilityMap");
+    expect(read("README.md")).toContain("npm run generate");
+    expect(read("README.md")).not.toContain("bun run");
+    expect(read("package.json")).toContain('"dev:web": "cd web && npm run dev"');
+    expect(read("package.json")).toContain('"test": "node ../../bin/forge-bun.mjs test"');
     expect(read("src/forge/schema.ts")).toContain("tickets");
     expect(read("src/commands/createTicket.ts")).toContain("ctx.emit");
     expect(read("src/queries/liveTickets.ts")).toContain("liveQuery");

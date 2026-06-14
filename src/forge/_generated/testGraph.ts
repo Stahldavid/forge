@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=8acc6fc3b51ea46ef5b755a0ada1649d1ef382eb176e67d6b08795bf52326e66 content=fdf33989200dbdaf0c3872f1be74817c3c20e445a8cce8141961a994bb615509
+// @forge-generated generator=0.0.0 input=892c076b902f6a9986304095ff389c9c0914f58520887962a99025b48031349d content=03dd4b2dc222f420528fded9697efddb6806967528434d91fad3a9d552a7ba09
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "8acc6fc3b51ea46ef5b755a0ada1649d1ef382eb176e67d6b08795bf52326e66",
+  "inputHash": "892c076b902f6a9986304095ff389c9c0914f58520887962a99025b48031349d",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -485,14 +485,16 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
-      "cost": "fast",
+      "confidence": "probable",
+      "cost": "slow",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -500,7 +502,9 @@ export const testGraph = {
       },
       "file": "tests/cli/node-compat.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "probable",
@@ -1192,7 +1196,8 @@ export const testGraph = {
         "liveQueries": [],
         "packages": [
           "react",
-          "tsx"
+          "tsx",
+          "zod"
         ],
         "policies": [],
         "queries": [],
@@ -1203,7 +1208,8 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages react",
-        "probable: packages tsx"
+        "probable: packages tsx",
+        "probable: packages zod"
       ]
     },
     {
@@ -1389,6 +1395,42 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec6ec-3ba7-7000-929c-8dce77d33e14/tests/changed.test.ts",
+      "kind": "unit",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec73a-d85f-7000-b667-40f09f20d106/tests/changed.test.ts",
+      "kind": "unit",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec73f-9a05-7000-8472-c2e003cbcd45/tests/changed.test.ts",
       "kind": "unit",
       "reasons": []
     },
