@@ -4,25 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./server": {
-      "types": "./server/index.ts",
-      "import": "./server/index.js",
-      "default": "./server/index.js"
-    },
-    "./schema": {
-      "types": "./schema/index.ts",
-      "import": "./schema/index.js",
-      "default": "./schema/index.js"
-    },
-    "./policy": {
-      "types": "./policy/index.ts",
-      "import": "./policy/index.js",
-      "default": "./policy/index.js"
-    },
-    "./react": {
-      "types": "./react/index.ts",
-      "import": "./react/index.js",
-      "default": "./react/index.js"
-    }
+    "./server": "./server.js",
+    "./schema": "./schema.js",
+    "./policy": "./policy.js",
+    "./react": "./react.js"
   }
 }
