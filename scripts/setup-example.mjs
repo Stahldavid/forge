@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +14,14 @@ if (!existsSync(exampleRoot)) {
 }
 
 mkdirSync(nodeModules, { recursive: true });
-cpSync(fixturePackages, nodeModules, { recursive: true, force: true });
+for (const entry of readdirSync(fixturePackages, { withFileTypes: true })) {
+  if (!entry.isDirectory()) {
+    continue;
+  }
+  cpSync(join(fixturePackages, entry.name), join(nodeModules, entry.name), {
+    recursive: true,
+    force: true,
+  });
+}
 
 console.log(`seeded ${nodeModules} from ${fixturePackages}`);

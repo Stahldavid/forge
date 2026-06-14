@@ -9,7 +9,7 @@ export interface DeterministicHeaderFields {
 }
 
 const HEADER_PATTERN =
-  /^\/\/ @forge-generated generator=([^\s]+) input=([^\s]+) content=([^\s]+)\n/;
+  /^\/\/ @forge-generated generator=([^\s]+) input=([^\s]+) content=([^\s]+)\r?\n/;
 
 export function formatDeterministicHeader(
   fields: DeterministicHeaderFields,

@@ -74,6 +74,14 @@ describe("deterministic header", () => {
     expect(stripDeterministicHeader(full)).toBe(body);
   });
 
+  test("strips CRLF headers from Windows checkouts", () => {
+    const body = "{\"ok\":true}\r\n";
+    const full =
+      "// @forge-generated generator=1.0.0 input=input-hash content=content-hash\r\n" +
+      body;
+    expect(stripDeterministicHeader(full)).toBe(body);
+  });
+
   test("contains no timestamp", () => {
     const header = formatDeterministicHeader({
       generatorVersion: "1.0.0",
