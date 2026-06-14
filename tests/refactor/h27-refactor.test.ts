@@ -388,4 +388,109 @@ describe("H27 safe refactor", () => {
       cleanupWorkspace(root);
     }
   });
+
+  test("extract-action is binding-aware and ignores shadowed local names", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-shadowed-import");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import Stripe from "stripe";
+          import { command } from "forge/server";
+          export const createCheckout = command({
+            handler: async (ctx, input: { planId: string }) => {
+              const Stripe = (_key: string) => ({ checkout: { sessions: { create: async () => input.planId } } });
+              return Stripe("local").checkout.sessions.create();
+            },
+          });
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          dryRun: true,
+        }),
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_PATCH_UNSAFE");
+      expect(result.diagnostics[0]?.message).toContain("not referenced inside");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("extract-action ignores type-only imports as runtime extraction targets", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-type-only");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import type Stripe from "stripe";
+          import { command } from "forge/server";
+          export const createCheckout = command({
+            handler: async (ctx, input: { stripe: Stripe.Checkout.SessionCreateParams }) => {
+              return { planId: input.stripe.mode };
+            },
+          });
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          dryRun: true,
+        }),
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_TARGET_NOT_FOUND");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("extract-action refuses side-effect imports with no analyzable binding", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-side-effect-import");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import "stripe";
+          import { command } from "forge/server";
+          export const createCheckout = command({
+            handler: async (ctx, input: { planId: string }) => {
+              return { planId: input.planId };
+            },
+          });
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          dryRun: true,
+        }),
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_PATCH_UNSAFE");
+      expect(result.diagnostics[0]?.message).toContain("no value binding");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
 });

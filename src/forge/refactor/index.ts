@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import ts from "typescript";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
@@ -287,6 +288,33 @@ function packageNameFromSpecifier(specifier: string): string {
   return specifier.split("/")[0] ?? specifier;
 }
 
+function isPackageImportDeclaration(statement: ts.Statement, packageName: string): statement is ts.ImportDeclaration {
+  return ts.isImportDeclaration(statement) &&
+    ts.isStringLiteral(statement.moduleSpecifier) &&
+    packageNameFromSpecifier(statement.moduleSpecifier.text) === packageName;
+}
+
+function isValueImportDeclarationForPackage(statement: ts.Statement, packageName: string): statement is ts.ImportDeclaration {
+  if (!isPackageImportDeclaration(statement, packageName)) {
+    return false;
+  }
+  const clause = statement.importClause;
+  if (!clause) {
+    return true;
+  }
+  if (clause.isTypeOnly) {
+    return false;
+  }
+  if (clause.name || (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings))) {
+    return true;
+  }
+  return Boolean(
+    clause.namedBindings &&
+      ts.isNamedImports(clause.namedBindings) &&
+      clause.namedBindings.elements.some((element) => !element.isTypeOnly),
+  );
+}
+
 function removeImportForPackage(
   sourceFile: ts.SourceFile,
   source: string,
@@ -294,10 +322,7 @@ function removeImportForPackage(
 ): { spans: Array<{ start: number; end: number }>; found: boolean } {
   const spans: Array<{ start: number; end: number }> = [];
   for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
-      continue;
-    }
-    if (packageNameFromSpecifier(statement.moduleSpecifier.text) !== packageName) {
+    if (!isValueImportDeclarationForPackage(statement, packageName)) {
       continue;
     }
     let end = statement.getEnd();
@@ -311,32 +336,95 @@ function removeImportForPackage(
   return { spans, found: spans.length > 0 };
 }
 
-function importBindingsForPackage(sourceFile: ts.SourceFile, packageName: string): string[] {
-  const bindings = new Set<string>();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
-      continue;
+interface ImportBinding {
+  name: string;
+  node: ts.Identifier;
+  symbol: ts.Symbol;
+}
+
+function createCommandProgram(
+  workspaceRoot: string,
+  commandFile: string,
+  source: string,
+): { sourceFile: ts.SourceFile; checker: ts.TypeChecker } {
+  const absoluteFile = join(workspaceRoot, commandFile);
+  const options: ts.CompilerOptions = {
+    allowImportingTsExtensions: true,
+    esModuleInterop: true,
+    jsx: ts.JsxEmit.ReactJSX,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    noEmit: true,
+    skipLibCheck: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+  };
+  const host = ts.createCompilerHost(options, true);
+  const originalReadFile = host.readFile.bind(host);
+  host.readFile = (fileName) => fileName === absoluteFile ? source : originalReadFile(fileName);
+  const originalFileExists = host.fileExists.bind(host);
+  host.fileExists = (fileName) => fileName === absoluteFile || originalFileExists(fileName);
+
+  const program = ts.createProgram([absoluteFile], options, host);
+  const sourceFile = program.getSourceFile(absoluteFile);
+  if (!sourceFile) {
+    throw new Error(`Unable to create TypeScript source file for ${commandFile}`);
+  }
+  return { sourceFile, checker: program.getTypeChecker() };
+}
+
+function bindingSymbol(checker: ts.TypeChecker, node: ts.Identifier): ts.Symbol | null {
+  const symbol = checker.getSymbolAtLocation(node);
+  if (!symbol) {
+    return null;
+  }
+  if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+    return checker.getAliasedSymbol(symbol);
+  }
+  return symbol;
+}
+
+function importBindingsForPackage(
+  sourceFile: ts.SourceFile,
+  checker: ts.TypeChecker,
+  packageName: string,
+): ImportBinding[] {
+  const bindings: ImportBinding[] = [];
+  const seen = new Set<string>();
+  const pushBinding = (node: ts.Identifier): void => {
+    const symbol = bindingSymbol(checker, node);
+    const key = symbol ? `${node.text}:${symbol.escapedName.toString()}` : node.text;
+    if (!symbol || seen.has(key)) {
+      return;
     }
-    if (packageNameFromSpecifier(statement.moduleSpecifier.text) !== packageName) {
+    bindings.push({ name: node.text, node, symbol });
+    seen.add(key);
+  };
+
+  for (const statement of sourceFile.statements) {
+    if (!isPackageImportDeclaration(statement, packageName)) {
       continue;
     }
     const clause = statement.importClause;
-    if (!clause) {
+    if (!clause || clause.isTypeOnly) {
       continue;
     }
     if (clause.name) {
-      bindings.add(clause.name.text);
+      pushBinding(clause.name);
     }
     if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
-      bindings.add(clause.namedBindings.name.text);
+      pushBinding(clause.namedBindings.name);
     }
     if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
       for (const element of clause.namedBindings.elements) {
-        bindings.add(element.name.text);
+        if (element.isTypeOnly) {
+          continue;
+        }
+        pushBinding(element.name);
       }
     }
   }
-  return [...bindings].sort();
+  return bindings.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function isImportIdentifier(node: ts.Identifier): boolean {
@@ -352,14 +440,48 @@ function isPropertyNameIdentifier(node: ts.Identifier): boolean {
     (ts.isBindingElement(node.parent) && node.parent.propertyName === node);
 }
 
-function identifierReferencesInNode(node: ts.Node, names: Set<string>): ts.Identifier[] {
+function isTypePosition(node: ts.Node): boolean {
+  let current: ts.Node = node;
+  while (current.parent) {
+    current = current.parent;
+    if (ts.isTypeNode(current) || ts.isInterfaceDeclaration(current) || ts.isTypeAliasDeclaration(current)) {
+      return true;
+    }
+    if (
+      ts.isExpressionStatement(current) ||
+      ts.isCallExpression(current) ||
+      ts.isNewExpression(current) ||
+      ts.isVariableDeclaration(current) ||
+      ts.isReturnStatement(current) ||
+      ts.isPropertyAccessExpression(current)
+    ) {
+      return false;
+    }
+  }
+  return false;
+}
+
+function sameSymbol(checker: ts.TypeChecker, reference: ts.Identifier, binding: ImportBinding): boolean {
+  if (reference.text !== binding.name || reference === binding.node) {
+    return false;
+  }
+  const referenceSymbol = bindingSymbol(checker, reference);
+  return referenceSymbol === binding.symbol;
+}
+
+function importReferencesInNode(
+  node: ts.Node,
+  checker: ts.TypeChecker,
+  bindings: ImportBinding[],
+): ts.Identifier[] {
   const references: ts.Identifier[] = [];
   function visit(current: ts.Node): void {
     if (
       ts.isIdentifier(current) &&
-      names.has(current.text) &&
       !isImportIdentifier(current) &&
-      !isPropertyNameIdentifier(current)
+      !isPropertyNameIdentifier(current) &&
+      !isTypePosition(current) &&
+      bindings.some((binding) => sameSymbol(checker, current, binding))
     ) {
       references.push(current);
     }
@@ -371,19 +493,27 @@ function identifierReferencesInNode(node: ts.Node, names: Set<string>): ts.Ident
 
 function importedPackageUsageDiagnostics(
   sourceFile: ts.SourceFile,
+  checker: ts.TypeChecker,
   commandFile: string,
   commandName: string,
   packageName: string,
   handler: ts.FunctionExpression | ts.ArrowFunction,
 ): Diagnostic[] {
-  const bindings = importBindingsForPackage(sourceFile, packageName);
+  const bindings = importBindingsForPackage(sourceFile, checker, packageName);
   if (bindings.length === 0) {
-    return [];
+    return [
+      createDiagnostic({
+        severity: "error",
+        code: "FORGE_REFACTOR_PATCH_UNSAFE",
+        message: `package import '${packageName}' has no value binding to analyze in ${commandFile}`,
+        file: commandFile,
+        fixHint: "Use extract-action only for direct value imports used by the command handler. Side-effect imports and type-only imports require a manual refactor.",
+      }),
+    ];
   }
-  const names = new Set(bindings);
   const handlerStart = handler.getFullStart();
   const handlerEnd = handler.getEnd();
-  const handlerReferences = identifierReferencesInNode(handler.body, names);
+  const handlerReferences = importReferencesInNode(handler.body, checker, bindings);
   if (handlerReferences.length === 0) {
     return [
       createDiagnostic({
@@ -396,7 +526,7 @@ function importedPackageUsageDiagnostics(
     ];
   }
 
-  const outsideReferences = identifierReferencesInNode(sourceFile, names)
+  const outsideReferences = importReferencesInNode(sourceFile, checker, bindings)
     .filter((reference) => reference.getStart(sourceFile) < handlerStart || reference.getStart(sourceFile) > handlerEnd);
   if (outsideReferences.length === 0) {
     return [];
@@ -418,29 +548,94 @@ function importedPackageUsageDiagnostics(
   ];
 }
 
-function lineIndentAt(source: string, position: number): string {
-  const lineStart = source.lastIndexOf("\n", position) + 1;
-  const match = /^[ \t]*/.exec(source.slice(lineStart, position));
-  return match?.[0] ?? "";
+function createExtractedHandlerBody(
+  ctxName: string,
+  inputName: string | null,
+  eventName: string,
+): ts.Block {
+  const payload = inputName
+    ? ts.factory.createIdentifier(inputName)
+    : ts.factory.createObjectLiteralExpression([], false);
+  return ts.factory.createBlock([
+    ts.factory.createExpressionStatement(
+      ts.factory.createAwaitExpression(
+        ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(ts.factory.createIdentifier(ctxName), "emit"),
+          undefined,
+          [ts.factory.createStringLiteral(eventName), payload],
+        ),
+      ),
+    ),
+    ts.factory.createReturnStatement(
+      ts.factory.createObjectLiteralExpression([
+        ts.factory.createPropertyAssignment("emitted", ts.factory.createStringLiteral(eventName)),
+      ], false),
+    ),
+  ], true);
 }
 
-function applyTextReplacements(
-  source: string,
-  replacements: Array<{ start: number; end: number; text: string }>,
+function rewriteExtractActionSource(
+  sourceFile: ts.SourceFile,
+  handler: ts.FunctionExpression | ts.ArrowFunction,
+  ctxName: string,
+  inputName: string | null,
+  intent: Extract<RefactorIntent, { kind: "extractAction" }>,
 ): string {
-  let next = source;
-  for (const replacement of [...replacements].sort((a, b) => b.start - a.start)) {
-    next = `${next.slice(0, replacement.start)}${replacement.text}${next.slice(replacement.end)}`;
+  const newBody = createExtractedHandlerBody(ctxName, inputName, intent.eventName);
+  const transform: ts.TransformerFactory<ts.SourceFile> = (context) => {
+    const visit: ts.Visitor = (node) => {
+      if (
+        ts.isImportDeclaration(node) &&
+        isValueImportDeclarationForPackage(node, intent.packageName)
+      ) {
+        return undefined;
+      }
+      if (node === handler) {
+        if (ts.isArrowFunction(node)) {
+          return ts.factory.updateArrowFunction(
+            node,
+            node.modifiers,
+            node.typeParameters,
+            node.parameters,
+            node.type,
+            node.equalsGreaterThanToken,
+            newBody,
+          );
+        }
+        if (ts.isFunctionExpression(node)) {
+          return ts.factory.updateFunctionExpression(
+            node,
+            node.modifiers,
+            node.asteriskToken,
+            node.name,
+            node.typeParameters,
+            node.parameters,
+            node.type,
+            newBody,
+          );
+        }
+      }
+      return ts.visitEachChild(node, visit, context);
+    };
+    return (node) => ts.visitNode(node, visit) as ts.SourceFile;
+  };
+  const result = ts.transform(sourceFile, [transform]);
+  try {
+    const transformed = result.transformed[0];
+    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+    return printer.printFile(transformed);
+  } finally {
+    result.dispose();
   }
-  return next;
 }
 
 function rewriteExtractActionCommand(
+  workspaceRoot: string,
   source: string,
   commandFile: string,
   intent: Extract<RefactorIntent, { kind: "extractAction" }>,
 ): { after?: string; diagnostics: Diagnostic[] } {
-  const sourceFile = ts.createSourceFile(commandFile, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const { sourceFile, checker } = createCommandProgram(workspaceRoot, commandFile, source);
   const commandObject = findCommandObject(sourceFile, intent.command);
   if (!commandObject) {
     return {
@@ -498,11 +693,6 @@ function rewriteExtractActionCommand(
     };
   }
 
-  const usageDiagnostics = importedPackageUsageDiagnostics(sourceFile, commandFile, intent.command, intent.packageName, handler);
-  if (usageDiagnostics.length > 0) {
-    return { diagnostics: usageDiagnostics };
-  }
-
   const imports = removeImportForPackage(sourceFile, source, intent.packageName);
   if (!imports.found) {
     return {
@@ -519,14 +709,18 @@ function rewriteExtractActionCommand(
     };
   }
 
-  const handlerIndent = lineIndentAt(source, handlerProperty.getStart(sourceFile));
-  const bodyIndent = `${handlerIndent}  `;
-  const payload = inputParam ? inputParam.text : "{}";
-  const replacementBody = `{\n${bodyIndent}await ${ctxParam.text}.emit(${JSON.stringify(intent.eventName)}, ${payload});\n${bodyIndent}return { emitted: ${JSON.stringify(intent.eventName)} };\n${handlerIndent}}`;
-  const after = applyTextReplacements(source, [
-    { start: handler.body.getStart(sourceFile), end: handler.body.getEnd(), text: replacementBody },
-    ...imports.spans.map((span) => ({ ...span, text: "" })),
-  ]);
+  const usageDiagnostics = importedPackageUsageDiagnostics(sourceFile, checker, commandFile, intent.command, intent.packageName, handler);
+  if (usageDiagnostics.length > 0) {
+    return { diagnostics: usageDiagnostics };
+  }
+
+  const after = rewriteExtractActionSource(
+    sourceFile,
+    handler,
+    ctxParam.text,
+    inputParam ? inputParam.text : null,
+    intent,
+  );
 
   return { after, diagnostics: [] };
 }
@@ -727,7 +921,7 @@ function buildExtractActionPlan(workspaceRoot: string, intent: Extract<RefactorI
       ],
     };
   }
-  const rewrite = rewriteExtractActionCommand(commandSource, commandFile, intent);
+  const rewrite = rewriteExtractActionCommand(workspaceRoot, commandSource, commandFile, intent);
   const commandPatch = rewrite.after
     ? makePatchFromContent(
       commandFile,
