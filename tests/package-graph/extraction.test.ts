@@ -14,6 +14,8 @@ describe("PackageGraph extraction fixtures", () => {
     test(`zod exports resolve in ${mode} mode`, async () => {
       const api = await analyze(FIXTURE_PACKAGES.zod, mode);
       const root = api.entrypoints.find((ep) => ep.subpath === ".");
+      expect(root?.dtsPath?.startsWith("packages/zod/")).toBe(true);
+      expect(root?.dtsPath).not.toMatch(/^[a-z]:/i);
       expect(root?.dtsPath).toContain("index.d.ts");
       expect(root?.exports.some((ex) => ex.name === "parse")).toBe(true);
       expect(root?.exports.find((ex) => ex.name === "parse")?.jsdoc?.summary).toContain(

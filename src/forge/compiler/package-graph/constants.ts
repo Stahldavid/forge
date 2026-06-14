@@ -1,4 +1,4 @@
 export const PACKAGE_GRAPH_SCHEMA_VERSION = "1.0.0";
-export const PACKAGE_ANALYZER_VERSION = "0.1.0";
+export const PACKAGE_ANALYZER_VERSION = "0.1.1";
 export const GENERATOR_VERSION = "0.0.0";
 export const DEFAULT_PATTERN_EXPANSION_LIMIT = 50;

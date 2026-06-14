@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import ts from "typescript";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import type {
@@ -326,7 +326,7 @@ export class PackageGraphCompiler {
         subpath,
         conditions: resolved.conditions,
         patternBacked,
-        dtsPath: resolved.dtsPath,
+        dtsPath: portableDtsPath(resolved.dtsPath, dep),
         exports: [],
       };
     }
@@ -339,10 +339,27 @@ export class PackageGraphCompiler {
       subpath,
       conditions: resolved.conditions,
       patternBacked,
-      dtsPath: resolved.dtsPath,
+      dtsPath: portableDtsPath(resolved.dtsPath, dep),
       exports,
     };
   }
+}
+
+function portableDtsPath(dtsPath: string, dep: Pick<Dependency, "installPath" | "name">): string {
+  const normalized = dtsPath.replace(/\\/g, "/");
+  const marker = "/node_modules/";
+  const index = normalized.lastIndexOf(marker);
+  if (index >= 0) {
+    return normalized.slice(index + 1);
+  }
+  if (normalized.startsWith("node_modules/")) {
+    return normalized;
+  }
+  const packageRelative = relative(dep.installPath, dtsPath).replace(/\\/g, "/");
+  if (packageRelative && !packageRelative.startsWith("../") && packageRelative !== "..") {
+    return `packages/${dep.name}/${packageRelative}`;
+  }
+  return normalized;
 }
 
 function readPackageJson(installPath: string): {
