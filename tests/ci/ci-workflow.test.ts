@@ -20,5 +20,7 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("npm run forge -- dev --once --json");
     expect(workflow).toContain("npm run forge -- verify --smoke --json --script-timeout-ms 120000");
     expect(npmrc).toContain("legacy-peer-deps=true");
+    expect(npmrc).toContain("package-lock=false");
+    expect(workflow).toContain("npm install --ignore-scripts --package-lock=false");
   });
 });

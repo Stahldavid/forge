@@ -76,7 +76,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies with npm
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --package-lock=false
 
       - name: Node CLI smoke
         shell: bash
@@ -110,7 +110,7 @@ jobs:
           node-version: 22
 
       - name: Install ForgeOS workspace dependencies
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --package-lock=false
 
       - name: Create, install, and verify an external app
         shell: bash
