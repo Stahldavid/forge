@@ -141,12 +141,16 @@ export interface VerifyOptions {
   strict: boolean;
   changed?: boolean;
   fast?: boolean;
+  smoke?: boolean;
   standard?: boolean;
   scriptTimeoutMs?: number;
 }
 
+export type VerifyProfile = "default" | "smoke" | "standard" | "strict" | "changed";
+
 export interface VerifyResult {
   ok: boolean;
+  profile?: VerifyProfile;
   steps: VerifyStep[];
   diagnostics: Diagnostic[];
   durationMs?: number;

@@ -1,5 +1,6 @@
-import { dirname, join, relative, resolve } from "node:path";
+import { delimiter, dirname, join, relative, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
@@ -16,7 +17,7 @@ import type { LiveQueryRegistry } from "../compiler/types/live-query-registry.ts
 import type { WorkflowRegistry, WorkflowSubscriptions } from "../compiler/types/workflow-registry.ts";
 import type { ActionSubscriptions } from "../compiler/types/action-subscriptions.ts";
 import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
-import { resolveBunExecutable } from "../cli/bun-exec.ts";
+import { resolveCommandArgv } from "../compiler/package-manager/executor.ts";
 import type {
   ImpactCommandOptions,
   ImpactReport,
@@ -36,6 +37,7 @@ const GENERATED = "src/forge/_generated";
 const TEST_PLAN_DIR = ".forge/test-plans";
 const TEST_RUN_DIR = ".forge/test-runs";
 const COST_ORDER: TestCost[] = ["instant", "fast", "standard", "slow", "docker", "browser"];
+const DEFAULT_TEST_COMMAND_TIMEOUT_MS = 30 * 60 * 1000;
 
 function diag(severity: Diagnostic["severity"], code: string, message: string, file?: string): Diagnostic {
   return createDiagnostic({ severity, code, message, ...(file ? { file } : {}) });
@@ -277,6 +279,18 @@ function importsPackage(text: string, packageName: string): boolean {
   ).test(text);
 }
 
+function isPackageDependencyFile(file: string): boolean {
+  return [
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+    "bun.lockb",
+  ].includes(normalize(file));
+}
+
 function analyzeFiles(args: {
   workspaceRoot: string;
   files: string[];
@@ -300,6 +314,10 @@ function analyzeFiles(args: {
 
   for (const file of args.files) {
     if (!args.includeGenerated && file.startsWith(`${GENERATED}/`)) {
+      push(impact.generatedArtifacts, file);
+      continue;
+    }
+    if (file === "forge.lock") {
       push(impact.generatedArtifacts, file);
       continue;
     }
@@ -328,7 +346,7 @@ function analyzeFiles(args: {
       }
     }
     for (const pkg of packageNames) {
-      if (importsPackage(text, pkg) || file === "package.json" || file.endsWith(".lock")) {
+      if (importsPackage(text, pkg) || isPackageDependencyFile(file)) {
         push(impact.packages, pkg);
       }
     }
@@ -418,6 +436,19 @@ function loadArtifacts(workspaceRoot: string) {
   };
 }
 
+function readLastRunByCommand(workspaceRoot: string): Map<string, TestRunStep> {
+  const raw = nodeFileSystem.readText(join(workspaceRoot, TEST_RUN_DIR, "last.json"));
+  if (raw === null) {
+    return new Map();
+  }
+  try {
+    const record = JSON.parse(stripDeterministicHeader(raw)) as TestRunRecord;
+    return new Map(record.results.map((result) => [result.command, result]));
+  } catch {
+    return new Map();
+  }
+}
+
 function requiredChecks(impact: ImpactedSystems): TestPlanCheck[] {
   const checks: TestPlanCheck[] = [
     { kind: "forge", command: "forge generate --check", cost: "fast", reason: "generated artifacts must stay deterministic" },
@@ -456,11 +487,17 @@ function selectTests(
   testGraph: TestGraph,
   impact: ImpactedSystems,
   changedFiles: string[],
-  options: { maxCost: TestCost; includeDocker: boolean; includeBrowser: boolean },
+  options: {
+    maxCost: TestCost;
+    includeDocker: boolean;
+    includeBrowser: boolean;
+    lastRunByCommand: Map<string, TestRunStep>;
+  },
 ): TargetedTest[] {
   const selected: TargetedTest[] = [];
   for (const test of testGraph.tests) {
-    if (test.confidence === "weak") continue;
+    const changedTestFile = changedFiles.includes(test.file);
+    if (test.confidence === "weak" && !changedTestFile) continue;
     if (!costAllowed(test.cost, options.maxCost, options.includeDocker, options.includeBrowser)) continue;
     const reason =
       intersects(test.covers.commands, impact.runtime.commands)?.replace(/^/, "covers impacted command ") ??
@@ -472,16 +509,27 @@ function selectTests(
       intersects(test.covers.policies, impact.policies)?.replace(/^/, "covers impacted policy ") ??
       intersects(test.covers.components, impact.frontend.components)?.replace(/^/, "covers impacted component ") ??
       intersects(test.covers.packages, impact.packages)?.replace(/^/, "covers impacted package ");
-    if (!reason && !changedFiles.includes(test.file)) continue;
+    if (!reason && !changedTestFile) continue;
+    const command = `bun test ${test.file}`;
+    const lastRun = options.lastRunByCommand.get(command);
     selected.push({
       file: test.file,
-      command: `bun test ${test.file}`,
+      command,
       reason: reason ?? "changed test file",
       cost: test.cost,
       confidence: test.confidence,
+      ...(lastRun ? { lastDurationMs: lastRun.durationMs, lastRunOk: lastRun.ok } : {}),
     });
   }
-  return selected.sort((a, b) => a.file.localeCompare(b.file));
+  return selected.sort((a, b) => {
+    const failedBias = Number(a.lastRunOk === false) - Number(b.lastRunOk === false);
+    if (failedBias !== 0) return -failedBias;
+    const costBias = COST_ORDER.indexOf(a.cost) - COST_ORDER.indexOf(b.cost);
+    if (costBias !== 0) return costBias;
+    const durationBias = (a.lastDurationMs ?? Number.MAX_SAFE_INTEGER) - (b.lastDurationMs ?? Number.MAX_SAFE_INTEGER);
+    if (durationBias !== 0) return durationBias;
+    return a.file.localeCompare(b.file);
+  });
 }
 
 function selectUiScenarioChecks(
@@ -560,10 +608,12 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
     excludeTests: false,
   });
   const artifacts = loadArtifacts(options.workspaceRoot);
+  const lastRunByCommand = readLastRunByCommand(options.workspaceRoot);
   const tests = selectTests(artifacts.testGraph, report.impacted, report.changedFiles, {
     maxCost: options.maxCost,
     includeDocker: options.includeDocker,
     includeBrowser: options.includeBrowser,
+    lastRunByCommand,
   });
   return {
     schemaVersion: "0.1.0",
@@ -597,7 +647,15 @@ export function writeTestPlan(workspaceRoot: string, plan: ImpactTestPlan): stri
 }
 
 export function renderTestPlanMarkdown(plan: ImpactTestPlan): string {
-  const tests = plan.tests.map((test) => test.command).join("\n") || "# no targeted tests selected";
+  const tests = plan.tests
+    .map((test) => {
+      const notes = [
+        test.lastDurationMs !== undefined ? `last ${test.lastDurationMs}ms` : null,
+        test.lastRunOk === false ? "failed last run" : null,
+      ].filter(Boolean).join(", ");
+      return notes ? `${test.command} # ${notes}` : test.command;
+    })
+    .join("\n") || "# no targeted tests selected";
   const checks = plan.requiredChecks.map((check) => check.command).join("\n") || "# no checks";
   return `# Test Plan
 
@@ -627,35 +685,129 @@ forge verify --strict
 `;
 }
 
-function commandArgs(command: string): { executable: string; args: string[] } {
-  const bun = resolveBunExecutable();
-  const parts = command.split(/\s+/).filter(Boolean);
-  if (parts[0] === "forge") {
-    return { executable: bun, args: ["src/forge/cli/main.ts", ...parts.slice(1)] };
+function localBinExecutable(workspaceRoot: string, command: string): string | null {
+  if (
+    command.includes("\\") ||
+    command.includes("/") ||
+    command.includes(":") ||
+    /\.[a-z0-9]+$/i.test(command)
+  ) {
+    return null;
   }
-  if (parts[0] === "bun") {
-    return { executable: bun, args: parts.slice(1) };
+  const extensions = process.platform === "win32" ? [".cmd", ".exe", ".bat", ""] : [""];
+  for (const extension of extensions) {
+    const candidate = join(workspaceRoot, "node_modules", ".bin", `${command}${extension}`);
+    if (nodeFileSystem.exists(candidate)) {
+      return candidate;
+    }
   }
-  return { executable: parts[0] ?? bun, args: parts.slice(1) };
+  return null;
 }
 
-function runCommand(workspaceRoot: string, command: string): Promise<TestRunStep> {
+function sourceRepoForgeBin(): string | null {
+  const candidate = fileURLToPath(new URL("../../../bin/forge.mjs", import.meta.url));
+  return nodeFileSystem.exists(candidate) ? candidate : null;
+}
+
+function nodeForgeArgs(binPath: string, args: string[]): { executable: string; args: string[] } {
+  const argv = resolveCommandArgv(["node", binPath, ...args]);
+  return { executable: argv[0]!, args: argv.slice(1) };
+}
+
+function addBunTestTimeout(command: string, timeoutMs: number): string {
+  const parts = command.split(/\s+/).filter(Boolean);
+  if (
+    parts[0] === "bun" &&
+    parts[1] === "test" &&
+    !parts.some((part) => part === "--timeout" || part.startsWith("--timeout="))
+  ) {
+    return `${command} --timeout ${timeoutMs}`;
+  }
+  return command;
+}
+
+function commandArgs(workspaceRoot: string, command: string): { executable: string; args: string[] } {
+  const parts = command.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { executable: process.execPath, args: ["-e", "process.exit(0)"] };
+  }
+  if (parts[0] === "forge") {
+    const localForge = localBinExecutable(workspaceRoot, "forge");
+    if (localForge) {
+      return { executable: localForge, args: parts.slice(1) };
+    }
+    const frameworkBin = join(workspaceRoot, "bin", "forge.mjs");
+    if (nodeFileSystem.exists(frameworkBin)) {
+      return nodeForgeArgs(frameworkBin, parts.slice(1));
+    }
+    const sourceBin = sourceRepoForgeBin();
+    if (sourceBin) {
+      return nodeForgeArgs(sourceBin, parts.slice(1));
+    }
+  }
+  const local = localBinExecutable(workspaceRoot, parts[0]!);
+  const argv = resolveCommandArgv([local ?? parts[0]!, ...parts.slice(1)]);
+  return { executable: argv[0]!, args: argv.slice(1) };
+}
+
+function resolveTestCommandTimeoutMs(timeoutMs?: number): number {
+  if (timeoutMs && Number.isFinite(timeoutMs) && timeoutMs >= 1) {
+    return Math.floor(timeoutMs);
+  }
+  const fromEnv = process.env.FORGE_TEST_COMMAND_TIMEOUT_MS;
+  if (fromEnv) {
+    const parsed = Number(fromEnv);
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      return Math.floor(parsed);
+    }
+  }
+  return DEFAULT_TEST_COMMAND_TIMEOUT_MS;
+}
+
+function runCommand(workspaceRoot: string, command: string, timeoutMs: number): Promise<TestRunStep> {
   const started = Date.now();
-  const resolved = commandArgs(command);
+  let resolved: { executable: string; args: string[] };
+  const effectiveCommand = addBunTestTimeout(command, timeoutMs);
+  try {
+    resolved = commandArgs(workspaceRoot, effectiveCommand);
+  } catch (error) {
+    return Promise.resolve({
+      command: effectiveCommand,
+      ok: false,
+      exitCode: 1,
+      durationMs: Date.now() - started,
+      failureKind: "command-resolution-error",
+      stderr: error instanceof Error ? error.message : String(error),
+    });
+  }
+  const path = [join(workspaceRoot, "node_modules", ".bin"), process.env.PATH ?? ""].filter(Boolean).join(delimiter);
   return new Promise((resolve) => {
+    let settled = false;
+    let timedOut = false;
     const child = spawn(resolved.executable, resolved.args, {
       cwd: workspaceRoot,
-      env: process.env,
+      env: { ...process.env, PATH: path },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     });
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try {
+        child.kill();
+      } catch {
+        // Process may have already exited.
+      }
+    }, timeoutMs);
     let stdout = "";
     let stderr = "";
     child.stdout?.on("data", (chunk) => { stdout += String(chunk); });
     child.stderr?.on("data", (chunk) => { stderr += String(chunk); });
     child.on("error", (error) => {
+      clearTimeout(timer);
+      if (settled) return;
+      settled = true;
       resolve({
-        command,
+        command: effectiveCommand,
         ok: false,
         exitCode: 1,
         durationMs: Date.now() - started,
@@ -664,12 +816,16 @@ function runCommand(workspaceRoot: string, command: string): Promise<TestRunStep
       });
     });
     child.on("close", (code) => {
+      clearTimeout(timer);
+      if (settled) return;
+      settled = true;
       resolve({
-        command,
-        ok: (code ?? 1) === 0,
-        exitCode: code ?? 1,
+        command: effectiveCommand,
+        ok: !timedOut && (code ?? 1) === 0,
+        exitCode: timedOut ? 1 : code ?? 1,
         durationMs: Date.now() - started,
-        failureKind: (code ?? 1) === 0 ? undefined : "test-failure",
+        timedOut,
+        failureKind: timedOut ? "timeout" : (code ?? 1) === 0 ? undefined : "test-failure",
         stdout,
         stderr,
       });
@@ -680,7 +836,7 @@ function runCommand(workspaceRoot: string, command: string): Promise<TestRunStep
 export async function runImpactTestPlan(
   workspaceRoot: string,
   plan: ImpactTestPlan,
-  options: { bail: boolean; report?: string },
+  options: { bail: boolean; report?: string; timeoutMs?: number },
 ): Promise<TestRunRecord> {
   const commands = [
     ...plan.requiredChecks.map((check) => check.command),
@@ -688,8 +844,9 @@ export async function runImpactTestPlan(
   ];
   const results: TestRunStep[] = [];
   const started = Date.now();
+  const timeoutMs = resolveTestCommandTimeoutMs(options.timeoutMs);
   for (const command of commands) {
-    const result = await runCommand(workspaceRoot, command);
+    const result = await runCommand(workspaceRoot, command, timeoutMs);
     results.push(result);
     if (!result.ok && options.bail) {
       break;
@@ -702,6 +859,7 @@ export async function runImpactTestPlan(
     planHash: `sha256:${hashStable(canonicalJson(plan))}`,
     source: plan.source,
     commands,
+    timeoutMs,
     results,
     failed: results.filter((result) => !result.ok).map((result) => result.command),
     durationMs: Date.now() - started,
@@ -731,6 +889,28 @@ export function explainTest(workspaceRoot: string, testFile: string): ImpactResu
   return { ok: true, test, diagnostics: [], exitCode: 0 };
 }
 
+export function diagnosticsForImpactTestRun(run: TestRunRecord): Diagnostic[] {
+  const timedOut = run.results.filter((result) => result.timedOut).map((result) => result.command);
+  if (timedOut.length > 0) {
+    return [diag("error", "FORGE_TEST_RUN_TIMEOUT", `impact-selected command timed out: ${timedOut.join(", ")}`)];
+  }
+
+  const resolutionFailures = run.results.filter((result) => result.failureKind === "command-resolution-error");
+  if (resolutionFailures.length > 0) {
+    return [diag(
+      "error",
+      "FORGE_TEST_COMMAND_RESOLUTION_FAILED",
+      `impact-selected command could not be resolved: ${resolutionFailures.map((result) => result.command).join(", ")}`,
+    )];
+  }
+
+  if (run.failed.length > 0) {
+    return [diag("error", "FORGE_TEST_RUN_FAILED", "one or more impact-selected tests failed")];
+  }
+
+  return [];
+}
+
 export async function runTestCommand(options: TestCommandOptions): Promise<ImpactResult> {
   if (options.subcommand === "explain") {
     return explainTest(options.workspaceRoot, options.testFile ?? "");
@@ -755,12 +935,13 @@ export async function runTestCommand(options: TestCommandOptions): Promise<Impac
   const run = await runImpactTestPlan(options.workspaceRoot, plan, {
     bail: options.bail,
     report: options.report,
+    timeoutMs: options.timeoutMs,
   });
   return {
     ok: run.failed.length === 0,
     plan,
     run,
-    diagnostics: run.failed.length > 0 ? [diag("error", "FORGE_TEST_RUN_FAILED", "one or more impact-selected tests failed")] : [],
+    diagnostics: diagnosticsForImpactTestRun(run),
     exitCode: run.failed.length > 0 ? 1 : 0,
   };
 }
@@ -790,6 +971,15 @@ export function runImpactCommand(options: ImpactCommandOptions): ImpactResult {
 }
 
 export function formatImpactJson(result: ImpactResult): string {
+  if (result.run) {
+    return `${JSON.stringify({
+      ok: result.ok,
+      plan: result.plan,
+      run: result.run,
+      diagnostics: result.diagnostics,
+      exitCode: result.exitCode,
+    }, null, 2)}\n`;
+  }
   return `${JSON.stringify(result.report ?? result.plan ?? result.test ?? result.run ?? result, null, 2)}\n`;
 }
 
@@ -832,7 +1022,11 @@ Covers: ${JSON.stringify(result.test.covers, null, 2)}
   if (result.run) {
     return `Impact test run ${result.run.id}
 
-${result.run.results.map((step) => `${step.ok ? "OK" : "FAIL"} ${step.command} (${step.durationMs}ms)`).join("\n")}
+${result.run.results.map((step) => {
+  const timeout = step.timedOut ? `, timed out after ${result.run?.timeoutMs ?? "unknown"}ms` : "";
+  const resolution = step.failureKind === "command-resolution-error" ? `, command resolution failed: ${step.stderr ?? "unknown error"}` : "";
+  return `${step.ok ? "OK" : "FAIL"} ${step.command} (${step.durationMs}ms${timeout}${resolution})`;
+}).join("\n")}
 `;
   }
   return result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");

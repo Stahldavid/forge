@@ -345,11 +345,11 @@ function playbooks(): AgentPlaybook[] {
     {
       title: "Plan impact-based tests",
       steps: [
-        "Run forge impact --changed --json.",
-        "Run forge test plan --changed --json.",
-        "Run forge test run --changed --json for targeted checks.",
-        "Use forge verify --changed for the fast impact gate.",
-        "Run forge verify --strict before final handoff.",
+      "Run forge impact --changed --json.",
+      "Run forge test plan --changed --json.",
+      "Run forge test run --changed --timeout-ms 120000 --json for targeted checks.",
+      "Use forge verify --changed for the fast impact gate.",
+      "Run forge verify --strict before final handoff.",
       ],
     },
     {
@@ -1002,7 +1002,7 @@ export function buildAgentContractArtifacts(
     playbooks: playbooks(),
     commandsToRun: {
       beforeEditing: ["forge do inspect --json", "forge dev --once --json", "forge inspect all --json", "forge check --json"],
-      afterEditing: ["forge generate", "forge check", "forge verify --strict"],
+      afterEditing: ["forge generate", "forge check", "forge verify --standard", "forge verify --strict"],
       dev: ["forge dev", "forge dev --once --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"],
     },
   };
@@ -1161,6 +1161,8 @@ forge inspect live-production --json
 forge live status --json
 forge doctor
 forge agent print-context --json
+forge verify --smoke
+forge verify --standard
 forge verify --strict
 \`\`\`
 
@@ -1283,10 +1285,11 @@ Use:
 \`\`\`bash
 forge impact --changed --json
 forge test plan --changed --json
-forge test run --changed --json
+forge test run --changed --timeout-ms 120000 --json
+forge verify --standard
 \`\`\`
 
-Finish handoffs with \`forge verify --strict\` when the change is ready.
+Use \`forge verify --standard\` for the normal agent development loop. Finish handoffs with \`forge verify --strict\` when the change is ready.
 
 ### Repair a failing check
 

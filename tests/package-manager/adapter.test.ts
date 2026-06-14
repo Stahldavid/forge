@@ -102,6 +102,17 @@ describe("PackageManagerAdapter with mock executor", () => {
     expect(resolved).toEqual([realBun, "install"]);
   });
 
+  test("default executor resolution refuses ambiguous Windows bun fallback", () => {
+    expect(() => resolvePackageManagerArgv(["bun", "install"], {
+      env: {},
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: () => false,
+      homeDir: "C:\\Users\\David",
+      platform: "win32",
+      which: () => "C:\\Users\\David\\AppData\\Local\\Kiro-Cli\\bun.exe",
+    })).toThrow("Unable to resolve a safe Bun executable on Windows");
+  });
+
   test("add runs PM command with ignoreScripts default true", async () => {
     const root = makeTempWorkspace();
     writeFileSync(

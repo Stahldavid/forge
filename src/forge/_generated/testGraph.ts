@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=a0ec79f76048165ca69946760a48c354d4cafd97cbb5596284bd204134ee73b9 content=b197fd696fa2688b48189eecccc03da0feb4b8f02817532db841371cdfa26720
+// @forge-generated generator=0.0.0 input=8acc6fc3b51ea46ef5b755a0ada1649d1ef382eb176e67d6b08795bf52326e66 content=fdf33989200dbdaf0c3872f1be74817c3c20e445a8cce8141961a994bb615509
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "a0ec79f76048165ca69946760a48c354d4cafd97cbb5596284bd204134ee73b9",
+  "inputHash": "8acc6fc3b51ea46ef5b755a0ada1649d1ef382eb176e67d6b08795bf52326e66",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -978,7 +978,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "docker",
+      "cost": "slow",
       "covers": {
         "actions": [],
         "commands": [],
@@ -1184,7 +1184,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "browser",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
@@ -1200,7 +1200,7 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/impact/h28-impact.test.ts",
-      "kind": "e2e",
+      "kind": "unknown",
       "reasons": [
         "probable: packages react",
         "probable: packages tsx"
@@ -1296,7 +1296,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "docker",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
@@ -1355,6 +1355,42 @@ export const testGraph = {
       "reasons": [
         "probable: packages tsx"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec6eb-ff1f-7000-83c1-5addbb10155c/tests/changed.test.ts",
+      "kind": "unit",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec6ec-3ba7-7000-929c-8dce77d33e14/tests/changed.test.ts",
+      "kind": "unit",
+      "reasons": []
     },
     {
       "confidence": "confirmed",
@@ -2090,7 +2126,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "browser",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
@@ -2140,7 +2176,7 @@ export const testGraph = {
     },
     {
       "confidence": "weak",
-      "cost": "docker",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
@@ -2202,7 +2238,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "docker",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
@@ -2350,7 +2386,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "docker",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
@@ -2772,7 +2808,7 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "browser",
+      "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],

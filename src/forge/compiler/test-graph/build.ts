@@ -69,9 +69,39 @@ function componentNames(sources: SourceFile[]): string[] {
   return stableSortStrings([...names]);
 }
 
+function hasBrowserAutomationSignal(path: string, text: string): boolean {
+  const loweredPath = path.toLowerCase();
+  const loweredText = text.toLowerCase();
+  return (
+    loweredPath.includes("playwright") ||
+    /^\s*import\s+["'](?:@playwright\/test|playwright)["'];?/m.test(loweredText) ||
+    /^\s*import\s+.*\s+from\s+["'](?:@playwright\/test|playwright)["'];?/m.test(loweredText) ||
+    /^\s*const\s+\w+\s*=\s*require\(["'](?:@playwright\/test|playwright)["']\)/m.test(loweredText) ||
+    /\b(chromium|firefox|webkit)\s*\./.test(loweredText) ||
+    /\bpage\.(goto|locator|click|fill|screenshot)\b/.test(loweredText)
+  );
+}
+
+function hasDockerOrExternalPostgresSignal(path: string, text: string): boolean {
+  const loweredPath = path.toLowerCase();
+  const loweredText = text.toLowerCase();
+  return (
+    loweredPath.includes("/docker/") ||
+    loweredPath.includes("\\docker\\") ||
+    loweredPath.includes("docker-compose") ||
+    loweredPath.includes("/postgres/") ||
+    loweredPath.includes("\\postgres\\") ||
+    loweredText.includes("testcontainers") ||
+    loweredText.includes("docker-compose") ||
+    loweredText.includes("postgres://") ||
+    loweredText.includes("postgresql://") ||
+    /\bnew\s+postgres(?:ql)?container\b/.test(loweredText)
+  );
+}
+
 function inferKind(path: string, text: string): TestKind {
   const lowered = path.toLowerCase();
-  if (lowered.includes("/e2e/") || text.includes("playwright")) {
+  if (lowered.includes("/e2e/") || hasBrowserAutomationSignal(path, text)) {
     return "e2e";
   }
   if (lowered.includes("/react/") || lowered.includes("/components/") || path.endsWith(".tsx")) {
@@ -88,10 +118,10 @@ function inferKind(path: string, text: string): TestKind {
 
 function inferCost(path: string, text: string, kind: TestKind): TestCost {
   const lowered = `${path}\n${text}`.toLowerCase();
-  if (lowered.includes("playwright") || lowered.includes("browser")) {
+  if (hasBrowserAutomationSignal(path, text)) {
     return "browser";
   }
-  if (lowered.includes("docker") || lowered.includes("postgres")) {
+  if (hasDockerOrExternalPostgresSignal(path, text)) {
     return "docker";
   }
   if (lowered.includes("e2e") || lowered.includes("timeout 120000")) {
@@ -226,9 +256,11 @@ export function buildTestPlanRegistry(): TestPlanRegistry {
       "forge impact --changed --json",
       "forge test plan --changed --json",
       "forge test run --changed --json",
+      "forge test run --changed --timeout-ms <ms> --json",
       "forge test explain <testFile> --json",
       "forge verify --changed",
       "forge verify --fast",
+      "forge verify --smoke",
       "forge verify --standard",
       "forge verify --strict",
     ],

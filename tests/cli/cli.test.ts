@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
@@ -130,6 +131,7 @@ describe("Forge CLI", () => {
       "--json",
       "--skip-tests",
       "--skip-eslint",
+      "--smoke",
       "--script-timeout-ms",
       "1234",
     ]);
@@ -138,7 +140,17 @@ describe("Forge CLI", () => {
     if (parsed.command?.kind === "verify") {
       expect(parsed.command.options.skipTests).toBe(true);
       expect(parsed.command.options.skipEslint).toBe(true);
+      expect(parsed.command.options.smoke).toBe(true);
       expect(parsed.command.options.scriptTimeoutMs).toBe(1234);
+    }
+  });
+
+  test("parseCli accepts impact test timeout", () => {
+    const parsed = parseCli(["test", "run", "--changed", "--timeout-ms", "77", "--json"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command?.kind).toBe("test");
+    if (parsed.command?.kind === "test") {
+      expect(parsed.command.options.timeoutMs).toBe(77);
     }
   });
 
@@ -181,6 +193,30 @@ describe("Forge CLI", () => {
       exists: (path) => path === realBun,
       platform: "win32",
       which: () => bunShim,
+    });
+
+    expect(resolved).toBe(realBun);
+  });
+
+  test("resolveBunExecutable refuses ambiguous Windows bun fallback", () => {
+    expect(() => resolveBunExecutable({
+      env: {},
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: () => false,
+      homeDir: "C:\\Users\\David",
+      platform: "win32",
+      which: () => "C:\\Users\\David\\AppData\\Local\\Kiro-Cli\\bun.exe",
+    })).toThrow("Unable to resolve a safe Bun executable on Windows");
+  });
+
+  test("resolveBunExecutable honors explicit FORGE_BUN", () => {
+    const realBun = "D:\\Tools\\bun\\bun.exe";
+    const resolved = resolveBunExecutable({
+      env: { FORGE_BUN: realBun },
+      execPath: "C:\\Program Files\\nodejs\\node.exe",
+      exists: (path) => path === realBun,
+      platform: "win32",
+      which: () => null,
     });
 
     expect(resolved).toBe(realBun);
@@ -268,6 +304,95 @@ describe("Forge CLI", () => {
       expect(result.ok).toBe(false);
       expect(result.steps.find((step) => step.name === "typecheck")?.timedOut).toBe(true);
       expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_SCRIPT_TIMEOUT")).toBe(true);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("verify --changed propagates impact command resolution diagnostics", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-verify-changed-resolution");
+    const previous = process.env.FORGE_BUN;
+    try {
+      mkdirSync(join(workspace, "tests"), { recursive: true });
+      writeFileSync(
+        join(workspace, "tests", "changed.test.ts"),
+        `import { test, expect } from "bun:test"; test("changed", () => expect(1).toBe(1));`,
+        "utf8",
+      );
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.email", "forge@example.test"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["commit", "-m", "baseline"], { cwd: workspace, windowsHide: true });
+      writeFileSync(
+        join(workspace, "tests", "changed.test.ts"),
+        `import { test, expect } from "bun:test"; test("changed", () => expect(2).toBe(2));`,
+        "utf8",
+      );
+
+      process.env.FORGE_BUN = join(workspace, "missing-bun.exe");
+      const result = await runVerifyCommand({
+        workspaceRoot: workspace,
+        json: true,
+        skipTests: false,
+        skipTypecheck: true,
+        skipEslint: true,
+        strict: false,
+        changed: true,
+        scriptTimeoutMs: 120000,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_TEST_COMMAND_RESOLUTION_FAILED")).toBe(true);
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_CHANGED_INCOMPLETE")).toBe(true);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.FORGE_BUN;
+      } else {
+        process.env.FORGE_BUN = previous;
+      }
+      cleanupWorkspace(workspace);
+    }
+  }, 30000);
+
+  test("verify --standard uses impact tests instead of the full test script", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-verify-standard");
+    try {
+      const pkgPath = join(workspace, "package.json");
+      writeFileSync(
+        pkgPath,
+        JSON.stringify(
+          {
+            name: "forge-verify-standard-test",
+            private: true,
+            type: "module",
+            packageManager: "npm@10.9.0",
+            scripts: {
+              test: "node -e \"process.exit(99)\"",
+            },
+            dependencies: { zod: "^3.24.0" },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      const result = await runVerifyCommand({
+        workspaceRoot: workspace,
+        json: true,
+        skipTests: false,
+        skipTypecheck: true,
+        skipEslint: true,
+        strict: false,
+        standard: true,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.profile).toBe("standard");
+      expect(result.steps.some((step) => step.name === "impact-tests")).toBe(true);
+      expect(result.steps.find((step) => step.name === "tests")?.skipped).toBe(true);
     } finally {
       cleanupWorkspace(workspace);
     }

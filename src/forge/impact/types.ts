@@ -62,6 +62,8 @@ export interface TargetedTest {
   reason: string;
   cost: TestCost;
   confidence: TestGraphEntry["confidence"];
+  lastDurationMs?: number;
+  lastRunOk?: boolean;
 }
 
 export interface ImpactTestPlan {
@@ -81,6 +83,7 @@ export interface TestRunStep {
   ok: boolean;
   exitCode: number;
   durationMs: number;
+  timedOut?: boolean;
   failureKind?: string;
   stdout?: string;
   stderr?: string;
@@ -93,6 +96,7 @@ export interface TestRunRecord {
   planHash: string;
   source: ImpactSource;
   commands: string[];
+  timeoutMs: number;
   results: TestRunStep[];
   failed: string[];
   durationMs: number;
@@ -133,6 +137,7 @@ export interface TestCommandOptions {
   includeBrowser: boolean;
   bail: boolean;
   report?: string;
+  timeoutMs?: number;
 }
 
 export interface ImpactResult {

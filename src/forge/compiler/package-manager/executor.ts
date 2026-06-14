@@ -25,6 +25,13 @@ export function resolvePackageManagerArgv(
   argv: string[],
   bunOptions?: BunExecutableResolutionOptions,
 ): string[] {
+  return resolveCommandArgv(argv, bunOptions);
+}
+
+export function resolveCommandArgv(
+  argv: string[],
+  bunOptions?: BunExecutableResolutionOptions,
+): string[] {
   if (argv[0]?.toLowerCase() === "bun" || argv[0]?.toLowerCase() === "bun.exe") {
     return [resolveBunExecutable(bunOptions), ...argv.slice(1)];
   }

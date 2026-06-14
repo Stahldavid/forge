@@ -18,6 +18,7 @@ function formatHelp(): string {
     "Useful next commands:",
     "  forge generate",
     "  forge check --json",
+    "  forge verify --standard",
     "  forge verify --strict",
     "",
   ].join("\n");

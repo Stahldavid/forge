@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=69418484de69a159bdbb79b216f3f22ffd9b6248efdbc7597ea784e01145e4cb content=0205635631ebfdb3324176c54dc9414750278f81d1fcbfb310856f20d4eb4348
+// @forge-generated generator=0.0.0 input=c4a632bc3eaecde8bbb6cfeafa34d7b57bcf50b598fc3ade3b96502edb9f1df8 content=8b553d4874244dccd6071e22f514978e990bdaeaccbb7299b08dc90fcdf6146e
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -77,6 +77,8 @@ forge inspect live-production --json
 forge live status --json
 forge doctor
 forge agent print-context --json
+forge verify --smoke
+forge verify --standard
 forge verify --strict
 ```
 
@@ -198,10 +200,11 @@ Use:
 ```bash
 forge impact --changed --json
 forge test plan --changed --json
-forge test run --changed --json
+forge test run --changed --timeout-ms 120000 --json
+forge verify --standard
 ```
 
-Finish handoffs with `forge verify --strict` when the change is ready.
+Use `forge verify --standard` for the normal agent development loop. Finish handoffs with `forge verify --strict` when the change is ready.
 
 ### Repair a failing check
 

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
-import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
+import type { VerifyOptions, VerifyProfile, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
 import {
   FORGE_VERIFY_POLICY,
   FORGE_VERIFY_SCRIPT_TIMEOUT,
@@ -15,7 +15,7 @@ import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
 import { runAuthCommand } from "./auth.ts";
 import { runRlsCommand } from "./rls.ts";
-import { buildImpactTestPlan, runImpactTestPlan } from "../impact/index.ts";
+import { buildImpactTestPlan, diagnosticsForImpactTestRun, runImpactTestPlan } from "../impact/index.ts";
 import { runAgentCheck } from "../agent-adapters/index.ts";
 import type { AgentAdapterTarget } from "../agent-adapters/types.ts";
 
@@ -167,6 +167,80 @@ function timedOutDiagnostic(scriptName: string, timeoutMs: number): Diagnostic {
   });
 }
 
+function resolveVerifyProfile(options: VerifyOptions): VerifyProfile {
+  if (options.changed) {
+    return "changed";
+  }
+  if (options.fast || options.smoke) {
+    return "smoke";
+  }
+  if (options.strict) {
+    return "strict";
+  }
+  if (options.standard) {
+    return "standard";
+  }
+  return "default";
+}
+
+async function runStandardImpactTests(
+  options: VerifyOptions,
+): Promise<{ steps: VerifyStep[]; diagnostics: Diagnostic[] }> {
+  const started = Date.now();
+  const diagnostics: Diagnostic[] = [];
+  const steps: VerifyStep[] = [];
+  const plan = buildImpactTestPlan({
+    subcommand: "run",
+    workspaceRoot: options.workspaceRoot,
+    json: options.json,
+    write: false,
+    changed: true,
+    staged: false,
+    maxCost: "standard",
+    includeDocker: false,
+    includeBrowser: false,
+    bail: false,
+  });
+  const impactOnlyPlan = {
+    ...plan,
+    requiredChecks: [],
+  };
+  const commands = impactOnlyPlan.tests.map((test) => test.command);
+
+  if (commands.length === 0) {
+    steps.push(skippedStep("impact-tests", "no changed files selected an impact test"));
+    return { steps, diagnostics };
+  }
+
+  const record = await runImpactTestPlan(options.workspaceRoot, impactOnlyPlan, {
+    bail: false,
+    timeoutMs: resolveScriptTimeoutMs(options),
+  });
+  steps.push({
+    name: "impact-tests",
+    ok: record.failed.length === 0,
+    exitCode: record.failed.length === 0 ? 0 : 1,
+    command: "forge test run --changed --max-cost standard --json",
+    durationMs: Date.now() - started,
+  });
+  if (record.failed.length > 0) {
+    diagnostics.push(...diagnosticsForImpactTestRun(record));
+    diagnostics.push(
+      createDiagnostic({
+        severity: "error",
+        code: "FORGE_VERIFY_TESTS",
+        message: `impact-selected tests failed: ${record.failed.join(", ")}; inspect .forge/test-runs/last.json for command output`,
+        suggestedCommands: [
+          "forge test run --changed --max-cost standard --json",
+          "forge repair diagnose --from-last-test-run --json",
+          "forge verify --strict",
+        ],
+      }),
+    );
+  }
+  return { steps, diagnostics };
+}
+
 export function configuredAgentTargets(workspaceRoot: string): AgentAdapterTarget[] {
   const targets: AgentAdapterTarget[] = [];
   if (nodeFileSystem.exists(join(workspaceRoot, ".forge/agent/context.json"))) {
@@ -192,6 +266,7 @@ export async function runVerifyCommand(
   const diagnostics: Diagnostic[] = [];
   const scripts = readPackageScripts(options.workspaceRoot);
   const scriptTimeoutMs = resolveScriptTimeoutMs(options);
+  const profile = resolveVerifyProfile(options);
 
   if (options.changed) {
     const plan = buildImpactTestPlan({
@@ -206,25 +281,31 @@ export async function runVerifyCommand(
       includeBrowser: false,
       bail: false,
     });
-    const record = await runImpactTestPlan(options.workspaceRoot, plan, { bail: false });
+    const record = await runImpactTestPlan(options.workspaceRoot, plan, {
+      bail: false,
+      timeoutMs: scriptTimeoutMs,
+    });
     for (const result of record.results) {
       steps.push({
         name: result.command,
         ok: result.ok,
         exitCode: result.exitCode,
+        command: result.command,
+        durationMs: result.durationMs,
       });
     }
     if (record.failed.length > 0) {
+      diagnostics.push(...diagnosticsForImpactTestRun(record));
       diagnostics.push(
         createDiagnostic({
           severity: "error",
           code: "FORGE_VERIFY_CHANGED_INCOMPLETE",
-          message: "impact-based verification failed; run forge test run --changed --json for details",
+          message: `impact-based verification failed: ${record.failed.join(", ")}; run forge test run --changed --json for details`,
         }),
       );
     }
     const ok = record.failed.length === 0;
-    return { ok, steps, diagnostics, durationMs: Date.now() - started, exitCode: ok ? 0 : 1 };
+    return { ok, profile, steps, diagnostics, durationMs: Date.now() - started, exitCode: ok ? 0 : 1 };
   }
 
   printProgress(options, "verify: generate-check");
@@ -263,7 +344,7 @@ export async function runVerifyCommand(
   });
   diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);
 
-  if (options.strict || options.standard) {
+  if (profile === "strict" || profile === "standard") {
     printProgress(options, "verify: policy-check-strict");
     const policyStarted = Date.now();
     const policyCheck = await runPolicyCommand({
@@ -385,10 +466,16 @@ export async function runVerifyCommand(
     }
   }
 
-  if (options.fast) {
-    steps.push(skippedStep("tests", "--fast"));
+  if (profile === "smoke") {
+    steps.push(skippedStep("tests", "--smoke/--fast"));
   } else if (options.skipTests) {
     steps.push(skippedStep("tests", "--skip-tests"));
+  } else if (profile === "standard") {
+    printProgress(options, "verify: impact-tests (standard profile)");
+    const impact = await runStandardImpactTests(options);
+    steps.push(...impact.steps);
+    diagnostics.push(...impact.diagnostics);
+    steps.push(skippedStep("tests", "--standard uses impact-selected tests; use --strict for the full test script"));
   } else if (!scripts.test) {
     steps.push(skippedStep("tests", "no test script in package.json"));
   } else {
@@ -416,8 +503,8 @@ export async function runVerifyCommand(
     }
   }
 
-  if (options.fast) {
-    steps.push(skippedStep("eslint", "--fast"));
+  if (profile === "smoke") {
+    steps.push(skippedStep("eslint", "--smoke/--fast"));
   } else if (options.skipEslint) {
     steps.push(skippedStep("eslint", "--skip-eslint"));
   } else {
@@ -433,6 +520,7 @@ export async function runVerifyCommand(
   const ok = steps.every((step) => step.ok);
   return {
     ok,
+    profile,
     steps,
     diagnostics,
     durationMs: Date.now() - started,

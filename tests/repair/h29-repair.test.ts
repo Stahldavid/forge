@@ -45,6 +45,7 @@ function lastRun(root: string, stdout: string, command = "forge check"): void {
     planHash: "sha256:test",
     source: { mode: "changed", base: "HEAD" },
     commands: [command],
+    timeoutMs: 120000,
     results: [
       {
         command,

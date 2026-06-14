@@ -47,6 +47,7 @@ export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
 export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
   return {
     ok: result.ok,
+    profile: result.profile ?? null,
     steps: result.steps,
     diagnostics: result.diagnostics,
     durationMs: result.durationMs ?? null,

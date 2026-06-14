@@ -15,6 +15,7 @@ bun run forge dev --once --json
 bun run forge inspect all --json
 bun run forge inspect framework --json
 bun run forge doctor
+bun run forge verify --standard
 bun run forge verify --strict
 ```
 
@@ -113,7 +114,7 @@ forge.lock
 | Full-stack map | `frontendGraph` + `capabilityMap` connect routes, components, hooks, runtime entries, tables, policies, and gaps |
 | Dev loop | `forge dev` prints API/Web URLs, phase health, capability coverage, cache status, diagnostics, and next action |
 | Templates | source-only templates and showcase app avoid committing generated artifacts by default |
-| Verification | `forge verify` reports per-step duration/command metadata and times out package scripts predictably |
+| Verification | `forge verify --smoke`, `--standard`, and `--strict` report per-step duration/command metadata, use impact-selected tests for the standard loop, and time out package scripts predictably |
 
 ## Command Map
 
@@ -130,9 +131,11 @@ forge inspect all --json
 forge inspect framework --json
 forge inspect capabilities --json
 forge doctor
+forge verify --standard
 forge verify --strict
 forge impact --changed --json
 forge test plan --changed --json
+forge test run --changed --timeout-ms 120000 --json
 forge repair diagnose --from-last-test-run --json
 forge repair diagnose --from-last-ui-run --json
 forge review run --changed --json
@@ -146,7 +149,9 @@ Common command groups:
 | `forge generate` | Analyze source and emit generated artifacts |
 | `forge generate --check` | Fail on generated drift |
 | `forge check --json` | Validate guardrails and emit diagnostics with fix hints |
-| `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
+| `forge verify --smoke` | Fast local gate: generated drift, Forge checks, typecheck when present, no tests/lint |
+| `forge verify --standard` | Agent development gate: generated drift, Forge/security checks, typecheck, and impact-selected tests |
+| `forge verify --strict` | Full handoff/CI gate: generated drift, Forge/security checks, typecheck, full test script, lint |
 | `forge verify --script-timeout-ms <ms>` | Run package scripts with a predictable timeout and machine-readable timeout diagnostics |
 | `forge do "<objective>" --json` | Guided intent router: choose the right workflow, files, risks, and next action |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
@@ -161,6 +166,7 @@ Common command groups:
 | `forge feature` | Validate/plan/apply feature blueprints |
 | `forge refactor` | Plan/apply/rollback safe refactors and targeted codemods |
 | `forge impact`, `forge test` | Compute change impact and run targeted checks |
+| `forge test run --timeout-ms <ms>` | Run impact-selected checks with a per-command timeout |
 | `forge repair` | Diagnose failures and produce repair plans |
 | `forge review` | Structured code review with findings and suggested commands |
 | `forge ui` | Browser/UI smoke, scenario, route, snapshot, doctor, and reports |

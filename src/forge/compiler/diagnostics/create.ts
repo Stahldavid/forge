@@ -75,6 +75,20 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       docs: ["AGENTS.md"],
     };
   }
+  if (code === "FORGE_TEST_RUN_TIMEOUT") {
+    return {
+      fixHint: "Run the timed-out command directly, or increase the impact test timeout only after checking why it is slow.",
+      suggestedCommands: ["forge test plan --changed --json", "forge test run --changed --timeout-ms 120000 --json"],
+      docs: ["AGENTS.md", ".forge/test-runs/last.json"],
+    };
+  }
+  if (code === "FORGE_TEST_COMMAND_RESOLUTION_FAILED") {
+    return {
+      fixHint: "Fix the local command resolution before retrying. On Windows, install Bun at ~/.bun/bin/bun.exe or set FORGE_BUN to an existing bun.exe.",
+      suggestedCommands: ["forge dev --once --json", "forge test plan --changed --json"],
+      docs: ["AGENTS.md"],
+    };
+  }
   if (code.startsWith("FORGE_FRONTEND_")) {
     return {
       fixHint: "Use the generated frontend bridge and inspect src/forge/_generated/frontendGraph.json before editing UI wiring.",

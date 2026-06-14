@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=19ab156a942a04678fed150424cb01459fa97a0ce4a0808c5cd9195edd52ffcd
+// @forge-generated generator=0.0.0 input=c4a632bc3eaecde8bbb6cfeafa34d7b57bcf50b598fc3ade3b96502edb9f1df8 content=c3abf39b00df567744cf27a30425da53b57ae8109c67abafd96ef0eb79781c14
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -60,6 +60,7 @@ export const agentContract = {
     "afterEditing": [
       "forge generate",
       "forge check",
+      "forge verify --standard",
       "forge verify --strict"
     ],
     "beforeEditing": [
@@ -653,7 +654,7 @@ export const agentContract = {
       "steps": [
         "Run forge impact --changed --json.",
         "Run forge test plan --changed --json.",
-        "Run forge test run --changed --json for targeted checks.",
+        "Run forge test run --changed --timeout-ms 120000 --json for targeted checks.",
         "Use forge verify --changed for the fast impact gate.",
         "Run forge verify --strict before final handoff."
       ],

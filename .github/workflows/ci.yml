@@ -26,6 +26,7 @@ jobs:
         run: |
           node ./bin/forge.mjs inspect framework --json
           node ./bin/forge.mjs dev --once --json
+          node ./bin/forge.mjs verify --smoke --json --script-timeout-ms 120000
 
       - name: Typecheck
         run: bun run typecheck
@@ -37,7 +38,7 @@ jobs:
         run: bun run forge generate
 
       - name: Verify compiler workspace
-        run: bun run forge verify --skip-tests
+        run: bun run forge verify --standard --script-timeout-ms 120000
 
       - name: Setup basic example
         run: node scripts/setup-example.mjs

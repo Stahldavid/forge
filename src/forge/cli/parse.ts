@@ -1264,6 +1264,14 @@ export function parseCli(argv: string[]): ParsedCli {
         errors.push("forge test requires subcommand: plan, run, or explain");
         return { command: null, workspaceRoot, errors };
       }
+      const timeoutRaw = parseOptionValue(argv, "--timeout-ms");
+      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : undefined;
+      if (
+        timeoutRaw !== undefined &&
+        (!Number.isFinite(timeoutMs) || timeoutMs! < 1)
+      ) {
+        errors.push("--timeout-ms must be a number >= 1");
+      }
       return {
         command: {
           kind: "test",
@@ -1285,6 +1293,7 @@ export function parseCli(argv: string[]): ParsedCli {
             includeBrowser: parseFlag(argv, "--include-browser"),
             bail: parseFlag(argv, "--bail"),
             report: parseOptionValue(argv, "--report"),
+            timeoutMs: timeoutMs ? Math.floor(timeoutMs) : undefined,
           },
         },
         workspaceRoot,
@@ -1443,6 +1452,7 @@ export function parseCli(argv: string[]): ParsedCli {
             strict: parseFlag(argv, "--strict"),
             changed: parseFlag(argv, "--changed"),
             fast: parseFlag(argv, "--fast"),
+            smoke: parseFlag(argv, "--smoke"),
             standard: parseFlag(argv, "--standard"),
             scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,
           },
@@ -1930,8 +1940,10 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--max-attempts",
     "--commit-friendly",
     "--fast",
+    "--smoke",
     "--standard",
     "--script-timeout-ms",
+    "--timeout-ms",
     "--apply",
     "--runtime-inspect",
     "--allow-scripts",
@@ -2106,6 +2118,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--runtime-url" ||
         arg === "--scenario" ||
         arg === "--timeout" ||
+        arg === "--timeout-ms" ||
         arg === "--name" ||
         arg === "--auth-token" ||
         arg === "--sandbox-backend" ||

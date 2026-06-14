@@ -3,6 +3,7 @@ import { nodeFileSystem } from "../fs/index.ts";
 import { basename, join, win32 } from "node:path";
 
 export interface BunExecutableResolutionOptions {
+  env?: Record<string, string | undefined>;
   execPath?: string;
   exists?: (path: string) => boolean;
   homeDir?: string;
@@ -36,11 +37,30 @@ function normalizeWindowsBunCandidate(
   return exists(exeCandidate) ? exeCandidate : null;
 }
 
+function unresolvedWindowsBunError(): Error {
+  return new Error(
+    "Unable to resolve a safe Bun executable on Windows. Install Bun at ~/.bun/bin/bun.exe or set FORGE_BUN to an existing bun.exe. Refusing to spawn bare bun.exe because Windows may open an app picker.",
+  );
+}
+
 /** Resolve the Bun executable for spawning child processes (Windows-safe). */
 export function resolveBunExecutable(options: BunExecutableResolutionOptions = {}): string {
   const platform = options.platform ?? process.platform;
   const exists = options.exists ?? nodeFileSystem.exists;
   const execPath = options.execPath ?? process.execPath;
+  const configured = options.env?.FORGE_BUN ?? process.env.FORGE_BUN;
+
+  if (configured) {
+    if (platform === "win32") {
+      const normalized = normalizeWindowsBunCandidate(configured, exists);
+      if (normalized) {
+        return normalized;
+      }
+    } else if (exists(configured)) {
+      return configured;
+    }
+    throw new Error(`FORGE_BUN does not point to a safe Bun executable: ${configured}`);
+  }
 
   if (isBunExecutablePath(execPath, platform) && exists(execPath)) {
     return execPath;
@@ -61,7 +81,7 @@ export function resolveBunExecutable(options: BunExecutableResolutionOptions = {
       return homeBun;
     }
 
-    return "bun.exe";
+    throw unresolvedWindowsBunError();
   }
 
   if (fromPath) {
