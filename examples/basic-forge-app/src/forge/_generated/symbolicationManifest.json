@@ -1,2 +1,0 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=b91f308c0736c5a419de94f0043fcbfbf719ce66b5b442387576e10f89f278c3
-{"diagnostics":[],"localSymbolication":true,"providers":["local","sentry-compatible","sentry","glitchtip","bugsink","otel","custom"],"releaseId":"basic-forge-app@0.0.0+unknown","schemaVersion":"0.1.0","sourceMapCount":0}

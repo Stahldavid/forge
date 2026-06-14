@@ -42,7 +42,7 @@ import {
   buildVerifyJson,
   writeHumanVerify,
 } from "./output.ts";
-import type { ForgeCommand } from "./parse.ts";
+import { INSPECT_TARGETS, TOP_LEVEL_COMMANDS, type ForgeCommand } from "./parse.ts";
 import { runVerifyCommand } from "./verify.ts";
 import {
   formatRunJson,
@@ -163,6 +163,103 @@ function readGeneratedText(workspaceRoot: string, relative: string): string | nu
     return null;
   }
   return stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? ""));
+}
+
+function readPackageJson(workspaceRoot: string): Record<string, unknown> {
+  try {
+    return JSON.parse(nodeFileSystem.readText(join(workspaceRoot, "package.json")) ?? "{}") as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function hasPath(workspaceRoot: string, relative: string): boolean {
+  return nodeFileSystem.exists(join(workspaceRoot, relative));
+}
+
+function sortedDirectoryNames(workspaceRoot: string, relative: string): string[] {
+  const absolute = join(workspaceRoot, relative);
+  if (!nodeFileSystem.exists(absolute)) {
+    return [];
+  }
+  return nodeFileSystem
+    .readDir(absolute)
+    .filter((entry) => entry.isDirectory)
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function buildFrameworkInspect(workspaceRoot: string): Record<string, unknown> {
+  const pkg = readPackageJson(workspaceRoot);
+  const scripts = pkg.scripts && typeof pkg.scripts === "object"
+    ? Object.keys(pkg.scripts as Record<string, string>).sort()
+    : [];
+  const dependencies = pkg.dependencies && typeof pkg.dependencies === "object"
+    ? Object.keys(pkg.dependencies as Record<string, string>).sort()
+    : [];
+  const devDependencies = pkg.devDependencies && typeof pkg.devDependencies === "object"
+    ? Object.keys(pkg.devDependencies as Record<string, string>).sort()
+    : [];
+  const templates = sortedDirectoryNames(workspaceRoot, "templates").map((name) => ({
+    name,
+    hasWeb: hasPath(workspaceRoot, `templates/${name}/web`),
+    hasAgentsMd: hasPath(workspaceRoot, `templates/${name}/AGENTS.md`),
+    packageJson: `templates/${name}/package.json`,
+  }));
+  const examples = sortedDirectoryNames(workspaceRoot, "examples").map((name) => ({
+    name,
+    sourceOnly: !hasPath(workspaceRoot, `examples/${name}/src/forge/_generated`) &&
+      !hasPath(workspaceRoot, `examples/${name}/forge.lock`),
+    hasWeb: hasPath(workspaceRoot, `examples/${name}/web`),
+    hasAgentsMd: hasPath(workspaceRoot, `examples/${name}/AGENTS.md`),
+  }));
+
+  return {
+    schemaVersion: "0.1.0",
+    project: {
+      name: typeof pkg.name === "string" ? pkg.name : "unknown",
+      version: typeof pkg.version === "string" ? pkg.version : "unknown",
+      private: pkg.private === true,
+      type: "forgeos-framework",
+    },
+    packageManager: pkg.packageManager ?? "bun",
+    scripts,
+    dependencies,
+    devDependencies,
+    cli: {
+      topLevelCommands: [...TOP_LEVEL_COMMANDS],
+      inspectTargets: [...INSPECT_TARGETS],
+      preferredEntryPoints: [
+        "forge do <objective> --json",
+        "forge dev --once --json",
+        "forge inspect all --json",
+        "forge inspect framework --json",
+        "forge verify --strict",
+      ],
+    },
+    modules: sortedDirectoryNames(workspaceRoot, "src/forge").map((name) => ({
+      name,
+      path: `src/forge/${name}`,
+    })),
+    templates,
+    examples,
+    tests: sortedDirectoryNames(workspaceRoot, "tests").map((name) => ({
+      name,
+      path: `tests/${name}`,
+    })),
+    generated: {
+      directory: GENERATED_DIR,
+      rootArtifacts: ["AGENTS.md", "forge.lock"],
+      sourceOnlyExamples: examples
+        .filter((example) => example.sourceOnly)
+        .map((example) => example.name),
+    },
+    documentation: {
+      readme: hasPath(workspaceRoot, "README.md"),
+      agents: hasPath(workspaceRoot, "AGENTS.md"),
+      ci: hasPath(workspaceRoot, ".github/workflows/ci.yml"),
+    },
+  };
 }
 
 export async function runGenerateCommand(
@@ -299,6 +396,7 @@ export async function runInspectCommand(
     make: `${GENERATED_DIR}/makeRegistry.json`,
     "test-graph": `${GENERATED_DIR}/testGraph.json`,
     "test-plans": `${GENERATED_DIR}/testPlanRegistry.json`,
+    "agent-contract": `${GENERATED_DIR}/agentContract.json`,
     "agent-adapters": `${GENERATED_DIR}/agentAdapterManifest.json`,
     "capability-map": `${GENERATED_DIR}/capabilityMap.json`,
     ui: `${GENERATED_DIR}/uiTestManifest.json`,
@@ -307,6 +405,16 @@ export async function runInspectCommand(
     rules: `${GENERATED_DIR}/runtimeRules.md`,
     map: `${GENERATED_DIR}/appMap.md`,
   };
+
+  if (target === "framework") {
+    return {
+      target,
+      data: buildFrameworkInspect(workspaceRoot),
+      warnings: [],
+      errors: [],
+      exitCode: 0,
+    };
+  }
 
   if (target === "all") {
     const aggregatePaths: Array<[string, string]> = [
@@ -358,6 +466,7 @@ export async function runInspectCommand(
         data[key] = value;
       }
     }
+    data.framework = buildFrameworkInspect(workspaceRoot);
     data.diagnostics = errors;
     return {
       target,

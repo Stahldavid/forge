@@ -1,2 +1,0 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=f222082696468f92f6a316519e70b2a2fd0950679cb5fcdde0e5bf72f7a3d083
-{"entries":[{"policy":"billing.manage","roles":["admin","owner"]},{"policy":"tickets.create","roles":["admin","member","owner"]},{"policy":"tickets.read","roles":["admin","member","owner"]}],"generatorVersion":"0.0.0","inputHash":"4dc19c5a6cd295803940f938f4397aca8ddbf1d7051a012232e72ef0739d41e5","schemaVersion":"1.0.0"}

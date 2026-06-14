@@ -13,6 +13,7 @@ bun run forge do inspect --json
 bun run forge dev
 bun run forge dev --once --json
 bun run forge inspect all --json
+bun run forge inspect framework --json
 bun run forge doctor
 bun run forge verify --strict
 ```
@@ -115,6 +116,7 @@ forge do verify --json
 forge dev --once --json
 forge dev
 forge inspect all --json
+forge inspect framework --json
 forge inspect capabilities --json
 forge doctor
 forge verify --strict
@@ -136,6 +138,7 @@ Common command groups:
 | `forge verify --strict` | CI gate: generate/check/policy/secrets/auth/RLS/agent checks/typecheck/tests |
 | `forge do "<objective>" --json` | Guided intent router: choose the right workflow, files, risks, and next action |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
+| `forge inspect framework --json` | Inspect ForgeOS framework modules, CLI commands, templates, examples, tests, and preferred entrypoints |
 | `forge doctor --json` | Human/agent health check for project coherence |
 | `forge dev` | Interactive local loop: generated checks, API runtime, DB, worker, watch mode, frontend server, URLs, and next agent checks |
 | `forge dev --once --json` | One-shot diagnostic orchestrator for agents/CI: generated drift/cache hit, check, frontend, capability map, doctor, impact, reports, next actions |
@@ -184,7 +187,7 @@ bun run generate
 bun run dev
 ```
 
-The showcase is source-only and demonstrates tenant-scoped data, policies, commands, queries, liveQueries, outbox actions, workflows, mock AI, telemetry trace IDs, generated React hooks, `agentContract`, `frontendGraph`, and `capabilityMap`.
+Examples are source-only where practical: generated artifacts, `forge.lock`, package lockfiles, and operational `.forge/**` state are recreated locally. The showcase demonstrates tenant-scoped data, policies, commands, queries, liveQueries, outbox actions, workflows, mock AI, telemetry trace IDs, generated React hooks, `agentContract`, `frontendGraph`, and `capabilityMap`.
 
 ## Platform Support
 

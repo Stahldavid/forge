@@ -2,7 +2,7 @@
 
 Demonstrates:
 
-- generated integration surface (`src/forge/_generated/`)
+- generated integration surface (`src/forge/_generated/`, recreated locally)
 - runtime matrix and import guards
 - transitive import guard (`badStripeCommand` → `stripeClient` → `stripe`)
 - package-aware adapters from `forge add`
@@ -20,6 +20,8 @@ bun run forge:generate
 ```
 
 `setup` copies vendored type fixtures from the parent repo into `node_modules/` so the example works offline in CI.
+
+This example is source-only. `src/forge/_generated/`, `forge.lock`, `bun.lock`, `node_modules/`, and operational `.forge/**` files are intentionally ignored and recreated by setup/generate commands.
 
 ## Verify
 

@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
-    "forge": "latest",
+    "forge": "file:../..",
     "zod": "^3.25.76"
   },
   "devDependencies": {

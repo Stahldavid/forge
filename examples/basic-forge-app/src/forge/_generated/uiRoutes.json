@@ -1,2 +1,0 @@
-// @forge-generated generator=0.0.0 input=546500a6b3678160b7670bd4f0428cd9913860cf4a90429c9bd9563aa38bc60f content=9fae35c186b0bd18c2110aa5e40c20380aa8a219dde34322cf962a0dbb688970
-{"routes":[{"name":"home","path":"/","uses":{"commands":[],"components":[],"liveQueries":[],"queries":[]}},{"name":"tickets","path":"/tickets","uses":{"commands":["createTicket","manageBilling"],"components":["TicketList","CreateTicketForm"],"liveQueries":["liveTickets"],"queries":["getTicket","listTickets"]}}],"schemaVersion":"0.1.0"}

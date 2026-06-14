@@ -289,7 +289,48 @@ export interface ParsedCli {
   errors: string[];
 }
 
-const INSPECT_TARGETS: InspectTarget[] = [
+export const TOP_LEVEL_COMMANDS = [
+  "new",
+  "build",
+  "serve",
+  "worker",
+  "self-host",
+  "agent-contract",
+  "agent",
+  "review",
+  "ui",
+  "doctor",
+  "auth",
+  "rls",
+  "deps",
+  "release",
+  "make",
+  "feature",
+  "refactor",
+  "impact",
+  "test",
+  "repair",
+  "do",
+  "generate",
+  "add",
+  "inspect",
+  "check",
+  "verify",
+  "run",
+  "query",
+  "live",
+  "dev",
+  "db",
+  "workflow",
+  "outbox",
+  "telemetry",
+  "policy",
+  "secrets",
+  "env",
+  "ai",
+] as const;
+
+export const INSPECT_TARGETS: InspectTarget[] = [
   "app",
   "packages",
   "capabilities",
@@ -320,8 +361,10 @@ const INSPECT_TARGETS: InspectTarget[] = [
   "make",
   "test-graph",
   "test-plans",
+  "agent-contract",
   "agent-adapters",
   "capability-map",
+  "framework",
   "ui",
   "ui-scenarios",
   "ui-routes",
@@ -606,7 +649,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (positional.length === 0) {
     errors.push(
-      "missing command; expected new, generate, make, feature, refactor, impact, test, repair, do, agent, review, ui, add, inspect, agent-contract, doctor, auth, rls, deps, check, verify, run, query, live, dev, db, outbox, workflow, telemetry, policy, secrets, env, or ai",
+      `missing command; expected ${TOP_LEVEL_COMMANDS.join(", ")}`,
     );
     return { command: null, workspaceRoot, errors };
   }

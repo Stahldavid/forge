@@ -30,6 +30,8 @@ describe("Forge CLI", () => {
       "data",
       "runtime",
       "dev",
+      "agent-contract",
+      "framework",
     ]) {
       const parsed = parseCli(["inspect", target]);
       expect(parsed.errors).toEqual([]);
@@ -202,6 +204,33 @@ describe("Forge CLI", () => {
       const result = await runInspectCommand("app", workspace);
       expect(result.exitCode).toBe(1);
       expect(result.errors[0]?.code).toBe("FORGE_INSPECT_MISSING");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("inspect framework returns framework-level context", async () => {
+    const result = await runInspectCommand("framework", process.cwd());
+    expect(result.exitCode).toBe(0);
+    expect(result.data).toMatchObject({
+      schemaVersion: "0.1.0",
+      project: {
+        type: "forgeos-framework",
+      },
+    });
+    expect(JSON.stringify(result.data)).toContain("forge dev --once --json");
+    expect(JSON.stringify(result.data)).toContain("minimal-web");
+  });
+
+  test("inspect agent-contract reads the generated agent contract", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-inspect-agent-contract");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      const result = await runInspectCommand("agent-contract", workspace);
+      expect(result.exitCode).toBe(0);
+      expect(result.data).toMatchObject({
+        schemaVersion: "0.1.0",
+      });
     } finally {
       cleanupWorkspace(workspace);
     }
