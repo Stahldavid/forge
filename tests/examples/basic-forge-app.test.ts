@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { GENERATED_DIR } from "../../src/forge/compiler/emitter/constants.ts";
 import { FORGE_GUARD_VIOLATION } from "../../src/forge/compiler/diagnostics/codes.ts";
 
 const EXAMPLE_ROOT = join(import.meta.dir, "..", "..", "examples", "basic-forge-app");
