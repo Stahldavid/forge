@@ -51,7 +51,7 @@ export async function createDbAdapter(
         return { adapter: null, diagnostics };
       }
 
-      const result = createPostgresAdapter(databaseUrl);
+      const result = await createPostgresAdapter(databaseUrl);
       if (!result.adapter) {
         diagnostics.push(result.diagnostic);
         return { adapter: null, diagnostics };

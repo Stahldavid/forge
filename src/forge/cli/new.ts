@@ -1,9 +1,12 @@
-import { cpSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { cpSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
+import { moduleDir } from "../platform/module.ts";
 
 export type NewTemplateName = "b2b-support-web" | "minimal-web";
 export type NewPackageManager = "bun" | "npm" | "pnpm" | "yarn";
@@ -64,7 +67,7 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 
 function repoRoot(): string {
-  return resolve(import.meta.dir, "..", "..", "..");
+  return resolve(moduleDir(import.meta), "..", "..", "..");
 }
 
 function templateRoot(template: NewTemplateName): string {
@@ -173,13 +176,16 @@ async function spawnCommand(
   args: string[],
   cwd: string,
 ): Promise<number> {
-  const child = Bun.spawn(resolvePackageManagerArgv([command, ...args]), {
-    cwd,
-    stdout: "inherit",
-    stderr: "inherit",
-    stdin: "ignore",
+  const argv = resolvePackageManagerArgv([command, ...args]);
+  return new Promise<number>((resolveExitCode, reject) => {
+    const child = spawn(argv[0]!, argv.slice(1), {
+      cwd,
+      stdio: ["ignore", "inherit", "inherit"],
+      windowsHide: true,
+    });
+    child.on("error", reject);
+    child.on("close", (code) => resolveExitCode(code ?? 1));
   });
-  return child.exited;
 }
 
 function lockfileNamesFor(packageManager: NewPackageManager): string[] {
@@ -268,8 +274,7 @@ async function waitForInstallArtifacts(
         if (!nodeFileSystem.exists(path)) {
           return `${path}:missing`;
         }
-        const file = Bun.file(path);
-        return `${path}:${file.size}`;
+        return `${path}:${statSync(path).size}`;
       }),
     ].join("|");
 
@@ -284,7 +289,7 @@ async function waitForInstallArtifacts(
       previousSignature = signature;
     }
 
-    await Bun.sleep(100);
+    await sleep(100);
   }
 }
 

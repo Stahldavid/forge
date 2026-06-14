@@ -5,7 +5,8 @@ import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { VerifyOptions, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
 import { FORGE_VERIFY_POLICY } from "../compiler/diagnostics/codes.ts";
-import { resolveBunExecutable } from "./bun-exec.ts";
+import { detectPackageManager } from "../compiler/package-manager/detect.ts";
+import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 import { runCheckCommand, runGenerateCommand } from "./commands.ts";
 import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
@@ -37,17 +38,19 @@ function readPackageScripts(workspaceRoot: string): PackageScripts {
   }
 }
 
-async function spawnBunRun(
+async function spawnPackageRun(
   workspaceRoot: string,
   scriptName: string,
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const bun = resolveBunExecutable();
+  const packageManager = detectPackageManager(workspaceRoot);
+  const argv = resolvePackageManagerArgv([packageManager, "run", scriptName]);
 
   return new Promise((resolve, reject) => {
-    const child = spawn(bun, ["run", scriptName], {
+    const child = spawn(argv[0]!, argv.slice(1), {
       cwd: workspaceRoot,
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
     });
 
     let stdout = "";
@@ -69,7 +72,7 @@ async function runPackageScript(
   workspaceRoot: string,
   scriptName: string,
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  return spawnBunRun(workspaceRoot, scriptName);
+  return spawnPackageRun(workspaceRoot, scriptName);
 }
 
 function skippedStep(name: string, reason: string): VerifyStep {

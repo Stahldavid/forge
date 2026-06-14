@@ -2,7 +2,7 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private MVP, implemented through H40. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, and Windows-safe Bun resolution are present. Public release still needs packaging hardening, broader Node compatibility, and deeper AST-first codemods.
+**Status:** private MVP, implemented through H41. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, and Node-compatible CLI/runtime paths are present. Public release still needs packaging hardening and deeper AST-first codemods.
 
 ## Agent-First Quickstart
 
@@ -16,6 +16,15 @@ bun run forge inspect all --json
 bun run forge inspect framework --json
 bun run forge doctor
 bun run forge verify --strict
+```
+
+Node is supported for the CLI/runtime path as well:
+
+```bash
+npm install
+npm run forge:node -- generate
+npm run forge:node -- dev --once --json
+npm run forge:node -- inspect framework --json
 ```
 
 When working as an AI coder, read:
@@ -33,9 +42,9 @@ These files describe the app surface, runtime rules, generated files, policies, 
 ## Create a Test App
 
 ```bash
-forge new notes-app --template minimal-web
+forge new notes-app --template minimal-web --package-manager npm
 cd notes-app
-bun run dev -- --open
+npm run dev -- --open
 ```
 
 `forge dev` starts the API runtime and the web dev server together when a `web/` app exists. The `--once --json` mode is the central agent/CI diagnostic entrypoint: it checks generated drift, guardrails, frontend routes/bindings, doctor status, impact, and the last test/UI reports in one deterministic response.
@@ -198,13 +207,20 @@ Examples are source-only where practical: generated artifacts, `forge.lock`, pac
 | Windows (WSL) | Supported for MVP development |
 | Windows (native) | Experimental |
 
+ForgeOS is Bun-first but no longer Bun-only. The package bin runs through Node via `tsx`, the dev server has a `node:http` fallback, package scripts use the detected package manager, and the Postgres adapter uses `Bun.SQL` when available or the `postgres` npm package under Node.
+
 Known Windows note: ForgeOS resolves Bun through a Windows-safe resolver and ignores known non-Bun `Kiro-Cli\bun` shims. If your shell still resolves a broken app association, invoke Bun from the real install path:
 
 ```powershell
 & "$env:USERPROFILE\.bun\bin\bun.exe"
 ```
 
-ForgeOS is still Bun-first. The current repo uses Bun scripts and Bun tests; Node-compatible CLI packaging remains a future hardening item.
+For Node-only local checks, use:
+
+```powershell
+node .\bin\forge.mjs dev --once --json
+node .\bin\forge.mjs inspect framework --json
+```
 
 ## Verification
 
@@ -271,12 +287,13 @@ H37  Convex-style forge dev panel
 H38  Fast generated check visibility
 H39  Showcase app
 H40  Windows/runtime hardening
+H41  Node-compatible CLI/runtime
 ```
 
 ## Remaining Hardening Before Public Release
 
 - Keep expanding AST-first refactors; avoid broad regex rewrites for semantic TypeScript changes.
 - Reduce command-selection risk with more task routers and richer inline diagnostics.
-- Improve native Windows setup and package the CLI so broken PATH/app associations cannot block usage.
-- Add Node-compatible paths for Bun-specific internals where practical.
+- Keep improving native Windows setup and package install smoke coverage.
+- Broaden Node CI coverage across npm, pnpm, and yarn template apps.
 - Broaden UI bridge coverage with installed Playwright browsers in CI.

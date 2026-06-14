@@ -62,7 +62,8 @@ function latestReleaseDir(workspaceRoot: string): string | null {
   if (!nodeFileSystem.exists(root)) {
     return null;
   }
-  const entries = Array.from(new Bun.Glob("*").scanSync({ cwd: root, onlyFiles: false }))
+  const entries = nodeFileSystem.readDir(root)
+    .map((entry) => entry.name)
     .sort()
     .at(-1);
   return entries ? join(root, entries) : null;

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=73f6857f8307f1ab2a66f6d2d4b5eb6643ce6b342bc66ae7469f0837fa4195c0 content=283bb95bb96b3a2c7be6a38e76357a6e02a7118d32cf5b505620b2d8f53d1e4a
+// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=52229621a168b0644018bae325c8c6388e31ca81c0e62347ad537ab2acdb758b
 export const queryRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "0eb54fcbfdd92d54d3f157432d0c1253046abf84576c3d934ee7f264eff6bc54",
+  "inputHash": "4cae98306386b3ffd5a7bd7a2c29c36b4c1d5e71cb5479488d9540fb056f82b4",
   "queries": [],
   "schemaVersion": "1.0.0"
 } as const;

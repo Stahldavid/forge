@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=69418484de69a159bdbb79b216f3f22ffd9b6248efdbc7597ea784e01145e4cb content=9045a1a14c93f449c04b1ca4a9291adeb80c4308fcfbae800879b4ca620f9d27
+// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=19ab156a942a04678fed150424cb01459fa97a0ce4a0808c5cd9195edd52ffcd
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -415,6 +415,26 @@ export const agentContract = {
         "liveQuery",
         "command"
       ],
+      "name": "postgres",
+      "version": "3.4.9"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
       "name": "react",
       "version": "19.2.7"
     },
@@ -477,6 +497,26 @@ export const agentContract = {
       ],
       "name": "tree-sitter-typescript",
       "version": "0.23.2"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "tsx",
+      "version": "4.22.4"
     },
     {
       "allowedContexts": [

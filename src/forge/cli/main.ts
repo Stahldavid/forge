@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
+import { isMainModule } from "../platform/module.ts";
 import { executeCommand } from "./commands.ts";
 import { hasUnknownOption, parseCli } from "./parse.ts";
 import { formatJsonResult } from "./output.ts";
@@ -60,7 +61,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   return executeCommand(parsed.command);
 }
 
-if (import.meta.main) {
+if (isMainModule(import.meta)) {
   const exitCode = await main();
   process.exit(exitCode);
 }

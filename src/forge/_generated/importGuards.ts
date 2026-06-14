@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=e779323348ebe96e01970d5ccd51061af8f3fe3758e7d8cf72e6489ca2185914 content=d179b02d36f3dda944386294ec6680e10d2b8f648e3172532b662d9d53bd5b13
+// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=e76f9de93625c1a35fb0e861e18f1017590ea04d120eb52a26d1366464eb4ae2
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -309,6 +309,40 @@ export const importGuards = {
       }
     },
     {
+      "packageName": "postgres",
+      "alias": "postgres",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
       "packageName": "react",
       "alias": "react",
       "compatible": [
@@ -413,6 +447,40 @@ export const importGuards = {
     {
       "packageName": "tree-sitter-typescript",
       "alias": "tree-sitter-typescript",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "tsx",
+      "alias": "tsx",
       "compatible": [
         "server",
         "action",

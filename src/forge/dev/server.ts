@@ -1,4 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
+import {
+  createServer,
+  type IncomingMessage,
+  type Server as NodeHttpServer,
+  type ServerResponse,
+} from "node:http";
 import { join } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
@@ -65,6 +71,145 @@ import {
 } from "../runtime/live/invalidation-log.ts";
 import { currentReleaseInfo } from "../runtime/release/runtime.ts";
 import { DEFAULT_LIVE_LIMITS } from "../runtime/live/types.ts";
+
+interface FetchServer {
+  hostname?: string;
+  port: number;
+  stop(force?: boolean): void;
+}
+
+async function readIncomingBody(request: IncomingMessage): Promise<Buffer | undefined> {
+  if (request.method === "GET" || request.method === "HEAD") {
+    return undefined;
+  }
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+}
+
+async function nodeRequestToFetch(
+  request: IncomingMessage,
+  input: { host: string; port: number },
+): Promise<Request> {
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(request.headers)) {
+    if (Array.isArray(value)) {
+      headers.set(name, value.join(", "));
+    } else if (value !== undefined) {
+      headers.set(name, value);
+    }
+  }
+
+  const url = `http://${input.host}:${input.port}${request.url ?? "/"}`;
+  const body = await readIncomingBody(request);
+  const init: RequestInit & { duplex?: "half" } = {
+    method: request.method,
+    headers,
+    body: body ? new Blob([new Uint8Array(body)]) : undefined,
+    ...(body ? { duplex: "half" as const } : {}),
+  };
+  return new Request(url, init);
+}
+
+async function writeFetchResponse(
+  response: ServerResponse,
+  fetchResponse: Response,
+): Promise<void> {
+  response.statusCode = fetchResponse.status;
+  fetchResponse.headers.forEach((value, key) => {
+    response.setHeader(key, value);
+  });
+
+  if (!fetchResponse.body) {
+    response.end();
+    return;
+  }
+
+  response.end(Buffer.from(await fetchResponse.arrayBuffer()));
+}
+
+async function createNodeFetchServer(
+  input: { hostname: string; port: number },
+  fetchHandler: (request: Request) => Promise<Response>,
+): Promise<FetchServer> {
+  let actualPort = input.port;
+  const nodeServer: NodeHttpServer = createServer(async (request, response) => {
+    try {
+      const fetchRequest = await nodeRequestToFetch(request, {
+        host: input.hostname,
+        port: actualPort,
+      });
+      const fetchResponse = await fetchHandler(fetchRequest);
+      await writeFetchResponse(response, fetchResponse);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "dev server request failed";
+      await writeFetchResponse(
+        response,
+        jsonResponse(
+          {
+            ok: false,
+            diagnostics: [
+              createDiagnostic({
+                severity: "error",
+                code: FORGE_DEV_SERVER_ERROR,
+                message,
+              }),
+            ],
+          },
+          500,
+        ),
+      );
+    }
+  });
+
+  await new Promise<void>((resolveListen, reject) => {
+    nodeServer.once("error", reject);
+    nodeServer.listen(input.port, input.hostname, () => {
+      nodeServer.off("error", reject);
+      resolveListen();
+    });
+  });
+
+  const address = nodeServer.address();
+  actualPort = typeof address === "object" && address ? address.port : input.port;
+  return {
+    hostname: input.hostname,
+    port: actualPort,
+    stop: () => {
+      nodeServer.close();
+    },
+  };
+}
+
+async function createFetchServer(
+  input: { hostname: string; port: number },
+  fetchHandler: (request: Request) => Promise<Response>,
+): Promise<FetchServer> {
+  const bunGlobal = globalThis as {
+    Bun?: {
+      serve?: (options: {
+        hostname: string;
+        port: number;
+        idleTimeout: number;
+        fetch: (request: Request) => Promise<Response>;
+      }) => FetchServer;
+    };
+  };
+
+  if (bunGlobal.Bun?.serve) {
+    return bunGlobal.Bun.serve({
+      hostname: input.hostname,
+      port: input.port,
+      idleTimeout: 255,
+      fetch: fetchHandler,
+    });
+  }
+
+  return createNodeFetchServer(input, fetchHandler);
+}
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -394,11 +539,10 @@ export async function startDevServer(
     );
   }
 
-  const server = Bun.serve({
+  const server = await createFetchServer({
     hostname: options.host,
     port: options.port,
-    idleTimeout: 255,
-    async fetch(request) {
+  }, async (request) => {
       if (request.method === "OPTIONS") {
         return corsPreflight();
       }
@@ -1190,7 +1334,6 @@ export async function startDevServer(
           500,
         );
       }
-    },
   });
 
   const host = server.hostname ?? options.host;

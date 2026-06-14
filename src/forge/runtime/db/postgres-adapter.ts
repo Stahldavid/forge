@@ -38,6 +38,25 @@ function loadBunSql(databaseUrl: string): PostgresClient | null {
   }
 }
 
+async function loadPostgresJs(databaseUrl: string): Promise<PostgresClient | null> {
+  try {
+    const module = await import("postgres");
+    const createSql = module.default;
+    const sql = createSql(databaseUrl);
+    return {
+      query: async (statement, params = []) => {
+        const rows = await sql.unsafe(statement, params as never[]);
+        return { rows: rows as Record<string, unknown>[] };
+      },
+      close: async () => {
+        await sql.end({ timeout: 5 });
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
 export class PostgresAdapter implements DbAdapter {
   readonly kind = "postgres" as const;
   private client: PostgresClient;
@@ -74,17 +93,17 @@ export class PostgresAdapter implements DbAdapter {
   }
 }
 
-export function createPostgresAdapter(
+export async function createPostgresAdapter(
   databaseUrl: string,
-): { adapter: DbAdapter } | { adapter: null; diagnostic: Diagnostic } {
-  const client = loadBunSql(databaseUrl);
+): Promise<{ adapter: DbAdapter } | { adapter: null; diagnostic: Diagnostic }> {
+  const client = loadBunSql(databaseUrl) ?? await loadPostgresJs(databaseUrl);
   if (!client) {
     return {
       adapter: null,
       diagnostic: createDiagnostic({
         severity: "error",
         code: FORGE_DB_ADAPTER_UNAVAILABLE,
-        message: "Bun.SQL is unavailable; postgres adapter cannot be created",
+        message: "postgres adapter requires Bun.SQL or the postgres npm package",
       }),
     };
   }

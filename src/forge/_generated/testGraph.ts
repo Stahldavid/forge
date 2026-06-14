@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=73f6857f8307f1ab2a66f6d2d4b5eb6643ce6b342bc66ae7469f0837fa4195c0 content=82cdc34caa448992fa7d09f01ab4733b8f526aa15320adcc43145228f81ca4a6
+// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=67e4134f97ec6632a76819bf1f852cce2ec4a57aaf9aba200dd198d61999db44
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "73f6857f8307f1ab2a66f6d2d4b5eb6643ce6b342bc66ae7469f0837fa4195c0",
+  "inputHash": "294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -16,6 +16,7 @@ export const testGraph = {
         "liveQueries": [],
         "packages": [
           "ai",
+          "tsx",
           "zod"
         ],
         "policies": [],
@@ -27,6 +28,7 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages ai",
+        "probable: packages tsx",
         "probable: packages zod"
       ]
     },
@@ -67,14 +69,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -82,7 +86,9 @@ export const testGraph = {
       },
       "file": "tests/agent-contract/h35-capability-map.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "confirmed",
@@ -475,6 +481,24 @@ export const testGraph = {
       "reasons": []
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/node-compat.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "probable",
       "cost": "fast",
       "covers": {
@@ -753,14 +777,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "postgres"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -768,7 +794,9 @@ export const testGraph = {
       },
       "file": "tests/deploy/self-host.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "probable",
@@ -1033,7 +1061,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "ai"
+          "ai",
+          "tsx"
         ],
         "policies": [],
         "queries": [],
@@ -1043,7 +1072,8 @@ export const testGraph = {
       "file": "tests/examples/showcase-app.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages ai"
+        "probable: packages ai",
+        "probable: packages tsx"
       ]
     },
     {
@@ -1157,7 +1187,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "react"
+          "react",
+          "tsx"
         ],
         "policies": [],
         "queries": [],
@@ -1167,7 +1198,8 @@ export const testGraph = {
       "file": "tests/impact/h28-impact.test.ts",
       "kind": "e2e",
       "reasons": [
-        "probable: packages react"
+        "probable: packages react",
+        "probable: packages tsx"
       ]
     },
     {
@@ -1259,14 +1291,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "postgres"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -1274,7 +1308,9 @@ export const testGraph = {
       },
       "file": "tests/live-production/h24-live-production.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "weak",
@@ -1295,14 +1331,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -1310,7 +1348,9 @@ export const testGraph = {
       },
       "file": "tests/make/h25-make.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "confirmed",
@@ -2073,14 +2113,16 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2088,7 +2130,9 @@ export const testGraph = {
       },
       "file": "tests/refactor/h27-refactor.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "weak",
@@ -2131,14 +2175,16 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2146,17 +2192,21 @@ export const testGraph = {
       },
       "file": "tests/review/h31-review.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "postgres"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2164,7 +2214,9 @@ export const testGraph = {
       },
       "file": "tests/rls/h21-rls.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "weak",
@@ -2676,7 +2728,8 @@ export const testGraph = {
         "liveQueries": [],
         "packages": [
           "ai",
-          "react"
+          "react",
+          "tsx"
         ],
         "policies": [],
         "queries": [],
@@ -2687,18 +2740,21 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages ai",
-        "probable: packages react"
+        "probable: packages react",
+        "probable: packages tsx"
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2706,17 +2762,21 @@ export const testGraph = {
       },
       "file": "tests/templates/new-minimal-web.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "browser",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2724,7 +2784,9 @@ export const testGraph = {
       },
       "file": "tests/ui/h32-ui.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "weak",

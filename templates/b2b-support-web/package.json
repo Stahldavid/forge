@@ -15,7 +15,7 @@
     "dev:api": "forge dev --api-only",
     "dev:web": "cd web && __PACKAGE_MANAGER__ run dev",
     "dev": "forge dev",
-    "test": "bun test",
+    "test": "node -e \"console.log('No tests configured')\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

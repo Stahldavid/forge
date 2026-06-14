@@ -1,8 +1,10 @@
+import { spawn } from "node:child_process";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { runGenerateCommand } from "./commands.ts";
 import { runVerifyCommand } from "./verify.ts";
-import { resolveBunExecutable } from "./bun-exec.ts";
+import { detectPackageManager } from "../compiler/package-manager/detect.ts";
+import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 
 export interface BuildCommandOptions {
   workspaceRoot: string;
@@ -24,17 +26,24 @@ async function runOptionalScript(
   if (!nodeFileSystem.exists(packageJsonPath)) {
     return { skipped: true, exitCode: 0 };
   }
-  const pkg = await Bun.file(packageJsonPath).json() as { scripts?: Record<string, string> };
+  const pkg = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as {
+    scripts?: Record<string, string>;
+  };
   if (!pkg.scripts?.[scriptName]) {
     return { skipped: true, exitCode: 0 };
   }
-  const child = Bun.spawn([resolveBunExecutable(), "run", scriptName], {
-    cwd: workspaceRoot,
-    stdout: "inherit",
-    stderr: "inherit",
-    stdin: "ignore",
+  const packageManager = detectPackageManager(workspaceRoot);
+  const argv = resolvePackageManagerArgv([packageManager, "run", scriptName]);
+  const exitCode = await new Promise<number>((resolveExitCode, reject) => {
+    const child = spawn(argv[0]!, argv.slice(1), {
+      cwd: workspaceRoot,
+      stdio: ["ignore", "inherit", "inherit"],
+      windowsHide: true,
+    });
+    child.on("error", reject);
+    child.on("close", (code) => resolveExitCode(code ?? 1));
   });
-  return { skipped: false, exitCode: await child.exited };
+  return { skipped: false, exitCode };
 }
 
 export async function runBuildCommand(options: BuildCommandOptions): Promise<BuildCommandResult> {

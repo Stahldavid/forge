@@ -9,7 +9,7 @@
     ]
   },
   "bin": {
-    "forge": "./src/forge/cli/main.ts"
+    "forge": "./bin/forge.mjs"
   },
   "exports": {
     "./react": "./src/forge/react/index.ts",
@@ -21,6 +21,7 @@
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "forge": "bun src/forge/cli/main.ts",
+    "forge:node": "node ./bin/forge.mjs",
     "forge:check": "bun run forge check",
     "forge:generate": "bun run forge generate",
     "forge:generate:check": "bun run forge generate --check",
@@ -34,7 +35,9 @@
     "@electric-sql/pglite": "^0.2.17",
     "ai": "^5.0.0",
     "jose": "^6.2.3",
+    "postgres": "^3.4.5",
     "react": "^19.2.7",
+    "tsx": "^4.20.6",
     "typescript": "^5.7.3",
     "zod": "^3.25.76"
   },

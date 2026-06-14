@@ -1,10 +1,12 @@
+import { spawn } from "node:child_process";
 import { run } from "../compiler/orchestrator/run.ts";
 import { join } from "node:path";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
-import { resolveBunExecutable } from "./bun-exec.ts";
+import { detectPackageManager } from "../compiler/package-manager/detect.ts";
+import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 import {
   formatDevConsoleHuman,
   formatDevConsoleJson,
@@ -158,24 +160,24 @@ function startWebDevServer(input: {
   }
 
   const pkg = readPackageJson(input.workspaceRoot);
-  const bun = resolveBunExecutable();
+  const packageManager = detectPackageManager(input.workspaceRoot);
   const env = {
-    ...Bun.env,
+    ...process.env,
     PORT: String(input.port),
     NEXT_PUBLIC_FORGE_URL: input.apiUrl,
     VITE_FORGE_URL: input.apiUrl,
   };
-  const command =
+  const rawCommand =
     pkg?.scripts?.dev
-      ? [bun, "run", "dev", "--", ...webDevArgsForPackage(pkg, input)]
-      : [bun, "server.ts"];
+      ? [packageManager, "run", "dev", "--", ...webDevArgsForPackage(pkg, input)]
+      : ["node", "--import", "tsx", "server.ts"];
+  const command = resolvePackageManagerArgv(rawCommand);
   const cwd = pkg?.scripts?.dev ? webRoot : webRoot;
-  const child = Bun.spawn(command, {
+  const child = spawn(command[0]!, command.slice(1), {
     cwd,
-    stdin: "ignore",
-    stdout: input.json ? "pipe" : "inherit",
-    stderr: input.json ? "pipe" : "inherit",
+    stdio: ["ignore", input.json ? "pipe" : "inherit", input.json ? "pipe" : "inherit"],
     env,
+    windowsHide: true,
   });
   return {
     url: `http://${input.host}:${input.port}`,
@@ -310,11 +312,12 @@ function openBrowser(url: string): void {
         ? ["open", url]
         : ["xdg-open", url];
   try {
-    Bun.spawn(command, {
-      stdin: "ignore",
-      stdout: "ignore",
-      stderr: "ignore",
+    const child = spawn(command[0]!, command.slice(1), {
+      stdio: "ignore",
+      detached: true,
+      windowsHide: true,
     });
+    child.unref();
   } catch {
     // Opening a browser is best-effort; dev server startup should not fail.
   }

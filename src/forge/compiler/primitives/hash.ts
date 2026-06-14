@@ -1,12 +1,11 @@
+import { createHash } from "node:crypto";
 import { stripDeterministicHeader } from "./header.ts";
 
 /**
  * SHA-256 hash of UTF-8 content, returned as lowercase hex.
  */
 export function hashStable(content: string): string {
-  const hasher = new Bun.CryptoHasher("sha256");
-  hasher.update(content);
-  return hasher.digest("hex");
+  return createHash("sha256").update(content).digest("hex");
 }
 
 /**
@@ -37,7 +36,5 @@ export function deriveStableSymbolId(input: StableSymbolIdInput): string {
 }
 
 export function hashUtf8Bytes(bytes: Uint8Array): string {
-  const hasher = new Bun.CryptoHasher("sha256");
-  hasher.update(bytes);
-  return hasher.digest("hex");
+  return createHash("sha256").update(bytes).digest("hex");
 }

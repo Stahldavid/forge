@@ -3,11 +3,10 @@
 ## Quick Start
 
 ```bash
-bun install
-bun run generate
-bun run verify
-bun run dev:api
-bun run dev:web
+__PACKAGE_MANAGER__ install
+__PACKAGE_MANAGER__ run generate
+__PACKAGE_MANAGER__ run verify
+__PACKAGE_MANAGER__ run dev
 ```
 
 Open:

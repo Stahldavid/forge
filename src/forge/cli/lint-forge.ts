@@ -8,6 +8,7 @@ import {
   checkSourceForgeGuards,
   loadForgeGuardArtifacts,
 } from "../../../packages/eslint-plugin-forge/index.ts";
+import { isMainModule } from "../platform/module.ts";
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx"]);
 const SKIP_DIRS = new Set(["node_modules", "_generated", ".forge", "dist", "build"]);
@@ -106,7 +107,7 @@ export async function lintForgeGuards(workspaceRoot: string): Promise<{
   };
 }
 
-if (import.meta.main) {
+if (isMainModule(import.meta)) {
   const result = await lintForgeGuards(process.cwd());
   for (const diagnostic of result.diagnostics) {
     const location = diagnostic.file ? ` ${diagnostic.file}` : "";
