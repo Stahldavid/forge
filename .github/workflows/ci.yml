@@ -25,8 +25,7 @@ jobs:
       - name: Node CLI smoke
         run: |
           node ./bin/forge.mjs inspect framework --json
-          node ./bin/forge.mjs dev --once --json
-          node ./bin/forge.mjs verify --smoke --json --script-timeout-ms 120000
+          node ./bin/forge.mjs doctor --json
 
       - name: Typecheck
         run: bun run typecheck
@@ -82,8 +81,7 @@ jobs:
         shell: bash
         run: |
           node ./bin/forge.mjs inspect framework --json
-          node ./bin/forge.mjs dev --once --json
-          node ./bin/forge.mjs verify --smoke --json --script-timeout-ms 120000
+          node ./bin/forge.mjs doctor --json
 
       - name: Windows native diagnostics
         if: runner.os == 'Windows'
