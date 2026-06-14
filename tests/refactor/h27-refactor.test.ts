@@ -315,4 +315,77 @@ describe("H27 safe refactor", () => {
       cleanupWorkspace(root);
     }
   });
+
+  test("extract-action refuses package bindings used outside the handler", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-outside-use");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import Stripe from "stripe";
+          import { command } from "forge/server";
+          const stripeVersion = Stripe.VERSION;
+          export const createCheckout = command({
+            handler: async (ctx, input: { planId: string }) => {
+              const stripe = new Stripe("sk_test");
+              return stripe.checkout.sessions.create({ mode: "payment" });
+            },
+          });
+          export const version = stripeVersion;
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          dryRun: true,
+        }),
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_PATCH_UNSAFE");
+      expect(result.diagnostics[0]?.message).toContain("outside the extracted handler");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("extract-action refuses unused package imports instead of deleting them blindly", async () => {
+    const root = scaffoldRefactorWorkspace("h27-extract-unused-import");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "createCheckout.ts"),
+        `
+          import Stripe from "stripe";
+          import { command } from "forge/server";
+          export const createCheckout = command({
+            handler: async (ctx, input: { planId: string }) => {
+              return { planId: input.planId };
+            },
+          });
+        `,
+        "utf8",
+      );
+      const result = await runRefactorCommand(
+        refactorOptions(root, {
+          action: "extract-action",
+          from: "createCheckout",
+          packageName: "stripe",
+          eventName: "checkout.requested",
+          actionName: "createCheckoutSession",
+          dryRun: true,
+        }),
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain("FORGE_REFACTOR_PATCH_UNSAFE");
+      expect(result.diagnostics[0]?.message).toContain("not referenced inside");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
 });

@@ -65,6 +65,7 @@ describe("Forge CLI", () => {
       expect(code).toBe(0);
       expect(output).toContain("forge dev --once --json");
       expect(output).toContain("forge do \"fix\" --json");
+      expect(output).toContain("forge doctor windows --json");
     } finally {
       process.stdout.write = originalWrite;
     }

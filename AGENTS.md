@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=c4a632bc3eaecde8bbb6cfeafa34d7b57bcf50b598fc3ade3b96502edb9f1df8 content=8b553d4874244dccd6071e22f514978e990bdaeaccbb7299b08dc90fcdf6146e
+// @forge-generated generator=0.0.0 input=d73a07e98759afd88ec9ac2c9a84b02052fb0c60a58b8f4da57fce02830b8f58 content=dc8782edd332c31786f4fef322384d566de8d4f56d5a042a04755e342d4da6bb
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -76,6 +76,8 @@ forge inspect client --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
+forge doctor windows --json
+forge setup windows --json
 forge agent print-context --json
 forge verify --smoke
 forge verify --standard

@@ -2,7 +2,7 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, Node-compatible CLI/runtime paths, observable verify timeouts, and quieter template workspaces are present. Public release still needs packaging hardening and deeper AST-first codemods.
+**Status:** private MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, and quieter template workspaces are present. Public release still needs packaging hardening and deeper AST-first codemods.
 
 ## Agent-First Quickstart
 
@@ -214,7 +214,7 @@ Examples are source-only where practical: generated artifacts, `forge.lock`, pac
 | Linux | Supported for MVP development |
 | macOS | Supported for MVP development |
 | Windows (WSL) | Supported for MVP development |
-| Windows (native) | Experimental |
+| Windows (native) | Experimental, with `forge doctor windows` and `forge setup windows` |
 
 ForgeOS is Bun-first but no longer Bun-only. The package bin runs through Node via `tsx`, the dev server has a `node:http` fallback, package scripts use the detected package manager, and the Postgres adapter uses `Bun.SQL` when available or the `postgres` npm package under Node.
 
@@ -223,6 +223,15 @@ Known Windows note: ForgeOS resolves Bun through a Windows-safe resolver and ign
 ```powershell
 & "$env:USERPROFILE\.bun\bin\bun.exe"
 ```
+
+Native Windows diagnostics:
+
+```powershell
+node .\bin\forge.mjs doctor windows --json
+node .\bin\forge.mjs setup windows --json
+```
+
+`forge doctor windows` checks Node, npm, Git, safe Bun resolution, suspicious Bun shims, Git long-path support, PowerShell execution policy, and symlink support. `forge setup windows` is dry-run by default and only applies supported environment fixes with `--yes`.
 
 For Node-only local checks, use:
 
@@ -253,6 +262,8 @@ bun run forge verify --strict
 UI bridge note: `forge ui` uses Playwright when installed. Without Playwright, `forge ui doctor --json` reports `FORGE_UI_PLAYWRIGHT_MISSING` with fix hints instead of silently failing.
 
 Frontend bridge note: `forge inspect frontend --json` and `forge dev --once --json` expose routes, components, `ForgeProvider`, generated client bindings, raw runtime fetch warnings, and fix hints. Agents should use this before editing UI wiring.
+
+CI note: the main GitHub Actions gate runs the full Bun-based verification path on Ubuntu. A separate Node breadth smoke matrix runs on Ubuntu, Windows, and macOS with Node 22 and 24, including template package-manager smoke for npm, pnpm, yarn, and Bun.
 
 ## Milestone History
 
@@ -305,6 +316,6 @@ H42  Verify observability and quieter app workspaces
 
 - Keep expanding AST-first refactors; avoid broad regex rewrites for semantic TypeScript changes.
 - Reduce command-selection risk with more task routers and richer inline diagnostics.
-- Keep improving native Windows setup and package install smoke coverage.
-- Broaden package manager CI coverage across pnpm and yarn template apps.
+- Keep hardening native Windows setup beyond diagnostics and safe automatic environment fixes.
+- Keep broadening package manager CI from template smoke toward install/build smoke for pnpm and yarn apps.
 - Broaden UI bridge coverage with installed Playwright browsers in CI.

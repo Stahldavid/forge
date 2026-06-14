@@ -311,6 +311,113 @@ function removeImportForPackage(
   return { spans, found: spans.length > 0 };
 }
 
+function importBindingsForPackage(sourceFile: ts.SourceFile, packageName: string): string[] {
+  const bindings = new Set<string>();
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
+      continue;
+    }
+    if (packageNameFromSpecifier(statement.moduleSpecifier.text) !== packageName) {
+      continue;
+    }
+    const clause = statement.importClause;
+    if (!clause) {
+      continue;
+    }
+    if (clause.name) {
+      bindings.add(clause.name.text);
+    }
+    if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
+      bindings.add(clause.namedBindings.name.text);
+    }
+    if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
+      for (const element of clause.namedBindings.elements) {
+        bindings.add(element.name.text);
+      }
+    }
+  }
+  return [...bindings].sort();
+}
+
+function isImportIdentifier(node: ts.Identifier): boolean {
+  return ts.isImportClause(node.parent) ||
+    ts.isNamespaceImport(node.parent) ||
+    ts.isImportSpecifier(node.parent);
+}
+
+function isPropertyNameIdentifier(node: ts.Identifier): boolean {
+  return (ts.isPropertyAccessExpression(node.parent) && node.parent.name === node) ||
+    (ts.isPropertyAssignment(node.parent) && node.parent.name === node) ||
+    (ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node) ||
+    (ts.isBindingElement(node.parent) && node.parent.propertyName === node);
+}
+
+function identifierReferencesInNode(node: ts.Node, names: Set<string>): ts.Identifier[] {
+  const references: ts.Identifier[] = [];
+  function visit(current: ts.Node): void {
+    if (
+      ts.isIdentifier(current) &&
+      names.has(current.text) &&
+      !isImportIdentifier(current) &&
+      !isPropertyNameIdentifier(current)
+    ) {
+      references.push(current);
+    }
+    ts.forEachChild(current, visit);
+  }
+  visit(node);
+  return references;
+}
+
+function importedPackageUsageDiagnostics(
+  sourceFile: ts.SourceFile,
+  commandFile: string,
+  commandName: string,
+  packageName: string,
+  handler: ts.FunctionExpression | ts.ArrowFunction,
+): Diagnostic[] {
+  const bindings = importBindingsForPackage(sourceFile, packageName);
+  if (bindings.length === 0) {
+    return [];
+  }
+  const names = new Set(bindings);
+  const handlerStart = handler.getFullStart();
+  const handlerEnd = handler.getEnd();
+  const handlerReferences = identifierReferencesInNode(handler.body, names);
+  if (handlerReferences.length === 0) {
+    return [
+      createDiagnostic({
+        severity: "error",
+        code: "FORGE_REFACTOR_PATCH_UNSAFE",
+        message: `package import '${packageName}' is not referenced inside ${commandFile} handler`,
+        file: commandFile,
+        fixHint: "Run extract-action only when the forbidden package usage is local to the command handler being extracted.",
+      }),
+    ];
+  }
+
+  const outsideReferences = identifierReferencesInNode(sourceFile, names)
+    .filter((reference) => reference.getStart(sourceFile) < handlerStart || reference.getStart(sourceFile) > handlerEnd);
+  if (outsideReferences.length === 0) {
+    return [];
+  }
+
+  const lines = outsideReferences.slice(0, 3).map((reference) => {
+    const position = sourceFile.getLineAndCharacterOfPosition(reference.getStart(sourceFile));
+    return `${reference.text}@${position.line + 1}:${position.character + 1}`;
+  });
+  return [
+    createDiagnostic({
+      severity: "error",
+      code: "FORGE_REFACTOR_PATCH_UNSAFE",
+      message: `package import '${packageName}' is referenced outside the extracted handler: ${lines.join(", ")}`,
+      file: commandFile,
+      fixHint: "Move non-handler package usage first, or extract a smaller helper manually before running extract-action.",
+      suggestedCommands: [`forge refactor extract-action ${commandName} --package ${packageName} --dry-run --json`],
+    }),
+  ];
+}
+
 function lineIndentAt(source: string, position: number): string {
   const lineStart = source.lastIndexOf("\n", position) + 1;
   const match = /^[ \t]*/.exec(source.slice(lineStart, position));
@@ -389,6 +496,11 @@ function rewriteExtractActionCommand(
         diagnostic("error", "FORGE_REFACTOR_PATCH_UNSAFE", `command '${intent.command}' input parameter must be an identifier`, commandFile),
       ],
     };
+  }
+
+  const usageDiagnostics = importedPackageUsageDiagnostics(sourceFile, commandFile, intent.command, intent.packageName, handler);
+  if (usageDiagnostics.length > 0) {
+    return { diagnostics: usageDiagnostics };
   }
 
   const imports = removeImportForPackage(sourceFile, source, intent.packageName);

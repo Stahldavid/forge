@@ -14,6 +14,7 @@ function formatHelp(): string {
     "  forge dev --once --json   One-shot health/diagnostic loop for agents and CI",
     "  forge do \"fix\" --json     Ask ForgeOS for the right workflow and commands",
     "  forge inspect all --json  Read the generated machine contract",
+    "  forge doctor windows --json  Diagnose native Windows setup and Bun shims",
     "",
     "Useful next commands:",
     "  forge generate",

@@ -95,7 +95,8 @@ export type ForgeCommand =
       json: boolean;
       workspaceRoot: string;
     }
-  | { kind: "doctor"; json: boolean; workspaceRoot: string }
+  | { kind: "doctor"; target?: "project" | "windows"; json: boolean; workspaceRoot: string }
+  | { kind: "setup"; target: "windows"; json: boolean; yes: boolean; workspaceRoot: string }
   | {
       kind: "auth";
       subcommand: AuthSubcommand;
@@ -300,6 +301,7 @@ export const TOP_LEVEL_COMMANDS = [
   "review",
   "ui",
   "doctor",
+  "setup",
   "auth",
   "rls",
   "deps",
@@ -917,15 +919,38 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "doctor":
+      if (rest[0] && rest[0] !== "windows") {
+        errors.push("forge doctor supports subcommand: windows");
+        return { command: null, workspaceRoot, errors };
+      }
       return {
         command: {
           kind: "doctor",
+          target: rest[0] === "windows" ? "windows" : "project",
           json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
         workspaceRoot,
         errors,
       };
+    case "setup": {
+      const target = rest[0];
+      if (target !== "windows") {
+        errors.push("forge setup requires subcommand: windows");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "setup",
+          target,
+          json: parseFlag(argv, "--json"),
+          yes: parseFlag(argv, "--yes"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "auth": {
       const subcommand = rest[0] as AuthSubcommand | undefined;
       if (!subcommand || !AUTH_SUBCOMMANDS.includes(subcommand)) {

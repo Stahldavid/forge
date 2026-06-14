@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=892c076b902f6a9986304095ff389c9c0914f58520887962a99025b48031349d content=03dd4b2dc222f420528fded9697efddb6806967528434d91fad3a9d552a7ba09
+// @forge-generated generator=0.0.0 input=acc89dd0bc51861863664d88778845a6bd9d8e826b8df13c550857dc5015407f content=8188314c272f1618f57468a0635ad2356e63b4666ea523c80fe1bf92afc03f9e
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "892c076b902f6a9986304095ff389c9c0914f58520887962a99025b48031349d",
+  "inputHash": "acc89dd0bc51861863664d88778845a6bd9d8e826b8df13c550857dc5015407f",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -415,6 +415,24 @@ export const testGraph = {
       ]
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ci/ci-workflow.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "confirmed",
       "cost": "fast",
       "covers": {
@@ -505,6 +523,24 @@ export const testGraph = {
       "reasons": [
         "probable: packages tsx"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/windows.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "probable",

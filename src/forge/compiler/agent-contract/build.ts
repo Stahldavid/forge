@@ -1160,6 +1160,8 @@ forge inspect client --json
 forge inspect live-production --json
 forge live status --json
 forge doctor
+forge doctor windows --json
+forge setup windows --json
 forge agent print-context --json
 forge verify --smoke
 forge verify --standard

@@ -59,3 +59,42 @@ jobs:
             node "$GITHUB_WORKSPACE/bin/forge.mjs" new "$pm-smoke" --template minimal-web --package-manager "$pm" --no-install --no-git
             grep "\"packageManager\": \"$pm@" "$pm-smoke/package.json"
           done
+
+  node-breadth:
+    name: Node smoke (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies with npm
+        run: npm install --ignore-scripts
+
+      - name: Node CLI smoke
+        shell: bash
+        run: |
+          node ./bin/forge.mjs inspect framework --json
+          node ./bin/forge.mjs dev --once --json
+          node ./bin/forge.mjs verify --smoke --json --script-timeout-ms 120000
+
+      - name: Windows native diagnostics
+        if: runner.os == 'Windows'
+        run: node .\bin\forge.mjs doctor windows --json
+
+      - name: Minimal template package-manager smoke
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/forge-template-smoke"
+          cd "$RUNNER_TEMP/forge-template-smoke"
+          for pm in npm pnpm yarn bun; do
+            node "$GITHUB_WORKSPACE/bin/forge.mjs" new "$pm-smoke" --template minimal-web --package-manager "$pm" --no-install --no-git
+            node -e "const pkg=require('./$pm-smoke/package.json'); if (!pkg.packageManager.startsWith('$pm@')) process.exit(1)"
+          done

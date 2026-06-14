@@ -92,6 +92,14 @@ import {
   formatDoctorJson,
   runDoctorCommand,
 } from "./doctor.ts";
+import {
+  formatWindowsDoctorHuman,
+  formatWindowsDoctorJson,
+  formatWindowsSetupHuman,
+  formatWindowsSetupJson,
+  runWindowsDoctorCommand,
+  runWindowsSetupCommand,
+} from "./windows.ts";
 import { formatAuthHuman, formatAuthJson, runAuthCommand } from "./auth.ts";
 import { formatRlsHuman, formatRlsJson, runRlsCommand } from "./rls.ts";
 import { formatDepsHuman, formatDepsJson, runDepsCommand } from "./deps.ts";
@@ -595,11 +603,32 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "doctor": {
+      if (command.target === "windows") {
+        const result = await runWindowsDoctorCommand({ workspaceRoot: command.workspaceRoot });
+        if (command.json) {
+          process.stdout.write(formatWindowsDoctorJson(result));
+        } else {
+          process.stdout.write(formatWindowsDoctorHuman(result));
+        }
+        return result.exitCode;
+      }
       const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });
       if (command.json) {
         process.stdout.write(formatDoctorJson(result));
       } else {
         process.stdout.write(formatDoctorHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "setup": {
+      const result = await runWindowsSetupCommand({
+        workspaceRoot: command.workspaceRoot,
+        yes: command.yes,
+      });
+      if (command.json) {
+        process.stdout.write(formatWindowsSetupJson(result));
+      } else {
+        process.stdout.write(formatWindowsSetupHuman(result));
       }
       return result.exitCode;
     }
