@@ -165,6 +165,70 @@ describe("H27 safe refactor", () => {
     }
   });
 
+  test("rename field rewrites structured TS/JSX/JSON references without renaming locals", async () => {
+    const root = scaffoldRefactorWorkspace("h27-field-ast");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "updateTicketPriority.ts"),
+        `
+          import { can, command } from "forge/server";
+          export const updateTicketPriority = command({
+            auth: can("tickets.update"),
+            handler: async (ctx, input: { id: string; priority: string }) => {
+              const priority = input.priority;
+              const { priority: existingPriority } = input;
+              const payload = { priority };
+              return ctx.db.tickets.update(input.id, {
+                ...payload,
+                priority: existingPriority,
+              });
+            },
+          });
+        `,
+        "utf8",
+      );
+      writeFileSync(
+        join(root, "web", "components", "PriorityBadge.tsx"),
+        `
+          export function PriorityBadge(props: { priority: string }) {
+            const priority = props.priority;
+            return <span data-field="priority" priority={priority}>{props.priority}</span>;
+          }
+        `,
+        "utf8",
+      );
+
+      const applied = await runRefactorCommand(
+        refactorOptions(root, {
+          renameTarget: "field",
+          from: "tickets.priority",
+          to: "tickets.urgency",
+          yes: true,
+        }),
+      );
+
+      expect(applied.ok).toBe(true);
+      const commandSource = readFileSync(join(root, "src", "commands", "updateTicketPriority.ts"), "utf8");
+      expect(commandSource).toContain("const priority = input.urgency;");
+      expect(commandSource).toContain("const { urgency: existingPriority } = input;");
+      expect(commandSource).toContain("const payload = { urgency: priority };");
+      expect(commandSource).toContain("urgency: existingPriority");
+      expect(commandSource).not.toContain("const urgency = input");
+
+      const componentSource = readFileSync(join(root, "web", "components", "PriorityBadge.tsx"), "utf8");
+      expect(componentSource).toMatch(/props:\s*{\s*urgency:\s*string;\s*}/);
+      expect(componentSource).toContain("const priority = props.urgency;");
+      expect(componentSource).toContain('data-field="urgency"');
+      expect(componentSource).toContain("urgency={priority}");
+
+      const blueprintSource = readFileSync(join(root, ".forge", "blueprints", "ticket-priority.json"), "utf8");
+      expect(blueprintSource).toContain('"name": "urgency"');
+      expect(blueprintSource).not.toContain('"name": "priority"');
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
   test("rename table is high risk unless explicitly allowed", async () => {
     const root = scaffoldRefactorWorkspace("h27-table");
     try {
@@ -192,6 +256,57 @@ describe("H27 safe refactor", () => {
       expect(planned.plan?.migrationPlan?.sql[0]).toBe(
         "ALTER TABLE tickets RENAME TO supportTickets;",
       );
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("rename table rewrites structured TS and JSON references when explicitly allowed", async () => {
+    const root = scaffoldRefactorWorkspace("h27-table-ast");
+    try {
+      writeFileSync(
+        join(root, "src", "commands", "updateTicketPriority.ts"),
+        `
+          import { can, command } from "forge/server";
+          export const updateTicketPriority = command({
+            auth: can("tickets.update"),
+            handler: async (ctx, input: { id: string; priority: string }) => {
+              const tickets = ["keep-local"];
+              const row = await ctx.db.tickets.update(input.id, { priority: input.priority });
+              return { row, local: tickets };
+            },
+          });
+        `,
+        "utf8",
+      );
+      const applied = await runRefactorCommand(
+        refactorOptions(root, {
+          renameTarget: "table",
+          from: "tickets",
+          to: "supportTickets",
+          yes: true,
+          allowHighRisk: true,
+        }),
+      );
+
+      expect(applied.ok).toBe(true);
+      const schemaSource = readFileSync(join(root, "src", "forge", "schema.ts"), "utf8");
+      expect(schemaSource).toContain("export const supportTickets = defineTable");
+      expect(schemaSource).toContain('name: "supportTickets"');
+
+      const commandSource = readFileSync(join(root, "src", "commands", "updateTicketPriority.ts"), "utf8");
+      expect(commandSource).toContain("ctx.db.supportTickets.update");
+      expect(commandSource).toContain('auth: can("supportTickets.update")');
+      expect(commandSource).toContain('const tickets = ["keep-local"];');
+      expect(commandSource).toContain("local: tickets");
+
+      const policiesSource = readFileSync(join(root, "src", "policies.ts"), "utf8");
+      expect(policiesSource).toContain('"supportTickets.read"');
+      expect(policiesSource).toContain('"supportTickets.update"');
+
+      const blueprintSource = readFileSync(join(root, ".forge", "blueprints", "ticket-priority.json"), "utf8");
+      expect(blueprintSource).toContain('"table": "supportTickets"');
+      expect(blueprintSource).not.toContain('"table": "tickets"');
     } finally {
       cleanupWorkspace(root);
     }

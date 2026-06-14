@@ -895,6 +895,254 @@ function buildExtractedActionContent(intent: Extract<RefactorIntent, { kind: "ex
   ]);
 }
 
+function isTypeScriptLike(file: string): boolean {
+  return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js") || file.endsWith(".jsx");
+}
+
+function scriptKindForFile(file: string): ts.ScriptKind {
+  if (file.endsWith(".tsx")) return ts.ScriptKind.TSX;
+  if (file.endsWith(".jsx")) return ts.ScriptKind.JSX;
+  if (file.endsWith(".js")) return ts.ScriptKind.JS;
+  return ts.ScriptKind.TS;
+}
+
+function renameIdentifierNode(to: string): ts.Identifier {
+  return ts.factory.createIdentifier(to);
+}
+
+function renamePropertyName(name: ts.PropertyName, from: string, to: string, prefixMode = false): ts.PropertyName {
+  if (ts.isIdentifier(name) && name.text === from) {
+    return renameIdentifierNode(to);
+  }
+  if (ts.isStringLiteral(name)) {
+    const next = renameStringValue(name.text, from, to, prefixMode);
+    if (next !== name.text) {
+      return ts.factory.createStringLiteral(next);
+    }
+  }
+  return name;
+}
+
+function renameStringValue(value: string, from: string, to: string, prefixMode: boolean): string {
+  if (value === from) {
+    return to;
+  }
+  if (prefixMode && value.startsWith(`${from}.`)) {
+    return `${to}${value.slice(from.length)}`;
+  }
+  return value;
+}
+
+function renameStringLiteralNode<T extends ts.StringLiteral | ts.NoSubstitutionTemplateLiteral>(
+  node: T,
+  from: string,
+  to: string,
+  prefixMode: boolean,
+): T {
+  const next = renameStringValue(node.text, from, to, prefixMode);
+  if (next === node.text) {
+    return node;
+  }
+  return (ts.isNoSubstitutionTemplateLiteral(node)
+    ? ts.factory.createNoSubstitutionTemplateLiteral(next)
+    : ts.factory.createStringLiteral(next)) as T;
+}
+
+function isDefineTableCall(expression: ts.Expression | undefined): boolean {
+  return (
+    expression !== undefined &&
+    ts.isCallExpression(expression) &&
+    ts.isIdentifier(expression.expression) &&
+    expression.expression.text === "defineTable"
+  );
+}
+
+function renameFieldInSource(source: string, file: string, from: string, to: string): string {
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKindForFile(file));
+  const transform: ts.TransformerFactory<ts.SourceFile> = (context) => {
+    const visit: ts.Visitor = (node) => {
+      if (ts.isPropertyAccessExpression(node) && node.name.text === from) {
+        return ts.factory.updatePropertyAccessExpression(node, node.expression, renameIdentifierNode(to));
+      }
+      if (ts.isPropertyAssignment(node)) {
+        return ts.factory.updatePropertyAssignment(
+          node,
+          renamePropertyName(node.name, from, to),
+          ts.visitNode(node.initializer, visit, ts.isExpression) ?? node.initializer,
+        );
+      }
+      if (ts.isShorthandPropertyAssignment(node) && node.name.text === from) {
+        return ts.factory.createPropertyAssignment(to, node.name);
+      }
+      if (ts.isPropertySignature(node)) {
+        return ts.factory.updatePropertySignature(
+          node,
+          node.modifiers,
+          renamePropertyName(node.name, from, to),
+          node.questionToken,
+          node.type,
+        );
+      }
+      if (ts.isBindingElement(node) && node.propertyName) {
+        return ts.factory.updateBindingElement(
+          node,
+          node.dotDotDotToken,
+          renamePropertyName(node.propertyName, from, to),
+          node.name,
+          node.initializer,
+        );
+      }
+      if (ts.isBindingElement(node) && ts.isIdentifier(node.name) && node.name.text === from && !node.propertyName) {
+        return ts.factory.updateBindingElement(
+          node,
+          node.dotDotDotToken,
+          ts.factory.createIdentifier(to),
+          node.name,
+          node.initializer,
+        );
+      }
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+        return renameStringLiteralNode(node, from, to, false);
+      }
+      if (ts.isJsxAttribute(node) && ts.isIdentifier(node.name) && node.name.text === from) {
+        return ts.factory.updateJsxAttribute(node, ts.factory.createIdentifier(to), node.initializer);
+      }
+      return ts.visitEachChild(node, visit, context);
+    };
+    return (node) => ts.visitNode(node, visit) as ts.SourceFile;
+  };
+  const result = ts.transform(sourceFile, [transform]);
+  try {
+    const transformed = result.transformed[0];
+    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+    return printer.printFile(transformed);
+  } finally {
+    result.dispose();
+  }
+}
+
+function renameTableInSource(source: string, file: string, from: string, to: string): string {
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKindForFile(file));
+  const transform: ts.TransformerFactory<ts.SourceFile> = (context) => {
+    const visit: ts.Visitor = (node) => {
+      if (
+        ts.isVariableDeclaration(node) &&
+        ts.isIdentifier(node.name) &&
+        node.name.text === from &&
+        isDefineTableCall(node.initializer)
+      ) {
+        return ts.factory.updateVariableDeclaration(
+          node,
+          renameIdentifierNode(to),
+          node.exclamationToken,
+          node.type,
+          ts.visitNode(node.initializer, visit, ts.isExpression) ?? node.initializer,
+        );
+      }
+      if (ts.isImportSpecifier(node)) {
+        if (node.propertyName?.text === from) {
+          return ts.factory.updateImportSpecifier(node, node.isTypeOnly, renameIdentifierNode(to), node.name);
+        }
+        if (!node.propertyName && node.name.text === from) {
+          return ts.factory.updateImportSpecifier(node, node.isTypeOnly, undefined, renameIdentifierNode(to));
+        }
+      }
+      if (ts.isExportSpecifier(node)) {
+        if (node.propertyName?.text === from) {
+          return ts.factory.updateExportSpecifier(node, node.isTypeOnly, renameIdentifierNode(to), node.name);
+        }
+        if (!node.propertyName && node.name.text === from) {
+          return ts.factory.updateExportSpecifier(node, node.isTypeOnly, undefined, renameIdentifierNode(to));
+        }
+      }
+      if (ts.isPropertyAccessExpression(node) && node.name.text === from) {
+        return ts.factory.updatePropertyAccessExpression(node, node.expression, renameIdentifierNode(to));
+      }
+      if (ts.isPropertyAssignment(node)) {
+        return ts.factory.updatePropertyAssignment(
+          node,
+          renamePropertyName(node.name, from, to, true),
+          ts.visitNode(node.initializer, visit, ts.isExpression) ?? node.initializer,
+        );
+      }
+      if (ts.isPropertySignature(node)) {
+        return ts.factory.updatePropertySignature(
+          node,
+          node.modifiers,
+          renamePropertyName(node.name, from, to, true),
+          node.questionToken,
+          node.type,
+        );
+      }
+      if (ts.isBindingElement(node) && node.propertyName) {
+        return ts.factory.updateBindingElement(
+          node,
+          node.dotDotDotToken,
+          renamePropertyName(node.propertyName, from, to),
+          node.name,
+          node.initializer,
+        );
+      }
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+        return renameStringLiteralNode(node, from, to, true);
+      }
+      return ts.visitEachChild(node, visit, context);
+    };
+    return (node) => ts.visitNode(node, visit) as ts.SourceFile;
+  };
+  const result = ts.transform(sourceFile, [transform]);
+  try {
+    const transformed = result.transformed[0];
+    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+    return printer.printFile(transformed);
+  } finally {
+    result.dispose();
+  }
+}
+
+function renameJsonValue(value: unknown, from: string, to: string, prefixMode: boolean): unknown {
+  if (typeof value === "string") {
+    return renameStringValue(value, from, to, prefixMode);
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => renameJsonValue(entry, from, to, prefixMode));
+  }
+  if (value && typeof value === "object") {
+    const output: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      const nextKey = renameStringValue(key, from, to, prefixMode);
+      output[nextKey] = renameJsonValue(entry, from, to, prefixMode);
+    }
+    return output;
+  }
+  return value;
+}
+
+function renameInJson(source: string, from: string, to: string, prefixMode: boolean): string {
+  const parsed = JSON.parse(source) as unknown;
+  return `${JSON.stringify(renameJsonValue(parsed, from, to, prefixMode), null, 2)}\n`;
+}
+
+function renameFieldContent(source: string, file: string, intent: Extract<RefactorIntent, { kind: "renameField" }>): string {
+  if (isTypeScriptLike(file)) {
+    return renameFieldInSource(source, file, intent.from.field, intent.to.field);
+  }
+  if (file.endsWith(".json")) {
+    return renameInJson(source, intent.from.field, intent.to.field, false);
+  }
+  return wordReplace(source, intent.from.field, intent.to.field);
+}
+
+function renameTableContent(source: string, file: string, intent: Extract<RefactorIntent, { kind: "renameTable" }>): string {
+  if (isTypeScriptLike(file)) {
+    return renameTableInSource(source, file, intent.from.table, intent.to.table);
+  }
+  if (file.endsWith(".json")) {
+    return renameInJson(source, intent.from.table, intent.to.table, true);
+  }
+  return wordReplace(source, intent.from.table, intent.to.table);
+}
+
 function buildRenameFieldPlan(workspaceRoot: string, intent: Extract<RefactorIntent, { kind: "renameField" }>): {
   patches: PlannedPatch[];
   diagnostics: Diagnostic[];
@@ -923,7 +1171,7 @@ function buildRenameFieldPlan(workspaceRoot: string, intent: Extract<RefactorInt
       workspaceRoot,
       file,
       `Rename field ${intent.table}.${intent.from.field} to ${intent.to.field}`,
-      (source) => wordReplace(source, intent.from.field, intent.to.field),
+      (source) => renameFieldContent(source, file, intent),
     );
     if (patch) {
       found = true;
@@ -957,7 +1205,7 @@ function buildRenameTablePlan(workspaceRoot: string, intent: Extract<RefactorInt
       workspaceRoot,
       file,
       `Rename table ${intent.from.table} to ${intent.to.table}`,
-      (source) => wordReplace(source, intent.from.table, intent.to.table),
+      (source) => renameTableContent(source, file, intent),
     );
     if (patch) {
       found = true;
