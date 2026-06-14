@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { cpSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, parse, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
@@ -17,6 +17,8 @@ export interface NewCommandOptions {
   packageManager: NewPackageManager;
   install: boolean;
   git: boolean;
+  forgePackageSpec?: string;
+  localForge?: boolean;
   workspaceRoot: string;
 }
 
@@ -66,12 +68,26 @@ const TEXT_EXTENSIONS = new Set([
   ".tsx",
 ]);
 
-function repoRoot(): string {
-  return resolve(moduleDir(import.meta), "..", "..", "..");
+function packageRoot(): string {
+  let current = moduleDir(import.meta);
+  const root = parse(current).root;
+  while (true) {
+    if (
+      nodeFileSystem.exists(join(current, "package.json")) &&
+      nodeFileSystem.exists(join(current, "templates"))
+    ) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current || current === root) {
+      return resolve(moduleDir(import.meta), "..", "..", "..");
+    }
+    current = parent;
+  }
 }
 
 function templateRoot(template: NewTemplateName): string {
-  return join(repoRoot(), "templates", template);
+  return join(packageRoot(), "templates", template);
 }
 
 function extensionFor(path: string): string {
@@ -93,12 +109,33 @@ function displayName(name: string): string {
 }
 
 function localForgePackageSpec(targetDir: string): string {
-  const root = repoRoot();
+  const root = packageRoot();
   const relativeRoot = relative(targetDir, root).replace(/\\/g, "/");
   if (!relativeRoot || relativeRoot.includes(":")) {
     return pathToFileURL(root).href;
   }
   return `file:${relativeRoot.startsWith(".") ? relativeRoot : `./${relativeRoot}`}`;
+}
+
+function normalizeForgePackageSpec(spec: string): string {
+  if (!spec.toLowerCase().startsWith("file:") || !spec.includes("\\")) {
+    return spec;
+  }
+  const fileTarget = spec.slice("file:".length);
+  if (/^[a-z]:[\\/]/i.test(fileTarget)) {
+    return `file:///${fileTarget.replace(/\\/g, "/")}`;
+  }
+  if (fileTarget.startsWith("\\\\")) {
+    return pathToFileURL(resolve(fileTarget)).href;
+  }
+  return `file:${fileTarget.replace(/\\/g, "/")}`;
+}
+
+function forgePackageSpec(targetDir: string, options: Pick<NewCommandOptions, "forgePackageSpec" | "localForge">): string {
+  if (options.forgePackageSpec && !options.localForge) {
+    return normalizeForgePackageSpec(options.forgePackageSpec);
+  }
+  return localForgePackageSpec(targetDir);
 }
 
 function packageManagerSpec(packageManager: string): string {
@@ -116,8 +153,7 @@ function packageManagerSpec(packageManager: string): string {
   }
 }
 
-function replaceTokens(targetDir: string, appName: string, packageManager: string): void {
-  const forgePackageSpec = localForgePackageSpec(targetDir);
+function replaceTokens(targetDir: string, appName: string, packageManager: string, packageSpec: string): void {
   const packageManagerWithVersion = packageManagerSpec(packageManager);
   function walk(dir: string): void {
     for (const entry of nodeFileSystem.readDir(dir)) {
@@ -138,7 +174,7 @@ function replaceTokens(targetDir: string, appName: string, packageManager: strin
         .replaceAll("__FORGE_APP_TITLE__", displayName(appName))
         .replaceAll("__PACKAGE_MANAGER__", packageManager)
         .replaceAll("__PACKAGE_MANAGER_SPEC__", packageManagerWithVersion)
-        .replaceAll("__FORGE_PACKAGE_SPEC__", forgePackageSpec);
+        .replaceAll("__FORGE_PACKAGE_SPEC__", packageSpec);
       nodeFileSystem.writeText(absolute, text);
     }
   }
@@ -176,17 +212,27 @@ async function spawnCommand(
   args: string[],
   cwd: string,
 ): Promise<number> {
-  const argv = resolvePackageManagerArgv([command, ...args]);
-  return new Promise<number>((resolveExitCode, reject) => {
-    const child = spawn(argv[0]!, argv.slice(1), {
-      cwd,
-      stdio: ["ignore", "inherit", "inherit"],
-      windowsHide: true,
-    });
-    child.on("error", reject);
+  let argv = resolvePackageManagerArgv([command, ...args]);
+  if (process.platform === "win32" && /\.(cmd|bat)$/i.test(argv[0] ?? "")) {
+    argv = [process.env.ComSpec ?? "cmd.exe", "/d", "/c", command, ...args];
+  }
+  return new Promise<number>((resolveExitCode) => {
+    let child: ReturnType<typeof spawn>;
+    try {
+      child = spawn(argv[0]!, argv.slice(1), {
+        cwd,
+        stdio: ["ignore", "inherit", "inherit"],
+        windowsHide: true,
+      });
+    } catch {
+      resolveExitCode(1);
+      return;
+    }
+    child.on("error", () => resolveExitCode(1));
     child.on("close", (code) => resolveExitCode(code ?? 1));
   });
 }
+
 
 function lockfileNamesFor(packageManager: NewPackageManager): string[] {
   switch (packageManager) {
@@ -347,7 +393,12 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
 
   nodeFileSystem.mkdirp(targetDir);
   cpSync(source, targetDir, { recursive: true, force: true });
-  replaceTokens(targetDir, options.name, options.packageManager);
+  replaceTokens(
+    targetDir,
+    options.name,
+    options.packageManager,
+    forgePackageSpec(targetDir, options),
+  );
 
   let installed = false;
   if (options.install) {

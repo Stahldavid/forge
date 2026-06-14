@@ -544,6 +544,8 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         packageManager: command.packageManager,
         install: command.install,
         git: command.git,
+        forgePackageSpec: command.forgePackageSpec,
+        localForge: command.localForge,
         workspaceRoot: command.workspaceRoot,
       });
       process.stdout.write(formatNewHuman(result));

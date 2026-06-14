@@ -13,5 +13,10 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("node-version: [22, 24]");
     expect(workflow).toContain("node .\\bin\\forge.mjs doctor windows --json");
     expect(workflow).toContain("Minimal template package-manager smoke");
+    expect(workflow).toContain("external-quickstart:");
+    expect(workflow).toContain("External quickstart smoke");
+    expect(workflow).toContain("--forge-spec \"file:$GITHUB_WORKSPACE\"");
+    expect(workflow).toContain("npm run forge -- dev --once --json");
+    expect(workflow).toContain("npm run forge -- verify --smoke --json --script-timeout-ms 120000");
   });
 });

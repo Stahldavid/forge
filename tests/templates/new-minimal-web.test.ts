@@ -20,6 +20,8 @@ describe("minimal-web template", () => {
       "notes-app",
       "--template",
       "minimal-web",
+      "--forge-spec",
+      "^0.1.0",
       "--no-install",
       "--no-git",
     ]);
@@ -27,7 +29,54 @@ describe("minimal-web template", () => {
     expect(parsed.command).toMatchObject({
       kind: "new",
       template: "minimal-web",
+      forgePackageSpec: "^0.1.0",
+      localForge: false,
+      install: false,
     });
+  });
+
+  test("parseCli accepts explicit install flag", () => {
+    const parsed = parseCli([
+      "new",
+      "notes-app",
+      "--template",
+      "minimal-web",
+      "--install",
+      "--no-git",
+    ]);
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "new",
+      install: true,
+    });
+  });
+
+  test("parseCli rejects conflicting forge package source flags", () => {
+    const parsed = parseCli([
+      "new",
+      "notes-app",
+      "--template",
+      "minimal-web",
+      "--forge-spec",
+      "^0.1.0",
+      "--local-forge",
+    ]);
+
+    expect(parsed.errors).toContain("use either --forge-spec or --local-forge, not both");
+  });
+
+  test("parseCli rejects conflicting install flags", () => {
+    const parsed = parseCli([
+      "new",
+      "notes-app",
+      "--template",
+      "minimal-web",
+      "--install",
+      "--no-install",
+    ]);
+
+    expect(parsed.errors).toContain("use either --install or --no-install, not both");
   });
 
   test("forge new creates a connected minimal full-stack app", async () => {
@@ -110,6 +159,52 @@ describe("minimal-web template", () => {
       cleanupWorkspace(workspace);
     }
   }, 30_000);
+
+  test("forge new can use an explicit Forge package spec for external smokes", async () => {
+    const workspace = tempWorkspace("new-minimal-web-forge-spec");
+    try {
+      const result = await runNewCommand({
+        name: "notes-app",
+        template: "minimal-web",
+        packageManager: "npm",
+        install: false,
+        git: false,
+        forgePackageSpec: "npm:@forgeos/cli@0.1.0-alpha.0",
+        workspaceRoot: workspace,
+      });
+      expect(result.exitCode).toBe(0);
+
+      const project = join(workspace, "notes-app");
+      expect(read(project, "package.json")).toContain('"forge": "npm:@forgeos/cli@0.1.0-alpha.0"');
+      expect(read(project, "package.json")).toContain('"packageManager": "npm@10.9.0"');
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("forge new normalizes Windows file forge specs before writing package.json", async () => {
+    const workspace = tempWorkspace("new-minimal-web-windows-forge-spec");
+    try {
+      const result = await runNewCommand({
+        name: "notes-app",
+        template: "minimal-web",
+        packageManager: "npm",
+        install: false,
+        git: false,
+        forgePackageSpec: "file:C:\\Users\\David\\Documents\\forge",
+        workspaceRoot: workspace,
+      });
+      expect(result.exitCode).toBe(0);
+
+      const project = join(workspace, "notes-app");
+      const pkg = JSON.parse(read(project, "package.json")) as {
+        dependencies?: Record<string, string>;
+      };
+      expect(pkg.dependencies?.forge).toBe("file:///C:/Users/David/Documents/forge");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
 
   test("forge check surfaces frontend diagnostics with fix hints", async () => {
     const workspace = tempWorkspace("new-minimal-web-frontend-check");

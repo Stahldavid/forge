@@ -53,6 +53,15 @@ npm run dev -- --open
 Template apps ignore `src/forge/_generated/`, `forge.lock`, and operational `.forge/**` work dirs by default so a freshly created app does not flood git or the editor with generated files. Run `forge generate` after checkout or before verification to recreate the agent contract, client SDK, frontend graph, capability map, and runtime manifests.
 Templates also include workspace editor excludes for generated/runtime directories so source files stay visually prominent.
 
+For release or external smoke testing, choose the Forge package source explicitly:
+
+```bash
+forge new smoke-app --template minimal-web --package-manager npm --forge-spec "^0.1.0"
+forge new local-app --template minimal-web --package-manager npm --local-forge
+```
+
+`--forge-spec` writes that dependency spec into the generated app, while `--local-forge` keeps the monorepo/local package workflow. CI uses `--forge-spec "file:$GITHUB_WORKSPACE"` to prove a freshly created app can install ForgeOS and run outside the framework workspace.
+
 ## What ForgeOS Generates
 
 ```txt

@@ -56,18 +56,34 @@ async function spawnPackageRun(
   timedOut: boolean;
 }> {
   const packageManager = detectPackageManager(workspaceRoot);
-  const argv = resolvePackageManagerArgv([packageManager, "run", scriptName]);
+  let argv = resolvePackageManagerArgv([packageManager, "run", scriptName]);
+  if (process.platform === "win32" && /\.(cmd|bat)$/i.test(argv[0] ?? "")) {
+    argv = [process.env.ComSpec ?? "cmd.exe", "/d", "/c", packageManager, "run", scriptName];
+  }
   const started = Date.now();
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let settled = false;
     let timedOut = false;
-    const child = spawn(argv[0]!, argv.slice(1), {
-      cwd: workspaceRoot,
-      env: process.env,
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
-    });
+    let child: ReturnType<typeof spawn>;
+    try {
+      child = spawn(argv[0]!, argv.slice(1), {
+        cwd: workspaceRoot,
+        env: process.env,
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+      });
+    } catch (error) {
+      resolve({
+        exitCode: 1,
+        stdout: "",
+        stderr: error instanceof Error ? error.message : String(error),
+        command: argv.join(" "),
+        durationMs: Date.now() - started,
+        timedOut: false,
+      });
+      return;
+    }
 
     let stdout = "";
     let stderr = "";
@@ -90,7 +106,14 @@ async function spawnPackageRun(
       clearTimeout(timer);
       if (!settled) {
         settled = true;
-        reject(error);
+        resolve({
+          exitCode: 1,
+          stdout,
+          stderr: error instanceof Error ? error.message : String(error),
+          command: argv.join(" "),
+          durationMs: Date.now() - started,
+          timedOut,
+        });
       }
     });
     child.on("close", (code) => {

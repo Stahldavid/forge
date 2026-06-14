@@ -98,3 +98,32 @@ jobs:
             node "$GITHUB_WORKSPACE/bin/forge.mjs" new "$pm-smoke" --template minimal-web --package-manager "$pm" --no-install --no-git
             node -e "const pkg=require('./$pm-smoke/package.json'); if (!pkg.packageManager.startsWith('$pm@')) process.exit(1)"
           done
+
+  external-quickstart:
+    name: External quickstart smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install ForgeOS workspace dependencies
+        run: npm install --ignore-scripts
+
+      - name: Create, install, and verify an external app
+        shell: bash
+        run: |
+          TEMP="$(mktemp -d)"
+          cd "$TEMP"
+          node "$GITHUB_WORKSPACE/bin/forge.mjs" new smoke-app \
+            --template minimal-web \
+            --package-manager npm \
+            --forge-spec "file:$GITHUB_WORKSPACE" \
+            --install \
+            --no-git
+          cd smoke-app
+          npm run generate
+          npm run forge -- dev --once --json
+          npm run forge -- verify --smoke --json --script-timeout-ms 120000

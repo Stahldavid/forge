@@ -55,6 +55,8 @@ export type ForgeCommand =
       packageManager: NewPackageManager;
       install: boolean;
       git: boolean;
+      forgePackageSpec?: string;
+      localForge: boolean;
       workspaceRoot: string;
     }
   | { kind: "build"; json: boolean; workspaceRoot: string }
@@ -670,6 +672,10 @@ export function parseCli(argv: string[]): ParsedCli {
         errors.push(`unsupported template '${templateRaw}'; supported: ${NEW_TEMPLATES.join(", ")}`);
       }
       const packageManagerRaw = parseOptionValue(argv, "--package-manager");
+      const forgePackageSpec = parseOptionValue(argv, "--forge-spec");
+      const localForge = parseFlag(argv, "--local-forge");
+      const install = parseFlag(argv, "--install");
+      const noInstall = parseFlag(argv, "--no-install");
       if (
         packageManagerRaw &&
         !NEW_PACKAGE_MANAGERS.includes(packageManagerRaw as NewPackageManager)
@@ -678,6 +684,12 @@ export function parseCli(argv: string[]): ParsedCli {
           `unsupported package manager '${packageManagerRaw}'; supported: ${NEW_PACKAGE_MANAGERS.join(", ")}`,
         );
       }
+      if (forgePackageSpec && localForge) {
+        errors.push("use either --forge-spec or --local-forge, not both");
+      }
+      if (install && noInstall) {
+        errors.push("use either --install or --no-install, not both");
+      }
 
       return {
         command: {
@@ -685,8 +697,10 @@ export function parseCli(argv: string[]): ParsedCli {
           name,
           template: parseNewTemplate(templateRaw),
           packageManager: parseNewPackageManager(packageManagerRaw),
-          install: !parseFlag(argv, "--no-install"),
+          install: install || !noInstall,
           git: !parseFlag(argv, "--no-git"),
+          forgePackageSpec,
+          localForge,
           workspaceRoot,
         },
         workspaceRoot,
@@ -2075,6 +2089,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--url",
     "--template",
     "--package-manager",
+    "--forge-spec",
+    "--local-forge",
+    "--install",
     "--no-install",
     "--no-git",
     "--with-web",
@@ -2170,6 +2187,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--url" ||
         arg === "--template" ||
         arg === "--package-manager" ||
+        arg === "--forge-spec" ||
         arg === "--postgres-version" ||
         arg === "--runtime-port" ||
         arg === "--web-port" ||
