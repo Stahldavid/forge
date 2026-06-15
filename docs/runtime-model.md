@@ -2,19 +2,15 @@
 
 ForgeOS separates deterministic transactional work from side effects.
 
-```mermaid
-flowchart TB
-  subgraph commit [Transactional — commands]
-    C[command] --> DB[(ctx.db write)]
-    C --> E[ctx.emit]
-  end
-  subgraph post [Post-commit — actions / workflows]
-    E --> A[action / workflow]
-    A --> S[secrets / network / AI]
-  end
-  subgraph read [Read-only — queries]
-    Q[query / liveQuery] --> DBread[(ctx.db read)]
-  end
+```text
+[Transactional — commands]
+  command -> ctx.db write + ctx.emit
+
+[Post-commit — actions / workflows]
+  outbox -> action/workflow -> secrets / network / AI
+
+[Read-only — queries / liveQuery]
+  query / liveQuery -> ctx.db read only
 ```
 
 See also:

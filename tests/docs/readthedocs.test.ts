@@ -38,14 +38,13 @@ describe("ReadTheDocs documentation", () => {
     expect(config).toContain("requirements: docs/requirements.txt");
   });
 
-  test("uses Material theme and Mermaid support", () => {
+  test("uses Material theme with RTD-safe defaults", () => {
     const mkdocs = read("mkdocs.yml");
     expect(mkdocs).toContain("name: material");
-    expect(mkdocs).toContain("mermaid");
-    expect(mkdocs).toContain("pymdownx.highlight");
-    expect(mkdocs).toContain("pymdownx.superfences");
-    expect(mkdocs).toContain("tables");
+    expect(mkdocs).not.toContain("markdown_extensions:");
+    expect(mkdocs).not.toContain("!!python/name:");
     const requirements = read("docs/requirements.txt");
+    expect(requirements).toContain("mkdocs==1.6.1");
     expect(requirements).toContain("mkdocs-material");
     expect(requirements).toContain("pymdown-extensions");
   });

@@ -54,37 +54,6 @@ nav:
   - Release: release.md
   - Changelog: changelog.md
 
-# Explicit list required on RTD: overriding markdown_extensions disables MkDocs defaults
-# (fenced_code, tables, toc). pymdownx.superfences replaces fenced_code for code blocks.
-markdown_extensions:
-  - abbr
-  - admonition
-  - attr_list
-  - def_list
-  - footnotes
-  - md_in_html
-  - tables
-  - toc:
-      permalink: true
-  - pymdownx.betterem:
-      smart_enable: all
-  - pymdownx.caret
-  - pymdownx.details
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.tilde
+# Do not set markdown_extensions here. Material for MkDocs enables the correct
+# defaults (superfences, highlight, tables, toc). A partial custom list breaks
+# code fences on RTD and can fail the build.

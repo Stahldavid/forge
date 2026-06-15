@@ -4,16 +4,15 @@ ForgeOS generates a **typed client SDK** and React hooks so web apps call comman
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  UI[React component] --> Bridge[web/lib/forge.ts]
-  Bridge --> Hooks[useCommand / useQuery / useLiveQuery]
-  Hooks --> API[Forge dev server]
-  API --> Runtime[commands / queries / liveQueries]
-  Runtime --> DB[(Database)]
-  Live[Invalidation log] --> LiveQ[liveQuery SSE]
-  DB --> Live
-  LiveQ --> Hooks
+```text
+React component
+  -> web/lib/forge.ts (bridge)
+  -> useCommand / useQuery / useLiveQuery
+  -> Forge dev server
+  -> commands / queries / liveQueries
+  -> database
+
+Database change -> invalidation log -> liveQuery SSE -> hooks -> UI
 ```
 
 | Layer | Responsibility |
@@ -130,19 +129,12 @@ Use `forge do connect-ui --json` when wiring is broken. See [Agent Workflow](age
 
 LiveQueries are **read-only**, tenant-scoped subscriptions backed by a **durable invalidation log** in production.
 
-```mermaid
-sequenceDiagram
-  participant UI
-  participant SSE as liveQuery SSE
-  participant DB
-  participant Log as _forge_live_invalidations
-
-  UI->>SSE: subscribe liveTickets
-  SSE->>DB: initial snapshot
-  Note over DB,Log: command writes row
-  DB->>Log: record invalidation
-  Log->>SSE: wakeup / new revision
-  SSE->>UI: updated snapshot
+```text
+1. UI subscribes to liveTickets (SSE)
+2. Server sends initial snapshot from DB
+3. Command writes a row -> invalidation recorded in _forge_live_invalidations
+4. SSE wakes up and pushes a new snapshot to the UI
+5. Client may resume with Last-Event-ID or ?lastRevision=
 ```
 
 Rules:
