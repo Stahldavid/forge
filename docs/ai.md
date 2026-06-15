@@ -363,6 +363,8 @@ Creates:
 
 See [Authoring](authoring.md) and [Frontend](frontend.md).
 
+For a focused guide to `aiTool`, `agent`, auto-tools, approval, and agent endpoints, see [AI Agents](ai-agents.md).
+
 ## Telemetry and cost
 
 Forge records AI events without retaining prompts/outputs by default:

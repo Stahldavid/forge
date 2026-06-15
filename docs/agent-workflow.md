@@ -203,6 +203,8 @@ Finish release-grade work with `forge verify --strict`.
 ## Related pages
 
 - [Agent Contract](agent-contract.md) — contract files and adapter export
+- [Agent Playbook](agent-playbook.md) — issue-to-handoff operating loop
+- [Dev Loop](dev-loop.md) — `forge dev` and `forge dev --once --json`
 - [CLI](cli.md) — full command reference
 - [forge add](forge-add.md) — integration recipes and dependency API oracle
 - [Frontend](frontend.md) — hooks, capability map, liveQuery

@@ -125,16 +125,23 @@ npm run generate
 | Topic | Page |
 |-------|------|
 | End-to-end first app | [First App Tutorial](tutorial-first-app.md) |
+| Runtime flow by example | [Runtime by Example](runtime-by-example.md) |
 | Build a feature with an agent | [Build a Feature with an Agent](agent-feature-tutorial.md) |
+| Agent issue-to-handoff loop | [Agent Playbook](agent-playbook.md) |
 | Agent-first workflow (`forge do`) | [Agent Workflow](agent-workflow.md) |
+| Local dev diagnostics | [Dev Loop](dev-loop.md) |
 | Architecture and generated files | [Architecture](architecture.md) |
+| Capability overview | [Capabilities](capabilities.md) |
 | Template file trees | [Examples](examples.md) |
 | Runtime rules (commands vs workflows) | [Runtime Model](runtime-model.md) |
 | Frontend hooks and liveQuery | [Frontend](frontend.md) |
+| Frontend/backend wiring | [Frontend Integration Guide](frontend-integration-guide.md) |
 | AI generation and agents | [AI](ai.md) |
+| Native AI tools and agent loop | [AI Agents](ai-agents.md) |
 | Scaffold resources and blueprints | [Authoring](authoring.md) |
 | Auth, policies, secrets, RLS | [Security and Data](security-and-data.md) |
 | Add Stripe, PostHog, Sentry, Zod, or AI SDK | [forge add](forge-add.md) |
+| Package graph and API oracle | [Package Intelligence](package-intelligence.md) |
 | Inspect package APIs for agents | [CLI - Dependency API oracle](cli.md#dependency-api-oracle-for-agents-and-upgrades) |
 | Fix guard violations | [Troubleshooting](troubleshooting.md) |
 | Version history | [Changelog](changelog.md) |

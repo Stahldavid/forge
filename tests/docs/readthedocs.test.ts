@@ -10,19 +10,26 @@ const PUBLIC_PAGES = [
   "getting-started.md",
   "tutorial-first-app.md",
   "why-forgeos.md",
+  "capabilities.md",
   "architecture.md",
   "examples.md",
   "templates.md",
   "agent-workflow.md",
+  "agent-playbook.md",
   "agent-feature-tutorial.md",
+  "dev-loop.md",
   "cli.md",
   "cli-reference.md",
   "runtime-model.md",
+  "runtime-by-example.md",
   "frontend.md",
+  "frontend-integration-guide.md",
   "ai.md",
+  "ai-agents.md",
   "security-and-data.md",
   "authoring.md",
   "forge-add.md",
+  "package-intelligence.md",
   "recipes.md",
   "payments.md",
   "codemods.md",
@@ -30,6 +37,7 @@ const PUBLIC_PAGES = [
   "testing-and-repair.md",
   "troubleshooting.md",
   "field-testing.md",
+  "operations.md",
   "self-host.md",
   "release.md",
   "changelog.md",
@@ -45,6 +53,9 @@ describe("ReadTheDocs documentation", () => {
     expect(config).toContain("requirements: docs/requirements.txt");
     expect(config).toContain("search:");
     expect(config).toContain("docs/why-forgeos.md: 10");
+    expect(config).toContain("docs/agent-playbook.md: 9");
+    expect(config).toContain("docs/dev-loop.md: 9");
+    expect(config).toContain("docs/package-intelligence.md: 8");
   });
 
   test("uses Material theme with RTD-safe defaults", () => {
@@ -90,12 +101,22 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/index.md")).toContain("npm create forge-app@alpha");
     expect(read("docs/index.md")).toContain("Agent Workflow");
     expect(read("docs/index.md")).toContain("Inspect SDK APIs before coding");
+    expect(read("docs/capabilities.md")).toContain("H39-H43");
+    expect(read("docs/capabilities.md")).toContain("Native AI agents");
     expect(read("docs/agent-workflow.md")).toContain("forge do");
     expect(read("docs/agent-workflow.md")).toContain("Integration change loop");
     expect(read("docs/agent-workflow.md")).toContain("forge deps api stripe checkout.sessions.create");
+    expect(read("docs/agent-playbook.md")).toContain("issue-to-handoff loop");
+    expect(read("docs/agent-playbook.md")).toContain("forge review run --changed --json");
     expect(read("docs/agent-feature-tutorial.md")).toContain("forge make resource task");
     expect(read("docs/agent-feature-tutorial.md")).toContain("Add integrations only through Forge");
+    expect(read("docs/dev-loop.md")).toContain("forge dev --once --json");
+    expect(read("docs/dev-loop.md")).toContain("API URL");
+    expect(read("docs/runtime-by-example.md")).toContain("create support tickets");
+    expect(read("docs/runtime-by-example.md")).toContain("ctx.emit");
     expect(read("docs/frontend.md")).toContain("useLiveQuery");
+    expect(read("docs/frontend-integration-guide.md")).toContain("ForgeProvider");
+    expect(read("docs/frontend-integration-guide.md")).toContain("Capability map");
     expect(read("docs/security-and-data.md")).toContain("forge rls check");
     expect(read("docs/authoring.md")).toContain("forge make resource");
     expect(read("docs/testing-and-repair.md")).toContain("forge verify --strict");
@@ -105,6 +126,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/forge-add.md")).toContain("forge add stripe");
     expect(read("docs/forge-add.md")).toContain("forge deps api");
     expect(read("docs/forge-add.md")).toContain("summarizes the useful API surface");
+    expect(read("docs/package-intelligence.md")).toContain("forge deps runtime-compat");
+    expect(read("docs/package-intelligence.md")).toContain("The agent should not call an SDK from memory");
     expect(read("docs/payments.md")).toContain("checkout.requested");
     expect(read("docs/codemods.md")).toContain("extract-action");
     expect(read("docs/codemods.md")).toContain("rename command");
@@ -120,6 +143,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/ai.md")).toContain("Choose the right AI path");
     expect(read("docs/ai.md")).toContain("forge make ai-chat");
     expect(read("docs/ai.md")).toContain("forge deps api @ai-sdk/openai createOpenAI");
+    expect(read("docs/ai-agents.md")).toContain("aiTool");
+    expect(read("docs/ai-agents.md")).toContain("/ai/agents/chat");
     expect(read("docs/cli.md")).toContain("forge ai trace");
     expect(read("docs/cli.md")).toContain("forge deps api");
     expect(read("docs/cli.md")).toContain("Dependency API oracle");
@@ -127,6 +152,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/why-forgeos.md")).toContain("Forge dependency API oracle");
     expect(read("docs/cli.md")).toContain("forge verify --smoke");
     expect(read("docs/runtime-model.md")).toContain("ctx.agent.run");
+    expect(read("docs/operations.md")).toContain("forge doctor windows --json");
+    expect(read("docs/operations.md")).toContain("forge verify --strict --script-timeout-ms");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");
     expect(read("docs/release.md")).toContain("Documentation checklist");
     expect(read("docs/changelog.md")).toContain("0.1.0-alpha.3");

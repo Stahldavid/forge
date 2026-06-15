@@ -97,11 +97,14 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Install and first app | [Getting Started](getting-started.md) |
 | Full first app walkthrough | [First App Tutorial](tutorial-first-app.md) |
 | Why ForgeOS exists | [Why ForgeOS](why-forgeos.md) |
+| Public capability map | [Capabilities](capabilities.md) |
 | Compiler/runtime architecture | [Architecture](architecture.md) |
 | Template file trees | [Examples](examples.md) |
 | Templates (`minimal-web`, `b2b-support-web`) | [Templates](templates.md) |
 | Agent intent router (`forge do`) | [Agent Workflow](agent-workflow.md) |
+| Agent issue-to-handoff loop | [Agent Playbook](agent-playbook.md) |
 | Build a feature with an agent | [Build a Feature with an Agent](agent-feature-tutorial.md) |
+| Local control panel | [Dev Loop](dev-loop.md) |
 | CLI workflows | [CLI](cli.md) |
 | Full CLI list | [CLI Reference](cli-reference.md) |
 
@@ -110,8 +113,11 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | Commands vs actions vs workflows | [Runtime Model](runtime-model.md) |
+| Runtime flow by example | [Runtime by Example](runtime-by-example.md) |
 | React hooks, liveQuery, capability map | [Frontend](frontend.md) |
+| Frontend/backend wiring guide | [Frontend Integration Guide](frontend-integration-guide.md) |
 | Simple generation, agents, tools | [AI](ai.md) |
+| Native AI tools and agent loop | [AI Agents](ai-agents.md) |
 | Auth, policies, secrets, RLS, DB | [Security and Data](security-and-data.md) |
 
 ### Build and integrate
@@ -121,6 +127,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | `forge make`, feature blueprints | [Authoring](authoring.md) |
 | Install integrations safely with generated adapters | [forge add](forge-add.md) |
 | Inspect SDK APIs before coding | [CLI - Dependency API oracle](cli.md#dependency-api-oracle-for-agents-and-upgrades) |
+| Package graph, runtime compatibility, API evidence | [Package Intelligence](package-intelligence.md) |
 | Integration recipes | [Recipes](recipes.md) |
 | Payment flows and webhooks | [Payments](payments.md) |
 | AST-aware refactors | [Codemods](codemods.md) |
@@ -139,5 +146,6 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | Self-host compose and checks | [Self-Host](self-host.md) |
+| Production-like operations and diagnostics | [Operations](operations.md) |
 | npm release and publishing | [Release](release.md) |
 | Version history | [Changelog](changelog.md) |

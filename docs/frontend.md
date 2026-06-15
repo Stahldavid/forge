@@ -218,6 +218,7 @@ forge check --json
 ## Related pages
 
 - [Runtime Model](runtime-model.md) — why commands cannot call network/AI
+- [Frontend Integration Guide](frontend-integration-guide.md) — provider, hooks, bridge, capability map
 - [Agent Workflow](agent-workflow.md) — `forge do connect-ui`
 - [Templates](templates.md) — minimal-web vs b2b-support-web
 - [Security and Data](security-and-data.md) — auth modes and policies

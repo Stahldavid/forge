@@ -51,20 +51,27 @@ nav:
   - Getting Started: getting-started.md
   - First App Tutorial: tutorial-first-app.md
   - Why ForgeOS: why-forgeos.md
+  - Capabilities: capabilities.md
   - Architecture: architecture.md
   - Examples: examples.md
   - Templates: templates.md
   - Agent Workflow: agent-workflow.md
+  - Agent Playbook: agent-playbook.md
   - Build a Feature with an Agent: agent-feature-tutorial.md
+  - Dev Loop: dev-loop.md
   - CLI: cli.md
   - CLI Reference: cli-reference.md
   - Runtime Model: runtime-model.md
+  - Runtime by Example: runtime-by-example.md
   - Frontend: frontend.md
+  - Frontend Integration Guide: frontend-integration-guide.md
   - AI: ai.md
+  - AI Agents: ai-agents.md
   - Security & Data: security-and-data.md
   - Authoring: authoring.md
   - Integrations:
       - forge add: forge-add.md
+      - Package Intelligence: package-intelligence.md
       - Recipes: recipes.md
       - Payments: payments.md
   - Codemods: codemods.md
@@ -72,6 +79,7 @@ nav:
   - Testing & Repair: testing-and-repair.md
   - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md
+  - Operations: operations.md
   - Self-Host: self-host.md
   - Release: release.md
   - Changelog: changelog.md

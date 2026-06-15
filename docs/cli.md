@@ -134,7 +134,7 @@ forge inspect runtime-matrix --json
 forge inspect secrets --json
 ```
 
-See [forge add](forge-add.md), [Recipes](recipes.md), and [Payments](payments.md).
+See [forge add](forge-add.md), [Package Intelligence](package-intelligence.md), [Recipes](recipes.md), and [Payments](payments.md).
 
 ## Dependency API oracle (for agents and upgrades)
 
@@ -152,7 +152,7 @@ forge deps upgrade-apply .forge/upgrades/<plan>.json
 
 Use `forge deps api` when an agent needs signatures, JSDoc, examples, resolution traces, and runtime placement hints for a specific SDK symbol. This lets agents verify package APIs before coding instead of relying on stale model memory. Summaries also appear in `agentContract.json` under `dependencyApis`.
 
-See [forge add — Dependency API for agents](forge-add.md).
+See [Package Intelligence](package-intelligence.md) and [forge add — Dependency API for agents](forge-add.md).
 
 ## Security and data
 

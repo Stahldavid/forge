@@ -161,6 +161,8 @@ See [Agent Workflow](agent-workflow.md).
 ## Related pages
 
 - [CLI](cli.md) — command reference
+- [Agent Playbook](agent-playbook.md) — issue-to-handoff loop
+- [Dev Loop](dev-loop.md) — local diagnostics before tests
 - [Troubleshooting](troubleshooting.md) — error codes and first response
 - [Codemods](codemods.md) — safe refactors when guards fail
 - [Release](release.md) — pre-tag validation
