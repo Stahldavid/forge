@@ -35,12 +35,34 @@ forge verify --strict
 
 `verify --standard` is the normal development gate. `verify --strict` is the release-grade gate.
 
-## Authoring
+## Integrations
+
+```bash
+forge add stripe --dry-run --json
+forge add stripe
+forge inspect runtime-matrix --json
+forge inspect secrets --json
+```
+
+See [forge add](forge-add.md), [Recipes](recipes.md), and [Payments](payments.md).
+
+## Authoring and refactors
 
 ```bash
 forge make resource notes --fields title:text,status:enum(open,done) --with-ui --yes
 forge refactor rename field notes.status notes.state --dry-run --json
+forge refactor extract-action charge --package stripe --dry-run --json
 forge feature plan .forge/blueprints/example.json
 ```
 
-Use `--dry-run --json` for plans that touch schema, policies, or UI wiring.
+Use `--dry-run --json` for plans that touch schema, policies, or UI wiring. See [Codemods](codemods.md).
+
+## When checks fail
+
+```bash
+forge doctor
+forge check --json
+forge repair diagnose --from-last-test-run --json
+```
+
+See [Troubleshooting](troubleshooting.md).

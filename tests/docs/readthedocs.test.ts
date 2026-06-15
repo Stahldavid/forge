@@ -21,7 +21,12 @@ describe("ReadTheDocs documentation", () => {
       "getting-started.md",
       "cli.md",
       "runtime-model.md",
+      "forge-add.md",
+      "recipes.md",
+      "payments.md",
+      "codemods.md",
       "agent-contract.md",
+      "troubleshooting.md",
       "field-testing.md",
       "release.md",
     ]) {
@@ -30,5 +35,9 @@ describe("ReadTheDocs documentation", () => {
     }
     expect(read("docs/getting-started.md")).toContain("forge new notes-app");
     expect(read("docs/field-testing.md")).toContain("npm run field:test");
+    expect(read("docs/forge-add.md")).toContain("forge add stripe");
+    expect(read("docs/payments.md")).toContain("checkout.requested");
+    expect(read("docs/codemods.md")).toContain("extract-action");
+    expect(read("docs/troubleshooting.md")).toContain("FORGE_GUARD_VIOLATION");
   });
 });

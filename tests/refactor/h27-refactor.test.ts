@@ -453,7 +453,7 @@ describe("H27 safe refactor", () => {
     } finally {
       cleanupWorkspace(root);
     }
-  });
+  }, 10000);
 
   test("extract-action refuses unsafe non-block handlers with inline fix hints", async () => {
     const root = scaffoldRefactorWorkspace("h27-extract-unsafe");
@@ -700,6 +700,125 @@ describe("H27 safe refactor", () => {
       expect(commandSource).not.toContain("import Stripe");
       expect(commandSource).toContain("config: StripeConfig");
       expect(commandSource).toContain('ctx.emit("checkout.requested"');
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("rename command rewrites export, file, capability-map UI bindings, and raw fetch paths", async () => {
+    const root = scaffoldRefactorWorkspace("h27-rename-command");
+    try {
+      writeFileSync(
+        join(root, "web", "components", "TicketPriorityForm.tsx"),
+        `
+          import { api, commands, useCommand } from "../lib/forge";
+          export function TicketPriorityForm() {
+            const updateTicketPriority = "local-label";
+            const direct = commands.updateTicketPriority;
+            const byApi = useCommand(api.commands.updateTicketPriority);
+            const byName = useCommand("updateTicketPriority");
+            const raw = fetch("/commands/updateTicketPriority");
+            const rawWithQuery = fetch("http://127.0.0.1:3765/commands/updateTicketPriority?debug=1");
+            return <button onClick={() => byApi.run({ id: "1", priority: "high" })}>{updateTicketPriority}</button>;
+          }
+        `,
+        "utf8",
+      );
+      writeFileSync(
+        join(root, "web", "components", "UnrelatedRuntimeMetadata.tsx"),
+        `
+          import "../commands/updateTicketPriorityHelpers";
+          const api = { commands: { updateTicketPriority: "local-api-value" } };
+          const byLocalApi = api.commands.updateTicketPriority;
+          const direct = commands.updateTicketPriority;
+          export const metadata = {
+            name: "updateTicketPriority",
+            event: "updateTicketPriority",
+            command: "updateTicketPriority",
+            label: "updateTicketPriority",
+          };
+          export const route = "/commands/updateTicketPriorityExtra";
+        `,
+        "utf8",
+      );
+      writeFileSync(
+        join(root, ".forge", "blueprints", "ticket-command.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          name: "ticket-command",
+          command: "updateTicketPriority",
+          commands: ["updateTicketPriority"],
+          node: { kind: "command", name: "updateTicketPriority" },
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(root, ".forge", "blueprints", "unrelated-runtime-metadata.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          name: "updateTicketPriority",
+          event: "updateTicketPriority",
+          commandLabel: "updateTicketPriority",
+          labels: ["updateTicketPriority"],
+          metadata: { name: "updateTicketPriority" },
+        }),
+        "utf8",
+      );
+
+      const applied = await runRefactorCommand(
+        refactorOptions(root, {
+          renameTarget: "command",
+          from: "updateTicketPriority",
+          to: "setTicketPriority",
+          yes: true,
+        }),
+      );
+
+      expect(applied.ok).toBe(true);
+      expect(existsSync(join(root, "src", "commands", "setTicketPriority.ts"))).toBe(true);
+      expect(existsSync(join(root, "src", "commands", "updateTicketPriority.ts"))).toBe(false);
+
+      const commandSource = readFileSync(join(root, "src", "commands", "setTicketPriority.ts"), "utf8");
+      expect(commandSource).toContain("export const setTicketPriority = command");
+
+      const uiSource = readFileSync(join(root, "web", "components", "TicketPriorityForm.tsx"), "utf8");
+      expect(uiSource).toContain("api.commands.setTicketPriority");
+      expect(uiSource).toContain("commands.setTicketPriority");
+      expect(uiSource).toContain('useCommand("setTicketPriority")');
+      expect(uiSource).toContain('fetch("/commands/setTicketPriority")');
+      expect(uiSource).toContain('fetch("http://127.0.0.1:3765/commands/setTicketPriority?debug=1")');
+      expect(uiSource).toContain('const updateTicketPriority = "local-label"');
+
+      const unrelatedTsSource = readFileSync(join(root, "web", "components", "UnrelatedRuntimeMetadata.tsx"), "utf8");
+      expect(unrelatedTsSource).toContain('import "../commands/updateTicketPriorityHelpers";');
+      expect(unrelatedTsSource).toContain("api.commands.updateTicketPriority");
+      expect(unrelatedTsSource).toContain("commands.updateTicketPriority");
+      expect(unrelatedTsSource).toContain('name: "updateTicketPriority"');
+      expect(unrelatedTsSource).toContain('event: "updateTicketPriority"');
+      expect(unrelatedTsSource).toContain('command: "updateTicketPriority"');
+      expect(unrelatedTsSource).toContain('label: "updateTicketPriority"');
+      expect(unrelatedTsSource).toContain('"/commands/updateTicketPriorityExtra"');
+
+      const blueprintSource = readFileSync(join(root, ".forge", "blueprints", "ticket-command.json"), "utf8");
+      expect(blueprintSource).toContain('"command": "setTicketPriority"');
+      expect(blueprintSource).toContain('"commands": [\n    "setTicketPriority"\n  ]');
+      expect(blueprintSource).toContain('"kind": "command"');
+      expect(blueprintSource).toContain('"name": "setTicketPriority"');
+      expect(blueprintSource).not.toContain('"command": "updateTicketPriority"');
+
+      const unrelatedJsonSource = readFileSync(join(root, ".forge", "blueprints", "unrelated-runtime-metadata.json"), "utf8");
+      const unrelatedJson = JSON.parse(unrelatedJsonSource) as {
+        name: string;
+        event: string;
+        commandLabel: string;
+        labels: string[];
+        metadata: { name: string };
+      };
+      expect(unrelatedJson.name).toBe("updateTicketPriority");
+      expect(unrelatedJson.event).toBe("updateTicketPriority");
+      expect(unrelatedJson.commandLabel).toBe("updateTicketPriority");
+      expect(unrelatedJson.labels).toEqual(["updateTicketPriority"]);
+      expect(unrelatedJson.metadata.name).toBe("updateTicketPriority");
     } finally {
       cleanupWorkspace(root);
     }

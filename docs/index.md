@@ -34,3 +34,15 @@ forge verify --standard
 ```
 
 Use `forge dev` for the local loop and `forge dev --once --json` when an agent needs a deterministic diagnostic snapshot.
+
+## Documentation Map
+
+| Topic | Page |
+|-------|------|
+| Install packages safely | [forge add](forge-add.md) |
+| Integration recipes (Stripe, PostHog, AI, …) | [Recipes](recipes.md) |
+| Payment flows and webhooks | [Payments](payments.md) |
+| AST-aware refactors | [Codemods](codemods.md) |
+| Guard violations, verify, repair | [Troubleshooting](troubleshooting.md) |
+| Agent-readable contract | [Agent Contract](agent-contract.md) |
+| External app validation | [Field Testing](field-testing.md) |

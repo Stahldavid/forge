@@ -12,6 +12,12 @@ nav:
   - Getting Started: getting-started.md
   - CLI: cli.md
   - Runtime Model: runtime-model.md
+  - Integrations:
+      - forge add: forge-add.md
+      - Recipes: recipes.md
+      - Payments: payments.md
+  - Codemods: codemods.md
   - Agent Contract: agent-contract.md
+  - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md
   - Release: release.md

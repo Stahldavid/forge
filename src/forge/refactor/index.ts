@@ -30,6 +30,9 @@ import {
   pushUnique,
   wordReplace,
 } from "./text-utils.ts";
+import {
+  buildRenameRuntimeEntryPlan,
+} from "./runtime-rename.ts";
 
 const REFACTOR_DIR = ".forge/refactors";
 
@@ -1589,8 +1592,13 @@ function planParts(workspaceRoot: string, intent: RefactorIntent): {
     return { patches: result.patches, filesToCreate: [], filesToDelete: [], diagnostics: result.diagnostics };
   }
   if (intent.kind === "renameRuntimeEntry") {
-    const result = buildStringRenamePlan(workspaceRoot, intent.from, intent.to, `Rename ${intent.entryKind} ${intent.from} to ${intent.to}`);
-    return { patches: result.patches, filesToCreate: [], filesToDelete: [], diagnostics: result.diagnostics };
+    const result = buildRenameRuntimeEntryPlan(workspaceRoot, intent);
+    return {
+      patches: result.patches,
+      filesToCreate: result.filesToCreate,
+      filesToDelete: result.filesToDelete,
+      diagnostics: result.diagnostics,
+    };
   }
   if (intent.kind === "moveComponent") {
     const result = buildMoveComponentPlan(workspaceRoot, intent);
