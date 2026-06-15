@@ -84,7 +84,7 @@ forge deps api stripe checkout.sessions.create --json
 forge deps runtime-compat stripe --json
 ```
 
-This is the DepLens-inspired part of ForgeOS: agents get resolved exports, signatures, JSDoc, examples when available, trace data, and runtime placement hints before they write code. The same metadata feeds `runtimeMatrix.json` and `importGuards.json`, so package advice is checked later by `forge check`.
+This is part of the ForgeOS package intelligence layer: agents get resolved exports, signatures, JSDoc, examples when available, trace data, and runtime placement hints before they write code. The same metadata feeds `runtimeMatrix.json` and `importGuards.json`, so package advice is checked later by `forge check`.
 
 ## Useful Commands
 

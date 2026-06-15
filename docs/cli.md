@@ -150,7 +150,7 @@ forge deps upgrade-plan stripe --to latest
 forge deps upgrade-apply .forge/upgrades/<plan>.json
 ```
 
-Use `forge deps api` when an agent needs signatures, JSDoc, examples, resolution traces, and runtime placement hints for a specific SDK symbol. This DepLens-inspired layer lets agents verify package APIs before coding instead of relying on stale model memory. Summaries also appear in `agentContract.json` under `dependencyApis`.
+Use `forge deps api` when an agent needs signatures, JSDoc, examples, resolution traces, and runtime placement hints for a specific SDK symbol. This lets agents verify package APIs before coding instead of relying on stale model memory. Summaries also appear in `agentContract.json` under `dependencyApis`.
 
 See [forge add — Dependency API for agents](forge-add.md).
 

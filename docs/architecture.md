@@ -143,7 +143,7 @@ flowchart LR
   A --> H["generated adapters and integration docs"]
 ```
 
-The DepLens-inspired dependency API commands expose the useful slice of `node_modules` without making an agent read it all:
+The dependency API commands expose the useful slice of `node_modules` without making an agent read it all:
 
 ```bash
 forge deps inspect stripe --json

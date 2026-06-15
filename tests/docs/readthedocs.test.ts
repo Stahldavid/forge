@@ -104,7 +104,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/field-testing.md")).toContain("npm run field:test");
     expect(read("docs/forge-add.md")).toContain("forge add stripe");
     expect(read("docs/forge-add.md")).toContain("forge deps api");
-    expect(read("docs/forge-add.md")).toContain("DepLens-style dependency inspection");
+    expect(read("docs/forge-add.md")).toContain("summarizes the useful API surface");
     expect(read("docs/payments.md")).toContain("checkout.requested");
     expect(read("docs/codemods.md")).toContain("extract-action");
     expect(read("docs/codemods.md")).toContain("rename command");
@@ -124,7 +124,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/cli.md")).toContain("forge deps api");
     expect(read("docs/cli.md")).toContain("Dependency API oracle");
     expect(read("docs/why-forgeos.md")).toContain("Add integrations safely");
-    expect(read("docs/why-forgeos.md")).toContain("DepLens-inspired dependency API oracle");
+    expect(read("docs/why-forgeos.md")).toContain("Forge dependency API oracle");
     expect(read("docs/cli.md")).toContain("forge verify --smoke");
     expect(read("docs/runtime-model.md")).toContain("ctx.agent.run");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");

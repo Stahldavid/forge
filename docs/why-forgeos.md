@@ -201,7 +201,7 @@ forge deps trace stripe --json
 forge deps runtime-compat stripe --json
 ```
 
-The DepLens-inspired dependency API oracle gives agents package-level evidence: resolved entry points, subpath traces, exported symbols, signatures, JSDoc, examples when available, runtime compatibility, and placement hints. Import guards then enforce those decisions in `forge check`.
+The Forge dependency API oracle gives agents package-level evidence: resolved entry points, subpath traces, exported symbols, signatures, JSDoc, examples when available, runtime compatibility, and placement hints. Import guards then enforce those decisions in `forge check`.
 
 This is useful for integrations such as Stripe, PostHog, Sentry, Zod, and AI SDK providers. It also helps agents avoid reading all of `node_modules` or relying on stale model memory to answer one API question.
 

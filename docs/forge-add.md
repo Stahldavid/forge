@@ -102,7 +102,7 @@ Parameter mistakes are caught by **TypeScript** when you call the SDK. Context m
 
 After `forge add` and `forge generate`, Forge builds a **PackageGraph** with export signatures, JSDoc, resolution traces, and runtime compatibility metadata. Use the dependency CLI when an AI coding agent or human needs to call a vendor SDK safely without reading all of `node_modules`.
 
-This layer is inspired by DepLens-style dependency inspection: resolve what the package exposes, summarize only the useful API surface, and connect that evidence to runtime placement. The goal is not to mirror package docs. The goal is to give agents enough local proof to write correct code and then let `forge check` enforce context rules.
+This layer resolves what the package exposes, summarizes the useful API surface, and connects that evidence to runtime placement. The goal is not to mirror package docs. The goal is to give agents enough local proof to write correct code and then let `forge check` enforce context rules.
 
 ### Inspect a package
 
