@@ -2,10 +2,19 @@ import { createHash } from "node:crypto";
 import { stripDeterministicHeader } from "./header.ts";
 
 /**
- * SHA-256 hash of UTF-8 content, returned as lowercase hex.
+ * SHA-256 hash of UTF-8 text, returned as lowercase hex.
+ *
+ * Forge generated artifacts must be stable across Windows and Linux checkouts.
+ * Git may materialize source files with CRLF locally and LF in CI, so text
+ * hashes normalize line endings. Use hashUtf8Bytes when byte-level identity is
+ * required.
  */
 export function hashStable(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
+  return createHash("sha256").update(normalizeHashText(content)).digest("hex");
+}
+
+export function normalizeHashText(content: string): string {
+  return content.replace(/\r\n?/g, "\n");
 }
 
 /**

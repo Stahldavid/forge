@@ -21,6 +21,15 @@ describe("hashStable", () => {
   test("differs for different inputs", () => {
     expect(hashStable("hello")).not.toBe(hashStable("world"));
   });
+
+  test("normalizes line endings for cross-platform generated artifacts", () => {
+    expect(hashStable("line one\nline two\n")).toBe(
+      hashStable("line one\r\nline two\r\n"),
+    );
+    expect(hashStable("line one\rline two\r")).toBe(
+      hashStable("line one\nline two\n"),
+    );
+  });
 });
 
 describe("deriveStableSymbolId", () => {
