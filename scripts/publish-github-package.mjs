@@ -59,7 +59,10 @@ async function scopedPack(sourceDir, githubName, tempRoot) {
   const packageJsonPath = join(extractDir, "package.json");
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
   packageJson.name = githubName;
-  packageJson.repository = "https://github.com/Stahldavid/forge";
+  packageJson.repository = {
+    type: "git",
+    url: "git+https://github.com/Stahldavid/forge.git",
+  };
   packageJson.publishConfig = {
     ...(packageJson.publishConfig ?? {}),
     registry,
