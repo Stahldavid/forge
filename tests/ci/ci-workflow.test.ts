@@ -21,6 +21,8 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("--forge-spec \"file:$GITHUB_WORKSPACE\"");
     expect(workflow).toContain("npm run forge -- dev --once --json");
     expect(workflow).toContain("npm run forge -- verify --smoke --json --script-timeout-ms 120000");
+    expect(workflow).toContain("Packed package smoke");
+    expect(workflow).toContain("npm run release:smoke");
     expect(nodeBreadthJob).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(nodeBreadthJob).not.toContain("node ./bin/forge.mjs dev --once --json");
     expect(nodeBreadthJob).not.toContain("node ./bin/forge.mjs verify --smoke");

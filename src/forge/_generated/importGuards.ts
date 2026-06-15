@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=294cdbf416a632080779f7447122c428a01aac52320533ad709082ab546848c7 content=e76f9de93625c1a35fb0e861e18f1017590ea04d120eb52a26d1366464eb4ae2
+// @forge-generated generator=0.0.0 input=6b855b87f2f57fce3e0939076b81cc0263cccfeae7bb969d2662613867b1c8ee content=35aa757da99dc2b35b9dd0dbdc76f61e454e8bbd99882425eb26787f6fddc01c
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -68,6 +68,74 @@ export const importGuards = {
         "edge": "denied by integration recipe",
         "test": "allowed by integration recipe",
         "build": "allowed by integration recipe"
+      }
+    },
+    {
+      "packageName": "@changesets/changelog-github",
+      "alias": "@changesets/changelog-github",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "@changesets/cli",
+      "alias": "@changesets/cli",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
       }
     },
     {

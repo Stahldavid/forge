@@ -169,13 +169,13 @@ describe("minimal-web template", () => {
         packageManager: "npm",
         install: false,
         git: false,
-        forgePackageSpec: "npm:@forgeos/cli@0.1.0-alpha.0",
+        forgePackageSpec: "npm:forgeos@0.1.0-alpha.0",
         workspaceRoot: workspace,
       });
       expect(result.exitCode).toBe(0);
 
       const project = join(workspace, "notes-app");
-      expect(read(project, "package.json")).toContain('"forge": "npm:@forgeos/cli@0.1.0-alpha.0"');
+      expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@0.1.0-alpha.0"');
       expect(read(project, "package.json")).toContain('"packageManager": "npm@10.9.0"');
     } finally {
       cleanupWorkspace(workspace);

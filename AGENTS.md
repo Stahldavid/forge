@@ -1,11 +1,11 @@
-// @forge-generated generator=0.0.0 input=c66c98a8c537973af073e7571f522683b815b3f5adafa2cc9a3135b370a91b9e content=02a245c1275eb50b8662f6ce09b9cb2506c03f0c2db2b7b6456ae50f72a327ee
+// @forge-generated generator=0.0.0 input=6b855b87f2f57fce3e0939076b81cc0263cccfeae7bb969d2662613867b1c8ee content=972ba64a9c3df8fb49f4e4c7cb9892d6449d7833b9a303b748d08c5717d239e3
 # AGENTS.md
 
 <!-- forge-generated:start -->
 
 ## Project
 
-This is a ForgeOS application named `forge`.
+This is a ForgeOS application named `forgeos`.
 
 ## Required workflow
 

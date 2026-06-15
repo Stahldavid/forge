@@ -59,6 +59,9 @@ jobs:
             grep "\"packageManager\": \"$pm@" "$pm-smoke/package.json"
           done
 
+      - name: Packed package smoke
+        run: npm run release:smoke
+
   node-breadth:
     name: Node smoke (${{ matrix.os }}, Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}

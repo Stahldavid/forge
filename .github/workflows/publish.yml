@@ -1,0 +1,140 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+      - "forgeos-v*"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  changesets:
+    name: Changesets release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Verify release toolchain
+        run: node --version && npm --version && bun --version
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --package-lock=false
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Verify generated output
+        run: npm run forge -- generate --check
+
+      - name: Smoke packed package
+        run: npm run release:smoke
+
+      - name: Create Release PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: npm run version-packages
+          publish: npm run release
+          commit: "chore(release): version packages"
+          title: "chore(release): version packages"
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Summarize outcome
+        if: always()
+        run: |
+          if [[ "${{ steps.changesets.outputs.published }}" == "true" ]]; then
+            echo "::notice::Published packages: ${{ steps.changesets.outputs.publishedPackages }}"
+          elif [[ "${{ steps.changesets.outputs.hasChangesets }}" == "true" ]]; then
+            echo "::notice::Pending changesets: release PR opened or updated. Merge it to publish."
+          else
+            echo "::notice::No pending changesets and nothing to publish."
+          fi
+
+  manual-publish:
+    name: Manual publish
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --package-lock=false
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Verify generated output
+        run: npm run forge -- generate --check
+
+      - name: Smoke packed package
+        run: npm run release:smoke
+
+      - name: Verify tag version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TAG_VERSION="${TAG#forgeos-v}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$TAG_VERSION" != "$PACKAGE_VERSION" ]]; then
+            echo "::error::Tag version '$TAG_VERSION' does not match package.json version '$PACKAGE_VERSION'."
+            exit 1
+          fi
+          echo "Version check OK: tag=$TAG_VERSION"
+
+      - name: Publish to npm
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
+        run: npm publish --access public --tag alpha

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=2e37c493504bbe4631f1d4fef498ef95e0dd4fab2bf9a7f632bac2e9c60d2178 content=77f23fe592c8928e54ced514e3ed96f97ff92e9729e49007a28f50acef127e59
+// @forge-generated generator=0.0.0 input=6b855b87f2f57fce3e0939076b81cc0263cccfeae7bb969d2662613867b1c8ee content=b5d7415be8c8c4635b0836900e60732362b7c8e090508f348a4b36c218790cce
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -258,6 +258,46 @@ export const agentContract = {
       ],
       "name": "@ai-sdk/openai",
       "version": "2.0.106"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "@changesets/changelog-github",
+      "version": "0.7.0"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "@changesets/cli",
+      "version": "2.31.0"
     },
     {
       "allowedContexts": [
@@ -742,7 +782,7 @@ export const agentContract = {
   ],
   "policies": [],
   "project": {
-    "name": "forge",
+    "name": "forgeos",
     "type": "forgeos-app"
   },
   "queries": [],

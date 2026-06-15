@@ -2,7 +2,7 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, AST-aware codemods for `extract-action`, `rename field`, and `rename table`, and quieter template workspaces are present. Public release still needs packaging hardening and deeper semantic codemods.
+**Status:** private MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, AST-aware codemods for `extract-action`, `rename field`, and `rename table`, and quieter template workspaces are present. Public release still needs deeper semantic codemods and broader field testing.
 
 ## Agent-First Quickstart
 
@@ -56,11 +56,11 @@ Templates also include workspace editor excludes for generated/runtime directori
 For release or external smoke testing, choose the Forge package source explicitly:
 
 ```bash
-forge new smoke-app --template minimal-web --package-manager npm --forge-spec "^0.1.0"
+forge new smoke-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@^0.1.0-alpha.0"
 forge new local-app --template minimal-web --package-manager npm --local-forge
 ```
 
-`--forge-spec` writes that dependency spec into the generated app, while `--local-forge` keeps the monorepo/local package workflow. CI uses `--forge-spec "file:$GITHUB_WORKSPACE"` to prove a freshly created app can install ForgeOS and run outside the framework workspace.
+`--forge-spec` writes that dependency spec into the generated app, while `--local-forge` keeps the monorepo/local package workflow. The npm package is published as `forgeos`, but generated apps keep the dependency key, CLI binary, and import surface as `forge` (`forge`, `forge/server`, `forge/react`) by using npm alias specs such as `"forge": "npm:forgeos@^0.1.0-alpha.0"`. CI uses both `--forge-spec "file:$GITHUB_WORKSPACE"` and a packed tarball smoke to prove freshly created apps can install ForgeOS and run outside the framework workspace.
 
 ## What ForgeOS Generates
 
@@ -279,6 +279,47 @@ UI bridge note: `forge ui` uses Playwright when installed. Without Playwright, `
 Frontend bridge note: `forge inspect frontend --json` and `forge dev --once --json` expose routes, components, `ForgeProvider`, generated client bindings, raw runtime fetch warnings, and fix hints. Agents should use this before editing UI wiring.
 
 CI note: the main GitHub Actions gate runs the full Bun-based verification path on Ubuntu. A separate Node breadth smoke matrix runs on Ubuntu, Windows, and macOS with Node 22 and 24, including template package-manager smoke for npm, pnpm, yarn, and Bun.
+
+## npm Release
+
+ForgeOS publishes to npm as `forgeos` and exposes the executable as `forge`.
+
+Release automation uses Changesets plus npm Trusted Publishing:
+
+```bash
+npm run changeset
+npm run version-packages
+npm run release:smoke
+```
+
+For the first prerelease publish, use the alpha dist-tag explicitly:
+
+```bash
+npm run release:publish-local-alpha -- --dry-run
+npm run release:publish-local-alpha -- --yes
+```
+
+The normal path is:
+
+```txt
+merge feature PR with changeset
+  -> publish.yml opens/updates a version PR
+merge version PR
+  -> publish.yml publishes through npm OIDC Trusted Publisher
+```
+
+Configure npm Trusted Publisher for package `forgeos`:
+
+| Field | Value |
+| --- | --- |
+| Provider | GitHub Actions |
+| Organization/user | `Stahldavid` |
+| Repository | `forge` |
+| Workflow filename | `publish.yml` |
+| Environment | blank |
+| Allowed action | `npm publish` |
+
+Do not add `NPM_TOKEN` for normal releases. Alpha releases publish with the `alpha` dist-tag so prerelease builds do not become `latest` accidentally. The first manual package creation uses `release:publish-local-alpha`, which publishes from a temporary hardlink-free staging copy and disables provenance because local shells do not have a GitHub OIDC provider. The workflow uses `id-token: write`, Node 24/npm 11+, and provenance for subsequent releases. `npm run release:smoke` runs `npm pack`, creates a fresh app with the packed tarball, installs dependencies, runs `forge dev --once --json`, and verifies the app smoke path.
 
 ## Milestone History
 

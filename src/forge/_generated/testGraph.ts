@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=eb8d78e749f083957f69f7f316aa4efc3faf5ccd81ff63e3cf32bf7fb7f705ac content=1c6cad28f54598dfb1d5c3a5fa4404273150b1d17acc004a73fa2bbda1a384e2
+// @forge-generated generator=0.0.0 input=045a6cb4b35ff84e44e490cddac563a732ab9b3c9d9e921ed9a1b1d279b62b2b content=1adf99a94eeae9862c90c18d42d10c312db8092013df22cf048a80e3e5a8ab13
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.0.0",
-  "inputHash": "eb8d78e749f083957f69f7f316aa4efc3faf5ccd81ff63e3cf32bf7fb7f705ac",
+  "inputHash": "045a6cb4b35ff84e44e490cddac563a732ab9b3c9d9e921ed9a1b1d279b62b2b",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -429,6 +429,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/ci/ci-workflow.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ci/publish-workflow.test.ts",
       "kind": "unknown",
       "reasons": []
     },
