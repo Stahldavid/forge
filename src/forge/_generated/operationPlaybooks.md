@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=01d6a3848650ea2a03ea8e037b400dc6497d1527c05345535ef5080132d7aabb content=6dd405e3d1dbf89a38afa243593c1f4443d1ce9e86fb69fa12c16140ff3c5dad
+// @forge-generated generator=0.1.0-alpha.0 input=91d8894f322b8dd604714d7b26a8bac3b5bbb0904d62cc0e2761ba21098e1537 content=462309a5bbe9b5c87581faf1755900bdfac7a1b938a89a5dc90472dff9de4340
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -102,10 +102,12 @@
 ## Upgrade a package
 
 1. Run forge deps upgrade-plan <package> --to latest.
-2. Read .forge/upgrades/.../plan.md.
-3. If risk is high, inspect affected files and generated adapters before applying.
-4. Apply with forge deps upgrade-apply <plan>.
-5. Finish with forge verify --strict.
+2. Use forge deps inspect <package> --json and forge deps api <package> <symbol> --json before relying on changed external APIs.
+3. Use forge deps trace <package> --json when exports or type resolution are ambiguous.
+4. Read .forge/upgrades/.../plan.md.
+5. If risk is high, inspect affected files and generated adapters before applying.
+6. Apply with forge deps upgrade-apply <plan>.
+7. Finish with forge verify --strict.
 
 ## Debug a policy error
 

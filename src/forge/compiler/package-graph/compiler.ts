@@ -44,6 +44,11 @@ import {
   typesPackageName,
 } from "./resolve.ts";
 import {
+  buildRuntimeCompatibility,
+  readPackageMetadata,
+  runtimeTypeMismatches,
+} from "./oracle.ts";
+import {
   assertPackageApiSecretSafe,
   defaultSandboxLimits,
   inspectExports,
@@ -185,6 +190,10 @@ export class PackageGraphCompiler {
       ...staticResult.api,
       source: "static+runtime",
       runtimeShape: sandbox.shape,
+      runtimeTypeMismatches: runtimeTypeMismatches({
+        entrypoints: staticResult.api.entrypoints,
+        runtimeShape: sandbox.shape,
+      }),
       contentChecksum: computeContentChecksum(
         packageHashes.packageJsonHash,
         packageHashes.dtsFilesHash,
@@ -249,6 +258,8 @@ export class PackageGraphCompiler {
     }
 
     const sortedEntrypoints = stableSortEntrypoints(entrypoints);
+    const metadata = readPackageMetadata(dep.installPath, sortedEntrypoints.length);
+    const runtimeCompatibility = buildRuntimeCompatibility(metadata);
     const packageJsonHash =
       packageHashes?.packageJsonHash ?? hashPackageJson(dep.installPath);
     const dtsFilesHash =
@@ -261,6 +272,9 @@ export class PackageGraphCompiler {
       resolutionMode: opts.resolutionMode,
       entrypoints: sortedEntrypoints,
       source: "static" as const,
+      runtimeTypeMismatches: [],
+      runtimeCompatibility,
+      metadata,
     };
 
     const contentChecksum = computeContentChecksum(
@@ -283,6 +297,30 @@ export class PackageGraphCompiler {
     diagnostics: Diagnostic[],
     dtsExtractor: DtsSignatureExtractor,
   ): Entrypoint {
+    if (isPackageJsonSubpath(subpath)) {
+      return {
+        subpath,
+        conditions: [],
+        patternBacked,
+        dtsPath: null,
+        resolutionTrace: [
+          {
+            step: "package.metadata",
+            status: "ok",
+            detail: "package.json export is metadata and has no type API",
+          },
+        ],
+        exports: [],
+      };
+    }
+
+    const resolutionTrace: Entrypoint["resolutionTrace"] = [
+      {
+        step: "typescript.resolveModuleName",
+        status: "ok",
+        detail: `resolve ${dep.name} ${subpath} with ${mode}`,
+      },
+    ];
     let resolved = resolveEntrypointTypes(
       dep.installPath,
       dep.name,
@@ -291,6 +329,11 @@ export class PackageGraphCompiler {
     );
 
     if (resolved.dtsPath == null) {
+      resolutionTrace.push({
+        step: "package.types",
+        status: "miss",
+        detail: "no bundled type declaration resolved",
+      });
       const typesPackage = typesPackageName(dep.name);
       const fallbackPath = resolveTypesPackage(
         typesPackage,
@@ -298,8 +341,25 @@ export class PackageGraphCompiler {
         mode,
       );
       if (fallbackPath != null) {
+        resolutionTrace.push({
+          step: "typesPackage.fallback",
+          status: "fallback",
+          detail: `resolved ${typesPackage}`,
+        });
         resolved = { dtsPath: fallbackPath, conditions: ["types"] };
+      } else {
+        resolutionTrace.push({
+          step: "typesPackage.fallback",
+          status: "miss",
+          detail: `${typesPackage} not found`,
+        });
       }
+    } else {
+      resolutionTrace.push({
+        step: "package.types",
+        status: "ok",
+        detail: portableDtsPath(resolved.dtsPath, dep),
+      });
     }
 
     if (resolved.dtsPath == null) {
@@ -309,6 +369,7 @@ export class PackageGraphCompiler {
         conditions: resolved.conditions,
         patternBacked,
         dtsPath: null,
+        resolutionTrace,
         exports: [],
       };
     }
@@ -327,6 +388,14 @@ export class PackageGraphCompiler {
         conditions: resolved.conditions,
         patternBacked,
         dtsPath: portableDtsPath(resolved.dtsPath, dep),
+        resolutionTrace: [
+          ...resolutionTrace,
+          {
+            step: "dts.extract",
+            status: "warning",
+            detail: "failed to extract declarations",
+          },
+        ],
         exports: [],
       };
     }
@@ -340,9 +409,21 @@ export class PackageGraphCompiler {
       conditions: resolved.conditions,
       patternBacked,
       dtsPath: portableDtsPath(resolved.dtsPath, dep),
+      resolutionTrace: [
+        ...resolutionTrace,
+        {
+          step: "dts.extract",
+          status: exports.length > 0 ? "ok" : "warning",
+          detail: `${exports.length} exports extracted`,
+        },
+      ],
       exports,
     };
   }
+}
+
+function isPackageJsonSubpath(subpath: string): boolean {
+  return subpath === "./package.json" || subpath === "package.json";
 }
 
 function portableDtsPath(dtsPath: string, dep: Pick<Dependency, "installPath" | "name">): string {

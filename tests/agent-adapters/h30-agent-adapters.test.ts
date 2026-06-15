@@ -115,6 +115,7 @@ function contract(): AgentContract {
         deniedContexts: [],
       },
     ],
+    dependencyApis: [],
     integrations: [],
     secrets: [
       {

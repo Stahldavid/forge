@@ -74,9 +74,13 @@ function pickTypesPath(resolved: ts.ResolvedModuleFull): string | null {
   if (resolved.extension === ts.Extension.Tsx) {
     return resolved.resolvedFileName;
   }
-  return resolved.resolvedFileName.endsWith(".d.ts")
+  return isDeclarationPath(resolved.resolvedFileName)
     ? resolved.resolvedFileName
     : null;
+}
+
+function isDeclarationPath(path: string): boolean {
+  return path.endsWith(".d.ts") || path.endsWith(".d.cts") || path.endsWith(".d.mts");
 }
 
 function extractConditions(resolved: ts.ResolvedModuleFull): string[] {

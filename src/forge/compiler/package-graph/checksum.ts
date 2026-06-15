@@ -67,7 +67,13 @@ export function computeContentChecksum(
   dtsFilesHash: string,
   api: Pick<
     PackageApi,
-    "entrypoints" | "resolutionMode" | "source" | "runtimeShape"
+    | "entrypoints"
+    | "resolutionMode"
+    | "source"
+    | "runtimeShape"
+    | "runtimeTypeMismatches"
+    | "runtimeCompatibility"
+    | "metadata"
   >,
 ): string {
   const payload = {
@@ -76,11 +82,15 @@ export function computeContentChecksum(
     resolutionMode: api.resolutionMode,
     source: api.source,
     runtimeShape: api.runtimeShape ?? null,
+    runtimeTypeMismatches: api.runtimeTypeMismatches,
+    runtimeCompatibility: api.runtimeCompatibility,
+    metadata: api.metadata,
     entrypoints: api.entrypoints.map((ep) => ({
       subpath: ep.subpath,
       conditions: ep.conditions,
       patternBacked: ep.patternBacked,
       dtsPath: ep.dtsPath,
+      resolutionTrace: ep.resolutionTrace,
       exports: ep.exports.map((ex) => ({
         name: ex.name,
         kind: ex.kind,

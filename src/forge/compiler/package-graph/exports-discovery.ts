@@ -54,8 +54,11 @@ export function expandPatternSubpaths(
     return [];
   }
 
+  const declarationFiles = files.filter(isDeclarationFile);
+  const candidates = declarationFiles.length > 0 ? declarationFiles : files;
+
   const expanded: string[] = [];
-  for (const file of files) {
+  for (const file of candidates) {
     const rel = posix.join(prefix, file);
     expanded.push(rel.startsWith("./") ? rel : `./${rel}`);
     if (expanded.length >= limit) {
@@ -65,6 +68,10 @@ export function expandPatternSubpaths(
 
   expanded.sort(compareBytes);
   return expanded;
+}
+
+function isDeclarationFile(path: string): boolean {
+  return path.endsWith(".d.ts") || path.endsWith(".d.cts") || path.endsWith(".d.mts");
 }
 
 function listFilesRecursive(dir: string, relative = ""): string[] {

@@ -8,6 +8,9 @@ import { GENERATOR_VERSION } from "../emitter/constants.ts";
 import { stripDeterministicHeader } from "../primitives/header.ts";
 import { canonicalJson, normalizeNewlines, serializeCanonical } from "../primitives/serialize.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
+import {
+  defaultRuntimeCompatibility,
+} from "../package-graph/oracle.ts";
 import { secretLeakScan } from "../sandbox/secret-scan.ts";
 import type { AiRegistry } from "../types/ai-registry.ts";
 import type { AppGraph } from "../types/app-graph.ts";
@@ -37,6 +40,7 @@ import type {
   AgentCapabilityMap,
   AgentCapabilityMapEntry,
   AgentContract,
+  AgentDependencyApiInfo,
   AgentFrontendRuntimeBindingInfo,
   AgentFrontendUsageInfo,
   AgentHttpEndpointInfo,
@@ -220,6 +224,22 @@ function buildIntegrations(classified: ClassifiedPackage[]): AgentIntegrationInf
   return sorted([...byAlias.values()], (entry) => entry.alias);
 }
 
+function buildDependencyApis(packageGraph: PackageGraph): AgentDependencyApiInfo[] {
+  return sorted(packageGraph.packages, (pkg) => pkg.name).map((pkg) => ({
+    package: pkg.name,
+    version: pkg.version,
+    source: pkg.source,
+    entrypoints: sorted(pkg.entrypoints, (entrypoint) => entrypoint.subpath).map((entrypoint) => ({
+      subpath: entrypoint.subpath,
+      dtsPath: entrypoint.dtsPath,
+      exportCount: entrypoint.exports.length,
+      exports: uniqueSorted(entrypoint.exports.map((exported) => exported.name)),
+    })),
+    runtimeCompatibility: pkg.runtimeCompatibility ?? defaultRuntimeCompatibility(),
+    runtimeTypeMismatches: pkg.runtimeTypeMismatches ?? [],
+  }));
+}
+
 function runtimeRules(): AgentRuntimeRule[] {
   return [
     {
@@ -378,6 +398,8 @@ function playbooks(): AgentPlaybook[] {
       title: "Upgrade a package",
       steps: [
         "Run forge deps upgrade-plan <package> --to latest.",
+        "Use forge deps inspect <package> --json and forge deps api <package> <symbol> --json before relying on changed external APIs.",
+        "Use forge deps trace <package> --json when exports or type resolution are ambiguous.",
         "Read .forge/upgrades/.../plan.md.",
         "If risk is high, inspect affected files and generated adapters before applying.",
         "Apply with forge deps upgrade-apply <plan>.",
@@ -905,6 +927,7 @@ export function buildAgentContractArtifacts(
         deniedContexts: classified?.classification.incompatible ?? [],
       };
     }),
+    dependencyApis: buildDependencyApis(input.packageGraph),
     integrations: buildIntegrations(input.classified),
     secrets: sorted(input.secretRegistry.secrets, (secret) => secret.name).map((secret) => ({
       name: secret.name,
@@ -1155,6 +1178,9 @@ forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge deps inspect <package> --json
+forge deps api <package> <symbol> --json
+forge deps trace <package> --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -1337,6 +1363,8 @@ Use:
 
 \`\`\`bash
 forge deps upgrade-plan <package> --to latest
+forge deps inspect <package> --json
+forge deps api <package> <symbol> --json
 forge deps upgrade-apply <plan>
 forge verify --strict
 \`\`\`

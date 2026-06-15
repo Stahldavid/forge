@@ -118,6 +118,7 @@ export type ForgeCommand =
       kind: "deps";
       subcommand: DepsSubcommand;
       packageName?: string;
+      symbolName?: string;
       planPath?: string;
       target?: string;
       json: boolean;
@@ -396,6 +397,9 @@ const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test"];
 const DEPS_SUBCOMMANDS: DepsSubcommand[] = [
   "outdated",
   "inspect",
+  "api",
+  "trace",
+  "runtime-compat",
   "diff",
   "upgrade-plan",
   "upgrade-apply",
@@ -1005,11 +1009,12 @@ export function parseCli(argv: string[]): ParsedCli {
     case "deps": {
       const subcommand = rest[0] as DepsSubcommand | undefined;
       if (!subcommand || !DEPS_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge deps requires subcommand: outdated, inspect, diff, upgrade-plan, upgrade-apply, upgrade-check, upgrade-rollback, or risk");
+        errors.push("forge deps requires subcommand: outdated, inspect, api, trace, runtime-compat, diff, upgrade-plan, upgrade-apply, upgrade-check, upgrade-rollback, or risk");
         return { command: null, workspaceRoot, errors };
       }
       const packageName =
         subcommand === "outdated" || subcommand === "upgrade-check" ? undefined : rest[1];
+      const symbolName = subcommand === "api" ? rest[2] : undefined;
       const planPath =
         subcommand === "upgrade-apply" || subcommand === "upgrade-rollback"
           ? rest[1]
@@ -1019,6 +1024,7 @@ export function parseCli(argv: string[]): ParsedCli {
           kind: "deps",
           subcommand,
           packageName,
+          symbolName,
           planPath,
           target: parseOptionValue(argv, "--to"),
           json: parseFlag(argv, "--json"),

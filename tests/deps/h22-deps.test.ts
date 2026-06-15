@@ -157,6 +157,12 @@ describe("H22 package upgrade planner", () => {
         packageName: "stripe",
         target: "latest",
       });
+      expect(parseCli(["deps", "api", "stripe", "Stripe", "--json"]).command).toMatchObject({
+        kind: "deps",
+        subcommand: "api",
+        packageName: "stripe",
+        symbolName: "Stripe",
+      });
 
       const outdated = await runDepsCommand({
         subcommand: "outdated",
@@ -182,6 +188,66 @@ describe("H22 package upgrade planner", () => {
         workspaceRoot: workspace,
       });
       expect((inspect.data as { integrationAlias: string }).integrationAlias).toBe("stripe");
+      expect((inspect.data as { oracle: { entrypoints: unknown[] } }).oracle.entrypoints.length).toBeGreaterThan(0);
+
+      const api = await runDepsCommand({
+        subcommand: "api",
+        packageName: "stripe",
+        symbolName: "Stripe",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+      expect(api.exitCode).toBe(0);
+      expect((api.data as { symbols: Array<{ name: string; signature: string }> }).symbols[0]?.name).toBe("Stripe");
+      expect((api.data as { symbols: Array<{ name: string; signature: string }> }).symbols[0]?.signature).toContain("apiKey");
+
+      const missingApi = await runDepsCommand({
+        subcommand: "api",
+        packageName: "stripe",
+        symbolName: "Nope",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+      expect(missingApi.exitCode).toBe(1);
+      expect(missingApi.diagnostics[0]?.code).toBe("FORGE_DEPS_UNKNOWN_EXPORT");
+
+      const trace = await runDepsCommand({
+        subcommand: "trace",
+        packageName: "stripe",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+      expect(trace.exitCode).toBe(0);
+      expect((trace.data as { traces: Array<{ trace: Array<{ step: string }> }> }).traces[0]?.trace.some((step) => step.step === "package.types")).toBe(true);
+
+      const compat = await runDepsCommand({
+        subcommand: "runtime-compat",
+        packageName: "stripe",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+      expect(compat.exitCode).toBe(0);
+      expect((compat.data as { runtimeCompatibility: { node: string } }).runtimeCompatibility.node).toBe("compatible");
 
       const diff = await runDepsCommand({
         subcommand: "diff",

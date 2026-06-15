@@ -1,5 +1,5 @@
 import type { CapabilitySet } from "./capability.ts";
-import type { RuntimeExportShape } from "./sandbox.ts";
+import type { RuntimeExportKind, RuntimeExportShape } from "./sandbox.ts";
 import type {
   PackageManager,
   ResolutionMode,
@@ -41,11 +41,53 @@ export interface ExportSignature {
   examples: string[];
 }
 
+export interface ResolutionTraceStep {
+  step: string;
+  status: "ok" | "miss" | "fallback" | "warning";
+  detail: string;
+}
+
+export interface RuntimeTypeMismatch {
+  entrypoint: string;
+  exportName: string;
+  kind: "types-only" | "runtime-only" | "kind-mismatch";
+  typesKind?: ExportKind;
+  runtimeKind?: RuntimeExportKind;
+}
+
+export type RuntimeCompatibilityStatus = "compatible" | "risky" | "unknown";
+
+export interface PackageRuntimeCompatibility {
+  node: RuntimeCompatibilityStatus;
+  bun: RuntimeCompatibilityStatus;
+  browser: RuntimeCompatibilityStatus;
+  edge: RuntimeCompatibilityStatus;
+  reasons: string[];
+  risks: string[];
+}
+
+export interface PackageMetadata {
+  type?: "module" | "commonjs";
+  engines: Record<string, string>;
+  entryFields: {
+    main?: string;
+    module?: string;
+    browser?: string | boolean;
+    types?: string;
+  };
+  peerDependencies: string[];
+  optionalPeerDependencies: string[];
+  hasInstallScripts: boolean;
+  hasNativeBindings: boolean;
+  exportSubpathCount: number;
+}
+
 export interface Entrypoint {
   subpath: string;
   conditions: string[];
   patternBacked: boolean;
   dtsPath: string | null;
+  resolutionTrace?: ResolutionTraceStep[];
   exports: ExportSignature[];
 }
 
@@ -57,6 +99,9 @@ export interface PackageApi {
   entrypoints: Entrypoint[];
   source: "static" | "static+runtime";
   runtimeShape?: RuntimeExportShape;
+  runtimeTypeMismatches?: RuntimeTypeMismatch[];
+  runtimeCompatibility?: PackageRuntimeCompatibility;
+  metadata?: PackageMetadata;
   contentChecksum: string;
 }
 

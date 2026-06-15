@@ -17,7 +17,10 @@ describe("PackageGraph extraction fixtures", () => {
       expect(root?.dtsPath?.startsWith("packages/zod/")).toBe(true);
       expect(root?.dtsPath).not.toMatch(/^[a-z]:/i);
       expect(root?.dtsPath).toContain("index.d.ts");
+      expect(root?.resolutionTrace?.some((step) => step.step === "package.types" && step.status === "ok")).toBe(true);
       expect(root?.exports.some((ex) => ex.name === "parse")).toBe(true);
+      expect(api.metadata?.exportSubpathCount).toBeGreaterThan(0);
+      expect(api.runtimeCompatibility?.node).toBe("compatible");
       expect(root?.exports.find((ex) => ex.name === "parse")?.jsdoc?.summary).toContain(
         "Parse a string",
       );

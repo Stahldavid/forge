@@ -1,4 +1,5 @@
 import type { Diagnostic } from "../types/diagnostic.ts";
+import type { PackageRuntimeCompatibility, RuntimeTypeMismatch } from "../types/package-graph.ts";
 import type { RuntimeContext } from "../types/runtime.ts";
 
 export interface AgentProjectInfo {
@@ -98,6 +99,20 @@ export interface AgentPackageInfo {
   version: string;
   allowedContexts: RuntimeContext[];
   deniedContexts: RuntimeContext[];
+}
+
+export interface AgentDependencyApiInfo {
+  package: string;
+  version: string;
+  source: "static" | "static+runtime";
+  entrypoints: Array<{
+    subpath: string;
+    dtsPath: string | null;
+    exportCount: number;
+    exports: string[];
+  }>;
+  runtimeCompatibility: PackageRuntimeCompatibility;
+  runtimeTypeMismatches: RuntimeTypeMismatch[];
 }
 
 export interface AgentIntegrationInfo {
@@ -308,6 +323,7 @@ export interface AgentContract {
   data: AgentDataInfo;
   policies: AgentPolicyInfo[];
   packages: AgentPackageInfo[];
+  dependencyApis: AgentDependencyApiInfo[];
   integrations: AgentIntegrationInfo[];
   secrets: AgentSecretInfo[];
   telemetry: AgentTelemetryInfo;
