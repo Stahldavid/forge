@@ -20,6 +20,7 @@ The contract includes:
 - Commands, queries, liveQueries, actions, and workflows.
 - Tables, fields, policies, tenant scope, and RLS metadata.
 - Package capabilities and runtime restrictions.
+- Dependency API summaries from `PackageGraph`, including selected SDK signatures, docs, examples, and placement hints.
 - Secret names, never secret values.
 - AI providers, model calls, tools, agents, approval hints, and runtime placement.
 - Agent endpoints: `/ai/agents/run` for JSON automation and `/ai/agents/chat` for AI SDK UIMessage streaming.
@@ -54,6 +55,13 @@ A small contract excerpt looks like this:
     "routes": ["/tickets"],
     "bindings": ["TicketList -> liveTickets", "CreateTicketForm -> createTicket"]
   },
+  "dependencyApis": [
+    {
+      "package": "stripe",
+      "symbol": "checkout.sessions.create",
+      "runtimePlacement": ["action", "workflow", "endpoint"]
+    }
+  ],
   "agentTools": [
     { "name": "forge_query_listTickets", "risk": "read", "needsApproval": false },
     { "name": "forge_command_createTicket", "risk": "write", "needsApproval": true }
@@ -62,6 +70,21 @@ A small contract excerpt looks like this:
 ```
 
 The real file is larger and deterministic. It includes names, rules, and metadata, never secret values, database rows, or raw prompt payloads.
+
+## Package API evidence
+
+`agentContract.json` also carries dependency API summaries generated from `PackageGraph`. These summaries are intentionally small: they give agents enough evidence to call a package correctly without turning the contract into a copy of `node_modules`.
+
+Use the CLI to refresh or inspect the source evidence:
+
+```bash
+forge add stripe --json
+forge deps inspect stripe --json
+forge deps api stripe checkout.sessions.create --json
+forge deps runtime-compat stripe --json
+```
+
+This is the DepLens-inspired part of ForgeOS: agents get resolved exports, signatures, JSDoc, examples when available, trace data, and runtime placement hints before they write code. The same metadata feeds `runtimeMatrix.json` and `importGuards.json`, so package advice is checked later by `forge check`.
 
 ## Useful Commands
 
@@ -74,6 +97,7 @@ forge ai tools --json
 forge ai agents --json
 forge ai trace <traceId> --json
 forge inspect frontend --json
+forge deps api stripe checkout.sessions.create --json
 ```
 
 An agent should read `AGENTS.md`, inspect the project, make a targeted change, regenerate, and then verify.

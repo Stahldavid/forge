@@ -82,6 +82,16 @@ npm run forge -- check --json
 
 These commands tell you what exists, what is stale, which routes call which runtime entries, and which command to run next.
 
+If the first feature needs a provider SDK or integration, do not start with `npm install`. Start with Forge's integration workflow:
+
+```bash
+npm run forge -- add stripe --dry-run --json
+npm run forge -- add stripe --json
+npm run forge -- deps api stripe checkout.sessions.create --json
+```
+
+`forge add` applies integration recipes, registers secret names, emits adapters, and updates runtime/package metadata. `forge deps api` gives an agent exact SDK signatures and placement hints before it writes code.
+
 Run these before handing off a change:
 
 ```bash
@@ -124,6 +134,7 @@ npm run generate
 | AI generation and agents | [AI](ai.md) |
 | Scaffold resources and blueprints | [Authoring](authoring.md) |
 | Auth, policies, secrets, RLS | [Security and Data](security-and-data.md) |
-| Add Stripe, PostHog, or AI SDK | [forge add](forge-add.md) |
+| Add Stripe, PostHog, Sentry, Zod, or AI SDK | [forge add](forge-add.md) |
+| Inspect package APIs for agents | [CLI - Dependency API oracle](cli.md#dependency-api-oracle-for-agents-and-upgrades) |
 | Fix guard violations | [Troubleshooting](troubleshooting.md) |
 | Version history | [Changelog](changelog.md) |

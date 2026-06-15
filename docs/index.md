@@ -66,12 +66,15 @@ forge inspect agent-tools --json
 
 The response gives the agent commands, queries, liveQueries, actions, workflows, policies, tables, frontend routes, package rules, AI tools, generated drift, risks, and the next command to run.
 
+When a feature needs an external package, ForgeOS keeps the same contract-first model. Use `forge add` for known integrations and `forge deps api` when an agent needs exact SDK signatures before writing code.
+
 ## What ForgeOS Generates
 
 - `AGENTS.md` for agent and human workflow instructions.
 - `src/forge/_generated/agentContract.json` for machine-readable project context.
 - `src/forge/_generated/agentTools.json` for AI-callable tools and auto-tools.
 - `src/forge/_generated/appMap.md` for a human architecture map.
+- `src/forge/_generated/packageGraph.json` plus `dependencyApis` in `agentContract.json` for package/API evidence.
 - Runtime guards for commands, queries, liveQueries, actions, workflows, policies, packages, secrets, auth, AI placement, and frontend wiring.
 
 ## Core Loop
@@ -116,7 +119,8 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | `forge make`, feature blueprints | [Authoring](authoring.md) |
-| Install packages safely | [forge add](forge-add.md) |
+| Install integrations safely with generated adapters | [forge add](forge-add.md) |
+| Inspect SDK APIs before coding | [CLI - Dependency API oracle](cli.md#dependency-api-oracle-for-agents-and-upgrades) |
 | Integration recipes | [Recipes](recipes.md) |
 | Payment flows and webhooks | [Payments](payments.md) |
 | AST-aware refactors | [Codemods](codemods.md) |

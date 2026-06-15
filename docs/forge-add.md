@@ -4,6 +4,8 @@
 
 Prefer `forge add` over manual `npm install` so the compiler can build the **runtime matrix**, **import guards**, and **secret registry** consistently.
 
+This is one of the main ForgeOS workflows. A package install is where agents often break apps: wrong SDK call, missing secret, unsafe runtime import, no mock, no generated docs, or no verification path. `forge add` turns integration setup into a deterministic compiler input that agents and humans can inspect.
+
 ## Supported aliases
 
 Top-level CLI aliases (reference integrations):
@@ -100,6 +102,8 @@ Parameter mistakes are caught by **TypeScript** when you call the SDK. Context m
 
 After `forge add` and `forge generate`, Forge builds a **PackageGraph** with export signatures, JSDoc, resolution traces, and runtime compatibility metadata. Use the dependency CLI when an AI coding agent or human needs to call a vendor SDK safely without reading all of `node_modules`.
 
+This layer is inspired by DepLens-style dependency inspection: resolve what the package exposes, summarize only the useful API surface, and connect that evidence to runtime placement. The goal is not to mirror package docs. The goal is to give agents enough local proof to write correct code and then let `forge check` enforce context rules.
+
 ### Inspect a package
 
 ```bash
@@ -148,7 +152,7 @@ forge deps api stripe <Symbol> --json
 forge check --json
 ```
 
-See [CLI — Dependency API](cli.md#dependency-api-for-agents-and-upgrades).
+See [CLI - Dependency API oracle](cli.md#dependency-api-oracle-for-agents-and-upgrades).
 
 ## Runtime contexts
 

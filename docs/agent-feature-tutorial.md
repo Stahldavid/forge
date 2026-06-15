@@ -140,7 +140,20 @@ forge verify --standard
 
 Use `--standard` for the normal agent loop. It is faster than `--strict` and still validates generated drift, Forge checks, typecheck, and impact-selected tests.
 
-## 8. Repair failures structurally
+## 8. Add integrations only through Forge
+
+If the feature needs a vendor SDK, keep the integration in the generated contract:
+
+```bash
+forge add stripe --dry-run --json
+forge add stripe --json
+forge deps api stripe checkout.sessions.create --json
+forge check --json
+```
+
+Do this before writing SDK calls. `forge add` records the integration recipe, secrets, adapters, and runtime compatibility. `forge deps api` gives the agent concrete package API evidence so it does not guess method names or runtime placement.
+
+## 9. Repair failures structurally
 
 If a command fails, do not guess:
 
@@ -152,7 +165,7 @@ forge repair plan --from-last-test-run --write
 
 Apply high-confidence repairs automatically. Review medium and low confidence repairs before changing code.
 
-## 9. Final handoff
+## 10. Final handoff
 
 Before handing work to a human or another agent:
 
@@ -173,6 +186,7 @@ forge verify --strict
 - Start with `forge do inspect --json`.
 - Read `AGENTS.md` and `agentContract.json`.
 - Use dry runs before schema, policy, package, or UI changes.
+- Use `forge add` and `forge deps api` before coding against provider SDKs.
 - Edit source files, not `src/forge/_generated/**`.
 - Regenerate after source changes.
 - Use `forge check --json` before verification.
@@ -183,6 +197,7 @@ forge verify --strict
 
 - [Agent Workflow](agent-workflow.md)
 - [Authoring](authoring.md)
+- [forge add](forge-add.md)
 - [Frontend](frontend.md)
 - [Testing and Repair](testing-and-repair.md)
 - [Troubleshooting](troubleshooting.md)

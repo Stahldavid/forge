@@ -16,7 +16,8 @@ After one create command, a ForgeOS app gives an AI coding agent:
 | Choose the next command | `forge do "<objective>" --json` |
 | Connect UI and backend | `frontendGraph.json`, `capabilityMap.json`, `forge do connect-ui --json` |
 | Avoid unsafe runtime code | `runtimeRules.md`, import guards, `forge check --json` |
-| Use SDKs correctly | package graph, `forge deps api`, runtime compatibility checks |
+| Add integrations safely | `forge add`, recipes, generated adapters, secret registry |
+| Use SDKs correctly | PackageGraph, `forge deps api`, runtime compatibility checks |
 | Refactor safely | AST-aware codemods, dry runs, impact reports, rollback snapshots |
 | Recover from failures | `forge repair diagnose`, `forge repair plan`, `forge doctor` |
 | Verify before handoff | `forge verify --standard`, `forge verify --strict` |
@@ -35,6 +36,7 @@ That creates predictable failure modes:
 - The agent edits a generated file instead of the source file.
 - The agent changes a table field but misses frontend hooks, policies, tests, or RLS.
 - The agent adds a package without understanding which runtime contexts may import it.
+- The agent guesses a vendor SDK method from memory and writes code against the wrong API.
 - The agent runs an expensive full test suite when a targeted test plan would be enough.
 
 ForgeOS treats these as product problems, not prompt problems.
@@ -85,6 +87,7 @@ This is the core idea: the repository becomes an API for development.
 | Choose the next command | Memorize a large CLI | `forge do "<objective>" --json` returns a plan and next action |
 | Connect frontend and backend | Manually trace fetches/hooks/routes | `frontendGraph.json` and `capabilityMap.json` connect UI to runtime entries |
 | Keep side effects safe | Team convention and code review | Commands are transactional; actions/workflows own side effects |
+| Add integrations | `npm install`, then hand-wire env, adapters, docs, tests, and guards | `forge add` applies recipes, emits adapters, registers secrets, and updates generated contracts |
 | Use packages safely | Read package docs and guess runtime fit | `PackageGraph`, `runtimeMatrix`, `forge deps api`, import guards |
 | Add AI tools | Hand-roll tool loops | `aiTool`, `agent`, auto-tools, approval metadata, telemetry |
 | Refactor app structure | Search and replace | AST-aware refactors with impact reports and rollback snapshots |
@@ -168,7 +171,26 @@ This means agents do not need ad hoc database access. They call tools that run t
 
 ## Package intelligence
 
-Agents often fail when they guess SDK APIs or import packages into the wrong runtime.
+Agents often fail when they guess SDK APIs, install packages without guard metadata, or import packages into the wrong runtime. ForgeOS treats package installation as part of the app contract, not as a side effect of `npm install`.
+
+`forge add` is the integration entry point:
+
+```bash
+forge add stripe --dry-run --json
+forge add stripe
+forge generate
+forge check --json
+```
+
+For known recipes, Forge can install dependencies, emit generated adapters, register secret names, update runtime compatibility, document safe usage, and refresh the agent-readable contract. That means an agent adding Stripe, PostHog, Sentry, Zod, or AI SDK support does not have to remember every file that must change.
+
+The output is visible in:
+
+- `PackageGraph` for exports, types, and dependency metadata;
+- `runtimeMatrix.json` for allowed and denied runtime contexts;
+- `importGuards.json` for `forge check`;
+- `secretRegistry.json` for required secret names;
+- `agentContract.json` for agent-facing package and dependency summaries.
 
 ForgeOS builds package intelligence into the project:
 
@@ -179,9 +201,11 @@ forge deps trace stripe --json
 forge deps runtime-compat stripe --json
 ```
 
-The package graph gives agents signatures, JSDoc, runtime compatibility, and placement hints. Import guards then enforce those decisions in `forge check`.
+The DepLens-inspired dependency API oracle gives agents package-level evidence: resolved entry points, subpath traces, exported symbols, signatures, JSDoc, examples when available, runtime compatibility, and placement hints. Import guards then enforce those decisions in `forge check`.
 
-This is useful for integrations such as Stripe, PostHog, Sentry, Zod, and AI SDK providers. It also helps agents avoid reading all of `node_modules` to answer one API question.
+This is useful for integrations such as Stripe, PostHog, Sentry, Zod, and AI SDK providers. It also helps agents avoid reading all of `node_modules` or relying on stale model memory to answer one API question.
+
+See [forge add](forge-add.md) for the full integration workflow and dependency API commands.
 
 ## Safe change tools
 

@@ -49,6 +49,16 @@ forge generate
 forge ai check --json
 ```
 
+When an agent needs to call an AI SDK or provider package directly from an allowed context, inspect the package API before writing code:
+
+```bash
+forge deps api ai generateText --json
+forge deps api @ai-sdk/openai createOpenAI --json
+forge deps runtime-compat ai --json
+```
+
+The dependency API oracle returns signatures, docs, examples when available, and runtime placement hints. Use it instead of guessing provider SDK APIs from memory.
+
 Configure secret **names** in `.env` (never commit values):
 
 ```env

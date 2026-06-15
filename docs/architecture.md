@@ -34,6 +34,7 @@ The source files remain the truth. Generated files explain that truth in stable 
 | Compiler | Reads source files and emits generated graphs, manifests, contracts, and clients. |
 | Runtime | Runs commands, queries, liveQueries, actions, workflows, endpoints, auth, secrets, telemetry, and AI. |
 | Frontend bridge | Connects generated runtime entries to React hooks and records route/component usage. |
+| Package intelligence | Turns `forge add` recipes and package metadata into PackageGraph, runtime compatibility, import guards, and dependency API summaries. |
 | Guard system | Enforces runtime boundaries, package placement, generated drift, policies, and secret access. |
 | Agent layer | Emits `AGENTS.md`, `agentContract.json`, playbooks, adapter exports, AI tools, repair plans, and review output. |
 | Dev loop | Runs API, worker, checks, web server, diagnostics, and deterministic snapshots. |
@@ -120,6 +121,39 @@ forge inspect capabilities --json
 forge do connect-ui --json
 ```
 
+## Package and integration contract
+
+ForgeOS treats package installation as a compiler event. A recipe-backed integration starts with:
+
+```bash
+forge add stripe --dry-run --json
+forge add stripe --json
+```
+
+The compiler then composes package evidence into the generated contract:
+
+```mermaid
+flowchart LR
+  A["forge add recipe"] --> B["package install"]
+  B --> C["PackageGraph"]
+  C --> D["runtimeMatrix.json"]
+  C --> E["importGuards.json"]
+  C --> F["dependencyApis in agentContract.json"]
+  A --> G["secretRegistry.json"]
+  A --> H["generated adapters and integration docs"]
+```
+
+The DepLens-inspired dependency API commands expose the useful slice of `node_modules` without making an agent read it all:
+
+```bash
+forge deps inspect stripe --json
+forge deps api stripe checkout.sessions.create --json
+forge deps trace stripe --json
+forge deps runtime-compat stripe --json
+```
+
+This layer answers two questions before code is written: "What is the SDK API?" and "Where may this package run?" Runtime guards enforce the answer during `forge check`.
+
 ## Agent-native layer
 
 ForgeOS does not turn the framework into an autonomous coding agent. It makes the app legible to agents.
@@ -145,7 +179,7 @@ forge doctor
 forge verify --standard
 ```
 
-This layer gives agents project context, allowed commands, runtime rules, frontend wiring, package compatibility, repair hints, and verification gates.
+This layer gives agents project context, allowed commands, runtime rules, frontend wiring, package compatibility, dependency API evidence, repair hints, and verification gates.
 
 ## Local development loop
 

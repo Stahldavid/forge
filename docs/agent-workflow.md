@@ -47,6 +47,25 @@ This keeps the agent out of generated files, verifies frontend wiring, and reser
 
 See [Build a Feature with an Agent](agent-feature-tutorial.md) for the full walkthrough.
 
+## Integration change loop
+
+For features that need a package or provider SDK, keep installation inside the Forge contract:
+
+```bash
+forge do "add stripe checkout flow" --json
+forge add stripe --dry-run --json
+forge add stripe --json
+forge deps api stripe checkout.sessions.create --json
+forge deps runtime-compat stripe --json
+forge generate
+forge check --json
+forge verify --standard
+```
+
+`forge add` is more than a package install. It applies the integration recipe, writes generated adapters, registers secret names, updates the runtime matrix, and feeds the agent contract. `forge deps api` is the API oracle for the next edit: it returns signatures, JSDoc, examples when available, and placement hints so the agent does not guess SDK calls from memory.
+
+Use this loop for Stripe, PostHog, Sentry, Zod, AI SDK providers, and any future recipe-backed integration.
+
 ## Response shape
 
 A typical `forge do` JSON response includes:
@@ -185,5 +204,6 @@ Finish release-grade work with `forge verify --strict`.
 
 - [Agent Contract](agent-contract.md) — contract files and adapter export
 - [CLI](cli.md) — full command reference
+- [forge add](forge-add.md) — integration recipes and dependency API oracle
 - [Frontend](frontend.md) — hooks, capability map, liveQuery
 - [Testing and Repair](testing-and-repair.md) — impact tests and repair loop

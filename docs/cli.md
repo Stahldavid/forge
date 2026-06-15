@@ -124,6 +124,8 @@ See [Testing and Repair](testing-and-repair.md).
 
 ## Integrations
 
+Use `forge add` instead of manual `npm install` for recipe-backed integrations. It installs packages, emits generated adapters, registers secret names, updates the runtime matrix, and feeds the generated agent contract.
+
 ```bash
 forge add stripe --dry-run --json
 forge add stripe
@@ -134,7 +136,7 @@ forge inspect secrets --json
 
 See [forge add](forge-add.md), [Recipes](recipes.md), and [Payments](payments.md).
 
-## Dependency API (for agents and upgrades)
+## Dependency API oracle (for agents and upgrades)
 
 After `forge add` or `forge generate`, inspect installed package APIs without reading all of `node_modules`:
 
@@ -148,7 +150,7 @@ forge deps upgrade-plan stripe --to latest
 forge deps upgrade-apply .forge/upgrades/<plan>.json
 ```
 
-Use `forge deps api` when an agent needs signatures, JSDoc, and examples for a specific SDK symbol. Summaries also appear in `agentContract.json` under `dependencyApis`.
+Use `forge deps api` when an agent needs signatures, JSDoc, examples, resolution traces, and runtime placement hints for a specific SDK symbol. This DepLens-inspired layer lets agents verify package APIs before coding instead of relying on stale model memory. Summaries also appear in `agentContract.json` under `dependencyApis`.
 
 See [forge add — Dependency API for agents](forge-add.md).
 
