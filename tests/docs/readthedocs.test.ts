@@ -51,9 +51,14 @@ describe("ReadTheDocs documentation", () => {
     const mkdocs = read("mkdocs.yml");
     expect(mkdocs).toContain("name: material");
     expect(mkdocs).toContain("markdown_extensions:");
-    expect(mkdocs).toContain("pymdownx.superfences");
-    expect(mkdocs).toContain("mermaid");
+    expect(mkdocs).toContain("fenced_code");
+    expect(mkdocs).toContain("extra_css:");
+    expect(mkdocs).toContain("stylesheets/extra.css");
+    expect(mkdocs).toContain("extra_javascript:");
+    expect(mkdocs).toContain("javascripts/mermaid-init.js");
     expect(mkdocs).not.toContain("navigation.instant");
+    expect(existsSync("docs/stylesheets/extra.css")).toBe(true);
+    expect(existsSync("docs/javascripts/mermaid-init.js")).toBe(true);
     const requirements = read("docs/requirements.txt");
     expect(requirements).toContain("mkdocs==1.6.1");
     expect(requirements).toContain("mkdocs-material");
