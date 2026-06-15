@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.0 input=663bd72fd297303ae67eb0c0c2217d62f2812ed9bd19c3b7f91de866277d7c97 content=3f72efe08b6df215c1d4efb97b64823ba7bce5a550ef6435262b0bca8ec33ab6
+// @forge-generated generator=0.1.0-alpha.0 input=bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf content=b410729315ac48087552cd2c7cf56573e836606d724c802b361833560fc2ad9a
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.0",
-  "inputHash": "663bd72fd297303ae67eb0c0c2217d62f2812ed9bd19c3b7f91de866277d7c97",
+  "inputHash": "bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1469,78 +1469,6 @@ export const testGraph = {
       "reasons": [
         "probable: packages tsx"
       ]
-    },
-    {
-      "confidence": "weak",
-      "cost": "fast",
-      "covers": {
-        "actions": [],
-        "commands": [],
-        "components": [],
-        "liveQueries": [],
-        "packages": [],
-        "policies": [],
-        "queries": [],
-        "tables": [],
-        "workflows": []
-      },
-      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec6eb-ff1f-7000-83c1-5addbb10155c/tests/changed.test.ts",
-      "kind": "unit",
-      "reasons": []
-    },
-    {
-      "confidence": "weak",
-      "cost": "fast",
-      "covers": {
-        "actions": [],
-        "commands": [],
-        "components": [],
-        "liveQueries": [],
-        "packages": [],
-        "policies": [],
-        "queries": [],
-        "tables": [],
-        "workflows": []
-      },
-      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec6ec-3ba7-7000-929c-8dce77d33e14/tests/changed.test.ts",
-      "kind": "unit",
-      "reasons": []
-    },
-    {
-      "confidence": "weak",
-      "cost": "fast",
-      "covers": {
-        "actions": [],
-        "commands": [],
-        "components": [],
-        "liveQueries": [],
-        "packages": [],
-        "policies": [],
-        "queries": [],
-        "tables": [],
-        "workflows": []
-      },
-      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec73a-d85f-7000-b667-40f09f20d106/tests/changed.test.ts",
-      "kind": "unit",
-      "reasons": []
-    },
-    {
-      "confidence": "weak",
-      "cost": "fast",
-      "covers": {
-        "actions": [],
-        "commands": [],
-        "components": [],
-        "liveQueries": [],
-        "packages": [],
-        "policies": [],
-        "queries": [],
-        "tables": [],
-        "workflows": []
-      },
-      "file": "tests/orchestrator/.tmp/cli-verify-changed-resolution-019ec73f-9a05-7000-8472-c2e003cbcd45/tests/changed.test.ts",
-      "kind": "unit",
-      "reasons": []
     },
     {
       "confidence": "confirmed",

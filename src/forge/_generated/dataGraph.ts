@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.0 input=663bd72fd297303ae67eb0c0c2217d62f2812ed9bd19c3b7f91de866277d7c97 content=9f28559452f9f920e60af13b23986a01ca80997e30bb3402e4a01b0a4e7c4d63
+// @forge-generated generator=0.1.0-alpha.0 input=bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf content=716763c623511f203c975baa95c010c938df5888ec0a67dba121566467c68241
 export const dataGraph = {
   "analyzerVersion": "0.1.0",
   "generatorVersion": "0.1.0-alpha.0",
-  "inputHash": "1e74caf38a2f2ce8114612f1045e4840812588980315fe9df261853c5600dabf",
+  "inputHash": "7e9f6352d5eed32b20bd8670421332fd8106a994c0c747c06c5e5d4727ab821e",
   "schemaVersion": "1.0.0",
   "tables": []
 } as const;
