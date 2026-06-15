@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.0 input=91d8894f322b8dd604714d7b26a8bac3b5bbb0904d62cc0e2761ba21098e1537 content=2c64ae3562d9a31c4bda39c74d4b09842929042331fd46352813e93111b3528f
+// @forge-generated generator=0.1.0-alpha.0 input=3e73eacf20870a5978a8aeb9088112fa211eecaef5a80a7e51b92cbd8b40cd8d content=2c64ae3562d9a31c4bda39c74d4b09842929042331fd46352813e93111b3528f
 {"clientSafe":true,"commands":[],"entrypoint":"src/forge/_generated/react.ts","generatorVersion":"0.1.0-alpha.0","hooks":["ForgeProvider","useForgeClient","useAuth","useQuery","useCommand","useLiveQuery"],"inputHash":"340bcb26297f5d6e3a3164c9fae4e6f554ffff6a4ffef198798b259fcaefaa64","liveQueries":[],"queries":[],"schemaVersion":"1.0.0"}
