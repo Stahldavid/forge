@@ -92,10 +92,15 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | Install and first app | [Getting Started](getting-started.md) |
+| Full first app walkthrough | [First App Tutorial](tutorial-first-app.md) |
 | Why ForgeOS exists | [Why ForgeOS](why-forgeos.md) |
+| Compiler/runtime architecture | [Architecture](architecture.md) |
+| Template file trees | [Examples](examples.md) |
 | Templates (`minimal-web`, `b2b-support-web`) | [Templates](templates.md) |
 | Agent intent router (`forge do`) | [Agent Workflow](agent-workflow.md) |
-| CLI reference | [CLI](cli.md) |
+| Build a feature with an agent | [Build a Feature with an Agent](agent-feature-tutorial.md) |
+| CLI workflows | [CLI](cli.md) |
+| Full CLI list | [CLI Reference](cli-reference.md) |
 
 ### Core concepts
 

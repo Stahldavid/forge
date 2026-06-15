@@ -81,6 +81,25 @@ Repair output includes:
 
 Apply only **high-confidence** repairs automatically. Review medium/low before changing code.
 
+Example diagnostic:
+
+```json
+{
+  "ok": false,
+  "failureKind": "runtime-guard",
+  "likelyCause": "A command imports a package that is only allowed in actions or workflows.",
+  "suggestedRepairs": [
+    {
+      "confidence": "high",
+      "action": "extract-action",
+      "command": "forge refactor extract-action chargeCustomer --package stripe --dry-run --json"
+    }
+  ]
+}
+```
+
+The fix is structural: move the side effect to an action or workflow instead of weakening the guard.
+
 After repair:
 
 ```bash

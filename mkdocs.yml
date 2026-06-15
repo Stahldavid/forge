@@ -37,15 +37,24 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - First App Tutorial: tutorial-first-app.md
   - Why ForgeOS: why-forgeos.md
+  - Architecture: architecture.md
+  - Examples: examples.md
   - Templates: templates.md
   - Agent Workflow: agent-workflow.md
+  - Build a Feature with an Agent: agent-feature-tutorial.md
   - CLI: cli.md
+  - CLI Reference: cli-reference.md
   - Runtime Model: runtime-model.md
   - Frontend: frontend.md
   - AI: ai.md

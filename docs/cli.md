@@ -1,8 +1,18 @@
 # CLI
 
-ForgeOS has many low-level commands, but most day-to-day work should start with the centered commands below.
+ForgeOS centers day-to-day work around a small command loop:
 
-Prefer **[Agent Workflow (`forge do`)](agent-workflow.md)** when you are unsure which command to run next.
+```bash
+forge do inspect --json
+forge dev
+forge dev --once --json
+forge check --json
+forge verify --standard
+```
+
+Use this page for common workflows. Use [CLI Reference](cli-reference.md) when you need the full command list.
+
+Prefer **[Agent Workflow (`forge do`)](agent-workflow.md)** when you know the goal but not the exact command.
 
 ## Create an App
 

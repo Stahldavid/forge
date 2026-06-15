@@ -78,6 +78,24 @@ forge verify --strict
 
 Use the broad field-test workflow before promoting a release beyond alpha.
 
+## Documentation checklist
+
+Before tagging a public release, verify the public documentation path:
+
+```bash
+python -m mkdocs build --strict --site-dir .site-check
+bun test tests/docs/readthedocs.test.ts
+```
+
+Check these items:
+
+- `README.md` points to `https://forgeos.readthedocs.io/`.
+- `docs/getting-started.md` shows `npm create forge-app@alpha`.
+- `docs/why-forgeos.md` explains the agent-native contract.
+- `docs/changelog.md` contains the release version.
+- `.readthedocs.yaml` uses the intended MkDocs config and search ranking.
+- No docs include secret values, `.env` contents, database rows, raw prompts, or telemetry payloads.
+
 ## Version alignment
 
 Release checks verify that:

@@ -39,6 +39,19 @@ Human-readable playbooks also live in:
 - `AGENTS.md`
 - `src/forge/_generated/operationPlaybooks.md`
 
+## Error map
+
+| Symptom or code | First command | Likely fix |
+|-----------------|---------------|------------|
+| Generated files are stale | `forge generate --check` | Run `forge generate`, then review generated drift. |
+| `FORGE_GUARD_VIOLATION` | `forge check --json` | Move network/secret/AI work to action, workflow, endpoint, or server code. |
+| `FORGE_AI_FORBIDDEN_CONTEXT` | `forge ai check --json` | Move model calls out of command, query, or liveQuery. |
+| `FORGE_POLICY_DENIED` | `forge policy simulate <policy> --role <role> --json` | Fix caller role, tenant scope, or policy declaration. |
+| LiveQuery stale data | `forge live status --json` | Check durable invalidations, tenant dependencies, and worker health. |
+| Frontend route not connected | `forge inspect capabilities --json` | Use generated hooks and the local `web/**/lib/forge.ts` bridge. |
+| Windows app picker opens for Bun | `forge doctor windows --json` | Set a safe Bun path or use the Node CLI path. |
+| Tests hang or run too long | `forge verify --standard --script-timeout-ms 120000 --json` | Use impact tests first; reserve strict verification for handoff. |
+
 ## Stale generated artifacts
 
 **Symptom:** `forge doctor` reports `generated artifacts are stale`, or `forge generate --check` fails.

@@ -8,9 +8,15 @@ function read(path: string): string {
 const PUBLIC_PAGES = [
   "index.md",
   "getting-started.md",
+  "tutorial-first-app.md",
+  "why-forgeos.md",
+  "architecture.md",
+  "examples.md",
   "templates.md",
   "agent-workflow.md",
+  "agent-feature-tutorial.md",
   "cli.md",
+  "cli-reference.md",
   "runtime-model.md",
   "frontend.md",
   "ai.md",
@@ -35,14 +41,18 @@ describe("ReadTheDocs documentation", () => {
     expect(config).toContain("version: 2");
     expect(config).toContain("python: \"3.12\"");
     expect(config).toContain("configuration: mkdocs.yml");
+    expect(config).toContain("fail_on_warning: true");
     expect(config).toContain("requirements: docs/requirements.txt");
+    expect(config).toContain("search:");
+    expect(config).toContain("docs/why-forgeos.md: 10");
   });
 
   test("uses Material theme with RTD-safe defaults", () => {
     const mkdocs = read("mkdocs.yml");
     expect(mkdocs).toContain("name: material");
-    expect(mkdocs).not.toContain("markdown_extensions:");
-    expect(mkdocs).not.toContain("!!python/name:");
+    expect(mkdocs).toContain("markdown_extensions:");
+    expect(mkdocs).toContain("pymdownx.superfences");
+    expect(mkdocs).toContain("mermaid");
     expect(mkdocs).not.toContain("navigation.instant");
     const requirements = read("docs/requirements.txt");
     expect(requirements).toContain("mkdocs==1.6.1");
@@ -59,9 +69,14 @@ describe("ReadTheDocs documentation", () => {
       expect(existsSync(`docs/${page}`)).toBe(true);
     }
     expect(read("docs/getting-started.md")).toContain("npm create forge-app@alpha");
+    expect(read("docs/getting-started.md")).toContain("Open the web URL");
+    expect(read("docs/tutorial-first-app.md")).toContain("npm run forge -- dev --once --json");
+    expect(read("docs/architecture.md")).toContain("flowchart TD");
+    expect(read("docs/examples.md")).toContain("Initial source tree");
     expect(read("docs/index.md")).toContain("npm create forge-app@alpha");
     expect(read("docs/index.md")).toContain("Agent Workflow");
     expect(read("docs/agent-workflow.md")).toContain("forge do");
+    expect(read("docs/agent-feature-tutorial.md")).toContain("forge make resource task");
     expect(read("docs/frontend.md")).toContain("useLiveQuery");
     expect(read("docs/security-and-data.md")).toContain("forge rls check");
     expect(read("docs/authoring.md")).toContain("forge make resource");
@@ -77,15 +92,18 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/troubleshooting.md")).toContain("FORGE_GUARD_VIOLATION");
     expect(read("docs/troubleshooting.md")).toContain("FORGE_AI_FORBIDDEN_CONTEXT");
     expect(read("docs/troubleshooting.md")).toContain("LiveQuery stale");
+    expect(read("docs/troubleshooting.md")).toContain("Error map");
     expect(read("docs/agent-contract.md")).toContain("forge agent export");
     expect(read("docs/ai.md")).toContain("ctx.ai.generateText");
     expect(read("docs/ai.md")).toContain("generateStructured");
+    expect(read("docs/ai.md")).toContain("Choose the right AI path");
     expect(read("docs/ai.md")).toContain("forge make ai-chat");
     expect(read("docs/cli.md")).toContain("forge ai trace");
     expect(read("docs/cli.md")).toContain("forge deps api");
     expect(read("docs/cli.md")).toContain("forge verify --smoke");
     expect(read("docs/runtime-model.md")).toContain("ctx.agent.run");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");
+    expect(read("docs/release.md")).toContain("Documentation checklist");
     expect(read("docs/changelog.md")).toContain("0.1.0-alpha.3");
   });
 });

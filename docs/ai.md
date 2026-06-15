@@ -20,6 +20,19 @@ AI calls do not belong in deterministic runtime entries:
 - queries
 - liveQueries
 
+## Choose the right AI path
+
+| Goal | Start with | Runtime placement |
+|------|------------|-------------------|
+| Classify or summarize app data | `ctx.ai.generateText` | Action or workflow step |
+| Return typed JSON | `ctx.ai.generateStructured` | Action or workflow step |
+| Let a model call app tools | `agent(...)` and `ctx.agent.run` | Action, workflow, endpoint, or server |
+| Add a chat UI | `forge make ai-chat <name>` | Web route plus AI endpoint |
+| Inspect available tools | `forge ai tools --json` | CLI |
+| Debug a model/tool run | `forge ai trace <traceId> --json` | CLI |
+
+Start with simple generation. Move to agents only when the model needs tool calls, approval metadata, multi-step behavior, or a chat surface.
+
 ## Runtime Rule
 
 Commands are transactional and deterministic. They may write to `ctx.db` and emit events through `ctx.emit`, but they should not call model providers directly. Use an action or workflow step after commit when a feature needs generation, classification, summarization, or tool calls.

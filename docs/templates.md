@@ -12,6 +12,13 @@ cd my-app
 npm run dev
 ```
 
+Expected result:
+
+- Forge starts the API runtime.
+- Forge starts the web dev server when `web/` exists.
+- The terminal prints the API URL and the web URL.
+- The app contains `AGENTS.md` and source files, but may ignore generated files until `forge generate` runs.
+
 Lower-level:
 
 ```bash
@@ -35,6 +42,8 @@ List templates from the CLI:
 ```bash
 forge new --help
 ```
+
+See [Examples](examples.md) for concrete file trees.
 
 ## npm package naming
 
@@ -97,9 +106,23 @@ Need tickets + billing + AI  -> b2b-support-web
 Custom domain                -> minimal-web + forge make resource ...
 ```
 
+## After creation
+
+Run:
+
+```bash
+npm run forge -- dev --once --json
+npm run forge -- inspect frontend --json
+npm run forge -- inspect capabilities --json
+```
+
+These commands verify that the generated frontend, provider, hook bridge, runtime entries, and capability map agree.
+
 After creation, see:
 
 - [Getting Started](getting-started.md) — first commands
+- [First App Tutorial](tutorial-first-app.md) — full first app walkthrough
+- [Examples](examples.md) — template file trees
 - [Frontend](frontend.md) — hooks and liveQuery
 - [Authoring](authoring.md) — add resources
 - [Field Testing](field-testing.md) — validate external installs

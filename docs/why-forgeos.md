@@ -6,6 +6,23 @@ AI agents can write code, but complex apps need more than code generation. They 
 
 The result is not an autonomous agent and not a mandatory dashboard. The result is an app that explains itself through files and commands that humans and agents can trust.
 
+## TL;DR
+
+After one create command, a ForgeOS app gives an AI coding agent:
+
+| Agent need | ForgeOS answer |
+|------------|----------------|
+| Understand the app | `agentContract.json`, `appMap.md`, `forge inspect all --json` |
+| Choose the next command | `forge do "<objective>" --json` |
+| Connect UI and backend | `frontendGraph.json`, `capabilityMap.json`, `forge do connect-ui --json` |
+| Avoid unsafe runtime code | `runtimeRules.md`, import guards, `forge check --json` |
+| Use SDKs correctly | package graph, `forge deps api`, runtime compatibility checks |
+| Refactor safely | AST-aware codemods, dry runs, impact reports, rollback snapshots |
+| Recover from failures | `forge repair diagnose`, `forge repair plan`, `forge doctor` |
+| Verify before handoff | `forge verify --standard`, `forge verify --strict` |
+
+The framework is early. The central value is already clear: the app produces a development contract instead of forcing agents to infer one from source conventions.
+
 ## The problem
 
 Most frameworks expose source files, framework conventions, a CLI, and runtime behavior. A human developer learns those conventions over time. An AI coding agent must infer them on every task.

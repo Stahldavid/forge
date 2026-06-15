@@ -28,6 +28,25 @@ forge do connect-ui --json
 
 Always pass `--json` when an AI agent is driving the session. The response is machine-readable and includes fix hints.
 
+## Feature change loop
+
+For app changes that touch backend and frontend, use this loop:
+
+```bash
+forge do inspect --json
+forge dev --once --json
+forge make resource task --fields title:text,status:enum(open,done) --with-ui --dry-run --json
+forge make resource task --fields title:text,status:enum(open,done) --with-ui --yes
+forge generate
+forge check --json
+forge inspect capabilities --json
+forge verify --standard
+```
+
+This keeps the agent out of generated files, verifies frontend wiring, and reserves `forge verify --strict` for final handoff.
+
+See [Build a Feature with an Agent](agent-feature-tutorial.md) for the full walkthrough.
+
 ## Response shape
 
 A typical `forge do` JSON response includes:
@@ -51,6 +70,26 @@ Example workflow for an agent:
 4. forge generate && forge check --json
 5. forge do verify --json
 6. forge verify --strict
+```
+
+Example JSON excerpt:
+
+```json
+{
+  "ok": true,
+  "intent": "inspect",
+  "filesToInspect": [
+    "AGENTS.md",
+    "src/forge/_generated/agentContract.json",
+    "src/forge/_generated/runtimeRules.md"
+  ],
+  "concreteCommands": [
+    "forge dev --once --json",
+    "forge inspect all --json",
+    "forge check --json"
+  ],
+  "nextAction": "forge dev --once --json"
+}
 ```
 
 ## Common objectives

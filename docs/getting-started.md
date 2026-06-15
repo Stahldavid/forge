@@ -2,20 +2,9 @@
 
 ForgeOS requires Node.js `22.14` or newer.
 
-## Install
+This page gets you from zero to a running Forge backend and web app. For the longer walkthrough, see [First App Tutorial](tutorial-first-app.md).
 
-```bash
-npm install -g forgeos@alpha
-forge --version
-```
-
-If you do not want a global install, use `npx`:
-
-```bash
-npx forgeos@alpha --help
-```
-
-## Create a Minimal App
+## Create an app
 
 Recommended public quickstart:
 
@@ -25,7 +14,42 @@ cd notes-app
 npm run dev
 ```
 
-Equivalent explicit ForgeOS command:
+`npm create forge-app@alpha` creates a new app without installing ForgeOS globally. It is the best first command for new users.
+
+The generated app contains:
+
+- a Forge backend under `src/`;
+- a small web UI under `web/`;
+- `AGENTS.md` with agent workflow instructions;
+- package scripts that call the local Forge CLI.
+
+## Open the right URL
+
+`npm run dev` prints two kinds of URLs:
+
+| URL | Purpose |
+|-----|---------|
+| Web URL | The app you open in the browser. |
+| API URL | The Forge JSON runtime used by hooks, commands, queries, and liveQuery. |
+
+Open the web URL for the user-facing app. The API URL returns JSON responses and may return `unknown route` at `/`; that does not mean the app is broken.
+
+## Install options
+
+Install globally only if you want the `forge` command available everywhere:
+
+```bash
+npm install -g forgeos@alpha
+forge --version
+```
+
+Run once without global install:
+
+```bash
+npx forgeos@alpha --help
+```
+
+Use the lower-level command when you need explicit flags:
 
 ```bash
 forge new notes-app \
@@ -34,31 +58,29 @@ forge new notes-app \
   --forge-spec "npm:forgeos@alpha" \
   --install \
   --no-git
-cd notes-app
-npm run dev
 ```
 
-The generated app contains a Forge backend and a small web UI. `forge dev` starts the API runtime and the web app together when the template has a `web/` directory.
-
-### Templates
+## Templates
 
 | Template | Best for |
 |----------|----------|
 | `minimal-web` | Learning Forge, small prototypes |
-| `b2b-support-web` | Tickets, Stripe, AI triage, liveQuery showcase |
+| `b2b-support-web` | Tickets, policies, Stripe, AI triage, liveQuery showcase |
 
-See [Templates](templates.md) for `--forge-spec`, npm alias `"forge": "npm:forgeos@alpha"`, and gitignore conventions.
+See [Templates](templates.md) and [Examples](examples.md) for file trees, package aliasing, and generated-app git hygiene.
 
-## Agent-Friendly First Checks
+## First checks
 
 Run these before editing a generated app:
 
 ```bash
-forge do inspect --json
+npm run forge -- do inspect --json
 npm run forge -- dev --once --json
 npm run forge -- inspect all --json
 npm run forge -- check --json
 ```
+
+These commands tell you what exists, what is stale, which routes call which runtime entries, and which command to run next.
 
 Run these before handing off a change:
 
@@ -69,13 +91,34 @@ npm run forge -- verify --standard
 
 Use `verify --strict` for release or final handoff gates.
 
-See [Agent Workflow](agent-workflow.md) and [Testing and Repair](testing-and-repair.md).
+## What to read first
+
+Generated apps include files for humans and AI agents:
+
+```txt
+AGENTS.md
+src/forge/_generated/agentContract.json
+src/forge/_generated/appMap.md
+src/forge/_generated/runtimeRules.md
+src/forge/_generated/frontendGraph.json
+src/forge/_generated/capabilityMap.json
+```
+
+Read them. Do not edit them. Change source files, then run:
+
+```bash
+npm run generate
+```
 
 ## Next steps
 
 | Topic | Page |
 |-------|------|
+| End-to-end first app | [First App Tutorial](tutorial-first-app.md) |
+| Build a feature with an agent | [Build a Feature with an Agent](agent-feature-tutorial.md) |
 | Agent-first workflow (`forge do`) | [Agent Workflow](agent-workflow.md) |
+| Architecture and generated files | [Architecture](architecture.md) |
+| Template file trees | [Examples](examples.md) |
 | Runtime rules (commands vs workflows) | [Runtime Model](runtime-model.md) |
 | Frontend hooks and liveQuery | [Frontend](frontend.md) |
 | AI generation and agents | [AI](ai.md) |

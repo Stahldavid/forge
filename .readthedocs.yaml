@@ -7,7 +7,18 @@ build:
 
 mkdocs:
   configuration: mkdocs.yml
+  fail_on_warning: true
 
 python:
   install:
     - requirements: docs/requirements.txt
+
+search:
+  ranking:
+    docs/why-forgeos.md: 10
+    docs/getting-started.md: 10
+    docs/tutorial-first-app.md: 9
+    docs/agent-feature-tutorial.md: 9
+    docs/agent-contract.md: 8
+    docs/frontend.md: 8
+    docs/troubleshooting.md: 7
