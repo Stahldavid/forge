@@ -44,3 +44,8 @@ test-out.txt
 full-test-err.txt
 guard-test-err.txt
 smoke-result.txt
+
+# MkDocs local output
+site/
+site-*/
+.venv-rtd/

@@ -20,7 +20,6 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.sections
     - search.suggest
@@ -54,6 +53,33 @@ nav:
   - Release: release.md
   - Changelog: changelog.md
 
-# Do not set markdown_extensions here. Material for MkDocs enables the correct
-# defaults (superfences, highlight, tables, toc). A partial custom list breaks
-# code fences on RTD and can fail the build.
+# Full explicit list: overriding markdown_extensions replaces MkDocs defaults.
+# Do not add Mermaid custom fences here — !!python/name breaks RTD builds.
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
