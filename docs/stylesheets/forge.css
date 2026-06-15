@@ -1,0 +1,150 @@
+:root {
+  --forge-border: rgba(37, 45, 68, 0.16);
+  --forge-section-fg: rgba(37, 45, 68, 0.62);
+  --forge-code-bg: #f5f7fb;
+  --forge-active-bg: rgba(63, 81, 181, 0.11);
+  --forge-active-fg: #304ffe;
+  --forge-hover-bg: rgba(63, 81, 181, 0.07);
+}
+
+[data-md-color-scheme="slate"] {
+  --forge-border: rgba(196, 204, 220, 0.14);
+  --forge-section-fg: rgba(236, 240, 248, 0.7);
+  --forge-code-bg: #121722;
+  --forge-active-bg: rgba(124, 150, 255, 0.16);
+  --forge-active-fg: #8eb0ff;
+  --forge-hover-bg: rgba(124, 150, 255, 0.1);
+}
+
+.md-header {
+  box-shadow: 0 1px 0 var(--forge-border);
+}
+
+.md-header__title {
+  font-weight: 750;
+}
+
+.md-search__form {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.35rem;
+}
+
+.md-nav__title {
+  color: var(--md-default-fg-color);
+  font-weight: 800;
+}
+
+.md-nav__item .md-nav__link {
+  border-radius: 0.28rem;
+  margin-top: 0.08rem;
+  padding: 0.22rem 0.38rem;
+}
+
+.md-nav__link:is(:focus, :hover) {
+  background: var(--forge-hover-bg);
+}
+
+.md-nav__link--active,
+.md-nav__item .md-nav__link--active {
+  position: relative;
+  background: var(--forge-active-bg);
+  color: var(--forge-active-fg);
+  font-weight: 750;
+}
+
+.md-nav__link--active::before,
+.md-nav__item .md-nav__link--active::before {
+  position: absolute;
+  top: 0.32rem;
+  bottom: 0.32rem;
+  left: 0;
+  width: 0.16rem;
+  border-radius: 999px;
+  background: var(--forge-active-fg);
+  content: "";
+}
+
+.md-nav__item--section > .md-nav__link,
+.md-nav__item--nested > .md-nav__link {
+  color: var(--forge-section-fg);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.md-nav__item--section > .md-nav,
+.md-nav__item--nested > .md-nav {
+  margin-left: 0.35rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--forge-border);
+}
+
+.md-nav--secondary .md-nav__title {
+  border-bottom: 1px solid var(--forge-border);
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.55rem;
+}
+
+.md-nav--secondary .md-nav__link {
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  padding-left: 0.55rem;
+}
+
+.md-nav--secondary .md-nav__link--active {
+  border-left-color: var(--forge-active-fg);
+  background: transparent;
+}
+
+.md-typeset h1,
+.md-typeset h2 {
+  font-weight: 760;
+}
+
+.md-typeset h2 {
+  border-top: 1px solid var(--forge-border);
+  margin-top: 2.15rem;
+  padding-top: 1.2rem;
+}
+
+.md-typeset table:not([class]) {
+  border: 1px solid var(--forge-border);
+  border-radius: 0.35rem;
+  overflow: hidden;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--forge-code-bg);
+}
+
+.md-typeset pre > code {
+  border: 1px solid var(--forge-border);
+  border-radius: 0.4rem;
+  background: var(--forge-code-bg);
+}
+
+.md-typeset :not(pre) > code {
+  border: 1px solid var(--forge-border);
+  border-radius: 0.22rem;
+  background: var(--forge-code-bg);
+  box-shadow: none;
+}
+
+.md-typeset .highlight,
+.md-typeset pre {
+  border-radius: 0.4rem;
+}
+
+.md-typeset .mermaid {
+  margin: 1.2rem 0;
+  padding: 1rem;
+  border: 1px solid var(--forge-border);
+  border-radius: 0.45rem;
+  background: var(--forge-code-bg);
+  overflow-x: auto;
+}
+
+.md-footer-meta {
+  border-top: 1px solid var(--forge-border);
+}
