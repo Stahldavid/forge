@@ -25,6 +25,9 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("uses: changesets/action@v1");
     expect(workflow).toContain("publish: npm run release");
     expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
+    expect(workflow).toContain("Generate release artifacts");
+    expect(workflow).toContain("Regenerate release artifacts");
+    expect(workflow).toContain("npm run forge -- generate");
     expect(workflow).toContain("git restore .");
     expect(workflow).toContain("git clean -fd");
     expect(workflow).toContain("NPM_CONFIG_PROVENANCE: \"true\"");
