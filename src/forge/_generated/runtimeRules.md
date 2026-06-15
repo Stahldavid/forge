@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=7f09595afb7106f9024085f103c559078fd03bd0f2bb80554f0b57c6464354a2
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=e05aaac5db95a6a159a7c3f79e5fd6a862fe5728756f1bc11a9cac0b834f3023
 # Runtime Rules
 
 ## LiveQuery Production
@@ -25,6 +25,8 @@ Forbidden:
 - network packages
 - ctx.secrets
 - ctx.ai
+- ctx.ai.runAgent
+- ctx.agent.run
 - process.env
 - filesystem access
 
@@ -39,6 +41,8 @@ Forbidden:
 - ctx.emit
 - ctx.secrets
 - ctx.ai
+- ctx.ai.runAgent
+- ctx.agent.run
 - network integrations
 
 ## liveQuery
@@ -52,6 +56,8 @@ Forbidden:
 - ctx.emit
 - ctx.secrets
 - ctx.ai
+- ctx.ai.runAgent
+- ctx.agent.run
 - network integrations
 
 ## action
@@ -60,6 +66,9 @@ Allowed:
 - ctx.secrets
 - integrations
 - ctx.ai
+- ctx.ai.runAgent
+- ctx.agent.run
+- AI SDK tools
 - ctx.db reads/writes
 - network packages
 
@@ -73,6 +82,9 @@ Allowed:
 - ctx.secrets
 - integrations
 - ctx.ai
+- ctx.ai.runAgent
+- ctx.agent.run
+- AI SDK ToolLoopAgent
 - retries
 
 Forbidden:

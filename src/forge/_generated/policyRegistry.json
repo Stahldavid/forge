@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=34533b78091df8095dcfa10b16e5562831487cd76c61f23f3fb298021aac80d2
-{"analyzerVersion":"policy-registry@1.0.0","commandAuth":[],"diagnostics":[],"generatorVersion":"0.1.0-alpha.2","inputHash":"429f618d9a65f68cf7229f12fc84db70a5794aa8bf36c33adf1c256d6a0713d6","policies":[],"queryAuth":[],"schemaVersion":"1.0.0"}
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=1a5d1e028ac93046dc5ebc5739699a900e293f8d498be5e811ac9e1437e0ed9a
+{"analyzerVersion":"policy-registry@1.0.0","commandAuth":[],"diagnostics":[],"generatorVersion":"0.1.0-alpha.3","inputHash":"82eb2e3ad8519160790b60a0932081b0e8825ff26c563090ab58e54ff333b438","policies":[],"queryAuth":[],"schemaVersion":"1.0.0"}

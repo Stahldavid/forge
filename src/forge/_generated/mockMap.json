@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=ce79e45d4228d202a492670aa76f238986b5500c8bb53774b328c216a1ccc6d8
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=ce79e45d4228d202a492670aa76f238986b5500c8bb53774b328c216a1ccc6d8
 {"entries":[{"mockFile":"src/forge/_generated/testkits/ai.anthropic.mock.ts","packageName":"@ai-sdk/anthropic"},{"mockFile":"src/forge/_generated/testkits/ai.openai.mock.ts","packageName":"@ai-sdk/openai"},{"mockFile":"src/forge/_generated/testkits/ai.gateway.mock.ts","packageName":"ai"},{"mockFile":"src/forge/_generated/testkits/zod.mock.ts","packageName":"zod"}]}

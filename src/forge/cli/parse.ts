@@ -284,6 +284,9 @@ export type ForgeCommand =
       model?: string;
       prompt?: string;
       mock: boolean;
+      traceId?: string;
+      db?: DbAdapterKind;
+      databaseUrl?: string;
       workspaceRoot: string;
     };
 
@@ -367,6 +370,7 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "test-graph",
   "test-plans",
   "agent-contract",
+  "agent-tools",
   "agent-adapters",
   "capability-map",
   "framework",
@@ -430,6 +434,7 @@ const MAKE_PRIMITIVES: MakePrimitive[] = [
   "component",
   "page",
   "ui",
+  "ai-chat",
   "resource",
   "apply",
   "rollback",
@@ -518,6 +523,15 @@ const UI_BROWSERS: UiBrowserName[] = ["chromium", "firefox", "webkit"];
 const UI_TRACE_MODES: UiTraceMode[] = ["on", "off", "retain-on-failure"];
 const UI_SCREENSHOT_MODES: UiScreenshotMode[] = ["on", "off", "only-on-failure"];
 const UI_VIDEO_MODES: UiVideoMode[] = ["on", "off", "retain-on-failure"];
+const AI_SUBCOMMANDS: AiSubcommand[] = [
+  "providers",
+  "check",
+  "test",
+  "models",
+  "tools",
+  "agents",
+  "trace",
+];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -547,6 +561,10 @@ function parseDbKind(value: string | undefined): "pglite" | "postgres" | "none" 
     return value;
   }
   return "pglite";
+}
+
+function parsePersistentDbKind(value: string | undefined): DbAdapterKind {
+  return parseDbKind(value) === "postgres" ? "postgres" : "pglite";
 }
 
 function parseAdapterKind(value: string | undefined): DbAdapterKind {
@@ -1082,6 +1100,8 @@ export function parseCli(argv: string[]): ParsedCli {
             ? undefined
             : primitive === "ui"
               ? rest[1] ?? "ui"
+              : primitive === "ai-chat"
+                ? rest[1] ?? "support"
               : rest[1];
       const explainPrimitive =
         primitive === "explain" ? (rest[1] as MakePrimitive | undefined) : undefined;
@@ -1092,7 +1112,7 @@ export function parseCli(argv: string[]): ParsedCli {
         errors.push("forge make explain requires a known primitive");
       }
       if (
-        !["list", "explain", "ui"].includes(primitive) &&
+        !["list", "explain", "ui", "ai-chat"].includes(primitive) &&
         !name
       ) {
         errors.push(`forge make ${primitive} requires a name or plan id`);
@@ -1925,13 +1945,17 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "ai": {
       const subcommand = rest[0] as AiSubcommand | undefined;
-      if (!subcommand || !["providers", "check", "test", "models"].includes(subcommand)) {
-        errors.push("forge ai requires subcommand: providers, check, test, or models");
+      if (!subcommand || !AI_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge ai requires subcommand: providers, check, test, models, tools, agents, or trace");
         return { command: null, workspaceRoot, errors };
       }
 
       const providerRaw = parseOptionValue(argv, "--provider");
       const provider = providerRaw as ForgeAiProvider | undefined;
+      const traceId = subcommand === "trace" ? rest[1] ?? parseOptionValue(argv, "--trace") : undefined;
+      if (subcommand === "trace" && !traceId) {
+        errors.push("forge ai trace requires a trace id");
+      }
 
       return {
         command: {
@@ -1942,6 +1966,9 @@ export function parseCli(argv: string[]): ParsedCli {
           model: parseOptionValue(argv, "--model"),
           prompt: parseOptionValue(argv, "--prompt"),
           mock: parseFlag(argv, "--mock"),
+          traceId,
+          db: parsePersistentDbKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
           workspaceRoot,
         },
         workspaceRoot,

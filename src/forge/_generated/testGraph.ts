@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=dbd3df22ccf1727a1595661b0bacc29d3f5859d921ba625c440e695b8cdcc558
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=2c58c51ddc772a37db527377e31afdcc2fb7632f4888fa504b365b2cf1e5228f
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.2",
-  "inputHash": "53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6",
+  "generatorVersion": "0.1.0-alpha.3",
+  "inputHash": "991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -143,7 +143,9 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "ai"
+          "ai",
+          "react",
+          "zod"
         ],
         "policies": [],
         "queries": [],
@@ -153,7 +155,9 @@ export const testGraph = {
       "file": "tests/ai/ai-dev-server.test.ts",
       "kind": "unknown",
       "reasons": [
-        "confirmed: packages ai"
+        "confirmed: packages ai",
+        "confirmed: packages zod",
+        "probable: packages react"
       ]
     },
     {
@@ -209,7 +213,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "ai"
+          "ai",
+          "zod"
         ],
         "policies": [],
         "queries": [],
@@ -219,7 +224,8 @@ export const testGraph = {
       "file": "tests/ai/ai-registry.test.ts",
       "kind": "unknown",
       "reasons": [
-        "confirmed: packages ai"
+        "confirmed: packages ai",
+        "confirmed: packages zod"
       ]
     },
     {
@@ -1493,6 +1499,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "ai",
+          "react",
           "tsx"
         ],
         "policies": [],
@@ -1503,6 +1511,8 @@ export const testGraph = {
       "file": "tests/make/h25-make.test.ts",
       "kind": "unknown",
       "reasons": [
+        "probable: packages ai",
+        "probable: packages react",
         "probable: packages tsx"
       ]
     },

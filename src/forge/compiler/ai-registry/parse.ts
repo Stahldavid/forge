@@ -1,7 +1,7 @@
 import type { ForgeAiProvider } from "../types/ai-registry.ts";
 
 const AI_METHOD_PATTERN =
-  /(?:ctx\.ai|ai)\.(generateText|streamText|generateStructured)\s*\(/g;
+  /(?:(?:ctx\.ai|ai)\.(generateText|streamText|generateStructured|runAgent)|ctx\.agent\.(run))\s*\(/g;
 
 const PROVIDER_PATTERN =
   /provider\s*:\s*["'](openai|anthropic|gateway)["']/;
@@ -11,7 +11,7 @@ const MODEL_PATTERN = /model\s*:\s*["']([^"']+)["']/;
 const PURPOSE_PATTERN = /purpose\s*:\s*["']([^"']+)["']/;
 
 export interface ParsedAiCall {
-  method: "generateText" | "streamText" | "generateStructured";
+  method: "generateText" | "streamText" | "generateStructured" | "runAgent";
   provider?: ForgeAiProvider;
   model?: string;
   purpose?: string;
@@ -21,7 +21,7 @@ export function parseAiCallsFromSlice(sourceSlice: string): ParsedAiCall[] {
   const calls: ParsedAiCall[] = [];
 
   for (const match of sourceSlice.matchAll(AI_METHOD_PATTERN)) {
-    const method = match[1] as ParsedAiCall["method"];
+    const method = (match[1] ?? (match[2] ? "runAgent" : "")) as ParsedAiCall["method"];
     const start = match.index ?? 0;
     const window = sourceSlice.slice(start, start + 600);
 
@@ -49,8 +49,102 @@ export function parseAiCallsFromSlice(sourceSlice: string): ParsedAiCall[] {
   return calls;
 }
 
-const FORBIDDEN_AI_CONTEXT_PATTERN = /ctx\.ai\./;
+const FORBIDDEN_AI_CONTEXT_PATTERN = /ctx\.(?:ai\.|agent\.run\s*\()/;
 
 export function detectCtxAiUsage(sourceSlice: string): boolean {
   return FORBIDDEN_AI_CONTEXT_PATTERN.test(sourceSlice);
+}
+
+const DESCRIPTION_PATTERN = /description\s*:\s*["'`]([^"'`]+)["'`]/;
+const RISK_PATTERN = /risk\s*:\s*["'](read|write|external|destructive)["']/;
+const STRICT_PATTERN = /strict\s*:\s*(true|false)/;
+const NEEDS_APPROVAL_PATTERN = /needsApproval\s*:\s*(true|false|async\s*\(|\([^)]*\)\s*=>|[A-Za-z_$][A-Za-z0-9_$]*)/;
+const INSTRUCTIONS_PATTERN = /instructions\s*:\s*["'`]([^"'`]+)["'`]/;
+const TOOL_ARRAY_PATTERN = /tools\s*:\s*\[([^\]]*)\]/s;
+const TOOL_OBJECT_PATTERN = /tools\s*:\s*\{([^}]*)\}/s;
+const STOP_TOOL_PATTERN = /stopWhen\s*:\s*\{[^}]*kind\s*:\s*["']toolCall["'][^}]*toolName\s*:\s*["']([^"']+)["'][^}]*\}/s;
+const STOP_STEP_PATTERN = /stopWhen\s*:\s*\{[^}]*kind\s*:\s*["']stepCount["'][^}]*maxSteps\s*:\s*(\d+)[^}]*\}/s;
+const MAX_STEPS_PATTERN = /maxSteps\s*:\s*(\d+)/;
+
+export interface ParsedAiToolMeta {
+  description?: string;
+  risk: "read" | "write" | "external" | "destructive" | "unknown";
+  strict: boolean;
+  needsApproval: boolean | "dynamic";
+}
+
+export interface ParsedAiAgentMeta {
+  provider?: ForgeAiProvider;
+  model?: string;
+  instructions?: string;
+  tools: string[];
+  stopWhen:
+    | { kind: "stepCount"; maxSteps: number }
+    | { kind: "toolCall"; toolName: string }
+    | { kind: "default" };
+}
+
+function parseBooleanOrDynamic(value: string | undefined): boolean | "dynamic" {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return "dynamic";
+}
+
+function parseStringList(raw: string | undefined): string[] {
+  if (!raw) return [];
+  return [...raw.matchAll(/["'`]([^"'`]+)["'`]/g)]
+    .map((match) => match[1] ?? "")
+    .filter(Boolean)
+    .sort();
+}
+
+function parseObjectToolKeys(raw: string | undefined): string[] {
+  if (!raw) return [];
+  const explicit = [...raw.matchAll(/([A-Za-z_$][A-Za-z0-9_$]*)\s*:/g)]
+    .map((match) => match[1] ?? "")
+    .filter(Boolean);
+  const shorthand = raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(part));
+  return [...new Set([...explicit, ...shorthand])].sort();
+}
+
+export function parseAiToolMeta(sourceSlice: string): ParsedAiToolMeta {
+  const description = DESCRIPTION_PATTERN.exec(sourceSlice)?.[1];
+  const risk = RISK_PATTERN.exec(sourceSlice)?.[1] as ParsedAiToolMeta["risk"] | undefined;
+  const strict = STRICT_PATTERN.exec(sourceSlice)?.[1] === "true";
+  const needsApprovalMatch = NEEDS_APPROVAL_PATTERN.exec(sourceSlice)?.[1];
+
+  return {
+    ...(description ? { description } : {}),
+    risk: risk ?? "unknown",
+    strict,
+    needsApproval: needsApprovalMatch
+      ? parseBooleanOrDynamic(needsApprovalMatch)
+      : false,
+  };
+}
+
+export function parseAiAgentMeta(sourceSlice: string): ParsedAiAgentMeta {
+  const provider = PROVIDER_PATTERN.exec(sourceSlice)?.[1] as ForgeAiProvider | undefined;
+  const model = MODEL_PATTERN.exec(sourceSlice)?.[1];
+  const instructions = INSTRUCTIONS_PATTERN.exec(sourceSlice)?.[1];
+  const arrayTools = parseStringList(TOOL_ARRAY_PATTERN.exec(sourceSlice)?.[1]);
+  const objectTools = parseObjectToolKeys(TOOL_OBJECT_PATTERN.exec(sourceSlice)?.[1]);
+  const stopTool = STOP_TOOL_PATTERN.exec(sourceSlice)?.[1];
+  const stopStepsRaw =
+    STOP_STEP_PATTERN.exec(sourceSlice)?.[1] ?? MAX_STEPS_PATTERN.exec(sourceSlice)?.[1];
+
+  return {
+    ...(provider ? { provider } : {}),
+    ...(model ? { model } : {}),
+    ...(instructions ? { instructions } : {}),
+    tools: [...new Set([...arrayTools, ...objectTools])].sort(),
+    stopWhen: stopTool
+      ? { kind: "toolCall", toolName: stopTool }
+      : stopStepsRaw
+        ? { kind: "stepCount", maxSteps: Number(stopStepsRaw) }
+        : { kind: "default" },
+  };
 }

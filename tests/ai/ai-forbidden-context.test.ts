@@ -38,6 +38,15 @@ describe("ai forbidden context", () => {
         prompt: "nope",
       }),
     ).rejects.toMatchObject({ code: FORGE_AI_FORBIDDEN_CONTEXT });
+
+    await expect(
+      ai.runAgent({
+        provider: "gateway",
+        model: "openai/gpt-5.4",
+        instructions: "nope",
+        prompt: "nope",
+      }),
+    ).rejects.toMatchObject({ code: FORGE_AI_FORBIDDEN_CONTEXT });
   });
 
   test("forge check flags ctx.ai in command source", async () => {

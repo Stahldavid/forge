@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "files": [
@@ -73,10 +73,10 @@
     "cli"
   ],
   "dependencies": {
-    "@ai-sdk/anthropic": "^2.0.0",
-    "@ai-sdk/openai": "^2.0.0",
+    "@ai-sdk/anthropic": "^3.0.84",
+    "@ai-sdk/openai": "^3.0.71",
     "@electric-sql/pglite": "^0.2.17",
-    "ai": "^5.0.0",
+    "ai": "^6.0.205",
     "jose": "^6.2.3",
     "postgres": "^3.4.5",
     "react": "^19.2.7",

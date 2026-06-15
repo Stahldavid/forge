@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=fa1107464c1de08135410251aeff7e759a69b11801f8704e9d324b4036fbfa7b
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=b7a94d564a961fdda392055d6f091aa61e7e6d9da2fb04f4f508803d75b3f1f3
 # Agent Quickstart
 
 Run:
@@ -12,7 +12,9 @@ forge dev
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge inspect agent-tools --json
 forge check --json
+forge ai trace <traceId> --json
 ```
 
 Never edit:

@@ -1,15 +1,16 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=ac7e00509f59ee0543d9795b37cbf863448d161671f87a35c39f8d3f7b402d05
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=dde1c607540ce0e2bbe022af128639deef1eb84a01e094935fa3ac7e193f6ea6
 export const makeRegistry = {
   "commands": [
     "forge make list --json",
     "forge make explain <primitive> --json",
     "forge make ui --framework vite --dry-run --json",
+    "forge make ai-chat support --dry-run --json",
     "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
     "forge make resource <name> --fields title:text --with-ui --yes",
     "forge make apply <planId>",
     "forge make rollback <planId>"
   ],
-  "generatorVersion": "0.1.0-alpha.2",
+  "generatorVersion": "0.1.0-alpha.3",
   "planDirectory": ".forge/make-plans",
   "primitives": [
     {
@@ -138,6 +139,19 @@ export const makeRegistry = {
       "modifies": [],
       "name": "ui",
       "summary": "Add a Vite React frontend shell with ForgeProvider devAuth and a generated client bridge."
+    },
+    {
+      "creates": [
+        "src/ai/<name>Agent.ts",
+        "web/components/<Name>AiChat.tsx",
+        "web/app/<name>-ai/page.tsx when web/app exists"
+      ],
+      "examples": [
+        "forge make ai-chat support --yes"
+      ],
+      "modifies": [],
+      "name": "ai-chat",
+      "summary": "Add a Forge AI agent and React chat component backed by /ai/agents/run."
     },
     {
       "creates": [

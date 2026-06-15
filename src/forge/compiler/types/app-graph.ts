@@ -12,6 +12,7 @@ export type ForgeKind =
   | "policy"
   | "workflow"
   | "agent"
+  | "aiTool"
   | "telemetryEvent";
 
 export interface ForgeSymbol {

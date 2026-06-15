@@ -405,6 +405,7 @@ export async function runInspectCommand(
     "test-graph": `${GENERATED_DIR}/testGraph.json`,
     "test-plans": `${GENERATED_DIR}/testPlanRegistry.json`,
     "agent-contract": `${GENERATED_DIR}/agentContract.json`,
+    "agent-tools": `${GENERATED_DIR}/agentTools.json`,
     "agent-adapters": `${GENERATED_DIR}/agentAdapterManifest.json`,
     "capability-map": `${GENERATED_DIR}/capabilityMap.json`,
     ui: `${GENERATED_DIR}/uiTestManifest.json`,
@@ -451,6 +452,7 @@ export async function runInspectCommand(
       ["testGraph", `${GENERATED_DIR}/testGraph.json`],
       ["testPlanRegistry", `${GENERATED_DIR}/testPlanRegistry.json`],
       ["agentContract", `${GENERATED_DIR}/agentContract.json`],
+      ["agentTools", `${GENERATED_DIR}/agentTools.json`],
       ["agentAdapters", `${GENERATED_DIR}/agentAdapterManifest.json`],
       ["capabilityMap", `${GENERATED_DIR}/capabilityMap.json`],
       ["ui", `${GENERATED_DIR}/uiTestManifest.json`],
@@ -1111,6 +1113,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         model: command.model,
         prompt: command.prompt,
         mock: command.mock,
+        traceId: command.traceId,
+        db: command.db,
+        databaseUrl: command.databaseUrl,
       });
 
       if (command.json) {

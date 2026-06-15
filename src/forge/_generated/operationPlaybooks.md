@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=515c32b35d7e92a7ba8a34da20cfcb71250786e1fb4244e28e386b843e638b41
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=58dad7f03d9e378e327fddb0676d079950c8f000752667cffb022f3b7e217265
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -38,6 +38,24 @@
 3. Run forge live debug <subscriptionId> --json when a subscription id is available.
 4. Check that _forge_live_invalidations has revisions newer than the last sent snapshot.
 5. Reconnect with Last-Event-ID or ?lastRevision=<revision> to verify resume behavior.
+
+## Add an AI tool
+
+1. Add a server-only file under src/ai or src/tools.
+2. Export aiTool({ description, inputSchema, outputSchema, risk, needsApproval, handler }).
+3. Use zod schemas for inputSchema and outputSchema.
+4. Access secrets through the tool context, not process.env.
+5. Mark destructive or external side effects with risk and needsApproval.
+6. Run forge generate and inspect src/forge/_generated/aiRegistry.json.
+
+## Add an agent
+
+1. Export agent({ provider, model, instructions, tools, stopWhen }) from server-only source.
+2. Prefer AI SDK ToolLoopAgent semantics through ctx.agent.run or ctx.ai.runAgent instead of custom loops.
+3. Use stopWhen with stepCount or terminal tool calls to prevent unbounded loops.
+4. Run agents only in actions, workflows, endpoints, or server code.
+5. Run forge inspect all --json and confirm agentContract.ai.agents lists the agent.
+6. Use forge ai trace <traceId> --json to inspect agent runs and tool calls.
 
 ## Add a table
 
@@ -127,12 +145,13 @@
 ## Add or update frontend
 
 1. Run forge make ui --framework vite --dry-run --json when the app does not have a web root.
-2. Use web/lib/forge.ts as the generated client bridge.
-3. Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.
-4. Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.
-5. Run forge generate so frontendGraph and agentContract include routes and bindings.
-6. Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.
-7. Run forge dev --once --json and forge doctor --json.
+2. Run forge make ai-chat support --dry-run --json to add a chat surface backed by /ai/agents/chat streaming and /ai/agents/run JSON automation.
+3. Use web/lib/forge.ts as the generated client bridge.
+4. Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.
+5. Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.
+6. Run forge generate so frontendGraph and agentContract include routes and bindings.
+7. Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.
+8. Run forge dev --once --json and forge doctor --json.
 
 ## Self-host
 

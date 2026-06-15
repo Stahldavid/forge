@@ -18,8 +18,30 @@ export interface AiGenerationCall {
   provider: ForgeAiProvider;
   model: string;
   purpose?: string;
-  method: "generateText" | "streamText" | "generateStructured";
+  method: "generateText" | "streamText" | "generateStructured" | "runAgent";
   file: string;
+}
+
+export interface AiToolDefinition {
+  name: string;
+  file: string;
+  description?: string;
+  risk: "read" | "write" | "external" | "destructive" | "unknown";
+  strict: boolean;
+  needsApproval: boolean | "dynamic";
+}
+
+export interface AiAgentDefinition {
+  name: string;
+  file: string;
+  provider: ForgeAiProvider;
+  model: string;
+  instructions?: string;
+  tools: string[];
+  stopWhen:
+    | { kind: "stepCount"; maxSteps: number }
+    | { kind: "toolCall"; toolName: string }
+    | { kind: "default" };
 }
 
 export interface AiRegistry {
@@ -29,5 +51,7 @@ export interface AiRegistry {
   inputHash: string;
   providers: AiProviderDefinition[];
   generations: AiGenerationCall[];
+  tools: AiToolDefinition[];
+  agents: AiAgentDefinition[];
   diagnostics: unknown[];
 }

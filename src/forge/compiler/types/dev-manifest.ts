@@ -11,6 +11,9 @@ export interface DevRoute {
     | "workflows"
     | "workflow-runs"
     | "workflow-process"
+    | "ai-agent-chat"
+    | "ai-agent-run"
+    | "ai-providers"
     | "queries"
     | "query";
   entryName?: string;

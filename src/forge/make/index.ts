@@ -10,6 +10,9 @@ import { parseFieldSpec, parseFields, splitTopLevel } from "./fields.ts";
 import { camelCase, kebabCase, pascalCase, singularize, titleCase } from "./naming.ts";
 import {
   renderAction,
+  renderAiAgentFile,
+  renderAiChatComponent,
+  renderAiChatPage,
   renderCreateCommand,
   renderCreateForm,
   renderDeleteCommand,
@@ -17,6 +20,7 @@ import {
   renderListComponent,
   renderListQuery,
   renderLiveQuery,
+  renderNextAiPackage,
   renderPage,
   renderPlaceholderTest,
   renderPolicyFile,
@@ -57,6 +61,7 @@ export const MAKE_PRIMITIVES: MakePrimitive[] = [
   "component",
   "page",
   "ui",
+  "ai-chat",
   "resource",
   "apply",
   "rollback",
@@ -103,6 +108,8 @@ const EXPLANATIONS: Record<MakeIntent["kind"], string> = {
     "Adds a minimal app page under web/app/<route>/page.tsx.",
   ui:
     "Adds a minimal Vite React web app with ForgeProvider devAuth and a generated client bridge.",
+  "ai-chat":
+    "Adds a Forge AI agent definition and a React chat component that calls the Forge /ai/agents/run runtime endpoint.",
   resource:
     "Creates a full resource slice: table, policies, CRUD commands, queries, liveQuery, action, optional React, and tests.",
 };
@@ -521,7 +528,7 @@ function buildIntent(options: MakeCommandOptions): {
     );
   }
   const name = options.name ?? (kind === "field" ? "" : undefined);
-  if (!name && !["component", "page", "ui"].includes(kind)) {
+  if (!name && !["component", "page", "ui", "ai-chat"].includes(kind)) {
     diagnostics.push(
       diagnostic("error", "FORGE_MAKE_PATCH_UNSAFE", `forge make ${kind} requires a name`),
     );
@@ -555,7 +562,8 @@ function buildIntent(options: MakeCommandOptions): {
         kind === "resource" ||
         kind === "component" ||
         kind === "page" ||
-        kind === "ui",
+        kind === "ui" ||
+        kind === "ai-chat",
       tests: options.withTests || kind === "resource",
       policy:
         options.policy ??
@@ -566,7 +574,7 @@ function buildIntent(options: MakeCommandOptions): {
       trigger: options.trigger ?? options.event ?? (table ? `${singular}.created` : undefined),
       component: options.component,
       route: options.name ? kebabCase(options.name) : undefined,
-      withAi: options.withAi,
+      withAi: options.withAi || kind === "ai-chat",
       withCreateForm: options.withCreateForm || kind === "resource",
     },
   };
@@ -598,6 +606,77 @@ function addPolicies(plan: MakePlan, workspaceRoot: string, entries: Record<stri
     existingPatch.description = `${existingPatch.description}; ${next.patch.description}`;
   }
   plan.diagnostics.push(...next.diagnostics);
+}
+
+function addWebAiDependencies(plan: MakePlan, workspaceRoot: string, appName: string): void {
+  const desired: Record<string, string> = {
+    "@ai-sdk/react": "^3.0.0",
+    ai: "^6.0.0",
+  };
+  const plannedPackage = plan.filesToCreate.find((file) => file.file === "web/package.json");
+  if (plannedPackage) {
+    try {
+      const parsed = JSON.parse(plannedPackage.content) as { dependencies?: Record<string, string> };
+      parsed.dependencies = { ...(parsed.dependencies ?? {}), ...desired };
+      plannedPackage.content = `${JSON.stringify(parsed, null, 2)}\n`;
+      return;
+    } catch {
+      plan.diagnostics.push(
+        diagnostic(
+          "warning",
+          "FORGE_MAKE_PACKAGE_JSON_UNSUPPORTED_SHAPE",
+          "could not update planned web/package.json with AI SDK dependencies",
+          "web/package.json",
+        ),
+      );
+      return;
+    }
+  }
+
+  const existing = readIfExists(workspaceRoot, "web/package.json");
+  if (!existing) {
+    plan.filesToCreate.push(
+      createFile(
+        workspaceRoot,
+        "web/package.json",
+        "Add web package with AI SDK dependencies",
+        renderNextAiPackage(appName),
+      ),
+    );
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(existing) as { dependencies?: Record<string, string> };
+    const dependencies = { ...(parsed.dependencies ?? {}) };
+    let changed = false;
+    for (const [name, version] of Object.entries(desired)) {
+      if (dependencies[name] !== version) {
+        dependencies[name] = version;
+        changed = true;
+      }
+    }
+    if (!changed) {
+      return;
+    }
+    parsed.dependencies = dependencies;
+    plan.filesToModify.push({
+      file: "web/package.json",
+      kind: "replace-section",
+      description: "Add AI SDK dependencies to web package",
+      beforeHash: hashStable(existing),
+      afterPreview: `${JSON.stringify(parsed, null, 2)}\n`,
+    });
+  } catch {
+    plan.diagnostics.push(
+      diagnostic(
+        "warning",
+        "FORGE_MAKE_PACKAGE_JSON_UNSUPPORTED_SHAPE",
+        "could not update web/package.json with AI SDK dependencies",
+        "web/package.json",
+      ),
+    );
+  }
 }
 
 function addRuntimeFiles(plan: MakePlan, workspaceRoot: string, intent: MakeIntent): void {
@@ -670,6 +749,50 @@ function addFrontendFiles(plan: MakePlan, workspaceRoot: string, intent: MakeInt
   const table = intent.table ?? intent.name;
   const singular = singularize(table);
   const pascal = pascalCase(singular);
+  if (intent.kind === "ai-chat") {
+    const name = intent.name || "support";
+    const hasViteSource = fileExists(workspaceRoot, "web/src") || fileExists(workspaceRoot, "web/src/main.tsx");
+    const bridgeFile = hasViteSource ? "web/src/lib/forge.ts" : "web/lib/forge.ts";
+    const componentFile = hasViteSource
+      ? `web/src/components/${pascalCase(name)}AiChat.tsx`
+      : `web/components/${pascalCase(name)}AiChat.tsx`;
+    addWebAiDependencies(plan, workspaceRoot, name);
+    if (!fileExists(workspaceRoot, bridgeFile)) {
+      plan.filesToCreate.push(
+        createFile(
+          workspaceRoot,
+          bridgeFile,
+          "Add Forge client bridge",
+          hasViteSource ? renderWebBridge() : renderWebRootBridge(),
+        ),
+      );
+    }
+    plan.filesToCreate.push(
+      createFile(
+        workspaceRoot,
+        `src/ai/${camelCase(name)}Agent.ts`,
+        `Add AI agent '${name}'`,
+        renderAiAgentFile(name),
+      ),
+      createFile(
+        workspaceRoot,
+        componentFile,
+        `Add AI chat component '${name}'`,
+        renderAiChatComponent(name),
+      ),
+    );
+    if (fileExists(workspaceRoot, "web/app") || fileExists(workspaceRoot, "web/app/layout.tsx")) {
+      plan.filesToCreate.push(
+        createFile(
+          workspaceRoot,
+          `web/app/${kebabCase(name)}-ai/page.tsx`,
+          `Add AI chat page '${name}'`,
+          renderAiChatPage(name),
+        ),
+      );
+    }
+    return;
+  }
   if (intent.kind === "ui") {
     plan.filesToCreate.push(
       createFile(workspaceRoot, "web/package.json", "Add Vite React web package", renderVitePackage(intent.name)),

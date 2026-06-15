@@ -1,10 +1,15 @@
 import type { AuthContext } from "./auth.ts";
 import type { AuthRequirement } from "../policy/index.ts";
+import type { ForgeRunAgentInput, ForgeRunAgentResult } from "./ai.ts";
 
 export type { AuthContext };
 
 export type {
   AiContext,
+  ForgeAiToolDefinition,
+  ForgeAiToolRuntimeContext,
+  ForgeRunAgentInput,
+  ForgeRunAgentResult,
   ForgeGenerateTextInput,
   ForgeGenerateTextResult,
 } from "./ai.ts";
@@ -17,6 +22,10 @@ export interface ForgeContext {
   auth: AuthContext;
   /** Injected by Forge runtime on server/action/workflow/endpoint contexts. */
   ai: import("./ai.ts").AiContext;
+  /** Alias for agent-native code. Delegates to ctx.ai.runAgent at runtime. */
+  agent: {
+    run(input: ForgeRunAgentInput): Promise<ForgeRunAgentResult>;
+  };
 }
 
 export interface ForgeCommandMeta {
@@ -95,6 +104,44 @@ export function action<TArgs = unknown, TResult = unknown>(
   };
 }
 
+export interface ForgeAiToolMeta {
+  kind: "aiTool";
+}
+
+export type ForgeAiTool<TArgs = unknown, TResult = unknown> =
+  import("./ai.ts").ForgeAiToolDefinition<TArgs, TResult> & {
+    __forge: ForgeAiToolMeta;
+  };
+
+export function aiTool<TArgs = unknown, TResult = unknown>(
+  config: import("./ai.ts").ForgeAiToolDefinition<TArgs, TResult>,
+): ForgeAiTool<TArgs, TResult> {
+  return {
+    ...config,
+    __forge: { kind: "aiTool" },
+  };
+}
+
+export interface ForgeAgentDefinition {
+  provider?: import("./ai.ts").ForgeAiProvider;
+  model: string;
+  instructions: string;
+  tools?: Record<string, import("./ai.ts").ForgeAiToolDefinition> | string[];
+  stopWhen?: import("./ai.ts").ForgeAgentStopWhen;
+  maxSteps?: number;
+}
+
+export type ForgeAgent = ForgeAgentDefinition & {
+  __forge: { kind: "agent" };
+};
+
+export function agent(config: ForgeAgentDefinition): ForgeAgent {
+  return {
+    ...config,
+    __forge: { kind: "agent" },
+  };
+}
+
 export interface WorkflowRunRecord {
   id: number;
   workflowName: string;
@@ -111,6 +158,9 @@ export interface WorkflowRunContext {
   telemetry: import("./telemetry.ts").TelemetryContext;
   auth: AuthContext;
   ai: import("./ai.ts").AiContext;
+  agent: {
+    run(input: ForgeRunAgentInput): Promise<ForgeRunAgentResult>;
+  };
 }
 
 export interface WorkflowStepDefinition<T = unknown> {

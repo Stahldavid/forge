@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=344fae7ce3db1aebe47436636186f05e893b4368a1cc186e40430aa4e6f33294
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=080be6d83e86fc0b867b41cf138f09387a3265be3c2b382692aafe3cecba0b2d
 export type ForgeAiProvider = "openai" | "anthropic" | "gateway";
 
 export type ForgeFlexibleSchema<T> = unknown & {
@@ -52,8 +52,74 @@ export interface ForgeGenerateStructuredInput<T> {
   schema: ForgeFlexibleSchema<T>;
 }
 
+export type ForgeAiToolRisk = "read" | "write" | "external" | "destructive";
+
+export interface ForgeAiToolRuntimeContext {
+  secrets: {
+    get(name: string): string;
+    optional(name: string): string | undefined;
+    has(name: string): boolean;
+  };
+  env: Record<string, string | undefined>;
+  telemetry?: {
+    traceId?: string;
+    capture(name: string, properties?: Record<string, unknown>): Promise<void>;
+  };
+  auth?: unknown;
+}
+
+export interface ForgeAiToolDefinition<TArgs = unknown, TResult = unknown> {
+  description: string;
+  inputSchema: unknown;
+  outputSchema?: unknown;
+  strict?: boolean;
+  needsApproval?: boolean | ((args: TArgs) => boolean | Promise<boolean>);
+  risk?: ForgeAiToolRisk;
+  handler: (
+    ctx: ForgeAiToolRuntimeContext,
+    args: TArgs,
+  ) => TResult | Promise<TResult>;
+}
+
+export type ForgeAgentStopWhen =
+  | { kind: "stepCount"; maxSteps: number }
+  | { kind: "toolCall"; toolName: string };
+
+export interface ForgeRunAgentInput {
+  provider?: ForgeAiProvider;
+  model: string;
+  prompt: string;
+  instructions: string;
+  purpose?: string;
+  tools?: Record<string, ForgeAiToolDefinition>;
+  stopWhen?: ForgeAgentStopWhen;
+  maxSteps?: number;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ForgeRunAgentResult {
+  text: string;
+  provider: ForgeAiProvider;
+  model: string;
+  purpose?: string;
+  usage: ForgeAiUsage;
+  latencyMs: number;
+  toolCalls: Array<{
+    toolName: string;
+    input: unknown;
+  }>;
+  toolResults: Array<{
+    toolName: string;
+    output: unknown;
+  }>;
+  steps: number;
+  estimatedCostUsd?: number;
+}
+
 export interface AiContext {
   generateText(input: ForgeGenerateTextInput): Promise<ForgeGenerateTextResult>;
   streamText(input: ForgeStreamTextInput): Promise<ForgeStreamTextResult>;
   generateStructured<T>(input: ForgeGenerateStructuredInput<T>): Promise<T>;
+  runAgent(input: ForgeRunAgentInput): Promise<ForgeRunAgentResult>;
 }

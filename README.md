@@ -138,7 +138,7 @@ forge.lock
 | Auth | dev headers, JWT, OIDC discovery/JWKS verification via `jose`, production-mode guardrails |
 | RLS | Postgres RLS SQL compiler/checks for DB-enforced tenant isolation |
 | Secrets/env | secret registry, env schema, redaction, strict `process.env` checks |
-| AI | provider registry, `ctx.ai`, mock mode, telemetry without prompt/output retention by default |
+| AI | Vercel AI SDK v6 engine, provider registry, `ctx.ai`, `ctx.agent.run`, `aiTool`, `agent`, `/ai/agents/run` JSON automation, `/ai/agents/chat` UIMessage streaming, `forge ai trace`, mock mode, telemetry without prompt/output retention by default |
 | Frontend | generated client SDK, React/Next hooks, template app, liveQuery client support |
 | LiveQuery | durable invalidation log, reconnect/resume semantics, production hardening checks |
 | Self-host | compose/deploy artifacts and self-host checks |

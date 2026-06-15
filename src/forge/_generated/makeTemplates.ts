@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=bec3e76f4a2feb0f6a1f4e3fb74d038a13ce13c7da0796fe16f4567ca0594f6e
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=d77484c9887220010cac51e14aaa010154cd261244eea7bf22a2aaaedca6afb4
 export const makeTemplates = {
   "schemaVersion": "0.1.0",
   "templates": [
@@ -50,6 +50,11 @@ export const makeTemplates = {
     {
       "name": "ui",
       "outputPattern": "web/src/App.tsx",
+      "sourceKind": "frontend"
+    },
+    {
+      "name": "ai-chat",
+      "outputPattern": "web/components/<name>AiChat.tsx",
       "sourceKind": "frontend"
     },
     {

@@ -37,6 +37,9 @@ describe("H19 agent contract", () => {
       for (const artifact of [
         "agentContract.json",
         "agentContract.ts",
+        "agentTools.json",
+        "agentTools.ts",
+        "agentTools.md",
         "appMap.md",
         "capabilityMap.json",
         "capabilityMap.ts",
@@ -79,6 +82,17 @@ describe("H19 agent contract", () => {
       expect(contract.commands[0]?.frontend?.hook).toContain("useCommand");
       expect(contract.queries[0]?.http?.path.startsWith("/queries/")).toBe(true);
       expect(contract.liveQueries[0]?.http?.method).toBe("GET");
+
+      const tools = readJson<{
+        autoTools: Array<{
+          sourceKind: "command" | "query" | "liveQuery";
+          sourceName: string;
+          http: { path: string };
+          requiresAuth: boolean;
+        }>;
+      }>(workspace, `${GENERATED}/agentTools.json`);
+      expect(tools.autoTools.some((tool) => tool.sourceKind === "command" && tool.http.path.startsWith("/commands/"))).toBe(true);
+      expect(tools.autoTools.some((tool) => tool.sourceKind === "query" && tool.http.path.startsWith("/queries/"))).toBe(true);
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -120,6 +134,10 @@ describe("H19 agent contract", () => {
       expect(readBody(workspace, `${GENERATED}/appMap.md`)).toContain("# App Map");
       expect(readBody(workspace, `${GENERATED}/operationPlaybooks.md`)).toContain(
         "## Add a command",
+      );
+      expect(readBody(workspace, `${GENERATED}/agentTools.md`)).toContain("# Agent Tools");
+      expect(readBody(workspace, `${GENERATED}/agentTools.md`)).toContain(
+        "## Auto Tools From Forge Runtime",
       );
     } finally {
       cleanupWorkspace(workspace);

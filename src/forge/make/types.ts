@@ -14,6 +14,7 @@ export type MakePrimitive =
   | "component"
   | "page"
   | "ui"
+  | "ai-chat"
   | "resource"
   | "apply"
   | "rollback";

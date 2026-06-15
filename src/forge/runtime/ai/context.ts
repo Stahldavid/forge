@@ -15,6 +15,8 @@ import type {
   ForgeGenerateStructuredInput,
   ForgeGenerateTextInput,
   ForgeGenerateTextResult,
+  ForgeRunAgentInput,
+  ForgeRunAgentResult,
   ForgeStreamTextInput,
   ForgeStreamTextResult,
   ForgeAiUsage,
@@ -64,6 +66,10 @@ export interface CreateAiContextOptions {
   runtimeKind: RuntimeContext;
   envelope?: AiTelemetryEnvelope;
   mockAi?: boolean;
+  toolContext?: {
+    env?: Record<string, string | undefined>;
+    auth?: unknown;
+  };
 }
 
 export function aiForbiddenInContext(runtimeKind: RuntimeContext): boolean {
@@ -89,6 +95,12 @@ export function createAiContext(options: CreateAiContextOptions): AiContext {
         );
       },
       async generateStructured() {
+        forgeError(
+          FORGE_AI_FORBIDDEN_CONTEXT,
+          `ctx.ai is forbidden in '${runtimeKind}' context`,
+        );
+      },
+      async runAgent() {
         forgeError(
           FORGE_AI_FORBIDDEN_CONTEXT,
           `ctx.ai is forbidden in '${runtimeKind}' context`,
@@ -284,7 +296,7 @@ export function createAiContext(options: CreateAiContextOptions): AiContext {
 
       return {
         textStream: result.textStream,
-        text: result.text.then(async (text) => {
+        text: Promise.resolve(result.text).then(async (text) => {
           const usage = mapUsage(await result.usage);
           await recordAiTelemetry(telemetry, "forge.ai.stream.completed", {
             ...baseProps(),
@@ -300,7 +312,7 @@ export function createAiContext(options: CreateAiContextOptions): AiContext {
         provider: input.provider,
         model: input.model,
         purpose: input.purpose,
-        usage: result.usage.then(mapUsage),
+        usage: Promise.resolve(result.usage).then(mapUsage),
         latencyMs,
       };
     },
@@ -347,10 +359,10 @@ export function createAiContext(options: CreateAiContextOptions): AiContext {
         );
         const { generateText, Output } = await import("ai");
         const result = await generateText({
-          model: languageModel,
+          model: languageModel as never,
           prompt: input.prompt,
           system: input.system,
-          experimental_output: Output.object({ schema: input.schema as never }),
+          output: Output.object({ schema: input.schema as never }),
         });
 
         const usage = mapUsage(result.usage);
@@ -365,12 +377,204 @@ export function createAiContext(options: CreateAiContextOptions): AiContext {
           method: "generateStructured",
         });
 
-        return result.experimental_output as T;
+        return result.output as T;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         await recordAiTelemetry(telemetry, "forge.ai.generation.failed", {
           ...baseProps(),
           provider: input.provider,
+          model: input.model,
+          purpose: input.purpose,
+          status: "failed",
+          error: message,
+        });
+        throw error;
+      }
+    },
+
+    async runAgent(input: ForgeRunAgentInput): Promise<ForgeRunAgentResult> {
+      const provider = input.provider ?? "gateway";
+      const startedAt = Date.now();
+      await recordAiTelemetry(telemetry, "forge.ai.agent.started", {
+        ...baseProps(),
+        provider,
+        model: input.model,
+        purpose: input.purpose,
+        toolCount: Object.keys(input.tools ?? {}).length,
+      });
+
+      try {
+        if (useMock) {
+          const mock = dequeueMockAiResponse();
+          const usage = createMockAiUsage(mock.usage);
+          const latencyMs = Date.now() - startedAt;
+          const estimatedCostUsd = estimateCostUsd(provider, input.model, usage);
+          const result = {
+            text: mock.text,
+            provider,
+            model: input.model,
+            purpose: input.purpose,
+            usage,
+            latencyMs,
+            toolCalls: [],
+            toolResults: [],
+            steps: 1,
+            estimatedCostUsd,
+          };
+          await recordAiTelemetry(telemetry, "forge.ai.agent.completed", {
+            ...baseProps(),
+            provider,
+            model: input.model,
+            purpose: input.purpose,
+            latencyMs,
+            usage,
+            estimatedCostUsd,
+            status: "completed",
+            mode: "mock",
+          });
+          return result;
+        }
+
+        const languageModel = await resolveLanguageModel(provider, input.model, secrets);
+        const { ToolLoopAgent, hasToolCall, stepCountIs, tool } = await import("ai");
+        const toolRuntimeContext = {
+          secrets,
+          env: options.toolContext?.env ?? {},
+          telemetry,
+          auth: options.toolContext?.auth,
+        };
+
+        const tools = Object.fromEntries(
+          Object.entries(input.tools ?? {}).map(([name, definition]) => {
+            const needsApproval = definition.needsApproval;
+            const aiSdkToolConfig = {
+              description: definition.description,
+              inputSchema: definition.inputSchema as never,
+              ...(definition.outputSchema
+                ? { outputSchema: definition.outputSchema as never }
+                : {}),
+              ...(definition.strict !== undefined ? { strict: definition.strict } : {}),
+              ...(needsApproval !== undefined
+                ? {
+                    needsApproval:
+                      typeof needsApproval === "function"
+                        ? async ({ args }: { args: unknown }) =>
+                            Boolean(await needsApproval(args as never))
+                        : needsApproval,
+                  }
+                : {}),
+              execute: async (args: unknown) => {
+                await recordAiTelemetry(telemetry, "forge.ai.tool.started", {
+                  ...baseProps(),
+                  provider,
+                  model: input.model,
+                  purpose: input.purpose,
+                  tool: name,
+                  risk: definition.risk ?? "external",
+                });
+                const toolStartedAt = Date.now();
+                try {
+                  const output = await definition.handler(
+                    toolRuntimeContext,
+                    args as never,
+                  );
+                  await recordAiTelemetry(telemetry, "forge.ai.tool.completed", {
+                    ...baseProps(),
+                    provider,
+                    model: input.model,
+                    purpose: input.purpose,
+                    tool: name,
+                    latencyMs: Date.now() - toolStartedAt,
+                    status: "completed",
+                  });
+                  return output;
+                } catch (error) {
+                  await recordAiTelemetry(telemetry, "forge.ai.tool.failed", {
+                    ...baseProps(),
+                    provider,
+                    model: input.model,
+                    purpose: input.purpose,
+                    tool: name,
+                    latencyMs: Date.now() - toolStartedAt,
+                    status: "failed",
+                    error: error instanceof Error ? error.message : String(error),
+                  });
+                  throw error;
+                }
+              },
+            };
+            return [name, tool(aiSdkToolConfig as never)];
+          }),
+        );
+
+        const stopWhen =
+          input.stopWhen?.kind === "toolCall"
+            ? hasToolCall(input.stopWhen.toolName)
+            : stepCountIs(input.stopWhen?.maxSteps ?? input.maxSteps ?? 20);
+
+        const agent = new ToolLoopAgent({
+          model: languageModel as never,
+          instructions: input.instructions,
+          tools,
+          stopWhen,
+          temperature: input.temperature,
+          maxOutputTokens: input.maxTokens,
+        });
+
+        const result = await agent.generate({ prompt: input.prompt });
+        const usage = mapUsage(result.usage);
+        const latencyMs = Date.now() - startedAt;
+        const estimatedCostUsd = estimateCostUsd(provider, input.model, usage);
+        const raw = result as unknown as {
+          steps?: unknown[];
+          toolCalls?: Array<{ toolName?: string; input?: unknown; args?: unknown }>;
+          toolResults?: Array<{ toolName?: string; output?: unknown; result?: unknown }>;
+        };
+
+        await recordAiTelemetry(telemetry, "forge.ai.agent.completed", {
+          ...baseProps(),
+          provider,
+          model: input.model,
+          purpose: input.purpose,
+          latencyMs,
+          usage,
+          estimatedCostUsd,
+          status: "completed",
+          steps: raw.steps?.length ?? 1,
+        });
+        await recordAiTelemetry(telemetry, "forge.ai.usage", {
+          ...baseProps(),
+          provider,
+          model: input.model,
+          purpose: input.purpose,
+          usage,
+          estimatedCostUsd,
+          method: "runAgent",
+        });
+
+        return {
+          text: result.text,
+          provider,
+          model: input.model,
+          purpose: input.purpose,
+          usage,
+          latencyMs,
+          toolCalls: (raw.toolCalls ?? []).map((call) => ({
+            toolName: call.toolName ?? "unknown",
+            input: call.input ?? call.args,
+          })),
+          toolResults: (raw.toolResults ?? []).map((toolResult) => ({
+            toolName: toolResult.toolName ?? "unknown",
+            output: toolResult.output ?? toolResult.result,
+          })),
+          steps: raw.steps?.length ?? 1,
+          estimatedCostUsd,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await recordAiTelemetry(telemetry, "forge.ai.agent.failed", {
+          ...baseProps(),
+          provider,
           model: input.model,
           purpose: input.purpose,
           status: "failed",
@@ -390,5 +594,6 @@ export function createNoopAiContext(): AiContext {
     generateText: noop,
     streamText: noop,
     generateStructured: noop,
+    runAgent: noop,
   };
 }

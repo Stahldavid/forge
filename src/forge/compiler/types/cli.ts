@@ -79,6 +79,7 @@ export type InspectTarget =
   | "test-graph"
   | "test-plans"
   | "agent-contract"
+  | "agent-tools"
   | "agent-adapters"
   | "capability-map"
   | "framework"

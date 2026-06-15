@@ -1,10 +1,11 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=02f17bb545ccdbda446cf0eb45175c7dd9f61dbf255f176fffcad82a4bf4967a
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=4aa0c09676f23fc80ff4676c754e6c0961394524d6b24c531ac3b608fbdea9ca
 export const aiRegistry = {
-  "analyzerVersion": "1.0.0",
+  "agents": [],
+  "analyzerVersion": "1.1.0",
   "diagnostics": [],
   "generations": [],
-  "generatorVersion": "0.1.0-alpha.2",
-  "inputHash": "f81451287f4bcd6c5f09856303a490a8483b54d27caa22adc2e6272601867e15",
+  "generatorVersion": "0.1.0-alpha.3",
+  "inputHash": "b9f9babff4f053b0ac152f7c5bb0fe5e8e7f90026b9ca12544f4786366dacadb",
   "providers": [
     {
       "id": "anthropic",
@@ -25,5 +26,6 @@ export const aiRegistry = {
       "secretName": "OPENAI_API_KEY"
     }
   ],
-  "schemaVersion": "1"
+  "schemaVersion": "1",
+  "tools": []
 } as const;

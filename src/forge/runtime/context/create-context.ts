@@ -13,7 +13,7 @@ import { loadEnvFiles } from "../secrets/env-loader.ts";
 import { loadEnvSchema, loadSecretRegistry } from "../secrets/check.ts";
 import { createRuntimeSecretsBundle } from "../secrets/runtime-bundle.ts";
 import { createAiContext } from "../ai/context.ts";
-import type { AiContext } from "../ai/types.ts";
+import type { AgentRuntimeContext, AiContext } from "../ai/types.ts";
 import { isMockAiEnabled } from "../ai/state.ts";
 import { currentReleaseInfo, type RuntimeReleaseInfo } from "../release/runtime.ts";
 
@@ -26,6 +26,7 @@ export interface ForgeContext {
   secrets: SecretsContext;
   config: ConfigContext;
   ai: AiContext;
+  agent: AgentRuntimeContext;
   release: RuntimeReleaseInfo;
 }
 
@@ -67,11 +68,16 @@ function buildSecretsConfigAndAi(
   runtimeKind: RuntimeContext,
   store: RuntimeEnvStore,
   telemetry: TelemetryContext,
-  options?: { mockAi?: boolean },
+  options?: {
+    mockAi?: boolean;
+    auth?: AuthContext;
+    env?: Record<string, string | undefined>;
+  },
 ): {
   secrets: SecretsContext;
   config: ConfigContext;
   ai: AiContext;
+  agent: AgentRuntimeContext;
   env: Record<string, string | undefined>;
 } {
   const registry = workspaceRoot ? loadSecretRegistry(workspaceRoot) : null;
@@ -93,12 +99,20 @@ function buildSecretsConfigAndAi(
       tenantId:
         undefined,
     },
+    toolContext: {
+      env: options?.env ?? store.snapshot(),
+      auth: options?.auth,
+    },
   });
+  const agent: AgentRuntimeContext = {
+    run: (input) => ai.runAgent(input),
+  };
 
   return {
     secrets: bundle.secrets,
     config: bundle.config,
     ai,
+    agent,
     env: store.snapshot(),
   };
 }
@@ -123,12 +137,16 @@ export function createForgeContext(
     (options?.workspaceRoot
       ? getRuntimeEnvStore(options.workspaceRoot)
       : getRuntimeEnvStore());
-  const { secrets, config, ai, env } = buildSecretsConfigAndAi(
+  const { secrets, config, ai, agent, env } = buildSecretsConfigAndAi(
     options?.workspaceRoot,
     runtimeKind,
     store,
     telemetry,
-    { mockAi: options?.mockAi },
+    {
+      mockAi: options?.mockAi,
+      auth,
+      env: options?.env,
+    },
   );
 
   return {
@@ -139,6 +157,7 @@ export function createForgeContext(
     secrets,
     config,
     ai,
+    agent,
     release: currentReleaseInfo(),
     emit: async (eventType, payload) => {
       const enriched =
@@ -178,12 +197,16 @@ export function createActionContext(
     (options?.workspaceRoot
       ? getRuntimeEnvStore(options.workspaceRoot)
       : getRuntimeEnvStore());
-  const { secrets, config, ai, env } = buildSecretsConfigAndAi(
+  const { secrets, config, ai, agent, env } = buildSecretsConfigAndAi(
     options?.workspaceRoot,
     runtimeKind,
     store,
     telemetry,
-    { mockAi: options?.mockAi },
+    {
+      mockAi: options?.mockAi,
+      auth,
+      env: options?.env,
+    },
   );
 
   return {
@@ -194,6 +217,7 @@ export function createActionContext(
     secrets,
     config,
     ai,
+    agent,
     release: currentReleaseInfo(),
     emit: async () => {
       /* actions invoked by outbox worker do not emit */

@@ -44,6 +44,20 @@ export function workflow(config) {
   };
 }
 
+export function aiTool(config) {
+  return {
+    ...config,
+    __forge: { kind: "aiTool" },
+  };
+}
+
+export function agent(config) {
+  return {
+    ...config,
+    __forge: { kind: "agent" },
+  };
+}
+
 export function query(fnOrConfig) {
   if (typeof fnOrConfig === "function") {
     fnOrConfig.__forge = { kind: "query" };

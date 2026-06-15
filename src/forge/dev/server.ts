@@ -6,6 +6,7 @@ import {
   type ServerResponse,
 } from "node:http";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
   FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION,
@@ -59,9 +60,12 @@ import {
 import { checkAiProviders, loadAiRegistry } from "../runtime/ai/check.ts";
 import { isMockAiEnabled } from "../runtime/ai/state.ts";
 import { createAiContext } from "../runtime/ai/context.ts";
+import type { ForgeAiProvider, ForgeAiToolDefinition } from "../runtime/ai/types.ts";
+import { resolveLanguageModel } from "../runtime/ai/providers.ts";
 import { createRuntimeSecretsBundle } from "../runtime/secrets/runtime-bundle.ts";
-import { createNoopTelemetryContext } from "../runtime/telemetry/context.ts";
+import { createNoopTelemetryContext, createTelemetryContext } from "../runtime/telemetry/context.ts";
 import { generateTraceId } from "../runtime/telemetry/correlation.ts";
+import type { AgentToolRegistry } from "../compiler/agent-contract/types.ts";
 import { loadLiveQueryRegistry } from "../runtime/live/registry.ts";
 import { createLiveSubscriptionManager } from "../runtime/live/subscription-manager.ts";
 import { createSseResponse } from "../runtime/live/sse.ts";
@@ -400,6 +404,233 @@ function parseInvokeName(pathname: string, prefix: string): string | null {
   }
   const name = pathname.slice(prefix.length);
   return name.length > 0 ? decodeURIComponent(name) : null;
+}
+
+function loadAgentToolRegistry(workspaceRoot: string): AgentToolRegistry | null {
+  return readGeneratedJson<AgentToolRegistry>(
+    workspaceRoot,
+    `${GENERATED_DIR}/agentTools.json`,
+  );
+}
+
+type RuntimeAgentDefinition = {
+  provider?: ForgeAiProvider;
+  model: string;
+  instructions: string;
+  tools?: Record<string, ForgeAiToolDefinition> | string[];
+  stopWhen?: { kind: "stepCount"; maxSteps: number } | { kind: "toolCall"; toolName: string };
+  maxSteps?: number;
+};
+
+async function loadNamedAgentDefinition(
+  workspaceRoot: string,
+  name: string | undefined,
+): Promise<RuntimeAgentDefinition | null> {
+  if (!name) {
+    return null;
+  }
+  const registry = loadAiRegistry(workspaceRoot);
+  const metadata = registry?.agents.find((agent) => agent.name === name);
+  if (!metadata) {
+    throw new Error(`unknown Forge AI agent '${name}'`);
+  }
+
+  const mod = (await import(pathToFileURL(join(workspaceRoot, metadata.file)).href)) as Record<
+    string,
+    unknown
+  >;
+  const definition = mod[metadata.name];
+  if (!definition || typeof definition !== "object") {
+    throw new Error(`Forge AI agent '${name}' was not exported from ${metadata.file}`);
+  }
+
+  const agent = definition as Partial<RuntimeAgentDefinition>;
+  if (!agent.model || !agent.instructions) {
+    throw new Error(`Forge AI agent '${name}' is missing model or instructions`);
+  }
+  return {
+    provider: agent.provider ?? metadata.provider,
+    model: agent.model,
+    instructions: agent.instructions,
+    tools: agent.tools,
+    stopWhen:
+      agent.stopWhen ??
+      (metadata.stopWhen.kind === "default" ? undefined : metadata.stopWhen),
+    maxSteps: agent.maxSteps,
+  };
+}
+
+function explicitAgentTools(
+  definition: RuntimeAgentDefinition | null,
+): Record<string, ForgeAiToolDefinition> {
+  if (!definition?.tools || Array.isArray(definition.tools)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(definition.tools).filter(([, toolDefinition]) =>
+      Boolean(
+        toolDefinition &&
+          typeof toolDefinition === "object" &&
+          "handler" in toolDefinition &&
+          "inputSchema" in toolDefinition,
+      ),
+    ),
+  );
+}
+
+function buildAutoAgentTools(input: {
+  workspaceRoot: string;
+  registry: AgentToolRegistry | null;
+  selected?: string[];
+  adapter: DevServerState["adapter"];
+  tableMap: Record<string, TableMapEntry>;
+  auth: Awaited<ReturnType<typeof authenticateHeaders>>;
+  liveManager?: ReturnType<typeof createLiveSubscriptionManager> | null;
+  json: boolean;
+  mock: boolean;
+}): Record<string, ForgeAiToolDefinition> {
+  const selected = new Set(input.selected ?? []);
+  const includeAll = selected.size === 0;
+  const tools: Record<string, ForgeAiToolDefinition> = {};
+  for (const toolInfo of input.registry?.autoTools ?? []) {
+    if (!includeAll && !selected.has(toolInfo.name) && !selected.has(toolInfo.sourceName)) {
+      continue;
+    }
+    tools[toolInfo.name] = {
+      description: `${toolInfo.readOnly ? "Read" : "Execute"} Forge ${toolInfo.sourceKind} '${toolInfo.sourceName}'. Policy: ${toolInfo.policy ?? "none"}.`,
+      inputSchema: {
+        type: "object",
+        properties: {
+          args: {
+            type: "object",
+            additionalProperties: true,
+          },
+        },
+        additionalProperties: true,
+      },
+      risk: toolInfo.readOnly ? "read" : "write",
+      needsApproval: !toolInfo.readOnly,
+      handler: async (_ctx, rawInput) => {
+        const objectInput =
+          rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
+            ? rawInput as { args?: unknown }
+            : {};
+        const args = objectInput.args ?? rawInput ?? {};
+        if (!input.adapter) {
+          throw new Error("database not connected");
+        }
+        if (toolInfo.sourceKind === "query" || toolInfo.sourceKind === "liveQuery") {
+          const result = await runQuery(
+            input.workspaceRoot,
+            toolInfo.sourceName,
+            { args, auth: input.auth },
+            {
+              adapter: input.adapter,
+              tableMap: input.tableMap,
+            },
+          );
+          if (!result.ok) {
+            throw new Error(result.diagnostics.map((diagnostic) => diagnostic.message).join("; "));
+          }
+          return { result: result.result, traceId: result.traceId };
+        }
+        const result = await runEntry(input.workspaceRoot, toolInfo.sourceName, {
+          json: input.json,
+          mock: input.mock,
+          args,
+          db: input.adapter,
+          auth: input.auth,
+          liveManager: input.liveManager ?? undefined,
+        });
+        if (!result.ok) {
+          throw new Error(result.diagnostics.map((diagnostic) => diagnostic.message).join("; "));
+        }
+        return { result: result.result, traceId: result.traceId };
+      },
+    };
+  }
+  return tools;
+}
+
+async function buildAiSdkTools(input: {
+  tools: Record<string, ForgeAiToolDefinition>;
+  provider: ForgeAiProvider;
+  model: string;
+  purpose?: string;
+  traceId: string;
+  secrets: ReturnType<typeof createRuntimeSecretsBundle>["secrets"];
+  telemetry: ReturnType<typeof createTelemetryContext> | ReturnType<typeof createNoopTelemetryContext>;
+  env: Record<string, string | undefined>;
+  auth: Awaited<ReturnType<typeof authenticateHeaders>>;
+}): Promise<Record<string, unknown>> {
+  const { tool } = await import("ai");
+  return Object.fromEntries(
+    Object.entries(input.tools).map(([name, definition]) => {
+      const needsApproval = definition.needsApproval;
+      return [
+        name,
+        tool({
+          description: definition.description,
+          inputSchema: definition.inputSchema as never,
+          ...(definition.outputSchema ? { outputSchema: definition.outputSchema as never } : {}),
+          ...(definition.strict !== undefined ? { strict: definition.strict } : {}),
+          ...(needsApproval !== undefined
+            ? {
+                needsApproval:
+                  typeof needsApproval === "function"
+                    ? async ({ args }: { args: unknown }) =>
+                        Boolean(await needsApproval(args as never))
+                    : needsApproval,
+              }
+            : {}),
+          execute: async (args: unknown) => {
+            const startedAt = Date.now();
+            await input.telemetry.capture("forge.ai.tool.started", {
+              traceId: input.traceId,
+              provider: input.provider,
+              model: input.model,
+              purpose: input.purpose,
+              tool: name,
+              risk: definition.risk ?? "external",
+            });
+            try {
+              const output = await definition.handler(
+                {
+                  secrets: input.secrets,
+                  env: input.env,
+                  telemetry: input.telemetry,
+                  auth: input.auth,
+                },
+                args as never,
+              );
+              await input.telemetry.capture("forge.ai.tool.completed", {
+                traceId: input.traceId,
+                provider: input.provider,
+                model: input.model,
+                purpose: input.purpose,
+                tool: name,
+                latencyMs: Date.now() - startedAt,
+                status: "completed",
+              });
+              return output;
+            } catch (error) {
+              await input.telemetry.capture("forge.ai.tool.failed", {
+                traceId: input.traceId,
+                provider: input.provider,
+                model: input.model,
+                purpose: input.purpose,
+                tool: name,
+                latencyMs: Date.now() - startedAt,
+                status: "failed",
+                error: error instanceof Error ? error.message : String(error),
+              });
+              throw error;
+            }
+          },
+        } as never),
+      ];
+    }),
+  );
 }
 
 async function parseRequestArgs(request: Request): Promise<unknown> {
@@ -874,6 +1105,282 @@ export async function startDevServer(
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return jsonResponse({ ok: false, error: message }, 400);
+          }
+        }
+
+        if (request.method === "POST" && pathname === "/ai/agents/run") {
+          const body = (await request.json().catch(() => ({}))) as {
+            agent?: string;
+            provider?: string;
+            model?: string;
+            instructions?: string;
+            prompt?: string;
+            purpose?: string;
+            maxSteps?: number;
+            tools?: string[];
+          };
+          if (!body.prompt) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_DEV_INVOKE_FAILED,
+                    message: "POST /ai/agents/run requires a prompt",
+                    fixHint: "Send JSON like {\"prompt\":\"...\",\"instructions\":\"...\",\"tools\":[\"forge_query_listTickets\"]}.",
+                  }),
+                ],
+              },
+              400,
+            );
+          }
+          const auth = await authenticateHeaders(request.headers, authConfig);
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+          const secretRegistry = loadSecretRegistry(workspaceRoot);
+          const bundle = createRuntimeSecretsBundle({
+            store: envStore,
+            registry: secretRegistry,
+            envSchema: null,
+            runtimeKind: "server",
+          });
+          const traceId = generateTraceId();
+          const telemetry = serverState.adapter
+            ? createTelemetryContext({
+                adapter: serverState.adapter,
+                traceId,
+                runtime: { kind: "endpoint", name: "ai.agent.run" },
+                bufferInTransaction: false,
+                workspaceRoot,
+                sinks: telemetrySinks,
+              })
+            : createNoopTelemetryContext(traceId);
+          const ai = createAiContext({
+            secrets: bundle.secrets,
+            telemetry,
+            runtimeKind: "endpoint",
+            mockAi: isMockAiEnabled({ mockAi: options.mockAi }),
+            envelope: { traceId, tenantId: auth.kind === "user" || auth.kind === "system" ? auth.tenantId : undefined },
+            toolContext: {
+              env: envStore.snapshot(),
+              auth,
+            },
+          });
+          try {
+            const namedAgent = await loadNamedAgentDefinition(workspaceRoot, body.agent);
+            const tools = {
+              ...explicitAgentTools(namedAgent),
+              ...buildAutoAgentTools({
+                workspaceRoot,
+                registry: loadAgentToolRegistry(workspaceRoot),
+                selected: body.tools,
+                adapter: serverState.adapter,
+                tableMap,
+                auth,
+                liveManager,
+                json: options.json,
+                mock: options.mock,
+              }),
+            };
+            const result = await ai.runAgent({
+              provider: (body.provider ?? namedAgent?.provider ?? "gateway") as ForgeAiProvider,
+              model: body.model ?? namedAgent?.model ?? "openai/gpt-5.4",
+              instructions:
+                body.instructions ??
+                namedAgent?.instructions ??
+                "You are a ForgeOS app agent. Use available Forge tools when useful.",
+              prompt: body.prompt,
+              purpose: body.purpose ?? "dev_agent_run",
+              stopWhen: namedAgent?.stopWhen,
+              maxSteps: body.maxSteps ?? namedAgent?.maxSteps,
+              tools,
+            });
+            return jsonResponse(
+              {
+                ok: true,
+                result,
+                traceId,
+                tools: Object.keys(tools).sort(),
+              },
+              200,
+              { "x-forge-trace-id": traceId },
+            );
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return jsonResponse(
+              {
+                ok: false,
+                traceId,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_DEV_INVOKE_FAILED,
+                    message,
+                    fixHint: `Inspect with forge ai trace ${traceId} --json or GET /telemetry/traces/${traceId}.`,
+                  }),
+                ],
+              },
+              400,
+              { "x-forge-trace-id": traceId },
+            );
+          }
+        }
+
+        if (request.method === "POST" && pathname === "/ai/agents/chat") {
+          const body = (await request.json().catch(() => ({}))) as {
+            agent?: string;
+            provider?: string;
+            model?: string;
+            instructions?: string;
+            purpose?: string;
+            maxSteps?: number;
+            tools?: string[];
+            messages?: unknown[];
+          };
+          if (!Array.isArray(body.messages)) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_DEV_INVOKE_FAILED,
+                    message: "POST /ai/agents/chat requires AI SDK UI messages",
+                    fixHint: "Use @ai-sdk/react useChat with DefaultChatTransport({ api: `${forgeUrl}/ai/agents/chat` }).",
+                  }),
+                ],
+              },
+              400,
+            );
+          }
+
+          const purpose = body.purpose ?? "dev_agent_chat";
+          const auth = await authenticateHeaders(request.headers, authConfig);
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+          const secretRegistry = loadSecretRegistry(workspaceRoot);
+          const bundle = createRuntimeSecretsBundle({
+            store: envStore,
+            registry: secretRegistry,
+            envSchema: null,
+            runtimeKind: "server",
+          });
+          const traceId = generateTraceId();
+          const telemetry = serverState.adapter
+            ? createTelemetryContext({
+                adapter: serverState.adapter,
+                traceId,
+                runtime: { kind: "endpoint", name: "ai.agent.chat" },
+                bufferInTransaction: false,
+                workspaceRoot,
+                sinks: telemetrySinks,
+              })
+            : createNoopTelemetryContext(traceId);
+          let provider = (body.provider ?? "gateway") as ForgeAiProvider;
+          let model = body.model ?? "openai/gpt-5.4";
+
+          try {
+            const namedAgent = await loadNamedAgentDefinition(workspaceRoot, body.agent);
+            provider = (body.provider ?? namedAgent?.provider ?? "gateway") as ForgeAiProvider;
+            model = body.model ?? namedAgent?.model ?? "openai/gpt-5.4";
+            await telemetry.capture("forge.ai.agent.started", {
+              traceId,
+              provider,
+              model,
+              purpose,
+              mode: "stream",
+            });
+            const languageModel = await resolveLanguageModel(provider, model, bundle.secrets);
+            const forgeTools = {
+              ...explicitAgentTools(namedAgent),
+              ...buildAutoAgentTools({
+                workspaceRoot,
+                registry: loadAgentToolRegistry(workspaceRoot),
+                selected: body.tools,
+                adapter: serverState.adapter,
+                tableMap,
+                auth,
+                liveManager,
+                json: options.json,
+                mock: options.mock,
+              }),
+            };
+            const tools = await buildAiSdkTools({
+              tools: forgeTools,
+              provider,
+              model,
+              purpose,
+              traceId,
+              secrets: bundle.secrets,
+              telemetry,
+              env: envStore.snapshot(),
+              auth,
+            });
+            const { ToolLoopAgent, createAgentUIStreamResponse, hasToolCall, stepCountIs } = await import("ai");
+            const stopWhen =
+              namedAgent?.stopWhen?.kind === "toolCall"
+                ? (hasToolCall(namedAgent.stopWhen.toolName) as never)
+                : namedAgent?.stopWhen?.kind === "stepCount"
+                  ? (stepCountIs(body.maxSteps ?? namedAgent.stopWhen.maxSteps) as never)
+                  : (stepCountIs(body.maxSteps ?? namedAgent?.maxSteps ?? 20) as never);
+            const agent = new ToolLoopAgent({
+              model: languageModel as never,
+              instructions:
+                body.instructions ??
+                namedAgent?.instructions ??
+                "You are a ForgeOS app agent. Use available Forge tools when useful.",
+              tools: tools as never,
+              stopWhen,
+            });
+            const response = await createAgentUIStreamResponse({
+              agent: agent as never,
+              uiMessages: body.messages,
+              onStepFinish: async () => {
+                await telemetry.capture("forge.ai.agent.step.completed", {
+                  traceId,
+                  provider,
+                  model,
+                  purpose,
+                });
+              },
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "x-forge-trace-id": traceId,
+              },
+            });
+            await telemetry.capture("forge.ai.agent.completed", {
+              traceId,
+              provider,
+              model,
+              purpose,
+              status: "streaming",
+            });
+            return response;
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            await telemetry.capture("forge.ai.agent.failed", {
+              traceId,
+              provider,
+              model,
+              purpose,
+              status: "failed",
+              error: message,
+            });
+            return jsonResponse(
+              {
+                ok: false,
+                traceId,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_DEV_INVOKE_FAILED,
+                    message,
+                    fixHint: `Inspect with forge ai trace ${traceId} --json or GET /telemetry/traces/${traceId}.`,
+                  }),
+                ],
+              },
+              400,
+              { "x-forge-trace-id": traceId },
+            );
           }
         }
 

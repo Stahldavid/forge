@@ -13,6 +13,7 @@ export const FORGE_BUILDER_APIS: Readonly<Record<string, ForgeKind>> = {
   definePolicies: "policy",
   workflow: "workflow",
   agent: "agent",
+  aiTool: "aiTool",
   telemetryEvent: "telemetryEvent",
 };
 

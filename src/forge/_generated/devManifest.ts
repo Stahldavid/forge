@@ -1,15 +1,30 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=2942c506a8a56aee9d6e9b97750b82004e4478ea2f9b1755e14baa3ef6819c33
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=583d3f2cf7253f1e93026cd5a7d5f5a5c7766a2e604ed1b31c9fdaf2263b7ec1
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
   "entries": [],
-  "generatorVersion": "0.1.0-alpha.2",
-  "inputHash": "40c3f4fed0607afc5336ba86042d08d98714a1f6a44e806fe2da313f04b0f1c9",
+  "generatorVersion": "0.1.0-alpha.3",
+  "inputHash": "080d8b82cb5b29b48c86623268ff5450a9d462ca2d6815e3f59a47608447c06b",
   "routes": [
     {
       "method": "GET",
       "path": "/",
       "purpose": "home"
+    },
+    {
+      "method": "POST",
+      "path": "/ai/agents/chat",
+      "purpose": "ai-agent-chat"
+    },
+    {
+      "method": "POST",
+      "path": "/ai/agents/run",
+      "purpose": "ai-agent-run"
+    },
+    {
+      "method": "GET",
+      "path": "/ai/providers",
+      "purpose": "ai-providers"
     },
     {
       "method": "GET",

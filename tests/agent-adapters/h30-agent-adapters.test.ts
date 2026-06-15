@@ -125,7 +125,7 @@ function contract(): AgentContract {
       },
     ],
     telemetry: { events: ["ticket.created"], sinks: ["local"] },
-    ai: { providers: ["openai"], generations: [] },
+    ai: { providers: ["openai"], generations: [], tools: [], agents: [] },
     client: {
       queries: ["listTickets"],
       commands: ["createTicket"],

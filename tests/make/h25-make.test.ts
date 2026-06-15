@@ -76,6 +76,7 @@ describe("H25 forge make", () => {
       expect(list.ok).toBe(true);
       expect(list.primitives).toContain("resource");
       expect(list.primitives).toContain("ui");
+      expect(list.primitives).toContain("ai-chat");
 
       const explain = await runMakeCommand(
         makeOptions(root, {
@@ -144,6 +145,38 @@ describe("H25 forge make", () => {
       const packageJson = result.plan?.filesToCreate.find((file) => file.file === "web/package.json")?.content;
       expect(packageJson).toContain('"vite": "^6.0.5"');
       expect(packageJson).not.toContain("latest");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("plans an AI chat with agent source and Forge runtime endpoint UI", async () => {
+    const root = scaffoldMakeWorkspace("h25-ai-chat");
+    mkdirSync(join(root, "web", "app"), { recursive: true });
+    try {
+      const result = await runMakeCommand(
+        makeOptions(root, {
+          primitive: "ai-chat",
+          name: "support",
+          dryRun: true,
+        }),
+      );
+
+      expect(result.ok).toBe(true);
+      const files = result.plan?.filesToCreate.map((file) => file.file) ?? [];
+      expect(files).toContain("src/ai/supportAgent.ts");
+      expect(files).toContain("web/components/SupportAiChat.tsx");
+      expect(files).toContain("web/app/support-ai/page.tsx");
+      expect(files).toContain("web/package.json");
+      expect(
+        result.plan?.filesToCreate.find((file) => file.file === "web/components/SupportAiChat.tsx")?.content,
+      ).toContain("/ai/agents/chat");
+      expect(
+        result.plan?.filesToCreate.find((file) => file.file === "web/package.json")?.content,
+      ).toContain("@ai-sdk/react");
+      expect(
+        result.plan?.filesToCreate.find((file) => file.file === "src/ai/supportAgent.ts")?.content,
+      ).toContain("aiTool");
     } finally {
       cleanupWorkspace(root);
     }

@@ -34,6 +34,7 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
       "forge make list --json",
       "forge make explain <primitive> --json",
       "forge make ui --framework vite --dry-run --json",
+      "forge make ai-chat support --dry-run --json",
       "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
       "forge make resource <name> --fields title:text --with-ui --yes",
       "forge make apply <planId>",
@@ -124,6 +125,17 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
         examples: ["forge make ui --framework vite --yes"],
       },
       {
+        name: "ai-chat",
+        summary: "Add a Forge AI agent and React chat component backed by /ai/agents/run.",
+        creates: [
+          "src/ai/<name>Agent.ts",
+          "web/components/<Name>AiChat.tsx",
+          "web/app/<name>-ai/page.tsx when web/app exists",
+        ],
+        modifies: [],
+        examples: ["forge make ai-chat support --yes"],
+      },
+      {
         name: "resource",
         summary: "Add schema, policies, CRUD, queries, liveQuery, optional UI, and tests.",
         creates: [
@@ -155,6 +167,7 @@ export function buildMakeTemplates(): MakeTemplateArtifact {
       { name: "component", sourceKind: "frontend", outputPattern: "web/components/<name>.tsx" },
       { name: "page", sourceKind: "frontend", outputPattern: "web/app/<route>/page.tsx" },
       { name: "ui", sourceKind: "frontend", outputPattern: "web/src/App.tsx" },
+      { name: "ai-chat", sourceKind: "frontend", outputPattern: "web/components/<name>AiChat.tsx" },
       { name: "placeholder-test", sourceKind: "test", outputPattern: "tests/make-generated/<name>.test.ts" },
     ],
   };

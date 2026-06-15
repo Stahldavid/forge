@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=39b5a42a6214087649bb1cc5ff26437a6d01243fefef6a28b6233d983cd1e731
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=53abf93e3b82e98f1dad118f3dc94ecffcc2a39bc531ba5f7acd4f8e78c296e2
 # App Map
 
 ## Data
@@ -12,6 +12,26 @@
 ## Actions
 
 ## Workflows
+
+## AI
+
+### Providers
+
+- anthropic
+- gateway
+- openai
+
+### Generations
+
+- none
+
+### Tools
+
+- none
+
+### Agents
+
+- none
 
 ## Frontend
 

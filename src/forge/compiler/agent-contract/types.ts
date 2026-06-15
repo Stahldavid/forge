@@ -145,6 +145,23 @@ export interface AgentAiInfo {
     file: string;
     purpose?: string;
   }>;
+  tools: Array<{
+    name: string;
+    file: string;
+    description?: string;
+    risk: string;
+    strict: boolean;
+    needsApproval: boolean | "dynamic";
+  }>;
+  agents: Array<{
+    name: string;
+    file: string;
+    provider: string;
+    model: string;
+    instructions?: string;
+    tools: string[];
+    stopWhen: unknown;
+  }>;
 }
 
 export interface AgentClientInfo {
@@ -304,6 +321,30 @@ export interface AgentCapabilityMap {
   };
   entries: AgentCapabilityMapEntry[];
   diagnostics: Diagnostic[];
+}
+
+export interface AgentToolRegistry {
+  schemaVersion: "0.1.0";
+  generatorVersion: string;
+  project: AgentProjectInfo;
+  explicitTools: AgentAiInfo["tools"];
+  autoTools: Array<{
+    name: string;
+    sourceKind: "command" | "query" | "liveQuery";
+    sourceName: string;
+    policy?: string;
+    file: string;
+    http: AgentHttpEndpointInfo;
+    frontend: AgentFrontendUsageInfo;
+    tablesRead: string[];
+    tablesWritten: string[];
+    emits: string[];
+    dependencies: Array<{ table: string; scope: "tenant" | "global" }>;
+    readOnly: boolean;
+    requiresAuth: boolean;
+    execution: "forge-runtime-endpoint";
+  }>;
+  agents: AgentAiInfo["agents"];
 }
 
 export interface AgentPlaybook {

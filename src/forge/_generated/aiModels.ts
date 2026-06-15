@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=753dace69a5973055334425e5ad17fe09ca9a9d0bfa488f3444b267107bd23c3
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=540a13e48caff6d5d20bc6f73964ce6c9801635a85ba7104896092026525c29a
 export const aiModels = {
   "models": [
     {
@@ -14,9 +14,21 @@ export const aiModels = {
       "provider": "anthropic"
     },
     {
+      "model": "claude-sonnet-4.5",
+      "provider": "anthropic"
+    },
+    {
+      "model": "anthropic/claude-sonnet-4.5",
+      "provider": "gateway"
+    },
+    {
       "inputCostPer1kTokensUsd": 0.0025,
       "model": "openai/gpt-4o",
       "outputCostPer1kTokensUsd": 0.01,
+      "provider": "gateway"
+    },
+    {
+      "model": "openai/gpt-5.4",
       "provider": "gateway"
     },
     {
@@ -29,6 +41,10 @@ export const aiModels = {
       "inputCostPer1kTokensUsd": 0.00015,
       "model": "gpt-4o-mini",
       "outputCostPer1kTokensUsd": 0.0006,
+      "provider": "openai"
+    },
+    {
+      "model": "gpt-5.4",
       "provider": "openai"
     }
   ]

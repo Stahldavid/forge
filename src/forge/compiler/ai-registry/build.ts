@@ -4,9 +4,11 @@ import { canonicalJson } from "../primitives/serialize.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type {
   AiGenerationCall,
+  AiAgentDefinition,
   AiModelDefinition,
   AiProviderDefinition,
   AiRegistry,
+  AiToolDefinition,
   ForgeAiProvider,
 } from "../types/ai-registry.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
@@ -15,9 +17,17 @@ import {
   AI_REGISTRY_ANALYZER_VERSION,
   AI_REGISTRY_SCHEMA_VERSION,
 } from "./constants.ts";
-import { parseAiCallsFromSlice } from "./parse.ts";
+import {
+  parseAiAgentMeta,
+  parseAiCallsFromSlice,
+  parseAiToolMeta,
+} from "./parse.ts";
 
 const KNOWN_MODELS: AiModelDefinition[] = [
+  {
+    provider: "openai",
+    model: "gpt-5.4",
+  },
   {
     provider: "openai",
     model: "gpt-4o",
@@ -32,6 +42,10 @@ const KNOWN_MODELS: AiModelDefinition[] = [
   },
   {
     provider: "anthropic",
+    model: "claude-sonnet-4.5",
+  },
+  {
+    provider: "anthropic",
     model: "claude-3-5-sonnet-20241022",
     inputCostPer1kTokensUsd: 0.003,
     outputCostPer1kTokensUsd: 0.015,
@@ -41,6 +55,14 @@ const KNOWN_MODELS: AiModelDefinition[] = [
     model: "claude-3-5-haiku-20241022",
     inputCostPer1kTokensUsd: 0.0008,
     outputCostPer1kTokensUsd: 0.004,
+  },
+  {
+    provider: "gateway",
+    model: "openai/gpt-5.4",
+  },
+  {
+    provider: "gateway",
+    model: "anthropic/claude-sonnet-4.5",
   },
   {
     provider: "gateway",
@@ -123,11 +145,38 @@ export function buildAiRegistry(
   classified: ClassifiedPackage[],
 ): AiRegistry {
   const generations: AiGenerationCall[] = [];
+  const tools: AiToolDefinition[] = [];
+  const agents: AiAgentDefinition[] = [];
 
   for (const symbol of appGraph.symbols) {
     const sourceSlice =
       typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
     if (sourceSlice.length === 0) continue;
+
+    if (symbol.kind === "aiTool") {
+      const meta = parseAiToolMeta(sourceSlice);
+      tools.push({
+        name: symbol.name,
+        file: symbol.file,
+        ...(meta.description ? { description: meta.description } : {}),
+        risk: meta.risk,
+        strict: meta.strict,
+        needsApproval: meta.needsApproval,
+      });
+    }
+
+    if (symbol.kind === "agent") {
+      const meta = parseAiAgentMeta(sourceSlice);
+      agents.push({
+        name: symbol.name,
+        file: symbol.file,
+        provider: meta.provider ?? "gateway",
+        model: meta.model ?? "unknown",
+        ...(meta.instructions ? { instructions: meta.instructions } : {}),
+        tools: meta.tools,
+        stopWhen: meta.stopWhen,
+      });
+    }
 
     for (const call of parseAiCallsFromSlice(sourceSlice)) {
       generations.push({
@@ -145,6 +194,16 @@ export function buildAiRegistry(
     if (fileCmp !== 0) return fileCmp;
     return a.method.localeCompare(b.method);
   });
+  tools.sort((a, b) => {
+    const nameCmp = a.name.localeCompare(b.name);
+    if (nameCmp !== 0) return nameCmp;
+    return a.file.localeCompare(b.file);
+  });
+  agents.sort((a, b) => {
+    const nameCmp = a.name.localeCompare(b.name);
+    if (nameCmp !== 0) return nameCmp;
+    return a.file.localeCompare(b.file);
+  });
 
   return {
     schemaVersion: AI_REGISTRY_SCHEMA_VERSION,
@@ -158,6 +217,8 @@ export function buildAiRegistry(
     ),
     providers: buildProviders(classified),
     generations,
+    tools,
+    agents,
     diagnostics: [],
   };
 }

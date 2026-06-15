@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=9d1e0a742596b9f2f862647e9e591c3f873db0fabb10458989247005a96efec1
+// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=1611635edf59c122b013ba76c85bd333ab3b30b289aaea04a9074f9438782a50
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -69,6 +69,7 @@ forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge inspect agent-tools --json
 forge deps inspect <package> --json
 forge deps api <package> <symbol> --json
 forge deps trace <package> --json
@@ -82,6 +83,9 @@ forge doctor
 forge doctor windows --json
 forge setup windows --json
 forge agent print-context --json
+forge ai tools --json
+forge ai agents --json
+forge ai trace <traceId> --json
 forge verify --smoke
 forge verify --standard
 forge verify --strict
@@ -102,6 +106,21 @@ Tenant-scoped tables:
 - AI_GATEWAY_API_KEY (required)
 - ANTHROPIC_API_KEY (required)
 - OPENAI_API_KEY (required)
+
+## AI Tools And Agents
+
+- AI SDK engine: Vercel AI SDK v6.
+- Forge layer: generated registry, runtime rules, telemetry, secrets, tenant/auth context, and agent contract.
+- Use `ctx.agent.run` or `ctx.ai.runAgent` only in actions, workflows, endpoints, and server code.
+- Do not create custom tool loops; use Forge tools and AI SDK `ToolLoopAgent` through the Forge runtime.
+
+Tools:
+
+- none
+
+Agents:
+
+- none
 
 ## Auth
 
@@ -158,6 +177,7 @@ Use:
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
 forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
 forge make ui --framework vite --dry-run --json
+forge make ai-chat support --dry-run --json
 ```
 
 Review the plan before applying when the resource touches schema or policies.
@@ -225,6 +245,19 @@ forge repair plan --from-last-test-run --write
 ```
 
 Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
+
+### Add AI tools or agents
+
+Use:
+
+```bash
+forge generate
+forge inspect all --json
+forge ai check --json
+forge ai trace <traceId> --json
+```
+
+Define tools with `aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })` and agents with `agent({ provider, model, instructions, tools, stopWhen })`. Execute agents with `ctx.agent.run` or `ctx.ai.runAgent` only from actions, workflows, endpoints, or server code. In dev, POST `/ai/agents/run` returns JSON for automation and POST `/ai/agents/chat` returns an AI SDK UIMessage stream for React `useChat`; both accept `agent: "<exportedAgentName>"` and use generated auto-tools from `agentTools.json`.
 
 ### Export agent adapters
 

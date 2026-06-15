@@ -46,6 +46,7 @@ import type {
   AgentHttpEndpointInfo,
   AgentIntegrationInfo,
   AgentRuntimeRule,
+  AgentToolRegistry,
   AgentPlaybook,
 } from "./types.ts";
 
@@ -78,9 +79,11 @@ export interface AgentContractInput {
 export interface AgentContractArtifacts {
   contract: AgentContract;
   capabilityMap: AgentCapabilityMap;
+  toolRegistry: AgentToolRegistry;
   agentsMd: string;
   appMapMd: string;
   capabilityMapMd: string;
+  agentToolsMd: string;
   runtimeRulesMd: string;
   operationPlaybooksMd: string;
   agentQuickstartMd: string;
@@ -245,26 +248,26 @@ function runtimeRules(): AgentRuntimeRule[] {
     {
       context: "command",
       allowed: ["ctx.db writes", "ctx.emit", "ctx.telemetry buffered events"],
-      forbidden: ["network packages", "ctx.secrets", "ctx.ai", "process.env", "filesystem access"],
+      forbidden: ["network packages", "ctx.secrets", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "process.env", "filesystem access"],
     },
     {
       context: "query",
       allowed: ["ctx.db reads", "ctx.telemetry buffered events"],
-      forbidden: ["insert/update/delete", "ctx.emit", "ctx.secrets", "ctx.ai", "network integrations"],
+      forbidden: ["insert/update/delete", "ctx.emit", "ctx.secrets", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "network integrations"],
     },
     {
       context: "liveQuery",
       allowed: ["ctx.db reads", "tenant-scoped subscriptions"],
-      forbidden: ["insert/update/delete", "ctx.emit", "ctx.secrets", "ctx.ai", "network integrations"],
+      forbidden: ["insert/update/delete", "ctx.emit", "ctx.secrets", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "network integrations"],
     },
     {
       context: "action",
-      allowed: ["ctx.secrets", "integrations", "ctx.ai", "ctx.db reads/writes", "network packages"],
+      allowed: ["ctx.secrets", "integrations", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "AI SDK tools", "ctx.db reads/writes", "network packages"],
       forbidden: ["uncommitted transactional side effects"],
     },
     {
       context: "workflow",
-      allowed: ["durable steps", "ctx.secrets", "integrations", "ctx.ai", "retries"],
+      allowed: ["durable steps", "ctx.secrets", "integrations", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "AI SDK ToolLoopAgent", "retries"],
       forbidden: ["non-idempotent step behavior without guards"],
     },
   ];
@@ -318,6 +321,28 @@ function playbooks(): AgentPlaybook[] {
         "Run forge live debug <subscriptionId> --json when a subscription id is available.",
         "Check that _forge_live_invalidations has revisions newer than the last sent snapshot.",
         "Reconnect with Last-Event-ID or ?lastRevision=<revision> to verify resume behavior.",
+      ],
+    },
+    {
+      title: "Add an AI tool",
+      steps: [
+        "Add a server-only file under src/ai or src/tools.",
+        "Export aiTool({ description, inputSchema, outputSchema, risk, needsApproval, handler }).",
+        "Use zod schemas for inputSchema and outputSchema.",
+        "Access secrets through the tool context, not process.env.",
+        "Mark destructive or external side effects with risk and needsApproval.",
+        "Run forge generate and inspect src/forge/_generated/aiRegistry.json.",
+      ],
+    },
+    {
+      title: "Add an agent",
+      steps: [
+        "Export agent({ provider, model, instructions, tools, stopWhen }) from server-only source.",
+        "Prefer AI SDK ToolLoopAgent semantics through ctx.agent.run or ctx.ai.runAgent instead of custom loops.",
+        "Use stopWhen with stepCount or terminal tool calls to prevent unbounded loops.",
+        "Run agents only in actions, workflows, endpoints, or server code.",
+        "Run forge inspect all --json and confirm agentContract.ai.agents lists the agent.",
+        "Use forge ai trace <traceId> --json to inspect agent runs and tool calls.",
       ],
     },
     {
@@ -429,6 +454,7 @@ function playbooks(): AgentPlaybook[] {
       title: "Add or update frontend",
       steps: [
         "Run forge make ui --framework vite --dry-run --json when the app does not have a web root.",
+        "Run forge make ai-chat support --dry-run --json to add a chat surface backed by /ai/agents/chat streaming and /ai/agents/run JSON automation.",
         "Use web/lib/forge.ts as the generated client bridge.",
         "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
         "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
@@ -654,6 +680,72 @@ function buildCapabilityMap(contract: AgentContract): AgentCapabilityMap {
     },
     entries,
     diagnostics,
+  };
+}
+
+function autoToolName(kind: "command" | "query" | "liveQuery", name: string): string {
+  return `forge_${kind}_${name}`.replace(/[^A-Za-z0-9_$]/g, "_");
+}
+
+function buildAgentToolRegistry(contract: AgentContract): AgentToolRegistry {
+  const autoTools: AgentToolRegistry["autoTools"] = [
+    ...contract.commands.map((command) => ({
+      name: autoToolName("command", command.name),
+      sourceKind: "command" as const,
+      sourceName: command.name,
+      ...(command.policy ? { policy: command.policy } : {}),
+      file: command.file,
+      http: command.http,
+      frontend: command.frontend,
+      tablesRead: command.tablesRead,
+      tablesWritten: command.tablesWritten,
+      emits: command.emits,
+      dependencies: [],
+      readOnly: false,
+      requiresAuth: command.policy !== undefined && command.policy !== "public",
+      execution: "forge-runtime-endpoint" as const,
+    })),
+    ...contract.queries.map((query) => ({
+      name: autoToolName("query", query.name),
+      sourceKind: "query" as const,
+      sourceName: query.name,
+      ...(query.policy ? { policy: query.policy } : {}),
+      file: query.file,
+      http: query.http,
+      frontend: query.frontend,
+      tablesRead: query.tablesRead,
+      tablesWritten: [],
+      emits: [],
+      dependencies: [],
+      readOnly: true,
+      requiresAuth: query.policy !== undefined && query.policy !== "public",
+      execution: "forge-runtime-endpoint" as const,
+    })),
+    ...contract.liveQueries.map((liveQuery) => ({
+      name: autoToolName("liveQuery", liveQuery.name),
+      sourceKind: "liveQuery" as const,
+      sourceName: liveQuery.name,
+      ...(liveQuery.policy ? { policy: liveQuery.policy } : {}),
+      file: liveQuery.file,
+      http: liveQuery.http,
+      frontend: liveQuery.frontend,
+      tablesRead: liveQuery.tablesRead,
+      tablesWritten: [],
+      emits: [],
+      dependencies: liveQuery.dependencies,
+      readOnly: true,
+      requiresAuth: liveQuery.policy !== undefined && liveQuery.policy !== "public",
+      execution: "forge-runtime-endpoint" as const,
+    })),
+  ].sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    schemaVersion: "0.1.0",
+    generatorVersion: GENERATOR_VERSION,
+    project: contract.project,
+    explicitTools: contract.ai.tools,
+    autoTools,
+    agents: contract.ai.agents,
   };
 }
 
@@ -952,6 +1044,23 @@ export function buildAgentContractArtifacts(
           ...(generation.purpose ? { purpose: generation.purpose } : {}),
         }))
         .sort((a, b) => `${a.file}:${a.method}:${a.model}`.localeCompare(`${b.file}:${b.method}:${b.model}`)),
+      tools: input.aiRegistry.tools.map((tool) => ({
+        name: tool.name,
+        file: tool.file,
+        ...(tool.description ? { description: tool.description } : {}),
+        risk: tool.risk,
+        strict: tool.strict,
+        needsApproval: tool.needsApproval,
+      })),
+      agents: input.aiRegistry.agents.map((agent) => ({
+        name: agent.name,
+        file: agent.file,
+        provider: agent.provider,
+        model: agent.model,
+        ...(agent.instructions ? { instructions: agent.instructions } : {}),
+        tools: agent.tools,
+        stopWhen: agent.stopWhen,
+      })),
     },
     client: {
       queries: input.clientManifest.queries,
@@ -1039,14 +1148,17 @@ export function buildAgentContractArtifacts(
     : null;
   const userNotes = extractUserNotes(existingAgents);
   const agentsMd = renderAgentsMd(contract, userNotes);
+  const toolRegistry = buildAgentToolRegistry(contract);
   const capabilityMap = buildCapabilityMap(contract);
   const capabilityMapMd = renderCapabilityMapMd(capabilityMap);
+  const agentToolsMd = renderAgentToolsMd(toolRegistry);
   const appMapMd = renderAppMapMd(contract);
   const runtimeRulesMd = renderRuntimeRulesMd(contract.rules);
   const operationPlaybooksMd = renderOperationPlaybooksMd(contract.playbooks);
   const agentQuickstartMd = renderAgentQuickstartMd();
   const diagnostics = scanAgentContractForLeaks(contract, [
     agentsMd,
+    agentToolsMd,
     capabilityMapMd,
     appMapMd,
     runtimeRulesMd,
@@ -1057,9 +1169,11 @@ export function buildAgentContractArtifacts(
   return {
     contract,
     capabilityMap,
+    toolRegistry,
     agentsMd,
     appMapMd,
     capabilityMapMd,
+    agentToolsMd,
     runtimeRulesMd,
     operationPlaybooksMd,
     agentQuickstartMd,
@@ -1100,6 +1214,15 @@ export function serializeCapabilityMapTs(capabilityMap: AgentCapabilityMap): str
   return `export const capabilityMap = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+export function serializeAgentToolRegistryJson(registry: AgentToolRegistry): string {
+  return serializeCanonical(registry);
+}
+
+export function serializeAgentToolRegistryTs(registry: AgentToolRegistry): string {
+  const parsed = JSON.parse(serializeAgentToolRegistryJson(registry)) as unknown;
+  return `export const agentTools = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
 function renderAgentsMd(contract: AgentContract, userNotes: string): string {
   const tenantTables = contract.data.tables
     .filter((table) => table.tenantScoped)
@@ -1108,6 +1231,12 @@ function renderAgentsMd(contract: AgentContract, userNotes: string): string {
     `${policy.name}: ${policy.roles.length > 0 ? policy.roles.join(", ") : policy.kind}`,
   );
   const secrets = contract.secrets.map((secret) => `${secret.name}${secret.required ? " (required)" : " (optional)"}`);
+  const aiTools = contract.ai.tools.map((tool) =>
+    `${tool.name}: ${tool.description ?? "no description"} (${tool.risk}${tool.needsApproval ? ", approval" : ""})`,
+  );
+  const aiAgents = contract.ai.agents.map((agent) =>
+    `${agent.name}: ${agent.provider}/${agent.model} with ${agent.tools.length > 0 ? agent.tools.join(", ") : "no tools"}`,
+  );
 
   return normalizeNewlines(`# AGENTS.md
 
@@ -1179,6 +1308,7 @@ forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge inspect agent-tools --json
 forge deps inspect <package> --json
 forge deps api <package> <symbol> --json
 forge deps trace <package> --json
@@ -1192,6 +1322,9 @@ forge doctor
 forge doctor windows --json
 forge setup windows --json
 forge agent print-context --json
+forge ai tools --json
+forge ai agents --json
+forge ai trace <traceId> --json
 forge verify --smoke
 forge verify --standard
 forge verify --strict
@@ -1210,6 +1343,21 @@ ${renderList(policies)}
 ## Secrets
 
 ${renderList(secrets)}
+
+## AI Tools And Agents
+
+- AI SDK engine: Vercel AI SDK v6.
+- Forge layer: generated registry, runtime rules, telemetry, secrets, tenant/auth context, and agent contract.
+- Use \`ctx.agent.run\` or \`ctx.ai.runAgent\` only in actions, workflows, endpoints, and server code.
+- Do not create custom tool loops; use Forge tools and AI SDK \`ToolLoopAgent\` through the Forge runtime.
+
+Tools:
+
+${renderList(aiTools)}
+
+Agents:
+
+${renderList(aiAgents)}
 
 ## Auth
 
@@ -1269,6 +1417,7 @@ Use:
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
 forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
 forge make ui --framework vite --dry-run --json
+forge make ai-chat support --dry-run --json
 \`\`\`
 
 Review the plan before applying when the resource touches schema or policies.
@@ -1336,6 +1485,19 @@ forge repair plan --from-last-test-run --write
 \`\`\`
 
 Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
+
+### Add AI tools or agents
+
+Use:
+
+\`\`\`bash
+forge generate
+forge inspect all --json
+forge ai check --json
+forge ai trace <traceId> --json
+\`\`\`
+
+Define tools with \`aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })\` and agents with \`agent({ provider, model, instructions, tools, stopWhen })\`. Execute agents with \`ctx.agent.run\` or \`ctx.ai.runAgent\` only from actions, workflows, endpoints, or server code. In dev, POST \`/ai/agents/run\` returns JSON for automation and POST \`/ai/agents/chat\` returns an AI SDK UIMessage stream for React \`useChat\`; both accept \`agent: "<exportedAgentName>"\` and use generated auto-tools from \`agentTools.json\`.
 
 ### Export agent adapters
 
@@ -1472,6 +1634,48 @@ function renderAppMapMd(contract: AgentContract): string {
   lines.push("## Workflows", "");
   for (const workflow of contract.workflows) {
     lines.push(`### ${workflow.name}`, `Trigger: ${workflow.trigger ?? "manual"}`, "Steps:", ...renderList(workflow.steps).split("\n"), "");
+  }
+
+  lines.push("## AI", "");
+  lines.push("### Providers", "", ...renderList(contract.ai.providers).split("\n"), "");
+  lines.push("### Generations", "");
+  for (const generation of contract.ai.generations) {
+    lines.push(
+      `- ${generation.method}: ${generation.provider}/${generation.model} in ${generation.file}${generation.purpose ? ` (${generation.purpose})` : ""}`,
+    );
+  }
+  if (contract.ai.generations.length === 0) {
+    lines.push("- none");
+  }
+  lines.push("", "### Tools", "");
+  for (const tool of contract.ai.tools) {
+    lines.push(
+      `#### ${tool.name}`,
+      `File: ${tool.file}`,
+      `Risk: ${tool.risk}`,
+      `Strict: ${tool.strict ? "yes" : "no"}`,
+      `Needs approval: ${String(tool.needsApproval)}`,
+      `Description: ${tool.description ?? "none"}`,
+      "",
+    );
+  }
+  if (contract.ai.tools.length === 0) {
+    lines.push("- none", "");
+  }
+  lines.push("### Agents", "");
+  for (const agent of contract.ai.agents) {
+    lines.push(
+      `#### ${agent.name}`,
+      `File: ${agent.file}`,
+      `Model: ${agent.provider}/${agent.model}`,
+      "Tools:",
+      ...renderList(agent.tools).split("\n"),
+      `Stop when: ${JSON.stringify(agent.stopWhen)}`,
+      "",
+    );
+  }
+  if (contract.ai.agents.length === 0) {
+    lines.push("- none", "");
   }
 
   lines.push("## Frontend", "");
@@ -1634,6 +1838,70 @@ function renderCapabilityMapMd(capabilityMap: AgentCapabilityMap): string {
   return normalizeNewlines(lines.join("\n"));
 }
 
+function renderAgentToolsMd(registry: AgentToolRegistry): string {
+  const lines = [
+    "# Agent Tools",
+    "",
+    `Project: ${registry.project.name}`,
+    "",
+    "## Explicit AI Tools",
+    "",
+  ];
+
+  for (const tool of registry.explicitTools) {
+    lines.push(
+      `### ${tool.name}`,
+      `File: ${tool.file}`,
+      `Risk: ${tool.risk}`,
+      `Strict: ${tool.strict ? "yes" : "no"}`,
+      `Needs approval: ${String(tool.needsApproval)}`,
+      `Description: ${tool.description ?? "none"}`,
+      "",
+    );
+  }
+  if (registry.explicitTools.length === 0) {
+    lines.push("- none", "");
+  }
+
+  lines.push("## Auto Tools From Forge Runtime", "");
+  for (const tool of registry.autoTools) {
+    lines.push(
+      `### ${tool.name}`,
+      `Source: ${tool.sourceKind} ${tool.sourceName}`,
+      `File: ${tool.file}`,
+      `HTTP: ${tool.http.method} ${tool.http.path}`,
+      `Policy: ${tool.policy ?? "none"}`,
+      `Requires auth: ${tool.requiresAuth ? "yes" : "no"}`,
+      `Read-only: ${tool.readOnly ? "yes" : "no"}`,
+      `Frontend hook: \`${tool.frontend.hook}\``,
+      `Reads: ${tool.tablesRead.length > 0 ? tool.tablesRead.join(", ") : "none"}`,
+      `Writes: ${tool.tablesWritten.length > 0 ? tool.tablesWritten.join(", ") : "none"}`,
+      `Emits: ${tool.emits.length > 0 ? tool.emits.join(", ") : "none"}`,
+      "",
+    );
+  }
+  if (registry.autoTools.length === 0) {
+    lines.push("- none", "");
+  }
+
+  lines.push("## Agents", "");
+  for (const agent of registry.agents) {
+    lines.push(
+      `### ${agent.name}`,
+      `File: ${agent.file}`,
+      `Model: ${agent.provider}/${agent.model}`,
+      `Tools: ${agent.tools.length > 0 ? agent.tools.join(", ") : "none"}`,
+      `Stop when: ${JSON.stringify(agent.stopWhen)}`,
+      "",
+    );
+  }
+  if (registry.agents.length === 0) {
+    lines.push("- none", "");
+  }
+
+  return normalizeNewlines(lines.join("\n"));
+}
+
 function renderOperationPlaybooksMd(playbookEntries: AgentPlaybook[]): string {
   const lines = ["# Operation Playbooks", ""];
   for (const playbook of playbookEntries) {
@@ -1660,7 +1928,9 @@ forge dev
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge inspect agent-tools --json
 forge check --json
+forge ai trace <traceId> --json
 \`\`\`
 
 Never edit:

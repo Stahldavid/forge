@@ -351,6 +351,166 @@ export default function ${pascal}Page() {
 `;
 }
 
+export function renderAiAgentFile(name: string): string {
+  const camel = camelCase(name);
+  const pascal = pascalCase(name);
+  return `import { agent, aiTool } from "forge/server";
+import { z } from "zod";
+
+export const ${camel}ProjectContext = aiTool({
+  description: "Return concise project context for the ${pascal} agent.",
+  inputSchema: z.object({
+    topic: z.string().optional(),
+  }),
+  outputSchema: z.object({
+    context: z.string(),
+  }),
+  risk: "read",
+  strict: true,
+  needsApproval: false,
+  handler: async (_ctx, input) => ({
+    context: \`ForgeOS project context for \${input.topic ?? "the current request"}.\`,
+  }),
+});
+
+export const ${camel}Agent = agent({
+  provider: "gateway",
+  model: "openai/gpt-5.4",
+  instructions: "You are a ForgeOS app agent. Use Forge tools before answering when runtime data is needed.",
+  tools: { ${camel}ProjectContext },
+  stopWhen: { kind: "stepCount", maxSteps: 8 },
+});
+`;
+}
+
+export function renderAiChatComponent(name: string): string {
+  const pascal = pascalCase(name);
+  return `"use client";
+
+import { DefaultChatTransport } from "ai";
+import { useChat } from "@ai-sdk/react";
+import { FormEvent, useMemo, useState } from "react";
+import { forgeUrl } from "../lib/forge";
+
+export function ${pascal}AiChat() {
+  const [input, setInput] = useState("");
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: \`\${forgeUrl}/ai/agents/chat\`,
+        headers: {
+          "x-forge-user-id": "dev-user",
+          "x-forge-tenant-id": "dev-tenant",
+          "x-forge-role": "owner",
+        },
+        body: {
+          agent: "${camelCase(name)}Agent",
+          provider: "gateway",
+          model: "openai/gpt-5.4",
+          instructions: "Answer as a ForgeOS app agent. Use available Forge tools when useful.",
+          maxSteps: 8,
+        },
+      }),
+    [],
+  );
+  const { messages, sendMessage, status, error, addToolApprovalResponse } = useChat({
+    transport,
+  });
+  const busy = status === "submitted" || status === "streaming";
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const prompt = input.trim();
+    if (!prompt || busy) return;
+    setInput("");
+    sendMessage({ text: prompt });
+  }
+
+  return (
+    <section>
+      <div>
+        {messages.map((message) => (
+          <article key={message.id}>
+            <strong>{message.role}</strong>
+            {message.parts.map((part, index) => {
+              if (part.type === "text") {
+                return <p key={index}>{part.text}</p>;
+              }
+              if (part.type.startsWith("tool-")) {
+                const toolPart = part as typeof part & {
+                  input?: unknown;
+                  output?: unknown;
+                  approval?: { id: string; state: string };
+                };
+                return (
+                  <div key={index}>
+                    <code>{part.type.replace(/^tool-/, "")}</code>
+                    {toolPart.approval?.state === "approval-requested" ? (
+                      <span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            addToolApprovalResponse({
+                              id: toolPart.approval!.id,
+                              approved: true,
+                            })
+                          }
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            addToolApprovalResponse({
+                              id: toolPart.approval!.id,
+                              approved: false,
+                            })
+                          }
+                        >
+                          Deny
+                        </button>
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </article>
+        ))}
+      </div>
+      <form onSubmit={submit}>
+        <input
+          value={input}
+          onChange={(event) => setInput(event.currentTarget.value)}
+          placeholder="Ask the Forge agent"
+        />
+        <button type="submit" disabled={busy}>{busy ? "Running" : "Send"}</button>
+      </form>
+      {error ? <p>{error.message}</p> : null}
+    </section>
+  );
+}
+`;
+}
+
+export function renderAiChatPage(name: string): string {
+  const pascal = pascalCase(name);
+  return `"use client";
+
+import { ${pascal}AiChat } from "../../components/${pascal}AiChat";
+
+export default function ${pascal}AiPage() {
+  return (
+    <main>
+      <h1>${titleCase(name)} AI</h1>
+      <${pascal}AiChat />
+    </main>
+  );
+}
+`;
+}
+
 export function renderWebBridge(): string {
   return `export const forgeUrl =
   import.meta.env.VITE_FORGE_URL ?? "http://127.0.0.1:3765";
@@ -476,8 +636,36 @@ export function renderVitePackage(appName: string): string {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "ai": "^6.0.0",
     "vite": "^6.0.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.3"
+  }
+}
+`;
+}
+
+export function renderNextAiPackage(appName: string): string {
+  return `{
+  "name": "${kebabCase(appName)}-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^3.0.0",
+    "ai": "^6.0.0",
+    "next": "^15.5.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
