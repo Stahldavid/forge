@@ -14,13 +14,16 @@ cd notes-app
 npm run dev
 ```
 
-Install ForgeOS globally or run it once with `npx`:
+Install ForgeOS globally:
 
 ```bash
 npm install -g forgeos@alpha
 forge --version
+```
 
-# or
+Or run once with `npx`:
+
+```bash
 npx forgeos@alpha --help
 ```
 

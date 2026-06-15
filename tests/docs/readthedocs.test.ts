@@ -42,6 +42,9 @@ describe("ReadTheDocs documentation", () => {
     const mkdocs = read("mkdocs.yml");
     expect(mkdocs).toContain("name: material");
     expect(mkdocs).toContain("mermaid");
+    expect(mkdocs).toContain("pymdownx.highlight");
+    expect(mkdocs).toContain("pymdownx.superfences");
+    expect(mkdocs).toContain("tables");
     const requirements = read("docs/requirements.txt");
     expect(requirements).toContain("mkdocs-material");
     expect(requirements).toContain("pymdown-extensions");
