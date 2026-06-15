@@ -36,6 +36,7 @@
     "release": "changeset publish --tag alpha",
     "release:pack": "npm pack --dry-run",
     "release:smoke": "node scripts/smoke-packed-package.mjs",
+    "release:publish-alpha": "node scripts/publish-trusted-alpha.mjs",
     "release:publish-local-alpha": "node scripts/publish-local-alpha.mjs",
     "field:test": "node scripts/field-test-forgeos.mjs",
     "forge": "node ./bin/forge.mjs",

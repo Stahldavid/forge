@@ -65,6 +65,11 @@ try {
   });
 
   if (result.status !== 0) {
+    if (!dryRun) {
+      console.error(
+        "Local npm publish failed. For ForgeOS releases, prefer `npm run release:publish-alpha` so npm Trusted Publisher/OIDC handles authentication.",
+      );
+    }
     process.exit(result.status ?? 1);
   }
 

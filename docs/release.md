@@ -5,8 +5,9 @@ ForgeOS is published to npm as `forgeos`.
 ## Alpha Release
 
 ```bash
+npm run release:publish-local-alpha -- --dry-run
 npm run release:smoke
-npm run release
+npm run release:publish-alpha
 ```
 
 The package uses the `alpha` dist-tag while the project is in private/public MVP hardening.
@@ -19,7 +20,7 @@ npm Trusted Publishing should point to:
 - Workflow file: `publish.yml`
 - Package: `forgeos`
 
-The GitHub workflow uses OIDC provenance for npm publishing. Local emergency alpha publishing uses the repository script and disables provenance because OIDC is only available in CI.
+The GitHub workflow uses OIDC provenance for npm publishing. Local publish is intentionally limited to tarball validation by default because the npm package is configured for Trusted Publisher plus strict 2FA/token settings. `npm run release:publish-alpha` verifies the version is not already published, checks that the current commit is pushed, dispatches `publish.yml`, and watches the run.
 
 ## Before a Public Tag
 

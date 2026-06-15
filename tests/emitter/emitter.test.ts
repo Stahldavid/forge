@@ -27,8 +27,11 @@ import {
 
 const GOLDEN_DIR = join(import.meta.dir, "fixtures", "golden");
 
-function readGolden(name: string): string {
-  return readFileSync(join(GOLDEN_DIR, name), "utf8");
+function readGolden(name: string, generatorVersion: string): string {
+  return readFileSync(join(GOLDEN_DIR, name), "utf8").replaceAll(
+    "__GENERATOR_VERSION__",
+    generatorVersion,
+  );
 }
 
 describe("Deterministic Emitter", () => {
@@ -39,10 +42,18 @@ describe("Deterministic Emitter", () => {
       inputHash: plan.lock.inputHash,
     };
 
-    expect(render(plan.files[0]!, context)).toBe(readGolden("appGraph.ts"));
-    expect(render(plan.files[1]!, context)).toBe(readGolden("appGraph.json"));
-    expect(render(plan.files[2]!, context)).toBe(readGolden("packageGraph.ts"));
-    expect(render(plan.files[3]!, context)).toBe(readGolden("packageGraph.json"));
+    expect(render(plan.files[0]!, context)).toBe(
+      readGolden("appGraph.ts", context.generatorVersion),
+    );
+    expect(render(plan.files[1]!, context)).toBe(
+      readGolden("appGraph.json", context.generatorVersion),
+    );
+    expect(render(plan.files[2]!, context)).toBe(
+      readGolden("packageGraph.ts", context.generatorVersion),
+    );
+    expect(render(plan.files[3]!, context)).toBe(
+      readGolden("packageGraph.json", context.generatorVersion),
+    );
 
     const barrelBody = buildBarrelIndexBody(plan.files.map((file) => file.path));
     const barrelFile = {
@@ -50,8 +61,12 @@ describe("Deterministic Emitter", () => {
       content: barrelBody,
       contentHash: hashStable(barrelBody),
     };
-    expect(render(barrelFile, context)).toBe(readGolden("index.ts"));
-    expect(serializeForgeLock(plan.lock)).toBe(readGolden("forge.lock"));
+    expect(render(barrelFile, context)).toBe(
+      readGolden("index.ts", context.generatorVersion),
+    );
+    expect(serializeForgeLock(plan.lock)).toBe(
+      readGolden("forge.lock", context.generatorVersion),
+    );
   });
 
   test("write mode writes only changed files and forge.lock last", async () => {

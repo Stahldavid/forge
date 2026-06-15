@@ -323,7 +323,7 @@ For the first prerelease publish, use the alpha dist-tag explicitly:
 
 ```bash
 npm run release:publish-local-alpha -- --dry-run
-npm run release:publish-local-alpha -- --yes
+npm run release:publish-alpha
 ```
 
 The normal path is:
@@ -346,7 +346,7 @@ Configure npm Trusted Publisher for package `forgeos`:
 | Environment | blank |
 | Allowed action | `npm publish` |
 
-Do not add `NPM_TOKEN` for normal releases. Alpha releases publish with the `alpha` dist-tag so prerelease builds do not become `latest` accidentally. The first manual package creation uses `release:publish-local-alpha`, which publishes from a temporary hardlink-free staging copy and disables provenance because local shells do not have a GitHub OIDC provider. The workflow uses `id-token: write`, Node 24/npm 11+, and provenance for subsequent releases. `npm run release:smoke` runs `npm pack`, creates a fresh app with the packed tarball, installs dependencies, runs `forge dev --once --json`, and verifies the app smoke path.
+Do not add `NPM_TOKEN` for normal releases. Alpha releases publish with the `alpha` dist-tag so prerelease builds do not become `latest` accidentally. Use `release:publish-local-alpha -- --dry-run` only to validate the staged tarball locally; real npm publishing should go through `release:publish-alpha`, which dispatches `publish.yml` and uses npm OIDC Trusted Publisher. The workflow checks whether the package version already exists before installing dependencies or running tests, then uses `id-token: write`, Node 24/npm 11+, and provenance for the actual publish. `npm run release:smoke` runs `npm pack`, creates a fresh app with the packed tarball, installs dependencies, runs `forge dev --once --json`, and verifies the app smoke path.
 
 ## Milestone History
 

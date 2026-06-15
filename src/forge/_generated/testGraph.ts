@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.2 input=58a72e10cb9647fa0d43ab28ebda1633d68b0cad8579c6a19686b78b101febbd content=1b356a3b987e2cabc58c4d5ffcacc33f5c6fc74a4d290f2b296146dd1600530e
+// @forge-generated generator=0.1.0-alpha.2 input=f450ec7161e279f2460d497d4129943c5786d075c3be87365a6f1f0ab77a3fcd content=89a492019fa70f0d9c7d5bec8dd7fd752a859ea0ccb8db2dd1ce22700fbe86c8
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.2",
-  "inputHash": "58a72e10cb9647fa0d43ab28ebda1633d68b0cad8579c6a19686b78b101febbd",
+  "inputHash": "f450ec7161e279f2460d497d4129943c5786d075c3be87365a6f1f0ab77a3fcd",
   "schemaVersion": "0.1.0",
   "tests": [
     {
