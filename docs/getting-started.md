@@ -17,6 +17,16 @@ npx forgeos@alpha --help
 
 ## Create a Minimal App
 
+Recommended public quickstart:
+
+```bash
+npm create forge-app@alpha notes-app -- --template minimal-web
+cd notes-app
+npm run dev
+```
+
+Equivalent explicit ForgeOS command:
+
 ```bash
 forge new notes-app \
   --template minimal-web \

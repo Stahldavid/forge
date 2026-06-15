@@ -1,0 +1,5 @@
+# Package contents are primarily controlled by package.json "files".
+node_modules/
+.git/
+*.tgz
+npm-debug.log*

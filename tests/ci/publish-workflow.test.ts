@@ -19,6 +19,18 @@ describe("npm publish workflow", () => {
     expect(pkg.scripts?.release).toBe("changeset publish --tag alpha");
     expect(pkg.scripts?.["release:smoke"]).toBe("node scripts/smoke-packed-package.mjs");
 
+    const createPkg = JSON.parse(
+      readFileSync(join(process.cwd(), "packages", "create-forge-app", "package.json"), "utf8"),
+    ) as {
+      name?: string;
+      bin?: Record<string, string>;
+      publishConfig?: Record<string, unknown>;
+    };
+    expect(createPkg.name).toBe("create-forge-app");
+    expect(createPkg.bin?.["create-forge-app"]).toBe("bin/create-forge-app.mjs");
+    expect(createPkg.publishConfig?.access).toBe("public");
+    expect(createPkg.publishConfig?.tag).toBe("alpha");
+
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("node-version: \"24\"");
     expect(workflow).toContain("registry-url: \"https://registry.npmjs.org\"");

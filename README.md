@@ -44,6 +44,22 @@ These files describe the app surface, runtime rules, generated files, policies, 
 
 ## Create a Test App
 
+Public one-command app creation:
+
+```bash
+npm create forge-app@alpha notes-app -- --template minimal-web
+cd notes-app
+npm run dev
+```
+
+Equivalent lower-level command without installing ForgeOS globally:
+
+```bash
+npm exec --package forgeos@alpha -- forge new notes-app --template minimal-web --package-manager npm
+```
+
+If ForgeOS is already installed or you are inside this repository:
+
 ```bash
 forge new notes-app --template minimal-web --package-manager npm
 cd notes-app

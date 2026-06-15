@@ -1,0 +1,39 @@
+{
+  "name": "create-forge-app",
+  "version": "0.1.0-alpha.1",
+  "description": "Create a ForgeOS app from the command line.",
+  "type": "module",
+  "bin": {
+    "create-forge-app": "bin/create-forge-app.mjs",
+    "forge-app": "bin/create-forge-app.mjs"
+  },
+  "files": [
+    "bin/",
+    "README.md",
+    ".npmignore"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "engines": {
+    "node": ">=22.14"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stahldavid/forge.git",
+    "directory": "packages/create-forge-app"
+  },
+  "homepage": "https://github.com/Stahldavid/forge#readme",
+  "bugs": {
+    "url": "https://github.com/Stahldavid/forge/issues"
+  },
+  "keywords": [
+    "forgeos",
+    "create-forge-app",
+    "scaffold",
+    "agent-native",
+    "full-stack"
+  ],
+  "license": "MIT"
+}

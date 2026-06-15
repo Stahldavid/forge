@@ -1,0 +1,35 @@
+name: Publish GitHub Packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+      - "forgeos-v*"
+
+concurrency:
+  group: github-packages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-github-packages:
+    name: Publish scoped GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@stahldavid"
+
+      - name: Publish package mirrors
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-github-package.mjs

@@ -69,6 +69,19 @@ try {
     "--script-timeout-ms",
     "120000",
   ], { cwd: appRoot });
+
+  run("node", [
+    join(repoRoot, "packages", "create-forge-app", "bin", "create-forge-app.mjs"),
+    "create-smoke-app",
+    "--template",
+    "minimal-web",
+    "--package-manager",
+    "npm",
+    "--forge-spec",
+    pathToFileURL(tarballPath).href,
+    "--no-install",
+    "--no-git",
+  ], { cwd: tempRoot });
 } finally {
   if (tarballPath) {
     rmSync(tarballPath, { force: true });
