@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.1 input=15db5211b2295feba64a25a14ce8d07c783b9685e9994859941a0139d6f10d5d content=ac0b866643b29adab3a404626bf58fffec1b41d63d5173c63f282314e432aece
+// @forge-generated generator=0.1.0-alpha.2 input=58a72e10cb9647fa0d43ab28ebda1633d68b0cad8579c6a19686b78b101febbd content=1b356a3b987e2cabc58c4d5ffcacc33f5c6fc74a4d290f2b296146dd1600530e
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.1",
-  "inputHash": "15db5211b2295feba64a25a14ce8d07c783b9685e9994859941a0139d6f10d5d",
+  "generatorVersion": "0.1.0-alpha.2",
+  "inputHash": "58a72e10cb9647fa0d43ab28ebda1633d68b0cad8579c6a19686b78b101febbd",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -447,6 +447,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/ci/field-workflow.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ci/github-packages-workflow.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1005,6 +1023,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/dev/server.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/dev/streaming-response.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -2923,6 +2959,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/telemetry/telemetry-sentry-sink.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/templates/create-forge-app.test.ts",
       "kind": "unknown",
       "reasons": []
     },

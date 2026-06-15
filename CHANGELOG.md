@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.2
+
+Windows and generated-app hardening:
+
+- Fixed Node ESM handler loading on Windows by importing generated app modules
+  through `file://` URLs across commands, queries, liveQueries, outbox actions,
+  workflow steps, mocks, and telemetry adapters.
+- Fixed `forge dev` SSE streaming on the Node HTTP fallback so liveQuery
+  snapshots are flushed immediately instead of buffering forever.
+- Hardened generated app scaffolding and web dev spawning on Windows.
+- Updated the B2B support template to route frontend imports through
+  `web/lib/forge.ts` and use safer handler input validation.
+- Added focused tests for Node compatibility, template scaffolding, runtime
+  imports, and streaming responses.
+
 ## 0.1.0-alpha.1
 
 Republish alpha with the dependency/API oracle improvements:

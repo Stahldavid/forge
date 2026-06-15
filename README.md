@@ -74,11 +74,11 @@ Templates also include workspace editor excludes for generated/runtime directori
 For release or external smoke testing, choose the Forge package source explicitly:
 
 ```bash
-forge new smoke-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@^0.1.0-alpha.0"
+forge new smoke-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@alpha"
 forge new local-app --template minimal-web --package-manager npm --local-forge
 ```
 
-`--forge-spec` writes that dependency spec into the generated app, while `--local-forge` keeps the monorepo/local package workflow. The npm package is published as `forgeos`, but generated apps keep the dependency key, CLI binary, and import surface as `forge` (`forge`, `forge/server`, `forge/react`) by using npm alias specs such as `"forge": "npm:forgeos@^0.1.0-alpha.0"`. CI uses both `--forge-spec "file:$GITHUB_WORKSPACE"` and a packed tarball smoke to prove freshly created apps can install ForgeOS and run outside the framework workspace.
+`--forge-spec` writes that dependency spec into the generated app, while `--local-forge` keeps the monorepo/local package workflow. The npm package is published as `forgeos`, but generated apps keep the dependency key, CLI binary, and import surface as `forge` (`forge`, `forge/server`, `forge/react`) by using npm alias specs such as `"forge": "npm:forgeos@alpha"`. CI uses both `--forge-spec "file:$GITHUB_WORKSPACE"` and a packed tarball smoke to prove freshly created apps can install ForgeOS and run outside the framework workspace.
 
 For broader field testing:
 
