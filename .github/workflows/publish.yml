@@ -150,7 +150,26 @@ jobs:
           fi
           echo "Version check OK: tag=$TAG_VERSION"
 
+      - name: Check npm package version
+        id: npm-version
+        shell: bash
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --json >/tmp/forgeos-npm-version.json 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm; skipping publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${PACKAGE_NAME}@${PACKAGE_VERSION} is not published yet; continuing."
+          fi
+
       - name: Publish to npm
+        if: steps.npm-version.outputs.exists != 'true'
         env:
           NPM_CONFIG_PROVENANCE: "true"
         run: npm publish --access public --tag alpha
+
+      - name: Summarize skipped publish
+        if: steps.npm-version.outputs.exists == 'true'
+        run: echo "::notice::Package version already exists on npm. No publish was attempted."
