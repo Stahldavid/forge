@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=35aa757da99dc2b35b9dd0dbdc76f61e454e8bbd99882425eb26787f6fddc01c
+// @forge-generated generator=0.1.0-alpha.0 input=663bd72fd297303ae67eb0c0c2217d62f2812ed9bd19c3b7f91de866277d7c97 content=e432d0f4305ef18d98e0d14b95def5b007ce3ac3498ac5ce46c10dd6f14b5502
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -175,6 +175,40 @@ export const importGuards = {
     {
       "packageName": "@types/bun",
       "alias": "@types/bun",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "@types/node",
+      "alias": "@types/node",
       "compatible": [
         "server",
         "action",

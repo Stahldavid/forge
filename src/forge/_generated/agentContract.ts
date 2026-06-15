@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=ae9f13c34a81604933a19b126555a1d9e0ee32ce4946214cc892d7ca52985b41
+// @forge-generated generator=0.1.0-alpha.0 input=663bd72fd297303ae67eb0c0c2217d62f2812ed9bd19c3b7f91de866277d7c97 content=c8e74f9a469c333badcfce5adfb3425c07924081df04fa642d6598156a2b117f
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -338,6 +338,26 @@ export const agentContract = {
       ],
       "name": "@types/bun",
       "version": "1.3.14"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "@types/node",
+      "version": "24.13.2"
     },
     {
       "allowedContexts": [
