@@ -2,7 +2,9 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, AST-aware codemods for `extract-action`, `rename field`, and `rename table`, and quieter template workspaces are present. Public release still needs deeper semantic codemods and broader field testing.
+**Status:** private/public alpha MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, ReadTheDocs-ready public docs, package/version-aligned generator metadata, AST-aware codemods for `extract-action`, `rename field`, and `rename table`, broader field-test automation, and quieter template workspaces are present. Public release hardening is still focused on deeper semantic codemods and more real-project field reports.
+
+Public docs are configured for ReadTheDocs with `.readthedocs.yaml` and `mkdocs.yml`. The local docs entrypoint is `docs/index.md`.
 
 ## Agent-First Quickstart
 
@@ -61,6 +63,15 @@ forge new local-app --template minimal-web --package-manager npm --local-forge
 ```
 
 `--forge-spec` writes that dependency spec into the generated app, while `--local-forge` keeps the monorepo/local package workflow. The npm package is published as `forgeos`, but generated apps keep the dependency key, CLI binary, and import surface as `forge` (`forge`, `forge/server`, `forge/react`) by using npm alias specs such as `"forge": "npm:forgeos@^0.1.0-alpha.0"`. CI uses both `--forge-spec "file:$GITHUB_WORKSPACE"` and a packed tarball smoke to prove freshly created apps can install ForgeOS and run outside the framework workspace.
+
+For broader field testing:
+
+```bash
+npm run field:test -- --dry-run --json
+npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "file:." --install --json
+```
+
+The scheduled/manual `Field Tests` workflow expands that coverage across Linux, macOS, Windows, Node 22, Node 24, and npm/pnpm/yarn/bun.
 
 ## What ForgeOS Generates
 

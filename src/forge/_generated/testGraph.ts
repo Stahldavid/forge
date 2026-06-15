@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=045a6cb4b35ff84e44e490cddac563a732ab9b3c9d9e921ed9a1b1d279b62b2b content=1adf99a94eeae9862c90c18d42d10c312db8092013df22cf048a80e3e5a8ab13
+// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=48e2e213a6fb65c46980cb7a64c0d24beb879c872bdd693be67314b3511b812d
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.0.0",
-  "inputHash": "045a6cb4b35ff84e44e490cddac563a732ab9b3c9d9e921ed9a1b1d279b62b2b",
+  "generatorVersion": "0.1.0-alpha.0",
+  "inputHash": "2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -429,6 +429,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/ci/ci-workflow.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ci/field-workflow.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1035,6 +1053,24 @@ export const testGraph = {
       ]
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/docs/readthedocs.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "probable",
       "cost": "slow",
       "covers": {
@@ -1159,6 +1195,24 @@ export const testGraph = {
       "reasons": [
         "probable: packages react"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/field/field-test-script.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "weak",
@@ -2285,6 +2339,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/release/h23-release.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/version-alignment.test.ts",
       "kind": "unknown",
       "reasons": []
     },

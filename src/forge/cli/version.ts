@@ -1,1 +1,1 @@
-export const CLI_VERSION = "0.0.0";
+export { CLI_VERSION } from "../version.ts";

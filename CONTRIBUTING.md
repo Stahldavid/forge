@@ -9,7 +9,28 @@ bun run typecheck
 bun test --timeout 120000
 node ./bin/forge.mjs verify --standard --script-timeout-ms 120000
 npm run release:smoke
+npm run field:test -- --dry-run --json
 ```
+
+Run a real external-app smoke before release candidates:
+
+```bash
+npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "file:." --install --json
+```
+
+Use the GitHub Actions `Field Tests` workflow for the broader OS, Node, package-manager matrix.
+
+## Documentation
+
+Public docs are built with MkDocs on ReadTheDocs. The configuration lives in:
+
+```txt
+.readthedocs.yaml
+mkdocs.yml
+docs/**
+```
+
+Keep `docs/getting-started.md`, `docs/cli.md`, and `docs/field-testing.md` current when changing install, template, or verification behavior.
 
 ## Changesets
 

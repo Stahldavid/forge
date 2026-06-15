@@ -1,9 +1,9 @@
-// @forge-generated generator=0.0.0 input=eb8d78e749f083957f69f7f316aa4efc3faf5ccd81ff63e3cf32bf7fb7f705ac content=dbab0f5fbb3d4685b0c01e223c4936a565a67c067258065c5f08beb205263875
+// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=0e6bbec727efce362827b88624920cca65428fcf0b885f10e9137dfc1c5e94b5
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
-  "generatorVersion": "0.0.0",
-  "inputHash": "786b3aae4e3654d067df5c05134990f857e0f8ee9a2b0c44fe2ff7488a6cf2b4",
+  "generatorVersion": "0.1.0-alpha.0",
+  "inputHash": "c6cc90a68d35a6fec9b6d6e2804982c6576d30392b25561c3a595c46e90a8faf",
   "moduleGraph": {
     "nodes": [
       {
@@ -7673,43 +7673,43 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 587,
-              "start": 563
+              "end": 554,
+              "start": 530
             },
             "toModuleId": "2cb7614557971df6500481cd15e93b44266641eda25cb6b401f50095b720fd61"
           },
           {
             "span": {
-              "end": 640,
-              "start": 627
+              "end": 606,
+              "start": 593
             },
             "toModuleId": "512dcccbb3b0268c3984e70799a048fa076eea6160abf6f5e4bfe1342bbb80c1"
           },
           {
             "span": {
-              "end": 736,
-              "start": 720
+              "end": 702,
+              "start": 686
             },
             "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
           },
           {
             "span": {
-              "end": 785,
-              "start": 774
+              "end": 751,
+              "start": 740
             },
             "toModuleId": "c4efc8849f672581d021260b07feef9effd28c27ff219e487ddfcf371f5aef3d"
           },
           {
             "span": {
-              "end": 856,
-              "start": 843
+              "end": 822,
+              "start": 809
             },
             "toModuleId": "beaba363d7007be5a47d7d34ebe0f0848f6b552c8fd06029216211384b443f93"
           },
           {
             "span": {
-              "end": 956,
-              "start": 944
+              "end": 922,
+              "start": 910
             },
             "toModuleId": "b40eb11ad7781d590ec757257bb76004d78672460b373b5f15d831e69a8996b9"
           }
@@ -10139,6 +10139,14 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/forge/compiler/workflow-registry/parse.ts",
         "id": "ab5df5521935f63d0d4b5715295644ce1d0453cba498fb82b3a861b7d75fac03",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/version.ts",
+        "id": "ab9e14c96c9fcf448674c6526a95ea384d8985fcd7f742f3b5d2f906c6cad895",
         "localImports": []
       },
       {

@@ -1,2 +1,2 @@
-// @forge-generated generator=0.0.0 input=a364a2ec435f1ad252c1d418c40d3d787ffd94db8ab078dc670d129e1ab2d4fd content=ac01d993b0647b5f91ca81847839eb087b0c65379cae567d3efcc8e427661801
+// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=ac01d993b0647b5f91ca81847839eb087b0c65379cae567d3efcc8e427661801
 {"providers":[{"id":"anthropic","integration":"ai-provider-anthropic","packageName":"@ai-sdk/anthropic","secretName":"ANTHROPIC_API_KEY"},{"id":"gateway","integration":"ai-gateway","packageName":"ai","secretName":"AI_GATEWAY_API_KEY"},{"id":"openai","integration":"ai-provider-openai","packageName":"@ai-sdk/openai","secretName":"OPENAI_API_KEY"}]}

@@ -14,7 +14,6 @@ import {
   normalizePath,
   stableSortByPath,
   stableSortEmitFiles,
-  stripDeterministicHeader,
 } from "../primitives/index.ts";
 import { buildBarrelIndexBody } from "./barrel.ts";
 import {
@@ -51,12 +50,10 @@ function resolveWorkspacePath(workspaceRoot: string, relativePath: string): stri
 }
 
 function bodiesDiffer(rendered: string, onDisk: string | null): boolean {
-  const renderedBody = stripDeterministicHeader(rendered);
   if (onDisk === null) {
     return true;
   }
-  const diskBody = stripDeterministicHeader(onDisk);
-  return renderedBody !== diskBody;
+  return rendered !== onDisk;
 }
 
 function buildRenderContext(plan: EmitPlan): RenderContext {

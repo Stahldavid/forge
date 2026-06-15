@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=cd54785b6ab00ae831e2d50088ef52fb68801367e50beec632b9ce67132b2d8b content=7a3f50ffd129a6969d3bea362759c9e28714bb74d46746f402c2e2ab01b9853c
+// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=7a3f50ffd129a6969d3bea362759c9e28714bb74d46746f402c2e2ab01b9853c
 "use client";
 
 import { createForgeReactBindings } from "forge/react";

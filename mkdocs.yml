@@ -1,0 +1,17 @@
+site_name: ForgeOS
+site_description: Agent-native application framework and compiler.
+site_url: https://forgeos.readthedocs.io/
+repo_url: https://github.com/Stahldavid/forge
+repo_name: Stahldavid/forge
+
+theme:
+  name: readthedocs
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - CLI: cli.md
+  - Runtime Model: runtime-model.md
+  - Agent Contract: agent-contract.md
+  - Field Testing: field-testing.md
+  - Release: release.md

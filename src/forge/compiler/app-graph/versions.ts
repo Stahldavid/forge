@@ -11,4 +11,4 @@ export const TREE_SITTER_GRAMMAR_VERSION = "0.23.2";
 export const FORGE_CLASSIFIER_VERSION = "0.1.1";
 
 /** Generation orchestrator version (recorded on emitted AppGraph). */
-export const GENERATOR_VERSION = "0.0.0";
+export { GENERATOR_VERSION } from "../../version.ts";

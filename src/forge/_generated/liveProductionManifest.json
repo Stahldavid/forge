@@ -1,2 +1,2 @@
-// @forge-generated generator=0.0.0 input=688a8f80ae64b3520539b60ed79d8f0dde426f02cd0d42dec906896865312d99 content=967f429b3fb0e3fbcef692494eb289adc5e9f1a733f54b93923473b52877be39
+// @forge-generated generator=0.1.0-alpha.0 input=2bec5acb1fae59bf9d55eca4937af5b76424e610905e4ef337a33d3f7ec220d2 content=967f429b3fb0e3fbcef692494eb289adc5e9f1a733f54b93923473b52877be39
 {"dependencyGranularity":"table-tenant","invalidationSource":"durable-table","limits":{"heartbeatIntervalMs":15000,"maxPendingMessagesPerSubscription":5,"maxSnapshotBytes":1000000,"maxSubscriptionsPerClient":50,"maxSubscriptionsPerTenant":500,"rerunDebounceMs":50},"liveQueries":[],"mode":"production-hardened","schemaVersion":"0.1.0","transports":["sse"],"wakeupAdapters":["postgres-notify","polling"]}
