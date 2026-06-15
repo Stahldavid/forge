@@ -100,9 +100,11 @@ Generated: `packages/zod.shared.ts`, `testkits/zod.mock.ts`.
 
 ```text
 Alias:          ai
-Package:        ai (>=5.0.0)
+Package:        ai (>=5.0.0; Forge apps use AI SDK v6 for agents/tools)
 Recipe version: 2.0.0
 ```
+
+Forge apps on the current alpha line depend on **Vercel AI SDK v6** for `ToolLoopAgent`, tool calling, MCP, and UI streaming. The recipe semver floor remains `>=5.0.0`, but agent features require the v6 runtime shipped with current `forgeos@alpha`.
 
 Allowed: `server`, `action`, `workflow`, `endpoint`, `test`, `build`.
 
@@ -111,6 +113,8 @@ Denied: `command`, `query`, `liveQuery`, `client`, `shared`, `edge`.
 Secrets: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, optional `AI_GATEWAY_API_KEY`.
 
 Network egress is provider-dependent; provider packages are classified separately.
+
+Generated artifacts include `aiRegistry.json`, `agentTools.json`, and AI adapters under `src/forge/_generated/`. See [AI](ai.md).
 
 Provider sub-recipes:
 

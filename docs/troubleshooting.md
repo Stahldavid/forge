@@ -236,7 +236,50 @@ forge telemetry inspect <traceId>
 
 Capture `traceId` from API response or browser network tab.
 
-Production uses JWT/OIDC; local dev may use `dev-headers` mode. See runtime auth config in generated `authConfig.json`.
+Production uses JWT/OIDC; local dev may use `dev-headers` mode. See [Security and Data](security-and-data.md) and generated `authConfig.json`.
+
+## LiveQuery stale or not updating
+
+**Symptom:** UI subscribed with `useLiveQuery` does not refresh after a command write.
+
+**Cause:** Invalidation not recorded, worker not running, wrong tenant, or client not resuming SSE.
+
+**Fix:**
+
+```bash
+forge live status --json
+forge live invalidations list --json
+forge live debug <subscriptionId> --json
+```
+
+Checklist:
+
+1. Command performed a transactional write that should invalidate the table.
+2. Outbox worker is running (`forge dev` includes worker by default).
+3. Invalidation rows exist in `_forge_live_invalidations` with revision newer than client snapshot.
+4. Client reconnects with `Last-Event-ID` or `?lastRevision=` after disconnect.
+
+See [Frontend — LiveQuery](frontend.md#livequery).
+
+## Repair loop
+
+**Symptom:** Tests or verify failed; unsure what to fix.
+
+```bash
+forge do fix --json
+forge test run --changed --timeout-ms 120000 --json
+forge repair diagnose --from-last-test-run --json
+forge repair plan --from-last-test-run --write
+```
+
+Apply only **high-confidence** suggested repairs automatically. Re-run:
+
+```bash
+forge verify --changed
+forge verify --strict
+```
+
+See [Testing and Repair](testing-and-repair.md).
 
 ## Windows-specific issues
 
@@ -281,6 +324,86 @@ npm run field:test -- \
 
 See [Field Testing](field-testing.md) for the full matrix workflow.
 
+## AI and agent errors
+
+**Symptom:** `forge check` reports `FORGE_AI_FORBIDDEN_CONTEXT`.
+
+**Cause:** `ctx.ai` or `ctx.agent` was used in a forbidden context (`command`, `query`, `liveQuery`, `client`, `shared`, or `edge`).
+
+**Fix:**
+
+1. Move AI logic to an **action** or **workflow** step after commit.
+2. Keep the command fast: write to `ctx.db` and `ctx.emit(...)`.
+3. Re-run:
+
+   ```bash
+   forge check --json
+   forge inspect ai --json
+   ```
+
+See [AI — Runtime Rule](ai.md#runtime-rule) and [Runtime Model](runtime-model.md#ai-placement).
+
+**Symptom:** `FORGE_AI_SECRET_MISSING` or `forge ai check` reports missing secrets.
+
+**Fix:**
+
+```bash
+forge add ai
+forge ai check --json
+```
+
+Configure `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `AI_GATEWAY_API_KEY` in `.env`, then restart dev.
+
+**Symptom:** `FORGE_AI_MODEL_MISSING` or `FORGE_AI_DYNAMIC_PROVIDER`.
+
+**Cause:** Missing static `model:` literal or dynamic `provider:` selection in source.
+
+**Fix:** Use static string literals for `provider` and `model` so the compiler can register calls in `aiRegistry.json`.
+
+**Symptom:** Agent run fails in dev or returns 403.
+
+**Fix:**
+
+```bash
+forge dev --once --json
+curl -X POST "$FORGE_URL/ai/agents/run" \
+  -H "Content-Type: application/json" \
+  -H "x-forge-user-id: dev-user" \
+  -H "x-forge-tenant-id: dev-tenant" \
+  -H "x-forge-role: owner" \
+  -d '{"prompt":"hello","maxSteps":4}'
+```
+
+Ensure dev auth headers match your app's auth mode. Inspect tool availability:
+
+```bash
+forge ai tools --json
+forge inspect agent-tools --json
+```
+
+**Symptom:** Need to debug a completed agent run.
+
+```bash
+forge ai trace <traceId> --json
+```
+
+Use the `traceId` from the API response header `x-forge-trace-id` or telemetry events.
+
+**Symptom:** Unexpected provider charges during local development.
+
+**Fix:** Use mock mode:
+
+```bash
+FORGE_MOCK_AI=1 forge dev
+forge ai test --provider openai --model gpt-4o-mini --prompt "ping" --mock
+```
+
+**Symptom:** Chat UI executes a write tool without confirmation.
+
+**Cause:** Command auto-tools require approval; the UI must call `addToolApprovalResponse` (AI SDK UI) before Forge executes a command tool.
+
+See [AI — Tools And Agents](ai.md#tools-and-agents).
+
 ## Error code reference
 
 | Code | Area | Typical fix |
@@ -293,6 +416,11 @@ See [Field Testing](field-testing.md) for the full matrix workflow.
 | `FORGE_REFACTOR_TARGET_NOT_FOUND` | codemod | Check names/paths |
 | `FORGE_VERIFY_TESTS` | verify | `forge test run`; repair diagnose |
 | `FORGE_DRY_RUN_FALLBACK` | forge add dry-run | Informational; plan still returned |
+| `FORGE_AI_FORBIDDEN_CONTEXT` | AI placement | Move AI to action/workflow; see [AI](ai.md) |
+| `FORGE_AI_SECRET_MISSING` | AI secrets | Configure provider keys; `forge ai check` |
+| `FORGE_AI_MODEL_MISSING` | AI registry | Add static `model:` literal |
+| `FORGE_AI_DYNAMIC_PROVIDER` | AI registry | Prefer static `provider:` literal |
+| `FORGE_AI_GENERATION_FAILED` | AI runtime | Check secrets, model name, provider status |
 
 Full diagnostic codes appear in CLI JSON under `errors[].code` with `fixHint` and `suggestedCommands`.
 
@@ -308,7 +436,11 @@ For framework bugs, include JSON output and steps to reproduce when opening an i
 ## Related pages
 
 - [Getting Started](getting-started.md)
+- [Agent Workflow](agent-workflow.md)
 - [CLI](cli.md)
+- [AI](ai.md)
+- [Frontend](frontend.md)
+- [Testing and Repair](testing-and-repair.md)
 - [forge add](forge-add.md)
 - [Codemods](codemods.md)
 - [Payments](payments.md)

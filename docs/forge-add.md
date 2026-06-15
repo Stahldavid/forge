@@ -96,6 +96,60 @@ forge inspect secrets --json
 
 Parameter mistakes are caught by **TypeScript** when you call the SDK. Context mistakes (for example Stripe inside a command) are caught by **`forge check`** as `FORGE_GUARD_VIOLATION`.
 
+## Dependency API for agents
+
+After `forge add` and `forge generate`, Forge builds a **PackageGraph** with export signatures, JSDoc, resolution traces, and runtime compatibility metadata. Use the dependency CLI when an AI coding agent or human needs to call a vendor SDK safely without reading all of `node_modules`.
+
+### Inspect a package
+
+```bash
+forge deps inspect stripe --json
+```
+
+Returns package version, classified contexts, export summary, and diagnostics.
+
+### Look up a symbol
+
+```bash
+forge deps api stripe checkout.sessions.create --json
+```
+
+Returns signatures, JSDoc, examples when available, and runtime placement hints. This is the fastest way for an agent to learn how to call a specific SDK method after `forge add stripe`.
+
+### Trace resolution
+
+```bash
+forge deps trace stripe --json
+```
+
+Shows how Forge resolved the package entry points, subpath exports, and type entry files.
+
+### Runtime compatibility
+
+```bash
+forge deps runtime-compat stripe --json
+```
+
+Reports which runtime contexts may import the package and any runtime/type mismatch warnings.
+
+### Generated contract
+
+Summaries also appear in:
+
+- `src/forge/_generated/packageGraph.json`
+- `src/forge/_generated/agentContract.json` → `dependencyApis`
+
+Recommended agent workflow after adding a package:
+
+```bash
+forge add stripe --json
+forge generate --check
+forge deps api stripe <Symbol> --json
+forge check --json
+```
+
+See [CLI — Dependency API](cli.md#dependency-api-for-agents).
+
 ## Runtime contexts
 
 Forge assigns each source file an effective runtime context (`command`, `query`, `action`, `workflow`, `endpoint`, `client`, etc.). Packages are compatible only in contexts listed in the runtime matrix.
@@ -168,5 +222,6 @@ Read the generated doc at `src/forge/_generated/docs/stripe.md` before writing a
 
 - [Recipes](recipes.md) — recipe schema and catalog
 - [Payments](payments.md) — Stripe and manual payment providers
+- [AI](ai.md) — AI integration and agent tools
 - [Codemods](codemods.md) — `extract-action` when guards fail
 - [Troubleshooting](troubleshooting.md) — guard violations and repair flow

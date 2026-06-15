@@ -5,20 +5,60 @@ repo_url: https://github.com/Stahldavid/forge
 repo_name: Stahldavid/forge
 
 theme:
-  name: readthedocs
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
 
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Templates: templates.md
+  - Agent Workflow: agent-workflow.md
   - CLI: cli.md
   - Runtime Model: runtime-model.md
+  - Frontend: frontend.md
   - AI: ai.md
+  - Security & Data: security-and-data.md
+  - Authoring: authoring.md
   - Integrations:
       - forge add: forge-add.md
       - Recipes: recipes.md
       - Payments: payments.md
   - Codemods: codemods.md
   - Agent Contract: agent-contract.md
+  - Testing & Repair: testing-and-repair.md
   - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md
+  - Self-Host: self-host.md
   - Release: release.md
+  - Changelog: changelog.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
