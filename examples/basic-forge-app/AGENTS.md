@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=112d41c02e7965fbb889b1dbe222352f195ce3ff939126ef371c031897d52ba8 content=4e17ee8cf54ed967826163af28ea3bebe4675a6f3414a50bc4560f0ec023b9b7
+// @forge-generated generator=0.1.0-alpha.1 input=112d41c02e7965fbb889b1dbe222352f195ce3ff939126ef371c031897d52ba8 content=8e7f009b0818d5c8cf6970cf20aa1bd07595c56aabc5ff5c94ae2088703c8e0f
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -69,6 +69,9 @@ forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge deps inspect <package> --json
+forge deps api <package> <symbol> --json
+forge deps trace <package> --json
 forge auth check --json
 forge inspect runtime-matrix --json
 forge inspect policies --json
@@ -253,6 +256,8 @@ Use:
 
 ```bash
 forge deps upgrade-plan <package> --to latest
+forge deps inspect <package> --json
+forge deps api <package> <symbol> --json
 forge deps upgrade-apply <plan>
 forge verify --strict
 ```
