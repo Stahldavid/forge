@@ -49,11 +49,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Verify generated output
+        run: npm run forge -- generate --check
+
       - name: Test
         run: npm test
 
-      - name: Verify generated output
-        run: npm run forge -- generate --check
+      - name: Restore workspace after tests
+        run: |
+          git restore .
+          git clean -fd
 
       - name: Smoke packed package
         run: npm run release:smoke
@@ -111,11 +116,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Verify generated output
+        run: npm run forge -- generate --check
+
       - name: Test
         run: npm test
 
-      - name: Verify generated output
-        run: npm run forge -- generate --check
+      - name: Restore workspace after tests
+        run: |
+          git restore .
+          git clean -fd
 
       - name: Smoke packed package
         run: npm run release:smoke

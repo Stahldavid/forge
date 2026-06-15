@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as fc from "fast-check";
 import type { EmitFile } from "../../src/forge/compiler/types/emit.ts";
-import { render } from "../../src/forge/compiler/emitter/render.ts";
+import { render, renderBody } from "../../src/forge/compiler/emitter/render.ts";
 import { serializeForgeLock } from "../../src/forge/compiler/emitter/lock.ts";
 import { buildBarrelIndexBody } from "../../src/forge/compiler/emitter/barrel.ts";
 import {
@@ -21,10 +21,11 @@ const emitFileArb: fc.Arbitrary<EmitFile> = fc
   .tuple(pathArb, fc.string({ minLength: 1, maxLength: 80 }))
   .map(([path, payload]) => {
     const content = `${payload}\n`;
+    const draft = { path, content } as EmitFile;
     return {
       path,
       content,
-      contentHash: hashStable(content),
+      contentHash: hashStable(renderBody(draft)),
     };
   });
 

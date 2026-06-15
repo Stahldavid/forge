@@ -24,6 +24,9 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("registry-url: \"https://registry.npmjs.org\"");
     expect(workflow).toContain("uses: changesets/action@v1");
     expect(workflow).toContain("publish: npm run release");
+    expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
+    expect(workflow).toContain("git restore .");
+    expect(workflow).toContain("git clean -fd");
     expect(workflow).toContain("NPM_CONFIG_PROVENANCE: \"true\"");
     expect(workflow).toContain("npm publish --access public --tag alpha");
     expect(workflow).toContain("npm run release:smoke");
