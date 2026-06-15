@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=f450ec7161e279f2460d497d4129943c5786d075c3be87365a6f1f0ab77a3fcd content=fa1107464c1de08135410251aeff7e759a69b11801f8704e9d324b4036fbfa7b
+// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=fa1107464c1de08135410251aeff7e759a69b11801f8704e9d324b4036fbfa7b
 # Agent Quickstart
 
 Run:

@@ -12,6 +12,7 @@ nav:
   - Getting Started: getting-started.md
   - CLI: cli.md
   - Runtime Model: runtime-model.md
+  - AI: ai.md
   - Integrations:
       - forge add: forge-add.md
       - Recipes: recipes.md

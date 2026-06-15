@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=f450ec7161e279f2460d497d4129943c5786d075c3be87365a6f1f0ab77a3fcd content=e0bf36433d915daf5ad06ac6265b3ac6f2cd1706269c69618bbbc1cb1f44e465
+// @forge-generated generator=0.1.0-alpha.2 input=53ebe776c36da97cc5e1cdd3412de67fa665c6640a49fb8f7c76c8a09ab92af6 content=9d1e0a742596b9f2f862647e9e591c3f873db0fabb10458989247005a96efec1
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -194,11 +194,13 @@ Use:
 ```bash
 forge refactor rename field tickets.priority tickets.urgency --dry-run --json
 forge refactor rename field tickets.priority tickets.urgency --yes
+forge refactor rename command createTicket openTicket --dry-run --json
+forge refactor rename command createTicket openTicket --yes
 ```
 
-These codemods are AST-aware for `extract-action`, `rename field`, and `rename table`. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
+These codemods are AST-aware for `extract-action`, `rename command`, `rename field`, and `rename table`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
 
-Never edit `src/forge/_generated/**` directly. Review migration hints before applying field or table renames.
+Never edit `src/forge/_generated/**` directly. Review migration hints before applying command, field, or table renames.
 
 ### Plan impact-based tests
 

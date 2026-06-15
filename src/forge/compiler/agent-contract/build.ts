@@ -355,7 +355,8 @@ function playbooks(): AgentPlaybook[] {
       title: "Safely refactor a feature",
       steps: [
         "Run forge refactor rename field <table.field> <table.field> --dry-run --json.",
-        "Rename codemods are AST-aware for extract-action, rename field, and rename table.",
+        "Run forge refactor rename command <oldName> <newName> --dry-run --json when renaming runtime entrypoints.",
+        "Rename codemods are AST-aware for extract-action, rename command, rename field, and rename table.",
         "Field renames are scoped to the target table, so tickets.priority only rewrites references linked to tickets.",
         "Review filesToModify, migrationPlan, diagnostics, and risk.",
         "Use --allow-high-risk only for intentional high-risk refactors.",
@@ -1304,11 +1305,13 @@ Use:
 \`\`\`bash
 forge refactor rename field tickets.priority tickets.urgency --dry-run --json
 forge refactor rename field tickets.priority tickets.urgency --yes
+forge refactor rename command createTicket openTicket --dry-run --json
+forge refactor rename command createTicket openTicket --yes
 \`\`\`
 
-These codemods are AST-aware for \`extract-action\`, \`rename field\`, and \`rename table\`. Field renames are scoped to the target table, so \`tickets.priority\` only rewrites references linked to \`tickets\`.
+These codemods are AST-aware for \`extract-action\`, \`rename command\`, \`rename field\`, and \`rename table\`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so \`tickets.priority\` only rewrites references linked to \`tickets\`.
 
-Never edit \`src/forge/_generated/**\` directly. Review migration hints before applying field or table renames.
+Never edit \`src/forge/_generated/**\` directly. Review migration hints before applying command, field, or table renames.
 
 ### Plan impact-based tests
 

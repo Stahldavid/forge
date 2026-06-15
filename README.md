@@ -2,7 +2,7 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private/public alpha MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, ReadTheDocs-ready public docs, package/version-aligned generator metadata, AST-aware codemods for `extract-action`, `rename field`, and `rename table`, broader field-test automation, and quieter template workspaces are present. Public release hardening is still focused on deeper semantic codemods and more real-project field reports.
+**Status:** private/public alpha MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, ReadTheDocs-ready public docs, package/version-aligned generator metadata, AST-aware codemods for `extract-action`, `rename command`, `rename field`, and `rename table`, broader field-test automation, and quieter template workspaces are present. Public release hardening is still focused on deeper semantic codemods and more real-project field reports.
 
 Public docs are configured for ReadTheDocs with `.readthedocs.yaml` and `mkdocs.yml`. The local docs entrypoint is `docs/index.md`.
 
@@ -214,6 +214,7 @@ Common command groups:
 Refactor codemods are AST-aware where safety matters most:
 
 - `forge refactor extract-action` is binding-aware and preserves unrelated imports, type-only imports, and shadowed locals.
+- `forge refactor rename command <oldName> <newName>` rewrites command declarations, generated client references, React hook usage, tests, and safe string references while preserving unrelated symbols.
 - `forge refactor rename field <table.field> <table.field>` rewrites structured TS/JS/JSX/TSX and JSON references, preserves locals, and scopes the field change to files/objects linked to the target table. For example, `tickets.priority -> tickets.urgency` does not rewrite a generic `priority` prop in a component with no `tickets` binding.
 - `forge refactor rename table <from> <to>` rewrites table definitions, `ctx.db.<table>` access, policy strings, JSON/blueprints, and import/export specifiers while preserving unrelated locals with the same name.
 
@@ -397,7 +398,7 @@ H42  Verify observability and quieter app workspaces
 
 ## Remaining Hardening Before Public Release
 
-- Keep expanding semantic codemods beyond the current AST-aware `extract-action`, `rename field`, and `rename table` paths.
+- Keep expanding semantic codemods beyond the current AST-aware `extract-action`, `rename command`, `rename field`, and `rename table` paths.
 - Reduce command-selection risk with more task routers and richer inline diagnostics.
 - Keep hardening native Windows setup beyond diagnostics and safe automatic environment fixes.
 - Keep broadening package manager CI from template smoke toward install/build smoke for pnpm and yarn apps.

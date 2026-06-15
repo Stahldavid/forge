@@ -41,6 +41,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 |-------|------|
 | Install packages safely | [forge add](forge-add.md) |
 | Integration recipes (Stripe, PostHog, AI, …) | [Recipes](recipes.md) |
+| AI runtime rules | [AI](ai.md) |
 | Payment flows and webhooks | [Payments](payments.md) |
 | AST-aware refactors | [Codemods](codemods.md) |
 | Guard violations, verify, repair | [Troubleshooting](troubleshooting.md) |
