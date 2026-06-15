@@ -44,7 +44,7 @@ jobs:
         run: node --version && npm --version && bun --version
 
       - name: Install dependencies
-        run: npm install --ignore-scripts --package-lock=false
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Typecheck
         run: npm run typecheck
@@ -106,7 +106,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: npm install --ignore-scripts --package-lock=false
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Typecheck
         run: npm run typecheck
