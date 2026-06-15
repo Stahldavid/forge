@@ -2,9 +2,9 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private/public alpha MVP, implemented through H42. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, ReadTheDocs-ready public docs, package/version-aligned generator metadata, AST-aware codemods for `extract-action`, `rename command`, `rename field`, and `rename table`, broader field-test automation, and quieter template workspaces are present. Public release hardening is still focused on deeper semantic codemods and more real-project field reports.
+**Status:** private/public alpha MVP, implemented through H43. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, Read the Docs public docs, package/version-aligned generator metadata, AST-aware codemods for `extract-action`, `rename command`, `rename field`, and `rename table`, native AI tools/agents, broader field-test automation, and quieter template workspaces are present. Public release hardening is still focused on deeper semantic codemods and more real-project field reports.
 
-Public docs are configured for ReadTheDocs with `.readthedocs.yaml` and `mkdocs.yml`. The local docs entrypoint is `docs/index.md`.
+Public docs live at [forgeos.readthedocs.io](https://forgeos.readthedocs.io/). The repo builds them with `.readthedocs.yaml`, `mkdocs.yml`, and `docs/index.md`.
 
 ## Agent-First Quickstart
 
@@ -394,6 +394,7 @@ H39  Showcase app
 H40  Windows/runtime hardening
 H41  Node-compatible CLI/runtime
 H42  Verify observability and quieter app workspaces
+H43  Native AI tools and agent loop
 ```
 
 ## Remaining Hardening Before Public Release

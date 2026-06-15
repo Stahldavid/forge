@@ -182,7 +182,7 @@ import { lookupTicket } from "./lookupTicket";
 
 export const supportAgent = agent({
   provider: "gateway",
-  model: "openai/gpt-5.4",
+  model: "openai/gpt-4o-mini",
   instructions: "Answer support questions with project-safe tools.",
   tools: { lookupTicket },
   stopWhen: { kind: "stepCount", maxSteps: 6 },
@@ -194,7 +194,7 @@ Run agents through Forge runtime context:
 ```ts
 const result = await ctx.agent.run({
   provider: "gateway",
-  model: "openai/gpt-5.4",
+  model: "openai/gpt-4o-mini",
   instructions: "Answer support questions with project-safe tools.",
   prompt: "Summarize ticket T-123.",
   tools: { lookupTicket },
@@ -234,7 +234,7 @@ const { messages, sendMessage, addToolApprovalResponse } = useChat({
     body: {
       agent: "supportAgent",
       provider: "gateway",
-      model: "openai/gpt-5.4",
+      model: "openai/gpt-4o-mini",
       maxSteps: 8,
     },
   }),
@@ -300,7 +300,7 @@ Always set explicit **`stopWhen`** / **`maxSteps`** — never rely on unbounded 
 ```ts
 export const supportAgent = agent({
   provider: "gateway",
-  model: "openai/gpt-5.4",
+  model: "openai/gpt-4o-mini",
   instructions: "Use tools when needed, then finish.",
   tools: { lookupTicket },
   stopWhen: { kind: "stepCount", maxSteps: 8 },

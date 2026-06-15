@@ -148,7 +148,7 @@ forge deps api stripe <Symbol> --json
 forge check --json
 ```
 
-See [CLI — Dependency API](cli.md#dependency-api-for-agents).
+See [CLI — Dependency API](cli.md#dependency-api-for-agents-and-upgrades).
 
 ## Runtime contexts
 

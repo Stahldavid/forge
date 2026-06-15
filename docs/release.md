@@ -9,7 +9,7 @@ Related packages:
 | `forgeos@alpha` | Framework, compiler, CLI, templates |
 | `create-forge-app@alpha` | `npm create forge-app@alpha` scaffolding wrapper |
 
-Current release line: **`0.1.0-alpha.3`**. See [Changelog](changelog.md) for version history.
+Current release line: **`forgeos@alpha`**. See [Changelog](changelog.md) for version history and `npm view forgeos dist-tags --json` for the registry state.
 
 ## Public Quickstart Validation
 

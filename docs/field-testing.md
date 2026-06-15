@@ -62,4 +62,4 @@ The regular CI still keeps a smaller smoke test so pull requests remain usable.
 
 - [Getting Started](getting-started.md)
 - [Release](release.md)
-- [Troubleshooting — npm / field test failures](troubleshooting.md#npm--field-test-failures)
+- [Troubleshooting — npm / field test failures](troubleshooting.md#npm-field-test-failures)

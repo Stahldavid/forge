@@ -29,9 +29,20 @@ theme:
 plugins:
   - search
 
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Why ForgeOS: why-forgeos.md
   - Templates: templates.md
   - Agent Workflow: agent-workflow.md
   - CLI: cli.md
@@ -53,5 +64,3 @@ nav:
   - Release: release.md
   - Changelog: changelog.md
 
-# Material for MkDocs supplies markdown_extensions (superfences, highlight, tables, toc).
-# Do not override here — a custom list breaks RTD builds (see payments.md + pygments).

@@ -2,7 +2,7 @@
 
 ForgeOS is an agent-native application framework and compiler. It gives AI coding agents and humans a generated contract for the app they are editing: commands, queries, liveQueries, policies, data, secrets, frontend routes, runtime rules, AI tools, and the commands needed to verify a change.
 
-The current npm release line is **`forgeos@alpha`** (currently `0.1.0-alpha.3`).
+The current npm release line is **`forgeos@alpha`**. See [Changelog](changelog.md) for version history.
 
 ## Quickstart
 
@@ -79,6 +79,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | Install and first app | [Getting Started](getting-started.md) |
+| Why ForgeOS exists | [Why ForgeOS](why-forgeos.md) |
 | Templates (`minimal-web`, `b2b-support-web`) | [Templates](templates.md) |
 | Agent intent router (`forge do`) | [Agent Workflow](agent-workflow.md) |
 | CLI reference | [CLI](cli.md) |

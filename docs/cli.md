@@ -140,7 +140,7 @@ forge deps upgrade-apply .forge/upgrades/<plan>.json
 
 Use `forge deps api` when an agent needs signatures, JSDoc, and examples for a specific SDK symbol. Summaries also appear in `agentContract.json` under `dependencyApis`.
 
-See [forge add — Dependency API for agents](forge-add.md#dependency-api-for-agents).
+See [forge add — Dependency API for agents](forge-add.md).
 
 ## Security and data
 

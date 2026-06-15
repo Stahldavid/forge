@@ -60,7 +60,7 @@
     "type": "git",
     "url": "git+https://github.com/Stahldavid/forge.git"
   },
-  "homepage": "https://github.com/Stahldavid/forge#readme",
+  "homepage": "https://forgeos.readthedocs.io/",
   "bugs": {
     "url": "https://github.com/Stahldavid/forge/issues"
   },
