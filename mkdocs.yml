@@ -53,33 +53,5 @@ nav:
   - Release: release.md
   - Changelog: changelog.md
 
-# Full explicit list: overriding markdown_extensions replaces MkDocs defaults.
-# Do not add Mermaid custom fences here — !!python/name breaks RTD builds.
-markdown_extensions:
-  - abbr
-  - admonition
-  - attr_list
-  - def_list
-  - footnotes
-  - md_in_html
-  - tables
-  - toc:
-      permalink: true
-  - pymdownx.betterem:
-      smart_enable: all
-  - pymdownx.caret
-  - pymdownx.details
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.tilde
+# Material for MkDocs supplies markdown_extensions (superfences, highlight, tables, toc).
+# Do not override here — a custom list breaks RTD builds (see payments.md + pygments).

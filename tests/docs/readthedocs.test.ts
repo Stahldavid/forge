@@ -41,13 +41,9 @@ describe("ReadTheDocs documentation", () => {
   test("uses Material theme with RTD-safe defaults", () => {
     const mkdocs = read("mkdocs.yml");
     expect(mkdocs).toContain("name: material");
-    expect(mkdocs).toContain("markdown_extensions:");
-    expect(mkdocs).toContain("pymdownx.superfences");
-    expect(mkdocs).toContain("pymdownx.highlight");
-    expect(mkdocs).not.toContain("navigation.instant");
+    expect(mkdocs).not.toContain("markdown_extensions:");
     expect(mkdocs).not.toContain("!!python/name:");
-    expect(mkdocs).not.toContain("custom_fences:");
-    expect(mkdocs).not.toMatch(/^\s*- name: mermaid/m);
+    expect(mkdocs).not.toContain("navigation.instant");
     const requirements = read("docs/requirements.txt");
     expect(requirements).toContain("mkdocs==1.6.1");
     expect(requirements).toContain("mkdocs-material");
