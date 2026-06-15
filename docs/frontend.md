@@ -23,6 +23,20 @@ Database change -> invalidation log -> liveQuery SSE -> hooks -> UI
 | Generated hooks | Typed runtime calls |
 | Capability map | Links UI actions to backend entries |
 
+## Frontend contract
+
+ForgeOS treats the frontend as part of the app contract. The compiler records routes, components, generated bridge files, hook usage, provider setup, direct runtime fetches, and backend bindings.
+
+That gives humans and agents concrete answers:
+
+- Which route uses `createTicket`?
+- Which component subscribes to `liveTickets`?
+- Which commands have no UI path?
+- Which UI action points to a missing runtime entry?
+- Which policy protects the backend entry behind a button?
+
+This is why frontend checks appear in `forge dev --once --json`, `forge inspect frontend --json`, `forge inspect capabilities --json`, and `agentContract.json`.
+
 ## Client bridge
 
 Templates ship a bridge file such as `web/lib/forge.ts` (or `web/src/lib/forge.ts` for Vite). Import hooks from there — **not** from deep paths under `_generated/`:

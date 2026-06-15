@@ -26,6 +26,43 @@ The contract includes:
 - Frontend routes, components, providers, bridge files, and client bindings.
 - Verification commands and common operation playbooks.
 
+## Example shape
+
+A small contract excerpt looks like this:
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "project": { "name": "support-app", "type": "forgeos-app" },
+  "commands": [
+    {
+      "name": "createTicket",
+      "policy": "tickets.create",
+      "tablesWritten": ["tickets"],
+      "emits": ["ticket.created"],
+      "forbiddenCapabilities": ["network", "secrets", "ai"]
+    }
+  ],
+  "liveQueries": [
+    {
+      "name": "liveTickets",
+      "policy": "tickets.read",
+      "dependencies": [{ "table": "tickets", "scope": "tenant" }]
+    }
+  ],
+  "frontend": {
+    "routes": ["/tickets"],
+    "bindings": ["TicketList -> liveTickets", "CreateTicketForm -> createTicket"]
+  },
+  "agentTools": [
+    { "name": "forge_query_listTickets", "risk": "read", "needsApproval": false },
+    { "name": "forge_command_createTicket", "risk": "write", "needsApproval": true }
+  ]
+}
+```
+
+The real file is larger and deterministic. It includes names, rules, and metadata, never secret values, database rows, or raw prompt payloads.
+
 ## Useful Commands
 
 ```bash

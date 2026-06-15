@@ -2,9 +2,11 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private/public alpha MVP, implemented through H43. The core compiler, local runtime, frontend SDK, production auth, RLS compiler, repair/review loops, UI test bridge, guided intent router, full-stack capability map, clean templates, faster generated checks, showcase app, Windows-safe Bun resolution, native Windows diagnostics/setup, Node-compatible CLI/runtime paths, observable verify timeouts, multi-OS Node CI smoke, release packaging smoke, npm alpha publishing, Trusted Publisher/OIDC release wiring, Read the Docs public docs, package/version-aligned generator metadata, AST-aware codemods for `extract-action`, `rename command`, `rename field`, and `rename table`, native AI tools/agents, broader field-test automation, and quieter template workspaces are present. Public release hardening is still focused on deeper semantic codemods and more real-project field reports.
+**Status:** private/public alpha MVP, implemented through H43. ForgeOS already includes the compiler, local runtime, frontend SDK, production auth, RLS compiler, liveQuery, self-host artifacts, generated agent contract, guided dev loop, repair/review/test tooling, AST-aware codemods, package intelligence, native AI tools/agents, npm alpha publishing, and Read the Docs public docs. Public release hardening is still focused on deeper semantic codemods, broader field reports, and more production mileage.
 
 Public docs live at [forgeos.readthedocs.io](https://forgeos.readthedocs.io/). The repo builds them with `.readthedocs.yaml`, `mkdocs.yml`, and `docs/index.md`.
+
+Start with [Why ForgeOS](https://forgeos.readthedocs.io/en/latest/why-forgeos/) to understand the agent-native design.
 
 ## Agent-First Quickstart
 

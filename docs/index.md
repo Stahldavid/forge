@@ -40,7 +40,7 @@ cd notes-app
 npm run dev
 ```
 
-ForgeOS is useful when you want a backend/runtime that is explicit, inspectable, and safe for code agents to operate without a mandatory dashboard.
+ForgeOS is useful when you want a backend/runtime that is explicit, inspectable, and safe for code agents to operate without a mandatory dashboard. See [Why ForgeOS](why-forgeos.md) for the full thesis.
 
 ## Agent-first loop
 
@@ -52,6 +52,19 @@ forge verify --standard
 ```
 
 See [Agent Workflow](agent-workflow.md).
+
+## The 30-second agent workflow
+
+An agent can enter a ForgeOS project and ask the app for its own operating context:
+
+```bash
+forge do inspect --json
+forge inspect all --json
+forge inspect capabilities --json
+forge inspect agent-tools --json
+```
+
+The response gives the agent commands, queries, liveQueries, actions, workflows, policies, tables, frontend routes, package rules, AI tools, generated drift, risks, and the next command to run.
 
 ## What ForgeOS Generates
 

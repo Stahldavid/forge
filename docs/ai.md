@@ -174,6 +174,20 @@ export const lookupTicket = aiTool({
 });
 ```
 
+## Why Forge tools instead of ad hoc tools
+
+Forge tools run through the same app boundaries as the rest of the runtime.
+
+| Ad hoc tool loop | Forge agent tools |
+|------------------|-------------------|
+| Tool names and schemas live in custom code | Tools are declared with `aiTool` or generated from runtime entries |
+| Approval rules are hand-written | Commands default to approval-required write tools |
+| Database access can bypass policies | Tools run with Forge auth, tenant scope, policies, and telemetry |
+| Tool inventory is hard to inspect | `agentTools.json`, `agentTools.md`, and `forge ai tools --json` list the surface |
+| Debugging depends on custom logs | `forge ai trace <traceId> --json` inspects runs |
+
+Use ad hoc provider calls for simple generation when your code already loaded the context. Use Forge agent tools when the model must choose among app operations.
+
 Define reusable agents with `agent`:
 
 ```ts
