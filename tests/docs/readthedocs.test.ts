@@ -59,6 +59,11 @@ describe("ReadTheDocs documentation", () => {
     expect(mkdocs).not.toContain("navigation.instant");
     expect(existsSync("docs/stylesheets/extra.css")).toBe(true);
     expect(existsSync("docs/javascripts/mermaid-init.js")).toBe(true);
+    const extraCss = read("docs/stylesheets/extra.css");
+    expect(extraCss).not.toContain(".md-main");
+    expect(extraCss).not.toContain(".md-main__inner");
+    expect(extraCss).not.toContain(".md-content {");
+    expect(extraCss).not.toContain(".md-content__inner");
     const requirements = read("docs/requirements.txt");
     expect(requirements).toContain("mkdocs==1.6.1");
     expect(requirements).toContain("mkdocs-material");
