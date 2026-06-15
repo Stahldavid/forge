@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf content=55dc63298cc86f403b92d923bfce73262f412f5e1fe47b6e7f2c2e0c7794b25f
+// @forge-generated generator=0.1.0-alpha.0 input=4dbda59592f3ea3b2e8992aa95fec54fd7f948fb5fcacf9a05a77ed0f3792761 content=55dc63298cc86f403b92d923bfce73262f412f5e1fe47b6e7f2c2e0c7794b25f
 export const clientManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.1.0-alpha.0",

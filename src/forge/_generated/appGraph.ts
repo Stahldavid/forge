@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf content=c4fef86472285d879bef1582312b4f91bc5204ca2b8b29e00597dd8cd4ddc46d
+// @forge-generated generator=0.1.0-alpha.0 input=4dbda59592f3ea3b2e8992aa95fec54fd7f948fb5fcacf9a05a77ed0f3792761 content=c4fef86472285d879bef1582312b4f91bc5204ca2b8b29e00597dd8cd4ddc46d
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:d1029f593abee5422ffcf19a8208d3040df58479518b32645d77fb3820913032",
   "edges": [],

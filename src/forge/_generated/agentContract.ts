@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf content=2f318b3820a88683dd749ff4454ccdc02e2bbe7d67094631e7c4286e7b1d70ba
+// @forge-generated generator=0.1.0-alpha.0 input=4dbda59592f3ea3b2e8992aa95fec54fd7f948fb5fcacf9a05a77ed0f3792761 content=c8e74f9a469c333badcfce5adfb3425c07924081df04fa642d6598156a2b117f
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -616,7 +616,7 @@ export const agentContract = {
       ],
       "deniedContexts": [],
       "name": "zod",
-      "version": "3.24.0"
+      "version": "3.25.76"
     }
   ],
   "playbooks": [

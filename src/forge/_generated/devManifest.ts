@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.0 input=bbcb5249a5456591d9d88ee11d0e1be99fc6bd72fc1bd3e65550c8656da372cf content=9b9bc3ecda4bdec5a00a1c6c764f12566e70db41a2f8c4835e75257bd13890fd
+// @forge-generated generator=0.1.0-alpha.0 input=4dbda59592f3ea3b2e8992aa95fec54fd7f948fb5fcacf9a05a77ed0f3792761 content=9b9bc3ecda4bdec5a00a1c6c764f12566e70db41a2f8c4835e75257bd13890fd
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
