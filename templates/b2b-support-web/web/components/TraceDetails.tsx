@@ -1,6 +1,6 @@
 "use client";
 
-import type { ForgeReactError } from "../../src/forge/_generated/react";
+import type { ForgeReactError } from "../lib/forge";
 
 export function TraceDetails({
   label,

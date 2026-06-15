@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
   FORGE_OUTBOX_PROCESS_FAILED,
@@ -66,7 +67,7 @@ async function runDeliveryAction(
   await prepareRuntimeEnvironment(workspaceRoot, { mock, db: adapter });
 
   const absolutePath = join(workspaceRoot, entry.file);
-  const mod = (await import(absolutePath)) as Record<string, unknown>;
+  const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
   const exported = mod[entry.name];
 
   if (

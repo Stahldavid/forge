@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { ForgeTelemetryEnvelope } from "../types.ts";
 
 export interface SentryCaptureFn {
@@ -40,11 +42,8 @@ export async function sendToSentry(
   }
 
   try {
-    const adapterPath = `${workspaceRoot}/src/forge/_generated/packages/sentry.server.ts`.replace(
-      /\\/g,
-      "/",
-    );
-    const mod = (await import(adapterPath)) as {
+    const adapterPath = join(workspaceRoot, "src/forge/_generated/packages/sentry.server.ts");
+    const mod = (await import(pathToFileURL(adapterPath).href)) as {
       captureServerException?: (err: Error, ctx?: Record<string, unknown>) => void;
     };
 

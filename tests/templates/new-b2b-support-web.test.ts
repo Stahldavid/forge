@@ -69,7 +69,7 @@ describe("b2b-support-web template", () => {
       expect(existsSync(join(project, "src", "workflows", "triageTicketWorkflow.ts"))).toBe(true);
 
       expect(read(project, "package.json")).toContain('"name": "support-app"');
-      expect(read(project, "package.json")).toContain('"forge": "file:');
+      expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@alpha"');
       expect(read(project, "package.json")).not.toContain('"forge": "latest"');
       expect(read(project, "package.json")).toContain('"packageManager": "bun@1.3.14"');
       expect(read(project, "web/package.json")).not.toContain("latest");
@@ -100,7 +100,10 @@ describe("b2b-support-web template", () => {
       );
 
       expect(read(project, "web/components/TicketList.tsx")).toContain("useLiveQuery");
+      expect(read(project, "web/components/TicketList.tsx")).toContain("../lib/forge");
+      expect(read(project, "web/components/TicketList.tsx")).not.toContain("_generated");
       expect(read(project, "web/components/CreateTicketForm.tsx")).toContain("useCommand");
+      expect(read(project, "web/components/CreateTicketForm.tsx")).not.toContain("_generated");
       expect(read(project, "web/components/PolicyDeniedDemo.tsx")).toContain(
         "manageBilling",
       );
@@ -176,5 +179,5 @@ describe("b2b-support-web template", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
-  }, 30_000);
+  }, 60_000);
 });

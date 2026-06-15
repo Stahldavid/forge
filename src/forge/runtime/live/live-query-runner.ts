@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
   FORGE_LIVEQUERY_AI_FORBIDDEN,
@@ -185,7 +186,7 @@ export async function runLiveQuery(
 
   try {
     const absolutePath = join(workspaceRoot, liveQuery.file);
-    const mod = (await import(absolutePath)) as Record<string, unknown>;
+    const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
     const exported = mod[liveQuery.exportName];
 
     if (

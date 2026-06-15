@@ -114,7 +114,7 @@ async function nodeRequestToFetch(
   return new Request(url, init);
 }
 
-async function writeFetchResponse(
+export async function writeFetchResponse(
   response: ServerResponse,
   fetchResponse: Response,
 ): Promise<void> {
@@ -128,7 +128,21 @@ async function writeFetchResponse(
     return;
   }
 
-  response.end(Buffer.from(await fetchResponse.arrayBuffer()));
+  const reader = fetchResponse.body.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      response.write(Buffer.from(value));
+    }
+    response.end();
+  } catch (error) {
+    response.destroy(error instanceof Error ? error : undefined);
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 async function createNodeFetchServer(

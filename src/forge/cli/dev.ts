@@ -147,6 +147,30 @@ function hasWebApp(workspaceRoot: string): boolean {
   );
 }
 
+function sanitizeProcessEnv(
+  env: NodeJS.ProcessEnv,
+  extra: Record<string, string>,
+): Record<string, string> {
+  const sanitized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string") {
+      sanitized[key] = value;
+    }
+  }
+  return {
+    ...sanitized,
+    ...extra,
+  };
+}
+
+function wrapWindowsShellCommand(command: string[]): string[] {
+  const executable = command[0];
+  if (process.platform !== "win32" || !executable || !/\.(cmd|bat)$/i.test(executable)) {
+    return command;
+  }
+  return [process.env.ComSpec ?? "cmd.exe", "/d", "/c", ...command];
+}
+
 function startWebDevServer(input: {
   workspaceRoot: string;
   host: string;
@@ -161,24 +185,27 @@ function startWebDevServer(input: {
 
   const pkg = readPackageJson(input.workspaceRoot);
   const packageManager = detectPackageManager(input.workspaceRoot);
-  const env = {
-    ...process.env,
+  const env = sanitizeProcessEnv(process.env, {
     PORT: String(input.port),
     NEXT_PUBLIC_FORGE_URL: input.apiUrl,
     VITE_FORGE_URL: input.apiUrl,
-  };
+  });
   const rawCommand =
     pkg?.scripts?.dev
       ? [packageManager, "run", "dev", "--", ...webDevArgsForPackage(pkg, input)]
       : ["node", "--import", "tsx", "server.ts"];
-  const command = resolvePackageManagerArgv(rawCommand);
+  const command = wrapWindowsShellCommand(resolvePackageManagerArgv(rawCommand));
   const cwd = pkg?.scripts?.dev ? webRoot : webRoot;
   const child = spawn(command[0]!, command.slice(1), {
     cwd,
-    stdio: ["ignore", input.json ? "pipe" : "inherit", input.json ? "pipe" : "inherit"],
+    stdio: ["ignore", "pipe", "pipe"],
     env,
     windowsHide: true,
   });
+  if (!input.json) {
+    child.stdout?.on("data", (chunk: Buffer) => process.stdout.write(chunk));
+    child.stderr?.on("data", (chunk: Buffer) => process.stderr.write(chunk));
+  }
   return {
     url: `http://${input.host}:${input.port}`,
     port: input.port,

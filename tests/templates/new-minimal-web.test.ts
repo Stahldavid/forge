@@ -107,7 +107,7 @@ describe("minimal-web template", () => {
       expect(read(project, ".gitignore")).toContain(".forge/refactors/");
       expect(read(project, ".gitignore")).toContain(".forge/upgrades/");
       expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
-      expect(read(project, "package.json")).toContain('"forge": "file:');
+      expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@alpha"');
       expect(read(project, "package.json")).not.toContain('"forge": "latest"');
       expect(read(project, "package.json")).toContain('"packageManager": "bun@1.3.14"');
       expect(read(project, "web/package.json")).not.toContain("latest");
@@ -177,6 +177,27 @@ describe("minimal-web template", () => {
       const project = join(workspace, "notes-app");
       expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@0.1.0-alpha.0"');
       expect(read(project, "package.json")).toContain('"packageManager": "npm@10.9.0"');
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("forge new can intentionally use the local Forge checkout", async () => {
+    const workspace = tempWorkspace("new-minimal-web-local-forge");
+    try {
+      const result = await runNewCommand({
+        name: "notes-app",
+        template: "minimal-web",
+        packageManager: "npm",
+        install: false,
+        git: false,
+        localForge: true,
+        workspaceRoot: workspace,
+      });
+      expect(result.exitCode).toBe(0);
+
+      const project = join(workspace, "notes-app");
+      expect(read(project, "package.json")).toContain('"forge": "file:');
     } finally {
       cleanupWorkspace(workspace);
     }

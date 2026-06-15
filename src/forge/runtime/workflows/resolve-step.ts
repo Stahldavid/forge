@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { WorkflowDefinition } from "../../compiler/types/workflow-registry.ts";
 import { prepareRuntimeEnvironment } from "../executor.ts";
 
@@ -24,7 +25,7 @@ export async function resolveWorkflowStepHandler(
   await prepareRuntimeEnvironment(workspaceRoot, { mock });
 
   const absolutePath = join(workspaceRoot, workflow.file);
-  const mod = (await import(absolutePath)) as Record<string, unknown>;
+  const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
   const exported = mod[workflow.exportName] as ExportedWorkflow | undefined;
 
   if (!exported || exported.__forge?.kind !== "workflow") {

@@ -11,3 +11,4 @@ export {
   useLiveQuery,
   useQuery,
 } from "../../src/forge/_generated/react";
+export type { ForgeReactError } from "../../src/forge/_generated/react";

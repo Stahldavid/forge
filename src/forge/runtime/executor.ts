@@ -1,5 +1,6 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import { classify } from "../compiler/classifier/classify.ts";
@@ -218,7 +219,7 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
       continue;
     }
 
-    const mod = (await import(absolute)) as Record<string, unknown>;
+    const mod = (await import(pathToFileURL(absolute).href)) as Record<string, unknown>;
     const factoryName = `create${capitalizeSegment(packageName)}Mock`;
     const factory = mod[factoryName];
 
@@ -387,7 +388,7 @@ export async function runEntry(
     });
 
     const absolutePath = join(workspaceRoot, entry.file);
-    const mod = (await import(absolutePath)) as Record<string, unknown>;
+    const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
     const resolved = resolveHandlerFromModule(mod, entry.name);
 
     if (!resolved) {

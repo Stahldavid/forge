@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
   FORGE_DB_ADAPTER_UNAVAILABLE,
@@ -162,7 +163,7 @@ export async function executeResolvedEntry(
     runtime.tableMap
   ) {
     const absolutePath = join(workspaceRoot, entry.file);
-    const mod = (await import(absolutePath)) as Record<string, unknown>;
+    const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
     const exported = mod[entry.name];
     const handler = (exported as { handler: (ctx: unknown, args: unknown) => unknown })
       .handler;

@@ -1,6 +1,7 @@
 import { existsSync, mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
 
 async function runNodeForge(
@@ -69,4 +70,49 @@ describe("Node-compatible CLI", () => {
       rmSync(workspace, { recursive: true, force: true });
     }
   });
+
+  test("node bin keeps dev api server alive for generated apps", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-node-dev-"));
+    try {
+      const created = await runNodeForge([
+        "new",
+        "support-app",
+        "--template",
+        "b2b-support-web",
+        "--package-manager",
+        "npm",
+        "--no-install",
+        "--no-git",
+      ], { cwd: workspace });
+      expect(created.exitCode).toBe(0);
+
+      const appRoot = join(workspace, "support-app");
+      const generated = await runNodeForge(["generate"], { cwd: appRoot });
+      expect(generated.exitCode).toBe(0);
+
+      const dev = spawnSync(
+        "node",
+        [
+          join(process.cwd(), "bin", "forge.mjs"),
+          "dev",
+          "--api-only",
+          "--port",
+          "0",
+          "--no-watch",
+        ],
+        {
+          cwd: appRoot,
+          encoding: "utf8",
+          timeout: 25_000,
+          windowsHide: true,
+        },
+      );
+
+      expect(`${dev.stdout}\n${dev.stderr}`).toContain("API runtime");
+      expect(`${dev.stdout}\n${dev.stderr}`).not.toContain("tsx-namespace");
+      expect(`${dev.stdout}\n${dev.stderr}`).not.toContain("ENOENT");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 40_000);
 });

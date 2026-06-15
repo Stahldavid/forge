@@ -1,7 +1,6 @@
 "use client";
 
-import { api } from "../../src/forge/_generated/api";
-import { useCommand } from "../../src/forge/_generated/react";
+import { api, useCommand } from "../lib/forge";
 import { TraceDetails } from "./TraceDetails";
 
 export function PolicyDeniedDemo() {

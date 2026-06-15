@@ -57,6 +57,8 @@ const REQUIRED_GITIGNORE_PATHS = [
   ".forge/agent-adapters/",
 ] as const;
 
+const DEFAULT_FORGE_PACKAGE_SPEC = "npm:forgeos@alpha";
+
 const TEXT_EXTENSIONS = new Set([
   "",
   ".css",
@@ -135,7 +137,10 @@ function forgePackageSpec(targetDir: string, options: Pick<NewCommandOptions, "f
   if (options.forgePackageSpec && !options.localForge) {
     return normalizeForgePackageSpec(options.forgePackageSpec);
   }
-  return localForgePackageSpec(targetDir);
+  if (options.localForge) {
+    return localForgePackageSpec(targetDir);
+  }
+  return DEFAULT_FORGE_PACKAGE_SPEC;
 }
 
 function packageManagerSpec(packageManager: string): string {
@@ -205,6 +210,28 @@ function analyzeGitHygiene(targetDir: string): NewCommandResult["gitHygiene"] {
     ignoredPaths: [...REQUIRED_GITIGNORE_PATHS],
     missingPaths,
   };
+}
+
+function ensureGitignore(targetDir: string): void {
+  const gitignorePath = join(targetDir, ".gitignore");
+  const existing = nodeFileSystem.exists(gitignorePath)
+    ? (nodeFileSystem.readText(gitignorePath) ?? "")
+    : "";
+  const normalized = existing.replace(/\r\n/g, "\n");
+  const missingPaths = REQUIRED_GITIGNORE_PATHS.filter(
+    (path) => !normalized.includes(path),
+  );
+  if (normalized.trim().length > 0 && missingPaths.length === 0) {
+    return;
+  }
+
+  const sections = [
+    normalized.trimEnd(),
+    normalized.trim().length > 0 ? "" : "node_modules/\ndist/\n.env\n.env.local",
+    "# ForgeOS generated and local runtime artifacts",
+    ...missingPaths,
+  ].filter(Boolean);
+  nodeFileSystem.writeText(gitignorePath, `${sections.join("\n")}\n`);
 }
 
 async function spawnCommand(
@@ -393,6 +420,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
 
   nodeFileSystem.mkdirp(targetDir);
   cpSync(source, targetDir, { recursive: true, force: true });
+  ensureGitignore(targetDir);
   replaceTokens(
     targetDir,
     options.name,

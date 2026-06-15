@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
   FORGE_POLICY_DENIED,
@@ -249,7 +250,7 @@ export async function runQuery(
     await setDbSessionContext(tx, auth);
 
     const absolutePath = join(workspaceRoot, query.file);
-    const mod = (await import(absolutePath)) as Record<string, unknown>;
+    const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
     const exported = mod[query.name];
 
     if (

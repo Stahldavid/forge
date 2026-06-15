@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { ForgeTelemetryEnvelope } from "../types.ts";
 
 export interface PosthogCaptureFn {
@@ -33,11 +35,8 @@ export async function sendToPosthog(
   }
 
   try {
-    const adapterPath = `${workspaceRoot}/src/forge/_generated/packages/posthog.server.ts`.replace(
-      /\\/g,
-      "/",
-    );
-    const mod = (await import(adapterPath)) as {
+    const adapterPath = join(workspaceRoot, "src/forge/_generated/packages/posthog.server.ts");
+    const mod = (await import(pathToFileURL(adapterPath).href)) as {
       createPosthogServer?: () => { capture: (args: unknown) => void; shutdown: () => Promise<void> };
     };
 

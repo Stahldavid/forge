@@ -24,11 +24,17 @@ async function ensureTenant(ctx: {
 
 export const createTicket = command({
   auth: can("tickets.create"),
-  handler: async (ctx, input: { title: string }) => {
+  handler: async (ctx, args) => {
+    const input = args as { title?: unknown };
+    const title = typeof input.title === "string" ? input.title.trim() : "";
+    if (!title) {
+      throw new Error("title is required");
+    }
+
     await ensureTenant(ctx);
 
     const ticket = await ctx.db.tickets.insert({
-      title: input.title,
+      title,
       status: "open",
       severity: "medium",
       triageSummary: "Waiting for workflow triage.",

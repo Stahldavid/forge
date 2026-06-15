@@ -1,7 +1,6 @@
 "use client";
 
-import { api } from "../../src/forge/_generated/api";
-import { useLiveQuery } from "../../src/forge/_generated/react";
+import { api, useLiveQuery } from "../lib/forge";
 import { TraceDetails } from "./TraceDetails";
 
 type Ticket = {
