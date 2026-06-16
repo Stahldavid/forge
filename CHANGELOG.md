@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0-alpha.8
+
+### Patch Changes
+
+- [`7568756`](https://github.com/Stahldavid/forge/commit/756875688873dd60d3d6cf700a7bb7c211968c69) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Publish prerelease packages through the ForgeOS alpha publisher so npm dist-tags stay aligned.
+
 ## 0.1.0-alpha.7
 
 ### Patch Changes
