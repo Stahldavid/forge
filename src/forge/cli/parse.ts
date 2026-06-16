@@ -294,6 +294,8 @@ export type ForgeCommand =
       model?: string;
       prompt?: string;
       mock: boolean;
+      modelLevel: boolean;
+      live: boolean;
       traceId?: string;
       db?: DbAdapterKind;
       databaseUrl?: string;
@@ -2000,6 +2002,8 @@ export function parseCli(argv: string[]): ParsedCli {
           model: parseOptionValue(argv, "--model"),
           prompt: parseOptionValue(argv, "--prompt"),
           mock: parseFlag(argv, "--mock"),
+          modelLevel: parseFlag(argv, "--model-level"),
+          live: parseFlag(argv, "--live"),
           traceId,
           db: parsePersistentDbKind(parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
@@ -2177,6 +2181,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-rules",
     "--full",
     "--run-tests",
+    "--model-level",
+    "--live",
   ]);
 
   for (let index = 0; index < argv.length; index++) {

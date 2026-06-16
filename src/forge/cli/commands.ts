@@ -1127,6 +1127,8 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         model: command.model,
         prompt: command.prompt,
         mock: command.mock,
+        modelLevel: command.modelLevel,
+        live: command.live,
         traceId: command.traceId,
         db: command.db,
         databaseUrl: command.databaseUrl,

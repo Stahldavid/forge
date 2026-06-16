@@ -38,7 +38,7 @@ security/evidence/latest/
 | Runtime tenant isolation | Covered | `tests/security/tenant-isolation/runtime-api.test.ts`, `tests/security/tenant-isolation/http-runtime.test.ts`, `forge security prove --json` |
 | Secret redaction | Covered | `forge secrets prove --json`, `tests/security/secret-redaction.test.ts` |
 | Webhook authenticity helpers | Partial | `tests/security/webhooks/webhook-security.test.ts`, `src/forge/runtime/webhooks/security.ts` |
-| Agent tool approval metadata | Partial | `forge ai tools --json`, `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
+| Agent tool approval metadata | Partial | `forge ai tools --json`, `forge ai redteam --json`, `forge ai redteam --model-level --json`, `tests/security/agent-tools.test.ts`, `tests/security/agent-redteam.test.ts` |
 | Postgres tenant isolation | Covered when run with Postgres | `forge rls test --db postgres --json`, `forge rls mutate-test --json` |
 | JWT/OIDC production auth | Partial | `forge auth prove --json`, `tests/security/auth-negative.test.ts` |
 | Supply-chain provenance | Covered for npm publish path | `.github/workflows/publish.yml`, Trusted Publisher, `NPM_CONFIG_PROVENANCE=true` |

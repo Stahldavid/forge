@@ -54,7 +54,7 @@ forge verify --strict --script-timeout-ms 120000
 bun test tests/security
 ```
 
-The current implementation covers adversarial fixtures for runtime boundaries, runtime and HTTP tenant isolation, JWT/OIDC negative auth paths, value-aware secret redaction, webhook signature/replay checks, agent tool metadata, structural agent checks, standards crosswalks, release evidence, SBOM generation, Postgres RLS tenant isolation, and RLS mutation checks.
+The current implementation covers adversarial fixtures for runtime boundaries, runtime and HTTP tenant isolation, JWT/OIDC negative auth paths, value-aware secret redaction, webhook signature/replay checks, agent tool metadata, structural agent checks, deterministic model-level agent probes, standards crosswalks, release evidence, SBOM generation, Postgres RLS tenant isolation, and RLS mutation checks.
 
 `forge security prove --json` reports an `assurance` level:
 
@@ -75,6 +75,7 @@ node ./bin/forge.mjs secrets check --json
 node ./bin/forge.mjs auth prove --json
 node ./bin/forge.mjs secrets prove --json
 node ./bin/forge.mjs ai redteam --json
+node ./bin/forge.mjs ai redteam --model-level --json
 node ./bin/forge.mjs rls test --db postgres --json
 node ./bin/forge.mjs rls mutate-test --json
 node ./bin/forge.mjs security prove --db postgres --full --json

@@ -89,9 +89,26 @@ forge inspect agent-tools --json
 forge ai tools --json
 forge ai agents --json
 forge ai redteam --json
+forge ai redteam --model-level --json
 ```
 
-`forge ai redteam --json` is a deterministic structural redteam pass. It checks generated and explicit tool metadata for approval bypass risks, read/write boundary drift, secret-like tool surfaces, and unbounded agent step loops. It does not replace model-level prompt-injection testing, but it is the fast local gate agents should run before handing off AI tool changes.
+`forge ai redteam --json` is a deterministic structural redteam pass. It checks generated and explicit tool metadata for approval bypass risks, read/write boundary drift, secret-like tool surfaces, and unbounded agent step loops.
+
+`forge ai redteam --model-level --json` adds a deterministic model-level probe harness. By default it uses Forge mock AI, so it is safe for CI and does not require provider keys. The probes cover:
+
+- direct prompt injection;
+- secret exfiltration requests;
+- approval-bypass attempts for external tools;
+- cross-tenant data requests;
+- indirect tool injection from retrieved content.
+
+For intentional live-model validation, pass a provider and model explicitly:
+
+```bash
+forge ai redteam --model-level --live --provider gateway --model openai/gpt-5.4 --json
+```
+
+Use live mode only when you intentionally want provider calls and cost. The deterministic mock mode is the default local gate agents should run before handing off AI tool changes.
 
 ## Dev endpoints
 
@@ -121,6 +138,7 @@ This creates an agent definition and a web chat component wired to the agent end
 ```bash
 forge ai trace <traceId> --json
 forge ai redteam --json
+forge ai redteam --model-level --json
 forge repair diagnose --from-last-test-run --json
 ```
 

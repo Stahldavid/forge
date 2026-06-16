@@ -37,9 +37,9 @@ Status values:
 
 | Risk | ForgeOS mitigation | Status | Evidence |
 | --- | --- | --- | --- |
-| Prompt injection | AI allowed only in actions/workflows/endpoints/server; tools carry risk metadata and structural redteam checks | Partial | `forge ai tools --json`, `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
+| Prompt injection | AI allowed only in actions/workflows/endpoints/server; tools carry risk metadata; structural and deterministic model-level redteam checks cover injection probes | Partial | `forge ai tools --json`, `forge ai redteam --json`, `forge ai redteam --model-level --json`, `tests/security/agent-tools.test.ts`, `tests/security/agent-redteam.test.ts` |
 | Sensitive information disclosure | Secret access through `ctx.secrets`; scrubbed telemetry and generated artifacts | Covered | `forge secrets prove --json`, `tests/security/secret-redaction.test.ts` |
-| Excessive agency | Tool risk, approval metadata, stop conditions | Partial | `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
+| Excessive agency | Tool risk, approval metadata, stop conditions, approval-bypass probes | Partial | `forge ai redteam --json`, `forge ai redteam --model-level --json`, `tests/security/agent-tools.test.ts`, `tests/security/agent-redteam.test.ts` |
 | Insecure plugin design | Integration recipes declare allowed/denied contexts and package guards | Partial | `forge add <alias>`, `forge inspect capabilities --json` |
 | Supply-chain vulnerabilities | Dependency inspection, runtime compatibility, provenance publishing | Partial | `forge deps inspect`, `publish.yml`, `NPM_CONFIG_PROVENANCE=true` |
 

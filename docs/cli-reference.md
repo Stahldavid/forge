@@ -133,6 +133,8 @@ forge ai check --json
 forge ai tools --json
 forge ai agents --json
 forge ai redteam --json
+forge ai redteam --model-level --json
+forge ai redteam --model-level --live --provider gateway --model openai/gpt-5.4 --json
 forge ai test --provider openai --model gpt-4o-mini --prompt "hello" --mock
 forge ai trace <traceId> --json
 ```
