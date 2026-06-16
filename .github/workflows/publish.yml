@@ -115,6 +115,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
+          NPM_CONFIG_TAG: "alpha"
 
       - name: Publish create app wrapper
         id: create-wrapper

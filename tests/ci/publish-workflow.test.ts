@@ -71,6 +71,7 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("git restore .");
     expect(workflow).toContain("git clean -fd");
     expect(workflow).toContain("NPM_CONFIG_PROVENANCE: \"true\"");
+    expect(workflow).toContain("NPM_CONFIG_TAG: \"alpha\"");
     expect(workflow).toContain("npm publish --access public --tag alpha");
     expect(workflow).toContain("npm run release:smoke");
     expect(workflow).not.toContain("NPM_TOKEN");
