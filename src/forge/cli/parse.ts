@@ -17,6 +17,7 @@ import type { SelfHostSubcommand } from "./self-host.ts";
 import type { AgentContractSubcommand } from "./agent-contract.ts";
 import type { AuthSubcommand } from "./auth.ts";
 import type { RlsSubcommand } from "./rls.ts";
+import type { SecuritySubcommand } from "./security.ts";
 import type { DepsSubcommand } from "./deps.ts";
 import type { ReleaseAction, ReleaseArea } from "./release.ts";
 import type { MakeCommandOptions, MakePrimitive } from "../make/types.ts";
@@ -99,6 +100,14 @@ export type ForgeCommand =
     }
   | { kind: "doctor"; target?: "project" | "windows"; json: boolean; workspaceRoot: string }
   | { kind: "setup"; target: "windows"; json: boolean; yes: boolean; workspaceRoot: string }
+  | {
+      kind: "security";
+      subcommand: SecuritySubcommand;
+      db: DbAdapterKind;
+      databaseUrl?: string;
+      json: boolean;
+      workspaceRoot: string;
+    }
   | {
       kind: "auth";
       subcommand: AuthSubcommand;
@@ -308,6 +317,7 @@ export const TOP_LEVEL_COMMANDS = [
   "ui",
   "doctor",
   "setup",
+  "security",
   "auth",
   "rls",
   "deps",
@@ -396,7 +406,9 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
   "decode",
   "test-token",
   "jwks",
+  "prove",
 ];
+const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
 const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test"];
 const DEPS_SUBCOMMANDS: DepsSubcommand[] = [
   "outdated",
@@ -987,10 +999,29 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "security": {
+      const subcommand = rest[0] as SecuritySubcommand | undefined;
+      if (!subcommand || !SECURITY_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge security requires subcommand: prove");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "security",
+          subcommand,
+          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          databaseUrl: parseOptionValue(argv, "--database-url"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "auth": {
       const subcommand = rest[0] as AuthSubcommand | undefined;
       if (!subcommand || !AUTH_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge auth requires subcommand: check, config, decode, test-token, or jwks");
+        errors.push("forge auth requires subcommand: check, config, decode, test-token, jwks, or prove");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -1902,10 +1933,10 @@ export function parseCli(argv: string[]): ParsedCli {
       const subcommand = rest[0] as SecretsSubcommand | undefined;
       if (
         !subcommand ||
-        !["list", "check", "print", "set", "unset"].includes(subcommand)
+        !["list", "check", "print", "set", "unset", "prove"].includes(subcommand)
       ) {
         errors.push(
-          "forge secrets requires subcommand: list, check, print, set, or unset",
+          "forge secrets requires subcommand: list, check, print, set, unset, or prove",
         );
         return { command: null, workspaceRoot, errors };
       }

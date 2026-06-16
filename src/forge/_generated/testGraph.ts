@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=036146e3c770368a0d71d33e4eff9252acb5ea90669f57bf119dcb1cb4b4e379 content=74f57b38de6fa8fcb7a17fbf760d02bf13c5963c5b3f385cb9450d99a7327c10
+// @forge-generated generator=0.1.0-alpha.3 input=0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106 content=ee79192d0dabb3e70c92e5f2e680bffe5c959f12c11a9ead758e27b1968193cc
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "036146e3c770368a0d71d33e4eff9252acb5ea90669f57bf119dcb1cb4b4e379",
+  "inputHash": "0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1149,7 +1149,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "ai"
+          "ai",
+          "postgres"
         ],
         "policies": [],
         "queries": [],
@@ -1159,7 +1160,8 @@ export const testGraph = {
       "file": "tests/docs/readthedocs.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages ai"
+        "probable: packages ai",
+        "probable: packages postgres"
       ]
     },
     {
@@ -2939,6 +2941,28 @@ export const testGraph = {
       "file": "tests/security/secret-redaction.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/security-prove.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "probable",

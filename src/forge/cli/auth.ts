@@ -9,7 +9,7 @@ import { mapClaimsToAuthContext } from "../runtime/auth/claims.ts";
 import { ForgeAuthError } from "../runtime/auth/errors.ts";
 import { verifyJwtToken } from "../runtime/auth/verifier.ts";
 
-export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks";
+export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove";
 
 export interface AuthCommandOptions {
   subcommand: AuthSubcommand;
@@ -162,6 +162,41 @@ export async function runAuthCommand(
 ): Promise<AuthCommandResult> {
   if (options.subcommand === "check") {
     return validateConfig(options.workspaceRoot);
+  }
+  if (options.subcommand === "prove") {
+    const checked = validateConfig(options.workspaceRoot);
+    const config = loadAuthConfigFromEnv(options.workspaceRoot);
+    const productionMode = config.mode === "jwt" || config.mode === "oidc";
+    return {
+      ok: checked.ok,
+      mode: config.mode,
+      data: {
+        schemaVersion: "0.1.0",
+        kind: "auth-proof",
+        ok: checked.ok,
+        mode: config.mode,
+        productionReady: productionMode && checked.ok,
+        invariants: [
+          {
+            id: "INV-001",
+            name: "dev headers are not production auth",
+            status: productionMode ? "passed" : "local-only",
+            evidence: productionMode
+              ? "jwt/oidc mode configured through environment"
+              : "dev-headers mode is allowed only for local dev, tests, and agent workflows",
+          },
+          {
+            id: "INV-001-CONFIG",
+            name: "jwt/oidc required settings are present when production auth is enabled",
+            status: checked.ok ? "passed" : "failed",
+            evidence: checked.data,
+          },
+        ],
+        checkedAt: "deterministic",
+      },
+      error: checked.error,
+      exitCode: checked.exitCode,
+    };
   }
   if (options.subcommand === "config") {
     return publicConfig(options.workspaceRoot);

@@ -416,6 +416,7 @@ security/evidence/latest/
   auth-check.json
   secrets-check.json
   rls-test.json
+  security-proof.json
   verify-strict.json
   runtime-boundaries.json
   secret-redaction.json

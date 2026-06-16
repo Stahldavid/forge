@@ -26,6 +26,9 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_security
       FORGE_MOCK_AI: "1"
+      AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
+      ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
+      OPENAI_API_KEY: forge-ci-redacted-openai-key
     steps:
       - uses: actions/checkout@v4
 
@@ -57,6 +60,9 @@ jobs:
 
       - name: RLS adversarial proof
         run: node ./bin/forge.mjs rls test --db postgres --json | tee security/evidence/latest/rls-test.json
+
+      - name: Aggregate security proof
+        run: node ./bin/forge.mjs security prove --db postgres --json | tee security/evidence/latest/security-proof.json
 
       - name: Strict verification
         run: node ./bin/forge.mjs verify --strict --script-timeout-ms 120000 | tee security/evidence/latest/verify-strict.txt

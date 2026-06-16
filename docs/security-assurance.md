@@ -37,6 +37,7 @@ forge check --json
 forge auth check --json
 forge secrets check --json
 forge rls test --db postgres --json
+forge security prove --db postgres --json
 forge verify --strict --script-timeout-ms 120000
 bun test tests/security
 ```
@@ -53,6 +54,7 @@ node ./bin/forge.mjs check --json
 node ./bin/forge.mjs auth check --json
 node ./bin/forge.mjs secrets check --json
 node ./bin/forge.mjs rls test --db postgres --json
+node ./bin/forge.mjs security prove --db postgres --json
 node ./bin/forge-bun.mjs test tests/security --timeout 120000
 ```
 
@@ -78,6 +80,7 @@ forge-check.json
 auth-check.json
 secrets-check.json
 rls-test.json
+security-proof.json
 runtime-boundaries.json
 secret-redaction.json
 agent-tools.json

@@ -175,6 +175,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/threat-model.md")).toContain("Known gaps");
     expect(read("docs/security-assurance.md")).toContain("SECURITY_INVARIANTS.md");
     expect(read("docs/security-assurance.md")).toContain("security-assurance.yml");
+    expect(read("docs/security-assurance.md")).toContain("forge security prove --db postgres --json");
     expect(read("docs/security-assurance.md")).toContain("tests/security");
     expect(read("docs/security-assurance.md")).toContain("security/evidence/latest");
     expect(read("docs/production-readiness.md")).toContain("Threat Model");

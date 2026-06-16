@@ -9,7 +9,7 @@ import {
 import { getRuntimeEnvStore, initializeRuntimeEnv } from "../runtime/context/create-context.ts";
 import { redactSecretValue } from "../runtime/secrets/env-loader.ts";
 
-export type SecretsSubcommand = "list" | "check" | "print" | "set" | "unset";
+export type SecretsSubcommand = "list" | "check" | "print" | "set" | "unset" | "prove";
 
 export interface SecretsCommandOptions {
   subcommand: SecretsSubcommand;
@@ -89,6 +89,51 @@ export async function runSecretsCommand(
       const store = getRuntimeEnvStore(options.workspaceRoot);
       const result = checkSecrets(store, registry);
       return { exitCode: result.ok ? 0 : 1, data: result };
+    }
+    case "prove": {
+      if (!registry) {
+        return {
+          exitCode: 1,
+          diagnostics: [
+            createDiagnostic({
+              severity: "error",
+              code: "FORGE_INSPECT_MISSING",
+              message: "missing secretRegistry.json; run forge generate first",
+            }),
+          ],
+        };
+      }
+
+      const store = getRuntimeEnvStore(options.workspaceRoot);
+      const result = checkSecrets(store, registry);
+      return {
+        exitCode: result.ok ? 0 : 1,
+        data: {
+          schemaVersion: "0.1.0",
+          kind: "secrets-proof",
+          ok: result.ok,
+          invariants: [
+            {
+              id: "INV-008",
+              name: "secret values are not emitted by the proof",
+              status: "passed",
+              evidence: "only names, missing names, and redacted presence markers are returned",
+            },
+            {
+              id: "INV-008-REQUIRED",
+              name: "required secrets are configured",
+              status: result.ok ? "passed" : "failed",
+              evidence: {
+                missing: result.missing,
+                present: result.present.map((entry) => ({
+                  name: entry.name,
+                  redacted: entry.redacted,
+                })),
+              },
+            },
+          ],
+        },
+      };
     }
     case "print": {
       if (!registry) {

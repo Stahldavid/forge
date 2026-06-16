@@ -102,6 +102,11 @@ import {
 } from "./windows.ts";
 import { formatAuthHuman, formatAuthJson, runAuthCommand } from "./auth.ts";
 import { formatRlsHuman, formatRlsJson, runRlsCommand } from "./rls.ts";
+import {
+  formatSecurityHuman,
+  formatSecurityJson,
+  runSecurityCommand,
+} from "./security.ts";
 import { formatDepsHuman, formatDepsJson, runDepsCommand } from "./deps.ts";
 import {
   formatReleaseHuman,
@@ -633,6 +638,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatWindowsSetupJson(result));
       } else {
         process.stdout.write(formatWindowsSetupHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "security": {
+      const result = await runSecurityCommand(command);
+      if (command.json) {
+        process.stdout.write(formatSecurityJson(result));
+      } else {
+        process.stdout.write(formatSecurityHuman(result));
       }
       return result.exitCode;
     }
