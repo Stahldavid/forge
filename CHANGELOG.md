@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0
+
+### Patch Changes
+
+- [`c30f906`](https://github.com/Stahldavid/forge/commit/c30f9069c99ac747ce143ab5fbcbf13912ed8760) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add CLI version output, align create-app help with package metadata, and add release dependency audit evidence.
+
 ## Unreleased
 
 Release and packaging hardening:
