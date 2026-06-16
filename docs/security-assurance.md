@@ -36,12 +36,12 @@ forge generate --check
 forge check --json
 forge auth check --json
 forge secrets check --json
-forge rls check --json
+forge rls test --db postgres --json
 forge verify --strict --script-timeout-ms 120000
 bun test tests/security
 ```
 
-The first implementation focuses on adversarial fixtures for runtime boundaries, secret redaction, and agent tool safety. Later layers add Postgres RLS adversarial tests, auth negative tests, standards crosswalks, and release supply-chain evidence.
+The first implementation focuses on adversarial fixtures for runtime boundaries, secret redaction, agent tool safety, and Postgres RLS tenant isolation. Later layers add auth negative tests, standards crosswalks, and release supply-chain evidence.
 
 ## Local Security Gate
 
@@ -52,7 +52,7 @@ node ./bin/forge.mjs generate --check
 node ./bin/forge.mjs check --json
 node ./bin/forge.mjs auth check --json
 node ./bin/forge.mjs secrets check --json
-node ./bin/forge.mjs rls check --json
+node ./bin/forge.mjs rls test --db postgres --json
 node ./bin/forge-bun.mjs test tests/security --timeout 120000
 ```
 
@@ -77,7 +77,7 @@ Examples:
 forge-check.json
 auth-check.json
 secrets-check.json
-rls-check.json
+rls-test.json
 runtime-boundaries.json
 secret-redaction.json
 agent-tools.json
@@ -95,11 +95,10 @@ Evidence files must not include:
 
 The current assurance layer is intentionally not the final security story. The next layers are:
 
-1. Postgres RLS adversarial tests with a real Postgres service and non-owner role.
-2. JWT/OIDC negative auth tests.
-3. Agent redteam tests for prompt injection, excessive agency, approval bypass, tenant leakage, and secret extraction.
-4. Standards crosswalks for OWASP ASVS, OWASP API Top 10, OWASP LLM Top 10, NIST SSDF, and SLSA.
-5. Release security gate with SBOM/provenance/dependency evidence.
+1. JWT/OIDC negative auth tests.
+2. Agent redteam tests for prompt injection, excessive agency, approval bypass, tenant leakage, and secret extraction.
+3. Standards crosswalks for OWASP ASVS, OWASP API Top 10, OWASP LLM Top 10, NIST SSDF, and SLSA.
+4. Release security gate with SBOM/provenance/dependency evidence.
 
 ## Related Pages
 

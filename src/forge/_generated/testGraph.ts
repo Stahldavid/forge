@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=dc9a740d65daecf0bd421f4606322f15696283bf0af0c6a904947fe4f731474b
+// @forge-generated generator=0.1.0-alpha.3 input=036146e3c770368a0d71d33e4eff9252acb5ea90669f57bf119dcb1cb4b4e379 content=74f57b38de6fa8fcb7a17fbf760d02bf13c5963c5b3f385cb9450d99a7327c10
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305",
+  "inputHash": "036146e3c770368a0d71d33e4eff9252acb5ea90669f57bf119dcb1cb4b4e379",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -515,6 +515,28 @@ export const testGraph = {
       "file": "tests/ci/publish-workflow.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ci/security-assurance-workflow.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "confirmed",
@@ -2829,6 +2851,92 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/secrets/verify-strict.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai",
+          "zod"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/agent-tools.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages zod",
+        "probable: packages ai"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/rls-postgres-adversarial.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages postgres"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/runtime-boundaries.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages ai"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/secret-redaction.test.ts",
       "kind": "unknown",
       "reasons": []
     },

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=080be6d83e86fc0b867b41cf138f09387a3265be3c2b382692aafe3cecba0b2d
+// @forge-generated generator=0.1.0-alpha.3 input=036146e3c770368a0d71d33e4eff9252acb5ea90669f57bf119dcb1cb4b4e379 content=080be6d83e86fc0b867b41cf138f09387a3265be3c2b382692aafe3cecba0b2d
 export type ForgeAiProvider = "openai" | "anthropic" | "gateway";
 
 export type ForgeFlexibleSchema<T> = unknown & {

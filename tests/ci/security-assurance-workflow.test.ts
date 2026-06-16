@@ -11,7 +11,7 @@ describe("security assurance workflow", () => {
     expect(workflow).toContain("node ./bin/forge.mjs check --json");
     expect(workflow).toContain("node ./bin/forge.mjs auth check --json");
     expect(workflow).toContain("node ./bin/forge.mjs secrets check --json");
-    expect(workflow).toContain("node ./bin/forge.mjs rls check --json");
+    expect(workflow).toContain("node ./bin/forge.mjs rls test --db postgres --json");
     expect(workflow).toContain("node ./bin/forge.mjs verify --strict");
     expect(workflow).toContain("node ./bin/forge-bun.mjs test tests/security");
     expect(workflow).toContain("actions/upload-artifact@v4");

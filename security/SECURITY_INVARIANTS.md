@@ -20,7 +20,7 @@ Each invariant has a threat, guarantee, enforcement points, tests, CI coverage, 
 |----|-----------|---------------|
 | INV-001 | Dev headers must not be accepted for production auth. | Checked |
 | INV-002 | A tenant must never read, list, update, or delete another tenant's data through app runtime APIs. | Design |
-| INV-003 | Postgres RLS must block cross-tenant access even when app handler code is wrong. | Design |
+| INV-003 | Postgres RLS must block cross-tenant access even when app handler code is wrong. | Proved |
 | INV-004 | Commands must not access network packages, secrets, filesystem, AI, or direct `process.env`. | Tested |
 | INV-005 | Queries and liveQueries must be read-only and side-effect free. | Tested |
 | INV-006 | Agent tools must inherit auth, tenant, policy, telemetry, and runtime boundaries. | Tested |
@@ -124,15 +124,15 @@ Enforcement points:
 
 Static check:
 
-- `forge rls check --json`
+- `forge rls test --db postgres --json`
 
 Runtime/integration test:
 
-- planned: `tests/security/rls/postgres-cross-tenant.test.ts`
+- `tests/security/rls-postgres-adversarial.test.ts`
 
 Negative/adversarial test:
 
-- planned: intentionally vulnerable query against Postgres with `FORCE ROW LEVEL SECURITY`.
+- synthetic rows for tenant A and tenant B, then direct same-table `SELECT`, `UPDATE`, `DELETE`, and mismatched-tenant `INSERT` probes under a non-`BYPASSRLS` role.
 
 CI job:
 
@@ -140,7 +140,7 @@ CI job:
 
 Evidence artifact:
 
-- `security/evidence/latest/rls-postgres.json`
+- `security/evidence/latest/rls-test.json`
 
 ## INV-004: Command Runtime Boundaries
 
@@ -415,7 +415,7 @@ security/evidence/latest/
   forge-check.json
   auth-check.json
   secrets-check.json
-  rls-check.json
+  rls-test.json
   verify-strict.json
   runtime-boundaries.json
   secret-redaction.json

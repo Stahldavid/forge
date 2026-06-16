@@ -55,8 +55,8 @@ jobs:
       - name: Secret registry check
         run: node ./bin/forge.mjs secrets check --json | tee security/evidence/latest/secrets-check.json
 
-      - name: RLS check
-        run: node ./bin/forge.mjs rls check --json | tee security/evidence/latest/rls-check.json
+      - name: RLS adversarial proof
+        run: node ./bin/forge.mjs rls test --db postgres --json | tee security/evidence/latest/rls-test.json
 
       - name: Strict verification
         run: node ./bin/forge.mjs verify --strict --script-timeout-ms 120000 | tee security/evidence/latest/verify-strict.txt

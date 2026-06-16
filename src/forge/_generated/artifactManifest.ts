@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=103f8e85d3f251d0e6900435433e5d54c449e50181c70c63eb84ba82fe0131a0
+// @forge-generated generator=0.1.0-alpha.3 input=036146e3c770368a0d71d33e4eff9252acb5ea90669f57bf119dcb1cb4b4e379 content=103f8e85d3f251d0e6900435433e5d54c449e50181c70c63eb84ba82fe0131a0
 export const artifactManifest = {
   "artifacts": [],
   "diagnostics": [],
