@@ -34,10 +34,11 @@ security/evidence/latest/
 | Area | Status | Main evidence |
 | --- | --- | --- |
 | Runtime boundaries | Covered | `forge check --json`, `tests/security/runtime-boundaries.test.ts` |
+| Runtime tenant isolation | Covered | `tests/security/tenant-isolation/runtime-api.test.ts`, `forge security prove --json` |
 | Secret redaction | Covered | `forge secrets prove --json`, `tests/security/secret-redaction.test.ts` |
-| Agent tool approval metadata | Partial | `forge ai tools --json`, `tests/security/agent-tools.test.ts` |
+| Agent tool approval metadata | Partial | `forge ai tools --json`, `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
 | Postgres tenant isolation | Covered when run with Postgres | `forge rls test --db postgres --json` |
-| JWT/OIDC production config | Partial | `forge auth prove --json` |
+| JWT/OIDC production auth | Partial | `forge auth prove --json`, `tests/security/auth-negative.test.ts` |
 | Supply-chain provenance | Covered for npm publish path | `.github/workflows/publish.yml`, Trusted Publisher, `NPM_CONFIG_PROVENANCE=true` |
 | SBOM | Planned | not emitted yet |
 

@@ -5,6 +5,8 @@ import type { RlsCommandResult } from "./rls.ts";
 import { runRlsCommand } from "./rls.ts";
 import type { SecretsCommandResult } from "./secrets.ts";
 import { runSecretsCommand } from "./secrets.ts";
+import type { AiCommandResult } from "./ai.ts";
+import { runAiCommand } from "./ai.ts";
 import { runCheckCommand } from "./commands.ts";
 import type { GenerateResult } from "../compiler/types/cli.ts";
 
@@ -22,11 +24,13 @@ export interface SecurityProofResult {
   ok: boolean;
   schemaVersion: "0.1.0";
   kind: "security-proof";
+  assurance: "structural-only" | "postgres-proved";
   proofs: {
     forgeCheck: GenerateResult;
     auth: AuthCommandResult;
     secrets: SecretsCommandResult;
     rls: RlsCommandResult;
+    agentRedteam: AiCommandResult;
   };
   summary: {
     passed: string[];
@@ -66,6 +70,11 @@ export async function runSecurityCommand(
     databaseUrl: options.databaseUrl,
     json: true,
   });
+  const agentRedteam = await runAiCommand({
+    subcommand: "redteam",
+    workspaceRoot: options.workspaceRoot,
+    json: true,
+  });
 
   const summary: SecurityProofResult["summary"] = {
     passed: [],
@@ -76,6 +85,7 @@ export async function runSecurityCommand(
   passed("auth-proof", auth.exitCode === 0, summary);
   passed("secrets-proof", secrets.exitCode === 0, summary);
   passed("rls-proof", rls.exitCode === 0, summary);
+  passed("agent-redteam", agentRedteam.exitCode === 0, summary);
 
   if (auth.mode === "dev-headers") {
     summary.warnings.push("auth-proof uses local-only dev-headers mode");
@@ -85,17 +95,30 @@ export async function runSecurityCommand(
       summary.warnings.push(`${diagnostic.code}: ${diagnostic.message}`);
     }
   }
+  for (const diagnostic of agentRedteam.diagnostics ?? []) {
+    if (diagnostic.severity === "warning") {
+      summary.warnings.push(`${diagnostic.code}: ${diagnostic.message}`);
+    }
+  }
 
   const ok = summary.failed.length === 0;
+  const assurance =
+    options.db === "postgres" &&
+    rls.exitCode === 0 &&
+    Boolean((rls.data as { skipped?: boolean } | undefined)?.skipped) === false
+      ? "postgres-proved"
+      : "structural-only";
   return {
     ok,
     schemaVersion: "0.1.0",
     kind: "security-proof",
+    assurance,
     proofs: {
       forgeCheck,
       auth,
       secrets,
       rls,
+      agentRedteam,
     },
     summary,
     exitCode: ok ? 0 : 1,
@@ -111,6 +134,7 @@ export function formatSecurityHuman(result: SecurityProofResult): string {
     "Forge Security Proof",
     "",
     `Status: ${result.ok ? "ok" : "failed"}`,
+    `Assurance: ${result.assurance}`,
     `Passed: ${result.summary.passed.join(", ") || "none"}`,
     `Failed: ${result.summary.failed.join(", ") || "none"}`,
   ];

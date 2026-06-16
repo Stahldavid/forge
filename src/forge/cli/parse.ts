@@ -542,6 +542,7 @@ const AI_SUBCOMMANDS: AiSubcommand[] = [
   "models",
   "tools",
   "agents",
+  "redteam",
   "trace",
 ];
 
@@ -1977,7 +1978,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "ai": {
       const subcommand = rest[0] as AiSubcommand | undefined;
       if (!subcommand || !AI_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge ai requires subcommand: providers, check, test, models, tools, agents, or trace");
+        errors.push("forge ai requires subcommand: providers, check, test, models, tools, agents, redteam, or trace");
         return { command: null, workspaceRoot, errors };
       }
 

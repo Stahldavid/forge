@@ -46,6 +46,7 @@ export type AiSubcommand =
   | "models"
   | "tools"
   | "agents"
+  | "redteam"
   | "trace";
 
 export interface AiCommandOptions {
@@ -119,6 +120,163 @@ function eventProperties(payload: Record<string, unknown>): Record<string, unkno
   return {};
 }
 
+interface AgentToolRecord {
+  name?: unknown;
+  risk?: unknown;
+  needsApproval?: unknown;
+  readOnly?: unknown;
+  sourceKind?: unknown;
+}
+
+interface AgentRecord {
+  name?: unknown;
+  stopWhen?: unknown;
+  maxSteps?: unknown;
+}
+
+interface AiRedteamScenario {
+  id: string;
+  name: string;
+  status: "passed" | "failed" | "not-applicable";
+  evidence: string;
+}
+
+function toolName(tool: AgentToolRecord): string {
+  return typeof tool.name === "string" && tool.name.length > 0 ? tool.name : "<anonymous>";
+}
+
+function toolNeedsApproval(tool: AgentToolRecord): boolean {
+  return tool.needsApproval === true || tool.needsApproval === "dynamic";
+}
+
+function isDangerousRisk(risk: unknown): boolean {
+  return risk === "write" || risk === "external" || risk === "destructive";
+}
+
+function hasAgentStepLimit(agent: AgentRecord): boolean {
+  if (typeof agent.maxSteps === "number" && agent.maxSteps > 0) {
+    return true;
+  }
+  const stopWhen = agent.stopWhen;
+  return Boolean(
+    stopWhen &&
+      typeof stopWhen === "object" &&
+      "maxSteps" in stopWhen &&
+      typeof (stopWhen as { maxSteps?: unknown }).maxSteps === "number" &&
+      (stopWhen as { maxSteps: number }).maxSteps > 0,
+  );
+}
+
+function runAgentRedteam(workspaceRoot: string): AiCommandResult {
+  const agentTools = loadAgentTools(workspaceRoot);
+  const explicitTools = (agentTools?.explicitTools ?? []) as AgentToolRecord[];
+  const autoTools = (agentTools?.autoTools ?? []) as AgentToolRecord[];
+  const agents = (agentTools?.agents ?? []) as AgentRecord[];
+  const allTools = [...explicitTools, ...autoTools];
+  const dangerousTools = allTools.filter((tool) => isDangerousRisk(tool.risk));
+  const dangerousWithoutApproval = dangerousTools.filter((tool) => !toolNeedsApproval(tool));
+  const readToolsWithWriteSurface = allTools.filter(
+    (tool) => tool.risk === "read" && tool.readOnly === false,
+  );
+  const commandToolsWithoutApproval = autoTools.filter(
+    (tool) => tool.sourceKind === "command" && !toolNeedsApproval(tool),
+  );
+  const agentsWithoutStepLimit = agents.filter((agent) => !hasAgentStepLimit(agent));
+  const secretLikeTools = allTools.filter((tool) => /secret|token|api[_-]?key/i.test(toolName(tool)));
+
+  const scenarios: AiRedteamScenario[] = [
+    {
+      id: "approval-bypass",
+      name: "Dangerous tools require approval",
+      status:
+        dangerousTools.length === 0
+          ? "not-applicable"
+          : dangerousWithoutApproval.length === 0
+            ? "passed"
+            : "failed",
+      evidence:
+        dangerousWithoutApproval.length === 0
+          ? `${dangerousTools.length} dangerous tools require approval`
+          : `tools without approval: ${dangerousWithoutApproval.map(toolName).sort().join(", ")}`,
+    },
+    {
+      id: "auto-command-approval",
+      name: "Generated command auto-tools require approval",
+      status:
+        autoTools.filter((tool) => tool.sourceKind === "command").length === 0
+          ? "not-applicable"
+          : commandToolsWithoutApproval.length === 0
+            ? "passed"
+            : "failed",
+      evidence:
+        commandToolsWithoutApproval.length === 0
+          ? "command auto-tools are approval gated"
+          : `command auto-tools without approval: ${commandToolsWithoutApproval.map(toolName).sort().join(", ")}`,
+    },
+    {
+      id: "read-only-boundary",
+      name: "Read tools stay read-only",
+      status: readToolsWithWriteSurface.length === 0 ? "passed" : "failed",
+      evidence:
+        readToolsWithWriteSurface.length === 0
+          ? "read tools do not expose write metadata"
+          : `read tools with write surface: ${readToolsWithWriteSurface.map(toolName).sort().join(", ")}`,
+    },
+    {
+      id: "excessive-agency",
+      name: "Agents have bounded step limits",
+      status:
+        agents.length === 0
+          ? "not-applicable"
+          : agentsWithoutStepLimit.length === 0
+            ? "passed"
+            : "failed",
+      evidence:
+        agentsWithoutStepLimit.length === 0
+          ? `${agents.length} agents are step bounded`
+          : `agents without step limits: ${agentsWithoutStepLimit.map((agent) => String(agent.name ?? "<anonymous>")).sort().join(", ")}`,
+    },
+    {
+      id: "secret-extraction-surface",
+      name: "Tool names do not expose secret-like capabilities",
+      status: secretLikeTools.length === 0 ? "passed" : "failed",
+      evidence:
+        secretLikeTools.length === 0
+          ? "no secret-like tool names detected"
+          : `secret-like tools: ${secretLikeTools.map(toolName).sort().join(", ")}`,
+    },
+  ];
+
+  const failed = scenarios.filter((scenario) => scenario.status === "failed");
+  return {
+    exitCode: failed.length === 0 ? 0 : 1,
+    data: {
+      schemaVersion: "0.1.0",
+      kind: "agent-redteam",
+      ok: failed.length === 0,
+      assurance: "structural-redteam",
+      scenarios,
+      summary: {
+        passed: scenarios.filter((scenario) => scenario.status === "passed").map((scenario) => scenario.id),
+        failed: failed.map((scenario) => scenario.id),
+        notApplicable: scenarios
+          .filter((scenario) => scenario.status === "not-applicable")
+          .map((scenario) => scenario.id),
+      },
+    },
+    diagnostics: failed.map((scenario) =>
+      createDiagnostic({
+        severity: "error",
+        code: "FORGE_AI_REDTEAM_FAILED",
+        message: `${scenario.name}: ${scenario.evidence}`,
+        fixHint: "Review generated agentTools.json and require approval for write/external/destructive tools, read-only metadata for read tools, and max step limits for agents.",
+        suggestedCommands: ["forge ai tools --json", "forge ai agents --json", "forge ai redteam --json"],
+        docs: ["docs/ai-agents.md", "docs/threat-model.md"],
+      }),
+    ),
+  };
+}
+
 export function summarizeAiTrace(traceId: string, inspected: {
   events: Record<string, unknown>[];
   spans: Record<string, unknown>[];
@@ -178,6 +336,9 @@ export async function runAiCommand(options: AiCommandOptions): Promise<AiCommand
     case "agents": {
       const agentTools = loadAgentTools(options.workspaceRoot);
       return { exitCode: 0, data: { agents: agentTools?.agents ?? registry?.agents ?? [] } };
+    }
+    case "redteam": {
+      return runAgentRedteam(options.workspaceRoot);
     }
     case "trace": {
       if (!options.traceId) {
@@ -315,6 +476,10 @@ export function formatAiHuman(subcommand: AiSubcommand, result: AiCommandResult)
   }
 
   if (subcommand === "trace") {
+    return `${JSON.stringify(result.data, null, 2)}\n`;
+  }
+
+  if (subcommand === "redteam") {
     return `${JSON.stringify(result.data, null, 2)}\n`;
   }
 

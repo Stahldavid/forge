@@ -261,12 +261,13 @@ Validation:
 forge inspect agent-tools --json
 forge ai tools --json
 forge ai agents --json
+forge ai redteam --json
 forge ai trace <traceId> --json
 ```
 
 Current limit:
 
-- production-facing AI agents need adversarial prompt-injection, data-exfiltration, approval-bypass, and cross-tenant tests.
+- `forge ai redteam` covers structural approval/read-only/step-limit checks. Production-facing AI agents still need deeper model-level prompt-injection, data-exfiltration, approval-bypass, indirect prompt-injection, and cross-tenant tests.
 
 ### Telemetry and trace exposure
 
@@ -323,11 +324,15 @@ Run:
 forge generate --check
 forge check --json
 forge auth check --json
+forge auth prove --json
 forge policy check --strict-policies --json
 forge secrets check --json
+forge secrets prove --json
 forge rls check --json
+forge security prove --db postgres --json
 forge inspect capabilities --json
 forge inspect agent-tools --json
+forge ai redteam --json
 forge verify --strict
 ```
 
@@ -348,7 +353,7 @@ Review:
 ForgeOS is alpha. Known security hardening gaps include:
 
 - no independent external audit yet;
-- more adversarial agent-tool tests needed;
+- deeper model-level adversarial agent-tool tests needed;
 - more production Postgres/RLS field reports needed;
 - more browser/UI security scenarios needed;
 - more package ecosystem fixtures needed;

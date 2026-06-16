@@ -76,12 +76,18 @@ describe("security assurance: prove commands", () => {
       });
       expect(result.exitCode).toBe(0);
       expect(result.kind).toBe("security-proof");
+      expect(result.assurance).toBe("structural-only");
       expect(result.summary.passed).toContain("forge-check");
       expect(result.summary.passed).toContain("auth-proof");
       expect(result.summary.passed).toContain("secrets-proof");
       expect(result.summary.passed).toContain("rls-proof");
+      expect(result.summary.passed).toContain("agent-redteam");
       expect(result.proofs.rls.data).toMatchObject({
         skipped: true,
+      });
+      expect(result.proofs.agentRedteam.data).toMatchObject({
+        kind: "agent-redteam",
+        ok: true,
       });
     } finally {
       cleanupWorkspace(workspace);

@@ -1,4 +1,5 @@
 import {
+  FORGE_AUTH_CLAIM_INVALID,
   FORGE_AUTH_CLAIM_MISSING,
   FORGE_AUTH_TENANT_MISSING,
 } from "../../compiler/diagnostics/codes.ts";
@@ -57,6 +58,31 @@ function asStringArray(value: unknown): string[] {
   return [];
 }
 
+function claimExists(claims: Record<string, unknown>, path: string | undefined): boolean {
+  return getClaimValue(claims, path) !== undefined;
+}
+
+function validateRoleClaim(
+  claims: Record<string, unknown>,
+  path: string | undefined,
+  label: string,
+): void {
+  const value = getClaimValue(claims, path);
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value === "string") {
+    return;
+  }
+  if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
+    return;
+  }
+  throw new ForgeAuthError(
+    FORGE_AUTH_CLAIM_INVALID,
+    `auth claim '${path ?? label}' must be a string or string array`,
+  );
+}
+
 function uniqueSorted(values: string[]): string[] {
   return [...new Set(values)].sort();
 }
@@ -84,6 +110,12 @@ export function mapClaimsToAuthContext(
     );
   }
 
+  if (claimExists(payload, mapping.role)) {
+    validateRoleClaim(payload, mapping.role, "role");
+  }
+  if (claimExists(payload, mapping.roles)) {
+    validateRoleClaim(payload, mapping.roles, "roles");
+  }
   const role = asString(getClaimValue(payload, mapping.role));
   const roles = uniqueSorted([
     ...(role ? [role] : []),

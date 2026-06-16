@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106 content=2e66b578430087b6b665384d7ccb32b8799f3682fb7d8789951c97eac3a9017b
+// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=ef691de19871ebaad390fdbb005340d8e8a758e0bfbe3da69b1604bca2891ca2
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106",
+  "inputHash": "6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -2879,11 +2879,57 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/security/agent-redteam.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages zod",
+        "probable: packages ai"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai",
+          "zod"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/security/agent-tools.test.ts",
       "kind": "unknown",
       "reasons": [
         "confirmed: packages zod",
         "probable: packages ai"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "jose"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/auth-negative.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages jose"
       ]
     },
     {
@@ -2991,6 +3037,24 @@ export const testGraph = {
       "reasons": [
         "probable: packages postgres"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/tenant-isolation/runtime-api.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "probable",

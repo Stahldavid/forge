@@ -18,8 +18,8 @@ Each invariant has a threat, guarantee, enforcement points, tests, CI coverage, 
 
 | ID | Invariant | Current level |
 |----|-----------|---------------|
-| INV-001 | Dev headers must not be accepted for production auth. | Checked |
-| INV-002 | A tenant must never read, list, update, or delete another tenant's data through app runtime APIs. | Design |
+| INV-001 | Dev headers must not be accepted for production auth. | Tested |
+| INV-002 | A tenant must never read, list, update, or delete another tenant's data through app runtime APIs. | Tested |
 | INV-003 | Postgres RLS must block cross-tenant access even when app handler code is wrong. | Proved |
 | INV-004 | Commands must not access network packages, secrets, filesystem, AI, or direct `process.env`. | Tested |
 | INV-005 | Queries and liveQueries must be read-only and side-effect free. | Tested |
@@ -52,11 +52,11 @@ Static check:
 
 Runtime/integration test:
 
-- planned: `tests/security/auth/production-dev-headers-denied.test.ts`
+- `tests/security/auth-negative.test.ts`
 
 Negative/adversarial test:
 
-- planned: production-mode request with `x-forge-role: owner` must be rejected or ignored.
+- expired token, wrong issuer, wrong audience, wrong algorithm, unknown `kid`, missing tenant claim, invalid role claim, and production-mode request with `x-forge-role: owner` rejected or ignored.
 
 CI job:
 
@@ -91,11 +91,11 @@ Static check:
 
 Runtime/integration test:
 
-- planned: `tests/security/tenant-isolation/*`
+- `tests/security/tenant-isolation/runtime-api.test.ts`
 
 Negative/adversarial test:
 
-- planned: cross-tenant `get`, `list`, `update`, `delete`, liveQuery, and agent auto-tool calls.
+- cross-tenant `get`, `list`, `update`, `delete`, caller-provided tenant spoofing, mismatched tenant `where`, and liveQuery snapshots.
 
 CI job:
 

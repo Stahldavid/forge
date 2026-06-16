@@ -14,10 +14,10 @@ Status values:
 
 | Area | ForgeOS control | Status | Evidence |
 | --- | --- | --- | --- |
-| Authentication | JWT/OIDC config, issuer/audience checks, generated auth contract | Partial | `forge auth prove --json`, `src/forge/_generated/authConfig.json` |
+| Authentication | JWT/OIDC config, issuer/audience checks, negative token tests, generated auth contract | Partial | `forge auth prove --json`, `tests/security/auth-negative.test.ts`, `src/forge/_generated/authConfig.json` |
 | Session context | Tenant/user/role mapped into runtime and DB session context | Covered | `src/forge/runtime/db/session-context.ts`, `forge rls test --db postgres --json` |
 | Access control | Policies declared on commands/queries and checked before runtime execution | Covered | `forge policy check --strict-policies`, `forge check --json` |
-| Tenant isolation | Runtime tenant scope plus Postgres RLS with FORCE RLS policies | Covered | `forge rls test --db postgres --json`, `security/evidence/latest/rls-test.json` |
+| Tenant isolation | Runtime tenant scope plus Postgres RLS with FORCE RLS policies | Covered | `tests/security/tenant-isolation/runtime-api.test.ts`, `forge rls test --db postgres --json`, `security/evidence/latest/rls-test.json` |
 | Secrets | Secret names tracked without values; generated files and telemetry scrubbed | Covered | `forge secrets prove --json`, `tests/security/secret-redaction.test.ts` |
 | Logging | Trace IDs, release metadata, redaction rules | Partial | `forge telemetry inspect`, `tests/security/secret-redaction.test.ts` |
 
@@ -25,8 +25,8 @@ Status values:
 
 | Risk | ForgeOS mitigation | Status | Evidence |
 | --- | --- | --- | --- |
-| Broken object property authorization | Tenant-scoped generated DB clients and RLS probes | Covered | `forge rls test --db postgres --json` |
-| Broken authentication | Production auth modes require JWT/OIDC config | Partial | `forge auth prove --json` |
+| Broken object property authorization | Tenant-scoped generated DB clients and RLS probes | Covered | `tests/security/tenant-isolation/runtime-api.test.ts`, `forge rls test --db postgres --json` |
+| Broken authentication | Production auth modes require JWT/OIDC config and reject common negative token paths | Partial | `forge auth prove --json`, `tests/security/auth-negative.test.ts` |
 | Broken object level authorization | Policies bound to entries and checked before handlers | Covered | `forge policy check --strict-policies` |
 | Unrestricted resource consumption | Agent step limits and liveQuery hardening | Partial | `forge ai check --json`, `forge live status --json` |
 | Security misconfiguration | `forge doctor`, generated runtime rules, release/security proof gates | Partial | `forge security prove --json`, `forge doctor` |
@@ -36,9 +36,9 @@ Status values:
 
 | Risk | ForgeOS mitigation | Status | Evidence |
 | --- | --- | --- | --- |
-| Prompt injection | AI allowed only in actions/workflows/endpoints/server; tools carry risk metadata | Partial | `forge ai tools --json`, `tests/security/agent-tools.test.ts` |
+| Prompt injection | AI allowed only in actions/workflows/endpoints/server; tools carry risk metadata and structural redteam checks | Partial | `forge ai tools --json`, `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
 | Sensitive information disclosure | Secret access through `ctx.secrets`; scrubbed telemetry and generated artifacts | Covered | `forge secrets prove --json`, `tests/security/secret-redaction.test.ts` |
-| Excessive agency | Tool risk, approval metadata, stop conditions | Partial | `tests/security/agent-tools.test.ts` |
+| Excessive agency | Tool risk, approval metadata, stop conditions | Partial | `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
 | Insecure plugin design | Integration recipes declare allowed/denied contexts and package guards | Partial | `forge add <alias>`, `forge inspect capabilities --json` |
 | Supply-chain vulnerabilities | Dependency inspection, runtime compatibility, provenance publishing | Partial | `forge deps inspect`, `publish.yml`, `NPM_CONFIG_PROVENANCE=true` |
 

@@ -42,13 +42,20 @@ forge generate --check
 forge check --json
 forge auth check --json
 forge secrets check --json
+forge auth prove --json
+forge secrets prove --json
 forge rls test --db postgres --json
 forge security prove --db postgres --json
 forge verify --strict --script-timeout-ms 120000
 bun test tests/security
 ```
 
-The first implementation focuses on adversarial fixtures for runtime boundaries, secret redaction, agent tool safety, and Postgres RLS tenant isolation. Later layers add auth negative tests, standards crosswalks, and release supply-chain evidence.
+The current implementation covers adversarial fixtures for runtime boundaries, runtime tenant isolation, JWT/OIDC negative auth paths, secret redaction, agent tool metadata, structural agent redteam checks, standards crosswalks, release evidence, and Postgres RLS tenant isolation.
+
+`forge security prove --json` reports an `assurance` level:
+
+- `structural-only`: local checks passed, but the RLS proof did not run against Postgres.
+- `postgres-proved`: the proof included the Postgres RLS adversarial probes.
 
 ## Local Security Gate
 
@@ -59,6 +66,9 @@ node ./bin/forge.mjs generate --check
 node ./bin/forge.mjs check --json
 node ./bin/forge.mjs auth check --json
 node ./bin/forge.mjs secrets check --json
+node ./bin/forge.mjs auth prove --json
+node ./bin/forge.mjs secrets prove --json
+node ./bin/forge.mjs ai redteam --json
 node ./bin/forge.mjs rls test --db postgres --json
 node ./bin/forge.mjs security prove --db postgres --json
 node ./bin/forge-bun.mjs test tests/security --timeout 120000
@@ -90,6 +100,7 @@ security-proof.json
 runtime-boundaries.json
 secret-redaction.json
 agent-tools.json
+agent-redteam.json
 ```
 
 Evidence files must not include:
@@ -104,10 +115,11 @@ Evidence files must not include:
 
 The current assurance layer is intentionally not the final security story. The next layers are:
 
-1. JWT/OIDC negative auth tests.
-2. Agent redteam tests for prompt injection, excessive agency, approval bypass, tenant leakage, and secret extraction.
-3. Standards crosswalks for OWASP ASVS, OWASP API Top 10, OWASP LLM Top 10, NIST SSDF, and SLSA.
-4. Release security gate with SBOM/provenance/dependency evidence.
+1. Deeper prompt-injection and indirect prompt-injection redteam tests with controlled model/tool loops.
+2. More runtime tenant isolation scenarios for generated agent auto-tools and HTTP probes.
+3. Webhook signature, replay, and tamper tests.
+4. SBOM and dependency vulnerability evidence attached to each release.
+5. External review of auth claim mapping, telemetry sinks, and RLS policy generation.
 
 ## Related Pages
 

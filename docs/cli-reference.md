@@ -109,12 +109,17 @@ forge deps upgrade-apply .forge/upgrades/<plan>.json
 
 ```bash
 forge auth check --json
+forge auth prove --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json
+forge secrets prove --json
 forge env check --json
 forge db diff --json
 forge db migrate --db pglite
 forge rls check --json
+forge rls test --db postgres --json
+forge security prove --json
+forge security prove --db postgres --json
 ```
 
 ## AI
@@ -125,6 +130,7 @@ forge ai models --json
 forge ai check --json
 forge ai tools --json
 forge ai agents --json
+forge ai redteam --json
 forge ai test --provider openai --model gpt-4o-mini --prompt "hello" --mock
 forge ai trace <traceId> --json
 ```
@@ -184,7 +190,7 @@ forge self-host check --json
 npm run field:test -- --dry-run --json
 npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "npm:forgeos@alpha" --install --json
 npm run release:pack
-npm run release:publish:alpha
+npm run release:publish-alpha
 ```
 
 ## Related pages

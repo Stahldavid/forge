@@ -656,9 +656,9 @@ export class MemoryAdapter implements DbAdapter {
       return { rows: [], rowCount: before - table.rows.length };
     }
 
-    const id = params[0];
+    const rowsToDelete = new Set(this.filterRows(table.rows, sql, params));
     const before = table.rows.length;
-    table.rows = table.rows.filter((row) => row.id !== id);
+    table.rows = table.rows.filter((row) => !rowsToDelete.has(row));
     return { rows: [], rowCount: before - table.rows.length };
   }
 

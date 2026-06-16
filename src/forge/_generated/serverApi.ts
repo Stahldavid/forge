@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.3 input=0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106 content=ee2db579330ea2ab0b97114ee7ccc943251367a8b6997d75d8987fff521b92bd
+// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=ee2db579330ea2ab0b97114ee7ccc943251367a8b6997d75d8987fff521b92bd
 import { api } from "./api.ts";
 
 export const serverApi = {

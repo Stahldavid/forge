@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.3 input=0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106 content=53abf93e3b82e98f1dad118f3dc94ecffcc2a39bc531ba5f7acd4f8e78c296e2
+// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=53abf93e3b82e98f1dad118f3dc94ecffcc2a39bc531ba5f7acd4f8e78c296e2
 # App Map
 
 ## Data
