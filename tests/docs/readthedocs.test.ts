@@ -98,6 +98,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/architecture.md")).toContain("Package and integration contract");
     expect(read("docs/architecture.md")).toContain("forge deps runtime-compat");
     expect(read("docs/examples.md")).toContain("Initial source tree");
+    expect(read("docs/examples.md")).toContain("Public proof app");
+    expect(read("docs/examples.md")).toContain("npm run proof:capabilities");
     expect(read("docs/index.md")).toContain("npm create forge-app@alpha");
     expect(read("docs/index.md")).toContain("Agent Workflow");
     expect(read("docs/index.md")).toContain("Inspect SDK APIs before coding");

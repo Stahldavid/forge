@@ -1,11 +1,28 @@
-# ForgeOS Showcase App
+# ForgeOS Agent-Native Support App
 
-This is the canonical small app for testing ForgeOS as an agent-native full-stack framework.
+This is the public proof app for ForgeOS.
 
-It is intentionally source-only: generated files and `forge.lock` are not committed here.
-Run `npm run generate` to recreate them.
+It is intentionally small enough to understand in one sitting, but complete enough to demonstrate the core ForgeOS thesis: an AI coding agent can inspect the app contract, understand runtime boundaries, change source files, verify frontend/backend wiring, and finish with deterministic checks.
 
-## Run
+## What this proves
+
+The app is a support desk with tickets, policies, live updates, workflow triage, telemetry, and a connected web UI.
+
+| ForgeOS capability | Evidence in this app |
+|--------------------|----------------------|
+| Data graph | `src/forge/schema.ts` defines tenant-scoped `tenants`, `users`, and `tickets` |
+| Policies | `src/policies.ts` defines ticket and billing permissions |
+| Transactional command | `src/commands/createTicket.ts` writes a ticket and emits `ticket.created` |
+| Policy denial | `src/commands/manageBilling.ts` requires `billing.manage`; the UI demo runs as `member` |
+| Query/liveQuery | `src/queries/listTickets.ts`, `src/queries/getTicket.ts`, `src/queries/liveTickets.ts` |
+| Outbox action | `src/actions/captureTicketCreated.ts` handles `ticket.created` after commit |
+| Workflow | `src/workflows/triageTicketWorkflow.ts` performs mock AI triage after commit |
+| Frontend contract | `web/app/tickets/page.tsx` and components use generated Forge hooks |
+| Capability map | `forge inspect capabilities --json` connects UI components to runtime entries |
+| Agent contract | `forge agent print-context --json` exposes the app to coding agents |
+| Verification loop | `forge dev --once --json`, `forge check --json`, `forge verify --standard` |
+
+## Run it
 
 ```bash
 npm install
@@ -13,49 +30,95 @@ npm run generate
 npm run dev
 ```
 
-`forge dev` starts the Forge API, PGlite, worker, watcher, and the Next.js web app together.
-This is the two-minute proof path: install, generate, run `forge dev`, open the web URL, then run `forge dev --once --json` for the machine-readable diagnosis.
+`forge dev` starts the Forge API runtime, PGlite database, outbox worker, watcher, and Next.js web app together.
 
-Open:
+Open the web URL printed by `forge dev`. The API URL is for JSON runtime calls and health checks.
 
-- Web: http://127.0.0.1:3000
-- API health: http://127.0.0.1:3765/health
+## Public proof path
 
-## What It Demonstrates
+Run these commands after install:
 
-- tenant-scoped data tables: `tenants`, `users`, `tickets`
-- policies and permission matrix
-- transactional commands: `createTicket`, `closeTicket`, `manageBilling`
-- read queries and live queries: `listTickets`, `getTicket`, `liveTickets`
-- outbox action after commit: `captureTicketCreated`
-- workflow subscription: `triageTicketWorkflow`
-- mock AI workflow step
-- telemetry trace IDs surfaced in the UI
-- generated React hooks through `web/lib/forge.ts`
-- `frontendGraph`, `agentContract`, and `capabilityMap` generation
-- `forge dev --once --json` as the one-shot agent diagnostic loop
+```bash
+npm run proof:inspect
+npm run proof:dev
+npm run proof:capabilities
+npm run proof:verify
+```
 
-## Agent Loop
+They prove four things:
+
+1. ForgeOS can inspect the app as structured context.
+2. The local runtime can start and report health as JSON.
+3. Frontend routes/components are connected to Forge runtime entries.
+4. The app passes the standard agent handoff gate.
+
+## Agent demo script
+
+Give an AI coding agent this task:
+
+```txt
+Add a ticket priority filter to the support app.
+
+Before editing, inspect the ForgeOS contract and frontend capability map.
+Do not edit generated files.
+Finish with forge generate, forge check --json, and forge verify --standard.
+```
+
+Expected agent loop:
 
 ```bash
 npm run forge -- do inspect --json
 npm run forge -- dev --once --json
-npm run forge -- inspect capability-map --json
-npm run forge -- verify --strict
+npm run forge -- inspect all --json
+npm run forge -- inspect capabilities --json
 ```
 
-The expected happy path is:
+Then the agent should edit source files only, likely:
 
-1. read `AGENTS.md`
-2. run `forge dev --once --json`
-3. inspect `src/forge/_generated/agentContract.json`
-4. inspect `src/forge/_generated/capabilityMap.json`
-5. edit source files only
-6. finish with `forge verify --strict`
+```txt
+src/queries/liveTickets.ts
+web/components/TicketList.tsx
+web/app/tickets/page.tsx
+```
 
-## Files To Avoid Committing
+Finish:
 
-The app `.gitignore` excludes generated and operational files:
+```bash
+npm run generate
+npm run forge -- check --json
+npm run forge -- verify --standard
+```
+
+## Things to click
+
+In the web app:
+
+1. Open `/tickets`.
+2. Create a ticket.
+3. Watch the live ticket list update.
+4. Inspect the trace output after command errors.
+5. Click `Try billing.manage` to see policy denial for a non-owner role.
+
+The policy denial is intentional. It proves that UI actions still run through Forge policies.
+
+## What agents should read
+
+After `npm run generate`, inspect:
+
+```txt
+AGENTS.md
+src/forge/_generated/agentContract.json
+src/forge/_generated/appMap.md
+src/forge/_generated/runtimeRules.md
+src/forge/_generated/frontendGraph.json
+src/forge/_generated/capabilityMap.json
+```
+
+These files are generated context. Read them, but do not edit them.
+
+## Source-only by design
+
+Generated files and operational state are not committed here:
 
 ```txt
 src/forge/_generated/
@@ -70,5 +133,20 @@ forge.lock
 .forge/agent-adapters/
 ```
 
-If these files appear locally, that is normal. They are recreated by ForgeOS.
-The included workspace settings also hide generated/runtime directories from editor search so agents focus on source files first.
+Run `npm run generate` after checkout to recreate generated artifacts.
+
+## Why this app matters
+
+Most framework demos show that a human can build a toy app.
+
+This demo is different: it shows that the app can explain itself to an AI coding agent. ForgeOS exposes the runtime model, policies, generated client surface, frontend bindings, package rules, diagnostics, and verification commands as stable files and JSON commands.
+
+That is the ForgeOS promise in one app.
+
+## Related docs
+
+- [Capabilities](https://forgeos.readthedocs.io/en/latest/capabilities/)
+- [Agent Playbook](https://forgeos.readthedocs.io/en/latest/agent-playbook/)
+- [Dev Loop](https://forgeos.readthedocs.io/en/latest/dev-loop/)
+- [Runtime by Example](https://forgeos.readthedocs.io/en/latest/runtime-by-example/)
+- [Frontend Integration Guide](https://forgeos.readthedocs.io/en/latest/frontend-integration-guide/)

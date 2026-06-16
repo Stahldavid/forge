@@ -130,6 +130,42 @@ Capabilities:
 
 Use this template to evaluate a realistic full-stack app shape.
 
+## Public proof app
+
+The repository also includes a source-only proof app:
+
+```bash
+cd examples/showcase-forge-app
+npm install
+npm run generate
+npm run proof:inspect
+npm run proof:dev
+npm run proof:capabilities
+npm run proof:verify
+```
+
+Read:
+
+```txt
+examples/showcase-forge-app/README.md
+examples/showcase-forge-app/PUBLIC_PROOF.md
+```
+
+This app demonstrates the full ForgeOS thesis in one place:
+
+- tenant-scoped data and policies;
+- transactional commands;
+- queries and liveQueries;
+- outbox action after commit;
+- workflow with mock AI triage;
+- generated React hooks;
+- frontend capability map;
+- agent contract;
+- policy denial surfaced in the UI;
+- standard verification loop.
+
+Use it when evaluating whether ForgeOS is useful for AI coding agents, not just whether it can scaffold a starter app.
+
 ## Capability inspection
 
 Run these commands in either app:

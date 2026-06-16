@@ -245,12 +245,23 @@ See [`examples/showcase-forge-app`](examples/showcase-forge-app/README.md).
 
 ```bash
 cd examples/showcase-forge-app
-bun install
-bun run generate
-bun run dev
+npm install
+npm run generate
+npm run dev
 ```
 
-Examples are source-only where practical: generated artifacts, `forge.lock`, package lockfiles, and operational `.forge/**` state are recreated locally. The showcase demonstrates tenant-scoped data, policies, commands, queries, liveQueries, outbox actions, workflows, mock AI, telemetry trace IDs, generated React hooks, `agentContract`, `frontendGraph`, and `capabilityMap`.
+For the reproducible public proof path:
+
+```bash
+npm run proof:inspect
+npm run proof:dev
+npm run proof:capabilities
+npm run proof:verify
+```
+
+Read [`examples/showcase-forge-app/PUBLIC_PROOF.md`](examples/showcase-forge-app/PUBLIC_PROOF.md) for the full walkthrough.
+
+Examples are source-only where practical: generated artifacts, `forge.lock`, package lockfiles, and operational `.forge/**` state are recreated locally. The showcase demonstrates tenant-scoped data, policies, commands, queries, liveQueries, outbox actions, workflows, mock AI, telemetry trace IDs, generated React hooks, `agentContract`, `frontendGraph`, `capabilityMap`, and the standard agent handoff loop.
 
 ## Platform Support
 
