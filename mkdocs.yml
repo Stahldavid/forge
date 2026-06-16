@@ -81,6 +81,7 @@ nav:
   - Field Testing: field-testing.md
   - Production Readiness: production-readiness.md
   - Threat Model: threat-model.md
+  - Security Assurance: security-assurance.md
   - Operations: operations.md
   - Self-Host: self-host.md
   - Release: release.md

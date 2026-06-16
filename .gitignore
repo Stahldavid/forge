@@ -31,6 +31,8 @@ node_modules/
 !.forge/field-reports/.gitkeep
 .forge/repairs/*
 !.forge/repairs/.gitkeep
+security/evidence/*
+!security/evidence/.gitkeep
 tests/**/.tmp/
 *.log
 .DS_Store

@@ -39,6 +39,7 @@ const PUBLIC_PAGES = [
   "field-testing.md",
   "production-readiness.md",
   "threat-model.md",
+  "security-assurance.md",
   "operations.md",
   "self-host.md",
   "release.md",
@@ -172,6 +173,10 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/threat-model.md")).toContain("AI tool abuse");
     expect(read("docs/threat-model.md")).toContain("Minimum security review before production");
     expect(read("docs/threat-model.md")).toContain("Known gaps");
+    expect(read("docs/security-assurance.md")).toContain("SECURITY_INVARIANTS.md");
+    expect(read("docs/security-assurance.md")).toContain("security-assurance.yml");
+    expect(read("docs/security-assurance.md")).toContain("tests/security");
+    expect(read("docs/security-assurance.md")).toContain("security/evidence/latest");
     expect(read("docs/production-readiness.md")).toContain("Threat Model");
     expect(read("docs/security-and-data.md")).toContain("Production Readiness");
     expect(read("docs/security-and-data.md")).toContain("Threat Model");
