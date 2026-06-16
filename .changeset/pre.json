@@ -4,5 +4,7 @@
   "initialVersions": {
     "forgeos": "0.1.0-alpha.5"
   },
-  "changesets": []
+  "changesets": [
+    "bright-audit-gates"
+  ]
 }
