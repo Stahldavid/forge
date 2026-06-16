@@ -39,6 +39,7 @@
     "release:evidence": "node scripts/write-release-evidence.mjs",
     "release:verify-public-alpha": "node scripts/verify-public-alpha.mjs",
     "security:evidence": "node scripts/write-security-evidence.mjs",
+    "security:deps": "node scripts/write-dependency-audit-evidence.mjs",
     "release:publish-alpha": "node scripts/publish-trusted-alpha.mjs",
     "release:publish-local-alpha": "node scripts/publish-local-alpha.mjs",
     "field:test": "node scripts/field-test-forgeos.mjs",

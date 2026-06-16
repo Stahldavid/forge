@@ -637,9 +637,9 @@ export function renderVitePackage(appName: string): string {
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.0.2",
     "ai": "^6.0.0",
-    "vite": "^6.0.5",
+    "vite": "^8.0.16",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

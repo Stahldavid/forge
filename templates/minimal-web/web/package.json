@@ -8,8 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.5",
+    "@vitejs/plugin-react": "^6.0.2",
+    "vite": "^8.0.16",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

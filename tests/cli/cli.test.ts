@@ -71,6 +71,42 @@ describe("Forge CLI", () => {
     }
   });
 
+  test("main prints CLI version", async () => {
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let output = "";
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      output += String(chunk);
+      return true;
+    }) as typeof process.stdout.write;
+
+    try {
+      const code = await main(["--version"]);
+      expect(code).toBe(0);
+      expect(output.trim()).toMatch(/^\d+\.\d+\.\d+-alpha\.\d+$/);
+    } finally {
+      process.stdout.write = originalWrite;
+    }
+  });
+
+  test("main prints JSON CLI version", async () => {
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let output = "";
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      output += String(chunk);
+      return true;
+    }) as typeof process.stdout.write;
+
+    try {
+      const code = await main(["--version", "--json"]);
+      expect(code).toBe(0);
+      const parsed = JSON.parse(output) as { version?: string; cliVersion?: string };
+      expect(parsed.version).toBe(parsed.cliVersion);
+      expect(parsed.version).toMatch(/^\d+\.\d+\.\d+-alpha\.\d+$/);
+    } finally {
+      process.stdout.write = originalWrite;
+    }
+  });
+
   test("generate --json emits one JSON document on stdout", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-generate-json");
     const originalWrite = process.stdout.write.bind(process.stdout);

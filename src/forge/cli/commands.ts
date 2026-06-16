@@ -160,6 +160,7 @@ import { runLiveCommand } from "./live.ts";
 import { runQuery } from "../runtime/query/run-query.ts";
 import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
 import { getActiveDbAdapter } from "../runtime/executor.ts";
+import { CLI_VERSION, FORGEOS_VERSION } from "../version.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -544,6 +545,18 @@ export async function runInspectCommand(
 
 export async function executeCommand(command: ForgeCommand): Promise<number> {
   switch (command.kind) {
+    case "version": {
+      if (command.json) {
+        process.stdout.write(`${JSON.stringify({
+          version: CLI_VERSION,
+          cliVersion: CLI_VERSION,
+          forgeosVersion: FORGEOS_VERSION,
+        }, null, 2)}\n`);
+      } else {
+        process.stdout.write(`${CLI_VERSION}\n`);
+      }
+      return 0;
+    }
     case "new": {
       const result = await runNewCommand({
         name: command.name,

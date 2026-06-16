@@ -43,6 +43,7 @@ security/evidence/latest/
 | JWT/OIDC production auth | Partial | `forge auth prove --json`, `tests/security/auth-negative.test.ts` |
 | Supply-chain provenance | Covered for npm publish path | `.github/workflows/publish.yml`, Trusted Publisher, `NPM_CONFIG_PROVENANCE=true` |
 | SBOM | Partial | basic CycloneDX SBOM from `npm run release:evidence` |
+| Dependency vulnerability evidence | Covered for release manifests | `npm run security:deps`, `security/dependency-audit-waivers.json`, `dependency-audit.json` |
 
 ## Standards Mapped
 
@@ -62,7 +63,7 @@ The npm publish workflow runs:
 npm run forge -- security prove --json
 ```
 
-before packaging and publishing. The publish workflow now runs the stronger Postgres-backed security proof, RLS mutation proof, release evidence, and SBOM generation before packaging and publishing.
+before packaging and publishing. The publish workflow now runs the stronger Postgres-backed security proof, RLS mutation proof, release evidence, SBOM generation, and dependency vulnerability evidence before packaging and publishing.
 
 ## What This Does Not Mean
 

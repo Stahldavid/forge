@@ -38,6 +38,7 @@ Use this matrix to decide what is ready to evaluate, what needs review, and what
 | Windows native | Experimental | Diagnostics, setup checks, Node fallback path, smoke testing | Broader native Windows field reports |
 | Node runtime path | Alpha | CLI/runtime smoke outside Bun, npm package validation | More Node-only app development mileage |
 | npm package and create app | Strong alpha | Public alpha installs, `npm create forgeos-app@alpha`, template smoke, runtime field probes | More package manager and platform field reports |
+| Release dependency audit | Strong alpha | `npm run security:deps`, release evidence JSON, explicit waiver file | More ecosystem coverage and signed artifact retention |
 
 ## Recommended usage today
 
@@ -72,6 +73,7 @@ forge secrets check --json
 forge rls check --json
 forge inspect capabilities --json
 forge inspect live-production --json
+npm run security:deps
 forge verify --strict
 ```
 

@@ -10,12 +10,30 @@ const allowFirstPublish =
   process.env.FORGE_ALLOW_FIRST_NPM_PUBLISH === "1";
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+  const executable = process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
+  if (process.platform === "win32" && executable.endsWith(".cmd")) {
+    const quote = (value) => /^[A-Za-z0-9_./:@=+-]+$/.test(value)
+      ? value
+      : `"${String(value).replaceAll('"', '\\"')}"`;
+    return spawnSync(process.env.ComSpec ?? "cmd.exe", [
+      "/d",
+      "/c",
+      `call ${[executable, ...args].map(quote).join(" ")}`,
+    ], {
+      cwd: options.cwd ?? packageDir,
+      encoding: "utf8",
+      stdio: options.capture ? ["ignore", "pipe", "pipe"] : "inherit",
+      windowsHide: true,
+      shell: false,
+    });
+  }
+
+  const result = spawnSync(executable, args, {
     cwd: options.cwd ?? packageDir,
     encoding: "utf8",
     stdio: options.capture ? ["ignore", "pipe", "pipe"] : "inherit",
     windowsHide: true,
-    shell: process.platform === "win32",
+    shell: false,
   });
   return result;
 }

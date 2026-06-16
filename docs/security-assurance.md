@@ -50,11 +50,12 @@ forge rls mutate-test --json
 forge security prove --db postgres --full --json
 npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest
 npm run release:evidence -- security/evidence/latest
+npm run security:deps -- security/evidence/latest/dependency-audit.json
 forge verify --strict --script-timeout-ms 120000
 bun test tests/security
 ```
 
-The current implementation covers adversarial fixtures for runtime boundaries, runtime and HTTP tenant isolation, JWT/OIDC negative auth paths, value-aware secret redaction, webhook signature/replay checks, agent tool metadata, structural agent checks, deterministic model-level agent probes, standards crosswalks, release evidence, SBOM generation, Postgres RLS tenant isolation, and RLS mutation checks.
+The current implementation covers adversarial fixtures for runtime boundaries, runtime and HTTP tenant isolation, JWT/OIDC negative auth paths, value-aware secret redaction, webhook signature/replay checks, agent tool metadata, structural agent checks, deterministic model-level agent probes, standards crosswalks, release evidence, SBOM generation, dependency vulnerability evidence, Postgres RLS tenant isolation, and RLS mutation checks.
 
 `forge security prove --json` reports an `assurance` level:
 
@@ -113,6 +114,7 @@ agent-tools.json
 webhooks.json
 release-supply-chain.json
 sbom.cyclonedx.json
+dependency-audit.json
 ```
 
 Evidence files must not include:
@@ -128,9 +130,32 @@ Evidence files must not include:
 The current assurance layer is intentionally not the final security story. The next layers are:
 
 1. More runtime tenant isolation scenarios for generated agent auto-tools and liveQuery HTTP/SSE probes.
-2. Dependency vulnerability evidence attached to each release in addition to the basic SBOM.
-3. External review of auth claim mapping, telemetry sinks, webhook recipes, and RLS policy generation.
-4. Broader production field reports on real Postgres deployments and longer-lived apps.
+2. External review of auth claim mapping, telemetry sinks, webhook recipes, and RLS policy generation.
+3. Broader production field reports on real Postgres deployments and longer-lived apps.
+
+## Dependency Vulnerability Evidence
+
+Run:
+
+```bash
+npm run security:deps
+```
+
+This writes:
+
+```txt
+security/evidence/latest/dependency-audit.json
+```
+
+The auditor recreates temporary npm installs from the framework package, the create-app wrapper, and both template root/web manifests. Template placeholders are resolved the same way generated apps are resolved, so the evidence reflects a real `npm create forgeos-app@alpha` consumer path instead of raw template files.
+
+The default threshold is `high`. Unwaived high or critical issues fail the command. Waivers are explicit and versioned in:
+
+```txt
+security/dependency-audit-waivers.json
+```
+
+Keep waivers narrow, include a reason, and set an expiration date.
 
 ## Related Pages
 

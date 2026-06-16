@@ -4,8 +4,19 @@ import { dirname, join, parse } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const CREATE_VERSION = "0.1.0-alpha.0";
 const DEFAULT_FORGE_SPEC = "npm:forgeos@alpha";
+
+function readCreateVersion() {
+  try {
+    const binDir = dirname(fileURLToPath(import.meta.url));
+    const parsed = JSON.parse(readFileSync(join(binDir, "..", "package.json"), "utf8"));
+    return typeof parsed.version === "string" ? parsed.version : "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+const CREATE_VERSION = readCreateVersion();
 
 function usage() {
   return `create-forge-app ${CREATE_VERSION}

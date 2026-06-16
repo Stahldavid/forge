@@ -80,10 +80,11 @@ The publish workflow runs:
 npm run forge -- security prove --db postgres --full --json
 npm run forge -- rls mutate-test --json
 npm run release:evidence
+npm run security:deps
 npm run release:verify-public-alpha
 ```
 
-before or after the relevant packaging/publishing phase. The public registry smoke retries npm dist-tag lookups while the registry propagates. If `create-forgeos-app` is still waiting for its first maintainer-authorized publish, the workflow verifies `forgeos@alpha` with `--skip-create`; after the wrapper exists, it verifies both packages. This gate aggregates Forge guard checks, auth proof, secrets proof, Postgres RLS proof, structural RLS mutation proof, invariant test status when source fixtures are present, release supply-chain evidence, a basic CycloneDX SBOM, and a public registry smoke for `forgeos@alpha` plus `create-forgeos-app@alpha` when available. The dedicated security assurance workflow uploads `security/evidence/latest/security-proof.json` plus split invariant artifacts.
+before or after the relevant packaging/publishing phase. The public registry smoke retries npm dist-tag lookups while the registry propagates. If `create-forgeos-app` is still waiting for its first maintainer-authorized publish, the workflow verifies `forgeos@alpha` with `--skip-create`; after the wrapper exists, it verifies both packages. This gate aggregates Forge guard checks, auth proof, secrets proof, Postgres RLS proof, structural RLS mutation proof, invariant test status when source fixtures are present, release supply-chain evidence, a basic CycloneDX SBOM, dependency vulnerability evidence, and a public registry smoke for `forgeos@alpha` plus `create-forgeos-app@alpha` when available. The dedicated security assurance workflow uploads `security/evidence/latest/security-proof.json` plus split invariant artifacts.
 
 See [Security Standards Crosswalk](security-standards.md) for the public mapping from controls to evidence.
 
@@ -100,6 +101,7 @@ Run:
 ```bash
 npm run release:smoke
 npm run release:evidence
+npm run security:deps
 npm run release:verify-public-alpha
 npm run field:test -- \
   --package-managers npm \

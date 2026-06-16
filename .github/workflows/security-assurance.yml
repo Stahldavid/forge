@@ -73,6 +73,9 @@ jobs:
       - name: Release evidence and SBOM
         run: npm run release:evidence -- security/evidence/latest
 
+      - name: Dependency vulnerability evidence
+        run: npm run security:deps -- security/evidence/latest/dependency-audit.json
+
       - name: Strict verification
         run: node ./bin/forge.mjs verify --strict --script-timeout-ms 120000 | tee security/evidence/latest/verify-strict.txt
 

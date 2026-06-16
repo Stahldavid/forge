@@ -143,7 +143,7 @@ describe("H25 forge make", () => {
         result.plan?.filesToCreate.find((file) => file.file === "web/src/main.tsx")?.content,
       ).toContain("devAuth");
       const packageJson = result.plan?.filesToCreate.find((file) => file.file === "web/package.json")?.content;
-      expect(packageJson).toContain('"vite": "^6.0.5"');
+      expect(packageJson).toContain('"vite": "^8.0.16"');
       expect(packageJson).not.toContain("latest");
     } finally {
       cleanupWorkspace(root);

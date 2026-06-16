@@ -87,6 +87,9 @@ jobs:
       - name: Release evidence and SBOM
         run: npm run release:evidence
 
+      - name: Dependency vulnerability evidence
+        run: npm run security:deps
+
       - name: Test
         run: npm test
 
@@ -116,6 +119,7 @@ jobs:
 
       - name: Publish create app wrapper
         id: create-wrapper
+        if: steps.changesets.outputs.published == 'true'
         env:
           NPM_CONFIG_PROVENANCE: "true"
           FORGE_ALLOW_FIRST_NPM_PUBLISH: ${{ github.event.inputs.allow-create-first-publish == 'true' && '1' || '' }}
@@ -237,6 +241,10 @@ jobs:
       - name: Release evidence and SBOM
         if: steps.npm-version.outputs.exists != 'true'
         run: npm run release:evidence
+
+      - name: Dependency vulnerability evidence
+        if: steps.npm-version.outputs.exists != 'true'
+        run: npm run security:deps
 
       - name: Test
         if: steps.npm-version.outputs.exists != 'true'

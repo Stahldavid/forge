@@ -41,8 +41,12 @@ describe("create-forge-app", () => {
 
   test("prints help", () => {
     const result = runCreate(["--help"], repoRoot);
+    const pkg = JSON.parse(
+      readFileSync(join(repoRoot, "packages", "create-forge-app", "package.json"), "utf8"),
+    ) as { version?: string };
 
     expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`create-forge-app ${pkg.version}`);
     expect(result.stdout).toContain("npm create forgeos-app@alpha <app-name>");
     expect(result.stdout).toContain("--template minimal-web");
   });

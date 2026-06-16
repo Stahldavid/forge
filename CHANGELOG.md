@@ -1,5 +1,14 @@
 # forgeos
 
+## Unreleased
+
+Release and packaging hardening:
+
+- Added `forge --version` / `forge --version --json`.
+- Updated `create-forgeos-app` help to read the wrapper package version instead of a hardcoded string and bumped the wrapper to `0.1.0-alpha.2`.
+- Added dependency vulnerability evidence with an explicit waiver file and CI release gate.
+- Updated generated web template dependencies to current Vite/plugin-react and Next majors.
+
 ## 0.1.0-alpha.5
 
 Release alignment for the public alpha channel:

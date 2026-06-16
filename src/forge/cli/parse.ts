@@ -49,6 +49,7 @@ import type {
 import type { ForgeDoOptions } from "../intent/types.ts";
 
 export type ForgeCommand =
+  | { kind: "version"; json: boolean }
   | {
       kind: "new";
       name: string;
@@ -309,6 +310,7 @@ export interface ParsedCli {
 }
 
 export const TOP_LEVEL_COMMANDS = [
+  "version",
   "new",
   "build",
   "serve",
@@ -688,6 +690,14 @@ export function parseCli(argv: string[]): ParsedCli {
   const errors: string[] = [];
   const positional = argv.filter((arg) => !arg.startsWith("-"));
   const workspaceRoot = process.cwd().replace(/\\/g, "/");
+
+  if (parseFlag(argv, "--version") || parseFlag(argv, "-v")) {
+    return {
+      command: { kind: "version", json: parseFlag(argv, "--json") },
+      workspaceRoot,
+      errors,
+    };
+  }
 
   if (positional.length === 0) {
     errors.push(
@@ -2021,6 +2031,7 @@ export function parseCli(argv: string[]): ParsedCli {
 
 export function hasUnknownOption(argv: string[]): string | null {
   const known = new Set([
+    "--version",
     "--check",
     "--json",
     "--dry-run",
