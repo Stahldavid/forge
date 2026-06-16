@@ -16,6 +16,9 @@ describe("security assurance: postgres RLS adversarial probes", () => {
         json: true,
       });
 
+      if (result.exitCode !== 0) {
+        throw new Error(JSON.stringify(result, null, 2));
+      }
       expect(result.exitCode).toBe(0);
       expect(result.diagnostics.filter((diagnostic) => diagnostic.severity === "error")).toEqual([]);
 

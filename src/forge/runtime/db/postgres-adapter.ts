@@ -12,7 +12,7 @@ function loadBunSql(databaseUrl: string): PostgresClient | null {
   try {
     const bunGlobal = globalThis as {
       Bun?: {
-        SQL?: new (url: string) => {
+        SQL?: new (options: string | { url: string; max?: number }) => {
           unsafe: (sql: string, params?: unknown[]) => Promise<Record<string, unknown>[]>;
           close: () => Promise<void>;
         };
@@ -23,7 +23,7 @@ function loadBunSql(databaseUrl: string): PostgresClient | null {
       return null;
     }
 
-    const client = new bunGlobal.Bun.SQL(databaseUrl);
+    const client = new bunGlobal.Bun.SQL({ url: databaseUrl, max: 1 });
     return {
       query: async (sql, params = []) => {
         const rows = await client.unsafe(sql, params);
@@ -43,6 +43,7 @@ async function loadPostgresJs(databaseUrl: string): Promise<PostgresClient | nul
     const module = await import("postgres");
     const createSql = module.default;
     const sql = createSql(databaseUrl, {
+      max: 1,
       onnotice: () => undefined,
     });
     return {

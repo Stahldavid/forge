@@ -245,11 +245,17 @@ async function seedReferencedRows(
   columns: ColumnDef[],
   row: Record<string, unknown>,
   seed: string,
+  seen: Set<string>,
 ): Promise<void> {
   for (const column of columns) {
     if (!column.references) {
       continue;
     }
+    const key = `${column.references.table}.${column.references.column}:${String(row[column.name])}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
     const referenced = tablePlan(plan, column.references.table);
     if (!referenced?.columns) {
       continue;
@@ -318,9 +324,10 @@ async function runTableProbe(
 
   const tx = await adapter.begin();
   try {
-    await seedReferencedRows(tx, plan, columns, rowA, `${table.table}:a`);
-    await seedReferencedRows(tx, plan, columns, rowB, `${table.table}:b`);
-    await seedReferencedRows(tx, plan, columns, mismatchRow, `${table.table}:mismatch`);
+    const seededReferences = new Set<string>();
+    await seedReferencedRows(tx, plan, columns, rowA, `${table.table}:a`, seededReferences);
+    await seedReferencedRows(tx, plan, columns, rowB, `${table.table}:b`, seededReferences);
+    await seedReferencedRows(tx, plan, columns, mismatchRow, `${table.table}:mismatch`, seededReferences);
     if (role) {
       await tx.query(`SET ROLE ${quoteIdent(role)}`);
     }
