@@ -32,7 +32,7 @@
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "changeset": "changeset",
-    "version-packages": "changeset version",
+    "version-packages": "node scripts/version-packages.mjs",
     "release": "changeset publish --tag alpha",
     "release:pack": "npm pack --dry-run",
     "release:smoke": "node scripts/smoke-packed-package.mjs",
