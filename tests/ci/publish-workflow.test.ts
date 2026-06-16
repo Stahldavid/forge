@@ -38,6 +38,9 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("publish: npm run release");
     expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
     expect(workflow).toContain("Generate release artifacts");
+    expect(workflow).toContain("Security proof");
+    expect(workflow).toContain("npm run forge -- security prove --json");
+    expect(workflow).toContain("AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key");
     expect(workflow).toContain("Regenerate release artifacts");
     expect(workflow).toContain("npm run forge -- generate");
     expect(workflow).toContain("git restore .");

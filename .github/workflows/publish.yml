@@ -52,6 +52,13 @@ jobs:
       - name: Generate release artifacts
         run: npm run forge -- generate
 
+      - name: Security proof
+        env:
+          AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
+          ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
+          OPENAI_API_KEY: forge-ci-redacted-openai-key
+        run: npm run forge -- security prove --json
+
       - name: Test
         run: npm test
 
@@ -153,6 +160,14 @@ jobs:
       - name: Generate release artifacts
         if: steps.npm-version.outputs.exists != 'true'
         run: npm run forge -- generate
+
+      - name: Security proof
+        if: steps.npm-version.outputs.exists != 'true'
+        env:
+          AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
+          ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
+          OPENAI_API_KEY: forge-ci-redacted-openai-key
+        run: npm run forge -- security prove --json
 
       - name: Test
         if: steps.npm-version.outputs.exists != 'true'

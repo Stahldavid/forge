@@ -40,6 +40,7 @@ const PUBLIC_PAGES = [
   "production-readiness.md",
   "threat-model.md",
   "security-assurance.md",
+  "security-standards.md",
   "operations.md",
   "self-host.md",
   "release.md",
@@ -178,6 +179,10 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/security-assurance.md")).toContain("forge security prove --db postgres --json");
     expect(read("docs/security-assurance.md")).toContain("tests/security");
     expect(read("docs/security-assurance.md")).toContain("security/evidence/latest");
+    expect(read("docs/security-standards.md")).toContain("security/STANDARDS_CROSSWALK.md");
+    expect(read("docs/security-standards.md")).toContain("OWASP LLM Top 10");
+    expect(read("docs/security-standards.md")).toContain("forge security prove --json");
+    expect(read("docs/security-standards.md")).toContain("NPM_CONFIG_PROVENANCE=true");
     expect(read("docs/production-readiness.md")).toContain("Threat Model");
     expect(read("docs/security-and-data.md")).toContain("Production Readiness");
     expect(read("docs/security-and-data.md")).toContain("Threat Model");
@@ -185,6 +190,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/release.md")).toContain("docs/production-readiness.md");
     expect(read("docs/release.md")).toContain("docs/threat-model.md");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");
+    expect(read("docs/release.md")).toContain("security prove --json");
+    expect(read("docs/release.md")).toContain("Security Standards Crosswalk");
     expect(read("docs/release.md")).toContain("Documentation checklist");
     expect(read("docs/changelog.md")).toContain("0.1.0-alpha.3");
   });

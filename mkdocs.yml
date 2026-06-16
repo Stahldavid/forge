@@ -82,6 +82,7 @@ nav:
   - Production Readiness: production-readiness.md
   - Threat Model: threat-model.md
   - Security Assurance: security-assurance.md
+  - Security Standards Crosswalk: security-standards.md
   - Operations: operations.md
   - Self-Host: self-host.md
   - Release: release.md

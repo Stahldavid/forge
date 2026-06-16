@@ -57,6 +57,18 @@ npm Trusted Publishing should point to:
 
 The GitHub workflow uses OIDC provenance for npm publishing. Local publish is intentionally limited to tarball validation by default because the npm package is configured for Trusted Publisher plus strict 2FA/token settings. `npm run release:publish-alpha` verifies the version is not already published, checks that the current commit is pushed, dispatches `publish.yml`, and watches the run.
 
+## Security Release Gate
+
+The publish workflow runs:
+
+```bash
+npm run forge -- security prove --json
+```
+
+before tests, packaging, and npm publishing. This gate aggregates Forge guard checks, auth proof, secrets proof, and RLS proof status. The dedicated security assurance workflow runs the stronger Postgres-backed RLS proof and uploads `security/evidence/latest/security-proof.json`.
+
+See [Security Standards Crosswalk](security-standards.md) for the public mapping from controls to evidence.
+
 ## GitHub Packages mirror
 
 The repository also publishes scoped mirrors to GitHub Packages via `.github/workflows/github-packages.yml`. This is useful for organizations that prefer installing from `npm.pkg.github.com` instead of the public npm registry.
@@ -78,6 +90,7 @@ npm run field:test -- \
   --write-report field-reports/pre-tag-minimal-web.json \
   --json
 forge verify --strict
+forge security prove --json
 ```
 
 Use the broad field-test workflow before promoting a release beyond alpha. It runs Linux, macOS, Windows, Node 22, Node 24, npm, pnpm, yarn, and Bun matrix cells with runtime probes and JSON artifacts.

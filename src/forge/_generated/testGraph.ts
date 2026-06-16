@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.3 input=0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106 content=ee79192d0dabb3e70c92e5f2e680bffe5c959f12c11a9ead758e27b1968193cc
+// @forge-generated generator=0.1.0-alpha.3 input=0ece0560c9d3676ff4363aaf8d954bb17be20b06abcc4e0e01c2e2bd0e69e106 content=2e66b578430087b6b665384d7ccb32b8799f3682fb7d8789951c97eac3a9017b
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
@@ -499,14 +499,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "ai"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -514,7 +516,9 @@ export const testGraph = {
       },
       "file": "tests/ci/publish-workflow.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages ai"
+      ]
     },
     {
       "confidence": "probable",
@@ -525,6 +529,7 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "ai",
           "postgres"
         ],
         "policies": [],
@@ -535,6 +540,7 @@ export const testGraph = {
       "file": "tests/ci/security-assurance-workflow.test.ts",
       "kind": "unknown",
       "reasons": [
+        "probable: packages ai",
         "probable: packages postgres"
       ]
     },
@@ -2959,6 +2965,28 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/security/security-prove.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages postgres"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/standards-crosswalk.test.ts",
       "kind": "unknown",
       "reasons": [
         "probable: packages postgres"

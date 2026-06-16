@@ -10,6 +10,12 @@ The public invariants live in:
 security/SECURITY_INVARIANTS.md
 ```
 
+The public standards mapping lives in:
+
+```txt
+security/STANDARDS_CROSSWALK.md
+```
+
 They cover:
 
 - production auth must not accept dev headers;
@@ -107,6 +113,7 @@ The current assurance layer is intentionally not the final security story. The n
 
 - [Security and Data](security-and-data.md)
 - [Threat Model](threat-model.md)
+- [Security Standards Crosswalk](security-standards.md)
 - [Production Readiness](production-readiness.md)
 - [AI Agents](ai-agents.md)
 - [Field Testing](field-testing.md)
