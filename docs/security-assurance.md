@@ -25,6 +25,7 @@ They cover:
 - queries and liveQueries must be read-only;
 - agent tools must inherit Forge auth, tenant, policy, telemetry, and approval boundaries;
 - secret values must not appear in generated artifacts, telemetry, logs, or reports;
+- webhooks must reject invalid signatures, stale timestamps, tampered bodies, and replayed event ids;
 - releases must be traceable to CI and package evidence.
 
 ## Security Assurance Workflow
@@ -45,12 +46,15 @@ forge secrets check --json
 forge auth prove --json
 forge secrets prove --json
 forge rls test --db postgres --json
+forge rls mutate-test --json
 forge security prove --db postgres --json
+npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest
+npm run release:evidence -- security/evidence/latest
 forge verify --strict --script-timeout-ms 120000
 bun test tests/security
 ```
 
-The current implementation covers adversarial fixtures for runtime boundaries, runtime tenant isolation, JWT/OIDC negative auth paths, secret redaction, agent tool metadata, structural agent redteam checks, standards crosswalks, release evidence, and Postgres RLS tenant isolation.
+The current implementation covers adversarial fixtures for runtime boundaries, runtime and HTTP tenant isolation, JWT/OIDC negative auth paths, value-aware secret redaction, webhook signature/replay checks, agent tool metadata, structural agent checks, standards crosswalks, release evidence, SBOM generation, Postgres RLS tenant isolation, and RLS mutation checks.
 
 `forge security prove --json` reports an `assurance` level:
 
@@ -70,6 +74,7 @@ node ./bin/forge.mjs auth prove --json
 node ./bin/forge.mjs secrets prove --json
 node ./bin/forge.mjs ai redteam --json
 node ./bin/forge.mjs rls test --db postgres --json
+node ./bin/forge.mjs rls mutate-test --json
 node ./bin/forge.mjs security prove --db postgres --json
 node ./bin/forge-bun.mjs test tests/security --timeout 120000
 ```
@@ -96,11 +101,16 @@ forge-check.json
 auth-check.json
 secrets-check.json
 rls-test.json
+rls-mutation.json
 security-proof.json
+auth-negative.json
+tenant-isolation.json
 runtime-boundaries.json
 secret-redaction.json
 agent-tools.json
-agent-redteam.json
+webhooks.json
+release-supply-chain.json
+sbom.cyclonedx.json
 ```
 
 Evidence files must not include:
@@ -115,11 +125,10 @@ Evidence files must not include:
 
 The current assurance layer is intentionally not the final security story. The next layers are:
 
-1. Deeper prompt-injection and indirect prompt-injection redteam tests with controlled model/tool loops.
-2. More runtime tenant isolation scenarios for generated agent auto-tools and HTTP probes.
-3. Webhook signature, replay, and tamper tests.
-4. SBOM and dependency vulnerability evidence attached to each release.
-5. External review of auth claim mapping, telemetry sinks, and RLS policy generation.
+1. More runtime tenant isolation scenarios for generated agent auto-tools and liveQuery HTTP/SSE probes.
+2. Dependency vulnerability evidence attached to each release in addition to the basic SBOM.
+3. External review of auth claim mapping, telemetry sinks, webhook recipes, and RLS policy generation.
+4. Broader production field reports on real Postgres deployments and longer-lived apps.
 
 ## Related Pages
 

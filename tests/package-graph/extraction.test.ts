@@ -110,6 +110,20 @@ describe("PackageGraph extraction fixtures", () => {
     expect(root?.exports.length).toBe(0);
   });
 
+  test("does not emit FORGE_PKG_NO_TYPES for @types packages", async () => {
+    const cacheDir = tempCacheDir("types-package-empty");
+    mkdirSync(cacheDir, { recursive: true });
+    const compiler = new PackageGraphCompiler();
+    const result = await compiler.build([FIXTURE_PACKAGES.typesNode], {
+      runtimeInspect: false,
+      resolutionMode: "nodenext",
+      cacheDir,
+    });
+    rmSync(cacheDir, { recursive: true, force: true });
+
+    expect(result.diagnostics.some((d) => d.code === "FORGE_PKG_NO_TYPES")).toBe(false);
+  });
+
   test("falls back to @types/* when bundled types are missing", async () => {
     const api = await analyze(FIXTURE_PACKAGES.needsTypesPackage, "nodenext");
     const root = api.entrypoints.find((ep) => ep.subpath === ".");

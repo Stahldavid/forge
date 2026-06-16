@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "files": [
@@ -36,6 +36,8 @@
     "release": "changeset publish --tag alpha",
     "release:pack": "npm pack --dry-run",
     "release:smoke": "node scripts/smoke-packed-package.mjs",
+    "release:evidence": "node scripts/write-release-evidence.mjs",
+    "security:evidence": "node scripts/write-security-evidence.mjs",
     "release:publish-alpha": "node scripts/publish-trusted-alpha.mjs",
     "release:publish-local-alpha": "node scripts/publish-local-alpha.mjs",
     "field:test": "node scripts/field-test-forgeos.mjs",

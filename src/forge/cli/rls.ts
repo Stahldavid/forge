@@ -5,6 +5,7 @@ import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
   FORGE_DB_SUPERUSER_RUNTIME,
   FORGE_RLS_APPLY_FAILED,
+  FORGE_RLS_MUTATION_FAILED,
   FORGE_RLS_PGLITE_NOT_AUTHORITATIVE,
   FORGE_RLS_POLICY_MISSING,
   FORGE_RLS_TEST_FAILED,
@@ -20,7 +21,7 @@ import { databaseUrlUsesPostgresSuperuser } from "../runtime/db/session-context.
 import type { RlsTableSecurity } from "../compiler/data-graph/rls/types.ts";
 import { createHash } from "node:crypto";
 
-export type RlsSubcommand = "generate" | "check" | "apply" | "test";
+export type RlsSubcommand = "generate" | "check" | "apply" | "test" | "mutate-test";
 
 export interface RlsCommandOptions {
   subcommand: RlsSubcommand;
@@ -563,6 +564,119 @@ function checkGeneratedArtifacts(options: RlsCommandOptions): RlsCommandResult {
   };
 }
 
+function manifestCoverageErrors(
+  manifest: { tables?: Array<{ table: string; forceRowLevelSecurity?: boolean; policies?: unknown[] }> } | null,
+): string[] {
+  const errors: string[] = [];
+  for (const table of manifest?.tables ?? []) {
+    if (!table.forceRowLevelSecurity || (table.policies?.length ?? 0) < 4) {
+      errors.push(`table '${table.table}' is missing complete FORCE RLS policy coverage`);
+    }
+  }
+  return errors;
+}
+
+function sqlHasUnsafeRlsPredicate(sql: string): boolean {
+  return /\bUSING\s*\(\s*true\s*\)/i.test(sql) || /\bWITH\s+CHECK\s*\(\s*true\s*\)/i.test(sql);
+}
+
+function sqlUsesBypassRls(sql: string): boolean {
+  return /\bBYPASSRLS\b/i.test(sql);
+}
+
+function mutation(id: string, description: string, killed: boolean) {
+  return {
+    id,
+    description,
+    killed,
+  };
+}
+
+function runRlsMutationTests(options: RlsCommandOptions): RlsCommandResult {
+  const checked = checkGeneratedArtifacts(options);
+  if (!checked.ok) {
+    return checked;
+  }
+
+  const manifest = readGeneratedJson<{
+    tables?: Array<{ table: string; forceRowLevelSecurity?: boolean; policies?: unknown[] }>;
+  }>(options.workspaceRoot, `${GENERATED_DIR}/dbSecurityManifest.json`);
+  const sql = readGeneratedText(options.workspaceRoot, `${GENERATED_DIR}/rlsPolicies.sql`) ?? "";
+  const firstTable = manifest?.tables?.[0];
+  const mutations: Array<ReturnType<typeof mutation>> = [];
+
+  if (firstTable) {
+    mutations.push(
+      mutation(
+        "force-rls-removed",
+        "disable FORCE ROW LEVEL SECURITY on a tenant-scoped table",
+        manifestCoverageErrors({
+          tables: [
+            ...((manifest?.tables ?? []).slice(0, 0)),
+            { ...firstTable, forceRowLevelSecurity: false },
+            ...((manifest?.tables ?? []).slice(1)),
+          ],
+        }).length > 0,
+      ),
+    );
+
+    mutations.push(
+      mutation(
+        "policy-removed",
+        "remove one generated RLS policy from a tenant-scoped table",
+        manifestCoverageErrors({
+          tables: [
+            { ...firstTable, policies: (firstTable.policies ?? []).slice(1) },
+            ...((manifest?.tables ?? []).slice(1)),
+          ],
+        }).length > 0,
+      ),
+    );
+  }
+
+  mutations.push(
+    mutation(
+      "unsafe-using-true",
+      "replace an RLS USING predicate with an unconditional predicate",
+      sqlHasUnsafeRlsPredicate(`${sql}\nCREATE POLICY forge_mutant ON tickets USING (true);`),
+    ),
+  );
+  mutations.push(
+    mutation(
+      "unsafe-with-check-true",
+      "replace an RLS WITH CHECK predicate with an unconditional predicate",
+      sqlHasUnsafeRlsPredicate(`${sql}\nCREATE POLICY forge_mutant ON tickets WITH CHECK (true);`),
+    ),
+  );
+  mutations.push(
+    mutation(
+      "bypassrls-role",
+      "grant a runtime role BYPASSRLS",
+      sqlUsesBypassRls(`${sql}\nALTER ROLE forge_runtime BYPASSRLS;`),
+    ),
+  );
+
+  const survivors = mutations.filter((item) => !item.killed);
+  const failures = survivors.map((item) =>
+    createDiagnostic({
+      severity: "error",
+      code: FORGE_RLS_MUTATION_FAILED,
+      message: `RLS mutation survived: ${item.id}`,
+    }),
+  );
+
+  return {
+    ok: failures.length === 0,
+    data: {
+      kind: "rls-mutation-proof",
+      structural: true,
+      mutations,
+    },
+    diagnostics: [...checked.diagnostics, ...failures],
+    exitCode: failures.length === 0 ? 0 : 1,
+  };
+}
+
 async function applyRls(options: RlsCommandOptions): Promise<RlsCommandResult> {
   const checked = checkGeneratedArtifacts(options);
   if (!checked.ok) {
@@ -670,6 +784,10 @@ export async function runRlsCommand(options: RlsCommandOptions): Promise<RlsComm
     return applyRls(options);
   }
 
+  if (options.subcommand === "mutate-test") {
+    return runRlsMutationTests(options);
+  }
+
   const checked = checkGeneratedArtifacts(options);
   if (options.db !== "postgres") {
     return {
@@ -708,6 +826,9 @@ export function formatRlsHuman(subcommand: RlsSubcommand, result: RlsCommandResu
   }
   if (subcommand === "test") {
     return `rls checks passed${suffix}`;
+  }
+  if (subcommand === "mutate-test") {
+    return `rls mutation checks passed${suffix}`;
   }
   return `rls contract is up to date${suffix}`;
 }

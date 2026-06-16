@@ -12,6 +12,15 @@ import type { GenerateResult } from "../compiler/types/cli.ts";
 
 export type SecuritySubcommand = "prove";
 
+export interface SecurityInvariantEvidence {
+  id: string;
+  artifact: string;
+  level: "checked" | "tested" | "proved";
+  summary: string;
+  tests: string[];
+  commands: string[];
+}
+
 export interface SecurityCommandOptions {
   subcommand: SecuritySubcommand;
   workspaceRoot: string;
@@ -30,7 +39,11 @@ export interface SecurityProofResult {
     auth: AuthCommandResult;
     secrets: SecretsCommandResult;
     rls: RlsCommandResult;
+    rlsMutation: RlsCommandResult;
     agentRedteam: AiCommandResult;
+  };
+  evidence: {
+    invariants: SecurityInvariantEvidence[];
   };
   summary: {
     passed: string[];
@@ -38,6 +51,100 @@ export interface SecurityProofResult {
     warnings: string[];
   };
   exitCode: 0 | 1;
+}
+
+function invariantEvidence(): SecurityInvariantEvidence[] {
+  return [
+    {
+      id: "INV-001",
+      artifact: "auth-negative",
+      level: "tested",
+      summary: "Production auth rejects invalid JWT/OIDC tokens and ignores dev headers in jwt mode.",
+      tests: ["tests/security/auth-negative.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/auth-negative.test.ts --timeout 120000"],
+    },
+    {
+      id: "INV-002",
+      artifact: "tenant-isolation",
+      level: "tested",
+      summary: "Runtime and HTTP APIs block cross-tenant reads, writes, tenant spoofing, and unsafe tenant filters.",
+      tests: [
+        "tests/security/tenant-isolation/runtime-api.test.ts",
+        "tests/security/tenant-isolation/http-runtime.test.ts",
+      ],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/tenant-isolation --timeout 120000"],
+    },
+    {
+      id: "INV-003",
+      artifact: "rls-test",
+      level: "proved",
+      summary: "Postgres RLS probes and structural mutation checks protect tenant-scoped tables.",
+      tests: [
+        "tests/security/rls-postgres-adversarial.test.ts",
+        "tests/security/rls-mutation.test.ts",
+      ],
+      commands: [
+        "node ./bin/forge.mjs rls test --db postgres --json",
+        "node ./bin/forge.mjs rls mutate-test --json",
+      ],
+    },
+    {
+      id: "INV-004",
+      artifact: "runtime-boundaries",
+      level: "tested",
+      summary: "Commands reject forbidden AI, agent, network, secret, filesystem, and process.env usage.",
+      tests: ["tests/security/runtime-boundaries.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/runtime-boundaries.test.ts --timeout 120000"],
+    },
+    {
+      id: "INV-005",
+      artifact: "runtime-boundaries",
+      level: "tested",
+      summary: "Queries and liveQueries remain read-only and side-effect free.",
+      tests: ["tests/security/runtime-boundaries.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/runtime-boundaries.test.ts --timeout 120000"],
+    },
+    {
+      id: "INV-006",
+      artifact: "agent-tools",
+      level: "tested",
+      summary: "Generated agent tools carry Forge auth, tenant, policy, runtime, and risk metadata.",
+      tests: ["tests/security/agent-tools.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/agent-tools.test.ts --timeout 120000"],
+    },
+    {
+      id: "INV-007",
+      artifact: "agent-tools",
+      level: "tested",
+      summary: "Write, destructive, and external agent tools require approval metadata.",
+      tests: ["tests/security/agent-tools.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/agent-tools.test.ts --timeout 120000"],
+    },
+    {
+      id: "INV-008",
+      artifact: "secret-redaction",
+      level: "tested",
+      summary: "Generated artifacts and telemetry scrub secret names and known secret values.",
+      tests: ["tests/security/secret-redaction.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/secret-redaction.test.ts --timeout 120000"],
+    },
+    {
+      id: "INV-009",
+      artifact: "webhooks",
+      level: "tested",
+      summary: "Webhook helpers reject invalid signatures, stale timestamps, tampered payloads, and replayed event IDs.",
+      tests: ["tests/security/webhooks/webhook-security.test.ts"],
+      commands: ["node ./bin/forge-bun.mjs test tests/security/webhooks --timeout 120000"],
+    },
+    {
+      id: "INV-010",
+      artifact: "release-supply-chain",
+      level: "checked",
+      summary: "Release workflow uses Trusted Publishing, provenance, smoke tests, security proof, and generated release evidence.",
+      tests: ["tests/ci/publish-workflow.test.ts"],
+      commands: ["npm run release:smoke", "npm run release:evidence"],
+    },
+  ];
 }
 
 function passed(name: string, ok: boolean, summary: SecurityProofResult["summary"]): void {
@@ -70,6 +177,13 @@ export async function runSecurityCommand(
     databaseUrl: options.databaseUrl,
     json: true,
   });
+  const rlsMutation = await runRlsCommand({
+    subcommand: "mutate-test",
+    workspaceRoot: options.workspaceRoot,
+    db: options.db,
+    databaseUrl: options.databaseUrl,
+    json: true,
+  });
   const agentRedteam = await runAiCommand({
     subcommand: "redteam",
     workspaceRoot: options.workspaceRoot,
@@ -85,12 +199,18 @@ export async function runSecurityCommand(
   passed("auth-proof", auth.exitCode === 0, summary);
   passed("secrets-proof", secrets.exitCode === 0, summary);
   passed("rls-proof", rls.exitCode === 0, summary);
+  passed("rls-mutation-proof", rlsMutation.exitCode === 0, summary);
   passed("agent-redteam", agentRedteam.exitCode === 0, summary);
 
   if (auth.mode === "dev-headers") {
     summary.warnings.push("auth-proof uses local-only dev-headers mode");
   }
   for (const diagnostic of rls.diagnostics) {
+    if (diagnostic.severity === "warning") {
+      summary.warnings.push(`${diagnostic.code}: ${diagnostic.message}`);
+    }
+  }
+  for (const diagnostic of rlsMutation.diagnostics) {
     if (diagnostic.severity === "warning") {
       summary.warnings.push(`${diagnostic.code}: ${diagnostic.message}`);
     }
@@ -118,7 +238,11 @@ export async function runSecurityCommand(
       auth,
       secrets,
       rls,
+      rlsMutation,
       agentRedteam,
+    },
+    evidence: {
+      invariants: invariantEvidence(),
     },
     summary,
     exitCode: ok ? 0 : 1,

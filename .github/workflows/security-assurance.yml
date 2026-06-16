@@ -61,8 +61,17 @@ jobs:
       - name: RLS adversarial proof
         run: node ./bin/forge.mjs rls test --db postgres --json | tee security/evidence/latest/rls-test.json
 
+      - name: RLS mutation proof
+        run: node ./bin/forge.mjs rls mutate-test --json | tee security/evidence/latest/rls-mutation.json
+
       - name: Aggregate security proof
         run: node ./bin/forge.mjs security prove --db postgres --json | tee security/evidence/latest/security-proof.json
+
+      - name: Split invariant evidence
+        run: npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest
+
+      - name: Release evidence and SBOM
+        run: npm run release:evidence -- security/evidence/latest
 
       - name: Strict verification
         run: node ./bin/forge.mjs verify --strict --script-timeout-ms 120000 | tee security/evidence/latest/verify-strict.txt

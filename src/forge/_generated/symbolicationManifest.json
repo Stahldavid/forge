@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=ecd5d54316115889bd3e2739321a44f361a0f255b35c982c87cee2f4b830160a
-{"diagnostics":[],"localSymbolication":true,"providers":["local","sentry-compatible","sentry","glitchtip","bugsink","otel","custom"],"releaseId":"forgeos@0.1.0-alpha.3+unknown","schemaVersion":"0.1.0","sourceMapCount":0}
+// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=b77244531b091b82cffa8509f129a8d10c5f37f27a8befb03ad7bb813b3c3d3b
+{"diagnostics":[],"localSymbolication":true,"providers":["local","sentry-compatible","sentry","glitchtip","bugsink","otel","custom"],"releaseId":"forgeos@0.1.0-alpha.4+unknown","schemaVersion":"0.1.0","sourceMapCount":0}

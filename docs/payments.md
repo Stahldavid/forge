@@ -107,14 +107,24 @@ export const createStripeCheckout = action({
 
 ### 4. Verify webhooks in an endpoint
 
-Forge generates `integrations/stripe/webhook.ts`:
+ForgeOS includes a webhook authenticity helper for HMAC-style providers. Generated integration recipes may wrap this helper for provider-specific ergonomics.
 
 ```typescript
-import { createStripeClient } from "../forge/_generated/packages/stripe.server.js";
-import { constructStripeWebhookEvent } from "../forge/_generated/integrations/stripe/webhook.js";
+import { verifyWebhookSignature } from "forge/server";
 
 // In your HTTP endpoint handler:
-const event = constructStripeWebhookEvent(rawBody, signatureHeader, ctx.secrets);
+const verified = await verifyWebhookSignature({
+  provider: "stripe",
+  secret: ctx.secrets.get("STRIPE_WEBHOOK_SECRET"),
+  payload: rawBody,
+  signatureHeader,
+  eventId: stripeEventId,
+  replayStore,
+});
+
+if (!verified.ok) {
+  throw new Error(verified.code);
+}
 
 if (event.type === "checkout.session.completed") {
   const sessionId = event.data.object.metadata?.sessionId;
@@ -238,6 +248,7 @@ forge generate
 forge check --json
 forge inspect secrets --json
 forge inspect runtime-matrix --json
+forge security prove --json
 forge verify --standard
 ```
 

@@ -83,6 +83,34 @@ describe("security assurance: secret redaction", () => {
     expect(diagnostics.some((diagnostic) => diagnostic.code === FORGE_TELEMETRY_SECRET_REDACTED)).toBe(true);
   });
 
+  test("telemetry scrubber removes known secret values from safe-looking fields", () => {
+    const { diagnostics, value } = scrubEnvelopePayload(
+      {
+        schemaVersion: "0.1",
+        type: "exception",
+        traceId: "security-value-redaction",
+        environment: "test",
+        runtime: { kind: "action" },
+        createdAt: new Date().toISOString(),
+        message: `provider returned ${CANARY}`,
+        details: {
+          output: `nested ${CANARY} value`,
+        },
+        exception: {
+          name: "Error",
+          message: "failure",
+          stack: `Error: ${CANARY}\n    at handler`,
+        },
+      },
+      { secretValues: [CANARY] },
+    );
+
+    const serialized = JSON.stringify(value);
+    expect(serialized).not.toContain(CANARY);
+    expect(serialized).toContain("[REDACTED]");
+    expect(diagnostics.some((diagnostic) => diagnostic.code === FORGE_TELEMETRY_SECRET_REDACTED)).toBe(true);
+  });
+
   test("direct process.env secret access is reported as a security diagnostic", async () => {
     const workspace = scaffoldGenerateWorkspace("security-process-env");
     mkdirSync(join(workspace, "src", "actions"), { recursive: true });

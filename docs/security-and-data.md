@@ -125,8 +125,9 @@ Local dev often uses PGlite; production uses Postgres with optional RLS enforcem
 For Postgres deployments, Forge can compile tenant rules to database-enforced RLS:
 
 ```bash
-forge rls inspect --json
 forge rls check --json
+forge rls test --db postgres --json
+forge rls mutate-test --json
 ```
 
 Generated artifacts:
@@ -137,6 +138,7 @@ Generated artifacts:
 RLS complements application-level policies — it blocks cross-tenant reads even if application code regresses.
 
 PGlite local dev may not treat RLS as production-authoritative. Run `forge rls check` before shipping Postgres deployments.
+Run `forge rls mutate-test --json` to verify that generated RLS artifacts fail closed when FORCE RLS, policies, predicates, or runtime roles are weakened.
 
 ## Data workflow for new tables
 
@@ -168,6 +170,7 @@ forge check --json
 forge auth check --json
 forge secrets check --json
 forge rls check --json
+forge rls mutate-test --json
 forge verify --strict
 ```
 

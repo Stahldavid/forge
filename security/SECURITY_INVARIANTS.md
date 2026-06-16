@@ -26,7 +26,7 @@ Each invariant has a threat, guarantee, enforcement points, tests, CI coverage, 
 | INV-006 | Agent tools must inherit auth, tenant, policy, telemetry, and runtime boundaries. | Tested |
 | INV-007 | Write, external, and destructive agent tools must require approval unless explicitly allowlisted by policy. | Tested |
 | INV-008 | Secret values must never appear in generated artifacts, agent contracts, telemetry, traces, logs, or reports. | Tested |
-| INV-009 | Webhooks and integration callbacks must reject invalid signatures, replayed events, and tampered payloads. | Design |
+| INV-009 | Webhooks and integration callbacks must reject invalid signatures, replayed events, and tampered payloads. | Tested |
 | INV-010 | Published packages must be traceable through lockfiles, provenance, CI gates, and release evidence. | Checked |
 
 ## INV-001: Dev Headers Must Not Work In Production
@@ -92,10 +92,12 @@ Static check:
 Runtime/integration test:
 
 - `tests/security/tenant-isolation/runtime-api.test.ts`
+- `tests/security/tenant-isolation/http-runtime.test.ts`
 
 Negative/adversarial test:
 
 - cross-tenant `get`, `list`, `update`, `delete`, caller-provided tenant spoofing, mismatched tenant `where`, and liveQuery snapshots.
+- HTTP command/query requests through `forge dev` with tenant A/B headers.
 
 CI job:
 
@@ -125,6 +127,7 @@ Enforcement points:
 Static check:
 
 - `forge rls test --db postgres --json`
+- `forge rls mutate-test --json`
 
 Runtime/integration test:
 
@@ -133,6 +136,7 @@ Runtime/integration test:
 Negative/adversarial test:
 
 - synthetic rows for tenant A and tenant B, then direct same-table `SELECT`, `UPDATE`, `DELETE`, and mismatched-tenant `INSERT` probes under a non-`BYPASSRLS` role.
+- structural mutations for missing FORCE RLS, missing policies, unconditional `USING (true)`, unconditional `WITH CHECK (true)`, and `BYPASSRLS`.
 
 CI job:
 
@@ -141,6 +145,7 @@ CI job:
 Evidence artifact:
 
 - `security/evidence/latest/rls-test.json`
+- `security/evidence/latest/rls-mutation.json`
 
 ## INV-004: Command Runtime Boundaries
 
@@ -299,7 +304,7 @@ Secrets leak through generated files, telemetry, traces, logs, agent contracts, 
 
 Guarantee:
 
-ForgeOS stores and emits secret names, never secret values; runtime payloads are scrubbed.
+ForgeOS stores and emits secret names, never secret values; runtime payloads are scrubbed by sensitive field name and by known secret value.
 
 Enforcement points:
 
@@ -341,25 +346,26 @@ Webhook handlers verify signatures, timestamps, replay windows, and payload inte
 
 Enforcement points:
 
-- planned integration recipes;
-- planned webhook helpers;
+- integration recipes;
+- `verifyWebhookSignature`;
+- timestamp/replay helpers;
 - action/workflow side-effect boundary.
 
 Static check:
 
-- planned: `forge security prove --webhooks --json`
+- `forge security prove --json`
 
 Runtime/integration test:
 
-- planned: `tests/security/webhooks/*`
+- `tests/security/webhooks/webhook-security.test.ts`
 
 Negative/adversarial test:
 
-- invalid signature, replayed timestamp, tampered body.
+- invalid signature, stale timestamp, replayed event ID, and tampered body.
 
 CI job:
 
-- planned `.github/workflows/security-assurance.yml`
+- `.github/workflows/security-assurance.yml`
 
 Evidence artifact:
 
@@ -386,6 +392,7 @@ Enforcement points:
 Static check:
 
 - `npm run release:smoke`
+- `npm run release:evidence`
 
 Runtime/integration test:
 
@@ -402,7 +409,8 @@ CI job:
 
 Evidence artifact:
 
-- `security/evidence/latest/release-security.json`
+- `security/evidence/latest/release-supply-chain.json`
+- `security/evidence/latest/sbom.cyclonedx.json`
 
 ## Evidence Model
 
@@ -416,7 +424,10 @@ security/evidence/latest/
   auth-check.json
   secrets-check.json
   rls-test.json
+  rls-mutation.json
   security-proof.json
+  release-supply-chain.json
+  sbom.cyclonedx.json
   verify-strict.json
   runtime-boundaries.json
   secret-redaction.json

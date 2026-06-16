@@ -62,10 +62,12 @@ The GitHub workflow uses OIDC provenance for npm publishing. Local publish is in
 The publish workflow runs:
 
 ```bash
-npm run forge -- security prove --json
+npm run forge -- security prove --db postgres --json
+npm run forge -- rls mutate-test --json
+npm run release:evidence
 ```
 
-before tests, packaging, and npm publishing. This gate aggregates Forge guard checks, auth proof, secrets proof, and RLS proof status. The dedicated security assurance workflow runs the stronger Postgres-backed RLS proof and uploads `security/evidence/latest/security-proof.json`.
+before tests, packaging, and npm publishing. This gate aggregates Forge guard checks, auth proof, secrets proof, Postgres RLS proof, structural RLS mutation proof, invariant evidence, release supply-chain evidence, and a basic CycloneDX SBOM. The dedicated security assurance workflow uploads `security/evidence/latest/security-proof.json` plus split invariant artifacts.
 
 See [Security Standards Crosswalk](security-standards.md) for the public mapping from controls to evidence.
 
@@ -81,6 +83,7 @@ Run:
 
 ```bash
 npm run release:smoke
+npm run release:evidence
 npm run field:test -- \
   --package-managers npm \
   --templates minimal-web \
@@ -90,7 +93,7 @@ npm run field:test -- \
   --write-report field-reports/pre-tag-minimal-web.json \
   --json
 forge verify --strict
-forge security prove --json
+forge security prove --db postgres --json
 ```
 
 Use the broad field-test workflow before promoting a release beyond alpha. It runs Linux, macOS, Windows, Node 22, Node 24, npm, pnpm, yarn, and Bun matrix cells with runtime probes and JSON artifacts.

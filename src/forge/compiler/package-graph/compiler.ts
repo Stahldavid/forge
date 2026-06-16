@@ -73,6 +73,10 @@ export interface BuildResult {
   diagnostics: Diagnostic[];
 }
 
+function shouldWarnNoTypes(packageName: string): boolean {
+  return !packageName.startsWith("@types/");
+}
+
 export class PackageGraphCompiler {
   async build(
     deps: Dependency[],
@@ -363,7 +367,9 @@ export class PackageGraphCompiler {
     }
 
     if (resolved.dtsPath == null) {
-      diagnostics.push(forgePkgNoTypes(dep.name, subpath));
+      if (shouldWarnNoTypes(dep.name)) {
+        diagnostics.push(forgePkgNoTypes(dep.name, subpath));
+      }
       return {
         subpath,
         conditions: resolved.conditions,
@@ -382,7 +388,9 @@ export class PackageGraphCompiler {
         subpath,
       );
     } catch {
-      diagnostics.push(forgePkgNoTypes(dep.name, subpath));
+      if (shouldWarnNoTypes(dep.name)) {
+        diagnostics.push(forgePkgNoTypes(dep.name, subpath));
+      }
       return {
         subpath,
         conditions: resolved.conditions,
@@ -401,7 +409,9 @@ export class PackageGraphCompiler {
     }
 
     if (exports.length === 0) {
-      diagnostics.push(forgePkgNoTypes(dep.name, subpath));
+      if (shouldWarnNoTypes(dep.name)) {
+        diagnostics.push(forgePkgNoTypes(dep.name, subpath));
+      }
     }
 
     return {

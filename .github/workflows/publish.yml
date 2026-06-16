@@ -19,10 +19,27 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: forge_publish
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     permissions:
       contents: write
       pull-requests: write
       id-token: write
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_publish
+      FORGE_MOCK_AI: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,7 +74,13 @@ jobs:
           AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
           ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
           OPENAI_API_KEY: forge-ci-redacted-openai-key
-        run: npm run forge -- security prove --json
+        run: npm run forge -- security prove --db postgres --json
+
+      - name: RLS mutation proof
+        run: npm run forge -- rls mutate-test --json
+
+      - name: Release evidence and SBOM
+        run: npm run release:evidence
 
       - name: Test
         run: npm test
@@ -102,9 +125,26 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: forge_publish
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     permissions:
       contents: read
       id-token: write
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_publish
+      FORGE_MOCK_AI: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -167,7 +207,15 @@ jobs:
           AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
           ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
           OPENAI_API_KEY: forge-ci-redacted-openai-key
-        run: npm run forge -- security prove --json
+        run: npm run forge -- security prove --db postgres --json
+
+      - name: RLS mutation proof
+        if: steps.npm-version.outputs.exists != 'true'
+        run: npm run forge -- rls mutate-test --json
+
+      - name: Release evidence and SBOM
+        if: steps.npm-version.outputs.exists != 'true'
+        run: npm run release:evidence
 
       - name: Test
         if: steps.npm-version.outputs.exists != 'true'

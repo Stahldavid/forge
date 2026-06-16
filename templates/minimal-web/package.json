@@ -21,6 +21,7 @@
     "forge": "__FORGE_PACKAGE_SPEC__"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "typescript": "^5.7.3"
   },
   "forge": {

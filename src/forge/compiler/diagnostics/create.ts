@@ -71,7 +71,7 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
   if (code.startsWith("FORGE_RLS_")) {
     return {
       fixHint: "Inspect generated RLS SQL and validate tenant isolation before applying migrations.",
-      suggestedCommands: ["forge rls check --json", "forge rls print --json"],
+      suggestedCommands: ["forge rls check --json", "forge rls test --db postgres --json"],
       docs: ["src/forge/_generated/agentContract.json"],
     };
   }

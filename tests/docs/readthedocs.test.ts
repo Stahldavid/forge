@@ -124,6 +124,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/frontend-integration-guide.md")).toContain("ForgeProvider");
     expect(read("docs/frontend-integration-guide.md")).toContain("Capability map");
     expect(read("docs/security-and-data.md")).toContain("forge rls check");
+    expect(read("docs/security-and-data.md")).toContain("forge rls mutate-test --json");
     expect(read("docs/authoring.md")).toContain("forge make resource");
     expect(read("docs/testing-and-repair.md")).toContain("forge verify --strict");
     expect(read("docs/self-host.md")).toContain("forge self-host check");
@@ -139,6 +140,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/package-intelligence.md")).toContain("forge deps runtime-compat");
     expect(read("docs/package-intelligence.md")).toContain("The agent should not call an SDK from memory");
     expect(read("docs/payments.md")).toContain("checkout.requested");
+    expect(read("docs/payments.md")).toContain("verifyWebhookSignature");
     expect(read("docs/codemods.md")).toContain("extract-action");
     expect(read("docs/codemods.md")).toContain("rename command");
     expect(read("docs/troubleshooting.md")).toContain("FORGE_GUARD_VIOLATION");
@@ -178,6 +180,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/security-assurance.md")).toContain("SECURITY_INVARIANTS.md");
     expect(read("docs/security-assurance.md")).toContain("security-assurance.yml");
     expect(read("docs/security-assurance.md")).toContain("forge security prove --db postgres --json");
+    expect(read("docs/security-assurance.md")).toContain("forge rls mutate-test --json");
+    expect(read("docs/security-assurance.md")).toContain("sbom.cyclonedx.json");
     expect(read("docs/security-assurance.md")).toContain("structural-only");
     expect(read("docs/security-assurance.md")).toContain("postgres-proved");
     expect(read("docs/security-assurance.md")).toContain("tests/security");
@@ -187,8 +191,11 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/security-standards.md")).toContain("forge security prove --json");
     expect(read("docs/security-standards.md")).toContain("tests/security/auth-negative.test.ts");
     expect(read("docs/security-standards.md")).toContain("tests/security/tenant-isolation/runtime-api.test.ts");
+    expect(read("docs/security-standards.md")).toContain("tests/security/tenant-isolation/http-runtime.test.ts");
+    expect(read("docs/security-standards.md")).toContain("tests/security/webhooks/webhook-security.test.ts");
     expect(read("docs/security-standards.md")).toContain("NPM_CONFIG_PROVENANCE=true");
     expect(read("docs/cli-reference.md")).toContain("forge auth prove --json");
+    expect(read("docs/cli-reference.md")).toContain("forge rls mutate-test --json");
     expect(read("docs/cli-reference.md")).toContain("forge ai redteam --json");
     expect(read("docs/cli-reference.md")).toContain("npm run release:publish-alpha");
     expect(read("docs/production-readiness.md")).toContain("Threat Model");
@@ -198,9 +205,10 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/release.md")).toContain("docs/production-readiness.md");
     expect(read("docs/release.md")).toContain("docs/threat-model.md");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");
-    expect(read("docs/release.md")).toContain("security prove --json");
+    expect(read("docs/release.md")).toContain("security prove --db postgres --json");
+    expect(read("docs/release.md")).toContain("npm run release:evidence");
     expect(read("docs/release.md")).toContain("Security Standards Crosswalk");
     expect(read("docs/release.md")).toContain("Documentation checklist");
-    expect(read("docs/changelog.md")).toContain("0.1.0-alpha.3");
+    expect(read("docs/changelog.md")).toContain("0.1.0-alpha.4");
   });
 });

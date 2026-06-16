@@ -176,3 +176,14 @@ export function step<T extends (...args: any[]) => unknown>(
 export function workflow<T extends Record<string, unknown>>(definition: T): ForgeDefinition<T> {
   return definition;
 }
+
+export {
+  MemoryWebhookReplayStore,
+  verifyWebhookSignature,
+} from "./runtime/webhooks/security.ts";
+export type {
+  WebhookProvider,
+  WebhookReplayStore,
+  WebhookVerificationInput,
+  WebhookVerificationResult,
+} from "./runtime/webhooks/security.ts";

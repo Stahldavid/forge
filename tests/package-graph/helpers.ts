@@ -25,6 +25,7 @@ export const FIXTURE_PACKAGES = {
   untypedLib: fixtureDependency("untyped-lib", "1.0.0"),
   needsTypesPackage: fixtureDependency("needs-types-package", "1.0.0"),
   overloadLib: fixtureDependency("overload-lib", "1.0.0"),
+  typesNode: fixtureDependency("@types/node", "24.0.0"),
 } as const;
 
 export function tempCacheDir(prefix: string): string {

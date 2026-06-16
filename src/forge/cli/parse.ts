@@ -409,7 +409,7 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
   "prove",
 ];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
-const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test"];
+const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test", "mutate-test"];
 const DEPS_SUBCOMMANDS: DepsSubcommand[] = [
   "outdated",
   "inspect",
@@ -1040,7 +1040,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "rls": {
       const subcommand = rest[0] as RlsSubcommand | undefined;
       if (!subcommand || !RLS_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge rls requires subcommand: generate, check, apply, or test");
+        errors.push("forge rls requires subcommand: generate, check, apply, test, or mutate-test");
         return { command: null, workspaceRoot, errors };
       }
       return {

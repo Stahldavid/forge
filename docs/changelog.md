@@ -4,6 +4,18 @@ Release history for the `forgeos` npm package (`alpha` dist-tag).
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## 0.1.0-alpha.4
+
+Security assurance and release evidence hardening:
+
+- Added value-aware telemetry redaction for known secret values in safe-looking fields, messages, details, outputs, and stack traces.
+- Added webhook signature, timestamp, and replay protection helpers with Stripe/GitHub/generic HMAC coverage.
+- Added HTTP tenant-isolation tests that exercise the dev server/API boundary, not only the internal runtime executor.
+- Added `forge rls mutate-test --json` to kill dangerous generated RLS mutations such as missing FORCE RLS, missing policies, unconditional predicates, and `BYPASSRLS`.
+- Extended `forge security prove --json` with RLS mutation proof and invariant-level evidence metadata.
+- Added scripts to split security evidence by invariant and emit basic release supply-chain evidence plus CycloneDX SBOM.
+- Strengthened publish/security workflows so release gates use Postgres-backed security proof, RLS mutation proof, release evidence, and SBOM generation.
+
 ## 0.1.0-alpha.3
 
 Native Forge AI agents on top of Vercel AI SDK v6:

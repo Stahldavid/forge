@@ -14,6 +14,7 @@ describe("security assurance: prove commands", () => {
   test("parseCli accepts prove commands", () => {
     expect(parseCli(["auth", "prove", "--json"]).errors).toEqual([]);
     expect(parseCli(["secrets", "prove", "--json"]).errors).toEqual([]);
+    expect(parseCli(["rls", "mutate-test", "--json"]).errors).toEqual([]);
     const parsed = parseCli(["security", "prove", "--db", "postgres", "--json"]);
     expect(parsed.errors).toEqual([]);
     expect(parsed.command).toMatchObject({
@@ -81,7 +82,13 @@ describe("security assurance: prove commands", () => {
       expect(result.summary.passed).toContain("auth-proof");
       expect(result.summary.passed).toContain("secrets-proof");
       expect(result.summary.passed).toContain("rls-proof");
+      expect(result.summary.passed).toContain("rls-mutation-proof");
       expect(result.summary.passed).toContain("agent-redteam");
+      expect(result.evidence.invariants.map((invariant) => invariant.id)).toContain("INV-009");
+      expect(result.proofs.rlsMutation.data).toMatchObject({
+        kind: "rls-mutation-proof",
+        structural: true,
+      });
       expect(result.proofs.rls.data).toMatchObject({
         skipped: true,
       });

@@ -12,7 +12,10 @@ describe("security assurance workflow", () => {
     expect(workflow).toContain("node ./bin/forge.mjs auth check --json");
     expect(workflow).toContain("node ./bin/forge.mjs secrets check --json");
     expect(workflow).toContain("node ./bin/forge.mjs rls test --db postgres --json");
+    expect(workflow).toContain("node ./bin/forge.mjs rls mutate-test --json");
     expect(workflow).toContain("node ./bin/forge.mjs security prove --db postgres --json");
+    expect(workflow).toContain("npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest");
+    expect(workflow).toContain("npm run release:evidence -- security/evidence/latest");
     expect(workflow).toContain("security/evidence/latest/security-proof.json");
     expect(workflow).toContain("AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key");
     expect(workflow).toContain("ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key");

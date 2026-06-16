@@ -20,6 +20,7 @@ For DB-enforced tenant isolation, run against Postgres:
 
 ```bash
 forge rls test --db postgres --json
+forge rls mutate-test --json
 forge security prove --db postgres --json
 ```
 
@@ -34,13 +35,14 @@ security/evidence/latest/
 | Area | Status | Main evidence |
 | --- | --- | --- |
 | Runtime boundaries | Covered | `forge check --json`, `tests/security/runtime-boundaries.test.ts` |
-| Runtime tenant isolation | Covered | `tests/security/tenant-isolation/runtime-api.test.ts`, `forge security prove --json` |
+| Runtime tenant isolation | Covered | `tests/security/tenant-isolation/runtime-api.test.ts`, `tests/security/tenant-isolation/http-runtime.test.ts`, `forge security prove --json` |
 | Secret redaction | Covered | `forge secrets prove --json`, `tests/security/secret-redaction.test.ts` |
+| Webhook authenticity helpers | Partial | `tests/security/webhooks/webhook-security.test.ts`, `src/forge/runtime/webhooks/security.ts` |
 | Agent tool approval metadata | Partial | `forge ai tools --json`, `forge ai redteam --json`, `tests/security/agent-tools.test.ts` |
-| Postgres tenant isolation | Covered when run with Postgres | `forge rls test --db postgres --json` |
+| Postgres tenant isolation | Covered when run with Postgres | `forge rls test --db postgres --json`, `forge rls mutate-test --json` |
 | JWT/OIDC production auth | Partial | `forge auth prove --json`, `tests/security/auth-negative.test.ts` |
 | Supply-chain provenance | Covered for npm publish path | `.github/workflows/publish.yml`, Trusted Publisher, `NPM_CONFIG_PROVENANCE=true` |
-| SBOM | Planned | not emitted yet |
+| SBOM | Partial | basic CycloneDX SBOM from `npm run release:evidence` |
 
 ## Standards Mapped
 
@@ -60,7 +62,7 @@ The npm publish workflow runs:
 npm run forge -- security prove --json
 ```
 
-before packaging and publishing. The dedicated security assurance workflow runs the stronger Postgres RLS proof and uploads evidence.
+before packaging and publishing. The publish workflow now runs the stronger Postgres-backed security proof, RLS mutation proof, release evidence, and SBOM generation before packaging and publishing.
 
 ## What This Does Not Mean
 

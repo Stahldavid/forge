@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=d545b7180f5269439c3f601f1a9e8a559c0212c3962a8761f71bba1f3a13378e
+// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=2099f476eb798519f9f4e5b54f45394c9dc02c7ca212f9a7b89b9622e60e6350
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
-  "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "b13c58139ef2df14221d379de2c095be64b0d160b2bfa944aab0032d1302dd93",
+  "generatorVersion": "0.1.0-alpha.4",
+  "inputHash": "d208b33f2b8de9b55de6fb37a3c497541ca502d1a29099cbf2ea0b3950fbbcd0",
   "moduleGraph": {
     "nodes": [
       {
@@ -7156,71 +7156,71 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 414,
-              "start": 380
+              "end": 443,
+              "start": 409
             },
             "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
           },
           {
             "span": {
-              "end": 480,
-              "start": 446
+              "end": 509,
+              "start": 475
             },
             "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
           },
           {
             "span": {
-              "end": 557,
-              "start": 523
+              "end": 586,
+              "start": 552
             },
             "toModuleId": "4792854bc77ff90623f63ddf2ec86eb6093131b82f500d1dec6ae8a9d1a4ac9f"
           },
           {
             "span": {
-              "end": 624,
-              "start": 591
+              "end": 653,
+              "start": 620
             },
             "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
           },
           {
             "span": {
-              "end": 703,
-              "start": 666
+              "end": 732,
+              "start": 695
             },
             "toModuleId": "83ec9c20a9730cd3fe0382497952e7839b049ca1660a658ab87a5b4a05a6a467"
           },
           {
             "span": {
-              "end": 763,
-              "start": 737
+              "end": 792,
+              "start": 766
             },
             "toModuleId": "4775a25c3f2e16f8f2e48e437785f1989d97080af387a4b8f27e6d51ba9e52d1"
           },
           {
             "span": {
-              "end": 852,
-              "start": 826
+              "end": 881,
+              "start": 855
             },
             "toModuleId": "402469cb9347dab4920016fba636e93b4303c3469a31564560bfb9da8df39205"
           },
           {
             "span": {
-              "end": 912,
-              "start": 886
+              "end": 941,
+              "start": 915
             },
             "toModuleId": "38f671f3f8ff0cec4ecfbb35b378ad2fb8d799e7a8684deeea803a4bc0acd2e4"
           },
           {
             "span": {
-              "end": 997,
-              "start": 963
+              "end": 1026,
+              "start": 992
             },
             "toModuleId": "80b5888e87df576d69ddd44dcc02fd2f6420eba43a78ecabaa2b8b1fbc62422d"
           },
           {
             "span": {
-              "end": 1074,
-              "start": 1037
+              "end": 1103,
+              "start": 1066
             },
             "toModuleId": "53dacca5ae0057ab3a6193ffb52a54d6982c7386eda556052ca959e8f907779f"
           }
@@ -8710,6 +8710,29 @@ export const appGraph = {
               "start": 133
             },
             "toModuleId": "d36091edba429805a855b10d5bc3c1a1d227c5994857aed666faf3ccd7f538dd"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/runtime/webhooks/security.ts",
+        "id": "9713ceb5a92b06dbf218e6666b0d66c366904c0f331f68a89621891ab3ab497a",
+        "localImports": [
+          {
+            "span": {
+              "end": 132,
+              "start": 95
+            },
+            "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          },
+          {
+            "span": {
+              "end": 290,
+              "start": 253
+            },
+            "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
           }
         ]
       },

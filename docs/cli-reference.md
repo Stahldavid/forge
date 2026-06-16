@@ -118,6 +118,7 @@ forge db diff --json
 forge db migrate --db pglite
 forge rls check --json
 forge rls test --db postgres --json
+forge rls mutate-test --json
 forge security prove --json
 forge security prove --db postgres --json
 ```
@@ -190,6 +191,7 @@ forge self-host check --json
 npm run field:test -- --dry-run --json
 npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "npm:forgeos@alpha" --install --json
 npm run release:pack
+npm run release:evidence
 npm run release:publish-alpha
 ```
 

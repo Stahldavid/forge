@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=ef691de19871ebaad390fdbb005340d8e8a758e0bfbe3da69b1604bca2891ca2
+// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=3b5381dae79c71114485eccf91e620adb20a64a3f62f9d381e4e0a4a42cb1dd8
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9",
+  "generatorVersion": "0.1.0-alpha.4",
+  "inputHash": "89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -500,14 +500,15 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "fast",
+      "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
         "packages": [
-          "ai"
+          "ai",
+          "postgres"
         ],
         "policies": [],
         "queries": [],
@@ -517,7 +518,8 @@ export const testGraph = {
       "file": "tests/ci/publish-workflow.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages ai"
+        "probable: packages ai",
+        "probable: packages postgres"
       ]
     },
     {
@@ -2933,6 +2935,24 @@ export const testGraph = {
       ]
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/rls-mutation.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "confirmed",
       "cost": "fast",
       "covers": {
@@ -3052,7 +3072,43 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/security/tenant-isolation/http-runtime.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/security/tenant-isolation/runtime-api.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/webhooks/webhook-security.test.ts",
       "kind": "unknown",
       "reasons": []
     },

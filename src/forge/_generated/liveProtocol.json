@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.3 input=6dc781b214af0d93cf64272aa15238cf3892cf6832c719080821b21888a3bda9 content=2547500ca2a41f806de71a91fb967c7d242fadc9f669a903f44d48ae6447fb66
+// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=2547500ca2a41f806de71a91fb967c7d242fadc9f669a903f44d48ae6447fb66
 {"messages":["hello","snapshot","error","heartbeat","reset"],"protocolVersion":"0.1.0","resume":{"queryParam":"lastRevision","sseLastEventId":true},"schemaVersion":"0.1.0","snapshot":{"fullSnapshotOnly":true,"includesReleaseId":true,"includesRevision":true}}
