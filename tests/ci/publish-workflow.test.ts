@@ -52,11 +52,18 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("node scripts/publish-npm-alpha-package.mjs packages/create-forge-app");
     expect(workflow).toContain("FORGE_ALLOW_FIRST_NPM_PUBLISH");
     expect(workflow).toContain("npm run release:verify-public-alpha");
+    expect(workflow).toContain("--skip-create");
     expect(readFileSync(join(process.cwd(), "scripts", "publish-npm-alpha-package.mjs"), "utf8")).toContain(
       "--allow-first-publish",
     );
     expect(readFileSync(join(process.cwd(), "scripts", "publish-trusted-alpha.mjs"), "utf8")).toContain(
       "--allow-create-first-publish",
+    );
+    expect(readFileSync(join(process.cwd(), "scripts", "verify-public-alpha.mjs"), "utf8")).toContain(
+      "--version-attempts=",
+    );
+    expect(readFileSync(join(process.cwd(), "scripts", "verify-public-alpha.mjs"), "utf8")).toContain(
+      "forge-public-smoke-redacted",
     );
     expect(workflow).toContain("AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key");
     expect(workflow).toContain("Regenerate release artifacts");

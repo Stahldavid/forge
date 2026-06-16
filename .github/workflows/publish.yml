@@ -123,7 +123,12 @@ jobs:
 
       - name: Verify published public alpha
         if: steps.changesets.outputs.published == 'true'
-        run: npm run release:verify-public-alpha
+        run: |
+          if [[ "${{ steps.create-wrapper.outputs.skipped }}" == "true" ]]; then
+            npm run release:verify-public-alpha -- --skip-create
+          else
+            npm run release:verify-public-alpha
+          fi
 
       - name: Summarize outcome
         if: always()
@@ -266,7 +271,12 @@ jobs:
 
       - name: Verify published public alpha
         if: steps.npm-version.outputs.exists != 'true'
-        run: npm run release:verify-public-alpha
+        run: |
+          if [[ "${{ steps.create-wrapper.outputs.skipped }}" == "true" ]]; then
+            npm run release:verify-public-alpha -- --skip-create
+          else
+            npm run release:verify-public-alpha
+          fi
 
       - name: Summarize skipped publish
         if: steps.npm-version.outputs.exists == 'true'

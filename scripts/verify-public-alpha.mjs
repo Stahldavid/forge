@@ -16,12 +16,49 @@ const expectedCreateVersion =
   createPkg.version;
 const skipCreate = args.includes("--skip-create");
 const keep = args.includes("--keep");
+const versionAttempts = Number(
+  args.find((arg) => arg.startsWith("--version-attempts="))?.slice("--version-attempts=".length) ?? "24",
+);
+const versionDelayMs = Number(
+  args.find((arg) => arg.startsWith("--version-delay-ms="))?.slice("--version-delay-ms=".length) ?? "5000",
+);
+const publicProofEnv = {
+  AI_GATEWAY_API_KEY: "forge-public-smoke-redacted-ai-gateway-key",
+  ANTHROPIC_API_KEY: "forge-public-smoke-redacted-anthropic-key",
+  OPENAI_API_KEY: "forge-public-smoke-redacted-openai-key",
+};
+
+function resolveExecutable(command) {
+  if (process.platform !== "win32" || command !== "npm") {
+    return command;
+  }
+  return "npm.cmd";
+}
+
+function quoteCmdArg(value) {
+  if (/^[A-Za-z0-9_./:@=+-]+$/.test(value)) {
+    return value;
+  }
+  return `"${value.replaceAll('"', '\\"')}"`;
+}
+
+function resolveSpawn(command, commandArgs) {
+  if (process.platform === "win32" && command === "npm") {
+    const commandLine = `call ${[resolveExecutable(command), ...commandArgs].map(quoteCmdArg).join(" ")}`;
+    return {
+      executable: process.env.ComSpec ?? "cmd.exe",
+      args: ["/d", "/c", commandLine],
+    };
+  }
+  return { executable: resolveExecutable(command), args: commandArgs };
+}
 
 function run(command, commandArgs, options = {}) {
-  const result = spawnSync(command, commandArgs, {
+  const { executable, args: spawnArgs } = resolveSpawn(command, commandArgs);
+  const result = spawnSync(executable, spawnArgs, {
     cwd: options.cwd ?? root,
     encoding: "utf8",
-    shell: process.platform === "win32",
+    shell: false,
     windowsHide: true,
     stdio: options.capture ? ["ignore", "pipe", "pipe"] : "inherit",
     env: {
@@ -38,25 +75,49 @@ function run(command, commandArgs, options = {}) {
   return result;
 }
 
-function read(command, commandArgs) {
-  return run(command, commandArgs, { capture: true }).stdout.trim();
+function read(command, commandArgs, options = {}) {
+  return run(command, commandArgs, { ...options, capture: true }).stdout.trim();
 }
 
 function parseJson(text) {
   return JSON.parse(text.trim());
 }
 
-function assertVersion(packageSpec, expected) {
-  const actual = parseJson(read("npm", ["view", packageSpec, "version", "--json"]));
-  if (actual !== expected) {
-    throw new Error(`${packageSpec} resolved to ${actual}; expected ${expected}`);
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function assertVersion(packageSpec, expected) {
+  let lastActual = "unresolved";
+  for (let attempt = 1; attempt <= versionAttempts; attempt += 1) {
+    const result = run("npm", ["view", packageSpec, "version", "--json"], {
+      capture: true,
+      check: false,
+    });
+    if (result.status === 0) {
+      lastActual = parseJson(result.stdout.trim());
+      if (lastActual === expected) {
+        console.log(`${packageSpec} => ${lastActual}`);
+        return;
+      }
+    } else {
+      lastActual = (result.stderr || result.stdout || "unresolved").trim();
+    }
+
+    if (attempt < versionAttempts) {
+      console.log(
+        `${packageSpec} resolved to ${lastActual}; expected ${expected}. Retrying registry lookup ${attempt}/${versionAttempts}...`,
+      );
+      await sleep(versionDelayMs);
+    }
   }
-  console.log(`${packageSpec} => ${actual}`);
+
+  throw new Error(`${packageSpec} resolved to ${lastActual}; expected ${expected}`);
 }
 
 const tempRoot = mkdtempSync(join(tmpdir(), "forgeos-public-alpha-"));
 try {
-  assertVersion("forgeos@alpha", expectedForgeVersion);
+  await assertVersion("forgeos@alpha", expectedForgeVersion);
 
   const redteam = parseJson(read("npm", [
     "exec",
@@ -85,13 +146,13 @@ try {
     "prove",
     "--full",
     "--json",
-  ]));
+  ], { env: publicProofEnv }));
   if (proof.exitCode !== 0 && proof.ok !== true) {
     throw new Error(`forgeos@alpha security prove --full failed: ${JSON.stringify(proof, null, 2)}`);
   }
 
   if (!skipCreate) {
-    assertVersion("create-forgeos-app@alpha", expectedCreateVersion);
+    await assertVersion("create-forgeos-app@alpha", expectedCreateVersion);
     run("npm", [
       "create",
       "forgeos-app@alpha",
