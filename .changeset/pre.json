@@ -6,6 +6,7 @@
   },
   "changesets": [
     "bright-audit-gates",
-    "nice-alpha-tags"
+    "nice-alpha-tags",
+    "sharp-alpha-publish"
   ]
 }
