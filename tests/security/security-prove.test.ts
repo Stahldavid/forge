@@ -108,4 +108,26 @@ describe("security assurance: prove commands", () => {
       cleanupWorkspace(workspace);
     }
   }, 60_000);
+
+  test("security prove --full degrades gracefully when framework test fixtures are absent", async () => {
+    const workspace = scaffoldGenerateWorkspace("security-prove-full-external");
+    try {
+      await run(defaultGenerateOptions(workspace));
+      const result = await runSecurityCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        db: "pglite",
+        runTests: true,
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.proofs.securityTests.enabled).toBe(false);
+      expect(result.summary.warnings.join("\n")).toContain(
+        "security invariant test fixtures are not available",
+      );
+      expect(result.summary.warnings.join("\n")).not.toContain("pass --full");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 60_000);
 });

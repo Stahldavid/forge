@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=3b5381dae79c71114485eccf91e620adb20a64a3f62f9d381e4e0a4a42cb1dd8
+// @forge-generated generator=0.1.0-alpha.5 input=622ec288588000a575ed155ad05aeada86dd21a51fa5d04404453dd81ada8886 content=31fd18558d1e715b48be9ab48eb1ab434226451180afab202ade9acf163b222c
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.4",
-  "inputHash": "89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7",
+  "generatorVersion": "0.1.0-alpha.5",
+  "inputHash": "622ec288588000a575ed155ad05aeada86dd21a51fa5d04404453dd81ada8886",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -3013,6 +3013,28 @@ export const testGraph = {
       "file": "tests/security/secret-redaction.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/security/security-evidence-script.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "probable",

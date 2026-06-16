@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const args = process.argv.slice(2);
 const noWatch = args.includes("--no-watch");
+const allowCreateFirstPublish = args.includes("--allow-create-first-publish");
 const refArg = args.find((arg) => arg.startsWith("--ref="));
 const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 
@@ -64,7 +65,11 @@ if (remoteHeadResult.status === 0 && remoteHeadResult.stdout.trim() !== localHea
 }
 
 console.log(`Dispatching trusted npm publish for ${packageSpec} from ${ref}...`);
-const dispatch = run("gh", ["workflow", "run", "publish.yml", "--ref", ref], {
+const workflowArgs = ["workflow", "run", "publish.yml", "--ref", ref];
+if (allowCreateFirstPublish) {
+  workflowArgs.push("-f", "allow-create-first-publish=true");
+}
+const dispatch = run("gh", workflowArgs, {
   stdio: ["ignore", "pipe", "inherit"],
 });
 process.stdout.write(dispatch.stdout || "");

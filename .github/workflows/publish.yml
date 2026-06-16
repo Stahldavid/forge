@@ -8,6 +8,11 @@ on:
       - "v*"
       - "forgeos-v*"
   workflow_dispatch:
+    inputs:
+      allow-create-first-publish:
+        description: "Allow first publish of create-forgeos-app if it does not exist yet"
+        required: false
+        default: "false"
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -74,7 +79,7 @@ jobs:
           AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
           ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
           OPENAI_API_KEY: forge-ci-redacted-openai-key
-        run: npm run forge -- security prove --db postgres --json
+        run: npm run forge -- security prove --db postgres --full --json
 
       - name: RLS mutation proof
         run: npm run forge -- rls mutate-test --json
@@ -110,9 +115,15 @@ jobs:
           NPM_CONFIG_PROVENANCE: "true"
 
       - name: Publish create app wrapper
+        id: create-wrapper
         env:
           NPM_CONFIG_PROVENANCE: "true"
+          FORGE_ALLOW_FIRST_NPM_PUBLISH: ${{ github.event.inputs.allow-create-first-publish == 'true' && '1' || '' }}
         run: node scripts/publish-npm-alpha-package.mjs packages/create-forge-app
+
+      - name: Verify published public alpha
+        if: steps.changesets.outputs.published == 'true'
+        run: npm run release:verify-public-alpha
 
       - name: Summarize outcome
         if: always()
@@ -212,7 +223,7 @@ jobs:
           AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
           ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
           OPENAI_API_KEY: forge-ci-redacted-openai-key
-        run: npm run forge -- security prove --db postgres --json
+        run: npm run forge -- security prove --db postgres --full --json
 
       - name: RLS mutation proof
         if: steps.npm-version.outputs.exists != 'true'
@@ -247,9 +258,15 @@ jobs:
         run: npm publish --access public --tag alpha
 
       - name: Publish create app wrapper
+        id: create-wrapper
         env:
           NPM_CONFIG_PROVENANCE: "true"
+          FORGE_ALLOW_FIRST_NPM_PUBLISH: ${{ github.event.inputs.allow-create-first-publish == 'true' && '1' || '' }}
         run: node scripts/publish-npm-alpha-package.mjs packages/create-forge-app
+
+      - name: Verify published public alpha
+        if: steps.npm-version.outputs.exists != 'true'
+        run: npm run release:verify-public-alpha
 
       - name: Summarize skipped publish
         if: steps.npm-version.outputs.exists == 'true'

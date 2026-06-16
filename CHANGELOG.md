@@ -1,5 +1,15 @@
 # forgeos
 
+## 0.1.0-alpha.5
+
+Release alignment for the public alpha channel:
+
+- Added `forge ai redteam --model-level --json` with deterministic prompt-injection, secret-exfiltration, approval-bypass, cross-tenant, and indirect tool-injection probes.
+- Added `forge security prove --full --json` support for source checkouts, with graceful structural-proof fallback when packaged apps do not include ForgeOS test fixtures.
+- Strengthened npm publish workflows to run `security prove --db postgres --full --json`.
+- Added public registry smoke coverage for `forgeos@alpha` and `create-forgeos-app@alpha`.
+- Bumped the create-app wrapper package line to `create-forgeos-app@0.1.0-alpha.1`.
+
 ## 0.1.0-alpha.4
 
 Security assurance and release evidence hardening:

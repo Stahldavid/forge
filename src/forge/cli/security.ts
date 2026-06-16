@@ -10,6 +10,8 @@ import { runAiCommand } from "./ai.ts";
 import { runCheckCommand } from "./commands.ts";
 import type { GenerateResult } from "../compiler/types/cli.ts";
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 export type SecuritySubcommand = "prove";
 
@@ -206,6 +208,21 @@ function runSecurityTests(options: SecurityCommandOptions): SecurityTestRunResul
     };
   }
 
+  const missingTests = tests.filter((test) => !existsSync(join(options.workspaceRoot, test)));
+  const runnerPath = join(options.workspaceRoot, "bin", "forge-bun.mjs");
+  if (missingTests.length > 0 || !existsSync(runnerPath)) {
+    return {
+      enabled: false,
+      ok: true,
+      command: ["node", ...command],
+      tests,
+      exitCode: null,
+      stdout: "",
+      stderr:
+        "security invariant test fixtures are not available in this workspace; structural proofs still ran. Run this command from the ForgeOS source checkout to execute the full framework test fixtures.",
+    };
+  }
+
   const result = spawnSync(process.execPath, command, {
     cwd: options.workspaceRoot,
     encoding: "utf8",
@@ -304,8 +321,11 @@ export async function runSecurityCommand(
       summary.warnings.push(`${diagnostic.code}: ${diagnostic.message}`);
     }
   }
-  if (!securityTests.enabled) {
+  if (!securityTests.enabled && !options.runTests) {
     summary.warnings.push("security-tests not executed; pass --full or --run-tests to run invariant security tests");
+  }
+  if (!securityTests.enabled && options.runTests) {
+    summary.warnings.push(securityTests.stderr);
   }
   if (options.runTests && options.db !== "postgres") {
     summary.warnings.push("postgres RLS adversarial test skipped because --db postgres was not selected");

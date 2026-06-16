@@ -205,10 +205,11 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/release.md")).toContain("docs/production-readiness.md");
     expect(read("docs/release.md")).toContain("docs/threat-model.md");
     expect(read("docs/release.md")).toContain("create-forgeos-app@alpha");
-    expect(read("docs/release.md")).toContain("security prove --db postgres --json");
+    expect(read("docs/release.md")).toContain("security prove --db postgres --full --json");
+    expect(read("docs/release.md")).toContain("release:verify-public-alpha");
     expect(read("docs/release.md")).toContain("npm run release:evidence");
     expect(read("docs/release.md")).toContain("Security Standards Crosswalk");
     expect(read("docs/release.md")).toContain("Documentation checklist");
-    expect(read("docs/changelog.md")).toContain("0.1.0-alpha.4");
+    expect(read("docs/changelog.md")).toContain("0.1.0-alpha.5");
   });
 });

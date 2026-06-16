@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=7c04c09131fcff86b3da6eae92a195c39c0bb2c0be618f597422f7a38dda024c
+// @forge-generated generator=0.1.0-alpha.5 input=622ec288588000a575ed155ad05aeada86dd21a51fa5d04404453dd81ada8886 content=7c04c09131fcff86b3da6eae92a195c39c0bb2c0be618f597422f7a38dda024c
 export const dbSecurityManifest = {
   "authoritativeAdapters": [
     "postgres"

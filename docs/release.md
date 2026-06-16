@@ -64,6 +64,12 @@ npm login
 node scripts/publish-npm-alpha-package.mjs packages/create-forge-app --allow-first-publish
 ```
 
+Alternatively, configure npm Trusted Publisher for `create-forgeos-app` with the same repository/workflow and dispatch the trusted publish workflow with first-publish enabled:
+
+```bash
+npm run release:publish-alpha -- --allow-create-first-publish
+```
+
 After the package exists and Trusted Publisher is configured for it, `publish.yml` can publish future versions automatically.
 
 ## Security Release Gate
@@ -71,12 +77,13 @@ After the package exists and Trusted Publisher is configured for it, `publish.ym
 The publish workflow runs:
 
 ```bash
-npm run forge -- security prove --db postgres --json
+npm run forge -- security prove --db postgres --full --json
 npm run forge -- rls mutate-test --json
 npm run release:evidence
+npm run release:verify-public-alpha
 ```
 
-before tests, packaging, and npm publishing. This gate aggregates Forge guard checks, auth proof, secrets proof, Postgres RLS proof, structural RLS mutation proof, invariant evidence, release supply-chain evidence, and a basic CycloneDX SBOM. The dedicated security assurance workflow uploads `security/evidence/latest/security-proof.json` plus split invariant artifacts.
+before or after the relevant packaging/publishing phase. This gate aggregates Forge guard checks, auth proof, secrets proof, Postgres RLS proof, structural RLS mutation proof, invariant test status when source fixtures are present, release supply-chain evidence, a basic CycloneDX SBOM, and a public registry smoke for `forgeos@alpha` plus `create-forgeos-app@alpha`. The dedicated security assurance workflow uploads `security/evidence/latest/security-proof.json` plus split invariant artifacts.
 
 See [Security Standards Crosswalk](security-standards.md) for the public mapping from controls to evidence.
 
@@ -93,6 +100,7 @@ Run:
 ```bash
 npm run release:smoke
 npm run release:evidence
+npm run release:verify-public-alpha
 npm run field:test -- \
   --package-managers npm \
   --templates minimal-web \

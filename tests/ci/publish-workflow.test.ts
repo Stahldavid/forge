@@ -19,6 +19,7 @@ describe("npm publish workflow", () => {
     expect(pkg.scripts?.release).toBe("changeset publish --tag alpha");
     expect(pkg.scripts?.["release:smoke"]).toBe("node scripts/smoke-packed-package.mjs");
     expect(pkg.scripts?.["release:evidence"]).toBe("node scripts/write-release-evidence.mjs");
+    expect(pkg.scripts?.["release:verify-public-alpha"]).toBe("node scripts/verify-public-alpha.mjs");
     expect(pkg.scripts?.["security:evidence"]).toBe("node scripts/write-security-evidence.mjs");
 
     const createPkg = JSON.parse(
@@ -45,12 +46,17 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("Security proof");
     expect(workflow).toContain("postgres:16");
     expect(workflow).toContain("DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_publish");
-    expect(workflow).toContain("npm run forge -- security prove --db postgres --json");
+    expect(workflow).toContain("npm run forge -- security prove --db postgres --full --json");
     expect(workflow).toContain("npm run forge -- rls mutate-test --json");
     expect(workflow).toContain("npm run release:evidence");
     expect(workflow).toContain("node scripts/publish-npm-alpha-package.mjs packages/create-forge-app");
+    expect(workflow).toContain("FORGE_ALLOW_FIRST_NPM_PUBLISH");
+    expect(workflow).toContain("npm run release:verify-public-alpha");
     expect(readFileSync(join(process.cwd(), "scripts", "publish-npm-alpha-package.mjs"), "utf8")).toContain(
       "--allow-first-publish",
+    );
+    expect(readFileSync(join(process.cwd(), "scripts", "publish-trusted-alpha.mjs"), "utf8")).toContain(
+      "--allow-create-first-publish",
     );
     expect(workflow).toContain("AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key");
     expect(workflow).toContain("Regenerate release artifacts");

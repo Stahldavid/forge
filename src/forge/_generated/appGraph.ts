@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.4 input=89430851907382c0b60cc8761af3b49eda8db4a6e8993691990c0e710d2bd8a7 content=2099f476eb798519f9f4e5b54f45394c9dc02c7ca212f9a7b89b9622e60e6350
+// @forge-generated generator=0.1.0-alpha.5 input=622ec288588000a575ed155ad05aeada86dd21a51fa5d04404453dd81ada8886 content=b739d00dedf664639dae949a83be396005ad0e80dcf8baa0f9a52819f70f6a06
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
-  "generatorVersion": "0.1.0-alpha.4",
-  "inputHash": "d208b33f2b8de9b55de6fb37a3c497541ca502d1a29099cbf2ea0b3950fbbcd0",
+  "generatorVersion": "0.1.0-alpha.5",
+  "inputHash": "0098cc9dcedeb9b6dc72cac26f2f0a2ef6dcb1ea0b6042a79fe132a30d2f6d6a",
   "moduleGraph": {
     "nodes": [
       {
@@ -14070,7 +14070,18 @@ export const appGraph = {
       },
       {
         "declaredContexts": [],
-        "directPackageImports": [],
+        "directPackageImports": [
+          {
+            "importKind": "dynamic",
+            "packageName": "zod",
+            "span": {
+              "end": 13382,
+              "start": 13377
+            },
+            "specifier": "zod",
+            "subpath": ""
+          }
+        ],
         "effectiveContexts": [],
         "file": "src/forge/cli/ai.ts",
         "id": "f26fd3c882388a6c64955ae46270336d64bfa202a441ad9c0fe7d5b6ad233380",
@@ -14147,57 +14158,57 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 792,
-              "start": 769
+              "end": 810,
+              "start": 787
             },
             "toModuleId": "50f7218b502a4c8aed5c8e1346a9a74249612efa4d415ec43aa22fc6ebcde227"
           },
           {
             "span": {
-              "end": 889,
-              "start": 851
+              "end": 907,
+              "start": 869
             },
             "toModuleId": "8678528a60437818c73f5822ae95891388141210a5c48ebee6668ebbba26238e"
           },
           {
             "span": {
-              "end": 967,
-              "start": 934
+              "end": 985,
+              "start": 952
             },
             "toModuleId": "16fd69cc83862d05a0758c75d1ba305ffcc49c898628e6997cdd878f2dff75fb"
           },
           {
             "span": {
-              "end": 1038,
-              "start": 1001
+              "end": 1056,
+              "start": 1019
             },
             "toModuleId": "72664ad7e42be15b76a7a8707e780e0f55cb9634cd60ce8e1b029e28b0f333e5"
           },
           {
             "span": {
-              "end": 1100,
-              "start": 1069
+              "end": 1118,
+              "start": 1087
             },
             "toModuleId": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
           },
           {
             "span": {
-              "end": 1166,
-              "start": 1137
+              "end": 1184,
+              "start": 1155
             },
             "toModuleId": "01d67b71159ba1b140cc9d08bd3e1903026f17925573a983609473fb5f9c9334"
           },
           {
             "span": {
-              "end": 1249,
-              "start": 1211
+              "end": 1267,
+              "start": 1229
             },
             "toModuleId": "a0b99d88a43d44db4e8380595d93272a1c67d163c15de3078e9ef2773755f021"
           },
           {
             "span": {
-              "end": 1312,
-              "start": 1288
+              "end": 1353,
+              "start": 1329
             },
             "toModuleId": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
           }

@@ -120,7 +120,6 @@ forge rls check --json
 forge rls test --db postgres --json
 forge rls mutate-test --json
 forge security prove --json
-forge security prove --db postgres --json
 forge security prove --db postgres --full --json
 ```
 

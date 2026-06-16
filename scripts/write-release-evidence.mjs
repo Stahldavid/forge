@@ -50,9 +50,10 @@ const releaseEvidence = {
     "npm run forge -- generate",
     "npm run forge -- rls test --db postgres --json",
     "npm run forge -- rls mutate-test --json",
-    "npm run forge -- security prove --db postgres --json",
+    "npm run forge -- security prove --db postgres --full --json",
     "npm test",
     "npm run release:smoke",
+    "npm run release:verify-public-alpha",
   ],
 };
 
