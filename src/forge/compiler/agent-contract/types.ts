@@ -341,6 +341,8 @@ export interface AgentToolRegistry {
     emits: string[];
     dependencies: Array<{ table: string; scope: "tenant" | "global" }>;
     readOnly: boolean;
+    risk: "read" | "write";
+    needsApproval: boolean;
     requiresAuth: boolean;
     execution: "forge-runtime-endpoint";
   }>;

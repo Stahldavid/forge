@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=dde1c607540ce0e2bbe022af128639deef1eb84a01e094935fa3ac7e193f6ea6
+// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=dde1c607540ce0e2bbe022af128639deef1eb84a01e094935fa3ac7e193f6ea6
 export const makeRegistry = {
   "commands": [
     "forge make list --json",

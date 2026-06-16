@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=baf0977337ed06971c889421f9b765120940ab1a2441d64cf5b7a59fc8875891
+// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=226823ddc291dbabf24d3af147fec981f3c159b0744f96853a0e4fc338927df7
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "a7e99557160065205fa405146c0ee13dab9d8e0127711ee7a7b15887dd22e3fd",
+  "inputHash": "3afd6d33d14422475d1dc963da958473b4f365f19f3104b296a92b5afefebf2e",
   "moduleGraph": {
     "nodes": [
       {

@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=ee392737c9b303f31760703df861e9531e257c16ea13ca016405233cbdef540b
+// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=ee392737c9b303f31760703df861e9531e257c16ea13ca016405233cbdef540b
 {"routes":[{"name":"home","path":"/","uses":{"commands":[],"components":[],"liveQueries":[],"queries":[]}}],"schemaVersion":"0.1.0"}

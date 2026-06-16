@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.3 input=991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae content=2c58c51ddc772a37db527377e31afdcc2fb7632f4888fa504b365b2cf1e5228f
+// @forge-generated generator=0.1.0-alpha.3 input=d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305 content=dc9a740d65daecf0bd421f4606322f15696283bf0af0c6a904947fe4f731474b
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.3",
-  "inputHash": "991570b39d634099828586e546d58e2eeae22189c5392405901477094c1855ae",
+  "inputHash": "d49018f43da5bba5ad177ba70e680f500a3aaba2062aa8f597ee4332662c0305",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -88,6 +88,30 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai",
+          "zod"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/ai/agent-safety.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages ai",
+        "confirmed: packages zod"
       ]
     },
     {
@@ -1095,14 +1119,16 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "ai"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -1110,7 +1136,9 @@ export const testGraph = {
       },
       "file": "tests/docs/readthedocs.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages ai"
+      ]
     },
     {
       "confidence": "probable",
@@ -2937,14 +2965,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "ai"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2952,7 +2982,9 @@ export const testGraph = {
       },
       "file": "tests/telemetry/telemetry-scrubber.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages ai"
+      ]
     },
     {
       "confidence": "weak",

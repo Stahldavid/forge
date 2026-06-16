@@ -88,15 +88,42 @@ describe("H19 agent contract", () => {
           sourceKind: "command" | "query" | "liveQuery";
           sourceName: string;
           http: { path: string };
+          readOnly: boolean;
+          risk: "read" | "write";
+          needsApproval: boolean;
           requiresAuth: boolean;
         }>;
       }>(workspace, `${GENERATED}/agentTools.json`);
-      expect(tools.autoTools.some((tool) => tool.sourceKind === "command" && tool.http.path.startsWith("/commands/"))).toBe(true);
-      expect(tools.autoTools.some((tool) => tool.sourceKind === "query" && tool.http.path.startsWith("/queries/"))).toBe(true);
+      const commandTool = tools.autoTools.find(
+        (tool) => tool.sourceKind === "command" && tool.http.path.startsWith("/commands/"),
+      );
+      const queryTool = tools.autoTools.find(
+        (tool) => tool.sourceKind === "query" && tool.http.path.startsWith("/queries/"),
+      );
+      const liveQueryTool = tools.autoTools.find((tool) => tool.sourceKind === "liveQuery");
+      expect(commandTool).toMatchObject({
+        readOnly: false,
+        risk: "write",
+        needsApproval: true,
+      });
+      expect(queryTool).toMatchObject({
+        readOnly: true,
+        risk: "read",
+        needsApproval: false,
+      });
+      expect(liveQueryTool).toMatchObject({
+        readOnly: true,
+        risk: "read",
+        needsApproval: false,
+      });
+
+      const toolsMd = readBody(workspace, `${GENERATED}/agentTools.md`);
+      expect(toolsMd).toContain("Risk: write");
+      expect(toolsMd).toContain("Needs approval: true");
     } finally {
       cleanupWorkspace(workspace);
     }
-  }, 30_000);
+  }, 60_000);
 
   test("AGENTS.md preserves user notes section", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-user-notes");

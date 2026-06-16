@@ -78,4 +78,35 @@ describe("ai forbidden context", () => {
       cleanupWorkspace(workspace);
     }
   });
+
+  test("forge check flags ctx.agent.run in command source", async () => {
+    const workspace = scaffoldGenerateWorkspace("agent-forbidden");
+    writeFileSync(
+      join(workspace, "src", "forge", "commands.ts"),
+      `
+        import { command } from "forge/server";
+        export const badAgent = command({
+          handler: async (ctx) => {
+            await ctx.agent.run({
+              provider: "gateway",
+              model: "openai/gpt-5.4",
+              instructions: "Do not run from a command.",
+              prompt: "bad",
+            });
+          },
+        });
+      `,
+      "utf8",
+    );
+
+    try {
+      await run(defaultGenerateOptions(workspace));
+      const result = await runCheckCommand(workspace);
+      expect(
+        result.errors.some((d) => d.code === FORGE_AI_FORBIDDEN_CONTEXT),
+      ).toBe(true);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
 });
