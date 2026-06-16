@@ -15,6 +15,7 @@ describe("field-test script", () => {
         "minimal-web,b2b-support-web",
         "--forge-spec",
         "npm:forgeos@alpha",
+        "--runtime-probes",
       ],
       { encoding: "utf8" },
     );
@@ -24,9 +25,11 @@ describe("field-test script", () => {
       cases: Array<{ packageManager: string; template: string }>;
       forgeSpec: string;
       ok: boolean;
+      runtimeProbes: boolean;
     };
     expect(payload.ok).toBe(true);
     expect(payload.forgeSpec).toBe("npm:forgeos@alpha");
+    expect(payload.runtimeProbes).toBe(true);
     expect(payload.cases).toHaveLength(4);
     expect(payload.cases).toContainEqual({ packageManager: "npm", template: "minimal-web" });
     expect(payload.cases).toContainEqual({ packageManager: "pnpm", template: "b2b-support-web" });

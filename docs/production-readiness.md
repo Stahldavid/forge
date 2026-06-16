@@ -37,7 +37,7 @@ Use this matrix to decide what is ready to evaluate, what needs review, and what
 | Release/source-map bridge | Experimental | Release metadata and symbolication bridge evaluation | Real external deployment reports |
 | Windows native | Experimental | Diagnostics, setup checks, Node fallback path, smoke testing | Broader native Windows field reports |
 | Node runtime path | Alpha | CLI/runtime smoke outside Bun, npm package validation | More Node-only app development mileage |
-| npm package and create app | Strong alpha | Public alpha installs, `npm create forge-app@alpha`, template smoke | More package manager and platform field reports |
+| npm package and create app | Strong alpha | Public alpha installs, `npm create forge-app@alpha`, template smoke, runtime field probes | More package manager and platform field reports |
 
 ## Recommended usage today
 
@@ -120,6 +120,31 @@ The biggest readiness improvements are:
 5. Broader UI/browser test coverage in CI.
 6. More package recipes and package compatibility fixtures.
 7. More semantic codemod coverage for real app refactors.
+
+## Field-test evidence expected before promotion
+
+Before moving a release beyond alpha, collect at least one passing field-test report for:
+
+- Linux, macOS, and Windows;
+- Node 22 and Node 24;
+- npm, pnpm, yarn, and Bun where the package manager is available;
+- `minimal-web` with runtime probes;
+- `b2b-support-web` with runtime probes before announcing frontend/runtime changes.
+
+Use:
+
+```bash
+npm run field:test -- \
+  --package-managers npm,pnpm,yarn,bun \
+  --templates minimal-web,b2b-support-web \
+  --forge-spec "npm:forgeos@alpha" \
+  --install \
+  --runtime-probes \
+  --write-report field-reports/full-alpha.json \
+  --json
+```
+
+A report should show successful scaffold, install, generate, `forge dev --once`, `forge verify --smoke`, `GET /health`, `GET /entries`, one command invocation, and one query invocation.
 
 ## Related pages
 

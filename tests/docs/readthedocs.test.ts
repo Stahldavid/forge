@@ -127,6 +127,10 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/self-host.md")).toContain("forge self-host check");
     expect(read("docs/templates.md")).toContain("b2b-support-web");
     expect(read("docs/field-testing.md")).toContain("npm run field:test");
+    expect(read("docs/field-testing.md")).toContain("--runtime-probes");
+    expect(read("docs/field-testing.md")).toContain("GET /health");
+    expect(read("docs/field-testing.md")).toContain("POST /commands");
+    expect(read("docs/field-testing.md")).toContain("field-report");
     expect(read("docs/forge-add.md")).toContain("forge add stripe");
     expect(read("docs/forge-add.md")).toContain("forge deps api");
     expect(read("docs/forge-add.md")).toContain("summarizes the useful API surface");
@@ -162,6 +166,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/production-readiness.md")).toContain("Strong alpha");
     expect(read("docs/production-readiness.md")).toContain("Minimum production checklist");
     expect(read("docs/production-readiness.md")).toContain("Agent safety checklist");
+    expect(read("docs/production-readiness.md")).toContain("Field-test evidence expected before promotion");
     expect(read("docs/threat-model.md")).toContain("Threat Model");
     expect(read("docs/threat-model.md")).toContain("Trust boundaries");
     expect(read("docs/threat-model.md")).toContain("AI tool abuse");

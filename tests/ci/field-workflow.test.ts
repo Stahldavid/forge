@@ -12,5 +12,8 @@ describe("field test workflow", () => {
     expect(workflow).toContain("node-version: [22, 24]");
     expect(workflow).toContain("package-manager: [npm, pnpm, yarn, bun]");
     expect(workflow).toContain("scripts/field-test-forgeos.mjs");
+    expect(workflow).toContain("--runtime-probes");
+    expect(workflow).toContain("--write-report");
+    expect(workflow).toContain("actions/upload-artifact@v4");
   });
 });

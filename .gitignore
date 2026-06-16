@@ -27,6 +27,8 @@ node_modules/
 !.forge/test-plans/.gitkeep
 .forge/test-runs/*
 !.forge/test-runs/.gitkeep
+.forge/field-reports/*
+!.forge/field-reports/.gitkeep
 .forge/repairs/*
 !.forge/repairs/.gitkeep
 tests/**/.tmp/

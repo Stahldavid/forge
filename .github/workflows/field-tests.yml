@@ -53,5 +53,15 @@ jobs:
             --templates "${{ inputs.templates || 'minimal-web' }}" \
             --forge-spec "$SPEC" \
             --install \
+            --runtime-probes \
             --json \
+            --write-report "field-reports/${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.package-manager }}.json" \
             --timeout-ms 180000
+
+      - name: Upload field-test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: field-report-${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.package-manager }}
+          path: field-reports/*.json
+          if-no-files-found: ignore

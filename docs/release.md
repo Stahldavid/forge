@@ -30,6 +30,8 @@ npm run field:test -- \
   --templates minimal-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
   --install \
+  --runtime-probes \
+  --write-report field-reports/release-smoke.json \
   --json
 ```
 
@@ -72,11 +74,13 @@ npm run field:test -- \
   --templates minimal-web \
   --forge-spec "npm:forgeos@alpha" \
   --install \
+  --runtime-probes \
+  --write-report field-reports/pre-tag-minimal-web.json \
   --json
 forge verify --strict
 ```
 
-Use the broad field-test workflow before promoting a release beyond alpha.
+Use the broad field-test workflow before promoting a release beyond alpha. It runs Linux, macOS, Windows, Node 22, Node 24, npm, pnpm, yarn, and Bun matrix cells with runtime probes and JSON artifacts.
 
 ## Documentation checklist
 
