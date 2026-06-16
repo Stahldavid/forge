@@ -103,30 +103,33 @@ jobs:
       - name: Smoke packed package
         run: npm run release:smoke
 
-      - name: Create Release PR or Publish
+      - name: Create Release PR
         id: changesets
         uses: changesets/action@v1
         with:
           version: npm run version-packages
-          publish: npm run release
           commit: "chore(release): version packages"
           title: "chore(release): version packages"
-          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish ForgeOS package
+        id: forgeos-package
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
           NPM_CONFIG_PROVENANCE: "true"
-          NPM_CONFIG_TAG: "alpha"
+        run: node scripts/publish-npm-alpha-package.mjs .
 
       - name: Publish create app wrapper
         id: create-wrapper
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.forgeos-package.outputs.published == 'true'
         env:
           NPM_CONFIG_PROVENANCE: "true"
           FORGE_ALLOW_FIRST_NPM_PUBLISH: ${{ github.event.inputs.allow-create-first-publish == 'true' && '1' || '' }}
         run: node scripts/publish-npm-alpha-package.mjs packages/create-forge-app
 
       - name: Verify published public alpha
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.forgeos-package.outputs.published == 'true'
         run: |
           if [[ "${{ steps.create-wrapper.outputs.skipped }}" == "true" ]]; then
             npm run release:verify-public-alpha -- --skip-create
@@ -137,8 +140,8 @@ jobs:
       - name: Summarize outcome
         if: always()
         run: |
-          if [[ "${{ steps.changesets.outputs.published }}" == "true" ]]; then
-            echo "::notice::Published packages: ${{ steps.changesets.outputs.publishedPackages }}"
+          if [[ "${{ steps.forgeos-package.outputs.published }}" == "true" ]]; then
+            echo "::notice::Published forgeos package with npm Trusted Publisher/OIDC."
           elif [[ "${{ steps.changesets.outputs.hasChangesets }}" == "true" ]]; then
             echo "::notice::Pending changesets: release PR opened or updated. Merge it to publish."
           else

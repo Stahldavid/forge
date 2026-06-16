@@ -40,7 +40,11 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("node-version: \"24\"");
     expect(workflow).not.toContain("registry-url: \"https://registry.npmjs.org\"");
     expect(workflow).toContain("uses: changesets/action@v1");
-    expect(workflow).toContain("publish: npm run release");
+    expect(workflow).toContain("Create Release PR");
+    expect(workflow).not.toContain("publish: npm run release");
+    expect(workflow).toContain("Publish ForgeOS package");
+    expect(workflow).toContain("id: forgeos-package");
+    expect(workflow).toContain("node scripts/publish-npm-alpha-package.mjs .");
     expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
     expect(workflow).toContain("Generate release artifacts");
     expect(workflow).toContain("Security proof");
@@ -71,7 +75,6 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("git restore .");
     expect(workflow).toContain("git clean -fd");
     expect(workflow).toContain("NPM_CONFIG_PROVENANCE: \"true\"");
-    expect(workflow).toContain("NPM_CONFIG_TAG: \"alpha\"");
     expect(workflow).toContain("npm publish --access public --tag alpha");
     expect(workflow).toContain("npm run release:smoke");
     expect(workflow).not.toContain("NPM_TOKEN");
