@@ -7,7 +7,7 @@ ForgeOS examples show how a generated app is structured and which capabilities e
 Create it:
 
 ```bash
-npm create forge-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha notes-app -- --template minimal-web
 cd notes-app
 npm run dev
 ```
@@ -72,7 +72,7 @@ Use this template to learn the full local loop without extra integrations.
 Create it:
 
 ```bash
-npm create forge-app@alpha support-app -- --template b2b-support-web
+npm create forgeos-app@alpha support-app -- --template b2b-support-web
 cd support-app
 npm run dev
 ```

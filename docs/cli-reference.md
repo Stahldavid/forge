@@ -5,7 +5,7 @@ This page lists common ForgeOS command groups. Start with [CLI](cli.md) for the 
 ## App creation
 
 ```bash
-npm create forge-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha my-app -- --template minimal-web
 forge new my-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@alpha" --install --no-git
 ```
 
@@ -121,6 +121,7 @@ forge rls test --db postgres --json
 forge rls mutate-test --json
 forge security prove --json
 forge security prove --db postgres --json
+forge security prove --db postgres --full --json
 ```
 
 ## AI

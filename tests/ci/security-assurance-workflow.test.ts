@@ -13,7 +13,7 @@ describe("security assurance workflow", () => {
     expect(workflow).toContain("node ./bin/forge.mjs secrets check --json");
     expect(workflow).toContain("node ./bin/forge.mjs rls test --db postgres --json");
     expect(workflow).toContain("node ./bin/forge.mjs rls mutate-test --json");
-    expect(workflow).toContain("node ./bin/forge.mjs security prove --db postgres --json");
+    expect(workflow).toContain("node ./bin/forge.mjs security prove --db postgres --full --json");
     expect(workflow).toContain("npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest");
     expect(workflow).toContain("npm run release:evidence -- security/evidence/latest");
     expect(workflow).toContain("security/evidence/latest/security-proof.json");

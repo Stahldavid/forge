@@ -95,7 +95,7 @@ describe("ReadTheDocs documentation", () => {
       expect(mkdocs).toContain(page);
       expect(existsSync(`docs/${page}`)).toBe(true);
     }
-    expect(read("docs/getting-started.md")).toContain("npm create forge-app@alpha");
+    expect(read("docs/getting-started.md")).toContain("npm create forgeos-app@alpha");
     expect(read("docs/getting-started.md")).toContain("Open the web URL");
     expect(read("docs/tutorial-first-app.md")).toContain("npm run forge -- dev --once --json");
     expect(read("docs/architecture.md")).toContain("flowchart TD");
@@ -104,7 +104,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/examples.md")).toContain("Initial source tree");
     expect(read("docs/examples.md")).toContain("Public proof app");
     expect(read("docs/examples.md")).toContain("npm run proof:capabilities");
-    expect(read("docs/index.md")).toContain("npm create forge-app@alpha");
+    expect(read("docs/index.md")).toContain("npm create forgeos-app@alpha");
     expect(read("docs/index.md")).toContain("Agent Workflow");
     expect(read("docs/index.md")).toContain("Inspect SDK APIs before coding");
     expect(read("docs/capabilities.md")).toContain("H39-H43");
@@ -179,7 +179,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/threat-model.md")).toContain("forge ai redteam --json");
     expect(read("docs/security-assurance.md")).toContain("SECURITY_INVARIANTS.md");
     expect(read("docs/security-assurance.md")).toContain("security-assurance.yml");
-    expect(read("docs/security-assurance.md")).toContain("forge security prove --db postgres --json");
+    expect(read("docs/security-assurance.md")).toContain("forge security prove --db postgres --full --json");
     expect(read("docs/security-assurance.md")).toContain("forge rls mutate-test --json");
     expect(read("docs/security-assurance.md")).toContain("sbom.cyclonedx.json");
     expect(read("docs/security-assurance.md")).toContain("structural-only");
@@ -204,7 +204,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/ai-agents.md")).toContain("Threat Model");
     expect(read("docs/release.md")).toContain("docs/production-readiness.md");
     expect(read("docs/release.md")).toContain("docs/threat-model.md");
-    expect(read("docs/release.md")).toContain("create-forge-app@alpha");
+    expect(read("docs/release.md")).toContain("create-forgeos-app@alpha");
     expect(read("docs/release.md")).toContain("security prove --db postgres --json");
     expect(read("docs/release.md")).toContain("npm run release:evidence");
     expect(read("docs/release.md")).toContain("Security Standards Crosswalk");

@@ -21,7 +21,7 @@ For DB-enforced tenant isolation, run against Postgres:
 ```bash
 forge rls test --db postgres --json
 forge rls mutate-test --json
-forge security prove --db postgres --json
+forge security prove --db postgres --full --json
 ```
 
 The security assurance workflow uploads evidence from:

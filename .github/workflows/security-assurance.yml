@@ -65,7 +65,7 @@ jobs:
         run: node ./bin/forge.mjs rls mutate-test --json | tee security/evidence/latest/rls-mutation.json
 
       - name: Aggregate security proof
-        run: node ./bin/forge.mjs security prove --db postgres --json | tee security/evidence/latest/security-proof.json
+        run: node ./bin/forge.mjs security prove --db postgres --full --json | tee security/evidence/latest/security-proof.json
 
       - name: Split invariant evidence
         run: npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest

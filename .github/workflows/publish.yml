@@ -109,6 +109,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
 
+      - name: Publish create app wrapper
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
+        run: node scripts/publish-npm-alpha-package.mjs packages/create-forge-app
+
       - name: Summarize outcome
         if: always()
         run: |
@@ -240,6 +245,11 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: "true"
         run: npm publish --access public --tag alpha
+
+      - name: Publish create app wrapper
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
+        run: node scripts/publish-npm-alpha-package.mjs packages/create-forge-app
 
       - name: Summarize skipped publish
         if: steps.npm-version.outputs.exists == 'true'

@@ -106,6 +106,7 @@ export type ForgeCommand =
       db: DbAdapterKind;
       databaseUrl?: string;
       json: boolean;
+      runTests: boolean;
       workspaceRoot: string;
     }
   | {
@@ -1013,6 +1014,7 @@ export function parseCli(argv: string[]): ParsedCli {
           db: parseAdapterKind(parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
           json: parseFlag(argv, "--json"),
+          runTests: parseFlag(argv, "--full") || parseFlag(argv, "--run-tests"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2173,6 +2175,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-preserve-user-sections",
     "--no-skills",
     "--no-rules",
+    "--full",
+    "--run-tests",
   ]);
 
   for (let index = 0; index < argv.length; index++) {

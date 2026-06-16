@@ -28,8 +28,10 @@ describe("npm publish workflow", () => {
       bin?: Record<string, string>;
       publishConfig?: Record<string, unknown>;
     };
-    expect(createPkg.name).toBe("create-forge-app");
+    expect(createPkg.name).toBe("create-forgeos-app");
+    expect(createPkg.bin?.["create-forgeos-app"]).toBe("bin/create-forge-app.mjs");
     expect(createPkg.bin?.["create-forge-app"]).toBe("bin/create-forge-app.mjs");
+    expect(createPkg.bin?.["forgeos-app"]).toBe("bin/create-forge-app.mjs");
     expect(createPkg.publishConfig?.access).toBe("public");
     expect(createPkg.publishConfig?.tag).toBe("alpha");
 
@@ -46,6 +48,10 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("npm run forge -- security prove --db postgres --json");
     expect(workflow).toContain("npm run forge -- rls mutate-test --json");
     expect(workflow).toContain("npm run release:evidence");
+    expect(workflow).toContain("node scripts/publish-npm-alpha-package.mjs packages/create-forge-app");
+    expect(readFileSync(join(process.cwd(), "scripts", "publish-npm-alpha-package.mjs"), "utf8")).toContain(
+      "--allow-first-publish",
+    );
     expect(workflow).toContain("AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key");
     expect(workflow).toContain("Regenerate release artifacts");
     expect(workflow).toContain("npm run forge -- generate");

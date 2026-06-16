@@ -20,7 +20,7 @@ npm --version
 ## 1. Create the app
 
 ```bash
-npm create forge-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha notes-app -- --template minimal-web
 cd notes-app
 ```
 

@@ -47,7 +47,7 @@ forge auth prove --json
 forge secrets prove --json
 forge rls test --db postgres --json
 forge rls mutate-test --json
-forge security prove --db postgres --json
+forge security prove --db postgres --full --json
 npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest
 npm run release:evidence -- security/evidence/latest
 forge verify --strict --script-timeout-ms 120000
@@ -60,6 +60,8 @@ The current implementation covers adversarial fixtures for runtime boundaries, r
 
 - `structural-only`: local checks passed, but the RLS proof did not run against Postgres.
 - `postgres-proved`: the proof included the Postgres RLS adversarial probes.
+
+By default, `forge security prove` aggregates structural proofs and invariant metadata. Pass `--full` or `--run-tests` to execute the invariant security tests inside the proof command and include the resulting test status in `proofs.securityTests`.
 
 ## Local Security Gate
 
@@ -75,8 +77,7 @@ node ./bin/forge.mjs secrets prove --json
 node ./bin/forge.mjs ai redteam --json
 node ./bin/forge.mjs rls test --db postgres --json
 node ./bin/forge.mjs rls mutate-test --json
-node ./bin/forge.mjs security prove --db postgres --json
-node ./bin/forge-bun.mjs test tests/security --timeout 120000
+node ./bin/forge.mjs security prove --db postgres --full --json
 ```
 
 Run the broader gate before release:

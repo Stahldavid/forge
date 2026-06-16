@@ -20,7 +20,7 @@ describe("GitHub Packages workflow", () => {
     expect(workflow).toContain("node scripts/publish-github-package.mjs");
 
     expect(script).toContain('"@stahldavid/forgeos"');
-    expect(script).toContain('"@stahldavid/create-forge-app"');
+    expect(script).toContain('"@stahldavid/create-forgeos-app"');
     expect(script).toContain("https://npm.pkg.github.com");
     expect(script).toContain("already exists on GitHub Packages; skipping.");
   });

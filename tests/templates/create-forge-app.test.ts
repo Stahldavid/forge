@@ -30,8 +30,10 @@ describe("create-forge-app", () => {
       publishConfig?: Record<string, unknown>;
     };
 
-    expect(pkg.name).toBe("create-forge-app");
+    expect(pkg.name).toBe("create-forgeos-app");
+    expect(pkg.bin?.["create-forgeos-app"]).toBe("bin/create-forge-app.mjs");
     expect(pkg.bin?.["create-forge-app"]).toBe("bin/create-forge-app.mjs");
+    expect(pkg.bin?.["forgeos-app"]).toBe("bin/create-forge-app.mjs");
     expect(pkg.bin?.["forge-app"]).toBe("bin/create-forge-app.mjs");
     expect(pkg.publishConfig?.access).toBe("public");
     expect(pkg.publishConfig?.tag).toBe("alpha");
@@ -41,7 +43,7 @@ describe("create-forge-app", () => {
     const result = runCreate(["--help"], repoRoot);
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("npm create forge-app@alpha <app-name>");
+    expect(result.stdout).toContain("npm create forgeos-app@alpha <app-name>");
     expect(result.stdout).toContain("--template minimal-web");
   });
 

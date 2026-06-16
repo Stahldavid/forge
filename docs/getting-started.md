@@ -9,12 +9,12 @@ This page gets you from zero to a running Forge backend and web app. For the lon
 Recommended public quickstart:
 
 ```bash
-npm create forge-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha notes-app -- --template minimal-web
 cd notes-app
 npm run dev
 ```
 
-`npm create forge-app@alpha` creates a new app without installing ForgeOS globally. It is the best first command for new users.
+`npm create forgeos-app@alpha` creates a new app without installing ForgeOS globally. It is the best first command for new users. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel.
 
 The generated app contains:
 

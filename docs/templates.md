@@ -7,7 +7,7 @@ ForgeOS ships **source-only templates** for creating new apps. Generated artifac
 Recommended:
 
 ```bash
-npm create forge-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha my-app -- --template minimal-web
 cd my-app
 npm run dev
 ```
@@ -129,5 +129,5 @@ After creation, see:
 
 ## Related pages
 
-- [Release](release.md) — publishing `forgeos` and `create-forge-app`
+- [Release](release.md) — publishing `forgeos` and `create-forgeos-app`
 - [CLI](cli.md) — `forge new` flags

@@ -37,7 +37,7 @@ Use this matrix to decide what is ready to evaluate, what needs review, and what
 | Release/source-map bridge | Experimental | Release metadata and symbolication bridge evaluation | Real external deployment reports |
 | Windows native | Experimental | Diagnostics, setup checks, Node fallback path, smoke testing | Broader native Windows field reports |
 | Node runtime path | Alpha | CLI/runtime smoke outside Bun, npm package validation | More Node-only app development mileage |
-| npm package and create app | Strong alpha | Public alpha installs, `npm create forge-app@alpha`, template smoke, runtime field probes | More package manager and platform field reports |
+| npm package and create app | Strong alpha | Public alpha installs, `npm create forgeos-app@alpha`, template smoke, runtime field probes | More package manager and platform field reports |
 
 ## Recommended usage today
 

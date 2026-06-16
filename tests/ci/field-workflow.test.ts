@@ -6,6 +6,8 @@ describe("field test workflow", () => {
     const workflow = readFileSync(".github/workflows/field-tests.yml", "utf8");
     expect(workflow).toContain("workflow_dispatch");
     expect(workflow).toContain("schedule:");
+    expect(workflow).toContain("public npm create smoke");
+    expect(workflow).toContain("npm create forgeos-app@alpha smoke-app -- --template minimal-web --no-install --no-git");
     expect(workflow).toContain("ubuntu-latest");
     expect(workflow).toContain("windows-latest");
     expect(workflow).toContain("macos-latest");

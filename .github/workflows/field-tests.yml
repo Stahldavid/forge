@@ -15,6 +15,21 @@ on:
     - cron: "0 7 * * 1"
 
 jobs:
+  public-create-smoke:
+    name: public npm create smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Create app through public npm create
+        run: npm create forgeos-app@alpha smoke-app -- --template minimal-web --no-install --no-git
+
+      - name: Verify generated app uses ForgeOS alpha alias
+        working-directory: smoke-app
+        run: node -e "const pkg=require('./package.json'); if (pkg.dependencies.forge !== 'npm:forgeos@alpha') throw new Error('expected forge alias to npm:forgeos@alpha')"
+
   app-matrix:
     name: ${{ matrix.os }} Node ${{ matrix.node-version }} ${{ matrix.package-manager }}
     runs-on: ${{ matrix.os }}

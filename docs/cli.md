@@ -17,7 +17,7 @@ Prefer **[Agent Workflow (`forge do`)](agent-workflow.md)** when you know the go
 ## Create an App
 
 ```bash
-npm create forge-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha notes-app -- --template minimal-web
 cd notes-app
 npm run dev
 ```

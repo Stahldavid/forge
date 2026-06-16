@@ -49,7 +49,7 @@ These files describe the app surface, runtime rules, generated files, policies, 
 Public one-command app creation:
 
 ```bash
-npm create forge-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha notes-app -- --template minimal-web
 cd notes-app
 npm run dev
 ```

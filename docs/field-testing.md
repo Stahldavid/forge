@@ -13,14 +13,14 @@ It is different from unit tests:
 Validate the same path external users take:
 
 ```bash
-npm create forge-app@alpha smoke-app -- --template minimal-web --no-git
+npm create forgeos-app@alpha smoke-app -- --template minimal-web --no-git
 cd smoke-app
 npm run generate
 npm run forge -- check --json
 npm run forge -- verify --standard
 ```
 
-The `create-forge-app@alpha` wrapper delegates to `forge new` with defaults:
+The `create-forgeos-app@alpha` wrapper delegates to `forge new` with defaults:
 
 ```txt
 --template minimal-web

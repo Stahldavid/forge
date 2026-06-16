@@ -3,7 +3,7 @@
 Create a ForgeOS app without installing ForgeOS globally first.
 
 ```bash
-npm create forge-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha my-app -- --template minimal-web
 cd my-app
 npm run dev
 ```
@@ -19,9 +19,9 @@ The wrapper delegates to `forge new` and defaults to:
 Examples:
 
 ```bash
-npm create forge-app@alpha notes-app -- --template minimal-web
-npm create forge-app@alpha support-app -- --template b2b-support-web
-npm create forge-app@alpha notes-app -- --template minimal-web --no-install --no-git
+npm create forgeos-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha support-app -- --template b2b-support-web
+npm create forgeos-app@alpha notes-app -- --template minimal-web --no-install --no-git
 ```
 
 Use the lower-level ForgeOS package directly when you want to add ForgeOS to an

@@ -42,7 +42,7 @@ Windows and generated-app hardening:
 - Hardened generated app scaffolding and web dev spawning on Windows.
 - Updated the B2B support template to route frontend imports through `web/lib/forge.ts` and use safer handler input validation.
 - Added focused tests for Node compatibility, template scaffolding, runtime imports, and streaming responses.
-- Added `create-forge-app@alpha` for `npm create forge-app@alpha`.
+- Added `create-forgeos-app@alpha` for `npm create forgeos-app@alpha`.
 - Added GitHub Packages mirror workflow for scoped package publishing.
 
 ## 0.1.0-alpha.1

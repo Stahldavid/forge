@@ -9,6 +9,7 @@ import type { AiCommandResult } from "./ai.ts";
 import { runAiCommand } from "./ai.ts";
 import { runCheckCommand } from "./commands.ts";
 import type { GenerateResult } from "../compiler/types/cli.ts";
+import { spawnSync } from "node:child_process";
 
 export type SecuritySubcommand = "prove";
 
@@ -27,6 +28,17 @@ export interface SecurityCommandOptions {
   json: boolean;
   db: DbAdapterKind;
   databaseUrl?: string;
+  runTests: boolean;
+}
+
+export interface SecurityTestRunResult {
+  enabled: boolean;
+  ok: boolean;
+  command: string[];
+  tests: string[];
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
 }
 
 export interface SecurityProofResult {
@@ -41,6 +53,7 @@ export interface SecurityProofResult {
     rls: RlsCommandResult;
     rlsMutation: RlsCommandResult;
     agentRedteam: AiCommandResult;
+    securityTests: SecurityTestRunResult;
   };
   evidence: {
     invariants: SecurityInvariantEvidence[];
@@ -155,6 +168,73 @@ function passed(name: string, ok: boolean, summary: SecurityProofResult["summary
   }
 }
 
+function securityTestFiles(options: SecurityCommandOptions): string[] {
+  const tests = new Set<string>();
+  for (const invariant of invariantEvidence()) {
+    for (const test of invariant.tests) {
+      if (!test.startsWith("tests/security/")) {
+        continue;
+      }
+      if (options.db !== "postgres" && test.includes("rls-postgres-adversarial.test.ts")) {
+        continue;
+      }
+      tests.add(test);
+    }
+  }
+  return [...tests].sort();
+}
+
+function runSecurityTests(options: SecurityCommandOptions): SecurityTestRunResult {
+  const tests = securityTestFiles(options);
+  const command = [
+    "./bin/forge-bun.mjs",
+    "test",
+    ...tests,
+    "--timeout",
+    "120000",
+  ];
+
+  if (!options.runTests) {
+    return {
+      enabled: false,
+      ok: true,
+      command: ["node", ...command],
+      tests,
+      exitCode: null,
+      stdout: "",
+      stderr: "",
+    };
+  }
+
+  const result = spawnSync(process.execPath, command, {
+    cwd: options.workspaceRoot,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      ...(options.databaseUrl ? { DATABASE_URL: options.databaseUrl } : {}),
+    },
+    windowsHide: true,
+  });
+
+  return {
+    enabled: true,
+    ok: result.status === 0,
+    command: ["node", ...command],
+    tests,
+    exitCode: result.status,
+    stdout: limitOutput(result.stdout ?? ""),
+    stderr: limitOutput(result.stderr ?? ""),
+  };
+}
+
+function limitOutput(output: string): string {
+  const maxLength = 20_000;
+  if (output.length <= maxLength) {
+    return output;
+  }
+  return `${output.slice(0, 4_000)}\n\n[forge output truncated]\n\n${output.slice(-16_000)}`;
+}
+
 export async function runSecurityCommand(
   options: SecurityCommandOptions,
 ): Promise<SecurityProofResult> {
@@ -189,6 +269,7 @@ export async function runSecurityCommand(
     workspaceRoot: options.workspaceRoot,
     json: true,
   });
+  const securityTests = runSecurityTests(options);
 
   const summary: SecurityProofResult["summary"] = {
     passed: [],
@@ -201,6 +282,9 @@ export async function runSecurityCommand(
   passed("rls-proof", rls.exitCode === 0, summary);
   passed("rls-mutation-proof", rlsMutation.exitCode === 0, summary);
   passed("agent-redteam", agentRedteam.exitCode === 0, summary);
+  if (securityTests.enabled) {
+    passed("security-tests", securityTests.ok, summary);
+  }
 
   if (auth.mode === "dev-headers") {
     summary.warnings.push("auth-proof uses local-only dev-headers mode");
@@ -219,6 +303,12 @@ export async function runSecurityCommand(
     if (diagnostic.severity === "warning") {
       summary.warnings.push(`${diagnostic.code}: ${diagnostic.message}`);
     }
+  }
+  if (!securityTests.enabled) {
+    summary.warnings.push("security-tests not executed; pass --full or --run-tests to run invariant security tests");
+  }
+  if (options.runTests && options.db !== "postgres") {
+    summary.warnings.push("postgres RLS adversarial test skipped because --db postgres was not selected");
   }
 
   const ok = summary.failed.length === 0;
@@ -240,6 +330,7 @@ export async function runSecurityCommand(
       rls,
       rlsMutation,
       agentRedteam,
+      securityTests,
     },
     evidence: {
       invariants: invariantEvidence(),
@@ -261,6 +352,7 @@ export function formatSecurityHuman(result: SecurityProofResult): string {
     `Assurance: ${result.assurance}`,
     `Passed: ${result.summary.passed.join(", ") || "none"}`,
     `Failed: ${result.summary.failed.join(", ") || "none"}`,
+    `Security tests: ${result.proofs.securityTests.enabled ? (result.proofs.securityTests.ok ? "passed" : "failed") : "not run"}`,
   ];
   if (result.summary.warnings.length > 0) {
     lines.push("", "Warnings:", ...result.summary.warnings.map((warning) => `- ${warning}`));

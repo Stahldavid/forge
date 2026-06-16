@@ -329,7 +329,7 @@ forge policy check --strict-policies --json
 forge secrets check --json
 forge secrets prove --json
 forge rls check --json
-forge security prove --db postgres --json
+forge security prove --db postgres --full --json
 forge inspect capabilities --json
 forge inspect agent-tools --json
 forge ai redteam --json

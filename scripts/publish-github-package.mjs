@@ -14,7 +14,7 @@ const packages = [
   },
   {
     sourceDir: join(repoRoot, "packages", "create-forge-app"),
-    githubName: "@stahldavid/create-forge-app",
+    githubName: "@stahldavid/create-forgeos-app",
   },
 ];
 

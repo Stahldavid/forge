@@ -4,15 +4,15 @@ import { dirname, join, parse } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const CREATE_VERSION = "0.1.0-alpha.1";
+const CREATE_VERSION = "0.1.0-alpha.0";
 const DEFAULT_FORGE_SPEC = "npm:forgeos@alpha";
 
 function usage() {
   return `create-forge-app ${CREATE_VERSION}
 
 Usage:
-  npm create forge-app@alpha <app-name> -- --template minimal-web
-  npm create forge-app@alpha <app-name> -- --template b2b-support-web
+  npm create forgeos-app@alpha <app-name> -- --template minimal-web
+  npm create forgeos-app@alpha <app-name> -- --template b2b-support-web
 
 Options passed through to ForgeOS:
   --template <name>          minimal-web | b2b-support-web
@@ -81,6 +81,7 @@ function run(command, args) {
   const result = spawnSync(command, args, {
     stdio: "inherit",
     windowsHide: true,
+    shell: process.platform === "win32" && command.endsWith(".cmd"),
   });
   if (result.error) {
     console.error(`create-forge-app: failed to run ${command}: ${result.error.message}`);

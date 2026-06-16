@@ -15,12 +15,13 @@ describe("security assurance: prove commands", () => {
     expect(parseCli(["auth", "prove", "--json"]).errors).toEqual([]);
     expect(parseCli(["secrets", "prove", "--json"]).errors).toEqual([]);
     expect(parseCli(["rls", "mutate-test", "--json"]).errors).toEqual([]);
-    const parsed = parseCli(["security", "prove", "--db", "postgres", "--json"]);
+    const parsed = parseCli(["security", "prove", "--db", "postgres", "--json", "--full"]);
     expect(parsed.errors).toEqual([]);
     expect(parsed.command).toMatchObject({
       kind: "security",
       subcommand: "prove",
       db: "postgres",
+      runTests: true,
     });
   });
 
@@ -74,6 +75,7 @@ describe("security assurance: prove commands", () => {
         workspaceRoot: workspace,
         json: true,
         db: "pglite",
+        runTests: false,
       });
       expect(result.exitCode).toBe(0);
       expect(result.kind).toBe("security-proof");
@@ -84,6 +86,12 @@ describe("security assurance: prove commands", () => {
       expect(result.summary.passed).toContain("rls-proof");
       expect(result.summary.passed).toContain("rls-mutation-proof");
       expect(result.summary.passed).toContain("agent-redteam");
+      expect(result.summary.warnings).toContain(
+        "security-tests not executed; pass --full or --run-tests to run invariant security tests",
+      );
+      expect(result.proofs.securityTests.enabled).toBe(false);
+      expect(result.proofs.securityTests.tests).toContain("tests/security/auth-negative.test.ts");
+      expect(result.proofs.securityTests.tests).not.toContain("tests/security/rls-postgres-adversarial.test.ts");
       expect(result.evidence.invariants.map((invariant) => invariant.id)).toContain("INV-009");
       expect(result.proofs.rlsMutation.data).toMatchObject({
         kind: "rls-mutation-proof",

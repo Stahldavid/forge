@@ -7,16 +7,16 @@ Related packages:
 | Package | Purpose |
 |---------|---------|
 | `forgeos@alpha` | Framework, compiler, CLI, templates |
-| `create-forge-app@alpha` | `npm create forge-app@alpha` scaffolding wrapper |
+| `create-forgeos-app@alpha` | `npm create forgeos-app@alpha` scaffolding wrapper |
 
-Current release line: **`forgeos@alpha`**. See [Changelog](changelog.md) for version history and `npm view forgeos dist-tags --json` for the registry state.
+Current release line: **`forgeos@alpha`**. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel. See [Changelog](changelog.md) for version history and `npm view forgeos dist-tags --json` for the registry state.
 
 ## Public Quickstart Validation
 
 Before promoting a release, validate the external install path:
 
 ```bash
-npm create forge-app@alpha smoke-app -- --template minimal-web --no-git
+npm create forgeos-app@alpha smoke-app -- --template minimal-web --no-git
 cd smoke-app
 npm run generate
 npm run forge -- check --json
@@ -57,6 +57,15 @@ npm Trusted Publishing should point to:
 
 The GitHub workflow uses OIDC provenance for npm publishing. Local publish is intentionally limited to tarball validation by default because the npm package is configured for Trusted Publisher plus strict 2FA/token settings. `npm run release:publish-alpha` verifies the version is not already published, checks that the current commit is pushed, dispatches `publish.yml`, and watches the run.
 
+The public create wrapper is published as `create-forgeos-app@alpha`. The first publish of that package requires npm CLI authentication by a maintainer:
+
+```bash
+npm login
+node scripts/publish-npm-alpha-package.mjs packages/create-forge-app --allow-first-publish
+```
+
+After the package exists and Trusted Publisher is configured for it, `publish.yml` can publish future versions automatically.
+
 ## Security Release Gate
 
 The publish workflow runs:
@@ -93,7 +102,7 @@ npm run field:test -- \
   --write-report field-reports/pre-tag-minimal-web.json \
   --json
 forge verify --strict
-forge security prove --db postgres --json
+forge security prove --db postgres --full --json
 ```
 
 Use the broad field-test workflow before promoting a release beyond alpha. It runs Linux, macOS, Windows, Node 22, Node 24, npm, pnpm, yarn, and Bun matrix cells with runtime probes and JSON artifacts.
@@ -110,7 +119,7 @@ bun test tests/docs/readthedocs.test.ts
 Check these items:
 
 - `README.md` points to `https://forgeos.readthedocs.io/`.
-- `docs/getting-started.md` shows `npm create forge-app@alpha`.
+- `docs/getting-started.md` shows `npm create forgeos-app@alpha`.
 - `docs/why-forgeos.md` explains the agent-native contract.
 - `docs/production-readiness.md` matches the current alpha maturity and known limits.
 - `docs/threat-model.md` matches current auth, policy, RLS, secrets, package, frontend, and AI-agent behavior.
