@@ -38,6 +38,7 @@ const PUBLIC_PAGES = [
   "troubleshooting.md",
   "field-testing.md",
   "production-readiness.md",
+  "threat-model.md",
   "operations.md",
   "self-host.md",
   "release.md",
@@ -161,8 +162,17 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/production-readiness.md")).toContain("Strong alpha");
     expect(read("docs/production-readiness.md")).toContain("Minimum production checklist");
     expect(read("docs/production-readiness.md")).toContain("Agent safety checklist");
+    expect(read("docs/threat-model.md")).toContain("Threat Model");
+    expect(read("docs/threat-model.md")).toContain("Trust boundaries");
+    expect(read("docs/threat-model.md")).toContain("AI tool abuse");
+    expect(read("docs/threat-model.md")).toContain("Minimum security review before production");
+    expect(read("docs/threat-model.md")).toContain("Known gaps");
+    expect(read("docs/production-readiness.md")).toContain("Threat Model");
     expect(read("docs/security-and-data.md")).toContain("Production Readiness");
+    expect(read("docs/security-and-data.md")).toContain("Threat Model");
+    expect(read("docs/ai-agents.md")).toContain("Threat Model");
     expect(read("docs/release.md")).toContain("docs/production-readiness.md");
+    expect(read("docs/release.md")).toContain("docs/threat-model.md");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");
     expect(read("docs/release.md")).toContain("Documentation checklist");
     expect(read("docs/changelog.md")).toContain("0.1.0-alpha.3");

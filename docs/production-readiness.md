@@ -114,7 +114,7 @@ forge ai trace <traceId> --json
 The biggest readiness improvements are:
 
 1. More external field-test reports across operating systems and package managers.
-2. A public threat model covering auth, RLS, policies, secrets, generated artifacts, package guards, and AI tools.
+2. Continued expansion of the public [Threat Model](threat-model.md), especially around auth, RLS, policies, secrets, generated artifacts, package guards, and AI tools.
 3. Adversarial tests for agent tools, tenant isolation, prompt injection, and secret leakage.
 4. Production-like showcase deployments with incident notes and known limits.
 5. Broader UI/browser test coverage in CI.
@@ -124,6 +124,7 @@ The biggest readiness improvements are:
 ## Related pages
 
 - [Security and Data](security-and-data.md)
+- [Threat Model](threat-model.md)
 - [Operations](operations.md)
 - [Field Testing](field-testing.md)
 - [Self-Host](self-host.md)

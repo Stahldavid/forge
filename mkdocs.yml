@@ -80,6 +80,7 @@ nav:
   - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md
   - Production Readiness: production-readiness.md
+  - Threat Model: threat-model.md
   - Operations: operations.md
   - Self-Host: self-host.md
   - Release: release.md

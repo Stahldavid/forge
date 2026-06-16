@@ -125,6 +125,7 @@ Forge records AI telemetry without retaining prompts or outputs by default.
 ## Related pages
 
 - [AI](ai.md)
+- [Threat Model](threat-model.md)
 - [Runtime by Example](runtime-by-example.md)
 - [Agent Contract](agent-contract.md)
 - [Frontend Integration Guide](frontend-integration-guide.md)

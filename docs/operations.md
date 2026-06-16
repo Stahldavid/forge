@@ -117,6 +117,7 @@ Timeout diagnostics should include the command, step, duration, and failure kind
 
 - [Self-Host](self-host.md)
 - [Production Readiness](production-readiness.md)
+- [Threat Model](threat-model.md)
 - [Release](release.md)
 - [Field Testing](field-testing.md)
 - [Troubleshooting](troubleshooting.md)
