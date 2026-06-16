@@ -67,6 +67,7 @@ For AI coding agents:
 For production hardening:
 
 1. [Security and Data](security-and-data.md)
-2. [Operations](operations.md)
-3. [Self-Host](self-host.md)
-4. [Release](release.md)
+2. [Production Readiness](production-readiness.md)
+3. [Operations](operations.md)
+4. [Self-Host](self-host.md)
+5. [Release](release.md)

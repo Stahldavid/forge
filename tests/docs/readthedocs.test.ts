@@ -37,6 +37,7 @@ const PUBLIC_PAGES = [
   "testing-and-repair.md",
   "troubleshooting.md",
   "field-testing.md",
+  "production-readiness.md",
   "operations.md",
   "self-host.md",
   "release.md",
@@ -156,6 +157,12 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/runtime-model.md")).toContain("ctx.agent.run");
     expect(read("docs/operations.md")).toContain("forge doctor windows --json");
     expect(read("docs/operations.md")).toContain("forge verify --strict --script-timeout-ms");
+    expect(read("docs/production-readiness.md")).toContain("Production Readiness");
+    expect(read("docs/production-readiness.md")).toContain("Strong alpha");
+    expect(read("docs/production-readiness.md")).toContain("Minimum production checklist");
+    expect(read("docs/production-readiness.md")).toContain("Agent safety checklist");
+    expect(read("docs/security-and-data.md")).toContain("Production Readiness");
+    expect(read("docs/release.md")).toContain("docs/production-readiness.md");
     expect(read("docs/release.md")).toContain("create-forge-app@alpha");
     expect(read("docs/release.md")).toContain("Documentation checklist");
     expect(read("docs/changelog.md")).toContain("0.1.0-alpha.3");

@@ -79,6 +79,7 @@ nav:
   - Testing & Repair: testing-and-repair.md
   - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md
+  - Production Readiness: production-readiness.md
   - Operations: operations.md
   - Self-Host: self-host.md
   - Release: release.md

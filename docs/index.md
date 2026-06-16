@@ -140,6 +140,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Impact tests, repair, verify gates | [Testing and Repair](testing-and-repair.md) |
 | Guard violations, verify, repair | [Troubleshooting](troubleshooting.md) |
 | External app validation | [Field Testing](field-testing.md) |
+| Production maturity by area | [Production Readiness](production-readiness.md) |
 
 ### Ship
 

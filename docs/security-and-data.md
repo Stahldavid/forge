@@ -182,6 +182,7 @@ Ensure:
 ## Related pages
 
 - [Runtime Model](runtime-model.md) — what each context may access
+- [Production Readiness](production-readiness.md) — maturity matrix and production checklist
 - [forge add](forge-add.md) — integration secrets and runtime matrix
 - [Frontend](frontend.md) — `ForgeProvider` and dev auth
 - [Payments](payments.md) — webhook verification pattern

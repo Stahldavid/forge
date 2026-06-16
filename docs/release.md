@@ -92,6 +92,7 @@ Check these items:
 - `README.md` points to `https://forgeos.readthedocs.io/`.
 - `docs/getting-started.md` shows `npm create forge-app@alpha`.
 - `docs/why-forgeos.md` explains the agent-native contract.
+- `docs/production-readiness.md` matches the current alpha maturity and known limits.
 - `docs/changelog.md` contains the release version.
 - `.readthedocs.yaml` uses the intended MkDocs config and search ranking.
 - No docs include secret values, `.env` contents, database rows, raw prompts, or telemetry payloads.

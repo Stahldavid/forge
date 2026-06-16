@@ -4,6 +4,8 @@ ForgeOS favors repository-native operations: generated artifacts, explicit check
 
 Use this page when preparing a local app for production-like operation, debugging platform issues, or validating a release.
 
+For a maturity matrix by subsystem, read [Production Readiness](production-readiness.md) before treating an app as production-ready.
+
 ## Health check
 
 ```bash
@@ -114,6 +116,7 @@ Timeout diagnostics should include the command, step, duration, and failure kind
 ## Related pages
 
 - [Self-Host](self-host.md)
+- [Production Readiness](production-readiness.md)
 - [Release](release.md)
 - [Field Testing](field-testing.md)
 - [Troubleshooting](troubleshooting.md)
