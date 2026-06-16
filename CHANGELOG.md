@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0-alpha.7
+
+### Patch Changes
+
+- [`4ace311`](https://github.com/Stahldavid/forge/commit/4ace3113e3298b5c306000870922fcfbae9c1861) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Keep npm prerelease publishing on the public alpha dist-tag.
+
 ## 0.1.0-alpha.6
 
 ### Patch Changes

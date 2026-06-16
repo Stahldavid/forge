@@ -5,6 +5,7 @@
     "forgeos": "0.1.0-alpha.5"
   },
   "changesets": [
-    "bright-audit-gates"
+    "bright-audit-gates",
+    "nice-alpha-tags"
   ]
 }
