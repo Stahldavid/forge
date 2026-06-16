@@ -16,7 +16,7 @@ describe("npm publish workflow", () => {
     expect(pkg.bin?.forge).toBe("bin/forge.mjs");
     expect(pkg.publishConfig?.access).toBe("public");
     expect(pkg.publishConfig?.tag).toBe("alpha");
-    expect(pkg.scripts?.release).toBe("changeset publish --tag alpha");
+    expect(pkg.scripts?.release).toBe("changeset publish");
     expect(pkg.scripts?.["release:smoke"]).toBe("node scripts/smoke-packed-package.mjs");
     expect(pkg.scripts?.["release:evidence"]).toBe("node scripts/write-release-evidence.mjs");
     expect(pkg.scripts?.["release:verify-public-alpha"]).toBe("node scripts/verify-public-alpha.mjs");
@@ -38,7 +38,7 @@ describe("npm publish workflow", () => {
 
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("node-version: \"24\"");
-    expect(workflow).toContain("registry-url: \"https://registry.npmjs.org\"");
+    expect(workflow).not.toContain("registry-url: \"https://registry.npmjs.org\"");
     expect(workflow).toContain("uses: changesets/action@v1");
     expect(workflow).toContain("publish: npm run release");
     expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
