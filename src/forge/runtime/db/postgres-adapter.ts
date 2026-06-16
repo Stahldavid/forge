@@ -42,7 +42,9 @@ async function loadPostgresJs(databaseUrl: string): Promise<PostgresClient | nul
   try {
     const module = await import("postgres");
     const createSql = module.default;
-    const sql = createSql(databaseUrl);
+    const sql = createSql(databaseUrl, {
+      onnotice: () => undefined,
+    });
     return {
       query: async (statement, params = []) => {
         const rows = await sql.unsafe(statement, params as never[]);
