@@ -19,7 +19,7 @@ import type { DbAdapter, DbAdapterKind, DbTransaction } from "../runtime/db/adap
 import { createDbAdapter } from "../runtime/db/factory.ts";
 import { databaseUrlUsesPostgresSuperuser } from "../runtime/db/session-context.ts";
 import type { RlsTableSecurity } from "../compiler/data-graph/rls/types.ts";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 export type RlsSubcommand = "generate" | "check" | "apply" | "test" | "mutate-test";
 
@@ -201,18 +201,39 @@ async function setTenant(tx: DbTransaction, tenantId: string): Promise<void> {
 async function setProbeRole(adapter: DbAdapter, tableNames: string[]): Promise<string | null> {
   const roleName = "forge_rls_probe";
   try {
+    const schema = await adapter.query("SELECT current_schema() AS schema");
+    const currentSchema = String(schema.rows[0]?.schema ?? "public");
     await adapter.query(
       `DO $$ BEGIN CREATE ROLE ${quoteIdent(roleName)} NOLOGIN NOBYPASSRLS; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
     );
     await adapter.query(`GRANT USAGE ON SCHEMA public TO ${quoteIdent(roleName)}`);
     await adapter.query(`GRANT USAGE ON SCHEMA forge TO ${quoteIdent(roleName)}`);
+    if (currentSchema !== "public" && currentSchema !== "forge") {
+      await adapter.query(`GRANT USAGE ON SCHEMA ${quoteIdent(currentSchema)} TO ${quoteIdent(roleName)}`);
+    }
     for (const tableName of tableNames) {
       await adapter.query(
         `GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE ${quoteIdent(tableName)} TO ${quoteIdent(roleName)}`,
       );
     }
     await adapter.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${quoteIdent(roleName)}`);
+    if (currentSchema !== "public" && currentSchema !== "forge") {
+      await adapter.query(
+        `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ${quoteIdent(currentSchema)} TO ${quoteIdent(roleName)}`,
+      );
+    }
     return roleName;
+  } catch {
+    return null;
+  }
+}
+
+async function isolateRlsProbeSchema(adapter: DbAdapter): Promise<string | null> {
+  const schemaName = `forge_rls_probe_${randomUUID().replaceAll("-", "").slice(0, 16)}`;
+  try {
+    await adapter.query(`CREATE SCHEMA ${quoteIdent(schemaName)}`);
+    await adapter.query(`SET search_path TO ${quoteIdent(schemaName)}, forge, public`);
+    return schemaName;
   } catch {
     return null;
   }
@@ -419,7 +440,13 @@ async function runRlsIsolationTests(options: RlsCommandOptions): Promise<RlsComm
     };
   }
 
+  let probeSchema: string | null = null;
+
   try {
+    if (options.db === "postgres") {
+      probeSchema = await isolateRlsProbeSchema(adapter);
+    }
+
     const migrationDiagnostics = await applyMigrations(adapter, plan);
     const migrationErrors = migrationDiagnostics.filter((diagnostic) => diagnostic.severity === "error");
     if (migrationErrors.length > 0) {
@@ -490,6 +517,11 @@ async function runRlsIsolationTests(options: RlsCommandOptions): Promise<RlsComm
       exitCode: 1,
     };
   } finally {
+    if (probeSchema) {
+      await adapter.query("RESET ROLE").catch(() => undefined);
+      await adapter.query("RESET search_path").catch(() => undefined);
+      await adapter.query(`DROP SCHEMA IF EXISTS ${quoteIdent(probeSchema)} CASCADE`).catch(() => undefined);
+    }
     await adapter.close();
   }
 }
