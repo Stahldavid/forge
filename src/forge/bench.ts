@@ -116,7 +116,10 @@ export async function runCompilerBenchCommand(options: BenchCommandOptions): Pro
         warmup,
         totalMs: roundMs(timings.totalMs),
         phases: {
+          fastCheckMs: roundMs(timings.fastCheckMs),
+          sessionMs: roundMs(timings.sessionMs),
           discoverMs: roundMs(timings.discoverMs),
+          graphBuildMs: roundMs(timings.graphBuildMs),
           appGraphMs: roundMs(timings.appGraphMs),
           ...(timings.appGraph
             ? {
@@ -132,8 +135,48 @@ export async function runCompilerBenchCommand(options: BenchCommandOptions): Pro
               }
             : {}),
           packageGraphMs: roundMs(timings.packageGraphMs),
+          classifyMs: roundMs(timings.classifyMs),
+          ...(timings.classifierSignals
+            ? {
+                classifierSignals: {
+                  calls: timings.classifierSignals.calls,
+                  totalMs: roundMs(timings.classifierSignals.totalMs),
+                  entrypoints: timings.classifierSignals.entrypoints,
+                  exports: timings.classifierSignals.exports,
+                  textFragments: timings.classifierSignals.textFragments,
+                  corpusBytes: timings.classifierSignals.corpusBytes,
+                  packageCount: timings.classifierSignals.packageCount,
+                  topPackages: timings.classifierSignals.topPackages.map((pkg) => ({
+                    packageName: pkg.packageName,
+                    calls: pkg.calls,
+                    totalMs: roundMs(pkg.totalMs),
+                    entrypoints: pkg.entrypoints,
+                    exports: pkg.exports,
+                    textFragments: pkg.textFragments,
+                    corpusBytes: pkg.corpusBytes,
+                  })),
+                },
+              }
+            : {}),
           planMs: roundMs(timings.planMs),
+          ...(timings.planDetail
+            ? {
+                planDetail: {
+                  coreArtifactsMs: roundMs(timings.planDetail.coreArtifactsMs),
+                  agentArtifactsMs: roundMs(timings.planDetail.agentArtifactsMs),
+                  supportArtifactsMs: roundMs(timings.planDetail.supportArtifactsMs),
+                  fileRenderMs: roundMs(timings.planDetail.fileRenderMs),
+                  finalizeMs: roundMs(timings.planDetail.finalizeMs),
+                  totalMs: roundMs(timings.planDetail.totalMs),
+                },
+              }
+            : {}),
+          runtimeMatrixMs: roundMs(timings.runtimeMatrixMs),
+          importGuardsMs: roundMs(timings.importGuardsMs),
+          qualityGateMs: roundMs(timings.qualityGateMs),
           emitMs: roundMs(timings.emitMs),
+          postEmitMs: roundMs(timings.postEmitMs),
+          unaccountedMs: roundMs(timings.unaccountedMs),
           totalMs: roundMs(timings.totalMs),
         },
       });
@@ -175,11 +218,26 @@ export function formatCompilerBenchHuman(result: CompilerBenchResult): string {
   for (const item of result.results.filter((entry) => !entry.warmup)) {
     lines.push(
       `  #${item.iteration}: ${item.totalMs}ms ` +
-        `(discover ${item.phases.discoverMs}ms, app ${item.phases.appGraphMs}ms, packages ${item.phases.packageGraphMs}ms, plan ${item.phases.planMs}ms, emit ${item.phases.emitMs}ms)`,
+        `(discover ${item.phases.discoverMs}ms, graphs ${item.phases.graphBuildMs}ms, classify ${item.phases.classifyMs}ms, plan ${item.phases.planMs}ms, emit ${item.phases.emitMs}ms)`,
     );
     if (item.phases.appGraph) {
       lines.push(
         `      app detail: parse ${item.phases.appGraph.parseMs}ms, symbols ${item.phases.appGraph.symbolsMs}ms, module ${item.phases.appGraph.moduleGraphMs}ms, hash ${item.phases.appGraph.inputHashMs}ms`,
+      );
+    }
+    if (item.phases.classifierSignals) {
+      lines.push(
+        `      classifier detail: gatherSignals ${item.phases.classifierSignals.totalMs}ms across ${item.phases.classifierSignals.calls} calls, ${item.phases.classifierSignals.exports} exports`,
+      );
+      for (const pkg of item.phases.classifierSignals.topPackages.slice(0, 3)) {
+        lines.push(
+          `        ${pkg.packageName}: ${pkg.totalMs}ms, ${pkg.calls} calls, ${pkg.exports} exports`,
+        );
+      }
+    }
+    if (item.phases.planDetail) {
+      lines.push(
+        `      plan detail: core ${item.phases.planDetail.coreArtifactsMs}ms, agent ${item.phases.planDetail.agentArtifactsMs}ms, support ${item.phases.planDetail.supportArtifactsMs}ms, render ${item.phases.planDetail.fileRenderMs}ms, finalize ${item.phases.planDetail.finalizeMs}ms`,
       );
     }
   }

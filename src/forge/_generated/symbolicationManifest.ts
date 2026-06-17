@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.8 input=7e9241d38232a56e5930612085bbc6719ac771f9c0cd3f836ab721e9b76abb1d content=92e75a602d8ac0c85aa2c7c4109c9ff112b97126954f517d86fad325934f2a25
+// @forge-generated generator=0.1.0-alpha.8 input=68167eae1fe7969b6713da0d1448f14c78392a93426e11b48c1e1f8d08111c1b content=92e75a602d8ac0c85aa2c7c4109c9ff112b97126954f517d86fad325934f2a25
 export const symbolicationManifest = {
   "diagnostics": [],
   "localSymbolication": true,

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.8 input=7e9241d38232a56e5930612085bbc6719ac771f9c0cd3f836ab721e9b76abb1d content=b43b8f016935ebd1e3e8eb40b01ae80c052ab5907ece3edfca511372c7f0bd60
+// @forge-generated generator=0.1.0-alpha.8 input=68167eae1fe7969b6713da0d1448f14c78392a93426e11b48c1e1f8d08111c1b content=b43b8f016935ebd1e3e8eb40b01ae80c052ab5907ece3edfca511372c7f0bd60
 # Capability Map
 
 Project: forgeos

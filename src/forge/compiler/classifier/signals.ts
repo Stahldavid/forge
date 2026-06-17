@@ -15,6 +15,64 @@ export interface PackageSignals {
   nativeAddonEvidence: string[];
 }
 
+export interface SignalProfile {
+  calls: number;
+  totalMs: number;
+  entrypoints: number;
+  exports: number;
+  textFragments: number;
+  corpusBytes: number;
+  packageCount: number;
+  topPackages: SignalPackageProfile[];
+}
+
+export interface SignalPackageProfile {
+  packageName: string;
+  calls: number;
+  totalMs: number;
+  entrypoints: number;
+  exports: number;
+  textFragments: number;
+  corpusBytes: number;
+}
+
+let activeProfile: SignalProfile | undefined;
+let activePackageProfiles: Map<string, SignalPackageProfile> | undefined;
+
+export function resetSignalProfile(): void {
+  activeProfile = {
+    calls: 0,
+    totalMs: 0,
+    entrypoints: 0,
+    exports: 0,
+    textFragments: 0,
+    corpusBytes: 0,
+    packageCount: 0,
+    topPackages: [],
+  };
+  activePackageProfiles = new Map();
+}
+
+export function getSignalProfile(): SignalProfile | undefined {
+  if (!activeProfile) {
+    return undefined;
+  }
+  const topPackages = [...(activePackageProfiles?.values() ?? [])]
+    .sort((a, b) => b.totalMs - a.totalMs)
+    .slice(0, 10)
+    .map((entry) => ({ ...entry }));
+  return {
+    ...activeProfile,
+    packageCount: activePackageProfiles?.size ?? 0,
+    topPackages,
+  };
+}
+
+export function clearSignalProfile(): void {
+  activeProfile = undefined;
+  activePackageProfiles = undefined;
+}
+
 const NODE_BUILTIN_PATTERNS = [
   /\bnode:/,
   /\brequire\s*\(\s*["'](?:fs|child_process|net|http|https|dns|tls|os|crypto)["']/,
@@ -89,9 +147,12 @@ function collectEnvVars(text: string): string[] {
 }
 
 export function gatherSignals(api: PackageApi): PackageSignals {
+  const started = activeProfile ? performance.now() : 0;
   const texts: string[] = [];
+  let exportCount = 0;
   for (const ep of api.entrypoints) {
     for (const exp of ep.exports) {
+      exportCount += 1;
       texts.push(exp.signature);
       if (exp.overloads) texts.push(...exp.overloads);
       if (exp.declarations) texts.push(...exp.declarations);
@@ -112,7 +173,7 @@ export function gatherSignals(api: PackageApi): PackageSignals {
   const nativeAddonEvidence = collectMatches(corpus, NATIVE_ADDON_PATTERNS);
   const envVars = collectEnvVars(corpus);
 
-  return {
+  const result = {
     usesNodeBuiltins: nodeBuiltins.length > 0,
     nodeBuiltins,
     usesNetwork: networkEvidence.length > 0,
@@ -126,4 +187,33 @@ export function gatherSignals(api: PackageApi): PackageSignals {
     usesNativeAddon: nativeAddonEvidence.length > 0,
     nativeAddonEvidence,
   };
+
+  if (activeProfile) {
+    const durationMs = performance.now() - started;
+    activeProfile.calls += 1;
+    activeProfile.totalMs += durationMs;
+    activeProfile.entrypoints += api.entrypoints.length;
+    activeProfile.exports += exportCount;
+    activeProfile.textFragments += texts.length;
+    activeProfile.corpusBytes += corpus.length;
+
+    const packageProfile = activePackageProfiles?.get(api.name) ?? {
+      packageName: api.name,
+      calls: 0,
+      totalMs: 0,
+      entrypoints: 0,
+      exports: 0,
+      textFragments: 0,
+      corpusBytes: 0,
+    };
+    packageProfile.calls += 1;
+    packageProfile.totalMs += durationMs;
+    packageProfile.entrypoints += api.entrypoints.length;
+    packageProfile.exports += exportCount;
+    packageProfile.textFragments += texts.length;
+    packageProfile.corpusBytes += corpus.length;
+    activePackageProfiles?.set(api.name, packageProfile);
+  }
+
+  return result;
 }

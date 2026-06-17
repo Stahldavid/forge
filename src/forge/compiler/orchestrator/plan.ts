@@ -205,6 +205,7 @@ import {
 } from "./serialize.ts";
 import { buildDefaultAuthRegistry, AUTH_ENV } from "../../runtime/auth/config.ts";
 import type { EnvSchema } from "../types/secret-registry.ts";
+import { recordPlanProfile } from "./plan-profile.ts";
 
 export interface PlanInput {
   appGraph: AppGraph;
@@ -292,6 +293,8 @@ function augmentEnvSchemaWithAuthVars(schema: EnvSchema): EnvSchema {
 }
 
 export function plan(input: PlanInput): EmitPlan {
+  const started = performance.now();
+  let checkpoint = started;
   const matrix = buildRuntimeMatrix(input.classified);
   const dataGraph = buildDataGraph(input.appGraph);
   const sqlPlan = buildSqlPlan(dataGraph);
@@ -332,6 +335,9 @@ export function plan(input: PlanInput): EmitPlan {
   });
   const devManifest = buildDevManifest(runtimeGraph, queryRegistry, input.appGraph);
   const mockMapEntries = buildMockMapEntries(input.classified);
+  const coreArtifactsMs = performance.now() - checkpoint;
+  checkpoint = performance.now();
+
   const agentArtifacts = buildAgentContractArtifacts({
     workspaceRoot: input.ctx.workspaceRoot,
     appGraph: input.appGraph,
@@ -354,6 +360,9 @@ export function plan(input: PlanInput): EmitPlan {
     frontendGraph,
   });
   const agentAdapterManifest = buildAgentAdapterManifest(agentArtifacts.contract);
+  const agentArtifactsMs = performance.now() - checkpoint;
+  checkpoint = performance.now();
+
   const rlsArtifacts = buildRlsArtifacts(sqlPlan, tenantScope);
   const packageUpgradeRegistry = {
     schemaVersion: "0.1.0" as const,
@@ -389,6 +398,8 @@ export function plan(input: PlanInput): EmitPlan {
     apiSurface,
     sources: input.ctx.sources,
   });
+  const supportArtifactsMs = performance.now() - checkpoint;
+  checkpoint = performance.now();
 
   const files: EmitFile[] = [
     makeEmitFile("AGENTS.md", agentArtifacts.agentsMd),
@@ -856,6 +867,8 @@ export function plan(input: PlanInput): EmitPlan {
       serializeReactManifestJson(reactManifest),
     ),
   ];
+  const fileRenderMs = performance.now() - checkpoint;
+  checkpoint = performance.now();
 
   const sortedFiles = stableSortEmitFiles(files);
   const plannedPathSet = new Set(sortedFiles.map((file) => file.path));
@@ -866,8 +879,9 @@ export function plan(input: PlanInput): EmitPlan {
   );
 
   const lock = buildForgeLock(input);
+  const finalizeMs = performance.now() - checkpoint;
 
-  return {
+  const result = {
     files: sortedFiles,
     orphanedFiles,
     lock,
@@ -884,4 +898,13 @@ export function plan(input: PlanInput): EmitPlan {
       ),
     ],
   };
+  recordPlanProfile(result, {
+    coreArtifactsMs,
+    agentArtifactsMs,
+    supportArtifactsMs,
+    fileRenderMs,
+    finalizeMs,
+    totalMs: performance.now() - started,
+  });
+  return result;
 }
