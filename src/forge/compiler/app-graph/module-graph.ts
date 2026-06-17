@@ -15,7 +15,6 @@ import type {
 } from "../types/app-graph.ts";
 import type { RuntimeContext } from "../types/runtime.ts";
 import { FORGE_KIND_TO_CONTEXT } from "./forge-apis.ts";
-import { loadTsconfig } from "./tsconfig-hash.ts";
 import type { RawSymbol } from "./types.ts";
 
 export function moduleIdForFile(file: string): string {
@@ -57,19 +56,27 @@ function stableSortModuleNodes(nodes: ModuleNode[]): ModuleNode[] {
 
 function declaredContextsForFile(
   file: string,
-  symbols: RawSymbol[],
+  contextsByFile: Map<string, RuntimeContext[]>,
 ): RuntimeContext[] {
-  const contexts = new Set<RuntimeContext>();
+  return contextsByFile.get(file) ?? [];
+}
+
+function buildDeclaredContextsByFile(symbols: RawSymbol[]): Map<string, RuntimeContext[]> {
+  const mutable = new Map<string, Set<RuntimeContext>>();
   for (const symbol of symbols) {
-    if (symbol.file !== file) {
-      continue;
-    }
     const context = FORGE_KIND_TO_CONTEXT[symbol.kind];
     if (context) {
-      contexts.add(context);
+      const fileContexts = mutable.get(symbol.file) ?? new Set<RuntimeContext>();
+      fileContexts.add(context);
+      mutable.set(symbol.file, fileContexts);
     }
   }
-  return stableSortStrings([...contexts]) as RuntimeContext[];
+
+  const byFile = new Map<string, RuntimeContext[]>();
+  for (const [file, fileContexts] of mutable) {
+    byFile.set(file, stableSortStrings([...fileContexts]) as RuntimeContext[]);
+  }
+  return byFile;
 }
 
 function spanFromNode(node: ts.Node, sourceFile: ts.SourceFile): {
@@ -81,50 +88,37 @@ function spanFromNode(node: ts.Node, sourceFile: ts.SourceFile): {
   return { start, end };
 }
 
-function toWorkspaceRelativePath(
-  absoluteOrRelativePath: string,
-  workspaceRoot: string,
-): string {
-  const normalized = normalizePath(absoluteOrRelativePath);
-  const root = normalizePath(path.resolve(workspaceRoot).replace(/\\/g, "/"));
-  const rootWithSlash = root.endsWith("/") ? root : `${root}/`;
-
-  if (normalized.startsWith(rootWithSlash)) {
-    return normalized.slice(rootWithSlash.length);
-  }
-
-  if (normalized === root) {
-    return "";
-  }
-
-  return normalized;
-}
-
 function resolveLocalTarget(
   specifier: string,
   fromFile: string,
-  program: ts.Program,
-  workspaceRoot: string,
+  sourcePaths: Set<string>,
 ): string | null {
-  const resolved = ts.resolveModuleName(
-    specifier,
-    fromFile,
-    program.getCompilerOptions(),
-    ts.sys,
-  );
-
-  const fileName = resolved.resolvedModule?.resolvedFileName;
-  if (!fileName) {
+  if (!specifier.startsWith(".")) {
     return null;
   }
 
-  return toWorkspaceRelativePath(fileName, workspaceRoot);
+  const base = normalizePath(path.join(path.dirname(fromFile), specifier));
+  const candidates = [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}/index.ts`,
+    `${base}/index.tsx`,
+  ];
+  if (/\.[cm]?jsx?$/.test(base)) {
+    const withoutJsExtension = base.replace(/\.[cm]?jsx?$/, "");
+    candidates.push(
+      `${withoutJsExtension}.ts`,
+      `${withoutJsExtension}.tsx`,
+    );
+  }
+
+  return candidates.find((candidate) => sourcePaths.has(candidate)) ?? null;
 }
 
 function collectImports(
   sourceFile: ts.SourceFile,
-  program: ts.Program,
-  workspaceRoot: string,
+  sourcePaths: Set<string>,
 ): { packageImports: PackageImport[]; localImports: LocalImport[] } {
   const packageImports: PackageImport[] = [];
   const localImports: LocalImport[] = [];
@@ -132,13 +126,10 @@ function collectImports(
 
   function recordPackageImport(
     specifier: string,
+    parsed: { packageName: string; subpath: string },
     span: { start: number; end: number },
     importKind: ImportKind,
   ): void {
-    const parsed = parsePackageSpecifier(specifier);
-    if (!parsed) {
-      return;
-    }
     packageImports.push({
       specifier,
       packageName: parsed.packageName,
@@ -155,13 +146,12 @@ function collectImports(
         const span = spanFromNode(node.moduleSpecifier, sourceFile);
         const parsed = parsePackageSpecifier(specifier);
         if (parsed) {
-          recordPackageImport(specifier, span, "static");
+          recordPackageImport(specifier, parsed, span, "static");
         } else {
           const target = resolveLocalTarget(
             specifier,
             fromFile,
-            program,
-            workspaceRoot,
+            sourcePaths,
           );
           if (target) {
             localImports.push({
@@ -183,13 +173,12 @@ function collectImports(
       const span = spanFromNode(node.arguments[0], sourceFile);
       const parsed = parsePackageSpecifier(specifier);
       if (parsed) {
-        recordPackageImport(specifier, span, "dynamic");
+        recordPackageImport(specifier, parsed, span, "dynamic");
       } else {
         const target = resolveLocalTarget(
           specifier,
           fromFile,
-          program,
-          workspaceRoot,
+          sourcePaths,
         );
         if (target) {
           localImports.push({
@@ -211,13 +200,12 @@ function collectImports(
       const span = spanFromNode(node.arguments[0], sourceFile);
       const parsed = parsePackageSpecifier(specifier);
       if (parsed) {
-        recordPackageImport(specifier, span, "require");
+        recordPackageImport(specifier, parsed, span, "require");
       } else {
         const target = resolveLocalTarget(
           specifier,
           fromFile,
-          program,
-          workspaceRoot,
+          sourcePaths,
         );
         if (target) {
           localImports.push({
@@ -238,8 +226,9 @@ function collectImports(
 function sourcesUnchangedSincePrior(
   sources: SourceFile[],
   prior?: AppGraph,
+  canReusePrior = true,
 ): boolean {
-  if (!prior) {
+  if (!prior || !canReusePrior) {
     return false;
   }
   const priorHashes = new Map(Object.entries(prior.sourceHashes ?? {}));
@@ -254,39 +243,46 @@ function sourcesUnchangedSincePrior(
   return true;
 }
 
+function priorModuleNodesByFile(prior?: AppGraph): Map<string, ModuleNode> {
+  return new Map((prior?.moduleGraph.nodes ?? []).map((node) => [node.file, node]));
+}
+
 export function buildModuleGraph(
   sources: SourceFile[],
   rawSymbols: RawSymbol[],
-  workspaceRoot: string,
-  tsconfigPath?: string,
   prior?: AppGraph,
+  canReusePrior = true,
 ): ModuleGraph {
-  if (sourcesUnchangedSincePrior(sources, prior)) {
+  if (sourcesUnchangedSincePrior(sources, prior, canReusePrior)) {
     return prior!.moduleGraph;
   }
 
-  const parsedConfig = loadTsconfig(workspaceRoot, tsconfigPath);
-  const fileNames = sources.map((source) =>
-    path.resolve(workspaceRoot, source.path).replace(/\\/g, "/"),
-  );
-
-  const program = ts.createProgram(fileNames, {
-    ...parsedConfig.options,
-    noEmit: true,
-    skipLibCheck: true,
-  });
+  const priorHashes = new Map(Object.entries(prior?.sourceHashes ?? {}));
+  const priorNodes = priorModuleNodesByFile(prior);
+  const contextsByFile = buildDeclaredContextsByFile(rawSymbols);
+  const sourcePaths = new Set(sources.map((source) => normalizePath(source.path)));
 
   const nodes: ModuleNode[] = [];
 
   for (const source of sources) {
     const normalizedFile = normalizePath(source.path);
-    const absolutePath = fileNames.find(
-      (name) => normalizePath(name).endsWith(normalizedFile),
-    );
+    const priorNode = priorNodes.get(normalizedFile);
+    if (
+      canReusePrior &&
+      priorNode &&
+      priorHashes.get(normalizedFile) === source.contentHash
+    ) {
+      nodes.push(priorNode);
+      continue;
+    }
 
-    const sourceFile = absolutePath
-      ? program.getSourceFile(absolutePath)
-      : undefined;
+    const sourceFile = ts.createSourceFile(
+      normalizedFile,
+      source.text,
+      ts.ScriptTarget.Latest,
+      true,
+      normalizedFile.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    );
 
     if (!sourceFile) {
       nodes.push({
@@ -294,7 +290,7 @@ export function buildModuleGraph(
         file: normalizedFile,
         directPackageImports: [],
         localImports: [],
-        declaredContexts: declaredContextsForFile(normalizedFile, rawSymbols),
+        declaredContexts: declaredContextsForFile(normalizedFile, contextsByFile),
         effectiveContexts: [],
       });
       continue;
@@ -302,8 +298,7 @@ export function buildModuleGraph(
 
     const { packageImports, localImports } = collectImports(
       sourceFile,
-      program,
-      workspaceRoot,
+      sourcePaths,
     );
 
     nodes.push({
@@ -311,7 +306,7 @@ export function buildModuleGraph(
       file: normalizedFile,
       directPackageImports: packageImports,
       localImports,
-      declaredContexts: declaredContextsForFile(normalizedFile, rawSymbols),
+      declaredContexts: declaredContextsForFile(normalizedFile, contextsByFile),
       effectiveContexts: [],
     });
   }

@@ -5,6 +5,7 @@ import {
 import type { GenerateOptions, GenerateResult } from "../types/cli.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import { classify } from "../classifier/classify.ts";
+import { getAppGraphProfile } from "../app-graph/profile.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { buildRuntimeMatrix } from "../classifier/runtime-matrix.ts";
 import { emit } from "../emitter/emit.ts";
@@ -226,9 +227,11 @@ async function runUnlocked(options: GenerateOptions): Promise<GenerateResult> {
 
   if (profileEnabled) {
     const totalMs = performance.now() - runStarted;
+    const appGraphProfile = getAppGraphProfile(appGraph);
     recordCompileTimings({
       discoverMs,
       appGraphMs,
+      ...(appGraphProfile ? { appGraph: appGraphProfile } : {}),
       packageGraphMs,
       planMs,
       emitMs,
@@ -239,6 +242,7 @@ async function runUnlocked(options: GenerateOptions): Promise<GenerateResult> {
       process.stderr.write(`${formatCompileTimings({
         discoverMs,
         appGraphMs,
+        ...(appGraphProfile ? { appGraph: appGraphProfile } : {}),
         packageGraphMs,
         planMs,
         emitMs,

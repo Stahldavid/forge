@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.8 input=f772dc4340a6b12abe01e0d960539c3f9ee1708c106f8d98108b06b0dc708960 content=ca7abef5a98b996f65c806ae7752a5fd628f20e818a17ab204b9f50a0a002adc
+// @forge-generated generator=0.1.0-alpha.8 input=7e9241d38232a56e5930612085bbc6719ac771f9c0cd3f836ab721e9b76abb1d content=ca7abef5a98b996f65c806ae7752a5fd628f20e818a17ab204b9f50a0a002adc
 export const agentContract = {
   "actions": [],
   "ai": {

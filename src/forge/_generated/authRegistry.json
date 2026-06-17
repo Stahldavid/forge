@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.8 input=f772dc4340a6b12abe01e0d960539c3f9ee1708c106f8d98108b06b0dc708960 content=0b60f773fa78808792114ca707760eaf310233136c684ee57e1df018a24f8d4c
+// @forge-generated generator=0.1.0-alpha.8 input=7e9241d38232a56e5930612085bbc6719ac771f9c0cd3f836ab721e9b76abb1d content=0b60f773fa78808792114ca707760eaf310233136c684ee57e1df018a24f8d4c
 {"algorithmsEnv":"FORGE_AUTH_ALGORITHMS","audienceEnv":"FORGE_AUTH_AUDIENCE","claims":{"email":"email","name":"name","permissions":"permissions","role":"role","roles":"roles","tenantId":"tenant_id","userId":"sub"},"defaultMode":"dev-headers","issuerEnv":"FORGE_AUTH_ISSUER","jwksUriEnv":"FORGE_AUTH_JWKS_URI","modes":["dev-headers","jwt","oidc","disabled"],"requiresTenant":false,"schemaVersion":"0.1.0"}

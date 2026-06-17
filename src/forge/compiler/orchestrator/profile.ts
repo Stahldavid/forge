@@ -1,6 +1,9 @@
+import type { AppGraphPhaseTimings } from "../app-graph/profile.ts";
+
 export interface CompilePhaseTimings {
   discoverMs: number;
   appGraphMs: number;
+  appGraph?: AppGraphPhaseTimings;
   packageGraphMs: number;
   planMs: number;
   emitMs: number;
@@ -34,6 +37,16 @@ export function formatCompileTimings(timings: CompilePhaseTimings): string {
     "forge compile profile:",
     `  discover: ${timings.discoverMs}ms`,
     `  app-graph: ${timings.appGraphMs}ms`,
+    ...(timings.appGraph
+      ? [
+          `    normalize: ${timings.appGraph.normalizeMs}ms`,
+          `    parse: ${timings.appGraph.parseMs}ms`,
+          `    symbols: ${timings.appGraph.symbolsMs}ms`,
+          `    duplicates: ${timings.appGraph.duplicatesMs}ms`,
+          `    module-graph: ${timings.appGraph.moduleGraphMs}ms`,
+          `    input-hash: ${timings.appGraph.inputHashMs}ms`,
+        ]
+      : []),
     `  package-graph: ${timings.packageGraphMs}ms`,
     `  plan: ${timings.planMs}ms`,
     `  emit: ${timings.emitMs}ms`,

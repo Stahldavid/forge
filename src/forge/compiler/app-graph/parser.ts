@@ -32,29 +32,28 @@ function priorSymbolsToRaw(symbols: ForgeSymbol[]): RawSymbol[] {
   }));
 }
 
-function groupPriorSymbolsByFile(
-  priorSymbols: ForgeSymbol[],
-): Map<string, ForgeSymbol[]> {
-  const byFile = new Map<string, ForgeSymbol[]>();
-  for (const symbol of priorSymbols) {
-    const list = byFile.get(symbol.file) ?? [];
-    list.push(symbol);
-    byFile.set(symbol.file, list);
-  }
-  return byFile;
+interface PriorSymbolsForFile {
+  contentHash?: string;
+  symbols: ForgeSymbol[];
 }
 
-function priorFileContentHash(
+function groupPriorSymbolsByFile(
   priorSymbols: ForgeSymbol[],
-  file: string,
-): string | undefined {
-  const match = priorSymbols.find((symbol) => symbol.file === file);
-  if (!match) {
-    return undefined;
+): Map<string, PriorSymbolsForFile> {
+  const byFile = new Map<string, PriorSymbolsForFile>();
+  for (const symbol of priorSymbols) {
+    const existing = byFile.get(symbol.file);
+    if (existing) {
+      existing.symbols.push(symbol);
+      continue;
+    }
+    const fromMeta = symbol.meta.fileContentHash;
+    byFile.set(symbol.file, {
+      contentHash: typeof fromMeta === "string" ? fromMeta : undefined,
+      symbols: [symbol],
+    });
   }
-  // All symbols from the same file share the same slice hash basis; use meta when present.
-  const fromMeta = match.meta.fileContentHash;
-  return typeof fromMeta === "string" ? fromMeta : undefined;
+  return byFile;
 }
 
 export interface IncrementalParseResult {
@@ -65,6 +64,7 @@ export interface IncrementalParseResult {
 export function incrementalParse(
   sources: SourceFile[],
   priorSymbols: ForgeSymbol[] | undefined,
+  priorSourceHashes: Record<string, string> | undefined,
   priorInvalidation: ParseInvalidationKey | undefined,
   currentInvalidation: ParseInvalidationKey,
 ): IncrementalParseResult {
@@ -76,22 +76,22 @@ export function incrementalParse(
 
   const priorByFile = priorSymbols
     ? groupPriorSymbolsByFile(priorSymbols)
-    : new Map<string, ForgeSymbol[]>();
+    : new Map<string, PriorSymbolsForFile>();
 
   for (const source of sources) {
     const normalizedFile = normalizePath(source.path);
     const priorForFile = priorByFile.get(normalizedFile);
-    const priorHash = priorSymbols
-      ? priorFileContentHash(priorSymbols, normalizedFile)
-      : undefined;
+    const priorHash = priorForFile?.contentHash ?? priorSourceHashes?.[normalizedFile];
 
     const fileUnchanged =
       !globalInvalidated &&
-      priorForFile !== undefined &&
       priorHash === source.contentHash;
 
+    if (fileUnchanged && priorForFile) {
+      allSymbols.push(...priorSymbolsToRaw(priorForFile.symbols));
+      continue;
+    }
     if (fileUnchanged) {
-      allSymbols.push(...priorSymbolsToRaw(priorForFile));
       continue;
     }
 

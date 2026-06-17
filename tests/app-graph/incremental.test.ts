@@ -27,7 +27,7 @@ describe("incrementalParse", () => {
       classifierVersion: "0.2.0",
     };
 
-    const first = incrementalParse([source], undefined, undefined, keyA);
+    const first = incrementalParse([source], undefined, undefined, undefined, keyA);
     const priorSymbols = first.symbols.map((raw, index) => ({
       id: `prior-${index}`,
       kind: raw.kind,
@@ -45,6 +45,7 @@ describe("incrementalParse", () => {
     const second = incrementalParse(
       [source],
       priorSymbols,
+      { [source.path]: source.contentHash },
       keyA,
       keyB,
     );
@@ -56,7 +57,7 @@ describe("incrementalParse", () => {
     const source = fixtureSource("queries.ts");
     const key = invalidationKey("cfg-stable");
 
-    const first = incrementalParse([source], undefined, undefined, key);
+    const first = incrementalParse([source], undefined, undefined, undefined, key);
     const priorSymbols = first.symbols.map((raw, index) => ({
       id: `cached-${index}`,
       kind: raw.kind,
@@ -71,8 +72,34 @@ describe("incrementalParse", () => {
       },
     }));
 
-    const second = incrementalParse([source], priorSymbols, key, key);
+    const second = incrementalParse(
+      [source],
+      priorSymbols,
+      { [source.path]: source.contentHash },
+      key,
+      key,
+    );
     expect(second.diagnostics).toHaveLength(0);
     expect(second.symbols.length).toBe(first.symbols.length);
+  });
+
+  test("reuses unchanged files that have no cached symbols", () => {
+    const key = invalidationKey("cfg-empty-file");
+    const source = {
+      path: "src/helpers/plain.ts",
+      text: "export const value = 1;\n",
+      contentHash: hashStable("export const value = 1;\n"),
+    };
+
+    const second = incrementalParse(
+      [source],
+      [],
+      { [source.path]: source.contentHash },
+      key,
+      key,
+    );
+
+    expect(second.diagnostics).toHaveLength(0);
+    expect(second.symbols).toEqual([]);
   });
 });

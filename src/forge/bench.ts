@@ -118,6 +118,19 @@ export async function runCompilerBenchCommand(options: BenchCommandOptions): Pro
         phases: {
           discoverMs: roundMs(timings.discoverMs),
           appGraphMs: roundMs(timings.appGraphMs),
+          ...(timings.appGraph
+            ? {
+                appGraph: {
+                  normalizeMs: roundMs(timings.appGraph.normalizeMs),
+                  parseMs: roundMs(timings.appGraph.parseMs),
+                  symbolsMs: roundMs(timings.appGraph.symbolsMs),
+                  duplicatesMs: roundMs(timings.appGraph.duplicatesMs),
+                  moduleGraphMs: roundMs(timings.appGraph.moduleGraphMs),
+                  inputHashMs: roundMs(timings.appGraph.inputHashMs),
+                  totalMs: roundMs(timings.appGraph.totalMs),
+                },
+              }
+            : {}),
           packageGraphMs: roundMs(timings.packageGraphMs),
           planMs: roundMs(timings.planMs),
           emitMs: roundMs(timings.emitMs),
@@ -164,6 +177,11 @@ export function formatCompilerBenchHuman(result: CompilerBenchResult): string {
       `  #${item.iteration}: ${item.totalMs}ms ` +
         `(discover ${item.phases.discoverMs}ms, app ${item.phases.appGraphMs}ms, packages ${item.phases.packageGraphMs}ms, plan ${item.phases.planMs}ms, emit ${item.phases.emitMs}ms)`,
     );
+    if (item.phases.appGraph) {
+      lines.push(
+        `      app detail: parse ${item.phases.appGraph.parseMs}ms, symbols ${item.phases.appGraph.symbolsMs}ms, module ${item.phases.appGraph.moduleGraphMs}ms, hash ${item.phases.appGraph.inputHashMs}ms`,
+      );
+    }
   }
   for (const diagnostic of result.diagnostics) {
     lines.push(`${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`);

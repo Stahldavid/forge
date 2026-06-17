@@ -6,10 +6,11 @@ import type { AppGraph, SourceFile } from "../types/app-graph.ts";
 import { detectDuplicateSymbols } from "./dup-symbol.ts";
 import { buildModuleGraph } from "./module-graph.ts";
 import { incrementalParse } from "./parser.ts";
+import { recordAppGraphProfile } from "./profile.ts";
 import { buildForgeSymbols } from "./symbols.ts";
 import { hashTsconfigForWorkspace } from "./tsconfig-hash.ts";
 import type { ParseInvalidationKey } from "./types.ts";
-import { buildAnalyzerVersion } from "./types.ts";
+import { buildAnalyzerVersion, parseInvalidationKeyEquals } from "./types.ts";
 import {
   APP_GRAPH_SCHEMA_VERSION,
   FORGE_CLASSIFIER_VERSION,
@@ -68,7 +69,11 @@ function parseInvalidationFromPrior(prior: AppGraph): ParseInvalidationKey | und
 export async function buildAppGraph(
   options: AppGraphBuildOptions,
 ): Promise<AppGraph> {
+  const started = Date.now();
+  let checkpoint = started;
   const sources = normalizeSources(options.sources);
+  const normalizeMs = Date.now() - checkpoint;
+  checkpoint = Date.now();
   const tsconfigHash =
     options.tsconfigHash ??
     hashTsconfigForWorkspace(
@@ -86,30 +91,43 @@ export async function buildAppGraph(
   const priorInvalidation = options.prior
     ? parseInvalidationFromPrior(options.prior)
     : undefined;
+  const canReusePrior =
+    priorInvalidation !== undefined &&
+    parseInvalidationKeyEquals(priorInvalidation, invalidation);
 
   const { symbols: rawSymbols, diagnostics: parseDiagnostics } =
     incrementalParse(
       sources,
       options.prior?.symbols,
+      options.prior?.sourceHashes,
       priorInvalidation,
       invalidation,
     );
+  const parseMs = Date.now() - checkpoint;
+  checkpoint = Date.now();
 
   const forgeSymbols = buildForgeSymbols(rawSymbols, sources);
+  const symbolsMs = Date.now() - checkpoint;
+  checkpoint = Date.now();
   const dupDiagnostics = detectDuplicateSymbols(forgeSymbols);
+  const duplicatesMs = Date.now() - checkpoint;
+  checkpoint = Date.now();
   const moduleGraph = buildModuleGraph(
     sources,
     rawSymbols,
-    options.workspaceRoot,
-    options.tsconfigPath,
     options.prior,
+    canReusePrior,
   );
+  const moduleGraphMs = Date.now() - checkpoint;
+  checkpoint = Date.now();
+  const inputHash = computeInputHash(sources, invalidation);
+  const inputHashMs = Date.now() - checkpoint;
 
-  return {
+  const graph = {
     schemaVersion: APP_GRAPH_SCHEMA_VERSION,
     generatorVersion: GENERATOR_VERSION,
     analyzerVersion: buildAnalyzerVersion(invalidation),
-    inputHash: computeInputHash(sources, invalidation),
+    inputHash,
     sourceHashes: Object.fromEntries(
       sources.map((source) => [source.path, source.contentHash]),
     ),
@@ -118,4 +136,14 @@ export async function buildAppGraph(
     moduleGraph,
     diagnostics: [...parseDiagnostics, ...dupDiagnostics],
   };
+  recordAppGraphProfile(graph, {
+    normalizeMs,
+    parseMs,
+    symbolsMs,
+    duplicatesMs,
+    moduleGraphMs,
+    inputHashMs,
+    totalMs: Date.now() - started,
+  });
+  return graph;
 }

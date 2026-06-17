@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.8 input=f772dc4340a6b12abe01e0d960539c3f9ee1708c106f8d98108b06b0dc708960 content=ec2cefd9943eae12986ef9302f2890219eddb3a004813a6ac0e77bc56e628156
+// @forge-generated generator=0.1.0-alpha.8 input=7e9241d38232a56e5930612085bbc6719ac771f9c0cd3f836ab721e9b76abb1d content=ed5667251fbe26d22dc5184dcb0c117ebbe5905c8511280384378ef8add95a27
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.1.0-alpha.8",
-  "inputHash": "a1c5d533172a9a5fc6c283238eb9533d3ee314665b10b665910b91d0826ec8c3",
+  "inputHash": "4bee4f87a66e5d12393909318ccdef7ebb27854b516252d6f919c398694aa331",
   "moduleGraph": {
     "nodes": [
       {
@@ -2244,6 +2244,22 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/compiler/app-graph/profile.ts",
+        "id": "170d41606ebf15934620c7da1394184a26c742f1cd06ace0276158e768e510b3",
+        "localImports": [
+          {
+            "span": {
+              "end": 53,
+              "start": 30
+            },
+            "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/make/naming.ts",
         "id": "17d783fb8a4e8999ac9212a2cd498b3e41bc0c65cdca8a5cab1eb2089305cab1",
         "localImports": []
@@ -2770,99 +2786,106 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 348,
-              "start": 315
+              "end": 335,
+              "start": 310
+            },
+            "toModuleId": "170d41606ebf15934620c7da1394184a26c742f1cd06ace0276158e768e510b3"
+          },
+          {
+            "span": {
+              "end": 409,
+              "start": 376
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 419,
-              "start": 386
+              "end": 479,
+              "start": 446
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 463,
-              "start": 443
+              "end": 523,
+              "start": 503
             },
             "toModuleId": "88215323394373b7e2c0c134f04e5ce08f49df2d981027de54b81dbd537b41c5"
           },
           {
             "span": {
-              "end": 533,
-              "start": 503
+              "end": 593,
+              "start": 563
             },
             "toModuleId": "4550dc72cebcc757a16f20cf831d6337e506cbebb6141fd62d6ef0afc66d555e"
           },
           {
             "span": {
-              "end": 597,
-              "start": 573
+              "end": 657,
+              "start": 633
             },
             "toModuleId": "a5e19b453b23188ca45916011457f083c9e4f42bb4552dd3370baa15153ce980"
           },
           {
             "span": {
-              "end": 647,
-              "start": 634
+              "end": 707,
+              "start": 694
             },
             "toModuleId": "69ee6695788e3a00c6c41afbb840b8a360aec03e10fdfa101b6b3a71767388b0"
           },
           {
             "span": {
-              "end": 728,
-              "start": 713
+              "end": 788,
+              "start": 773
             },
             "toModuleId": "473e7f0e937c77d26b5db4e27ccd65571fd9c1f490efa17b5ba13ba67cace950"
           },
           {
             "span": {
-              "end": 793,
-              "start": 771
+              "end": 853,
+              "start": 831
             },
             "toModuleId": "9a733f38a5cf18a1ed64ba9830a27bd989c8ff312593ca3825f134b8c5998faf"
           },
           {
             "span": {
-              "end": 850,
-              "start": 833
+              "end": 910,
+              "start": 893
             },
             "toModuleId": "b5e8306e56ef3c5938a91a73eb4c44c0493237f7aed5266516e9d083037c48c4"
           },
           {
             "span": {
-              "end": 945,
-              "start": 925
+              "end": 1005,
+              "start": 985
             },
             "toModuleId": "9dc8dd8db0bb067ca55126fe84e6344905569cdc0b935d27c2408ceeae6e7f61"
           },
           {
             "span": {
-              "end": 1087,
-              "start": 1073
+              "end": 1147,
+              "start": 1133
             },
             "toModuleId": "fb6d66c51109df7a87de2144aca524ada21d06db8dddc92c319c9fac63629aeb"
           },
           {
             "span": {
-              "end": 1122,
-              "start": 1111
+              "end": 1182,
+              "start": 1171
             },
             "toModuleId": "e2e1402c6d40396a061488174eb8161b1d4ec65ccac5d12bd9c2c61f74ebd91e"
           },
           {
             "span": {
-              "end": 1256,
-              "start": 1242
+              "end": 1316,
+              "start": 1302
             },
             "toModuleId": "aa851e70bc745f624138a0d17e7f51b449e39822ace073f92b1ec1e7522f7d97"
           },
           {
             "span": {
-              "end": 1308,
-              "start": 1295
+              "end": 1368,
+              "start": 1355
             },
             "toModuleId": "67f2d5cb52ec26c60b482d241870888d6e694d573aba5c45df275a73c6efdb48"
           }
@@ -2875,8 +2898,8 @@ export const appGraph = {
             "importKind": "static",
             "packageName": "typescript",
             "span": {
-              "end": 58,
-              "start": 46
+              "end": 57,
+              "start": 45
             },
             "specifier": "typescript",
             "subpath": ""
@@ -2888,64 +2911,57 @@ export const appGraph = {
         "localImports": [
           {
             "span": {
-              "end": 116,
-              "start": 90
+              "end": 114,
+              "start": 88
             },
             "toModuleId": "495eb2d1e9bc8e2e790fb63116e44e9f96cfd4567ecfbbea8790753f430af2f0"
           },
           {
             "span": {
-              "end": 169,
-              "start": 146
+              "end": 167,
+              "start": 144
             },
             "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
           },
           {
             "span": {
-              "end": 226,
-              "start": 202
+              "end": 224,
+              "start": 200
             },
             "toModuleId": "bf893446bb757c7cd7f61bee3010411d2f63f0e70b9a572cc09c0f3ee22d72b0"
           },
           {
             "span": {
-              "end": 286,
-              "start": 263
+              "end": 284,
+              "start": 261
             },
             "toModuleId": "9c575b15948278713bbf63047eb4922f5d3b22564f371ad89d090600349bfbcb"
           },
           {
             "span": {
-              "end": 442,
-              "start": 419
+              "end": 440,
+              "start": 417
             },
             "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
           },
           {
             "span": {
-              "end": 502,
-              "start": 481
+              "end": 500,
+              "start": 479
             },
             "toModuleId": "6dc6787f86d30a143cb816e58742d08166d5daf685c2af2233e776ca293e1ab8"
           },
           {
             "span": {
-              "end": 560,
-              "start": 543
+              "end": 557,
+              "start": 540
             },
             "toModuleId": "43e75c1680d6c78afd0545cff428d285a0652f5aede5e92e75715dc386666fa6"
           },
           {
             "span": {
-              "end": 612,
-              "start": 592
-            },
-            "toModuleId": "b5f12207ab3605046396dd9133c3e843e465e5fd71435b971452ab87a3c24e03"
-          },
-          {
-            "span": {
-              "end": 658,
-              "start": 646
+              "end": 602,
+              "start": 590
             },
             "toModuleId": "d36091edba429805a855b10d5bc3c1a1d227c5994857aed666faf3ccd7f538dd"
           }
@@ -13314,24 +13330,24 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 527,
-              "start": 513
+              "end": 530,
+              "start": 516
+            },
+            "toModuleId": "170d41606ebf15934620c7da1394184a26c742f1cd06ace0276158e768e510b3"
+          },
+          {
+            "span": {
+              "end": 580,
+              "start": 566
             },
             "toModuleId": "421b762a93037d3ea38ae6fa7fed3bb58e670216376494d57fba6cfce2245906"
           },
           {
             "span": {
-              "end": 591,
-              "start": 571
+              "end": 643,
+              "start": 623
             },
             "toModuleId": "b5f12207ab3605046396dd9133c3e843e465e5fd71435b971452ab87a3c24e03"
-          },
-          {
-            "span": {
-              "end": 648,
-              "start": 636
-            },
-            "toModuleId": "d36091edba429805a855b10d5bc3c1a1d227c5994857aed666faf3ccd7f538dd"
           },
           {
             "span": {
@@ -13342,8 +13358,15 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 847,
-              "start": 832
+              "end": 779,
+              "start": 767
+            },
+            "toModuleId": "d36091edba429805a855b10d5bc3c1a1d227c5994857aed666faf3ccd7f538dd"
+          },
+          {
+            "span": {
+              "end": 925,
+              "start": 910
             },
             "toModuleId": "7812959aea5e0002d9459d6d9b481e7a4bd61a5455b09fa6f640b0bf65ded12a"
           }
@@ -14694,7 +14717,15 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/forge/compiler/orchestrator/profile.ts",
         "id": "fb6d66c51109df7a87de2144aca524ada21d06db8dddc92c319c9fac63629aeb",
-        "localImports": []
+        "localImports": [
+          {
+            "span": {
+              "end": 67,
+              "start": 42
+            },
+            "toModuleId": "170d41606ebf15934620c7da1394184a26c742f1cd06ace0276158e768e510b3"
+          }
+        ]
       },
       {
         "declaredContexts": [],

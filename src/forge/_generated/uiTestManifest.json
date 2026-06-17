@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.8 input=f772dc4340a6b12abe01e0d960539c3f9ee1708c106f8d98108b06b0dc708960 content=ad1c5c0a74530a81fef31b08fd6c8eae7f8cb12d9e4157e88f146e30d353371c
+// @forge-generated generator=0.1.0-alpha.8 input=7e9241d38232a56e5930612085bbc6719ac771f9c0cd3f836ab721e9b76abb1d content=ad1c5c0a74530a81fef31b08fd6c8eae7f8cb12d9e4157e88f146e30d353371c
 {"defaultBaseUrl":"http://127.0.0.1:3000","framework":"unknown","generatorVersion":"0.1.0-alpha.8","routes":[{"name":"home","path":"/","uses":{"commands":[],"components":[],"liveQueries":[],"queries":[]}}],"runtimeUrl":"http://127.0.0.1:3765","scenarios":["home-loads"],"schemaVersion":"0.1.0","selectors":["[data-forge-testid='app-root'], body"],"webRoot":""}
