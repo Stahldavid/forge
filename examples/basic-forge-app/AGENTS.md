@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.2 input=112d41c02e7965fbb889b1dbe222352f195ce3ff939126ef371c031897d52ba8 content=8e7f009b0818d5c8cf6970cf20aa1bd07595c56aabc5ff5c94ae2088703c8e0f
+// @forge-generated generator=0.1.0-alpha.8 input=112d41c02e7965fbb889b1dbe222352f195ce3ff939126ef371c031897d52ba8 content=2b1a73735cb3ed5521adfb990a2a7e6973cb1b203daff531ab0c2305f3d888dc
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -69,6 +69,7 @@ forge inspect app --json
 forge inspect all --json
 forge inspect frontend --json
 forge inspect capabilities --json
+forge inspect agent-tools --json
 forge deps inspect <package> --json
 forge deps api <package> <symbol> --json
 forge deps trace <package> --json
@@ -82,6 +83,9 @@ forge doctor
 forge doctor windows --json
 forge setup windows --json
 forge agent print-context --json
+forge ai tools --json
+forge ai agents --json
+forge ai trace <traceId> --json
 forge verify --smoke
 forge verify --standard
 forge verify --strict
@@ -105,6 +109,21 @@ Tenant-scoped tables:
 - POSTHOG_KEY (required)
 - STRIPE_SECRET_KEY (required)
 - STRIPE_WEBHOOK_SECRET (required)
+
+## AI Tools And Agents
+
+- AI SDK engine: Vercel AI SDK v6.
+- Forge layer: generated registry, runtime rules, telemetry, secrets, tenant/auth context, and agent contract.
+- Use `ctx.agent.run` or `ctx.ai.runAgent` only in actions, workflows, endpoints, and server code.
+- Do not create custom tool loops; use Forge tools and AI SDK `ToolLoopAgent` through the Forge runtime.
+
+Tools:
+
+- none
+
+Agents:
+
+- none
 
 ## Auth
 
@@ -161,6 +180,7 @@ Use:
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
 forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
 forge make ui --framework vite --dry-run --json
+forge make ai-chat support --dry-run --json
 ```
 
 Review the plan before applying when the resource touches schema or policies.
@@ -197,11 +217,13 @@ Use:
 ```bash
 forge refactor rename field tickets.priority tickets.urgency --dry-run --json
 forge refactor rename field tickets.priority tickets.urgency --yes
+forge refactor rename command createTicket openTicket --dry-run --json
+forge refactor rename command createTicket openTicket --yes
 ```
 
-These codemods are AST-aware for `extract-action`, `rename field`, and `rename table`. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
+These codemods are AST-aware for `extract-action`, `rename command`, `rename field`, and `rename table`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
 
-Never edit `src/forge/_generated/**` directly. Review migration hints before applying field or table renames.
+Never edit `src/forge/_generated/**` directly. Review migration hints before applying command, field, or table renames.
 
 ### Plan impact-based tests
 
@@ -226,6 +248,19 @@ forge repair plan --from-last-test-run --write
 ```
 
 Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
+
+### Add AI tools or agents
+
+Use:
+
+```bash
+forge generate
+forge inspect all --json
+forge ai check --json
+forge ai trace <traceId> --json
+```
+
+Define tools with `aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })` and agents with `agent({ provider, model, instructions, tools, stopWhen })`. Execute agents with `ctx.agent.run` or `ctx.ai.runAgent` only from actions, workflows, endpoints, or server code. In dev, POST `/ai/agents/run` returns JSON for automation and POST `/ai/agents/chat` returns an AI SDK UIMessage stream for React `useChat`; both accept `agent: "<exportedAgentName>"` and use generated auto-tools from `agentTools.json`.
 
 ### Export agent adapters
 

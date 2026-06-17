@@ -86,6 +86,14 @@ function moduleGraphForAppGraphSnapshot(graph: AppGraph): AppGraph["moduleGraph"
   };
 }
 
+export function serializeConstFromJson(
+  exportName: string,
+  serializedJson: string,
+): string {
+  const parsed: unknown = JSON.parse(serializedJson.trimEnd());
+  return `export const ${exportName} = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+}
+
 export function serializeAppGraphJson(graph: AppGraph): string {
   const payload = {
     schemaVersion: graph.schemaVersion,
@@ -100,8 +108,7 @@ export function serializeAppGraphJson(graph: AppGraph): string {
 }
 
 export function serializeAppGraphTs(graph: AppGraph): string {
-  const parsed: unknown = JSON.parse(serializeAppGraphJson(graph).trimEnd());
-  return `export const appGraph = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+  return serializeConstFromJson("appGraph", serializeAppGraphJson(graph));
 }
 
 export function serializePackageGraphJson(graph: PackageGraph): string {
@@ -109,8 +116,7 @@ export function serializePackageGraphJson(graph: PackageGraph): string {
 }
 
 export function serializePackageGraphTs(graph: PackageGraph): string {
-  const parsed: unknown = JSON.parse(serializePackageGraphJson(graph).trimEnd());
-  return `export const packageGraph = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+  return serializeConstFromJson("packageGraph", serializePackageGraphJson(graph));
 }
 
 export function serializeRuntimeMatrixJson(matrix: RuntimeMatrix): string {
@@ -118,8 +124,7 @@ export function serializeRuntimeMatrixJson(matrix: RuntimeMatrix): string {
 }
 
 export function serializeRuntimeMatrixTs(matrix: RuntimeMatrix): string {
-  const parsed: unknown = JSON.parse(serializeRuntimeMatrixJson(matrix).trimEnd());
-  return `export const runtimeMatrix = ${JSON.stringify(parsed, null, 2)} as const;\n`;
+  return serializeConstFromJson("runtimeMatrix", serializeRuntimeMatrixJson(matrix));
 }
 
 export function serializeImportGuardsJson(

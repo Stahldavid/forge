@@ -97,7 +97,6 @@ import { detectOrphanedGeneratedFiles } from "./orphans.ts";
 import type { DiscoverContext } from "./types.ts";
 import {
   serializeAppGraphJson,
-  serializeAppGraphTs,
   serializeDataGraphJson,
   serializeDataGraphTs,
   serializeImportGuardsJson,
@@ -105,11 +104,10 @@ import {
   serializeMockMapJson,
   serializeMockMapTs,
   serializePackageGraphJson,
-  serializePackageGraphTs,
   serializeRuntimeGraphJson,
   serializeRuntimeGraphTs,
   serializeRuntimeMatrixJson,
-  serializeRuntimeMatrixTs,
+  serializeConstFromJson,
   serializeRuntimeRegistryTs,
   serializeDevManifestJson,
   serializeDevManifestTs,
@@ -401,6 +399,10 @@ export function plan(input: PlanInput): EmitPlan {
   const supportArtifactsMs = performance.now() - checkpoint;
   checkpoint = performance.now();
 
+  const appGraphJson = serializeAppGraphJson(input.appGraph);
+  const packageGraphJson = serializePackageGraphJson(input.packageGraph);
+  const runtimeMatrixJson = serializeRuntimeMatrixJson(matrix);
+
   const files: EmitFile[] = [
     makeEmitFile("AGENTS.md", agentArtifacts.agentsMd),
     makeEmitFile(
@@ -457,27 +459,27 @@ export function plan(input: PlanInput): EmitPlan {
     ),
     makeEmitFile(
       `${GENERATED_DIR}/appGraph.ts`,
-      serializeAppGraphTs(input.appGraph),
+      serializeConstFromJson("appGraph", appGraphJson),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/appGraph.json`,
-      serializeAppGraphJson(input.appGraph),
+      appGraphJson,
     ),
     makeEmitFile(
       `${GENERATED_DIR}/packageGraph.ts`,
-      serializePackageGraphTs(input.packageGraph),
+      serializeConstFromJson("packageGraph", packageGraphJson),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/packageGraph.json`,
-      serializePackageGraphJson(input.packageGraph),
+      packageGraphJson,
     ),
     makeEmitFile(
       `${GENERATED_DIR}/runtimeMatrix.ts`,
-      serializeRuntimeMatrixTs(matrix),
+      serializeConstFromJson("runtimeMatrix", runtimeMatrixJson),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/runtimeMatrix.json`,
-      serializeRuntimeMatrixJson(matrix),
+      runtimeMatrixJson,
     ),
     makeEmitFile(
       `${GENERATED_DIR}/importGuards.ts`,

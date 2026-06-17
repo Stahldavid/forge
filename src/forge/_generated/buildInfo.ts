@@ -1,6 +1,6 @@
-// @forge-generated generator=0.1.0-alpha.8 input=68167eae1fe7969b6713da0d1448f14c78392a93426e11b48c1e1f8d08111c1b content=fa23e3d4efd2f506e91be769aca26aad0f4b01032016868b9a4cb4a69ef882d5
+// @forge-generated generator=0.1.0-alpha.8 input=3fb619bf835f25bb4ff97aa048ec14e2b5079a13c310f91d21f362a0ba16ae7d content=38d58645a2fda2e089e3f3febcb68feed9183250ed8b121021ff1f1f1d89c08d
 export const buildInfo = {
-  "generatedHash": "68167eae1fe7969b6713da0d1448f14c78392a93426e11b48c1e1f8d08111c1b",
+  "generatedHash": "3fb619bf835f25bb4ff97aa048ec14e2b5079a13c310f91d21f362a0ba16ae7d",
   "gitSha": "unknown",
   "packageName": "forgeos",
   "packageVersion": "0.1.0-alpha.8",

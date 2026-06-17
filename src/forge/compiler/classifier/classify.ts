@@ -8,7 +8,7 @@ import { resolveByPackageName } from "../recipes/registry.ts";
 import { detectCapabilities } from "./capabilities.ts";
 import { partitionContexts } from "./contexts.ts";
 import { detectSecrets } from "./secrets.ts";
-import { gatherSignals } from "./signals.ts";
+import { gatherSignals, type PackageSignals } from "./signals.ts";
 
 export interface RuntimeClassifier {
   classify(api: PackageApi, recipe?: IntegrationRecipe): RuntimeClassification;
@@ -30,8 +30,8 @@ function classifyExport(
   recipe: IntegrationRecipe | undefined,
   caps: CapabilitySet,
   alias: string,
+  signals: PackageSignals,
 ): ExportClassification {
-  const signals = gatherSignals(api);
   const { compatible, incompatible } = partitionContexts(
     recipe,
     caps,
@@ -55,12 +55,12 @@ export function classify(
   recipe?: IntegrationRecipe,
 ): RuntimeClassification {
   const resolvedRecipe = resolveRecipeForApi(api, recipe);
-  const caps = detectCapabilities(api, resolvedRecipe);
+  const signals = gatherSignals(api);
+  const caps = detectCapabilities(api, resolvedRecipe, signals);
   const capsWithSecrets: CapabilitySet = {
     ...caps,
-    secrets: detectSecrets(api, resolvedRecipe),
+    secrets: detectSecrets(api, resolvedRecipe, signals),
   };
-  const signals = gatherSignals(api);
   const alias = resolvedRecipe?.alias ?? api.name;
 
   const { compatible, incompatible, rationale } = partitionContexts(
@@ -74,19 +74,43 @@ export function classify(
   for (const ep of api.entrypoints) {
     for (const exp of ep.exports) {
       perEntrypoint.push(
-        classifyExport(api, ep.subpath, exp.name, resolvedRecipe, capsWithSecrets, alias),
+        classifyExport(
+          api,
+          ep.subpath,
+          exp.name,
+          resolvedRecipe,
+          capsWithSecrets,
+          alias,
+          signals,
+        ),
       );
     }
     if (ep.exports.length === 0) {
       perEntrypoint.push(
-        classifyExport(api, ep.subpath, "*", resolvedRecipe, capsWithSecrets, alias),
+        classifyExport(
+          api,
+          ep.subpath,
+          "*",
+          resolvedRecipe,
+          capsWithSecrets,
+          alias,
+          signals,
+        ),
       );
     }
   }
 
   if (api.entrypoints.length === 0) {
     perEntrypoint.push(
-      classifyExport(api, ".", "*", resolvedRecipe, capsWithSecrets, alias),
+      classifyExport(
+        api,
+        ".",
+        "*",
+        resolvedRecipe,
+        capsWithSecrets,
+        alias,
+        signals,
+      ),
     );
   }
 

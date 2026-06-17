@@ -2,11 +2,12 @@ import type { SecretRequirement } from "../types/capability.ts";
 import type { IntegrationRecipe } from "../types/integration.ts";
 import type { PackageApi } from "../types/package-graph.ts";
 import { secret } from "../recipes/helpers.ts";
-import { gatherSignals } from "./signals.ts";
+import { gatherSignals, type PackageSignals } from "./signals.ts";
 
 export function detectSecrets(
   api: PackageApi,
   recipe?: IntegrationRecipe,
+  precomputedSignals?: PackageSignals,
 ): SecretRequirement[] {
   const found = new Map<string, SecretRequirement>();
 
@@ -16,7 +17,7 @@ export function detectSecrets(
     }
   }
 
-  const signals = gatherSignals(api);
+  const signals = precomputedSignals ?? gatherSignals(api);
   for (const evidence of signals.envSecretEvidence) {
     const envVar = evidence.replace(/^env:/, "");
     if (!found.has(envVar)) {

@@ -2,17 +2,18 @@ import type { CapabilitySet } from "../types/capability.ts";
 import type { IntegrationRecipe } from "../types/integration.ts";
 import type { PackageApi } from "../types/package-graph.ts";
 import { capability, emptyCapabilitySet } from "../recipes/helpers.ts";
-import { gatherSignals } from "./signals.ts";
+import { gatherSignals, type PackageSignals } from "./signals.ts";
 
 export function detectCapabilities(
   api: PackageApi,
   recipe?: IntegrationRecipe,
+  precomputedSignals?: PackageSignals,
 ): CapabilitySet {
   if (recipe) {
     return cloneCapabilitySet(recipe.capabilities);
   }
 
-  const signals = gatherSignals(api);
+  const signals = precomputedSignals ?? gatherSignals(api);
   const caps = emptyCapabilitySet();
 
   if (signals.usesNetwork) {
