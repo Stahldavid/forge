@@ -173,6 +173,7 @@ export interface AgentExternalEntryInfo {
   transport: string;
   transaction?: string;
   risk?: "read" | "write" | "destructive" | "external";
+  needsApproval?: boolean;
   effects: string[];
   description?: string;
 }

@@ -4,8 +4,10 @@
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "files": [
+    "adapters/",
     "bin/",
     "docs/forge-protocol.md",
+    "examples/go-billing/",
     "packages/eslint-plugin-forge/",
     "schemas/",
     "src/",

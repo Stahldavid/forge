@@ -42,6 +42,7 @@ export interface ForgeExternalManifestEntry {
   tenantScoped?: boolean;
   transaction?: ForgeExternalTransactionMode;
   risk?: ForgeExternalEntryRisk;
+  needsApproval?: boolean;
   effects?: string[];
 }
 

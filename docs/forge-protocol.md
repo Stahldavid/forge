@@ -35,6 +35,7 @@ External services publish JSON that matches
       "policy": "billing.write",
       "transaction": "external-managed",
       "risk": "write",
+      "needsApproval": true,
       "effects": ["invoice.created"]
     },
     {

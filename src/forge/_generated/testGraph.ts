@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=7349e7b0b0a82feaa00ad6c36dc0ffc862bd47f0f2f690f3f9c80f1a7941c56c
+// @forge-generated generator=0.1.0-alpha.9 input=7e1d521593b626abf25a35531d4a4d31d541cae45c515610751b15e073c4d5a7 content=7f6c014da004e771cde73323db026349f439e16f67766ec1b89179110cbba3a4
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.9",
-  "inputHash": "11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f",
+  "inputHash": "7e1d521593b626abf25a35531d4a4d31d541cae45c515610751b15e073c4d5a7",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1309,6 +1309,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/external-manifest/external-runtime-bridge.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/external-manifest/go-adapter-conformance.test.ts",
       "kind": "unknown",
       "reasons": []
     },

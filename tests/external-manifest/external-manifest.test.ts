@@ -42,6 +42,7 @@ function writeManifest(root: string): string {
             policy: "billing.write",
             transaction: "external-managed",
             risk: "write",
+            needsApproval: true,
             effects: ["invoice.created"],
             inputSchema: {
               type: "object",
@@ -89,7 +90,7 @@ describe("external Forge manifests", () => {
       expect(generated.exitCode).toBe(0);
 
       const external = readJson<{
-        services: Array<{ name: string; language: string; entries: Array<{ name: string; kind: string }> }>;
+        services: Array<{ name: string; language: string; entries: Array<{ name: string; kind: string; needsApproval?: boolean }> }>;
         diagnostics: unknown[];
       }>(workspace, `${GENERATED}/externalServices.json`);
       expect(external.diagnostics).toHaveLength(0);
@@ -128,7 +129,7 @@ describe("external Forge manifests", () => {
       });
       expect(contract.commands.find((command) => command.name === "billing.createInvoice")).toMatchObject({
         source: "external",
-        external: { service: "billing", language: "java" },
+        external: { service: "billing", language: "java", needsApproval: true },
       });
       expect(contract.queries.find((query) => query.name === "billing.listInvoices")).toMatchObject({
         source: "external",

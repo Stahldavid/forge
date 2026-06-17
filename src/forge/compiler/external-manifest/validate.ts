@@ -154,6 +154,7 @@ function validateEntry(
     ...(RISKS.includes(entry.risk as ForgeExternalEntryRisk)
       ? { risk: entry.risk as ForgeExternalEntryRisk }
       : {}),
+    ...(typeof entry.needsApproval === "boolean" ? { needsApproval: entry.needsApproval } : {}),
     ...(stringArray(entry.effects) ? { effects: entry.effects } : {}),
   };
 }

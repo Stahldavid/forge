@@ -39,6 +39,7 @@
             "enum": ["read-only", "external-managed", "forge-managed", "saga"]
           },
           "risk": { "enum": ["read", "write", "destructive", "external"] },
+          "needsApproval": { "type": "boolean" },
           "effects": {
             "type": "array",
             "items": { "type": "string" }

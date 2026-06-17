@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=c9bda2f6e9efc218ecd5cf8504fc1115b75c98927021cd1a6a48b49c7df32798
+// @forge-generated generator=0.1.0-alpha.9 input=7e1d521593b626abf25a35531d4a4d31d541cae45c515610751b15e073c4d5a7 content=c9bda2f6e9efc218ecd5cf8504fc1115b75c98927021cd1a6a48b49c7df32798
 {"claims":{"email":"email","name":"name","permissions":"permissions","role":"role","roles":"roles","tenantId":"tenant_id","userId":"sub"},"schemaVersion":"0.1.0"}

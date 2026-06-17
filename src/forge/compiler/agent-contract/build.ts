@@ -718,7 +718,7 @@ function buildAgentToolRegistry(contract: AgentContract): AgentToolRegistry {
       readOnly: false,
       risk: "write" as const,
       needsApproval: command.source === "external"
-        ? command.external?.risk !== "read"
+        ? command.external?.needsApproval ?? (command.external?.risk !== "read")
         : true,
       requiresAuth: command.policy !== undefined && command.policy !== "public",
       ...(command.source ? { source: command.source } : {}),
@@ -838,6 +838,7 @@ function externalEntryInfo(entry: ForgeExternalServiceEntry): AgentExternalEntry
     transport: entry.transport,
     ...(entry.transaction ? { transaction: entry.transaction } : {}),
     ...(entry.risk ? { risk: entry.risk } : {}),
+    ...(typeof entry.needsApproval === "boolean" ? { needsApproval: entry.needsApproval } : {}),
     effects: entry.effects ?? [],
     ...(entry.description ? { description: entry.description } : {}),
   };
