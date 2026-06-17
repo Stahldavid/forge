@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.9 input=ca868c8ec6ee8cac0b8a654cbdfef0cc44cdb8d68fa7e924cc6237ac0241a710 content=03521b0a14644492f03c59e24b91dfc50c1d11650866c03edb5cf4f4f38b3985
+// @forge-generated generator=0.1.0-alpha.10 input=0027e0819b107e3a91d36a3ebe496b8d70dd5bdf64c0d3399d8cc69acef3d5e3 content=6e6837388bae0d1d7f30b03d78692847d3bcda018073234c4301ba062480e6a7
 export const makeRegistry = {
   "commands": [
     "forge make list --json",
@@ -10,7 +10,7 @@ export const makeRegistry = {
     "forge make apply <planId>",
     "forge make rollback <planId>"
   ],
-  "generatorVersion": "0.1.0-alpha.9",
+  "generatorVersion": "0.1.0-alpha.10",
   "planDirectory": ".forge/make-plans",
   "primitives": [
     {

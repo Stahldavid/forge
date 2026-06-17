@@ -4,7 +4,7 @@ Release history for the `forgeos` npm package (`alpha` dist-tag).
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
-## Unreleased
+## 0.1.0-alpha.10
 
 Launch polish:
 
@@ -13,6 +13,7 @@ Launch polish:
 - Emit generated `.json` artifacts as pure JSON while keeping deterministic headers on code/text artifacts.
 - Relaxed the `minimal-web` template verify script to `forge verify --smoke` and added the missing `check` script to `b2b-support-web`.
 - Updated public protocol/changelog docs for the external runtime and Go adapter alpha line.
+- Bumped the create-app wrapper package line to `create-forgeos-app@0.1.0-alpha.4`.
 
 ## 0.1.0-alpha.9
 

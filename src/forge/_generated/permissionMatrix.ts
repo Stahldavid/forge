@@ -1,7 +1,7 @@
-// @forge-generated generator=0.1.0-alpha.9 input=ca868c8ec6ee8cac0b8a654cbdfef0cc44cdb8d68fa7e924cc6237ac0241a710 content=5fa67a1a0ca1cf97e8da4a1b2bd78437f773c5f35714eabe8eda7718f2d71390
+// @forge-generated generator=0.1.0-alpha.10 input=0027e0819b107e3a91d36a3ebe496b8d70dd5bdf64c0d3399d8cc69acef3d5e3 content=951b33930d8582c51bd9c0549e7287eab1b14ac7e45c1a36b3228b39e4a58c37
 export const permissionMatrix = {
   "entries": [],
-  "generatorVersion": "0.1.0-alpha.9",
-  "inputHash": "66a8ee866077677a0d4f986a5393b7461b69505ac3654f906d1ad2641d61425a",
+  "generatorVersion": "0.1.0-alpha.10",
+  "inputHash": "498f16966be8023c4408b87afaf0182385503d0d1902ae690dea209fe9fc5e88",
   "schemaVersion": "1.0.0"
 } as const;

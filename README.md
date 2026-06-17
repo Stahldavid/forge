@@ -91,6 +91,35 @@ npm run field:test -- --package-managers npm --templates minimal-web --forge-spe
 
 The scheduled/manual `Field Tests` workflow expands that coverage across Linux, macOS, Windows, Node 22, Node 24, and npm/pnpm/yarn/bun.
 
+## External Runtimes And Go Adapter
+
+ForgeOS can import services written outside TypeScript through the Forge Protocol.
+External runtimes publish a `forge.manifest.json` that describes commands, queries,
+transport, policies, risk metadata, tenant scope, and schemas. Forge then emits
+the same machine-readable app/API/agent artifacts and exposes runtime bridge
+endpoints for those entries.
+
+The first adapter MVP is Go:
+
+```bash
+cd examples/go-billing
+go run . --manifest --base-url http://127.0.0.1:8787 > forge.manifest.json
+go run . --addr 127.0.0.1:8787 --base-url http://127.0.0.1:8787
+```
+
+In a Forge app:
+
+```bash
+forge manifest validate ./forge.manifest.json --json
+forge manifest import ./forge.manifest.json --json
+forge generate
+forge run billing.createInvoice --args '{"title":"Invoice"}' --user-id u1 --tenant-id tenant-a --role admin
+forge query billing.listInvoices --args '{}' --user-id u1 --tenant-id tenant-a --role admin
+```
+
+See [`docs/forge-protocol.md`](docs/forge-protocol.md), [`schemas/forge-manifest.schema.json`](schemas/forge-manifest.schema.json),
+and [`adapters/go`](adapters/go/README.md).
+
 ## What ForgeOS Generates
 
 ```txt
