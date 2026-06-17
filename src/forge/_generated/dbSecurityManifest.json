@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.9 input=7e1d521593b626abf25a35531d4a4d31d541cae45c515610751b15e073c4d5a7 content=2990ae1c7d12671f2204605202c9e7d982b0156793644525ae0f7df2c0e18f6e
+// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=2990ae1c7d12671f2204605202c9e7d982b0156793644525ae0f7df2c0e18f6e
 {"authoritativeAdapters":["postgres"],"diagnostics":[],"nonAuthoritativeAdapters":["pglite","memory"],"provider":"postgres","schemaVersion":"0.1.0","tables":[],"tenantIsolation":"postgres-rls"}

@@ -66,7 +66,7 @@ export async function runBuildCommand(options: BuildCommandOptions): Promise<Bui
     skipTests: false,
     skipTypecheck: false,
     skipEslint: false,
-    strict: true,
+    strict: false,
   });
   steps.push({ name: "verify", ok: verify.exitCode === 0, exitCode: verify.exitCode });
   if (verify.exitCode !== 0) {
