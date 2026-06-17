@@ -47,6 +47,7 @@ import type {
   UiVideoMode,
 } from "../ui/types.ts";
 import type { ForgeDoOptions } from "../intent/types.ts";
+import type { BenchCommandOptions, BenchSubcommand } from "../bench.ts";
 
 export type ForgeCommand =
   | { kind: "version"; json: boolean }
@@ -161,6 +162,7 @@ export type ForgeCommand =
   | { kind: "test"; options: TestCommandOptions }
   | { kind: "repair"; options: RepairCommandOptions }
   | { kind: "do"; options: ForgeDoOptions }
+  | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
@@ -334,6 +336,7 @@ export const TOP_LEVEL_COMMANDS = [
   "test",
   "repair",
   "do",
+  "bench",
   "generate",
   "add",
   "inspect",
@@ -550,6 +553,7 @@ const AI_SUBCOMMANDS: AiSubcommand[] = [
   "redteam",
   "trace",
 ];
+const BENCH_SUBCOMMANDS: BenchSubcommand[] = ["compiler"];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -1477,6 +1481,43 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "bench": {
+      const subcommand = rest[0] as BenchSubcommand | undefined;
+      if (!subcommand || !BENCH_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge bench requires subcommand: compiler");
+        return { command: null, workspaceRoot, errors };
+      }
+      const iterationsRaw = parseOptionValue(argv, "--iterations");
+      const warmupsRaw = parseOptionValue(argv, "--warmups");
+      const concurrencyRaw = parseOptionValue(argv, "--concurrency");
+      const iterations = iterationsRaw !== undefined ? Number(iterationsRaw) : 5;
+      const warmups = warmupsRaw !== undefined ? Number(warmupsRaw) : 1;
+      const concurrency = concurrencyRaw !== undefined ? Number(concurrencyRaw) : 4;
+      if (!Number.isFinite(iterations) || iterations < 1) {
+        errors.push("--iterations must be a number >= 1");
+      }
+      if (!Number.isFinite(warmups) || warmups < 0) {
+        errors.push("--warmups must be a number >= 0");
+      }
+      if (!Number.isFinite(concurrency) || concurrency < 1) {
+        errors.push("--concurrency must be a number >= 1");
+      }
+      return {
+        command: {
+          kind: "bench",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            iterations: Math.floor(iterations),
+            warmups: Math.floor(warmups),
+            concurrency: Math.floor(concurrency),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "generate": {
       const concurrencyRaw = parseOptionValue(argv, "--concurrency");
       const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;
@@ -1545,11 +1586,20 @@ export function parseCli(argv: string[]): ParsedCli {
       {
         const scriptTimeoutRaw = parseOptionValue(argv, "--script-timeout-ms");
         const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;
+        const typechecker = parseOptionValue(argv, "--typechecker");
         if (
           scriptTimeoutRaw !== undefined &&
           (!Number.isFinite(scriptTimeoutMs) || scriptTimeoutMs! < 1)
         ) {
           errors.push("--script-timeout-ms must be a number >= 1");
+        }
+        if (
+          typechecker !== undefined &&
+          typechecker !== "tsc" &&
+          typechecker !== "tsgo" &&
+          typechecker !== "auto"
+        ) {
+          errors.push("--typechecker must be one of: tsc, tsgo, auto");
         }
       return {
         command: {
@@ -1566,6 +1616,8 @@ export function parseCli(argv: string[]): ParsedCli {
             smoke: parseFlag(argv, "--smoke"),
             standard: parseFlag(argv, "--standard"),
             scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,
+            typechecker: typechecker as "tsc" | "tsgo" | "auto" | undefined,
+            fullTests: parseFlag(argv, "--full"),
           },
         },
         workspaceRoot,
@@ -2064,6 +2116,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--smoke",
     "--standard",
     "--script-timeout-ms",
+    "--typechecker",
     "--timeout-ms",
     "--apply",
     "--runtime-inspect",
@@ -2133,6 +2186,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--allow-public-sourcemaps",
     "--with-release",
     "--concurrency",
+    "--iterations",
+    "--warmups",
     "--sandbox-backend",
     "--skip-tests",
     "--skip-typecheck",
@@ -2204,6 +2259,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     if (known.has(arg)) {
       if (
         arg === "--concurrency" ||
+        arg === "--iterations" ||
+        arg === "--warmups" ||
         arg === "--field" ||
         arg === "--fields" ||
         arg === "--type" ||
@@ -2247,6 +2304,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--scenario" ||
         arg === "--timeout" ||
         arg === "--timeout-ms" ||
+        arg === "--typechecker" ||
         arg === "--name" ||
         arg === "--auth-token" ||
         arg === "--sandbox-backend" ||

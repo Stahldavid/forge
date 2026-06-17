@@ -81,6 +81,12 @@ export interface AiTraceSummary {
   spans: Array<Record<string, unknown>>;
 }
 
+type ZodBuilders = {
+  object: (shape: Record<string, unknown>) => unknown;
+  string: () => unknown;
+  number: () => unknown;
+};
+
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const path = join(workspaceRoot, relative);
   if (!nodeFileSystem.exists(path)) {
@@ -369,7 +375,16 @@ async function runModelLevelRedteam(options: AiCommandOptions): Promise<{
     };
   }
 
-  const { z } = await import("zod");
+  const zodModule = (await import("zod")) as unknown as
+    | (ZodBuilders & { default?: ZodBuilders; z?: ZodBuilders })
+    | { default: ZodBuilders; z?: ZodBuilders };
+  const z = (
+    "z" in zodModule && zodModule.z
+      ? zodModule.z
+      : "default" in zodModule
+        ? zodModule.default
+        : zodModule
+  ) as ZodBuilders;
   const store = getRuntimeEnvStore(options.workspaceRoot);
   const secretRegistry = loadSecretRegistry(options.workspaceRoot);
   const bundle = createRuntimeSecretsBundle({

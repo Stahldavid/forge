@@ -16,6 +16,14 @@ import type {
 
 const TEST_RE = /\.(test|spec)\.(ts|tsx)$/;
 
+function isTemporaryTestPath(path: string): boolean {
+  return path.split("/").some((segment) => segment === ".tmp" || segment === "__tmp__");
+}
+
+function isTestGraphCandidate(path: string): boolean {
+  return TEST_RE.test(path) && !isTemporaryTestPath(path);
+}
+
 function emptyCoverage(): TestCoverage {
   return {
     commands: [],
@@ -40,7 +48,7 @@ function collectTestsFromDisk(workspaceRoot: string): SourceFile[] {
   const { sources } = walkWorkspaceSources({
     workspaceRoot,
     roots: ["tests", "web"],
-    excludeRelativePath: (path) => !TEST_RE.test(path),
+    excludeRelativePath: (path) => !isTestGraphCandidate(path),
   });
   return sources.sort((a, b) => a.path.localeCompare(b.path));
 }
@@ -208,7 +216,7 @@ export function buildTestGraph(input: {
   const diskTests = collectTestsFromDisk(input.workspaceRoot);
   const byPath = new Map<string, SourceFile>();
   for (const source of input.sources) {
-    if (TEST_RE.test(source.path)) {
+    if (isTestGraphCandidate(source.path)) {
       byPath.set(source.path, source);
     }
   }
@@ -216,7 +224,7 @@ export function buildTestGraph(input: {
     byPath.set(source.path, source);
   }
 
-  const allSources = [...input.sources.filter((s) => TEST_RE.test(s.path)), ...diskTests];
+  const allSources = [...input.sources.filter((s) => isTestGraphCandidate(s.path)), ...diskTests];
   const tests: TestGraphEntry[] = [...byPath.values()]
     .sort((a, b) => a.path.localeCompare(b.path))
     .map((source) => {

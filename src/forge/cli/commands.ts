@@ -45,6 +45,11 @@ import {
 import { INSPECT_TARGETS, TOP_LEVEL_COMMANDS, type ForgeCommand } from "./parse.ts";
 import { runVerifyCommand } from "./verify.ts";
 import {
+  formatCompilerBenchHuman,
+  formatCompilerBenchJson,
+  runCompilerBenchCommand,
+} from "../bench.ts";
+import {
   formatRunJson,
   formatRunListHuman,
   formatRunResultHuman,
@@ -764,6 +769,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       } else {
         process.stdout.write(formatForgeDoHuman(result));
       }
+      return result.exitCode;
+    }
+    case "bench": {
+      const result = await runCompilerBenchCommand(command.options);
+      process.stdout.write(
+        command.options.json
+          ? formatCompilerBenchJson(result)
+          : formatCompilerBenchHuman(result),
+      );
       return result.exitCode;
     }
     case "agent": {

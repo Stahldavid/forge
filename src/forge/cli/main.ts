@@ -15,12 +15,13 @@ function formatHelp(): string {
     "  forge do \"fix\" --json     Ask ForgeOS for the right workflow and commands",
     "  forge inspect all --json  Read the generated machine contract",
     "  forge doctor windows --json  Diagnose native Windows setup and Bun shims",
+    "  forge bench compiler --json  Measure public compiler phase timings",
     "",
     "Useful next commands:",
     "  forge generate",
     "  forge check --json",
     "  forge verify --standard",
-    "  forge verify --strict",
+    "  forge verify --strict --typechecker auto",
     "",
   ].join("\n");
 }

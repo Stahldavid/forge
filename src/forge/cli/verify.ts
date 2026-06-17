@@ -1,15 +1,17 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
+import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
+import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
 import type { VerifyOptions, VerifyProfile, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
 import {
   FORGE_VERIFY_POLICY,
   FORGE_VERIFY_SCRIPT_TIMEOUT,
 } from "../compiler/diagnostics/codes.ts";
 import { detectPackageManager } from "../compiler/package-manager/detect.ts";
-import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
+import { resolveCommandArgv, resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 import { runCheckCommand, runGenerateCommand } from "./commands.ts";
 import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
@@ -26,6 +28,17 @@ interface PackageScripts {
 }
 
 const DEFAULT_SCRIPT_TIMEOUT_MS = 30 * 60 * 1000;
+type TypecheckerChoice = "tsc" | "tsgo" | "auto";
+
+interface ScriptRunResult {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  command: string;
+  durationMs: number;
+  timedOut: boolean;
+  spawnError?: boolean;
+}
 
 function readPackageScripts(workspaceRoot: string): PackageScripts {
   const packageJsonPath = join(workspaceRoot, "package.json");
@@ -47,19 +60,21 @@ async function spawnPackageRun(
   workspaceRoot: string,
   scriptName: string,
   timeoutMs: number,
-): Promise<{
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  command: string;
-  durationMs: number;
-  timedOut: boolean;
-}> {
+): Promise<ScriptRunResult> {
   const packageManager = detectPackageManager(workspaceRoot);
   let argv = resolvePackageManagerArgv([packageManager, "run", scriptName]);
   if (process.platform === "win32" && /\.(cmd|bat)$/i.test(argv[0] ?? "")) {
     argv = [process.env.ComSpec ?? "cmd.exe", "/d", "/c", packageManager, "run", scriptName];
   }
+  return spawnArgv(workspaceRoot, argv, timeoutMs, argv.join(" "));
+}
+
+async function spawnArgv(
+  workspaceRoot: string,
+  argv: string[],
+  timeoutMs: number,
+  command = argv.join(" "),
+): Promise<ScriptRunResult> {
   const started = Date.now();
 
   return new Promise((resolve) => {
@@ -78,9 +93,10 @@ async function spawnPackageRun(
         exitCode: 1,
         stdout: "",
         stderr: error instanceof Error ? error.message : String(error),
-        command: argv.join(" "),
+        command,
         durationMs: Date.now() - started,
         timedOut: false,
+        spawnError: true,
       });
       return;
     }
@@ -110,9 +126,10 @@ async function spawnPackageRun(
           exitCode: 1,
           stdout,
           stderr: error instanceof Error ? error.message : String(error),
-          command: argv.join(" "),
+          command,
           durationMs: Date.now() - started,
           timedOut,
+          spawnError: true,
         });
       }
     });
@@ -124,7 +141,7 @@ async function spawnPackageRun(
           exitCode: timedOut ? 1 : code ?? 1,
           stdout,
           stderr,
-          command: argv.join(" "),
+          command,
           durationMs: Date.now() - started,
           timedOut,
         });
@@ -137,14 +154,7 @@ async function runPackageScript(
   workspaceRoot: string,
   scriptName: string,
   timeoutMs: number,
-): Promise<{
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  command: string;
-  durationMs: number;
-  timedOut: boolean;
-}> {
+): Promise<ScriptRunResult> {
   return spawnPackageRun(workspaceRoot, scriptName, timeoutMs);
 }
 
@@ -227,6 +237,150 @@ function packageScriptFailureDiagnostic(
       "forge dev --once --json",
     ],
   });
+}
+
+function resolveTypechecker(options: VerifyOptions): TypecheckerChoice {
+  if (options.typechecker) {
+    return options.typechecker;
+  }
+  const fromEnv = process.env.FORGE_TYPECHECKER;
+  return fromEnv === "tsgo" || fromEnv === "auto" || fromEnv === "tsc" ? fromEnv : "tsc";
+}
+
+async function runTscTypecheck(
+  workspaceRoot: string,
+  scripts: PackageScripts,
+  timeoutMs: number,
+): Promise<ScriptRunResult> {
+  if (scripts.typecheck) {
+    return runPackageScript(workspaceRoot, "typecheck", timeoutMs);
+  }
+  const argv = resolveCommandArgv(["tsc", "--noEmit"]);
+  return spawnArgv(workspaceRoot, argv, timeoutMs, "tsc --noEmit");
+}
+
+async function runTsgoTypecheck(workspaceRoot: string, timeoutMs: number): Promise<ScriptRunResult> {
+  const argv = resolveCommandArgv(["tsgo", "--noEmit"]);
+  return spawnArgv(workspaceRoot, argv, timeoutMs, "tsgo --noEmit");
+}
+
+async function runPreferredTypecheck(
+  options: VerifyOptions,
+  scripts: PackageScripts,
+  timeoutMs: number,
+): Promise<{ result: ScriptRunResult; diagnostics: Diagnostic[]; label: string }> {
+  const choice = resolveTypechecker(options);
+  if (choice === "tsc") {
+    return { result: await runTscTypecheck(options.workspaceRoot, scripts, timeoutMs), diagnostics: [], label: "tsc" };
+  }
+
+  const tsgo = await runTsgoTypecheck(options.workspaceRoot, timeoutMs);
+  if (tsgo.exitCode === 0) {
+    return { result: tsgo, diagnostics: [], label: "tsgo" };
+  }
+
+  const fallback = await runTscTypecheck(options.workspaceRoot, scripts, timeoutMs);
+  const diagnostics = [
+    createDiagnostic({
+      severity: "warning",
+      code: "FORGE_VERIFY_TSGO_FALLBACK",
+      message: `tsgo typecheck failed; fell back to tsc (${tsgo.spawnError ? "command unavailable" : `exit code ${tsgo.exitCode}`})`,
+      fixHint: outputExcerpt(tsgo.stdout, tsgo.stderr) || undefined,
+      suggestedCommands: [
+        "npm install -D @typescript/native-preview@beta",
+        "forge verify --typechecker tsc",
+      ],
+    }),
+  ];
+  return {
+    result: fallback,
+    diagnostics,
+    label: choice === "auto" ? "auto->tsc" : "tsgo->tsc",
+  };
+}
+
+const STRICT_TEST_COSTS: TestCost[] = ["instant", "fast", "standard", "slow"];
+const STRICT_TEST_CHUNK_SIZE = 12;
+
+function readTestGraph(workspaceRoot: string): TestGraph | null {
+  const raw = nodeFileSystem.readText(join(workspaceRoot, "src/forge/_generated/testGraph.json"));
+  if (!raw) {
+    return null;
+  }
+  return JSON.parse(stripDeterministicHeader(raw)) as TestGraph;
+}
+
+function strictTestFiles(workspaceRoot: string): string[] {
+  const graph = readTestGraph(workspaceRoot);
+  if (!graph) {
+    return [];
+  }
+  return [...new Set(
+    graph.tests
+      .filter((test) => STRICT_TEST_COSTS.includes(test.cost))
+      .map((test) => test.file)
+      .sort(),
+  )];
+}
+
+function chunkFiles(files: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < files.length; index += size) {
+    chunks.push(files.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function runStrictGraphTests(
+  workspaceRoot: string,
+  timeoutMs: number,
+): Promise<ScriptRunResult & { fileCount: number; chunkCount: number }> {
+  const files = strictTestFiles(workspaceRoot);
+  if (files.length === 0) {
+    return {
+      exitCode: 1,
+      stdout: "",
+      stderr: "TestGraph has no non-docker/browser tests",
+      command: "forge strict TestGraph tests",
+      durationMs: 0,
+      timedOut: false,
+      spawnError: true,
+      fileCount: 0,
+      chunkCount: 0,
+    };
+  }
+
+  const started = Date.now();
+  let stdout = "";
+  let stderr = "";
+  let timedOut = false;
+  let exitCode = 0;
+  const chunks = chunkFiles(files, STRICT_TEST_CHUNK_SIZE);
+  let command = `bun test <${files.length} TestGraph files in ${chunks.length} chunks> --timeout ${timeoutMs}`;
+  for (const [chunkIndex, chunk] of chunks.entries()) {
+    const argv = resolveCommandArgv(["bun", "test", ...chunk, "--timeout", String(timeoutMs)]);
+    const chunkCommand = `bun test <TestGraph chunk ${chunkIndex + 1}/${chunks.length}, ${chunk.length} files> --timeout ${timeoutMs}`;
+    const result = await spawnArgv(workspaceRoot, argv, timeoutMs, chunkCommand);
+    stdout += result.stdout;
+    stderr += result.stderr;
+    timedOut = timedOut || result.timedOut;
+    if (result.exitCode !== 0) {
+      exitCode = result.exitCode;
+      command = chunkCommand;
+      break;
+    }
+  }
+
+  return {
+    exitCode,
+    stdout,
+    stderr,
+    command,
+    durationMs: Date.now() - started,
+    timedOut,
+    fileCount: files.length,
+    chunkCount: chunks.length,
+  };
 }
 
 function resolveVerifyProfile(options: VerifyOptions): VerifyProfile {
@@ -505,11 +659,14 @@ export async function runVerifyCommand(
 
   if (options.skipTypecheck) {
     steps.push(skippedStep("typecheck", "--skip-typecheck"));
-  } else if (!scripts.typecheck) {
-    steps.push(skippedStep("typecheck", "no typecheck script in package.json"));
   } else {
-    printProgress(options, `verify: typecheck (${scriptTimeoutMs}ms timeout)`);
-    const typecheck = await runPackageScript(options.workspaceRoot, "typecheck", scriptTimeoutMs);
+    const typechecker = resolveTypechecker(options);
+    printProgress(options, `verify: typecheck (${typechecker}, ${scriptTimeoutMs}ms timeout)`);
+    const { result: typecheck, diagnostics: typecheckDiagnostics } = await runPreferredTypecheck(
+      options,
+      scripts,
+      scriptTimeoutMs,
+    );
     steps.push({
       name: "typecheck",
       ok: typecheck.exitCode === 0,
@@ -519,6 +676,7 @@ export async function runVerifyCommand(
       timedOut: typecheck.timedOut,
       failureKind: packageScriptFailureKind(typecheck),
     });
+    diagnostics.push(...typecheckDiagnostics);
     if (typecheck.timedOut) {
       diagnostics.push(timedOutDiagnostic("typecheck", scriptTimeoutMs));
     } else if (typecheck.exitCode !== 0) {
@@ -538,6 +696,25 @@ export async function runVerifyCommand(
     steps.push(...impact.steps);
     diagnostics.push(...impact.diagnostics);
     steps.push(skippedStep("tests", "--standard uses impact-selected tests; use --strict for the full test script"));
+  } else if (profile === "strict" && !options.fullTests) {
+    printProgress(options, `verify: tests (strict TestGraph, ${scriptTimeoutMs}ms timeout)`);
+    const tests = await runStrictGraphTests(options.workspaceRoot, scriptTimeoutMs);
+    steps.push({
+      name: "tests:testgraph-strict",
+      ok: tests.exitCode === 0,
+      exitCode: tests.exitCode,
+      command: tests.command,
+      durationMs: tests.durationMs,
+      timedOut: tests.timedOut,
+      failureKind: packageScriptFailureKind(tests),
+    });
+    if (tests.timedOut) {
+      diagnostics.push(timedOutDiagnostic("test", scriptTimeoutMs));
+    } else if (tests.exitCode !== 0) {
+      diagnostics.push(
+        packageScriptFailureDiagnostic("test", "FORGE_VERIFY_TESTS", tests),
+      );
+    }
   } else if (!scripts.test) {
     steps.push(skippedStep("tests", "no test script in package.json"));
   } else {

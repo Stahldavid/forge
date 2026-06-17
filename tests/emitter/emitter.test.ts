@@ -28,10 +28,9 @@ import {
 const GOLDEN_DIR = join(import.meta.dir, "fixtures", "golden");
 
 function readGolden(name: string, generatorVersion: string): string {
-  return readFileSync(join(GOLDEN_DIR, name), "utf8").replaceAll(
-    "__GENERATOR_VERSION__",
-    generatorVersion,
-  );
+  return readFileSync(join(GOLDEN_DIR, name), "utf8")
+    .replaceAll("\r\n", "\n")
+    .replaceAll("__GENERATOR_VERSION__", generatorVersion);
 }
 
 describe("Deterministic Emitter", () => {

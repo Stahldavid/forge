@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
+import { runCompilerBenchCommand } from "../../src/forge/bench.ts";
 import {
   runCheckCommand,
   runGenerateCommand,
@@ -179,6 +180,45 @@ describe("Forge CLI", () => {
       expect(parsed.command.options.skipEslint).toBe(true);
       expect(parsed.command.options.smoke).toBe(true);
       expect(parsed.command.options.scriptTimeoutMs).toBe(1234);
+    }
+  });
+
+  test("parseCli accepts verify typechecker and compiler bench", () => {
+    const verify = parseCli(["verify", "--typechecker", "auto", "--json"]);
+    expect(verify.errors).toEqual([]);
+    expect(verify.command?.kind).toBe("verify");
+    if (verify.command?.kind === "verify") {
+      expect(verify.command.options.typechecker).toBe("auto");
+    }
+
+    const bench = parseCli(["bench", "compiler", "--json", "--iterations", "2", "--warmups", "0", "--concurrency", "3"]);
+    expect(bench.errors).toEqual([]);
+    expect(bench.command?.kind).toBe("bench");
+    if (bench.command?.kind === "bench") {
+      expect(bench.command.options.iterations).toBe(2);
+      expect(bench.command.options.warmups).toBe(0);
+      expect(bench.command.options.concurrency).toBe(3);
+    }
+  });
+
+  test("compiler bench reports public phase timings", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-bench-compiler");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      const result = await runCompilerBenchCommand({
+        subcommand: "compiler",
+        workspaceRoot: workspace,
+        json: true,
+        iterations: 1,
+        warmups: 0,
+        concurrency: 2,
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.results).toHaveLength(1);
+      expect(result.summary.medianMs).toBeGreaterThanOrEqual(0);
+      expect(result.results[0]?.phases.packageGraphMs).toBeGreaterThanOrEqual(0);
+    } finally {
+      cleanupWorkspace(workspace);
     }
   });
 

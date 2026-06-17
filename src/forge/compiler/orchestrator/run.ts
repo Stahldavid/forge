@@ -25,6 +25,7 @@ import {
   formatCompileTimings,
   isCompileProfileEnabled,
   recordCompileTimings,
+  shouldPrintCompileProfile,
 } from "./profile.ts";
 import { plan } from "./plan.ts";
 import {
@@ -130,18 +131,27 @@ async function runUnlocked(options: GenerateOptions): Promise<GenerateResult> {
 
   const pkgCompiler = new PackageGraphCompiler();
 
-  const graphStarted = profileEnabled ? performance.now() : 0;
-  const [appGraph, pkgResult] = await Promise.all([
-    buildAppGraphForSession(session),
-    pkgCompiler.build(ctx.dependencies, {
+  let appGraphMs = 0;
+  let packageGraphMs = 0;
+  const appGraphPromise = (async () => {
+    const started = profileEnabled ? performance.now() : 0;
+    const graph = await buildAppGraphForSession(session);
+    appGraphMs = profileEnabled ? performance.now() - started : 0;
+    return graph;
+  })();
+  const packageGraphPromise = (async () => {
+    const started = profileEnabled ? performance.now() : 0;
+    const result = await pkgCompiler.build(ctx.dependencies, {
       runtimeInspect: false,
       resolutionMode: "nodenext",
       cacheDir: ctx.cacheDir,
       concurrency: options.concurrency,
       lockfileHash: ctx.lockfileHash,
-    }),
-  ]);
-  const graphMs = profileEnabled ? performance.now() - graphStarted : 0;
+    });
+    packageGraphMs = profileEnabled ? performance.now() - started : 0;
+    return result;
+  })();
+  const [appGraph, pkgResult] = await Promise.all([appGraphPromise, packageGraphPromise]);
 
   const classified = classifyPackages(pkgResult.graph);
 
@@ -218,23 +228,25 @@ async function runUnlocked(options: GenerateOptions): Promise<GenerateResult> {
     const totalMs = performance.now() - runStarted;
     recordCompileTimings({
       discoverMs,
-      appGraphMs: graphMs,
-      packageGraphMs: 0,
+      appGraphMs,
+      packageGraphMs,
       planMs,
       emitMs,
       totalMs,
     });
     const fsProfile = getFileSystemProfile();
-    process.stderr.write(`${formatCompileTimings({
-      discoverMs,
-      appGraphMs: graphMs,
-      packageGraphMs: 0,
-      planMs,
-      emitMs,
-      totalMs,
-    })}\n`);
-    if (fsProfile) {
-      process.stderr.write(`${formatFileSystemProfile(fsProfile)}\n`);
+    if (shouldPrintCompileProfile()) {
+      process.stderr.write(`${formatCompileTimings({
+        discoverMs,
+        appGraphMs,
+        packageGraphMs,
+        planMs,
+        emitMs,
+        totalMs,
+      })}\n`);
+      if (fsProfile) {
+        process.stderr.write(`${formatFileSystemProfile(fsProfile)}\n`);
+      }
     }
   }
 

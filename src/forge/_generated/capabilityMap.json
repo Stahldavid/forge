@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.5 input=622ec288588000a575ed155ad05aeada86dd21a51fa5d04404453dd81ada8886 content=5eecf85fdb38df8ef69d70c5fa0ca60e70a9399c286e86f73b60bda0721257ec
-{"diagnostics":[],"entries":[],"generatorVersion":"0.1.0-alpha.5","project":{"name":"forgeos","type":"forgeos-app"},"schemaVersion":"0.1.0","summary":{"backendOnly":0,"covered":0,"frontendOnly":0,"warnings":0}}
+// @forge-generated generator=0.1.0-alpha.8 input=f772dc4340a6b12abe01e0d960539c3f9ee1708c106f8d98108b06b0dc708960 content=a769d4e99697c0b0cd2830a1b390a5321a647a4fa4f317fadf44e9c204f8443e
+{"diagnostics":[],"entries":[],"generatorVersion":"0.1.0-alpha.8","project":{"name":"forgeos","type":"forgeos-app"},"schemaVersion":"0.1.0","summary":{"backendOnly":0,"covered":0,"frontendOnly":0,"warnings":0}}

@@ -10,6 +10,12 @@ export interface CompilePhaseTimings {
 let lastTimings: CompilePhaseTimings | null = null;
 
 export function isCompileProfileEnabled(): boolean {
+  return process.env.FORGE_PROFILE === "1" ||
+    process.env.FORGE_PROFILE === "true" ||
+    process.env.FORGE_PROFILE === "silent";
+}
+
+export function shouldPrintCompileProfile(): boolean {
   return process.env.FORGE_PROFILE === "1" || process.env.FORGE_PROFILE === "true";
 }
 

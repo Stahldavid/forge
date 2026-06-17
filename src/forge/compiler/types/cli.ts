@@ -146,6 +146,8 @@ export interface VerifyOptions {
   smoke?: boolean;
   standard?: boolean;
   scriptTimeoutMs?: number;
+  typechecker?: "tsc" | "tsgo" | "auto";
+  fullTests?: boolean;
 }
 
 export type VerifyProfile = "default" | "smoke" | "standard" | "strict" | "changed";
