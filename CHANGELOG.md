@@ -1,5 +1,13 @@
 # forgeos
 
+## 0.1.0-alpha.9
+
+### Patch Changes
+
+- Reuse compiler classifier package signals across export classification, dropping repeated package signal scans.
+- Reuse serialized graph JSON when rendering the largest generated TypeScript graph artifacts.
+- Keep generated Forge artifacts aligned with the `0.1.0-alpha.9` compiler/runtime version.
+
 ## 0.1.0-alpha.8
 
 ### Patch Changes

@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.8 input=3fb619bf835f25bb4ff97aa048ec14e2b5079a13c310f91d21f362a0ba16ae7d content=0dadd9b939a34213d9e91c6a0794c81dd4551535b7ad587b4b86cde72e6853dd
-{"generatorVersion":"0.1.0-alpha.8","schemaVersion":"1.0.0","sinks":[{"id":"local","kind":"local"}]}
+// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=ee918f7645d56a6d7034a6a8981b5c21638786e5bb472c664a2649f1197a891e
+{"generatorVersion":"0.1.0-alpha.9","schemaVersion":"1.0.0","sinks":[{"id":"local","kind":"local"}]}

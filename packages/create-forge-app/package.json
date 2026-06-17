@@ -1,6 +1,6 @@
 {
   "name": "create-forgeos-app",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Create a ForgeOS app from the command line.",
   "type": "module",
   "bin": {

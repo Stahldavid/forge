@@ -1,11 +1,11 @@
-// @forge-generated generator=0.1.0-alpha.8 input=3fb619bf835f25bb4ff97aa048ec14e2b5079a13c310f91d21f362a0ba16ae7d content=934549fd029800465a90894996872cbad5241731931cbb02bb0e3e4e8b5b91ef
+// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=d49a8bf8ba1ca55ec4e78a5183a83fc99042ebd6823a2f50f6aba70f83218a77
 export const aiRegistry = {
   "agents": [],
   "analyzerVersion": "1.1.0",
   "diagnostics": [],
   "generations": [],
-  "generatorVersion": "0.1.0-alpha.8",
-  "inputHash": "bb8cc8d5ac75dce8d2558ce811fe0ca9738948ea9913115fca9a2c81c1b5f2c9",
+  "generatorVersion": "0.1.0-alpha.9",
+  "inputHash": "1a967bebf548f09dd0be1de797f914d0aed24719161bdfc078383d9e576f6ec3",
   "providers": [
     {
       "id": "anthropic",
