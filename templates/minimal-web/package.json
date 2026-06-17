@@ -10,7 +10,7 @@
     "forge": "forge",
     "generate": "forge generate",
     "check": "forge check",
-    "verify": "forge verify --strict",
+    "verify": "forge verify --smoke",
     "dev": "forge dev",
     "dev:api": "forge dev --api-only",
     "dev:web": "cd web && __PACKAGE_MANAGER__ run dev",

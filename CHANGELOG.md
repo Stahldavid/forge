@@ -1,9 +1,22 @@
 # forgeos
 
+## Unreleased
+
+Launch polish:
+
+- Fixed `forge run <external-command> --args ...` so CLI arguments reach the external runtime bridge.
+- Added direct external query CLI support through `forge query <service.query> --args ...`.
+- Emit generated `.json` artifacts as pure JSON while keeping deterministic headers on code/text artifacts.
+- Relaxed the `minimal-web` template verify script to `forge verify --smoke` and added the missing `check` script to `b2b-support-web`.
+- Updated public protocol/changelog docs for the external runtime and Go adapter alpha line.
+
 ## 0.1.0-alpha.9
 
 ### Patch Changes
 
+- Added the Forge external runtime protocol bridge for manifest-backed commands and queries.
+- Added the Go adapter MVP with a real `go-billing` conformance example.
+- Emitted external service metadata into inspect/API/agent artifacts, including `needsApproval` for agent tools.
 - Reuse compiler classifier package signals across export classification, dropping repeated package signal scans.
 - Reuse serialized graph JSON when rendering the largest generated TypeScript graph artifacts.
 - Keep generated Forge artifacts aligned with the `0.1.0-alpha.9` compiler/runtime version.
@@ -25,15 +38,6 @@
 ### Patch Changes
 
 - [`c30f906`](https://github.com/Stahldavid/forge/commit/c30f9069c99ac747ce143ab5fbcbf13912ed8760) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add CLI version output, align create-app help with package metadata, and add release dependency audit evidence.
-
-## Unreleased
-
-Release and packaging hardening:
-
-- Added `forge --version` / `forge --version --json`.
-- Updated `create-forgeos-app` help to read the wrapper package version instead of a hardcoded string and bumped the wrapper to `0.1.0-alpha.2`.
-- Added dependency vulnerability evidence with an explicit waiver file and CI release gate.
-- Updated generated web template dependencies to current Vite/plugin-react and Next majors.
 
 ## 0.1.0-alpha.5
 

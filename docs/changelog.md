@@ -6,6 +6,39 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+Launch polish:
+
+- Fixed `forge run <external-command> --args ...` so CLI arguments reach the external runtime bridge.
+- Added direct external query CLI support through `forge query <service.query> --args ...`.
+- Emit generated `.json` artifacts as pure JSON while keeping deterministic headers on code/text artifacts.
+- Relaxed the `minimal-web` template verify script to `forge verify --smoke` and added the missing `check` script to `b2b-support-web`.
+- Updated public protocol/changelog docs for the external runtime and Go adapter alpha line.
+
+## 0.1.0-alpha.9
+
+Compiler, external runtime, and Go adapter:
+
+- Added the Forge external runtime protocol bridge for manifest-backed commands and queries.
+- Added the Go adapter MVP with a real `go-billing` conformance example.
+- Emitted external service metadata into inspect/API/agent artifacts, including `needsApproval` for agent tools.
+- Reuse compiler classifier package signals across export classification, dropping repeated package signal scans.
+- Reuse serialized graph JSON when rendering the largest generated TypeScript graph artifacts.
+- Keep generated Forge artifacts aligned with the `0.1.0-alpha.9` compiler/runtime version.
+
+## 0.1.0-alpha.8
+
+Publishing:
+
+- Publish prerelease packages through the ForgeOS alpha publisher so npm dist-tags stay aligned.
+
+## 0.1.0-alpha.7
+
+Publishing:
+
+- Keep npm prerelease publishing on the public alpha dist-tag.
+
+## 0.1.0-alpha.6
+
 Release and packaging hardening:
 
 - Added `forge --version` / `forge --version --json`.

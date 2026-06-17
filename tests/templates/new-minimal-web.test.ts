@@ -109,6 +109,7 @@ describe("minimal-web template", () => {
       expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
       expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@alpha"');
       expect(read(project, "package.json")).not.toContain('"forge": "latest"');
+      expect(read(project, "package.json")).toContain('"verify": "forge verify --smoke"');
       expect(read(project, "package.json")).toContain('"packageManager": "bun@1.3.14"');
       expect(read(project, "web/package.json")).not.toContain("latest");
       expect(read(project, "web/package.json")).toContain('"vite": "^8.0.16"');

@@ -59,11 +59,16 @@ export function renderBody(file: EmitFile): string {
  */
 export function render(file: EmitFile, context: RenderContext): string {
   const body = renderBody(file);
+  const kind = detectArtifactKind(file.path);
 
   if (file.contentHash !== hashStable(body)) {
     throw new Error(
       `EmitFile contentHash mismatch for ${file.path}: expected ${hashStable(body)}, got ${file.contentHash}`,
     );
+  }
+
+  if (kind === "json") {
+    return body;
   }
 
   return prependDeterministicHeader(body, {

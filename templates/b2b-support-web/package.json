@@ -9,6 +9,7 @@
   "scripts": {
     "forge": "forge",
     "generate": "forge generate",
+    "check": "forge check",
     "verify": "forge verify --strict",
     "self-host:compose": "forge self-host compose",
     "self-host:check": "forge self-host check",

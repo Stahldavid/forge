@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { runRunCommand } from "../../src/forge/cli/run.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
@@ -15,8 +15,25 @@ import {
   startClientDevServer,
 } from "../client/helpers.ts";
 
+const FORGE_CLI = resolve(process.cwd(), "bin", "forge.mjs");
+
 function readJson<T>(root: string, relative: string): T {
   return JSON.parse(stripDeterministicHeader(readFileSync(join(root, relative), "utf8"))) as T;
+}
+
+async function runForgeCli(root: string, args: string[]): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const proc = Bun.spawn(["node", FORGE_CLI, ...args], {
+    cwd: root,
+    stdout: "pipe",
+    stderr: "pipe",
+    env: process.env,
+  });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  return { exitCode, stdout, stderr };
 }
 
 async function readBody(request: IncomingMessage): Promise<string> {
@@ -167,6 +184,42 @@ describe("external runtime bridge", () => {
         tenantHeader: tenantA,
       });
 
+      const commandCli = await runForgeCli(root, [
+        "run",
+        "billing.createInvoice",
+        "--args",
+        JSON.stringify({ title: "Real CLI invoice" }),
+        "--user-id",
+        "u1",
+        "--tenant-id",
+        tenantA,
+        "--role",
+        "admin",
+        "--json",
+      ]);
+      expect(commandCli.exitCode, commandCli.stderr).toBe(0);
+      expect(JSON.parse(commandCli.stdout).run.result).toMatchObject({
+        created: true,
+        title: "Real CLI invoice",
+        tenantHeader: tenantA,
+      });
+
+      const queryCli = await runForgeCli(root, [
+        "query",
+        "billing.listInvoices",
+        "--args",
+        JSON.stringify({}),
+        "--user-id",
+        "u1",
+        "--tenant-id",
+        tenantA,
+        "--role",
+        "admin",
+        "--json",
+      ]);
+      expect(queryCli.exitCode, queryCli.stderr).toBe(0);
+      expect(JSON.parse(queryCli.stdout).run.result).toEqual([{ id: "inv_1", tenant: tenantA }]);
+
       const handle = await startClientDevServer(root);
       try {
         const denied = await fetch(`${handle.url}/external/billing/commands/createInvoice`, {
@@ -201,6 +254,8 @@ describe("external runtime bridge", () => {
         expect(queryResult).toEqual([{ id: "inv_1", tenant: tenantA }]);
         expect(external.calls.map((call) => call.path)).toEqual([
           "/invoices/create",
+          "/invoices/create",
+          "/invoices/list",
           "/invoices/create",
           "/invoices/list",
         ]);

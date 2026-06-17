@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=ffd5e95a6107ad58380a0a171f1602594eca9c5bef9feb12f9d4568013e3e9d2
+// @forge-generated generator=0.1.0-alpha.9 input=ca868c8ec6ee8cac0b8a654cbdfef0cc44cdb8d68fa7e924cc6237ac0241a710 content=ffd5e95a6107ad58380a0a171f1602594eca9c5bef9feb12f9d4568013e3e9d2
 export const authConfig = {
   "algorithmsEnv": "FORGE_AUTH_ALGORITHMS",
   "audienceEnv": "FORGE_AUTH_AUDIENCE",

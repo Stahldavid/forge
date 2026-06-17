@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=ee392737c9b303f31760703df861e9531e257c16ea13ca016405233cbdef540b
 {"routes":[{"name":"home","path":"/","uses":{"commands":[],"components":[],"liveQueries":[],"queries":[]}}],"schemaVersion":"0.1.0"}

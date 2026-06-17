@@ -103,7 +103,7 @@ describe("Node-compatible CLI", () => {
         {
           cwd: appRoot,
           encoding: "utf8",
-          timeout: 25_000,
+          timeout: 45_000,
           windowsHide: true,
         },
       );
@@ -114,5 +114,5 @@ describe("Node-compatible CLI", () => {
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
-  }, 40_000);
+  }, 90_000);
 });

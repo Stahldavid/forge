@@ -79,7 +79,7 @@ describe("Property 1: Determinism", () => {
     );
   });
 
-  test("rendered artifacts include a timestamp-free deterministic header", () => {
+  test("rendered code artifacts include a timestamp-free deterministic header while JSON stays parseable", () => {
     const plan = makeSampleEmitPlan();
     const context = {
       generatorVersion: plan.lock.generatorVersion,
@@ -88,7 +88,12 @@ describe("Property 1: Determinism", () => {
 
     for (const file of plan.files) {
       const rendered = render(file, context);
-      expect(rendered.startsWith("// @forge-generated")).toBe(true);
+      if (file.path.endsWith(".json")) {
+        expect(rendered.startsWith("// @forge-generated")).toBe(false);
+        expect(() => JSON.parse(rendered)).not.toThrow();
+      } else {
+        expect(rendered.startsWith("// @forge-generated")).toBe(true);
+      }
       expect(rendered).not.toMatch(/timestamp/i);
       expect(rendered).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
       expect(formatDeterministicHeader).toBeDefined();

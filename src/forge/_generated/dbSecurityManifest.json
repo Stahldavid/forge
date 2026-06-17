@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=2990ae1c7d12671f2204605202c9e7d982b0156793644525ae0f7df2c0e18f6e
 {"authoritativeAdapters":["postgres"],"diagnostics":[],"nonAuthoritativeAdapters":["pglite","memory"],"provider":"postgres","schemaVersion":"0.1.0","tables":[],"tenantIsolation":"postgres-rls"}

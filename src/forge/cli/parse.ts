@@ -1687,6 +1687,15 @@ export function parseCli(argv: string[]): ParsedCli {
 
       const name = rest[0];
       const list = parseFlag(argv, "--list") || !name;
+      const argsRaw = parseOptionValue(argv, "--args");
+      let args: unknown = {};
+      if (argsRaw !== undefined) {
+        try {
+          args = JSON.parse(argsRaw);
+        } catch {
+          errors.push("--args must be valid JSON");
+        }
+      }
       return {
         command: {
           kind: "run",
@@ -1699,19 +1708,30 @@ export function parseCli(argv: string[]): ParsedCli {
           role: parseOptionValue(argv, "--role"),
           envFile: parseOptionValue(argv, "--env-file"),
           workspaceRoot,
+          args,
         },
         workspaceRoot,
         errors,
       };
     }
     case "query": {
-      const subcommand = (rest[0] ?? "list") as QuerySubcommand;
+      const requested = rest[0] as QuerySubcommand | undefined;
+      const subcommand =
+        !requested
+          ? "list"
+          : ["list", "run"].includes(requested)
+            ? requested
+            : "run";
       if (!["list", "run"].includes(subcommand)) {
         errors.push("forge query requires subcommand: list or run");
         return { command: null, workspaceRoot, errors };
       }
 
-      const queryName = subcommand === "run" ? rest[1] : undefined;
+      const queryName = subcommand === "run"
+        ? requested === "run"
+          ? rest[1]
+          : rest[0]
+        : undefined;
       if (subcommand === "run" && !queryName) {
         errors.push("forge query run requires a query name");
       }

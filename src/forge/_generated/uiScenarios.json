@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=ac896f93ba688a592c18a57978caa8e810729173e6e8ddb8e2d74d50cd8c9fd6
 {"scenarios":[{"cost":"browser","description":"Load the home route and verify the app renders.","name":"home-loads","requires":{"commands":[],"components":[],"liveQueries":[],"policies":[],"queries":[],"workflows":[]},"route":"/","steps":[{"kind":"goto","path":"/"},{"kind":"expectVisible","selector":"[data-forge-testid='app-root'], body"}]}],"schemaVersion":"0.1.0"}

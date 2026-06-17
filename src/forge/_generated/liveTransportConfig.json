@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=b8074453717d4c465dd2928bfd4ed51ecbf4d9ce9bff5d20e63c8a026f4b1cc8
 {"defaultTransport":"sse","schemaVersion":"0.1.0","selfHostEnv":{"FORGE_LIVE_HEARTBEAT_MS":"15000","FORGE_LIVE_INVALIDATION":"polling,postgres-notify","FORGE_LIVE_POLL_INTERVAL_MS":"1000","FORGE_LIVE_TRANSPORT":"sse"},"transports":{"sse":{"endpoint":"/live/:name","heartbeat":true,"multiplexEndpoint":"/live/stream","oneConnectionPerClientRecommended":true}}}

@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=870b6768891672a94c3e574e68fd5ece0e599f3ecda2a3971209781f35797c56
 {"defaultBaseUrl":"http://127.0.0.1:3000","framework":"unknown","generatorVersion":"0.1.0-alpha.9","routes":[{"name":"home","path":"/","uses":{"commands":[],"components":[],"liveQueries":[],"queries":[]}}],"runtimeUrl":"http://127.0.0.1:3765","scenarios":["home-loads"],"schemaVersion":"0.1.0","selectors":["[data-forge-testid='app-root'], body"],"webRoot":""}

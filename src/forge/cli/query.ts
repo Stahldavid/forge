@@ -1,6 +1,10 @@
 import { listQueries, runQuery, type ListQueriesResult, type RunQueryResult } from "../runtime/query/run-query.ts";
 import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
+import {
+  resolveExternalQualifiedName,
+  runExternalEntry,
+} from "../runtime/external/bridge.ts";
 
 export type QuerySubcommand = "list" | "run";
 
@@ -51,6 +55,34 @@ export async function runQueryCommand(
     tenantId: options.tenantId,
     role: options.role,
   });
+
+  const external = resolveExternalQualifiedName(options.workspaceRoot, options.name, "query");
+  if (external) {
+    const run = await runExternalEntry(options.workspaceRoot, {
+      kind: "query",
+      serviceName: external.serviceName,
+      entryName: external.entryName,
+      args: options.args,
+      auth,
+    });
+    return {
+      run: {
+        ok: run.ok,
+        result: run.result,
+        query: {
+          name: `${external.serviceName}.${external.entryName}`,
+          qualifiedName: `${external.serviceName}.${external.entryName}`,
+          file: `external:${external.serviceName}`,
+          symbolId: `external:${external.serviceName}:query:${external.entryName}`,
+          moduleId: `external:${external.serviceName}`,
+        },
+        diagnostics: run.diagnostics,
+        exitCode: run.exitCode,
+        traceId: run.traceId,
+      },
+      exitCode: run.exitCode,
+    };
+  }
 
   const run = await runQuery(options.workspaceRoot, options.name, {
     args: options.args,

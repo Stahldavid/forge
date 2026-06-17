@@ -104,6 +104,7 @@ name:
 ```bash
 forge run billing.createInvoice --args '{"title":"Invoice"}'
 forge query billing.listInvoices --args '{}'
+forge run query billing.listInvoices --args '{}'
 ```
 
 ## Runtime Bridge

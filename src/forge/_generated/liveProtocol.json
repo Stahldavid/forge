@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=2547500ca2a41f806de71a91fb967c7d242fadc9f669a903f44d48ae6447fb66
 {"messages":["hello","snapshot","error","heartbeat","reset"],"protocolVersion":"0.1.0","resume":{"queryParam":"lastRevision","sseLastEventId":true},"schemaVersion":"0.1.0","snapshot":{"fullSnapshotOnly":true,"includesReleaseId":true,"includesRevision":true}}

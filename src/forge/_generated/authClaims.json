@@ -1,2 +1,1 @@
-// @forge-generated generator=0.1.0-alpha.9 input=f8247c48f65f765e34269321a93a803b5c3f6b43c92841fd1bc009e13eee2a31 content=c9bda2f6e9efc218ecd5cf8504fc1115b75c98927021cd1a6a48b49c7df32798
 {"claims":{"email":"email","name":"name","permissions":"permissions","role":"role","roles":"roles","tenantId":"tenant_id","userId":"sub"},"schemaVersion":"0.1.0"}
