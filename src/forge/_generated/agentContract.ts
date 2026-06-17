@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=3fea5776b7364da83dd9f9acdb44c47be6f61c0298ffd55691634de86104fbff
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=fa53516b0bd2951f6a73509852b12a4f2f9fd084c325f96dd77464d3c136cd93
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -53,6 +53,8 @@ export const agentContract = {
     ],
     "transport": {
       "commands": "POST /commands/:name",
+      "externalCommands": "POST /external/:service/commands/:name",
+      "externalQueries": "POST /external/:service/queries/:name",
       "liveQueries": "GET /live/:name",
       "queries": "POST /queries/:name"
     }
@@ -5212,6 +5214,7 @@ export const agentContract = {
     ],
     "selfHost": true
   },
+  "externalServices": [],
   "frontend": {
     "bridgeFiles": [],
     "clientBindings": [],

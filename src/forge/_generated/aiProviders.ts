@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=f64ed237a464321c0b04236ca0f6eba798e18892ac6eb30f02fbaac1bcedb1e7
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=f64ed237a464321c0b04236ca0f6eba798e18892ac6eb30f02fbaac1bcedb1e7
 export const aiProviders = {
   "providers": [
     {

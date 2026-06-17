@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=efbb16b871b81db953a2a14261936545e57957c7268cd3a41605ea242c7aed5b
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=50beac3960fdef92435ab3dcb488441826f800dbb0d8c277264459d633ee02a3
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.1+tsconfig:a3c21dc3ef9173472f34345ed6d7152d180f9d7bcf6fabd13624e4a4204f9cb0",
   "edges": [],
   "generatorVersion": "0.1.0-alpha.9",
-  "inputHash": "2f53a233021f3037a79361f7bde115a7f17b679bf0a0d057988f1e7484dfc95d",
+  "inputHash": "3c3514f557036dba1f0c2c3ac97dacaba24222f79a6b24af575857a0090ca3da",
   "moduleGraph": {
     "nodes": [
       {
@@ -445,274 +445,288 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 2062,
-              "start": 2049
+              "end": 2088,
+              "start": 2045
+            },
+            "toModuleId": "59eb48e29604975c931719cdbc49347952c152c53068af5a527ec6def7163bff"
+          },
+          {
+            "span": {
+              "end": 2189,
+              "start": 2158
+            },
+            "toModuleId": "10089508816590796e512aa663bfa0c9aec767a336e2c166005f0794e74d5a58"
+          },
+          {
+            "span": {
+              "end": 2306,
+              "start": 2293
             },
             "toModuleId": "43b1d62e0b2f14737834bb0ce94f03683808f87fcdf8735d23b7d2757b767688"
           },
           {
             "span": {
-              "end": 2176,
-              "start": 2166
+              "end": 2420,
+              "start": 2410
             },
             "toModuleId": "344fde6f2f26dbb6d2c186a772dfeeba184cb04dca44dda0af27dd92825beef4"
           },
           {
             "span": {
-              "end": 2219,
-              "start": 2209
+              "end": 2463,
+              "start": 2453
             },
             "toModuleId": "aa50923b69999983b16597f383589fff028ebe3294050e34d91b5d1b86acb623"
           },
           {
             "span": {
-              "end": 2297,
-              "start": 2259
+              "end": 2541,
+              "start": 2503
             },
             "toModuleId": "8678528a60437818c73f5822ae95891388141210a5c48ebee6668ebbba26238e"
           },
           {
             "span": {
-              "end": 2367,
-              "start": 2358
+              "end": 2611,
+              "start": 2602
             },
             "toModuleId": "bde2ce165af50cb4cbec4712b3b44d5e84d128a57134de8f6630c93e9dad9299"
           },
           {
             "span": {
-              "end": 2453,
-              "start": 2440
+              "end": 2697,
+              "start": 2684
             },
             "toModuleId": "004d6d451ce52b8ef759dd03d467e207cac0a475a87db97558380b427ca00e2f"
           },
           {
             "span": {
-              "end": 2558,
-              "start": 2543
+              "end": 2802,
+              "start": 2787
             },
             "toModuleId": "dad6fae4970fa2b04ee659c9d5ef68742033980a47c886d1499d9b3d0bbfbd5c"
           },
           {
             "span": {
-              "end": 2667,
-              "start": 2651
+              "end": 2911,
+              "start": 2895
             },
             "toModuleId": "119a5f170ce50375ef50ab0ed0c9c1ca20f1a04490dddba264b22f02a580a455"
           },
           {
             "span": {
-              "end": 2764,
-              "start": 2751
+              "end": 3008,
+              "start": 2995
             },
             "toModuleId": "3d24067a2be1a95c3d3df9dc44c3ccb3855f7bd7c298fe4187e3489fff0e6199"
           },
           {
             "span": {
-              "end": 2920,
-              "start": 2906
+              "end": 3164,
+              "start": 3150
             },
             "toModuleId": "ff3f46f01c461e3cffd8ae00ed2ce9aa0dda58d3c6978891694317156cd529c9"
           },
           {
             "span": {
-              "end": 2990,
-              "start": 2981
+              "end": 3234,
+              "start": 3225
             },
             "toModuleId": "f26fd3c882388a6c64955ae46270336d64bfa202a441ad9c0fe7d5b6ad233380"
           },
           {
             "span": {
-              "end": 3049,
-              "start": 3039
+              "end": 3293,
+              "start": 3283
             },
             "toModuleId": "4b98df43b6f2e925f5188c398f7a6b93aaa3b06004918a53a4686555da05b0e8"
           },
           {
             "span": {
-              "end": 3114,
-              "start": 3102
+              "end": 3358,
+              "start": 3346
             },
             "toModuleId": "73b46e4b3c48bc3ac28d46603b49fbe8b0581babffe4cdb34d0b8ecd4f510d69"
           },
           {
             "span": {
-              "end": 3161,
-              "start": 3149
+              "end": 3405,
+              "start": 3393
             },
             "toModuleId": "d8079c70db0816d83e6f26db4ba0b9f59302730bde71f28f592e454f881a8a02"
           },
           {
             "span": {
-              "end": 3210,
-              "start": 3197
+              "end": 3454,
+              "start": 3441
             },
             "toModuleId": "a4ca1de821975a1974a9d662fababe02117822769f70dff4df47e4e858c225c2"
           },
           {
             "span": {
-              "end": 3285,
-              "start": 3269
+              "end": 3529,
+              "start": 3513
             },
             "toModuleId": "15966efdf6e146d85490341fb6add1ca37846642bf29ab6b2b190f55e724ed28"
           },
           {
             "span": {
-              "end": 3381,
-              "start": 3360
+              "end": 3625,
+              "start": 3604
             },
             "toModuleId": "bd228c2d27bf80c65dcf2b3a08a1d309b64a9383381896f098fd091140eb1a02"
           },
           {
             "span": {
-              "end": 3478,
-              "start": 3465
+              "end": 3722,
+              "start": 3709
             },
             "toModuleId": "5cdef317a623cde486245204f96e10576fabd8d00dfb54de6f812eb08f729bed"
           },
           {
             "span": {
-              "end": 3679,
-              "start": 3665
+              "end": 3923,
+              "start": 3909
             },
             "toModuleId": "04f456a5d8e3f33853ffe227933d0755ed70c98545c74685d4cc2a5a55f80019"
           },
           {
             "span": {
-              "end": 3757,
-              "start": 3746
+              "end": 4001,
+              "start": 3990
             },
             "toModuleId": "dc4c4bebfaa6a59ec52c4a212c977d17b9633558c325b58952af0d2155aa1efe"
           },
           {
             "span": {
-              "end": 3831,
-              "start": 3821
+              "end": 4075,
+              "start": 4065
             },
             "toModuleId": "830f97bfc0ceffdb444e0a5521b46fd33df891cc09a6278357e196cde1057222"
           },
           {
             "span": {
-              "end": 3936,
-              "start": 3921
+              "end": 4180,
+              "start": 4165
             },
             "toModuleId": "44d6217623ddbcdbae9b402cf7c0bdd7370f159cdd8a594b9a448e0fe46be2b6"
           },
           {
             "span": {
-              "end": 4014,
-              "start": 4003
+              "end": 4258,
+              "start": 4247
             },
             "toModuleId": "4429f23081e1f99f3e0011b2ccd73a7d4b9818891cb42cfd66f110c55c229571"
           },
           {
             "span": {
-              "end": 4115,
-              "start": 4101
+              "end": 4359,
+              "start": 4345
             },
             "toModuleId": "14c261d3b68bc28bdd9d5c833a0e9a9560883509474d87d06893c69b3aeca17a"
           },
           {
             "span": {
-              "end": 4193,
-              "start": 4182
+              "end": 4437,
+              "start": 4426
             },
             "toModuleId": "dcdf153cf24b540c6383f20e8c3bafac737fba78f71a4713d3ee1b5a71bd5b4c"
           },
           {
             "span": {
-              "end": 4283,
-              "start": 4269
+              "end": 4527,
+              "start": 4513
             },
             "toModuleId": "099b8363d1e78cb6d3060d5070f5b0768ee6d9a71bf60b26ccb93076688947b7"
           },
           {
             "span": {
-              "end": 4377,
-              "start": 4362
+              "end": 4621,
+              "start": 4606
             },
             "toModuleId": "b0cfffb434574f65dd1bd939e788288f5614631c6ee58b05b1632f9b359d78fb"
           },
           {
             "span": {
-              "end": 4500,
-              "start": 4480
+              "end": 4744,
+              "start": 4724
             },
             "toModuleId": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
           },
           {
             "span": {
-              "end": 4604,
-              "start": 4584
+              "end": 4848,
+              "start": 4828
             },
             "toModuleId": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884"
           },
           {
             "span": {
-              "end": 4711,
-              "start": 4691
+              "end": 4955,
+              "start": 4935
             },
             "toModuleId": "ba41b66fc5fb60c81f4ed6eeddda3f761f6dc06013112c5b7baa2e7a038c9735"
           },
           {
             "span": {
-              "end": 4820,
-              "start": 4792
+              "end": 5064,
+              "start": 5036
             },
             "toModuleId": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
           },
           {
             "span": {
-              "end": 4965,
-              "start": 4945
+              "end": 5209,
+              "start": 5189
             },
             "toModuleId": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
           },
           {
             "span": {
-              "end": 5074,
-              "start": 5058
+              "end": 5318,
+              "start": 5302
             },
             "toModuleId": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
           },
           {
             "span": {
-              "end": 5198,
-              "start": 5186
+              "end": 5442,
+              "start": 5430
             },
             "toModuleId": "9a4ddb5a6cc116b1a18d2f14dc77ecb01c2915d46a15cd6712a55f22435108b2"
           },
           {
             "span": {
-              "end": 5243,
-              "start": 5232
+              "end": 5487,
+              "start": 5476
             },
             "toModuleId": "3fe52c3e22858aa259c5c5107efba290904b11240d7376d60cea1269bf504640"
           },
           {
             "span": {
-              "end": 5302,
-              "start": 5271
+              "end": 5546,
+              "start": 5515
             },
             "toModuleId": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292"
           },
           {
             "span": {
-              "end": 5368,
-              "start": 5340
+              "end": 5612,
+              "start": 5584
             },
             "toModuleId": "f34e7ea37dce9d8303d66a65fc172b9d6fc9d9c879c8caa0ea988316113daa50"
           },
           {
             "span": {
-              "end": 5430,
-              "start": 5406
+              "end": 5674,
+              "start": 5650
             },
             "toModuleId": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
           },
           {
             "span": {
-              "end": 5493,
-              "start": 5478
+              "end": 5737,
+              "start": 5722
             },
             "toModuleId": "ab9e14c96c9fcf448674c6526a95ea384d8985fcd7f742f3b5d2f906c6cad895"
           }
@@ -1226,6 +1240,120 @@ export const appGraph = {
               "start": 51
             },
             "toModuleId": "91b5e91b6d56849ac57c9de5b1fc4dbd049ea91359f5d51a62ae520e031408b8"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/runtime/external/bridge.ts",
+        "id": "10089508816590796e512aa663bfa0c9aec767a336e2c166005f0794e74d5a58",
+        "localImports": [
+          {
+            "span": {
+              "end": 149,
+              "start": 111
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 350,
+              "start": 313
+            },
+            "toModuleId": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+          },
+          {
+            "span": {
+              "end": 419,
+              "start": 382
+            },
+            "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
+          },
+          {
+            "span": {
+              "end": 480,
+              "start": 452
+            },
+            "toModuleId": "8dc374a57e700d706f2584353e9217fff49f4f1097d92ec070e846bfc969ab11"
+          },
+          {
+            "span": {
+              "end": 560,
+              "start": 523
+            },
+            "toModuleId": "4792854bc77ff90623f63ddf2ec86eb6093131b82f500d1dec6ae8a9d1a4ac9f"
+          },
+          {
+            "span": {
+              "end": 708,
+              "start": 665
+            },
+            "toModuleId": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
+          },
+          {
+            "span": {
+              "end": 778,
+              "start": 742
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 857,
+              "start": 817
+            },
+            "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
+          },
+          {
+            "span": {
+              "end": 932,
+              "start": 893
+            },
+            "toModuleId": "477a1f15499f3ccb0cb40d76c7429914eb8d1037916ed73867147f16eb62e0d5"
+          },
+          {
+            "span": {
+              "end": 985,
+              "start": 967
+            },
+            "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
+          },
+          {
+            "span": {
+              "end": 1034,
+              "start": 1016
+            },
+            "toModuleId": "bcbd96e0b3ad5628fbff8156fb9b986deeca7e8bc625e0dbe726ba61a6a826e5"
+          },
+          {
+            "span": {
+              "end": 1085,
+              "start": 1067
+            },
+            "toModuleId": "402469cb9347dab4920016fba636e93b4303c3469a31564560bfb9da8df39205"
+          },
+          {
+            "span": {
+              "end": 1160,
+              "start": 1140
+            },
+            "toModuleId": "b7bbc2fbd43920596d795ed9b7cdf50b0011aa68a7b03cd1f25a2c883ae52cd5"
+          },
+          {
+            "span": {
+              "end": 1226,
+              "start": 1201
+            },
+            "toModuleId": "16fd69cc83862d05a0758c75d1ba305ffcc49c898628e6997cdd878f2dff75fb"
+          },
+          {
+            "span": {
+              "end": 1308,
+              "start": 1279
+            },
+            "toModuleId": "72664ad7e42be15b76a7a8707e780e0f55cb9634cd60ce8e1b029e28b0f333e5"
           }
         ]
       },
@@ -2532,22 +2660,29 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 1891,
-              "start": 1865
+              "end": 1941,
+              "start": 1910
+            },
+            "toModuleId": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
+          },
+          {
+            "span": {
+              "end": 2002,
+              "start": 1976
             },
             "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
           },
           {
             "span": {
-              "end": 1970,
-              "start": 1940
+              "end": 2081,
+              "start": 2051
             },
             "toModuleId": "35910f7b338a3ca665e7875e9d6ef52aa3048acb2ae276db5f8d13136e842300"
           },
           {
             "span": {
-              "end": 2267,
-              "start": 2255
+              "end": 2404,
+              "start": 2392
             },
             "toModuleId": "e8a465a58857ea944773e1171752ee0aedba4559de6b2c863e1c4c281bac560d"
           }
@@ -3283,6 +3418,20 @@ export const appGraph = {
               "start": 189
             },
             "toModuleId": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
+          },
+          {
+            "span": {
+              "end": 314,
+              "start": 283
+            },
+            "toModuleId": "10089508816590796e512aa663bfa0c9aec767a336e2c166005f0794e74d5a58"
+          },
+          {
+            "span": {
+              "end": 379,
+              "start": 351
+            },
+            "toModuleId": "f34e7ea37dce9d8303d66a65fc172b9d6fc9d9c879c8caa0ea988316113daa50"
           }
         ]
       },
@@ -5236,6 +5385,57 @@ export const appGraph = {
               "start": 249
             },
             "toModuleId": "089f5c6e9f6b4f083d69332ccb973c358e39951f904611700cd669cf747f3343"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/compiler/external-manifest/registry.ts",
+        "id": "59eb48e29604975c931719cdbc49347952c152c53068af5a527ec6def7163bff",
+        "localImports": [
+          {
+            "span": {
+              "end": 189,
+              "start": 163
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 241,
+              "start": 218
+            },
+            "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
+          },
+          {
+            "span": {
+              "end": 306,
+              "start": 278
+            },
+            "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
+          },
+          {
+            "span": {
+              "end": 364,
+              "start": 340
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 643,
+              "start": 631
+            },
+            "toModuleId": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
+          },
+          {
+            "span": {
+              "end": 740,
+              "start": 725
+            },
+            "toModuleId": "921d158b80de4a71fda045728da45f97c750e5ffc7a258cc785c7dd007f02650"
           }
         ]
       },
@@ -8626,6 +8826,36 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/compiler/external-manifest/validate.ts",
+        "id": "921d158b80de4a71fda045728da45f97c750e5ffc7a258cc785c7dd007f02650",
+        "localImports": [
+          {
+            "span": {
+              "end": 59,
+              "start": 33
+            },
+            "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
+          },
+          {
+            "span": {
+              "end": 117,
+              "start": 93
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          },
+          {
+            "span": {
+              "end": 432,
+              "start": 420
+            },
+            "toModuleId": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/sandbox/serialize.ts",
         "id": "9255d37762fda33db1f1396a73061b3f5f3220d158be2822d671e90ffce2266d",
         "localImports": [
@@ -11807,8 +12037,8 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "ai",
             "span": {
-              "end": 18688,
-              "start": 18684
+              "end": 19212,
+              "start": 19208
             },
             "specifier": "ai",
             "subpath": ""
@@ -11817,8 +12047,8 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "ai",
             "span": {
-              "end": 45543,
-              "start": 45539
+              "end": 46633,
+              "start": 46629
             },
             "specifier": "ai",
             "subpath": ""
@@ -12131,8 +12361,15 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 48455,
-              "start": 48424
+              "end": 3747,
+              "start": 3716
+            },
+            "toModuleId": "10089508816590796e512aa663bfa0c9aec767a336e2c166005f0794e74d5a58"
+          },
+          {
+            "span": {
+              "end": 49545,
+              "start": 49514
             },
             "toModuleId": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
           }
@@ -12732,6 +12969,13 @@ export const appGraph = {
               "start": 413
             },
             "toModuleId": "ff161cc50125c41e2c3321037a035bc62c58714648085a19fae5f676991c8fd9"
+          },
+          {
+            "span": {
+              "end": 524,
+              "start": 493
+            },
+            "toModuleId": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
           }
         ]
       },
@@ -13632,239 +13876,246 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 1095,
-              "start": 1062
+              "end": 1151,
+              "start": 1117
+            },
+            "toModuleId": "59eb48e29604975c931719cdbc49347952c152c53068af5a527ec6def7163bff"
+          },
+          {
+            "span": {
+              "end": 1247,
+              "start": 1214
             },
             "toModuleId": "91b5e91b6d56849ac57c9de5b1fc4dbd049ea91359f5d51a62ae520e031408b8"
           },
           {
             "span": {
-              "end": 1221,
-              "start": 1193
+              "end": 1373,
+              "start": 1345
             },
             "toModuleId": "a098f2339ec8c37ba1f899fc19186ba6d1ef3ab19642168120c277d823313a63"
           },
           {
             "span": {
-              "end": 1405,
-              "start": 1373
+              "end": 1557,
+              "start": 1525
             },
             "toModuleId": "0fcb2e3b8160bc14b1a84d124f355d723f4aff8861f9c9cd1b455df453ea3edc"
           },
           {
             "span": {
-              "end": 1463,
-              "start": 1437
+              "end": 1615,
+              "start": 1589
             },
             "toModuleId": "ade91b617db2c5e623ea2728604b197af6fc21b4b6726f1e79b7c636b75882bb"
           },
           {
             "span": {
-              "end": 1528,
-              "start": 1500
+              "end": 1680,
+              "start": 1652
             },
             "toModuleId": "cd3eda6cfdb4eba3f62b657c8fcba9ffb47c303cc407ce34db5db49c617aae3f"
           },
           {
             "span": {
-              "end": 1599,
-              "start": 1578
+              "end": 1751,
+              "start": 1730
             },
             "toModuleId": "4ca55b8e5e62702274a9d34a51090f1d89eefa4874617192eb63af1ff1009cd9"
           },
           {
             "span": {
-              "end": 1676,
-              "start": 1647
+              "end": 1828,
+              "start": 1799
             },
             "toModuleId": "0c567df3ef8a760414fb62047c9bf5b8a5c8519dbab56ab147685eb3654e5d18"
           },
           {
             "span": {
-              "end": 1760,
-              "start": 1733
+              "end": 1912,
+              "start": 1885
             },
             "toModuleId": "33609d0cddfeec45340c6b07169a9612c5ccab288b86ac2f9db4a1099bf1f84d"
           },
           {
             "span": {
-              "end": 1841,
-              "start": 1817
+              "end": 1993,
+              "start": 1969
             },
             "toModuleId": "f3f185131256c04376e58326982c8dbb26f1c5bf0fb79f333727f7b9512035d4"
           },
           {
             "span": {
-              "end": 1903,
-              "start": 1877
+              "end": 2055,
+              "start": 2029
             },
             "toModuleId": "c7db664b9ba1116c780ca648ca5ab211cfe7623170e71705f34d6bffc9a0c09a"
           },
           {
             "span": {
-              "end": 1967,
-              "start": 1940
+              "end": 2119,
+              "start": 2092
             },
             "toModuleId": "aaef51e4e11df6e1669ff6dd9496cf76dbbadb5ace6c4a9c52142a93503ab5e7"
           },
           {
             "span": {
-              "end": 2227,
-              "start": 2199
+              "end": 2379,
+              "start": 2351
             },
             "toModuleId": "218ff0cd398cfcc09a1f44ba9c5b569246817556277f4168cc7f1c4b3e2b5097"
           },
           {
             "span": {
-              "end": 2381,
-              "start": 2350
+              "end": 2533,
+              "start": 2502
             },
             "toModuleId": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
           },
           {
             "span": {
-              "end": 2618,
-              "start": 2599
+              "end": 2770,
+              "start": 2751
             },
             "toModuleId": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
           },
           {
             "span": {
-              "end": 2674,
-              "start": 2651
+              "end": 2826,
+              "start": 2803
             },
             "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
           },
           {
             "span": {
-              "end": 2738,
-              "start": 2711
+              "end": 2890,
+              "start": 2863
             },
             "toModuleId": "7e52df7ee09de93c49fb00b88e7bc532ebb19a77344e13b623b022bc6c060fc9"
           },
           {
             "span": {
-              "end": 2799,
-              "start": 2781
+              "end": 2951,
+              "start": 2933
             },
             "toModuleId": "fdc330e9f569b5fa5fd6d7ad204e850f3c55d44e235ce519ca83d06c8ab220ed"
           },
           {
             "span": {
-              "end": 2867,
-              "start": 2849
+              "end": 3019,
+              "start": 3001
             },
             "toModuleId": "7ecbaea777d56e064e29bb257f5a45918f2e6f1ea1f24291275bde627a9d98bf"
           },
           {
             "span": {
-              "end": 2942,
-              "start": 2909
+              "end": 3094,
+              "start": 3061
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 3013,
-              "start": 2980
+              "end": 3165,
+              "start": 3132
             },
             "toModuleId": "7aa6096abfe8749b6867db720436dd9368b97febd090f705b7ad1f42010d55a0"
           },
           {
             "span": {
-              "end": 3082,
-              "start": 3051
+              "end": 3234,
+              "start": 3203
             },
             "toModuleId": "c941bb0d49bbd15030980ad0c636793b6174606b7ff7098cc7f8d349f56e8861"
           },
           {
             "span": {
-              "end": 3141,
-              "start": 3115
+              "end": 3293,
+              "start": 3267
             },
             "toModuleId": "3d0332a04eb274727643ef01a23ec9243de865b53bce1ce92cc11ffeeec08313"
           },
           {
             "span": {
-              "end": 3205,
-              "start": 3181
+              "end": 3357,
+              "start": 3333
             },
             "toModuleId": "a5e19b453b23188ca45916011457f083c9e4f42bb4552dd3370baa15153ce980"
           },
           {
             "span": {
-              "end": 3273,
-              "start": 3246
+              "end": 3425,
+              "start": 3398
             },
             "toModuleId": "5194e753dfe17c025a21587e67d0e565e2b724a47cf73042cddaf6dae1663e0b"
           },
           {
             "span": {
-              "end": 3388,
-              "start": 3363
+              "end": 3540,
+              "start": 3515
             },
             "toModuleId": "ead3e07c24550a34030c973ea03a9368ba65d50c818095fc05bdfc6e4037fb41"
           },
           {
             "span": {
-              "end": 3463,
-              "start": 3432
+              "end": 3615,
+              "start": 3584
             },
             "toModuleId": "e5bfcf41b306994148ed71dc62c75e8049821a03c5855bf84b802c64442a994e"
           },
           {
             "span": {
-              "end": 3516,
-              "start": 3493
+              "end": 3668,
+              "start": 3645
             },
             "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
           },
           {
             "span": {
-              "end": 3578,
-              "start": 3555
+              "end": 3730,
+              "start": 3707
             },
             "toModuleId": "9c575b15948278713bbf63047eb4922f5d3b22564f371ad89d090600349bfbcb"
           },
           {
             "span": {
-              "end": 3640,
-              "start": 3626
+              "end": 3792,
+              "start": 3778
             },
             "toModuleId": "28a152a4ce65fa0711ad8db346b1c5174bee8dcc883012e285acb9446235c134"
           },
           {
             "span": {
-              "end": 3692,
-              "start": 3680
+              "end": 3844,
+              "start": 3832
             },
             "toModuleId": "ae38c66c1161bb4092b4b61588b3ef02337dba86008a055b485a401984b8949a"
           },
           {
             "span": {
-              "end": 6885,
-              "start": 6869
+              "end": 7037,
+              "start": 7021
             },
             "toModuleId": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
           },
           {
             "span": {
-              "end": 6969,
-              "start": 6939
+              "end": 7121,
+              "start": 7091
             },
             "toModuleId": "35910f7b338a3ca665e7875e9d6ef52aa3048acb2ae276db5f8d13136e842300"
           },
           {
             "span": {
-              "end": 7032,
-              "start": 7003
+              "end": 7184,
+              "start": 7155
             },
             "toModuleId": "c824cbd31b5daa90a46998b34cb9670a8f6a00f198d11210f21d94bb6ebc753f"
           },
           {
             "span": {
-              "end": 7087,
-              "start": 7068
+              "end": 7239,
+              "start": 7220
             },
             "toModuleId": "e60ed5b9c77cd17864c72ff9603ceb2a311c6d530c3831024b259853047b2672"
           }
@@ -14458,6 +14709,22 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/compiler/external-manifest/types.ts",
+        "id": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a",
+        "localImports": [
+          {
+            "span": {
+              "end": 56,
+              "start": 32
+            },
+            "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/test-graph/build.ts",
         "id": "f3f185131256c04376e58326982c8dbb26f1c5bf0fb79f333727f7b9512035d4",
         "localImports": [
@@ -14679,22 +14946,29 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 769,
-              "start": 740
+              "end": 643,
+              "start": 612
+            },
+            "toModuleId": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
+          },
+          {
+            "span": {
+              "end": 849,
+              "start": 820
             },
             "toModuleId": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
           },
           {
             "span": {
-              "end": 873,
-              "start": 857
+              "end": 953,
+              "start": 937
             },
             "toModuleId": "9ef7466661c8a496ff266647025fc7ac79586dce3a9a9234daf07779f2c732e9"
           },
           {
             "span": {
-              "end": 946,
-              "start": 934
+              "end": 1026,
+              "start": 1014
             },
             "toModuleId": "d31abe19c6873350dca1593bda049ac5254843b256c456be8d9f0934fad31790"
           }

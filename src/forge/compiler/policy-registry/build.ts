@@ -11,6 +11,7 @@ import { hashStable } from "../primitives/hash.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
 import type { AppGraph } from "../types/app-graph.ts";
 import type { DataGraph } from "../types/data-graph.ts";
+import type { ForgeExternalServiceGraph } from "../external-manifest/types.ts";
 import type {
   CommandAuthBinding,
   PermissionMatrix,
@@ -64,7 +65,20 @@ function buildPermissionMatrix(policies: PolicyRule[]): PermissionMatrixEntry[] 
     .sort((a, b) => (a.policy < b.policy ? -1 : a.policy > b.policy ? 1 : 0));
 }
 
-export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
+function authFromExternalPolicy(policy: string | undefined): CommandAuthBinding["auth"] {
+  if (!policy) {
+    return { kind: "public" };
+  }
+  if (policy === "public" || policy === "system" || policy === "user") {
+    return { kind: policy };
+  }
+  return { kind: "policy", policy };
+}
+
+export function buildPolicyRegistry(
+  appGraph: AppGraph,
+  externalServices?: ForgeExternalServiceGraph,
+): PolicyRegistry {
   const policies: PolicyRule[] = [];
   const commandAuth: CommandAuthBinding[] = [];
   const queryAuth: QueryAuthBinding[] = [];
@@ -152,6 +166,28 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
     }
   }
 
+  for (const service of externalServices?.services ?? []) {
+    for (const entry of service.entries) {
+      const qualifiedName = `${service.name}.${entry.name}`;
+      const binding = {
+        file: `external:${service.name}`,
+        symbolId: `external:${service.name}:${entry.kind}:${entry.name}`,
+        auth: authFromExternalPolicy(entry.policy),
+      };
+      if (entry.kind === "command") {
+        commandAuth.push({
+          commandName: qualifiedName,
+          ...binding,
+        });
+      } else {
+        queryAuth.push({
+          queryName: qualifiedName,
+          ...binding,
+        });
+      }
+    }
+  }
+
   const sortedPolicies = stableSortPolicies(policies);
   const sortedCommandAuth = stableSortCommandAuth(commandAuth);
   const sortedQueryAuth = stableSortQueryAuth(queryAuth);
@@ -167,6 +203,9 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
           code: FORGE_POLICY_UNKNOWN,
           message: `command '${binding.commandName}' references unknown policy '${binding.auth.policy}'`,
           file: binding.file,
+          fixHint: binding.file.startsWith("external:")
+            ? "Define this policy in the Forge app or change the external manifest policy to public, user, or system."
+            : undefined,
         }),
       );
     }
@@ -183,6 +222,9 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
           code: FORGE_POLICY_UNKNOWN,
           message: `query '${binding.queryName}' references unknown policy '${binding.auth.policy}'`,
           file: binding.file,
+          fixHint: binding.file.startsWith("external:")
+            ? "Define this policy in the Forge app or change the external manifest policy to public, user, or system."
+            : undefined,
         }),
       );
     }
@@ -195,6 +237,7 @@ export function buildPolicyRegistry(appGraph: AppGraph): PolicyRegistry {
     inputHash: hashStable(
       canonicalJson({
         appInputHash: appGraph.inputHash,
+        externalInputHash: externalServices?.inputHash ?? "",
         analyzerVersion: POLICY_REGISTRY_ANALYZER_VERSION,
       }),
     ),

@@ -45,6 +45,15 @@ import {
 import { INSPECT_TARGETS, TOP_LEVEL_COMMANDS, type ForgeCommand } from "./parse.ts";
 import { runVerifyCommand } from "./verify.ts";
 import {
+  buildExternalServiceGraph,
+  importExternalManifest,
+  readExternalManifestFile,
+} from "../compiler/external-manifest/registry.ts";
+import {
+  resolveExternalQualifiedName,
+  runExternalEntry,
+} from "../runtime/external/bridge.ts";
+import {
   formatCompilerBenchHuman,
   formatCompilerBenchJson,
   runCompilerBenchCommand,
@@ -354,6 +363,7 @@ export async function runCheckCommand(
       workspaceRoot,
       `${GENERATED_DIR}/capabilityMap.json`,
     )?.diagnostics ?? [];
+  const externalDiagnostics = buildExternalServiceGraph(workspaceRoot).diagnostics;
 
   const allDiagnostics = [
     ...guardDiagnostics,
@@ -362,6 +372,7 @@ export async function runCheckCommand(
     ...queryDiagnostics,
     ...frontendDiagnostics,
     ...capabilityDiagnostics,
+    ...externalDiagnostics,
   ];
   const errors = allDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
@@ -378,6 +389,61 @@ export async function runCheckCommand(
     exitCode: errors.length > 0 ? 1 : 0,
     failureKind: errors.length > 0 ? "guard_violation" : undefined,
   });
+}
+
+function formatManifestHuman(result: {
+  subcommand: "validate" | "import";
+  path: string;
+  imported?: boolean;
+  serviceCount?: number;
+  diagnostics: import("../compiler/types/diagnostic.ts").Diagnostic[];
+  exitCode: number;
+}): string {
+  const errors = result.diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  const warnings = result.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  const lines = [
+    `manifest: ${result.subcommand}`,
+    `path: ${result.path}`,
+    result.subcommand === "import" ? `imported: ${result.imported ? "yes" : "no"}` : null,
+    result.serviceCount !== undefined ? `external services: ${result.serviceCount}` : null,
+    `errors: ${errors.length}`,
+    `warnings: ${warnings.length}`,
+  ].filter((line): line is string => line !== null);
+  for (const diagnostic of result.diagnostics) {
+    lines.push(`${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+function runManifestCommand(command: Extract<ForgeCommand, { kind: "manifest" }>): {
+  subcommand: "validate" | "import";
+  path: string;
+  imported?: boolean;
+  serviceCount?: number;
+  diagnostics: import("../compiler/types/diagnostic.ts").Diagnostic[];
+  exitCode: number;
+} {
+  if (command.subcommand === "validate") {
+    const result = readExternalManifestFile(command.path);
+    const hasErrors = result.diagnostics.some((diagnostic) => diagnostic.severity === "error");
+    return {
+      subcommand: "validate",
+      path: command.path,
+      diagnostics: result.diagnostics,
+      exitCode: hasErrors ? 1 : 0,
+    };
+  }
+
+  const result = importExternalManifest(command.workspaceRoot, command.path);
+  const hasErrors = result.diagnostics.some((diagnostic) => diagnostic.severity === "error");
+  return {
+    subcommand: "import",
+    path: result.path,
+    imported: result.imported,
+    serviceCount: result.graph.services.length,
+    diagnostics: result.diagnostics,
+    exitCode: hasErrors ? 1 : 0,
+  };
 }
 
 export async function runInspectCommand(
@@ -401,6 +467,7 @@ export async function runInspectCommand(
     ai: `${GENERATED_DIR}/aiRegistry.json`,
     queries: `${GENERATED_DIR}/queryRegistry.json`,
     api: `${GENERATED_DIR}/api.json`,
+    external: `${GENERATED_DIR}/externalServices.json`,
     client: `${GENERATED_DIR}/clientManifest.json`,
     frontend: `${GENERATED_DIR}/frontendGraph.json`,
     auth: `${GENERATED_DIR}/authRegistry.json`,
@@ -448,6 +515,7 @@ export async function runInspectCommand(
       ["workflows", `${GENERATED_DIR}/workflowRegistry.json`],
       ["telemetry", `${GENERATED_DIR}/telemetryRegistry.json`],
       ["ai", `${GENERATED_DIR}/aiRegistry.json`],
+      ["externalServices", `${GENERATED_DIR}/externalServices.json`],
       ["client", `${GENERATED_DIR}/clientManifest.json`],
       ["frontend", `${GENERATED_DIR}/frontendGraph.json`],
       ["auth", `${GENERATED_DIR}/authRegistry.json`],
@@ -840,6 +908,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return result.exitCode;
     }
+    case "manifest": {
+      const result = runManifestCommand(command);
+      if (command.json) {
+        process.stdout.write(formatJsonResult(result));
+      } else {
+        process.stdout.write(formatManifestHuman(result));
+      }
+      return result.exitCode;
+    }
     case "inspect": {
       const result = await runInspectCommand(
         command.target,
@@ -881,6 +958,32 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       );
 
       if (command.queryMode && command.name) {
+        const external = resolveExternalQualifiedName(command.workspaceRoot, command.name, "query");
+        if (external) {
+          const run = await runExternalEntry(command.workspaceRoot, {
+            kind: "query",
+            serviceName: external.serviceName,
+            entryName: external.entryName,
+            args: command.args,
+            auth: resolveAuthFromCli({
+              userId: command.userId,
+              tenantId: command.tenantId,
+              role: command.role,
+            }),
+          });
+          const payload = { run };
+          if (command.json) {
+            process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+          } else {
+            process.stdout.write(
+              run.ok
+                ? `${JSON.stringify(run.result, null, 2)}\n`
+                : `${run.diagnostics.map((diagnostic) => `error ${diagnostic.code}: ${diagnostic.message}`).join("\n")}\n`,
+            );
+          }
+          return run.exitCode;
+        }
+
         const tableMap = readGeneratedJson<{ tableMap: Record<string, import("../compiler/data-graph/sql/serialize.ts").TableMapEntry> }>(
           command.workspaceRoot,
           `${GENERATED_DIR}/db.json`,
@@ -919,6 +1022,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         userId: command.userId,
         tenantId: command.tenantId,
         role: command.role,
+        args: command.args,
         workspaceRoot: command.workspaceRoot,
       });
 

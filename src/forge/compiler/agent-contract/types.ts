@@ -11,6 +11,8 @@ export interface AgentProjectInfo {
 export interface AgentEntryInfo {
   name: string;
   file: string;
+  source?: "local" | "external";
+  external?: AgentExternalEntryInfo;
   policy?: string;
   allowedPackages: string[];
   forbiddenCapabilities: string[];
@@ -162,6 +164,29 @@ export interface AgentAiInfo {
     tools: string[];
     stopWhen: unknown;
   }>;
+}
+
+export interface AgentExternalEntryInfo {
+  service: string;
+  language: string;
+  framework?: string;
+  transport: string;
+  transaction?: string;
+  risk?: "read" | "write" | "destructive" | "external";
+  effects: string[];
+  description?: string;
+}
+
+export interface AgentExternalServiceInfo {
+  name: string;
+  language: string;
+  framework?: string;
+  transport: string;
+  baseUrl?: string;
+  command?: string;
+  health?: string;
+  commands: string[];
+  queries: string[];
 }
 
 export interface AgentClientInfo {
@@ -344,7 +369,9 @@ export interface AgentToolRegistry {
     risk: "read" | "write";
     needsApproval: boolean;
     requiresAuth: boolean;
-    execution: "forge-runtime-endpoint";
+    source?: "local" | "external";
+    external?: AgentExternalEntryInfo;
+    execution: "forge-runtime-endpoint" | "external-runtime-endpoint";
   }>;
   agents: AgentAiInfo["agents"];
 }
@@ -368,6 +395,7 @@ export interface AgentContract {
   packages: AgentPackageInfo[];
   dependencyApis: AgentDependencyApiInfo[];
   integrations: AgentIntegrationInfo[];
+  externalServices?: AgentExternalServiceInfo[];
   secrets: AgentSecretInfo[];
   telemetry: AgentTelemetryInfo;
   ai: AgentAiInfo;

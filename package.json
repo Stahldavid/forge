@@ -5,7 +5,9 @@
   "type": "module",
   "files": [
     "bin/",
+    "docs/forge-protocol.md",
     "packages/eslint-plugin-forge/",
+    "schemas/",
     "src/",
     "templates/",
     "README.md",

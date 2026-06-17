@@ -28,6 +28,11 @@ import {
 } from "../live-query-registry/build.ts";
 import { buildApiSurface } from "../api-surface/build.ts";
 import {
+  buildExternalServiceGraph,
+  serializeExternalServiceGraphJson,
+  serializeExternalServiceGraphTs,
+} from "../external-manifest/registry.ts";
+import {
   buildClientManifest,
   buildReactManifest,
 } from "../client-sdk/build-manifest.ts";
@@ -301,7 +306,8 @@ export function plan(input: PlanInput): EmitPlan {
   const workflowSubscriptions = buildWorkflowSubscriptions(workflowRegistry);
   const telemetryRegistry = buildTelemetryRegistry(input.appGraph);
   const telemetrySinks = buildTelemetrySinks(input.classified);
-  const policyRegistry = buildPolicyRegistry(input.appGraph);
+  const externalServices = buildExternalServiceGraph(input.ctx.workspaceRoot);
+  const policyRegistry = buildPolicyRegistry(input.appGraph, externalServices);
   const permissionMatrix = buildPermissionMatrixFromRegistry(policyRegistry);
   const tenantScope = buildTenantScope(dataGraph);
   const secretRegistry = buildSecretRegistry(input.classified);
@@ -324,6 +330,7 @@ export function plan(input: PlanInput): EmitPlan {
     queryRegistry,
     liveQueryRegistry,
     workflowRegistry,
+    externalServices,
   );
   const clientManifest = buildClientManifest(apiSurface, input.classified);
   const reactManifest = buildReactManifest(clientManifest);
@@ -356,6 +363,7 @@ export function plan(input: PlanInput): EmitPlan {
     apiSurface,
     clientManifest,
     frontendGraph,
+    externalServices,
   });
   const agentAdapterManifest = buildAgentAdapterManifest(agentArtifacts.contract);
   const agentArtifactsMs = performance.now() - checkpoint;
@@ -412,6 +420,14 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/agentContract.json`,
       serializeAgentContractJson(agentArtifacts.contract),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/externalServices.ts`,
+      serializeExternalServiceGraphTs(externalServices),
+    ),
+    makeEmitFile(
+      `${GENERATED_DIR}/externalServices.json`,
+      serializeExternalServiceGraphJson(externalServices),
     ),
     makeEmitFile(`${GENERATED_DIR}/appMap.md`, agentArtifacts.appMapMd),
     makeEmitFile(

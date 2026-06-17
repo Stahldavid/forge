@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=836ba0b50fd9b9055c77e16245fee7c8a6b7d76b7db75da4c3e12a716b3a2f40
-{"actions":{},"commands":{},"generatorVersion":"0.1.0-alpha.9","inputHash":"ab2d6ab0def5814827d3e9013d686bb30364fdca2f58443e38f3dd42d0af13ef","liveQueries":{},"queries":{},"schemaVersion":"1.0.0","workflows":{}}
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=a1a9898e129938de88ad5132600b747176dcb9667926f047ef5b54fb02c34c08
+{"actions":{},"commands":{},"external":{"commands":{},"queries":{},"services":{}},"generatorVersion":"0.1.0-alpha.9","inputHash":"3d567b01ccd1724ffdc5b302f77f065a9b63d407ad44c6ca80a27874d62d071b","liveQueries":{},"queries":{},"schemaVersion":"1.0.0","workflows":{}}

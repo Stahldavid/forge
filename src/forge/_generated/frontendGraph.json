@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=c9761a223a8d510711c5e18e835a8bca78cede975c218a5f437c016a2ffc1a25
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=c9761a223a8d510711c5e18e835a8bca78cede975c218a5f437c016a2ffc1a25
 {"bridgeFiles":[],"clientBindings":[],"components":[],"diagnostics":[],"framework":"none","present":false,"providers":[],"routes":[],"schemaVersion":"0.1.0","webManifest":{"bridge":{"files":[],"valid":false},"env":{"apiUrl":"NEXT_PUBLIC_FORGE_URL"},"framework":"none","present":false,"scripts":{},"urls":{"api":"http://127.0.0.1:3765"}}}

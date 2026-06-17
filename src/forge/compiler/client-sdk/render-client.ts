@@ -52,6 +52,22 @@ export class ForgeError extends Error {
 export type QueryName = keyof typeof import("./api.ts").api.queries;
 export type CommandName = keyof typeof import("./api.ts").api.commands;
 export type LiveQueryName = keyof typeof import("./api.ts").api.liveQueries;
+export type ExternalCommandName = string;
+export type ExternalQueryName = string;
+export type ExternalRuntimeRefObject = {
+  service: string;
+  name: string;
+  kind?: "command" | "query";
+  language?: string;
+  framework?: string;
+  transport?: string;
+};
+export type ExternalCommandRef =
+  | ExternalCommandName
+  | ExternalRuntimeRefObject;
+export type ExternalQueryRef =
+  | ExternalQueryName
+  | ExternalRuntimeRefObject;
 
 export type LiveSnapshot<T> = {
   subscriptionId: string;
@@ -70,6 +86,8 @@ export type ForgeClient = {
   readonly lastTraceId?: string;
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
+  externalQuery<Name extends ExternalQueryRef>(name: Name, args: unknown): Promise<unknown>;
+  externalCommand<Name extends ExternalCommandRef>(name: Name, args: unknown): Promise<unknown>;
   liveQuery<Name extends LiveQueryName>(
     name: Name,
     args: unknown,
@@ -87,6 +105,8 @@ import type {
   ForgeAuthProvider,
   ForgeClient,
   ForgeClientConfig,
+  ExternalCommandRef,
+  ExternalQueryRef,
   LiveQueryOptions,
   LiveSnapshot,
 } from "./clientTypes.ts";
@@ -102,6 +122,11 @@ export type {
   QueryName,
   CommandName,
   LiveQueryName,
+  ExternalCommandName,
+  ExternalQueryName,
+  ExternalRuntimeRefObject,
+  ExternalCommandRef,
+  ExternalQueryRef,
   ForgeResolvedAuth,
   LiveQueryOptions,
   LiveSnapshot,
@@ -179,6 +204,16 @@ function parseJsonPayload(body: unknown): {
   };
 }
 
+function normalizeExternalRef(
+  ref: ExternalCommandRef | ExternalQueryRef,
+): { service: string; name: string } {
+  if (typeof ref === "string") {
+    const [service, ...entryParts] = ref.split(".");
+    return { service: service ?? "", name: entryParts.join(".") };
+  }
+  return { service: ref.service, name: ref.name };
+}
+
 class ForgeHttpClient implements ForgeClient {
   lastTraceId?: string;
 
@@ -190,6 +225,14 @@ class ForgeHttpClient implements ForgeClient {
 
   command(name: string, args: unknown): Promise<unknown> {
     return this.invoke("commands", name, args);
+  }
+
+  externalQuery(name: ExternalQueryRef, args: unknown): Promise<unknown> {
+    return this.invokeExternal("queries", name, args);
+  }
+
+  externalCommand(name: ExternalCommandRef, args: unknown): Promise<unknown> {
+    return this.invokeExternal("commands", name, args);
   }
 
   liveQuery(
@@ -225,6 +268,68 @@ class ForgeHttpClient implements ForgeClient {
   ): Promise<unknown> {
     const baseUrl = this.config.url.replace(/\\/$/, "");
     const url = \`\${baseUrl}/\${kind}/\${encodeURIComponent(name)}\`;
+    const authHeaders = await resolveAuthHeaders(this.config.auth);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
+      body: JSON.stringify({ args }),
+    });
+
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new ForgeError(\`HTTP \${response.status}\`, {
+        code: "FORGE_HTTP_ERROR",
+        status: response.status,
+      });
+    }
+
+    const payload = parseJsonPayload(body);
+    this.lastTraceId = payload.traceId;
+
+    if (!response.ok || payload.ok === false) {
+      const diagnostic = payload.diagnostics?.find((entry) => entry.code);
+      const code =
+        payload.error?.code ?? diagnostic?.code ?? "FORGE_REQUEST_FAILED";
+      const message =
+        payload.error?.message ??
+        diagnostic?.message ??
+        \`Request failed with status \${response.status}\`;
+      throw new ForgeError(message, {
+        code,
+        traceId: payload.traceId,
+        status: response.status,
+        details: payload.error?.details ?? payload.diagnostics,
+      });
+    }
+
+    return payload.result;
+  }
+
+  private async invokeExternal(
+    kind: "queries" | "commands",
+    name: ExternalCommandRef | ExternalQueryRef,
+    args: unknown,
+  ): Promise<unknown> {
+    const normalized = normalizeExternalRef(name);
+    const serviceName = normalized.service;
+    const entryName = normalized.name;
+    if (!serviceName || !entryName) {
+      throw new ForgeError(\`External runtime name must be service.entry\`, {
+        code: "FORGE_EXTERNAL_RUNTIME_NOT_FOUND",
+      });
+    }
+    const baseUrl = this.config.url.replace(/\\/$/, "");
+    const url = \`\${baseUrl}/external/\${encodeURIComponent(serviceName)}/\${kind}/\${encodeURIComponent(entryName)}\`;
+    return this.invokeUrl(url, args);
+  }
+
+  private async invokeUrl(url: string, args: unknown): Promise<unknown> {
     const authHeaders = await resolveAuthHeaders(this.config.auth);
 
     const response = await fetch(url, {

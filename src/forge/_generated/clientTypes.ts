@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=39ad42ec98ed7aebc56e061aa399738c1175f0a7b4261b5bf2df70eb59afcfe2
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=b893b27f895193111546b90974f4ad1540aef6ede0d9ab3a11972a1dce2519e2
 export type ForgeStaticAuth = {
   userId?: string;
   tenantId?: string;
@@ -50,6 +50,22 @@ export class ForgeError extends Error {
 export type QueryName = keyof typeof import("./api.ts").api.queries;
 export type CommandName = keyof typeof import("./api.ts").api.commands;
 export type LiveQueryName = keyof typeof import("./api.ts").api.liveQueries;
+export type ExternalCommandName = string;
+export type ExternalQueryName = string;
+export type ExternalRuntimeRefObject = {
+  service: string;
+  name: string;
+  kind?: "command" | "query";
+  language?: string;
+  framework?: string;
+  transport?: string;
+};
+export type ExternalCommandRef =
+  | ExternalCommandName
+  | ExternalRuntimeRefObject;
+export type ExternalQueryRef =
+  | ExternalQueryName
+  | ExternalRuntimeRefObject;
 
 export type LiveSnapshot<T> = {
   subscriptionId: string;
@@ -68,6 +84,8 @@ export type ForgeClient = {
   readonly lastTraceId?: string;
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
+  externalQuery<Name extends ExternalQueryRef>(name: Name, args: unknown): Promise<unknown>;
+  externalCommand<Name extends ExternalCommandRef>(name: Name, args: unknown): Promise<unknown>;
   liveQuery<Name extends LiveQueryName>(
     name: Name,
     args: unknown,

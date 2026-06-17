@@ -1,9 +1,11 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=9b27e66a63e6abbf0c65ca5d8c1d64c7992fc7249842a9174b97b4a99c72a4bd
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=beb8a95a58b094f5f4f5407dc18f0e22f9f88c30747976a374dacea44feef3f2
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
   ForgeClient,
   ForgeClientConfig,
+  ExternalCommandRef,
+  ExternalQueryRef,
   LiveQueryOptions,
   LiveSnapshot,
 } from "./clientTypes.ts";
@@ -19,6 +21,11 @@ export type {
   QueryName,
   CommandName,
   LiveQueryName,
+  ExternalCommandName,
+  ExternalQueryName,
+  ExternalRuntimeRefObject,
+  ExternalCommandRef,
+  ExternalQueryRef,
   ForgeResolvedAuth,
   LiveQueryOptions,
   LiveSnapshot,
@@ -96,6 +103,16 @@ function parseJsonPayload(body: unknown): {
   };
 }
 
+function normalizeExternalRef(
+  ref: ExternalCommandRef | ExternalQueryRef,
+): { service: string; name: string } {
+  if (typeof ref === "string") {
+    const [service, ...entryParts] = ref.split(".");
+    return { service: service ?? "", name: entryParts.join(".") };
+  }
+  return { service: ref.service, name: ref.name };
+}
+
 class ForgeHttpClient implements ForgeClient {
   lastTraceId?: string;
 
@@ -107,6 +124,14 @@ class ForgeHttpClient implements ForgeClient {
 
   command(name: string, args: unknown): Promise<unknown> {
     return this.invoke("commands", name, args);
+  }
+
+  externalQuery(name: ExternalQueryRef, args: unknown): Promise<unknown> {
+    return this.invokeExternal("queries", name, args);
+  }
+
+  externalCommand(name: ExternalCommandRef, args: unknown): Promise<unknown> {
+    return this.invokeExternal("commands", name, args);
   }
 
   liveQuery(
@@ -142,6 +167,68 @@ class ForgeHttpClient implements ForgeClient {
   ): Promise<unknown> {
     const baseUrl = this.config.url.replace(/\/$/, "");
     const url = `${baseUrl}/${kind}/${encodeURIComponent(name)}`;
+    const authHeaders = await resolveAuthHeaders(this.config.auth);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
+      body: JSON.stringify({ args }),
+    });
+
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new ForgeError(`HTTP ${response.status}`, {
+        code: "FORGE_HTTP_ERROR",
+        status: response.status,
+      });
+    }
+
+    const payload = parseJsonPayload(body);
+    this.lastTraceId = payload.traceId;
+
+    if (!response.ok || payload.ok === false) {
+      const diagnostic = payload.diagnostics?.find((entry) => entry.code);
+      const code =
+        payload.error?.code ?? diagnostic?.code ?? "FORGE_REQUEST_FAILED";
+      const message =
+        payload.error?.message ??
+        diagnostic?.message ??
+        `Request failed with status ${response.status}`;
+      throw new ForgeError(message, {
+        code,
+        traceId: payload.traceId,
+        status: response.status,
+        details: payload.error?.details ?? payload.diagnostics,
+      });
+    }
+
+    return payload.result;
+  }
+
+  private async invokeExternal(
+    kind: "queries" | "commands",
+    name: ExternalCommandRef | ExternalQueryRef,
+    args: unknown,
+  ): Promise<unknown> {
+    const normalized = normalizeExternalRef(name);
+    const serviceName = normalized.service;
+    const entryName = normalized.name;
+    if (!serviceName || !entryName) {
+      throw new ForgeError(`External runtime name must be service.entry`, {
+        code: "FORGE_EXTERNAL_RUNTIME_NOT_FOUND",
+      });
+    }
+    const baseUrl = this.config.url.replace(/\/$/, "");
+    const url = `${baseUrl}/external/${encodeURIComponent(serviceName)}/${kind}/${encodeURIComponent(entryName)}`;
+    return this.invokeUrl(url, args);
+  }
+
+  private async invokeUrl(url: string, args: unknown): Promise<unknown> {
     const authHeaders = await resolveAuthHeaders(this.config.auth);
 
     const response = await fetch(url, {

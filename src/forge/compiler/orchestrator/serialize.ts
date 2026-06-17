@@ -895,6 +895,7 @@ export function serializeSubscriptionManifestTs(
 }
 
 export function serializeApiJson(surface: ApiSurface): string {
+  const external = surface.external ?? { services: {}, commands: {}, queries: {} };
   return serializeCanonical({
     schemaVersion: surface.schemaVersion,
     generatorVersion: surface.generatorVersion,
@@ -904,6 +905,7 @@ export function serializeApiJson(surface: ApiSurface): string {
     liveQueries: surface.liveQueries,
     actions: surface.actions,
     workflows: surface.workflows,
+    external,
   });
 }
 

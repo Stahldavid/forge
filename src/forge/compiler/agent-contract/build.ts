@@ -34,6 +34,10 @@ import type { QueryRegistry } from "../types/query-registry.ts";
 import type { LiveQueryRegistry } from "../types/live-query-registry.ts";
 import type { ClientManifest } from "../client-sdk/build-manifest.ts";
 import type { FrontendGraph } from "../types/frontend-graph.ts";
+import type {
+  ForgeExternalServiceEntry,
+  ForgeExternalServiceGraph,
+} from "../external-manifest/types.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
 import type {
@@ -41,6 +45,7 @@ import type {
   AgentCapabilityMapEntry,
   AgentContract,
   AgentDependencyApiInfo,
+  AgentExternalEntryInfo,
   AgentFrontendRuntimeBindingInfo,
   AgentFrontendUsageInfo,
   AgentHttpEndpointInfo,
@@ -74,6 +79,7 @@ export interface AgentContractInput {
   apiSurface: ApiSurface;
   clientManifest: ClientManifest;
   frontendGraph: FrontendGraph;
+  externalServices?: ForgeExternalServiceGraph;
 }
 
 export interface AgentContractArtifacts {
@@ -536,7 +542,11 @@ function runtimeEntriesWithoutFrontend(contract: AgentContract): AgentCapability
           emits: commandEntry.emits,
           dependencies: [],
         },
-        notes: ["Runtime entry is available to agents even though no frontend usage was detected."],
+        notes: [
+          commandEntry.source === "external"
+            ? "External runtime entry is imported from a Forge manifest; execution requires an external runtime bridge."
+            : "Runtime entry is available to agents even though no frontend usage was detected.",
+        ],
       });
     }
   }
@@ -557,7 +567,11 @@ function runtimeEntriesWithoutFrontend(contract: AgentContract): AgentCapability
           emits: [],
           dependencies: [],
         },
-        notes: ["Runtime entry is available to agents even though no frontend usage was detected."],
+        notes: [
+          queryEntry.source === "external"
+            ? "External runtime entry is imported from a Forge manifest; execution requires an external runtime bridge."
+            : "Runtime entry is available to agents even though no frontend usage was detected.",
+        ],
       });
     }
   }
@@ -703,9 +717,15 @@ function buildAgentToolRegistry(contract: AgentContract): AgentToolRegistry {
       dependencies: [],
       readOnly: false,
       risk: "write" as const,
-      needsApproval: true,
+      needsApproval: command.source === "external"
+        ? command.external?.risk !== "read"
+        : true,
       requiresAuth: command.policy !== undefined && command.policy !== "public",
-      execution: "forge-runtime-endpoint" as const,
+      ...(command.source ? { source: command.source } : {}),
+      ...(command.external ? { external: command.external } : {}),
+      execution: command.source === "external"
+        ? "external-runtime-endpoint" as const
+        : "forge-runtime-endpoint" as const,
     })),
     ...contract.queries.map((query) => ({
       name: autoToolName("query", query.name),
@@ -723,7 +743,11 @@ function buildAgentToolRegistry(contract: AgentContract): AgentToolRegistry {
       risk: "read" as const,
       needsApproval: false,
       requiresAuth: query.policy !== undefined && query.policy !== "public",
-      execution: "forge-runtime-endpoint" as const,
+      ...(query.source ? { source: query.source } : {}),
+      ...(query.external ? { external: query.external } : {}),
+      execution: query.source === "external"
+        ? "external-runtime-endpoint" as const
+        : "forge-runtime-endpoint" as const,
     })),
     ...contract.liveQueries.map((liveQuery) => ({
       name: autoToolName("liveQuery", liveQuery.name),
@@ -741,6 +765,7 @@ function buildAgentToolRegistry(contract: AgentContract): AgentToolRegistry {
       risk: "read" as const,
       needsApproval: false,
       requiresAuth: liveQuery.policy !== undefined && liveQuery.policy !== "public",
+      source: "local" as const,
       execution: "forge-runtime-endpoint" as const,
     })),
   ].sort((a, b) => a.name.localeCompare(b.name));
@@ -791,6 +816,38 @@ function httpEndpointFor(
     method: "POST",
     path: `/${collection}/${encoded}`,
     exampleBody: { args: {} },
+  };
+}
+
+function externalEndpointFor(entry: ForgeExternalServiceEntry): AgentHttpEndpointInfo {
+  const encodedService = encodeURIComponent(entry.service);
+  const encodedName = encodeURIComponent(entry.name);
+  const collection = entry.kind === "query" ? "queries" : "commands";
+  return {
+    method: entry.method ?? "POST",
+    path: entry.path ?? `/external/${encodedService}/${collection}/${encodedName}`,
+    exampleBody: { args: {} },
+  };
+}
+
+function externalEntryInfo(entry: ForgeExternalServiceEntry): AgentExternalEntryInfo {
+  return {
+    service: entry.service,
+    language: entry.language,
+    ...(entry.framework ? { framework: entry.framework } : {}),
+    transport: entry.transport,
+    ...(entry.transaction ? { transaction: entry.transaction } : {}),
+    ...(entry.risk ? { risk: entry.risk } : {}),
+    effects: entry.effects ?? [],
+    ...(entry.description ? { description: entry.description } : {}),
+  };
+}
+
+function externalFrontendUsage(entry: ForgeExternalServiceEntry): AgentFrontendUsageInfo {
+  return {
+    hook: `external manifest '${entry.service}.${entry.name}'; runtime bridge required before client invocation`,
+    routes: [],
+    components: [],
   };
 }
 
@@ -916,12 +973,14 @@ export function buildAgentContractArtifacts(
 
   const runtimeEntries = new Map(input.runtimeGraph.entries.map((entry) => [entry.name, entry]));
   const tableNames = new Set(input.dataGraph.tables.map((table) => table.name));
-  const commandInfos: AgentContract["commands"] = sorted(Object.keys(input.apiSurface.commands), (name) => name).map((name) => {
+  const externalEntries = input.externalServices?.services.flatMap((service) => service.entries) ?? [];
+  const localCommandInfos: AgentContract["commands"] = sorted(Object.keys(input.apiSurface.commands), (name) => name).map((name) => {
     const entry = runtimeEntries.get(name);
     const file = entry?.file ?? "";
     return {
       name,
       file,
+      source: "local" as const,
       policy: authPolicy(commandAuth.get(name)),
       tablesRead: dbTablesForFile(input.workspaceRoot, file, tableNames, DB_READ_OPS),
       tablesWritten: dbTablesForFile(input.workspaceRoot, file, tableNames, DB_WRITE_OPS),
@@ -932,9 +991,30 @@ export function buildAgentContractArtifacts(
       frontend: frontendUsageFor(input.frontendGraph, "command", name),
     };
   });
-  const queryInfos: AgentContract["queries"] = sorted(input.queryRegistry.queries, (query) => query.name).map((query) => ({
+  const externalCommandInfos: AgentContract["commands"] = externalEntries
+    .filter((entry) => entry.kind === "command")
+    .map((entry) => ({
+      name: `${entry.service}.${entry.name}`,
+      file: `external:${entry.service}`,
+      source: "external" as const,
+      external: externalEntryInfo(entry),
+      ...(entry.policy ? { policy: entry.policy } : {}),
+      tablesRead: [],
+      tablesWritten: entry.transaction === "read-only" ? [] : [`external:${entry.service}`],
+      emits: entry.effects ?? [],
+      allowedPackages: [],
+      forbiddenCapabilities: [],
+      http: externalEndpointFor(entry),
+      frontend: externalFrontendUsage(entry),
+    }));
+  const commandInfos: AgentContract["commands"] = sorted(
+    [...localCommandInfos, ...externalCommandInfos],
+    (command) => command.name,
+  );
+  const localQueryInfos: AgentContract["queries"] = sorted(input.queryRegistry.queries, (query) => query.name).map((query) => ({
     name: query.name,
     file: query.file,
+    source: "local" as const,
     policy: authPolicy(queryAuth.get(query.name)),
     readOnly: true,
     tenantScoped: input.tenantScope.tables.length > 0,
@@ -944,6 +1024,26 @@ export function buildAgentContractArtifacts(
     http: httpEndpointFor("query", query.name),
     frontend: frontendUsageFor(input.frontendGraph, "query", query.name),
   }));
+  const externalQueryInfos: AgentContract["queries"] = externalEntries
+    .filter((entry) => entry.kind === "query")
+    .map((entry) => ({
+      name: `${entry.service}.${entry.name}`,
+      file: `external:${entry.service}`,
+      source: "external" as const,
+      external: externalEntryInfo(entry),
+      ...(entry.policy ? { policy: entry.policy } : {}),
+      readOnly: true as const,
+      tenantScoped: entry.tenantScoped ?? false,
+      tablesRead: [`external:${entry.service}`],
+      allowedPackages: [],
+      forbiddenCapabilities: [],
+      http: externalEndpointFor(entry),
+      frontend: externalFrontendUsage(entry),
+    }));
+  const queryInfos: AgentContract["queries"] = sorted(
+    [...localQueryInfos, ...externalQueryInfos],
+    (query) => query.name,
+  );
   const liveQueryInfos: AgentContract["liveQueries"] = sorted(input.liveQueryRegistry.liveQueries, (liveQuery) => liveQuery.name).map(
     (liveQuery) => {
       const tablesRead = dbTablesForFile(input.workspaceRoot, liveQuery.file, tableNames, DB_READ_OPS);
@@ -1028,6 +1128,19 @@ export function buildAgentContractArtifacts(
     }),
     dependencyApis: buildDependencyApis(input.packageGraph),
     integrations: buildIntegrations(input.classified),
+    externalServices: (input.externalServices?.services ?? []).map((service) => ({
+      name: service.name,
+      language: service.language,
+      ...(service.framework ? { framework: service.framework } : {}),
+      transport: service.transport,
+      ...(service.baseUrl ? { baseUrl: service.baseUrl } : {}),
+      ...(service.command ? { command: service.command } : {}),
+      ...(service.health ? { health: service.health } : {}),
+      commands: sorted(service.entries.filter((entry) => entry.kind === "command"), (entry) => entry.name)
+        .map((entry) => `${service.name}.${entry.name}`),
+      queries: sorted(service.entries.filter((entry) => entry.kind === "query"), (entry) => entry.name)
+        .map((entry) => `${service.name}.${entry.name}`),
+    })),
     secrets: sorted(input.secretRegistry.secrets, (secret) => secret.name).map((secret) => ({
       name: secret.name,
       integration: secret.integration,

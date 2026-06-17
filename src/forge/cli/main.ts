@@ -16,6 +16,7 @@ function formatHelp(): string {
     "  forge inspect all --json  Read the generated machine contract",
     "  forge doctor windows --json  Diagnose native Windows setup and Bun shims",
     "  forge bench compiler --json  Measure public compiler phase timings",
+    "  forge manifest validate ./forge.manifest.json --json  Validate an external runtime manifest",
     "",
     "Useful next commands:",
     "  forge generate",

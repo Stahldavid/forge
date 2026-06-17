@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.9 input=8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc content=60321f93ab063356da2e92e67116cd6349f98a7b651ed18cf59d6bd3b48c54e5
+// @forge-generated generator=0.1.0-alpha.9 input=11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f content=7349e7b0b0a82feaa00ad6c36dc0ffc862bd47f0f2f690f3f9c80f1a7941c56c
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.9",
-  "inputHash": "8272d9166eb01c344388e0da68a01dbb2259b236af7b9fe5c7605e4a01ce57fc",
+  "inputHash": "11d52fee585f53d8e2be9d455295ba3ac5ff6b218e315ec8a27fc58cfdefcb5f",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1275,6 +1275,42 @@ export const testGraph = {
         "probable: packages ai",
         "probable: packages tsx"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/external-manifest/external-manifest.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/external-manifest/external-runtime-bridge.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "probable",

@@ -64,6 +64,7 @@ export type InspectTarget =
   | "ai"
   | "queries"
   | "api"
+  | "external"
   | "client"
   | "frontend"
   | "auth"

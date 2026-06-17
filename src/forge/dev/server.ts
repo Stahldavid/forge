@@ -75,6 +75,10 @@ import {
 } from "../runtime/live/invalidation-log.ts";
 import { currentReleaseInfo } from "../runtime/release/runtime.ts";
 import { DEFAULT_LIVE_LIMITS } from "../runtime/live/types.ts";
+import {
+  loadExternalServiceGraph,
+  runExternalEntry,
+} from "../runtime/external/bridge.ts";
 
 interface FetchServer {
   hostname?: string;
@@ -404,6 +408,22 @@ function parseInvokeName(pathname: string, prefix: string): string | null {
   }
   const name = pathname.slice(prefix.length);
   return name.length > 0 ? decodeURIComponent(name) : null;
+}
+
+function parseExternalInvoke(pathname: string): {
+  serviceName: string;
+  kind: "command" | "query";
+  entryName: string;
+} | null {
+  const match = pathname.match(/^\/external\/([^/]+)\/(commands|queries)\/([^/]+)$/);
+  if (!match) {
+    return null;
+  }
+  return {
+    serviceName: decodeURIComponent(match[1]!),
+    kind: match[2] === "commands" ? "command" : "query",
+    entryName: decodeURIComponent(match[3]!),
+  };
 }
 
 function loadAgentToolRegistry(workspaceRoot: string): AgentToolRegistry | null {
@@ -803,6 +823,7 @@ export async function startDevServer(
           const listed = listEntries(workspaceRoot);
           const queries = listQueries(workspaceRoot);
           const liveQueries = loadLiveQueryRegistry(workspaceRoot);
+          const external = loadExternalServiceGraph(workspaceRoot);
           const entries = [
             ...queries.queries.map((query) => ({
               name: query.name,
@@ -825,6 +846,14 @@ export async function startDevServer(
                   : `/actions/${entry.name}`,
               method: "POST",
             })),
+            ...(external.graph?.services.flatMap((service) =>
+              service.entries.map((entry) => ({
+                name: `${service.name}.${entry.name}`,
+                kind: `external:${entry.kind}`,
+                path: `/external/${encodeURIComponent(service.name)}/${entry.kind === "command" ? "commands" : "queries"}/${encodeURIComponent(entry.name)}`,
+                method: entry.method ?? "POST",
+              }))
+            ) ?? []),
           ].sort((a, b) =>
             a.path === b.path ? a.kind.localeCompare(b.kind) : a.path.localeCompare(b.path),
           );
@@ -846,6 +875,7 @@ export async function startDevServer(
               ...listed.diagnostics,
               ...queries.diagnostics,
               ...(liveQueries.registry?.diagnostics ?? []),
+              ...external.diagnostics,
             ],
           };
 
@@ -1501,6 +1531,15 @@ export async function startDevServer(
         }
 
         if (request.method === "GET") {
+          const externalInvoke = parseExternalInvoke(pathname);
+          if (externalInvoke) {
+            return methodHelpResponse({
+              kind: externalInvoke.kind,
+              name: `${externalInvoke.serviceName}.${externalInvoke.entryName}`,
+              path: `/external/${externalInvoke.serviceName}/${externalInvoke.kind === "command" ? "commands" : "queries"}/${externalInvoke.entryName}`,
+            });
+          }
+
           const queryName = parseInvokeName(pathname, "/queries/");
           if (queryName) {
             return methodHelpResponse({
@@ -1656,6 +1695,35 @@ export async function startDevServer(
             });
 
             return jsonResponse({ ok: true, ...result });
+          }
+
+          const externalInvoke = parseExternalInvoke(pathname);
+          if (externalInvoke) {
+            const args = await parseRequestArgs(request);
+            const auth = await authenticateHeaders(request.headers, authConfig);
+            const result = await runExternalEntry(
+              workspaceRoot,
+              {
+                ...externalInvoke,
+                args,
+                auth,
+                requestHeaders: request.headers,
+              },
+              { adapter: serverState.adapter },
+            );
+            const policyDenied = result.diagnostics.some(
+              (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
+            );
+            return jsonResponse(
+              {
+                ok: result.ok,
+                result: result.result,
+                diagnostics: result.diagnostics,
+                traceId: result.traceId,
+              },
+              result.ok ? 200 : policyDenied ? 403 : 400,
+              result.traceId ? { "x-forge-trace-id": result.traceId } : {},
+            );
           }
 
           let entryName: string | null = null;

@@ -16,6 +16,8 @@ export interface ClientManifest {
     queries: string;
     commands: string;
     liveQueries: string;
+    externalQueries: string;
+    externalCommands: string;
   };
   react: {
     entrypoint: string;
@@ -101,6 +103,8 @@ export function buildClientManifest(
       queries: "POST /queries/:name",
       commands: "POST /commands/:name",
       liveQueries: "GET /live/:name",
+      externalQueries: "POST /external/:service/queries/:name",
+      externalCommands: "POST /external/:service/commands/:name",
     },
     react: {
       entrypoint: "src/forge/_generated/react.ts",

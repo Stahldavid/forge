@@ -5,6 +5,16 @@ import type { QueryRegistry } from "../types/query-registry.ts";
 import type { LiveQueryRegistry } from "../types/live-query-registry.ts";
 import type { RuntimeGraph } from "../types/runtime-graph.ts";
 import type { WorkflowRegistry } from "../types/workflow-registry.ts";
+import type { ForgeExternalServiceGraph } from "../external-manifest/types.ts";
+
+export interface ApiExternalEntry {
+  service: string;
+  name: string;
+  kind: "command" | "query";
+  language: string;
+  framework?: string;
+  transport: string;
+}
 
 export interface ApiSurface {
   schemaVersion: string;
@@ -15,6 +25,11 @@ export interface ApiSurface {
   liveQueries: Record<string, string>;
   actions: Record<string, string>;
   workflows: Record<string, string>;
+  external?: {
+    services: Record<string, string>;
+    commands: Record<string, ApiExternalEntry>;
+    queries: Record<string, ApiExternalEntry>;
+  };
 }
 
 export function buildApiSurface(
@@ -22,6 +37,7 @@ export function buildApiSurface(
   queryRegistry: QueryRegistry,
   liveQueryRegistry: LiveQueryRegistry,
   workflowRegistry: WorkflowRegistry,
+  externalServices?: ForgeExternalServiceGraph,
 ): ApiSurface {
   const queries: Record<string, string> = {};
   for (const query of queryRegistry.queries) {
@@ -48,6 +64,31 @@ export function buildApiSurface(
     workflows[workflow.name] = workflow.name;
   }
 
+  const external = {
+    services: {} as Record<string, string>,
+    commands: {} as Record<string, ApiExternalEntry>,
+    queries: {} as Record<string, ApiExternalEntry>,
+  };
+  for (const service of externalServices?.services ?? []) {
+    external.services[service.name] = service.name;
+    for (const entry of service.entries) {
+      const qualifiedName = `${service.name}.${entry.name}`;
+      const surfaceEntry = {
+        service: service.name,
+        name: entry.name,
+        kind: entry.kind,
+        language: service.language,
+        ...(service.framework ? { framework: service.framework } : {}),
+        transport: service.transport,
+      };
+      if (entry.kind === "command") {
+        external.commands[qualifiedName] = surfaceEntry;
+      } else {
+        external.queries[qualifiedName] = surfaceEntry;
+      }
+    }
+  }
+
   return {
     schemaVersion: "1.0.0",
     generatorVersion: GENERATOR_VERSION,
@@ -57,6 +98,7 @@ export function buildApiSurface(
         queryInputHash: queryRegistry.inputHash,
         liveQueryInputHash: liveQueryRegistry.inputHash,
         workflowInputHash: workflowRegistry.inputHash,
+        externalInputHash: externalServices?.inputHash ?? "",
       }),
     ),
     queries,
@@ -64,10 +106,12 @@ export function buildApiSurface(
     liveQueries,
     actions,
     workflows,
+    external,
   };
 }
 
 export function serializeApiTs(surface: ApiSurface): string {
+  const external = surface.external ?? { services: {}, commands: {}, queries: {} };
   return `export const api = ${JSON.stringify(
     {
       queries: surface.queries,
@@ -75,6 +119,7 @@ export function serializeApiTs(surface: ApiSurface): string {
       liveQueries: surface.liveQueries,
       actions: surface.actions,
       workflows: surface.workflows,
+      external,
     },
     null,
     2,
@@ -90,6 +135,7 @@ export const serverApi = {
   liveQueries: api.liveQueries,
   actions: api.actions,
   workflows: api.workflows,
+  external: api.external,
 } as const;
 `;
 }
@@ -102,6 +148,7 @@ export const clientApi = {
   queries: api.queries,
   commands: api.commands,
   liveQueries: api.liveQueries,
+  external: api.external,
 } as const;
 `;
 }

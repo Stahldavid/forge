@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgeos.dev/schemas/forge-manifest.schema.json",
+  "title": "Forge external runtime manifest",
+  "type": "object",
+  "required": ["forgeProtocol", "language", "service", "entries"],
+  "properties": {
+    "forgeProtocol": { "const": "1.0" },
+    "language": { "type": "string", "minLength": 1 },
+    "framework": { "type": "string", "minLength": 1 },
+    "service": {
+      "type": "object",
+      "required": ["name", "transport"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "transport": { "enum": ["http", "grpc", "stdio"] },
+        "baseUrl": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "health": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["command", "query"] },
+          "description": { "type": "string" },
+          "path": { "type": "string", "minLength": 1 },
+          "method": { "enum": ["GET", "POST"] },
+          "inputSchema": {},
+          "outputSchema": {},
+          "policy": { "type": "string", "minLength": 1 },
+          "tenantScoped": { "type": "boolean" },
+          "transaction": {
+            "enum": ["read-only", "external-managed", "forge-managed", "saga"]
+          },
+          "risk": { "enum": ["read", "write", "destructive", "external"] },
+          "effects": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "schemas": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

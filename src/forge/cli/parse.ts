@@ -166,6 +166,7 @@ export type ForgeCommand =
   | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
+  | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -337,6 +338,7 @@ export const TOP_LEVEL_COMMANDS = [
   "repair",
   "do",
   "bench",
+  "manifest",
   "generate",
   "add",
   "inspect",
@@ -373,6 +375,7 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "ai",
   "queries",
   "api",
+  "external",
   "client",
   "frontend",
   "auth",
@@ -1531,6 +1534,29 @@ export function parseCli(argv: string[]): ParsedCli {
           dryRun: parseFlag(argv, "--dry-run"),
           json: parseFlag(argv, "--json"),
           concurrency: Math.max(1, Math.floor(concurrency || 4)),
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "manifest": {
+      const subcommand = rest[0];
+      const path = rest[1];
+      if (subcommand !== "validate" && subcommand !== "import") {
+        errors.push("forge manifest requires subcommand validate or import");
+        return { command: null, workspaceRoot, errors };
+      }
+      if (!path) {
+        errors.push(`forge manifest ${subcommand} requires a manifest file path`);
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "manifest",
+          subcommand,
+          path,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
         },
         workspaceRoot,
         errors,
