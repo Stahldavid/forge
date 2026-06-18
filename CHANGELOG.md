@@ -9,7 +9,7 @@ Strict verify performance:
 - Balanced TestGraph strict execution across shared and isolated lanes, bringing the slowest files down from roughly 50s to under 10s in the updated profile.
 - Moved heavy refactor/impact/external runtime suites onto faster shared paths where safe and kept isolation for process-sensitive tests.
 - Documented and guarded the cache behavior so future test helpers preserve the speedup without checking cache contents into git.
-- Aligned the alpha release workflow so the public `latest` dist-tag is promoted with the published ForgeOS alpha package.
+- Added guarded alpha release workflow support for promoting the public `latest` dist-tag when npm token auth is configured.
 
 ## 0.1.0-alpha.10
 

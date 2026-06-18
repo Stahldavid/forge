@@ -122,7 +122,14 @@ jobs:
 
       - name: Promote ForgeOS latest tag
         if: steps.forgeos-package.outputs.published == 'true'
-        run: npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::warning::NPM_TOKEN is not configured; skipping latest dist-tag promotion."
+            exit 0
+          fi
+          npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
 
       - name: Publish create app wrapper
         id: create-wrapper
@@ -278,7 +285,14 @@ jobs:
 
       - name: Promote ForgeOS latest tag
         if: steps.npm-version.outputs.exists != 'true'
-        run: npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::warning::NPM_TOKEN is not configured; skipping latest dist-tag promotion."
+            exit 0
+          fi
+          npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
 
       - name: Publish create app wrapper
         id: create-wrapper
