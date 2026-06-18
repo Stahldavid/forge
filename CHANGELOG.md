@@ -1,5 +1,17 @@
 # forgeos
 
+## 0.1.0-alpha.14
+
+Java and Nuxt/Vue support:
+
+- Added the Java external runtime adapter with a lightweight JDK HTTP bridge, manifest export, typed handlers, tenant/auth context, diagnostics, and command/query registration.
+- Added a Spring Boot starter for Java services that want annotation-based Forge command/query exposure.
+- Added the `java-billing` conformance example and packaged it with the public alpha line.
+- Added generated Vue bindings and a `forgeos/vue` export with `provideForge`, `ForgeVuePlugin`, `useForgeQuery`, `useForgeCommand`, and `useForgeLiveQuery`.
+- Added Nuxt UI scaffolding through `forge make ui --framework nuxt`, including plugin wiring, composable bridge files, and frontend graph detection for `.vue` routes/components.
+- Updated docs, agent adapter guidance, generated manifests, and focused Java/Vue/Nuxt tests.
+- Kept H44-H48 memory, sessions, timeline, grouping, and MCP surfaces intact while merging the Java/Nuxt work into `main`.
+
 ## 0.1.0-alpha.13
 
 Agent Memory Bridge:
