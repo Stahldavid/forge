@@ -111,6 +111,8 @@ forge inspect imported --json
 
 All imported entries start with `origin: imported`, `assurance: static-scan`, `reviewStatus: needs-review`, and `visibleToAgent: false`. Command-like, destructive, external, or unknown entries keep `needsApproval: true` until a human review turns them into native Forge commands, queries, actions, or workflows.
 
+See [Brownfield Import](brownfield-import.md) for the full migration workflow.
+
 ## Generation and Verification
 
 ```bash

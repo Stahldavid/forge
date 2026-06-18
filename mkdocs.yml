@@ -60,6 +60,8 @@ nav:
   - Build a Feature with an Agent: agent-feature-tutorial.md
   - Dev Loop: dev-loop.md
   - Forge DeltaDB: forge-deltadb.md
+  - Agent Memory: agent-memory.md
+  - Brownfield Import: brownfield-import.md
   - CLI: cli.md
   - CLI Reference: cli-reference.md
   - Runtime Model: runtime-model.md
@@ -71,6 +73,7 @@ nav:
   - Security & Data: security-and-data.md
   - Authoring: authoring.md
   - Integrations:
+      - Forge Protocol: forge-protocol.md
       - forge add: forge-add.md
       - Package Intelligence: package-intelligence.md
       - Recipes: recipes.md

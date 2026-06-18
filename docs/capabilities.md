@@ -1,6 +1,6 @@
 # Capabilities
 
-ForgeOS has grown through milestones H1-H43. This page groups those milestones into public capabilities instead of exposing them as an implementation timeline.
+ForgeOS has grown through milestones H1-H49. This page groups those milestones into public capabilities instead of exposing them as an implementation timeline.
 
 ## Capability map
 
@@ -19,6 +19,10 @@ ForgeOS has grown through milestones H1-H43. This page groups those milestones i
 | Refactor safety | AST-aware rename/extract codemods | `forge refactor` | [Codemods](codemods.md) |
 | Testing and repair | Impact tests, repair plans, review, UI smoke | `forge impact`, `forge repair`, `forge review`, `forge ui` | [Testing and Repair](testing-and-repair.md) |
 | Native AI agents | Tools, agents, auto-tools, chat endpoints | `forge ai`, `forge inspect agent-tools` | [AI Agents](ai-agents.md) |
+| DeltaDB and timeline | Local operation memory, inferred sessions, semantic timeline, explain | `forge delta`, `forge session`, `forge timeline`, `forge explain` | [Forge DeltaDB](forge-deltadb.md) |
+| Agent memory bridge | Redacted external agent event ingestion and MCP context | `forge agent memory`, `forge agent ingest`, `forge mcp serve` | [Agent Memory](agent-memory.md) |
+| External runtimes | Executable manifest-backed Go, Java, and Spring Boot services | `forge manifest`, `forge run`, `forge query` | [Forge Protocol](forge-protocol.md) |
+| Brownfield import | Static inventory for existing TypeScript/JavaScript apps | `forge import analyze`, `forge inspect imported` | [Brownfield Import](brownfield-import.md) |
 | Operations | Self-host, release, Windows, Node path | `forge doctor`, `forge self-host`, `forge verify` | [Operations](operations.md) |
 
 ## How the pieces fit
@@ -47,6 +51,9 @@ The core idea stays the same across every capability: make the app explicit enou
 | H25-H32 | Authoring, blueprints, codemods, impact tests, repair, adapters, review, UI bridge |
 | H33-H38 | Intent router, full-stack contract, capability map, template hygiene, dev panel, fast generated checks |
 | H39-H43 | Showcase app, Windows/Node hardening, verify observability, native AI tools and agents |
+| H44-H47 | DeltaDB local recorder, inferred work sessions, change grouping, semantic timeline |
+| H48 | Agent memory bridge for Codex, Claude Code, Cursor, and MCP |
+| H49 | Brownfield import analysis for existing TypeScript/JavaScript apps |
 
 ## Recommended reading paths
 
@@ -62,7 +69,9 @@ For AI coding agents:
 1. [Agent Playbook](agent-playbook.md)
 2. [Agent Workflow](agent-workflow.md)
 3. [Agent Contract](agent-contract.md)
-4. [Testing and Repair](testing-and-repair.md)
+4. [Agent Memory](agent-memory.md)
+5. [Forge DeltaDB](forge-deltadb.md)
+6. [Testing and Repair](testing-and-repair.md)
 
 For production hardening:
 
@@ -71,3 +80,10 @@ For production hardening:
 3. [Operations](operations.md)
 4. [Self-Host](self-host.md)
 5. [Release](release.md)
+
+For existing apps:
+
+1. [Brownfield Import](brownfield-import.md)
+2. [CLI](cli.md)
+3. [Forge Protocol](forge-protocol.md)
+4. [Runtime Model](runtime-model.md)

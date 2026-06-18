@@ -12,6 +12,32 @@ Brownfield import analysis:
 - Emits `.forge/import` inventory, route, frontend call, candidate entry, risk, migration plan, and imported agent contract artifacts.
 - Keeps every imported entry hidden from agents until review, with approval required for command-like or risky static detections.
 
+## 0.1.0-alpha.14
+
+Java and Nuxt/Vue support:
+
+- Added the Java external runtime adapter, Spring Boot starter, and `java-billing` conformance example.
+- Added generated Vue bindings and the `forgeos/vue` export.
+- Added Nuxt UI scaffolding through `forge make ui --framework nuxt`.
+- Updated docs, agent adapter guidance, generated manifests, and focused Java/Vue/Nuxt tests.
+
+## 0.1.0-alpha.13
+
+Agent Memory Bridge:
+
+- Added H48 redacted external agent event ingestion with normalized `forge.agent-event.v1` envelopes.
+- Added Codex and Claude Code hook installers plus Cursor MCP/rules setup.
+- Added `forge mcp serve`, `forge agent install`, `forge agent ingest`, `forge agent context`, and `forge agent memory`.
+- Persisted external agent activity in DeltaDB and linked agent/tool/file events into the semantic timeline.
+
+## 0.1.0-alpha.12
+
+Semantic Timeline:
+
+- Added the H47 DeltaDB semantic timeline projection with rebuildable events, entity indexes, causal edges, and projection state.
+- Upgraded `forge timeline` from raw operations into an entity-oriented timeline for runtime entries, policies, diagnostics, proofs, services, files, and sessions.
+- Added proof staleness detection and timeline context in `forge explain`.
+
 ## 0.1.0-alpha.11
 
 Strict verify performance:

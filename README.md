@@ -2,7 +2,7 @@
 
 Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
-**Status:** private/public alpha MVP, implemented through H43. ForgeOS already includes the compiler, local runtime, frontend SDK, production auth, RLS compiler, liveQuery, self-host artifacts, generated agent contract, guided dev loop, repair/review/test tooling, AST-aware codemods, package intelligence, native AI tools/agents, npm alpha publishing, and Read the Docs public docs. Public release hardening is still focused on deeper semantic codemods, broader field reports, and more production mileage.
+**Status:** private/public alpha MVP, implemented through H49. ForgeOS already includes the compiler, local runtime, frontend SDK, production auth, RLS compiler, liveQuery, self-host artifacts, generated agent contract, guided dev loop, repair/review/test tooling, AST-aware codemods, package intelligence, native AI tools/agents, DeltaDB work memory, external agent memory ingestion, brownfield import analysis, npm alpha publishing, and Read the Docs public docs. Public release hardening is still focused on deeper semantic codemods, broader field reports, and more production mileage.
 
 Public docs live at [forgeos.readthedocs.io](https://forgeos.readthedocs.io/). The repo builds them with `.readthedocs.yaml`, `mkdocs.yml`, and `docs/index.md`.
 
@@ -91,7 +91,7 @@ npm run field:test -- --package-managers npm --templates minimal-web --forge-spe
 
 The scheduled/manual `Field Tests` workflow expands that coverage across Linux, macOS, Windows, Node 22, Node 24, and npm/pnpm/yarn/bun.
 
-## External Runtimes And Go Adapter
+## External Runtimes And Adapters
 
 ForgeOS can import services written outside TypeScript through the Forge Protocol.
 External runtimes publish a `forge.manifest.json` that describes commands, queries,
@@ -99,7 +99,7 @@ transport, policies, risk metadata, tenant scope, and schemas. Forge then emits
 the same machine-readable app/API/agent artifacts and exposes runtime bridge
 endpoints for those entries.
 
-The first adapter MVP is Go:
+The Go example starts a manifest-backed service:
 
 ```bash
 cd examples/go-billing
@@ -116,6 +116,10 @@ forge generate
 forge run billing.createInvoice --args '{"title":"Invoice"}' --user-id u1 --tenant-id tenant-a --role admin
 forge query billing.listInvoices --args '{}' --user-id u1 --tenant-id tenant-a --role admin
 ```
+
+For Java, see [`adapters/java`](adapters/java/README.md),
+[`adapters/java-spring-boot-starter`](adapters/java-spring-boot-starter/README.md),
+and [`examples/java-billing`](examples/java-billing/README.md).
 
 See [`docs/forge-protocol.md`](docs/forge-protocol.md), [`schemas/forge-manifest.schema.json`](schemas/forge-manifest.schema.json),
 and [`adapters/go`](adapters/go/README.md).
@@ -173,11 +177,13 @@ forge.lock
 | Frontend | generated client SDK, React/Next hooks, template app, liveQuery client support |
 | LiveQuery | durable invalidation log, reconnect/resume semantics, production hardening checks |
 | DeltaDB | ambient local recorder plus inferred work sessions and semantic timelines for Forge commands, dev file saves, generated artifacts, runtime calls, policies, proofs, diagnostics, `forge timeline`, `forge explain`, and optional `forge session` correction |
+| Agent memory | opt-in Codex and Claude Code hooks, Cursor MCP/rules setup, normalized external agent events, redacted local memory, and `forge mcp serve` |
+| Brownfield import | static TypeScript/JavaScript app inventory with routes, frontend calls, env usage, candidate entries, risk report, migration plan, and hidden-by-default imported agent contract |
 | Self-host | compose/deploy artifacts and self-host checks |
 | Agent contract | `AGENTS.md`, `agentContract.json`, app maps, runtime rules, playbooks, inspect/doctor |
 | Authoring | `forge make`, feature blueprints, safe refactor plans, package upgrade plans |
 | Testing/repair | impact-based test planner, repair loop, structured review, UI/browser test bridge |
-| Adapters | agent adapter export for external AI tools |
+| Adapters | Forge Protocol manifest import plus Go, Java, and Spring Boot adapter support for executable external commands and queries |
 | Intent router | `forge do` maps objectives like fix, verify, connect UI, and add feature into plans, files, risks, and next commands |
 | Full-stack map | `frontendGraph` + `capabilityMap` connect routes, components, hooks, runtime entries, tables, policies, and gaps |
 | Dev loop | `forge dev` prints API/Web URLs, phase health, capability coverage, cache status, diagnostics, and next action |
@@ -204,6 +210,10 @@ forge timeline --session current
 forge explain <thing>
 forge explain session current
 forge session list
+forge agent memory --json
+forge mcp serve
+forge import analyze --json
+forge inspect imported --json
 forge doctor
 forge verify --standard
 forge verify --strict
@@ -248,7 +258,10 @@ Common command groups:
 | `forge ui` | Browser/UI smoke, scenario, route, snapshot, doctor, and reports |
 | `forge deps` | Package upgrade planning and application |
 | `forge release` | Release/source-map bridge and symbolication |
-| `forge agent`, `forge agent-contract` | Agent-facing contract and adapter exports |
+| `forge agent`, `forge agent-contract` | Agent-facing contract, adapter exports, context, install, ingest, and memory commands |
+| `forge mcp serve` | MCP server for external agents to read Forge context, memory, timeline, and inspect surfaces |
+| `forge import analyze`, `forge import inspect` | Brownfield TypeScript/JavaScript app inventory and reviewed migration planning |
+| `forge inspect imported --json` | Inspect `.forge/import` analysis artifacts |
 | `forge self-host` | Self-host packaging and checks |
 
 Refactor codemods are AST-aware where safety matters most:
@@ -446,6 +459,12 @@ H40  Windows/runtime hardening
 H41  Node-compatible CLI/runtime
 H42  Verify observability and quieter app workspaces
 H43  Native AI tools and agent loop
+H44  Ambient DeltaDB recorder
+H45  Automatic work-session inference
+H46  Automatic change grouping
+H47  Semantic timeline
+H48  Agent Memory Bridge
+H49  Brownfield import analysis
 ```
 
 ## Remaining Hardening Before Public Release
