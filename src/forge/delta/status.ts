@@ -22,7 +22,28 @@ export function formatDeltaStatusHuman(result: DeltaStatusResult): string {
   lines.push(`  ${result.recording ? "recording enabled" : "recording disabled"}`);
   lines.push(`  local store: ${result.store}`);
   lines.push("");
-  lines.push("Current session:");
+  lines.push("Current work session:");
+  if (result.workSession) {
+    lines.push(`  ${result.workSession.id}`);
+    lines.push(`  title: ${result.workSession.title}`);
+    lines.push(`  status: ${result.workSession.status}`);
+    lines.push(`  confidence: ${result.workSession.confidence.toFixed(2)}`);
+    lines.push(`  operations: ${result.workSession.operationCount}`);
+    if (result.workSession.gitBranch) {
+      lines.push(`  branch: ${result.workSession.gitBranch}`);
+    }
+    if (result.workSession.reasons.length > 0) {
+      lines.push("");
+      lines.push("Why this session:");
+      for (const reason of result.workSession.reasons.slice(0, 5)) {
+        lines.push(`  - ${reason.signal}${reason.value ? `: ${reason.value}` : ""}`);
+      }
+    }
+  } else {
+    lines.push("  none");
+  }
+  lines.push("");
+  lines.push("Latest recorder session:");
   if (result.session) {
     lines.push(`  ${result.session.id}`);
     lines.push(`  started: ${result.session.startedAt}`);
@@ -45,4 +66,3 @@ export function formatDeltaStatusHuman(result: DeltaStatusResult): string {
 export function formatDeltaStatusJson(result: DeltaStatusResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
 }
-

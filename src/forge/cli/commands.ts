@@ -83,9 +83,12 @@ import {
   formatDeltaExplainJson,
   formatDeltaStatusHuman,
   formatDeltaStatusJson,
+  formatDeltaSessionHuman,
+  formatDeltaSessionJson,
   formatDeltaTimelineHuman,
   formatDeltaTimelineJson,
   runDeltaExplain,
+  runDeltaSessionCommand,
   runDeltaStatus,
   runDeltaTimeline,
 } from "../delta/index.ts";
@@ -864,11 +867,25 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       process.stdout.write(command.json ? formatDeltaStatusJson(result) : formatDeltaStatusHuman(result));
       return result.exitCode;
     }
+    case "session": {
+      const result = await runDeltaSessionCommand({
+        workspaceRoot: command.workspaceRoot,
+        subcommand: command.subcommand,
+        sessionId: command.sessionId,
+        sourceSessionId: command.sourceSessionId,
+        operationId: command.operationId,
+        title: command.title,
+        limit: command.limit,
+      });
+      process.stdout.write(command.json ? formatDeltaSessionJson(result) : formatDeltaSessionHuman(result));
+      return result.exitCode;
+    }
     case "timeline": {
       const result = await runDeltaTimeline({
         workspaceRoot: command.workspaceRoot,
         target: command.target,
         kind: command.kindFilter,
+        session: command.sessionId,
         limit: command.limit,
       });
       process.stdout.write(command.json ? formatDeltaTimelineJson(result) : formatDeltaTimelineHuman(result));

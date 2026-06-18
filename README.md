@@ -172,7 +172,7 @@ forge.lock
 | AI | Vercel AI SDK v6 engine, provider registry, `ctx.ai`, `ctx.agent.run`, `aiTool`, `agent`, `/ai/agents/run` JSON automation, `/ai/agents/chat` UIMessage streaming, `forge ai trace`, structural and model-level redteam probes, mock mode, telemetry without prompt/output retention by default |
 | Frontend | generated client SDK, React/Next hooks, template app, liveQuery client support |
 | LiveQuery | durable invalidation log, reconnect/resume semantics, production hardening checks |
-| DeltaDB | ambient local recorder for Forge commands, dev file saves, generated artifacts, runtime calls, proofs, diagnostics, and `forge timeline` / `forge explain` |
+| DeltaDB | ambient local recorder plus inferred work sessions for Forge commands, dev file saves, generated artifacts, runtime calls, proofs, diagnostics, `forge timeline`, `forge explain`, and optional `forge session` correction |
 | Self-host | compose/deploy artifacts and self-host checks |
 | Agent contract | `AGENTS.md`, `agentContract.json`, app maps, runtime rules, playbooks, inspect/doctor |
 | Authoring | `forge make`, feature blueprints, safe refactor plans, package upgrade plans |
@@ -200,7 +200,10 @@ forge inspect framework --json
 forge inspect capabilities --json
 forge delta status
 forge timeline
+forge timeline --session current
 forge explain <thing>
+forge explain session current
+forge session list
 forge doctor
 forge verify --standard
 forge verify --strict

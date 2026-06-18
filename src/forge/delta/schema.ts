@@ -96,11 +96,61 @@ export const DELTA_SCHEMA_SQL = [
     confidence real,
     metadata_json text
   )`,
+  `CREATE TABLE IF NOT EXISTS work_sessions (
+    id text PRIMARY KEY,
+    workspace_root text NOT NULL,
+    kind text NOT NULL,
+    status text NOT NULL,
+    title text,
+    inferred_intent text,
+    confidence real NOT NULL,
+    started_at text NOT NULL,
+    ended_at text,
+    actor_ids_json text,
+    git_branch text,
+    git_head_start text,
+    git_head_end text,
+    summary text,
+    metadata_json text,
+    created_at text NOT NULL,
+    updated_at text NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS work_session_operations (
+    work_session_id text NOT NULL,
+    operation_id text NOT NULL,
+    link_type text NOT NULL,
+    confidence real NOT NULL,
+    reason_json text,
+    created_at text NOT NULL,
+    PRIMARY KEY (work_session_id, operation_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS work_session_signals (
+    id text PRIMARY KEY,
+    work_session_id text,
+    operation_id text,
+    signal_type text NOT NULL,
+    weight real NOT NULL,
+    value text,
+    metadata_json text,
+    created_at text NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS work_session_summaries (
+    id text PRIMARY KEY,
+    work_session_id text NOT NULL,
+    summary_type text NOT NULL,
+    content text NOT NULL,
+    generated_by text,
+    created_at text NOT NULL,
+    redaction_json text
+  )`,
   `CREATE INDEX IF NOT EXISTS operations_timestamp_idx ON operations(timestamp)`,
   `CREATE INDEX IF NOT EXISTS operations_kind_idx ON operations(kind)`,
   `CREATE INDEX IF NOT EXISTS operations_session_idx ON operations(session_id)`,
   `CREATE INDEX IF NOT EXISTS file_changes_path_idx ON file_changes(path)`,
   `CREATE INDEX IF NOT EXISTS runtime_calls_entry_idx ON runtime_calls(entry_name)`,
   `CREATE INDEX IF NOT EXISTS artifacts_path_idx ON artifacts(path)`,
+  `CREATE INDEX IF NOT EXISTS work_sessions_status_idx ON work_sessions(status, updated_at)`,
+  `CREATE INDEX IF NOT EXISTS work_sessions_branch_idx ON work_sessions(git_branch)`,
+  `CREATE INDEX IF NOT EXISTS work_session_operations_operation_idx ON work_session_operations(operation_id)`,
+  `CREATE INDEX IF NOT EXISTS work_session_signals_session_idx ON work_session_signals(work_session_id)`,
 ];
-

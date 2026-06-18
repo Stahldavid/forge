@@ -26,9 +26,34 @@ export async function runDeltaExplain(input: {
 
 export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
   const explanation = result.explanation;
+  if (explanation.type === "work-session") {
+    const session = explanation.session as Record<string, unknown> | null | undefined;
+    const lines = [result.thing, ""];
+    if (!session) {
+      lines.push("work session not found");
+      return `${lines.join("\n")}\n`;
+    }
+    lines.push("Work session:");
+    lines.push(`  ${String(session.id)}`);
+    lines.push(`  title: ${String(session.title ?? "Work session")}`);
+    lines.push(`  status: ${String(session.status ?? "unknown")}`);
+    lines.push(`  confidence: ${Number(session.confidence ?? 0).toFixed(2)}`);
+    if (session.summary) {
+      lines.push(`  summary: ${String(session.summary)}`);
+    }
+    const operations = Array.isArray(session.operations) ? session.operations as Array<Record<string, unknown>> : [];
+    lines.push("");
+    lines.push("Operations:");
+    for (const operation of operations.slice(-12)) {
+      const timestamp = typeof operation.timestamp === "string" ? operation.timestamp.slice(11, 16) : "??:??";
+      lines.push(`  ${timestamp} ${String(operation.kind)}${operation.summary ? ` ${String(operation.summary)}` : ""}`);
+    }
+    return `${lines.join("\n")}\n`;
+  }
   const runtime = explanation.runtime as Record<string, unknown> | null | undefined;
   const timeline = Array.isArray(explanation.timeline) ? explanation.timeline as Array<Record<string, unknown>> : [];
   const proofs = Array.isArray(explanation.proofs) ? explanation.proofs as Array<Record<string, unknown>> : [];
+  const workSessions = Array.isArray(explanation.workSessions) ? explanation.workSessions as Array<Record<string, unknown>> : [];
   const lines = [result.thing, ""];
   lines.push("Type:");
   lines.push(`  ${String(explanation.type ?? "unknown")}`);
@@ -55,6 +80,18 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
     }
   }
   lines.push("");
+  lines.push("Introduced in:");
+  if (workSessions.length === 0) {
+    lines.push("  no inferred work session linked");
+  } else {
+    const session = workSessions[0]!;
+    lines.push(`  ${String(session.id)} - ${String(session.title ?? "Work session")}`);
+    lines.push(`  confidence: ${Number(session.confidence ?? 0).toFixed(2)}`);
+    if (session.summary) {
+      lines.push(`  ${String(session.summary)}`);
+    }
+  }
+  lines.push("");
   lines.push("Proofs:");
   if (proofs.length === 0) {
     lines.push("  none recorded");
@@ -72,4 +109,3 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
 export function formatDeltaExplainJson(result: DeltaExplainResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
 }
-

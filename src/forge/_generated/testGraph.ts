@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.11 input=e2bfdfd1880fd53eedb9aa5d81a3a008a5a2c6f0b1a3317d0bdb8d67414cfa1b content=0892dd160a9e6d062db7e5c69bf1b4dcad8920cb33a5af4857e2f4ef2c723d77
+// @forge-generated generator=0.1.0-alpha.11 input=d1e9ea1b1e7d1268b74c027b8d605e187a9ea56cbbb5aeff174833ed68610c4c content=3c528605b57d95f457838c15cf4152195afb3f4bef4d522c2da65a0701fb93d9
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.11",
-  "inputHash": "e2bfdfd1880fd53eedb9aa5d81a3a008a5a2c6f0b1a3317d0bdb8d67414cfa1b",
+  "inputHash": "d1e9ea1b1e7d1268b74c027b8d605e187a9ea56cbbb5aeff174833ed68610c4c",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1043,6 +1043,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/delta/delta-store.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/session-inference.test.ts",
       "kind": "unknown",
       "reasons": []
     },

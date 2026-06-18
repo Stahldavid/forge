@@ -168,8 +168,19 @@ export type ForgeCommand =
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
   | { kind: "delta"; subcommand: "status"; json: boolean; workspaceRoot: string }
-  | { kind: "timeline"; target?: string; kindFilter?: string; limit?: number; json: boolean; workspaceRoot: string }
+  | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; workspaceRoot: string }
   | { kind: "explain"; thing: string; json: boolean; workspaceRoot: string }
+  | {
+      kind: "session";
+      subcommand: "list" | "show" | "rename" | "merge" | "split" | "detach";
+      sessionId?: string;
+      sourceSessionId?: string;
+      operationId?: string;
+      title?: string;
+      limit?: number;
+      json: boolean;
+      workspaceRoot: string;
+    }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -343,6 +354,7 @@ export const TOP_LEVEL_COMMANDS = [
   "do",
   "bench",
   "delta",
+  "session",
   "timeline",
   "explain",
   "manifest",
@@ -1563,10 +1575,39 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "session": {
+      const subcommand = rest[0];
+      if (subcommand !== "list" && subcommand !== "show" && subcommand !== "rename" && subcommand !== "merge" && subcommand !== "split" && subcommand !== "detach") {
+        errors.push("forge session requires subcommand: list, show, rename, merge, split, or detach");
+        return { command: null, workspaceRoot, errors };
+      }
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const limit = limitRaw ? Number(limitRaw) : undefined;
+      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
+        errors.push("--limit must be a number >= 1");
+      }
+      const sessionId = rest[1];
+      return {
+        command: {
+          kind: "session",
+          subcommand,
+          sessionId: subcommand === "detach" ? undefined : sessionId,
+          sourceSessionId: subcommand === "merge" ? rest[2] : undefined,
+          operationId: subcommand === "split" ? rest[2] : subcommand === "detach" ? rest[1] : undefined,
+          title: subcommand === "rename" ? rest.slice(2).join(" ") : undefined,
+          limit: limit ? Math.floor(limit) : undefined,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "timeline": {
       const limitRaw = parseOptionValue(argv, "--limit");
       const kindFilter = parseOptionValue(argv, "--kind");
-      const target = rest.find((item) => item !== kindFilter && item !== limitRaw);
+      const sessionId = parseOptionValue(argv, "--session");
+      const target = rest.find((item) => item !== kindFilter && item !== limitRaw && item !== sessionId);
       const limit = limitRaw ? Number(limitRaw) : undefined;
       if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
         errors.push("--limit must be a number >= 1");
@@ -1576,6 +1617,7 @@ export function parseCli(argv: string[]): ParsedCli {
           kind: "timeline",
           target,
           kindFilter,
+          sessionId,
           limit: limit ? Math.floor(limit) : undefined,
           json: parseFlag(argv, "--json"),
           workspaceRoot,
@@ -1585,7 +1627,7 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "explain": {
-      const thing = rest[0];
+      const thing = rest[0] === "session" ? `session:${rest[1] ?? "current"}` : rest[0];
       if (!thing) {
         errors.push("forge explain requires a target");
         return { command: null, workspaceRoot, errors };
@@ -2326,6 +2368,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--once",
     "--limit",
     "--kind",
+    "--session",
     "--input",
     "--args",
     "--step",
@@ -2439,6 +2482,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--database-url" ||
         arg === "--limit" ||
         arg === "--kind" ||
+        arg === "--session" ||
         arg === "--input" ||
         arg === "--args" ||
         arg === "--step" ||

@@ -10,7 +10,10 @@ export type DeltaIdPrefix =
   | "proof"
   | "rtcall"
   | "artifact"
-  | "gitmap";
+  | "gitmap"
+  | "worksess"
+  | "wssig"
+  | "wssum";
 
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -37,4 +40,3 @@ function encodeRandom(bytes: Uint8Array): string {
 export function createDeltaId(prefix: DeltaIdPrefix): string {
   return `${prefix}_${encodeTime(Date.now())}${encodeRandom(randomBytes(10))}`;
 }
-

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.11 input=e2bfdfd1880fd53eedb9aa5d81a3a008a5a2c6f0b1a3317d0bdb8d67414cfa1b content=2d0b241c72c12248c72ea591f45276f97f14b152891f431b84ba7a514d5cd3cd
+// @forge-generated generator=0.1.0-alpha.11 input=d1e9ea1b1e7d1268b74c027b8d605e187a9ea56cbbb5aeff174833ed68610c4c content=a4c7f3c62a6d0436bbf2b8fe0d5e00c016127ee033aa2a65d70b021b05dabdd1
 export const telemetryRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
   "events": [],
   "generatorVersion": "0.1.0-alpha.11",
-  "inputHash": "261894b9df1a6ca91961f7b4d98bd372d80db577490530fa23a25309058d8a25",
+  "inputHash": "0791336b79281201ea184c04060999dc498ef1c56e1093adada72dcfed3c8213",
   "schemaVersion": "1.0.0"
 } as const;

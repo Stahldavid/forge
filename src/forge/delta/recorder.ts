@@ -100,7 +100,13 @@ export async function recordParsedCliCommand(input: {
   exitCode: number;
   durationMs: number;
 }): Promise<void> {
-  if (isDeltaDisabled(input.argv) || input.command.kind === "delta" || input.command.kind === "timeline" || input.command.kind === "explain") {
+  if (
+    isDeltaDisabled(input.argv) ||
+    input.command.kind === "delta" ||
+    input.command.kind === "session" ||
+    input.command.kind === "timeline" ||
+    input.command.kind === "explain"
+  ) {
     return;
   }
   await safeDelta(async () => {
