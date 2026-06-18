@@ -1,5 +1,15 @@
 # forgeos
 
+## 0.1.0-alpha.12
+
+Semantic Timeline:
+
+- Added the H47 Semantic Timeline projection for DeltaDB with rebuildable timeline events, entity indexes, causal edges, and projection state.
+- Upgraded `forge timeline` from a raw operation log view into an entity-oriented semantic timeline for runtime entries, policies, diagnostics, proofs, services, files, and sessions.
+- Added proof staleness detection and causal links for denial -> policy repair -> successful execution flows.
+- Updated `forge explain` to include semantic timeline context and current-state summaries when available.
+- Documented the timeline projection/rebuild model and added focused DeltaDB coverage for runtime, policy, diagnostic, proof, and deterministic rebuild scenarios.
+
 ## 0.1.0-alpha.11
 
 Strict verify performance:

@@ -1,4 +1,4 @@
-export const DELTA_SCHEMA_VERSION = "0.1.0";
+export const DELTA_SCHEMA_VERSION = "0.2.0";
 
 export const DELTA_SCHEMA_SQL = [
   `CREATE TABLE IF NOT EXISTS delta_meta (
@@ -143,6 +143,42 @@ export const DELTA_SCHEMA_SQL = [
     created_at text NOT NULL,
     redaction_json text
   )`,
+  `CREATE TABLE IF NOT EXISTS timeline_events (
+    id text PRIMARY KEY,
+    operation_id text,
+    session_id text,
+    change_id text,
+    timestamp text NOT NULL,
+    event_kind text NOT NULL,
+    title text NOT NULL,
+    summary text,
+    severity text,
+    confidence real NOT NULL,
+    data_json text NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS timeline_entities (
+    id text PRIMARY KEY,
+    timeline_event_id text NOT NULL,
+    entity_kind text NOT NULL,
+    entity_name text NOT NULL,
+    role text NOT NULL,
+    confidence real NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS timeline_edges (
+    id text PRIMARY KEY,
+    from_event_id text NOT NULL,
+    to_event_id text NOT NULL,
+    edge_kind text NOT NULL,
+    confidence real NOT NULL,
+    reason_json text
+  )`,
+  `CREATE TABLE IF NOT EXISTS timeline_projection_state (
+    id text PRIMARY KEY,
+    last_operation_id text,
+    last_rebuild_at text,
+    projection_version text,
+    graph_hash text
+  )`,
   `CREATE INDEX IF NOT EXISTS operations_timestamp_idx ON operations(timestamp)`,
   `CREATE INDEX IF NOT EXISTS operations_kind_idx ON operations(kind)`,
   `CREATE INDEX IF NOT EXISTS operations_session_idx ON operations(session_id)`,
@@ -153,4 +189,13 @@ export const DELTA_SCHEMA_SQL = [
   `CREATE INDEX IF NOT EXISTS work_sessions_branch_idx ON work_sessions(git_branch)`,
   `CREATE INDEX IF NOT EXISTS work_session_operations_operation_idx ON work_session_operations(operation_id)`,
   `CREATE INDEX IF NOT EXISTS work_session_signals_session_idx ON work_session_signals(work_session_id)`,
+  `CREATE INDEX IF NOT EXISTS timeline_events_time_idx ON timeline_events(timestamp)`,
+  `CREATE INDEX IF NOT EXISTS timeline_events_kind_idx ON timeline_events(event_kind)`,
+  `CREATE INDEX IF NOT EXISTS timeline_events_operation_idx ON timeline_events(operation_id)`,
+  `CREATE INDEX IF NOT EXISTS timeline_events_change_idx ON timeline_events(change_id)`,
+  `CREATE INDEX IF NOT EXISTS timeline_events_session_idx ON timeline_events(session_id)`,
+  `CREATE INDEX IF NOT EXISTS timeline_entities_entity_idx ON timeline_entities(entity_kind, entity_name)`,
+  `CREATE INDEX IF NOT EXISTS timeline_entities_event_idx ON timeline_entities(timeline_event_id)`,
+  `CREATE INDEX IF NOT EXISTS timeline_edges_from_idx ON timeline_edges(from_event_id)`,
+  `CREATE INDEX IF NOT EXISTS timeline_edges_to_idx ON timeline_edges(to_event_id)`,
 ];

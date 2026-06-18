@@ -103,6 +103,60 @@ export interface DeltaTimelineEntry {
   data: Record<string, unknown>;
 }
 
+export interface DeltaTimelineEntityRef {
+  kind: string;
+  name: string;
+}
+
+export interface DeltaSemanticTimelineEntity extends DeltaTimelineEntityRef {
+  id: string;
+  eventId: string;
+  role: string;
+  confidence: number;
+}
+
+export interface DeltaSemanticTimelineEvent {
+  id: string;
+  operationId?: string;
+  sessionId?: string;
+  changeId?: string;
+  timestamp: string;
+  kind: string;
+  title: string;
+  summary?: string;
+  severity?: string;
+  confidence: number;
+  data: Record<string, unknown>;
+  entities: DeltaSemanticTimelineEntity[];
+}
+
+export interface DeltaSemanticTimelineEdge {
+  id: string;
+  from: string;
+  to: string;
+  kind: string;
+  confidence: number;
+  reason?: Record<string, unknown>;
+}
+
+export interface DeltaSemanticTimelineFilter extends DeltaTimelineFilter {
+  since?: string;
+  until?: string;
+}
+
+export interface DeltaSemanticTimelineResult {
+  entity?: DeltaTimelineEntityRef;
+  currentState: Record<string, unknown>;
+  events: DeltaSemanticTimelineEvent[];
+  causalEdges: DeltaSemanticTimelineEdge[];
+  openQuestions: string[];
+  projection: {
+    version: string;
+    lastOperationId?: string;
+    lastRebuildAt?: string;
+  };
+}
+
 export interface DeltaStatus {
   ok: true;
   recording: boolean;
@@ -419,6 +473,130 @@ export class DeltaStore {
     return result.rows.reverse().map(rowToTimelineEntry);
   }
 
+  async semanticTimeline(filter: DeltaSemanticTimelineFilter = {}): Promise<DeltaSemanticTimelineResult> {
+    await this.ensureSemanticTimelineFresh();
+    const limit = Math.max(1, Math.min(filter.limit ?? 50, 200));
+    const entity = parseTimelineEntityTarget(filter.target);
+    const params: unknown[] = [];
+    const clauses: string[] = [];
+    if (filter.kind) {
+      const kindFilters = normalizeSemanticKindFilter(filter.kind);
+      if (kindFilters.length === 1) {
+        params.push(kindFilters[0]);
+        clauses.push(`te.event_kind = $${params.length}`);
+      } else {
+        const placeholders = kindFilters.map((kind) => {
+          params.push(kind);
+          return `$${params.length}`;
+        });
+        clauses.push(`te.event_kind IN (${placeholders.join(", ")})`);
+      }
+    }
+    if (filter.since) {
+      params.push(filter.since);
+      clauses.push(`te.timestamp >= $${params.length}`);
+    }
+    if (filter.until) {
+      params.push(filter.until);
+      clauses.push(`te.timestamp <= $${params.length}`);
+    }
+    if (filter.workSessionId) {
+      const workSessionId = await this.resolveWorkSessionId(filter.workSessionId);
+      if (!workSessionId) {
+        return await this.emptySemanticTimeline(entity);
+      }
+      params.push(workSessionId);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM work_session_operations wso
+        WHERE wso.operation_id = te.operation_id AND wso.work_session_id = $${params.length}
+      )`);
+    }
+    if (entity) {
+      params.push(entity.kind);
+      const kindIndex = params.length;
+      params.push(entity.name);
+      const nameIndex = params.length;
+      clauses.push(`EXISTS (
+        SELECT 1 FROM timeline_entities ten
+        WHERE ten.timeline_event_id = te.id
+          AND ten.entity_kind = $${kindIndex}
+          AND ten.entity_name = $${nameIndex}
+      )`);
+    }
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const rows = await this.adapter.query(
+      `SELECT te.*
+       FROM timeline_events te
+       ${where}
+       ORDER BY te.timestamp DESC, te.id DESC
+       LIMIT ${limit}`,
+      params,
+    );
+    let events = rows.rows.reverse().map(rowToSemanticTimelineEvent);
+    for (const event of events) {
+      event.entities = await this.timelineEntitiesForEvent(event.id);
+    }
+    const baseEventIds = events.map((event) => event.id);
+    let expandedIds = [...baseEventIds];
+    for (let depth = 0; depth < 2; depth += 1) {
+      const touchingEdges = expandedIds.length > 0 ? await this.timelineEdgesTouchingEvents(expandedIds) : [];
+      const nextIds = uniqueStrings(touchingEdges.flatMap((edge) => [edge.from, edge.to]));
+      if (nextIds.every((id) => expandedIds.includes(id))) {
+        break;
+      }
+      expandedIds = uniqueStrings([...expandedIds, ...nextIds]);
+    }
+    const linkedIds = expandedIds.filter((id) => !baseEventIds.includes(id));
+    if (linkedIds.length > 0) {
+      events = [...events, ...(await this.semanticEventsByIds(linkedIds))]
+        .sort((left, right) => left.timestamp.localeCompare(right.timestamp) || left.id.localeCompare(right.id));
+    }
+    const eventIds = events.map((event) => event.id);
+    const causalEdges = eventIds.length > 0 ? await this.timelineEdgesForEvents(eventIds) : [];
+    const projection = await this.timelineProjectionState();
+    const currentState = await this.semanticCurrentState(entity, events, causalEdges);
+    const openQuestions = semanticOpenQuestions(entity, currentState, events);
+    return { entity, currentState, events, causalEdges, openQuestions, projection };
+  }
+
+  async rebuildSemanticTimeline(): Promise<void> {
+    await this.adapter.query(`DELETE FROM timeline_edges`);
+    await this.adapter.query(`DELETE FROM timeline_entities`);
+    await this.adapter.query(`DELETE FROM timeline_events`);
+    const operations = await this.adapter.query(`SELECT id FROM operations ORDER BY timestamp, id`);
+    const projected: ProjectedTimelineEvent[] = [];
+    for (const row of operations.rows) {
+      const context = await this.loadOperationContext(String(row.id));
+      if (!context) {
+        continue;
+      }
+      const event = await this.projectOperationToSemanticEvent(context);
+      if (!event) {
+        continue;
+      }
+      projected.push(event);
+      await this.insertSemanticTimelineEvent(event);
+    }
+    await this.insertSemanticTimelineEdges(projected);
+    const latest = await this.latestOperationId();
+    const now = new Date().toISOString();
+    const graphHash = hashStable(JSON.stringify(projected.map((event) => ({
+      id: event.event.id,
+      kind: event.event.kind,
+      entities: event.entities.map((entity) => `${entity.kind}:${entity.name}:${entity.role}`),
+    }))));
+    await this.adapter.query(
+      `INSERT INTO timeline_projection_state (id, last_operation_id, last_rebuild_at, projection_version, graph_hash)
+       VALUES ('semantic', $1, $2, $3, $4)
+       ON CONFLICT (id) DO UPDATE
+       SET last_operation_id = EXCLUDED.last_operation_id,
+           last_rebuild_at = EXCLUDED.last_rebuild_at,
+           projection_version = EXCLUDED.projection_version,
+           graph_hash = EXCLUDED.graph_hash`,
+      [latest, now, DELTA_SCHEMA_VERSION, graphHash],
+    );
+  }
+
   async explain(thing: string): Promise<Record<string, unknown>> {
     if (thing === "session" || thing.startsWith("session:")) {
       const sessionId = thing === "session" ? "current" : thing.slice("session:".length);
@@ -430,6 +608,7 @@ export class DeltaStore {
         git: session?.gitBranch ? { branch: session.gitBranch } : await this.latestGitMapping(),
       };
     }
+    const semanticTimeline = await this.semanticTimeline({ target: thing, limit: 100 });
     const timeline = await this.timeline({ target: thing, limit: 100 });
     const runtime = await this.adapter.query(`SELECT * FROM runtime_calls WHERE entry_name = $1 ORDER BY operation_id`, [thing]);
     const files = await this.adapter.query(`SELECT * FROM file_changes WHERE path = $1 ORDER BY operation_id`, [thing]);
@@ -454,12 +633,13 @@ export class DeltaStore {
             : "unknown";
     return {
       thing,
-      type,
+      type: semanticTimeline.events.length > 0 ? semanticTimeline.entity?.kind ?? type : type,
       origin: manifestOps.rows.map((row) => parseJsonRecord(row.data_json)),
       runtime: latestRuntime ? normalizeRow(latestRuntime) : null,
       files: files.rows.map(normalizeRow),
       artifacts: artifacts.rows.map(normalizeRow),
       proofs: proofs.rows.map(normalizeRow),
+      semanticTimeline,
       timeline,
       workSessions: await this.workSessionsForThing(thing),
       git: await this.latestGitMapping(),
@@ -886,6 +1066,8 @@ export class DeltaStore {
     const entries = uniqueStrings([
       ...runtimeResult.rows.map((item) => item.entry_name),
       data.entryName,
+      ...arrayOfStrings(data.entries),
+      ...arrayOfStrings(data.entryNames),
     ]);
     const diagnostics = uniqueStrings([
       ...runtimeResult.rows.map((item) => item.diagnostic_code),
@@ -900,6 +1082,7 @@ export class DeltaStore {
     const services = uniqueStrings([
       ...runtimeResult.rows.map((item) => item.service),
       data.service,
+      ...arrayOfStrings(data.services),
       typeof data.path === "string" ? serviceFromManifestPath(data.path) : undefined,
       ...entries.map((entry) => entry.split(".")[0]),
     ]);
@@ -1139,6 +1322,312 @@ export class DeltaStore {
     );
   }
 
+  private async ensureSemanticTimelineFresh(): Promise<void> {
+    const latest = await this.latestOperationId();
+    const state = await this.timelineProjectionState();
+    if (state.lastOperationId === latest && state.version === DELTA_SCHEMA_VERSION) {
+      return;
+    }
+    await this.rebuildSemanticTimeline();
+  }
+
+  private async emptySemanticTimeline(entity?: DeltaTimelineEntityRef): Promise<DeltaSemanticTimelineResult> {
+    return {
+      entity,
+      currentState: {},
+      events: [],
+      causalEdges: [],
+      openQuestions: entity ? [`No timeline events found for ${entity.kind}:${entity.name}`] : [],
+      projection: await this.timelineProjectionState(),
+    };
+  }
+
+  private async latestOperationId(): Promise<string | undefined> {
+    const result = await this.adapter.query(`SELECT id FROM operations ORDER BY timestamp DESC, id DESC LIMIT 1`);
+    return typeof result.rows[0]?.id === "string" ? result.rows[0].id : undefined;
+  }
+
+  private async timelineProjectionState(): Promise<DeltaSemanticTimelineResult["projection"]> {
+    const result = await this.adapter.query(`SELECT * FROM timeline_projection_state WHERE id = 'semantic' LIMIT 1`);
+    const row = result.rows[0];
+    return {
+      version: typeof row?.projection_version === "string" ? row.projection_version : DELTA_SCHEMA_VERSION,
+      lastOperationId: typeof row?.last_operation_id === "string" ? row.last_operation_id : undefined,
+      lastRebuildAt: typeof row?.last_rebuild_at === "string" ? row.last_rebuild_at : undefined,
+    };
+  }
+
+  private async projectOperationToSemanticEvent(context: DeltaOperationContext): Promise<ProjectedTimelineEvent | undefined> {
+    if (context.kind === "session.started" || context.kind === "session.ended") {
+      return undefined;
+    }
+    const runtimeResult = await this.adapter.query(`SELECT * FROM runtime_calls WHERE operation_id = $1`, [context.id]);
+    const proofResult = await this.adapter.query(`SELECT * FROM proofs WHERE operation_id = $1`, [context.id]);
+    const artifactResult = await this.adapter.query(`SELECT * FROM artifacts WHERE operation_id = $1`, [context.id]);
+    const fileResult = await this.adapter.query(`SELECT * FROM file_changes WHERE operation_id = $1`, [context.id]);
+    const runtime = runtimeResult.rows[0];
+    const proof = proofResult.rows[0];
+    const eventKind = semanticEventKindForOperation(context, runtime, proof);
+    if (!eventKind) {
+      return undefined;
+    }
+    const title = semanticTitleForOperation(context, eventKind, runtime, proof);
+    const severity = semanticSeverity(eventKind);
+    const event: DeltaSemanticTimelineEvent = {
+      id: deterministicTimelineId("tle", [context.id, eventKind]),
+      operationId: context.id,
+      sessionId: context.sessionId,
+      timestamp: context.timestamp,
+      kind: eventKind,
+      title,
+      summary: context.summary,
+      severity,
+      confidence: confidenceForSemanticEvent(context, eventKind),
+      data: redactedTimelineData({
+        operationKind: context.kind,
+        ...context.data,
+        runtime: runtime ? normalizeRow(runtime) : undefined,
+        proof: proof ? normalizeRow(proof) : undefined,
+        artifacts: artifactResult.rows.map(normalizeRow),
+      }),
+      entities: [],
+    };
+    const entities = timelineEntitiesFromContext(context, eventKind, runtimeResult.rows, proofResult.rows, fileResult.rows, artifactResult.rows)
+      .map((entity, index) => ({
+        ...entity,
+        id: deterministicTimelineId("tlent", [event.id, entity.kind, entity.name, entity.role, String(index)]),
+        eventId: event.id,
+      }));
+    event.entities = entities;
+    return { event, entities };
+  }
+
+  private async insertSemanticTimelineEvent(projected: ProjectedTimelineEvent): Promise<void> {
+    const event = projected.event;
+    await this.adapter.query(
+      `INSERT INTO timeline_events (id, operation_id, session_id, change_id, timestamp, event_kind, title, summary, severity, confidence, data_json)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [
+        event.id,
+        event.operationId ?? null,
+        event.sessionId ?? null,
+        event.changeId ?? null,
+        event.timestamp,
+        event.kind,
+        event.title,
+        event.summary ?? null,
+        event.severity ?? null,
+        event.confidence,
+        JSON.stringify(event.data),
+      ],
+    );
+    for (const entity of projected.entities) {
+      await this.adapter.query(
+        `INSERT INTO timeline_entities (id, timeline_event_id, entity_kind, entity_name, role, confidence)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [entity.id, event.id, entity.kind, entity.name, entity.role, entity.confidence],
+      );
+    }
+  }
+
+  private async insertSemanticTimelineEdges(projected: ProjectedTimelineEvent[]): Promise<void> {
+    const edges: DeltaSemanticTimelineEdge[] = [];
+    for (const denied of projected.filter((item) => item.event.kind === "denied" || item.event.kind === "diagnostic.emitted")) {
+      const entry = denied.entities.find((entity) => entity.kind === "runtime-entry")?.name;
+      const diagnostic = denied.entities.find((entity) => entity.kind === "diagnostic")?.name;
+      const policy = denied.entities.find((entity) => entity.kind === "policy")?.name;
+      if (!entry && !diagnostic) {
+        continue;
+      }
+      const repair = projected.find((item) =>
+        item.event.timestamp >= denied.event.timestamp &&
+        item.event.kind === "policy.changed" &&
+        (!policy || item.entities.some((entity) => entity.kind === "policy" && entity.name === policy)),
+      );
+      if (!repair) {
+        continue;
+      }
+      edges.push({
+        id: deterministicTimelineId("tledge", [denied.event.id, repair.event.id, "fixed"]),
+        from: denied.event.id,
+        to: repair.event.id,
+        kind: "fixed",
+        confidence: 0.82,
+        reason: { diagnostic, entry, policy, rule: "diagnostic-to-policy-repair" },
+      });
+      const success = projected.find((item) =>
+        item.event.timestamp >= repair.event.timestamp &&
+        item.event.kind === "executed" &&
+        (!entry || item.entities.some((entity) => entity.kind === "runtime-entry" && entity.name === entry)),
+      );
+      if (success) {
+        edges.push({
+          id: deterministicTimelineId("tledge", [repair.event.id, success.event.id, "validated"]),
+          from: repair.event.id,
+          to: success.event.id,
+          kind: "validated",
+          confidence: 0.86,
+          reason: { diagnostic, entry, policy, rule: "repair-to-success" },
+        });
+      }
+    }
+    for (const proof of projected.filter((item) => item.event.kind === "proof.passed" || item.event.kind === "proof.failed")) {
+      const previous = [...projected]
+        .reverse()
+        .find((item) =>
+          item.event.timestamp < proof.event.timestamp &&
+          item.event.kind !== "proof.passed" &&
+          item.event.kind !== "proof.failed" &&
+          hasSharedSemanticEntity(item.entities, proof.entities),
+        );
+      if (previous) {
+        edges.push({
+          id: deterministicTimelineId("tledge", [previous.event.id, proof.event.id, "validated"]),
+          from: previous.event.id,
+          to: proof.event.id,
+          kind: proof.event.kind === "proof.passed" ? "validated" : "failed",
+          confidence: 0.74,
+          reason: { rule: "related-change-to-proof" },
+        });
+      }
+    }
+    for (const edge of uniqueEdges(edges)) {
+      await this.adapter.query(
+        `INSERT INTO timeline_edges (id, from_event_id, to_event_id, edge_kind, confidence, reason_json)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [edge.id, edge.from, edge.to, edge.kind, edge.confidence, JSON.stringify(edge.reason ?? {})],
+      );
+    }
+  }
+
+  private async timelineEntitiesForEvent(eventId: string): Promise<DeltaSemanticTimelineEntity[]> {
+    const result = await this.adapter.query(
+      `SELECT * FROM timeline_entities WHERE timeline_event_id = $1 ORDER BY role, entity_kind, entity_name`,
+      [eventId],
+    );
+    return result.rows.map(rowToSemanticTimelineEntity);
+  }
+
+  private async timelineEdgesForEvents(eventIds: string[]): Promise<DeltaSemanticTimelineEdge[]> {
+    const values = eventIds.map((_, index) => `$${index + 1}`).join(", ");
+    const result = await this.adapter.query(
+      `SELECT * FROM timeline_edges
+       WHERE from_event_id IN (${values}) AND to_event_id IN (${values})
+       ORDER BY edge_kind, id`,
+      eventIds,
+    );
+    return result.rows.map(rowToSemanticTimelineEdge);
+  }
+
+  private async timelineEdgesTouchingEvents(eventIds: string[]): Promise<DeltaSemanticTimelineEdge[]> {
+    const values = eventIds.map((_, index) => `$${index + 1}`).join(", ");
+    const result = await this.adapter.query(
+      `SELECT * FROM timeline_edges
+       WHERE from_event_id IN (${values}) OR to_event_id IN (${values})
+       ORDER BY edge_kind, id`,
+      eventIds,
+    );
+    return result.rows.map(rowToSemanticTimelineEdge);
+  }
+
+  private async semanticEventsByIds(eventIds: string[]): Promise<DeltaSemanticTimelineEvent[]> {
+    const values = eventIds.map((_, index) => `$${index + 1}`).join(", ");
+    const result = await this.adapter.query(
+      `SELECT * FROM timeline_events WHERE id IN (${values}) ORDER BY timestamp, id`,
+      eventIds,
+    );
+    const events = result.rows.map(rowToSemanticTimelineEvent);
+    for (const event of events) {
+      event.entities = await this.timelineEntitiesForEvent(event.id);
+    }
+    return events;
+  }
+
+  private async semanticCurrentState(
+    entity: DeltaTimelineEntityRef | undefined,
+    events: DeltaSemanticTimelineEvent[],
+    edges: DeltaSemanticTimelineEdge[],
+  ): Promise<Record<string, unknown>> {
+    if (!entity) {
+      return {
+        eventCount: events.length,
+        latestEventKind: events[events.length - 1]?.kind,
+      };
+    }
+    if (entity.kind === "runtime-entry" || entity.kind === "agent-tool") {
+      const runtime = await this.adapter.query(`SELECT * FROM runtime_calls WHERE entry_name = $1 ORDER BY operation_id DESC LIMIT 1`, [entity.name]);
+      const row = runtime.rows[0];
+      const latestRelevantChange = latestEventTimestamp(events, ["modified", "policy.changed", "imported", "generated"]);
+      const latestProof = latestEventTimestamp(events, ["proof.passed"]);
+      return {
+        kind: row ? row.entry_kind : undefined,
+        service: row ? row.service : undefined,
+        risk: row ? row.risk : undefined,
+        policy: row ? row.policy : undefined,
+        tenantScoped: row?.tenant_scoped === 1 || row?.tenant_scoped === true,
+        lastResult: row ? row.result : undefined,
+        lastDiagnostic: row ? row.diagnostic_code : undefined,
+        proofStatus: latestProof && latestRelevantChange && Date.parse(latestRelevantChange) > Date.parse(latestProof) ? "stale" : latestProof ? "fresh" : "unknown",
+        exportedToGit: events.some((event) => event.kind === "git.exported"),
+      };
+    }
+    if (entity.kind === "policy") {
+      const entries = await this.adapter.query(
+        `SELECT DISTINCT entry_name FROM runtime_calls WHERE policy = $1 ORDER BY entry_name LIMIT 50`,
+        [entity.name],
+      );
+      return {
+        entries: entries.rows.map((row) => String(row.entry_name)),
+        lastChangedAt: latestEventTimestamp(events, ["policy.changed"]),
+        lastDenialAt: latestEventTimestamp(events, ["denied"]),
+        resolved: edges.some((edge) => edge.kind === "validated" || edge.kind === "fixed"),
+      };
+    }
+    if (entity.kind === "proof") {
+      const latestProofResult = await this.adapter.query(
+        `SELECT te.timestamp, te.event_kind
+         FROM timeline_events te
+         JOIN timeline_entities ten ON ten.timeline_event_id = te.id
+         WHERE ten.entity_kind = 'proof' AND ten.entity_name = $1
+         ORDER BY te.timestamp DESC, te.id DESC
+         LIMIT 1`,
+        [entity.name],
+      );
+      const latestProof = typeof latestProofResult.rows[0]?.timestamp === "string" ? latestProofResult.rows[0].timestamp : undefined;
+      const latestProofKind = typeof latestProofResult.rows[0]?.event_kind === "string" ? latestProofResult.rows[0].event_kind : undefined;
+      const latestChangeResult = await this.adapter.query(
+        `SELECT timestamp FROM timeline_events
+         WHERE event_kind IN ('modified', 'policy.changed', 'generated', 'imported')
+         ORDER BY timestamp DESC, id DESC
+         LIMIT 1`,
+      );
+      const latestChange = typeof latestChangeResult.rows[0]?.timestamp === "string" ? latestChangeResult.rows[0].timestamp : undefined;
+      return {
+        lastRunAt: latestProof,
+        proofStatus: latestProof && latestChange && Date.parse(latestChange) > Date.parse(latestProof) ? "stale" : latestProof ? "fresh" : "unknown",
+        lastResult: latestProofKind,
+      };
+    }
+    if (entity.kind === "diagnostic") {
+      return {
+        occurrences: events.filter((event) => event.kind === "denied" || event.kind === "diagnostic.emitted").length,
+        resolved: edges.some((edge) => edge.kind === "fixed" || edge.kind === "validated"),
+      };
+    }
+    if (entity.kind === "external-service") {
+      return {
+        entries: uniqueStrings(events.flatMap((event) => event.entities.filter((item) => item.kind === "runtime-entry").map((item) => item.name))),
+        lastFailureAt: latestEventTimestamp(events, ["failed", "denied"]),
+        lastSuccessAt: latestEventTimestamp(events, ["executed"]),
+      };
+    }
+    return {
+      eventCount: events.length,
+      latestEventKind: events[events.length - 1]?.kind,
+      latestEventAt: events[events.length - 1]?.timestamp,
+    };
+  }
+
   private async latestGitMapping(): Promise<Record<string, unknown> | null> {
     const result = await this.adapter.query(`SELECT * FROM git_mappings ORDER BY detected_at DESC LIMIT 1`);
     return result.rows[0] ? normalizeRow(result.rows[0]) : null;
@@ -1147,6 +1636,333 @@ export class DeltaStore {
 
 export function getDeltaStorePath(workspaceRoot: string): string {
   return join(workspaceRoot, ".forge", "delta", "delta.db");
+}
+
+interface ProjectedTimelineEvent {
+  event: DeltaSemanticTimelineEvent;
+  entities: DeltaSemanticTimelineEntity[];
+}
+
+function semanticEventKindForOperation(
+  context: DeltaOperationContext,
+  runtime: Record<string, unknown> | undefined,
+  proof: Record<string, unknown> | undefined,
+): string | undefined {
+  if (context.kind === "manifest.imported" || context.kind === "manifest.validated") {
+    return "imported";
+  }
+  if (context.kind === "artifact.generated" || context.kind === "generate.completed") {
+    return "generated";
+  }
+  if (context.kind === "proof.run" || proof) {
+    const result = String(proof?.result ?? context.data.result ?? context.data.exitCode ?? "");
+    return result === "passed" || result === "success" || result === "0" || result === "true" ? "proof.passed" : "proof.failed";
+  }
+  if (context.kind.startsWith("runtime.entry") || runtime) {
+    const result = String(runtime?.result ?? context.data.result ?? context.kind);
+    if (result === "denied" || context.kind.includes("denied")) {
+      return "denied";
+    }
+    if (result === "failed" || result === "error" || context.kind.includes("failed")) {
+      return "failed";
+    }
+    return "executed";
+  }
+  if (context.kind === "diagnostic.emitted" || context.diagnostics.length > 0) {
+    return "diagnostic.emitted";
+  }
+  if (context.kind === "git.commit.detected" || context.kind === "git.mapping.detected") {
+    return "git.exported";
+  }
+  if (context.kind.startsWith("file.")) {
+    return context.fileClusters.includes("policy.change") ? "policy.changed" : "modified";
+  }
+  if (context.kind.startsWith("command.")) {
+    return context.data.exitCode === 0 ? "executed" : "failed";
+  }
+  return undefined;
+}
+
+function semanticTitleForOperation(
+  context: DeltaOperationContext,
+  eventKind: string,
+  runtime: Record<string, unknown> | undefined,
+  proof: Record<string, unknown> | undefined,
+): string {
+  const entry = context.entries[0] ?? stringOrUndefined(runtime?.entry_name);
+  const file = context.files[0];
+  const diagnostic = context.diagnostics[0] ?? stringOrUndefined(runtime?.diagnostic_code);
+  const proofKind = context.proofs[0] ?? stringOrUndefined(proof?.proof_kind);
+  const service = context.services[0];
+  if (eventKind === "imported") {
+    return service ? `Imported ${service}` : `Imported ${file ?? "manifest"}`;
+  }
+  if (eventKind === "generated") {
+    return file ? `Generated ${file}` : "Generated artifacts";
+  }
+  if (eventKind === "denied") {
+    return `${entry ?? "runtime entry"} denied${diagnostic ? `: ${diagnostic}` : ""}`;
+  }
+  if (eventKind === "executed") {
+    return `${entry ?? context.commands[0] ?? "operation"} executed`;
+  }
+  if (eventKind === "failed") {
+    return `${entry ?? context.commands[0] ?? "operation"} failed`;
+  }
+  if (eventKind === "policy.changed") {
+    return context.data.policy ? `Policy ${String(context.data.policy)} changed` : `Policy source changed${file ? ` in ${file}` : ""}`;
+  }
+  if (eventKind === "proof.passed" || eventKind === "proof.failed") {
+    return `${proofKind ?? "proof"} ${eventKind === "proof.passed" ? "passed" : "failed"}`;
+  }
+  if (eventKind === "diagnostic.emitted") {
+    return `Diagnostic emitted${diagnostic ? `: ${diagnostic}` : ""}`;
+  }
+  if (eventKind === "git.exported") {
+    return "Exported to Git";
+  }
+  return context.summary ?? context.kind;
+}
+
+function semanticSeverity(eventKind: string): string {
+  if (eventKind === "failed" || eventKind === "denied" || eventKind === "proof.failed") {
+    return "error";
+  }
+  if (eventKind === "proof.passed" || eventKind === "executed") {
+    return "success";
+  }
+  if (eventKind === "policy.changed" || eventKind === "dependency.added" || eventKind === "dependency.upgraded") {
+    return "warning";
+  }
+  return "info";
+}
+
+function confidenceForSemanticEvent(context: DeltaOperationContext, eventKind: string): number {
+  if (eventKind === "modified" && context.fileClusters.some((cluster) => cluster.startsWith("file."))) {
+    return 0.72;
+  }
+  if (eventKind === "policy.changed" && !context.data.policy) {
+    return 0.78;
+  }
+  return 0.95;
+}
+
+function timelineEntitiesFromContext(
+  context: DeltaOperationContext,
+  eventKind: string,
+  runtimeRows: Record<string, unknown>[],
+  proofRows: Record<string, unknown>[],
+  fileRows: Record<string, unknown>[],
+  artifactRows: Record<string, unknown>[],
+): Array<Omit<DeltaSemanticTimelineEntity, "id" | "eventId">> {
+  const entities: Array<Omit<DeltaSemanticTimelineEntity, "id" | "eventId">> = [];
+  const add = (kind: string, name: unknown, role: string, confidence = 0.9) => {
+    if (typeof name !== "string" || name.length === 0) {
+      return;
+    }
+    const normalizedName = kind === "file" || kind === "manifest" ? normalizePath(name) : name;
+    if (!entities.some((entity) => entity.kind === kind && entity.name === normalizedName && entity.role === role)) {
+      entities.push({ kind, name: normalizedName, role, confidence });
+    }
+  };
+  for (const entry of context.entries) {
+    add("runtime-entry", entry, eventKind === "executed" || eventKind === "denied" || eventKind === "failed" ? "primary" : "affected", 0.95);
+    add("agent-tool", entry, "affected", 0.7);
+  }
+  for (const service of context.services) {
+    add("external-service", service, eventKind === "imported" ? "primary" : "source", 0.88);
+  }
+  for (const file of context.files) {
+    add(file.endsWith(".manifest.json") || file === "forge.manifest.json" ? "manifest" : "file", file, eventKind === "generated" ? "generated" : "affected", 0.9);
+  }
+  for (const file of fileRows) {
+    add("file", file.path, eventKind === "policy.changed" ? "source" : "affected", 0.95);
+    for (const hint of parseSemanticHints(file.semantic_hints_json)) {
+      if (hint.kind === "dependency.change") {
+        add("dependency", stringOrUndefined(context.data.dependency) ?? stringOrUndefined(context.data.packageName), "affected", 0.65);
+      }
+      if (hint.kind === "policy.change") {
+        add("policy", context.data.policy, eventKind === "policy.changed" ? "primary" : "affected", context.data.policy ? 0.86 : 0.55);
+      }
+    }
+  }
+  for (const artifact of artifactRows) {
+    add("file", artifact.path, "generated", 0.86);
+  }
+  for (const runtime of runtimeRows) {
+    add("runtime-entry", runtime.entry_name, "primary", 0.98);
+    add("policy", runtime.policy, eventKind === "denied" ? "requires" : "affected", 0.9);
+    add("diagnostic", runtime.diagnostic_code, eventKind === "denied" ? "failed" : "affected", 0.94);
+    add("external-service", runtime.service, "source", 0.9);
+  }
+  for (const diagnostic of context.diagnostics) {
+    add("diagnostic", diagnostic, eventKind === "denied" || eventKind === "failed" ? "failed" : "affected", 0.9);
+  }
+  for (const proof of proofRows) {
+    add("proof", proof.proof_kind, eventKind === "proof.passed" ? "validated" : "failed", 0.98);
+    for (const path of arrayOfStrings(parseJsonUnknown(proof.artifact_paths_json))) {
+      add("file", path, "validated", 0.75);
+    }
+  }
+  for (const proof of context.proofs) {
+    add("proof", proof, eventKind === "proof.passed" ? "validated" : "failed", 0.9);
+  }
+  if (context.sessionId) {
+    add("session", context.sessionId, "source", 0.75);
+  }
+  if (context.data.commitSha) {
+    add("git-commit", context.data.commitSha, "exported", 0.85);
+  }
+  return entities.length > 0
+    ? entities
+    : [{ kind: "session", name: context.sessionId ?? context.id, role: "source", confidence: 0.5 }];
+}
+
+function parseTimelineEntityTarget(target: string | undefined): DeltaTimelineEntityRef | undefined {
+  if (!target) {
+    return undefined;
+  }
+  const [prefix, ...tail] = target.split(":");
+  if (tail.length > 0) {
+    const name = tail.join(":");
+    const kind = timelineEntityKindFromPrefix(prefix);
+    return { kind, name: kind === "file" || kind === "manifest" ? normalizePath(name) : name };
+  }
+  if (target.includes("/") || target.startsWith(".") || hasKnownFileExtension(target)) {
+    return { kind: "file", name: normalizePath(target) };
+  }
+  if (/^[A-Z0-9_]+$/.test(target)) {
+    return { kind: "diagnostic", name: target };
+  }
+  return { kind: "runtime-entry", name: target };
+}
+
+function hasKnownFileExtension(target: string): boolean {
+  return /\.(ts|tsx|js|jsx|mjs|cjs|json|md|mdx|sql|css|html|yml|yaml|toml|lock)$/i.test(target);
+}
+
+function timelineEntityKindFromPrefix(prefix: string): string {
+  switch (prefix) {
+    case "entry":
+    case "runtime":
+      return "runtime-entry";
+    case "tool":
+      return "agent-tool";
+    case "service":
+      return "external-service";
+    case "commit":
+    case "git":
+      return "git-commit";
+    default:
+      return prefix;
+  }
+}
+
+function normalizeSemanticKindFilter(kind: string): string[] {
+  if (kind === "proof.run") {
+    return ["proof.passed", "proof.failed"];
+  }
+  if (kind === "runtime.entry.executed") {
+    return ["executed"];
+  }
+  if (kind === "runtime.entry.denied") {
+    return ["denied"];
+  }
+  if (kind === "file.changed") {
+    return ["modified", "policy.changed"];
+  }
+  return [kind];
+}
+
+function deterministicTimelineId(prefix: string, parts: string[]): string {
+  return `${prefix}_${hashStable(parts.join("\0")).slice(0, 24)}`;
+}
+
+function redactedTimelineData(data: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+  return redactDeltaPayload(cleaned).value;
+}
+
+function rowToSemanticTimelineEvent(row: Record<string, unknown>): DeltaSemanticTimelineEvent {
+  return {
+    id: String(row.id),
+    operationId: typeof row.operation_id === "string" ? row.operation_id : undefined,
+    sessionId: typeof row.session_id === "string" ? row.session_id : undefined,
+    changeId: typeof row.change_id === "string" ? row.change_id : undefined,
+    timestamp: String(row.timestamp),
+    kind: String(row.event_kind),
+    title: String(row.title),
+    summary: typeof row.summary === "string" ? row.summary : undefined,
+    severity: typeof row.severity === "string" ? row.severity : undefined,
+    confidence: Number(row.confidence ?? 0),
+    data: parseJsonRecord(row.data_json),
+    entities: [],
+  };
+}
+
+function rowToSemanticTimelineEntity(row: Record<string, unknown>): DeltaSemanticTimelineEntity {
+  return {
+    id: String(row.id),
+    eventId: String(row.timeline_event_id),
+    kind: String(row.entity_kind),
+    name: String(row.entity_name),
+    role: String(row.role),
+    confidence: Number(row.confidence ?? 0),
+  };
+}
+
+function rowToSemanticTimelineEdge(row: Record<string, unknown>): DeltaSemanticTimelineEdge {
+  return {
+    id: String(row.id),
+    from: String(row.from_event_id),
+    to: String(row.to_event_id),
+    kind: String(row.edge_kind),
+    confidence: Number(row.confidence ?? 0),
+    reason: parseJsonRecord(row.reason_json),
+  };
+}
+
+function hasSharedSemanticEntity(left: DeltaSemanticTimelineEntity[], right: DeltaSemanticTimelineEntity[]): boolean {
+  return left.some((leftEntity) =>
+    right.some((rightEntity) =>
+      leftEntity.kind === rightEntity.kind &&
+      leftEntity.name === rightEntity.name &&
+      leftEntity.kind !== "session",
+    ),
+  );
+}
+
+function uniqueEdges(edges: DeltaSemanticTimelineEdge[]): DeltaSemanticTimelineEdge[] {
+  const seen = new Set<string>();
+  return edges.filter((edge) => {
+    if (seen.has(edge.id)) {
+      return false;
+    }
+    seen.add(edge.id);
+    return true;
+  });
+}
+
+function latestEventTimestamp(events: DeltaSemanticTimelineEvent[], kinds: string[]): string | undefined {
+  return [...events].reverse().find((event) => kinds.includes(event.kind))?.timestamp;
+}
+
+function semanticOpenQuestions(
+  entity: DeltaTimelineEntityRef | undefined,
+  currentState: Record<string, unknown>,
+  events: DeltaSemanticTimelineEvent[],
+): string[] {
+  const questions: string[] = [];
+  if (entity && events.length === 0) {
+    questions.push(`No semantic history found for ${entity.kind}:${entity.name}`);
+  }
+  if (entity?.kind === "runtime-entry" && currentState.exportedToGit === false) {
+    questions.push("No Git export linked yet");
+  }
+  if (currentState.proofStatus === "stale") {
+    questions.push("Proof is stale after the latest relevant change");
+  }
+  return questions;
 }
 
 function shouldInferWorkSession(context: DeltaOperationContext): boolean {
@@ -1456,6 +2272,17 @@ function safeJson<T>(value: string, fallback: T): T {
     return JSON.parse(value) as T;
   } catch {
     return fallback;
+  }
+}
+
+function parseJsonUnknown(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value;
+  }
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return undefined;
   }
 }
 

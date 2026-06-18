@@ -887,6 +887,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         kind: command.kindFilter,
         session: command.sessionId,
         limit: command.limit,
+        rebuild: command.rebuild,
       });
       process.stdout.write(command.json ? formatDeltaTimelineJson(result) : formatDeltaTimelineHuman(result));
       return result.exitCode;

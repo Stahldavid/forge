@@ -34,18 +34,33 @@ It does not store raw prompts, model outputs, full runtime response bodies, auth
 
 `forge delta status` shows whether recording is available, where the local store lives, the current inferred work session, the latest recorder session, and recent operations. A recorder session is the technical command/dev process that wrote operations. A work session is the H45 projection that groups related operations into human-readable work.
 
-`forge timeline` prints recent operations. It accepts a target and simple kind filter:
+`forge timeline` prints the H47 Semantic Timeline projection. It is not the source of truth; it is a rebuildable view over the local operation log, inferred work sessions, runtime calls, proofs, diagnostics, artifacts, and Git mappings.
 
 ```bash
 forge timeline src/policies.ts
 forge timeline billing.createInvoice
-forge timeline --kind proof.run
+forge timeline policy:billing.manage
+forge timeline diagnostic:FORGE_POLICY_DENIED
+forge timeline proof:security-prove
+forge timeline --kind proof.passed
 forge timeline --session current
 forge timeline --session worksess_...
+forge timeline rebuild
 forge timeline --json
+forge timeline billing.createInvoice --json --for-agent
 ```
 
-`forge explain <thing>` reconstructs the available operational context for a runtime entry, file, artifact, diagnostic, or manifest path:
+Semantic timelines group raw operations into entity-oriented events such as `imported`, `generated`, `denied`, `policy.changed`, `executed`, `proof.passed`, `proof.failed`, `diagnostic.emitted`, and `git.exported`. Each event is linked to entities like runtime entries, files, policies, diagnostics, external services, proofs, dependencies, sessions, and Git commits. Timeline edges record causal hints such as a diagnostic likely being fixed by a policy change and then validated by a successful runtime call.
+
+The projection can be rebuilt at any time:
+
+```bash
+forge timeline rebuild
+```
+
+Rebuild deletes and recreates `timeline_events`, `timeline_entities`, and `timeline_edges` from the durable operation log. This keeps the timeline aligned with event-sourcing principles: operations remain primary, while the semantic timeline is a queryable materialized view for humans and agents.
+
+`forge explain <thing>` reconstructs the available operational context for a runtime entry, file, artifact, diagnostic, proof, policy, or manifest path. When Semantic Timeline data exists, explain uses it for current state, proof freshness, and recent causal context:
 
 ```bash
 forge explain billing.createInvoice

@@ -168,7 +168,7 @@ export type ForgeCommand =
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
   | { kind: "delta"; subcommand: "status"; json: boolean; workspaceRoot: string }
-  | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; workspaceRoot: string }
+  | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; workspaceRoot: string }
   | { kind: "explain"; thing: string; json: boolean; workspaceRoot: string }
   | {
       kind: "session";
@@ -1607,7 +1607,8 @@ export function parseCli(argv: string[]): ParsedCli {
       const limitRaw = parseOptionValue(argv, "--limit");
       const kindFilter = parseOptionValue(argv, "--kind");
       const sessionId = parseOptionValue(argv, "--session");
-      const target = rest.find((item) => item !== kindFilter && item !== limitRaw && item !== sessionId);
+      const rebuild = rest[0] === "rebuild";
+      const target = rebuild ? undefined : rest.find((item) => item !== kindFilter && item !== limitRaw && item !== sessionId);
       const limit = limitRaw ? Number(limitRaw) : undefined;
       if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
         errors.push("--limit must be a number >= 1");
@@ -1616,12 +1617,14 @@ export function parseCli(argv: string[]): ParsedCli {
         command: {
           kind: "timeline",
           target,
-          kindFilter,
-          sessionId,
-          limit: limit ? Math.floor(limit) : undefined,
-          json: parseFlag(argv, "--json"),
-          workspaceRoot,
-        },
+            kindFilter,
+            sessionId,
+            limit: limit ? Math.floor(limit) : undefined,
+            json: parseFlag(argv, "--json"),
+            rebuild,
+            forAgent: parseFlag(argv, "--for-agent"),
+            workspaceRoot,
+          },
         workspaceRoot,
         errors,
       };
@@ -2247,6 +2250,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--version",
     "--check",
     "--json",
+    "--for-agent",
     "--dry-run",
     "--plan",
     "--staged",

@@ -51,7 +51,13 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
     return `${lines.join("\n")}\n`;
   }
   const runtime = explanation.runtime as Record<string, unknown> | null | undefined;
-  const timeline = Array.isArray(explanation.timeline) ? explanation.timeline as Array<Record<string, unknown>> : [];
+  const semanticTimeline = explanation.semanticTimeline as Record<string, unknown> | null | undefined;
+  const semanticEvents = semanticTimeline && Array.isArray(semanticTimeline.events)
+    ? semanticTimeline.events as Array<Record<string, unknown>>
+    : [];
+  const currentState = semanticTimeline && semanticTimeline.currentState && typeof semanticTimeline.currentState === "object"
+    ? semanticTimeline.currentState as Record<string, unknown>
+    : {};
   const proofs = Array.isArray(explanation.proofs) ? explanation.proofs as Array<Record<string, unknown>> : [];
   const workSessions = Array.isArray(explanation.workSessions) ? explanation.workSessions as Array<Record<string, unknown>> : [];
   const lines = [result.thing, ""];
@@ -70,13 +76,22 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
     }
     lines.push("");
   }
-  lines.push("Timeline:");
-  if (timeline.length === 0) {
+  lines.push("Semantic timeline:");
+  if (semanticEvents.length === 0) {
     lines.push("  no matching operations");
   } else {
-    for (const item of timeline.slice(-12)) {
+    for (const item of semanticEvents.slice(-12)) {
       const timestamp = typeof item.timestamp === "string" ? item.timestamp.slice(11, 16) : "??:??";
-      lines.push(`  ${timestamp} ${String(item.kind)}${item.summary ? ` ${String(item.summary)}` : ""}`);
+      lines.push(`  ${timestamp} ${String(item.kind)} ${String(item.title ?? item.summary ?? "")}`.trimEnd());
+    }
+  }
+  if (Object.keys(currentState).length > 0) {
+    lines.push("");
+    lines.push("Current state:");
+    for (const [key, value] of Object.entries(currentState)) {
+      if (value !== undefined) {
+        lines.push(`  ${key}: ${Array.isArray(value) ? value.join(", ") : String(value)}`);
+      }
     }
   }
   lines.push("");
