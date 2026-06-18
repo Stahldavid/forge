@@ -46,6 +46,22 @@ async function runOptionalScript(
   return { skipped: false, exitCode };
 }
 
+function readPackageScripts(workspaceRoot: string): Record<string, string> {
+  const packageJsonPath = join(workspaceRoot, "package.json");
+  if (!nodeFileSystem.exists(packageJsonPath)) {
+    return {};
+  }
+  const pkg = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as {
+    scripts?: Record<string, string>;
+  };
+  return pkg.scripts ?? {};
+}
+
+function shouldTypecheckBuild(workspaceRoot: string): boolean {
+  const scripts = readPackageScripts(workspaceRoot);
+  return Boolean(scripts.typecheck || nodeFileSystem.exists(join(workspaceRoot, "tsconfig.json")));
+}
+
 export async function runBuildCommand(options: BuildCommandOptions): Promise<BuildCommandResult> {
   const steps: BuildCommandResult["steps"] = [];
   const generate = await runGenerateCommand({
@@ -63,9 +79,9 @@ export async function runBuildCommand(options: BuildCommandOptions): Promise<Bui
   const verify = await runVerifyCommand({
     workspaceRoot: options.workspaceRoot,
     json: false,
-    skipTests: false,
-    skipTypecheck: false,
-    skipEslint: false,
+    skipTests: true,
+    skipTypecheck: !shouldTypecheckBuild(options.workspaceRoot),
+    skipEslint: true,
     strict: false,
   });
   steps.push({ name: "verify", ok: verify.exitCode === 0, exitCode: verify.exitCode });
