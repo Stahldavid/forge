@@ -132,7 +132,7 @@ describe("security assurance: HTTP tenant isolation", () => {
         port: 0,
         mock: false,
         json: false,
-        db: "pglite",
+        db: "memory",
       });
 
       try {

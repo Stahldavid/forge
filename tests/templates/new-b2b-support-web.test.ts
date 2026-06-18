@@ -140,15 +140,6 @@ describe("b2b-support-web template", () => {
       });
       expect(generated.exitCode).toBe(0);
 
-      const stabilized = await runGenerateCommand({
-        workspaceRoot: project,
-        check: false,
-        dryRun: false,
-        json: false,
-        concurrency: 2,
-      });
-      expect(stabilized.exitCode).toBe(0);
-
       const checked = await runGenerateCommand({
         workspaceRoot: project,
         check: true,

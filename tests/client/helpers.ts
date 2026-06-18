@@ -16,8 +16,12 @@ export interface ClientWorkspace {
   tenantB: string;
 }
 
-export async function scaffoldClientWorkspace(prefix: string): Promise<ClientWorkspace> {
+export async function scaffoldClientWorkspace(
+  prefix: string,
+  options: { generate?: boolean } = {},
+): Promise<ClientWorkspace> {
   const workspace = scaffoldGenerateWorkspace(prefix);
+  const shouldGenerate = options.generate ?? true;
   const tenantA = "11111111-1111-1111-1111-111111111111";
   const tenantB = "22222222-2222-2222-2222-222222222222";
 
@@ -111,9 +115,11 @@ export async function scaffoldClientWorkspace(prefix: string): Promise<ClientWor
     "utf8",
   );
 
-  const generated = await run(defaultGenerateOptions(workspace));
-  if (generated.exitCode !== 0) {
-    throw new Error(`generate failed: ${generated.errors.map((e) => e.message).join("; ")}`);
+  if (shouldGenerate) {
+    const generated = await run(defaultGenerateOptions(workspace));
+    if (generated.exitCode !== 0) {
+      throw new Error(`generate failed: ${generated.errors.map((e) => e.message).join("; ")}`);
+    }
   }
 
   return { root: workspace, tenantA, tenantB };
@@ -131,30 +137,41 @@ export async function seedClientDatabase(
   tenantB: string,
   options?: { seedTickets?: boolean },
 ): Promise<void> {
-  await adapter.query(`INSERT INTO tenants (id) VALUES ($1), ($2)`, [tenantA, tenantB]);
+  await adapter.query(`INSERT INTO tenants (id) VALUES ($1)`, [tenantA]);
+  await adapter.query(`INSERT INTO tenants (id) VALUES ($1)`, [tenantB]);
 
   if (options?.seedTickets) {
     await adapter.query(
-      `INSERT INTO tickets (id, tenant_id, title, status) VALUES ($1, $2, 'tenant-a-ticket', 'open'), ($3, $4, 'tenant-b-ticket', 'open')`,
-      ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", tenantA, "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", tenantB],
+      `INSERT INTO tickets (id, tenant_id, title, status) VALUES ($1, $2, 'tenant-a-ticket', 'open')`,
+      ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", tenantA],
+    );
+    await adapter.query(
+      `INSERT INTO tickets (id, tenant_id, title, status) VALUES ($1, $2, 'tenant-b-ticket', 'open')`,
+      ["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", tenantB],
     );
   }
 }
 
-export async function startClientDevServer(workspace: string): Promise<DevServerHandle> {
-  resetPgliteDir(workspace);
+export async function startClientDevServer(
+  workspace: string,
+  options: { db?: "memory" | "pglite" | "none" } = {},
+): Promise<DevServerHandle> {
+  const db = options.db ?? "memory";
+  if (db === "pglite") {
+    resetPgliteDir(workspace);
+  }
   const handle = await startDevServer({
     workspaceRoot: workspace,
     host: "127.0.0.1",
     port: 0,
     mock: false,
     json: false,
-    db: "pglite",
+    db,
     worker: false,
     telemetry: ["local"],
   });
 
-  if (!handle.state.adapter) {
+  if (db !== "none" && !handle.state.adapter) {
     throw new Error("dev server started without database adapter");
   }
 
@@ -165,9 +182,9 @@ export async function prepareClientDatabase(
   workspace: string,
   tenantA: string,
   tenantB: string,
-  options?: { seedTickets?: boolean },
+  options?: { db?: "memory" | "pglite"; seedTickets?: boolean },
 ): Promise<DevServerHandle> {
-  const handle = await startClientDevServer(workspace);
+  const handle = await startClientDevServer(workspace, { db: options?.db ?? "memory" });
   await seedClientDatabase(handle.state.adapter!, tenantA, tenantB, options);
   return handle;
 }

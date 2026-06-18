@@ -112,13 +112,17 @@ forge verify --strict
 |---------|------|
 | `forge verify --smoke` | Generated drift, Forge checks, typecheck (fast) |
 | `forge verify --standard` | Smoke + impact-selected tests (normal dev gate) |
-| `forge verify --strict` | Full test script + lint (handoff / CI) |
+| `forge verify --strict` | Full TestGraph in bounded parallel/isolated chunks + lint (handoff / CI) |
 | `forge verify --changed` | Checks/tests for current diff only |
 
 ```bash
 forge verify --standard --script-timeout-ms 120000 --json
+forge verify --strict --test-jobs 4 --json
+forge verify --strict --test-plan --json
 forge do verify --json
 ```
+
+`--test-plan` prints the strict TestGraph lane/chunk plan without running tests. `--test-jobs` is the total TestGraph concurrency budget; isolated lane workers are reserved from that same budget so runtime-heavy files can overlap with ordinary chunks without oversubscribing the machine. With `--test-jobs 1`, lanes run sequentially while isolated chunks still execute one file at a time. Strict TestGraph runs write measured durations to `.forge/test-runs/testgraph-profile.json`; later plans use that profile to balance slow files across chunks.
 
 See [Testing and Repair](testing-and-repair.md).
 

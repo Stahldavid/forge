@@ -1,5 +1,5 @@
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { FIXTURE_PACKAGES } from "../package-graph/helpers.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..", "..");
@@ -16,7 +16,23 @@ export function cleanupWorkspace(dir: string): void {
   rmSync(dir, { recursive: true, force: true });
 }
 
-export function scaffoldGenerateWorkspace(prefix: string): string {
+function copyPackageFixture(workspace: string, packageName: string): void {
+  const target = join(workspace, "node_modules", packageName);
+  mkdirSync(dirname(target), { recursive: true });
+  cpSync(
+    join(PACKAGE_FIXTURES, packageName),
+    target,
+    {
+      recursive: true,
+      force: true,
+    },
+  );
+}
+
+export function scaffoldGenerateWorkspace(
+  prefix: string,
+  options: { packageFixtures?: string[] } = {},
+): string {
   const workspace = tempWorkspace(prefix);
 
   writeFileSync(
@@ -63,12 +79,10 @@ export function scaffoldGenerateWorkspace(prefix: string): string {
     writeFileSync(join(srcDir, name), source, "utf8");
   }
 
-  const nodeModulesZod = join(workspace, "node_modules", "zod");
-  mkdirSync(nodeModulesZod, { recursive: true });
-  cpSync(PACKAGE_FIXTURES, join(workspace, "node_modules"), {
-    recursive: true,
-    force: true,
-  });
+  mkdirSync(join(workspace, "node_modules"), { recursive: true });
+  for (const fixture of options.packageFixtures ?? ["forge", "zod"]) {
+    copyPackageFixture(workspace, fixture);
+  }
 
   return workspace;
 }

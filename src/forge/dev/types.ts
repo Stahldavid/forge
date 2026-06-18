@@ -1,7 +1,7 @@
 import type { DevRoute } from "../compiler/types/dev-manifest.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
 
-export type DevDbMode = "pglite" | "postgres" | "none";
+export type DevDbMode = "memory" | "pglite" | "postgres" | "none";
 
 export interface DevServerOptions {
   workspaceRoot: string;

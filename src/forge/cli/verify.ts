@@ -1,11 +1,23 @@
+import { mkdtempSync, rmSync } from "node:fs";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { spawn } from "node:child_process";
+import { availableParallelism, tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
-import type { VerifyOptions, VerifyProfile, VerifyResult, VerifyStep } from "../compiler/types/cli.ts";
+import type {
+  VerifyOptions,
+  VerifyProfile,
+  VerifyResult,
+  VerifyStep,
+  VerifyTestGraphDurationSource,
+  VerifyTestGraphLane,
+  VerifyTestGraphPlan,
+  VerifyTestGraphPlanChunk,
+} from "../compiler/types/cli.ts";
 import {
   FORGE_VERIFY_POLICY,
   FORGE_VERIFY_SCRIPT_TIMEOUT,
@@ -74,6 +86,7 @@ async function spawnArgv(
   argv: string[],
   timeoutMs: number,
   command = argv.join(" "),
+  envOverrides?: Record<string, string>,
 ): Promise<ScriptRunResult> {
   const started = Date.now();
 
@@ -84,7 +97,7 @@ async function spawnArgv(
     try {
       child = spawn(argv[0]!, argv.slice(1), {
         cwd: workspaceRoot,
-        env: process.env,
+        env: envOverrides ? { ...process.env, ...envOverrides } : process.env,
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       });
@@ -301,6 +314,111 @@ async function runPreferredTypecheck(
 
 const STRICT_TEST_COSTS: TestCost[] = ["instant", "fast", "standard", "slow"];
 const STRICT_TEST_CHUNK_SIZE = 12;
+const STRICT_TEST_MAX_DEFAULT_JOBS = 6;
+// The isolated lane (one heavy file per chunk: node-compat, dev-server, CLI) is
+// the makespan bottleneck, so it gets more default concurrency than before. The
+// overall budget is still capped by STRICT_TEST_MAX_DEFAULT_JOBS and CPU count.
+const STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS = 4;
+const TESTGRAPH_PROFILE_RELATIVE_PATH = ".forge/test-runs/testgraph-profile.json";
+const TEST_COST_FALLBACK_MS: Record<TestCost, number> = {
+  instant: 250,
+  fast: 1_000,
+  standard: 3_000,
+  slow: 12_000,
+  docker: 60_000,
+  browser: 60_000,
+};
+const TEST_COST_RANK: Record<TestCost, number> = {
+  instant: 0,
+  fast: 1,
+  standard: 2,
+  slow: 3,
+  docker: 4,
+  browser: 5,
+};
+const STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: number }> = [
+  { pattern: /^tests\/cli\/node-compat\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/cli\/node-compat-dev-server\.test\.ts$/, estimatedMs: 6_000 },
+  { pattern: /^tests\/cli\/node-compat-new\.test\.ts$/, estimatedMs: 8_000 },
+  { pattern: /^tests\/cli\/cli\.test\.ts$/, estimatedMs: 3_000 },
+  { pattern: /^tests\/cli\/cli-generation\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/cli\/cli-verify\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/cli\/cli-verify-changed\.test\.ts$/, estimatedMs: 5_000 },
+  { pattern: /^tests\/db\/pglite-adapter\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/dev\/dev-workflow-worker\.test\.ts$/, estimatedMs: 6_000 },
+  { pattern: /^tests\/external-manifest\/external-runtime-bridge\.test\.ts$/, estimatedMs: 4_000 },
+  { pattern: /^tests\/external-manifest\/external-runtime-cli\.test\.ts$/, estimatedMs: 6_000 },
+  { pattern: /^tests\/external-manifest\/external-runtime-node-cli\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/external-manifest\/go-adapter-conformance\.test\.ts$/, estimatedMs: 5_000 },
+  { pattern: /^tests\/impact\/h28-impact\.test\.ts$/, estimatedMs: 8_000 },
+  { pattern: /^tests\/impact\/h28-impact-runner\.test\.ts$/, estimatedMs: 7_000 },
+  { pattern: /^tests\/impact\/h28-impact-runner-diagnostics\.test\.ts$/, estimatedMs: 3_000 },
+  { pattern: /^tests\/refactor\/h27-refactor\.test\.ts$/, estimatedMs: 6_000 },
+  { pattern: /^tests\/refactor\/h27-refactor-extract-action-apply\.test\.ts$/, estimatedMs: 10_000 },
+  { pattern: /^tests\/refactor\/h27-refactor-extract-action\.test\.ts$/, estimatedMs: 21_000 },
+  { pattern: /^tests\/refactor\/h27-refactor-extract-action-bindings\.test\.ts$/, estimatedMs: 10_000 },
+  { pattern: /^tests\/release\/h23-release-artifacts\.test\.ts$/, estimatedMs: 8_000 },
+  { pattern: /^tests\/release\/h23-release-self-host\.test\.ts$/, estimatedMs: 4_000 },
+  { pattern: /^tests\/release\/h23-release\.test\.ts$/, estimatedMs: 3_000 },
+  { pattern: /^tests\/templates\/new-b2b-support-web\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/templates\/new-minimal-web\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/templates\/create-forge-app\.test\.ts$/, estimatedMs: 8_000 },
+];
+const STRICT_ISOLATED_TEST_PATTERNS = [
+  /^tests\/ai\//,
+  /^tests\/cli\/cli-generation\.test\.ts$/,
+  /^tests\/cli\/cli\.test\.ts$/,
+  /^tests\/cli\/cli-verify\.test\.ts$/,
+  /^tests\/cli\/cli-verify-changed\.test\.ts$/,
+  /^tests\/cli\/node-compat-dev-server\.test\.ts$/,
+  /^tests\/cli\/node-compat-new\.test\.ts$/,
+  /^tests\/cli\/windows\.test\.ts$/,
+  /^tests\/client\//,
+  /^tests\/db\/pglite-adapter\.test\.ts$/,
+  /^tests\/dev\//,
+  /^tests\/external-manifest\/external-manifest\.test\.ts$/,
+  /^tests\/external-manifest\/go-adapter-conformance\.test\.ts$/,
+  /^tests\/external-manifest\/external-runtime-bridge\.test\.ts$/,
+  /^tests\/external-manifest\/external-runtime-node-cli\.test\.ts$/,
+  /^tests\/impact\/h28-impact\.test\.ts$/,
+  /^tests\/impact\/h28-impact-runner\.test\.ts$/,
+  /^tests\/impact\/h28-impact-runner-diagnostics\.test\.ts$/,
+  /^tests\/live\//,
+  /^tests\/queries\/query-dev-server\.test\.ts$/,
+  // refactor extract-action/rename tests use ts.createProgram fresh per call
+  // against isolated temp workspaces (no shared global or server state), so they
+  // run safely co-located in the parallel lane and share one process warm-up
+  // instead of paying a cold start per isolated chunk.
+  /^tests\/release\/h23-release-artifacts\.test\.ts$/,
+  /^tests\/release\/h23-release-self-host\.test\.ts$/,
+  /^tests\/release\/h23-release\.test\.ts$/,
+  /^tests\/security\/tenant-isolation\/http-runtime\.test\.ts$/,
+  /^tests\/templates\/new-b2b-support-web\.test\.ts$/,
+  /^tests\/templates\/new-minimal-web\.test\.ts$/,
+  /^tests\/telemetry\/telemetry-dev-server\.test\.ts$/,
+];
+const STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [];
+
+interface StrictTestEntry {
+  file: string;
+  cost: TestCost;
+  lane: StrictTestLane;
+  estimatedMs: number;
+  durationSource: VerifyTestGraphDurationSource;
+}
+
+interface TestGraphProfileFile {
+  schemaVersion: "0.1.0";
+  updatedAt: string;
+  files: Record<string, {
+    durationMs: number;
+    runs: number;
+    lane: StrictTestLane;
+    sourceHash?: string;
+    lastExitCode: number;
+    lastRunAt: string;
+  }>;
+}
 
 function readTestGraph(workspaceRoot: string): TestGraph | null {
   const raw = nodeFileSystem.readText(join(workspaceRoot, "src/forge/_generated/testGraph.json"));
@@ -310,20 +428,27 @@ function readTestGraph(workspaceRoot: string): TestGraph | null {
   return JSON.parse(stripDeterministicHeader(raw)) as TestGraph;
 }
 
-function strictTestFiles(workspaceRoot: string): string[] {
+function strictTestEntries(workspaceRoot: string): Array<{ file: string; cost: TestCost }> {
   const graph = readTestGraph(workspaceRoot);
   if (!graph) {
     return [];
   }
-  return [...new Set(
-    graph.tests
-      .filter((test) => STRICT_TEST_COSTS.includes(test.cost))
-      .map((test) => test.file)
-      .sort(),
-  )];
+  const byFile = new Map<string, TestCost>();
+  for (const test of graph.tests) {
+    if (!STRICT_TEST_COSTS.includes(test.cost)) {
+      continue;
+    }
+    const existing = byFile.get(test.file);
+    if (!existing || TEST_COST_RANK[test.cost] > TEST_COST_RANK[existing]) {
+      byFile.set(test.file, test.cost);
+    }
+  }
+  return [...byFile.entries()]
+    .map(([file, cost]) => ({ file, cost }))
+    .sort((left, right) => left.file.localeCompare(right.file));
 }
 
-function chunkFiles(files: string[], size: number): string[][] {
+export function chunkFiles(files: string[], size: number): string[][] {
   const chunks: string[][] = [];
   for (let index = 0; index < files.length; index += size) {
     chunks.push(files.slice(index, index + size));
@@ -331,12 +456,455 @@ function chunkFiles(files: string[], size: number): string[][] {
   return chunks;
 }
 
+export function resolveStrictTestJobs(options: {
+  requested?: number;
+  env?: NodeJS.ProcessEnv;
+  chunkCount: number;
+}): number {
+  if (options.chunkCount <= 1) {
+    return 1;
+  }
+  const fromEnv = options.env?.FORGE_VERIFY_TEST_JOBS;
+  const parsedEnv = fromEnv ? Number(fromEnv) : undefined;
+  const requested = options.requested ?? parsedEnv;
+  if (requested !== undefined && Number.isInteger(requested) && requested >= 1) {
+    return Math.min(requested, options.chunkCount);
+  }
+
+  const cpuBound = Math.max(2, Math.floor(availableParallelism() / 2));
+  return Math.min(STRICT_TEST_MAX_DEFAULT_JOBS, cpuBound, options.chunkCount);
+}
+
+function resolveStrictLaneJobs(options: {
+  totalJobs: number;
+  parallelChunkCount: number;
+  isolatedChunkCount: number;
+  env?: NodeJS.ProcessEnv;
+}): { parallelJobs: number; isolatedJobs: number } {
+  if (options.parallelChunkCount === 0) {
+    return {
+      parallelJobs: 0,
+      isolatedJobs: resolveStrictIsolatedTestJobs({
+        env: options.env,
+        chunkCount: Math.min(options.totalJobs, options.isolatedChunkCount),
+      }),
+    };
+  }
+  if (options.isolatedChunkCount === 0) {
+    return {
+      parallelJobs: Math.min(options.totalJobs, options.parallelChunkCount),
+      isolatedJobs: 0,
+    };
+  }
+  const requestedIsolated = resolveStrictIsolatedTestJobs({
+    env: options.env,
+    chunkCount: options.isolatedChunkCount,
+  });
+  const isolatedJobs = Math.min(
+    requestedIsolated,
+    options.isolatedChunkCount,
+    Math.max(1, options.totalJobs - 1),
+  );
+  const parallelJobs = Math.min(
+    options.parallelChunkCount,
+    Math.max(1, options.totalJobs - isolatedJobs),
+  );
+  return { parallelJobs, isolatedJobs };
+}
+
+export function resolveStrictIsolatedTestJobs(options: {
+  requested?: number;
+  env?: NodeJS.ProcessEnv;
+  chunkCount: number;
+}): number {
+  if (options.chunkCount <= 1) {
+    return 1;
+  }
+  const fromEnv = options.env?.FORGE_VERIFY_ISOLATED_TEST_JOBS;
+  const parsedEnv = fromEnv ? Number(fromEnv) : undefined;
+  const requested = options.requested ?? parsedEnv;
+  if (requested !== undefined && Number.isInteger(requested) && requested >= 1) {
+    return Math.min(requested, options.chunkCount);
+  }
+  return Math.min(STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS, options.chunkCount);
+}
+
+function normalizeTestPath(file: string): string {
+  return file.replace(/\\/g, "/");
+}
+
+export type StrictTestLane = VerifyTestGraphLane;
+
+export function classifyStrictTestFile(file: string): StrictTestLane {
+  const normalized = normalizeTestPath(file);
+  if (STRICT_SERIAL_TEST_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return "serial";
+  }
+  if (STRICT_ISOLATED_TEST_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return "isolated";
+  }
+  return "parallel";
+}
+
+function testGraphProfilePath(workspaceRoot: string): string {
+  return join(workspaceRoot, TESTGRAPH_PROFILE_RELATIVE_PATH);
+}
+
+function testFileSourceHash(workspaceRoot: string, file: string): string | null {
+  const source = nodeFileSystem.readText(join(workspaceRoot, file));
+  if (source === null) {
+    return null;
+  }
+  return createHash("sha256")
+    .update(normalizeTestPath(file))
+    .update("\0")
+    .update(source)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+function readTestGraphProfile(workspaceRoot: string): TestGraphProfileFile | null {
+  const raw = nodeFileSystem.readText(testGraphProfilePath(workspaceRoot));
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as TestGraphProfileFile;
+    if (parsed.schemaVersion !== "0.1.0" || typeof parsed.files !== "object") {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function estimateStrictTestEntry(
+  workspaceRoot: string,
+  file: string,
+  cost: TestCost,
+  lane: StrictTestLane,
+  profile: TestGraphProfileFile | null,
+): { estimatedMs: number; source: VerifyTestGraphDurationSource } {
+  const profiled = profile?.files[file];
+  const sourceHash = testFileSourceHash(workspaceRoot, file);
+  if (
+    profiled &&
+    sourceHash !== null &&
+    profiled.sourceHash === sourceHash &&
+    Number.isFinite(profiled.durationMs) &&
+    profiled.durationMs > 0
+  ) {
+    return { estimatedMs: Math.max(1, Math.round(profiled.durationMs)), source: "profile" };
+  }
+  const normalized = normalizeTestPath(file);
+  const pathOverride = STRICT_TEST_FALLBACK_MS_BY_PATH.find((entry) => entry.pattern.test(normalized));
+  const fallback = pathOverride?.estimatedMs ?? TEST_COST_FALLBACK_MS[cost] ?? TEST_COST_FALLBACK_MS.standard;
+  if (lane === "serial") {
+    return { estimatedMs: Math.max(fallback, 8_000), source: "fallback" };
+  }
+  if (lane === "isolated") {
+    return { estimatedMs: Math.max(fallback, 3_000), source: "fallback" };
+  }
+  return { estimatedMs: fallback, source: "fallback" };
+}
+
+function weightedStrictTestEntries(
+  workspaceRoot: string,
+  profile: TestGraphProfileFile | null,
+): StrictTestEntry[] {
+  return strictTestEntries(workspaceRoot).map(({ file, cost }) => {
+    const lane = classifyStrictTestFile(file);
+    const estimate = estimateStrictTestEntry(workspaceRoot, file, cost, lane, profile);
+    return {
+      file,
+      cost,
+      lane,
+      estimatedMs: estimate.estimatedMs,
+      durationSource: estimate.source,
+    };
+  });
+}
+
+function partitionStrictTestEntries(entries: StrictTestEntry[]): {
+  parallel: StrictTestEntry[];
+  isolated: StrictTestEntry[];
+  serial: StrictTestEntry[];
+} {
+  const parallel: StrictTestEntry[] = [];
+  const isolated: StrictTestEntry[] = [];
+  const serial: StrictTestEntry[] = [];
+  for (const entry of entries) {
+    const lane = entry.lane;
+    if (lane === "serial") {
+      serial.push(entry);
+      continue;
+    }
+    if (lane === "isolated") {
+      isolated.push(entry);
+      continue;
+    }
+    parallel.push(entry);
+  }
+  return { parallel, isolated, serial };
+}
+
+export function packWeightedStrictTestChunks(
+  entries: Array<{ file: string; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }>,
+  size: number,
+): Array<{ files: string[]; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }> {
+  if (entries.length === 0) {
+    return [];
+  }
+  const binCount = Math.max(1, Math.ceil(entries.length / Math.max(1, size)));
+  const bins = Array.from({ length: binCount }, () => ({
+    files: [] as string[],
+    estimatedMs: 0,
+    durationSource: "profile" as VerifyTestGraphDurationSource,
+  }));
+  const ordered = [...entries].sort((left, right) => {
+    const byEstimate = right.estimatedMs - left.estimatedMs;
+    return byEstimate !== 0 ? byEstimate : left.file.localeCompare(right.file);
+  });
+  for (const entry of ordered) {
+    const target = bins
+      .filter((bin) => bin.files.length < size)
+      .sort((left, right) => {
+        const byEstimate = left.estimatedMs - right.estimatedMs;
+        return byEstimate !== 0 ? byEstimate : left.files.length - right.files.length;
+      })[0] ?? bins[0]!;
+    target.files.push(entry.file);
+    target.files.sort();
+    target.estimatedMs += entry.estimatedMs;
+    if (entry.durationSource === "fallback") {
+      target.durationSource = "fallback";
+    }
+  }
+  return bins.filter((bin) => bin.files.length > 0);
+}
+
+function oneFileChunks(
+  entries: StrictTestEntry[],
+): Array<{ files: string[]; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }> {
+  return [...entries]
+    .sort((left, right) => {
+      const byEstimate = right.estimatedMs - left.estimatedMs;
+      return byEstimate !== 0 ? byEstimate : left.file.localeCompare(right.file);
+    })
+    .map((entry) => ({
+      files: [entry.file],
+      estimatedMs: entry.estimatedMs,
+      durationSource: entry.durationSource,
+    }));
+}
+
+function laneEstimate(chunks: VerifyTestGraphPlanChunk[], jobs: number): number {
+  const workers = Array.from({ length: Math.max(1, jobs) }, () => 0);
+  for (const chunk of chunks) {
+    workers.sort((left, right) => left - right);
+    workers[0] += chunk.estimatedMs;
+  }
+  return Math.max(...workers, 0);
+}
+
+function strictPlanRecommendations(plan: VerifyTestGraphPlan): string[] {
+  const recommendations: string[] = [];
+  if (!plan.profileFound) {
+    recommendations.push(`Run forge verify --strict once to create ${TESTGRAPH_PROFILE_RELATIVE_PATH}; later plans use measured durations.`);
+  }
+  if (plan.lanes.serial.chunkCount > 0 && plan.lanes.serial.estimatedMs > plan.criticalPathEstimateMs * 0.35) {
+    recommendations.push("Split or de-globalize the slowest serial tests; serial work is now the main critical-path limiter.");
+  } else if (plan.lanes.serial.chunkCount === 0 && plan.lanes.isolated.chunkCount > 0) {
+    recommendations.push("No current strict TestGraph files require the serial lane; optimize isolated runtime/template tests next.");
+  }
+  if (plan.lanes.isolated.chunkCount > 0 && plan.isolatedJobs < STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS) {
+    recommendations.push(`Set FORGE_VERIFY_ISOLATED_TEST_JOBS=${STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS} on machines that can run isolated runtime tests concurrently.`);
+  }
+  const slowest = plan.slowestFiles[0];
+  if (slowest) {
+    recommendations.push(`Inspect ${slowest.file}; it is currently the heaviest estimated TestGraph file.`);
+  }
+  return recommendations;
+}
+
+export function buildStrictTestGraphPlan(
+  workspaceRoot: string,
+  testJobs?: number,
+  env: NodeJS.ProcessEnv = process.env,
+): VerifyTestGraphPlan {
+  const profile = readTestGraphProfile(workspaceRoot);
+  const entries = weightedStrictTestEntries(workspaceRoot, profile);
+  const partitioned = partitionStrictTestEntries(entries);
+  const parallelRaw = packWeightedStrictTestChunks(partitioned.parallel, STRICT_TEST_CHUNK_SIZE);
+  const isolatedRaw = oneFileChunks(partitioned.isolated);
+  const serialRaw = oneFileChunks(partitioned.serial);
+  const totalJobs = resolveStrictTestJobs({
+    requested: testJobs,
+    env,
+    chunkCount: parallelRaw.length + isolatedRaw.length,
+  });
+  const { parallelJobs, isolatedJobs } = resolveStrictLaneJobs({
+    totalJobs,
+    parallelChunkCount: parallelRaw.length,
+    isolatedChunkCount: isolatedRaw.length,
+    env,
+  });
+  let index = 1;
+  const toPlanChunks = (
+    lane: StrictTestLane,
+    chunks: Array<{ files: string[]; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }>,
+  ): VerifyTestGraphPlanChunk[] => chunks.map((chunk) => ({
+    index: index++,
+    lane,
+    files: chunk.files,
+    estimatedMs: chunk.estimatedMs,
+    durationSource: chunk.durationSource,
+  }));
+  const parallelChunks = toPlanChunks("parallel", parallelRaw);
+  const isolatedChunks = toPlanChunks("isolated", isolatedRaw);
+  const serialChunks = toPlanChunks("serial", serialRaw);
+  const laneMode =
+    totalJobs <= 1 && parallelChunks.length > 0 && isolatedChunks.length > 0
+      ? "sequential"
+      : "overlap";
+  const chunks = [...parallelChunks, ...isolatedChunks, ...serialChunks];
+  const lanes = {
+    parallel: {
+      fileCount: partitioned.parallel.length,
+      chunkCount: parallelChunks.length,
+      estimatedMs: parallelChunks.reduce((sum, chunk) => sum + chunk.estimatedMs, 0),
+    },
+    isolated: {
+      fileCount: partitioned.isolated.length,
+      chunkCount: isolatedChunks.length,
+      estimatedMs: isolatedChunks.reduce((sum, chunk) => sum + chunk.estimatedMs, 0),
+    },
+    serial: {
+      fileCount: partitioned.serial.length,
+      chunkCount: serialChunks.length,
+      estimatedMs: serialChunks.reduce((sum, chunk) => sum + chunk.estimatedMs, 0),
+    },
+  };
+  const plan: VerifyTestGraphPlan = {
+    schemaVersion: "0.1.0",
+    fileCount: entries.length,
+    chunkCount: chunks.length,
+    totalJobs,
+    laneMode,
+    jobs: parallelJobs,
+    isolatedJobs,
+    lanes,
+    chunks,
+    criticalPathEstimateMs:
+      (laneMode === "sequential"
+        ? laneEstimate(parallelChunks, parallelJobs) + laneEstimate(isolatedChunks, isolatedJobs)
+        : Math.max(
+          laneEstimate(parallelChunks, parallelJobs),
+          laneEstimate(isolatedChunks, isolatedJobs),
+        )) +
+      lanes.serial.estimatedMs,
+    profilePath: TESTGRAPH_PROFILE_RELATIVE_PATH,
+    profileFound: profile !== null,
+    slowestFiles: [...entries]
+      .sort((left, right) => {
+        const byEstimate = right.estimatedMs - left.estimatedMs;
+        return byEstimate !== 0 ? byEstimate : left.file.localeCompare(right.file);
+      })
+      .slice(0, 10)
+      .map((entry) => ({
+        file: entry.file,
+        lane: entry.lane,
+        estimatedMs: entry.estimatedMs,
+        source: entry.durationSource,
+      })),
+    recommendations: [],
+  };
+  plan.recommendations = strictPlanRecommendations(plan);
+  return plan;
+}
+
+async function runStrictGraphChunkPool(
+  workspaceRoot: string,
+  chunks: VerifyTestGraphPlanChunk[],
+  timeoutMs: number,
+  jobs: number,
+  totalChunks = chunks.length,
+): Promise<{ results: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined>; timedOut: boolean }> {
+  const results: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined> = [];
+  let nextChunk = 0;
+  let stopScheduling = false;
+
+  async function runNextChunk(): Promise<void> {
+    while (!stopScheduling) {
+      const chunkIndex = nextChunk;
+      nextChunk += 1;
+      const chunk = chunks[chunkIndex];
+      if (!chunk) {
+        return;
+      }
+      const result = await runStrictGraphTestChunk(
+        workspaceRoot,
+        chunk.files,
+        chunk.index - 1,
+        totalChunks,
+        timeoutMs,
+      );
+      results[chunkIndex] = { ...result, files: chunk.files, lane: chunk.lane };
+      if (result.exitCode !== 0) {
+        stopScheduling = true;
+        return;
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: jobs }, () => runNextChunk()));
+  return {
+    results,
+    timedOut: results.some((result) => result?.timedOut),
+  };
+}
+
+function writeTestGraphProfile(
+  workspaceRoot: string,
+  results: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined>,
+): void {
+  const existing = readTestGraphProfile(workspaceRoot);
+  const now = new Date().toISOString();
+  const files = { ...(existing?.files ?? {}) };
+  for (const result of results) {
+    if (!result || result.files.length === 0) {
+      continue;
+    }
+    const perFileDuration = Math.max(1, Math.round(result.durationMs / result.files.length));
+    for (const file of result.files) {
+      const previous = files[file];
+      files[file] = {
+        durationMs: perFileDuration,
+        runs: (previous?.runs ?? 0) + 1,
+        lane: result.lane,
+        sourceHash: testFileSourceHash(workspaceRoot, file) ?? previous?.sourceHash,
+        lastExitCode: result.exitCode,
+        lastRunAt: now,
+      };
+    }
+  }
+  const profile: TestGraphProfileFile = {
+    schemaVersion: "0.1.0",
+    updatedAt: now,
+    files,
+  };
+  const path = testGraphProfilePath(workspaceRoot);
+  nodeFileSystem.mkdirp(dirname(path));
+  nodeFileSystem.writeText(path, `${JSON.stringify(profile, null, 2)}\n`);
+}
+
 async function runStrictGraphTests(
   workspaceRoot: string,
   timeoutMs: number,
-): Promise<ScriptRunResult & { fileCount: number; chunkCount: number }> {
-  const files = strictTestFiles(workspaceRoot);
-  if (files.length === 0) {
+  testJobs?: number,
+): Promise<ScriptRunResult & { fileCount: number; chunkCount: number; jobs: number; isolatedJobs: number; plan: VerifyTestGraphPlan }> {
+  const plan = buildStrictTestGraphPlan(workspaceRoot, testJobs);
+  if (plan.fileCount === 0) {
     return {
       exitCode: 1,
       stdout: "",
@@ -347,6 +915,9 @@ async function runStrictGraphTests(
       spawnError: true,
       fileCount: 0,
       chunkCount: 0,
+      jobs: 0,
+      isolatedJobs: 0,
+      plan,
     };
   }
 
@@ -355,32 +926,116 @@ async function runStrictGraphTests(
   let stderr = "";
   let timedOut = false;
   let exitCode = 0;
-  const chunks = chunkFiles(files, STRICT_TEST_CHUNK_SIZE);
-  let command = `bun test <${files.length} TestGraph files in ${chunks.length} chunks> --timeout ${timeoutMs}`;
-  for (const [chunkIndex, chunk] of chunks.entries()) {
-    const argv = resolveCommandArgv(["bun", "test", ...chunk, "--timeout", String(timeoutMs)]);
-    const chunkCommand = `bun test <TestGraph chunk ${chunkIndex + 1}/${chunks.length}, ${chunk.length} files> --timeout ${timeoutMs}`;
-    const result = await spawnArgv(workspaceRoot, argv, timeoutMs, chunkCommand);
+  let failedOutput: Pick<ScriptRunResult, "stdout" | "stderr"> | null = null;
+  const parallelChunks = plan.chunks.filter((chunk) => chunk.lane === "parallel");
+  const isolatedChunks = plan.chunks.filter((chunk) => chunk.lane === "isolated");
+  const serialChunks = plan.chunks.filter((chunk) => chunk.lane === "serial");
+
+  let command = `bun test <${plan.fileCount} TestGraph files in ${plan.chunkCount} chunks, ${plan.laneMode} lanes, total jobs ${plan.totalJobs}, parallel jobs ${plan.jobs}, isolated jobs ${plan.isolatedJobs}, isolated ${isolatedChunks.length}, serial ${serialChunks.length}> --timeout ${timeoutMs}`;
+  const parallelPool = () => runStrictGraphChunkPool(
+    workspaceRoot,
+    parallelChunks,
+    timeoutMs,
+    plan.jobs,
+    plan.chunkCount,
+  );
+  const isolatedPool = () => runStrictGraphChunkPool(
+    workspaceRoot,
+    isolatedChunks,
+    timeoutMs,
+    plan.isolatedJobs,
+    plan.chunkCount,
+  );
+  const [parallelRun, isolatedRun] = plan.laneMode === "sequential"
+    ? [await parallelPool(), await isolatedPool()]
+    : await Promise.all([parallelPool(), isolatedPool()]);
+  const orderedResults: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined> = [];
+  for (const result of parallelRun.results) {
+    if (result) {
+      orderedResults.push(result);
+    }
+  }
+  for (const result of isolatedRun.results) {
+    if (result) {
+      orderedResults.push(result);
+    }
+  }
+  timedOut = timedOut || parallelRun.timedOut;
+  timedOut = timedOut || isolatedRun.timedOut;
+
+  if (
+    parallelRun.results.every((result) => result?.exitCode === 0) &&
+    isolatedRun.results.every((result) => result?.exitCode === 0)
+  ) {
+    for (const chunk of serialChunks) {
+      const result = await runStrictGraphTestChunk(
+        workspaceRoot,
+        chunk.files,
+        chunk.index - 1,
+        plan.chunkCount,
+        timeoutMs,
+      );
+      orderedResults.push({ ...result, files: chunk.files, lane: chunk.lane });
+      timedOut = timedOut || result.timedOut;
+      if (result.exitCode !== 0) {
+        break;
+      }
+    }
+  }
+
+  writeTestGraphProfile(workspaceRoot, orderedResults);
+
+  for (const result of orderedResults) {
+    if (!result) {
+      continue;
+    }
     stdout += result.stdout;
     stderr += result.stderr;
     timedOut = timedOut || result.timedOut;
     if (result.exitCode !== 0) {
       exitCode = result.exitCode;
-      command = chunkCommand;
+      command = result.command;
+      failedOutput = { stdout: result.stdout, stderr: result.stderr };
       break;
     }
   }
 
   return {
     exitCode,
-    stdout,
-    stderr,
+    stdout: failedOutput?.stdout ?? stdout,
+    stderr: failedOutput?.stderr ?? stderr,
     command,
     durationMs: Date.now() - started,
     timedOut,
-    fileCount: files.length,
-    chunkCount: chunks.length,
+    fileCount: plan.fileCount,
+    chunkCount: plan.chunkCount,
+    jobs: plan.jobs,
+    isolatedJobs: plan.isolatedJobs,
+    plan,
   };
+}
+
+function runStrictGraphTestChunk(
+  workspaceRoot: string,
+  chunk: string[],
+  chunkIndex: number,
+  chunkCount: number,
+  timeoutMs: number,
+): Promise<ScriptRunResult> {
+  const argv = resolveCommandArgv(["bun", "test", ...chunk, "--timeout", String(timeoutMs)]);
+  const chunkCommand = `bun test <TestGraph chunk ${chunkIndex + 1}/${chunkCount}, ${chunk.length} files> --timeout ${timeoutMs}`;
+  const chunkTempDir = mkdtempSync(join(tmpdir(), `forge-testgraph-${chunkIndex + 1}-`));
+  return spawnArgv(workspaceRoot, argv, timeoutMs, chunkCommand, {
+    TMP: chunkTempDir,
+    TEMP: chunkTempDir,
+    TMPDIR: chunkTempDir,
+    FORGE_TEST_TMPDIR: chunkTempDir,
+    FORGE_VERIFY_CHUNK_INDEX: String(chunkIndex + 1),
+    FORGE_VERIFY_CHUNK_COUNT: String(chunkCount),
+    FORGE_DEV_PORT: "0",
+  }).finally(() => {
+    rmSync(chunkTempDir, { recursive: true, force: true });
+  });
 }
 
 function resolveVerifyProfile(options: VerifyOptions): VerifyProfile {
@@ -485,6 +1140,38 @@ export async function runVerifyCommand(
   const scripts = readPackageScripts(options.workspaceRoot);
   const scriptTimeoutMs = resolveScriptTimeoutMs(options);
   const profile = resolveVerifyProfile(options);
+  let testGraphPlan: VerifyTestGraphPlan | undefined;
+
+  if (options.testPlan) {
+    testGraphPlan = buildStrictTestGraphPlan(options.workspaceRoot, options.testJobs);
+    steps.push({
+      name: "tests:testgraph-plan",
+      ok: testGraphPlan.fileCount > 0,
+      skipped: false,
+      exitCode: testGraphPlan.fileCount > 0 ? 0 : 1,
+      command: `forge verify --strict --test-plan (${testGraphPlan.fileCount} files, ${testGraphPlan.chunkCount} chunks)`,
+      durationMs: Date.now() - started,
+    });
+    if (testGraphPlan.fileCount === 0) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_VERIFY_TESTGRAPH_EMPTY",
+          message: "TestGraph has no non-docker/browser tests",
+        }),
+      );
+    }
+    const ok = steps.every((step) => step.ok);
+    return {
+      ok,
+      profile,
+      steps,
+      diagnostics,
+      testGraphPlan,
+      durationMs: Date.now() - started,
+      exitCode: ok ? 0 : 1,
+    };
+  }
 
   if (options.changed) {
     const plan = buildImpactTestPlan({
@@ -698,7 +1385,8 @@ export async function runVerifyCommand(
     steps.push(skippedStep("tests", "--standard uses impact-selected tests; use --strict for the full test script"));
   } else if (profile === "strict" && !options.fullTests) {
     printProgress(options, `verify: tests (strict TestGraph, ${scriptTimeoutMs}ms timeout)`);
-    const tests = await runStrictGraphTests(options.workspaceRoot, scriptTimeoutMs);
+    const tests = await runStrictGraphTests(options.workspaceRoot, scriptTimeoutMs, options.testJobs);
+    testGraphPlan = tests.plan;
     steps.push({
       name: "tests:testgraph-strict",
       ok: tests.exitCode === 0,
@@ -758,6 +1446,7 @@ export async function runVerifyCommand(
     profile,
     steps,
     diagnostics,
+    testGraphPlan,
     durationMs: Date.now() - started,
     exitCode: ok ? 0 : 1,
   };

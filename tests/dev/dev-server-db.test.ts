@@ -56,7 +56,7 @@ describe("dev server db integration", () => {
         port: 0,
         mock: false,
         json: false,
-        db: "pglite",
+        db: "memory",
       });
 
       try {
@@ -64,6 +64,7 @@ describe("dev server db integration", () => {
         const healthBody = (await health.json()) as {
           db: { kind: string; connected: boolean };
         };
+        expect(healthBody.db.kind).toBe("memory");
         expect(healthBody.db.connected).toBe(true);
 
         const invoke = await fetch(`${handle.url}/commands/saveTicket`, {

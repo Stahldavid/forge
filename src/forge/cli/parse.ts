@@ -182,7 +182,7 @@ export type ForgeCommand =
       once: boolean;
       watch: boolean;
       json: boolean;
-      db: "pglite" | "postgres" | "none";
+      db: "memory" | "pglite" | "postgres" | "none";
       databaseUrl?: string;
       worker: boolean;
       withWeb: boolean;
@@ -192,6 +192,7 @@ export type ForgeCommand =
       webPort?: number;
       telemetry: string[];
       envFile?: string;
+      skipStartupConsole: boolean;
       workspaceRoot: string;
     }
   | {
@@ -581,8 +582,8 @@ function parseOptionValues(args: string[], flag: string): string[] {
   return values;
 }
 
-function parseDbKind(value: string | undefined): "pglite" | "postgres" | "none" {
-  if (value === "postgres" || value === "none") {
+function parseDbKind(value: string | undefined): "memory" | "pglite" | "postgres" | "none" {
+  if (value === "memory" || value === "postgres" || value === "none") {
     return value;
   }
   return "pglite";
@@ -1612,12 +1613,20 @@ export function parseCli(argv: string[]): ParsedCli {
       {
         const scriptTimeoutRaw = parseOptionValue(argv, "--script-timeout-ms");
         const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;
+        const testJobsRaw = parseOptionValue(argv, "--test-jobs");
+        const testJobs = testJobsRaw ? Number(testJobsRaw) : undefined;
         const typechecker = parseOptionValue(argv, "--typechecker");
         if (
           scriptTimeoutRaw !== undefined &&
           (!Number.isFinite(scriptTimeoutMs) || scriptTimeoutMs! < 1)
         ) {
           errors.push("--script-timeout-ms must be a number >= 1");
+        }
+        if (
+          testJobsRaw !== undefined &&
+          (!Number.isInteger(testJobs) || testJobs! < 1)
+        ) {
+          errors.push("--test-jobs must be an integer >= 1");
         }
         if (
           typechecker !== undefined &&
@@ -1642,8 +1651,10 @@ export function parseCli(argv: string[]): ParsedCli {
             smoke: parseFlag(argv, "--smoke"),
             standard: parseFlag(argv, "--standard"),
             scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,
+            testJobs: testJobs ? Math.floor(testJobs) : undefined,
             typechecker: typechecker as "tsc" | "tsgo" | "auto" | undefined,
             fullTests: parseFlag(argv, "--full"),
+            testPlan: parseFlag(argv, "--test-plan"),
           },
         },
         workspaceRoot,
@@ -1840,6 +1851,7 @@ export function parseCli(argv: string[]): ParsedCli {
             .map((value) => value.trim())
             .filter(Boolean),
           envFile: parseOptionValue(argv, "--env-file"),
+          skipStartupConsole: parseFlag(argv, "--skip-startup-console"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2162,6 +2174,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--smoke",
     "--standard",
     "--script-timeout-ms",
+    "--test-plan",
     "--typechecker",
     "--timeout-ms",
     "--apply",
@@ -2236,6 +2249,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--warmups",
     "--sandbox-backend",
     "--skip-tests",
+    "--test-jobs",
     "--skip-typecheck",
     "--skip-eslint",
     "--mock",
@@ -2263,6 +2277,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--strict",
     "--strict-secrets",
     "--env-file",
+    "--skip-startup-console",
     "--redacted",
     "--mock-ai",
     "--ai",
@@ -2350,6 +2365,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--scenario" ||
         arg === "--timeout" ||
         arg === "--timeout-ms" ||
+        arg === "--test-jobs" ||
         arg === "--typechecker" ||
         arg === "--name" ||
         arg === "--auth-token" ||

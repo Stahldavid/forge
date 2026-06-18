@@ -13,7 +13,9 @@ import {
 
 describe("secrets check", () => {
   test("reports missing and present secrets with redaction", async () => {
-    const workspace = scaffoldGenerateWorkspace("secrets-check");
+    const workspace = scaffoldGenerateWorkspace("secrets-check", {
+      packageFixtures: ["forge", "zod", "stripe"],
+    });
     writeFileSync(
       join(workspace, "package.json"),
       JSON.stringify({ name: "x", dependencies: { stripe: "17.0.0" } }),

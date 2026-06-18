@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createServer, type IncomingMessage, type Server } from "node:http";
-import { readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
-import { runRunCommand } from "../../src/forge/cli/run.ts";
-import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import { importExternalManifest } from "../../src/forge/compiler/external-manifest/registry.ts";
 import {
   cleanupWorkspace,
@@ -14,139 +9,16 @@ import {
   scaffoldClientWorkspace,
   startClientDevServer,
 } from "../client/helpers.ts";
-
-const FORGE_CLI = resolve(process.cwd(), "bin", "forge.mjs");
-
-function readJson<T>(root: string, relative: string): T {
-  return JSON.parse(stripDeterministicHeader(readFileSync(join(root, relative), "utf8"))) as T;
-}
-
-async function runForgeCli(root: string, args: string[]): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const proc = Bun.spawn(["node", FORGE_CLI, ...args], {
-    cwd: root,
-    stdout: "pipe",
-    stderr: "pipe",
-    env: process.env,
-  });
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-    proc.exited,
-  ]);
-  return { exitCode, stdout, stderr };
-}
-
-async function readBody(request: IncomingMessage): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of request) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}
-
-async function startExternalHttpService(): Promise<{
-  url: string;
-  stop: () => Promise<void>;
-  calls: Array<{ path: string; body: unknown; headers: Record<string, string | string[] | undefined> }>;
-}> {
-  const calls: Array<{ path: string; body: unknown; headers: Record<string, string | string[] | undefined> }> = [];
-  const server = createServer(async (request, response) => {
-    const bodyText = await readBody(request);
-    const body = bodyText ? JSON.parse(bodyText) : {};
-    calls.push({
-      path: request.url ?? "",
-      body,
-      headers: request.headers,
-    });
-
-    response.setHeader("content-type", "application/json");
-    if (request.url === "/invoices/create") {
-      response.end(JSON.stringify({
-        ok: true,
-        result: {
-          created: true,
-          title: body.args?.title,
-          tenantHeader: request.headers["x-forge-tenant-id"],
-          authKind: body.auth?.kind,
-        },
-      }));
-      return;
-    }
-
-    if (request.url === "/invoices/list") {
-      response.end(JSON.stringify({
-        ok: true,
-        result: [{ id: "inv_1", tenant: request.headers["x-forge-tenant-id"] }],
-      }));
-      return;
-    }
-
-    response.statusCode = 404;
-    response.end(JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "not found" } }));
-  });
-
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  if (!address || typeof address === "string") {
-    throw new Error("failed to start external service");
-  }
-  return {
-    url: `http://127.0.0.1:${address.port}`,
-    calls,
-    stop: () => new Promise((resolve, reject) => {
-      (server as Server).close((error) => error ? reject(error) : resolve());
-    }),
-  };
-}
-
-function writeExternalManifest(root: string, baseUrl: string): string {
-  const path = join(root, "billing.manifest.json");
-  writeFileSync(
-    path,
-    JSON.stringify(
-      {
-        forgeProtocol: "1.0",
-        language: "java",
-        framework: "spring-boot",
-        service: {
-          name: "billing",
-          transport: "http",
-          baseUrl,
-          health: "/health",
-        },
-        entries: [
-          {
-            name: "createInvoice",
-            kind: "command",
-            path: "/invoices/create",
-            policy: "billing.manage",
-            transaction: "external-managed",
-            risk: "write",
-            effects: ["invoice.created"],
-          },
-          {
-            name: "listInvoices",
-            kind: "query",
-            path: "/invoices/list",
-            policy: "billing.manage",
-            transaction: "read-only",
-            risk: "read",
-            tenantScoped: true,
-          },
-        ],
-      },
-      null,
-      2,
-    ),
-    "utf8",
-  );
-  return path;
-}
+import {
+  readJson,
+  startExternalHttpService,
+  writeExternalManifest,
+} from "./external-runtime-helpers.ts";
 
 describe("external runtime bridge", () => {
   test("executes HTTP external commands and queries with Forge auth and policy", async () => {
     const external = await startExternalHttpService();
-    const { root, tenantA } = await scaffoldClientWorkspace("external-runtime");
+    const { root, tenantA } = await scaffoldClientWorkspace("external-runtime", { generate: false });
     const manifestPath = writeExternalManifest(root, external.url);
 
     try {
@@ -166,61 +38,7 @@ describe("external runtime bridge", () => {
       expect(policyRegistry.queryAuth.find((entry) => entry.queryName === "billing.listInvoices")?.auth)
         .toEqual({ kind: "policy", policy: "billing.manage" });
 
-      const cliRun = await runRunCommand({
-        name: "billing.createInvoice",
-        list: false,
-        json: true,
-        mock: false,
-        userId: "u1",
-        tenantId: tenantA,
-        role: "admin",
-        args: { title: "CLI invoice" },
-        workspaceRoot: root,
-      });
-      expect(cliRun.exitCode).toBe(0);
-      expect(cliRun.run?.result).toMatchObject({
-        created: true,
-        title: "CLI invoice",
-        tenantHeader: tenantA,
-      });
-
-      const commandCli = await runForgeCli(root, [
-        "run",
-        "billing.createInvoice",
-        "--args",
-        JSON.stringify({ title: "Real CLI invoice" }),
-        "--user-id",
-        "u1",
-        "--tenant-id",
-        tenantA,
-        "--role",
-        "admin",
-        "--json",
-      ]);
-      expect(commandCli.exitCode, commandCli.stderr).toBe(0);
-      expect(JSON.parse(commandCli.stdout).run.result).toMatchObject({
-        created: true,
-        title: "Real CLI invoice",
-        tenantHeader: tenantA,
-      });
-
-      const queryCli = await runForgeCli(root, [
-        "query",
-        "billing.listInvoices",
-        "--args",
-        JSON.stringify({}),
-        "--user-id",
-        "u1",
-        "--tenant-id",
-        tenantA,
-        "--role",
-        "admin",
-        "--json",
-      ]);
-      expect(queryCli.exitCode, queryCli.stderr).toBe(0);
-      expect(JSON.parse(queryCli.stdout).run.result).toEqual([{ id: "inv_1", tenant: tenantA }]);
-
-      const handle = await startClientDevServer(root);
+      const handle = await startClientDevServer(root, { db: "none" });
       try {
         const denied = await fetch(`${handle.url}/external/billing/commands/createInvoice`, {
           method: "POST",
@@ -253,9 +71,6 @@ describe("external runtime bridge", () => {
         const queryResult = await client.externalQuery("billing.listInvoices", {}) as Array<{ id: string; tenant: string }>;
         expect(queryResult).toEqual([{ id: "inv_1", tenant: tenantA }]);
         expect(external.calls.map((call) => call.path)).toEqual([
-          "/invoices/create",
-          "/invoices/create",
-          "/invoices/list",
           "/invoices/create",
           "/invoices/list",
         ]);

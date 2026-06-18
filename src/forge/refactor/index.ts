@@ -420,6 +420,7 @@ function createCommandProgram(
     module: ts.ModuleKind.ESNext,
     moduleResolution: ts.ModuleResolutionKind.Bundler,
     noEmit: true,
+    noLib: true,
     skipLibCheck: true,
     strict: true,
     target: ts.ScriptTarget.ES2022,

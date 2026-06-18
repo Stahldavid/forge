@@ -21,7 +21,9 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 describe("secret registry generation", () => {
   test("emits secretRegistry and envSchema from stripe recipe", async () => {
-    const workspace = scaffoldGenerateWorkspace("secret-registry-gen");
+    const workspace = scaffoldGenerateWorkspace("secret-registry-gen", {
+      packageFixtures: ["forge", "zod", "stripe"],
+    });
     writeFileSync(
       join(workspace, "package.json"),
       JSON.stringify({

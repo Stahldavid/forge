@@ -11,7 +11,9 @@ import {
 
 describe("dev server env", () => {
   test("/health includes env loadedFiles and missingRequiredSecrets", async () => {
-    const workspace = scaffoldGenerateWorkspace("dev-server-env");
+    const workspace = scaffoldGenerateWorkspace("dev-server-env", {
+      packageFixtures: ["forge", "zod", "stripe"],
+    });
     writeFileSync(
       join(workspace, "package.json"),
       JSON.stringify({ name: "x", dependencies: { stripe: "17.0.0" } }),

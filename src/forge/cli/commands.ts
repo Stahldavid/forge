@@ -1060,6 +1060,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         webPort: command.webPort,
         telemetry: command.telemetry,
         envFile: command.envFile,
+        skipStartupConsole: command.skipStartupConsole,
       });
       return result.exitCode;
     }

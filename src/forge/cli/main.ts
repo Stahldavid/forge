@@ -22,7 +22,8 @@ function formatHelp(): string {
     "  forge generate",
     "  forge check --json",
     "  forge verify --standard",
-    "  forge verify --strict --typechecker auto",
+    "  forge verify --strict --typechecker auto --test-jobs 6",
+    "  forge verify --strict --test-plan --json",
     "",
   ].join("\n");
 }

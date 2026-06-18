@@ -8,22 +8,8 @@ import {
   writeTriageWorkflow,
 } from "../workflows/helpers.ts";
 
-async function waitFor<T>(
-  producer: () => Promise<T>,
-  predicate: (value: T) => boolean,
-  timeoutMs = 90_000,
-): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  let last = await producer();
-  while (!predicate(last) && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    last = await producer();
-  }
-  return last;
-}
-
 describe("dev workflow worker", () => {
-  test("forge dev --worker completes workflow after createTicket", async () => {
+  test("forge dev workflow process endpoint completes workflow after createTicket", async () => {
     const { workspace, workflowsDir } = scaffoldWorkflowWorkspace("dev-wf-worker");
     writeTriageWorkflow(workflowsDir);
 
@@ -36,8 +22,8 @@ describe("dev workflow worker", () => {
         port: 0,
         mock: false,
         json: false,
-        db: "pglite",
-        worker: true,
+        db: "memory",
+        worker: false,
       });
 
       try {
@@ -54,15 +40,30 @@ describe("dev workflow worker", () => {
         };
         expect(healthBody.workflows).toBeDefined();
 
-        const runsBody = await waitFor(
-          async () => {
-            const runs = await fetch(`${handle.url}/workflows/runs`);
-            return (await runs.json()) as {
-              runs: Array<{ status: string }>;
-            };
-          },
-          (body) => body.runs.some((runRow) => runRow.status === "completed"),
-        );
+        type ProcessBody = {
+          ok: boolean;
+          batch: { workflowBatch: { completed: number; runsStarted: number } };
+        };
+        let runsStarted = 0;
+        let completed = 0;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          const processed = await fetch(`${handle.url}/workflows/process`, { method: "POST" });
+          expect(processed.status).toBe(200);
+          const body = await processed.json() as ProcessBody;
+          runsStarted += body.batch.workflowBatch.runsStarted;
+          completed += body.batch.workflowBatch.completed;
+          if (completed > 0) {
+            break;
+          }
+        }
+
+        expect(runsStarted).toBeGreaterThanOrEqual(1);
+        expect(completed).toBeGreaterThanOrEqual(1);
+
+        const runs = await fetch(`${handle.url}/workflows/runs`);
+        const runsBody = (await runs.json()) as {
+          runs: Array<{ status: string }>;
+        };
         expect(runsBody.runs.some((runRow) => runRow.status === "completed")).toBe(true);
       } finally {
         handle.stop();

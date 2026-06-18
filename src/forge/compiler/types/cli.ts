@@ -147,17 +147,59 @@ export interface VerifyOptions {
   smoke?: boolean;
   standard?: boolean;
   scriptTimeoutMs?: number;
+  testJobs?: number;
   typechecker?: "tsc" | "tsgo" | "auto";
   fullTests?: boolean;
+  testPlan?: boolean;
 }
 
 export type VerifyProfile = "default" | "smoke" | "standard" | "strict" | "changed";
+
+export type VerifyTestGraphLane = "parallel" | "isolated" | "serial";
+export type VerifyTestGraphLaneMode = "overlap" | "sequential";
+
+export type VerifyTestGraphDurationSource = "profile" | "fallback";
+
+export interface VerifyTestGraphPlanChunk {
+  index: number;
+  lane: VerifyTestGraphLane;
+  files: string[];
+  estimatedMs: number;
+  durationSource: VerifyTestGraphDurationSource;
+}
+
+export interface VerifyTestGraphPlan {
+  schemaVersion: "0.1.0";
+  fileCount: number;
+  chunkCount: number;
+  totalJobs: number;
+  laneMode: VerifyTestGraphLaneMode;
+  jobs: number;
+  isolatedJobs: number;
+  lanes: Record<VerifyTestGraphLane, {
+    fileCount: number;
+    chunkCount: number;
+    estimatedMs: number;
+  }>;
+  chunks: VerifyTestGraphPlanChunk[];
+  criticalPathEstimateMs: number;
+  profilePath: string;
+  profileFound: boolean;
+  slowestFiles: Array<{
+    file: string;
+    lane: VerifyTestGraphLane;
+    estimatedMs: number;
+    source: VerifyTestGraphDurationSource;
+  }>;
+  recommendations: string[];
+}
 
 export interface VerifyResult {
   ok: boolean;
   profile?: VerifyProfile;
   steps: VerifyStep[];
   diagnostics: Diagnostic[];
+  testGraphPlan?: VerifyTestGraphPlan;
   durationMs?: number;
   exitCode: 0 | 1;
 }

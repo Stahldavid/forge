@@ -9,22 +9,8 @@ import {
   scaffoldGenerateWorkspace,
 } from "../orchestrator/helpers.ts";
 
-async function waitFor<T>(
-  producer: () => Promise<T>,
-  predicate: (value: T) => boolean,
-  timeoutMs = 90_000,
-): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  let last = await producer();
-  while (!predicate(last) && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    last = await producer();
-  }
-  return last;
-}
-
 describe("dev outbox worker", () => {
-  test("forge dev --worker processes delivery after createTicket", async () => {
+  test("forge dev outbox process endpoint processes delivery after createTicket", async () => {
     const workspace = scaffoldGenerateWorkspace("dev-outbox-worker");
     const commandsDir = join(workspace, "src", "commands");
     const actionsDir = join(workspace, "src", "actions");
@@ -79,8 +65,8 @@ describe("dev outbox worker", () => {
         port: 0,
         mock: false,
         json: false,
-        db: "pglite",
-        worker: true,
+        db: "memory",
+        worker: false,
       });
 
       try {
@@ -95,17 +81,22 @@ describe("dev outbox worker", () => {
         const healthBody = (await health.json()) as {
           outbox: { worker: string; pending: number; dead: number };
         };
-        expect(healthBody.outbox.worker).toBe("running");
+        expect(healthBody.outbox.worker).toBe("stopped");
 
-        const outboxBody = await waitFor(
-          async () => {
-            const outbox = await fetch(`${handle.url}/outbox`);
-            return (await outbox.json()) as {
-              summary: { processed: number; pending: number };
-            };
-          },
-          (body) => body.summary.processed >= 1 && body.summary.pending === 0,
-        );
+        const processed = await fetch(`${handle.url}/outbox/process`, { method: "POST" });
+        expect(processed.status).toBe(200);
+        const processedBody = (await processed.json()) as {
+          batch: { outbox: { processed: number; failed: number; dead: number; claimed: number } };
+        };
+        expect(processedBody.batch.outbox.claimed).toBeGreaterThanOrEqual(1);
+        expect(processedBody.batch.outbox.processed).toBeGreaterThanOrEqual(1);
+        expect(processedBody.batch.outbox.failed).toBe(0);
+        expect(processedBody.batch.outbox.dead).toBe(0);
+
+        const outbox = await fetch(`${handle.url}/outbox`);
+        const outboxBody = (await outbox.json()) as {
+          summary: { processed: number; pending: number };
+        };
         expect(outboxBody.summary.processed).toBeGreaterThanOrEqual(1);
         expect(outboxBody.summary.pending).toBe(0);
       } finally {

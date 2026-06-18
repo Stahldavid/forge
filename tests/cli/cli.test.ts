@@ -1,22 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { join } from "node:path";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
-import { runCompilerBenchCommand } from "../../src/forge/bench.ts";
 import {
-  runCheckCommand,
-  runGenerateCommand,
-  runInspectCommand,
-  runVerifyCommand,
-} from "../../src/forge/cli/commands.ts";
-import {
-  cleanupWorkspace,
-  defaultGenerateOptions,
-  scaffoldGenerateWorkspace,
-} from "../orchestrator/helpers.ts";
+  buildStrictTestGraphPlan,
+  chunkFiles,
+  classifyStrictTestFile,
+  packWeightedStrictTestChunks,
+  resolveStrictIsolatedTestJobs,
+  resolveStrictTestJobs,
+} from "../../src/forge/cli/verify.ts";
 
 describe("Forge CLI", () => {
   test("parseCli rejects unsupported inspect target", () => {
@@ -108,61 +101,6 @@ describe("Forge CLI", () => {
     }
   });
 
-  test("generate --json emits one JSON document on stdout", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-generate-json");
-    const originalWrite = process.stdout.write.bind(process.stdout);
-    let output = "";
-
-    process.stdout.write = ((chunk: string | Uint8Array) => {
-      output += String(chunk);
-      return true;
-    }) as typeof process.stdout.write;
-
-    try {
-      const parsed = parseCli(["generate", "--json"]);
-      expect(parsed.command?.kind).toBe("generate");
-
-      const result = await runGenerateCommand({
-        workspaceRoot: workspace,
-        check: false,
-        dryRun: false,
-        json: true,
-        concurrency: 2,
-      });
-
-      expect(() => JSON.parse(output || "{}")).not.toThrow();
-      expect(result.exitCode).toBe(0);
-    } finally {
-      process.stdout.write = originalWrite;
-      cleanupWorkspace(workspace);
-    }
-  });
-
-  test("generate --dry-run does not write files", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-dry-run");
-    try {
-      const result = await runGenerateCommand({
-        ...defaultGenerateOptions(workspace),
-        dryRun: true,
-      });
-      expect(result.changed.length).toBeGreaterThan(0);
-      expect(result.exitCode).toBe(0);
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
-  test("check exits 0 when guard artifacts are present", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-check-guards");
-    try {
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runCheckCommand(workspace);
-      expect(result.exitCode).toBe(0);
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
   test("parseCli accepts verify with skip flags", () => {
     const parsed = parseCli([
       "verify",
@@ -183,12 +121,14 @@ describe("Forge CLI", () => {
     }
   });
 
-  test("parseCli accepts verify typechecker and compiler bench", () => {
-    const verify = parseCli(["verify", "--typechecker", "auto", "--json"]);
+  test("parseCli accepts verify typechecker, test jobs, test plan, and compiler bench", () => {
+    const verify = parseCli(["verify", "--typechecker", "auto", "--test-jobs", "3", "--test-plan", "--json"]);
     expect(verify.errors).toEqual([]);
     expect(verify.command?.kind).toBe("verify");
     if (verify.command?.kind === "verify") {
       expect(verify.command.options.typechecker).toBe("auto");
+      expect(verify.command.options.testJobs).toBe(3);
+      expect(verify.command.options.testPlan).toBe(true);
     }
 
     const bench = parseCli(["bench", "compiler", "--json", "--iterations", "2", "--warmups", "0", "--concurrency", "3"]);
@@ -201,25 +141,79 @@ describe("Forge CLI", () => {
     }
   });
 
-  test("compiler bench reports public phase timings", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-bench-compiler");
-    try {
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runCompilerBenchCommand({
-        subcommand: "compiler",
-        workspaceRoot: workspace,
-        json: true,
-        iterations: 1,
-        warmups: 0,
-        concurrency: 2,
-      });
-      expect(result.exitCode).toBe(0);
-      expect(result.results).toHaveLength(1);
-      expect(result.summary.medianMs).toBeGreaterThanOrEqual(0);
-      expect(result.results[0]?.phases.packageGraphMs).toBeGreaterThanOrEqual(0);
-    } finally {
-      cleanupWorkspace(workspace);
-    }
+  test("strict TestGraph jobs are bounded and configurable", () => {
+    expect(chunkFiles(["a", "b", "c", "d", "e"], 2)).toEqual([["a", "b"], ["c", "d"], ["e"]]);
+    expect(resolveStrictTestJobs({ requested: 99, chunkCount: 3 })).toBe(3);
+    expect(resolveStrictTestJobs({ requested: 1, chunkCount: 3 })).toBe(1);
+    expect(resolveStrictTestJobs({ env: { FORGE_VERIFY_TEST_JOBS: "2" }, chunkCount: 5 })).toBe(2);
+    expect(resolveStrictTestJobs({ env: { FORGE_VERIFY_TEST_JOBS: "not-a-number" }, chunkCount: 1 })).toBe(1);
+    expect(resolveStrictIsolatedTestJobs({ env: {}, chunkCount: 5 })).toBe(4);
+    expect(resolveStrictIsolatedTestJobs({ env: { FORGE_VERIFY_ISOLATED_TEST_JOBS: "2" }, chunkCount: 5 })).toBe(2);
+    expect(resolveStrictIsolatedTestJobs({ env: {}, chunkCount: 3 })).toBe(3);
+  });
+
+  test("strict TestGraph weighted chunks balance slow files", () => {
+    const chunks = packWeightedStrictTestChunks(
+      [
+        { file: "slow-a.test.ts", estimatedMs: 10_000, durationSource: "profile" },
+        { file: "slow-b.test.ts", estimatedMs: 9_000, durationSource: "profile" },
+        { file: "fast-a.test.ts", estimatedMs: 500, durationSource: "fallback" },
+        { file: "fast-b.test.ts", estimatedMs: 500, durationSource: "fallback" },
+      ],
+      2,
+    );
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]!.estimatedMs).toBeLessThanOrEqual(10_500);
+    expect(chunks[1]!.estimatedMs).toBeLessThanOrEqual(10_500);
+    expect(chunks.some((chunk) => chunk.files.includes("slow-a.test.ts") && chunk.files.includes("slow-b.test.ts"))).toBe(false);
+  });
+
+  test("strict TestGraph plan is available without running tests", () => {
+    const plan = buildStrictTestGraphPlan(process.cwd(), 3, {});
+    expect(plan.fileCount).toBeGreaterThan(0);
+    expect(plan.chunkCount).toBeGreaterThan(0);
+    expect(plan.totalJobs).toBeLessThanOrEqual(3);
+    expect(plan.laneMode).toBe("overlap");
+    expect(plan.jobs + plan.isolatedJobs).toBeLessThanOrEqual(plan.totalJobs);
+    expect(plan.jobs).toBeGreaterThan(0);
+    expect(plan.isolatedJobs).toBeGreaterThan(0);
+    expect(plan.lanes.serial.chunkCount).toBe(0);
+    expect(plan.slowestFiles.length).toBeGreaterThan(0);
+
+    const singleWorkerPlan = buildStrictTestGraphPlan(process.cwd(), 1, {});
+    expect(singleWorkerPlan.totalJobs).toBe(1);
+    expect(singleWorkerPlan.laneMode).toBe("sequential");
+    expect(singleWorkerPlan.jobs).toBe(1);
+    expect(singleWorkerPlan.isolatedJobs).toBe(1);
+  });
+
+  test("strict TestGraph lanes isolate global-heavy tests without serializing them", () => {
+    expect(classifyStrictTestFile("tests/client/client-query.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/cli/cli.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/db/pglite-adapter.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/dev/server.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/external-manifest/external-runtime-bridge.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/external-manifest/external-runtime-cli.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/external-manifest/external-runtime-node-cli.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/external-manifest/go-adapter-conformance.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/cli/cli-generation.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/cli/node-compat.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/cli/node-compat-dev-server.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/cli/node-compat-new.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/cli/cli-verify.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/cli/cli-verify-changed.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/impact/h28-impact-runner.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/impact/h28-impact-runner-diagnostics.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/release/h23-release-artifacts.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/release/h23-release-self-host.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/release/h23-release.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/refactor/h27-refactor-extract-action-apply.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/refactor/h27-refactor-extract-action.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/refactor/h27-refactor-extract-action-bindings.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/refactor/h27-refactor.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/security/tenant-isolation/http-runtime.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/templates/create-forge-app.test.ts")).toBe("parallel");
+    expect(classifyStrictTestFile("tests/classifier/classify.test.ts")).toBe("parallel");
   });
 
   test("parseCli accepts impact test timeout", () => {
@@ -299,254 +293,17 @@ describe("Forge CLI", () => {
     expect(resolved).toBe(realBun);
   });
 
-  test("verify runs generate-check and forge-check in scaffold workspace", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-verify");
-    try {
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runVerifyCommand({
-        workspaceRoot: workspace,
-        json: false,
-        skipTests: true,
-        skipTypecheck: true,
-        skipEslint: true,
-        strict: false,
-      });
-      expect(result.ok).toBe(true);
-      expect(result.steps.some((step) => step.name === "generate-check")).toBe(
-        true,
-      );
-      expect(result.steps.some((step) => step.name === "forge-check")).toBe(
-        true,
-      );
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
   test("parseCli accepts dev with port and watch flags", () => {
-    const parsed = parseCli(["dev", "--port", "4000", "--watch", "--mock"]);
+    const parsed = parseCli(["dev", "--port", "4000", "--watch", "--mock", "--db", "memory", "--skip-startup-console"]);
     expect(parsed.errors).toEqual([]);
     expect(parsed.command?.kind).toBe("dev");
     if (parsed.command?.kind === "dev") {
       expect(parsed.command.port).toBe(4000);
       expect(parsed.command.watch).toBe(true);
       expect(parsed.command.mock).toBe(true);
+      expect(parsed.command.db).toBe("memory");
+      expect(parsed.command.skipStartupConsole).toBe(true);
     }
   });
 
-  test("inspect returns error when artifacts are missing", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-inspect-missing");
-    try {
-      const result = await runInspectCommand("app", workspace);
-      expect(result.exitCode).toBe(1);
-      expect(result.errors[0]?.code).toBe("FORGE_INSPECT_MISSING");
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
-  test("verify reports package script timeouts", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-verify-timeout");
-    try {
-      const pkgPath = join(workspace, "package.json");
-      writeFileSync(
-        pkgPath,
-        JSON.stringify(
-          {
-            name: "forge-verify-timeout-test",
-            private: true,
-            type: "module",
-            packageManager: "npm@10.9.0",
-            scripts: {
-              typecheck: "node -e \"setTimeout(() => {}, 5000)\"",
-            },
-            dependencies: { zod: "^3.24.0" },
-          },
-          null,
-          2,
-        ),
-        "utf8",
-      );
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runVerifyCommand({
-        workspaceRoot: workspace,
-        json: true,
-        skipTests: true,
-        skipTypecheck: false,
-        skipEslint: true,
-        strict: false,
-        scriptTimeoutMs: 50,
-      });
-
-      expect(result.ok).toBe(false);
-      expect(result.steps.find((step) => step.name === "typecheck")?.timedOut).toBe(true);
-      expect(result.steps.find((step) => step.name === "typecheck")?.failureKind).toBe("timeout");
-      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_SCRIPT_TIMEOUT")).toBe(true);
-      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_TYPECHECK")).toBe(false);
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
-  test("verify reports package script failure output", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-verify-script-failure");
-    try {
-      const pkgPath = join(workspace, "package.json");
-      writeFileSync(
-        pkgPath,
-        JSON.stringify(
-          {
-            name: "forge-verify-script-failure-test",
-            private: true,
-            type: "module",
-            packageManager: "npm@10.9.0",
-            scripts: {
-              typecheck: "node -e \"console.error('typecheck exploded'); process.exit(7)\"",
-            },
-            dependencies: { zod: "^3.24.0" },
-          },
-          null,
-          2,
-        ),
-        "utf8",
-      );
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runVerifyCommand({
-        workspaceRoot: workspace,
-        json: true,
-        skipTests: true,
-        skipTypecheck: false,
-        skipEslint: true,
-        strict: false,
-        scriptTimeoutMs: 120000,
-      });
-
-      const typecheck = result.steps.find((step) => step.name === "typecheck");
-      const diagnostic = result.diagnostics.find((item) => item.code === "FORGE_VERIFY_TYPECHECK");
-      expect(result.ok).toBe(false);
-      expect(typecheck?.failureKind).toBe("script-failure");
-      expect(diagnostic?.message).toContain("exit code 7");
-      expect(diagnostic?.fixHint).toContain("typecheck exploded");
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
-  test("verify --changed propagates impact command resolution diagnostics", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-verify-changed-resolution");
-    const previous = process.env.FORGE_BUN;
-    try {
-      mkdirSync(join(workspace, "tests"), { recursive: true });
-      writeFileSync(
-        join(workspace, "tests", "changed.test.ts"),
-        `import { test, expect } from "bun:test"; test("changed", () => expect(1).toBe(1));`,
-        "utf8",
-      );
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
-      spawnSync("git", ["config", "user.email", "forge@example.test"], { cwd: workspace, windowsHide: true });
-      spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
-      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
-      spawnSync("git", ["commit", "-m", "baseline"], { cwd: workspace, windowsHide: true });
-      writeFileSync(
-        join(workspace, "tests", "changed.test.ts"),
-        `import { test, expect } from "bun:test"; test("changed", () => expect(2).toBe(2));`,
-        "utf8",
-      );
-
-      process.env.FORGE_BUN = join(workspace, "missing-bun.exe");
-      const result = await runVerifyCommand({
-        workspaceRoot: workspace,
-        json: true,
-        skipTests: false,
-        skipTypecheck: true,
-        skipEslint: true,
-        strict: false,
-        changed: true,
-        scriptTimeoutMs: 120000,
-      });
-
-      expect(result.ok).toBe(false);
-      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_TEST_COMMAND_RESOLUTION_FAILED")).toBe(true);
-      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_CHANGED_INCOMPLETE")).toBe(true);
-      expect(result.steps.find((step) => step.command?.startsWith("bun test tests/changed.test.ts"))?.failureKind)
-        .toBe("command-resolution-error");
-    } finally {
-      if (previous === undefined) {
-        delete process.env.FORGE_BUN;
-      } else {
-        process.env.FORGE_BUN = previous;
-      }
-      cleanupWorkspace(workspace);
-    }
-  }, 60_000);
-
-  test("verify --standard uses impact tests instead of the full test script", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-verify-standard");
-    try {
-      const pkgPath = join(workspace, "package.json");
-      writeFileSync(
-        pkgPath,
-        JSON.stringify(
-          {
-            name: "forge-verify-standard-test",
-            private: true,
-            type: "module",
-            packageManager: "npm@10.9.0",
-            scripts: {
-              test: "node -e \"process.exit(99)\"",
-            },
-            dependencies: { zod: "^3.24.0" },
-          },
-          null,
-          2,
-        ),
-        "utf8",
-      );
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runVerifyCommand({
-        workspaceRoot: workspace,
-        json: true,
-        skipTests: false,
-        skipTypecheck: true,
-        skipEslint: true,
-        strict: false,
-        standard: true,
-      });
-
-      expect(result.ok).toBe(true);
-      expect(result.profile).toBe("standard");
-      expect(result.steps.some((step) => step.name === "impact-tests")).toBe(true);
-      expect(result.steps.find((step) => step.name === "tests")?.skipped).toBe(true);
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
-
-  test("inspect framework returns framework-level context", async () => {
-    const result = await runInspectCommand("framework", process.cwd());
-    expect(result.exitCode).toBe(0);
-    expect(result.data).toMatchObject({
-      schemaVersion: "0.1.0",
-      project: {
-        type: "forgeos-framework",
-      },
-    });
-    expect(JSON.stringify(result.data)).toContain("forge dev --once --json");
-    expect(JSON.stringify(result.data)).toContain("minimal-web");
-  });
-
-  test("inspect agent-contract reads the generated agent contract", async () => {
-    const workspace = scaffoldGenerateWorkspace("cli-inspect-agent-contract");
-    try {
-      await runGenerateCommand(defaultGenerateOptions(workspace));
-      const result = await runInspectCommand("agent-contract", workspace);
-      expect(result.exitCode).toBe(0);
-      expect(result.data).toMatchObject({
-        schemaVersion: "0.1.0",
-      });
-    } finally {
-      cleanupWorkspace(workspace);
-    }
-  });
 });

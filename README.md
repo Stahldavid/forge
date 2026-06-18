@@ -218,8 +218,10 @@ Common command groups:
 | `forge check --json` | Validate guardrails and emit diagnostics with fix hints |
 | `forge verify --smoke` | Fast local gate: generated drift, Forge checks, typecheck when present, no tests/lint |
 | `forge verify --standard` | Agent development gate: generated drift, Forge/security checks, typecheck, and impact-selected tests |
-| `forge verify --strict` | Full handoff/CI gate: generated drift, Forge/security checks, typecheck, full test script, lint |
+| `forge verify --strict` | Full handoff/CI gate: generated drift, Forge/security checks, typecheck, full TestGraph in bounded parallel/isolated chunks, lint |
 | `forge verify --script-timeout-ms <ms>` | Run package scripts with a predictable timeout and machine-readable timeout diagnostics |
+| `forge verify --test-jobs <n>` | Tune strict TestGraph chunk parallelism; `FORGE_VERIFY_TEST_JOBS` is also supported |
+| `forge verify --strict --test-plan --json` | Print the strict TestGraph scheduler plan without running tests |
 | `forge do "<objective>" --json` | Guided intent router: choose the right workflow, files, risks, and next action |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
 | `forge inspect framework --json` | Inspect ForgeOS framework modules, CLI commands, templates, examples, tests, and preferred entrypoints |

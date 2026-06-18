@@ -50,12 +50,26 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
     profile: result.profile ?? null,
     steps: result.steps,
     diagnostics: result.diagnostics,
+    testGraphPlan: result.testGraphPlan ?? null,
     durationMs: result.durationMs ?? null,
     exitCode: result.exitCode,
   };
 }
 
 export function writeHumanVerify(result: VerifyResult): void {
+  if (result.testGraphPlan) {
+    const plan = result.testGraphPlan;
+    console.log(
+      `testgraph plan: ${plan.fileCount} files, ${plan.chunkCount} chunks, ${plan.laneMode} lanes, total jobs ${plan.totalJobs}, parallel jobs ${plan.jobs}, isolated jobs ${plan.isolatedJobs}, estimated ${plan.criticalPathEstimateMs}ms`,
+    );
+    for (const file of plan.slowestFiles.slice(0, 5)) {
+      console.log(`testgraph slow: ${file.file} (${file.lane}, ${file.estimatedMs}ms, ${file.source})`);
+    }
+    for (const recommendation of plan.recommendations) {
+      console.log(`testgraph hint: ${recommendation}`);
+    }
+  }
+
   for (const step of result.steps) {
     if (step.skipped) {
       console.log(`skip ${step.name}: ${step.skipReason}`);

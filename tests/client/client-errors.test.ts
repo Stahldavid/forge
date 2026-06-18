@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { FORGE_POLICY_DENIED } from "../../src/forge/compiler/diagnostics/codes.ts";
-import { cleanupWorkspace, prepareClientDatabase, scaffoldClientWorkspace } from "./helpers.ts";
+import { cleanupWorkspace, scaffoldClientWorkspace, startClientDevServer } from "./helpers.ts";
 
 describe("client errors", () => {
   test("FORGE_POLICY_DENIED becomes ForgeError with code and traceId", async () => {
-    const { root, tenantA, tenantB } = await scaffoldClientWorkspace("client-errors");
-    const handle = await prepareClientDatabase(root, tenantA, tenantB);
+    const { root, tenantA } = await scaffoldClientWorkspace("client-errors");
+    const handle = await startClientDevServer(root, { db: "memory" });
 
     try {
       const { createForgeClient, api, ForgeError } = await import(

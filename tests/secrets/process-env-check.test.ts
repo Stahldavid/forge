@@ -12,7 +12,9 @@ import { FORGE_SECRET_DIRECT_PROCESS_ENV } from "../../src/forge/compiler/diagno
 
 describe("process.env check", () => {
   test("warns on direct process.env secret access in app source", async () => {
-    const workspace = scaffoldGenerateWorkspace("process-env-check");
+    const workspace = scaffoldGenerateWorkspace("process-env-check", {
+      packageFixtures: ["forge", "zod", "stripe"],
+    });
     writeFileSync(
       join(workspace, "package.json"),
       JSON.stringify({ name: "x", dependencies: { stripe: "17.0.0" } }),

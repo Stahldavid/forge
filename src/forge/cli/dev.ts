@@ -29,7 +29,7 @@ export interface DevCommandOptions {
   once?: boolean;
   watch: boolean;
   json: boolean;
-  db: "pglite" | "postgres" | "none";
+  db: "memory" | "pglite" | "postgres" | "none";
   databaseUrl?: string;
   worker: boolean;
   withWeb?: boolean;
@@ -41,6 +41,7 @@ export interface DevCommandOptions {
   envFile?: string;
   mode?: "dev" | "serve";
   allowDevAuth?: boolean;
+  skipStartupConsole?: boolean;
 }
 
 export interface DevCommandResult {
@@ -374,16 +375,18 @@ export async function runDevCommand(
     (options.withWeb !== false && !options.apiOnly && hasWebApp(workspaceRoot));
   const webUrl = shouldStartWeb ? `http://${host}:${webPort}` : undefined;
 
-  const startupCycle = await runDevConsoleCycle({
-    workspaceRoot,
-    mode: "startup",
-    strictSecrets: false,
-    includeImpact: true,
-  });
-  if (options.json) {
-    process.stdout.write(formatDevConsoleJson(startupCycle));
-  } else {
-    process.stdout.write(formatDevConsoleHuman(startupCycle));
+  if (!options.skipStartupConsole) {
+    const startupCycle = await runDevConsoleCycle({
+      workspaceRoot,
+      mode: "startup",
+      strictSecrets: false,
+      includeImpact: true,
+    });
+    if (options.json) {
+      process.stdout.write(formatDevConsoleJson(startupCycle));
+    } else {
+      process.stdout.write(formatDevConsoleHuman(startupCycle));
+    }
   }
 
   if (options.webOnly) {

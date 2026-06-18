@@ -4,7 +4,7 @@ import { rmSync, mkdirSync } from "node:fs";
 import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 
 describe("pglite adapter", () => {
-  test("connects and runs queries", async () => {
+  test("connects, runs queries, and supports transactions", async () => {
     const dataDir = join(import.meta.dir, ".tmp", `pglite-${Bun.randomUUIDv7()}`);
     mkdirSync(join(import.meta.dir, ".tmp"), { recursive: true });
     const adapter = await createPgliteAdapter(dataDir);
@@ -12,18 +12,7 @@ describe("pglite adapter", () => {
     try {
       const result = await adapter.query("SELECT 1 AS value");
       expect(result.rows[0]?.value).toBe(1);
-    } finally {
-      await adapter.close();
-      rmSync(dataDir, { recursive: true, force: true });
-    }
-  });
 
-  test("supports transactions", async () => {
-    const dataDir = join(import.meta.dir, ".tmp", `pglite-tx-${Bun.randomUUIDv7()}`);
-    mkdirSync(join(import.meta.dir, ".tmp"), { recursive: true });
-    const adapter = await createPgliteAdapter(dataDir);
-
-    try {
       await adapter.query(
         `CREATE TABLE IF NOT EXISTS "items" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid(), "name" text NOT NULL)`,
       );

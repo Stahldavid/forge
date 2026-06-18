@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.10 input=0027e0819b107e3a91d36a3ebe496b8d70dd5bdf64c0d3399d8cc69acef3d5e3 content=4be7166b338bb107912fb6fb7b6ede523cf0826f7e2f765ecfc813fa1a871ed0
+// @forge-generated generator=0.1.0-alpha.10 input=17d4dad0c0c44729ad234dea95690f1a993d0142a54695c77ac4008c415c73d5 content=4d581ab753eaaf41c24ef511d30759e98393a3c8033be2ebcb96fa8096a34c0b
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.10",
-  "inputHash": "0027e0819b107e3a91d36a3ebe496b8d70dd5bdf64c0d3399d8cc69acef3d5e3",
+  "inputHash": "17d4dad0c0c44729ad234dea95690f1a993d0142a54695c77ac4008c415c73d5",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -595,6 +595,42 @@ export const testGraph = {
       ]
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/cli-generation.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/cli-verify-changed.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "probable",
       "cost": "fast",
       "covers": {
@@ -610,11 +646,69 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
-      "file": "tests/cli/cli.test.ts",
+      "file": "tests/cli/cli-verify.test.ts",
       "kind": "unknown",
       "reasons": [
         "probable: packages zod"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/cli.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/node-compat-dev-server.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/node-compat-new.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "probable",
@@ -1326,6 +1420,42 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/external-manifest/external-runtime-cli.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/external-manifest/external-runtime-node-cli.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/external-manifest/go-adapter-conformance.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -1449,6 +1579,42 @@ export const testGraph = {
       "reasons": [
         "probable: packages zod"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/impact/h28-impact-runner-diagnostics.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/impact/h28-impact-runner.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "probable",
@@ -2391,6 +2557,60 @@ export const testGraph = {
       ]
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/refactor/h27-refactor-extract-action-apply.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/refactor/h27-refactor-extract-action-bindings.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/refactor/h27-refactor-extract-action.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "probable",
       "cost": "fast",
       "covers": {
@@ -2411,6 +2631,42 @@ export const testGraph = {
       "reasons": [
         "probable: packages tsx"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/h23-release-artifacts.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/h23-release-self-host.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "weak",
@@ -2703,14 +2959,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "zod"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2718,7 +2976,9 @@ export const testGraph = {
       },
       "file": "tests/secrets/dev-server-env.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages zod"
+      ]
     },
     {
       "confidence": "weak",
@@ -2775,14 +3035,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "zod"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2790,17 +3052,21 @@ export const testGraph = {
       },
       "file": "tests/secrets/process-env-check.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages zod"
+      ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "zod"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2808,17 +3074,21 @@ export const testGraph = {
       },
       "file": "tests/secrets/secret-registry-generation.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages zod"
+      ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "zod"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -2826,7 +3096,9 @@ export const testGraph = {
       },
       "file": "tests/secrets/secrets-check.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages zod"
+      ]
     },
     {
       "confidence": "weak",
