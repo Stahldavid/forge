@@ -582,6 +582,7 @@ async function buildAiSdkTools(input: {
   telemetry: ReturnType<typeof createTelemetryContext> | ReturnType<typeof createNoopTelemetryContext>;
   env: Record<string, string | undefined>;
   auth: Awaited<ReturnType<typeof authenticateHeaders>>;
+  deltaRecorder?: DevServerOptions["deltaRecorder"];
 }): Promise<Record<string, unknown>> {
   const { tool } = await import("ai");
   return Object.fromEntries(
@@ -632,6 +633,13 @@ async function buildAiSdkTools(input: {
                 latencyMs: Date.now() - startedAt,
                 status: "completed",
               });
+              await input.deltaRecorder?.recordAgentTool({
+                toolName: name,
+                risk: definition.risk ?? "external",
+                status: "completed",
+                traceId: input.traceId,
+                durationMs: Date.now() - startedAt,
+              });
               return output;
             } catch (error) {
               await input.telemetry.capture("forge.ai.tool.failed", {
@@ -643,6 +651,13 @@ async function buildAiSdkTools(input: {
                 latencyMs: Date.now() - startedAt,
                 status: "failed",
                 error: error instanceof Error ? error.message : String(error),
+              });
+              await input.deltaRecorder?.recordAgentTool({
+                toolName: name,
+                risk: definition.risk ?? "external",
+                status: "failed",
+                traceId: input.traceId,
+                durationMs: Date.now() - startedAt,
               });
               throw error;
             }
@@ -671,6 +686,7 @@ export async function startDevServer(
   options: DevServerOptions,
 ): Promise<DevServerHandle> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
+  const deltaRecorder = options.deltaRecorder;
   const authConfig = loadAuthConfigFromEnv(workspaceRoot, {
     defaultMode: "dev-headers",
   });
@@ -1344,6 +1360,7 @@ export async function startDevServer(
               telemetry,
               env: envStore.snapshot(),
               auth,
+              deltaRecorder,
             });
             const { ToolLoopAgent, createAgentUIStreamResponse, hasToolCall, stepCountIs } = await import("ai");
             const stopWhen =
@@ -1714,6 +1731,14 @@ export async function startDevServer(
             const policyDenied = result.diagnostics.some(
               (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
             );
+            await deltaRecorder?.recordRuntimeCall({
+              entryName: `${externalInvoke.serviceName}.${externalInvoke.entryName}`,
+              entryKind: externalInvoke.kind,
+              service: externalInvoke.serviceName,
+              result: policyDenied ? "denied" : result.ok ? "success" : "failed",
+              diagnostics: result.diagnostics,
+              traceId: result.traceId,
+            });
             return jsonResponse(
               {
                 ok: result.ok,
@@ -1775,6 +1800,13 @@ export async function startDevServer(
             const policyDenied = result.diagnostics.some(
               (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
             );
+            await deltaRecorder?.recordRuntimeCall({
+              entryName: queryName,
+              entryKind: "query",
+              result: policyDenied ? "denied" : result.ok ? "success" : "failed",
+              diagnostics: result.diagnostics,
+              traceId: result.traceId,
+            });
 
             return jsonResponse(
               {
@@ -1845,6 +1877,13 @@ export async function startDevServer(
             const policyDenied = result.diagnostics.some(
               (diagnostic) => diagnostic.code === FORGE_POLICY_DENIED,
             );
+            await deltaRecorder?.recordRuntimeCall({
+              entryName,
+              entryKind: entry.kind,
+              result: policyDenied ? "denied" : result.ok ? "success" : "failed",
+              diagnostics: result.diagnostics,
+              traceId: result.traceId,
+            });
 
             if (policyDenied) {
               const denied = result.diagnostics.find(

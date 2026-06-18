@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.11 input=6d037d7c4786d870706e130952bd7f40146d318a8f8c76702bd02a34ef7dcbd3 content=9bc2770efa354567debb3efef697873bbc749549a50c98503485a15b7f4a6a7b
+// @forge-generated generator=0.1.0-alpha.11 input=e2bfdfd1880fd53eedb9aa5d81a3a008a5a2c6f0b1a3317d0bdb8d67414cfa1b content=0892dd160a9e6d062db7e5c69bf1b4dcad8920cb33a5af4857e2f4ef2c723d77
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.11",
-  "inputHash": "6d037d7c4786d870706e130952bd7f40146d318a8f8c76702bd02a34ef7dcbd3",
+  "inputHash": "e2bfdfd1880fd53eedb9aa5d81a3a008a5a2c6f0b1a3317d0bdb8d67414cfa1b",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1025,6 +1025,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/db/sql-compiler.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/delta-store.test.ts",
       "kind": "unknown",
       "reasons": []
     },

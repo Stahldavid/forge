@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.11 input=6d037d7c4786d870706e130952bd7f40146d318a8f8c76702bd02a34ef7dcbd3 content=286c05b6e4bc0a3bf652b6d11fcc61fe046f0d293513c641978fbe25f73f8bce
+// @forge-generated generator=0.1.0-alpha.11 input=e2bfdfd1880fd53eedb9aa5d81a3a008a5a2c6f0b1a3317d0bdb8d67414cfa1b content=286c05b6e4bc0a3bf652b6d11fcc61fe046f0d293513c641978fbe25f73f8bce
 export const agentTools = {
   "agents": [],
   "autoTools": [],

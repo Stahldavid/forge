@@ -79,6 +79,17 @@ import {
   runTelemetryCommand,
 } from "./telemetry.ts";
 import {
+  formatDeltaExplainHuman,
+  formatDeltaExplainJson,
+  formatDeltaStatusHuman,
+  formatDeltaStatusJson,
+  formatDeltaTimelineHuman,
+  formatDeltaTimelineJson,
+  runDeltaExplain,
+  runDeltaStatus,
+  runDeltaTimeline,
+} from "../delta/index.ts";
+import {
   formatPolicyHuman,
   formatPolicyJson,
   runPolicyCommand,
@@ -846,6 +857,29 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
           ? formatCompilerBenchJson(result)
           : formatCompilerBenchHuman(result),
       );
+      return result.exitCode;
+    }
+    case "delta": {
+      const result = await runDeltaStatus(command.workspaceRoot);
+      process.stdout.write(command.json ? formatDeltaStatusJson(result) : formatDeltaStatusHuman(result));
+      return result.exitCode;
+    }
+    case "timeline": {
+      const result = await runDeltaTimeline({
+        workspaceRoot: command.workspaceRoot,
+        target: command.target,
+        kind: command.kindFilter,
+        limit: command.limit,
+      });
+      process.stdout.write(command.json ? formatDeltaTimelineJson(result) : formatDeltaTimelineHuman(result));
+      return result.exitCode;
+    }
+    case "explain": {
+      const result = await runDeltaExplain({
+        workspaceRoot: command.workspaceRoot,
+        thing: command.thing,
+      });
+      process.stdout.write(command.json ? formatDeltaExplainJson(result) : formatDeltaExplainHuman(result));
       return result.exitCode;
     }
     case "agent": {

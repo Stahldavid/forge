@@ -21,28 +21,38 @@ export function shouldSkipWatchPath(absolutePath: string): boolean {
 
 export function createDebouncedCallback(
   debounceMs: number,
-  callback: (changedCount: number) => void | Promise<void>,
-): (increment?: number) => void {
+  callback: (changedCount: number, changedPaths: string[]) => void | Promise<void>,
+): (incrementOrPath?: number | string) => void {
   let pendingChanges = 0;
+  const pendingPaths = new Set<string>();
   let timer: ReturnType<typeof setTimeout> | null = null;
 
-  return (increment = 1) => {
-    pendingChanges += increment;
+  return (incrementOrPath) => {
+    if (typeof incrementOrPath === "number") {
+      pendingChanges += incrementOrPath;
+    } else {
+      pendingChanges += 1;
+    }
+    if (typeof incrementOrPath === "string") {
+      pendingPaths.add(incrementOrPath);
+    }
     if (timer !== null) {
       clearTimeout(timer);
     }
     timer = setTimeout(async () => {
       const count = pendingChanges;
+      const paths = [...pendingPaths].sort();
       pendingChanges = 0;
+      pendingPaths.clear();
       timer = null;
-      await callback(count);
+      await callback(count, paths);
     }, debounceMs);
   };
 }
 
 export function startDevWatch(
   workspaceRoot: string,
-  onRegenerate: (changedCount: number) => void | Promise<void>,
+  onRegenerate: (changedCount: number, changedPaths: string[]) => void | Promise<void>,
 ): DevWatchHandle {
   const roots = getSourceRoots(workspaceRoot);
   const watchers: FSWatcher[] = [];
@@ -71,7 +81,7 @@ export function startDevWatch(
             return;
           }
 
-          debounced();
+          debounced(relativePath);
         },
       );
 

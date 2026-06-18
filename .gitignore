@@ -3,11 +3,13 @@ node_modules/
 .env.local
 .forge/cache/
 .forge/pglite/
+.forge/delta/
 .forge/local/
 .forge/locks/
 .forge/test-cache/
 **/.forge/cache/
 **/.forge/pglite/
+**/.forge/delta/
 **/.forge/local/
 **/.forge/locks/
 **/.forge/test-cache/

@@ -45,6 +45,7 @@ const REQUIRED_GITIGNORE_PATHS = [
   "forge.lock",
   ".forge/cache/",
   ".forge/pglite/",
+  ".forge/delta/",
   ".forge/local/",
   ".forge/test-cache/",
   ".forge/test-runs/",

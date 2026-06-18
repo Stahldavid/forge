@@ -59,6 +59,7 @@ nav:
   - Agent Playbook: agent-playbook.md
   - Build a Feature with an Agent: agent-feature-tutorial.md
   - Dev Loop: dev-loop.md
+  - Forge DeltaDB: forge-deltadb.md
   - CLI: cli.md
   - CLI Reference: cli-reference.md
   - Runtime Model: runtime-model.md

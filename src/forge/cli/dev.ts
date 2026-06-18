@@ -19,6 +19,7 @@ import {
 } from "../dev/server.ts";
 import { startDevWatch } from "../dev/watch.ts";
 import type { DevServerHandle } from "../dev/types.ts";
+import { createAmbientDeltaRecorder } from "../delta/index.ts";
 
 export interface DevCommandOptions {
   workspaceRoot: string;
@@ -443,6 +444,8 @@ export async function runDevCommand(
     return { web: webHandle, exitCode: 0 };
   }
 
+  const deltaRecorder = await createAmbientDeltaRecorder(workspaceRoot, "forge-dev", "forge dev");
+
   let handle: DevServerHandle;
   try {
     handle = await startDevServer({
@@ -460,8 +463,10 @@ export async function runDevCommand(
       mode: options.mode,
       allowDevAuth: options.allowDevAuth,
       webUrl,
+      deltaRecorder,
     });
   } catch (error) {
+    await deltaRecorder.close("forge dev failed to start");
     const message =
       error instanceof Error ? error.message : "failed to start dev server";
     if (options.json) {
@@ -507,7 +512,10 @@ export async function runDevCommand(
   }
 
   if (options.watch) {
-    watchHandle = startDevWatch(workspaceRoot, async (changedCount) => {
+    watchHandle = startDevWatch(workspaceRoot, async (changedCount, changedPaths) => {
+      for (const changedPath of changedPaths) {
+        await deltaRecorder.recordFileChanged(changedPath);
+      }
       const result = await run({
         workspaceRoot,
         check: false,
@@ -543,13 +551,14 @@ export async function runDevCommand(
   }
 
   await new Promise<void>((resolve) => {
-    const shutdown = () => {
-      watchHandle?.stop();
-      outboxWorkerHandle?.stop();
-      webHandle?.stop();
-      handle.stop();
-      resolve();
-    };
+      const shutdown = () => {
+        watchHandle?.stop();
+        outboxWorkerHandle?.stop();
+        webHandle?.stop();
+        handle.stop();
+        void deltaRecorder.close("forge dev stopped");
+        resolve();
+      };
 
     process.once("SIGINT", shutdown);
     process.once("SIGTERM", shutdown);

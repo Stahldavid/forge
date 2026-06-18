@@ -4,6 +4,7 @@ import { isMainModule } from "../platform/module.ts";
 import { executeCommand } from "./commands.ts";
 import { hasUnknownOption, parseCli } from "./parse.ts";
 import { formatJsonResult } from "./output.ts";
+import { recordParsedCliCommand } from "../delta/index.ts";
 
 function formatHelp(): string {
   return [
@@ -86,7 +87,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     return 1;
   }
 
-  return executeCommand(parsed.command);
+  const startedAt = Date.now();
+  const exitCode = await executeCommand(parsed.command);
+  await recordParsedCliCommand({
+    command: parsed.command,
+    argv,
+    exitCode,
+    durationMs: Date.now() - startedAt,
+  });
+  return exitCode;
 }
 
 if (isMainModule(import.meta)) {

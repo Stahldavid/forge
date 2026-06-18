@@ -103,6 +103,7 @@ describe("minimal-web template", () => {
       expect(read(project, ".gitignore")).toContain("src/forge/_generated/");
       expect(read(project, ".gitignore")).toContain("forge.lock");
       expect(read(project, ".gitignore")).toContain(".forge/locks/");
+      expect(read(project, ".gitignore")).toContain(".forge/delta/");
       expect(read(project, ".gitignore")).toContain(".forge/repairs/");
       expect(read(project, ".gitignore")).toContain(".forge/refactors/");
       expect(read(project, ".gitignore")).toContain(".forge/upgrades/");

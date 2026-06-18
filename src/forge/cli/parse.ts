@@ -167,6 +167,9 @@ export type ForgeCommand =
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
+  | { kind: "delta"; subcommand: "status"; json: boolean; workspaceRoot: string }
+  | { kind: "timeline"; target?: string; kindFilter?: string; limit?: number; json: boolean; workspaceRoot: string }
+  | { kind: "explain"; thing: string; json: boolean; workspaceRoot: string }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
@@ -339,6 +342,9 @@ export const TOP_LEVEL_COMMANDS = [
   "repair",
   "do",
   "bench",
+  "delta",
+  "timeline",
+  "explain",
   "manifest",
   "generate",
   "add",
@@ -1540,6 +1546,61 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "delta": {
+      const subcommand = rest[0];
+      if (subcommand !== "status") {
+        errors.push("forge delta requires subcommand: status");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "delta",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "timeline": {
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const kindFilter = parseOptionValue(argv, "--kind");
+      const target = rest.find((item) => item !== kindFilter && item !== limitRaw);
+      const limit = limitRaw ? Number(limitRaw) : undefined;
+      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
+        errors.push("--limit must be a number >= 1");
+      }
+      return {
+        command: {
+          kind: "timeline",
+          target,
+          kindFilter,
+          limit: limit ? Math.floor(limit) : undefined,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "explain": {
+      const thing = rest[0];
+      if (!thing) {
+        errors.push("forge explain requires a target");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "explain",
+          thing,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "manifest": {
       const subcommand = rest[0];
       const path = rest[1];
@@ -2264,6 +2325,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-worker",
     "--once",
     "--limit",
+    "--kind",
     "--input",
     "--args",
     "--step",
@@ -2310,6 +2372,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--run-tests",
     "--model-level",
     "--live",
+    "--no-delta",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -2375,6 +2438,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--db" ||
         arg === "--database-url" ||
         arg === "--limit" ||
+        arg === "--kind" ||
         arg === "--input" ||
         arg === "--args" ||
         arg === "--step" ||

@@ -1,5 +1,6 @@
 import type { DevRoute } from "../compiler/types/dev-manifest.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
+import type { AmbientDeltaRecorder } from "../delta/recorder.ts";
 
 export type DevDbMode = "memory" | "pglite" | "postgres" | "none";
 
@@ -18,6 +19,7 @@ export interface DevServerOptions {
   mode?: "dev" | "serve";
   allowDevAuth?: boolean;
   webUrl?: string;
+  deltaRecorder?: AmbientDeltaRecorder;
 }
 
 export interface DevServerDbState {
