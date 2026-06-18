@@ -77,7 +77,13 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("NPM_CONFIG_PROVENANCE: \"true\"");
     expect(workflow).toContain("npm publish --access public --tag alpha");
     expect(workflow).toContain("npm run release:smoke");
-    expect(workflow).not.toContain("NPM_TOKEN");
-    expect(workflow).not.toContain("NODE_AUTH_TOKEN");
+    const forgeosPublishStart = workflow.indexOf("name: Publish ForgeOS package");
+    const forgeosLatestStart = workflow.indexOf("name: Promote ForgeOS latest tag");
+    const forgeosPublishBlock = workflow.slice(forgeosPublishStart, forgeosLatestStart);
+    expect(forgeosPublishBlock).not.toContain("NPM_TOKEN");
+    expect(forgeosPublishBlock).not.toContain("NODE_AUTH_TOKEN");
+    expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
+    expect(workflow).toContain("NPM_TOKEN is not configured; skipping latest dist-tag promotion.");
+    expect(workflow).toContain("npm dist-tag add \"forgeos@$(node -p \"require('./package.json').version\")\" latest");
   });
 });
