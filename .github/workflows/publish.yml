@@ -120,6 +120,10 @@ jobs:
           NPM_CONFIG_PROVENANCE: "true"
         run: node scripts/publish-npm-alpha-package.mjs .
 
+      - name: Promote ForgeOS latest tag
+        if: steps.forgeos-package.outputs.published == 'true'
+        run: npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
+
       - name: Publish create app wrapper
         id: create-wrapper
         if: steps.forgeos-package.outputs.published == 'true'
@@ -271,6 +275,10 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: "true"
         run: npm publish --access public --tag alpha
+
+      - name: Promote ForgeOS latest tag
+        if: steps.npm-version.outputs.exists != 'true'
+        run: npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
 
       - name: Publish create app wrapper
         id: create-wrapper

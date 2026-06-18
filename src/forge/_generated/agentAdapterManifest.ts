@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.10 input=17d4dad0c0c44729ad234dea95690f1a993d0142a54695c77ac4008c415c73d5 content=45c1991a1dd60d7f10bb06dfb7d4dd7cd85d715ab3eb59f2afde0a0d66378837
+// @forge-generated generator=0.1.0-alpha.11 input=6d037d7c4786d870706e130952bd7f40146d318a8f8c76702bd02a34ef7dcbd3 content=7dbfdd3e0b739cbfde92ebfd4500ded0562d31c9ca12f10d3dd9385d9fd4d177
 export const agentAdapterManifest = {
-  "generatorVersion": "0.1.0-alpha.10",
+  "generatorVersion": "0.1.0-alpha.11",
   "schemaVersion": "0.1.0",
-  "sourceHash": "sha256:aac9692de14672fb438e91a5e1b548e616cac9290cedfa6e89f1b7bacc5b045a",
+  "sourceHash": "sha256:b0737f9c5c590a286fe7ae32ef6dec1cd71d9addb0307e58094179c73b8d5928",
   "targets": [
     {
       "adapterVersion": "agent-adapter-0.1.0",

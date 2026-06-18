@@ -4,6 +4,17 @@ Release history for the `forgeos` npm package (`alpha` dist-tag).
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## 0.1.0-alpha.11
+
+Strict verify performance:
+
+- Reduced the validated `forge verify --strict` wall time from roughly 358-454s to about 116s on the current Windows test machine.
+- Added stable repo-local `tsx` CLI caching under `node_modules/.cache/forge-tsx-cli` so spawned CLI tests reuse the warm compiler path.
+- Balanced TestGraph strict execution across shared and isolated lanes, bringing the slowest files down from roughly 50s to under 10s in the updated profile.
+- Moved heavy refactor/impact/external runtime suites onto faster shared paths where safe and kept isolation for process-sensitive tests.
+- Documented and guarded the cache behavior so future test helpers preserve the speedup without checking cache contents into git.
+- Aligned the alpha release workflow so the public `latest` dist-tag is promoted with the published ForgeOS alpha package.
+
 ## 0.1.0-alpha.10
 
 Launch polish:
