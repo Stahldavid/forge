@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.13
+
+Agent Memory Bridge:
+
+- Added the H48 Agent Memory Bridge alpha with redacted external agent event ingestion and normalized `forge.agent-event.v1` envelopes.
+- Added Codex and Claude Code hook installers plus Cursor MCP/rules setup, all with raw prompts, completions, tool args, transcripts, and cloud sync off by default.
+- Added `forge mcp serve` with context, memory, timeline, and inspect tools for external agents.
+- Added `forge agent install`, `forge agent ingest`, `forge agent context`, and `forge agent memory` commands.
+- Persisted external agent activity in DeltaDB and linked agent/tool/file events into the semantic timeline.
+- Added focused privacy, ingest, MCP, installer, and CLI parse coverage for the H48 bridge.
+
 ## 0.1.0-alpha.12
 
 Semantic Timeline:

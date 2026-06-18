@@ -10,7 +10,11 @@ export type AgentSubcommand =
   | "check"
   | "doctor"
   | "print-context"
-  | "clean";
+  | "clean"
+  | "install"
+  | "ingest"
+  | "context"
+  | "memory";
 
 export interface AgentCommandOptions {
   subcommand: AgentSubcommand;
@@ -22,6 +26,11 @@ export interface AgentCommandOptions {
   preserveUserSections: boolean;
   skills: boolean;
   rules: boolean;
+  eventName?: string;
+  input?: unknown;
+  entry?: string;
+  current?: boolean;
+  limit?: number;
 }
 
 export interface AgentExportFile {

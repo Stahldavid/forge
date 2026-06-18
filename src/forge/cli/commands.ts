@@ -165,6 +165,7 @@ import {
   formatAgentJson,
   runAgentCommand,
 } from "../agent-adapters/index.ts";
+import { runMcpServe } from "../agent-memory/mcp.ts";
 import {
   formatReviewHuman,
   formatReviewJson,
@@ -908,6 +909,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatAgentHuman(result));
       }
       return result.exitCode;
+    }
+    case "mcp": {
+      return runMcpServe(command.workspaceRoot);
     }
     case "review": {
       const result = runReviewCommand(command.options);

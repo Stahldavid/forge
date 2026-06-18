@@ -11,6 +11,8 @@ export type DeltaIdPrefix =
   | "rtcall"
   | "artifact"
   | "gitmap"
+  | "aevt"
+  | "amem"
   | "worksess"
   | "wssig"
   | "wssum";

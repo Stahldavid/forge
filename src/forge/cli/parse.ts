@@ -164,6 +164,7 @@ export type ForgeCommand =
   | { kind: "do"; options: ForgeDoOptions }
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
+  | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
@@ -336,6 +337,7 @@ export const TOP_LEVEL_COMMANDS = [
   "self-host",
   "agent-contract",
   "agent",
+  "mcp",
   "review",
   "ui",
   "doctor",
@@ -533,6 +535,10 @@ const AGENT_SUBCOMMANDS: AgentSubcommand[] = [
   "doctor",
   "print-context",
   "clean",
+  "install",
+  "ingest",
+  "context",
+  "memory",
 ];
 const REVIEW_SUBCOMMANDS: ReviewSubcommand[] = ["inspect", "list", "explain"];
 const REVIEW_MODES: ReviewMode[] = ["quick", "standard", "strict"];
@@ -890,12 +896,27 @@ export function parseCli(argv: string[]): ParsedCli {
     case "agent": {
       const subcommand = rest[0] as AgentSubcommand | undefined;
       if (!subcommand || !AGENT_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge agent requires subcommand: list-targets, export, check, doctor, print-context, or clean");
+        errors.push("forge agent requires subcommand: list-targets, export, check, doctor, print-context, clean, install, ingest, context, or memory");
         return { command: null, workspaceRoot, errors };
+      }
+      const inputRaw = parseOptionValue(argv, "--input");
+      let input: unknown;
+      if (inputRaw !== undefined) {
+        try {
+          input = JSON.parse(inputRaw);
+        } catch {
+          errors.push("--input must be valid JSON");
+        }
+      }
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const limit = limitRaw ? Number(limitRaw) : undefined;
+      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
+        errors.push("--limit must be a number >= 1");
       }
       const target =
         (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ??
-        (subcommand === "export" || subcommand === "clean" ? "generic" : "generic");
+        (subcommand === "install" || subcommand === "ingest" ? rest[1] : undefined) ??
+        "generic";
       return {
         command: {
           kind: "agent",
@@ -909,7 +930,28 @@ export function parseCli(argv: string[]): ParsedCli {
             preserveUserSections: !parseFlag(argv, "--no-preserve-user-sections"),
             skills: !parseFlag(argv, "--no-skills"),
             rules: !parseFlag(argv, "--no-rules"),
+            eventName: parseOptionValue(argv, "--event"),
+            input,
+            entry: parseOptionValue(argv, "--entry") ?? (subcommand === "context" && rest[1] !== "--current" ? rest[1] : undefined),
+            current: parseFlag(argv, "--current"),
+            limit: limit ? Math.floor(limit) : undefined,
           },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "mcp": {
+      const subcommand = rest[0];
+      if (subcommand !== "serve") {
+        errors.push("forge mcp requires subcommand: serve");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "mcp",
+          subcommand,
+          workspaceRoot,
         },
         workspaceRoot,
         errors,
@@ -2304,6 +2346,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--policy",
     "--emit",
     "--event",
+    "--entry",
+    "--current",
     "--trigger",
     "--component",
     "--framework",
@@ -2442,6 +2486,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--policy" ||
         arg === "--emit" ||
         arg === "--event" ||
+        arg === "--entry" ||
         arg === "--trigger" ||
         arg === "--component" ||
         arg === "--package" ||

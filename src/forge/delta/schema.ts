@@ -1,4 +1,4 @@
-export const DELTA_SCHEMA_VERSION = "0.2.0";
+export const DELTA_SCHEMA_VERSION = "0.3.0";
 
 export const DELTA_SCHEMA_SQL = [
   `CREATE TABLE IF NOT EXISTS delta_meta (
@@ -179,6 +179,38 @@ export const DELTA_SCHEMA_SQL = [
     projection_version text,
     graph_hash text
   )`,
+  `CREATE TABLE IF NOT EXISTS agent_event_sources (
+    id text PRIMARY KEY,
+    source_name text NOT NULL,
+    source_kind text NOT NULL,
+    integration_kind text NOT NULL,
+    trust_level text NOT NULL,
+    config_json text,
+    created_at text NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS external_agent_events (
+    id text PRIMARY KEY,
+    source_id text NOT NULL,
+    external_session_id text,
+    external_turn_id text,
+    event_kind text NOT NULL,
+    captured_at text NOT NULL,
+    payload_redacted_json text NOT NULL,
+    payload_hash text,
+    raw_stored integer DEFAULT 0,
+    normalization_status text NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS agent_memory_events (
+    id text PRIMARY KEY,
+    external_event_id text,
+    forge_session_id text,
+    forge_change_id text,
+    operation_id text,
+    normalized_kind text NOT NULL,
+    summary text,
+    confidence real NOT NULL,
+    data_json text NOT NULL
+  )`,
   `CREATE INDEX IF NOT EXISTS operations_timestamp_idx ON operations(timestamp)`,
   `CREATE INDEX IF NOT EXISTS operations_kind_idx ON operations(kind)`,
   `CREATE INDEX IF NOT EXISTS operations_session_idx ON operations(session_id)`,
@@ -198,4 +230,9 @@ export const DELTA_SCHEMA_SQL = [
   `CREATE INDEX IF NOT EXISTS timeline_entities_event_idx ON timeline_entities(timeline_event_id)`,
   `CREATE INDEX IF NOT EXISTS timeline_edges_from_idx ON timeline_edges(from_event_id)`,
   `CREATE INDEX IF NOT EXISTS timeline_edges_to_idx ON timeline_edges(to_event_id)`,
+  `CREATE INDEX IF NOT EXISTS agent_event_sources_name_idx ON agent_event_sources(source_name, integration_kind)`,
+  `CREATE INDEX IF NOT EXISTS external_agent_events_source_idx ON external_agent_events(source_id, captured_at)`,
+  `CREATE INDEX IF NOT EXISTS external_agent_events_kind_idx ON external_agent_events(event_kind)`,
+  `CREATE INDEX IF NOT EXISTS agent_memory_events_kind_idx ON agent_memory_events(normalized_kind)`,
+  `CREATE INDEX IF NOT EXISTS agent_memory_events_operation_idx ON agent_memory_events(operation_id)`,
 ];

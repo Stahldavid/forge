@@ -32,6 +32,12 @@ import type {
   CustomAdapterConfig,
   AgentCheckResult,
 } from "./types.ts";
+import {
+  formatAgentMemoryHuman,
+  formatAgentMemoryJson,
+  runAgentMemoryCommand,
+  type AgentMemoryCommandResult,
+} from "../agent-memory/bridge.ts";
 
 export const AGENT_ADAPTER_VERSION = "agent-adapter-0.1.0";
 export const AGENT_FORMAT_VERSION = "2026-06";
@@ -945,7 +951,7 @@ export function runAgentDoctor(options: AgentCommandOptions): AgentDoctorResult 
 }
 
 export async function runAgentCommand(options: AgentCommandOptions): Promise<
-  AgentExportResult | AgentCheckResult | AgentTargetsResult | AgentPrintContextResult | AgentDoctorResult
+  AgentExportResult | AgentCheckResult | AgentTargetsResult | AgentPrintContextResult | AgentDoctorResult | AgentMemoryCommandResult
 > {
   if (options.subcommand === "list-targets") {
     return runAgentListTargets(options.workspaceRoot);
@@ -965,6 +971,27 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<
   if (options.subcommand === "clean") {
     return runAgentClean(options);
   }
+  if (
+    options.subcommand === "install" ||
+    options.subcommand === "ingest" ||
+    options.subcommand === "context" ||
+    options.subcommand === "memory"
+  ) {
+    return runAgentMemoryCommand({
+      subcommand: options.subcommand,
+      workspaceRoot: options.workspaceRoot,
+      json: options.json,
+      target: options.target,
+      source: options.target,
+      eventName: options.eventName,
+      input: options.input,
+      entry: options.entry,
+      current: options.current,
+      dryRun: options.dryRun,
+      force: options.force,
+      limit: options.limit,
+    });
+  }
   return {
     ok: false,
     target: options.target,
@@ -979,10 +1006,16 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<
 }
 
 export function formatAgentJson(result: Awaited<ReturnType<typeof runAgentCommand>>): string {
+  if ("privacy" in result || "event" in result || "agentMemory" in result || "events" in result) {
+    return formatAgentMemoryJson(result as AgentMemoryCommandResult);
+  }
   return `${JSON.stringify(result, null, 2)}\n`;
 }
 
 export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentCommand>>): string {
+  if ("privacy" in result || "event" in result || "agentMemory" in result || "events" in result) {
+    return formatAgentMemoryHuman(result as AgentMemoryCommandResult);
+  }
   if ("targets" in result) {
     return `${result.targets.map((target) => `${target.name}${target.default ? " (default)" : ""}${target.optional ? " (optional)" : ""}${target.custom ? " (custom)" : ""}`).join("\n")}\n`;
   }
@@ -998,5 +1031,6 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
     }
     return `agent adapter exports are stale\nmissing: ${result.missing.join(", ") || "none"}\nstale: ${result.stale.join(", ") || "none"}\n`;
   }
-  return `agent export ${result.ok ? "ok" : "failed"} for ${result.target}\nfiles written:\n${result.filesWritten.map((file) => `- ${file}`).join("\n") || "- none"}\n`;
+  const exportResult = result as AgentExportResult;
+  return `agent export ${exportResult.ok ? "ok" : "failed"} for ${exportResult.target}\nfiles written:\n${exportResult.filesWritten.map((file: string) => `- ${file}`).join("\n") || "- none"}\n`;
 }

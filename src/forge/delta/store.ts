@@ -9,6 +9,7 @@ import { createDeltaId } from "./ids.ts";
 import { redactDeltaPayload } from "./redaction.ts";
 import { classifyArtifactKind, classifyDeltaPath, type DeltaSemanticHint } from "./classifier.ts";
 import { readDeltaGitSnapshot, type DeltaGitSnapshot } from "./git-observer.ts";
+import type { AgentEventEnvelope, AgentMemoryEventRecord } from "../agent-memory/types.ts";
 
 export type DeltaActorKind = "human" | "agent" | "forge" | "ci" | "git" | "unknown";
 export type DeltaSessionSource = "forge-dev" | "forge-command" | "agent-adapter" | "git" | "auto";
@@ -86,6 +87,20 @@ export interface DeltaAppendInput {
   proof?: DeltaProofInput;
   artifacts?: DeltaArtifactInput[];
   git?: { commitSha?: string; branch?: string; confidence?: number; metadata?: Record<string, unknown> };
+}
+
+export interface DeltaAgentMemoryEventInput {
+  envelope: AgentEventEnvelope;
+  summary?: string;
+  bindings?: {
+    toolName?: string;
+    command?: string;
+    exitCode?: number;
+    files?: string[];
+    entries?: string[];
+    proofs?: string[];
+    status?: string;
+  };
 }
 
 export interface DeltaTimelineFilter {
@@ -392,6 +407,191 @@ export class DeltaStore {
     }
     await this.inferWorkSessionForOperation(operationId).catch(() => undefined);
     return operationId;
+  }
+
+  async recordAgentMemoryEvent(input: DeltaAgentMemoryEventInput): Promise<AgentMemoryEventRecord> {
+    const envelope = input.envelope;
+    const timestamp = envelope.event.timestamp || new Date().toISOString();
+    const sourceId = deterministicTimelineId("agsrc", [
+      String(envelope.source.agent),
+      String(envelope.source.integration),
+      String(envelope.capture.trustLevel),
+    ]);
+    await this.adapter.query(
+      `INSERT INTO agent_event_sources (id, source_name, source_kind, integration_kind, trust_level, config_json, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (id) DO UPDATE
+       SET source_name = EXCLUDED.source_name,
+           source_kind = EXCLUDED.source_kind,
+           integration_kind = EXCLUDED.integration_kind,
+           trust_level = EXCLUDED.trust_level,
+           config_json = EXCLUDED.config_json`,
+      [
+        sourceId,
+        String(envelope.source.agent),
+        "external-agent",
+        String(envelope.source.integration),
+        envelope.capture.trustLevel,
+        JSON.stringify({ version: envelope.source.version }),
+        timestamp,
+      ],
+    );
+
+    const actorId = await this.ensureActor("agent", envelope.actor.name, {
+      source: envelope.source.agent,
+      model: envelope.actor.model,
+      integration: envelope.source.integration,
+    });
+    const forgeSessionId = envelope.session.forgeSessionId ?? await this.createSession({
+      source: "agent-adapter",
+      summary: `${envelope.source.agent} ${envelope.event.kind}`,
+      metadata: {
+        externalSessionId: envelope.session.externalSessionId,
+        source: envelope.source,
+      },
+      git: { branch: envelope.workspace.gitBranch, head: envelope.workspace.gitHead },
+    });
+    const bindings = input.bindings ?? {};
+    const operationId = await this.appendOperation({
+      sessionId: forgeSessionId,
+      actorId,
+      kind: envelope.event.kind,
+      summary: input.summary,
+      data: {
+        source: envelope.source,
+        session: envelope.session,
+        capture: envelope.capture,
+        privacy: envelope.privacy,
+        payload: envelope.payload,
+        toolName: bindings.toolName,
+        status: bindings.status,
+        entries: bindings.entries,
+        files: bindings.files,
+        proofs: bindings.proofs,
+      },
+      commandRun: bindings.command
+        ? {
+            commandName: bindings.command,
+            argv: [bindings.command],
+            exitCode: bindings.exitCode,
+          }
+        : undefined,
+      fileChanges: bindings.files?.map((path) => ({
+        path,
+        changeType: envelope.event.kind === "agent.file.changed" ? "modified" : "modified",
+        semanticHints: classifyDeltaPath(path),
+      })),
+      proof: bindings.proofs?.[0]
+        ? {
+            proofKind: bindings.proofs[0],
+            command: bindings.command,
+            result: bindings.status === "failed" ? "failed" : "passed",
+          }
+        : undefined,
+      git: envelope.workspace.gitHead || envelope.workspace.gitBranch
+        ? {
+            commitSha: envelope.workspace.gitHead,
+            branch: envelope.workspace.gitBranch,
+            confidence: envelope.capture.confidence,
+            metadata: { source: envelope.source.agent },
+          }
+        : undefined,
+    });
+
+    const externalEventId = createDeltaId("aevt");
+    const payloadJson = JSON.stringify(envelope.payload);
+    await this.adapter.query(
+      `INSERT INTO external_agent_events
+       (id, source_id, external_session_id, external_turn_id, event_kind, captured_at, payload_redacted_json, payload_hash, raw_stored, normalization_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 'normalized')`,
+      [
+        externalEventId,
+        sourceId,
+        envelope.session.externalSessionId ?? null,
+        envelope.session.turnId ?? null,
+        envelope.event.kind,
+        timestamp,
+        payloadJson,
+        hashStable(payloadJson),
+      ],
+    );
+
+    const memoryId = createDeltaId("amem");
+    const data = {
+      envelope,
+      bindings,
+    };
+    await this.adapter.query(
+      `INSERT INTO agent_memory_events
+       (id, external_event_id, forge_session_id, forge_change_id, operation_id, normalized_kind, summary, confidence, data_json)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        memoryId,
+        externalEventId,
+        forgeSessionId,
+        null,
+        operationId,
+        envelope.event.kind,
+        input.summary ?? null,
+        envelope.capture.confidence,
+        JSON.stringify(data),
+      ],
+    );
+
+    return {
+      id: memoryId,
+      externalEventId,
+      sourceName: String(envelope.source.agent),
+      integrationKind: String(envelope.source.integration),
+      trustLevel: envelope.capture.trustLevel,
+      externalSessionId: envelope.session.externalSessionId,
+      externalTurnId: envelope.session.turnId,
+      eventKind: envelope.event.kind,
+      normalizedKind: envelope.event.kind,
+      summary: input.summary,
+      confidence: envelope.capture.confidence,
+      capturedAt: timestamp,
+      operationId,
+      data,
+    };
+  }
+
+  async listAgentMemoryEvents(filter: { target?: string; limit?: number } = {}): Promise<AgentMemoryEventRecord[]> {
+    const limit = Math.max(1, Math.min(filter.limit ?? 50, 200));
+    const params: unknown[] = [];
+    const clauses: string[] = [];
+    if (filter.target) {
+      params.push(`%${filter.target}%`);
+      clauses.push(`(ame.summary ILIKE $${params.length} OR ame.data_json ILIKE $${params.length})`);
+    }
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const rows = await this.adapter.query(
+      `SELECT ame.*, e.external_session_id, e.external_turn_id, e.event_kind, e.captured_at,
+              s.source_name, s.integration_kind, s.trust_level
+       FROM agent_memory_events ame
+       JOIN external_agent_events e ON e.id = ame.external_event_id
+       JOIN agent_event_sources s ON s.id = e.source_id
+       ${where}
+       ORDER BY e.captured_at DESC, ame.id DESC
+       LIMIT ${limit}`,
+      params,
+    );
+    return rows.rows.reverse().map((row) => ({
+      id: String(row.id),
+      externalEventId: String(row.external_event_id),
+      sourceName: String(row.source_name),
+      integrationKind: String(row.integration_kind),
+      trustLevel: String(row.trust_level),
+      externalSessionId: typeof row.external_session_id === "string" ? row.external_session_id : undefined,
+      externalTurnId: typeof row.external_turn_id === "string" ? row.external_turn_id : undefined,
+      eventKind: String(row.event_kind),
+      normalizedKind: String(row.normalized_kind),
+      summary: typeof row.summary === "string" ? row.summary : undefined,
+      confidence: Number(row.confidence ?? 0),
+      capturedAt: String(row.captured_at),
+      operationId: typeof row.operation_id === "string" ? row.operation_id : undefined,
+      data: parseJsonRecord(row.data_json),
+    }));
   }
 
   async status(): Promise<DeltaStatus> {
@@ -1093,6 +1293,7 @@ export class DeltaStore {
     const commands = uniqueStrings([
       ...commandResult.rows.map((item) => item.command_name),
       data.command,
+      data.toolName,
     ]);
     return {
       id: String(row.id),
@@ -1674,6 +1875,9 @@ function semanticEventKindForOperation(
   if (context.kind === "git.commit.detected" || context.kind === "git.mapping.detected") {
     return "git.exported";
   }
+  if (context.kind.startsWith("agent.") || context.kind.startsWith("approval.")) {
+    return context.kind;
+  }
   if (context.kind.startsWith("file.")) {
     return context.fileClusters.includes("policy.change") ? "policy.changed" : "modified";
   }
@@ -1721,14 +1925,26 @@ function semanticTitleForOperation(
   if (eventKind === "git.exported") {
     return "Exported to Git";
   }
+  if (eventKind === "agent.prompt.submitted") {
+    return `${agentNameFromContext(context) ?? "Agent"} submitted a prompt`;
+  }
+  if (eventKind.startsWith("agent.tool")) {
+    return `${agentNameFromContext(context) ?? "Agent"} ${String(context.data.toolName ?? context.commands[0] ?? "tool")} ${eventKind.split(".").pop()}`;
+  }
+  if (eventKind.startsWith("approval.")) {
+    return `${agentNameFromContext(context) ?? "Agent"} approval ${eventKind.split(".").pop()}`;
+  }
+  if (eventKind.startsWith("agent.")) {
+    return `${agentNameFromContext(context) ?? "Agent"} ${eventKind.replace(/^agent\./, "").replace(/\./g, " ")}`;
+  }
   return context.summary ?? context.kind;
 }
 
 function semanticSeverity(eventKind: string): string {
-  if (eventKind === "failed" || eventKind === "denied" || eventKind === "proof.failed") {
+  if (eventKind === "failed" || eventKind === "denied" || eventKind === "proof.failed" || eventKind.endsWith(".failed") || eventKind.endsWith(".denied")) {
     return "error";
   }
-  if (eventKind === "proof.passed" || eventKind === "executed") {
+  if (eventKind === "proof.passed" || eventKind === "executed" || eventKind.endsWith(".completed")) {
     return "success";
   }
   if (eventKind === "policy.changed" || eventKind === "dependency.added" || eventKind === "dependency.upgraded") {
@@ -1743,6 +1959,12 @@ function confidenceForSemanticEvent(context: DeltaOperationContext, eventKind: s
   }
   if (eventKind === "policy.changed" && !context.data.policy) {
     return 0.78;
+  }
+  if (context.kind.startsWith("agent.") || context.kind.startsWith("approval.")) {
+    const capture = context.data.capture && typeof context.data.capture === "object"
+      ? context.data.capture as Record<string, unknown>
+      : {};
+    return typeof capture.confidence === "number" ? capture.confidence : 0.86;
   }
   return 0.95;
 }
@@ -1769,6 +1991,8 @@ function timelineEntitiesFromContext(
     add("runtime-entry", entry, eventKind === "executed" || eventKind === "denied" || eventKind === "failed" ? "primary" : "affected", 0.95);
     add("agent-tool", entry, "affected", 0.7);
   }
+  add("agent", agentNameFromContext(context), "source", 0.95);
+  add("agent-tool", context.data.toolName, eventKind.startsWith("agent.tool") ? "primary" : "affected", 0.95);
   for (const service of context.services) {
     add("external-service", service, eventKind === "imported" ? "primary" : "source", 0.88);
   }
@@ -1816,6 +2040,15 @@ function timelineEntitiesFromContext(
   return entities.length > 0
     ? entities
     : [{ kind: "session", name: context.sessionId ?? context.id, role: "source", confidence: 0.5 }];
+}
+
+function agentNameFromContext(context: DeltaOperationContext): string | undefined {
+  const source = context.data.source;
+  if (source && typeof source === "object" && !Array.isArray(source)) {
+    const agent = (source as Record<string, unknown>).agent;
+    return typeof agent === "string" && agent.length > 0 ? agent : undefined;
+  }
+  return undefined;
 }
 
 function parseTimelineEntityTarget(target: string | undefined): DeltaTimelineEntityRef | undefined {

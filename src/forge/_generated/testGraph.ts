@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.11 input=d1e9ea1b1e7d1268b74c027b8d605e187a9ea56cbbb5aeff174833ed68610c4c content=3c528605b57d95f457838c15cf4152195afb3f4bef4d522c2da65a0701fb93d9
+// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=3e038ac87daaeac205462fe73b98c6e49a17dda939c406c50794457fc4dfbd47
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.11",
-  "inputHash": "d1e9ea1b1e7d1268b74c027b8d605e187a9ea56cbbb5aeff174833ed68610c4c",
+  "generatorVersion": "0.1.0-alpha.13",
+  "inputHash": "bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -89,6 +89,24 @@ export const testGraph = {
       "reasons": [
         "probable: packages tsx"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-memory/h48-agent-memory.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "confirmed",
@@ -1043,6 +1061,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/delta/delta-store.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/semantic-timeline.test.ts",
       "kind": "unknown",
       "reasons": []
     },

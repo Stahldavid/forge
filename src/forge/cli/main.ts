@@ -15,6 +15,8 @@ function formatHelp(): string {
     "  forge dev --once --json   One-shot health/diagnostic loop for agents and CI",
     "  forge do \"fix\" --json     Ask ForgeOS for the right workflow and commands",
     "  forge inspect all --json  Read the generated machine contract",
+    "  forge mcp serve          Serve ForgeOS Agent Memory tools over MCP stdio",
+    "  forge agent context --current --json  Read the Agent Memory context pack",
     "  forge doctor windows --json  Diagnose native Windows setup and Bun shims",
     "  forge bench compiler --json  Measure public compiler phase timings",
     "  forge manifest validate ./forge.manifest.json --json  Validate an external runtime manifest",
