@@ -23,6 +23,10 @@ export interface ClientManifest {
     entrypoint: string;
     hooks: string[];
   };
+  vue: {
+    entrypoint: string;
+    composables: string[];
+  };
   excluded: {
     actions: string[];
     workflows: string[];
@@ -37,6 +41,18 @@ export interface ReactManifest {
   inputHash: string;
   entrypoint: string;
   hooks: string[];
+  queries: string[];
+  commands: string[];
+  liveQueries: string[];
+  clientSafe: true;
+}
+
+export interface VueManifest {
+  schemaVersion: string;
+  generatorVersion: string;
+  inputHash: string;
+  entrypoint: string;
+  composables: string[];
   queries: string[];
   commands: string[];
   liveQueries: string[];
@@ -117,6 +133,17 @@ export function buildClientManifest(
         "useLiveQuery",
       ],
     },
+    vue: {
+      entrypoint: "src/forge/_generated/vue.ts",
+      composables: [
+        "provideForge",
+        "useForgeClient",
+        "useForgeAuth",
+        "useForgeQuery",
+        "useForgeCommand",
+        "useForgeLiveQuery",
+      ],
+    },
     excluded: {
       actions,
       workflows,
@@ -147,6 +174,34 @@ export function buildReactManifest(clientManifest: ClientManifest): ReactManifes
     ),
     entrypoint: "src/forge/_generated/react.ts",
     hooks,
+    queries: clientManifest.queries,
+    commands: clientManifest.commands,
+    liveQueries: clientManifest.liveQueries,
+    clientSafe: true,
+  };
+}
+
+export function buildVueManifest(clientManifest: ClientManifest): VueManifest {
+  const composables = [
+    "provideForge",
+    "useForgeClient",
+    "useForgeAuth",
+    "useForgeQuery",
+    "useForgeCommand",
+    "useForgeLiveQuery",
+  ];
+
+  return {
+    schemaVersion: "1.0.0",
+    generatorVersion: GENERATOR_VERSION,
+    inputHash: hashStable(
+      canonicalJson({
+        clientInputHash: clientManifest.inputHash,
+        composables,
+      }),
+    ),
+    entrypoint: "src/forge/_generated/vue.ts",
+    composables,
     queries: clientManifest.queries,
     commands: clientManifest.commands,
     liveQueries: clientManifest.liveQueries,

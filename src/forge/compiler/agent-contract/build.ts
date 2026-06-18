@@ -453,17 +453,17 @@ function playbooks(): AgentPlaybook[] {
         "Run forge dev --once --json for a one-shot diagnostic cycle.",
         "Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.",
         "When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.",
-        "Use generated client and React hooks through web/lib/forge.ts.",
+        "Use generated client bindings through web/lib/forge.ts, web/src/lib/forge.ts, or Nuxt web/composables/forge.ts.",
       ],
     },
     {
       title: "Add or update frontend",
       steps: [
-        "Run forge make ui --framework vite --dry-run --json when the app does not have a web root.",
+        "Run forge make ui --framework vite --dry-run --json or forge make ui --framework nuxt --dry-run --json when the app does not have a web root.",
         "Run forge make ai-chat support --dry-run --json to add a chat surface backed by /ai/agents/chat streaming and /ai/agents/run JSON automation.",
-        "Use web/lib/forge.ts as the generated client bridge.",
-        "Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.",
-        "Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.",
+        "Use web/lib/forge.ts, web/src/lib/forge.ts, or web/composables/forge.ts as the generated client bridge.",
+        "Mount ForgeProvider or install the Nuxt Forge plugin once in the web app provider/layout layer; use devAuth for local development.",
+        "Use useQuery/useCommand/useLiveQuery or useForgeQuery/useForgeCommand/useForgeLiveQuery instead of raw /commands or /queries fetches.",
         "Run forge generate so frontendGraph and agentContract include routes and bindings.",
         "Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.",
         "Run forge dev --once --json and forge doctor --json.",
@@ -1502,9 +1502,9 @@ ${contract.frontend.dev ? `- Web URL: ${contract.frontend.dev.url}
 
 Rules:
 
-- Use the local \`web/**/lib/forge.ts\` bridge to generated hooks.
-- Mount \`<ForgeProvider devAuth>\` in local development.
-- Use \`useQuery\`, \`useCommand\`, and \`useLiveQuery\` instead of raw Forge endpoint fetches in React components.
+- Use the local \`web/**/lib/forge.ts\` or Nuxt \`web/composables/forge.ts\` bridge to generated bindings.
+- Mount \`<ForgeProvider devAuth>\` or install the Nuxt Forge plugin in local development.
+- Use \`useQuery\`/\`useCommand\`/\`useLiveQuery\` or \`useForgeQuery\`/\`useForgeCommand\`/\`useForgeLiveQuery\` instead of raw Forge endpoint fetches in components.
 - Keep frontend routes reflected in \`src/forge/_generated/frontendGraph.json\`.
 
 ## Common tasks
@@ -1537,6 +1537,7 @@ Use:
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
 forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
 forge make ui --framework vite --dry-run --json
+forge make ui --framework nuxt --dry-run --json
 forge make ai-chat support --dry-run --json
 \`\`\`
 
@@ -1553,7 +1554,7 @@ forge inspect frontend --json
 forge inspect capabilities --json
 \`\`\`
 
-\`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, \`ForgeProvider\`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
+\`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
 
 ### Apply a feature blueprint
 

@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=9b782c68e34ac68fb230b1472d51297bde6d669b3095609da826463ffc9d7572
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=a2d87acaf286c35f06b9e432c8d53b69252e52ea568c7d6e6fabf0a607b7afcf
 export const clientManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.1.0-alpha.13",
-  "inputHash": "bdeb41d51457623161dfc4103342f04ddbc801d77cbe2b8ab8593ebdbc0c5db2",
+  "inputHash": "fd861ab7b5e9f80f62d08e6ef90567ac67174a66780f82328e44c7d65be9ffef",
   "queries": [],
   "commands": [],
   "liveQueries": [],
@@ -22,6 +22,17 @@ export const clientManifest = {
       "useQuery",
       "useCommand",
       "useLiveQuery"
+    ]
+  },
+  "vue": {
+    "entrypoint": "src/forge/_generated/vue.ts",
+    "composables": [
+      "provideForge",
+      "useForgeClient",
+      "useForgeAuth",
+      "useForgeQuery",
+      "useForgeCommand",
+      "useForgeLiveQuery"
     ]
   },
   "excluded": {

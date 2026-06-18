@@ -652,6 +652,159 @@ export function renderVitePackage(appName: string): string {
 `;
 }
 
+export function renderNuxtPackage(appName: string): string {
+  return `{
+  "name": "${kebabCase(appName)}-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "nuxt": "^4.0.0",
+    "vue": "^3.5.38"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
+`;
+}
+
+export function renderNuxtConfig(): string {
+  return `export default defineNuxtConfig({
+  compatibilityDate: "2026-06-18",
+  runtimeConfig: {
+    public: {
+      forgeUrl: process.env.NUXT_PUBLIC_FORGE_URL ?? "http://127.0.0.1:3765",
+    },
+  },
+  typescript: {
+    strict: true,
+  },
+});
+`;
+}
+
+export function renderNuxtTsconfig(): string {
+  return `{
+  "extends": "./.nuxt/tsconfig.json"
+}
+`;
+}
+
+export function renderNuxtForgeComposable(): string {
+  return `export const forgeUrl = "http://127.0.0.1:3765";
+
+export { api } from "../../src/forge/_generated/api";
+export { createForgeClient, ForgeError } from "../../src/forge/_generated/client";
+export {
+  ForgeVuePlugin,
+  provideForge,
+  useForgeAuth,
+  useForgeClient,
+  useForgeCommand,
+  useForgeLiveQuery,
+  useForgeQuery,
+} from "../../src/forge/_generated/vue";
+`;
+}
+
+export function renderNuxtForgePlugin(): string {
+  return `import { ForgeVuePlugin } from "../composables/forge";
+
+export default defineNuxtPlugin((nuxtApp) => {
+  const config = useRuntimeConfig();
+
+  nuxtApp.vueApp.use(ForgeVuePlugin, {
+    url: String(config.public.forgeUrl),
+    devAuth: true,
+  });
+});
+`;
+}
+
+export function renderNuxtApp(): string {
+  return `<script setup lang="ts">
+import ForgeStatus from "./components/ForgeStatus.vue";
+</script>
+
+<template>
+  <main class="shell">
+    <p class="eyebrow">ForgeOS Nuxt app</p>
+    <h1>Full-stack loop ready</h1>
+    <ForgeStatus />
+  </main>
+</template>
+
+<style scoped>
+.shell {
+  width: min(760px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.eyebrow {
+  color: #58655f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 12px;
+  color: #17211d;
+  font-size: 2.2rem;
+}
+</style>
+`;
+}
+
+export function renderNuxtStatusComponent(): string {
+  return `<script setup lang="ts">
+import { computed } from "vue";
+import { useForgeAuth } from "../composables/forge";
+
+const auth = useForgeAuth();
+const tenantLabel = computed(() => auth?.tenantId ?? "dev-tenant");
+const roleLabel = computed(() => auth?.role ?? "owner");
+</script>
+
+<template>
+  <section class="status-panel">
+    <span class="status-dot" aria-hidden="true" />
+    <p>
+      Connected as <strong>{{ roleLabel }}</strong> on
+      <strong>{{ tenantLabel }}</strong>.
+    </p>
+  </section>
+</template>
+
+<style scoped>
+.status-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  color: #26332d;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #1f9d55;
+}
+
+p {
+  margin: 0;
+}
+</style>
+`;
+}
+
 export function renderNextAiPackage(appName: string): string {
   return `{
   "name": "${kebabCase(appName)}-web",

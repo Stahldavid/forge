@@ -1,4 +1,4 @@
-import type { ClientManifest, ReactManifest } from "./build-manifest.ts";
+import type { ClientManifest, ReactManifest, VueManifest } from "./build-manifest.ts";
 
 export function renderClientTypesTs(): string {
   return `export type ForgeStaticAuth = {
@@ -534,4 +534,69 @@ export declare const useLiveQuery: import("forge/react").ForgeReactBindings["use
 
 export function renderReactManifestTs(manifest: ReactManifest): string {
   return `export const reactManifest = ${JSON.stringify(manifest, null, 2)} as const;\n`;
+}
+
+export function renderVueTs(): string {
+  return `import { createForgeVueBindings } from "forge/vue";
+import { createForgeClient } from "./client.ts";
+
+export type {
+  ForgeDevAuthConfig,
+  ForgeVueAuth,
+  ForgeVueAuthProvider,
+  ForgeVueBindings,
+  ForgeVueClient,
+  ForgeVueClientConfig,
+  ForgeVueError,
+  ForgeVuePluginOptions,
+  UseForgeCommandOptions,
+  UseForgeCommandResult,
+  UseForgeLiveQueryOptions,
+  UseForgeLiveQueryResult,
+  UseForgeQueryOptions,
+  UseForgeQueryResult,
+} from "forge/vue";
+
+const forgeVue = createForgeVueBindings(createForgeClient);
+
+export const ForgeVuePlugin = forgeVue.ForgeVuePlugin;
+export const provideForge = forgeVue.provideForge;
+export const useForgeClient = forgeVue.useForgeClient;
+export const useForgeAuth = forgeVue.useForgeAuth;
+export const useForgeQuery = forgeVue.useForgeQuery;
+export const useForgeCommand = forgeVue.useForgeCommand;
+export const useForgeLiveQuery = forgeVue.useForgeLiveQuery;
+`;
+}
+
+export function renderVueDts(): string {
+  return `export type {
+  ForgeDevAuthConfig,
+  ForgeVueAuth,
+  ForgeVueAuthProvider,
+  ForgeVueBindings,
+  ForgeVueClient,
+  ForgeVueClientConfig,
+  ForgeVueError,
+  ForgeVuePluginOptions,
+  UseForgeCommandOptions,
+  UseForgeCommandResult,
+  UseForgeLiveQueryOptions,
+  UseForgeLiveQueryResult,
+  UseForgeQueryOptions,
+  UseForgeQueryResult,
+} from "forge/vue";
+
+export declare const ForgeVuePlugin: import("forge/vue").ForgeVueBindings["ForgeVuePlugin"];
+export declare const provideForge: import("forge/vue").ForgeVueBindings["provideForge"];
+export declare const useForgeClient: import("forge/vue").ForgeVueBindings["useForgeClient"];
+export declare const useForgeAuth: import("forge/vue").ForgeVueBindings["useForgeAuth"];
+export declare const useForgeQuery: import("forge/vue").ForgeVueBindings["useForgeQuery"];
+export declare const useForgeCommand: import("forge/vue").ForgeVueBindings["useForgeCommand"];
+export declare const useForgeLiveQuery: import("forge/vue").ForgeVueBindings["useForgeLiveQuery"];
+`;
+}
+
+export function renderVueManifestTs(manifest: VueManifest): string {
+  return `export const vueManifest = ${JSON.stringify(manifest, null, 2)} as const;\n`;
 }

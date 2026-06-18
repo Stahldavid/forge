@@ -73,6 +73,7 @@ forge make list --json
 forge make resource notes --fields title:text,status:enum(open,done) --with-ui --dry-run --json
 forge make resource notes --fields title:text,status:enum(open,done) --with-ui --yes
 forge make ui --framework vite --dry-run --json
+forge make ui --framework nuxt --dry-run --json
 forge make ai-chat support --dry-run --json
 forge feature validate .forge/blueprints/example.json --json
 forge feature plan .forge/blueprints/example.json

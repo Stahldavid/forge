@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=d77484c9887220010cac51e14aaa010154cd261244eea7bf22a2aaaedca6afb4
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=5239d21f9c87bfad8b8ab8128df724fa0ea0030add19884c47d4f9fbb16a7cb0
 export const makeTemplates = {
   "schemaVersion": "0.1.0",
   "templates": [
@@ -49,7 +49,7 @@ export const makeTemplates = {
     },
     {
       "name": "ui",
-      "outputPattern": "web/src/App.tsx",
+      "outputPattern": "web/src/App.tsx or web/app.vue",
       "sourceKind": "frontend"
     },
     {

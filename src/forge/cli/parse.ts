@@ -1266,7 +1266,7 @@ export function parseCli(argv: string[]): ParsedCli {
             event: parseOptionValue(argv, "--event"),
             trigger: parseOptionValue(argv, "--trigger"),
             component: parseOptionValue(argv, "--component"),
-            framework: parseOptionValue(argv, "--framework") as "vite" | "next" | undefined,
+            framework: parseOptionValue(argv, "--framework") as "vite" | "next" | "nuxt" | undefined,
             withAi: parseFlag(argv, "--with-ai"),
             withCrud: parseFlag(argv, "--with-crud"),
             withLiveQuery: parseFlag(argv, "--with-livequery"),

@@ -31,7 +31,7 @@ export interface FrontendProviderInfo {
 
 export interface FrontendWebManifest {
   present: boolean;
-  framework: "next" | "vite" | "static" | "unknown" | "none";
+  framework: "next" | "nuxt" | "vite" | "static" | "unknown" | "none";
   root?: string;
   packageManager?: "bun" | "npm" | "pnpm" | "yarn" | "unknown";
   scripts: {
@@ -63,7 +63,7 @@ export interface FrontendClientBindingInfo {
 export interface FrontendGraph {
   schemaVersion: "0.1.0";
   present: boolean;
-  framework: "next" | "vite" | "static" | "unknown" | "none";
+  framework: "next" | "nuxt" | "vite" | "static" | "unknown" | "none";
   root?: string;
   dev?: {
     command: string;

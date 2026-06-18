@@ -1,13 +1,14 @@
 # Frontend
 
-ForgeOS generates a **typed client SDK** and React hooks so web apps call commands, queries, and liveQueries through the same runtime surface as the backend — not ad-hoc fetch URLs.
+ForgeOS generates a **typed client SDK** plus framework bindings so web apps call commands, queries, and liveQueries through the same runtime surface as the backend, not ad-hoc fetch URLs.
 
 ## Architecture
 
 ```text
-React component
-  -> web/lib/forge.ts (bridge)
+React or Vue component
+  -> web/lib/forge.ts or web/composables/forge.ts (bridge)
   -> useCommand / useQuery / useLiveQuery
+  -> or useForgeCommand / useForgeQuery / useForgeLiveQuery
   -> Forge dev server
   -> commands / queries / liveQueries
   -> database
@@ -17,10 +18,10 @@ Database change -> invalidation log -> liveQuery SSE -> hooks -> UI
 
 | Layer | Responsibility |
 |-------|----------------|
-| React components | UI, forms, lists |
-| `web/lib/forge.ts` | Generated bridge to client SDK |
-| `ForgeProvider` | API URL, dev auth headers |
-| Generated hooks | Typed runtime calls |
+| React/Vue components | UI, forms, lists |
+| `web/lib/forge.ts` or `web/composables/forge.ts` | Generated bridge to client SDK |
+| `ForgeProvider` or Nuxt plugin | API URL, dev auth headers |
+| Generated hooks/composables | Typed runtime calls |
 | Capability map | Links UI actions to backend entries |
 
 ## Frontend contract
@@ -39,7 +40,7 @@ This is why frontend checks appear in `forge dev --once --json`, `forge inspect 
 
 ## Client bridge
 
-Templates ship a bridge file such as `web/lib/forge.ts` (or `web/src/lib/forge.ts` for Vite). Import hooks from there — **not** from deep paths under `_generated/`:
+Templates ship a bridge file such as `web/lib/forge.ts`, `web/src/lib/forge.ts` for Vite, or `web/composables/forge.ts` for Nuxt. Import hooks or composables from there, **not** from deep paths under `_generated/`:
 
 ```tsx
 import { useCommand, useQuery, useLiveQuery, ForgeProvider } from "../lib/forge";
@@ -85,6 +86,21 @@ export function TicketList() {
   );
 }
 ```
+
+## Nuxt and Vue composables
+
+Nuxt apps use `web/plugins/forge.ts` to install the Forge Vue plugin from runtime config. Components import generated composables from `web/composables/forge.ts`:
+
+```vue
+<script setup lang="ts">
+import { api, useForgeCommand, useForgeLiveQuery } from "../composables/forge";
+
+const tickets = useForgeLiveQuery(api.liveQueries.liveTickets, {});
+const createTicket = useForgeCommand(api.commands.createTicket);
+</script>
+```
+
+The Nuxt template stores the runtime URL in `runtimeConfig.public.forgeUrl`, which can be overridden with `NUXT_PUBLIC_FORGE_URL`.
 
 ## ForgeProvider and dev auth
 
@@ -174,6 +190,8 @@ When an app has no `web/` directory yet:
 ```bash
 forge make ui --framework vite --dry-run --json
 forge make ui --framework vite --yes
+forge make ui --framework nuxt --dry-run --json
+forge make ui --framework nuxt --yes
 ```
 
 For AI chat UI backed by dev agent endpoints:

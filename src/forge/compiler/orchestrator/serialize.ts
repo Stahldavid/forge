@@ -940,6 +940,12 @@ export function serializeReactManifestJson(
   return serializeCanonical(manifest);
 }
 
+export function serializeVueManifestJson(
+  manifest: import("../client-sdk/build-manifest.ts").VueManifest,
+): string {
+  return serializeCanonical(manifest);
+}
+
 export function serializeTestGraphJson(graph: TestGraph): string {
   return serializeCanonical(graph);
 }

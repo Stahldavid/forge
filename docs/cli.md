@@ -204,6 +204,7 @@ See [AI](ai.md) for runtime placement, simple generation, agents, and tool appro
 forge make list --json
 forge make resource notes --fields title:text,status:enum(open,done) --with-ui --yes
 forge make ui --framework vite --yes
+forge make ui --framework nuxt --yes
 forge make ai-chat support --yes
 forge feature validate .forge/blueprints/example.json --json
 forge feature plan .forge/blueprints/example.json

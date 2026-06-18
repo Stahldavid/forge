@@ -42,7 +42,7 @@ The core idea stays the same across every capability: make the app explicit enou
 | H1-H3 | Compiler, examples, DataGraph |
 | H4-H8 | Runtime, persistence, outbox, workflows |
 | H9-H12 | Telemetry, auth/policy/tenant, secrets, AI workflows |
-| H13-H17 | Queries, client SDK, liveQuery, React hooks, frontend template |
+| H13-H17 | Queries, client SDK, liveQuery, React/Vue bindings, frontend template |
 | H18-H24 | Self-host, agent contract, production auth, RLS, package planner, release bridge, production liveQuery |
 | H25-H32 | Authoring, blueprints, codemods, impact tests, repair, adapters, review, UI bridge |
 | H33-H38 | Intent router, full-stack contract, capability map, template hygiene, dev panel, fast generated checks |

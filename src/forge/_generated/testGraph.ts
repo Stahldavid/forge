@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=3e038ac87daaeac205462fe73b98c6e49a17dda939c406c50794457fc4dfbd47
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=52e939623d4381b5cfcc4577f9cf9d1a86872d12b380bd6acc2b3f9458e557ad
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.13",
-  "inputHash": "bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309",
+  "inputHash": "4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1533,6 +1533,24 @@ export const testGraph = {
       "reasons": []
     },
     {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/external-manifest/java-adapter-conformance.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
       "confidence": "probable",
       "cost": "fast",
       "covers": {
@@ -1853,7 +1871,8 @@ export const testGraph = {
         "packages": [
           "ai",
           "react",
-          "tsx"
+          "tsx",
+          "vue"
         ],
         "policies": [],
         "queries": [],
@@ -1865,7 +1884,8 @@ export const testGraph = {
       "reasons": [
         "probable: packages ai",
         "probable: packages react",
-        "probable: packages tsx"
+        "probable: packages tsx",
+        "probable: packages vue"
       ]
     },
     {
@@ -3718,6 +3738,52 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/vue/generated-vue.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages vue",
+        "probable: packages ai"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/vue/hooks.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages vue"
       ]
     },
     {

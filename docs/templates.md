@@ -35,6 +35,7 @@ forge new my-app \
 | Template | Stack | Includes | Best for |
 |----------|-------|----------|----------|
 | `minimal-web` | Forge backend + Vite React `web/` | Basic CRUD patterns, `ForgeProvider`, client bridge | Learning Forge, prototypes |
+| Nuxt UI shell via `forge make ui --framework nuxt` | Forge backend + Nuxt Vue `web/` | Nuxt plugin, Vue composables, runtime config bridge | Vue/Nuxt apps |
 | `b2b-support-web` | Forge + Next-style `web/` | Tickets, policies, Stripe hooks, AI triage workflow, liveQuery | Full-stack showcase, B2B support apps |
 
 List templates from the CLI:

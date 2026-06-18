@@ -106,7 +106,12 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
   if (code.startsWith("FORGE_FRONTEND_")) {
     return {
       fixHint: "Use the generated frontend bridge and inspect src/forge/_generated/frontendGraph.json before editing UI wiring.",
-      suggestedCommands: ["forge inspect frontend --json", "forge make ui --framework vite --dry-run --json", "forge generate"],
+      suggestedCommands: [
+        "forge inspect frontend --json",
+        "forge make ui --framework vite --dry-run --json",
+        "forge make ui --framework nuxt --dry-run --json",
+        "forge generate",
+      ],
       docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
     };
   }

@@ -1,5 +1,6 @@
 /package-lock.json
 node_modules/
+**/target/
 .env.local
 .forge/cache/
 .forge/pglite/

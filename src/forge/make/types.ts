@@ -61,6 +61,7 @@ export interface MakeIntent {
   trigger?: string;
   component?: string;
   route?: string;
+  framework?: "vite" | "next" | "nuxt";
   withAi: boolean;
   withCreateForm: boolean;
 }
@@ -130,7 +131,7 @@ export interface MakeCommandOptions {
   event?: string;
   trigger?: string;
   component?: string;
-  framework?: "vite" | "next";
+  framework?: "vite" | "next" | "nuxt";
   withAi: boolean;
   withCrud: boolean;
   withLiveQuery: boolean;

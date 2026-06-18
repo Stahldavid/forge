@@ -384,7 +384,7 @@ function playbookFiles(): AgentExportFile[] {
       "Prefer targeted repairs and impacted tests before full verify.",
     ]],
     ["frontend-change.md", "Frontend Change", [
-      "Use generated client APIs and React hooks.",
+      "Use generated client APIs and framework bindings: React hooks or Vue composables.",
       "Do not import server adapters or server-only packages into client code.",
       "Preserve `ForgeError.traceId` in visible error states.",
       "Run affected frontend tests and `forge verify --changed`.",

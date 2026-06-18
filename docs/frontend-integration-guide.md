@@ -10,15 +10,18 @@ The goal is for an agent to answer: which route calls which command, which query
 web/
   src/ or app/
   lib/forge.ts
+  composables/forge.ts       # Nuxt/Vue
+  plugins/forge.ts           # Nuxt provider
   components/**
 src/forge/_generated/
   client.ts
   react.ts
+  vue.ts
   frontendGraph.json
   capabilityMap.json
 ```
 
-The local bridge file should import generated Forge hooks and expose one stable path to app components.
+The local bridge file should import generated Forge hooks or composables and expose one stable path to app components.
 
 ## Provider
 
@@ -41,6 +44,8 @@ Local development usually uses dev auth:
 
 Production apps should use the configured auth mode and pass bearer tokens through the client transport.
 
+Nuxt apps install the Forge Vue plugin from `web/plugins/forge.ts` and read `runtimeConfig.public.forgeUrl`, overrideable through `NUXT_PUBLIC_FORGE_URL`.
+
 ## Hooks
 
 Use generated hooks instead of raw fetches:
@@ -52,6 +57,15 @@ const ticket = useQuery("getTicket", { id });
 ```
 
 This keeps UI calls visible to `frontendGraph.json` and `capabilityMap.json`.
+
+Nuxt/Vue components use generated composables:
+
+```vue
+<script setup lang="ts">
+const tickets = useForgeLiveQuery("liveTickets", {});
+const createTicket = useForgeCommand("createTicket");
+</script>
+```
 
 ## Capability map
 
@@ -103,6 +117,8 @@ Open the web URL for the app. The API URL is for JSON runtime calls and health c
 ```bash
 forge make ui --framework vite --dry-run --json
 forge make ui --framework vite --yes
+forge make ui --framework nuxt --dry-run --json
+forge make ui --framework nuxt --yes
 forge generate
 forge inspect frontend --json
 ```

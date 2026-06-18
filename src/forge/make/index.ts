@@ -21,6 +21,13 @@ import {
   renderListQuery,
   renderLiveQuery,
   renderNextAiPackage,
+  renderNuxtApp,
+  renderNuxtConfig,
+  renderNuxtForgeComposable,
+  renderNuxtForgePlugin,
+  renderNuxtPackage,
+  renderNuxtStatusComponent,
+  renderNuxtTsconfig,
   renderPage,
   renderPlaceholderTest,
   renderPolicyFile,
@@ -107,7 +114,7 @@ const EXPLANATIONS: Record<MakeIntent["kind"], string> = {
   page:
     "Adds a minimal app page under web/app/<route>/page.tsx.",
   ui:
-    "Adds a minimal Vite React web app with ForgeProvider devAuth and a generated client bridge.",
+    "Adds a minimal Vite React or Nuxt Vue web app with generated Forge client bindings.",
   "ai-chat":
     "Adds a Forge AI agent definition and a React chat component that calls the Forge /ai/agents/run runtime endpoint.",
   resource:
@@ -513,7 +520,7 @@ function buildIntent(options: MakeCommandOptions): {
   const kind = options.primitive as MakeIntent["kind"];
   const fieldOptions = parseFieldOptions(options);
   const diagnostics = [...fieldOptions.diagnostics];
-  if (options.framework && !["vite", "next"].includes(options.framework)) {
+  if (options.framework && !["vite", "next", "nuxt"].includes(options.framework)) {
     diagnostics.push(
       diagnostic("error", "FORGE_MAKE_PATCH_UNSAFE", `unsupported frontend framework '${options.framework}'`),
     );
@@ -523,7 +530,7 @@ function buildIntent(options: MakeCommandOptions): {
       diagnostic(
         "warning",
         "FORGE_MAKE_UI_FRAMEWORK_EXPERIMENTAL",
-        "forge make ui currently generates the Vite React bridge; Next support should use the b2b-support-web template",
+        "forge make ui currently generates Vite React and Nuxt Vue bridges; Next support should use the b2b-support-web template",
       ),
     );
   }
@@ -574,6 +581,7 @@ function buildIntent(options: MakeCommandOptions): {
       trigger: options.trigger ?? options.event ?? (table ? `${singular}.created` : undefined),
       component: options.component,
       route: options.name ? kebabCase(options.name) : undefined,
+      framework: options.framework,
       withAi: options.withAi || kind === "ai-chat",
       withCreateForm: options.withCreateForm || kind === "resource",
     },
@@ -794,6 +802,18 @@ function addFrontendFiles(plan: MakePlan, workspaceRoot: string, intent: MakeInt
     return;
   }
   if (intent.kind === "ui") {
+    if (intent.framework === "nuxt") {
+      plan.filesToCreate.push(
+        createFile(workspaceRoot, "web/package.json", "Add Nuxt web package", renderNuxtPackage(intent.name)),
+        createFile(workspaceRoot, "web/nuxt.config.ts", "Add Nuxt runtime config", renderNuxtConfig()),
+        createFile(workspaceRoot, "web/tsconfig.json", "Add Nuxt TypeScript config", renderNuxtTsconfig()),
+        createFile(workspaceRoot, "web/composables/forge.ts", "Add Forge Vue composable bridge", renderNuxtForgeComposable()),
+        createFile(workspaceRoot, "web/plugins/forge.ts", "Add Forge Nuxt plugin", renderNuxtForgePlugin()),
+        createFile(workspaceRoot, "web/app.vue", "Add Nuxt app shell", renderNuxtApp()),
+        createFile(workspaceRoot, "web/components/ForgeStatus.vue", "Add Forge status component", renderNuxtStatusComponent()),
+      );
+      return;
+    }
     plan.filesToCreate.push(
       createFile(workspaceRoot, "web/package.json", "Add Vite React web package", renderVitePackage(intent.name)),
       createFile(workspaceRoot, "web/tsconfig.json", "Add web TypeScript config", renderViteTsconfig()),

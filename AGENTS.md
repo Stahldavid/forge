@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=1611635edf59c122b013ba76c85bd333ab3b30b289aaea04a9074f9438782a50
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=143ee5e2d6fee031a4952f21ee3cc8f1e5678fd11ea673c2cb79196c251c32b6
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -142,9 +142,9 @@ Agents:
 
 Rules:
 
-- Use the local `web/**/lib/forge.ts` bridge to generated hooks.
-- Mount `<ForgeProvider devAuth>` in local development.
-- Use `useQuery`, `useCommand`, and `useLiveQuery` instead of raw Forge endpoint fetches in React components.
+- Use the local `web/**/lib/forge.ts` or Nuxt `web/composables/forge.ts` bridge to generated bindings.
+- Mount `<ForgeProvider devAuth>` or install the Nuxt Forge plugin in local development.
+- Use `useQuery`/`useCommand`/`useLiveQuery` or `useForgeQuery`/`useForgeCommand`/`useForgeLiveQuery` instead of raw Forge endpoint fetches in components.
 - Keep frontend routes reflected in `src/forge/_generated/frontendGraph.json`.
 
 ## Common tasks
@@ -177,6 +177,7 @@ Use:
 forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
 forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
 forge make ui --framework vite --dry-run --json
+forge make ui --framework nuxt --dry-run --json
 forge make ai-chat support --dry-run --json
 ```
 
@@ -193,7 +194,7 @@ forge inspect frontend --json
 forge inspect capabilities --json
 ```
 
-`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, `ForgeProvider`, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
+`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
 
 ### Apply a feature blueprint
 

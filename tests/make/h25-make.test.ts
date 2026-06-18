@@ -150,6 +150,50 @@ describe("H25 forge make", () => {
     }
   });
 
+  test("applies a Nuxt UI shell with Forge plugin and Vue composable bridge", async () => {
+    const root = scaffoldMakeWorkspace("h25-nuxt-ui");
+    try {
+      const result = await runMakeCommand(
+        makeOptions(root, {
+          primitive: "ui",
+          name: "ui",
+          framework: "nuxt",
+          apply: true,
+          yes: true,
+          noGenerate: false,
+        }),
+      );
+
+      expect(result.ok).toBe(true);
+      expect(result.applied).toBe(true);
+      expect(existsSync(join(root, "web", "nuxt.config.ts"))).toBe(true);
+      expect(readFileSync(join(root, "web", "plugins", "forge.ts"), "utf8")).toContain("ForgeVuePlugin");
+      expect(readFileSync(join(root, "web", "composables", "forge.ts"), "utf8")).toContain("useForgeCommand");
+      expect(readFileSync(join(root, "web", "components", "ForgeStatus.vue"), "utf8")).toContain("useForgeAuth");
+      expect(readFileSync(join(root, "web", "package.json"), "utf8")).toContain('"nuxt": "^4.0.0"');
+
+      const inspect = await runInspectCommand("frontend", root);
+      expect(inspect.exitCode).toBe(0);
+      expect(inspect.data).toMatchObject({
+        present: true,
+        framework: "nuxt",
+        routes: [{ path: "/" }],
+        providers: [
+          {
+            name: "ForgeNuxtPlugin",
+            devAuth: true,
+          },
+        ],
+        webManifest: {
+          env: { apiUrl: "NUXT_PUBLIC_FORGE_URL" },
+          bridge: { valid: true },
+        },
+      });
+    } finally {
+      cleanupWorkspace(root);
+    }
+  }, 30_000);
+
   test("plans an AI chat with agent source and Forge runtime endpoint UI", async () => {
     const root = scaffoldMakeWorkspace("h25-ai-chat");
     mkdirSync(join(root, "web", "app"), { recursive: true });

@@ -1,9 +1,10 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=75925248b2650521b058a8d7134fa1895b259a5cc2f0c97a02612c216c26e778
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=5b90ca44d1650742ec87b1a6d3e2966f61fba58ccb610b4e8e1405849dcdd678
 export const makeRegistry = {
   "commands": [
     "forge make list --json",
     "forge make explain <primitive> --json",
     "forge make ui --framework vite --dry-run --json",
+    "forge make ui --framework nuxt --dry-run --json",
     "forge make ai-chat support --dry-run --json",
     "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
     "forge make resource <name> --fields title:text --with-ui --yes",
@@ -128,17 +129,16 @@ export const makeRegistry = {
     {
       "creates": [
         "web/package.json",
-        "web/index.html",
-        "web/src/lib/forge.ts",
-        "web/src/main.tsx",
-        "web/src/App.tsx"
+        "web/src/lib/forge.ts or web/composables/forge.ts",
+        "web/src/main.tsx or web/app.vue"
       ],
       "examples": [
-        "forge make ui --framework vite --yes"
+        "forge make ui --framework vite --yes",
+        "forge make ui --framework nuxt --yes"
       ],
       "modifies": [],
       "name": "ui",
-      "summary": "Add a Vite React frontend shell with ForgeProvider devAuth and a generated client bridge."
+      "summary": "Add a Vite React or Nuxt Vue frontend shell with generated Forge client bindings."
     },
     {
       "creates": [

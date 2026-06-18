@@ -1,0 +1,1 @@
+{"clientSafe":true,"commands":[],"composables":["provideForge","useForgeClient","useForgeAuth","useForgeQuery","useForgeCommand","useForgeLiveQuery"],"entrypoint":"src/forge/_generated/vue.ts","generatorVersion":"0.1.0-alpha.13","inputHash":"b1b50d975efe586bf428a7bc92bf3caae2a7d6a8a2987d4f14d52aa545a9f789","liveQueries":[],"queries":[],"schemaVersion":"1.0.0"}

@@ -196,6 +196,7 @@ describe("Forge CLI", () => {
     expect(classifyStrictTestFile("tests/external-manifest/external-runtime-cli.test.ts")).toBe("parallel");
     expect(classifyStrictTestFile("tests/external-manifest/external-runtime-node-cli.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/external-manifest/go-adapter-conformance.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/external-manifest/java-adapter-conformance.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/cli/cli-generation.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/cli/node-compat.test.ts")).toBe("parallel");
     expect(classifyStrictTestFile("tests/cli/node-compat-dev-server.test.ts")).toBe("isolated");

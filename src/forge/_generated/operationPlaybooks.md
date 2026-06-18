@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=58dad7f03d9e378e327fddb0676d079950c8f000752667cffb022f3b7e217265
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=24234c760a47f0f438e811125db8d767ce276f01d699bda62f6f71ec6c9a17ca
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -140,15 +140,15 @@
 2. Run forge dev --once --json for a one-shot diagnostic cycle.
 3. Use --api-only, --web-only, --no-watch, or --no-worker only when narrowing the loop intentionally.
 4. When a web app exists, forge dev starts the API runtime and the web dev server together and prints both URLs.
-5. Use generated client and React hooks through web/lib/forge.ts.
+5. Use generated client bindings through web/lib/forge.ts, web/src/lib/forge.ts, or Nuxt web/composables/forge.ts.
 
 ## Add or update frontend
 
-1. Run forge make ui --framework vite --dry-run --json when the app does not have a web root.
+1. Run forge make ui --framework vite --dry-run --json or forge make ui --framework nuxt --dry-run --json when the app does not have a web root.
 2. Run forge make ai-chat support --dry-run --json to add a chat surface backed by /ai/agents/chat streaming and /ai/agents/run JSON automation.
-3. Use web/lib/forge.ts as the generated client bridge.
-4. Mount ForgeProvider once in the web app provider/layout layer; use devAuth for local development.
-5. Use useQuery, useCommand, and useLiveQuery instead of raw /commands or /queries fetches.
+3. Use web/lib/forge.ts, web/src/lib/forge.ts, or web/composables/forge.ts as the generated client bridge.
+4. Mount ForgeProvider or install the Nuxt Forge plugin once in the web app provider/layout layer; use devAuth for local development.
+5. Use useQuery/useCommand/useLiveQuery or useForgeQuery/useForgeCommand/useForgeLiveQuery instead of raw /commands or /queries fetches.
 6. Run forge generate so frontendGraph and agentContract include routes and bindings.
 7. Run forge inspect capabilities --json to confirm UI actions map to runtime capabilities.
 8. Run forge dev --once --json and forge doctor --json.

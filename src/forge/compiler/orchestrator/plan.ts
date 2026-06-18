@@ -35,6 +35,7 @@ import {
 import {
   buildClientManifest,
   buildReactManifest,
+  buildVueManifest,
 } from "../client-sdk/build-manifest.ts";
 import {
   buildFrontendGraph,
@@ -48,6 +49,9 @@ import {
   renderReactDts,
   renderReactManifestTs,
   renderReactTs,
+  renderVueDts,
+  renderVueManifestTs,
+  renderVueTs,
 } from "../client-sdk/render-client.ts";
 import { buildSqlPlan } from "../data-graph/sql/ddl.ts";
 import { buildRlsArtifacts } from "../data-graph/rls/build.ts";
@@ -204,6 +208,7 @@ import {
   serializeClientApiTsExport,
   serializeClientManifestJson,
   serializeReactManifestJson,
+  serializeVueManifestJson,
   buildMockMapEntries,
 } from "./serialize.ts";
 import { buildDefaultAuthRegistry, AUTH_ENV } from "../../runtime/auth/config.ts";
@@ -334,6 +339,7 @@ export function plan(input: PlanInput): EmitPlan {
   );
   const clientManifest = buildClientManifest(apiSurface, input.classified);
   const reactManifest = buildReactManifest(clientManifest);
+  const vueManifest = buildVueManifest(clientManifest);
   const frontendGraph = buildFrontendGraph({
     workspaceRoot: input.ctx.workspaceRoot,
     clientManifest,
@@ -883,6 +889,13 @@ export function plan(input: PlanInput): EmitPlan {
     makeEmitFile(
       `${GENERATED_DIR}/reactManifest.json`,
       serializeReactManifestJson(reactManifest),
+    ),
+    makeEmitFile(`${GENERATED_DIR}/vue.ts`, renderVueTs()),
+    makeEmitFile(`${GENERATED_DIR}/vue.d.ts`, renderVueDts()),
+    makeEmitFile(`${GENERATED_DIR}/vueManifest.ts`, renderVueManifestTs(vueManifest)),
+    makeEmitFile(
+      `${GENERATED_DIR}/vueManifest.json`,
+      serializeVueManifestJson(vueManifest),
     ),
   ];
   const fileRenderMs = performance.now() - checkpoint;

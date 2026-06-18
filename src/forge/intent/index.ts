@@ -231,7 +231,7 @@ function planFor(input: {
     }
     case "connect-ui":
       return {
-        summary: "Inspect and repair the web app bridge, provider, routes, and generated hook usage.",
+        summary: "Inspect and repair the web app bridge, provider/plugin, routes, and generated binding usage.",
         plan: [
           step(
             "Read frontend graph",
@@ -242,20 +242,25 @@ function planFor(input: {
           ),
           step(
             "Create or repair UI bridge",
-            "Forge frontends should use the local bridge and hooks instead of fragile direct runtime fetches.",
-            ["forge make ui --framework vite --dry-run --json", "forge repair diagnose --diagnostic FORGE_FRONTEND_DIRECT_RUNTIME_FETCH --json"],
-            ["web/src/lib/forge.ts", "web/src/App.tsx", `${GENERATED_DIR}/frontendGraph.json`],
-            ["ForgeProvider is mounted when framework needs it", "useQuery/useCommand/useLiveQuery replace raw endpoint fetches"],
+            "Forge frontends should use the local bridge and generated hooks/composables instead of fragile direct runtime fetches.",
+            [
+              "forge make ui --framework vite --dry-run --json",
+              "forge make ui --framework nuxt --dry-run --json",
+              "forge repair diagnose --diagnostic FORGE_FRONTEND_DIRECT_RUNTIME_FETCH --json",
+            ],
+            ["web/src/lib/forge.ts", "web/composables/forge.ts", "web/src/App.tsx", "web/app.vue", `${GENERATED_DIR}/frontendGraph.json`],
+            ["ForgeProvider or Nuxt plugin is mounted when framework needs it", "generated hooks/composables replace raw endpoint fetches"],
           ),
         ],
         commands: [
           intentCommand("forge inspect frontend --json", "Inspect frontend wiring"),
           intentCommand("forge dev --once --json", "Run the central diagnostic loop"),
           intentCommand("forge make ui --framework vite --dry-run --json", "Preview adding a Forge-ready UI bridge", "after-review"),
+          intentCommand("forge make ui --framework nuxt --dry-run --json", "Preview adding a Forge-ready Nuxt UI bridge", "after-review"),
           intentCommand("forge generate", "Refresh frontendGraph and agentContract", "after-editing"),
         ],
         filesToInspect: files,
-        filesToChange: uniqueSorted(["web", "web/src/lib/forge.ts", "web/src/App.tsx"]),
+        filesToChange: uniqueSorted(["web", "web/src/lib/forge.ts", "web/composables/forge.ts", "web/src/App.tsx", "web/app.vue"]),
         risks: [
           risk("medium", "UI can appear to work while bypassing generated hooks.", "Treat frontendGraph diagnostics as blocking for agent handoff."),
         ],

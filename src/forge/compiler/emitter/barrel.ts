@@ -33,6 +33,9 @@ export function buildBarrelIndexBody(exportFilePaths: string[]): string {
 
   const lines = unique.map((path) => {
     const exportPath = toBarrelExportPath(path);
+    if (exportPath === "./vue") {
+      return `export * as vue from "${exportPath}";`;
+    }
     return `export * from "${exportPath}";`;
   });
 

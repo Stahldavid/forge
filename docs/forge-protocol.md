@@ -107,6 +107,39 @@ forge query billing.listInvoices --args '{}'
 forge run query billing.listInvoices --args '{}'
 ```
 
+## Java Adapter
+
+Forge ships a minimal Java adapter under `adapters/java`. The adapter is a small
+SDK for JVM services that want to join the Forge external runtime protocol
+without requiring Forge to parse Java source code.
+
+```java
+ForgeRegistry app = Forge.service("billing",
+    Forge.framework("java/jdk-http"),
+    Forge.baseUrl("http://127.0.0.1:8788"));
+
+app.command("createInvoice",
+    Forge.handle(CreateInvoiceInput.class, Billing::createInvoice),
+    Forge.policy("billing.manage"),
+    Forge.tenantScoped(true),
+    Forge.needsApproval(true));
+
+app.query("listInvoices",
+    Forge.handle(EmptyInput.class, Billing::listInvoices),
+    Forge.policy("billing.manage"),
+    Forge.tenantScoped(true),
+    Forge.readOnly());
+```
+
+The adapter exposes `GET /manifest`, `GET /health`, `POST /commands/:name`, and
+`POST /queries/:name`. The `examples/java-billing` app demonstrates manifest
+export, HTTP serving, policy enforcement through the Forge bridge, generated
+client calls, and agent tool registration.
+
+Spring Boot users can start from `adapters/java-spring-boot-starter`, which
+provides `@ForgeExternalService`, `@ForgeCommand`, and `@ForgeQuery` annotations
+plus a `ForgeRegistry` auto-configuration hook.
+
 ## Runtime Bridge
 
 Forge accepts the normal JSON body:

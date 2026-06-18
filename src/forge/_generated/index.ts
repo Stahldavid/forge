@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.13 input=bc50622b4c866fb91117a08611d3d1afb34a3e850789f9f7cb05058d7c2dc309 content=f2588959f96846b0516992fc2832678e756f82e0fc9f78d6ffb0f934738b06e1
+// @forge-generated generator=0.1.0-alpha.13 input=4014caa977eff4a37c3ff6c255f595e2ae9f80b25fb6970482fd60ba5a7cf3b6 content=3a0c12a66741d47e5365b0826e91424cb3e5838294f99e13a43ca7306e0aa0ea
 export * from "./actionSubscriptions";
 export * from "./agentAdapterManifest";
 export * from "./agentContract";
@@ -65,5 +65,7 @@ export * from "./testPlanRegistry";
 export * from "./uiRoutes";
 export * from "./uiScenarios";
 export * from "./uiTestManifest";
+export * as vue from "./vue";
+export * from "./vueManifest";
 export * from "./workflowRegistry";
 export * from "./workflowSubscriptions";

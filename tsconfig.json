@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "forge/react": ["src/forge/react/index.ts"],
+      "forge/vue": ["src/forge/vue/index.ts"],
       "forge/server": ["tests/fixtures/packages/forge/server/index.ts"],
       "forge/schema": ["tests/fixtures/packages/forge/schema/index.ts"],
       "forge/policy": ["tests/fixtures/packages/forge/policy/index.ts"],

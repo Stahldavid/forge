@@ -13,6 +13,7 @@ import { createDiagnostic } from "../diagnostics/create.ts";
 
 const WEB_ROOT = "web";
 const API_URL_ENV = "NEXT_PUBLIC_FORGE_URL";
+const NUXT_API_URL_ENV = "NUXT_PUBLIC_FORGE_URL";
 const VITE_API_URL_ENV = "VITE_FORGE_URL";
 
 function toPosix(path: string): string {
@@ -43,7 +44,7 @@ function walkFiles(root: string): string[] {
     for (const entry of nodeFileSystem.readDir(dir)) {
       const absolute = join(dir, entry.name);
       if (entry.isDirectory) {
-        if (entry.name === "node_modules" || entry.name === ".next" || entry.name === "dist") {
+        if (entry.name === "node_modules" || entry.name === ".next" || entry.name === ".nuxt" || entry.name === "dist" || entry.name === ".output") {
           continue;
         }
         walk(absolute);
@@ -70,6 +71,14 @@ function detectFramework(webRoot: string): FrontendGraph["framework"] {
   const deps = { ...(pkg?.dependencies ?? {}), ...(pkg?.devDependencies ?? {}) };
   if (deps.next || nodeFileSystem.exists(join(webRoot, "next.config.ts"))) {
     return "next";
+  }
+  if (
+    deps.nuxt ||
+    nodeFileSystem.exists(join(webRoot, "nuxt.config.ts")) ||
+    nodeFileSystem.exists(join(webRoot, "nuxt.config.js")) ||
+    nodeFileSystem.exists(join(webRoot, "nuxt.config.mjs"))
+  ) {
+    return "nuxt";
   }
   if (deps.vite || nodeFileSystem.exists(join(webRoot, "vite.config.ts"))) {
     return "vite";
@@ -105,6 +114,27 @@ function routePathForFile(webRoot: string, file: string): string | null {
   if (rel === "app/page.tsx" || rel === "app/page.ts" || rel === "app/page.jsx" || rel === "app/page.js") {
     return "/";
   }
+  if (rel === "app.vue") {
+    return "/";
+  }
+  if (rel === "pages/index.vue") {
+    return "/";
+  }
+  const vueRoute = rel.match(/^pages\/(.+)\.vue$/);
+  if (vueRoute) {
+    const route = vueRoute[1]
+      .split("/")
+      .map((segment) => {
+        if (segment === "index") {
+          return "";
+        }
+        const dynamic = segment.match(/^\[([A-Za-z0-9_]+)\]$/);
+        return dynamic ? `:${dynamic[1]}` : segment;
+      })
+      .filter(Boolean)
+      .join("/");
+    return `/${route}`;
+  }
   const match = rel.match(/^app\/(.+)\/page\.(tsx|ts|jsx|js)$/);
   if (match) {
     const route = match[1]
@@ -117,7 +147,7 @@ function routePathForFile(webRoot: string, file: string): string | null {
 }
 
 function componentNameForFile(file: string): string {
-  return basename(file).replace(/\.(tsx|ts|jsx|js)$/, "");
+  return basename(file).replace(/\.(tsx|ts|jsx|js|vue)$/, "");
 }
 
 function componentNameForText(file: string, text: string): string {
@@ -134,6 +164,14 @@ function componentNameForText(file: string, text: string): string {
 
 function isComponentFile(webRoot: string, file: string, text: string): boolean {
   const rel = toPosix(relative(webRoot, file));
+  if (file.endsWith(".vue")) {
+    return (
+      rel === "app.vue" ||
+      rel.startsWith("components/") ||
+      rel.startsWith("src/components/") ||
+      rel.startsWith("pages/")
+    );
+  }
   if (!/\.(tsx|jsx)$/.test(file)) {
     return false;
   }
@@ -206,6 +244,9 @@ function devCommandFor(webRoot: string, framework: FrontendGraph["framework"]): 
 }
 
 function apiEnvFor(framework: FrontendGraph["framework"]): string {
+  if (framework === "nuxt") {
+    return NUXT_API_URL_ENV;
+  }
   return framework === "vite" || framework === "static" ? VITE_API_URL_ENV : API_URL_ENV;
 }
 
@@ -224,7 +265,7 @@ function stringProp(text: string, prop: "userId" | "tenantId" | "role"): string 
 }
 
 function defaultWebPort(framework: FrontendGraph["framework"]): number {
-  return framework === "next" ? 3000 : 5173;
+  return framework === "next" || framework === "nuxt" ? 3000 : 5173;
 }
 
 function componentNamesInText(text: string, components: FrontendComponentInfo[]): string[] {
@@ -299,7 +340,7 @@ export function buildFrontendGraph(input: {
   const defaultApiUrl = `http://127.0.0.1:${input.apiPort ?? 3765}`;
   const devUrl = `http://127.0.0.1:${input.webPort ?? defaultWebPort(framework)}`;
   const files = walkFiles(webRoot);
-  const sourceFiles = files.filter((file) => /\.(tsx|ts|jsx|js|html)$/.test(file));
+  const sourceFiles = files.filter((file) => /\.(tsx|ts|jsx|js|vue|html)$/.test(file));
   const routes: FrontendRouteInfo[] = [];
   const components: FrontendComponentInfo[] = [];
   const providers: FrontendProviderInfo[] = [];
@@ -314,7 +355,9 @@ export function buildFrontendGraph(input: {
       rel === "web/lib/forge.ts" ||
       rel === "web/lib/forge.tsx" ||
       rel === "web/src/lib/forge.ts" ||
-      rel === "web/src/lib/forge.tsx";
+      rel === "web/src/lib/forge.tsx" ||
+      rel === "web/composables/forge.ts" ||
+      rel === "web/plugins/forge.ts";
     textByRel.set(rel, text);
     const uses = detectUses(text, input.clientManifest);
     if (isComponentFile(webRoot, file, text)) {
@@ -336,10 +379,31 @@ export function buildFrontendGraph(input: {
       });
     }
     if (
+      text.includes("provideForge({") ||
+      text.includes("vueApp.use(ForgeVuePlugin") ||
+      text.includes("app.use(ForgeVuePlugin")
+    ) {
+      const devAuth =
+        text.includes("devAuth") ||
+        (text.includes("userId") && text.includes("tenantId") && text.includes("role"));
+      providers.push({
+        name: framework === "nuxt" ? "ForgeNuxtPlugin" : "ForgeVueProvider",
+        file: rel,
+        ...(text.includes(NUXT_API_URL_ENV) ? { apiUrlEnv: NUXT_API_URL_ENV } : {}),
+        ...(text.includes(VITE_API_URL_ENV) ? { apiUrlEnv: VITE_API_URL_ENV } : {}),
+        devAuth,
+        ...(devAuth && stringProp(text, "userId") ? { devAuthUserId: stringProp(text, "userId") } : {}),
+        ...(devAuth && stringProp(text, "tenantId") ? { devAuthTenantId: stringProp(text, "tenantId") } : {}),
+        ...(devAuth && stringProp(text, "role") ? { devAuthRole: stringProp(text, "role") } : {}),
+      });
+    }
+    if (
       rel === "web/lib/forge.ts" ||
       rel === "web/lib/forge.tsx" ||
       rel === "web/src/lib/forge.ts" ||
-      rel === "web/src/lib/forge.tsx"
+      rel === "web/src/lib/forge.tsx" ||
+      rel === "web/composables/forge.ts" ||
+      rel === "web/plugins/forge.ts"
     ) {
       bridgeFiles.push(rel);
     }
@@ -350,7 +414,7 @@ export function buildFrontendGraph(input: {
         message: "frontend imports generated files directly; prefer the local web/lib/forge bridge",
         file: rel,
         fixHint: "Import generated client APIs through web/lib/forge.ts so agents and humans have one stable frontend bridge.",
-        suggestedCommands: ["forge inspect frontend --json", "forge make ui --framework vite --dry-run --json"],
+        suggestedCommands: ["forge inspect frontend --json", `forge make ui --framework ${framework === "nuxt" ? "nuxt" : "vite"} --dry-run --json`],
         docs: ["src/forge/_generated/frontendGraph.json", "src/forge/_generated/appMap.md"],
       }));
     }
@@ -401,9 +465,13 @@ export function buildFrontendGraph(input: {
     diagnostics.push(createDiagnostic({
       severity: "warning",
       code: "FORGE_FRONTEND_PROVIDER_MISSING",
-      message: "web app does not expose a ForgeProvider; generated hooks may not be wired",
-      fixHint: "Mount ForgeProvider once in the web app root/provider layer and pass devAuth for local development.",
-      suggestedCommands: ["forge inspect frontend --json", "forge make ui --framework vite --dry-run --json"],
+      message: framework === "nuxt"
+        ? "Nuxt app does not expose a Forge plugin; generated composables may not be wired"
+        : "web app does not expose a ForgeProvider; generated hooks may not be wired",
+      fixHint: framework === "nuxt"
+        ? "Create web/plugins/forge.ts and call provideForge with runtimeConfig.public.forgeUrl and devAuth for local development."
+        : "Mount ForgeProvider once in the web app root/provider layer and pass devAuth for local development.",
+      suggestedCommands: ["forge inspect frontend --json", `forge make ui --framework ${framework === "nuxt" ? "nuxt" : "vite"} --dry-run --json`],
       docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
     }));
   }
@@ -411,9 +479,13 @@ export function buildFrontendGraph(input: {
     diagnostics.push(createDiagnostic({
       severity: "warning",
       code: "FORGE_FRONTEND_BRIDGE_MISSING",
-      message: "web/**/lib/forge.ts bridge is missing; agents may use fragile generated import paths",
-      fixHint: "Create web/lib/forge.ts or web/src/lib/forge.ts and re-export api, client, ForgeProvider, and generated hooks from src/forge/_generated.",
-      suggestedCommands: ["forge make ui --framework vite --dry-run --json", "forge generate"],
+      message: framework === "nuxt"
+        ? "web/composables/forge.ts bridge is missing; agents may use fragile generated import paths"
+        : "web/**/lib/forge.ts bridge is missing; agents may use fragile generated import paths",
+      fixHint: framework === "nuxt"
+        ? "Create web/composables/forge.ts and re-export api plus generated Forge Vue composables from src/forge/_generated."
+        : "Create web/lib/forge.ts or web/src/lib/forge.ts and re-export api, client, ForgeProvider, and generated hooks from src/forge/_generated.",
+      suggestedCommands: [`forge make ui --framework ${framework === "nuxt" ? "nuxt" : "vite"} --dry-run --json`, "forge generate"],
       docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],
     }));
   }

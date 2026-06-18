@@ -57,9 +57,11 @@ forge make workflow invoiceWorkflow --trigger invoice.created
 ```bash
 forge make ui --framework vite --dry-run --json
 forge make ui --framework vite --yes
+forge make ui --framework nuxt --dry-run --json
+forge make ui --framework nuxt --yes
 ```
 
-Adds Vite + React + `ForgeProvider` + client bridge.
+Adds Vite + React + `ForgeProvider` or Nuxt + Vue composables + client bridge.
 
 ### AI chat surface
 
