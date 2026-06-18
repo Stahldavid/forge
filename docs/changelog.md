@@ -4,7 +4,7 @@ Release history for the `forgeos` npm package (`alpha` dist-tag).
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
-## Unreleased
+## 0.1.0-alpha.15
 
 Brownfield import analysis:
 
