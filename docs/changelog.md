@@ -4,6 +4,14 @@ Release history for the `forgeos` npm package (`alpha` dist-tag).
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## Unreleased
+
+Brownfield import analysis:
+
+- Added H49 `forge import analyze`, `forge import inspect`, and `forge inspect imported --json`.
+- Emits `.forge/import` inventory, route, frontend call, candidate entry, risk, migration plan, and imported agent contract artifacts.
+- Keeps every imported entry hidden from agents until review, with approval required for command-like or risky static detections.
+
 ## 0.1.0-alpha.11
 
 Strict verify performance:

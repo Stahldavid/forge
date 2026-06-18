@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.14 input=d960fc3e75c3f21b1066e18eba126fb8d7b18633f82417cd61779fc88366e1e8 content=ca83e88f54d6790ab4200cb3bc39becc15917416c10776851dc608e45e339a34
+// @forge-generated generator=0.1.0-alpha.14 input=a43a0684c37e2ef6e7bce4adf441dbc821a8de9a5fa05aca373a8dd420940b7d content=ca83e88f54d6790ab4200cb3bc39becc15917416c10776851dc608e45e339a34
 export const packageUpgradeRegistry = {
   "commands": [
     "forge deps outdated --json",

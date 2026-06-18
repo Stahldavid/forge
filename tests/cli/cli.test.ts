@@ -29,10 +29,30 @@ describe("Forge CLI", () => {
       "dev",
       "agent-contract",
       "framework",
+      "imported",
     ]) {
       const parsed = parseCli(["inspect", target]);
       expect(parsed.errors).toEqual([]);
       expect(parsed.command?.kind).toBe("inspect");
+    }
+  });
+
+  test("parseCli accepts brownfield import commands", () => {
+    const analyze = parseCli(["import", "analyze", "--json", "--dry-run"]);
+    expect(analyze.errors).toEqual([]);
+    expect(analyze.command?.kind).toBe("import");
+    if (analyze.command?.kind === "import") {
+      expect(analyze.command.options.subcommand).toBe("analyze");
+      expect(analyze.command.options.dryRun).toBe(true);
+    }
+
+    const inspect = parseCli(["import", "inspect", "--entry", "users.read", "--target", "candidate-entries", "--json"]);
+    expect(inspect.errors).toEqual([]);
+    expect(inspect.command?.kind).toBe("import");
+    if (inspect.command?.kind === "import") {
+      expect(inspect.command.options.subcommand).toBe("inspect");
+      expect(inspect.command.options.entry).toBe("users.read");
+      expect(inspect.command.options.target).toBe("candidate-entries");
     }
   });
 

@@ -1,7 +1,7 @@
-// @forge-generated generator=0.1.0-alpha.14 input=d960fc3e75c3f21b1066e18eba126fb8d7b18633f82417cd61779fc88366e1e8 content=1f8039110cc139d45d0ed720567b93e88ba93974fb90dcd418cce44869fb9369
+// @forge-generated generator=0.1.0-alpha.14 input=a43a0684c37e2ef6e7bce4adf441dbc821a8de9a5fa05aca373a8dd420940b7d content=d4bf87fbb0b4e73483c4aa67896162c3674024d878504f393fbf124bff0d130f
 export const subscriptionManifest = {
   "generatorVersion": "0.1.0-alpha.14",
-  "inputHash": "c95dd24cda57965dd08c82ae9057b5953b75fd19bb1c76bfe98aee4f109c2afc",
+  "inputHash": "f1f146338109f807fe8ea010bb20e7369e713310a4ed88c93aa0d1c8c9169039",
   "liveQueries": [],
   "schemaVersion": "0.1.0"
 } as const;

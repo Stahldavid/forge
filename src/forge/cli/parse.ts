@@ -48,6 +48,7 @@ import type {
 } from "../ui/types.ts";
 import type { ForgeDoOptions } from "../intent/types.ts";
 import type { BenchCommandOptions, BenchSubcommand } from "../bench.ts";
+import type { BrownfieldImportCommandOptions } from "../brownfield-import/types.ts";
 
 export type ForgeCommand =
   | { kind: "version"; json: boolean }
@@ -168,6 +169,7 @@ export type ForgeCommand =
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
+  | { kind: "import"; options: BrownfieldImportCommandOptions }
   | { kind: "delta"; subcommand: "status"; json: boolean; workspaceRoot: string }
   | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; workspaceRoot: string }
   | { kind: "explain"; thing: string; json: boolean; workspaceRoot: string }
@@ -360,6 +362,7 @@ export const TOP_LEVEL_COMMANDS = [
   "timeline",
   "explain",
   "manifest",
+  "import",
   "generate",
   "add",
   "inspect",
@@ -416,6 +419,7 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "agent-adapters",
   "capability-map",
   "framework",
+  "imported",
   "ui",
   "ui-scenarios",
   "ui-routes",
@@ -1706,6 +1710,28 @@ export function parseCli(argv: string[]): ParsedCli {
           path,
           json: parseFlag(argv, "--json"),
           workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "import": {
+      const subcommand = rest[0];
+      if (subcommand !== "analyze" && subcommand !== "inspect") {
+        errors.push("forge import requires subcommand analyze or inspect");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "import",
+          options: {
+            subcommand,
+            json: parseFlag(argv, "--json"),
+            dryRun: parseFlag(argv, "--dry-run"),
+            workspaceRoot,
+            entry: parseOptionValue(argv, "--entry"),
+            target: parseOptionValue(argv, "--target"),
+          },
         },
         workspaceRoot,
         errors,

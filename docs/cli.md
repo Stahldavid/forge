@@ -73,6 +73,7 @@ forge inspect capabilities --json
 forge inspect ai --json
 forge inspect agent-tools --json
 forge inspect framework --json
+forge inspect imported --json
 forge doctor
 forge doctor windows --json
 ```
@@ -93,8 +94,22 @@ forge doctor windows --json
 | `ai` | Providers, generations, placement |
 | `agent-tools` | Explicit + auto tools |
 | `framework` | ForgeOS CLI/modules (in framework repo) |
+| `imported` | Brownfield import artifacts from `.forge/import` |
 
 Use these when an agent needs to understand the project before changing it.
+
+## Brownfield Import Analysis
+
+```bash
+forge import analyze --json
+forge import inspect --json
+forge import inspect --target candidate-entries --json
+forge inspect imported --json
+```
+
+`forge import analyze` scans an existing TypeScript/JavaScript app without changing source code. It writes `.forge/import/inventory.json`, `routes.json`, `frontendCalls.json`, `candidateEntries.json`, `riskReport.json`, `migrationPlan.md`, and `importedAgentContract.json`.
+
+All imported entries start with `origin: imported`, `assurance: static-scan`, `reviewStatus: needs-review`, and `visibleToAgent: false`. Command-like, destructive, external, or unknown entries keep `needsApproval: true` until a human review turns them into native Forge commands, queries, actions, or workflows.
 
 ## Generation and Verification
 

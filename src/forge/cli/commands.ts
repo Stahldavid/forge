@@ -161,6 +161,12 @@ import {
   runForgeDoCommand,
 } from "../intent/index.ts";
 import {
+  formatBrownfieldImportHuman,
+  formatBrownfieldImportJson,
+  inspectBrownfieldImport,
+  runBrownfieldImportCommand,
+} from "../brownfield-import/index.ts";
+import {
   formatAgentHuman,
   formatAgentJson,
   runAgentCommand,
@@ -515,6 +521,18 @@ export async function runInspectCommand(
       warnings: [],
       errors: [],
       exitCode: 0,
+    };
+  }
+
+  if (target === "imported") {
+    const result = inspectBrownfieldImport(workspaceRoot);
+    return {
+      target,
+      data: formatBrownfieldImportJson(result),
+      warnings: [],
+      errors: [],
+      exitCode: result.exitCode,
+      failureKind: result.failureKind,
     };
   }
 
@@ -970,6 +988,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatJsonResult(result));
       } else {
         process.stdout.write(formatManifestHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "import": {
+      const result = runBrownfieldImportCommand(command.options);
+      if (command.options.json) {
+        process.stdout.write(formatJsonResult(formatBrownfieldImportJson(result)));
+      } else {
+        process.stdout.write(formatBrownfieldImportHuman(result));
       }
       return result.exitCode;
     }

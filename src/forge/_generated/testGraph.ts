@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.14 input=d960fc3e75c3f21b1066e18eba126fb8d7b18633f82417cd61779fc88366e1e8 content=d62f6fdc3536217d8d26c84c1e979111348c9e8ac44f6efcfdd4f1df13e10258
+// @forge-generated generator=0.1.0-alpha.14 input=a43a0684c37e2ef6e7bce4adf441dbc821a8de9a5fa05aca373a8dd420940b7d content=25e53de6970aee1cd8e1a5e11145cf257cd2eec798d0f96c2b17a1f76ac61514
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.14",
-  "inputHash": "d960fc3e75c3f21b1066e18eba126fb8d7b18633f82417cd61779fc88366e1e8",
+  "inputHash": "a43a0684c37e2ef6e7bce4adf441dbc821a8de9a5fa05aca373a8dd420940b7d",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1730,6 +1730,30 @@ export const testGraph = {
         "probable: packages react",
         "probable: packages tsx",
         "probable: packages zod"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "tsx",
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/import/h49-brownfield-import.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx",
+        "probable: packages typescript"
       ]
     },
     {

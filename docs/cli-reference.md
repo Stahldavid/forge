@@ -54,6 +54,10 @@ forge inspect client --json
 forge inspect ai --json
 forge inspect agent-tools --json
 forge inspect framework --json
+forge inspect imported --json
+forge import analyze --json
+forge import inspect --json
+forge import inspect --target candidate-entries --json
 ```
 
 ## Verification

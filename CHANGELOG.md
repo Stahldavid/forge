@@ -1,5 +1,15 @@
 # forgeos
 
+## Unreleased
+
+Brownfield import analysis:
+
+- Added H49 `forge import analyze` and `forge import inspect` for static brownfield TypeScript/JavaScript app inventory.
+- Detects Next.js App Router routes, Pages API routes, Express/Nest-style handlers, frontend `fetch`/`axios` calls, env usage, framework/data/external package signals, and conservative candidate command/query entries.
+- Writes `.forge/import` artifacts including inventory, routes, frontend calls, candidate entries, risk report, migration plan, and imported agent contract.
+- Keeps imported entries hidden from agents by default with `origin: imported`, `assurance: static-scan`, `reviewStatus: needs-review`, `visibleToAgent: false`, and approval required for command-like or risky entries.
+- Added `forge inspect imported --json` plus focused H49 CLI and scanner coverage.
+
 ## 0.1.0-alpha.14
 
 Java and Nuxt/Vue support:

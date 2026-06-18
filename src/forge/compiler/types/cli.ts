@@ -84,6 +84,7 @@ export type InspectTarget =
   | "agent-adapters"
   | "capability-map"
   | "framework"
+  | "imported"
   | "ui"
   | "ui-scenarios"
   | "ui-routes"
