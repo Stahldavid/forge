@@ -1,0 +1,1 @@
+{"check":["forge check"],"dev":["forge dev"],"generate":["forge generate"],"impact":["forge impact --changed --json"],"repair":["forge repair diagnose --from-last-test-run --json"],"setup":["bun install"],"testPlan":["forge test plan --changed --json"],"testRun":["forge test run --changed --json"],"verify":["forge verify --strict"]}

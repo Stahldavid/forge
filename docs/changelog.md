@@ -4,6 +4,15 @@ Release history for the `forgeos` npm package.
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## 0.1.0-alpha.18
+
+Codex hook memory hardening:
+
+- Derived useful Codex hook metadata from the documented wire format while keeping raw prompts, tool inputs, tool responses, transcripts, and secrets out of Agent Memory.
+- Added safe command summaries, tool-call ids, result status, exit codes, response summaries, inferred files, and inferred runtime entries for Codex tool events.
+- Updated Codex hook installation with hook timeouts, status messages, and a local wrapper for checkout-based ingestion.
+- Updated Agent Memory docs and regression coverage for real Codex hook payloads.
+
 ## 0.1.0-alpha.17
 
 External runtime timeline metadata:

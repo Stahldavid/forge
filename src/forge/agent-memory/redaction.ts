@@ -17,7 +17,7 @@ const RAW_TEXT_KEYS = new Set([
   "result",
 ]);
 
-const RAW_ARGS_KEYS = new Set(["args", "arguments", "tool_input", "toolInput", "input"]);
+const RAW_ARGS_KEYS = new Set(["args", "arguments", "tool_input", "toolInput", "tool_response", "toolResponse", "input"]);
 
 export interface AgentPayloadRedaction {
   value: Record<string, unknown>;
@@ -77,7 +77,8 @@ function summarizeText(value: string): string | undefined {
   if (!normalized) {
     return undefined;
   }
-  return normalized.length > 160 ? `${normalized.slice(0, 157)}...` : normalized;
+  const clipped = normalized.length > 160 ? `${normalized.slice(0, 157)}...` : normalized;
+  return scrubSecretTokens(clipped);
 }
 
 function describeShape(value: unknown): unknown {
@@ -91,4 +92,12 @@ function describeShape(value: unknown): unknown {
     };
   }
   return { kind: typeof value };
+}
+
+function scrubSecretTokens(value: string): string {
+  return value
+    .replace(/\bsk[-_][A-Za-z0-9_\-.]{8,}\b/g, "[REDACTED]")
+    .replace(/\bnpm_[A-Za-z0-9]{16,}\b/g, "[REDACTED]")
+    .replace(/\bgh[pousr]_[A-Za-z0-9_]{16,}\b/g, "[REDACTED]")
+    .replace(/\b(?:xox[baprs]-)[A-Za-z0-9-]{16,}\b/g, "[REDACTED]");
 }

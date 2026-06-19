@@ -1,5 +1,14 @@
 # forgeos
 
+## 0.1.0-alpha.18
+
+Codex hook memory hardening:
+
+- Hardened Codex hook ingestion by deriving useful tool-call metadata from the documented hook wire format while keeping raw prompts, tool inputs, tool responses, transcripts, and secrets out of Agent Memory.
+- Added safe command summaries, tool-call ids, result status, exit codes, response summaries, inferred files, and inferred runtime entries for Codex `PreToolUse`, `PermissionRequest`, and `PostToolUse` events.
+- Updated the Codex hook installer with hook timeouts and status messages, and added a local wrapper so repo hooks can use the checkout implementation.
+- Documented the safe Codex hook metadata surface and added regression coverage for real hook payload shapes.
+
 ## 0.1.0-alpha.17
 
 External runtime timeline metadata:

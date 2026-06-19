@@ -13,6 +13,19 @@ const CODEX_EVENTS = [
   "Stop",
 ];
 
+const CODEX_EVENT_STATUS: Record<string, string> = {
+  SessionStart: "Recording Codex session start",
+  UserPromptSubmit: "Recording Codex prompt metadata",
+  PreToolUse: "Recording Codex tool request",
+  PermissionRequest: "Recording Codex approval request",
+  PostToolUse: "Recording Codex tool result",
+  SubagentStart: "Recording Codex subagent start",
+  SubagentStop: "Recording Codex subagent stop",
+  PreCompact: "Recording Codex compaction start",
+  PostCompact: "Recording Codex compaction result",
+  Stop: "Recording Codex turn stop",
+};
+
 export function codexInstallFiles(): Array<{ path: string; content: string }> {
   const hook = {
     hooks: Object.fromEntries(CODEX_EVENTS.map((event) => [
@@ -24,6 +37,8 @@ export function codexInstallFiles(): Array<{ path: string; content: string }> {
             {
               type: "command",
               command: `forge agent ingest codex --event ${event}`,
+              timeout: 30,
+              statusMessage: CODEX_EVENT_STATUS[event] ?? "Recording Codex event",
             },
           ],
         },

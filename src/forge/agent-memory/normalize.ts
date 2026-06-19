@@ -1,5 +1,7 @@
 import { normalizePath } from "../compiler/primitives/paths.ts";
+import { hashStable } from "../compiler/primitives/hash.ts";
 import { readDeltaGitSnapshot } from "../delta/git-observer.ts";
+import { redactDeltaPayload } from "../delta/redaction.ts";
 import { redactAgentPayload } from "./redaction.ts";
 import {
   AGENT_EVENT_SCHEMA,
@@ -23,6 +25,7 @@ export function normalizeAgentEvent(input: NormalizeAgentEventInput): AgentEvent
   const rawEventName = input.eventName ?? stringField(input.raw, "hook_event_name") ?? stringField(input.raw, "event") ?? "unknown";
   const normalizedKind = normalizeEventKind(source, rawEventName, input.raw);
   const redacted = redactAgentPayload(input.raw);
+  const derived = deriveSafeHookMetadata(input.raw, rawEventName);
   const git = readDeltaGitSnapshot(input.workspaceRoot);
   const actorName = source === "claude-code"
     ? "Claude Code"
@@ -57,7 +60,10 @@ export function normalizeAgentEvent(input: NormalizeAgentEventInput): AgentEvent
       name: stringField(input.raw, "actor") ?? actorName,
       model: stringField(input.raw, "model"),
     },
-    payload: redacted.value,
+    payload: {
+      ...redacted.value,
+      ...derived,
+    },
     privacy: {
       rawPromptStored: false,
       rawCompletionStored: false,
@@ -78,15 +84,21 @@ export function summarizeAgentEvent(envelope: AgentEventEnvelope): string {
     stringField(envelope.payload, "tool_name") ??
     stringField(envelope.payload, "tool");
   const command = stringField(envelope.payload, "command");
+  const commandSummary = stringField(envelope.payload, "commandSummary");
+  const resultStatus = stringField(envelope.payload, "resultStatus");
   const promptSummary = stringField(envelope.payload, "promptSummary") ?? stringField(envelope.payload, "userPromptSummary");
   if (envelope.event.kind === "agent.prompt.submitted" && promptSummary) {
     return promptSummary;
   }
-  if (tool) {
-    return `${envelope.source.agent} ${tool} ${statusFromKind(envelope.event.kind)}`;
+  if (envelope.event.kind === "approval.requested") {
+    return `${envelope.source.agent} requested approval${tool ? ` for ${tool}` : ""}${commandSummary ? `: ${commandSummary}` : ""}`;
   }
-  if (command) {
-    return `${envelope.source.agent} ran ${command}`;
+  if (tool) {
+    const status = resultStatus ?? statusFromKind(envelope.event.kind);
+    return `${envelope.source.agent} ${tool}${status ? ` ${status}` : ""}${commandSummary ? `: ${commandSummary}` : ""}`;
+  }
+  if (commandSummary ?? command) {
+    return `${envelope.source.agent} ran ${commandSummary ?? command}`;
   }
   return `${envelope.source.agent} ${envelope.event.kind}`;
 }
@@ -103,11 +115,12 @@ export function extractAgentEventBindings(envelope: AgentEventEnvelope): {
   const payload = envelope.payload;
   return {
     toolName: stringField(payload, "toolName") ?? stringField(payload, "tool_name") ?? stringField(payload, "tool"),
-    command: stringField(payload, "command"),
+    command: stringField(payload, "command") ?? stringField(payload, "commandSummary"),
     exitCode: numberField(payload, "exitCode") ?? numberField(payload, "exit_code"),
     files: uniqueStrings([
       ...arrayOfStrings(payload.files),
       ...arrayOfStrings(payload.paths),
+      ...arrayOfStrings(payload.affectedFiles),
       stringField(payload, "file_path"),
       stringField(payload, "filePath"),
       stringField(payload, "path"),
@@ -117,6 +130,7 @@ export function extractAgentEventBindings(envelope: AgentEventEnvelope): {
       stringField(payload, "entryName"),
       stringField(payload, "entry_name"),
       stringField(payload, "runtimeEntry"),
+      stringField(payload, "runtime_entry"),
     ]),
     proofs: uniqueStrings([
       ...arrayOfStrings(payload.proofs),
@@ -125,6 +139,98 @@ export function extractAgentEventBindings(envelope: AgentEventEnvelope): {
     ]),
     status: statusFromKind(envelope.event.kind),
   };
+}
+
+function deriveSafeHookMetadata(raw: Record<string, unknown>, eventName: string): Record<string, unknown> {
+  const derived: Record<string, unknown> = {};
+  const toolName = stringField(raw, "tool_name") ?? stringField(raw, "toolName") ?? stringField(raw, "tool");
+  const toolUseId = stringField(raw, "tool_use_id") ?? stringField(raw, "toolUseId");
+  const permissionMode = stringField(raw, "permission_mode") ?? stringField(raw, "permissionMode");
+  const cwd = stringField(raw, "cwd");
+  const trigger = stringField(raw, "trigger");
+  const agentId = stringField(raw, "agent_id") ?? stringField(raw, "agentId");
+  const agentType = stringField(raw, "agent_type") ?? stringField(raw, "agentType");
+  if (toolName) {
+    derived.toolName = toolName;
+  }
+  if (toolUseId) {
+    derived.toolUseId = toolUseId;
+  }
+  if (permissionMode) {
+    derived.permissionMode = permissionMode;
+  }
+  if (cwd) {
+    derived.cwd = normalizePath(cwd);
+  }
+  if (trigger) {
+    derived.trigger = trigger;
+  }
+  if (agentId) {
+    derived.agentId = agentId;
+  }
+  if (agentType) {
+    derived.agentType = agentType;
+  }
+
+  const toolInput = objectField(raw, "tool_input") ?? objectField(raw, "toolInput");
+  const toolResponse = objectField(raw, "tool_response") ?? objectField(raw, "toolResponse");
+  const command = stringField(toolInput, "command") ?? stringField(raw, "command");
+  if (command) {
+    derived.commandHash = hashStable(command);
+    derived.commandStored = false;
+    derived.commandSummary = summarizeCommand(command);
+    derived.commandKind = classifyCommand(toolName, command);
+  }
+  const description = stringField(toolInput, "description");
+  if (description) {
+    derived.approvalDescriptionSummary = safeSummary(description, 180);
+  }
+  const exitCode = numberField(toolResponse, "exitCode") ?? numberField(toolResponse, "exit_code") ?? numberField(raw, "exitCode") ?? numberField(raw, "exit_code");
+  if (exitCode !== undefined) {
+    derived.exitCode = exitCode;
+    derived.resultStatus = exitCode === 0 ? "success" : "failed";
+  } else {
+    const status = stringField(toolResponse, "status") ?? stringField(raw, "status");
+    if (status) {
+      derived.resultStatus = status;
+    }
+  }
+  const responseSummary = summarizeToolResponse(toolResponse);
+  if (responseSummary) {
+    derived.responseSummary = responseSummary;
+  }
+  if (toolResponse) {
+    derived.responseHash = hashStable(JSON.stringify(toolResponse));
+    derived.responseStored = false;
+  }
+
+  const files = uniqueStrings([
+    ...extractPaths(toolInput),
+    ...extractPaths(toolResponse),
+    ...extractPaths(raw),
+    ...extractPathsFromCommand(command),
+  ].map((value) => normalizePath(value)));
+  if (files.length > 0) {
+    derived.files = files;
+    derived.affectedFiles = files;
+  }
+  const entries = uniqueStrings([
+    ...extractNamedValues(toolInput, ["entry", "entryName", "entry_name", "runtimeEntry", "runtime_entry"]),
+    ...extractNamedValues(raw, ["entry", "entryName", "entry_name", "runtimeEntry", "runtime_entry"]),
+    ...extractEntriesFromCommand(command),
+  ]);
+  if (entries.length > 0) {
+    derived.entries = entries;
+  }
+  if (eventName === "Stop" || eventName === "SubagentStop") {
+    const lastMessage = stringField(raw, "last_assistant_message") ?? stringField(raw, "lastAssistantMessage");
+    if (lastMessage) {
+      derived.lastAssistantMessageHash = hashStable(lastMessage);
+      derived.lastAssistantMessageStored = false;
+      derived.lastAssistantMessageSummary = safeSummary(lastMessage, 220);
+    }
+  }
+  return derived;
 }
 
 function normalizeSource(source: string): AgentMemorySourceName | string {
@@ -230,13 +336,18 @@ function statusFromKind(kind: string): string | undefined {
   return undefined;
 }
 
-function stringField(value: Record<string, unknown>, key: string): string | undefined {
+function objectField(value: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
   const field = value[key];
+  return field && typeof field === "object" && !Array.isArray(field) ? field as Record<string, unknown> : undefined;
+}
+
+function stringField(value: Record<string, unknown> | undefined, key: string): string | undefined {
+  const field = value?.[key];
   return typeof field === "string" && field.length > 0 ? field : undefined;
 }
 
-function numberField(value: Record<string, unknown>, key: string): number | undefined {
-  const field = value[key];
+function numberField(value: Record<string, unknown> | undefined, key: string): number | undefined {
+  const field = value?.[key];
   return typeof field === "number" && Number.isFinite(field) ? field : undefined;
 }
 
@@ -246,4 +357,142 @@ function arrayOfStrings(value: unknown): string[] {
 
 function uniqueStrings(values: Array<string | undefined>): string[] {
   return [...new Set(values.filter((value): value is string => typeof value === "string" && value.length > 0))];
+}
+
+function summarizeCommand(command: string): string {
+  const normalized = command.replace(/\s+/g, " ").trim();
+  const singleLine = normalized.length > 220 ? `${normalized.slice(0, 217)}...` : normalized;
+  return safeSummary(singleLine, 220);
+}
+
+function safeSummary(value: string, maxLength: number): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const clipped = normalized.length > maxLength ? `${normalized.slice(0, Math.max(0, maxLength - 3))}...` : normalized;
+  const redacted = redactDeltaPayload({ summary: scrubSecretTokens(clipped) }).value.summary;
+  return typeof redacted === "string" ? redacted : clipped;
+}
+
+function scrubSecretTokens(value: string): string {
+  return value
+    .replace(/\bsk[-_][A-Za-z0-9_\-.]{8,}\b/g, "[REDACTED]")
+    .replace(/\bnpm_[A-Za-z0-9]{16,}\b/g, "[REDACTED]")
+    .replace(/\bgh[pousr]_[A-Za-z0-9_]{16,}\b/g, "[REDACTED]")
+    .replace(/\b(?:xox[baprs]-)[A-Za-z0-9-]{16,}\b/g, "[REDACTED]");
+}
+
+function classifyCommand(toolName: string | undefined, command: string): string {
+  if (toolName === "apply_patch") {
+    return "patch";
+  }
+  if (toolName?.startsWith("mcp__")) {
+    return "mcp";
+  }
+  if (/\b(git|npm|pnpm|bun|yarn|node|forge|gh|python|pytest|mvn|gradle)\b/.test(command)) {
+    return "shell";
+  }
+  return toolName ?? "command";
+}
+
+function summarizeToolResponse(value: Record<string, unknown> | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const candidate = stringField(value, "summary") ??
+    stringField(value, "message") ??
+    stringField(value, "stderr") ??
+    stringField(value, "stdout") ??
+    stringField(value, "output") ??
+    stringField(value, "result");
+  return candidate ? safeSummary(candidate, 220) : undefined;
+}
+
+function extractPaths(value: unknown): string[] {
+  const paths: string[] = [];
+  visit(value, (key, child) => {
+    if (typeof child === "string" && isPathLikeKey(key) && looksLikePath(child)) {
+      paths.push(child);
+    }
+    if (Array.isArray(child) && isPathListKey(key)) {
+      for (const item of child) {
+        if (typeof item === "string" && looksLikePath(item)) {
+          paths.push(item);
+        }
+      }
+    }
+  });
+  return paths;
+}
+
+function extractNamedValues(value: unknown, keys: string[]): string[] {
+  const wanted = new Set(keys);
+  const values: string[] = [];
+  visit(value, (key, child) => {
+    if (wanted.has(key) && typeof child === "string" && child.length > 0) {
+      values.push(child);
+    }
+  });
+  return values;
+}
+
+function extractPathsFromCommand(command: string | undefined): string[] {
+  if (!command) {
+    return [];
+  }
+  const paths: string[] = [];
+  const patchPattern = /^\*\*\* (?:Add|Update|Delete) File: (.+)$/gm;
+  for (const match of command.matchAll(patchPattern)) {
+    if (match[1]) {
+      paths.push(match[1].trim());
+    }
+  }
+  const literalPathPattern = /(?:-LiteralPath|-Path)\s+["']?([^"'\s]+)["']?/g;
+  for (const match of command.matchAll(literalPathPattern)) {
+    if (match[1] && looksLikePath(match[1])) {
+      paths.push(match[1]);
+    }
+  }
+  return paths;
+}
+
+function extractEntriesFromCommand(command: string | undefined): string[] {
+  if (!command) {
+    return [];
+  }
+  const entries: string[] = [];
+  const forgeEntryPattern = /\b(?:run|query|explain|timeline)\s+([a-zA-Z0-9_.:-]+)/g;
+  for (const match of command.matchAll(forgeEntryPattern)) {
+    const value = match[1];
+    if (value && value.includes(".")) {
+      entries.push(value);
+    }
+  }
+  return entries;
+}
+
+function visit(value: unknown, callback: (key: string, value: unknown) => void, depth = 0): void {
+  if (!value || typeof value !== "object" || depth > 4) {
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value.slice(0, 50)) {
+      visit(item, callback, depth + 1);
+    }
+    return;
+  }
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    callback(key, child);
+    visit(child, callback, depth + 1);
+  }
+}
+
+function isPathLikeKey(key: string): boolean {
+  return /^(file|filePath|file_path|path|uri|absolutePath|relativePath)$/i.test(key);
+}
+
+function isPathListKey(key: string): boolean {
+  return /^(files|paths|changedFiles|affectedFiles|artifact_paths|artifactPaths)$/i.test(key);
+}
+
+function looksLikePath(value: string): boolean {
+  return /[\\/]/.test(value) || /\.(ts|tsx|js|jsx|mjs|cjs|json|md|mdx|sql|css|html|yml|yaml|toml|lock|java|go|py|ps1)$/i.test(value);
 }

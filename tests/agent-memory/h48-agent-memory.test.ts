@@ -83,6 +83,123 @@ describe("H48 agent memory bridge", () => {
     }
   });
 
+  test("extracts useful metadata from real Codex hook wire format without storing raw payloads", async () => {
+    const root = tempWorkspace("h48-codex-wire");
+    try {
+      const ingest = await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        eventName: "PostToolUse",
+        input: {
+          session_id: "codex-session-3",
+          turn_id: "turn-3",
+          hook_event_name: "PostToolUse",
+          permission_mode: "acceptEdits",
+          cwd: root,
+          tool_name: "Bash",
+          tool_use_id: "toolu_3",
+          tool_input: {
+            command: "forge run billing.createInvoice --args '{\"apiKey\":\"sk_h48_real_wire_secret\"}'",
+          },
+          tool_response: {
+            exitCode: 0,
+            stdout: "created invoice inv_123 with sk_h48_real_wire_secret",
+          },
+        },
+      });
+      expect(ingest.exitCode).toBe(0);
+      expect("envelope" in ingest).toBe(true);
+      expect("event" in ingest).toBe(true);
+      if (!("envelope" in ingest) || !("event" in ingest)) {
+        throw new Error("expected ingest result");
+      }
+      const serialized = JSON.stringify(ingest);
+      expect(serialized).not.toContain("sk_h48_real_wire_secret");
+      expect(serialized).not.toContain("\"tool_input\":{\"command\"");
+      expect(serialized).not.toContain("\"tool_response\":{\"exitCode\"");
+      expect(ingest.envelope?.payload).toMatchObject({
+        toolName: "Bash",
+        toolUseId: "toolu_3",
+        permissionMode: "acceptEdits",
+        commandStored: false,
+        commandKind: "shell",
+        resultStatus: "success",
+        exitCode: 0,
+        responseStored: false,
+      });
+      expect(ingest.envelope?.payload.commandHash).toBeTruthy();
+      expect(ingest.envelope?.payload.commandSummary).toContain("forge run billing.createInvoice");
+      expect(ingest.envelope?.payload.responseSummary).toContain("created invoice");
+      expect(ingest.event?.data.bindings).toMatchObject({
+        toolName: "Bash",
+        command: expect.stringContaining("forge run billing.createInvoice"),
+        exitCode: 0,
+        entries: ["billing.createInvoice"],
+        status: "completed",
+      });
+
+      const context = await runAgentMemoryCommand({
+        subcommand: "context",
+        workspaceRoot: root,
+        json: true,
+        target: "generic",
+        entry: "billing.createInvoice",
+      });
+      expect("agentMemory" in context).toBe(true);
+      if ("agentMemory" in context) {
+        expect(context.agentMemory.entries).toContain("billing.createInvoice");
+        expect(context.agentMemory.toolCalls.some((call) => call.tool === "Bash" && call.status === "completed")).toBe(true);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("extracts approval and apply_patch file metadata from Codex hook inputs", async () => {
+    const root = tempWorkspace("h48-codex-approval");
+    try {
+      const ingest = await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        eventName: "PermissionRequest",
+        input: {
+          session_id: "codex-session-4",
+          turn_id: "turn-4",
+          hook_event_name: "PermissionRequest",
+          tool_name: "apply_patch",
+          tool_use_id: "toolu_4",
+          tool_input: {
+            description: "Edit source files",
+            command: "*** Begin Patch\n*** Update File: src/commands/createInvoice.ts\n@@\n-old\n+new\n*** End Patch",
+          },
+        },
+      });
+      expect(ingest.exitCode).toBe(0);
+      expect("envelope" in ingest).toBe(true);
+      expect("event" in ingest).toBe(true);
+      if (!("envelope" in ingest) || !("event" in ingest)) {
+        throw new Error("expected ingest result");
+      }
+      expect(ingest.envelope?.payload).toMatchObject({
+        toolName: "apply_patch",
+        toolUseId: "toolu_4",
+        commandKind: "patch",
+        commandStored: false,
+        approvalDescriptionSummary: "Edit source files",
+      });
+      expect(ingest.event?.data.bindings).toMatchObject({
+        files: ["src/commands/createInvoice.ts"],
+        status: "requested",
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("installs Cursor via MCP and rules without private state hooks", async () => {
     const root = tempWorkspace("h48-cursor-install");
     try {

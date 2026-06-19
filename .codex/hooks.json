@@ -1,0 +1,134 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs SessionStart",
+            "timeout": 30,
+            "statusMessage": "Recording Codex session start"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs UserPromptSubmit",
+            "timeout": 30,
+            "statusMessage": "Recording Codex prompt metadata"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs PreToolUse",
+            "timeout": 30,
+            "statusMessage": "Recording Codex tool request"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs PermissionRequest",
+            "timeout": 30,
+            "statusMessage": "Recording Codex approval request"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs PostToolUse",
+            "timeout": 30,
+            "statusMessage": "Recording Codex tool result"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs SubagentStart",
+            "timeout": 30,
+            "statusMessage": "Recording Codex subagent start"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs SubagentStop",
+            "timeout": 30,
+            "statusMessage": "Recording Codex subagent stop"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs PreCompact",
+            "timeout": 30,
+            "statusMessage": "Recording Codex compaction start"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs PostCompact",
+            "timeout": 30,
+            "statusMessage": "Recording Codex compaction result"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/forge-agent-ingest.cjs Stop",
+            "timeout": 30,
+            "statusMessage": "Recording Codex turn stop"
+          }
+        ]
+      }
+    ]
+  }
+}
