@@ -4,6 +4,7 @@ import {
   FORGE_TELEMETRY_SECRET_REDACTED,
 } from "../../compiler/diagnostics/codes.ts";
 import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
+import { hashStable } from "../../compiler/primitives/hash.ts";
 
 const SECRET_KEY_PATTERN =
   /password|secret|token|apikey|authorization|cookie/i;
@@ -101,6 +102,28 @@ function scrubObject(
   return result;
 }
 
+function summarizeValue(value: unknown): Record<string, unknown> {
+  if (Array.isArray(value)) {
+    return { type: "array", length: value.length };
+  }
+  if (value && typeof value === "object") {
+    return {
+      type: "object",
+      keys: Object.keys(value as Record<string, unknown>).sort().slice(0, 20),
+    };
+  }
+  if (typeof value === "string") {
+    return { type: "string", length: value.length };
+  }
+  return { type: value === null ? "null" : typeof value };
+}
+
+function summarizePayload(payload: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(payload).map(([key, value]) => [key, summarizeValue(value)]),
+  );
+}
+
 function truncateString(
   value: string,
   maxBytes: number,
@@ -148,7 +171,8 @@ export function scrubEnvelopePayload<T extends Record<string, unknown>>(
   }
 
   const serialized = JSON.stringify(scrubbed);
-  if (Buffer.byteLength(serialized, "utf8") > MAX_PAYLOAD_BYTES) {
+  const originalBytes = Buffer.byteLength(serialized, "utf8");
+  if (originalBytes > MAX_PAYLOAD_BYTES) {
     diagnostics.push(
       createDiagnostic({
         severity: "warning",
@@ -156,10 +180,16 @@ export function scrubEnvelopePayload<T extends Record<string, unknown>>(
         message: `truncated telemetry payload to ${MAX_PAYLOAD_BYTES} bytes`,
       }),
     );
-    const parsed = JSON.parse(
-      truncateString(serialized, MAX_PAYLOAD_BYTES, diagnostics, "payload"),
-    ) as T;
-    return { value: parsed, diagnostics };
+    return {
+      value: {
+        truncated: true,
+        originalBytes,
+        maxBytes: MAX_PAYLOAD_BYTES,
+        hash: hashStable(serialized),
+        summary: summarizePayload(scrubbed),
+      } as unknown as T,
+      diagnostics,
+    };
   }
 
   return { value: scrubbed, diagnostics };

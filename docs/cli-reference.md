@@ -70,6 +70,26 @@ forge verify --changed
 forge verify --standard --script-timeout-ms 120000 --json
 ```
 
+## DeltaDB, Timeline, and Sessions
+
+```bash
+forge delta status --json
+forge timeline --json
+forge timeline billing.createInvoice --json
+forge timeline policy:billing.manage --json
+forge timeline --session current --json
+forge timeline rebuild --json
+forge explain billing.createInvoice --json
+forge explain src/policies.ts --json
+forge explain session current --json
+forge session list --json
+forge session show current --json
+forge session rename current "Import billing external service" --json
+forge session merge current worksess_... --json
+forge session split current op_... --json
+forge session detach op_... --json
+```
+
 ## Authoring
 
 ```bash
@@ -179,6 +199,13 @@ forge agent-contract generate
 forge agent-contract check
 forge agent-contract print --json
 forge agent print-context --json
+forge agent context --current --json
+forge agent memory --json
+forge agent ingest codex --event UserPromptSubmit --input '{"hook_event_name":"UserPromptSubmit","session_id":"s1","turn_id":"t1","model":"test","prompt":"hello"}' --json
+forge agent install codex --dry-run --json
+forge agent install claude-code --dry-run --json
+forge agent install cursor --dry-run --json
+forge mcp serve
 forge agent export --target generic
 forge agent export --target cursor
 forge agent export --target codex

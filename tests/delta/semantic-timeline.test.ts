@@ -185,6 +185,38 @@ describe("delta semantic timeline", () => {
     }
   });
 
+  test("summarizes large generated artifact batches in semantic timeline data", async () => {
+    const root = tempWorkspace("semantic-large-artifacts");
+    try {
+      const store = await DeltaStore.open(root);
+      const sessionId = await store.createSession({ source: "forge-command" });
+      await store.appendOperation({
+        sessionId,
+        kind: "artifact.generated",
+        summary: "Generated many Forge artifacts",
+        data: { count: 180, generator: "forge generate" },
+        artifacts: Array.from({ length: 180 }, (_, index) => ({
+          path: `src/forge/_generated/artifact-${index}.json`,
+          artifactKind: "generated-contract",
+          hash: `${index}`.padStart(64, "a"),
+          generated: true,
+        })),
+      });
+
+      const timeline = await store.semanticTimeline({ target: "src/forge/_generated/artifact-179.json" });
+      await store.close();
+
+      const generated = timeline.events.find((event) => event.kind === "generated");
+      expect(generated?.data.artifacts).toMatchObject({
+        count: 180,
+        omitted: 170,
+      });
+      expect(JSON.stringify(generated?.data)).not.toContain("artifact-179");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("parses semantic timeline commands", () => {
     const policy = parseCli(["timeline", "policy:billing.manage", "--json", "--for-agent"]).command;
     expect(policy?.kind).toBe("timeline");

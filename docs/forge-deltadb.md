@@ -22,7 +22,7 @@ H44 stores DeltaDB locally with PGlite at:
 .forge/delta/delta.db
 ```
 
-The path is gitignored by default. It is local state, not a Git replacement and not a committed audit artifact.
+This path is a PGlite/Postgres data directory, not a single SQLite file. The path is gitignored by default. It is local state, not a Git replacement and not a committed audit artifact.
 
 ## Privacy Defaults
 

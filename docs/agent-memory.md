@@ -10,7 +10,7 @@ The bridge is opt-in. It normalizes Codex hooks, Claude Code hooks, Cursor MCP/r
 forge agent install --target codex
 forge agent install --target claude
 forge agent install --target cursor
-forge agent ingest --source codex --input ./event.json --json
+forge agent ingest codex --event UserPromptSubmit --input '{"hook_event_name":"UserPromptSubmit","session_id":"s1","turn_id":"t1","model":"test","prompt":"hello"}' --json
 forge agent context --json
 forge agent memory --json
 forge mcp serve

@@ -1574,6 +1574,7 @@ export class DeltaStore {
     }
     const title = semanticTitleForOperation(context, eventKind, runtime, proof);
     const severity = semanticSeverity(eventKind);
+    const artifacts = summarizeTimelineArtifacts(artifactResult.rows.map(normalizeRow));
     const event: DeltaSemanticTimelineEvent = {
       id: deterministicTimelineId("tle", [context.id, eventKind]),
       operationId: context.id,
@@ -1589,7 +1590,7 @@ export class DeltaStore {
         ...context.data,
         runtime: runtime ? normalizeRow(runtime) : undefined,
         proof: proof ? normalizeRow(proof) : undefined,
-        artifacts: artifactResult.rows.map(normalizeRow),
+        artifacts,
       }),
       entities: [],
     };
@@ -2109,6 +2110,29 @@ function normalizeSemanticKindFilter(kind: string): string[] {
 
 function deterministicTimelineId(prefix: string, parts: string[]): string {
   return `${prefix}_${hashStable(parts.join("\0")).slice(0, 24)}`;
+}
+
+function summarizeTimelineArtifacts(artifacts: Record<string, unknown>[]): Record<string, unknown> | undefined {
+  if (artifacts.length === 0) {
+    return undefined;
+  }
+  const sample = artifacts.slice(0, 10).map((artifact) => ({
+    path: artifact.path,
+    artifactKind: artifact.artifact_kind,
+    hash: artifact.hash,
+    generated: artifact.generated,
+  }));
+  return {
+    count: artifacts.length,
+    hash: hashStable(JSON.stringify(artifacts.map((artifact) => ({
+      path: artifact.path,
+      artifactKind: artifact.artifact_kind,
+      hash: artifact.hash,
+      generated: artifact.generated,
+    })))),
+    sample,
+    omitted: Math.max(0, artifacts.length - sample.length),
+  };
 }
 
 function redactedTimelineData(data: Record<string, unknown>): Record<string, unknown> {

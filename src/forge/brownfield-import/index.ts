@@ -207,7 +207,9 @@ function normalizeRouteSegment(segment: string): string | null {
 }
 
 function routePathFromFile(relativePath: string, marker: string): string {
-  const afterMarker = relativePath.slice(relativePath.indexOf(marker) + marker.length);
+  const normalized = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  const markerIndex = normalized.indexOf(marker);
+  const afterMarker = markerIndex >= 0 ? normalized.slice(markerIndex + marker.length) : normalized;
   const segments = afterMarker
     .split("/")
     .map(normalizeRouteSegment)
@@ -217,6 +219,11 @@ function routePathFromFile(relativePath: string, marker: string): string {
 
 function joinRoutePath(base: string, child: string): string {
   return `/${[base, child].map((part) => part.replace(/^\/|\/$/gu, "")).filter(Boolean).join("/")}`.replace(/\/+/gu, "/");
+}
+
+function pathIncludesRouteMarker(relativePath: string, marker: string): boolean {
+  const normalized = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  return normalized.includes(marker);
 }
 
 function addRoute(
@@ -243,7 +250,7 @@ function detectRoutes(files: SourceFile[]): ImportedRoute[] {
   const routes: ImportedRoute[] = [];
   const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
   for (const file of files) {
-    if (file.relativePath.includes("/app/api/") && basename(file.relativePath).startsWith("route.")) {
+    if (pathIncludesRouteMarker(file.relativePath, "/app/api/") && basename(file.relativePath).startsWith("route.")) {
       const path = routePathFromFile(file.relativePath, "/app/");
       for (const method of methods) {
         if (new RegExp(`export\\s+(?:async\\s+)?function\\s+${method}\\b`, "u").test(file.text)) {
@@ -252,7 +259,7 @@ function detectRoutes(files: SourceFile[]): ImportedRoute[] {
       }
     }
 
-    if (file.relativePath.includes("/pages/api/")) {
+    if (pathIncludesRouteMarker(file.relativePath, "/pages/api/")) {
       const path = routePathFromFile(file.relativePath, "/pages/");
       addRoute(routes, "ANY", path, file.relativePath, "next-pages-api", 0.78, "default");
     }
@@ -305,7 +312,10 @@ function detectFrontendCalls(files: SourceFile[], routes: ImportedRoute[]): Impo
     });
   };
   for (const file of files) {
-    if (file.relativePath.includes("/app/api/") || file.relativePath.includes("/pages/api/")) {
+    if (
+      pathIncludesRouteMarker(file.relativePath, "/app/api/") ||
+      pathIncludesRouteMarker(file.relativePath, "/pages/api/")
+    ) {
       continue;
     }
     const fetchCall = /\bfetch\s*\(\s*["'`]([^"'`]+)["'`]\s*(?:,\s*\{(?<options>[\s\S]{0,300}?)\})?/giu;

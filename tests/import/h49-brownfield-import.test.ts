@@ -46,6 +46,30 @@ function makeWorkspace(): string {
     `,
     "utf8",
   );
+  mkdirSync(join(root, "app", "api", "tickets", "[id]"), { recursive: true });
+  writeFileSync(
+    join(root, "app", "api", "tickets", "[id]", "route.ts"),
+    `
+      export async function GET() {
+        return Response.json({ ok: true });
+      }
+
+      export async function POST() {
+        return Response.json({ ok: true });
+      }
+    `,
+    "utf8",
+  );
+  mkdirSync(join(root, "pages", "api", "billing"), { recursive: true });
+  writeFileSync(
+    join(root, "pages", "api", "billing", "refund.ts"),
+    `
+      export default async function handler(req, res) {
+        res.json({ ok: true });
+      }
+    `,
+    "utf8",
+  );
   mkdirSync(join(root, "server"), { recursive: true });
   writeFileSync(
     join(root, "server", "routes.ts"),
@@ -90,6 +114,9 @@ describe("H49 brownfield import analyze", () => {
       expect(result.inventory?.dependencies.externalPackages).toContain("stripe");
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("GET /api/users/:id");
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("DELETE /api/users/:id");
+      expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("GET /api/tickets/:id");
+      expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("POST /api/tickets/:id");
+      expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("ANY /api/billing/refund");
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("POST /api/checkout");
       expect(result.frontendCalls.some((call) => call.url === "/api/checkout" && call.client === "axios")).toBe(true);
       expect(result.candidateEntries.length).toBeGreaterThanOrEqual(3);
