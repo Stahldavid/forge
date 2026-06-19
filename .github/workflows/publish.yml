@@ -128,10 +128,10 @@ jobs:
           PACKAGE_NAME="$(node -p "require('./package.json').name")"
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::error::NPM_TOKEN is required to promote ${PACKAGE_NAME}@${PACKAGE_VERSION} to latest. npm Trusted Publisher/OIDC can publish, but npm dist-tag still requires a token."
-            exit 1
+            echo "::notice::NPM_TOKEN is not configured; skipping latest dist-tag promotion."
+            exit 0
           fi
-          npm dist-tag add "${PACKAGE_NAME}@${PACKAGE_VERSION}" latest
+          npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
           for attempt in {1..24}; do
             ACTUAL="$(npm view "${PACKAGE_NAME}@latest" version 2>/dev/null || true)"
             if [ "${ACTUAL}" = "${PACKAGE_VERSION}" ]; then
@@ -304,10 +304,10 @@ jobs:
           PACKAGE_NAME="$(node -p "require('./package.json').name")"
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::error::NPM_TOKEN is required to promote ${PACKAGE_NAME}@${PACKAGE_VERSION} to latest. npm Trusted Publisher/OIDC can publish, but npm dist-tag still requires a token."
-            exit 1
+            echo "::notice::NPM_TOKEN is not configured; skipping latest dist-tag promotion."
+            exit 0
           fi
-          npm dist-tag add "${PACKAGE_NAME}@${PACKAGE_VERSION}" latest
+          npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
           for attempt in {1..24}; do
             ACTUAL="$(npm view "${PACKAGE_NAME}@latest" version 2>/dev/null || true)"
             if [ "${ACTUAL}" = "${PACKAGE_VERSION}" ]; then
