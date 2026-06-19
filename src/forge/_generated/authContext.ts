@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.15 input=624aeb38a3511aee123d146b3484fd077c65e0c6548f1bd50890c71ee0c207ae content=cf170e035d456c3ac698211e5b5a5b65a5743332654a8d5987281c050002cf99
+// @forge-generated generator=0.1.0-alpha.16 input=8eb999ad15dd5d4ef04649d90d87e1c5fb395bbd74791852afd75ad6a5dfbe13 content=cf170e035d456c3ac698211e5b5a5b65a5743332654a8d5987281c050002cf99
 export type AuthContext =
   | {
       kind: "user";

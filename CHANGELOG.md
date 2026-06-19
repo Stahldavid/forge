@@ -1,5 +1,15 @@
 # forgeos
 
+## 0.1.0-alpha.16
+
+Stability alignment:
+
+- Fixed H47 `forge timeline` and `forge explain` crashes after large `artifact.generated` payloads by replacing unsafe JSON string truncation with a safe summary/hash envelope.
+- Summarized generated artifact batches in the Semantic Timeline with count, hash, sample, and omitted count instead of embedding every artifact in timeline event data.
+- Fixed H49 brownfield import detection for root-level Next.js App Router and Pages API routes such as `app/api/.../route.ts` and `pages/api/...`.
+- Updated public CLI and DeltaDB docs for timeline/session/explain/MCP/agent-memory commands and clarified that `.forge/delta/delta.db` is a PGlite/Postgres data directory.
+- Verified the release against a public GitHub `main` smoke app using `generate`, `check`, `delta status`, `timeline`, `explain`, `import analyze`, and `inspect imported`.
+
 ## 0.1.0-alpha.15
 
 Brownfield import analysis:

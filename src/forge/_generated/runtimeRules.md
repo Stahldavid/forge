@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.15 input=624aeb38a3511aee123d146b3484fd077c65e0c6548f1bd50890c71ee0c207ae content=e05aaac5db95a6a159a7c3f79e5fd6a862fe5728756f1bc11a9cac0b834f3023
+// @forge-generated generator=0.1.0-alpha.16 input=8eb999ad15dd5d4ef04649d90d87e1c5fb395bbd74791852afd75ad6a5dfbe13 content=e05aaac5db95a6a159a7c3f79e5fd6a862fe5728756f1bc11a9cac0b834f3023
 # Runtime Rules
 
 ## LiveQuery Production

@@ -4,6 +4,14 @@ Release history for the `forgeos` npm package (`alpha` dist-tag).
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## 0.1.0-alpha.16
+
+Stability alignment:
+
+- Fixed `forge timeline` and `forge explain` crashes after large generated artifact batches.
+- Fixed brownfield import detection for root-level Next.js App Router and Pages API routes.
+- Updated CLI, Agent Memory, and DeltaDB docs for the alpha.16 command surface.
+
 ## 0.1.0-alpha.15
 
 Brownfield import analysis:

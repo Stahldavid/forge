@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.15 input=624aeb38a3511aee123d146b3484fd077c65e0c6548f1bd50890c71ee0c207ae content=4070d51c0959f39a8a5732953d6f0b49f7fee0afb9c166a1b1370984bff0d5ab
+// @forge-generated generator=0.1.0-alpha.16 input=8eb999ad15dd5d4ef04649d90d87e1c5fb395bbd74791852afd75ad6a5dfbe13 content=9124f01cf27950b68221987dde4da722431d311d3c51289d853d523ae9a2b3ac
 export const runtimeGraph = {
   "analyzerVersion": "0.1.0",
   "entries": [],
-  "generatorVersion": "0.1.0-alpha.15",
-  "inputHash": "8a5b49767b00aa5f62cc50ff95dbe935728d1e570c840f00fe11bec950d1cfd4",
+  "generatorVersion": "0.1.0-alpha.16",
+  "inputHash": "210202562d6cc2381629418f2bbd2cf3ed8e2a3e8ace63d69582291e98ab3048",
   "schemaVersion": "1.0.0"
 } as const;
