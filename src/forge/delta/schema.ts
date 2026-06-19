@@ -1,4 +1,4 @@
-export const DELTA_SCHEMA_VERSION = "0.3.0";
+export const DELTA_SCHEMA_VERSION = "0.3.1";
 
 export const DELTA_SCHEMA_SQL = [
   `CREATE TABLE IF NOT EXISTS delta_meta (
@@ -77,8 +77,10 @@ export const DELTA_SCHEMA_SQL = [
     diagnostic_code text,
     trace_id text,
     service text,
-    language text
+    language text,
+    needs_approval integer
   )`,
+  `ALTER TABLE runtime_calls ADD COLUMN IF NOT EXISTS needs_approval integer`,
   `CREATE TABLE IF NOT EXISTS artifacts (
     id text PRIMARY KEY,
     operation_id text NOT NULL,

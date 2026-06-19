@@ -51,6 +51,7 @@ export interface DeltaRuntimeCallInput {
   risk?: string;
   policy?: string;
   tenantScoped?: boolean;
+  needsApproval?: boolean;
   result?: string;
   diagnosticCode?: string;
   traceId?: string;
@@ -1472,8 +1473,8 @@ export class DeltaStore {
 
   private async insertRuntimeCall(operationId: string, runtimeCall: DeltaRuntimeCallInput): Promise<void> {
     await this.adapter.query(
-      `INSERT INTO runtime_calls (id, operation_id, entry_name, entry_kind, risk, policy, tenant_scoped, result, diagnostic_code, trace_id, service, language)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      `INSERT INTO runtime_calls (id, operation_id, entry_name, entry_kind, risk, policy, tenant_scoped, result, diagnostic_code, trace_id, service, language, needs_approval)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         createDeltaId("rtcall"),
         operationId,
@@ -1487,6 +1488,7 @@ export class DeltaStore {
         runtimeCall.traceId ?? null,
         runtimeCall.service ?? null,
         runtimeCall.language ?? null,
+        runtimeCall.needsApproval === undefined ? null : runtimeCall.needsApproval ? 1 : 0,
       ],
     );
   }
@@ -1764,9 +1766,11 @@ export class DeltaStore {
       return {
         kind: row ? row.entry_kind : undefined,
         service: row ? row.service : undefined,
+        language: row ? row.language : undefined,
         risk: row ? row.risk : undefined,
         policy: row ? row.policy : undefined,
         tenantScoped: row?.tenant_scoped === 1 || row?.tenant_scoped === true,
+        needsApproval: row?.needs_approval === 1 || row?.needs_approval === true,
         lastResult: row ? row.result : undefined,
         lastDiagnostic: row ? row.diagnostic_code : undefined,
         proofStatus: latestProof && latestRelevantChange && Date.parse(latestRelevantChange) > Date.parse(latestProof) ? "stale" : latestProof ? "fresh" : "unknown",

@@ -155,12 +155,13 @@ async function recordSpecializedCommand(
   exitCode: number,
   commandName: string,
 ): Promise<void> {
+  const workspaceRoot = commandWorkspaceRoot(command);
   if (command.kind === "generate" && exitCode === 0) {
-    const artifacts = listGeneratedArtifacts(process.cwd()).map((path) => ({
+    const artifacts = listGeneratedArtifacts(workspaceRoot).map((path) => ({
       path,
       artifactKind: classifyArtifactKind(path),
       generated: true,
-      hash: hashFileIfPresent(process.cwd(), path),
+      hash: hashFileIfPresent(workspaceRoot, path),
     }));
     await store.appendOperation({
       sessionId,
@@ -192,32 +193,36 @@ async function recordSpecializedCommand(
 
   if (command.kind === "run" && command.name) {
     const queryMode = command.queryMode === true;
+    const runtimeMetadata = externalRuntimeMetadata(workspaceRoot, command.name, queryMode ? "query" : "command");
     await store.appendOperation({
       sessionId,
       actorId,
       kind: exitCode === 0 ? "runtime.entry.executed" : "runtime.entry.failed",
       summary: `${command.name} ${exitCode === 0 ? "success" : "failed"}`,
-      data: { entryName: command.name, entryKind: queryMode ? "query" : "command", exitCode },
+      data: { entryName: command.name, entryKind: queryMode ? "query" : "command", exitCode, ...runtimeMetadata },
       runtimeCall: {
         entryName: command.name,
         entryKind: queryMode ? "query" : "command",
         result: exitCode === 0 ? "success" : "failed",
+        ...runtimeMetadata,
       },
     });
     return;
   }
 
   if (command.kind === "query" && command.subcommand === "run" && command.name) {
+    const runtimeMetadata = externalRuntimeMetadata(workspaceRoot, command.name, "query");
     await store.appendOperation({
       sessionId,
       actorId,
       kind: exitCode === 0 ? "runtime.entry.executed" : "runtime.entry.failed",
       summary: `${command.name} ${exitCode === 0 ? "success" : "failed"}`,
-      data: { entryName: command.name, entryKind: "query", exitCode },
+      data: { entryName: command.name, entryKind: "query", exitCode, ...runtimeMetadata },
       runtimeCall: {
         entryName: command.name,
         entryKind: "query",
         result: exitCode === 0 ? "success" : "failed",
+        ...runtimeMetadata,
       },
     });
     return;
@@ -291,6 +296,53 @@ function diagnosticCode(diagnostics: unknown[] | undefined): string | undefined 
     diagnostic && typeof diagnostic === "object" && "code" in diagnostic,
   ) as { code?: unknown } | undefined;
   return typeof first?.code === "string" ? first.code : undefined;
+}
+
+interface ExternalServicesFile {
+  services?: Array<{
+    name?: unknown;
+    language?: unknown;
+    entries?: Array<{
+      name?: unknown;
+      kind?: unknown;
+      risk?: unknown;
+      policy?: unknown;
+      tenantScoped?: unknown;
+      needsApproval?: unknown;
+    }>;
+  }>;
+}
+
+function externalRuntimeMetadata(
+  workspaceRoot: string,
+  qualifiedName: string,
+  kind: "command" | "query",
+): Partial<DeltaRuntimeCallInput> {
+  const [serviceName, ...entryParts] = qualifiedName.split(".");
+  const entryName = entryParts.join(".");
+  if (!serviceName || !entryName) {
+    return {};
+  }
+  try {
+    const graph = JSON.parse(
+      readFileSync(join(workspaceRoot, GENERATED_DIR, "externalServices.json"), "utf8"),
+    ) as ExternalServicesFile;
+    const service = graph.services?.find((candidate) => candidate.name === serviceName);
+    const entry = service?.entries?.find((candidate) => candidate.name === entryName && candidate.kind === kind);
+    if (!service || !entry) {
+      return {};
+    }
+    return {
+      service: typeof service.name === "string" ? service.name : undefined,
+      language: typeof service.language === "string" ? service.language : undefined,
+      risk: typeof entry.risk === "string" ? entry.risk : undefined,
+      policy: typeof entry.policy === "string" ? entry.policy : undefined,
+      tenantScoped: typeof entry.tenantScoped === "boolean" ? entry.tenantScoped : undefined,
+      needsApproval: typeof entry.needsApproval === "boolean" ? entry.needsApproval : undefined,
+    };
+  } catch {
+    return {};
+  }
 }
 
 function commandWorkspaceRoot(command: ForgeCommand): string {

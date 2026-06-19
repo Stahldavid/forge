@@ -1,10 +1,11 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
 import { redactDeltaPayload } from "../../src/forge/delta/redaction.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
+import { recordParsedCliCommand } from "../../src/forge/delta/recorder.ts";
 
 function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
@@ -55,6 +56,67 @@ describe("delta store", () => {
       const timeline = await store.timeline({ target: "src/policies.ts" });
       await store.close();
       expect(timeline[0]?.kind).toBe("file.changed");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("enriches external runtime calls from generated service metadata", async () => {
+    const root = tempWorkspace("delta-external-runtime");
+    try {
+      const generated = join(root, "src/forge/_generated");
+      mkdirSync(generated, { recursive: true });
+      writeFileSync(
+        join(generated, "externalServices.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          services: [
+            {
+              name: "billing",
+              language: "java",
+              entries: [
+                {
+                  name: "createInvoice",
+                  kind: "command",
+                  risk: "write",
+                  policy: "billing.manage",
+                  tenantScoped: true,
+                  needsApproval: true,
+                },
+              ],
+            },
+          ],
+        }),
+      );
+
+      await recordParsedCliCommand({
+        command: {
+          kind: "run",
+          name: "billing.createInvoice",
+          list: false,
+          json: true,
+          mock: false,
+          workspaceRoot: root,
+        },
+        argv: ["forge", "run", "billing.createInvoice", "--json"],
+        exitCode: 0,
+        durationMs: 12,
+      });
+
+      const store = await DeltaStore.open(root);
+      const timeline = await store.semanticTimeline({ target: "billing.createInvoice" });
+      await store.close();
+
+      expect(timeline.currentState).toMatchObject({
+        kind: "command",
+        service: "billing",
+        language: "java",
+        risk: "write",
+        policy: "billing.manage",
+        tenantScoped: true,
+        needsApproval: true,
+        lastResult: "success",
+      });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

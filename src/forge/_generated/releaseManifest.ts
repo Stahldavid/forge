@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.16 input=8eb999ad15dd5d4ef04649d90d87e1c5fb395bbd74791852afd75ad6a5dfbe13 content=09382d9ea735405e84e30363f2eae475836f79a42c2807bacfec42b33577c7a5
+// @forge-generated generator=0.1.0-alpha.16 input=48860df69cb90d3dd3e4ab7f4a96c04ae6aaf13e86500ee34868ba58a6c23650 content=09382d9ea735405e84e30363f2eae475836f79a42c2807bacfec42b33577c7a5
 export const releaseManifest = {
   "defaultProvider": "local",
   "diagnostics": [],
