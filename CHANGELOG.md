@@ -1,5 +1,15 @@
 # forgeos
 
+## 0.1.0-alpha.17
+
+External runtime timeline metadata:
+
+- Enriched DeltaDB runtime call recording for imported Go/Java/external services by reading generated `externalServices.json` metadata during `forge run` and `forge query`.
+- `forge timeline` and `forge explain` now report external runtime `service`, `language`, `risk`, `policy`, `tenantScoped`, and `needsApproval` state instead of falling back to null/false values after successful external calls.
+- Added a DeltaDB schema migration for `runtime_calls.needs_approval` and bumped the local DeltaDB schema to `0.3.1`.
+- Added regression coverage for the real CLI recorder path so manifest-imported external commands keep semantic metadata in timelines.
+- Promotes this release on npm as both `alpha` and `latest`.
+
 ## 0.1.0-alpha.16
 
 Stability alignment:

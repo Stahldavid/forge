@@ -1,8 +1,16 @@
 # Changelog
 
-Release history for the `forgeos` npm package (`alpha` dist-tag).
+Release history for the `forgeos` npm package.
 
 The canonical source file in the repository is `CHANGELOG.md`.
+
+## 0.1.0-alpha.17
+
+External runtime timeline metadata:
+
+- Enriched `forge timeline` and `forge explain` for imported external runtimes.
+- External command/query calls now keep `service`, `language`, `risk`, `policy`, `tenantScoped`, and `needsApproval` metadata in DeltaDB.
+- Promoted this release on npm as both `alpha` and `latest`.
 
 ## 0.1.0-alpha.16
 

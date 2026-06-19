@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.16 input=48860df69cb90d3dd3e4ab7f4a96c04ae6aaf13e86500ee34868ba58a6c23650 content=b893b27f895193111546b90974f4ad1540aef6ede0d9ab3a11972a1dce2519e2
+// @forge-generated generator=0.1.0-alpha.17 input=e751b452338c88a7e9e015c5a6bcc9dfb7a7a36386e730af0ddf5e86dca23232 content=b893b27f895193111546b90974f4ad1540aef6ede0d9ab3a11972a1dce2519e2
 export type ForgeStaticAuth = {
   userId?: string;
   tenantId?: string;
