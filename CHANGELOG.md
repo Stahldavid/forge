@@ -1,5 +1,23 @@
 # forgeos
 
+## Unreleased
+
+Alpha DX hardening:
+
+- Added the `agent-workroom` app template for Forge Studio style demos: external
+  agents edit the app, while ForgeOS shows preview URL, agent signals, check
+  runs, and handoff evidence through generated commands and liveQuery bindings.
+- Added `forge studio attach` for Studio-style observer apps: writes `.forge/studio/attachment.json`, prepares external-agent adapters/hooks, and returns the target preview URL.
+- Added `summary.preview` and `summary.urls.suggestedPreview` to `forge dev --once --json` so observer UIs can target the app under construction instead of pointing at themselves.
+- Improved `forge dev` port-busy failures with a `port_busy` JSON failure kind and suggested recovery commands, including the common "Is port X in use?" startup error shape.
+- `forge dev` now resolves the web app port before startup and automatically moves to the next available port when the default web port is busy, keeping the printed/JSON web URL truthful.
+- Improved `forge check --json` next actions by surfacing diagnostic-specific repair/inspect commands instead of a generic last-test-run repair hint.
+- Added `forge doctor agent --target <agent>` as the top-level agent readiness check.
+- Added explicit `forge agent ingest <source> --watch --file <events.ndjson>` support for opt-in hook/export file ingestion.
+- Added human-friendly verifier aliases: `forge verify quick`, `forge verify agent`, and `forge verify release`.
+- Made `forge status --human` an explicit accepted spelling and documented `forge add <npm-package> --workspace web` as the normal package-add path.
+- Made bare `forge inspect` default to the compact `summary` target instead of returning a usage error.
+
 ## 0.1.0-alpha.18
 
 Codex hook memory hardening:

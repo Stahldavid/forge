@@ -4,14 +4,21 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   buildAgentAdapterManifest,
+  formatAgentHuman,
   runAgentCheck,
+  runAgentDoctor,
   runAgentExport,
+  runAgentHooksSmoke,
+  runAgentHooksStatus,
   runAgentListTargets,
+  runAgentOnboard,
+  runAgentPrepare,
   runAgentPrintContext,
 } from "../../src/forge/agent-adapters/index.ts";
 import { configuredAgentTargets } from "../../src/forge/cli/verify.ts";
 import type { AgentCommandOptions } from "../../src/forge/agent-adapters/types.ts";
 import type { AgentContract } from "../../src/forge/compiler/agent-contract/types.ts";
+import { cleanupWorkspace, scaffoldGenerateWorkspace } from "../orchestrator/helpers.ts";
 
 const roots: string[] = [];
 
@@ -287,7 +294,7 @@ function contract(): AgentContract {
     rules: [],
     playbooks: [],
     commandsToRun: {
-      beforeEditing: ["forge inspect all --json"],
+      beforeEditing: ["forge status --json", "forge agent print-context --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --strict"],
       dev: ["forge dev"],
     },
@@ -330,12 +337,14 @@ afterEach(() => {
 });
 
 describe("H30 agent adapter export", () => {
-  test("generic export writes AGENTS.md and agent context artifacts", () => {
+  test("generic export writes agent context artifacts without owning generated AGENTS.md", () => {
     const root = workspace();
     const result = runAgentExport(options(root, "generic"));
     expect(result.ok).toBe(true);
+    expect(result.filesPlanned).not.toContain("AGENTS.md");
     expect(existsSync(join(root, ".forge/agent/context.json"))).toBe(true);
     expect(existsSync(join(root, ".forge/agent/commands.json"))).toBe(true);
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toContain("old");
     expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toContain("keep me");
     const context = JSON.parse(readFileSync(join(root, ".forge/agent/context.json"), "utf8"));
     expect(context.commands).toContain("createTicket");
@@ -350,6 +359,7 @@ describe("H30 agent adapter export", () => {
     expect(existsSync(join(root, ".cursor/rules/forge-runtime.mdc"))).toBe(true);
     expect(runAgentExport(options(root, "claude")).ok).toBe(true);
     expect(existsSync(join(root, "CLAUDE.md"))).toBe(true);
+    expect(readFileSync(join(root, "CLAUDE.md"), "utf8")).toContain("forge handoff --json");
   });
 
   test("dry-run writes nothing and reports planned files", () => {
@@ -429,4 +439,133 @@ describe("H30 agent adapter export", () => {
     expect(runAgentExport(options(root, "all")).ok).toBe(true);
     expect(configuredAgentTargets(root)).toEqual(["generic", "codex", "cursor", "claude"]);
   });
+
+  test("agent prepare exports context, installs hooks, and returns next commands", async () => {
+    const root = workspace();
+    const result = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(root, ".codex/skills/forge-add-command/SKILL.md"))).toBe(true);
+    expect(JSON.stringify(result.commands)).toContain("forge agent hooks status --target codex --json");
+    expect(JSON.stringify(result.commands)).toContain("forge agent hooks smoke --target codex --json");
+  });
+
+  test("agent onboard prepares adapters, proves hooks, and returns the external agent entry loop", async () => {
+    const root = scaffoldGenerateWorkspace("agent-onboard-codex");
+    try {
+      const result = await runAgentOnboard({ ...options(root, "codex"), subcommand: "onboard" });
+      expect(result.ok).toBe(true);
+      expect(result.readyToEdit).toBe(true);
+      expect(result.summary).toMatchObject({
+        adapter: "ready",
+        hookBridge: "ready",
+        safeToEdit: true,
+      });
+      expect(typeof result.summary.generatedFresh).toBe("boolean");
+      expect(result.summary.memorySignals).toBeGreaterThan(0);
+      expect(result.steps.map((step) => step.name)).toContain("hook-smoke");
+      expect(result.commands.changed).toBe("forge changed --json");
+      expect(result.commands.dev).toBe("forge dev --once --json");
+      expect(result.commands.context).toBe("forge agent context --current --json");
+      expect(result.nextActions).toContain("forge changed --json");
+      expect(result.recommendedReadFiles).toContain("AGENTS.md");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  }, 30_000);
+
+  test("agent hooks status explains installation, memory visibility, and useful signals", async () => {
+    const root = workspace();
+    const missing = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(missing.ok).toBe(false);
+    expect(missing.installed).toBe(false);
+    expect(missing.visibleInMemory).toBe(false);
+    expect(missing.nextActions).toContain("forge agent install codex --json");
+
+    const prepared = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
+    expect(prepared.ok).toBe(true);
+    const waiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(waiting.installed).toBe(true);
+    expect(waiting.visibleInMemory).toBe(false);
+    expect(waiting.nextActions).toContain("forge agent hooks smoke --target codex --json");
+
+    const smoke = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
+    expect(smoke.ok).toBe(true);
+    const ready = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(ready.ok).toBe(true);
+    expect(ready.installed).toBe(true);
+    expect(ready.bridgeWritable).toBe(true);
+    expect(ready.deltaWritable).toBe(true);
+    expect(ready.visibleInMemory).toBe(true);
+    expect(ready.usefulSignals).toBeGreaterThan(0);
+    expect(ready.lastSignal?.summary).toContain("forge agent hooks smoke");
+  });
+
+  test("agent hooks smoke stores a canary hook event", async () => {
+    const root = workspace();
+    const result = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
+    expect(result.ok).toBe(true);
+    expect(result.installed).toBe(true);
+    expect(result.bridgeWritable).toBe(true);
+    expect(result.deltaWritable).toBe(true);
+    expect(result.visibleInMemory).toBe(true);
+    expect(result.usefulSignals).toBeGreaterThan(0);
+    expect(result.lastSignal?.summary).toContain("forge agent hooks smoke");
+    expect(result.canary).toMatchObject({
+      marker: "FORGE_HOOK_SMOKE_CANARY",
+      source: "codex",
+      eventName: "SessionStart",
+      visible: true,
+    });
+    expect(result.canary?.ingestedEventId).toBeTruthy();
+    expect(result.canary?.memoryEventsChecked).toBeGreaterThan(0);
+    expect(result.checks).toContainEqual({
+      name: "canary-ingest",
+      ok: true,
+      message: "canary event was normalized and stored",
+    });
+    expect(result.checks.some((check) => check.name === "canary-memory-readable" && check.ok)).toBe(true);
+    expect(JSON.stringify(result.ingestResult)).toContain("FORGE_HOOK_SMOKE_CANARY");
+    const human = formatAgentHuman(result);
+    expect(human).toContain("Canary:");
+    expect(human).toContain("marker: FORGE_HOOK_SMOKE_CANARY");
+    expect(human).toContain("ingested id:");
+    expect(human).toContain("memory events checked:");
+    expect(human).toContain("visible: yes");
+    expect(human).toContain("last signal:");
+    expect(human).toContain("forge agent hooks status --target codex --json");
+  });
+
+  test(
+    "agent doctor explains adapter, hook bridge, memory, and next actions",
+    async () => {
+      const root = workspace();
+      const missing = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
+      expect(missing.ok).toBe(false);
+      expect(missing.summary).toMatchObject({
+        adapter: "missing",
+        hookBridge: "missing",
+        recentEvents: 0,
+      });
+      expect(missing.nextActions).toContain("forge agent export --target codex");
+      expect(missing.nextActions).toContain("forge agent install codex --json");
+      expect(missing.nextActions).toContain("forge agent hooks smoke --target codex --json");
+
+      const prepared = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
+      expect(prepared.ok).toBe(true);
+      const smoke = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
+      expect(smoke.ok).toBe(true);
+
+      const ready = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
+      expect(ready.ok).toBe(true);
+      expect(ready.summary).toMatchObject({
+        adapter: "ready",
+        hookBridge: "ready",
+        recentEvents: 1,
+        usefulSignals: 1,
+      });
+      expect(ready.nextActions).toContain("forge agent context --current --json");
+      expect(ready.nextActions).toContain("forge agent memory --entry codex --json");
+    },
+    20_000,
+  );
 });

@@ -402,19 +402,24 @@ class ForgeHttpClient implements ForgeClient {
     const reader = response.body.getReader();
     let buffer = "";
 
-    while (!signal.aborted) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
+    try {
+      while (!signal.aborted) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        let boundary = buffer.indexOf("\\n\\n");
+        while (boundary !== -1) {
+          const frame = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2);
+          this.handleSseFrame(frame, onSnapshot, onError);
+          boundary = buffer.indexOf("\\n\\n");
+        }
       }
-      buffer += decoder.decode(value, { stream: true });
-      let boundary = buffer.indexOf("\\n\\n");
-      while (boundary !== -1) {
-        const frame = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
-        this.handleSseFrame(frame, onSnapshot, onError);
-        boundary = buffer.indexOf("\\n\\n");
-      }
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
     }
   }
 

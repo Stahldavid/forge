@@ -2,6 +2,7 @@ import type { PackageManager } from "../types/runtime.ts";
 
 export interface BuildAddCommandOptions {
   ignoreScripts: boolean;
+  workspace?: string;
 }
 
 /**
@@ -26,6 +27,9 @@ export function buildAddCommand(
       const args = ["npm", "install", spec, "--save", "--no-fund", "--no-audit"];
       if (ignoreScripts) {
         args.push("--ignore-scripts");
+      }
+      if (options.workspace) {
+        args.push("--workspace", options.workspace);
       }
       return args;
     }

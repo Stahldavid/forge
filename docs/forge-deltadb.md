@@ -36,6 +36,8 @@ It does not store raw prompts, model outputs, full runtime response bodies, auth
 
 `forge timeline` prints the H47 Semantic Timeline projection. It is not the source of truth; it is a rebuildable view over the local operation log, inferred work sessions, runtime calls, proofs, diagnostics, artifacts, and Git mappings.
 
+DeltaDB separates read and write access. Read-only commands such as `forge delta status`, `forge timeline`, `forge explain`, `forge session list`, `forge session show`, `forge agent timeline`, `forge agent context`, `forge agent memory`, and MCP read tools can run while another ForgeOS or external-agent process is recording events. Mutating operations such as event recording, agent ingest, hook smoke writes, timeline rebuild, session edits, and `forge delta repair --yes` fail fast with `FORGE_DELTA_BUSY` instead of waiting on the embedded database indefinitely. Busy JSON results include a `busy` block with the lock path, pid when known, whether the process still appears alive, lock age, cwd, and command. Retry after the running command exits, or inspect `.forge/delta/delta.lock` if the process appears stuck.
+
 ```bash
 forge timeline src/policies.ts
 forge timeline billing.createInvoice

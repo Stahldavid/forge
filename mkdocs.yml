@@ -48,7 +48,9 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Five-Minute Model: five-minute-model.md
   - Getting Started: getting-started.md
+  - Alpha Golden Path: golden-path.md
   - First App Tutorial: tutorial-first-app.md
   - Why ForgeOS: why-forgeos.md
   - Capabilities: capabilities.md
@@ -56,6 +58,7 @@ nav:
   - Examples: examples.md
   - Templates: templates.md
   - Agent Workflow: agent-workflow.md
+  - Agent-Native Demo: agent-native-demo.md
   - Agent Playbook: agent-playbook.md
   - Build a Feature with an Agent: agent-feature-tutorial.md
   - Dev Loop: dev-loop.md

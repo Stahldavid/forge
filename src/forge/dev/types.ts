@@ -1,6 +1,7 @@
 import type { DevRoute } from "../compiler/types/dev-manifest.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
 import type { AmbientDeltaRecorder } from "../delta/recorder.ts";
+import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 
 export type DevDbMode = "memory" | "pglite" | "postgres" | "none";
 
@@ -43,7 +44,18 @@ export interface DevServerHandle {
   routes: DevRoute[];
   state: DevServerState;
   outboxWorker?: DevServerState["outboxWorker"];
+  reload: (reason?: string) => Promise<DevServerReloadResult>;
   stop: () => void;
+}
+
+export interface DevServerReloadResult {
+  ok: boolean;
+  reason: string;
+  migrated: boolean;
+  routes: number;
+  runtimeEntries: number;
+  worker: "running" | "stopped";
+  diagnostics: Diagnostic[];
 }
 
 export interface DevWatchHandle {

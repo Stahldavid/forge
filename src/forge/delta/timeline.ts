@@ -17,7 +17,7 @@ export async function runDeltaTimeline(input: {
   limit?: number;
   rebuild?: boolean;
 }): Promise<DeltaTimelineResult> {
-  const store = await DeltaStore.open(input.workspaceRoot);
+  const store = await DeltaStore.open(input.workspaceRoot, { access: input.rebuild ? "write" : "read" });
   try {
     if (input.rebuild) {
       await store.rebuildSemanticTimeline();

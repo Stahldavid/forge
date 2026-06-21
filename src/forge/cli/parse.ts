@@ -101,7 +101,7 @@ export type ForgeCommand =
       json: boolean;
       workspaceRoot: string;
     }
-  | { kind: "doctor"; target?: "project" | "windows"; json: boolean; workspaceRoot: string }
+  | { kind: "doctor"; target?: "project" | "windows" | "agent"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
   | { kind: "setup"; target: "windows"; json: boolean; yes: boolean; workspaceRoot: string }
   | {
       kind: "security";
@@ -170,7 +170,22 @@ export type ForgeCommand =
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
   | { kind: "import"; options: BrownfieldImportCommandOptions }
-  | { kind: "delta"; subcommand: "status"; json: boolean; workspaceRoot: string }
+  | { kind: "delta"; subcommand: "status" | "repair"; json: boolean; workspaceRoot: string; dryRun: boolean; yes: boolean }
+  | { kind: "status"; json: boolean; workspaceRoot: string }
+  | { kind: "changed"; json: boolean; workspaceRoot: string }
+  | { kind: "handoff"; json: boolean; workspaceRoot: string }
+  | {
+      kind: "studio";
+      subcommand: "attach" | "snapshot" | "watch" | "open" | "doctor";
+      path?: string;
+      previewUrl?: string;
+      previewPort?: number;
+      targets: string[];
+      json: boolean;
+      dryRun: boolean;
+      force: boolean;
+      workspaceRoot: string;
+    }
   | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; workspaceRoot: string }
   | { kind: "explain"; thing: string; json: boolean; workspaceRoot: string }
   | {
@@ -186,7 +201,7 @@ export type ForgeCommand =
     }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
-  | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean }
+  | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean; full: boolean; brief: boolean }
   | { kind: "check"; json: boolean; dryRun: boolean; strictSecrets: boolean }
   | { kind: "verify"; options: VerifyOptions }
   | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string; queryMode?: boolean; args?: unknown }
@@ -363,6 +378,10 @@ export const TOP_LEVEL_COMMANDS = [
   "explain",
   "manifest",
   "import",
+  "status",
+  "changed",
+  "handoff",
+  "studio",
   "generate",
   "add",
   "inspect",
@@ -418,6 +437,10 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "agent-tools",
   "agent-adapters",
   "capability-map",
+  "summary",
+  "schema",
+  "drift",
+  "handoff",
   "framework",
   "imported",
   "ui",
@@ -428,7 +451,7 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "map",
 ];
 
-const NEW_TEMPLATES: NewTemplateName[] = ["b2b-support-web", "minimal-web"];
+const NEW_TEMPLATES: NewTemplateName[] = ["agent-workroom", "b2b-support-web", "minimal-web"];
 const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
 const SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = ["compose", "env", "check", "clean"];
 const AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [
@@ -537,14 +560,18 @@ const AGENT_SUBCOMMANDS: AgentSubcommand[] = [
   "export",
   "check",
   "doctor",
+  "onboard",
   "print-context",
   "clean",
+  "prepare",
+  "hooks",
   "install",
   "ingest",
   "context",
   "memory",
+  "timeline",
 ];
-const REVIEW_SUBCOMMANDS: ReviewSubcommand[] = ["inspect", "list", "explain"];
+const REVIEW_SUBCOMMANDS: ReviewSubcommand[] = ["run", "inspect", "list", "explain"];
 const REVIEW_MODES: ReviewMode[] = ["quick", "standard", "strict"];
 const REVIEW_FAIL_ON: ReviewFailOn[] = ["warning", "error", "blocking"];
 const REVIEW_CATEGORIES: ReviewFindingCategory[] = [
@@ -638,7 +665,10 @@ function parseSandboxBackend(value: string | undefined): SandboxBackend {
 function parseAddOptions(
   args: string[],
   workspaceRoot: string,
+  mode: AddOptions["mode"] = "auto",
 ): AddOptions & { workspaceRoot: string } {
+  const frontend = parseFlag(args, "--frontend");
+  const backend = parseFlag(args, "--backend");
   return {
     workspaceRoot,
     json: parseFlag(args, "--json"),
@@ -648,6 +678,9 @@ function parseAddOptions(
       parseOptionValue(args, "--sandbox-backend"),
     ),
     allowScripts: parseFlag(args, "--allow-scripts"),
+    mode,
+    installWorkspace: parseOptionValue(args, "--workspace"),
+    packageTarget: frontend && !backend ? "frontend" : backend ? "backend" : undefined,
   };
 }
 
@@ -900,7 +933,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "agent": {
       const subcommand = rest[0] as AgentSubcommand | undefined;
       if (!subcommand || !AGENT_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge agent requires subcommand: list-targets, export, check, doctor, print-context, clean, install, ingest, context, or memory");
+        errors.push("forge agent requires subcommand: list-targets, export, check, doctor, onboard, print-context, clean, prepare, hooks, install, ingest, context, memory, or timeline");
         return { command: null, workspaceRoot, errors };
       }
       const inputRaw = parseOptionValue(argv, "--input");
@@ -914,13 +947,24 @@ export function parseCli(argv: string[]): ParsedCli {
       }
       const limitRaw = parseOptionValue(argv, "--limit");
       const limit = limitRaw ? Number(limitRaw) : undefined;
+      const pollIntervalRaw = parseOptionValue(argv, "--poll-interval");
+      const pollIntervalMs = pollIntervalRaw ? Number(pollIntervalRaw) : undefined;
       if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
         errors.push("--limit must be a number >= 1");
+      }
+      if (
+        pollIntervalRaw !== undefined &&
+        (!Number.isFinite(pollIntervalMs) || pollIntervalMs! < 100)
+      ) {
+        errors.push("--poll-interval must be a number >= 100");
       }
       const target =
         (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ??
         (subcommand === "install" || subcommand === "ingest" ? rest[1] : undefined) ??
-        "generic";
+        (subcommand === "hooks" ? rest[2] : undefined) ??
+        (subcommand === "timeline" ? rest[1] : undefined) ??
+        (subcommand === "timeline" ? "all" : undefined) ??
+        (subcommand === "hooks" || subcommand === "onboard" ? "codex" : "generic");
       return {
         command: {
           kind: "agent",
@@ -935,10 +979,14 @@ export function parseCli(argv: string[]): ParsedCli {
             skills: !parseFlag(argv, "--no-skills"),
             rules: !parseFlag(argv, "--no-rules"),
             eventName: parseOptionValue(argv, "--event"),
+            hookAction: subcommand === "hooks" ? rest[1] : undefined,
             input,
             entry: parseOptionValue(argv, "--entry") ?? (subcommand === "context" && rest[1] !== "--current" ? rest[1] : undefined),
             current: parseFlag(argv, "--current"),
             limit: limit ? Math.floor(limit) : undefined,
+            watch: parseFlag(argv, "--watch"),
+            file: parseOptionValue(argv, "--file"),
+            pollIntervalMs: pollIntervalMs ? Math.floor(pollIntervalMs) : undefined,
           },
         },
         workspaceRoot,
@@ -983,6 +1031,7 @@ export function parseCli(argv: string[]): ParsedCli {
             json: parseFlag(argv, "--json"),
             md: parseFlag(argv, "--md"),
             sarif: parseFlag(argv, "--sarif"),
+            full: parseFlag(argv, "--full"),
             write: positionalWrite || parseFlag(argv, "--write"),
             changed: parseFlag(argv, "--changed") || noSourceFlag,
             staged: parseFlag(argv, "--staged"),
@@ -1053,14 +1102,17 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "doctor":
-      if (rest[0] && rest[0] !== "windows") {
-        errors.push("forge doctor supports subcommand: windows");
+      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent") {
+        errors.push("forge doctor supports subcommand: windows or agent");
         return { command: null, workspaceRoot, errors };
       }
       return {
         command: {
           kind: "doctor",
-          target: rest[0] === "windows" ? "windows" : "project",
+          target: rest[0] === "windows" ? "windows" : rest[0] === "agent" ? "agent" : "project",
+          agentTarget: rest[0] === "agent"
+            ? (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ?? (rest[1] as AgentAdapterTarget | undefined) ?? "codex"
+            : undefined,
           json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
@@ -1586,6 +1638,82 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "status":
+      return {
+        command: {
+          kind: "status",
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    case "changed":
+      return {
+        command: {
+          kind: "changed",
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    case "handoff":
+      return {
+        command: {
+          kind: "handoff",
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    case "studio": {
+      const subcommand = rest[0];
+      if (
+        subcommand !== "attach" &&
+        subcommand !== "snapshot" &&
+        subcommand !== "watch" &&
+        subcommand !== "open" &&
+        subcommand !== "doctor"
+      ) {
+        errors.push("forge studio requires subcommand: attach, snapshot, watch, open, or doctor");
+        return { command: null, workspaceRoot, errors };
+      }
+      const previewPortRaw = parseOptionValue(argv, "--preview-port");
+      const previewPort = previewPortRaw !== undefined ? Number(previewPortRaw) : undefined;
+      if (
+        previewPortRaw !== undefined &&
+        (!Number.isInteger(previewPort) || previewPort! < 1)
+      ) {
+        errors.push("--preview-port must be an integer >= 1");
+      }
+      const targets = parseOptionValues(argv, "--target");
+      const ignoredOptionValues = new Set(
+        [
+          ...targets,
+          parseOptionValue(argv, "--preview-url"),
+          previewPortRaw,
+        ].filter((value): value is string => typeof value === "string"),
+      );
+      const studioPath = rest.slice(1).find((item) => !ignoredOptionValues.has(item));
+      return {
+        command: {
+          kind: "studio",
+          subcommand,
+          path: studioPath,
+          previewUrl: parseOptionValue(argv, "--preview-url"),
+          previewPort: previewPort ? Math.floor(previewPort) : undefined,
+          targets: targets.length > 0 ? targets : ["codex"],
+          json: parseFlag(argv, "--json"),
+          dryRun: parseFlag(argv, "--dry-run"),
+          force: parseFlag(argv, "--force"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "generate": {
       const concurrencyRaw = parseOptionValue(argv, "--concurrency");
       const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;
@@ -1606,8 +1734,8 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "delta": {
       const subcommand = rest[0];
-      if (subcommand !== "status") {
-        errors.push("forge delta requires subcommand: status");
+      if (subcommand !== "status" && subcommand !== "repair") {
+        errors.push("forge delta requires subcommand: status or repair");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -1615,6 +1743,8 @@ export function parseCli(argv: string[]): ParsedCli {
           kind: "delta",
           subcommand,
           json: parseFlag(argv, "--json"),
+          dryRun: parseFlag(argv, "--dry-run"),
+          yes: parseFlag(argv, "--yes"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1738,24 +1868,35 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "add": {
-      const alias = rest[0];
+      const subcommand = rest[0];
+      const explicitMode =
+        subcommand === "package"
+          ? "package"
+          : subcommand === "integration"
+            ? "integration"
+            : "auto";
+      const alias = explicitMode === "auto" ? rest[0] : rest[1];
       if (!alias) {
-        errors.push("forge add requires an integration alias");
+        errors.push(
+          explicitMode === "auto"
+            ? "forge add requires a package name or integration alias"
+            : `forge add ${subcommand} requires a target`,
+        );
         return { command: null, workspaceRoot, errors };
       }
       return {
         command: {
           kind: "add",
           alias,
-          options: parseAddOptions(argv, workspaceRoot),
+          options: parseAddOptions(argv, workspaceRoot, explicitMode),
         },
         workspaceRoot,
         errors,
       };
     }
     case "inspect": {
-      const target = rest[0] as InspectTarget | undefined;
-      if (!target || !INSPECT_TARGETS.includes(target)) {
+      const target = (rest[0] as InspectTarget | undefined) ?? "summary";
+      if (!INSPECT_TARGETS.includes(target)) {
         errors.push(
           `unsupported inspect target; supported: ${INSPECT_TARGETS.join(", ")}`,
         );
@@ -1767,6 +1908,8 @@ export function parseCli(argv: string[]): ParsedCli {
           target,
           json: parseFlag(argv, "--json"),
           dryRun: parseFlag(argv, "--dry-run"),
+          full: parseFlag(argv, "--full"),
+          brief: parseFlag(argv, "--brief"),
         },
         workspaceRoot,
         errors,
@@ -1785,6 +1928,13 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     case "verify":
       {
+        const profileAlias = rest[0];
+        const verifyProfiles = new Set(["quick", "smoke", "agent", "standard", "release", "strict", "changed"]);
+        if (profileAlias && !profileAlias.startsWith("--") && !verifyProfiles.has(profileAlias)) {
+          errors.push(
+            `unknown forge verify profile '${profileAlias}'; expected quick, smoke, agent, standard, release, strict, or changed`,
+          );
+        }
         const scriptTimeoutRaw = parseOptionValue(argv, "--script-timeout-ms");
         const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;
         const testJobsRaw = parseOptionValue(argv, "--test-jobs");
@@ -1819,11 +1969,11 @@ export function parseCli(argv: string[]): ParsedCli {
             skipTests: parseFlag(argv, "--skip-tests"),
             skipTypecheck: parseFlag(argv, "--skip-typecheck"),
             skipEslint: parseFlag(argv, "--skip-eslint"),
-            strict: parseFlag(argv, "--strict"),
-            changed: parseFlag(argv, "--changed"),
-            fast: parseFlag(argv, "--fast"),
-            smoke: parseFlag(argv, "--smoke"),
-            standard: parseFlag(argv, "--standard"),
+            strict: parseFlag(argv, "--strict") || profileAlias === "release" || profileAlias === "strict",
+            changed: parseFlag(argv, "--changed") || profileAlias === "changed",
+            fast: parseFlag(argv, "--fast") || profileAlias === "quick",
+            smoke: parseFlag(argv, "--smoke") || profileAlias === "smoke",
+            standard: parseFlag(argv, "--standard") || profileAlias === "agent" || profileAlias === "standard",
             scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,
             testJobs: testJobs ? Math.floor(testJobs) : undefined,
             typechecker: typechecker as "tsc" | "tsgo" | "auto" | undefined,
@@ -2034,8 +2184,8 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "db": {
       const subcommand = rest[0] as DbSubcommand | undefined;
-      if (!subcommand || !["diff", "migrate", "reset", "status", "rls-check"].includes(subcommand)) {
-        errors.push("forge db requires subcommand: diff, migrate, reset, status, or rls-check");
+      if (!subcommand || !["diff", "migrate", "reset", "status", "doctor", "rls-check"].includes(subcommand)) {
+        errors.push("forge db requires subcommand: diff, migrate, reset, status, doctor, or rls-check");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -2318,6 +2468,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--version",
     "--check",
     "--json",
+    "--human",
     "--for-agent",
     "--dry-run",
     "--plan",
@@ -2401,6 +2552,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--video",
     "--base-url",
     "--runtime-url",
+    "--workspace",
     "--reuse-servers",
     "--start-servers",
     "--scenario",
@@ -2479,6 +2631,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--postgres-version",
     "--runtime-port",
     "--web-port",
+    "--preview-port",
+    "--preview-url",
     "--poll-interval",
     "--allow-dev-auth",
     "--token",
@@ -2486,6 +2640,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-skills",
     "--no-rules",
     "--full",
+    "--brief",
     "--run-tests",
     "--model-level",
     "--live",
@@ -2543,6 +2698,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--video" ||
         arg === "--base-url" ||
         arg === "--runtime-url" ||
+        arg === "--workspace" ||
         arg === "--scenario" ||
         arg === "--timeout" ||
         arg === "--timeout-ms" ||
@@ -2580,6 +2736,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--postgres-version" ||
         arg === "--runtime-port" ||
         arg === "--web-port" ||
+        arg === "--preview-port" ||
+        arg === "--preview-url" ||
         arg === "--poll-interval" ||
         arg === "--token"
         || arg === "--to" ||

@@ -9,12 +9,16 @@ export type AgentSubcommand =
   | "export"
   | "check"
   | "doctor"
+  | "onboard"
   | "print-context"
   | "clean"
+  | "prepare"
+  | "hooks"
   | "install"
   | "ingest"
   | "context"
-  | "memory";
+  | "memory"
+  | "timeline";
 
 export interface AgentCommandOptions {
   subcommand: AgentSubcommand;
@@ -27,10 +31,14 @@ export interface AgentCommandOptions {
   skills: boolean;
   rules: boolean;
   eventName?: string;
+  hookAction?: "smoke" | "status" | string;
   input?: unknown;
   entry?: string;
   current?: boolean;
   limit?: number;
+  watch?: boolean;
+  file?: string;
+  pollIntervalMs?: number;
 }
 
 export interface AgentExportFile {
@@ -130,7 +138,167 @@ export interface AgentPrintContextResult {
 
 export interface AgentDoctorResult {
   ok: boolean;
+  target: AgentAdapterTarget;
+  summary: {
+    adapter: "ready" | "missing" | "stale";
+    hookBridge: "ready" | "missing" | "not-supported";
+    recentEvents: number;
+    usefulSignals: number;
+    lastEventAt?: string;
+  };
+  checks: Array<{ name: string; ok: boolean; message?: string; evidence?: unknown }>;
+  nextActions: string[];
+  diagnostics: Diagnostic[];
+  exitCode: 0 | 1;
+}
+
+export interface AgentPrepareResult {
+  ok: boolean;
+  target: AgentAdapterTarget;
+  exportResult: AgentExportResult;
+  checkResult: AgentCheckResult;
+  installResult?: unknown;
+  commands: {
+    context: string;
+    export: string;
+    check: string;
+    install?: string;
+    hooksStatus?: string;
+    hooksSmoke?: string;
+    open?: string;
+  };
+  diagnostics: Diagnostic[];
+  exitCode: 0 | 1;
+}
+
+export interface AgentOnboardResult {
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  target: AgentAdapterTarget;
+  readyToEdit: boolean;
+  summary: {
+    adapter: "ready" | "missing" | "stale";
+    hookBridge: "ready" | "missing" | "not-supported";
+    memorySignals: number;
+    generatedFresh: boolean;
+    generatedChanged: boolean;
+    generatedChangedFiles: number;
+    safeToEdit: boolean;
+    changedFiles: number;
+    primaryAction?: string;
+  };
+  steps: Array<{
+    name: string;
+    ok: boolean;
+    message: string;
+  }>;
+  recommendedReadFiles: string[];
+  commands: {
+    changed: string;
+    dev: string;
+    context: string;
+    verify: string;
+    hooksStatus?: string;
+    hooksSmoke?: string;
+    open?: string;
+  };
+  nextActions: string[];
+  diagnostics: Diagnostic[];
+  exitCode: 0 | 1;
+}
+
+export interface AgentHooksSmokeResult {
+  ok: boolean;
+  target: AgentAdapterTarget;
+  installTarget?: string;
+  installed: boolean;
+  bridgeWritable: boolean;
+  deltaWritable: boolean;
+  visibleInMemory: boolean;
+  usefulSignals: number;
+  lastSignal?: {
+    kind: string;
+    summary?: string;
+    capturedAt: string;
+  };
+  canary?: {
+    marker: string;
+    source: string;
+    eventName: string;
+    ingestedEventId?: string;
+    memoryEventsChecked: number;
+    visible: boolean;
+  };
   checks: Array<{ name: string; ok: boolean; message?: string }>;
+  nextActions: string[];
+  installResult?: unknown;
+  ingestResult?: unknown;
+  diagnostics: Diagnostic[];
+  exitCode: 0 | 1;
+}
+
+export interface AgentHooksStatusResult {
+  ok: boolean;
+  target: AgentAdapterTarget;
+  installTarget?: string;
+  installed: boolean;
+  bridgeWritable: boolean;
+  deltaWritable: boolean;
+  visibleInMemory: boolean;
+  recentEvents: number;
+  usefulSignals: number;
+  lastSignal?: {
+    kind: string;
+    summary?: string;
+    capturedAt: string;
+  };
+  checks: Array<{ name: string; ok: boolean; message?: string; evidence?: unknown }>;
+  nextActions: string[];
+  installResult?: unknown;
+  diagnostics: Diagnostic[];
+  exitCode: 0 | 1;
+}
+
+export interface AgentTimelineItem {
+  id: string;
+  source: string;
+  integration: string;
+  trustLevel: string;
+  kind: string;
+  capturedAt: string;
+  sessionId?: string;
+  turnId?: string;
+  summary?: string;
+  toolName?: string;
+  command?: string;
+  status?: string;
+  files: string[];
+  entries: string[];
+  proofs: string[];
+  confidence: number;
+}
+
+export interface AgentTimelineResult {
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  timeline: "agent";
+  target: AgentAdapterTarget;
+  sourceFilter?: string;
+  summary: {
+    events: number;
+    sessions: number;
+    files: number;
+    entries: number;
+    proofs: number;
+    tools: number;
+    latestEventAt?: string;
+  };
+  events: AgentTimelineItem[];
+  files: string[];
+  entries: string[];
+  proofs: string[];
+  sessions: string[];
+  nextActions: string[];
   diagnostics: Diagnostic[];
   exitCode: 0 | 1;
 }

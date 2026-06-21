@@ -1,14 +1,13 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=a2e23d6a49f7a3c1da5a570bb84f82c284ebb15a91b682523f74ef97a466c41a
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=4bb6771e76ed394eea4aa11306c22180372b788d359ead0c1f499ea40475afb4
 export const agentAdapterManifest = {
   "generatorVersion": "0.1.0-alpha.18",
   "schemaVersion": "0.1.0",
-  "sourceHash": "sha256:0d9f5722da28ca3438d5569405126576bf2a06e683253ab8254a543e9230c2a0",
+  "sourceHash": "sha256:97d0dead704fbec66b346049e9a930c036aeaef0a707358fbcb53b5933909506",
   "targets": [
     {
       "adapterVersion": "agent-adapter-0.1.0",
       "default": true,
       "files": [
-        "AGENTS.md",
         ".forge/agent/context.json",
         ".forge/agent/commands.json",
         ".forge/agent/done-criteria.json",

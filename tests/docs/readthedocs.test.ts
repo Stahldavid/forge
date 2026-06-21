@@ -110,9 +110,13 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/capabilities.md")).toContain("H39-H43");
     expect(read("docs/capabilities.md")).toContain("Native AI agents");
     expect(read("docs/agent-workflow.md")).toContain("forge do");
+    expect(read("docs/agent-workflow.md")).toContain("forge status --json");
+    expect(read("docs/agent-workflow.md")).toContain("forge handoff --json");
     expect(read("docs/agent-workflow.md")).toContain("Integration change loop");
     expect(read("docs/agent-workflow.md")).toContain("forge deps api stripe checkout.sessions.create");
     expect(read("docs/agent-playbook.md")).toContain("issue-to-handoff loop");
+    expect(read("docs/agent-playbook.md")).toContain("forge status --json");
+    expect(read("docs/agent-playbook.md")).toContain("forge handoff --json");
     expect(read("docs/agent-playbook.md")).toContain("forge review run --changed --json");
     expect(read("docs/agent-feature-tutorial.md")).toContain("forge make resource task");
     expect(read("docs/agent-feature-tutorial.md")).toContain("Add integrations only through Forge");
@@ -147,6 +151,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/troubleshooting.md")).toContain("FORGE_AI_FORBIDDEN_CONTEXT");
     expect(read("docs/troubleshooting.md")).toContain("LiveQuery stale");
     expect(read("docs/troubleshooting.md")).toContain("Error map");
+    expect(read("docs/troubleshooting.md")).toContain("forge handoff --json");
     expect(read("docs/agent-contract.md")).toContain("forge agent export");
     expect(read("docs/agent-contract.md")).toContain("dependencyApis");
     expect(read("docs/agent-contract.md")).toContain("Package API evidence");
@@ -158,6 +163,9 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/ai-agents.md")).toContain("aiTool");
     expect(read("docs/ai-agents.md")).toContain("/ai/agents/chat");
     expect(read("docs/cli.md")).toContain("forge ai trace");
+    expect(read("docs/cli.md")).toContain("forge status --json");
+    expect(read("docs/cli.md")).toContain("forge handoff --json");
+    expect(read("docs/cli.md")).toContain("forge inspect all --full --json");
     expect(read("docs/cli.md")).toContain("forge deps api");
     expect(read("docs/cli.md")).toContain("Dependency API oracle");
     expect(read("docs/why-forgeos.md")).toContain("Add integrations safely");
@@ -195,6 +203,9 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/security-standards.md")).toContain("tests/security/webhooks/webhook-security.test.ts");
     expect(read("docs/security-standards.md")).toContain("NPM_CONFIG_PROVENANCE=true");
     expect(read("docs/cli-reference.md")).toContain("forge auth prove --json");
+    expect(read("docs/cli-reference.md")).toContain("forge status --json");
+    expect(read("docs/cli-reference.md")).toContain("forge handoff --json");
+    expect(read("docs/cli-reference.md")).toContain("forge inspect all --full --json");
     expect(read("docs/cli-reference.md")).toContain("forge rls mutate-test --json");
     expect(read("docs/cli-reference.md")).toContain("forge ai redteam --json");
     expect(read("docs/cli-reference.md")).toContain("npm run release:publish-alpha");

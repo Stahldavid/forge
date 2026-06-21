@@ -35,6 +35,7 @@ forge new my-app \
 | Template | Stack | Includes | Best for |
 |----------|-------|----------|----------|
 | `minimal-web` | Forge backend + Vite React `web/` | Basic CRUD patterns, `ForgeProvider`, client bridge | Learning Forge, prototypes |
+| `agent-workroom` | Forge backend + Vite React observer UI | App preview, terminal-like external-agent signals, generated state, diff focus, check runs, handoff evidence, liveQuery | Demonstrating ForgeOS as an agent-native development environment |
 | Nuxt UI shell via `forge make ui --framework nuxt` | Forge backend + Nuxt Vue `web/` | Nuxt plugin, Vue composables, runtime config bridge | Vue/Nuxt apps |
 | `b2b-support-web` | Forge + Next-style `web/` | Tickets, policies, Stripe hooks, AI triage workflow, liveQuery | Full-stack showcase, B2B support apps |
 
@@ -103,6 +104,7 @@ Without generate, `forge doctor` reports stale or missing artifacts.
 
 ```txt
 Need only API + small UI     -> minimal-web
+Need external-agent demo     -> agent-workroom
 Need tickets + billing + AI  -> b2b-support-web
 Custom domain                -> minimal-web + forge make resource ...
 ```
@@ -118,6 +120,7 @@ npm run forge -- inspect capabilities --json
 ```
 
 These commands verify that the generated frontend, provider, hook bridge, runtime entries, and capability map agree.
+For `agent-workroom`, ForgeOS also keeps a template smoke that executes the generated `openWorkroom`, `recordAgentSignal`, `recordCheckRun`, and `liveWorkroom` runtime path against an in-memory database. That test proves the demo is more than a static shell: external-agent evidence, preview status, generated freshness, authored/generated diff focus, and verification results can be recorded and surfaced through liveQuery without launching the browser.
 
 After creation, see:
 

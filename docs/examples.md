@@ -67,6 +67,60 @@ src/forge/_generated/
 
 Use this template to learn the full local loop without extra integrations.
 
+## Agent workroom app
+
+Create it:
+
+```bash
+npm create forgeos-app@alpha workroom -- --template agent-workroom
+cd workroom
+npm run dev
+```
+
+Initial source tree:
+
+```txt
+workroom/
+  AGENTS.md
+  forge.config.ts
+  package.json
+  src/
+    actions/
+      indexAgentSignal.ts
+    commands/
+      openWorkroom.ts
+      recordAgentSignal.ts
+      recordCheckRun.ts
+    forge/
+      schema.ts
+    policies.ts
+    queries/
+      listWorkrooms.ts
+      liveWorkroom.ts
+  web/
+    index.html
+    package.json
+    src/
+      App.tsx
+      lib/forge.ts
+      main.tsx
+      styles.css
+```
+
+Capabilities:
+
+| Capability | Demonstrated by |
+|------------|-----------------|
+| App preview | Workroom embeds the target app URL, normally `http://127.0.0.1:5174` |
+| External-agent signals | `recordAgentSignal` and `liveWorkroom` |
+| Verification evidence | `recordCheckRun` and the checks panel |
+| Handoff context | `AGENTS.md`, generated contracts, and live evidence |
+| Studio attachment | `forge studio attach . --target codex --preview-port 5174` |
+
+Use this template to show ForgeOS as an agent-native development cockpit. The
+browser UI does not chat with a model; Codex, Claude Code, or Cursor edit the
+workspace externally while ForgeOS records the evidence.
+
 ## B2B support web app
 
 Create it:

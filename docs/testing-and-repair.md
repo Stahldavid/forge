@@ -27,6 +27,7 @@ forge verify --standard --script-timeout-ms 120000
 Strict verification runs non-docker/non-browser TestGraph entries in bounded chunks.
 Parallel and isolated lanes run at the same time, so the reported critical path reflects lane overlap instead of adding both lanes together.
 Runtime-heavy, template, release, git, and process-spawning tests run as isolated one-file chunks with their own temp directory and dynamic dev port.
+Template coverage includes an `agent-workroom` runtime smoke: scaffold the template, generate contracts, migrate an in-memory database, run the workroom commands, and read the `liveWorkroom` liveQuery snapshot.
 The serial lane is reserved for tests that intentionally mutate shared state in the checkout itself.
 By default, Forge uses a total budget of up to 4 TestGraph jobs and reserves up to 2 of those jobs for isolated runtime-test chunks when both lanes have work.
 Strict runs write measured file timings to `.forge/test-runs/testgraph-profile.json`; later runs use that profile to balance slow tests instead of chunking alphabetically.
@@ -139,6 +140,8 @@ See [Troubleshooting](troubleshooting.md).
 ```bash
 forge review run --changed --json
 ```
+
+The review JSON is compact by default for agents and CI logs. It includes `changeSummary` and `reviewFocus`, so authored changes stay ahead of derived generated artifacts in review order. Add `--full` to include every changed file and generated artifact path.
 
 Produces findings and suggested commands for agent/human review before merge.
 

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=143ee5e2d6fee031a4952f21ee3cc8f1e5678fd11ea673c2cb79196c251c32b6
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=8f0fa0558026b7bf99263295a7b05a2e4d4207a4411eb72c3ceb34ce66243772
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -12,9 +12,13 @@ This is a ForgeOS application named `forgeos`.
 Before editing:
 
 ```bash
+forge agent onboard --target codex --json
+forge status --json
+forge changed --json
+forge handoff --json
 forge do inspect --json
 forge dev --once --json
-forge inspect all --json
+forge agent print-context --json
 forge check --json
 ```
 
@@ -65,8 +69,10 @@ forge do fix --json
 forge do verify --json
 forge dev --once --json
 forge dev
+forge handoff --json
 forge inspect app --json
 forge inspect all --json
+forge inspect all --full --json
 forge inspect frontend --json
 forge inspect capabilities --json
 forge inspect agent-tools --json
@@ -83,6 +89,7 @@ forge doctor
 forge doctor windows --json
 forge setup windows --json
 forge agent print-context --json
+forge agent doctor --target codex --json
 forge ai tools --json
 forge ai agents --json
 forge ai trace <traceId> --json
@@ -253,7 +260,8 @@ Use:
 
 ```bash
 forge generate
-forge inspect all --json
+forge inspect ai --json
+forge agent print-context --json
 forge ai check --json
 forge ai trace <traceId> --json
 ```

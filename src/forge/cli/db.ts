@@ -24,7 +24,7 @@ import {
 } from "../runtime/db/migrate.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
 
-export type DbSubcommand = "diff" | "migrate" | "reset" | "status" | "rls-check";
+export type DbSubcommand = "diff" | "migrate" | "reset" | "status" | "doctor" | "rls-check";
 
 export interface DbCommandOptions {
   subcommand: DbSubcommand;
@@ -171,6 +171,120 @@ function sqlPlanDiagnostics(plan: SqlPlan): Diagnostic[] {
   return Array.isArray(plan.diagnostics) ? plan.diagnostics : [];
 }
 
+async function inspectDatabaseColumns(
+  adapter: NonNullable<Awaited<ReturnType<typeof createDbAdapter>>["adapter"]>,
+): Promise<{ tables: Record<string, string[]>; diagnostics: Diagnostic[] }> {
+  try {
+    const result = await adapter.query(
+      `SELECT c.relname AS table_name, a.attname AS column_name
+       FROM pg_catalog.pg_class c
+       JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+       JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+       WHERE n.nspname = 'public'
+         AND c.relkind IN ('r', 'p')
+         AND a.attnum > 0
+         AND NOT a.attisdropped
+       ORDER BY c.relname, a.attnum`,
+    );
+    const tables: Record<string, string[]> = {};
+    for (const row of result.rows) {
+      const table = typeof row.table_name === "string" ? row.table_name : undefined;
+      const column = typeof row.column_name === "string" ? row.column_name : undefined;
+      if (!table || !column) {
+        continue;
+      }
+      tables[table] = [...(tables[table] ?? []), column];
+    }
+    return { tables, diagnostics: [] };
+  } catch (error) {
+    return {
+      tables: {},
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_DB_DOCTOR_INSPECT_FAILED",
+          message: error instanceof Error ? error.message : "failed to inspect database columns",
+          fixHint: "Verify the configured database adapter is reachable, then retry the read-only doctor.",
+          suggestedCommands: ["forge db doctor --json", "forge db migrate --json"],
+        }),
+      ],
+    };
+  }
+}
+
+async function runDbDoctor(
+  options: DbCommandOptions,
+  plan: SqlPlan,
+  diagnostics: Diagnostic[],
+  planDiagnostics: Diagnostic[],
+): Promise<DbCommandResult> {
+  const { adapter, diagnostics: adapterDiagnostics } = await createDbAdapter(adapterOptions(options));
+  if (!adapter) {
+    return {
+      ok: false,
+      diagnostics: [...diagnostics, ...planDiagnostics, ...adapterDiagnostics],
+      exitCode: 1,
+    };
+  }
+
+  try {
+    const inspected = await inspectDatabaseColumns(adapter);
+    const expected = Object.fromEntries(
+      plan.tables
+        .filter((table) => table.kind === "create_table" && table.table && table.columns)
+        .map((table) => [table.table!, table.columns!.map((column) => column.name).sort()]),
+    );
+    const missingTables = Object.keys(expected)
+      .filter((table) => !inspected.tables[table])
+      .sort();
+    const missingColumns = Object.entries(expected)
+      .flatMap(([table, columns]) => {
+        const actual = new Set(inspected.tables[table] ?? []);
+        return columns
+          .filter((column) => !actual.has(column))
+          .map((column) => ({ table, column }));
+      })
+      .sort((a, b) => a.table.localeCompare(b.table) || a.column.localeCompare(b.column));
+    const extraTables = Object.keys(inspected.tables)
+      .filter((table) => !expected[table] && !table.startsWith("_forge_"))
+      .sort();
+    const ok = inspected.diagnostics.length === 0 && missingTables.length === 0 && missingColumns.length === 0;
+
+    return {
+      ok,
+      data: {
+        schemaVersion: "0.1.0",
+        summary: {
+          ok,
+          adapter: adapter.kind,
+          expectedTables: Object.keys(expected).length,
+          actualTables: Object.keys(inspected.tables).length,
+          missingTables: missingTables.length,
+          missingColumns: missingColumns.length,
+          extraTables: extraTables.length,
+        },
+        expected,
+        actual: inspected.tables,
+        missingTables,
+        missingColumns,
+        extraTables,
+        nextActions: ok
+          ? ["forge db status --json", "forge check --json"]
+          : ["forge db migrate --json", "forge db doctor --json", "forge generate"],
+      },
+      diagnostics: [
+        ...diagnostics,
+        ...planDiagnostics,
+        ...adapterDiagnostics,
+        ...inspected.diagnostics,
+      ],
+      exitCode: ok ? 0 : 1,
+    };
+  } finally {
+    await adapter.close();
+  }
+}
+
 export async function runDbCommand(options: DbCommandOptions): Promise<DbCommandResult> {
   const { plan, diagnostics: planDiagnostics } = await loadSqlPlan(options.workspaceRoot);
 
@@ -214,6 +328,11 @@ export async function runDbCommand(options: DbCommandOptions): Promise<DbCommand
   }
 
   const diagnostics = sqlPlanDiagnostics(plan);
+
+  if (options.subcommand === "doctor") {
+    return runDbDoctor(options, plan, diagnostics, planDiagnostics);
+  }
+
   const { adapter, diagnostics: adapterDiagnostics } = await createDbAdapter(
     adapterOptions(options),
   );
@@ -308,7 +427,7 @@ export function formatDbHuman(subcommand: DbSubcommand, result: DbCommandResult)
     return "database reset complete\n";
   }
 
-  if (subcommand === "status" || subcommand === "diff") {
+  if (subcommand === "status" || subcommand === "diff" || subcommand === "doctor") {
     return `${JSON.stringify(result.data, null, 2)}\n`;
   }
 

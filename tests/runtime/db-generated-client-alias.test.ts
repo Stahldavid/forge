@@ -4,6 +4,35 @@ import { createGeneratedDbClient } from "../../src/forge/runtime/db/generated-cl
 import { createMemoryAdapter } from "../../src/forge/runtime/db/memory-adapter.ts";
 
 describe("generated db client field aliases", () => {
+  test("exposes snake_case table names through camelCase runtime aliases", async () => {
+    const adapter = createMemoryAdapter();
+    await adapter.query(
+      `CREATE TABLE IF NOT EXISTS incident_messages (id text PRIMARY KEY, incident_id text NOT NULL, content text NOT NULL)`,
+    );
+
+    const db = createGeneratedDbClient(adapterAsTransaction(adapter), {
+      incident_messages: {
+        tableName: "incident_messages",
+        columns: [
+          { name: "id", fieldName: "id", sqlType: "text", primaryKey: true },
+          { name: "incident_id", fieldName: "incidentId", sqlType: "text" },
+          { name: "content", fieldName: "content", sqlType: "text" },
+        ],
+      },
+    });
+
+    await db.incidentMessages.insert({
+      id: "msg-1",
+      incidentId: "incident-1",
+      content: "The room opened.",
+    });
+
+    expect(await db.incident_messages.where({ incidentId: "incident-1" })).toHaveLength(1);
+    expect(await db.incidentMessages.where({ incident_id: "incident-1" })).toHaveLength(1);
+
+    await adapter.close();
+  });
+
   test("accepts TypeScript field names and maps them to SQL columns", async () => {
     const adapter = createMemoryAdapter();
     await adapter.query(

@@ -8,6 +8,8 @@ Public docs live at [forgeos.readthedocs.io](https://forgeos.readthedocs.io/). T
 
 Start with [Why ForgeOS](https://forgeos.readthedocs.io/en/latest/why-forgeos/) to understand the agent-native design.
 
+For the short version, read [The Five-Minute ForgeOS Model](https://forgeos.readthedocs.io/en/latest/five-minute-model/) and [Alpha Golden Path](https://forgeos.readthedocs.io/en/latest/golden-path/). The important distinction is that external coding agents are the primary ForgeOS workflow; integrated AI SDK features are available for apps that need in-product AI, but they are not the main development loop.
+
 ## Agent-First Quickstart
 
 ```bash

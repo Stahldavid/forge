@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import {
+  formatReviewJson,
   renderSarif,
   runReviewCommand,
 } from "../../src/forge/review/index.ts";
@@ -174,6 +175,12 @@ describe("H31 structured Forge review", () => {
   });
 
   test("parser supports review commands and rule explanations", () => {
+    const runParsed = parseCli(["review", "run", "--changed", "--json", "--full"]);
+    expect(runParsed.command).toMatchObject({
+      kind: "review",
+      options: { subcommand: "run", changed: true, json: true, full: true },
+    });
+
     const parsed = parseCli(["review", "--base", "main", "--write", "--sarif", "--fail-on", "blocking"]);
     expect(parsed.command).toMatchObject({
       kind: "review",
@@ -190,6 +197,63 @@ describe("H31 structured Forge review", () => {
       ruleId: "runtime-command-forbidden-import",
     }));
     expect(explain.explanation).toContain("Rule: runtime-command-forbidden-import");
+  });
+
+  test("secret review ignores docs and operational env while preserving real secret findings", () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "docs/troubleshooting.md", "Example: process.env.STRIPE_SECRET_KEY and process.env.PATH");
+    write(root, "src/forge/dev/server.ts", "export const port = process.env.FORGE_DEV_PORT ?? process.env.PATH;");
+    write(root, "src/actions/sendInvoice.ts", "export async function sendInvoice() { return process.env.STRIPE_SECRET_KEY; }");
+    stage(root, "docs/troubleshooting.md", "src/forge/dev/server.ts", "src/actions/sendInvoice.ts");
+
+    const result = runReviewCommand(options(root));
+    const secretFindings = result.report?.findings.filter((finding) => finding.category === "secrets") ?? [];
+
+    expect(secretFindings.map((finding) => finding.file)).toEqual([
+      "src/actions/sendInvoice.ts",
+      "src/actions/sendInvoice.ts",
+    ]);
+    expect(secretFindings.map((finding) => finding.code).sort()).toEqual([
+      "secret-direct-process-env",
+      "secret-env-example-missing",
+    ]);
+  });
+
+  test("JSON formatter is compact by default and exposes full report on request", () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/commands/createCheckout.ts", `import Stripe from "stripe"; export async function createCheckout() { return Stripe; }`);
+    write(root, "forge.lock", "generated lock\n");
+    stage(root, "src/commands/createCheckout.ts", "forge.lock");
+
+    const result = runReviewCommand(options(root));
+    const compact = JSON.parse(formatReviewJson(result));
+    const full = JSON.parse(formatReviewJson(result, { full: true }));
+
+    expect(compact.changed.files).toBe(2);
+    expect(Array.isArray(compact.changed.files)).toBe(false);
+    expect(compact.changeSummary.byType.source.count).toBe(1);
+    expect(compact.changeSummary.byType.generated.count).toBe(1);
+    expect(compact.reviewFocus).toMatchObject({
+      first: "authoredChanges",
+      then: "derivedArtifacts",
+      generatedIsDerived: true,
+    });
+    expect(compact.diffPlan).toMatchObject({
+      first: "authored",
+      then: "generated",
+      generatedCollapsedByDefault: true,
+      authoredFiles: 1,
+      generatedFiles: 1,
+    });
+    expect(compact.reviewFocus.suggestedOrder).toEqual(["source", "generated"]);
+    expect(typeof compact.impacted.generatedArtifacts).toBe("number");
+    expect(compact.fullCommand).toBe("forge review run --changed --full --json");
+    expect(Array.isArray(full.changed.files)).toBe(true);
+    expect(full.changed.files).toContain("src/commands/createCheckout.ts");
+    expect(full.diffPlan.generatedDiffCommand).toContain("src/forge/_generated");
+    expect(full.changeSummary.byType.generated.sample).toContain("forge.lock");
   });
 
   test("SARIF output maps findings to rules", () => {

@@ -14,6 +14,7 @@ function readOptional(path: string): string | null {
 
 export function snapshotVersionControlled(
   workspaceRoot: string,
+  extraRelativePaths: string[] = [],
 ): VersionControlledSnapshot {
   const pm = detectPackageManager(workspaceRoot);
   const lockfile = getLockfileForPm(pm);
@@ -25,6 +26,7 @@ export function snapshotVersionControlled(
       `${workspaceRoot.replace(/\\/g, "/")}/`,
       "",
     ),
+    ...extraRelativePaths,
   ];
 
   const files = new Map<string, string | null>();

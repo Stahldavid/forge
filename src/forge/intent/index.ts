@@ -195,7 +195,7 @@ function planFor(input: {
           step(
             "Inspect current app contract",
             "The agent should understand existing entries, policies, frontend routes, and generated rules before editing.",
-            ["forge dev --once --json", "forge inspect all --json"],
+            ["forge status --json", "forge changed --json", "forge handoff --json", "forge dev --once --json", "forge agent print-context --json"],
             files,
             ["No stale generated artifacts", "Frontend/runtime diagnostics are visible before editing"],
           ),
@@ -215,7 +215,11 @@ function planFor(input: {
           ),
         ],
         commands: [
+          intentCommand("forge status --json", "Read compact project health and handoff state"),
+          intentCommand("forge changed --json", "Inspect grouped human and generated changes before opening diffs"),
+          intentCommand("forge handoff --json", "Build the compact work handoff for external agents"),
           intentCommand("forge dev --once --json", "Get the current generated/check/frontend/doctor state"),
+          intentCommand("forge agent print-context --json", "Read the agent-facing context"),
           intentCommand(dryRun, "Preview the feature scaffold"),
           intentCommand(apply, "Apply the reviewed scaffold", "after-review"),
           intentCommand("forge generate", "Refresh generated contracts after edits", "after-editing"),
@@ -272,7 +276,7 @@ function planFor(input: {
           step(
             "Collect current diagnostics",
             "The central dev cycle aggregates generated drift, guardrails, frontend wiring, doctor checks, impact, and last reports.",
-            ["forge dev --once --json"],
+            ["forge status --json", "forge changed --json", "forge handoff --json", "forge dev --once --json"],
             files,
             ["Diagnostics include codes, fix hints, and suggested commands"],
           ),
@@ -289,6 +293,9 @@ function planFor(input: {
           ),
         ],
         commands: [
+          intentCommand("forge status --json", "Read compact project health before repair"),
+          intentCommand("forge changed --json", "Inspect grouped changes and risk buckets before repair"),
+          intentCommand("forge handoff --json", "Capture current work state and risks before repair"),
           intentCommand("forge dev --once --json", "Collect current diagnostics"),
           intentCommand("forge repair diagnose --from-last-test-run --json", "Diagnose last test failures", "after-review"),
           intentCommand("forge repair diagnose --from-last-ui-run --json", "Diagnose last UI failures", "after-review"),
@@ -307,7 +314,7 @@ function planFor(input: {
           step(
             "Get changed-file impact",
             "Impact planning keeps verification fast while still choosing relevant checks.",
-            ["forge dev --once --json", "forge test plan --changed --json"],
+            ["forge changed --json", "forge handoff --json", "forge dev --once --json", "forge test plan --changed --json"],
             files,
             ["Changed files and recommended checks are listed"],
           ),
@@ -320,6 +327,8 @@ function planFor(input: {
           ),
         ],
         commands: [
+          intentCommand("forge changed --json", "Inspect grouped changes before planning verification"),
+          intentCommand("forge handoff --json", "Summarize current work state before verification"),
           intentCommand("forge dev --once --json", "Run central diagnostics"),
           intentCommand("forge test plan --changed --json", "Plan targeted checks from changed files"),
           intentCommand("forge verify --changed", "Run focused verification", "after-editing"),
@@ -338,7 +347,7 @@ function planFor(input: {
           step(
             "Review current state",
             "Handoffs need current generated artifacts, review findings, and changed-file impact.",
-            ["forge dev --once --json", "forge review --changed --json", "git status --short"],
+            ["forge changed --json", "forge handoff --json", "forge dev --once --json", "forge review --changed --json", "git status --short"],
             files,
             ["No unexpected generated drift", "Review findings are known before commit"],
           ),
@@ -351,6 +360,8 @@ function planFor(input: {
           ),
         ],
         commands: [
+          intentCommand("forge changed --json", "Inspect grouped changes before review and handoff"),
+          intentCommand("forge handoff --json", "Build the work handoff and risk summary"),
           intentCommand("forge dev --once --json", "Run central diagnostics"),
           intentCommand("forge review --changed --json", "Review changed files structurally"),
           intentCommand("forge verify --strict", "Run final strict verification", "before-handoff"),
@@ -364,14 +375,14 @@ function planFor(input: {
     case "explain":
     case "inspect":
       return {
-        summary: "Read the generated contract and maps before opening individual files.",
+        summary: "Read compact project health and generated agent context before opening individual files.",
         plan: [
           step(
             "Load agent context",
-            "The generated contract is the fastest route to understanding runtime, data, frontend, policies, and commands.",
-            ["forge inspect all --json", "forge agent print-context --json"],
+            "The compact status, grouped diff, and generated context are the fastest route to understanding runtime, data, frontend, policies, and commands.",
+            ["forge status --json", "forge changed --json", "forge handoff --json", "forge agent print-context --json", "forge inspect all --brief --json"],
             files,
-            ["Contract and maps are available", "Frontend routes and runtime endpoints are known"],
+            ["Grouped human and generated changes are visible", "Contract and maps are available", "Frontend routes and runtime endpoints are known"],
           ),
           step(
             "Open the relevant source files",
@@ -382,14 +393,17 @@ function planFor(input: {
           ),
         ],
         commands: [
-          intentCommand("forge inspect all --json", "Read the aggregate project contract"),
+          intentCommand("forge status --json", "Read the compact project health and next actions"),
+          intentCommand("forge changed --json", "Inspect grouped human and generated changes before source reads"),
+          intentCommand("forge handoff --json", "Read the compact work handoff and resume brief"),
           intentCommand("forge agent print-context --json", "Read the agent-facing context"),
+          intentCommand("forge inspect all --brief --json", "Read the brief aggregate project contract without large nested payloads"),
           intentCommand("forge inspect frontend --json", "Read frontend routes and bindings"),
         ],
         filesToInspect: files,
         filesToChange: [],
         risks: [
-          risk("low", "Reading source before generated maps wastes context.", "Start from AGENTS.md and agentContract.json."),
+          risk("low", "Reading source before grouped changes and generated maps wastes context.", "Start from status, changed, AGENTS.md, and agentContract.json."),
         ],
       };
   }

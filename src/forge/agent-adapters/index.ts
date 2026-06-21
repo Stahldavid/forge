@@ -27,25 +27,31 @@ import type {
   AgentDoctorResult,
   AgentExportFile,
   AgentExportResult,
+  AgentHooksSmokeResult,
+  AgentHooksStatusResult,
+  AgentOnboardResult,
   AgentPrintContextResult,
+  AgentPrepareResult,
+  AgentTimelineItem,
+  AgentTimelineResult,
   AgentTargetsResult,
   CustomAdapterConfig,
   AgentCheckResult,
 } from "./types.ts";
+import type { AgentMemoryEventRecord } from "../agent-memory/types.ts";
 import {
   formatAgentMemoryHuman,
   formatAgentMemoryJson,
   runAgentMemoryCommand,
   type AgentMemoryCommandResult,
 } from "../agent-memory/bridge.ts";
+import { runDevConsoleCycle } from "../dev-console/cycle.ts";
 
 export const AGENT_ADAPTER_VERSION = "agent-adapter-0.1.0";
 export const AGENT_FORMAT_VERSION = "2026-06";
 
 const USER_START = "<!-- user-notes:start -->";
 const USER_END = "<!-- user-notes:end -->";
-const GENERATED_START = "<!-- forge-generated:start -->";
-const GENERATED_END = "<!-- forge-generated:end -->";
 const CUSTOM_ADAPTERS_DIR = ".forge/agent-adapters";
 
 function sorted(values: string[]): string[] {
@@ -228,99 +234,6 @@ export function buildAgentDoneCriteria(): AgentDoneCriteria {
   };
 }
 
-function replaceGeneratedBlock(existing: string | null, generated: string, fallbackUserNotes: string): string {
-  const userBlock = extractUserBlock(existing) ?? `${USER_START}\n\n${fallbackUserNotes}\n\n${USER_END}`;
-  return `${GENERATED_START}\n${generated.trim()}\n${GENERATED_END}\n\n${userBlock.trim()}\n`;
-}
-
-function extractUserBlock(existing: string | null): string | null {
-  if (!existing) {
-    return null;
-  }
-  const start = existing.indexOf(USER_START);
-  const end = existing.indexOf(USER_END);
-  if (start === -1 || end === -1 || end < start) {
-    return null;
-  }
-  return existing.slice(start, end + USER_END.length);
-}
-
-function agentsMarkdown(contract: AgentContract, existing: string | null): string {
-  const context = buildAgentContext(contract);
-  const generated = `# AGENTS.md
-
-## Project Type
-
-This is a ForgeOS application.
-
-## Required Workflow
-
-Before editing:
-
-\`\`\`bash
-forge inspect all --json
-forge doctor --json
-\`\`\`
-
-During editing:
-
-\`\`\`bash
-forge impact --changed --json
-forge test plan --changed --json
-\`\`\`
-
-After editing:
-
-\`\`\`bash
-forge generate
-forge check
-forge verify --strict
-\`\`\`
-
-## Do Not
-
-- Do not edit \`src/forge/_generated/**\`.
-- Do not import network packages in \`command\`, \`query\`, or \`liveQuery\`.
-- Do not use \`process.env\` directly in app code.
-- Use \`ctx.secrets\`.
-- Do not bypass tenant isolation.
-- Do not call \`ctx.ai\` in \`command\`, \`query\`, or \`liveQuery\`.
-- Do not manually modify \`forge.lock\` unless instructed.
-
-## Runtime Model
-
-- \`command\`: ${context.runtimeModel.command}.
-- \`query\`: ${context.runtimeModel.query}.
-- \`liveQuery\`: ${context.runtimeModel.liveQuery}.
-- \`action\`: ${context.runtimeModel.action}.
-- \`workflow\`: ${context.runtimeModel.workflow}.
-
-## Common Commands
-
-\`\`\`bash
-forge make resource <name>
-forge feature plan <blueprint>
-forge refactor rename field <from> <to>
-forge impact --changed --json
-forge repair diagnose --from-last-test-run --json
-forge agent print-context --json
-\`\`\`
-
-## Agent Adapter Exports
-
-- Generic agents read \`.forge/agent/context.json\` and \`.forge/agent/playbooks/*.md\`.
-- Codex skills are generated under \`.codex/skills/**\`.
-- Cursor rules are generated under \`.cursor/rules/**\`.
-- Claude instructions are generated in \`CLAUDE.md\` and \`.claude/**\`.
-
-These files are derived from ForgeOS generated contracts. Regenerate them with:
-
-\`\`\`bash
-forge agent export --target all
-\`\`\``;
-  return `# AGENTS.md\n\n${replaceGeneratedBlock(existing, generated, "Project-specific human notes go here.")}`;
-}
-
 function playbook(title: string, steps: string[]): string {
   return `# Playbook: ${title}\n\n${steps.map((step, index) => `${index + 1}. ${step}`).join("\n")}\n`;
 }
@@ -328,7 +241,7 @@ function playbook(title: string, steps: string[]): string {
 function playbookFiles(): AgentExportFile[] {
   const books: Array<[string, string, string[]]> = [
     ["add-command.md", "Add Command", [
-      "Run `forge inspect all --json`.",
+      "Run `forge status --json`, `forge handoff --json`, and `forge agent print-context --json`.",
       "Prefer `forge make command <resource.action> --table <table> --policy <policy>`.",
       "Commands may write through `ctx.db` and emit with `ctx.emit`.",
       "Commands must not import network packages, use `ctx.secrets`, or call `ctx.ai`.",
@@ -401,14 +314,17 @@ function playbookFiles(): AgentExportFile[] {
   }));
 }
 
-function buildGenericFiles(contract: AgentContract, existingAgentsMd?: string | null): AgentExportFile[] {
+function buildGenericFiles(contract: AgentContract): AgentExportFile[] {
   return [
-    { path: "AGENTS.md", content: existingAgentsMd ?? agentsMarkdown(contract, null) },
     { path: ".forge/agent/context.json", content: renderJson(buildAgentContext(contract)) },
     { path: ".forge/agent/commands.json", content: renderJson(buildAgentCommandsMap()) },
     { path: ".forge/agent/done-criteria.json", content: renderJson(buildAgentDoneCriteria()) },
     ...playbookFiles(),
   ];
+}
+
+function buildGenericSupportFiles(contract: AgentContract): AgentExportFile[] {
+  return buildGenericFiles(contract);
 }
 
 function skill(name: string, description: string, body: string): string {
@@ -429,7 +345,7 @@ Rules:
 - Commands must not use \`ctx.secrets\` or \`ctx.ai\`.
 
 Steps:
-1. Run \`forge inspect all --json\`.
+1. Run \`forge status --json\`, \`forge handoff --json\`, and \`forge agent print-context --json\`.
 2. Prefer \`forge make command <resource.action> --table <table> --policy <policy>\`.
 3. Run \`forge generate\`, \`forge check\`, and \`forge verify --changed\`.
 4. Finish with \`forge verify --strict\`.
@@ -547,8 +463,11 @@ This is a ForgeOS app.
 Start with:
 
 \`\`\`bash
-forge inspect all --json
-forge doctor --json
+forge status --json
+forge handoff --json
+forge dev --once --json
+forge agent print-context --json
+forge check --json
 \`\`\`
 
 After changes:
@@ -674,23 +593,22 @@ function builtFilesForTarget(
   target: AgentAdapterTarget,
   options: Pick<AgentCommandOptions, "skills" | "rules">,
 ): { files: AgentExportFile[]; diagnostics: Diagnostic[] } {
-  const existingAgentsMd = readText(workspaceRoot, "AGENTS.md");
   if (target === "generic") {
-    return { files: buildGenericFiles(contract, existingAgentsMd), diagnostics: [] };
+    return { files: buildGenericFiles(contract), diagnostics: [] };
   }
   if (target === "codex") {
-    return { files: [...buildGenericFiles(contract, existingAgentsMd), ...buildCodexFiles(contract, { skills: options.skills })], diagnostics: [] };
+    return { files: [...buildGenericSupportFiles(contract), ...buildCodexFiles(contract, { skills: options.skills })], diagnostics: [] };
   }
   if (target === "cursor") {
-    return { files: [...buildGenericFiles(contract, existingAgentsMd), ...buildCursorFiles(contract, { rules: options.rules })], diagnostics: [] };
+    return { files: [...buildGenericSupportFiles(contract), ...buildCursorFiles(contract, { rules: options.rules })], diagnostics: [] };
   }
   if (target === "claude") {
-    return { files: [...buildGenericFiles(contract, existingAgentsMd), ...buildClaudeFiles(contract)], diagnostics: [] };
+    return { files: [...buildGenericSupportFiles(contract), ...buildClaudeFiles(contract)], diagnostics: [] };
   }
   if (target === "all") {
     const byPath = new Map<string, AgentExportFile>();
     for (const file of [
-      ...buildGenericFiles(contract, existingAgentsMd),
+      ...buildGenericFiles(contract),
       ...buildCodexFiles(contract, { skills: options.skills }),
       ...buildCursorFiles(contract, { rules: options.rules }),
       ...buildClaudeFiles(contract),
@@ -837,10 +755,26 @@ export function runAgentCheck(options: AgentCommandOptions): AgentCheckResult {
   }
   const diag = [...built.diagnostics, ...validation];
   for (const file of stale) {
-    diag.push(diagnostic("error", FORGE_AGENT_STALE_EXPORT, `stale agent adapter export: ${file}`, file));
+    diag.push(createDiagnostic({
+      severity: "error",
+      code: FORGE_AGENT_STALE_EXPORT,
+      message: `stale agent adapter export: ${file}`,
+      file,
+      fixHint: `Regenerate the ${options.target} adapter export.`,
+      suggestedCommands: [`forge agent export --target ${options.target}`, "forge verify --strict"],
+      docs: ["src/forge/_generated/agentAdapterManifest.json", "AGENTS.md"],
+    }));
   }
   for (const file of missing) {
-    diag.push(diagnostic("error", FORGE_AGENT_STALE_EXPORT, `missing agent adapter export: ${file}`, file));
+    diag.push(createDiagnostic({
+      severity: "error",
+      code: FORGE_AGENT_STALE_EXPORT,
+      message: `missing agent adapter export: ${file}`,
+      file,
+      fixHint: `Generate the ${options.target} adapter export.`,
+      suggestedCommands: [`forge agent export --target ${options.target}`, "forge verify --strict"],
+      docs: ["src/forge/_generated/agentAdapterManifest.json", "AGENTS.md"],
+    }));
   }
   const ok = stale.length === 0 && missing.length === 0 && diag.every((item) => item.severity !== "error");
   return {
@@ -936,22 +870,840 @@ export function runAgentClean(options: AgentCommandOptions): AgentExportResult {
   };
 }
 
-export function runAgentDoctor(options: AgentCommandOptions): AgentDoctorResult {
+function eventBindings(event: AgentMemoryEventRecord): Record<string, unknown> {
+  const data = event.data;
+  const bindings = data && typeof data === "object" && "bindings" in data
+    ? (data as { bindings?: unknown }).bindings
+    : undefined;
+  return bindings && typeof bindings === "object" && !Array.isArray(bindings)
+    ? bindings as Record<string, unknown>
+    : {};
+}
+
+function eventHasUsefulSignal(event: AgentMemoryEventRecord): boolean {
+  const bindings = eventBindings(event);
+  const files = bindings.files;
+  const entries = bindings.entries;
+  const proofs = bindings.proofs;
+  return (
+    typeof bindings.toolName === "string" ||
+    typeof bindings.command === "string" ||
+    typeof bindings.status === "string" ||
+    (Array.isArray(files) && files.length > 0) ||
+    (Array.isArray(entries) && entries.length > 0) ||
+    (Array.isArray(proofs) && proofs.length > 0)
+  );
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function agentTimelineItem(event: AgentMemoryEventRecord): AgentTimelineItem {
+  const bindings = eventBindings(event);
+  return {
+    id: event.id,
+    source: event.sourceName,
+    integration: event.integrationKind,
+    trustLevel: event.trustLevel,
+    kind: event.normalizedKind,
+    capturedAt: event.capturedAt,
+    ...(event.externalSessionId ? { sessionId: event.externalSessionId } : {}),
+    ...(event.externalTurnId ? { turnId: event.externalTurnId } : {}),
+    ...(event.summary ? { summary: event.summary } : {}),
+    ...(stringValue(bindings.toolName) ? { toolName: stringValue(bindings.toolName) } : {}),
+    ...(stringValue(bindings.command) ? { command: stringValue(bindings.command) } : {}),
+    ...(stringValue(bindings.status) ? { status: stringValue(bindings.status) } : {}),
+    files: stringArray(bindings.files),
+    entries: stringArray(bindings.entries),
+    proofs: stringArray(bindings.proofs),
+    confidence: event.confidence,
+  };
+}
+
+function agentTimelineSourceFilter(target: AgentAdapterTarget): string | undefined {
+  if (!target || target === "all" || target === "generic") {
+    return undefined;
+  }
+  return agentMemorySourceForTarget(target);
+}
+
+export async function runAgentTimeline(options: AgentCommandOptions): Promise<AgentTimelineResult> {
+  const target = options.target || "all";
+  const sourceFilter = agentTimelineSourceFilter(target);
+  const requestedLimit = options.limit ?? 50;
+  const memoryResult = await runAgentMemoryCommand({
+    subcommand: "memory",
+    workspaceRoot: options.workspaceRoot,
+    json: true,
+    target: "generic",
+    source: "generic",
+    limit: sourceFilter ? 200 : requestedLimit,
+  });
+  if (!("events" in memoryResult) || memoryResult.ok === false) {
+    const diagnostics = "diagnostics" in memoryResult ? memoryResult.diagnostics ?? [] : [];
+    const nextActions = "nextActions" in memoryResult
+      ? memoryResult.nextActions ?? ["forge delta status --json"]
+      : ["forge delta status --json"];
+    return {
+      schemaVersion: "0.1.0",
+      ok: false,
+      timeline: "agent",
+      target,
+      ...(sourceFilter ? { sourceFilter } : {}),
+      summary: { events: 0, sessions: 0, files: 0, entries: 0, proofs: 0, tools: 0 },
+      events: [],
+      files: [],
+      entries: [],
+      proofs: [],
+      sessions: [],
+      nextActions,
+      diagnostics,
+      exitCode: 1,
+    };
+  }
+
+  const filtered = sourceFilter
+    ? memoryResult.events.filter((event) => event.sourceName === sourceFilter)
+    : memoryResult.events;
+  const events = filtered.slice(-requestedLimit).map(agentTimelineItem);
+  const files = sorted(events.flatMap((event) => event.files));
+  const entries = sorted(events.flatMap((event) => event.entries));
+  const proofs = sorted(events.flatMap((event) => event.proofs));
+  const sessions = sorted(events.flatMap((event) => event.sessionId ? [event.sessionId] : []));
+  const tools = sorted(events.flatMap((event) => event.toolName ? [event.toolName] : []));
+  return {
+    schemaVersion: "0.1.0",
+    ok: true,
+    timeline: "agent",
+    target,
+    ...(sourceFilter ? { sourceFilter } : {}),
+    summary: {
+      events: events.length,
+      sessions: sessions.length,
+      files: files.length,
+      entries: entries.length,
+      proofs: proofs.length,
+      tools: tools.length,
+      ...(events.at(-1)?.capturedAt ? { latestEventAt: events.at(-1)?.capturedAt } : {}),
+    },
+    events,
+    files,
+    entries,
+    proofs,
+    sessions,
+    nextActions: [
+      "forge agent context --current --json",
+      "forge changed --json",
+      "forge timeline --json --for-agent",
+    ],
+    diagnostics: [],
+    exitCode: 0,
+  };
+}
+
+function agentMemorySourceForTarget(target: AgentAdapterTarget): string {
+  if (target === "claude") return "claude-code";
+  if (target === "codex" || target === "cursor" || target === "claude-code") return target;
+  return String(target || "generic");
+}
+
+function hookInstallFilesPresent(workspaceRoot: string, installResult: unknown): {
+  planned: string[];
+  missing: string[];
+} {
+  const planned =
+    installResult &&
+    typeof installResult === "object" &&
+    "filesPlanned" in installResult &&
+    Array.isArray((installResult as { filesPlanned?: unknown }).filesPlanned)
+      ? ((installResult as { filesPlanned: unknown[] }).filesPlanned.filter((file): file is string => typeof file === "string"))
+      : [];
+  return {
+    planned,
+    missing: planned.filter((file) => !nodeFileSystem.exists(join(workspaceRoot, file))),
+  };
+}
+
+function lastAgentSignal(events: AgentMemoryEventRecord[]): AgentHooksStatusResult["lastSignal"] {
+  const event = events.at(-1);
+  return event
+    ? {
+        kind: event.normalizedKind,
+        ...(event.summary ? { summary: event.summary } : {}),
+        capturedAt: event.capturedAt,
+      }
+    : undefined;
+}
+
+async function readHookMemoryStatus(
+  workspaceRoot: string,
+  source: string,
+  limit: number,
+): Promise<{ events: AgentMemoryEventRecord[]; diagnostics: Diagnostic[] }> {
+  const diagnostics: Diagnostic[] = [];
+  const memoryResult = await runAgentMemoryCommand({
+    subcommand: "memory",
+    workspaceRoot,
+    json: true,
+    target: source,
+    source,
+    entry: source,
+    limit,
+  }).catch((error: unknown) => {
+    diagnostics.push(diagnostic(
+      "error",
+      "FORGE_AGENT_MEMORY_UNAVAILABLE",
+      error instanceof Error ? error.message : "agent memory store is unavailable",
+    ));
+    return { ok: false as const, events: [], exitCode: 1 as const };
+  });
+  if (
+    memoryResult &&
+    typeof memoryResult === "object" &&
+    "diagnostics" in memoryResult &&
+    Array.isArray((memoryResult as { diagnostics?: unknown }).diagnostics)
+  ) {
+    diagnostics.push(...(memoryResult as { diagnostics: Diagnostic[] }).diagnostics);
+  }
+  return {
+    events: "events" in memoryResult ? memoryResult.events ?? [] : [],
+    diagnostics,
+  };
+}
+
+async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentHooksStatusResult> {
+  const target = options.target || "codex";
+  const source = agentMemorySourceForTarget(target);
+  const installTarget = hookInstallTarget(target);
+  if (!installTarget) {
+    const diag = diagnostic(
+      "error",
+      "FORGE_AGENT_HOOK_TARGET_UNSUPPORTED",
+      `agent hooks supports codex, claude, and cursor targets; got ${target}`,
+    );
+    return {
+      ok: false,
+      target,
+      installed: false,
+      bridgeWritable: false,
+      deltaWritable: false,
+      visibleInMemory: false,
+      recentEvents: 0,
+      usefulSignals: 0,
+      checks: [{ name: "target", ok: false, message: diag.message }],
+      nextActions: ["forge agent list-targets --json"],
+      diagnostics: [diag],
+      exitCode: 1,
+    };
+  }
+
+  const installResult = await runAgentMemoryCommand({
+    subcommand: "install",
+    workspaceRoot: options.workspaceRoot,
+    json: options.json,
+    target: installTarget,
+    source: installTarget,
+    dryRun: true,
+    force: false,
+  });
+  const installOk =
+    typeof installResult === "object" && installResult !== null && "exitCode" in installResult
+      ? (installResult as { exitCode?: number }).exitCode === 0
+      : true;
+  const hookFiles = hookInstallFilesPresent(options.workspaceRoot, installResult);
+  const memory = await readHookMemoryStatus(options.workspaceRoot, source, options.limit ?? 25);
+  const usefulEvents = memory.events.filter(eventHasUsefulSignal);
+  const installed = hookFiles.missing.length === 0;
+  const bridgeWritable = installOk;
+  const deltaWritable = memory.diagnostics.length === 0;
+  const visibleInMemory = memory.events.length > 0;
+  const usefulSignals = usefulEvents.length;
+  const ok = installed && bridgeWritable && deltaWritable && visibleInMemory && usefulSignals > 0;
+  const nextActions = ok
+    ? [
+        `forge agent memory --entry ${source} --json`,
+        `forge agent context --current --json`,
+      ]
+    : [
+        ...(!installed ? [`forge agent install ${installTarget} --json`] : []),
+        ...(installed && !visibleInMemory ? [`forge agent hooks smoke --target ${target} --json`] : []),
+        ...(visibleInMemory && usefulSignals === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
+        ...(!deltaWritable ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
+      ];
+
+  return {
+    ok,
+    target,
+    installTarget,
+    installed,
+    bridgeWritable,
+    deltaWritable,
+    visibleInMemory,
+    recentEvents: memory.events.length,
+    usefulSignals,
+    ...(lastAgentSignal(memory.events) ? { lastSignal: lastAgentSignal(memory.events) } : {}),
+    checks: [
+      {
+        name: "hook-bridge-installed",
+        ok: installed,
+        message: installed
+          ? `${installTarget} hook bridge files are present`
+          : `missing hook bridge files: ${hookFiles.missing.join(", ")}`,
+        evidence: { planned: hookFiles.planned, missing: hookFiles.missing },
+      },
+      {
+        name: "hook-bridge-installable",
+        ok: bridgeWritable,
+        message: bridgeWritable ? "hook bridge install plan is valid" : "hook bridge install failed",
+      },
+      {
+        name: "agent-memory-readable",
+        ok: deltaWritable,
+        message: deltaWritable ? "agent memory store is readable" : "agent memory store is unavailable",
+      },
+      {
+        name: "visible-in-memory",
+        ok: visibleInMemory,
+        message: visibleInMemory ? `${memory.events.length} recent ${source} events visible` : "no hook events visible in memory yet",
+      },
+      {
+        name: "useful-signals",
+        ok: usefulSignals > 0,
+        message: usefulSignals > 0
+          ? `${usefulSignals} events include useful tool, file, command, status, entry, or proof signals`
+          : "no useful tool, file, command, status, entry, or proof signals found",
+      },
+    ],
+    nextActions,
+    installResult,
+    diagnostics: memory.diagnostics,
+    exitCode: ok ? 0 : 1,
+  };
+}
+
+export async function runAgentDoctor(options: AgentCommandOptions): Promise<AgentDoctorResult> {
+  const target = options.target || "generic";
   const check = runAgentCheck(options);
+  const source = agentMemorySourceForTarget(target);
+  const installTarget = hookInstallTarget(target);
+  const installResult = installTarget
+    ? await runAgentMemoryCommand({
+        subcommand: "install",
+        workspaceRoot: options.workspaceRoot,
+        json: options.json,
+        target: installTarget,
+        source: installTarget,
+        dryRun: true,
+        force: false,
+      })
+    : undefined;
+  const hookFiles = installTarget
+    ? hookInstallFilesPresent(options.workspaceRoot, installResult)
+    : { planned: [], missing: [] };
+  const memoryDiagnostics: Diagnostic[] = [];
+  const memoryResult = await runAgentMemoryCommand({
+    subcommand: "memory",
+    workspaceRoot: options.workspaceRoot,
+    json: options.json,
+    target: source,
+    source,
+    entry: source,
+    limit: options.limit ?? 25,
+  }).catch((error: unknown) => {
+    memoryDiagnostics.push(diagnostic(
+      "error",
+      "FORGE_AGENT_MEMORY_UNAVAILABLE",
+      error instanceof Error ? error.message : "agent memory store is unavailable",
+    ));
+    return { ok: false as const, events: [], exitCode: 1 as const };
+  });
+  if (
+    memoryResult &&
+    typeof memoryResult === "object" &&
+    "diagnostics" in memoryResult &&
+    Array.isArray((memoryResult as { diagnostics?: unknown }).diagnostics)
+  ) {
+    memoryDiagnostics.push(...(memoryResult as { diagnostics: Diagnostic[] }).diagnostics);
+  }
+  const recentEvents = "events" in memoryResult ? memoryResult.events ?? [] : [];
+  const usefulEvents = recentEvents.filter(eventHasUsefulSignal);
+  const adapterState = check.missing.length > 0 ? "missing" : check.stale.length > 0 ? "stale" : "ready";
+  const hookBridgeState = !installTarget
+    ? "not-supported"
+    : hookFiles.missing.length === 0
+      ? "ready"
+      : "missing";
   const checks = [
-    { name: "AGENTS.md", ok: !check.missing.includes("AGENTS.md") },
+    {
+      name: "adapter-export",
+      ok: check.missing.length === 0 && check.stale.length === 0,
+      message: adapterState === "ready" ? "agent adapter exports are current" : `adapter exports are ${adapterState}`,
+      evidence: { missing: check.missing, stale: check.stale },
+    },
+    { name: "AGENTS.md", ok: readText(options.workspaceRoot, "AGENTS.md") !== null },
     { name: "agent-context", ok: !check.missing.includes(".forge/agent/context.json") },
     { name: "commands", ok: !check.missing.includes(".forge/agent/commands.json") },
     { name: "done-criteria", ok: !check.missing.includes(".forge/agent/done-criteria.json") },
-    { name: "stale-exports", ok: check.stale.length === 0, message: check.stale.join(", ") || undefined },
+    {
+      name: "hook-bridge",
+      ok: !installTarget || hookFiles.missing.length === 0,
+      message: !installTarget
+        ? "this target has no native hook bridge"
+        : hookFiles.missing.length === 0
+          ? `${installTarget} hook bridge files are present`
+          : `missing hook bridge files: ${hookFiles.missing.join(", ")}`,
+      evidence: { target: installTarget, planned: hookFiles.planned, missing: hookFiles.missing },
+    },
+    {
+      name: "recent-memory",
+      ok: (!installTarget || recentEvents.length > 0) && memoryDiagnostics.length === 0,
+      message: memoryDiagnostics.length > 0
+        ? "agent memory store is unavailable"
+        : recentEvents.length > 0
+        ? `${recentEvents.length} recent ${source} memory events`
+        : "no recent agent memory events found",
+      evidence: recentEvents.slice(-5).map((event) => ({
+        kind: event.normalizedKind,
+        summary: event.summary,
+        capturedAt: event.capturedAt,
+      })),
+    },
+    {
+      name: "useful-signals",
+      ok: !installTarget || usefulEvents.length > 0,
+      message: usefulEvents.length > 0
+        ? `${usefulEvents.length} events include files, entries, commands, tools, status, or proofs`
+        : "events do not yet include useful files, entries, commands, tools, status, or proofs",
+    },
     { name: "secret-scan", ok: !check.diagnostics.some((diag) => diag.code === FORGE_AGENT_SECRET_LEAK) },
   ];
   const ok = checks.every((item) => item.ok) && check.exitCode === 0;
-  return { ok, checks, diagnostics: check.diagnostics, exitCode: ok ? 0 : 1 };
+  const nextActions = ok
+    ? [
+        `forge agent context --current --json`,
+        `forge agent memory --entry ${source} --json`,
+      ]
+    : [
+        ...(check.missing.length > 0 || check.stale.length > 0 ? [`forge agent export --target ${target}`] : []),
+        ...(installTarget && hookFiles.missing.length > 0 ? [`forge agent install ${installTarget} --json`] : []),
+        ...(memoryDiagnostics.length > 0 ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
+        ...(installTarget && recentEvents.length === 0 && memoryDiagnostics.length === 0 ? [`forge agent hooks smoke --target ${target} --json`] : []),
+        ...(installTarget && recentEvents.length > 0 && usefulEvents.length === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
+      ];
+  return {
+    ok,
+    target,
+    summary: {
+      adapter: adapterState,
+      hookBridge: hookBridgeState,
+      recentEvents: recentEvents.length,
+      usefulSignals: usefulEvents.length,
+      ...(recentEvents.at(-1)?.capturedAt ? { lastEventAt: recentEvents.at(-1)?.capturedAt } : {}),
+    },
+    checks,
+    nextActions,
+    diagnostics: [...check.diagnostics, ...memoryDiagnostics],
+    exitCode: ok ? 0 : 1,
+  };
+}
+
+function hookInstallTarget(target: AgentAdapterTarget): string | null {
+  if (target === "codex") return "codex";
+  if (target === "claude") return "claude-code";
+  if (target === "cursor") return "cursor";
+  return null;
+}
+
+function openCommandForTarget(target: AgentAdapterTarget): string | undefined {
+  if (target === "codex") return "codex";
+  if (target === "claude") return "claude";
+  if (target === "cursor") return "cursor .";
+  return undefined;
+}
+
+function agentCommandHints(target: AgentAdapterTarget): AgentPrepareResult["commands"] {
+  const installTarget = hookInstallTarget(target);
+  return {
+    context: "forge agent context --current --json",
+    export: `forge agent export --target ${target}`,
+    check: `forge agent check --target ${target} --json`,
+    ...(installTarget ? { install: `forge agent install ${installTarget} --json` } : {}),
+    ...(installTarget ? { hooksStatus: `forge agent hooks status --target ${target} --json` } : {}),
+    ...(installTarget ? { hooksSmoke: `forge agent hooks smoke --target ${target} --json` } : {}),
+    ...(openCommandForTarget(target) ? { open: openCommandForTarget(target) } : {}),
+  };
+}
+
+export async function runAgentPrepare(options: AgentCommandOptions): Promise<AgentPrepareResult> {
+  const target = options.target || "generic";
+  const exportResult = runAgentExport({ ...options, target });
+  const installTarget = hookInstallTarget(target);
+  const installResult = installTarget
+    ? await runAgentMemoryCommand({
+        subcommand: "install",
+        workspaceRoot: options.workspaceRoot,
+        json: options.json,
+        target: installTarget,
+        source: installTarget,
+        dryRun: options.dryRun,
+        force: options.force,
+      })
+    : undefined;
+  const checkResult = runAgentCheck({ ...options, target });
+  const diagnostics = [
+    ...exportResult.diagnostics,
+    ...checkResult.diagnostics,
+  ];
+  const installOk =
+    !installResult ||
+    (typeof installResult === "object" && installResult !== null && "exitCode" in installResult
+      ? (installResult as { exitCode?: number }).exitCode === 0
+      : true);
+  const ok = exportResult.ok && checkResult.ok && installOk;
+  return {
+    ok,
+    target,
+    exportResult,
+    checkResult,
+    ...(installResult ? { installResult } : {}),
+    commands: agentCommandHints(target),
+    diagnostics,
+    exitCode: ok ? 0 : 1,
+  };
+}
+
+function uniqueCommands(commands: Array<string | undefined>): string[] {
+  return [...new Set(commands.filter((command): command is string => Boolean(command)))];
+}
+
+export async function runAgentOnboard(options: AgentCommandOptions): Promise<AgentOnboardResult> {
+  const target = options.target || "codex";
+  const installTarget = hookInstallTarget(target);
+  const initialContext = runAgentPrintContext(options.workspaceRoot);
+  const preflightDev = initialContext.context === null
+    ? await runDevConsoleCycle({
+        workspaceRoot: options.workspaceRoot,
+        mode: "once",
+        strictSecrets: false,
+        includeImpact: false,
+      })
+    : undefined;
+  const prepare = await runAgentPrepare({ ...options, target });
+  const hookSmoke = installTarget && !options.dryRun
+    ? await runAgentHooksSmoke({ ...options, target, subcommand: "hooks", hookAction: "smoke" })
+    : undefined;
+  const doctor = await runAgentDoctor({ ...options, target, subcommand: "doctor" });
+  const context = runAgentPrintContext(options.workspaceRoot);
+  const dev = await runDevConsoleCycle({
+    workspaceRoot: options.workspaceRoot,
+    mode: "once",
+    strictSecrets: true,
+    includeImpact: true,
+  });
+  const agentContext = dev.summary.agentContext;
+  const diagnostics = [
+    ...(preflightDev?.ok ? [] : initialContext.diagnostics),
+    ...(preflightDev?.diagnostics ?? []),
+    ...prepare.diagnostics,
+    ...(hookSmoke?.diagnostics ?? []),
+    ...doctor.diagnostics,
+    ...context.diagnostics,
+    ...dev.diagnostics,
+  ];
+  const readyToEdit =
+    prepare.ok &&
+    context.context !== null &&
+    dev.ok &&
+    agentContext.safeToEdit &&
+    (!hookSmoke || hookSmoke.ok) &&
+    doctor.summary.adapter === "ready";
+  const steps = [
+    ...(preflightDev
+      ? [{
+          name: "generated-preflight",
+          ok: preflightDev.ok,
+          message: preflightDev.ok
+            ? "generated context was created before adapter preparation"
+            : "generated context preflight failed",
+        }]
+      : []),
+    {
+      name: "adapter-prepare",
+      ok: prepare.ok,
+      message: prepare.ok
+        ? `${target} adapter files are present and current`
+        : `${target} adapter files need attention`,
+    },
+    ...(hookSmoke
+      ? [{
+          name: "hook-smoke",
+          ok: hookSmoke.ok,
+          message: hookSmoke.ok
+            ? `${target} hooks recorded a useful canary signal`
+            : `${target} hooks did not prove memory visibility`,
+        }]
+      : [{
+          name: "hook-smoke",
+          ok: !installTarget,
+          message: installTarget
+            ? "hook smoke skipped because this was a dry run"
+            : "this target has no native hook bridge",
+        }]),
+    {
+      name: "agent-doctor",
+      ok: doctor.ok,
+      message: doctor.ok ? "adapter, hooks, and memory are ready" : "agent doctor found follow-up actions",
+    },
+    {
+      name: "dev-snapshot",
+      ok: dev.ok && agentContext.safeToEdit,
+      message: dev.ok
+        ? `safeToEdit=${agentContext.safeToEdit}; generatedFresh=${agentContext.generatedFresh}; generatedChangedFiles=${agentContext.generatedChangedFiles}; changedFiles=${agentContext.changedFiles}`
+        : "dev snapshot found blocking diagnostics",
+    },
+    {
+      name: "context",
+      ok: context.context !== null,
+      message: context.context ? "generated agent context is readable" : "generated agent context is missing",
+    },
+  ];
+  const commandHints = agentCommandHints(target);
+  const nextActions = readyToEdit
+    ? uniqueCommands([
+        commandHints.open,
+        "forge changed --json",
+        "forge agent context --current --json",
+        "forge do verify --json",
+      ])
+    : uniqueCommands([
+        ...doctor.nextActions,
+        ...dev.nextActions.map((action) => action.command),
+        ...(context.context ? [] : ["forge generate"]),
+        "forge dev --once --json",
+      ]);
+  return {
+    schemaVersion: "0.1.0",
+    ok: readyToEdit,
+    target,
+    readyToEdit,
+    summary: {
+      adapter: doctor.summary.adapter,
+      hookBridge: doctor.summary.hookBridge,
+      memorySignals: doctor.summary.usefulSignals,
+      generatedFresh: agentContext.generatedFresh,
+      generatedChanged: agentContext.generatedChanged,
+      generatedChangedFiles: agentContext.generatedChangedFiles,
+      safeToEdit: agentContext.safeToEdit,
+      changedFiles: agentContext.changedFiles,
+      ...(dev.summary.primaryAction?.command ? { primaryAction: dev.summary.primaryAction.command } : {}),
+    },
+    steps,
+    recommendedReadFiles: agentContext.recommendedReadFiles,
+    commands: {
+      changed: "forge changed --json",
+      dev: "forge dev --once --json",
+      context: "forge agent context --current --json",
+      verify: "forge do verify --json",
+      ...(commandHints.hooksStatus ? { hooksStatus: commandHints.hooksStatus } : {}),
+      ...(commandHints.hooksSmoke ? { hooksSmoke: commandHints.hooksSmoke } : {}),
+      ...(commandHints.open ? { open: commandHints.open } : {}),
+    },
+    nextActions,
+    diagnostics,
+    exitCode: readyToEdit ? 0 : 1,
+  };
+}
+
+export async function runAgentHooksStatus(options: AgentCommandOptions): Promise<AgentHooksStatusResult> {
+  return readAgentHookStatus(options);
+}
+
+export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<AgentHooksSmokeResult> {
+  const target = options.target || "codex";
+  const installTarget = hookInstallTarget(target);
+  const source = agentMemorySourceForTarget(target);
+  const canaryMarker = "FORGE_HOOK_SMOKE_CANARY";
+  if (!installTarget) {
+    const diag = diagnostic(
+      "error",
+      "FORGE_AGENT_HOOK_TARGET_UNSUPPORTED",
+      `agent hook smoke supports codex, claude, and cursor targets; got ${target}`,
+    );
+    return {
+      ok: false,
+      target,
+      installed: false,
+      bridgeWritable: false,
+      deltaWritable: false,
+      visibleInMemory: false,
+      usefulSignals: 0,
+      checks: [{ name: "target", ok: false, message: diag.message }],
+      nextActions: ["forge agent list-targets --json"],
+      diagnostics: [diag],
+      exitCode: 1,
+    };
+  }
+
+  const installResult = await runAgentMemoryCommand({
+    subcommand: "install",
+    workspaceRoot: options.workspaceRoot,
+    json: options.json,
+    target: installTarget,
+    source: installTarget,
+    dryRun: options.dryRun,
+    force: options.force,
+  });
+  const installOk =
+    typeof installResult === "object" && installResult !== null && "exitCode" in installResult
+      ? (installResult as { exitCode?: number }).exitCode === 0
+      : true;
+
+  const ingestResult = options.dryRun
+    ? undefined
+    : await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: options.workspaceRoot,
+        json: options.json,
+        target: installTarget,
+        source: installTarget,
+        eventName: installTarget === "cursor" ? "FileChange" : "SessionStart",
+        input: {
+          forgeHookCanary: canaryMarker,
+          cwd: options.workspaceRoot,
+          provider: installTarget,
+          status: "completed",
+          summary: "Forge hook smoke event recorded",
+          filesChanged: ["AGENTS.md"],
+          command: "forge agent hooks smoke",
+        },
+      });
+  const ingestOk =
+    options.dryRun ||
+    (typeof ingestResult === "object" && ingestResult !== null && "exitCode" in ingestResult
+      ? (ingestResult as { exitCode?: number }).exitCode === 0
+      : false);
+  const ingestDiagnostics =
+    ingestResult &&
+    typeof ingestResult === "object" &&
+    "diagnostics" in ingestResult &&
+    Array.isArray((ingestResult as { diagnostics?: unknown }).diagnostics)
+      ? (ingestResult as { diagnostics: Diagnostic[] }).diagnostics
+      : [];
+  const ingestNextActions =
+    ingestResult &&
+    typeof ingestResult === "object" &&
+    "nextActions" in ingestResult &&
+    Array.isArray((ingestResult as { nextActions?: unknown }).nextActions)
+      ? (ingestResult as { nextActions: unknown[] }).nextActions.filter((action): action is string => typeof action === "string")
+      : [];
+  const ingestStoreBusy = ingestDiagnostics.some((diag) => diag.code === "FORGE_DELTA_BUSY");
+  const ingestedEventId =
+    ingestResult &&
+    typeof ingestResult === "object" &&
+    "event" in ingestResult &&
+    (ingestResult as { event?: { id?: string } }).event?.id;
+  const memoryAfterSmoke = options.dryRun
+    ? { events: [], diagnostics: [] as Diagnostic[] }
+    : await readHookMemoryStatus(options.workspaceRoot, source, Math.max(options.limit ?? 25, 50));
+  const status = await readAgentHookStatus({ ...options, target });
+  const canaryEvent = ingestedEventId
+    ? memoryAfterSmoke.events.find((event) => event.id === ingestedEventId)
+    : undefined;
+  const visibleInMemory = options.dryRun
+    ? false
+    : Boolean(canaryEvent);
+  const checks = [
+    { name: "hook-install", ok: installOk, message: installOk ? "hook bridge files are available" : "hook bridge install failed" },
+    { name: "canary-ingest", ok: ingestOk, message: options.dryRun ? "dry-run skipped ingest" : ingestOk ? "canary event was normalized and stored" : "canary ingest failed" },
+    {
+      name: "canary-memory-readable",
+      ok: options.dryRun || memoryAfterSmoke.diagnostics.length === 0,
+      message: options.dryRun
+        ? "dry-run skipped memory read"
+        : memoryAfterSmoke.diagnostics.length === 0
+          ? `${memoryAfterSmoke.events.length} memory event(s) inspected after canary ingest`
+          : "agent memory was not readable after canary ingest",
+    },
+    {
+      name: "canary-visible",
+      ok: options.dryRun || !ingestOk || visibleInMemory,
+      message: options.dryRun
+        ? "dry-run skipped memory visibility check"
+        : !ingestOk
+          ? "not checked because canary ingest failed"
+        : visibleInMemory
+          ? "canary event is visible in agent memory"
+          : "canary event was not visible in agent memory",
+    },
+  ];
+  const diagnostics = [
+    ...ingestDiagnostics,
+    ...memoryAfterSmoke.diagnostics,
+    ...(!installOk
+      ? [diagnostic("error", "FORGE_AGENT_HOOK_INSTALL_FAILED", `hook bridge install failed for ${installTarget}`)]
+      : []),
+    ...(!ingestOk && !ingestStoreBusy
+      ? [diagnostic(
+          "error",
+          "FORGE_AGENT_HOOK_CANARY_MISSING",
+          `Forge hook smoke did not record a canary event for ${installTarget}; install hooks and restart the external agent, then run forge agent hooks smoke --target ${target} --json`,
+        )]
+      : []),
+    ...(!options.dryRun && ingestOk && !visibleInMemory
+      ? [createDiagnostic({
+          severity: "error",
+          code: "FORGE_AGENT_HOOK_CANARY_NOT_VISIBLE",
+          message: `Forge hook smoke ingested canary ${ingestedEventId ?? canaryMarker} for ${installTarget}, but that event was not visible in agent memory; inspect hook status and DeltaDB before trusting hooks.`,
+          suggestedCommands: [`forge agent hooks status --target ${target} --json`, `forge agent memory --entry ${source} --json`, "forge delta status --json"],
+        })]
+      : []),
+  ];
+  const ok = checks.every((check) => check.ok);
+  return {
+    ok,
+    target,
+    installTarget,
+    installed: status.installed,
+    bridgeWritable: installOk,
+    deltaWritable: status.deltaWritable && ingestOk && memoryAfterSmoke.diagnostics.length === 0,
+    visibleInMemory,
+    usefulSignals: status.usefulSignals,
+    ...(canaryEvent ? { lastSignal: lastAgentSignal([canaryEvent]) } : status.lastSignal ? { lastSignal: status.lastSignal } : {}),
+    canary: {
+      marker: canaryMarker,
+      source,
+      eventName: installTarget === "cursor" ? "FileChange" : "SessionStart",
+      ...(ingestedEventId ? { ingestedEventId } : {}),
+      memoryEventsChecked: memoryAfterSmoke.events.length,
+      visible: visibleInMemory,
+    },
+    checks,
+    nextActions: ok
+      ? [`forge agent hooks status --target ${target} --json`, `forge agent memory --entry ${source} --json`]
+      : uniqueCommands([
+          ...ingestNextActions,
+          ...status.nextActions,
+          `forge agent hooks status --target ${target} --json`,
+          `forge agent memory --entry ${source} --json`,
+          `forge agent timeline --target ${target} --json`,
+          "forge delta status --json",
+        ]),
+    installResult,
+    ...(ingestResult ? { ingestResult } : {}),
+    diagnostics,
+    exitCode: ok ? 0 : 1,
+  };
 }
 
 export async function runAgentCommand(options: AgentCommandOptions): Promise<
-  AgentExportResult | AgentCheckResult | AgentTargetsResult | AgentPrintContextResult | AgentDoctorResult | AgentMemoryCommandResult
+  AgentExportResult | AgentCheckResult | AgentTargetsResult | AgentPrintContextResult | AgentDoctorResult | AgentPrepareResult | AgentOnboardResult | AgentHooksSmokeResult | AgentHooksStatusResult | AgentTimelineResult | AgentMemoryCommandResult
 > {
   if (options.subcommand === "list-targets") {
     return runAgentListTargets(options.workspaceRoot);
@@ -965,11 +1717,26 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<
   if (options.subcommand === "doctor") {
     return runAgentDoctor({ ...options, target: options.target || "generic" });
   }
+  if (options.subcommand === "onboard") {
+    return runAgentOnboard({ ...options, target: options.target || "codex" });
+  }
   if (options.subcommand === "print-context") {
     return runAgentPrintContext(options.workspaceRoot);
   }
   if (options.subcommand === "clean") {
     return runAgentClean(options);
+  }
+  if (options.subcommand === "prepare") {
+    return runAgentPrepare(options);
+  }
+  if (options.subcommand === "hooks") {
+    if (options.hookAction === "status") {
+      return runAgentHooksStatus(options);
+    }
+    return runAgentHooksSmoke(options);
+  }
+  if (options.subcommand === "timeline") {
+    return runAgentTimeline(options);
   }
   if (
     options.subcommand === "install" ||
@@ -990,6 +1757,9 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<
       dryRun: options.dryRun,
       force: options.force,
       limit: options.limit,
+      watch: options.watch,
+      file: options.file,
+      pollIntervalMs: options.pollIntervalMs,
     });
   }
   return {
@@ -1006,14 +1776,38 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<
 }
 
 export function formatAgentJson(result: Awaited<ReturnType<typeof runAgentCommand>>): string {
-  if ("privacy" in result || "event" in result || "agentMemory" in result || "events" in result) {
+  if ("timeline" in result && result.timeline === "agent") {
+    return `${JSON.stringify(result, null, 2)}\n`;
+  }
+  if ("privacy" in result || "event" in result || "agentMemory" in result || "events" in result || "watch" in result) {
     return formatAgentMemoryJson(result as AgentMemoryCommandResult);
   }
   return `${JSON.stringify(result, null, 2)}\n`;
 }
 
 export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentCommand>>): string {
-  if ("privacy" in result || "event" in result || "agentMemory" in result || "events" in result) {
+  if ("timeline" in result && result.timeline === "agent") {
+    return [
+      `agent timeline for ${result.target}: ${result.summary.events} event(s)`,
+      ...(result.summary.latestEventAt ? [`latest: ${result.summary.latestEventAt}`] : []),
+      ...(result.files.length > 0 ? [`files: ${result.files.slice(0, 8).join(", ")}`] : []),
+      ...(result.entries.length > 0 ? [`entries: ${result.entries.slice(0, 8).join(", ")}`] : []),
+      "",
+      ...result.events.slice(-12).map((event) => {
+        const parts = [
+          event.capturedAt,
+          event.source,
+          event.kind,
+          event.toolName,
+          event.status,
+          event.summary,
+        ].filter(Boolean);
+        return `- ${parts.join(" | ")}`;
+      }),
+      ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((command) => `  ${command}`)] : []),
+    ].join("\n") + "\n";
+  }
+  if ("privacy" in result || "event" in result || "agentMemory" in result || "events" in result || "watch" in result) {
     return formatAgentMemoryHuman(result as AgentMemoryCommandResult);
   }
   if ("targets" in result) {
@@ -1022,8 +1816,78 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
   if ("context" in result) {
     return `${JSON.stringify(result.context, null, 2)}\n`;
   }
+  if ("exportResult" in result) {
+    return [
+      `agent prepare ${result.ok ? "ok" : "failed"} for ${result.target}`,
+      "commands:",
+      ...Object.entries(result.commands).map(([name, command]) => `- ${name}: ${command}`),
+      "files written:",
+      ...(result.exportResult.filesWritten.length > 0 ? result.exportResult.filesWritten.map((file) => `- ${file}`) : ["- none"]),
+    ].join("\n") + "\n";
+  }
+  if ("readyToEdit" in result) {
+    return [
+      `agent onboard ${result.ok ? "ready" : "needs attention"} for ${result.target}`,
+      `ready to edit: ${result.readyToEdit ? "yes" : "no"}`,
+      `generated fresh: ${result.summary.generatedFresh ? "yes" : "no"}`,
+      `generated changed: ${result.summary.generatedChangedFiles}`,
+      `changed files: ${result.summary.changedFiles}`,
+      "",
+      "steps:",
+      ...result.steps.map((step) => `${step.ok ? "OK" : "WARN"} ${step.name}: ${step.message}`),
+      ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((command) => `  ${command}`)] : []),
+    ].join("\n") + "\n";
+  }
+  if ("ingestResult" in result || ("checks" in result && "installResult" in result)) {
+    const smoke = result as AgentHooksSmokeResult;
+    return [
+      `agent hooks smoke ${smoke.ok ? "ok" : "failed"} for ${smoke.target}`,
+      ...smoke.checks.map((check) => `${check.ok ? "OK" : "FAIL"} ${check.name}${check.message ? `: ${check.message}` : ""}`),
+      ...(smoke.canary
+        ? [
+            "",
+            "Canary:",
+            `  marker: ${smoke.canary.marker}`,
+            `  source: ${smoke.canary.source}`,
+            `  event: ${smoke.canary.eventName}`,
+            ...(smoke.canary.ingestedEventId ? [`  ingested id: ${smoke.canary.ingestedEventId}`] : []),
+            `  memory events checked: ${smoke.canary.memoryEventsChecked}`,
+            `  visible: ${smoke.canary.visible ? "yes" : "no"}`,
+          ]
+        : []),
+      ...(smoke.lastSignal
+        ? [
+            "",
+            `last signal: ${smoke.lastSignal.kind}${smoke.lastSignal.summary ? ` - ${smoke.lastSignal.summary}` : ""}`,
+            `captured at: ${smoke.lastSignal.capturedAt}`,
+          ]
+        : []),
+      ...(smoke.nextActions.length > 0 ? ["", "Next:", ...smoke.nextActions.map((command) => `  ${command}`)] : []),
+    ].join("\n") + "\n";
+  }
+  if ("installed" in result && "visibleInMemory" in result) {
+    return [
+      `agent hooks status ${result.ok ? "ready" : "needs attention"} for ${result.target}`,
+      `installed: ${result.installed ? "yes" : "no"}`,
+      `bridge writable: ${result.bridgeWritable ? "yes" : "no"}`,
+      `delta writable: ${result.deltaWritable ? "yes" : "no"}`,
+      `visible in memory: ${result.visibleInMemory ? "yes" : "no"}`,
+      `useful signals: ${result.usefulSignals}`,
+      ...("recentEvents" in result ? [`recent events: ${result.recentEvents}`] : []),
+      ...(result.lastSignal ? [`last signal: ${result.lastSignal.kind}${result.lastSignal.summary ? ` - ${result.lastSignal.summary}` : ""}`] : []),
+      ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((command) => `  ${command}`)] : []),
+    ].join("\n") + "\n";
+  }
   if ("checks" in result) {
-    return `Forge Agent Doctor\n\n${result.checks.map((check) => `${check.ok ? "OK" : "WARN"} ${check.name}${check.message ? `: ${check.message}` : ""}`).join("\n")}\n`;
+    const nextActions = "nextActions" in result && Array.isArray(result.nextActions)
+      ? result.nextActions as string[]
+      : [];
+    return [
+      `Forge Agent Doctor ${result.ok ? "ready" : "needs attention"}`,
+      "",
+      ...result.checks.map((check) => `${check.ok ? "OK" : "WARN"} ${check.name}${check.message ? `: ${check.message}` : ""}`),
+      ...(nextActions.length > 0 ? ["", "Next:", ...nextActions.map((command) => `  ${command}`)] : []),
+    ].join("\n") + "\n";
   }
   if ("stale" in result) {
     if (result.ok) {

@@ -29,6 +29,9 @@ import type {
 } from "../compiler/types/cli.ts";
 import type { RuntimeMatrix } from "../compiler/types/runtime-matrix.ts";
 import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
+import type { DataGraph } from "../compiler/types/data-graph.ts";
+import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
+import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import {
   attachFailureKind,
@@ -65,6 +68,30 @@ import {
   runRunCommand,
 } from "./run.ts";
 import { runDevCommand } from "./dev.ts";
+import {
+  formatHandoffHuman,
+  formatHandoffJson,
+  runHandoffCommand,
+} from "./handoff.ts";
+import {
+  formatStudioAttachHuman,
+  formatStudioAttachJson,
+  formatStudioDoctorHuman,
+  formatStudioDoctorJson,
+  formatStudioSnapshotHuman,
+  formatStudioSnapshotJson,
+  formatStudioWatchHuman,
+  formatStudioWatchJson,
+  runStudioAttachCommand,
+  runStudioDoctorCommand,
+  runStudioOpenCommand,
+  runStudioSnapshotCommand,
+  runStudioWatchCommand,
+} from "./studio.ts";
+import {
+  formatChangedHuman,
+  runChangedCommand,
+} from "./changed.ts";
 import { initializeRuntimeEnv } from "../runtime/context/create-context.ts";
 import { formatDbHuman, formatDbJson, runDbCommand } from "./db.ts";
 import { formatOutboxHuman, formatOutboxJson, runOutboxCommand } from "./outbox.ts";
@@ -81,6 +108,8 @@ import {
 import {
   formatDeltaExplainHuman,
   formatDeltaExplainJson,
+  formatDeltaRepairHuman,
+  formatDeltaRepairJson,
   formatDeltaStatusHuman,
   formatDeltaStatusJson,
   formatDeltaSessionHuman,
@@ -88,6 +117,7 @@ import {
   formatDeltaTimelineHuman,
   formatDeltaTimelineJson,
   runDeltaExplain,
+  runDeltaRepair,
   runDeltaSessionCommand,
   runDeltaStatus,
   runDeltaTimeline,
@@ -196,6 +226,8 @@ import { runQuery } from "../runtime/query/run-query.ts";
 import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
 import { getActiveDbAdapter } from "../runtime/executor.ts";
 import { CLI_VERSION, FORGEOS_VERSION } from "../version.ts";
+import type { CategorizedFileSummary } from "../workspace/change-summary.ts";
+import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -279,9 +311,14 @@ function buildFrameworkInspect(workspaceRoot: string): Record<string, unknown> {
       topLevelCommands: [...TOP_LEVEL_COMMANDS],
       inspectTargets: [...INSPECT_TARGETS],
       preferredEntryPoints: [
+        "forge status --json",
+        "forge changed --json",
+        "forge agent onboard --target codex --json",
         "forge do <objective> --json",
         "forge dev --once --json",
+        "forge inspect all --brief --json",
         "forge inspect all --json",
+        "forge agent print-context --json",
         "forge inspect framework --json",
         "forge verify --strict",
       ],
@@ -309,6 +346,481 @@ function buildFrameworkInspect(workspaceRoot: string): Record<string, unknown> {
       ci: hasPath(workspaceRoot, ".github/workflows/ci.yml"),
     },
   };
+}
+
+function readGeneratedArtifactStatus(workspaceRoot: string): Array<{ name: string; path: string; present: boolean }> {
+  const artifacts = [
+    ["app", `${GENERATED_DIR}/appGraph.json`],
+    ["data", `${GENERATED_DIR}/dataGraph.json`],
+    ["sql", `${GENERATED_DIR}/sqlPlan.json`],
+    ["db", `${GENERATED_DIR}/db.json`],
+    ["runtime", `${GENERATED_DIR}/runtimeGraph.json`],
+    ["frontend", `${GENERATED_DIR}/frontendGraph.json`],
+    ["client", `${GENERATED_DIR}/clientManifest.json`],
+    ["agent-contract", `${GENERATED_DIR}/agentContract.json`],
+    ["agent-adapters", `${GENERATED_DIR}/agentAdapterManifest.json`],
+    ["capability-map", `${GENERATED_DIR}/capabilityMap.json`],
+    ["test-graph", `${GENERATED_DIR}/testGraph.json`],
+    ["agents-md", "AGENTS.md"],
+    ["forge-lock", "forge.lock"],
+  ] as const;
+
+  return artifacts.map(([name, path]) => ({
+    name,
+    path,
+    present: hasPath(workspaceRoot, path),
+  }));
+}
+
+function buildInspectSummary(workspaceRoot: string): Record<string, unknown> {
+  const framework = buildFrameworkInspect(workspaceRoot);
+  const dataGraph = readGeneratedJson<DataGraph>(workspaceRoot, `${GENERATED_DIR}/dataGraph.json`);
+  const frontend = readGeneratedJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);
+  const agentAdapters = readGeneratedJson<{ targets?: Array<{ name?: string; files?: string[]; default?: boolean; optional?: boolean }> }>(
+    workspaceRoot,
+    `${GENERATED_DIR}/agentAdapterManifest.json`,
+  );
+  const artifacts = readGeneratedArtifactStatus(workspaceRoot);
+  const missingArtifacts = artifacts.filter((artifact) => !artifact.present);
+
+  return {
+    schemaVersion: "0.1.0",
+    summary: {
+      project: (framework.project as Record<string, unknown> | undefined)?.name ?? "unknown",
+      tables: dataGraph?.tables.length ?? 0,
+      frontendPresent: frontend?.present === true,
+      routes: frontend?.routes.length ?? 0,
+      agentTargets: agentAdapters?.targets?.map((target) => target.name).filter(Boolean) ?? [],
+      missingArtifacts: missingArtifacts.length,
+    },
+    artifacts,
+    nextActions: [
+      "forge inspect schema --json",
+      "forge inspect handoff --json",
+      "forge inspect drift --json",
+      "forge check --json",
+    ],
+  };
+}
+
+function buildInspectBrief(workspaceRoot: string): Record<string, unknown> {
+  const summary = buildInspectSummary(workspaceRoot);
+  const framework = buildFrameworkInspect(workspaceRoot);
+  const cli = framework.cli as { preferredEntryPoints?: string[]; inspectTargets?: string[] } | undefined;
+  const artifacts = readGeneratedArtifactStatus(workspaceRoot);
+  const missingArtifacts = artifacts.filter((artifact) => !artifact.present);
+  return {
+    schemaVersion: "0.1.0",
+    brief: true,
+    payload: {
+      mode: "brief",
+      purpose: "orientation",
+      includes: ["summary", "entrypoints", "refs", "artifact counts"],
+      omitted: ["schema table details", "framework module lists", "generated registries"],
+      fullCommand: "forge inspect all --full --json",
+      compactCommand: "forge inspect all --json",
+    },
+    summary: summary.summary,
+    entrypoints: {
+      preferred: cli?.preferredEntryPoints ?? [],
+      inspect: [
+        "forge inspect summary --json",
+        "forge inspect schema --json",
+        "forge inspect handoff --json",
+        "forge inspect all --json",
+        "forge inspect all --full --json",
+      ],
+    },
+    refs: [
+      "AGENTS.md",
+      `${GENERATED_DIR}/agentContract.json`,
+      `${GENERATED_DIR}/appMap.md`,
+      `${GENERATED_DIR}/runtimeRules.md`,
+      `${GENERATED_DIR}/operationPlaybooks.md`,
+      `${GENERATED_DIR}/frontendGraph.json`,
+    ],
+    artifacts: {
+      total: artifacts.length,
+      present: artifacts.length - missingArtifacts.length,
+      missing: missingArtifacts,
+    },
+    nextActions: [
+      "forge status --json",
+      "forge changed --json",
+      "forge agent onboard --target codex --json",
+      "forge dev --once --json",
+      "forge inspect all --json",
+    ],
+  };
+}
+
+function buildSchemaInspect(workspaceRoot: string): { data: Record<string, unknown>; errors: ReturnType<typeof createDiagnostic>[] } {
+  const dataGraph = readGeneratedJson<DataGraph>(workspaceRoot, `${GENERATED_DIR}/dataGraph.json`);
+  const sqlPlan = readGeneratedJson<SqlPlan>(workspaceRoot, `${GENERATED_DIR}/sqlPlan.json`);
+  const db = readGeneratedJson<{ tableMap?: Record<string, TableMapEntry> }>(workspaceRoot, `${GENERATED_DIR}/db.json`);
+  const errors: ReturnType<typeof createDiagnostic>[] = [];
+
+  if (!dataGraph) {
+    errors.push(createDiagnostic({
+      severity: "error",
+      code: "FORGE_INSPECT_MISSING",
+      message: `missing generated artifact: ${GENERATED_DIR}/dataGraph.json; run forge generate first`,
+      file: `${GENERATED_DIR}/dataGraph.json`,
+    }));
+  }
+  if (!sqlPlan) {
+    errors.push(createDiagnostic({
+      severity: "error",
+      code: "FORGE_INSPECT_MISSING",
+      message: `missing generated artifact: ${GENERATED_DIR}/sqlPlan.json; run forge generate first`,
+      file: `${GENERATED_DIR}/sqlPlan.json`,
+    }));
+  }
+  if (!db?.tableMap) {
+    errors.push(createDiagnostic({
+      severity: "error",
+      code: "FORGE_INSPECT_MISSING",
+      message: `missing generated artifact: ${GENERATED_DIR}/db.json; run forge generate first`,
+      file: `${GENERATED_DIR}/db.json`,
+    }));
+  }
+
+  const sqlByAccessName = new Map(
+    (sqlPlan?.tables ?? [])
+      .filter((table) => table.kind === "create_table")
+      .map((table) => [table.accessName ?? table.table ?? "", table]),
+  );
+  const tableMap = db?.tableMap ?? {};
+  const dataGraphDiagnostics = dataGraph?.diagnostics ?? [];
+  const sqlPlanDiagnostics = sqlPlan?.diagnostics ?? [];
+  const tables = (dataGraph?.tables ?? []).map((table) => {
+    const sql = sqlByAccessName.get(table.name);
+    const runtime = sql?.table ? tableMap[sql.table] ?? tableMap[table.name] : tableMap[table.name];
+    const sourceFields = table.fields.map((field) => field.name).sort();
+    const sqlColumns = (sql?.columns ?? []).map((column) => ({
+      name: column.name,
+      fieldName: column.fieldName,
+      sqlType: column.sqlType,
+      primaryKey: column.primaryKey === true,
+    }));
+    const runtimeFields = (runtime?.columns ?? []).map((column) => column.fieldName ?? column.name).sort();
+    const missingRuntimeFields = sourceFields.filter((field) => !runtimeFields.includes(field));
+
+    return {
+      name: table.name,
+      file: table.file,
+      sourceFields,
+      sqlTable: sql?.table ?? null,
+      sqlColumns,
+      runtimeAccessors: Object.entries(tableMap)
+        .filter(([, entry]) => entry.tableName === (sql?.table ?? table.name))
+        .map(([name]) => name)
+        .sort(),
+      missingRuntimeFields,
+    };
+  });
+
+  return {
+    data: {
+      schemaVersion: "0.1.0",
+      summary: {
+        tables: tables.length,
+        missingRuntimeFields: tables.reduce(
+          (count, table) => count + (table.missingRuntimeFields as string[]).length,
+          0,
+        ),
+        diagnostics: dataGraphDiagnostics.length + sqlPlanDiagnostics.length + errors.length,
+      },
+      tables,
+      diagnostics: [
+        ...dataGraphDiagnostics,
+        ...sqlPlanDiagnostics,
+        ...errors,
+      ],
+    },
+    errors,
+  };
+}
+
+function buildDriftInspect(workspaceRoot: string): Record<string, unknown> {
+  const schema = buildSchemaInspect(workspaceRoot);
+  const artifacts = readGeneratedArtifactStatus(workspaceRoot);
+  const missingArtifacts = artifacts.filter((artifact) => !artifact.present);
+  const tableDrift = ((schema.data.tables as Array<{ name: string; missingRuntimeFields: string[] }> | undefined) ?? [])
+    .filter((table) => table.missingRuntimeFields.length > 0)
+    .map((table) => ({
+      table: table.name,
+      missingRuntimeFields: table.missingRuntimeFields,
+      suggestedCommand: "forge generate && forge check --json",
+    }));
+  const staleAgentContext = hasPath(workspaceRoot, ".forge/agent/context.json")
+    ? "run forge agent check --target codex --json or forge agent export --target codex"
+    : null;
+
+  return {
+    schemaVersion: "0.1.0",
+    summary: {
+      ok: missingArtifacts.length === 0 && tableDrift.length === 0,
+      missingArtifacts: missingArtifacts.length,
+      tableDrift: tableDrift.length,
+      agentContextPresent: hasPath(workspaceRoot, ".forge/agent/context.json"),
+    },
+    missingArtifacts,
+    tableDrift,
+    agentContext: staleAgentContext,
+    nextActions: [
+      ...(missingArtifacts.length > 0 || tableDrift.length > 0 ? ["forge generate", "forge check --json"] : []),
+      "forge agent check --target codex --json",
+    ],
+  };
+}
+
+function buildHandoffInspect(workspaceRoot: string): Record<string, unknown> {
+  const manifest = readGeneratedJson<{
+    targets?: Array<{
+      name?: string;
+      files?: string[];
+      default?: boolean;
+      optional?: boolean;
+      formatVersion?: string;
+      adapterVersion?: string;
+    }>;
+  }>(workspaceRoot, `${GENERATED_DIR}/agentAdapterManifest.json`);
+  const targets = (manifest?.targets ?? []).map((target) => {
+    const files = target.files ?? [];
+    const missingFiles = files.filter((file) => !hasPath(workspaceRoot, file));
+    return {
+      name: target.name,
+      default: target.default === true,
+      optional: target.optional === true,
+      formatVersion: target.formatVersion,
+      adapterVersion: target.adapterVersion,
+      files,
+      filesPresent: files.length - missingFiles.length,
+      missingFiles,
+      exportCommand: target.name ? `forge agent export --target ${target.name}` : null,
+      checkCommand: target.name ? `forge agent check --target ${target.name} --json` : null,
+      prepareCommand: target.name ? `forge agent prepare --target ${target.name} --json` : null,
+    };
+  });
+  const missingRequiredFiles = targets.reduce(
+    (count, target) => count + (target.optional ? 0 : target.missingFiles.length),
+    0,
+  );
+  const missingOptionalFiles = targets.reduce(
+    (count, target) => count + (target.optional ? target.missingFiles.length : 0),
+    0,
+  );
+  const defaultTarget = targets.find((target) => target.default);
+  const defaultTargetMissingFiles = defaultTarget?.missingFiles.length ?? missingRequiredFiles;
+
+  return {
+    schemaVersion: "0.1.0",
+    summary: {
+      targets: targets.length,
+      defaultTarget: defaultTarget?.name ?? "generic",
+      missingFiles: missingRequiredFiles + missingOptionalFiles,
+      missingDefaultFiles: defaultTargetMissingFiles,
+      missingRequiredFiles,
+      missingOptionalFiles,
+      defaultReady: defaultTargetMissingFiles === 0,
+      requiredReady: missingRequiredFiles === 0,
+    },
+    targets,
+    commands: [
+      "forge agent list-targets --json",
+      "forge agent prepare --target codex --json",
+      "forge agent hooks smoke --target codex --json",
+      "forge agent ingest codex --event PostToolUse --json",
+    ],
+  };
+}
+
+export interface StatusCommandResult {
+  ok: boolean;
+  data: Record<string, unknown>;
+  exitCode: 0 | 1;
+}
+
+export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
+  const summary = buildInspectSummary(workspaceRoot);
+  const drift = buildDriftInspect(workspaceRoot);
+  const handoff = buildHandoffInspect(workspaceRoot);
+  const gitSummary = buildWorkspaceGitSummary(workspaceRoot);
+  const git = {
+    available: gitSummary.available,
+    ...(gitSummary.error ? { error: gitSummary.error } : {}),
+    changed: gitSummary.changeSummary.changed,
+    staged: gitSummary.changeSummary.staged,
+    unstaged: gitSummary.changeSummary.unstaged,
+    untracked: gitSummary.changeSummary.untracked,
+  };
+  const summaryBlock = summary.summary as Record<string, unknown>;
+  const driftSummary = drift.summary as Record<string, unknown>;
+  const handoffSummary = handoff.summary as Record<string, unknown>;
+  const missingArtifacts = Number(summaryBlock.missingArtifacts ?? 0);
+  const tableDrift = Number(driftSummary.tableDrift ?? 0);
+  const generatedReady = missingArtifacts === 0;
+  const driftClean = driftSummary.ok === true;
+  const ok = driftClean && generatedReady;
+  const handoffDefaultReady = handoffSummary.defaultReady === true;
+  const generatedState = !generatedReady
+    ? "missing-artifacts"
+    : driftClean
+      ? "ready"
+      : "drift";
+  const generatedNextActions = generatedState === "ready"
+    ? ["forge dev", "forge generate --check --json"]
+    : ["forge generate", "forge check --json", "forge inspect drift --json"];
+  const frontendPresent = summaryBlock.frontendPresent === true;
+  const studio = {
+    openCommand: "forge studio open . --preview-port 5174 --target codex --json",
+    attachCommand: "forge studio attach . --preview-port 5174 --target codex --json",
+    snapshotCommand: "forge studio snapshot . --preview-port 5174 --target codex --json",
+    watchCommand: "forge studio watch . --preview-port 5174 --target codex --json",
+    doctorCommand: "forge studio doctor . --preview-port 5174 --target codex --json",
+    targetPreviewUrl: "http://127.0.0.1:5174",
+    startTargetAppCommand: "forge dev --web-port 5174",
+    probeCommand: "forge dev --once --json",
+    useful: frontendPresent,
+    note: frontendPresent
+      ? "Attach this app to Forge Studio as an external-agent workroom; Studio should preview the target app on 5174."
+      : "No frontend was detected, but Studio can still attach for hooks, posture, and agent context.",
+  };
+
+  return {
+    ok,
+    data: {
+      schemaVersion: "0.1.0",
+      ok,
+      generated: {
+        state: generatedState,
+        ready: generatedReady,
+        driftClean,
+        missingArtifacts,
+        tableDrift,
+        safeDevCommand: "forge dev",
+        checkCommand: "forge generate --check --json",
+        repairCommand: "forge generate",
+        nextActions: generatedNextActions,
+      },
+      studio,
+      summary: {
+        project: summaryBlock.project,
+        generated: generatedState,
+        tables: summaryBlock.tables,
+        frontendPresent,
+        routes: summaryBlock.routes,
+        drift: driftClean ? "clean" : "attention",
+        agentTargets: summaryBlock.agentTargets,
+        missingAgentFiles: handoffSummary.missingRequiredFiles,
+        missingDefaultAgentFiles: handoffSummary.missingDefaultFiles,
+        missingRequiredAgentFiles: handoffSummary.missingRequiredFiles,
+        missingOptionalAgentFiles: handoffSummary.missingOptionalFiles,
+      },
+      checks: {
+        artifacts: {
+          missing: missingArtifacts,
+        },
+        schema: {
+          tableDrift,
+        },
+        handoff: {
+          targets: handoffSummary.targets,
+          missingFiles: handoffSummary.missingFiles,
+          missingDefaultFiles: handoffSummary.missingDefaultFiles,
+          missingRequiredFiles: handoffSummary.missingRequiredFiles,
+          missingOptionalFiles: handoffSummary.missingOptionalFiles,
+          defaultReady: handoffSummary.defaultReady,
+          requiredReady: handoffSummary.requiredReady,
+        },
+      },
+      git,
+      nextActions: ok
+        ? [
+            "forge handoff --json",
+            "forge changed --json",
+            "forge dev",
+            ...(frontendPresent ? [studio.openCommand, studio.doctorCommand] : []),
+            ...(!handoffDefaultReady ? ["forge agent prepare --target generic --json"] : []),
+            "forge inspect handoff --json",
+            "forge verify --changed",
+          ]
+        : [
+            "forge generate",
+            "forge handoff --json",
+            "forge changed --json",
+            ...(frontendPresent ? [studio.openCommand, studio.doctorCommand] : []),
+            "forge inspect drift --json",
+            "forge agent prepare --target codex --json",
+          ],
+    },
+    exitCode: ok ? 0 : 1,
+  };
+}
+
+export function formatStatusHuman(result: StatusCommandResult): string {
+  const summary = result.data.summary as Record<string, unknown>;
+  const generated = result.data.generated as
+    | {
+      state?: string;
+      missingArtifacts?: number;
+      tableDrift?: number;
+      safeDevCommand?: string;
+      checkCommand?: string;
+      repairCommand?: string;
+    }
+    | undefined;
+  const git = result.data.git as
+    | {
+      available?: boolean;
+      changed?: CategorizedFileSummary;
+    }
+    | undefined;
+  const studio = result.data.studio as
+    | {
+      attachCommand?: string;
+      openCommand?: string;
+      doctorCommand?: string;
+      targetPreviewUrl?: string;
+      startTargetAppCommand?: string;
+      useful?: boolean;
+    }
+    | undefined;
+  const lines = [
+    `Forge status: ${result.ok ? "ready" : "needs attention"}`,
+    `Project: ${summary.project ?? "unknown"}`,
+    `Generated: ${summary.generated}`,
+    ...(generated
+      ? [
+          `Generated detail: missing artifacts ${generated.missingArtifacts ?? 0}, table drift ${generated.tableDrift ?? 0}`,
+          `Generated check: ${generated.checkCommand ?? "forge generate --check --json"}`,
+          `Generated repair: ${generated.repairCommand ?? "forge generate"}`,
+          `Generated dev: ${generated.safeDevCommand ?? "forge dev"}`,
+        ]
+      : []),
+    `Drift: ${summary.drift}`,
+    `Frontend: ${summary.frontendPresent ? `${summary.routes ?? 0} routes` : "none"}`,
+    ...(studio
+      ? [
+          `Studio open: ${studio.openCommand ?? "forge studio open . --preview-port 5174 --target codex --json"}`,
+          `Studio attach: ${studio.attachCommand ?? "forge studio attach . --preview-port 5174 --target codex --json"}`,
+          `Studio doctor: ${studio.doctorCommand ?? "forge studio doctor . --preview-port 5174 --target codex --json"}`,
+          `Studio preview: ${studio.targetPreviewUrl ?? "http://127.0.0.1:5174"}`,
+          `Studio start: ${studio.startTargetAppCommand ?? "forge dev --web-port 5174"}`,
+        ]
+      : []),
+    ...(git?.available && git.changed
+      ? [`Changed: ${git.changed.total.count}${git.changed.total.count > 0 ? ` (${git.changed.primaryTypes.slice(0, 5).join(", ")})` : ""}`]
+      : []),
+    `Agent default missing files: ${summary.missingDefaultAgentFiles ?? 0}`,
+    `Agent required missing files: ${summary.missingRequiredAgentFiles ?? summary.missingAgentFiles ?? 0}`,
+    `Agent optional missing files: ${summary.missingOptionalAgentFiles ?? 0}`,
+    "",
+    "Next:",
+    ...((result.data.nextActions as string[] | undefined) ?? []).map((command) => `  ${command}`),
+  ];
+  return `${lines.join("\n")}\n`;
 }
 
 export async function runGenerateCommand(
@@ -470,6 +982,7 @@ function runManifestCommand(command: Extract<ForgeCommand, { kind: "manifest" }>
 export async function runInspectCommand(
   target: InspectTarget,
   workspaceRoot: string,
+  options: { full?: boolean; brief?: boolean } = {},
 ): Promise<InspectResult> {
   const dataPaths: Partial<Record<InspectTarget, string>> = {
     app: `${GENERATED_DIR}/appGraph.json`,
@@ -524,6 +1037,48 @@ export async function runInspectCommand(
     };
   }
 
+  if (target === "summary") {
+    return {
+      target,
+      data: buildInspectSummary(workspaceRoot),
+      warnings: [],
+      errors: [],
+      exitCode: 0,
+    };
+  }
+
+  if (target === "schema") {
+    const result = buildSchemaInspect(workspaceRoot);
+    return {
+      target,
+      data: result.data,
+      warnings: [],
+      errors: result.errors,
+      exitCode: result.errors.length > 0 ? 1 : 0,
+      failureKind: result.errors.length > 0 ? "missing_artifact" : undefined,
+    };
+  }
+
+  if (target === "drift") {
+    return {
+      target,
+      data: buildDriftInspect(workspaceRoot),
+      warnings: [],
+      errors: [],
+      exitCode: 0,
+    };
+  }
+
+  if (target === "handoff") {
+    return {
+      target,
+      data: buildHandoffInspect(workspaceRoot),
+      warnings: [],
+      errors: [],
+      exitCode: 0,
+    };
+  }
+
   if (target === "imported") {
     const result = inspectBrownfieldImport(workspaceRoot);
     return {
@@ -537,6 +1092,59 @@ export async function runInspectCommand(
   }
 
   if (target === "all") {
+    if (options.brief) {
+      const brief = buildInspectBrief(workspaceRoot);
+      return {
+        target,
+        data: brief,
+        warnings: [],
+        errors: [],
+        exitCode: 0,
+      };
+    }
+    if (!options.full) {
+      const summary = buildInspectSummary(workspaceRoot);
+      const schema = buildSchemaInspect(workspaceRoot);
+      const drift = buildDriftInspect(workspaceRoot);
+      const handoff = buildHandoffInspect(workspaceRoot);
+      const framework = buildFrameworkInspect(workspaceRoot);
+      const errors = [
+        ...schema.errors,
+      ];
+      return {
+        target,
+        data: {
+          schemaVersion: "0.1.0",
+          compact: true,
+          payload: {
+            mode: "compact",
+            purpose: "agent diagnostic bundle",
+            includes: ["summary", "schema", "drift", "handoff", "framework"],
+            omitted: ["large generated registries", "module graph", "full runtime graph payloads"],
+            fullCommand: "forge inspect all --full --json",
+            briefCommand: "forge inspect all --brief --json",
+          },
+          summary: summary.summary,
+          inspections: {
+            summary,
+            schema: schema.data,
+            drift,
+            handoff,
+            framework,
+          },
+          nextActions: [
+            "forge inspect summary --json",
+            "forge inspect schema --json",
+            "forge inspect handoff --json",
+            "forge inspect all --full --json",
+          ],
+        },
+        warnings: [],
+        errors,
+        exitCode: errors.length > 0 ? 1 : 0,
+        failureKind: errors.length > 0 ? "missing_artifact" : undefined,
+      };
+    }
     const aggregatePaths: Array<[string, string]> = [
       ["app", `${GENERATED_DIR}/appGraph.json`],
       ["data", `${GENERATED_DIR}/dataGraph.json`],
@@ -573,6 +1181,7 @@ export async function runInspectCommand(
     ];
     const data: Record<string, unknown> = {};
     const errors = [];
+    data.summary = buildInspectSummary(workspaceRoot).summary;
     for (const [key, relative] of aggregatePaths) {
       const value = readGeneratedJson<unknown>(workspaceRoot, relative);
       if (value === null) {
@@ -590,6 +1199,17 @@ export async function runInspectCommand(
     }
     data.framework = buildFrameworkInspect(workspaceRoot);
     data.diagnostics = errors;
+    data.compact = false;
+    data.payload = {
+      mode: "full",
+      purpose: "complete generated machine contract",
+      includes: aggregatePaths.map(([key]) => key),
+      compactCommand: "forge inspect all --json",
+      briefCommand: "forge inspect all --brief --json",
+    };
+    data.nextActions = errors.length > 0
+      ? ["forge status --json", "forge generate", "forge check --json"]
+      : ["forge inspect all --json", "forge check --json"];
     return {
       target,
       data,
@@ -731,6 +1351,25 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "doctor": {
+      if (command.target === "agent") {
+        const result = await runAgentCommand({
+          subcommand: "doctor",
+          workspaceRoot: command.workspaceRoot,
+          json: command.json,
+          target: command.agentTarget ?? "codex",
+          dryRun: false,
+          force: false,
+          preserveUserSections: true,
+          skills: true,
+          rules: true,
+        });
+        if (command.json) {
+          process.stdout.write(formatAgentJson(result));
+        } else {
+          process.stdout.write(formatAgentHuman(result));
+        }
+        return result.exitCode;
+      }
       if (command.target === "windows") {
         const result = await runWindowsDoctorCommand({ workspaceRoot: command.workspaceRoot });
         if (command.json) {
@@ -882,6 +1521,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "delta": {
+      if (command.subcommand === "repair") {
+        const result = await runDeltaRepair({
+          workspaceRoot: command.workspaceRoot,
+          dryRun: command.dryRun,
+          yes: command.yes,
+        });
+        process.stdout.write(command.json ? formatDeltaRepairJson(result) : formatDeltaRepairHuman(result));
+        return result.exitCode;
+      }
       const result = await runDeltaStatus(command.workspaceRoot);
       process.stdout.write(command.json ? formatDeltaStatusJson(result) : formatDeltaStatusHuman(result));
       return result.exitCode;
@@ -934,7 +1582,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "review": {
       const result = runReviewCommand(command.options);
       if (command.options.json) {
-        process.stdout.write(formatReviewJson(result));
+        process.stdout.write(formatReviewJson(result, { full: command.options.full }));
       } else if (command.options.md && result.report) {
         process.stdout.write(renderReviewMarkdown(result.report));
       } else if (command.options.sarif && result.report && !command.options.write) {
@@ -1000,10 +1648,63 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return result.exitCode;
     }
+    case "status": {
+      const result = runStatusCommand(command.workspaceRoot);
+      if (command.json) {
+        process.stdout.write(formatJsonResult(result.data));
+      } else {
+        process.stdout.write(formatStatusHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "changed": {
+      const result = runChangedCommand(command.workspaceRoot);
+      if (command.json) {
+        process.stdout.write(formatJsonResult(result.data));
+      } else {
+        process.stdout.write(formatChangedHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "handoff": {
+      const result = await runHandoffCommand(command);
+      process.stdout.write(command.json ? formatHandoffJson(result) : formatHandoffHuman(result));
+      return result.exitCode;
+    }
+    case "studio": {
+      const result = command.subcommand === "snapshot"
+        ? await runStudioSnapshotCommand(command)
+        : command.subcommand === "watch"
+          ? await runStudioWatchCommand(command)
+          : command.subcommand === "doctor"
+            ? await runStudioDoctorCommand(command)
+            : command.subcommand === "open"
+              ? await runStudioOpenCommand(command)
+              : await runStudioAttachCommand(command);
+      process.stdout.write(
+        command.json
+          ? command.subcommand === "snapshot"
+            ? formatStudioSnapshotJson(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)
+            : command.subcommand === "watch"
+              ? formatStudioWatchJson(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)
+              : command.subcommand === "doctor"
+                ? formatStudioDoctorJson(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)
+                : formatStudioAttachJson(result as Awaited<ReturnType<typeof runStudioAttachCommand>>)
+          : command.subcommand === "snapshot"
+            ? formatStudioSnapshotHuman(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)
+            : command.subcommand === "watch"
+              ? formatStudioWatchHuman(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)
+              : command.subcommand === "doctor"
+                ? formatStudioDoctorHuman(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)
+                : formatStudioAttachHuman(result as Awaited<ReturnType<typeof runStudioAttachCommand>>),
+      );
+      return result.exitCode;
+    }
     case "inspect": {
       const result = await runInspectCommand(
         command.target,
         process.cwd(),
+        { full: command.full, brief: command.brief },
       );
       if (command.json) {
         process.stdout.write(formatJsonResult(buildInspectJson(result)));
@@ -1362,5 +2063,5 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
   }
 }
 
-export { runVerifyCommand };
+export { runChangedCommand, runVerifyCommand };
 export type { VerifyOptions, VerifyResult };

@@ -1,18 +1,23 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=b7a94d564a961fdda392055d6f091aa61e7e6d9da2fb04f4f508803d75b3f1f3
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=8a11ed1c878594b797fd231584b012b0b7f1add75c6fdc4e6720ea21d6bfd61b
 # Agent Quickstart
 
 Run:
 
 ```bash
+forge agent onboard --target codex --json
+forge status --json
+forge changed --json
+forge handoff --json
 forge do inspect --json
 forge do fix --json
 forge do verify --json
 forge dev --once --json
 forge dev
-forge inspect all --json
+forge agent print-context --json
 forge inspect frontend --json
 forge inspect capabilities --json
 forge inspect agent-tools --json
+forge inspect all --json
 forge check --json
 forge ai trace <traceId> --json
 ```

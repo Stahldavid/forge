@@ -37,6 +37,10 @@ export interface GeneratedDbClientOptions {
   writeTracker?: WriteTracker;
 }
 
+function camelCase(value: string): string {
+  return value.replace(/[_-]([a-zA-Z0-9])/g, (_match, char: string) => char.toUpperCase());
+}
+
 function quoteIdent(ident: string): string {
   return `"${ident.replace(/"/g, '""')}"`;
 }
@@ -286,8 +290,15 @@ export function createGeneratedDbClient(
 ): DbClient {
   const client: DbClient = {};
 
-  for (const [tableName, entry] of Object.entries(tableMap).sort()) {
-    client[tableName] = createTableClient(tx, tableName, entry, options);
+  for (const [accessName, entry] of Object.entries(tableMap).sort()) {
+    const tableClient = createTableClient(tx, entry.tableName, entry, options);
+    client[accessName] = tableClient;
+
+    for (const alias of new Set([camelCase(accessName), camelCase(entry.tableName)])) {
+      if (alias && client[alias] === undefined) {
+        client[alias] = tableClient;
+      }
+    }
   }
 
   return client;

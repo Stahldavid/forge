@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=f0e3d75d4514db3242c50943cadbc9a03a49163d1cf36220a1e408295802ec13
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=6e6b3bd66db747fb0543e7144737ad55421d99a3d86930891d4510bc631e2a0c
 export const agentContract = {
   "actions": [],
   "ai": {
@@ -68,14 +68,19 @@ export const agentContract = {
       "forge verify --strict"
     ],
     "beforeEditing": [
+      "forge agent onboard --target codex --json",
+      "forge status --json",
+      "forge changed --json",
+      "forge handoff --json",
       "forge do inspect --json",
       "forge dev --once --json",
-      "forge inspect all --json",
+      "forge agent print-context --json",
       "forge check --json"
     ],
     "dev": [
       "forge dev",
       "forge dev --once --json",
+      "forge handoff --json",
       "forge do fix --json",
       "forge do verify --json",
       "forge dev --api-only",
@@ -7078,7 +7083,7 @@ export const agentContract = {
         "Prefer AI SDK ToolLoopAgent semantics through ctx.agent.run or ctx.ai.runAgent instead of custom loops.",
         "Use stopWhen with stepCount or terminal tool calls to prevent unbounded loops.",
         "Run agents only in actions, workflows, endpoints, or server code.",
-        "Run forge inspect all --json and confirm agentContract.ai.agents lists the agent.",
+        "Run forge inspect ai --json or forge agent print-context --json and confirm the generated context lists the agent.",
         "Use forge ai trace <traceId> --json to inspect agent runs and tool calls."
       ],
       "title": "Add an agent"

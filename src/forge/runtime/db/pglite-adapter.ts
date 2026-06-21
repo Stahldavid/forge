@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { mkdirSync } from "node:fs";
 import type { DbAdapter, DbQueryResult, DbTransaction } from "./adapter.ts";
 
 function toQueryResult(result: {
@@ -45,7 +46,13 @@ export class PgliteAdapter implements DbAdapter {
 }
 
 export async function createPgliteAdapter(dataDir: string): Promise<DbAdapter> {
+  mkdirSync(dataDir, { recursive: true });
   const adapter = new PgliteAdapter(dataDir);
-  await adapter.query("SELECT 1");
-  return adapter;
+  try {
+    await adapter.query("SELECT 1");
+    return adapter;
+  } catch (error) {
+    await adapter.close().catch(() => undefined);
+    throw error;
+  }
 }

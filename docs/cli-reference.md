@@ -7,17 +7,44 @@ This page lists common ForgeOS command groups. Start with [CLI](cli.md) for the 
 ```bash
 npm create forgeos-app@alpha my-app -- --template minimal-web
 forge new my-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@alpha" --install --no-git
+forge new workroom --template agent-workroom --package-manager npm --no-install --no-git
 ```
 
 ## Intent router
 
 ```bash
+forge status --json
+forge status --human
+forge changed --json
+forge handoff --json
+forge agent onboard --target codex --json
+forge doctor agent --target codex --json
+forge studio open ../customer-app --preview-port 5174 --target codex --json
+forge studio doctor ../customer-app --preview-port 5174 --target codex --json
 forge do inspect --json
 forge do "<objective>" --json
 forge do fix --json
 forge do verify --json
 forge do connect-ui --json
 ```
+
+`forge handoff --json` creates a compact work handoff for the next external code agent: dev diagnostic summary, git state, changed-file categories, recent test/UI run status, opening brief, recommended read files, next commands, and risks. The `git.changeSummary` block separates source, tests, docs, generated artifacts, operational files, assets, config, and other paths so large generated diffs do not hide the real edit surface.
+
+`forge changed --json` is the dedicated diff-orientation command. It separates human-authored changes from generated artifacts, reports staged/unstaged/untracked buckets, lists risks such as untracked or uncategorized files, and recommends the next verification commands. Its `diffPlan` gives an authored-first diff command, a generated-only diff command, and a compact reason for collapsing generated artifacts until the source cause is understood.
+
+`forge add <package> --frontend`, `forge add frontend:<package>`, `forge add <package> --backend`, and `forge add backend:<package>` are normal npm package installs with explicit app-side intent. JSON includes `packageTarget`, `packageTargetReason`, `nativeInstallCommand`, and `avoidedManualCommand`, so Studio and agents can show which package.json will change and which native package-manager command Forge is managing.
+
+`forge status --json` also includes a lightweight `git` block with categorized changed, staged, unstaged, and untracked files. Its top-level `generated` block gives Studio and external agents an explicit state (`ready`, `missing-artifacts`, or `drift`) plus the safe dev/check/repair commands, so they do not have to infer stale generated state from filenames. Its `studio` block gives the open/attach/snapshot/watch/doctor commands, target preview URL, start command, and probe command for observer UIs. The human output prints the same generated and Studio detail. Use it when you need quick orientation before the fuller `handoff` or `dev --once` snapshots.
+
+`forge agent onboard --target codex --json` is the one-command entry point for a freshly opened external agent session. It prepares the target adapter, installs/proves hooks when supported, runs the compact dev diagnostic snapshot, and returns `readyToEdit`, recommended read files, and next commands.
+
+`forge doctor agent --target codex --json` is the top-level spelling for agent readiness checks. It delegates to `forge agent doctor` and reports adapter freshness, hook bridge status, recent useful signals, next actions, and diagnostics.
+
+`forge studio open <path> --preview-port 5174 --target codex --json` is the recommended Studio entrypoint. It attaches an app directory to a Studio-style observer without moving the coding agent into the browser. It writes `.forge/studio/attachment.json`, prepares the selected agent adapter/hook bridge, and returns the target preview URL plus the commands to run the app and inspect hooks. `forge studio attach` is the lower-level spelling for the same attachment write. `commands.startTargetAppCwd`, `commands.startTargetApp`, `commands.openPreview`, and `commands.probePreview` tell Studio exactly what to show and where the command should run. `preview.status` reports whether a local preview was reachable, not running, or intentionally not checked. `posture` reports generated freshness and authored-first review commands. If a preview points at local port `5173`, ForgeOS treats it as likely Studio self-preview and shifts the target app preview to `5174` unless `--force` is provided.
+
+`forge studio snapshot <path> --preview-port 5174 --target codex --json` is the read-only version for Studio refresh loops. It does not write `.forge/studio/attachment.json`, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` buckets, `diffPlan`, `contextPacket`, hook proofs, DeltaDB status, plus the commands the UI should show. If an attachment manifest already exists, snapshot reuses its preview URL and targets unless the command overrides them.
+
+`forge studio doctor <path> --preview-port 5174 --target codex --json` is the Studio trust gate. It checks preview reachability, generated freshness, hook usefulness, and DeltaDB readability. `forge studio watch <path> --preview-port 5174 --target codex --json` emits a Studio-shaped `studio.snapshot` event; long-running reload streams continue to come from `forge dev --watch --json`.
 
 ## Development
 
@@ -26,6 +53,14 @@ forge dev
 forge dev --once --json
 forge dev --mock-ai
 ```
+
+`forge dev` regenerates Forge artifacts before startup and, with watch enabled, regenerates and reloads the runtime after source changes so `_generated` does not stay stale during the agent loop. Startup JSON, `forge dev --once --json`, and human output expose `summary.generated.state`, changed artifact counts, sample generated paths, and the exact generate/check commands so agents do not have to infer freshness from file timestamps.
+
+`forge dev --once --json` is the compact agent/CI entrypoint. Read `summary.agentContext` for safe-to-edit state, whether generated artifacts are fresh after the cycle, whether the cycle regenerated files (`generatedChangedFiles`), changed-file counts, `changeSummary` buckets, `diffPlan` review commands, blocking issues, recommended read files, recommended commands, and deeper `--full` commands.
+
+In long-running watch mode, `forge dev --json` emits incremental `dev.reload` events with `generated`, `preview`, and `agentContext`, followed by the full watch-cycle snapshot. `dev.generate_failed` events include generated stale-risk evidence and recovery commands. This gives Forge Studio a streaming source of truth instead of requiring log scraping.
+
+Read `summary.preview.targetAppUrl` when a Studio or observer UI needs the app-under-construction URL. If Studio itself is running at `http://127.0.0.1:5173`, ForgeOS suggests `http://127.0.0.1:5174` for the internal app preview instead of pointing the iframe back at Studio.
 
 ## Generation and checks
 
@@ -42,7 +77,11 @@ forge doctor windows --json
 ## Inspection
 
 ```bash
+forge inspect --json
+forge inspect summary --json
+forge inspect all --brief --json
 forge inspect all --json
+forge inspect all --full --json
 forge inspect app --json
 forge inspect data --json
 forge inspect frontend --json
@@ -60,15 +99,23 @@ forge import inspect --json
 forge import inspect --target candidate-entries --json
 ```
 
+Bare `forge inspect` defaults to `summary`. Use `forge inspect all --brief --json` as the first aggregate read when context budget matters. It returns summary counts, preferred entrypoints, artifact status, and high-value file refs without embedding the larger framework/test/dependency payloads. Use `forge inspect all --json` for the compact diagnostic bundle and `--full` only when a tool needs the full generated machine contract. The `all` variants include a `payload` block that names the mode, what was included or omitted, and the command to switch to brief/compact/full output.
+
 ## Verification
 
 ```bash
 forge verify --smoke
+forge verify quick
 forge verify --standard
+forge verify agent
 forge verify --strict
+forge verify release
 forge verify --changed
 forge verify --standard --script-timeout-ms 120000 --json
 ```
+
+Aliases map to the same verifier profiles: `quick` is smoke/fast, `agent` is standard impact-based verification for the normal external-agent loop, and `release` is strict verification.
+Unknown positional profiles fail early with the accepted profile list instead of silently running the default verifier.
 
 ## DeltaDB, Timeline, and Sessions
 
@@ -121,6 +168,8 @@ Use dry runs for schema, policy, package, or UI edits.
 forge add stripe --dry-run --json
 forge add stripe
 forge add ai
+forge add lucide-react --workspace web
+forge add package @tanstack/react-query --workspace web
 forge deps inspect stripe --json
 forge deps api stripe checkout.sessions.create --json
 forge deps trace stripe --json
@@ -175,6 +224,8 @@ forge repair plan --from-last-test-run --write
 forge review run --changed --json
 ```
 
+`forge review run --changed --json` is compact by default and includes `changeSummary`, `reviewFocus`, and `diffPlan`, so agents review authored source/tests/docs/config first and inspect generated artifacts after the source cause is understood. Use `forge review run --changed --full --json` for the complete report.
+
 ## UI and browser tests
 
 ```bash
@@ -202,6 +253,11 @@ forge agent print-context --json
 forge agent context --current --json
 forge agent memory --json
 forge agent ingest codex --event UserPromptSubmit --input '{"hook_event_name":"UserPromptSubmit","session_id":"s1","turn_id":"t1","model":"test","prompt":"hello"}' --json
+forge agent ingest codex --watch --file .forge/agent/events.ndjson --json
+forge agent hooks status --target codex --json
+forge agent hooks smoke --target codex --json
+forge agent timeline --json
+forge agent timeline --target codex --json
 forge agent install codex --dry-run --json
 forge agent install claude-code --dry-run --json
 forge agent install cursor --dry-run --json
@@ -211,6 +267,10 @@ forge agent export --target cursor
 forge agent export --target codex
 forge agent export --target claude
 ```
+
+`forge agent context` and `forge agent memory` use compact human-readable summaries by default. Add `--json` for machine-readable context and detailed memory audit events. Agent memory read commands should not block on the DeltaDB writer lock; write commands such as ingest, hook smoke, repair, timeline rebuild, and session mutations may fail fast with `FORGE_DELTA_BUSY`.
+
+`forge agent ingest <source> --watch --file <path>` is explicit and opt-in. It tails JSON or NDJSON hook/export files and records normalized Agent Memory events until interrupted.
 
 ## Self-host
 

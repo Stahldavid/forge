@@ -1,3 +1,5 @@
+import type { Diagnostic } from "../compiler/types/diagnostic.ts";
+
 export const AGENT_EVENT_SCHEMA = "forge.agent-event.v1" as const;
 
 export type AgentMemorySourceName = "claude-code" | "codex" | "cursor" | "generic";
@@ -69,19 +71,51 @@ export interface AgentMemoryEventRecord {
   data: Record<string, unknown>;
 }
 
+export interface AgentMemoryContextEvent {
+  id: string;
+  source: string;
+  integration: string;
+  trustLevel: string;
+  kind: string;
+  capturedAt: string;
+  summary?: string;
+  sessionId?: string;
+  turnId?: string;
+  tool?: string;
+  command?: string;
+  status?: string;
+  files: string[];
+  entries: string[];
+  proofs: string[];
+  confidence: number;
+}
+
 export interface AgentMemoryContextPack {
   ok: true;
   scope: "current" | "entry";
   entry?: string;
   currentState: Record<string, unknown>;
   agentMemory: {
+    summary: {
+      events: number;
+      goals: number;
+      toolCalls: number;
+      files: number;
+      entries: number;
+      approvals: number;
+      proofs: number;
+      openQuestions: number;
+      sources: string[];
+      tools: string[];
+      latestEventAt?: string;
+    };
     goals: Array<{ source: string; summary: string; confidence: number }>;
     toolCalls: Array<{ source: string; tool: string; status?: string; summary?: string }>;
     files: string[];
     entries: string[];
     approvals: Array<{ source: string; status: string; summary?: string }>;
     proofs: Array<{ kind: string; result?: string }>;
-    events: AgentMemoryEventRecord[];
+    events: AgentMemoryContextEvent[];
     openQuestions: string[];
   };
   exitCode: 0;
@@ -109,4 +143,39 @@ export interface AgentIngestResult {
   envelope?: AgentEventEnvelope;
   exitCode: 0 | 1;
   error?: string;
+  diagnostics?: Diagnostic[];
+  nextActions?: string[];
+}
+
+export interface AgentIngestWatchResult {
+  ok: boolean;
+  watch: true;
+  source: string;
+  file?: string;
+  dryRun?: boolean;
+  eventsIngested: number;
+  errors: string[];
+  nextActions: string[];
+  exitCode: 0 | 1;
+}
+
+export interface AgentMemoryUnavailableResult {
+  ok: false;
+  error: string;
+  events?: AgentMemoryEventRecord[];
+  busy?: {
+    code: "FORGE_DELTA_BUSY";
+    lockPath: string;
+    relativeLockPath: string;
+    pid?: number;
+    processAlive: boolean;
+    createdAt?: string;
+    ageMs?: number;
+    cwd?: string;
+    command?: string;
+    holderKnown: boolean;
+  };
+  diagnostics: Diagnostic[];
+  nextActions: string[];
+  exitCode: 1;
 }

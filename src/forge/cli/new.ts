@@ -8,7 +8,7 @@ import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 import { moduleDir } from "../platform/module.ts";
 
-export type NewTemplateName = "b2b-support-web" | "minimal-web";
+export type NewTemplateName = "agent-workroom" | "b2b-support-web" | "minimal-web";
 export type NewPackageManager = "bun" | "npm" | "pnpm" | "yarn";
 
 export interface NewCommandOptions {

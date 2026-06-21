@@ -25,6 +25,24 @@ export interface GenerateResult {
 
 export interface ForgeAddResult extends GenerateResult {
   alias?: string;
+  mode?: "integration" | "package";
+  targetKind?: "forge-integration" | "npm-package";
+  target?: string;
+  packageTarget?: "root" | "frontend" | "backend" | "workspace";
+  packageTargetReason?: string;
+  explanation?: string;
+  recipeVersion?: string;
+  recipePackages?: string[];
+  requiredSecrets?: string[];
+  optionalSecrets?: string[];
+  packageSpec?: string;
+  packageName?: string;
+  packageManager?: string;
+  installCommand?: string[];
+  nativeInstallCommand?: string[];
+  avoidedManualCommand?: string;
+  installCwd?: string;
+  installWorkspace?: string;
 }
 
 export interface InspectResult {
@@ -45,6 +63,9 @@ export interface AddOptions extends CliCommonOptions {
   runtimeInspect: boolean;
   sandboxBackend: SandboxBackend;
   allowScripts: boolean;
+  mode?: "auto" | "integration" | "package";
+  installWorkspace?: string;
+  packageTarget?: "frontend" | "backend";
 }
 
 export type InspectTarget =
@@ -83,6 +104,10 @@ export type InspectTarget =
   | "agent-tools"
   | "agent-adapters"
   | "capability-map"
+  | "summary"
+  | "schema"
+  | "drift"
+  | "handoff"
   | "framework"
   | "imported"
   | "ui"
@@ -107,6 +132,7 @@ export interface RunResult {
 export interface PmAddOptions {
   ignoreScripts: boolean;
   cwd: string;
+  workspace?: string;
 }
 
 export interface PmAddResult {

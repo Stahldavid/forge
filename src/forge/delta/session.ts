@@ -23,7 +23,8 @@ export interface DeltaSessionCommandResult {
 }
 
 export async function runDeltaSessionCommand(input: DeltaSessionCommandInput): Promise<DeltaSessionCommandResult> {
-  const store = await DeltaStore.open(input.workspaceRoot);
+  const readOnly = input.subcommand === "list" || input.subcommand === "show";
+  const store = await DeltaStore.open(input.workspaceRoot, { access: readOnly ? "read" : "write" });
   try {
     switch (input.subcommand) {
       case "list":

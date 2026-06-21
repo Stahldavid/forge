@@ -64,6 +64,7 @@ describe("H19 agent contract", () => {
         secrets: unknown[];
         frontend: { present: boolean; routes: unknown[]; components: unknown[]; runtimeEndpoints: unknown[] };
         capabilityMap?: unknown;
+        commandsToRun: { beforeEditing: string[]; dev: string[] };
       }>(workspace, `${GENERATED}/agentContract.json`);
 
       expect(contract.commands.length).toBeGreaterThan(0);
@@ -82,6 +83,10 @@ describe("H19 agent contract", () => {
       expect(contract.commands[0]?.frontend?.hook).toContain("useCommand");
       expect(contract.queries[0]?.http?.path.startsWith("/queries/")).toBe(true);
       expect(contract.liveQueries[0]?.http?.method).toBe("GET");
+      expect(contract.commandsToRun.beforeEditing).toContain("forge handoff --json");
+      expect(contract.commandsToRun.dev).toContain("forge handoff --json");
+      expect(readBody(workspace, "AGENTS.md")).toContain("forge handoff --json");
+      expect(readBody(workspace, `${GENERATED}/agentQuickstart.md`)).toContain("forge handoff --json");
 
       const tools = readJson<{
         autoTools: Array<{
@@ -171,15 +176,25 @@ describe("H19 agent contract", () => {
     }
   }, 30_000);
 
-  test("inspect all and agent-contract print expose generated contract", async () => {
+  test("inspect all compact and full plus agent-contract print expose generated contract", async () => {
     const workspace = scaffoldGenerateWorkspace("h19-inspect");
     try {
       await runGenerateCommand(defaultGenerateOptions(workspace));
 
+      const briefInspect = await runInspectCommand("all", workspace, { brief: true });
+      expect(briefInspect.exitCode).toBe(0);
+      expect((briefInspect.data as { brief?: boolean }).brief).toBe(true);
+      expect((briefInspect.data as { refs?: string[] }).refs).toContain("AGENTS.md");
+
       const inspect = await runInspectCommand("all", workspace);
       expect(inspect.exitCode).toBe(0);
-      expect((inspect.data as { agentContract?: unknown }).agentContract).toBeTruthy();
-      expect((inspect.data as { frontend?: unknown }).frontend).toBeTruthy();
+      expect((inspect.data as { compact?: boolean }).compact).toBe(true);
+      expect(JSON.stringify(inspect.data)).toContain("forge inspect all --full --json");
+
+      const fullInspect = await runInspectCommand("all", workspace, { full: true });
+      expect(fullInspect.exitCode).toBe(0);
+      expect((fullInspect.data as { agentContract?: unknown }).agentContract).toBeTruthy();
+      expect((fullInspect.data as { frontend?: unknown }).frontend).toBeTruthy();
 
       const frontend = await runInspectCommand("frontend", workspace);
       expect(frontend.exitCode).toBe(0);

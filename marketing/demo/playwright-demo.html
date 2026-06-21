@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ForgeOS Agent Workroom</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        --bg: #101214;
+        --surface: #f5f2eb;
+        --panel: #ffffff;
+        --panel-2: #ece7dc;
+        --ink: #17191c;
+        --muted: #68707a;
+        --line: #25282d;
+        --green: #256f4a;
+        --green-soft: #dcefe4;
+        --blue: #315f8c;
+        --blue-soft: #dce9f5;
+        --amber: #9b6a18;
+        --amber-soft: #f3e6c8;
+        --red: #a33a32;
+        --red-soft: #f1d7d4;
+        --code: #15181c;
+        --code-soft: #222830;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      .stage {
+        width: 1280px;
+        height: 720px;
+        background: var(--surface);
+        display: grid;
+        grid-template-rows: 62px 1fr 54px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 230px 1fr 330px;
+        align-items: center;
+        gap: 18px;
+        padding: 0 22px;
+        border-bottom: 1px solid #d6d0c4;
+        background: #fbfaf7;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .brand strong {
+        font-size: 24px;
+        letter-spacing: 0;
+      }
+
+      .brand span,
+      .subtitle,
+      .clock {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: var(--ink);
+        font-size: 18px;
+      }
+
+      .subtitle span {
+        color: var(--blue);
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pill {
+        min-height: 28px;
+        border: 1px solid #c9c2b7;
+        border-radius: 6px;
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: 750;
+        background: #fff;
+      }
+
+      .pill.green {
+        color: var(--green);
+        border-color: #a6c8b4;
+        background: var(--green-soft);
+      }
+
+      .pill.blue {
+        color: var(--blue);
+        border-color: #adc6dc;
+        background: var(--blue-soft);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 255px 1fr 345px;
+        gap: 14px;
+        padding: 16px 18px 14px;
+        min-height: 0;
+      }
+
+      .panel {
+        min-height: 0;
+        border: 1px solid #d4cec2;
+        border-radius: 8px;
+        background: var(--panel);
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: 40px 1fr;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 13px;
+        border-bottom: 1px solid #ddd6cb;
+        background: var(--panel-2);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #373a40;
+      }
+
+      .mono {
+        font-family: Consolas, "Cascadia Mono", monospace;
+      }
+
+      .project-body {
+        padding: 12px;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 12px;
+        min-height: 0;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .metric {
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        padding: 9px;
+        background: #fbfaf7;
+        min-height: 62px;
+      }
+
+      .metric label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 750;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .agent-picker {
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        background: #fbfaf7;
+        padding: 10px;
+      }
+
+      .agent-picker label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .agent-options {
+        display: grid;
+        gap: 7px;
+      }
+
+      .agent-option {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #d7d0c4;
+        border-radius: 6px;
+        padding: 0 9px;
+        font-size: 13px;
+        font-weight: 800;
+        background: #fff;
+      }
+
+      .agent-option.active {
+        border-color: #8fb1cf;
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .command-list {
+        min-height: 0;
+        overflow: hidden;
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+
+      .command {
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        background: #15181c;
+        color: #f4f1e8;
+        padding: 9px;
+        font-size: 12px;
+        line-height: 1.35;
+        opacity: 0.35;
+      }
+
+      .command.active {
+        opacity: 1;
+        outline: 2px solid #9ec4df;
+      }
+
+      .center {
+        display: grid;
+        grid-template-rows: 40px 1fr;
+        min-height: 0;
+      }
+
+      .work {
+        min-height: 0;
+        padding: 12px;
+        display: grid;
+        grid-template-columns: 1fr 275px;
+        grid-template-rows: 210px 155px 1fr;
+        gap: 12px;
+      }
+
+      .chat {
+        grid-row: span 3;
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: 34px 1fr;
+        background: #fbfaf7;
+      }
+
+      .subhead {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        border-bottom: 1px solid #ded7cb;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .chat-feed {
+        min-height: 0;
+        padding: 11px;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .message {
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        background: #fff;
+        padding: 10px;
+        opacity: 0.35;
+        transform: translateY(8px);
+      }
+
+      .message.active {
+        opacity: 1;
+        transform: translateY(0);
+        transition: 180ms ease;
+      }
+
+      .message b {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 12px;
+        color: var(--blue);
+        text-transform: uppercase;
+      }
+
+      .message span {
+        display: block;
+        font-size: 15px;
+        line-height: 1.28;
+        font-weight: 650;
+      }
+
+      .focus,
+      .preview,
+      .checks {
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        overflow: hidden;
+        background: #fbfaf7;
+        display: grid;
+        grid-template-rows: 34px 1fr;
+        min-height: 0;
+      }
+
+      .file-list,
+      .check-list {
+        padding: 9px;
+        display: grid;
+        gap: 7px;
+        align-content: start;
+      }
+
+      .app-preview {
+        min-height: 0;
+        padding: 9px;
+        background: #eef2f4;
+        display: grid;
+        grid-template-rows: 34px 1fr 38px;
+        gap: 8px;
+      }
+
+      .preview-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #d0d9df;
+        border-radius: 6px;
+        background: #fff;
+        padding: 0 9px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .preview-note-list {
+        display: grid;
+        gap: 7px;
+        align-content: start;
+        min-height: 0;
+      }
+
+      .note-card {
+        border: 1px solid #d0d9df;
+        border-radius: 7px;
+        background: #fff;
+        padding: 8px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .note-card strong {
+        font-size: 13px;
+      }
+
+      .note-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.25;
+        font-weight: 650;
+      }
+
+      .labels {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+
+      .label {
+        border-radius: 99px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        padding: 3px 6px;
+        font-size: 10px;
+        font-weight: 900;
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      .label.visible {
+        opacity: 1;
+        transform: translateY(0);
+        transition: 180ms ease;
+      }
+
+      .preview-footer {
+        border: 1px solid #d0d9df;
+        border-radius: 6px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 9px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .file,
+      .check {
+        min-height: 30px;
+        border: 1px solid #ded7cb;
+        border-radius: 6px;
+        background: #fff;
+        padding: 7px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .file.generated {
+        color: var(--muted);
+        background: #f3f0e9;
+      }
+
+      .status {
+        min-width: 58px;
+        text-align: center;
+        border-radius: 99px;
+        padding: 3px 6px;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .status.ok {
+        color: var(--green);
+        background: var(--green-soft);
+      }
+
+      .status.wait {
+        color: var(--amber);
+        background: var(--amber-soft);
+      }
+
+      .status.info {
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .evidence-body {
+        min-height: 0;
+        padding: 11px;
+        display: grid;
+        grid-template-rows: 148px 1fr;
+        gap: 11px;
+      }
+
+      .gate {
+        border: 1px solid #b7d0c1;
+        background: var(--green-soft);
+        border-radius: 7px;
+        padding: 12px;
+      }
+
+      .gate label {
+        display: block;
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+      }
+
+      .gate strong {
+        display: block;
+        font-size: 25px;
+        margin-bottom: 6px;
+      }
+
+      .gate p {
+        margin: 0;
+        color: #395947;
+        font-size: 13px;
+        line-height: 1.3;
+        font-weight: 650;
+      }
+
+      .timeline {
+        min-height: 0;
+        overflow: hidden;
+        display: grid;
+        align-content: start;
+        gap: 8px;
+      }
+
+      .event {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 8px;
+        border: 1px solid #ded7cb;
+        border-radius: 7px;
+        background: #fff;
+        padding: 8px;
+        opacity: 0.3;
+      }
+
+      .event.active {
+        opacity: 1;
+        border-color: #adc6dc;
+        background: #f8fbfd;
+      }
+
+      .event time {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .event b {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 3px;
+      }
+
+      .event span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+        font-weight: 650;
+      }
+
+      .footer {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 20px;
+        padding: 0 22px;
+        border-top: 1px solid #d6d0c4;
+        background: #fbfaf7;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .progress {
+        height: 8px;
+        width: 300px;
+        border-radius: 99px;
+        background: #ded7cb;
+        overflow: hidden;
+      }
+
+      .progress span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--blue);
+        transition: width 240ms ease;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <header class="topbar">
+        <div class="brand">
+          <strong>ForgeOS</strong>
+          <span>Agent Workroom</span>
+        </div>
+        <div class="subtitle">External coding agents build the app. <span>ForgeOS keeps the work legible.</span></div>
+        <div class="toolbar">
+          <span class="pill green">safeToEdit true</span>
+          <span class="pill blue">generatedFresh true</span>
+          <span class="clock mono" id="clock">00:00</span>
+        </div>
+      </header>
+
+      <section class="grid">
+        <aside class="panel">
+          <div class="panel-head">
+            <span>Project</span>
+            <span class="mono">notes-app</span>
+          </div>
+          <div class="project-body">
+            <div class="metric-grid">
+              <div class="metric">
+                <label>changed</label>
+                <strong id="changedCount">0</strong>
+              </div>
+              <div class="metric">
+                <label>generated</label>
+                <strong id="generatedCount">0</strong>
+              </div>
+              <div class="metric">
+                <label>hooks</label>
+                <strong id="hookCount">0</strong>
+              </div>
+              <div class="metric">
+                <label>checks</label>
+                <strong id="checkCount">0/4</strong>
+              </div>
+            </div>
+
+            <div class="agent-picker">
+              <label>Open external agent</label>
+              <div class="agent-options">
+                <div class="agent-option active"><span>Codex</span><span class="status ok">ready</span></div>
+                <div class="agent-option"><span>Claude Code</span><span class="status info">export</span></div>
+                <div class="agent-option"><span>Cursor</span><span class="status info">mcp</span></div>
+              </div>
+            </div>
+
+            <div class="command-list">
+              <div class="command mono active" data-step="0">forge status --json</div>
+              <div class="command mono" data-step="1">forge changed --json</div>
+              <div class="command mono" data-step="2">forge agent onboard --target codex --json</div>
+              <div class="command mono" data-step="3">forge agent context --current --json</div>
+              <div class="command mono" data-step="4">forge test plan --changed --json</div>
+              <div class="command mono" data-step="5">forge handoff --json</div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="panel center">
+          <div class="panel-head">
+            <span>External agent session</span>
+            <span>read-only mirror from hooks</span>
+          </div>
+          <div class="work">
+            <div class="chat">
+              <div class="subhead">
+                <span>Codex outside the browser</span>
+                <span class="mono">C:/work/notes-app</span>
+              </div>
+              <div class="chat-feed">
+                <div class="message active" data-step="0">
+                  <b>User</b>
+                  <span>Add project labels to notes and keep the generated client fresh.</span>
+                </div>
+                <div class="message" data-step="1">
+                  <b>ForgeOS</b>
+                  <span>Review authored files first: source -> tests -> docs -> generated.</span>
+                </div>
+                <div class="message" data-step="2">
+                  <b>Codex</b>
+                  <span>Adapter ready. Hooks installed. I can read app rules, runtime entries, and verification commands.</span>
+                </div>
+                <div class="message" data-step="3">
+                  <b>Codex</b>
+                  <span>Editing command, query, React hook usage, and focused tests. Raw prompts and tool payloads stay out of memory.</span>
+                </div>
+                <div class="message" data-step="4">
+                  <b>ForgeOS</b>
+                  <span>Impact plan selected CLI, generated client, and agent-memory tests. Generated artifacts are derived evidence.</span>
+                </div>
+                <div class="message" data-step="5">
+                  <b>Handoff</b>
+                  <span>Change is explainable: authored diff reviewed, checks passed, timeline and hook evidence attached.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview">
+              <div class="subhead">
+                <span>App preview</span>
+                <span>localhost</span>
+              </div>
+              <div class="app-preview">
+                <div class="preview-top">
+                  <span>Notes</span>
+                  <span class="status info" id="previewMode">before</span>
+                </div>
+                <div class="preview-note-list">
+                  <div class="note-card">
+                    <strong>Launch checklist</strong>
+                    <p>Publish docs, smoke package, and record release evidence.</p>
+                    <div class="labels">
+                      <span class="label" data-label-step="3">release</span>
+                      <span class="label" data-label-step="4">verified</span>
+                    </div>
+                  </div>
+                  <div class="note-card">
+                    <strong>Customer feedback</strong>
+                    <p>Group reported issues by workspace and impact.</p>
+                    <div class="labels">
+                      <span class="label" data-label-step="3">support</span>
+                      <span class="label" data-label-step="5">ready</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="preview-footer">
+                  <span id="previewStatus">waiting for external agent edits</span>
+                  <span class="mono">web</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="focus">
+              <div class="subhead">
+                <span>Review focus</span>
+                <span>authored first</span>
+              </div>
+              <div class="file-list">
+                <div class="file"><span>src/commands/updateNote.ts</span><span class="status info">source</span></div>
+                <div class="file"><span>web/src/App.tsx</span><span class="status info">source</span></div>
+                <div class="file"><span>tests/notes/labels.test.ts</span><span class="status info">test</span></div>
+                <div class="file generated"><span>src/forge/_generated/client.ts</span><span class="status wait">derived</span></div>
+              </div>
+            </div>
+
+            <div class="checks">
+              <div class="subhead">
+                <span>Verification gate</span>
+                <span id="gateLabel">collecting</span>
+              </div>
+              <div class="check-list">
+                <div class="check" data-check="0"><span>generate --check</span><span class="status wait">wait</span></div>
+                <div class="check" data-check="1"><span>forge check</span><span class="status wait">wait</span></div>
+                <div class="check" data-check="2"><span>impact tests</span><span class="status wait">wait</span></div>
+                <div class="check" data-check="3"><span>handoff ready</span><span class="status wait">wait</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-head">
+            <span>Evidence stream</span>
+            <span>DeltaDB + hooks + MCP</span>
+          </div>
+          <div class="evidence-body">
+            <div class="gate">
+              <label>Trust state</label>
+              <strong id="trustState">Orienting</strong>
+              <p id="trustText">ForgeOS is reading the app contract before the external agent edits anything.</p>
+            </div>
+
+            <div class="timeline">
+              <div class="event active" data-step="0">
+                <time>00:01</time>
+                <div><b>status</b><span>Project is safe to edit. Generated artifacts are fresh.</span></div>
+              </div>
+              <div class="event" data-step="1">
+                <time>00:07</time>
+                <div><b>changed</b><span>Authored files separated from generated artifacts.</span></div>
+              </div>
+              <div class="event" data-step="2">
+                <time>00:14</time>
+                <div><b>hook smoke</b><span>Codex hook bridge records useful canary signal.</span></div>
+              </div>
+              <div class="event" data-step="3">
+                <time>00:25</time>
+                <div><b>agent memory</b><span>Tool, file, command, and proof metadata captured without raw payloads.</span></div>
+              </div>
+              <div class="event" data-step="4">
+                <time>00:42</time>
+                <div><b>verify</b><span>Focused checks pass before generated artifacts are trusted.</span></div>
+              </div>
+              <div class="event" data-step="5">
+                <time>00:55</time>
+                <div><b>handoff</b><span>Next agent gets opening brief, risks, read files, and commands.</span></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="footer">
+        <span>ForgeOS does not hide the agent. It makes the app understandable enough for the agent to work safely.</span>
+        <div class="progress"><span id="progress"></span></div>
+      </footer>
+    </main>
+
+    <script>
+      const steps = [
+        { time: "00:01", changed: 0, generated: 0, hooks: 0, checks: 0, preview: "before", previewStatus: "waiting for external agent edits", trust: "Orienting", text: "ForgeOS is reading the app contract before the external agent edits anything." },
+        { time: "00:07", changed: 4, generated: 1, hooks: 0, checks: 0, preview: "planning", previewStatus: "review focus selected", trust: "Focused", text: "Authored changes are separated from generated artifacts for review." },
+        { time: "00:14", changed: 4, generated: 1, hooks: 1, checks: 0, preview: "agent", previewStatus: "Codex opened outside browser", trust: "Connected", text: "Codex runs outside the browser. Hooks and MCP connect it to ForgeOS context." },
+        { time: "00:25", changed: 7, generated: 3, hooks: 5, checks: 1, preview: "patched", previewStatus: "labels visible in local app", trust: "Recorded", text: "Agent Memory stores safe metadata, not raw prompts or tool payloads." },
+        { time: "00:42", changed: 7, generated: 3, hooks: 7, checks: 3, preview: "verified", previewStatus: "preview matches generated client", trust: "Verified", text: "ForgeOS proves generated freshness, guards, and focused tests." },
+        { time: "00:55", changed: 7, generated: 3, hooks: 8, checks: 4, preview: "ready", previewStatus: "ready for handoff", trust: "Ready", text: "The handoff is ready for commit, review, or the next external agent." },
+      ];
+
+      let current = 0;
+      let timer = null;
+
+      function setStep(index) {
+        current = index;
+        const step = steps[index];
+        document.getElementById("clock").textContent = step.time;
+        document.getElementById("changedCount").textContent = String(step.changed);
+        document.getElementById("generatedCount").textContent = String(step.generated);
+        document.getElementById("hookCount").textContent = String(step.hooks);
+        document.getElementById("checkCount").textContent = `${step.checks}/4`;
+        document.getElementById("trustState").textContent = step.trust;
+        document.getElementById("trustText").textContent = step.text;
+        document.getElementById("previewMode").textContent = step.preview;
+        document.getElementById("previewStatus").textContent = step.previewStatus;
+        document.getElementById("gateLabel").textContent = step.checks === 4 ? "ready" : "checking";
+        document.getElementById("progress").style.width = `${((index + 1) / steps.length) * 100}%`;
+
+        document.querySelectorAll("[data-step]").forEach((node) => {
+          const nodeStep = Number(node.getAttribute("data-step"));
+          node.classList.toggle("active", nodeStep <= index);
+        });
+
+        document.querySelectorAll("[data-check]").forEach((node) => {
+          const checkIndex = Number(node.getAttribute("data-check"));
+          const badge = node.querySelector(".status");
+          const ok = checkIndex < step.checks;
+          badge.textContent = ok ? "pass" : "wait";
+          badge.className = `status ${ok ? "ok" : "wait"}`;
+        });
+
+        document.querySelectorAll("[data-label-step]").forEach((node) => {
+          const labelStep = Number(node.getAttribute("data-label-step"));
+          node.classList.toggle("visible", index >= labelStep);
+        });
+
+        if (index === steps.length - 1) {
+          window.__forgeDemoDone = true;
+        }
+      }
+
+      function startDemo() {
+        window.__forgeDemoDone = false;
+        clearInterval(timer);
+        setStep(0);
+        timer = setInterval(() => {
+          if (current >= steps.length - 1) {
+            clearInterval(timer);
+            window.__forgeDemoDone = true;
+            return;
+          }
+          setStep(current + 1);
+        }, 8200);
+      }
+
+      window.addEventListener("forge-demo-start", startDemo);
+      setStep(0);
+    </script>
+  </body>
+</html>

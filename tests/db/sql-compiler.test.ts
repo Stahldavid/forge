@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { buildDataGraph } from "../../src/forge/compiler/data-graph/build.ts";
 import { buildSqlPlan } from "../../src/forge/compiler/data-graph/sql/ddl.ts";
-import { serializeSqlPlanJson } from "../../src/forge/compiler/data-graph/sql/serialize.ts";
+import {
+  buildTableMap,
+  serializeSqlPlanJson,
+} from "../../src/forge/compiler/data-graph/sql/serialize.ts";
 import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
 import { fixtureSource, fixtureWorkspaceRoot } from "../data-graph/helpers.ts";
 
@@ -39,6 +42,107 @@ describe("sql compiler", () => {
 
     expect(first).toBe(second);
     expect(JSON.parse(first).diagnostics).toEqual([]);
+  });
+
+  test("orders tables before dependents with inline foreign keys", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "appBlueprints",
+          name: "appBlueprints",
+          symbolId: "appBlueprints",
+          exportName: "appBlueprints",
+          file: "schema.ts",
+          fields: [
+            { name: "projectId", type: "ref:projects" },
+            { name: "title", type: "text" },
+          ],
+        },
+        {
+          id: "projects",
+          name: "projects",
+          symbolId: "projects",
+          exportName: "projects",
+          file: "schema.ts",
+          fields: [
+            { name: "tenantId", type: "ref:tenants" },
+            { name: "title", type: "text" },
+          ],
+        },
+        {
+          id: "tenants",
+          name: "tenants",
+          symbolId: "tenants",
+          exportName: "tenants",
+          file: "schema.ts",
+          fields: [{ name: "name", type: "text" }],
+        },
+      ],
+    });
+
+    expect(plan.tables.map((table) => table.table)).toEqual([
+      "tenants",
+      "projects",
+      "app_blueprints",
+    ]);
+  });
+
+  test("exposes original table names as db client aliases", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "appBlueprints",
+          name: "appBlueprints",
+          symbolId: "appBlueprints",
+          exportName: "appBlueprints",
+          file: "schema.ts",
+          fields: [{ name: "title", type: "text" }],
+        },
+      ],
+    });
+    const tableMap = buildTableMap(plan);
+
+    expect(tableMap.appBlueprints?.tableName).toBe("app_blueprints");
+    expect(tableMap.app_blueprints?.tableName).toBe("app_blueprints");
+  });
+
+  test("preserves source fields named name in SQL and runtime table map", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "tenants",
+          name: "tenants",
+          symbolId: "tenants",
+          exportName: "tenants",
+          file: "schema.ts",
+          fields: [
+            { name: "id", type: "uuid" },
+            { name: "name", type: "text" },
+          ],
+        },
+      ],
+    });
+    const table = plan.tables.find((entry) => entry.table === "tenants");
+    const tableMap = buildTableMap(plan);
+
+    expect(table?.columns?.map((column) => column.fieldName ?? column.name)).toContain("name");
+    expect(table?.sql).toContain("\"name\" text NOT NULL");
+    expect(tableMap.tenants?.columns.map((column) => column.fieldName ?? column.name)).toContain("name");
   });
 
   test.skip("reports unsupported field types", async () => {

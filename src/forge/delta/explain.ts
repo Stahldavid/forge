@@ -11,7 +11,7 @@ export async function runDeltaExplain(input: {
   workspaceRoot: string;
   thing: string;
 }): Promise<DeltaExplainResult> {
-  const store = await DeltaStore.open(input.workspaceRoot);
+  const store = await DeltaStore.open(input.workspaceRoot, { access: "read" });
   try {
     return {
       ok: true,

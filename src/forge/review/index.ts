@@ -6,6 +6,8 @@ import { serializeCanonical } from "../compiler/primitives/serialize.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { analyzeImpact, buildImpactTestPlan, detectChangedFiles } from "../impact/index.ts";
 import type { ImpactCommandOptions, ImpactSource } from "../impact/types.ts";
+import { buildDiffPlanFromChangeSummary, categorizeFiles } from "../workspace/change-summary.ts";
+import type { CategorizedFileSummary, ChangeType } from "../workspace/change-summary.ts";
 import type {
   ReviewChanged,
   ReviewCommandOptions,
@@ -14,6 +16,8 @@ import type {
   ReviewFinding,
   ReviewFindingCategory,
   ReviewFindingSeverity,
+  ReviewFocus,
+  ReviewDiffPlan,
   ReviewReport,
   ReviewResult,
   ReviewRisk,
@@ -40,6 +44,21 @@ const ALL_CATEGORIES: ReviewFindingCategory[] = [
   "release",
   "agent",
 ];
+
+const SYSTEM_ENV_NAMES = new Set([
+  "CI",
+  "HOME",
+  "PATH",
+  "PWD",
+  "SHELL",
+  "TEMP",
+  "TMP",
+  "USER",
+  "USERNAME",
+  "USERPROFILE",
+]);
+
+const SECRET_ENV_PATTERN = /(^|_)(API_KEY|AUTH_TOKEN|CLIENT_SECRET|CREDENTIALS|JWT_SECRET|PASSWORD|PRIVATE_KEY|SECRET|SECRET_KEY|TOKEN|WEBHOOK_SECRET)$/;
 
 const RULE_DOCS: ReviewRuleDoc[] = [
   {
@@ -124,6 +143,32 @@ function changedFromFiles(files: string[]): ReviewChanged {
   };
 }
 
+function buildReviewFocus(changeSummary: CategorizedFileSummary): ReviewFocus {
+  const authoredOrder = ([
+    "source",
+    "tests",
+    "docs",
+    "config",
+    "operational",
+    "assets",
+    "other",
+  ] satisfies ChangeType[])
+    .filter((type) => changeSummary.byType[type].count > 0);
+  const suggestedOrder: ChangeType[] = [...authoredOrder];
+  if (changeSummary.byType.generated.count > 0) {
+    suggestedOrder.push("generated");
+  }
+  return {
+    first: "authoredChanges",
+    then: "derivedArtifacts",
+    generatedIsDerived: true,
+    suggestedOrder,
+    summary: changeSummary.byType.generated.count > 0
+      ? "Review authored changes first; inspect generated artifacts after the source cause is understood."
+      : "Review authored changes directly; no generated artifacts changed.",
+  };
+}
+
 function loadContext(options: ReviewCommandOptions): ReviewContext {
   const source = sourceFromOptions(options);
   const impactSource = impactSourceFromReview(source);
@@ -190,9 +235,22 @@ function isTestFile(file: string): boolean {
   return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(file) || normalize(file).startsWith("tests/");
 }
 
+function isDocumentationFile(file: string): boolean {
+  const normalized = normalize(file);
+  return normalized.startsWith("docs/") ||
+    normalized.startsWith("marketing/") ||
+    normalized.endsWith(".md") ||
+    normalized.endsWith(".mdx");
+}
+
 function isForgeToolingFile(file: string): boolean {
   const normalized = normalize(file);
-  return normalized.startsWith("src/forge/cli/") || normalized.startsWith("src/forge/review/");
+  return normalized.startsWith("src/forge/cli/") ||
+    normalized.startsWith("src/forge/review/") ||
+    normalized.startsWith("src/forge/dev/") ||
+    normalized.startsWith("src/forge/dev-console/") ||
+    normalized.startsWith("src/forge/compiler/package-manager/") ||
+    normalized.startsWith("src/forge/compiler/integration/");
 }
 
 function includesCategory(options: ReviewCommandOptions, category: ReviewFindingCategory): boolean {
@@ -200,20 +258,47 @@ function includesCategory(options: ReviewCommandOptions, category: ReviewFinding
   return options.include.length === 0 || options.include.includes(category);
 }
 
-function secretNamesFromText(text: string): string[] {
+function processEnvNamesFromText(text: string): string[] {
   const names = new Set<string>();
-  for (const regex of [/process\.env\.([A-Z0-9_]+)/g, /process\.env\[['"]([A-Z0-9_]+)['"]\]/g, /ctx\.secrets\.get\(['"]([A-Z0-9_]+)['"]\)/g]) {
+  for (const regex of [/process\.env\.([A-Z0-9_]+)/g, /process\.env\[['"]([A-Z0-9_]+)['"]\]/g]) {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text))) names.add(match[1]);
   }
   return [...names].sort();
 }
 
-function processEnvNamesFromText(text: string): string[] {
+function ctxSecretNamesFromText(text: string): string[] {
+  const names = new Set<string>();
+  const regex = /ctx\.secrets\.get\(['"]([A-Z0-9_]+)['"]\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text))) names.add(match[1]);
+  return [...names].sort();
+}
+
+function isSecretEnvName(name: string): boolean {
+  if (SYSTEM_ENV_NAMES.has(name)) return false;
+  return SECRET_ENV_PATTERN.test(name);
+}
+
+function secretNamesFromText(text: string): string[] {
+  const names = new Set<string>();
+  for (const name of processEnvNamesFromText(text)) {
+    if (isSecretEnvName(name)) names.add(name);
+  }
+  for (const name of ctxSecretNamesFromText(text)) names.add(name);
+  return [...names].sort();
+}
+
+function publicSecretNamesFromText(text: string): string[] {
   const names = new Set<string>();
   for (const regex of [/process\.env\.([A-Z0-9_]+)/g, /process\.env\[['"]([A-Z0-9_]+)['"]\]/g]) {
     let match: RegExpExecArray | null;
-    while ((match = regex.exec(text))) names.add(match[1]);
+    while ((match = regex.exec(text))) {
+      const name = match[1];
+      if ((name.startsWith("PUBLIC_") || name.startsWith("NEXT_PUBLIC_")) && isSecretEnvName(name)) {
+        names.add(name);
+      }
+    }
   }
   return [...names].sort();
 }
@@ -352,15 +437,16 @@ function secretRules(ctx: ReviewContext): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
   const documented = ctx.envExample;
   for (const [file, text] of ctx.fileTexts) {
-    if (isTestFile(file) || isForgeToolingFile(file)) continue;
+    if (isTestFile(file) || isDocumentationFile(file)) continue;
     const names = secretNamesFromText(text);
-    if (processEnvNamesFromText(text).length > 0) {
+    const directSecretEnvNames = processEnvNamesFromText(text).filter(isSecretEnvName);
+    if (directSecretEnvNames.length > 0 && !isForgeToolingFile(file)) {
       findings.push(finding({
         severity: "error",
         category: "secrets",
         code: "secret-direct-process-env",
         title: "Direct process.env usage introduced",
-        message: "ForgeOS code should access secrets through ctx.secrets or generated config context.",
+        message: `${directSecretEnvNames.join(", ")} should be accessed through ctx.secrets or generated config context.`,
         file,
         suggestedCommands: ["forge secrets check", "forge refactor replace-process-env <ENV_VAR>"],
         autoRepair: { available: true, command: "forge refactor replace-process-env <ENV_VAR>", confidence: "medium" },
@@ -378,7 +464,7 @@ function secretRules(ctx: ReviewContext): ReviewFinding[] {
           suggestedCommands: ["forge secrets check"],
         }));
       }
-      if (/(_SECRET|SECRET_|TOKEN|KEY)/.test(name) && (name.startsWith("PUBLIC_") || name.startsWith("NEXT_PUBLIC_"))) {
+      if (publicSecretNamesFromText(text).includes(name)) {
         findings.push(finding({
           severity: "blocking",
           category: "secrets",
@@ -693,6 +779,9 @@ function buildReport(options: ReviewCommandOptions): ReviewReport {
     findings: findings.map((item) => [item.code, item.file, item.severity]),
   })).slice(0, 12)}`;
   const generatedPaths = ctx.changed.generated;
+  const changeSummary = categorizeFiles(ctx.changed.files);
+  const reviewFocus = buildReviewFocus(changeSummary);
+  const diffPlan: ReviewDiffPlan = buildDiffPlanFromChangeSummary(changeSummary);
   return {
     schemaVersion: "0.1.0",
     reviewVersion: REVIEW_VERSION,
@@ -709,6 +798,9 @@ function buildReport(options: ReviewCommandOptions): ReviewReport {
     risk,
     findings,
     changed: ctx.changed,
+    changeSummary,
+    reviewFocus,
+    diffPlan,
     impacted: ctx.impacted,
     checks: [
       { name: "impact-analysis", ok: true, message: `risk ${risk.level}` },
@@ -755,7 +847,13 @@ ${report.summary.bullets.map((bullet) => `- ${bullet}`).join("\n")}
 
 ## Changed Files
 
-${report.changed.files.map((file) => `- ${file}`).join("\n") || "- none"}
+${report.changed.files.filter((file) => !file.startsWith(`${GENERATED}/`) && file !== "forge.lock").map((file) => `- ${file}`).join("\n") || "- none"}
+
+Generated artifacts are derived and collapsed by default.
+
+- Generated files: ${report.diffPlan.generatedFiles}
+- Authored diff: \`${report.diffPlan.authoredDiffCommand}\`
+- Generated diff: \`${report.diffPlan.generatedDiffCommand}\`
 
 ## Findings
 
@@ -958,8 +1056,54 @@ export function runReviewCommand(options: ReviewCommandOptions): ReviewResult {
   }
 }
 
-export function formatReviewJson(result: ReviewResult): string {
-  return `${JSON.stringify(result.report ?? result.reports ?? result.explanation ?? result, null, 2)}\n`;
+function compactReviewReport(result: ReviewResult): unknown {
+  const report = result.report;
+  if (!report) return result.reports ?? result.explanation ?? result;
+  const impacted = {
+    ...report.impacted,
+    generatedArtifacts: report.impacted.generatedArtifacts.length,
+  };
+  return {
+    schemaVersion: report.schemaVersion,
+    reviewVersion: report.reviewVersion,
+    ok: result.ok,
+    id: report.id,
+    source: report.source,
+    summary: report.summary,
+    risk: report.risk,
+    findings: report.findings,
+    changed: {
+      files: report.changed.files.length,
+      tests: report.changed.tests.length,
+      sourceFiles: report.changed.sourceFiles.length,
+      generated: report.changed.generated.length,
+      packageFiles: report.changed.packageFiles.length,
+      deployFiles: report.changed.deployFiles.length,
+    },
+    changeSummary: report.changeSummary,
+    reviewFocus: report.reviewFocus,
+    diffPlan: report.diffPlan,
+    impacted,
+    checks: report.checks,
+    recommendedCommands: report.recommendedCommands,
+    humanChecklist: report.humanChecklist,
+    agentInstructions: report.agentInstructions,
+    generatedArtifacts: {
+      paths: report.generatedArtifacts.paths.length,
+      stale: report.generatedArtifacts.stale,
+    },
+    writeResult: result.writeResult,
+    diagnostics: result.diagnostics,
+    exitCode: result.exitCode,
+    fullCommand: "forge review run --changed --full --json",
+  };
+}
+
+export function formatReviewJson(result: ReviewResult, options: { full?: boolean } = {}): string {
+  const payload = options.full
+    ? result.report ?? result.reports ?? result.explanation ?? result
+    : compactReviewReport(result);
+  return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
 export function formatReviewHuman(result: ReviewResult): string {
@@ -978,6 +1122,8 @@ ${result.reports.map((report) => `- ${report.id}: ${report.dir}`).join("\n") || 
 
 Risk: ${report.risk.level} (${report.risk.score})
 Findings: ${report.findings.length}
+Review focus: ${report.reviewFocus.summary}
+Review order: ${report.reviewFocus.suggestedOrder.join(" -> ") || "none"}
 
 Blocking issues:
 ${report.findings.filter((finding) => finding.severity === "blocking").map((finding) => `  - ${finding.code}: ${finding.message}`).join("\n") || "  - none"}

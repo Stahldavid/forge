@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=24234c760a47f0f438e811125db8d767ce276f01d699bda62f6f71ec6c9a17ca
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=ef5f2f9965e7bf267fcc663071d1f9a0fd2097e9eb9873fb9754fe3747d1455e
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -54,7 +54,7 @@
 2. Prefer AI SDK ToolLoopAgent semantics through ctx.agent.run or ctx.ai.runAgent instead of custom loops.
 3. Use stopWhen with stepCount or terminal tool calls to prevent unbounded loops.
 4. Run agents only in actions, workflows, endpoints, or server code.
-5. Run forge inspect all --json and confirm agentContract.ai.agents lists the agent.
+5. Run forge inspect ai --json or forge agent print-context --json and confirm the generated context lists the agent.
 6. Use forge ai trace <traceId> --json to inspect agent runs and tool calls.
 
 ## Add a table

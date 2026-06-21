@@ -48,4 +48,45 @@ describe("db cli", () => {
     },
     15_000,
   );
+
+  test(
+    "doctor inspects pglite columns through pg_catalog",
+    async () => {
+      const workspace = tempWorkspace("db-cli-pglite-doctor");
+      try {
+        mkdirSync(join(workspace, GENERATED_DIR), { recursive: true });
+        const appGraph = await buildAppGraph({
+          workspaceRoot: fixtureWorkspaceRoot(),
+          sources: [fixtureSource("object-config.ts")],
+        });
+        const plan = buildSqlPlan(buildDataGraph(appGraph));
+        writeFileSync(
+          join(workspace, GENERATED_DIR, "sqlPlan.json"),
+          `${JSON.stringify(plan, null, 2)}\n`,
+          "utf8",
+        );
+
+        const migrated = await runDbCommand({
+          subcommand: "migrate",
+          workspaceRoot: workspace,
+          db: "pglite",
+          json: true,
+        });
+        expect(migrated.exitCode).toBe(0);
+
+        const doctor = await runDbCommand({
+          subcommand: "doctor",
+          workspaceRoot: workspace,
+          db: "pglite",
+          json: true,
+        });
+        expect(doctor.exitCode).toBe(0);
+        expect(doctor.ok).toBe(true);
+        expect(JSON.stringify(doctor.data)).toContain("tickets");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    20_000,
+  );
 });

@@ -65,6 +65,7 @@ forge new notes-app \
 | Template | Best for |
 |----------|----------|
 | `minimal-web` | Learning Forge, small prototypes |
+| `agent-workroom` | Showing ForgeOS as an external-agent development cockpit |
 | `b2b-support-web` | Tickets, policies, Stripe, AI triage, liveQuery showcase |
 
 See [Templates](templates.md) and [Examples](examples.md) for file trees, package aliasing, and generated-app git hygiene.

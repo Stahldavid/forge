@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { nodeFileSystem } from "../fs/index.ts";
 import type { AddOptions } from "../types/cli.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
@@ -16,11 +16,14 @@ import { PACKAGE_ANALYZER_VERSION } from "../package-graph/constants.ts";
 import { renderBody } from "../emitter/render.ts";
 import { hashStable } from "../primitives/hash.ts";
 import { PackageGraphCompiler } from "../package-graph/compiler.ts";
+import { run as runGenerate } from "../orchestrator/run.ts";
 import {
+  buildAddCommand,
   detectAndCreatePackageManagerAdapter,
   dryRunRecipeFallbackMessage,
   type PackageManagerAdapter,
 } from "../package-manager/adapter.ts";
+import { parsePackageName } from "../package-manager/parse-spec.ts";
 import { PackageManagerCommandError } from "../package-manager/executor.ts";
 import {
   isReferenceAlias,
@@ -50,12 +53,234 @@ export interface ForgeAddOptions extends AddOptions {
 
 export interface ForgeAddResult {
   alias: string;
+  mode?: "integration" | "package";
+  targetKind?: "forge-integration" | "npm-package";
+  target?: string;
+  packageTarget?: "root" | "frontend" | "backend" | "workspace";
+  packageTargetReason?: string;
+  explanation?: string;
+  recipeVersion?: string;
+  recipePackages?: string[];
+  requiredSecrets?: string[];
+  optionalSecrets?: string[];
+  packageSpec?: string;
+  packageName?: string;
+  packageManager?: string;
+  installCommand?: string[];
+  nativeInstallCommand?: string[];
+  avoidedManualCommand?: string;
+  installCwd?: string;
+  installWorkspace?: string;
   changed: string[];
   unchanged: string[];
   warnings: Diagnostic[];
   errors: Diagnostic[];
   exitCode: 0 | 1;
   failureKind?: string;
+}
+
+function recipeResultMetadata(recipe: NonNullable<ReturnType<typeof resolveRecipe>>): Pick<
+  ForgeAddResult,
+  "recipeVersion" | "recipePackages" | "requiredSecrets" | "optionalSecrets"
+> {
+  return {
+    recipeVersion: recipe.recipeVersion,
+    recipePackages: recipe.packages.map((pkg) => pkg.packageName),
+    requiredSecrets: recipe.secrets.filter((secret) => secret.required !== false).map((secret) => secret.envVar),
+    optionalSecrets: recipe.secrets.filter((secret) => secret.required === false).map((secret) => secret.envVar),
+  };
+}
+
+function addExplanation(result: ForgeAddResult): string {
+  if (result.mode === "package") {
+    const location = result.target && result.target !== "root" ? `${result.target}/package.json` : "package.json";
+    const command = result.installCommand?.join(" ") ?? `package manager add ${result.packageSpec ?? result.alias}`;
+    const target = result.packageTarget && result.packageTarget !== "root" ? ` (${result.packageTarget})` : "";
+    return `Adds npm package '${result.packageSpec ?? result.alias}' to ${location}${target}, then refreshes Forge package evidence. Forge runs the native install command for you: ${command}.`;
+  }
+
+  if (result.failureKind === "unknown_alias") {
+    return `No Forge integration recipe exists for '${result.alias}'. Use 'forge add ${result.alias}' or 'forge add package ${result.alias}' for a normal npm package, or choose a supported integration alias.`;
+  }
+
+  return `Applies the Forge integration recipe '${result.alias}', including package install, generated adapters, secret-name metadata, runtime guards, and Forge lock evidence.`;
+}
+
+function finalizeAddResult(result: Omit<ForgeAddResult, "targetKind" | "explanation">): ForgeAddResult {
+  const mode = result.mode ?? "integration";
+  const withMode: ForgeAddResult = {
+    ...result,
+    mode,
+    targetKind: mode === "package" ? "npm-package" : "forge-integration",
+  };
+  return {
+    ...withMode,
+    explanation: addExplanation(withMode),
+  };
+}
+
+function packageJsonRelativeFor(workspace?: string): string {
+  return workspace ? `${workspace.replace(/\\/g, "/")}/package.json` : "package.json";
+}
+
+type PackageAddScope = "root" | "frontend" | "backend" | "workspace";
+
+interface NormalizedPackageRequest {
+  spec: string;
+  packageTarget: PackageAddScope;
+  packageTargetReason: string;
+  installWorkspace?: string;
+  forcePackageMode: boolean;
+}
+
+function parseScopedPackageSpec(spec: string): {
+  spec: string;
+  target?: "frontend" | "backend";
+  forcePackageMode: boolean;
+} {
+  const trimmed = spec.trim();
+  const match = /^(frontend|front|web|client|backend|back|server|api|root):(.+)$/i.exec(trimmed);
+  if (!match) {
+    return { spec: trimmed, forcePackageMode: false };
+  }
+  const scope = match[1]!.toLowerCase();
+  return {
+    spec: match[2]!.trim(),
+    target: scope === "frontend" || scope === "front" || scope === "web" || scope === "client"
+      ? "frontend"
+      : "backend",
+    forcePackageMode: true,
+  };
+}
+
+function findFrontendWorkspace(workspaceRoot: string): string | undefined {
+  for (const candidate of ["web", "frontend", "client", "apps/web", "packages/web"]) {
+    if (nodeFileSystem.exists(join(workspaceRoot, candidate, "package.json"))) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+function normalizePackageRequest(
+  spec: string,
+  options: ForgeAddOptions,
+): { request: NormalizedPackageRequest; error?: Diagnostic } {
+  const scoped = parseScopedPackageSpec(spec);
+  const requestedTarget = options.packageTarget ?? scoped.target;
+  if (options.installWorkspace?.trim()) {
+    return {
+      request: {
+        spec: scoped.spec,
+        packageTarget: "workspace",
+        packageTargetReason: `explicit --workspace ${options.installWorkspace.trim()}`,
+        installWorkspace: options.installWorkspace.trim(),
+        forcePackageMode: scoped.forcePackageMode,
+      },
+    };
+  }
+  if (requestedTarget === "frontend") {
+    const workspace = findFrontendWorkspace(options.workspaceRoot);
+    if (!workspace) {
+      return {
+        request: {
+          spec: scoped.spec,
+          packageTarget: "frontend",
+          packageTargetReason: "frontend target requested, but no frontend package.json was detected",
+          forcePackageMode: true,
+        },
+        error: createDiagnostic({
+          severity: "error",
+          code: "FORGE_ADD_FRONTEND_WORKSPACE_MISSING",
+          message: "frontend package target requested, but no frontend package.json was found under web, frontend, client, apps/web, or packages/web",
+          fixHint: "Create a frontend with forge make ui, pass --workspace <path>, or install as a backend/root package.",
+          suggestedCommands: [
+            "forge make ui --framework vite --dry-run --json",
+            `forge add ${scoped.spec} --workspace web --dry-run --json`,
+            `forge add backend:${scoped.spec} --dry-run --json`,
+          ],
+        }),
+      };
+    }
+    return {
+      request: {
+        spec: scoped.spec,
+        packageTarget: "frontend",
+        packageTargetReason: `frontend target resolved to ${workspace}/package.json`,
+        installWorkspace: workspace,
+        forcePackageMode: true,
+      },
+    };
+  }
+  if (requestedTarget === "backend") {
+    return {
+      request: {
+        spec: scoped.spec,
+        packageTarget: "backend",
+        packageTargetReason: "backend target resolves to the Forge app root package.json",
+        forcePackageMode: true,
+      },
+    };
+  }
+  return {
+    request: {
+      spec: scoped.spec,
+      packageTarget: "root",
+      packageTargetReason: "default package target resolves to the Forge app root package.json",
+      forcePackageMode: scoped.forcePackageMode,
+    },
+  };
+}
+
+function resolveInstallRoot(options: ForgeAddOptions): {
+  installRoot: string;
+  target: string;
+  extraSnapshotPaths: string[];
+  error?: Diagnostic;
+} {
+  const workspace = options.installWorkspace?.trim();
+  if (!workspace) {
+    return {
+      installRoot: options.workspaceRoot,
+      target: "root",
+      extraSnapshotPaths: [],
+    };
+  }
+
+  const workspaceRoot = resolve(options.workspaceRoot);
+  const installRoot = resolve(workspaceRoot, workspace);
+  const rel = relative(workspaceRoot, installRoot).replace(/\\/g, "/");
+  if (rel.startsWith("..") || rel === "") {
+    return {
+      installRoot,
+      target: workspace,
+      extraSnapshotPaths: [],
+      error: createDiagnostic({
+        severity: "error",
+        code: "FORGE_ADD_INVALID_WORKSPACE",
+        message: `workspace '${workspace}' must resolve inside the Forge app`,
+      }),
+    };
+  }
+
+  if (!nodeFileSystem.exists(join(installRoot, "package.json"))) {
+    return {
+      installRoot,
+      target: rel,
+      extraSnapshotPaths: [],
+      error: createDiagnostic({
+        severity: "error",
+        code: "FORGE_ADD_INVALID_WORKSPACE",
+        message: `workspace '${workspace}' does not contain a package.json`,
+      }),
+    };
+  }
+
+  return {
+    installRoot,
+    target: rel,
+    extraSnapshotPaths: [packageJsonRelativeFor(rel)],
+  };
 }
 
 function failureKind(errors: Diagnostic[]): string | undefined {
@@ -258,24 +483,85 @@ export async function forgeAdd(
   alias: string,
   options: ForgeAddOptions,
 ): Promise<ForgeAddResult> {
-  const normalized = alias.trim().toLowerCase();
+  const packageRequestResult = normalizePackageRequest(alias, options);
+  const packageRequest = packageRequestResult.request;
+  const effectiveOptions: ForgeAddOptions = {
+    ...options,
+    installWorkspace: packageRequest.installWorkspace,
+  };
+  const packageModeRequested =
+    options.mode === "package" ||
+    packageRequest.forcePackageMode ||
+    options.packageTarget !== undefined;
+  if (packageRequestResult.error && packageModeRequested) {
+    return finalizeAddResult({
+      alias: packageRequest.spec,
+      mode: "package",
+      target: packageRequest.installWorkspace ?? packageRequest.packageTarget,
+      packageTarget: packageRequest.packageTarget,
+      packageTargetReason: packageRequest.packageTargetReason,
+      packageSpec: packageRequest.spec,
+      packageName: parsePackageName(packageRequest.spec),
+      changed: [],
+      unchanged: [],
+      warnings: [],
+      errors: [packageRequestResult.error],
+      exitCode: 1,
+      failureKind: "invalid_workspace",
+    });
+  }
+  if (options.mode === "integration" && (packageRequest.forcePackageMode || options.packageTarget)) {
+    const error = createDiagnostic({
+      severity: "error",
+      code: "FORGE_ADD_SCOPED_INTEGRATION",
+      message: "frontend/backend package targets only apply to normal npm package installs, not explicit integration recipes",
+      fixHint: "Use forge add package <spec> --frontend, forge add frontend:<spec>, or remove the frontend/backend target for an integration recipe.",
+      suggestedCommands: [
+        `forge add package ${packageRequest.spec} --frontend --dry-run --json`,
+        `forge add integration ${packageRequest.spec} --dry-run --json`,
+      ],
+    });
+    return finalizeAddResult({
+      alias: packageRequest.spec,
+      mode: "integration",
+      changed: [],
+      unchanged: [],
+      warnings: [],
+      errors: [error],
+      exitCode: 1,
+      failureKind: "invalid_target",
+    });
+  }
+
+  const normalized = packageRequest.spec.trim().toLowerCase();
   const recipe = resolveRecipe(normalized);
+  const mode = options.mode ?? "auto";
+
+  if (packageModeRequested) {
+    return forgeAddPackage(packageRequest.spec, effectiveOptions, packageRequest);
+  }
+
+  if (mode === "auto" && (!isReferenceAlias(normalized) || recipe === null)) {
+    return forgeAddPackage(packageRequest.spec, effectiveOptions, packageRequest);
+  }
 
   if (!isReferenceAlias(normalized) || recipe === null) {
     const error = createDiagnostic({
       severity: "error",
       code: "FORGE_UNKNOWN_ALIAS",
-      message: `unknown integration alias '${alias}'; supported: stripe, posthog, sentry, zod, ai`,
+      message: `unknown integration alias '${alias}'; supported: stripe, posthog, sentry, zod, ai. For npm packages, use 'forge add package ${alias}' or 'forge add ${alias}'.`,
+      suggestedCommands: [`forge add package ${alias} --dry-run --json`, "forge add --help"],
     });
-    return {
+    return finalizeAddResult({
       alias: normalized,
+      mode: "integration",
       changed: [],
       unchanged: [],
       warnings: [],
       errors: [error],
       exitCode: 1,
       failureKind: "unknown_alias",
-    };
+    });
   }
 
   const pm =
@@ -283,7 +569,7 @@ export async function forgeAdd(
     detectAndCreatePackageManagerAdapter(options.workspaceRoot);
 
   if (options.dryRun) {
-    const ctx = discover({ workspaceRoot: options.workspaceRoot });
+    const ctx = discover({ workspaceRoot: effectiveOptions.workspaceRoot });
     let installRoot = options.workspaceRoot;
 
     try {
@@ -302,7 +588,7 @@ export async function forgeAdd(
         recipe,
         ctx,
         installRoot,
-        options,
+        effectiveOptions,
       );
       warnings.push(
         createDiagnostic({
@@ -312,15 +598,17 @@ export async function forgeAdd(
         }),
       );
 
-      return {
+      return finalizeAddResult({
         alias: normalized,
+        mode: "integration",
+        ...recipeResultMetadata(recipe),
         changed: [...emitPlan.files.map((file) => file.path), "forge.lock"],
         unchanged: [],
         warnings,
         errors,
         exitCode: errors.length > 0 ? 1 : 0,
         failureKind: failureKind(errors),
-      };
+      });
     }
 
     const { emitPlan, warnings, errors } = await buildAddPlan(
@@ -328,18 +616,20 @@ export async function forgeAdd(
       recipe,
       ctx,
       installRoot,
-      options,
+      effectiveOptions,
     );
 
-    return {
+    return finalizeAddResult({
       alias: normalized,
+      mode: "integration",
+      ...recipeResultMetadata(recipe),
       changed: [...emitPlan.files.map((file) => file.path), "forge.lock"],
       unchanged: [],
       warnings,
       errors,
       exitCode: errors.length > 0 ? 1 : 0,
       failureKind: failureKind(errors),
-    };
+    });
   }
 
   const snapshot = snapshotVersionControlled(options.workspaceRoot);
@@ -363,15 +653,17 @@ export async function forgeAdd(
 
     if (analyzeErrors.length > 0) {
       restoreVersionControlledSnapshot(options.workspaceRoot, snapshot);
-      return {
+      return finalizeAddResult({
         alias: normalized,
+        mode: "integration",
+        ...recipeResultMetadata(recipe),
         changed: [],
         unchanged: [],
         warnings,
         errors: analyzeErrors,
         exitCode: 1,
         failureKind: failureKind(analyzeErrors),
-      };
+      });
     }
 
     const emitResult = await emit(emitPlan, {
@@ -384,15 +676,17 @@ export async function forgeAdd(
 
     if (errors.length > 0) {
       restoreVersionControlledSnapshot(options.workspaceRoot, snapshot);
-      return {
+      return finalizeAddResult({
         alias: normalized,
+        mode: "integration",
+        ...recipeResultMetadata(recipe),
         changed: [],
         unchanged: [],
         warnings: warningsCombined,
         errors,
         exitCode: 1,
         failureKind: failureKind(errors),
-      };
+      });
     }
 
     const integrityErrors = verifyLockIntegrity(
@@ -401,15 +695,17 @@ export async function forgeAdd(
     );
     if (integrityErrors.length > 0) {
       restoreVersionControlledSnapshot(options.workspaceRoot, snapshot);
-      return {
+      return finalizeAddResult({
         alias: normalized,
+        mode: "integration",
+        ...recipeResultMetadata(recipe),
         changed: [],
         unchanged: [],
         warnings: warningsCombined,
         errors: integrityErrors,
         exitCode: 1,
         failureKind: "lock_integrity",
-      };
+      });
     }
 
     const manifest = loadManifest(ctx.cacheDir);
@@ -435,14 +731,16 @@ export async function forgeAdd(
       ),
     );
 
-    return {
+    return finalizeAddResult({
       alias: normalized,
+      mode: "integration",
+      ...recipeResultMetadata(recipe),
       changed: emitResult.changed,
       unchanged: emitResult.unchanged,
       warnings: warningsCombined,
       errors: [],
       exitCode: 0,
-    };
+    });
   } catch (error) {
     restoreVersionControlledSnapshot(options.workspaceRoot, snapshot);
 
@@ -459,15 +757,193 @@ export async function forgeAdd(
       message: `forge add failed: ${message}`,
     });
 
-    return {
+    return finalizeAddResult({
       alias: normalized,
+      mode: "integration",
+      ...recipeResultMetadata(recipe),
       changed: [],
       unchanged: [],
       warnings: [],
       errors: [diagnostic],
       exitCode: 1,
       failureKind: "install_failed",
-    };
+    });
+  }
+}
+
+async function forgeAddPackage(
+  spec: string,
+  options: ForgeAddOptions,
+  request = normalizePackageRequest(spec, options).request,
+): Promise<ForgeAddResult> {
+  const normalized = request.spec.trim();
+  const packageName = parsePackageName(normalized);
+  const target = resolveInstallRoot(options);
+  if (target.error) {
+    return finalizeAddResult({
+      alias: normalized,
+      mode: "package",
+      target: target.target,
+      packageTarget: request.packageTarget,
+      packageTargetReason: request.packageTargetReason,
+      changed: [],
+      unchanged: [],
+      warnings: [],
+      errors: [target.error],
+      exitCode: 1,
+      failureKind: "invalid_workspace",
+    });
+  }
+
+  const pm =
+    options.pmAdapter ??
+    detectAndCreatePackageManagerAdapter(options.workspaceRoot);
+  const packageManagerCwd = target.installRoot;
+  const semanticInstallWorkspace = target.target === "root" ? undefined : target.target;
+  const installCommand = buildAddCommand(pm.name, normalized, {
+    ignoreScripts: !options.allowScripts,
+    workspace: undefined,
+  });
+  const avoidedManualCommand = installCommand.join(" ");
+  const installPlan = {
+    packageSpec: normalized,
+    packageName,
+    packageManager: pm.name,
+    installCommand,
+    nativeInstallCommand: installCommand,
+    avoidedManualCommand,
+    installCwd: packageManagerCwd.replace(/\\/g, "/"),
+    packageTarget: request.packageTarget,
+    packageTargetReason: request.packageTargetReason,
+    ...(semanticInstallWorkspace ? { installWorkspace: semanticInstallWorkspace } : {}),
+  };
+
+  if (options.dryRun) {
+    try {
+      await pm.dryRunAdd(normalized, {
+        cwd: packageManagerCwd,
+        ignoreScripts: !options.allowScripts,
+        workspace: undefined,
+      });
+    } catch (error) {
+      const message =
+        error instanceof PackageManagerCommandError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : String(error);
+      const diagnostic = createDiagnostic({
+        severity: "error",
+        code: "FORGE_ADD_INSTALL_FAILED",
+        message: `forge add package dry-run failed: ${message}`,
+      });
+      return finalizeAddResult({
+        alias: normalized,
+        mode: "package",
+        target: target.target,
+        ...installPlan,
+        changed: [],
+        unchanged: [],
+        warnings: [],
+        errors: [diagnostic],
+        exitCode: 1,
+        failureKind: "install_failed",
+      });
+    }
+
+    return finalizeAddResult({
+      alias: normalized,
+      mode: "package",
+      target: target.target,
+      ...installPlan,
+      changed: [
+        packageJsonRelativeFor(target.target === "root" ? undefined : target.target),
+      ],
+      unchanged: [],
+      warnings: [],
+      errors: [],
+      exitCode: 0,
+    });
+  }
+
+  const snapshot = snapshotVersionControlled(
+    options.workspaceRoot,
+    target.extraSnapshotPaths,
+  );
+
+  try {
+    await pm.add(normalized, {
+      cwd: packageManagerCwd,
+      ignoreScripts: !options.allowScripts,
+      workspace: undefined,
+    });
+
+    const generated = await runGenerate({
+      workspaceRoot: options.workspaceRoot,
+      check: false,
+      dryRun: false,
+      json: options.json,
+      concurrency: 4,
+    });
+
+    if (generated.exitCode !== 0) {
+      restoreVersionControlledSnapshot(options.workspaceRoot, snapshot);
+      return finalizeAddResult({
+        alias: normalized,
+        mode: "package",
+        target: target.target,
+        ...installPlan,
+        changed: [],
+        unchanged: [],
+        warnings: generated.warnings,
+        errors: generated.errors,
+        exitCode: 1,
+        failureKind: generated.failureKind,
+      });
+    }
+
+    return finalizeAddResult({
+      alias: normalized,
+      mode: "package",
+      target: target.target,
+      ...installPlan,
+      changed: [
+        packageJsonRelativeFor(target.target === "root" ? undefined : target.target),
+        ...generated.changed,
+      ],
+      unchanged: generated.unchanged,
+      warnings: generated.warnings,
+      errors: generated.errors,
+      exitCode: 0,
+    });
+  } catch (error) {
+    restoreVersionControlledSnapshot(options.workspaceRoot, snapshot);
+
+    const message =
+      error instanceof PackageManagerCommandError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
+
+    const diagnostic = createDiagnostic({
+      severity: "error",
+      code: "FORGE_ADD_INSTALL_FAILED",
+      message: `forge add package failed: ${message}`,
+    });
+
+    return finalizeAddResult({
+      alias: normalized,
+      mode: "package",
+      target: target.target,
+      ...installPlan,
+      changed: [],
+      unchanged: [],
+      warnings: [],
+      errors: [diagnostic],
+      exitCode: 1,
+      failureKind: "install_failed",
+    });
   }
 }
 

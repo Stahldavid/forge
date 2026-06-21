@@ -178,7 +178,7 @@ describe("H22 package upgrade planner", () => {
 
       const inspect = await runDepsCommand({
         subcommand: "inspect",
-        packageName: "stripe",
+        packageName: "stripe@18.0.0",
         json: true,
         yes: false,
         allowScripts: false,
@@ -187,12 +187,14 @@ describe("H22 package upgrade planner", () => {
         changed: false,
         workspaceRoot: workspace,
       });
+      expect((inspect.data as { package: string; requestedPackageSpec: string; integrationAlias: string }).package).toBe("stripe");
+      expect((inspect.data as { package: string; requestedPackageSpec: string; integrationAlias: string }).requestedPackageSpec).toBe("stripe@18.0.0");
       expect((inspect.data as { integrationAlias: string }).integrationAlias).toBe("stripe");
       expect((inspect.data as { oracle: { entrypoints: unknown[] } }).oracle.entrypoints.length).toBeGreaterThan(0);
 
       const api = await runDepsCommand({
         subcommand: "api",
-        packageName: "stripe",
+        packageName: "stripe@18.0.0",
         symbolName: "Stripe",
         json: true,
         yes: false,
@@ -203,6 +205,8 @@ describe("H22 package upgrade planner", () => {
         workspaceRoot: workspace,
       });
       expect(api.exitCode).toBe(0);
+      expect((api.data as { package: string; requestedPackageSpec: string }).package).toBe("stripe");
+      expect((api.data as { package: string; requestedPackageSpec: string }).requestedPackageSpec).toBe("stripe@18.0.0");
       expect((api.data as { symbols: Array<{ name: string; signature: string }> }).symbols[0]?.name).toBe("Stripe");
       expect((api.data as { symbols: Array<{ name: string; signature: string }> }).symbols[0]?.signature).toContain("apiKey");
 
@@ -220,6 +224,25 @@ describe("H22 package upgrade planner", () => {
       });
       expect(missingApi.exitCode).toBe(1);
       expect(missingApi.diagnostics[0]?.code).toBe("FORGE_DEPS_UNKNOWN_EXPORT");
+
+      const missingVersioned = await runDepsCommand({
+        subcommand: "inspect",
+        packageName: "missing-lib@latest",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+      expect(missingVersioned.exitCode).toBe(1);
+      expect(missingVersioned.data).toMatchObject({
+        package: "missing-lib",
+        requestedPackageSpec: "missing-lib@latest",
+      });
+      expect(missingVersioned.diagnostics[0]?.message).toContain("requested spec: 'missing-lib@latest'");
+      expect(missingVersioned.diagnostics[0]?.suggestedCommands).toContain("forge deps inspect missing-lib --json");
 
       const trace = await runDepsCommand({
         subcommand: "trace",

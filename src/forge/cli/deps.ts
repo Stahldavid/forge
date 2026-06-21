@@ -23,6 +23,7 @@ import {
   listOutdatedFromFixture,
   parseUpgradeTarget,
 } from "../compiler/package-upgrades/planner.ts";
+import { parsePackageName } from "../compiler/package-manager/parse-spec.ts";
 import {
   applyUpgradePlan,
   rollbackUpgradePlan,
@@ -241,6 +242,53 @@ function runtimeCompatPackage(workspaceRoot: string, packageName: string): DepsC
   };
 }
 
+function normalizePackageInput(packageSpec: string | undefined): {
+  packageName?: string;
+  requestedPackageSpec?: string;
+} {
+  if (!packageSpec) {
+    return {};
+  }
+  const packageName = parsePackageName(packageSpec);
+  return {
+    packageName,
+    ...(packageName !== packageSpec ? { requestedPackageSpec: packageSpec } : {}),
+  };
+}
+
+function withPackageInput(
+  result: DepsCommandResult,
+  packageName: string,
+  requestedPackageSpec: string | undefined,
+): DepsCommandResult {
+  if (!requestedPackageSpec) {
+    return result;
+  }
+  const data = result.data && typeof result.data === "object" && !Array.isArray(result.data)
+    ? {
+        requestedPackageSpec,
+        package: packageName,
+        ...(result.data as Record<string, unknown>),
+      }
+    : {
+        requestedPackageSpec,
+        package: packageName,
+      };
+  return {
+    ...result,
+    data,
+    diagnostics: result.diagnostics.map((diagnostic) =>
+      diagnostic.code === "FORGE_DEPS_PACKAGE_NOT_INSTALLED"
+        ? {
+            ...diagnostic,
+            message: `${diagnostic.message} (requested spec: '${requestedPackageSpec}')`,
+            fixHint: "Forge strips version/range suffixes for deps lookup. Run forge generate, then retry with the normalized package name if needed.",
+          }
+        : diagnostic,
+    ),
+  };
+}
+
 export async function runDepsCommand(options: DepsCommandOptions): Promise<DepsCommandResult> {
   if (options.subcommand === "outdated") {
     return {
@@ -251,41 +299,60 @@ export async function runDepsCommand(options: DepsCommandOptions): Promise<DepsC
     };
   }
 
+  const packageInput = normalizePackageInput(options.packageName);
+  const packageName = packageInput.packageName;
+
   if (options.subcommand === "inspect") {
-    if (!options.packageName) {
+    if (!packageName) {
       return missingPackage();
     }
-    return inspectPackage(options.workspaceRoot, options.packageName);
+    return withPackageInput(
+      inspectPackage(options.workspaceRoot, packageName),
+      packageName,
+      packageInput.requestedPackageSpec,
+    );
   }
 
   if (options.subcommand === "api") {
-    if (!options.packageName) {
+    if (!packageName) {
       return missingPackage();
     }
-    return inspectPackageApi(options.workspaceRoot, options.packageName, options.symbolName);
+    return withPackageInput(
+      inspectPackageApi(options.workspaceRoot, packageName, options.symbolName),
+      packageName,
+      packageInput.requestedPackageSpec,
+    );
   }
 
   if (options.subcommand === "trace") {
-    if (!options.packageName) {
+    if (!packageName) {
       return missingPackage();
     }
-    return tracePackage(options.workspaceRoot, options.packageName);
+    return withPackageInput(
+      tracePackage(options.workspaceRoot, packageName),
+      packageName,
+      packageInput.requestedPackageSpec,
+    );
   }
 
   if (options.subcommand === "runtime-compat") {
-    if (!options.packageName) {
+    if (!packageName) {
       return missingPackage();
     }
-    return runtimeCompatPackage(options.workspaceRoot, options.packageName);
+    return withPackageInput(
+      runtimeCompatPackage(options.workspaceRoot, packageName),
+      packageName,
+      packageInput.requestedPackageSpec,
+    );
   }
 
   if (options.subcommand === "diff" || options.subcommand === "upgrade-plan" || options.subcommand === "risk") {
-    if (!options.packageName) {
+    if (!packageName) {
       return missingPackage();
     }
     const planned = await createUpgradePlan({
       workspaceRoot: options.workspaceRoot,
-      packageName: options.packageName,
+      packageName,
       target: parseUpgradeTarget(options.target),
       writeArtifacts: options.subcommand !== "diff" && options.subcommand !== "risk",
     });
@@ -314,12 +381,12 @@ export async function runDepsCommand(options: DepsCommandOptions): Promise<DepsC
               planDir: planned.planDir,
             };
 
-    return {
+    return withPackageInput({
       ok: planned.ok,
       data,
       diagnostics: planned.diagnostics,
       exitCode: planned.exitCode,
-    };
+    }, packageName, packageInput.requestedPackageSpec);
   }
 
   if (options.subcommand === "upgrade-apply") {

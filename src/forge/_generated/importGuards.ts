@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=ad7ecb223cb611bfbf7d20074dfbd842c862146bfdb7e34494f1d57faf66623f
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=ad7ecb223cb611bfbf7d20074dfbd842c862146bfdb7e34494f1d57faf66623f
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [

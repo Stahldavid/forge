@@ -42,6 +42,61 @@ function stableSortTables(tables: DataTable[]): DataTable[] {
   return [...tables].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
+function stableSortTableChangesByReferences(tables: SqlChange[]): SqlChange[] {
+  const orderedInput = [...tables].sort((a, b) => {
+    const tableA = a.table ?? "";
+    const tableB = b.table ?? "";
+    return tableA < tableB ? -1 : tableA > tableB ? 1 : 0;
+  });
+  const byName = new Map<string, SqlChange>();
+
+  for (const table of orderedInput) {
+    if (table.table) {
+      byName.set(table.table, table);
+    }
+  }
+
+  const pending = new Set(byName.keys());
+  const emitted = new Set<string>();
+  const ordered: SqlChange[] = [];
+
+  while (pending.size > 0) {
+    let progressed = false;
+
+    for (const tableName of pending) {
+      const table = byName.get(tableName);
+      if (!table) {
+        pending.delete(tableName);
+        continue;
+      }
+
+      const dependencies = (table.columns ?? [])
+        .map((column) => column.references?.table)
+        .filter((dependency): dependency is string => Boolean(dependency))
+        .filter((dependency) => dependency !== tableName && byName.has(dependency));
+
+      if (dependencies.every((dependency) => emitted.has(dependency))) {
+        ordered.push(table);
+        emitted.add(tableName);
+        pending.delete(tableName);
+        progressed = true;
+      }
+    }
+
+    if (!progressed) {
+      for (const tableName of pending) {
+        const table = byName.get(tableName);
+        if (table) {
+          ordered.push(table);
+        }
+      }
+      break;
+    }
+  }
+
+  return ordered;
+}
+
 function parseFieldType(
   field: DataField,
   tableName: string,
@@ -254,6 +309,7 @@ function buildTableChange(table: DataTable, diagnostics: Diagnostic[]): SqlChang
   return {
     kind: "create_table",
     table: tableName,
+    accessName: table.name,
     columns,
     sql: buildCreateTableSql(tableName, columns),
   };
@@ -342,6 +398,8 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
     }
   }
 
+  const orderedTables = stableSortTableChangesByReferences(tables);
+
   indexes.sort((a, b) => {
     const nameA = a.index?.name ?? "";
     const nameB = b.index?.name ?? "";
@@ -364,7 +422,7 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
   const payload = {
     schemaVersion: SQL_PLAN_SCHEMA_VERSION,
     systemTables: systemTables.map((change) => change.sql),
-    tables: tables.map((change) => change.sql),
+    tables: orderedTables.map((change) => change.sql),
     indexes: indexes.map((change) => change.sql),
   };
 
@@ -376,7 +434,7 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
     migrationId,
     checksum,
     systemTables,
-    tables,
+    tables: orderedTables,
     indexes,
     diagnostics: diagnostics.sort((a, b) => {
       const fileA = a.file ?? "";

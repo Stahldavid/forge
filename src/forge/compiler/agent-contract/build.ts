@@ -347,7 +347,7 @@ function playbooks(): AgentPlaybook[] {
         "Prefer AI SDK ToolLoopAgent semantics through ctx.agent.run or ctx.ai.runAgent instead of custom loops.",
         "Use stopWhen with stepCount or terminal tool calls to prevent unbounded loops.",
         "Run agents only in actions, workflows, endpoints, or server code.",
-        "Run forge inspect all --json and confirm agentContract.ai.agents lists the agent.",
+        "Run forge inspect ai --json or forge agent print-context --json and confirm the generated context lists the agent.",
         "Use forge ai trace <traceId> --json to inspect agent runs and tool calls.",
       ],
     },
@@ -1256,9 +1256,9 @@ export function buildAgentContractArtifacts(
     rules: runtimeRules(),
     playbooks: playbooks(),
     commandsToRun: {
-      beforeEditing: ["forge do inspect --json", "forge dev --once --json", "forge inspect all --json", "forge check --json"],
+      beforeEditing: ["forge agent onboard --target codex --json", "forge status --json", "forge changed --json", "forge handoff --json", "forge do inspect --json", "forge dev --once --json", "forge agent print-context --json", "forge check --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --standard", "forge verify --strict"],
-      dev: ["forge dev", "forge dev --once --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"],
+      dev: ["forge dev", "forge dev --once --json", "forge handoff --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"],
     },
   };
 
@@ -1371,9 +1371,13 @@ This is a ForgeOS application named \`${contract.project.name}\`.
 Before editing:
 
 \`\`\`bash
+forge agent onboard --target codex --json
+forge status --json
+forge changed --json
+forge handoff --json
 forge do inspect --json
 forge dev --once --json
-forge inspect all --json
+forge agent print-context --json
 forge check --json
 \`\`\`
 
@@ -1424,8 +1428,10 @@ forge do fix --json
 forge do verify --json
 forge dev --once --json
 forge dev
+forge handoff --json
 forge inspect app --json
 forge inspect all --json
+forge inspect all --full --json
 forge inspect frontend --json
 forge inspect capabilities --json
 forge inspect agent-tools --json
@@ -1442,6 +1448,7 @@ forge doctor
 forge doctor windows --json
 forge setup windows --json
 forge agent print-context --json
+forge agent doctor --target codex --json
 forge ai tools --json
 forge ai agents --json
 forge ai trace <traceId> --json
@@ -1613,7 +1620,8 @@ Use:
 
 \`\`\`bash
 forge generate
-forge inspect all --json
+forge inspect ai --json
+forge agent print-context --json
 forge ai check --json
 forge ai trace <traceId> --json
 \`\`\`
@@ -2043,15 +2051,20 @@ function renderAgentQuickstartMd(): string {
 Run:
 
 \`\`\`bash
+forge agent onboard --target codex --json
+forge status --json
+forge changed --json
+forge handoff --json
 forge do inspect --json
 forge do fix --json
 forge do verify --json
 forge dev --once --json
 forge dev
-forge inspect all --json
+forge agent print-context --json
 forge inspect frontend --json
 forge inspect capabilities --json
 forge inspect agent-tools --json
+forge inspect all --json
 forge check --json
 forge ai trace <traceId> --json
 \`\`\`

@@ -1,8 +1,11 @@
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
+import { buildDevWatchGenerateFailureEvent, buildDevWatchReloadEvent, ensureGeneratedForDev, generatedEvidenceFromCycle, resolveAvailableWebPort, runDevCommand } from "../../src/forge/cli/dev.ts";
 import {
   formatDevConsoleJson,
   runDevConsoleCycle,
@@ -15,6 +18,41 @@ import {
   scaffoldGenerateWorkspace,
   tempWorkspace,
 } from "../orchestrator/helpers.ts";
+
+async function listenOnRandomPort(): Promise<{ port: number; close: () => Promise<void> }> {
+  const server = createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => resolve());
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("failed to allocate test port");
+  }
+  return {
+    port: address.port,
+    close: () => new Promise<void>((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    }),
+  };
+}
+
+async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; output: string }> {
+  const chunks: string[] = [];
+  const originalWrite = process.stdout.write;
+  process.stdout.write = ((chunk: string | Uint8Array) => {
+    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+    return true;
+  }) as typeof process.stdout.write;
+  try {
+    return {
+      result: await fn(),
+      output: chunks.join(""),
+    };
+  } finally {
+    process.stdout.write = originalWrite;
+  }
+}
 
 describe("H33 forge dev console", () => {
   test("parseCli recognizes forge dev --once as the diagnostic entrypoint", () => {
@@ -73,7 +111,211 @@ describe("H33 forge dev console", () => {
   });
 
   test(
-    "dev console recommends forge generate when generated files are stale",
+    "dev console exposes a target preview URL for Studio observers",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-preview-url");
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        const cycle = await runDevConsoleCycle({
+          workspaceRoot: workspace,
+          mode: "once",
+          includeImpact: false,
+        });
+
+        expect(cycle.summary.urls.suggestedPreview).toBe(cycle.summary.preview.targetAppUrl);
+        expect(cycle.summary.preview.targetAppPort).toBe(5174);
+        expect(cycle.summary.preview.targetAppUrl).toBe("http://127.0.0.1:5174");
+        expect(cycle.summary.preview.note).toContain("target app preview");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    15_000,
+  );
+
+  test("dev watch generation failures produce agent-readable JSON events", () => {
+    const event = buildDevWatchGenerateFailureEvent({
+      changedCount: 2,
+      changedPaths: ["src/commands/createTicket.ts", "src/forge/schema.ts"],
+      result: {
+        ok: false,
+        changed: [],
+        unchanged: [],
+        diagnostics: [
+          {
+            severity: "error",
+            code: "FORGE_TEST_DIAGNOSTIC",
+            message: "schema could not be compiled",
+          },
+        ],
+        exitCode: 1,
+      },
+    });
+
+    expect(event).toMatchObject({
+      schemaVersion: "0.1.0",
+      event: "dev.generate_failed",
+      ok: false,
+      changedFiles: 2,
+      changedPaths: ["src/commands/createTicket.ts", "src/forge/schema.ts"],
+      generated: {
+        ok: false,
+        state: "stale-risk",
+        changedFiles: 0,
+      },
+      nextActions: ["forge dev --once --json", "forge check --json"],
+    });
+    expect(event.diagnostics[0]?.code).toBe("FORGE_TEST_DIAGNOSTIC");
+  });
+
+  test(
+    "dev watch reload events include generated posture and agent context",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-watch-reload-event");
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        const cycle = await runDevConsoleCycle({
+          workspaceRoot: workspace,
+          mode: "watch",
+          includeImpact: true,
+        });
+        const event = buildDevWatchReloadEvent({
+          changedCount: 1,
+          changedPaths: ["src/forge/schema.ts"],
+          generated: {
+            ok: true,
+            changed: ["src/forge/_generated/appGraph.json"],
+            unchanged: [],
+            diagnostics: [],
+            exitCode: 0,
+          },
+          reload: {
+            ok: true,
+            reason: "test",
+            migrated: false,
+            routes: 1,
+            runtimeEntries: 1,
+            worker: "running",
+            diagnostics: [],
+          },
+          cycle,
+        });
+
+        expect(event).toMatchObject({
+          schemaVersion: "0.1.0",
+          event: "dev.reload",
+          ok: true,
+          changedFiles: 1,
+          changedPaths: ["src/forge/schema.ts"],
+          generated: {
+            state: "regenerated",
+            changedFiles: 1,
+            command: "forge generate",
+            checkCommand: "forge generate --check --json",
+          },
+          preview: {
+            targetAppUrl: "http://127.0.0.1:5174",
+          },
+          agentContext: {
+            safeToEdit: true,
+            generatedFresh: true,
+          },
+        });
+        expect(event.agentContext.diffPlan?.authoredDiffCommand).toContain("git diff -- .");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    15_000,
+  );
+
+  test(
+    "forge dev reports port-busy failures with recovery commands",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-port-busy");
+      const occupied = await listenOnRandomPort();
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        const captured = await captureStdout(() =>
+          runDevCommand({
+            workspaceRoot: workspace,
+            host: "127.0.0.1",
+            port: occupied.port,
+            mock: false,
+            mockAi: false,
+            watch: false,
+            json: true,
+            db: "memory",
+            worker: false,
+            telemetry: [],
+            skipStartupConsole: true,
+          }),
+        );
+        const payload = JSON.parse(captured.output.trim()) as {
+          ok: boolean;
+          failureKind?: string;
+          busy?: { port?: number; suggestedCommands?: string[] };
+          exitCode: number;
+        };
+
+        expect(captured.result.exitCode).toBe(1);
+        expect(payload).toMatchObject({
+          ok: false,
+          failureKind: "port_busy",
+          exitCode: 1,
+          busy: {
+            port: occupied.port,
+          },
+        });
+        expect(payload.busy?.suggestedCommands?.[0]).toContain("forge dev --port 0");
+        expect(payload.busy?.suggestedCommands).toContain("forge doctor windows --json");
+      } finally {
+        await occupied.close();
+        cleanupWorkspace(workspace);
+      }
+    },
+    20_000,
+  );
+
+  test("forge dev resolves an available web port before starting the web app", async () => {
+    const occupied = await listenOnRandomPort();
+    try {
+      const selected = await resolveAvailableWebPort({
+        host: "127.0.0.1",
+        preferredPort: occupied.port,
+        maxAttempts: 3,
+      });
+
+      expect(selected).toMatchObject({
+        requestedPort: occupied.port,
+        autoPortSelected: true,
+      });
+      expect(selected.port).toBeGreaterThan(occupied.port);
+    } finally {
+      await occupied.close();
+    }
+  });
+
+  test(
+    "forge dev generation guard refreshes stale artifacts before serving",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-autogenerate");
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        writeFileSync(join(workspace, "src", "forge", "_generated", "appGraph.json"), "{\"stale\":true}\n", "utf8");
+
+        const generated = await ensureGeneratedForDev(workspace);
+        expect(generated.ok).toBe(true);
+        expect(generated.changed).toContain("src/forge/_generated/appGraph.json");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    15_000,
+  );
+
+  test(
+    "dev console regenerates stale artifacts instead of serving stale output",
     async () => {
       const workspace = scaffoldGenerateWorkspace("dev-console-stale");
       try {
@@ -84,13 +326,15 @@ describe("H33 forge dev console", () => {
           mode: "once",
           includeImpact: false,
         });
-        expect(cycle.ok).toBe(false);
-        expect(cycle.summary.health.ok).toBe(false);
-        expect(cycle.summary.primaryAction?.command).toBe("forge do fix --json");
-        expect(cycle.phases.find((phase) => phase.name === "generated")?.ok).toBe(false);
-        expect(cycle.phases.find((phase) => phase.name === "check")?.status).toBe("skipped");
-        expect(cycle.phases.find((phase) => phase.name === "frontend")?.status).toBe("skipped");
-        expect(cycle.nextActions.map((action) => action.command)).toContain("forge generate");
+        const generated = cycle.phases.find((phase) => phase.name === "generated");
+        expect(cycle.ok).toBe(true);
+        expect(cycle.summary.health.ok).toBe(true);
+        expect(generated?.ok).toBe(true);
+        expect(generated?.message).toContain("regenerated");
+        expect(Number(generated?.details?.changed)).toBeGreaterThan(0);
+        expect(generated?.details?.sampleChanged as string[]).toContain("src/forge/_generated/appGraph.json");
+        expect(cycle.phases.find((phase) => phase.name === "check")?.status).not.toBe("skipped");
+        expect(cycle.phases.find((phase) => phase.name === "frontend")?.status).not.toBe("skipped");
         expect(JSON.parse(formatDevConsoleJson(cycle)).schemaVersion).toBe("0.1.0");
       } finally {
         cleanupWorkspace(workspace);
@@ -112,13 +356,67 @@ describe("H33 forge dev console", () => {
         });
         expect(cycle.phases.find((phase) => phase.name === "generated")?.ok).toBe(true);
         expect(cycle.summary.health.errors).toBe(0);
-        expect(cycle.phases.find((phase) => phase.name === "generated")?.details?.cache).toMatchObject({
-          strategy: "generated-check",
-          result: "hit",
-        });
+        expect(Number(cycle.phases.find((phase) => phase.name === "generated")?.details?.changed)).toBe(0);
+        expect(cycle.phases.find((phase) => phase.name === "generated")?.message).toBe("generated artifacts are up to date");
         expect(cycle.phases.find((phase) => phase.name === "check")?.status).not.toBe("skipped");
         expect(cycle.phases.find((phase) => phase.name === "frontend")?.status).not.toBe("skipped");
         expect(cycle.nextActions.length).toBeGreaterThan(0);
+        expect(cycle.summary.agentContext).toMatchObject({
+          safeToEdit: true,
+          generatedFresh: true,
+          generatedChanged: false,
+          generatedChangedFiles: 0,
+          changedFiles: 0,
+        });
+        expect(cycle.summary.generated).toMatchObject({
+          ok: true,
+          state: "fresh",
+          changedFiles: 0,
+          command: "forge generate",
+          checkCommand: "forge generate --check --json",
+        });
+        expect(cycle.summary.agentContext.recommendedReadFiles).toContain("AGENTS.md");
+        expect(cycle.summary.agentContext.recommendedCommands).toContain("forge dev");
+        expect(generatedEvidenceFromCycle(cycle)).toMatchObject({
+          state: "fresh",
+          changedFiles: 0,
+          command: "forge generate",
+          checkCommand: "forge generate --check --json",
+        });
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    15_000,
+  );
+
+  test(
+    "dev console marks generated artifacts fresh after self-healing stale files",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-self-heal-fresh");
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        await Bun.write(join(workspace, "src", "forge", "_generated", "appGraph.json"), "{\"stale\":true}\n");
+        const cycle = await runDevConsoleCycle({
+          workspaceRoot: workspace,
+          mode: "once",
+          includeImpact: false,
+        });
+
+        expect(cycle.ok).toBe(true);
+        expect(cycle.summary.agentContext).toMatchObject({
+          safeToEdit: true,
+          generatedFresh: true,
+          generatedChanged: true,
+        });
+        expect(cycle.summary.agentContext.generatedChangedFiles).toBeGreaterThan(0);
+        expect(cycle.summary.generated.state).toBe("regenerated");
+        expect(cycle.summary.generated.changedFiles).toBeGreaterThan(0);
+        expect(cycle.phases.find((phase) => phase.name === "generated")?.message).toContain("regenerated");
+        const evidence = generatedEvidenceFromCycle(cycle);
+        expect(evidence.state).toBe("regenerated");
+        expect(evidence.changedFiles).toBeGreaterThan(0);
+        expect(evidence.message).toContain("regenerated");
       } finally {
         cleanupWorkspace(workspace);
       }
@@ -150,6 +448,82 @@ describe("H33 forge dev console", () => {
       }
     },
     15_000,
+  );
+
+  test(
+    "dev console impact summary is compact for agent JSON",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-impact-compact");
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+        spawnSync("git", ["config", "user.email", "forge@example.com"], { cwd: workspace, windowsHide: true });
+        spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
+        spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+        spawnSync("git", ["commit", "-m", "initial"], { cwd: workspace, windowsHide: true });
+        mkdirSync(join(workspace, "bin"), { recursive: true });
+        mkdirSync(join(workspace, "docs"), { recursive: true });
+        mkdirSync(join(workspace, "scratch"), { recursive: true });
+        writeFileSync(join(workspace, "bin", "dev-console-helper.ts"), "export const ok = true;\n", "utf8");
+        writeFileSync(join(workspace, "docs", "dev-console.md"), "# Dev console\n", "utf8");
+        writeFileSync(
+          join(workspace, "src", "forge", "schema.ts"),
+          'import { defineTable } from "forge/schema";\n\nexport const users = defineTable("users", {\n  id: "string",\n});\n\nexport const auditEvents = defineTable("audit_events", {\n  id: "string",\n});\n',
+          "utf8",
+        );
+        for (let index = 0; index < 20; index += 1) {
+          writeFileSync(join(workspace, "scratch", `zz-${String(index).padStart(2, "0")}.txt`), `${index}\n`, "utf8");
+        }
+
+        const cycle = await runDevConsoleCycle({
+          workspaceRoot: workspace,
+          mode: "once",
+          includeImpact: true,
+        });
+        const impact = cycle.phases.find((phase) => phase.name === "impact");
+        const summary = impact?.details?.summary as {
+          changedFiles: number;
+          sampleChangedFiles: string[];
+          hiddenChangedFiles: number;
+          changeSummary: {
+            byType: {
+              source: { sample: string[] };
+              docs: { sample: string[] };
+              other: { count: number };
+            };
+            primaryTypes: string[];
+          };
+          fullCommand: string;
+        } | undefined;
+
+        expect(impact?.ok).toBe(true);
+        expect(summary?.changedFiles).toBeGreaterThan(12);
+        expect(summary?.sampleChangedFiles.length).toBeLessThanOrEqual(12);
+        expect(summary?.hiddenChangedFiles).toBeGreaterThan(0);
+        expect(summary?.changeSummary.byType.source.sample).toContain("bin/dev-console-helper.ts");
+        expect(summary?.changeSummary.byType.docs.sample).toContain("docs/dev-console.md");
+        expect(summary?.changeSummary.byType.other.count).toBeGreaterThan(12);
+        expect(summary?.changeSummary.primaryTypes).toContain("other");
+        expect(summary?.fullCommand).toBe("forge impact --changed --json");
+        expect(cycle.summary.agentContext.changedFiles).toBeGreaterThan(12);
+        expect(cycle.summary.agentContext.changeSummary?.byType.source.sample).toContain("bin/dev-console-helper.ts");
+        expect(cycle.summary.agentContext.diffPlan).toMatchObject({
+          first: "authored",
+          then: "generated",
+          generatedCollapsedByDefault: true,
+          authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
+          generatedDiffCommand: "git diff -- src/forge/_generated forge.lock",
+        });
+        expect(cycle.summary.agentContext.diffPlan?.generatedFiles).toBeGreaterThan(0);
+        expect(cycle.summary.agentContext.diffPlan?.authoredFiles).toBeGreaterThan(12);
+        expect(cycle.summary.agentContext.recommendedCommands).toContain("forge do verify --json");
+        expect(cycle.summary.agentContext.useFullCommands).toContain("forge impact --changed --json");
+        expect(formatDevConsoleJson(cycle)).not.toContain("zz-19.txt");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    20_000,
   );
 
   test(

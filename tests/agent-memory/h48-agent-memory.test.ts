@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
-import { runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
+import { runAgentCommand } from "../../src/forge/agent-adapters/index.ts";
+import { formatAgentMemoryHuman, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
@@ -70,8 +71,44 @@ describe("H48 agent memory bridge", () => {
       });
       expect("agentMemory" in context).toBe(true);
       if ("agentMemory" in context) {
+        expect(context.agentMemory.summary).toMatchObject({
+          events: 1,
+          toolCalls: 1,
+          entries: 1,
+          sources: ["codex"],
+          tools: ["forge.manifest_import"],
+        });
         expect(context.agentMemory.entries).toContain("billing.createInvoice");
         expect(context.agentMemory.toolCalls.some((call) => call.tool === "forge.manifest_import")).toBe(true);
+        expect(context.agentMemory.events[0]?.entries).toContain("billing.createInvoice");
+        expect(JSON.stringify(context)).not.toContain("\"envelope\"");
+        expect(JSON.stringify(context)).not.toContain("\"payload\"");
+        const human = formatAgentMemoryHuman(context);
+        expect(human).toContain("Forge Agent Context (entry: billing.createInvoice)");
+        expect(human).toContain("events: 1");
+        expect(human).toContain("tools: forge.manifest_import");
+        expect(human).not.toContain("\"payload\"");
+      }
+
+      const memory = await runAgentMemoryCommand({
+        subcommand: "memory",
+        workspaceRoot: root,
+        json: true,
+        target: "generic",
+        entry: "billing.createInvoice",
+      });
+      expect("events" in memory).toBe(true);
+      if ("events" in memory && memory.ok) {
+        expect(memory.events[0]?.data.envelope).toBeTruthy();
+        expect(JSON.stringify(memory)).toContain("\"payload\"");
+        expect(JSON.stringify(memory)).not.toContain("sk_h48_canary_secret_abcdef");
+        const memoryHuman = formatAgentMemoryHuman(memory);
+        expect(memoryHuman).toContain("Forge Agent Memory");
+        expect(memoryHuman).toContain("events: 1");
+        expect(memoryHuman).toContain("tools: forge.manifest_import");
+        expect(memoryHuman).toContain("entries: billing.createInvoice");
+        expect(memoryHuman).not.toContain("\"payload\"");
+        expect(memoryHuman).not.toContain("sk_h48_canary_secret_abcdef");
       }
 
       const store = await DeltaStore.open(root);
@@ -200,6 +237,203 @@ describe("H48 agent memory bridge", () => {
     }
   });
 
+  test("agent timeline summarizes external agent hook activity", async () => {
+    const root = tempWorkspace("h48-agent-timeline");
+    try {
+      await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        eventName: "PreToolUse",
+        input: {
+          session_id: "codex-session-5",
+          turn_id: "turn-5",
+          hook_event_name: "PreToolUse",
+          tool_name: "Bash",
+          tool_use_id: "toolu_5",
+          tool_input: {
+            command: "forge check --json && echo sk_h48_timeline_secret",
+          },
+        },
+      });
+      await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        eventName: "PermissionRequest",
+        input: {
+          session_id: "codex-session-5",
+          turn_id: "turn-6",
+          hook_event_name: "PermissionRequest",
+          tool_name: "apply_patch",
+          tool_use_id: "toolu_6",
+          tool_input: {
+            command: "*** Begin Patch\n*** Update File: src/commands/payInvoice.ts\n@@\n-old\n+new\n*** End Patch",
+          },
+        },
+      });
+
+      const timeline = await runAgentCommand({
+        subcommand: "timeline",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        dryRun: false,
+        force: false,
+        preserveUserSections: true,
+        skills: true,
+        rules: true,
+        limit: 10,
+      });
+
+      expect("timeline" in timeline).toBe(true);
+      if (!("timeline" in timeline)) {
+        throw new Error("expected agent timeline result");
+      }
+      expect(timeline.ok).toBe(true);
+      expect(timeline.sourceFilter).toBe("codex");
+      expect(timeline.summary.events).toBe(2);
+      expect(timeline.sessions).toContain("codex-session-5");
+      expect(timeline.files).toContain("src/commands/payInvoice.ts");
+      expect(timeline.events.some((event) => event.toolName === "Bash" && event.command?.includes("forge check --json"))).toBe(true);
+      expect(timeline.events.some((event) => event.status === "requested")).toBe(true);
+      expect(JSON.stringify(timeline)).not.toContain("sk_h48_timeline_secret");
+      expect(timeline.nextActions).toContain("forge agent context --current --json");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("agent timeline can read while another Delta writer is open", async () => {
+    const root = tempWorkspace("h48-agent-timeline-read-while-open");
+    let store: DeltaStore | null = null;
+    try {
+      store = await DeltaStore.open(root);
+      const timeline = await runAgentCommand({
+        subcommand: "timeline",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        dryRun: false,
+        force: false,
+        preserveUserSections: true,
+        skills: true,
+        rules: true,
+        limit: 10,
+      });
+
+      expect("timeline" in timeline).toBe(true);
+      if (!("timeline" in timeline)) {
+        throw new Error("expected agent timeline result");
+      }
+      expect(timeline.ok).toBe(true);
+      expect(timeline.exitCode).toBe(0);
+      expect(timeline.summary.events).toBe(0);
+      expect(timeline.diagnostics).toEqual([]);
+
+      const context = await runAgentMemoryCommand({
+        subcommand: "context",
+        workspaceRoot: root,
+        json: true,
+        current: true,
+      });
+      expect("agentMemory" in context).toBe(true);
+
+      const memory = await runAgentMemoryCommand({
+        subcommand: "memory",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        limit: 10,
+      });
+      expect("events" in memory).toBe(true);
+      if (!("events" in memory)) {
+        throw new Error("expected agent memory list result");
+      }
+      expect(memory.ok).toBe(true);
+      expect(memory.exitCode).toBe(0);
+
+      const hookStatus = await runAgentCommand({
+        subcommand: "hooks",
+        hookAction: "status",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        dryRun: false,
+        force: false,
+        preserveUserSections: true,
+        skills: true,
+        rules: true,
+        limit: 10,
+      });
+      expect("checks" in hookStatus).toBe(true);
+      if (!("checks" in hookStatus)) {
+        throw new Error("expected hook status result");
+      }
+      expect(hookStatus.checks.find((check) => check.name === "agent-memory-readable")?.ok).toBe(true);
+      expect(hookStatus.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_DELTA_BUSY")).toBe(false);
+
+      const mcpContext = await handleMcpRequest(root, {
+        jsonrpc: "2.0",
+        id: 42,
+        method: "tools/call",
+        params: { name: "agent_context", arguments: { entry: "billing.createInvoice" } },
+      });
+      expect(JSON.stringify(mcpContext)).toContain("agentMemory");
+
+      const mcpMemory = await handleMcpRequest(root, {
+        jsonrpc: "2.0",
+        id: 43,
+        method: "tools/call",
+        params: { name: "agent_memory", arguments: { target: "codex", limit: 10 } },
+      });
+      const mcpMemoryText = mcpToolText(mcpMemory);
+      expect(mcpMemoryText).toContain("\"ok\": true");
+
+      const mcpTimeline = await handleMcpRequest(root, {
+        jsonrpc: "2.0",
+        id: 44,
+        method: "tools/call",
+        params: { name: "timeline", arguments: { target: "tool:Bash", limit: 10 } },
+      });
+      const mcpTimelineText = mcpToolText(mcpTimeline);
+      expect(mcpTimelineText).toContain("\"ok\": true");
+
+      const smoke = await runAgentCommand({
+        subcommand: "hooks",
+        hookAction: "smoke",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        dryRun: false,
+        force: false,
+        preserveUserSections: true,
+        skills: true,
+        rules: true,
+        limit: 10,
+      });
+      expect("ingestResult" in smoke).toBe(true);
+      if (!("checks" in smoke) || !("diagnostics" in smoke) || !("nextActions" in smoke)) {
+        throw new Error("expected hook smoke result");
+      }
+      expect(smoke.exitCode).toBe(1);
+      expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_DELTA_BUSY")).toBe(true);
+      expect(JSON.stringify(smoke)).toContain("\"busy\"");
+      expect(JSON.stringify(smoke)).toContain("\"relativeLockPath\":\".forge/delta/delta.lock\"");
+      expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_AGENT_HOOK_CANARY_NOT_VISIBLE")).toBe(false);
+      expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_AGENT_HOOK_CANARY_MISSING")).toBe(false);
+      expect(smoke.checks.find((check) => check.name === "canary-visible")?.message).toBe("not checked because canary ingest failed");
+      expect(smoke.nextActions).toContain("forge delta status --json");
+    } finally {
+      if (store) {
+        await store.close();
+      }
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("installs Cursor via MCP and rules without private state hooks", async () => {
     const root = tempWorkspace("h48-cursor-install");
     try {
@@ -262,6 +496,25 @@ describe("H48 agent memory bridge", () => {
       kind: "agent",
       options: { subcommand: "context", current: true, json: true },
     });
+    expect(parseCli(["agent", "timeline", "--target", "codex", "--limit", "5", "--json"]).command).toMatchObject({
+      kind: "agent",
+      options: { subcommand: "timeline", target: "codex", limit: 5, json: true },
+    });
     expect(parseCli(["mcp", "serve"]).command).toMatchObject({ kind: "mcp", subcommand: "serve" });
   });
 });
+
+function mcpToolText(response: Record<string, unknown> | null): string {
+  const result = response?.result;
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
+    return "";
+  }
+  const content = (result as { content?: unknown }).content;
+  if (!Array.isArray(content)) {
+    return "";
+  }
+  const first = content[0];
+  return first && typeof first === "object" && !Array.isArray(first) && typeof (first as { text?: unknown }).text === "string"
+    ? (first as { text: string }).text
+    : "";
+}

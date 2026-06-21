@@ -7,6 +7,7 @@ This guide covers the most common ForgeOS failures during local development, CI,
 When something fails, run this sequence:
 
 ```bash
+forge status --json
 forge dev --once --json
 forge doctor
 forge generate --check
@@ -25,10 +26,14 @@ forge setup windows --yes
 
 | Command | Use when |
 |---------|----------|
+| `forge status --json` | Compact project health, handoff state, and next actions |
+| `forge handoff --json` | Switching agents, resuming work, or creating a compact work brief |
 | `forge dev --once --json` | Single-pass snapshot: drift, routes, doctor, impact |
 | `forge doctor` | Missing contract files, stale generated output |
 | `forge check --json` | Guard violations, secret rules, AI/query usage |
-| `forge inspect all --json` | Deep project understanding |
+| `forge agent print-context --json` | Agent-facing generated context pack |
+| `forge inspect all --json` | Compact aggregate inspection |
+| `forge inspect all --full --json` | Deep project dump when compact context is not enough |
 | `forge inspect frontend --json` | Route/binding/capability-map issues |
 | `forge inspect runtime-matrix --json` | Package context compatibility |
 | `forge repair diagnose --json` | Structured failure analysis |
@@ -437,11 +442,15 @@ See [AI — Tools And Agents](ai.md#tools-and-agents).
 
 Full diagnostic codes appear in CLI JSON under `errors[].code` with `fixHint` and `suggestedCommands`.
 
+`forge check --json` also lifts diagnostic `suggestedCommands` into top-level
+`nextActions`, so agents can usually move from the failing check directly to the
+right repair, inspect, or refactor command.
+
 ## Escalation path
 
 1. `forge dev --once --json` — collect snapshot
 2. `forge repair diagnose ... --json` — structured analysis
-3. `forge inspect all --json` — full contract review
+3. `forge inspect all --full --json` — full contract review
 4. `forge verify --strict` — confirm fix before handoff
 
 For framework bugs, include JSON output and steps to reproduce when opening an issue on the repository.

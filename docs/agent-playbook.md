@@ -9,9 +9,11 @@ The goal is simple: inspect first, edit source files only, regenerate, check, re
 Start with project context:
 
 ```bash
+forge status --json
+forge handoff --json
 forge do inspect --json
 forge dev --once --json
-forge inspect all --json
+forge agent print-context --json
 forge check --json
 ```
 
@@ -122,7 +124,7 @@ Apply deterministic high-confidence repairs automatically. Review lower-confiden
 forge review run --changed --json
 ```
 
-The structured review should focus on correctness, runtime boundaries, policy/tenant safety, generated drift, test gaps, and handoff readiness.
+The default JSON is compact for agents. Use `forge review run --changed --full --json` only when you need the complete file list and artifact dump. The structured review should focus on correctness, runtime boundaries, policy/tenant safety, generated drift, test gaps, and handoff readiness.
 
 ## 9. Verify and hand off
 

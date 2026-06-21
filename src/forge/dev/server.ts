@@ -23,6 +23,7 @@ import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { DevManifest } from "../compiler/types/dev-manifest.ts";
+import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { RuntimeGraph } from "../compiler/types/runtime-graph.ts";
 import { createDbAdapter } from "../runtime/db/factory.ts";
 import { applyMigrations } from "../runtime/db/migrate.ts";
@@ -49,7 +50,7 @@ import { loadWorkflowRegistry } from "../runtime/workflows/registry.ts";
 import { retryWorkflowRun } from "../runtime/workflows/retry-run.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
 import { canonicalJson } from "../compiler/primitives/serialize.ts";
-import type { DevServerHandle, DevServerOptions, DevServerState } from "./types.ts";
+import type { DevServerHandle, DevServerOptions, DevServerReloadResult, DevServerState } from "./types.ts";
 import { getTelemetrySummary, inspectTrace } from "../runtime/telemetry/flush.ts";
 import { processTelemetryBatch } from "../runtime/telemetry/process.ts";
 import { getRuntimeEnvStore } from "../runtime/context/create-context.ts";
@@ -100,7 +101,7 @@ async function readIncomingBody(request: IncomingMessage): Promise<Buffer | unde
 
 async function nodeRequestToFetch(
   request: IncomingMessage,
-  input: { host: string; port: number },
+  input: { host: string; port: number; signal?: AbortSignal },
 ): Promise<Request> {
   const headers = new Headers();
   for (const [name, value] of Object.entries(request.headers)) {
@@ -117,6 +118,7 @@ async function nodeRequestToFetch(
     method: request.method,
     headers,
     body: body ? new Blob([new Uint8Array(body)]) : undefined,
+    signal: input.signal,
     ...(body ? { duplex: "half" as const } : {}),
   };
   return new Request(url, init);
@@ -159,10 +161,13 @@ async function createNodeFetchServer(
 ): Promise<FetchServer> {
   let actualPort = input.port;
   const nodeServer: NodeHttpServer = createServer(async (request, response) => {
+    const controller = new AbortController();
+    response.once("close", () => controller.abort());
     try {
       const fetchRequest = await nodeRequestToFetch(request, {
         host: input.hostname,
         port: actualPort,
+        signal: controller.signal,
       });
       const fetchResponse = await fetchHandler(fetchRequest);
       await writeFetchResponse(response, fetchResponse);
@@ -431,6 +436,18 @@ function loadAgentToolRegistry(workspaceRoot: string): AgentToolRegistry | null 
     workspaceRoot,
     `${GENERATED_DIR}/agentTools.json`,
   );
+}
+
+async function listDatabaseTables(adapter: NonNullable<DevServerState["adapter"]>): Promise<string[]> {
+  const result = await adapter.query(
+    `SELECT c.relname AS table_name
+     FROM pg_catalog.pg_class c
+     JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public'
+       AND c.relkind IN ('r', 'p')
+     ORDER BY c.relname`,
+  );
+  return result.rows.map((row) => String(row.table_name));
 }
 
 type RuntimeAgentDefinition = {
@@ -800,6 +817,74 @@ export async function startDevServer(
   }
 
   const initialArtifacts = loadArtifacts();
+  let currentRoutes = devManifest.routes;
+  let currentRuntimeEntryCount = runtimeGraph.entries.length;
+
+  async function reloadGeneratedArtifacts(reason = "manual"): Promise<DevServerReloadResult> {
+    try {
+      const fresh = loadArtifacts();
+      currentRoutes = fresh.devManifest.routes;
+      currentRuntimeEntryCount = fresh.runtimeGraph.entries.length;
+      const diagnostics: Diagnostic[] = [];
+      let migrated = false;
+
+      if (serverState.adapter) {
+        const sqlPlan = readGeneratedJson<SqlPlan>(
+          workspaceRoot,
+          `${GENERATED_DIR}/sqlPlan.json`,
+        );
+        if (sqlPlan) {
+          migrated = true;
+          diagnostics.push(...(await applyMigrations(serverState.adapter, sqlPlan)));
+        }
+        if (diagnostics.every((diagnostic) => diagnostic.severity !== "error")) {
+          await ensureLiveInvalidationSchema(serverState.adapter);
+        }
+      }
+
+      if (
+        options.worker &&
+        serverState.adapter &&
+        diagnostics.every((diagnostic) => diagnostic.severity !== "error")
+      ) {
+        serverState.outboxWorker?.stop();
+        serverState.outboxWorker = startOutboxWorker(
+          serverState.adapter,
+          workspaceRoot,
+          fresh.tableMap,
+          fresh.runtimeGraph.entries,
+          { mock: options.mock, intervalMs: 2_000, telemetrySinks, workspaceRoot },
+        );
+      }
+
+      return {
+        ok: diagnostics.every((diagnostic) => diagnostic.severity !== "error"),
+        reason,
+        migrated,
+        routes: currentRoutes.length,
+        runtimeEntries: currentRuntimeEntryCount,
+        worker: serverState.outboxWorker?.isRunning() ? "running" : "stopped",
+        diagnostics,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        reason,
+        migrated: false,
+        routes: currentRoutes.length,
+        runtimeEntries: currentRuntimeEntryCount,
+        worker: serverState.outboxWorker?.isRunning() ? "running" : "stopped",
+        diagnostics: [
+          createDiagnostic({
+            severity: "error",
+            code: FORGE_DEV_SERVER_ERROR,
+            message: error instanceof Error ? error.message : "failed to reload generated artifacts",
+          }),
+        ],
+      };
+    }
+  }
+
   const liveManager = serverState.adapter
     ? createLiveSubscriptionManager({
         workspaceRoot,
@@ -815,7 +900,7 @@ export async function startDevServer(
       serverState.adapter,
       workspaceRoot,
       initialArtifacts.tableMap,
-      runtimeGraph.entries,
+      initialArtifacts.runtimeGraph.entries,
       { mock: options.mock, intervalMs: 2_000, telemetrySinks, workspaceRoot },
     );
   }
@@ -1532,12 +1617,11 @@ export async function startDevServer(
 
         if (request.method === "GET" && pathname === "/db/tables") {
           if (serverState.adapter) {
-            const result = await serverState.adapter.query(
-              `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`,
-            );
             return jsonResponse({
               ok: true,
-              tables: result.rows.map((row) => String(row.table_name)),
+              tables: serverState.adapter.kind === "memory"
+                ? Object.keys(tableMap).sort()
+                : await listDatabaseTables(serverState.adapter),
             });
           }
 
@@ -1969,13 +2053,19 @@ export async function startDevServer(
   const protocol = "http";
   const url = `${protocol}://${host}:${port}`;
 
-  return {
+  const handle: DevServerHandle = {
     host,
     port,
     url,
-    routes: devManifest.routes,
+    routes: currentRoutes,
     state: serverState,
     outboxWorker: serverState.outboxWorker,
+    reload: async (reason?: string) => {
+      const result = await reloadGeneratedArtifacts(reason);
+      handle.routes = currentRoutes;
+      handle.outboxWorker = serverState.outboxWorker;
+      return result;
+    },
     stop: () => {
       serverState.outboxWorker?.stop();
       liveManager?.stop();
@@ -1986,6 +2076,8 @@ export async function startDevServer(
       void adapter?.close().catch(() => undefined);
     },
   };
+
+  return handle;
 }
 
 export function resolveDevPort(explicit?: number): number {

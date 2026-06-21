@@ -127,9 +127,15 @@ export function createFixturePmAdapter(
     return argv.at(-1) ?? "";
   }
 
+  function extractWorkspaceFromArgv(argv: string[]): string | undefined {
+    const index = argv.indexOf("--workspace");
+    return index === -1 ? undefined : argv[index + 1];
+  }
+
   const executor: CommandExecutor = {
     async run(argv, options): Promise<CommandRunResult> {
       const spec = extractSpecFromArgv(argv);
+      const workspace = extractWorkspaceFromArgv(argv);
       onAdd?.(spec, options.cwd);
 
       for (const pkg of spec.split(/\s+/).filter(Boolean)) {
@@ -137,7 +143,7 @@ export function createFixturePmAdapter(
         seedInstalledPackage(options.cwd, name, "1.0.0");
       }
 
-      const pkgJsonPath = join(options.cwd, "package.json");
+      const pkgJsonPath = join(options.cwd, workspace ?? "", "package.json");
       const pkg = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
         dependencies?: Record<string, string>;
       };

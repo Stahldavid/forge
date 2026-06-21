@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=503d8bba2b5ee96972310db36e99b4fca744c13561e8f998f318e3ba3f0ee0c6
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=efbb4d093caec677fb650d6a8e12779b87dc5a62ca94a507919a1209bbe3fb8f
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.18",
-  "inputHash": "1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b",
+  "inputHash": "d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -671,6 +671,28 @@ export const testGraph = {
       ]
     },
     {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "react"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/cli.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages react"
+      ]
+    },
+    {
       "confidence": "weak",
       "cost": "fast",
       "covers": {
@@ -684,7 +706,7 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
-      "file": "tests/cli/cli.test.ts",
+      "file": "tests/cli/handoff.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1177,6 +1199,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/dev/dev-outbox-worker.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/dev/dev-reload.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1765,6 +1805,7 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "react",
           "zod"
         ],
         "policies": [],
@@ -1775,6 +1816,7 @@ export const testGraph = {
       "file": "tests/integration/add.test.ts",
       "kind": "integration",
       "reasons": [
+        "probable: packages react",
         "probable: packages zod"
       ]
     },
@@ -3703,6 +3745,28 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/templates/new-agent-workroom.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
           "ai",
           "react",
           "tsx"
@@ -3842,6 +3906,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/workflows/workflow-definition.test.ts",
+      "kind": "integration",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "standard",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/workflows/workflow-idempotency.test.ts",
       "kind": "integration",
       "reasons": []
@@ -3934,6 +4016,24 @@ export const testGraph = {
       },
       "file": "tests/workflows/workflow-subscriptions.test.ts",
       "kind": "integration",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/workspace/git-summary.test.ts",
+      "kind": "unknown",
       "reasons": []
     }
   ]

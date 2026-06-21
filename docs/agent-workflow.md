@@ -12,14 +12,26 @@ ForgeOS is **agent-native**: before editing files manually, humans and coding ag
 | Something failed | `forge do fix --json` |
 | Ready to hand off a change | `forge do verify --json` |
 | Frontend wiring looks wrong | `forge do connect-ui --json` |
-| Need project context first | `forge do inspect --json` |
+| New external agent entering the repo | `forge agent onboard --target codex --json` |
+| Need project health first | `forge status --json` |
+| Need to understand the current diff | `forge changed --json` |
+| Switching agents or resuming work | `forge handoff --json` |
+| Need agent context first | `forge agent print-context --json` |
 
 Prefer `forge do` **before** jumping to lower-level commands like `forge refactor`, `forge make`, or `forge add`.
+
+`forge handoff --json` is the best first read for a new external agent. It includes the dev snapshot plus a categorized git summary, so an agent can tell whether the current work is mostly source edits, tests, docs, generated artifacts, operational hook files, assets, or config.
+
+Use `forge changed --json` when the worktree is large. It gives the agent the human-authored surface first, separates generated artifacts, flags untracked or uncategorized paths, and returns the focused verification commands to run next.
 
 ## Basic usage
 
 ```bash
+forge agent onboard --target codex --json
 forge do inspect --json
+forge status --json
+forge changed --json
+forge handoff --json
 forge do "add stripe checkout flow" --json
 forge do fix --json
 forge do verify --json
@@ -33,6 +45,9 @@ Always pass `--json` when an AI agent is driving the session. The response is ma
 For app changes that touch backend and frontend, use this loop:
 
 ```bash
+forge status --json
+forge changed --json
+forge handoff --json
 forge do inspect --json
 forge dev --once --json
 forge make resource task --fields title:text,status:enum(open,done) --with-ui --dry-run --json
@@ -77,18 +92,19 @@ A typical `forge do` JSON response includes:
 | `filesToInspect` | Source files worth reading first |
 | `filesToChange` | Likely edit targets |
 | `risks` | Schema, policy, UI, or integration risks |
-| `concreteCommands` | Exact CLI commands to run next |
+| `commands` | Exact CLI commands to run next |
 | `nextAction` | Single recommended next command |
 
 Example workflow for an agent:
 
 ```txt
 1. forge do inspect --json
-2. Read filesToInspect
-3. Run concreteCommands from the plan
-4. forge generate && forge check --json
-5. forge do verify --json
-6. forge verify --strict
+2. forge changed --json
+3. Read filesToInspect
+4. Run commands from the plan
+5. forge generate && forge check --json
+6. forge do verify --json
+7. forge verify --strict
 ```
 
 Example JSON excerpt:
@@ -102,12 +118,14 @@ Example JSON excerpt:
     "src/forge/_generated/agentContract.json",
     "src/forge/_generated/runtimeRules.md"
   ],
-  "concreteCommands": [
-    "forge dev --once --json",
-    "forge inspect all --json",
-    "forge check --json"
+  "commands": [
+    "forge status --json",
+    "forge changed --json",
+    "forge handoff --json",
+    "forge agent print-context --json",
+    "forge inspect all --brief --json"
   ],
-  "nextAction": "forge dev --once --json"
+  "nextAction": "forge status --json"
 }
 ```
 
@@ -122,8 +140,12 @@ forge do inspect --json
 Equivalent to starting with:
 
 ```bash
+forge status --json
+forge changed --json
+forge handoff --json
 forge dev --once --json
-forge inspect all --json
+forge agent print-context --json
+forge agent hooks status --target codex --json
 forge check --json
 ```
 

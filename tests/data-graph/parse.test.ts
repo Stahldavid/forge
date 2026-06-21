@@ -25,6 +25,32 @@ describe("parseDefineTableSlice", () => {
     });
   });
 
+  test("preserves field named name in explicit fields object", () => {
+    const parsed = parseDefineTableSlice(
+      'defineTable({ name: "projects", fields: { id: "uuid", name: "text" } })',
+    );
+    expect(parsed).toEqual({
+      tableName: "projects",
+      fields: [
+        { name: "id", type: "uuid" },
+        { name: "name", type: "text" },
+      ],
+    });
+  });
+
+  test("preserves field named name in string literal table style", () => {
+    const parsed = parseDefineTableSlice(
+      'defineTable("projects", { id: "uuid", name: "text" })',
+    );
+    expect(parsed).toEqual({
+      tableName: "projects",
+      fields: [
+        { name: "id", type: "uuid" },
+        { name: "name", type: "text" },
+      ],
+    });
+  });
+
   test("returns null for non-defineTable slices", () => {
     expect(parseDefineTableSlice('query("users")')).toBeNull();
   });

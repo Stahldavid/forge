@@ -173,8 +173,13 @@ export function step<T extends (...args: any[]) => unknown>(
   return { kind: "step", name, handler };
 }
 
-export function workflow<T extends Record<string, unknown>>(definition: T): ForgeDefinition<T> {
-  return definition;
+export function workflow<T extends Record<string, unknown>>(
+  definition: T,
+): ForgeDefinition<T & { __forge: { kind: "workflow" } }> {
+  return {
+    ...definition,
+    __forge: { kind: "workflow" },
+  };
 }
 
 export {

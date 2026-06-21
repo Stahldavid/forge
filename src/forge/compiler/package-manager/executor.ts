@@ -88,11 +88,40 @@ export class PackageManagerCommandError extends Error {
   }
 }
 
+function quoteWindowsShellArg(arg: string): string {
+  if (/^[a-zA-Z0-9@._/:=-]+$/.test(arg)) {
+    return arg;
+  }
+  return `"${arg.replace(/(["^&|<>])/g, "^$1")}"`;
+}
+
+function spawnArgvForWindowsScript(originalArgv: string[], resolvedArgv: string[]): string[] {
+  const originalCommand = originalArgv[0] ?? resolvedArgv[0]!;
+  const command =
+    originalCommand.includes("\\") ||
+    originalCommand.includes("/") ||
+    isAbsolute(originalCommand)
+      ? resolvedArgv[0]!
+      : originalCommand;
+  const commandPart = command === originalCommand ? command : quoteWindowsShellArg(command);
+  const args = originalArgv.slice(1).map(quoteWindowsShellArg).join(" ");
+  return [
+    process.env.ComSpec ?? "cmd.exe",
+    "/d",
+    "/c",
+    `${commandPart}${args ? ` ${args}` : ""}`,
+  ];
+}
+
 export const defaultCommandExecutor: CommandExecutor = {
   async run(argv, options) {
     const resolvedArgv = resolvePackageManagerArgv(argv);
+    const spawnArgv =
+      process.platform === "win32" && /\.(?:cmd|bat)$/i.test(resolvedArgv[0] ?? "")
+        ? spawnArgvForWindowsScript(argv, resolvedArgv)
+        : resolvedArgv;
     return new Promise<CommandRunResult>((resolve, reject) => {
-      const child = spawn(resolvedArgv[0]!, resolvedArgv.slice(1), {
+      const child = spawn(spawnArgv[0]!, spawnArgv.slice(1), {
         cwd: options.cwd,
         env: options.env ?? process.env,
         windowsHide: true,

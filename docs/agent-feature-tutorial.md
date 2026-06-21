@@ -16,6 +16,7 @@ You have a generated `minimal-web` app and want to add a task resource with:
 ## 1. Ask for project context
 
 ```bash
+forge status --json
 forge do inspect --json
 ```
 
@@ -37,12 +38,13 @@ The response includes the next useful files and commands. A typical response sha
     "src/forge/_generated/runtimeRules.md",
     "src/forge/_generated/frontendGraph.json"
   ],
-  "concreteCommands": [
+  "commands": [
+    "forge status --json",
     "forge dev --once --json",
-    "forge inspect all --json",
+    "forge agent print-context --json",
     "forge check --json"
   ],
-  "nextAction": "forge dev --once --json"
+  "nextAction": "forge status --json"
 }
 ```
 

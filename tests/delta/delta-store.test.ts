@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
+import { runDeltaExplain } from "../../src/forge/delta/explain.ts";
+import { runDeltaSessionCommand } from "../../src/forge/delta/session.ts";
+import { runDeltaRepair, runDeltaStatus } from "../../src/forge/delta/status.ts";
+import { runDeltaTimeline } from "../../src/forge/delta/timeline.ts";
 import { redactDeltaPayload } from "../../src/forge/delta/redaction.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { recordParsedCliCommand } from "../../src/forge/delta/recorder.ts";
@@ -12,6 +16,26 @@ function tempWorkspace(name: string): string {
 }
 
 describe("delta store", () => {
+  test("delta repair dry-run plans a backup without mutating the store", async () => {
+    const root = tempWorkspace("delta-repair-preview");
+    try {
+      mkdirSync(join(root, ".forge", "delta", "delta.db"), { recursive: true });
+      writeFileSync(join(root, ".forge", "delta", "delta.db", "postmaster.pid"), "-42\n");
+
+      const result = await runDeltaRepair({ workspaceRoot: root, dryRun: true, yes: false });
+
+      expect(result.ok).toBe(true);
+      expect(result.applied).toBe(false);
+      expect(result.needsConfirmation).toBe(true);
+      expect(result.store).toBe(".forge/delta/delta.db");
+      expect(result.backupPath).toContain(".forge/delta/backups/delta.db.");
+      expect(result.actions.some((action) => action.kind === "backup")).toBe(true);
+      expect(result.nextActions).toContain("forge delta repair --yes --json");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("initializes, records operations, and returns status", async () => {
     const root = tempWorkspace("delta-store");
     try {
@@ -42,6 +66,58 @@ describe("delta store", () => {
       expect(timeline.some((entry) => entry.kind === "runtime.entry.executed")).toBe(true);
       expect(explain.type).toBe("runtime-entry");
     } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("allows status reads while blocking mutable repair when the local store is open", async () => {
+    const root = tempWorkspace("delta-busy");
+    let store: DeltaStore | null = null;
+    try {
+      store = await DeltaStore.open(root);
+      const dryRun = await runDeltaRepair({ workspaceRoot: root, dryRun: true, yes: false });
+      expect(dryRun.exitCode).toBe(0);
+
+      const status = await runDeltaStatus(root);
+      expect(status.exitCode).toBe(0);
+      if (status.exitCode !== 0) {
+        throw new Error("expected Delta status to read while a writer is open");
+      }
+      expect(status.recording).toBe(true);
+
+      const timeline = await runDeltaTimeline({ workspaceRoot: root, limit: 10 });
+      expect(timeline.exitCode).toBe(0);
+      expect(timeline.ok).toBe(true);
+
+      const explain = await runDeltaExplain({ workspaceRoot: root, thing: "billing.createInvoice" });
+      expect(explain.exitCode).toBe(0);
+      expect(explain.ok).toBe(true);
+
+      const sessions = await runDeltaSessionCommand({ workspaceRoot: root, subcommand: "list", limit: 10 });
+      expect(sessions.exitCode).toBe(0);
+      expect(sessions.ok).toBe(true);
+
+      const repair = await runDeltaRepair({ workspaceRoot: root, dryRun: false, yes: true });
+      expect(repair.exitCode).toBe(1);
+      expect(repair.diagnostics[0]?.code).toBe("FORGE_DELTA_BUSY");
+      expect(repair.busy).toMatchObject({
+        code: "FORGE_DELTA_BUSY",
+        relativeLockPath: ".forge/delta/delta.lock",
+        processAlive: true,
+        holderKnown: true,
+      });
+      expect(repair.busy?.pid).toBe(process.pid);
+      expect(repair.nextActions).toContain("forge agent timeline --json");
+      expect(repair.applied).toBe(false);
+
+      await store.close();
+      store = null;
+      const reopened = await runDeltaStatus(root);
+      expect(reopened.exitCode).toBe(0);
+    } finally {
+      if (store) {
+        await store.close();
+      }
       rmSync(root, { recursive: true, force: true });
     }
   });

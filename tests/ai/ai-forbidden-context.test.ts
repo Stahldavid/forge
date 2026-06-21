@@ -4,6 +4,7 @@ import { createSecretsContext } from "../../src/forge/runtime/secrets/create-con
 import { createNoopTelemetryContext } from "../../src/forge/runtime/telemetry/context.ts";
 import { FORGE_AI_FORBIDDEN_CONTEXT } from "../../src/forge/compiler/diagnostics/codes.ts";
 import { runCheckCommand } from "../../src/forge/cli/commands.ts";
+import { buildGenerateJson } from "../../src/forge/cli/output.ts";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
@@ -71,9 +72,17 @@ describe("ai forbidden context", () => {
     try {
       await run(defaultGenerateOptions(workspace));
       const result = await runCheckCommand(workspace);
-      expect(
-        result.errors.some((d) => d.code === FORGE_AI_FORBIDDEN_CONTEXT),
-      ).toBe(true);
+      const diagnostic = result.errors.find((d) => d.code === FORGE_AI_FORBIDDEN_CONTEXT);
+      expect(diagnostic).toBeDefined();
+      expect(diagnostic?.fixHint).toContain("Move AI calls");
+      expect(diagnostic?.suggestedCommands).toContain(
+        "forge repair diagnose --diagnostic FORGE_AI_FORBIDDEN_CONTEXT --json",
+      );
+      const json = buildGenerateJson(result) as { nextActions?: string[] };
+      expect(json.nextActions).toContain(
+        "forge repair diagnose --diagnostic FORGE_AI_FORBIDDEN_CONTEXT --json",
+      );
+      expect(json.nextActions).toContain("forge inspect ai --json");
     } finally {
       cleanupWorkspace(workspace);
     }

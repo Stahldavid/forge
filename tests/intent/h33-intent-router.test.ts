@@ -76,6 +76,8 @@ describe("H33 intent router", () => {
       expect(result.commands.map((item) => item.command)).toContain(
         "forge make resource notes --fields title:text,status:enum(open,closed) --with-ui --dry-run --json",
       );
+      expect(result.commands.map((item) => item.command)).toContain("forge changed --json");
+      expect(result.commands.map((item) => item.command)).toContain("forge handoff --json");
       expect(result.filesToInspect).toContain("src/forge/_generated/frontendGraph.json");
       expect(JSON.stringify(result.risks)).toContain("Frontend bindings");
     } finally {
@@ -92,6 +94,8 @@ describe("H33 intent router", () => {
         json: true,
       });
       expect(result.intent.kind).toBe("fix");
+      expect(result.commands.map((item) => item.command)).toContain("forge changed --json");
+      expect(result.commands.map((item) => item.command)).toContain("forge handoff --json");
       expect(result.commands.map((item) => item.command)).toContain("forge dev --once --json");
       expect(result.commands.map((item) => item.command)).toContain(
         "forge repair diagnose --from-last-test-run --json",
@@ -101,7 +105,44 @@ describe("H33 intent router", () => {
     }
   });
 
-  test("dev console exposes guided fix action before low-level stale commands", async () => {
+  test("forge do inspect includes handoff for agent resume context", () => {
+    const workspace = scaffoldGenerateWorkspace("intent-router-inspect");
+    try {
+      const result = runForgeDoCommand({
+        workspaceRoot: workspace,
+        objective: "understand project",
+        json: true,
+      });
+      expect(["inspect", "explain"]).toContain(result.intent.kind);
+      expect(result.commands[0]?.command).toBe("forge status --json");
+      expect(result.commands[1]?.command).toBe("forge changed --json");
+      expect(result.commands.map((item) => item.command)).toContain("forge handoff --json");
+      expect(result.commands.map((item) => item.command)).toContain("forge agent print-context --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("forge do verify starts from grouped changes before focused checks", () => {
+    const workspace = scaffoldGenerateWorkspace("intent-router-verify");
+    try {
+      const result = runForgeDoCommand({
+        workspaceRoot: workspace,
+        objective: "verify before handoff",
+        json: true,
+      });
+      const commands = result.commands.map((item) => item.command);
+      expect(result.intent.kind).toBe("verify");
+      expect(commands[0]).toBe("forge changed --json");
+      expect(commands).toContain("forge test plan --changed --json");
+      expect(commands).toContain("forge verify --changed");
+      expect(result.plan[0]?.commands).toContain("forge changed --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("dev console self-heals stale generated artifacts before suggesting next work", async () => {
     const workspace = scaffoldGenerateWorkspace("intent-router-dev-console");
     try {
       await runGenerate(defaultGenerateOptions(workspace));
@@ -111,9 +152,14 @@ describe("H33 intent router", () => {
         mode: "once",
         includeImpact: false,
       });
-      expect(cycle.ok).toBe(false);
-      expect(cycle.nextActions[0]?.command).toBe("forge do fix --json");
-      expect(cycle.nextActions.map((item) => item.command)).toContain("forge generate");
+      const generated = cycle.phases.find((phase) => phase.name === "generated");
+      expect(cycle.ok).toBe(true);
+      expect(generated?.message).toContain("regenerated");
+      expect(Number(generated?.details?.changed)).toBeGreaterThan(0);
+      expect(generated?.details?.sampleChanged as string[]).toContain("src/forge/_generated/appGraph.json");
+      expect(cycle.summary.agentContext.generatedFresh).toBe(true);
+      expect(cycle.summary.agentContext.generatedChanged).toBe(true);
+      expect(cycle.nextActions[0]?.command).toBe("forge dev");
     } finally {
       cleanupWorkspace(workspace);
     }

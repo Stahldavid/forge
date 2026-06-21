@@ -83,7 +83,10 @@ async function runInstall(
   executor: CommandExecutor,
 ): Promise<PmAddResult> {
   const ignoreScripts = opts.ignoreScripts ?? true;
-  const argv = buildAddCommand(pm, spec, { ignoreScripts });
+  const argv = buildAddCommand(pm, spec, {
+    ignoreScripts,
+    workspace: opts.workspace,
+  });
   const lockBefore = hashLockfiles(opts.cwd, pm);
 
   const result = await executor.run(argv, { cwd: opts.cwd });

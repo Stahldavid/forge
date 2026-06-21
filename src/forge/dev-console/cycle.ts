@@ -26,8 +26,11 @@ import { runImpactCommand } from "../impact/index.ts";
 import type { TestRunRecord } from "../impact/types.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import type { UiRunReport } from "../ui/types.ts";
+import { buildDiffPlanFromChangeSummary, categorizeFiles, summarizeChangeTypes } from "../workspace/change-summary.ts";
 import type {
   DevConsoleCycle,
+  DevConsoleAgentContext,
+  DevConsoleGeneratedSummary,
   DevConsoleNextAction,
   DevConsoleOptions,
   DevConsolePhase,
@@ -117,17 +120,30 @@ function skippedPhase(
   };
 }
 
+function compactFileList(files: string[], sampleSize = 12): {
+  count: number;
+  sample: string[];
+  hidden: number;
+} {
+  return {
+    count: files.length,
+    sample: files.slice(0, sampleSize),
+    hidden: Math.max(0, files.length - sampleSize),
+  };
+}
+
 async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase> {
   const start = performance.now();
   const result = await runGenerate({
     workspaceRoot,
-    check: true,
+    check: false,
     dryRun: false,
     json: false,
     concurrency: 4,
   });
   const diagnostics = [...result.errors, ...result.warnings];
   const durationMs = msSince(start);
+  const changed = compactFileList(result.changed);
   return {
     name: "generated",
     ok: result.exitCode === 0,
@@ -135,11 +151,18 @@ async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase
     diagnostics,
     durationMs,
     details: {
-      changed: result.changed,
+      changed: changed.count,
+      sampleChanged: changed.sample,
+      hiddenChanged: changed.hidden,
       unchangedCount: result.unchanged.length,
+      fullCommand: "forge generate --json",
       ...(result.cache ? { cache: result.cache } : {}),
     },
-    message: result.exitCode === 0 ? "generated artifacts are up to date" : "generated artifacts are stale",
+    message: result.exitCode === 0
+      ? result.changed.length > 0
+        ? `regenerated ${result.changed.length} generated artifacts`
+        : "generated artifacts are up to date"
+      : "generated artifacts could not be regenerated",
   };
 }
 
@@ -305,6 +328,39 @@ function defaultFrontendSummary(workspaceRoot: string): FrontendSummary {
   };
 }
 
+function nextPreviewPort(webUrl?: string): number {
+  if (!webUrl) {
+    return 5174;
+  }
+  try {
+    const parsed = new URL(webUrl);
+    const port = parsed.port ? Number(parsed.port) : parsed.protocol === "https:" ? 443 : 80;
+    return Number.isFinite(port) && port > 0 ? port + 1 : 5174;
+  } catch {
+    return 5174;
+  }
+}
+
+function buildGeneratedSummary(phaseItem: DevConsolePhase | undefined): DevConsoleGeneratedSummary {
+  const changedFiles = Number(phaseItem?.details?.changed ?? 0);
+  const sampleChanged = Array.isArray(phaseItem?.details?.sampleChanged)
+    ? phaseItem.details.sampleChanged.filter((item): item is string => typeof item === "string")
+    : [];
+  const hiddenChanged = Number(phaseItem?.details?.hiddenChanged ?? 0);
+  return {
+    ok: phaseItem?.ok === true,
+    state: phaseItem?.ok === true
+      ? changedFiles > 0 ? "regenerated" : "fresh"
+      : "stale-risk",
+    changedFiles,
+    sampleChanged,
+    hiddenChanged,
+    message: phaseItem?.message ?? "generated phase did not report a message",
+    command: "forge generate",
+    checkCommand: "forge generate --check --json",
+  };
+}
+
 function buildDevSummary(input: {
   workspaceRoot: string;
   ok: boolean;
@@ -322,6 +378,11 @@ function buildDevSummary(input: {
   );
   const warnings = input.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
   const errors = input.diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
+  const webUrl = frontend.devUrl;
+  const generated = buildGeneratedSummary(input.phases.find((item) => item.name === "generated"));
+  const targetAppPort = nextPreviewPort(webUrl);
+  const targetAppUrl = `http://127.0.0.1:${targetAppPort}`;
+  const isStudioSelfPreview = Boolean(webUrl && webUrl === targetAppUrl);
   return {
     project: {
       root: input.workspaceRoot,
@@ -334,8 +395,19 @@ function buildDevSummary(input: {
     },
     urls: {
       api: frontend.apiUrl ?? "http://127.0.0.1:3765",
-      ...(frontend.devUrl ? { web: frontend.devUrl } : {}),
+      ...(webUrl ? { web: webUrl } : {}),
+      suggestedPreview: targetAppUrl,
     },
+    preview: {
+      ...(webUrl ? { studioUrl: webUrl } : {}),
+      targetAppUrl,
+      targetAppPort,
+      isStudioSelfPreview,
+      note: webUrl
+        ? `Use ${targetAppUrl} for the app being built when ${webUrl} is Forge Studio itself.`
+        : `No web app was detected; ${targetAppUrl} is the default target app preview URL for Studio attach flows.`,
+    },
+    generated,
     frontend,
     capabilities: capabilityMap?.summary ?? {
       covered: 0,
@@ -343,6 +415,11 @@ function buildDevSummary(input: {
       frontendOnly: 0,
       warnings: 0,
     },
+    agentContext: buildAgentContext({
+      phases: input.phases,
+      diagnostics: input.diagnostics,
+      nextActions: input.nextActions,
+    }),
     ...(input.nextActions[0] ? { primaryAction: input.nextActions[0] } : {}),
   };
 }
@@ -370,18 +447,28 @@ function runImpactPhase(workspaceRoot: string): DevConsolePhase {
   }
   const report = result.report;
   const summary: ImpactSummary | undefined = report
-    ? {
-      changedFiles: report.changedFiles,
-      risk: report.risk.level,
-      recommendedChecks: report.recommendedChecks,
-    }
+    ? (() => {
+      const changeSummary = categorizeFiles(report.changedFiles);
+      return {
+        changedFiles: report.changedFiles.length,
+        sampleChangedFiles: report.changedFiles.slice(0, 12),
+        hiddenChangedFiles: Math.max(0, report.changedFiles.length - 12),
+        changeSummary,
+        risk: report.risk.level,
+        recommendedChecks: report.recommendedChecks,
+        fullCommand: "forge impact --changed --json",
+      };
+    })()
     : undefined;
+  const changeTypes = summary ? summarizeChangeTypes(summary.changeSummary) : "";
   return phase(
     "impact",
     result.diagnostics,
     msSince(start),
     summary ? { summary } : undefined,
-    summary && summary.changedFiles.length > 0 ? `${summary.changedFiles.length} changed files detected` : "no changed files detected",
+    summary && summary.changedFiles > 0
+      ? `${summary.changedFiles} changed files detected${changeTypes ? `: ${changeTypes}` : ""}`
+      : "no changed files detected",
   );
 }
 
@@ -512,7 +599,12 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
 
   const impact = phases.find((item) => item.name === "impact");
   const summary = impact?.details?.summary as ImpactSummary | undefined;
-  if (summary && summary.changedFiles.length > 0) {
+  if (summary && summary.changedFiles > 0) {
+    actions.push({
+      command: "forge changed --json",
+      reason: "changed files were detected; inspect grouped human and generated changes first",
+      confidence: "high",
+    });
     actions.push({
       command: "forge do verify --json",
       reason: "changed files were detected; use the guided verification path",
@@ -539,6 +631,55 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
   }
 
   return uniqueActions(actions).slice(0, 12);
+}
+
+function phaseDetails<T>(phases: DevConsolePhase[], name: DevConsolePhase["name"], key: string): T | undefined {
+  return phases.find((item) => item.name === name)?.details?.[key] as T | undefined;
+}
+
+function buildAgentContext(input: {
+  phases: DevConsolePhase[];
+  diagnostics: Diagnostic[];
+  nextActions: DevConsoleNextAction[];
+}): DevConsoleAgentContext {
+  const generated = input.phases.find((item) => item.name === "generated");
+  const frontend = phaseDetails<FrontendSummary>(input.phases, "frontend", "summary");
+  const impact = phaseDetails<ImpactSummary>(input.phases, "impact", "summary");
+  const errorDiagnostics = input.diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  const warningDiagnostics = input.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  const generatedChangedFiles = Number(generated?.details?.changed ?? 0);
+  const suggestedReadFiles = [
+    "AGENTS.md",
+    "src/forge/_generated/agentContract.json",
+    "src/forge/_generated/appMap.md",
+    "src/forge/_generated/runtimeRules.md",
+    "src/forge/_generated/operationPlaybooks.md",
+    ...(frontend?.present ? ["src/forge/_generated/frontendGraph.json"] : []),
+    ...input.diagnostics.flatMap((diagnostic) => diagnostic.docs ?? []),
+    ...input.diagnostics.flatMap((diagnostic) => diagnostic.file ? [diagnostic.file] : []),
+  ];
+  const fullCommands = [
+    "forge inspect all --full --json",
+    "forge changed --json",
+    "forge impact --changed --json",
+    "forge generate --json",
+  ];
+  return {
+    safeToEdit: generated?.ok === true && errorDiagnostics.length === 0,
+    generatedFresh: generated?.ok === true,
+    generatedChanged: generatedChangedFiles > 0,
+    generatedChangedFiles,
+    frontendReady: frontend?.present ? frontend.bridgeFiles.length > 0 : false,
+    changedFiles: impact?.changedFiles ?? 0,
+    ...(impact?.changeSummary ? { changeSummary: impact.changeSummary } : {}),
+    ...(impact?.changeSummary ? { diffPlan: buildDiffPlanFromChangeSummary(impact.changeSummary) } : {}),
+    blockingIssues: errorDiagnostics.map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`).slice(0, 8),
+    recommendedReadFiles: [...new Set(suggestedReadFiles)].slice(0, 12),
+    recommendedCommands: input.nextActions.map((action) => action.command).slice(0, 8),
+    useFullCommands: warningDiagnostics.length > 0 || (impact?.hiddenChangedFiles ?? 0) > 0
+      ? fullCommands
+      : fullCommands.slice(0, 1),
+  };
 }
 
 export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<DevConsoleCycle> {
@@ -603,6 +744,17 @@ export function formatDevConsoleHuman(cycle: DevConsoleCycle): string {
   lines.push(`Project: ${cycle.summary.project.root}`);
   lines.push(`API: ${cycle.summary.urls.api}`);
   lines.push(`Web: ${cycle.summary.urls.web ?? "none detected"}`);
+  lines.push(`Target preview: ${cycle.summary.preview.targetAppUrl}`);
+  lines.push(
+    `Generated: ${cycle.summary.generated.state}` +
+      (cycle.summary.generated.changedFiles > 0 ? ` (${cycle.summary.generated.changedFiles} changed)` : ""),
+  );
+  if (cycle.summary.agentContext.diffPlan) {
+    lines.push(`Diff focus: ${cycle.summary.agentContext.diffPlan.summary}`);
+  }
+  if (cycle.summary.preview.isStudioSelfPreview) {
+    lines.push("Preview warning: target preview points at the Studio URL");
+  }
   lines.push(
     `Frontend: ${cycle.summary.frontend.present ? cycle.summary.frontend.framework : "none"} ` +
       `(${cycle.summary.frontend.routes.length} routes, ${cycle.summary.frontend.bindings.length} bindings)`,

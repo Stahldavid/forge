@@ -1,5 +1,6 @@
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { ImpactedSystems, ImpactSource } from "../impact/types.ts";
+import type { CategorizedFileSummary, ChangeType, DiffPlan } from "../workspace/change-summary.ts";
 
 export type ReviewSubcommand = "run" | "inspect" | "list" | "explain";
 export type ReviewMode = "quick" | "standard" | "strict";
@@ -26,6 +27,7 @@ export interface ReviewCommandOptions {
   json: boolean;
   md: boolean;
   sarif: boolean;
+  full?: boolean;
   write: boolean;
   changed: boolean;
   staged: boolean;
@@ -59,6 +61,16 @@ export interface ReviewChanged {
   packageFiles: string[];
   deployFiles: string[];
 }
+
+export interface ReviewFocus {
+  first: "authoredChanges";
+  then: "derivedArtifacts";
+  generatedIsDerived: boolean;
+  suggestedOrder: ChangeType[];
+  summary: string;
+}
+
+export type ReviewDiffPlan = DiffPlan;
 
 export interface ReviewSummary {
   title: string;
@@ -130,6 +142,9 @@ export interface ReviewReport {
   risk: ReviewRisk;
   findings: ReviewFinding[];
   changed: ReviewChanged;
+  changeSummary: CategorizedFileSummary;
+  reviewFocus: ReviewFocus;
+  diffPlan: ReviewDiffPlan;
   impacted: ImpactedSystems;
   checks: ReviewCheckResult[];
   recommendedCommands: string[];

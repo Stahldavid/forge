@@ -15,6 +15,7 @@ export function serializeSqlPlanJson(plan: SqlPlan): string {
     tables: plan.tables.map((change) => ({
       kind: change.kind,
       table: change.table,
+      accessName: change.accessName,
       columns: change.columns,
       sql: change.sql,
     })),
@@ -69,6 +70,9 @@ export function buildTableMap(
         ? { tenantScoped: true, tenantIdColumn }
         : {}),
     };
+    if (change.accessName && change.accessName !== change.table) {
+      map[change.accessName] = map[change.table]!;
+    }
   }
 
   return map;

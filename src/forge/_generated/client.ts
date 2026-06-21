@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=1c1ef7efb2ac73b43268abb18f6939fcb29db9810b977fe6c343d7c6b2bb8b0b content=beb8a95a58b094f5f4f5407dc18f0e22f9f88c30747976a374dacea44feef3f2
+// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=a9ef50bacbd3eafa1a6b2048ca37597e5b1266f73b64b1c7e7ba258615b60841
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
@@ -301,19 +301,24 @@ class ForgeHttpClient implements ForgeClient {
     const reader = response.body.getReader();
     let buffer = "";
 
-    while (!signal.aborted) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
+    try {
+      while (!signal.aborted) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        let boundary = buffer.indexOf("\n\n");
+        while (boundary !== -1) {
+          const frame = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2);
+          this.handleSseFrame(frame, onSnapshot, onError);
+          boundary = buffer.indexOf("\n\n");
+        }
       }
-      buffer += decoder.decode(value, { stream: true });
-      let boundary = buffer.indexOf("\n\n");
-      while (boundary !== -1) {
-        const frame = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
-        this.handleSseFrame(frame, onSnapshot, onError);
-        boundary = buffer.indexOf("\n\n");
-      }
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
     }
   }
 

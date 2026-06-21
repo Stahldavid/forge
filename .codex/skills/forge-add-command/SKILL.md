@@ -13,7 +13,7 @@ Rules:
 - Commands must not use `ctx.secrets` or `ctx.ai`.
 
 Steps:
-1. Run `forge inspect all --json`.
+1. Run `forge status --json`, `forge handoff --json`, and `forge agent print-context --json`.
 2. Prefer `forge make command <resource.action> --table <table> --policy <policy>`.
 3. Run `forge generate`, `forge check`, and `forge verify --changed`.
 4. Finish with `forge verify --strict`.

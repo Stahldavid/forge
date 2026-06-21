@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
@@ -255,24 +255,224 @@ interface DeltaOperationContext {
   commands: string[];
 }
 
+export type DeltaStoreAccess = "read" | "write";
+
+export class DeltaStoreBusyError extends Error {
+  readonly code = "FORGE_DELTA_BUSY" as const;
+
+  constructor(
+    readonly lockPath: string,
+    readonly holder: Record<string, unknown> | null,
+  ) {
+    const holderText = holder?.pid ? ` by pid ${String(holder.pid)}` : "";
+    super(`Forge Delta local store is busy${holderText}`);
+    this.name = "DeltaStoreBusyError";
+  }
+}
+
+export interface DeltaStoreBusyInfo {
+  code: "FORGE_DELTA_BUSY";
+  lockPath: string;
+  relativeLockPath: string;
+  pid?: number;
+  processAlive: boolean;
+  createdAt?: string;
+  ageMs?: number;
+  cwd?: string;
+  command?: string;
+  holderKnown: boolean;
+}
+
+interface DeltaStoreLock {
+  path: string;
+  token: string;
+}
+
+function getDeltaLockPath(workspaceRoot: string): string {
+  return join(workspaceRoot, ".forge", "delta", "delta.lock");
+}
+
+function readLockHolder(lockPath: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(readFileSync(lockPath, "utf8")) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function processLooksAlive(pid: unknown): boolean {
+  if (typeof pid !== "number" || !Number.isInteger(pid) || pid <= 0) {
+    return false;
+  }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return Boolean(error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "EPERM");
+  }
+}
+
+function lockLooksStale(holder: Record<string, unknown> | null): boolean {
+  if (!holder) {
+    return true;
+  }
+  if (processLooksAlive(holder.pid)) {
+    return false;
+  }
+  const createdAt = typeof holder.createdAt === "string" ? Date.parse(holder.createdAt) : NaN;
+  return !Number.isFinite(createdAt) || Date.now() - createdAt > 30_000;
+}
+
+export function describeDeltaStoreBusy(
+  error: DeltaStoreBusyError,
+  workspaceRoot: string,
+  now = Date.now(),
+): DeltaStoreBusyInfo {
+  const holder = error.holder;
+  const pid = typeof holder?.pid === "number" && Number.isInteger(holder.pid) && holder.pid > 0
+    ? holder.pid
+    : undefined;
+  const createdAt = typeof holder?.createdAt === "string" ? holder.createdAt : undefined;
+  const createdMs = createdAt ? Date.parse(createdAt) : NaN;
+  const cwd = typeof holder?.cwd === "string" ? holder.cwd : undefined;
+  const command = typeof holder?.command === "string" ? holder.command : undefined;
+  return {
+    code: "FORGE_DELTA_BUSY",
+    lockPath: error.lockPath,
+    relativeLockPath: normalizePath(relative(workspaceRoot, error.lockPath)),
+    ...(pid ? { pid } : {}),
+    processAlive: pid ? processLooksAlive(pid) : false,
+    ...(createdAt ? { createdAt } : {}),
+    ...(Number.isFinite(createdMs) ? { ageMs: Math.max(0, now - createdMs) } : {}),
+    ...(cwd ? { cwd } : {}),
+    ...(command ? { command } : {}),
+    holderKnown: Boolean(holder),
+  };
+}
+
+function acquireDeltaStoreLock(workspaceRoot: string): DeltaStoreLock {
+  const lockPath = getDeltaLockPath(workspaceRoot);
+  mkdirSync(dirname(lockPath), { recursive: true });
+  const token = `${process.pid}:${Date.now()}:${createDeltaId("op")}`;
+  const content = `${JSON.stringify({
+    pid: process.pid,
+    token,
+    createdAt: new Date().toISOString(),
+    cwd: process.cwd(),
+    command: process.argv.slice(0, 6).join(" "),
+  }, null, 2)}\n`;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const fd = openSync(lockPath, "wx");
+      try {
+        writeFileSync(fd, content, "utf8");
+      } finally {
+        closeSync(fd);
+      }
+      return { path: lockPath, token };
+    } catch (error) {
+      const holder = readLockHolder(lockPath);
+      if (attempt === 0 && lockLooksStale(holder)) {
+        try {
+          unlinkSync(lockPath);
+          continue;
+        } catch {
+          // Another process may have refreshed the lock first; report the live holder below.
+        }
+      }
+      const code = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
+      if (code === "EEXIST" || existsSync(lockPath)) {
+        throw new DeltaStoreBusyError(lockPath, holder);
+      }
+      throw error;
+    }
+  }
+
+  throw new DeltaStoreBusyError(lockPath, readLockHolder(lockPath));
+}
+
+export function probeDeltaStoreBusy(workspaceRoot: string): DeltaStoreBusyError | null {
+  const lockPath = getDeltaLockPath(workspaceRoot);
+  if (!existsSync(lockPath)) {
+    return null;
+  }
+  const holder = readLockHolder(lockPath);
+  if (lockLooksStale(holder)) {
+    try {
+      unlinkSync(lockPath);
+      return null;
+    } catch {
+      return new DeltaStoreBusyError(lockPath, readLockHolder(lockPath));
+    }
+  }
+  return new DeltaStoreBusyError(lockPath, holder);
+}
+
+function releaseDeltaStoreLock(lock: DeltaStoreLock): void {
+  const holder = readLockHolder(lock.path);
+  if (holder?.token !== lock.token) {
+    return;
+  }
+  try {
+    unlinkSync(lock.path);
+  } catch {
+    // Best effort; stale locks are cleaned by the next opener when their process is gone.
+  }
+}
+
+function deltaStoreInitialized(storePath: string): boolean {
+  return existsSync(join(storePath, "PG_VERSION"));
+}
+
 export class DeltaStore {
+  private closed = false;
+
   private constructor(
     readonly workspaceRoot: string,
     readonly storePath: string,
     private readonly adapter: DbAdapter,
+    private readonly lock: DeltaStoreLock | null,
   ) {}
 
-  static async open(workspaceRoot: string): Promise<DeltaStore> {
+  static async open(workspaceRoot: string, options: { access?: DeltaStoreAccess } = {}): Promise<DeltaStore> {
     const storePath = getDeltaStorePath(workspaceRoot);
     mkdirSync(dirname(storePath), { recursive: true });
-    const adapter = await createPgliteAdapter(storePath);
-    const store = new DeltaStore(workspaceRoot, storePath, adapter);
-    await store.init();
-    return store;
+    const initializedBeforeOpen = deltaStoreInitialized(storePath);
+    const lock = options.access === "read" ? null : acquireDeltaStoreLock(workspaceRoot);
+    let store: DeltaStore | null = null;
+    try {
+      const adapter = await createPgliteAdapter(storePath);
+      store = new DeltaStore(workspaceRoot, storePath, adapter, lock);
+      if (options.access !== "read" || !initializedBeforeOpen) {
+        await store.init();
+      }
+      return store;
+    } catch (error) {
+      if (store) {
+        await store.close().catch(() => undefined);
+      } else if (lock) {
+        releaseDeltaStoreLock(lock);
+      }
+      throw error;
+    }
   }
 
   async close(): Promise<void> {
-    await this.adapter.close();
+    if (this.closed) {
+      return;
+    }
+    this.closed = true;
+    try {
+      await this.adapter.close();
+    } finally {
+      if (this.lock) {
+        releaseDeltaStoreLock(this.lock);
+      }
+    }
   }
 
   async init(): Promise<void> {

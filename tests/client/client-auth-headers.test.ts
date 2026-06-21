@@ -150,12 +150,66 @@ describe("client auth headers", () => {
         );
       });
 
-      streamController?.close();
+      try {
+        streamController?.close();
+      } catch (error) {
+        if (!(error instanceof TypeError)) {
+          throw error;
+        }
+      }
 
       expect((snapshot as { traceId?: string }).traceId).toBe("trace-live");
       expect(seenHeaders["x-forge-user-id"]).toBe("u1");
       expect(seenHeaders["x-forge-tenant-id"]).toBe(tenantA);
       expect(seenHeaders["x-forge-role"]).toBe("member");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test.serial("liveQuery unsubscribe cancels the response stream", async () => {
+    const originalFetch = globalThis.fetch;
+    let streamCanceled = false;
+    const encoder = new TextEncoder();
+
+    globalThis.fetch = (async () => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller: ReadableStreamDefaultController<Uint8Array>) {
+          controller.enqueue(
+            encoder.encode(
+              'event: snapshot\ndata: {"type":"snapshot","subscriptionId":"sub-1","revision":1,"data":[],"traceId":"trace-live"}\n\n',
+            ),
+          );
+        },
+        cancel() {
+          streamCanceled = true;
+        },
+      });
+
+      return new Response(stream, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      });
+    }) as unknown as typeof fetch;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const client = generated.createForgeClient({
+          url: "http://127.0.0.1:3765",
+          auth: { userId: "u1", tenantId: tenantA, role: "member" },
+        });
+        const unsubscribe = client.liveQuery(
+          generated.api.liveQueries.watchUser,
+          {},
+          () => {
+            unsubscribe();
+            setTimeout(resolve, 0);
+          },
+          reject,
+        );
+      });
+
+      expect(streamCanceled).toBe(true);
     } finally {
       globalThis.fetch = originalFetch;
     }

@@ -6,9 +6,36 @@ Prefer `forge add` over manual `npm install` so the compiler can build the **run
 
 This is one of the main ForgeOS workflows. A package install is where agents often break apps: wrong SDK call, missing secret, unsafe runtime import, no mock, no generated docs, or no verification path. `forge add` turns integration setup into a deterministic compiler input that agents and humans can inspect.
 
-## Supported aliases
+## Packages and recipes
 
-Top-level CLI aliases (reference integrations):
+`forge add` accepts both npm package specs and Forge integration recipes.
+
+Use a regular package name when you only need a dependency:
+
+```bash
+forge add lucide-react --workspace web
+forge add frontend:lucide-react
+forge add hono --backend
+forge add date-fns
+forge add package zod
+```
+
+Use an integration recipe when Forge should install packages and emit adapters, secrets, docs, and testkits:
+
+```bash
+forge add stripe
+forge add integration stripe
+```
+
+When a target matches a known recipe, the bare form keeps the recipe behavior for compatibility. Use `forge add package <spec>` to force a normal npm package install for a name that also has a recipe.
+
+Frontend/backend package targets are normal npm package installs with clearer intent:
+
+- `forge add frontend:<package>` or `forge add <package> --frontend` installs into the detected frontend package directory (`web`, `frontend`, `client`, `apps/web`, or `packages/web`).
+- `forge add backend:<package>` or `forge add <package> --backend` installs into the Forge app root package.
+- `--workspace <path>` is still the most explicit form and wins when you need a specific package directory.
+
+Top-level recipe aliases:
 
 | Alias | npm package(s) | Typical use |
 |-------|----------------|-------------|
@@ -20,10 +47,10 @@ Top-level CLI aliases (reference integrations):
 
 AI provider aliases are also available (for example `ai-provider-openai`, `ai-provider-anthropic`, `ai-gateway`). These resolve through the recipe registry but are typically added via their package names after `forge add ai`.
 
-Unknown aliases fail with `FORGE_UNKNOWN_ALIAS`:
+Unknown explicit integration aliases fail with `FORGE_UNKNOWN_ALIAS`:
 
 ```bash
-forge add unknown-vendor
+forge add integration unknown-vendor
 # supported: stripe, posthog, sentry, zod, ai
 ```
 
@@ -32,6 +59,7 @@ forge add unknown-vendor
 ```bash
 forge add stripe --dry-run --json
 forge add stripe
+forge add lucide-react --workspace web
 forge generate
 forge check --json
 forge verify --standard
@@ -39,10 +67,11 @@ forge verify --standard
 
 Recommended order:
 
-1. **`forge add <alias>`** — install package(s) and emit integration artifacts.
-2. **`forge generate`** — refresh the full generated contract if other sources changed.
-3. **`forge check`** — run guardrails (import guards, secret usage, AI/query rules).
-4. **`forge verify --standard`** — run the normal development gate.
+1. **`forge add <package>`** — install a normal npm package and refresh generated package evidence.
+2. **`forge add <alias>`** — when the target is a known recipe, install package(s) and emit integration artifacts.
+3. **`forge generate`** — refresh the full generated contract if other sources changed.
+4. **`forge check`** — run guardrails (import guards, secret usage, AI/query rules).
+5. **`forge verify --standard`** — run the normal development gate.
 
 ## Flags
 
@@ -53,14 +82,22 @@ Recommended order:
 | `--runtime-inspect` | Run deeper package analysis (slower; optional) |
 | `--sandbox-backend <mode>` | Sandbox backend for runtime inspection |
 | `--allow-scripts` | Allow package install scripts (default: scripts disabled) |
+| `--workspace <path>` | Install a normal package in that package directory, such as `web/package.json` |
+| `--frontend` | Install a normal package into the detected frontend package directory |
+| `--backend` | Install a normal package into the Forge app root package |
 
 Example dry run:
 
 ```bash
 forge add stripe --dry-run --json
+forge add lucide-react --workspace web --dry-run --json
+forge add frontend:lucide-react --dry-run --json
+forge add hono --backend --dry-run --json
 ```
 
-The JSON response includes `changed`, `warnings`, `errors`, and `failureKind` when applicable.
+The JSON response includes `mode`, `targetKind`, `target`, `explanation`, `changed`, `warnings`, `errors`, and `failureKind` when applicable. `targetKind` is `npm-package` for normal package installs and `forge-integration` for recipe-backed integrations, so Studio and external agents can explain what will happen without inferring it from filenames. For normal npm packages it also includes `packageSpec`, `packageName`, `packageTarget`, `packageTargetReason`, `packageManager`, `installCommand`, `nativeInstallCommand`, `avoidedManualCommand`, `installCwd`, optional `installWorkspace`, and package-oriented `nextActions` such as `forge deps inspect <package> --json`, `forge generate`, and `forge check --json`. `packageSpec` preserves the exact install request, such as `@tanstack/react-query@latest`; `packageName` strips the version/range and is what Forge uses for `forge deps inspect`. With `--workspace web` or `frontend:<package>`, `installCwd` is the resolved frontend directory and `installWorkspace` records the semantic target; Forge does not require npm/pnpm/yarn workspace metadata just to add a frontend package. `avoidedManualCommand` shows the native package-manager command Forge is managing so users do not need to run `npm install`, `bun add`, `pnpm add`, or `yarn add` separately. For recipe-backed integrations it includes `recipeVersion`, `recipePackages`, `requiredSecrets`, `optionalSecrets`, and integration-oriented `nextActions` such as `forge deps inspect <package> --json` and `forge secrets check --json`. This lets an external code agent show the exact install or integration plan before mutating `package.json`.
+
+Human output prints the same normal-package essentials: package spec, normalized package name when different, target, package target, target reason, install cwd, install workspace, install command, avoided manual command, and the same `Next:` commands returned by JSON.
 
 ## What gets generated
 
@@ -111,6 +148,7 @@ forge deps inspect stripe --json
 ```
 
 Returns package version, classified contexts, export summary, and diagnostics.
+Versioned specs are accepted for convenience; `forge deps inspect @tanstack/react-query@latest --json` normalizes to package `@tanstack/react-query` and preserves the original spec as `requestedPackageSpec` in JSON output. If the package is missing, diagnostics mention both the normalized package and the requested spec.
 
 ### Look up a symbol
 

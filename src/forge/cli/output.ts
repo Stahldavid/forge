@@ -26,32 +26,164 @@ export function formatJsonResult(payload: unknown): string {
   return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
+function artifactGroup(path: string): string {
+  if (path === "AGENTS.md" || path.includes("/agent") || path.includes("\\agent") || path.includes("agent")) {
+    return "agent";
+  }
+  if (path.includes("frontend") || path.includes("react") || path.includes("vue") || path.includes("ui")) {
+    return "frontend";
+  }
+  if (path.includes("dataGraph") || path.includes("sqlPlan") || path.includes("db.") || path.includes("tenantScope")) {
+    return "schema";
+  }
+  if (path.includes("api") || path.includes("client") || path.includes("runtime")) {
+    return "api";
+  }
+  if (path.startsWith("src/forge/_generated") || path.includes("\\src\\forge\\_generated")) {
+    return "generated";
+  }
+  return "other";
+}
+
+function summarizeGeneratedArtifacts(paths: string[]): Record<string, number> {
+  const groups: Record<string, number> = {};
+  for (const path of paths) {
+    const group = artifactGroup(path);
+    groups[group] = (groups[group] ?? 0) + 1;
+  }
+  return groups;
+}
+
+function buildGenerateNextActions(result: GenerateResult): string[] {
+  const suggested = new Set<string>();
+  for (const diagnostic of [...result.errors, ...result.warnings]) {
+    for (const command of diagnostic.suggestedCommands ?? []) {
+      suggested.add(command);
+    }
+  }
+  if (result.exitCode !== 0) {
+    for (const diagnostic of result.errors.slice(0, 3)) {
+      if (!diagnostic.suggestedCommands?.some((command) => command.includes("forge repair diagnose"))) {
+        suggested.add(`forge repair diagnose --diagnostic ${diagnostic.code} --json`);
+      }
+    }
+    suggested.add("forge check --json");
+    return [...suggested];
+  }
+  if (result.changed.length > 0) {
+    suggested.add("forge check --json");
+    suggested.add("forge verify --smoke");
+    return [...suggested];
+  }
+  suggested.add("forge check --json");
+  return [...suggested];
+}
+
 export function buildGenerateJson(result: GenerateResult): Record<string, unknown> {
+  const diagnostics = [...result.errors, ...result.warnings];
   return {
+    schemaVersion: "0.1.0",
+    ok: result.exitCode === 0,
+    summary: {
+      changed: result.changed.length,
+      unchanged: result.unchanged.length,
+      warnings: result.warnings.length,
+      errors: result.errors.length,
+      changedGroups: summarizeGeneratedArtifacts(result.changed),
+      unchangedGroups: summarizeGeneratedArtifacts(result.unchanged),
+    },
     changed: result.changed,
     unchanged: result.unchanged,
     warnings: result.warnings,
     errors: result.errors,
+    diagnostics,
+    nextActions: buildGenerateNextActions(result),
+    durationMs: null,
     exitCode: result.exitCode,
     failureKind: result.failureKind ?? null,
   };
 }
 
 export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
+  const base = buildGenerateJson(result);
+  const packageInspectName = result.packageName ?? result.alias;
+  const packageNextActions =
+    result.mode === "package" && packageInspectName
+      ? [
+          `forge deps inspect ${packageInspectName} --json`,
+          "forge generate",
+          "forge check --json",
+          "forge verify --smoke",
+        ]
+      : undefined;
+  const integrationNextActions =
+    result.exitCode === 0 && result.mode === "integration" && result.targetKind === "forge-integration"
+      ? [
+          ...(result.recipePackages ?? []).map((pkg) => `forge deps inspect ${pkg} --json`),
+          ...((result.requiredSecrets?.length ?? 0) > 0 || (result.optionalSecrets?.length ?? 0) > 0
+            ? ["forge secrets check --json", "forge inspect secrets --json"]
+            : []),
+          "forge generate",
+          "forge check --json",
+          "forge verify --smoke",
+        ]
+      : undefined;
   return {
     alias: result.alias ?? null,
-    ...buildGenerateJson(result),
+    mode: result.mode ?? null,
+    targetKind: result.targetKind ?? null,
+    target: result.target ?? null,
+    ...(result.packageTarget ? { packageTarget: result.packageTarget } : {}),
+    ...(result.packageTargetReason ? { packageTargetReason: result.packageTargetReason } : {}),
+    explanation: result.explanation ?? null,
+    ...(result.recipeVersion ? { recipeVersion: result.recipeVersion } : {}),
+    ...(result.recipePackages ? { recipePackages: result.recipePackages } : {}),
+    ...(result.requiredSecrets ? { requiredSecrets: result.requiredSecrets } : {}),
+    ...(result.optionalSecrets ? { optionalSecrets: result.optionalSecrets } : {}),
+    ...(result.packageSpec ? { packageSpec: result.packageSpec } : {}),
+    ...(result.packageName ? { packageName: result.packageName } : {}),
+    ...(result.packageManager ? { packageManager: result.packageManager } : {}),
+    ...(result.installCommand ? { installCommand: result.installCommand } : {}),
+    ...(result.nativeInstallCommand ? { nativeInstallCommand: result.nativeInstallCommand } : {}),
+    ...(result.avoidedManualCommand ? { avoidedManualCommand: result.avoidedManualCommand } : {}),
+    ...(result.installCwd ? { installCwd: result.installCwd } : {}),
+    ...(result.installWorkspace ? { installWorkspace: result.installWorkspace } : {}),
+    ...base,
+    nextActions: packageNextActions ?? integrationNextActions ?? base.nextActions,
   };
 }
 
 export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
+  const suggested = new Set<string>();
+  for (const diagnostic of result.diagnostics) {
+    for (const command of diagnostic.suggestedCommands ?? []) {
+      suggested.add(command);
+    }
+    if (diagnostic.code === "FORGE_AGENT_STALE_EXPORT") {
+      suggested.add("forge agent export --target codex");
+      suggested.add("forge agent export --target generic");
+    }
+  }
+  if (result.exitCode === 0) {
+    suggested.add("forge inspect summary --json");
+  } else {
+    suggested.add("forge repair diagnose --from-last-test-run --json");
+  }
   return {
+    schemaVersion: "0.1.0",
     ok: result.ok,
     profile: result.profile ?? null,
+    summary: {
+      steps: result.steps.length,
+      failedSteps: result.steps.filter((step) => !step.ok && !step.skipped).map((step) => step.name),
+      skippedSteps: result.steps.filter((step) => step.skipped).map((step) => step.name),
+      diagnostics: result.diagnostics.length,
+    },
     steps: result.steps,
     diagnostics: result.diagnostics,
     testGraphPlan: result.testGraphPlan ?? null,
     durationMs: result.durationMs ?? null,
+    nextActions: [...suggested],
     exitCode: result.exitCode,
   };
 }
@@ -93,11 +225,29 @@ export function writeHumanVerify(result: VerifyResult): void {
 }
 
 export function buildInspectJson(result: InspectResult): Record<string, unknown> {
+  const dataNextActions =
+    result.data &&
+    typeof result.data === "object" &&
+    !Array.isArray(result.data) &&
+    Array.isArray((result.data as { nextActions?: unknown }).nextActions)
+      ? (result.data as { nextActions: unknown[] }).nextActions.filter((action): action is string => typeof action === "string")
+      : [];
   return {
+    schemaVersion: "0.1.0",
+    ok: result.exitCode === 0,
     target: result.target,
+    summary:
+      result.data && typeof result.data === "object" && !Array.isArray(result.data)
+        ? ((result.data as Record<string, unknown>).summary ?? null)
+        : null,
     data: result.data,
     warnings: result.warnings,
     errors: result.errors,
+    diagnostics: [...result.errors, ...result.warnings],
+    nextActions:
+      result.exitCode === 0
+        ? (dataNextActions.length > 0 ? dataNextActions : ["forge inspect summary --json", "forge check --json"])
+        : ["forge generate", `forge inspect ${result.target} --json`],
     exitCode: result.exitCode,
     failureKind: result.failureKind ?? null,
   };
@@ -117,7 +267,51 @@ export function writeHumanGenerate(result: GenerateResult): void {
 
 export function writeHumanAdd(result: ForgeAddResult): void {
   console.log(`forge add ${result.alias ?? ""}`);
+  if (result.targetKind) {
+    console.log(`type: ${result.targetKind}`);
+  }
+  if (result.mode === "package") {
+    if (result.packageSpec) {
+      console.log(`package spec: ${result.packageSpec}`);
+    }
+    if (result.packageName && result.packageName !== result.packageSpec) {
+      console.log(`package name: ${result.packageName}`);
+    }
+    if (result.target) {
+      console.log(`target: ${result.target}`);
+    }
+    if (result.packageTarget) {
+      console.log(`package target: ${result.packageTarget}`);
+    }
+    if (result.packageTargetReason) {
+      console.log(`target reason: ${result.packageTargetReason}`);
+    }
+    if (result.installWorkspace) {
+      console.log(`install workspace: ${result.installWorkspace}`);
+    }
+    if (result.installCwd) {
+      console.log(`install cwd: ${result.installCwd}`);
+    }
+    if (result.installCommand) {
+      console.log(`install command: ${result.installCommand.join(" ")}`);
+    }
+    if (result.avoidedManualCommand) {
+      console.log(`manual command avoided: ${result.avoidedManualCommand}`);
+    }
+  }
+  if (result.explanation) {
+    console.log(result.explanation);
+  }
   writeHumanGenerate(result);
+  const nextActions = buildAddJson(result).nextActions;
+  if (Array.isArray(nextActions) && nextActions.length > 0) {
+    console.log("Next:");
+    for (const action of nextActions) {
+      if (typeof action === "string") {
+        console.log(`  ${action}`);
+      }
+    }
+  }
 }
 
 export function writeHumanInspect(result: InspectResult): void {

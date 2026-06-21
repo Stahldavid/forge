@@ -74,7 +74,7 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
         ? params.arguments as Record<string, unknown>
         : {};
       const result = await runTool(workspaceRoot, name, args);
-      await logMcpToolCall(workspaceRoot, name, args, "completed");
+      await logMcpToolCall(workspaceRoot, name, args, "completed").catch(() => undefined);
       return response(request.id, {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       });
@@ -121,7 +121,7 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
     });
   }
   if (name === "agent_memory") {
-    const store = await DeltaStore.open(workspaceRoot);
+    const store = await DeltaStore.open(workspaceRoot, { access: "read" });
     try {
       return {
         ok: true,
@@ -139,7 +139,7 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
     if (!target) {
       throw new Error("timeline requires target");
     }
-    const store = await DeltaStore.open(workspaceRoot);
+    const store = await DeltaStore.open(workspaceRoot, { access: "read" });
     try {
       return {
         ok: true,

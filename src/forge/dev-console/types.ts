@@ -1,5 +1,6 @@
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { ImpactRiskLevel } from "../impact/types.ts";
+import type { CategorizedFileSummary, DiffPlan } from "../workspace/change-summary.ts";
 
 export type DevConsolePhaseName =
   | "generated"
@@ -39,7 +40,16 @@ export interface DevConsoleSummary {
   urls: {
     api: string;
     web?: string;
+    suggestedPreview?: string;
   };
+  preview: {
+    studioUrl?: string;
+    targetAppUrl: string;
+    targetAppPort: number;
+    isStudioSelfPreview: boolean;
+    note: string;
+  };
+  generated: DevConsoleGeneratedSummary;
   frontend: FrontendSummary;
   capabilities: {
     covered: number;
@@ -47,6 +57,7 @@ export interface DevConsoleSummary {
     frontendOnly: number;
     warnings: number;
   };
+  agentContext: DevConsoleAgentContext;
   primaryAction?: DevConsoleNextAction;
 }
 
@@ -82,9 +93,41 @@ export interface LastUiRunSummary {
 }
 
 export interface ImpactSummary {
-  changedFiles: string[];
+  changedFiles: number;
+  sampleChangedFiles: string[];
+  hiddenChangedFiles: number;
+  changeSummary: CategorizedFileSummary;
   risk: ImpactRiskLevel;
   recommendedChecks: string[];
+  fullCommand: string;
+}
+
+export interface DevConsoleGeneratedSummary {
+  ok: boolean;
+  state: "fresh" | "regenerated" | "stale-risk";
+  changedFiles: number;
+  sampleChanged: string[];
+  hiddenChanged: number;
+  message: string;
+  command: string;
+  checkCommand: string;
+}
+
+export type DevConsoleDiffPlan = DiffPlan;
+
+export interface DevConsoleAgentContext {
+  safeToEdit: boolean;
+  generatedFresh: boolean;
+  generatedChanged: boolean;
+  generatedChangedFiles: number;
+  frontendReady: boolean;
+  changedFiles: number;
+  changeSummary?: CategorizedFileSummary;
+  diffPlan?: DevConsoleDiffPlan;
+  blockingIssues: string[];
+  recommendedReadFiles: string[];
+  recommendedCommands: string[];
+  useFullCommands: string[];
 }
 
 export interface FrontendSummary {

@@ -36,7 +36,7 @@ function unwrapStringLiteral(node: SyntaxNode): string | null {
   return null;
 }
 
-function extractFieldsFromObject(objectNode: SyntaxNode): DataField[] {
+function extractFieldsFromObject(objectNode: SyntaxNode, options: { skipConfigName?: boolean } = {}): DataField[] {
   const fields: DataField[] = [];
 
   for (const child of objectNode.namedChildren) {
@@ -55,7 +55,7 @@ function extractFieldsFromObject(objectNode: SyntaxNode): DataField[] {
         ? keyNode.text
         : unwrapStringLiteral(keyNode);
 
-    if (!key || key === "name") {
+    if (!key || (options.skipConfigName && key === "name")) {
       continue;
     }
 
@@ -131,7 +131,7 @@ function parseCallArguments(callNode: SyntaxNode): ParsedDefineTable | null {
 
   if (first.type === "object") {
     const tableName = extractNameFromObject(first);
-    const fields = extractFieldsFromObject(first);
+    const fields = extractFieldsFromObject(first, { skipConfigName: true });
     return { tableName, fields };
   }
 
