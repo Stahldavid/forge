@@ -39,6 +39,7 @@ import type {
   ForgeExternalServiceGraph,
 } from "../external-manifest/types.ts";
 import { createDiagnostic } from "../diagnostics/create.ts";
+import { CAIR_SCHEMA_VERSION } from "../../cair/types.ts";
 import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
 import type {
   AgentCapabilityMap,
@@ -51,6 +52,7 @@ import type {
   AgentHttpEndpointInfo,
   AgentIntegrationInfo,
   AgentRuntimeRule,
+  AgentProtocolInfo,
   AgentToolRegistry,
   AgentPlaybook,
 } from "./types.ts";
@@ -93,6 +95,7 @@ export interface AgentContractArtifacts {
   runtimeRulesMd: string;
   operationPlaybooksMd: string;
   agentQuickstartMd: string;
+  agentCairGuideMd: string;
   diagnostics: Diagnostic[];
 }
 
@@ -275,6 +278,75 @@ function runtimeRules(): AgentRuntimeRule[] {
       context: "workflow",
       allowed: ["durable steps", "ctx.secrets", "integrations", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "AI SDK ToolLoopAgent", "retries"],
       forbidden: ["non-idempotent step behavior without guards"],
+    },
+  ];
+}
+
+function agentProtocols(): AgentProtocolInfo[] {
+  return [
+    {
+      id: "cair",
+      kind: "agent-protocol",
+      version: CAIR_SCHEMA_VERSION,
+      guide: "src/forge/_generated/agentCairGuide.md",
+      commands: [
+        "forge cair snapshot",
+        "forge cair query \"Q ST\"",
+        "forge cair query \"Q S name=<symbol>\"",
+        "forge cair query \"Q D S#1\"",
+        "forge cair query \"Q R S#1\"",
+        "forge cair query \"Q I S#1\"",
+        "forge cair action --plan \"A RN t=S#1 nn=<newName>\"",
+        "forge cair action \"A APPLY plan=<P#|path>\"",
+        "forge cair action \"A ROLLBACK journal=<path>\"",
+      ],
+      preferredFor: [
+        "compact repository orientation",
+        "symbol lookup before file reads",
+        "semantic code edits",
+        "guarded refactors",
+        "Forge-native feature creation",
+        "impact-aware test selection",
+        "token-efficient programming",
+      ],
+      readQueries: [
+        "Q ST",
+        "Q S name=<symbol>",
+        "Q D S#1",
+        "Q R S#1",
+        "Q I S#1",
+        "Q T S#1",
+        "Q DEP.API package=<pkg> symbol=<export>",
+      ],
+      mutationActions: [
+        "A RN t=S#1 nn=<newName>",
+        "A MV t=S#1 to=<path>",
+        "A OI f=M#1",
+        "A FMT f=M#1",
+        "A MC n=<command>",
+        "A MQ n=<query>",
+        "A MA n=<action>",
+        "A MT n=<table> fields=<fields>",
+        "A AT t=S#1 kind=unit",
+        "A WX t=S#1 file=src/index.ts",
+        "A APPLY plan=<P#|path>",
+        "A ROLLBACK journal=<path>",
+      ],
+      compactAliases: [
+        "Q ST=Q STATUS",
+        "Q S=Q SYMBOL",
+        "Q D=Q DEF",
+        "Q R=Q REFS",
+        "Q I=Q IMPACT",
+        "A RN=A RENAME.SYMBOL",
+        "A MV=A MOVE.SYMBOL",
+        "A OI=A ORGANIZE.IMPORTS",
+        "A FMT=A FORMAT",
+        "A MC=A MAKE.COMMAND",
+        "A MT=A MAKE.TABLE",
+        "A AT=A ADD.TEST",
+        "A WX=A WIRE.EXPORT",
+      ],
     },
   ];
 }
@@ -1069,6 +1141,7 @@ export function buildAgentContractArtifacts(
     queries: queryInfos,
     liveQueries: liveQueryInfos,
   });
+  const protocols = agentProtocols();
   const contract: AgentContract = {
     schemaVersion: "0.1.0",
     generatorVersion: GENERATOR_VERSION,
@@ -1255,9 +1328,10 @@ export function buildAgentContractArtifacts(
     },
     rules: runtimeRules(),
     playbooks: playbooks(),
+    agentProtocols: protocols,
     commandsToRun: {
-      beforeEditing: ["forge agent onboard --target codex --json", "forge status --json", "forge changed --json", "forge handoff --json", "forge do inspect --json", "forge dev --once --json", "forge agent print-context --json", "forge check --json"],
-      afterEditing: ["forge generate", "forge check", "forge verify --standard", "forge verify --strict"],
+      beforeEditing: ["forge agent onboard --target codex --json", "forge status --json", "forge changed --json", "forge handoff --json", "forge do inspect --json", "forge cair snapshot", "forge cair query \"Q ST\"", "forge dev --once --json", "forge agent print-context --json", "forge check --json"],
+      afterEditing: ["forge generate", "forge check", "forge verify --standard", finalVerifyCommand(project.name)],
       dev: ["forge dev", "forge dev --once --json", "forge handoff --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"],
     },
   };
@@ -1275,7 +1349,8 @@ export function buildAgentContractArtifacts(
   const appMapMd = renderAppMapMd(contract);
   const runtimeRulesMd = renderRuntimeRulesMd(contract.rules);
   const operationPlaybooksMd = renderOperationPlaybooksMd(contract.playbooks);
-  const agentQuickstartMd = renderAgentQuickstartMd();
+  const agentQuickstartMd = renderAgentQuickstartMd(project.name);
+  const agentCairGuideMd = renderAgentCairGuideMd(contract);
   const diagnostics = scanAgentContractForLeaks(contract, [
     agentsMd,
     agentToolsMd,
@@ -1284,6 +1359,7 @@ export function buildAgentContractArtifacts(
     runtimeRulesMd,
     operationPlaybooksMd,
     agentQuickstartMd,
+    agentCairGuideMd,
   ]);
 
   return {
@@ -1297,6 +1373,7 @@ export function buildAgentContractArtifacts(
     runtimeRulesMd,
     operationPlaybooksMd,
     agentQuickstartMd,
+    agentCairGuideMd,
     diagnostics: [...diagnostics, ...capabilityMap.diagnostics],
   };
 }
@@ -1343,7 +1420,12 @@ export function serializeAgentToolRegistryTs(registry: AgentToolRegistry): strin
   return `export const agentTools = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
+function finalVerifyCommand(projectName: string): string {
+  return projectName === "forgeos" ? "forge verify framework" : "forge verify --strict";
+}
+
 function renderAgentsMd(contract: AgentContract, userNotes: string): string {
+  const finalVerify = finalVerifyCommand(contract.project.name);
   const tenantTables = contract.data.tables
     .filter((table) => table.tenantScoped)
     .map((table) => `${table.name} via ${table.tenantField}`);
@@ -1381,12 +1463,32 @@ forge agent print-context --json
 forge check --json
 \`\`\`
 
+## CAIR first
+
+Before reading large files or hand-writing patches, prefer the generated CAIR guide:
+
+\`\`\`bash
+forge cair snapshot
+forge cair query "Q ST"
+forge cair query "Q S name=<symbol>"
+forge cair query "Q D S#1"
+forge cair query "Q R S#1"
+forge cair query "Q I S#1"
+\`\`\`
+
+Use \`src/forge/_generated/agentCairGuide.md\` for the full compact protocol. Plan CAIR mutations before applying them:
+
+\`\`\`bash
+forge cair action --plan "A RN t=S#1 nn=<newName>"
+forge cair action "A APPLY plan=<returned-plan-path>"
+\`\`\`
+
 After editing:
 
 \`\`\`bash
 forge generate
 forge check
-forge verify --strict
+${finalVerify}
 \`\`\`
 
 ## Do not edit
@@ -1454,7 +1556,7 @@ forge ai agents --json
 forge ai trace <traceId> --json
 forge verify --smoke
 forge verify --standard
-forge verify --strict
+${finalVerify}
 \`\`\`
 
 ## Data
@@ -1534,7 +1636,7 @@ forge do verify --json
 1. Add file in \`src/commands\`.
 2. Declare \`auth: can("...")\`.
 3. Run \`forge generate\`.
-4. Run \`forge verify --strict\`.
+4. Run \`${finalVerify}\`.
 
 ### Scaffold a resource
 
@@ -1601,7 +1703,7 @@ forge test run --changed --timeout-ms 120000 --json
 forge verify --standard
 \`\`\`
 
-Use \`forge verify --standard\` for the normal agent development loop. Finish handoffs with \`forge verify --strict\` when the change is ready.
+Use \`forge verify --standard\` for the normal agent development loop. Finish handoffs with \`${finalVerify}\` when the change is ready.
 
 ### Repair a failing check
 
@@ -1660,7 +1762,7 @@ forge deps upgrade-plan <package> --to latest
 forge deps inspect <package> --json
 forge deps api <package> <symbol> --json
 forge deps upgrade-apply <plan>
-forge verify --strict
+${finalVerify}
 \`\`\`
 
 Do not manually edit \`package.json\` for package upgrades unless necessary.
@@ -2045,7 +2147,8 @@ function renderOperationPlaybooksMd(playbookEntries: AgentPlaybook[]): string {
   return normalizeNewlines(lines.join("\n"));
 }
 
-function renderAgentQuickstartMd(): string {
+function renderAgentQuickstartMd(projectName: string): string {
+  const finalVerify = finalVerifyCommand(projectName);
   return normalizeNewlines(`# Agent Quickstart
 
 Run:
@@ -2082,7 +2185,158 @@ Always finish with:
 
 \`\`\`bash
 forge generate
-forge verify --strict
+${finalVerify}
 \`\`\`
+`);
+}
+
+function renderAgentCairGuideMd(contract: AgentContract): string {
+  const cair = contract.agentProtocols.find((protocol) => protocol.id === "cair");
+  const finalVerify = finalVerifyCommand(contract.project.name);
+  const summary = [
+    `commands=${contract.commands.length}`,
+    `queries=${contract.queries.length}`,
+    `liveQueries=${contract.liveQueries.length}`,
+    `actions=${contract.actions.length}`,
+    `workflows=${contract.workflows.length}`,
+    `tables=${contract.data.tables.length}`,
+  ].join(" ");
+  return normalizeNewlines(`# CAIR Agent Guide
+
+Project: ${contract.project.name}
+CAIR version: ${cair?.version ?? CAIR_SCHEMA_VERSION}
+Surface: ${summary}
+
+CAIR is the compact agent protocol for reading and changing this Forge workspace. Use it before opening whole files when symbol, module, dependency, test, or impact context is enough.
+
+## First commands
+
+\`\`\`bash
+forge cair snapshot
+forge cair query "Q ST"
+\`\`\`
+
+The snapshot emits compact ids:
+
+- \`M#\` modules/files
+- \`S#\` symbols
+- \`P#\` packages
+- \`API#\` dependency APIs
+- \`T#\` tests
+
+## Read before editing
+
+\`\`\`bash
+forge cair query "Q S name=<symbol>"
+forge cair query "Q D S#1"
+forge cair query "Q R S#1"
+forge cair query "Q I S#1"
+forge cair query "Q T S#1"
+forge cair query "Q DEP.API package=<pkg> symbol=<export>"
+\`\`\`
+
+Only open source files after CAIR shows that the exact file or body is needed.
+
+## Plan, apply, rollback
+
+Never apply semantic mutations first. Create a plan:
+
+\`\`\`bash
+forge cair action --plan "A RN t=S#1 nn=<newName>"
+\`\`\`
+
+Apply the returned plan path:
+
+\`\`\`bash
+forge cair action "A APPLY plan=<P#|.forge/cair/plans/...json>"
+\`\`\`
+
+Keep returned journal paths for rollback:
+
+\`\`\`bash
+forge cair action "A ROLLBACK journal=.forge/cair/journal/<journal>.json"
+\`\`\`
+
+## Semantic actions
+
+\`\`\`txt
+A RN t=S#1 nn=<newName>
+A MV t=S#1 to=src/target.ts
+A SIG t=S#1 signature="export function x(input: string): boolean"
+A PARAM t=S#1 name=tenantId type=string default="defaultTenant"
+A CALLS t=S#1 appendArg="defaultTenant"
+A OI f=M#1
+A FMT f=M#1
+\`\`\`
+
+For high-risk semantic actions, include expectations when available:
+
+\`\`\`txt
+expect.file=src/path.ts
+expect.kind=command
+expect.hash=<sha256>
+\`\`\`
+
+## Forge-native actions
+
+Prefer Forge-native CAIR actions over hand-writing boilerplate:
+
+\`\`\`txt
+A MC n=createTicket
+A MQ n=listTickets
+A MA n=chargeCustomer
+A MT n=tickets fields=title:text,status:text
+A AT t=S#1 kind=unit
+A WX t=S#1 file=src/index.ts
+\`\`\`
+
+## Compact aliases
+
+Queries:
+
+\`\`\`txt
+Q ST  = Q STATUS
+Q S   = Q SYMBOL
+Q D   = Q DEF
+Q R   = Q REFS
+Q I   = Q IMPACT
+Q M   = Q MODULE
+Q T   = Q TESTS
+Q API = Q DEP.API
+\`\`\`
+
+Actions:
+
+\`\`\`txt
+A RN  = A RENAME.SYMBOL
+A MV  = A MOVE.SYMBOL
+A OI  = A ORGANIZE.IMPORTS
+A FMT = A FORMAT
+A MC  = A MAKE.COMMAND
+A MQ  = A MAKE.QUERY
+A MA  = A MAKE.ACTION
+A MT  = A MAKE.TABLE
+A AT  = A ADD.TEST
+A WX  = A WIRE.EXPORT
+A AP  = A APPLY
+A RB  = A ROLLBACK
+\`\`\`
+
+## Verification
+
+After CAIR edits, run the narrowest useful checks:
+
+\`\`\`bash
+forge check --json
+forge verify --standard
+${finalVerify}
+\`\`\`
+
+## Constraints
+
+- Do not edit \`src/forge/_generated/**\` unless explicitly allowed.
+- Do not bypass \`--plan\` for semantic edits.
+- Do not use CAIR as blind text replacement when a semantic action exists.
+- Use TypeScript language service, ast-grep, ts-morph, or raw file reads only as implementation backends or fallbacks. CAIR is the agent-facing protocol.
 `);
 }

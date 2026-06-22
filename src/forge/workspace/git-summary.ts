@@ -40,7 +40,11 @@ function emptySummary(error?: string): WorkspaceGitSummary {
   };
 }
 
-function runGit(args: string[], workspaceRoot: string): { ok: boolean; stdout: string; error?: string } {
+function runGit(
+  args: string[],
+  workspaceRoot: string,
+  options: { trim?: boolean } = {},
+): { ok: boolean; stdout: string; error?: string } {
   const result = spawnSync("git", args, {
     cwd: workspaceRoot,
     encoding: "utf8",
@@ -53,7 +57,7 @@ function runGit(args: string[], workspaceRoot: string): { ok: boolean; stdout: s
       error: (result.stderr || result.stdout || "git command failed").trim(),
     };
   }
-  return { ok: true, stdout: result.stdout.trim() };
+  return { ok: true, stdout: options.trim === false ? result.stdout : result.stdout.trim() };
 }
 
 function parseStatusPath(line: string): string {
@@ -68,7 +72,7 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
     return emptySummary(root.error);
   }
 
-  const status = runGit(["status", "--porcelain=v1", "-uall"], workspaceRoot);
+  const status = runGit(["status", "--porcelain=v1", "-uall"], workspaceRoot, { trim: false });
   const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"], workspaceRoot);
   const commit = runGit(["rev-parse", "--short", "HEAD"], workspaceRoot);
   const lines = status.ok ? status.stdout.split(/\r?\n/).filter(Boolean) : [];

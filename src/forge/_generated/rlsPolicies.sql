@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=d53b7a15ff082fa13fe5c51368a06755ee24e057d2cdc2d4830e14eec0e7cbfa
+// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=d53b7a15ff082fa13fe5c51368a06755ee24e057d2cdc2d4830e14eec0e7cbfa
 CREATE SCHEMA IF NOT EXISTS forge;
 
 CREATE OR REPLACE FUNCTION forge.current_tenant_id()

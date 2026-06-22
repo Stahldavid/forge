@@ -2,7 +2,7 @@ import { canonicalJson } from "../primitives/serialize.ts";
 import { hashStable } from "../primitives/hash.ts";
 import { normalizePath } from "../primitives/paths.ts";
 import { stableSortEdges, stableSortSymbols } from "../primitives/sort.ts";
-import type { AppGraph, SourceFile } from "../types/app-graph.ts";
+import type { AppGraph, ForgeEdge, ForgeSymbol, SourceFile } from "../types/app-graph.ts";
 import { detectDuplicateSymbols } from "./dup-symbol.ts";
 import { buildModuleGraph } from "./module-graph.ts";
 import { incrementalParse } from "./parser.ts";
@@ -66,6 +66,37 @@ function parseInvalidationFromPrior(prior: AppGraph): ParseInvalidationKey | und
   };
 }
 
+function moduleIdByFile(moduleGraph: AppGraph["moduleGraph"]): Map<string, string> {
+  return new Map(moduleGraph.nodes.map((node) => [node.file, node.id]));
+}
+
+function buildAppGraphEdges(
+  symbols: ForgeSymbol[],
+  moduleGraph: AppGraph["moduleGraph"],
+): ForgeEdge[] {
+  const edges: ForgeEdge[] = [];
+  const modules = moduleIdByFile(moduleGraph);
+
+  for (const symbol of symbols) {
+    const moduleId = modules.get(symbol.file);
+    if (moduleId) {
+      edges.push({ from: symbol.id, to: moduleId, kind: "registers" });
+    }
+  }
+
+  for (const module of moduleGraph.nodes) {
+    for (const localImport of module.localImports) {
+      edges.push({
+        from: module.id,
+        to: localImport.toModuleId,
+        kind: "imports",
+      });
+    }
+  }
+
+  return edges;
+}
+
 export async function buildAppGraph(
   options: AppGraphBuildOptions,
 ): Promise<AppGraph> {
@@ -122,6 +153,7 @@ export async function buildAppGraph(
   checkpoint = Date.now();
   const inputHash = computeInputHash(sources, invalidation);
   const inputHashMs = Date.now() - checkpoint;
+  const sortedSymbols = stableSortSymbols(forgeSymbols);
 
   const graph = {
     schemaVersion: APP_GRAPH_SCHEMA_VERSION,
@@ -131,8 +163,8 @@ export async function buildAppGraph(
     sourceHashes: Object.fromEntries(
       sources.map((source) => [source.path, source.contentHash]),
     ),
-    symbols: stableSortSymbols(forgeSymbols),
-    edges: stableSortEdges([]),
+    symbols: sortedSymbols,
+    edges: stableSortEdges(buildAppGraphEdges(sortedSymbols, moduleGraph)),
     moduleGraph,
     diagnostics: [...parseDiagnostics, ...dupDiagnostics],
   };

@@ -1,5 +1,5 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { classify } from "../compiler/classifier/classify.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
@@ -62,6 +62,11 @@ import {
   runCompilerBenchCommand,
 } from "../bench.ts";
 import {
+  formatCairHuman,
+  formatCairJson,
+  runCairCommand,
+} from "../cair/index.ts";
+import {
   formatRunJson,
   formatRunListHuman,
   formatRunResultHuman,
@@ -76,17 +81,28 @@ import {
 import {
   formatStudioAttachHuman,
   formatStudioAttachJson,
+  formatStudioBridgeEventJson,
+  formatStudioBridgeHuman,
+  formatStudioBridgeJson,
+  formatStudioCodexServerHuman,
+  formatStudioCodexServerJson,
   formatStudioDoctorHuman,
   formatStudioDoctorJson,
+  formatStudioOpenHuman,
+  formatStudioOpenJson,
   formatStudioSnapshotHuman,
   formatStudioSnapshotJson,
   formatStudioWatchHuman,
   formatStudioWatchJson,
   runStudioAttachCommand,
+  runStudioBridgeCommand,
+  runStudioBridgeLoop,
+  runStudioCodexServerCommand,
   runStudioDoctorCommand,
   runStudioOpenCommand,
   runStudioSnapshotCommand,
   runStudioWatchCommand,
+  runStudioWatchLoop,
 } from "./studio.ts";
 import {
   formatChangedHuman,
@@ -678,9 +694,10 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
     attachCommand: "forge studio attach . --preview-port 5174 --target codex --json",
     snapshotCommand: "forge studio snapshot . --preview-port 5174 --target codex --json",
     watchCommand: "forge studio watch . --preview-port 5174 --target codex --json",
+    bridgeCommand: "forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json",
     doctorCommand: "forge studio doctor . --preview-port 5174 --target codex --json",
     targetPreviewUrl: "http://127.0.0.1:5174",
-    startTargetAppCommand: "forge dev --web-port 5174",
+    startTargetAppCommand: "forge dev --port 3766 --web-port 5174",
     probeCommand: "forge dev --once --json",
     useful: frontendPresent,
     note: frontendPresent
@@ -741,7 +758,7 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
             "forge handoff --json",
             "forge changed --json",
             "forge dev",
-            ...(frontendPresent ? [studio.openCommand, studio.doctorCommand] : []),
+            ...(frontendPresent ? [studio.openCommand, studio.bridgeCommand, studio.doctorCommand] : []),
             ...(!handoffDefaultReady ? ["forge agent prepare --target generic --json"] : []),
             "forge inspect handoff --json",
             "forge verify --changed",
@@ -750,7 +767,7 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
             "forge generate",
             "forge handoff --json",
             "forge changed --json",
-            ...(frontendPresent ? [studio.openCommand, studio.doctorCommand] : []),
+            ...(frontendPresent ? [studio.openCommand, studio.bridgeCommand, studio.doctorCommand] : []),
             "forge inspect drift --json",
             "forge agent prepare --target codex --json",
           ],
@@ -782,6 +799,7 @@ export function formatStatusHuman(result: StatusCommandResult): string {
       attachCommand?: string;
       openCommand?: string;
       doctorCommand?: string;
+      bridgeCommand?: string;
       targetPreviewUrl?: string;
       startTargetAppCommand?: string;
       useful?: boolean;
@@ -805,9 +823,10 @@ export function formatStatusHuman(result: StatusCommandResult): string {
       ? [
           `Studio open: ${studio.openCommand ?? "forge studio open . --preview-port 5174 --target codex --json"}`,
           `Studio attach: ${studio.attachCommand ?? "forge studio attach . --preview-port 5174 --target codex --json"}`,
+          `Studio bridge: ${studio.bridgeCommand ?? "forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json"}`,
           `Studio doctor: ${studio.doctorCommand ?? "forge studio doctor . --preview-port 5174 --target codex --json"}`,
           `Studio preview: ${studio.targetPreviewUrl ?? "http://127.0.0.1:5174"}`,
-          `Studio start: ${studio.startTargetAppCommand ?? "forge dev --web-port 5174"}`,
+          `Studio start: ${studio.startTargetAppCommand ?? "forge dev --port 3766 --web-port 5174"}`,
         ]
       : []),
     ...(git?.available && git.changed
@@ -826,8 +845,22 @@ export function formatStatusHuman(result: StatusCommandResult): string {
 export async function runGenerateCommand(
   options: GenerateOptions,
 ): Promise<GenerateResult> {
-  const result = await run(options);
+  const result = await withWorkspaceCwd(options.workspaceRoot, () => run(options));
   return attachFailureKind(result);
+}
+
+async function withWorkspaceCwd<T>(workspaceRoot: string, fn: () => Promise<T>): Promise<T> {
+  const previous = process.cwd();
+  const target = resolve(workspaceRoot);
+  if (resolve(previous).toLowerCase() === target.toLowerCase()) {
+    return fn();
+  }
+  process.chdir(target);
+  try {
+    return await fn();
+  } finally {
+    process.chdir(previous);
+  }
 }
 
 export async function runAddCommand(
@@ -1520,6 +1553,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       );
       return result.exitCode;
     }
+    case "cair": {
+      const result = runCairCommand(command.options);
+      process.stdout.write(
+        command.options.json || command.options.format === "json"
+          ? formatCairJson(result)
+          : formatCairHuman(result),
+      );
+      return result.exitCode;
+    }
     case "delta": {
       if (command.subcommand === "repair") {
         const result = await runDeltaRepair({
@@ -1606,7 +1648,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     }
     case "generate": {
       const result = await runGenerateCommand({
-        workspaceRoot: process.cwd(),
+        workspaceRoot: command.workspaceRoot,
         check: command.check,
         dryRun: command.dryRun,
         json: command.json,
@@ -1672,31 +1714,57 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "studio": {
+      if (command.subcommand === "bridge" && !command.once && !command.dryRun) {
+        return runStudioBridgeLoop(command, (result) => {
+          process.stdout.write(command.json ? formatStudioBridgeEventJson(result) : formatStudioBridgeHuman(result));
+        });
+      }
+      if (command.subcommand === "watch" && !command.once && !command.dryRun) {
+        return runStudioWatchLoop(command, (result) => {
+          process.stdout.write(command.json ? formatStudioWatchJson(result) : formatStudioWatchHuman(result));
+        });
+      }
       const result = command.subcommand === "snapshot"
         ? await runStudioSnapshotCommand(command)
         : command.subcommand === "watch"
           ? await runStudioWatchCommand(command)
-          : command.subcommand === "doctor"
-            ? await runStudioDoctorCommand(command)
-            : command.subcommand === "open"
-              ? await runStudioOpenCommand(command)
-              : await runStudioAttachCommand(command);
+          : command.subcommand === "bridge"
+            ? await runStudioBridgeCommand(command)
+            : command.subcommand === "codex-server"
+              ? await runStudioCodexServerCommand(command)
+              : command.subcommand === "doctor"
+                ? await runStudioDoctorCommand(command)
+                : command.subcommand === "open"
+                  ? await runStudioOpenCommand(command)
+                  : await runStudioAttachCommand(command);
       process.stdout.write(
         command.json
           ? command.subcommand === "snapshot"
             ? formatStudioSnapshotJson(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)
             : command.subcommand === "watch"
               ? formatStudioWatchJson(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)
-              : command.subcommand === "doctor"
-                ? formatStudioDoctorJson(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)
-                : formatStudioAttachJson(result as Awaited<ReturnType<typeof runStudioAttachCommand>>)
+              : command.subcommand === "bridge"
+                ? formatStudioBridgeJson(result as Awaited<ReturnType<typeof runStudioBridgeCommand>>)
+                : command.subcommand === "codex-server"
+                  ? formatStudioCodexServerJson(result as Awaited<ReturnType<typeof runStudioCodexServerCommand>>)
+                  : command.subcommand === "doctor"
+                    ? formatStudioDoctorJson(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)
+                    : command.subcommand === "open"
+                      ? formatStudioOpenJson(result as Awaited<ReturnType<typeof runStudioOpenCommand>>)
+                      : formatStudioAttachJson(result as Awaited<ReturnType<typeof runStudioAttachCommand>>)
           : command.subcommand === "snapshot"
             ? formatStudioSnapshotHuman(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)
             : command.subcommand === "watch"
               ? formatStudioWatchHuman(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)
-              : command.subcommand === "doctor"
-                ? formatStudioDoctorHuman(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)
-                : formatStudioAttachHuman(result as Awaited<ReturnType<typeof runStudioAttachCommand>>),
+              : command.subcommand === "bridge"
+                ? formatStudioBridgeHuman(result as Awaited<ReturnType<typeof runStudioBridgeCommand>>)
+                : command.subcommand === "codex-server"
+                  ? formatStudioCodexServerHuman(result as Awaited<ReturnType<typeof runStudioCodexServerCommand>>)
+                  : command.subcommand === "doctor"
+                    ? formatStudioDoctorHuman(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)
+                    : command.subcommand === "open"
+                      ? formatStudioOpenHuman(result as Awaited<ReturnType<typeof runStudioOpenCommand>>)
+                      : formatStudioAttachHuman(result as Awaited<ReturnType<typeof runStudioAttachCommand>>),
       );
       return result.exitCode;
     }

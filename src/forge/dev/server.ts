@@ -891,6 +891,10 @@ export async function startDevServer(
         adapter: serverState.adapter,
         loadTableMap: () => loadArtifacts().tableMap,
         enablePolling: true,
+        limits: {
+          ...DEFAULT_LIVE_LIMITS,
+          maxSubscriptionsPerClient: Number(process.env.FORGE_DEV_LIVE_MAX_SUBSCRIPTIONS ?? "250"),
+        },
         pollIntervalMs: Number(process.env.FORGE_LIVE_POLL_INTERVAL_MS ?? "1000"),
       })
     : null;
@@ -1159,6 +1163,13 @@ export async function startDevServer(
               "NaN",
           );
           let subscriptionId: string | null = null;
+          const cleanupSubscription = () => {
+            if (subscriptionId) {
+              liveManager.unsubscribe(subscriptionId);
+              subscriptionId = null;
+            }
+          };
+          request.signal.addEventListener("abort", cleanupSubscription, { once: true });
 
           return createSseResponse(
             async (send, close) => {
@@ -1170,6 +1181,11 @@ export async function startDevServer(
                 send,
               });
               subscriptionId = subscription.id;
+              if (request.signal.aborted) {
+                cleanupSubscription();
+                close();
+                return;
+              }
               const known = loadLiveQueryRegistry(workspaceRoot).liveQueries.some(
                 (liveQuery) => liveQuery.name === name,
               );
@@ -1178,9 +1194,7 @@ export async function startDevServer(
               }
             },
             () => {
-              if (subscriptionId) {
-                liveManager.unsubscribe(subscriptionId);
-              }
+              cleanupSubscription();
             },
             {
               heartbeatIntervalMs: Number(process.env.FORGE_LIVE_HEARTBEAT_MS ?? "15000"),

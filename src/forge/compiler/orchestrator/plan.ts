@@ -113,9 +113,11 @@ import {
   serializeMockMapJson,
   serializeMockMapTs,
   serializePackageGraphJson,
+  serializePackageGraphTs,
   serializeRuntimeGraphJson,
   serializeRuntimeGraphTs,
   serializeRuntimeMatrixJson,
+  serializeRuntimeMatrixTs,
   serializeConstFromJson,
   serializeRuntimeRegistryTs,
   serializeDevManifestJson,
@@ -464,6 +466,10 @@ export function plan(input: PlanInput): EmitPlan {
       agentArtifacts.agentQuickstartMd,
     ),
     makeEmitFile(
+      `${GENERATED_DIR}/agentCairGuide.md`,
+      agentArtifacts.agentCairGuideMd,
+    ),
+    makeEmitFile(
       `${GENERATED_DIR}/agentAdapterManifest.ts`,
       serializeAgentAdapterManifestTs(agentAdapterManifest),
     ),
@@ -489,7 +495,7 @@ export function plan(input: PlanInput): EmitPlan {
     ),
     makeEmitFile(
       `${GENERATED_DIR}/packageGraph.ts`,
-      serializeConstFromJson("packageGraph", packageGraphJson),
+      serializePackageGraphTs(input.packageGraph),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/packageGraph.json`,
@@ -497,7 +503,7 @@ export function plan(input: PlanInput): EmitPlan {
     ),
     makeEmitFile(
       `${GENERATED_DIR}/runtimeMatrix.ts`,
-      serializeConstFromJson("runtimeMatrix", runtimeMatrixJson),
+      serializeRuntimeMatrixTs(matrix),
     ),
     makeEmitFile(
       `${GENERATED_DIR}/runtimeMatrix.json`,

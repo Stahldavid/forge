@@ -20,7 +20,11 @@ forge handoff --json
 forge agent onboard --target codex --json
 forge doctor agent --target codex --json
 forge studio open ../customer-app --preview-port 5174 --target codex --json
+forge studio bridge ../customer-app --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json
+forge studio bridge ../customer-app --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --probe-codex-server --json
 forge studio doctor ../customer-app --preview-port 5174 --target codex --json
+forge studio codex-server ../customer-app --json
+forge studio codex-server ../customer-app --probe --json
 forge do inspect --json
 forge do "<objective>" --json
 forge do fix --json
@@ -34,17 +38,21 @@ forge do connect-ui --json
 
 `forge add <package> --frontend`, `forge add frontend:<package>`, `forge add <package> --backend`, and `forge add backend:<package>` are normal npm package installs with explicit app-side intent. JSON includes `packageTarget`, `packageTargetReason`, `nativeInstallCommand`, and `avoidedManualCommand`, so Studio and agents can show which package.json will change and which native package-manager command Forge is managing.
 
-`forge status --json` also includes a lightweight `git` block with categorized changed, staged, unstaged, and untracked files. Its top-level `generated` block gives Studio and external agents an explicit state (`ready`, `missing-artifacts`, or `drift`) plus the safe dev/check/repair commands, so they do not have to infer stale generated state from filenames. Its `studio` block gives the open/attach/snapshot/watch/doctor commands, target preview URL, start command, and probe command for observer UIs. The human output prints the same generated and Studio detail. Use it when you need quick orientation before the fuller `handoff` or `dev --once` snapshots.
+`forge status --json` also includes a lightweight `git` block with categorized changed, staged, unstaged, and untracked files. Its top-level `generated` block gives Studio and external agents an explicit state (`ready`, `missing-artifacts`, or `drift`) plus the safe dev/check/repair commands, so they do not have to infer stale generated state from filenames. Its `studio` block gives the open/attach/snapshot/bridge/watch/doctor commands, target preview URL, start command, and probe command for observer UIs. The human output prints the same generated and Studio detail. Use it when you need quick orientation before the fuller `handoff` or `dev --once` snapshots.
 
 `forge agent onboard --target codex --json` is the one-command entry point for a freshly opened external agent session. It prepares the target adapter, installs/proves hooks when supported, runs the compact dev diagnostic snapshot, and returns `readyToEdit`, recommended read files, and next commands.
 
 `forge doctor agent --target codex --json` is the top-level spelling for agent readiness checks. It delegates to `forge agent doctor` and reports adapter freshness, hook bridge status, recent useful signals, next actions, and diagnostics.
 
-`forge studio open <path> --preview-port 5174 --target codex --json` is the recommended Studio entrypoint. It attaches an app directory to a Studio-style observer without moving the coding agent into the browser. It writes `.forge/studio/attachment.json`, prepares the selected agent adapter/hook bridge, and returns the target preview URL plus the commands to run the app and inspect hooks. `forge studio attach` is the lower-level spelling for the same attachment write. `commands.startTargetAppCwd`, `commands.startTargetApp`, `commands.openPreview`, and `commands.probePreview` tell Studio exactly what to show and where the command should run. `preview.status` reports whether a local preview was reachable, not running, or intentionally not checked. `posture` reports generated freshness and authored-first review commands. If a preview points at local port `5173`, ForgeOS treats it as likely Studio self-preview and shifts the target app preview to `5174` unless `--force` is provided.
+`forge studio open <path> --preview-port 5174 --target codex --json` is the recommended Studio entrypoint. It attaches an app directory to a Studio-style observer without moving the coding agent into the browser, writes `.forge/studio/attachment.json`, prepares the selected agent adapter/hook bridge, checks whether dependencies are installed, auto-starts the local target preview when possible, and attempts one bridge ingest to the Studio runtime. The JSON result includes `previewAutomation` for dependency/start evidence and `bridge` for Studio delivery evidence. Use `--install` to let ForgeOS run the detected install command, `--no-start` when another process owns preview startup, and `--no-bridge` for attach/start only. `forge studio attach` is the lower-level command for writing the attachment manifest and preparing adapters without startup/bridge orchestration. `commands.startTargetAppCwd`, `commands.startTargetApp`, `commands.openPreview`, and `commands.probePreview` tell Studio exactly what to show and where the command should run. `preview.status` reports whether a local preview was reachable, not running, or intentionally not checked. `posture` reports generated freshness and authored-first review commands. If a preview points at local port `5173`, ForgeOS treats it as likely Studio self-preview and shifts the target app preview to `5174` unless `--force` is provided.
 
-`forge studio snapshot <path> --preview-port 5174 --target codex --json` is the read-only version for Studio refresh loops. It does not write `.forge/studio/attachment.json`, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` buckets, `diffPlan`, `contextPacket`, hook proofs, DeltaDB status, plus the commands the UI should show. If an attachment manifest already exists, snapshot reuses its preview URL and targets unless the command overrides them.
+`forge studio snapshot <path> --preview-port 5174 --target codex --json` is the read-only version for Studio refresh loops. It does not write `.forge/studio/attachment.json`, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` buckets, `diffPlan`, `contextPacket`, hook proofs, DeltaDB status, plus the commands the UI should show. If an attachment manifest already exists, snapshot reuses its preview URL and targets unless the command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should include the actual `codex app-server` stdio initialize proof under `proofs.codexAppServer.handshake`.
 
-`forge studio doctor <path> --preview-port 5174 --target codex --json` is the Studio trust gate. It checks preview reachability, generated freshness, hook usefulness, and DeltaDB readability. `forge studio watch <path> --preview-port 5174 --target codex --json` emits a Studio-shaped `studio.snapshot` event; long-running reload streams continue to come from `forge dev --watch --json`.
+`forge studio bridge <path> --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json` is the official ForgeOS-to-Studio signal bridge. It collects the same read-only snapshot and posts it to the Studio runtime command `ingestStudioSnapshot` with local dev-auth headers. Use `--once` for a single ingest, `--dry-run` to prove the snapshot contract without network delivery, and `--interval-ms 5000` to control the continuous bridge cadence. Bridge success means the snapshot was delivered or dry-run collected; the embedded snapshot can still report generated drift, preview down, or hook warnings so Studio can show the actual evidence.
+
+`forge studio doctor <path> --preview-port 5174 --target codex --json` is the Studio trust gate. It checks preview reachability, generated freshness, hook usefulness, DeltaDB readability, and optional Codex app-server availability. Add `--probe-codex-server` to prove the stdio initialize handshake in the same snapshot/doctor/bridge flow. `forge studio codex-server <path> --json` is the narrow Codex app-server diagnostic: it reports whether `codex app-server` is available, which schema generation commands match the local Codex version, how Studio should connect over stdio, and which WebSocket/security constraints to respect. Add `--write` when you want ForgeOS to run both schema generation commands and write `.forge/codex-app-server-schemas`; the default is read-only. Add `--probe` when you want ForgeOS to start `codex app-server`, perform the `initialize`/`initialized` stdio handshake, make safe read-only `model/list` and `account/read` RPCs, report sanitized protocol readiness, and exit before starting a Codex thread or turn. `forge studio watch <path> --preview-port 5174 --target codex --json` emits a Studio-shaped `studio.snapshot` event; long-running reload streams continue to come from `forge dev --watch --json`.
+
+Studio reserves `http://127.0.0.1:5173` and `http://127.0.0.1:3765` for the observer app. The app being observed defaults to `http://127.0.0.1:5174` for web preview and `http://127.0.0.1:3766` for its ForgeOS runtime, so `commands.startTargetApp` uses `forge dev --port 3766 --web-port 5174`.
 
 ## Development
 
@@ -110,11 +118,13 @@ forge verify --standard
 forge verify agent
 forge verify --strict
 forge verify release
+forge verify framework
 forge verify --changed
 forge verify --standard --script-timeout-ms 120000 --json
 ```
 
-Aliases map to the same verifier profiles: `quick` is smoke/fast, `agent` is standard impact-based verification for the normal external-agent loop, and `release` is strict verification.
+Aliases map to verifier profiles: `quick` is smoke/fast, `agent` is standard impact-based verification for the normal external-agent loop, `release` is strict app release verification, and `framework`/`internal`/`maintainer` are explicit ForgeOS framework maintainer verification.
+`forge verify` is app-first. It verifies the current ForgeOS app; it does not run the ForgeOS framework's internal test suite unless the current checkout is the framework repo and the command explicitly uses `forge verify framework` or `--internal`.
 Unknown positional profiles fail early with the accepted profile list instead of silently running the default verifier.
 
 ## DeltaDB, Timeline, and Sessions
@@ -269,6 +279,8 @@ forge agent export --target claude
 ```
 
 `forge agent context` and `forge agent memory` use compact human-readable summaries by default. Add `--json` for machine-readable context and detailed memory audit events. Agent memory read commands should not block on the DeltaDB writer lock; write commands such as ingest, hook smoke, repair, timeline rebuild, and session mutations may fail fast with `FORGE_DELTA_BUSY`.
+
+Codex Desktop has an additional trust boundary for newly installed hooks. `forge agent hooks smoke --target codex --json` writes a ForgeOS canary and proves that Agent Memory can read it, but it does not mean Codex Desktop has approved and executed the native hook files. `forge agent hooks status --target codex --json` reports `approvalStatus`, `approvalRequired`, `nativeSignals`, and `canarySignals`; `waiting-for-user-trust` means the user must approve the Codex hook prompt and then continue a Codex session in the workspace.
 
 `forge agent ingest <source> --watch --file <path>` is explicit and opt-in. It tails JSON or NDJSON hook/export files and records normalized Agent Memory events until interrupted.
 

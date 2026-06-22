@@ -8,6 +8,7 @@ ForgeOS ties **change impact**, **targeted tests**, **verification gates**, and 
 forge verify --smoke
 forge verify --standard
 forge verify --strict
+forge verify framework
 forge verify --changed
 ```
 
@@ -15,7 +16,8 @@ forge verify --changed
 |------|---------------|------|
 | `--smoke` | Generated drift, `forge check`, typecheck | Fast local sanity |
 | `--standard` | Smoke + impact-selected tests | Normal dev loop |
-| `--strict` | Full TestGraph + lint | Handoff / CI / release |
+| `--strict` | App TestGraph + lint | Handoff / CI / release for an app |
+| `framework` / `--internal` | ForgeOS framework TestGraph + lint | Maintaining ForgeOS itself |
 | `--changed` | Only tests affected by current diff | After focused edits |
 
 Add predictable timeouts for package scripts:
@@ -24,7 +26,17 @@ Add predictable timeouts for package scripts:
 forge verify --standard --script-timeout-ms 120000
 ```
 
-Strict verification runs non-docker/non-browser TestGraph entries in bounded chunks.
+Use the TypeScript 7 native checker as an opt-in fast path:
+
+```bash
+npm install -D typescript-7@npm:typescript@rc
+forge verify --standard --typechecker native
+FORGE_TYPECHECKER=auto forge verify --standard
+```
+
+Forge intentionally supports TS7 as a checker binary before moving Forge internals to the TS7 programmatic API. `--typechecker native` resolves `FORGE_TS7_TSC`, then an aliased `typescript-7` package, then a root `typescript` package only if it is version 7 or newer, and finally the older `@typescript/native-preview` / `tsgo` path. If none of those are usable, verification records a warning and falls back to the stable `tsc` flow. Tune native workers with `FORGE_TS7_CHECKERS`, `FORGE_TS7_BUILDERS`, or `FORGE_TS7_SINGLE_THREADED=1`.
+
+`forge verify` is app-level by default. It verifies the app in the current directory and should not surprise users by running ForgeOS framework package tests. In ordinary apps, strict verification runs that app's non-docker/non-browser TestGraph entries in bounded chunks. In the ForgeOS framework checkout, internal framework tests are skipped by `forge verify --strict` unless you explicitly run `forge verify framework` or `forge verify --internal`.
 Parallel and isolated lanes run at the same time, so the reported critical path reflects lane overlap instead of adding both lanes together.
 Runtime-heavy, template, release, git, and process-spawning tests run as isolated one-file chunks with their own temp directory and dynamic dev port.
 Template coverage includes an `agent-workroom` runtime smoke: scaffold the template, generate contracts, migrate an in-memory database, run the workroom commands, and read the `liveWorkroom` liveQuery snapshot.
@@ -35,6 +47,7 @@ Tune that when a machine has fewer or more cores:
 
 ```bash
 forge verify --strict --test-jobs 4
+forge verify framework --test-jobs 4
 FORGE_VERIFY_TEST_JOBS=1 forge verify --strict
 FORGE_VERIFY_ISOLATED_TEST_JOBS=1 forge verify --strict
 ```
@@ -47,6 +60,7 @@ Inspect the plan without running the full suite:
 
 ```bash
 forge verify --strict --test-plan --json
+forge verify framework --test-plan --json
 ```
 
 Or route through the intent router:

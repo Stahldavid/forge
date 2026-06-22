@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { createServer as createNetServer } from "node:net";
 import { run } from "../compiler/orchestrator/run.ts";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { hashStable } from "../compiler/primitives/hash.ts";
@@ -167,6 +167,40 @@ function nextPreviewPort(webUrl?: string): number {
   } catch {
     return 5174;
   }
+}
+
+function isForgeStudioWorkspace(workspaceRoot: string): boolean {
+  return basename(workspaceRoot).toLowerCase() === "forge-studio";
+}
+
+function previewSummaryFor(input: {
+  workspaceRoot: string;
+  host: string;
+  webUrl?: string;
+}): DevStartupSummary["preview"] {
+  if (input.webUrl && !isForgeStudioWorkspace(input.workspaceRoot)) {
+    const parsed = new URL(input.webUrl);
+    const targetAppPort = parsed.port ? Number(parsed.port) : parsed.protocol === "https:" ? 443 : 80;
+    return {
+      targetAppUrl: input.webUrl,
+      targetAppPort,
+      isStudioSelfPreview: false,
+      note: `Web app preview is running at ${input.webUrl}.`,
+    };
+  }
+
+  const targetAppPort = nextPreviewPort(input.webUrl);
+  const targetAppUrl = `http://${input.host}:${targetAppPort}`;
+  const isStudioSelfPreview = Boolean(input.webUrl && input.webUrl === targetAppUrl);
+  return {
+    ...(input.webUrl ? { studioUrl: input.webUrl } : {}),
+    targetAppUrl,
+    targetAppPort,
+    isStudioSelfPreview,
+    note: input.webUrl
+      ? `Use ${targetAppUrl} for the app being built when ${input.webUrl} is Forge Studio itself.`
+      : `No web app was detected; ${targetAppUrl} is the default target app preview URL for Studio attach flows.`,
+  };
 }
 
 async function isPortAvailable(host: string, port: number): Promise<boolean> {
@@ -395,9 +429,11 @@ function buildStartupSummary(input: {
     ? [...new Set(frontend.clientBindings.map((binding) => `${binding.kind}:${binding.name}`))].sort()
     : [];
   const browserUrl = input.web?.url ?? input.handle.url;
-  const targetAppPort = nextPreviewPort(input.web?.url);
-  const targetAppUrl = `http://${input.handle.host}:${targetAppPort}`;
-  const isStudioSelfPreview = Boolean(input.web?.url && input.web.url === targetAppUrl);
+  const preview = previewSummaryFor({
+    workspaceRoot: input.workspaceRoot,
+    host: input.handle.host,
+    ...(input.web?.url ? { webUrl: input.web.url } : {}),
+  });
   return {
     schemaVersion: "0.1.0",
     ok: true,
@@ -422,15 +458,7 @@ function buildStartupSummary(input: {
           ...(frontend?.dev?.apiUrlEnv ? { apiUrlEnv: frontend.dev.apiUrlEnv } : {}),
         }
       : null,
-    preview: {
-      ...(input.web?.url ? { studioUrl: input.web.url } : {}),
-      targetAppUrl,
-      targetAppPort,
-      isStudioSelfPreview,
-      note: input.web?.url
-        ? `Use ${targetAppUrl} for the app being built when ${input.web.url} is Forge Studio itself.`
-        : `No web app was detected; ${targetAppUrl} is the default target app preview URL for Studio attach flows.`,
-    },
+    preview,
     watch: {
       enabled: input.watch,
       autoGenerate: input.watch,

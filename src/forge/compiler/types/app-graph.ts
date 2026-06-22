@@ -13,7 +13,13 @@ export type ForgeKind =
   | "workflow"
   | "agent"
   | "aiTool"
-  | "telemetryEvent";
+  | "telemetryEvent"
+  | "code.function"
+  | "code.class"
+  | "code.interface"
+  | "code.type"
+  | "code.const"
+  | "code.enum";
 
 export interface ForgeSymbol {
   id: string;
@@ -26,7 +32,7 @@ export interface ForgeSymbol {
   meta: Record<string, JsonValue>;
 }
 
-export type ForgeEdgeKind = "references" | "registers" | "guards" | "emits";
+export type ForgeEdgeKind = "references" | "registers" | "guards" | "emits" | "imports";
 
 export interface ForgeEdge {
   from: string;

@@ -74,4 +74,27 @@ describe("workspace git summary", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test("does not classify leading-space porcelain lines as staged", () => {
+    const root = workspace("forge-git-summary-unstaged-only");
+    try {
+      git(root, ["init"]);
+      git(root, ["config", "user.email", "forge@example.test"]);
+      git(root, ["config", "user.name", "Forge Test"]);
+      write(root, "docs/tracked.md", "# Tracked\n");
+      git(root, ["add", "."]);
+      git(root, ["commit", "--no-gpg-sign", "--no-verify", "-m", "baseline"]);
+
+      write(root, "docs/tracked.md", "# Tracked\n\nChanged\n");
+
+      const summary = buildWorkspaceGitSummary(root);
+
+      expect(summary.changed.sample).toContain("docs/tracked.md");
+      expect(summary.staged.count).toBe(0);
+      expect(summary.staged.sample).not.toContain("docs/tracked.md");
+      expect(summary.unstaged.sample).toContain("docs/tracked.md");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

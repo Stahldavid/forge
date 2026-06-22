@@ -382,6 +382,18 @@ export interface AgentPlaybook {
   steps: string[];
 }
 
+export interface AgentProtocolInfo {
+  id: string;
+  kind: "agent-protocol";
+  version: string;
+  guide: string;
+  commands: string[];
+  preferredFor: string[];
+  readQueries: string[];
+  mutationActions: string[];
+  compactAliases: string[];
+}
+
 export interface AgentContract {
   schemaVersion: string;
   generatorVersion: string;
@@ -406,6 +418,7 @@ export interface AgentContract {
   deploy?: AgentDeployInfo;
   rules: AgentRuntimeRule[];
   playbooks: AgentPlaybook[];
+  agentProtocols: AgentProtocolInfo[];
   commandsToRun: {
     beforeEditing: string[];
     afterEditing: string[];

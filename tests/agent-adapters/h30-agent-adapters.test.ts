@@ -18,6 +18,7 @@ import {
 import { configuredAgentTargets } from "../../src/forge/cli/verify.ts";
 import type { AgentCommandOptions } from "../../src/forge/agent-adapters/types.ts";
 import type { AgentContract } from "../../src/forge/compiler/agent-contract/types.ts";
+import { runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
 import { cleanupWorkspace, scaffoldGenerateWorkspace } from "../orchestrator/helpers.ts";
 
 const roots: string[] = [];
@@ -293,6 +294,7 @@ function contract(): AgentContract {
     deploy: { selfHost: true, files: ["deploy/docker-compose.yml"] },
     rules: [],
     playbooks: [],
+    agentProtocols: [],
     commandsToRun: {
       beforeEditing: ["forge status --json", "forge agent print-context --json"],
       afterEditing: ["forge generate", "forge check", "forge verify --strict"],
@@ -330,6 +332,27 @@ function options(root: string, target = "generic"): AgentCommandOptions {
   };
 }
 
+async function recordNativeCodexSignal(root: string) {
+  const result = await runAgentMemoryCommand({
+    subcommand: "ingest",
+    workspaceRoot: root,
+    json: true,
+    target: "codex",
+    source: "codex",
+    eventName: "PostToolUse",
+    input: {
+      session_id: "codex-native-session",
+      tool_name: "Edit",
+      cwd: root,
+      status: "completed",
+      tool_input: { file_path: "AGENTS.md" },
+      tool_response: { status: "success" },
+    },
+  });
+  expect(result.exitCode).toBe(0);
+  return result;
+}
+
 afterEach(() => {
   for (const root of roots.splice(0)) {
     rmSync(root, { recursive: true, force: true });
@@ -355,6 +378,10 @@ describe("H30 agent adapter export", () => {
     const root = workspace();
     expect(runAgentExport(options(root, "codex")).ok).toBe(true);
     expect(existsSync(join(root, ".codex/skills/forge-add-command/SKILL.md"))).toBe(true);
+    const explorerRole = readFileSync(join(root, ".codex/agents/forge-explorer.toml"), "utf8");
+    expect(explorerRole).toContain('name = "forge-explorer"');
+    expect(explorerRole).toContain("developer_instructions");
+    expect(explorerRole).toContain("forge inspect all --brief --json");
     expect(runAgentExport(options(root, "cursor")).ok).toBe(true);
     expect(existsSync(join(root, ".cursor/rules/forge-runtime.mdc"))).toBe(true);
     expect(runAgentExport(options(root, "claude")).ok).toBe(true);
@@ -449,29 +476,34 @@ describe("H30 agent adapter export", () => {
     expect(JSON.stringify(result.commands)).toContain("forge agent hooks smoke --target codex --json");
   });
 
-  test("agent onboard prepares adapters, proves hooks, and returns the external agent entry loop", async () => {
+  test("agent onboard prepares adapters and stops at the Codex hook approval boundary", async () => {
     const root = scaffoldGenerateWorkspace("agent-onboard-codex");
     try {
       const result = await runAgentOnboard({ ...options(root, "codex"), subcommand: "onboard" });
-      expect(result.ok).toBe(true);
-      expect(result.readyToEdit).toBe(true);
+      expect(result.ok).toBe(false);
+      expect(result.readyToEdit).toBe(false);
       expect(result.summary).toMatchObject({
         adapter: "ready",
-        hookBridge: "ready",
+        hookBridge: "waiting-for-user-trust",
+        approvalRequired: true,
+        approvalStatus: "waiting-for-user-trust",
         safeToEdit: true,
       });
       expect(typeof result.summary.generatedFresh).toBe("boolean");
       expect(result.summary.memorySignals).toBeGreaterThan(0);
+      expect(result.summary.canarySignals).toBeGreaterThan(0);
+      expect(result.summary.nativeSignals).toBe(0);
       expect(result.steps.map((step) => step.name)).toContain("hook-smoke");
+      expect(result.steps.map((step) => step.name)).toContain("hook-approval");
       expect(result.commands.changed).toBe("forge changed --json");
       expect(result.commands.dev).toBe("forge dev --once --json");
       expect(result.commands.context).toBe("forge agent context --current --json");
-      expect(result.nextActions).toContain("forge changed --json");
+      expect(result.nextActions).toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
       expect(result.recommendedReadFiles).toContain("AGENTS.md");
     } finally {
       cleanupWorkspace(root);
     }
-  }, 30_000);
+  }, 45_000);
 
   test("agent hooks status explains installation, memory visibility, and useful signals", async () => {
     const root = workspace();
@@ -485,11 +517,24 @@ describe("H30 agent adapter export", () => {
     expect(prepared.ok).toBe(true);
     const waiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
     expect(waiting.installed).toBe(true);
+    expect(waiting.approvalRequired).toBe(true);
+    expect(waiting.approvalStatus).toBe("waiting-for-user-trust");
     expect(waiting.visibleInMemory).toBe(false);
+    expect(waiting.nextActions).toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
     expect(waiting.nextActions).toContain("forge agent hooks smoke --target codex --json");
 
     const smoke = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
-    expect(smoke.ok).toBe(true);
+    expect(smoke.ok).toBe(false);
+    expect(smoke.approvalRequired).toBe(true);
+    expect(smoke.canary?.visible).toBe(true);
+    const stillWaiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(stillWaiting.ok).toBe(false);
+    expect(stillWaiting.visibleInMemory).toBe(true);
+    expect(stillWaiting.usefulSignals).toBeGreaterThan(0);
+    expect(stillWaiting.nativeSignals).toBe(0);
+    expect(stillWaiting.canarySignals).toBeGreaterThan(0);
+
+    await recordNativeCodexSignal(root);
     const ready = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
     expect(ready.ok).toBe(true);
     expect(ready.installed).toBe(true);
@@ -497,18 +542,24 @@ describe("H30 agent adapter export", () => {
     expect(ready.deltaWritable).toBe(true);
     expect(ready.visibleInMemory).toBe(true);
     expect(ready.usefulSignals).toBeGreaterThan(0);
-    expect(ready.lastSignal?.summary).toContain("forge agent hooks smoke");
-  });
+    expect(ready.nativeSignals).toBeGreaterThan(0);
+    expect(ready.approvalRequired).toBe(false);
+    expect(ready.approvalStatus).toBe("trusted");
+  }, 45_000);
 
-  test("agent hooks smoke stores a canary hook event", async () => {
+  test("agent hooks smoke stores a canary hook event without bypassing Codex trust", async () => {
     const root = workspace();
     const result = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false);
     expect(result.installed).toBe(true);
     expect(result.bridgeWritable).toBe(true);
     expect(result.deltaWritable).toBe(true);
     expect(result.visibleInMemory).toBe(true);
     expect(result.usefulSignals).toBeGreaterThan(0);
+    expect(result.nativeSignals).toBe(0);
+    expect(result.canarySignals).toBeGreaterThan(0);
+    expect(result.approvalRequired).toBe(true);
+    expect(result.approvalStatus).toBe("waiting-for-user-trust");
     expect(result.lastSignal?.summary).toContain("forge agent hooks smoke");
     expect(result.canary).toMatchObject({
       marker: "FORGE_HOOK_SMOKE_CANARY",
@@ -524,8 +575,10 @@ describe("H30 agent adapter export", () => {
       message: "canary event was normalized and stored",
     });
     expect(result.checks.some((check) => check.name === "canary-memory-readable" && check.ok)).toBe(true);
+    expect(result.checks.some((check) => check.name === "codex-hook-approval" && !check.ok)).toBe(true);
     expect(JSON.stringify(result.ingestResult)).toContain("FORGE_HOOK_SMOKE_CANARY");
     const human = formatAgentHuman(result);
+    expect(human).toContain("approval: waiting-for-user-trust");
     expect(human).toContain("Canary:");
     expect(human).toContain("marker: FORGE_HOOK_SMOKE_CANARY");
     expect(human).toContain("ingested id:");
@@ -533,7 +586,7 @@ describe("H30 agent adapter export", () => {
     expect(human).toContain("visible: yes");
     expect(human).toContain("last signal:");
     expect(human).toContain("forge agent hooks status --target codex --json");
-  });
+  }, 45_000);
 
   test(
     "agent doctor explains adapter, hook bridge, memory, and next actions",
@@ -553,19 +606,39 @@ describe("H30 agent adapter export", () => {
       const prepared = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
       expect(prepared.ok).toBe(true);
       const smoke = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
-      expect(smoke.ok).toBe(true);
+      expect(smoke.ok).toBe(false);
+
+      const needsApproval = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
+      expect(needsApproval.ok).toBe(false);
+      expect(needsApproval.summary).toMatchObject({
+        adapter: "ready",
+        hookBridge: "waiting-for-user-trust",
+        approvalRequired: true,
+        approvalStatus: "waiting-for-user-trust",
+        recentEvents: 1,
+        usefulSignals: 1,
+        nativeSignals: 0,
+        canarySignals: 1,
+      });
+      expect(needsApproval.nextActions).toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
+
+      await recordNativeCodexSignal(root);
 
       const ready = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
       expect(ready.ok).toBe(true);
       expect(ready.summary).toMatchObject({
         adapter: "ready",
         hookBridge: "ready",
-        recentEvents: 1,
-        usefulSignals: 1,
+        approvalRequired: false,
+        approvalStatus: "trusted",
+        recentEvents: 2,
+        usefulSignals: 2,
+        nativeSignals: 1,
+        canarySignals: 1,
       });
       expect(ready.nextActions).toContain("forge agent context --current --json");
       expect(ready.nextActions).toContain("forge agent memory --entry codex --json");
     },
-    20_000,
+    45_000,
   );
 });

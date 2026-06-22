@@ -54,15 +54,28 @@ flowchart LR
 
 The browser UI, if one exists, is not where Codex or Claude Code lives. The browser can show what ForgeOS knows: files, timeline, hooks, memory, checks, and handoff state. The coding agent remains the external editor/operator.
 
+For Codex Desktop, hook installation also has a user trust step. ForgeOS can install hook files and write a smoke canary, but it treats the setup as pending until Codex Desktop is approved by the user and a trusted native hook signal appears. In Studio this shows up as `waiting-for-user-trust`, not as a failed app build.
+
+Codex also has a deeper integration surface: `codex app-server`. Forge Studio treats it as optional and diagnostic-first. Hooks remain the universal observer path; app-server adds a richer Codex-specific path for streamed thread/turn/item events, approvals, terminal output, MCP status, and generated version-matched schemas when Studio owns a Codex app-server process. Studio snapshots expose availability under `proofs.codexAppServer` when the target is Codex; add `--probe-codex-server` when the observer should start `codex app-server`, send the documented stdio `initialize`/`initialized` handshake, make safe read-only `model/list` and `account/read` RPCs, and store the sanitized proof under `proofs.codexAppServer.handshake`.
+
 For a Studio-style observer, attach the app directory instead of turning the browser into the coding agent:
 
 ```bash
 forge studio open ../customer-app --preview-port 5174 --target codex --json
-forge studio doctor ../customer-app --preview-port 5174 --target codex --json
+forge studio bridge ../customer-app --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --probe-codex-server --json
+forge studio doctor ../customer-app --preview-port 5174 --target codex --probe-codex-server --json
+forge studio codex-server ../customer-app --json
+forge studio codex-server ../customer-app --probe --json
 forge dev --once --json
+codex app-server generate-ts --out .forge/codex-app-server-schemas
+codex app-server generate-json-schema --out .forge/codex-app-server-schemas
 ```
 
-The first command records the observed app, selected external-agent targets, hook setup commands, and preview URL. The second proves whether preview, hooks, generated artifacts, and DeltaDB are trustworthy. The dev snapshot returns `summary.preview.targetAppUrl`, which is the URL the observer should embed for the app being built.
+The first command records the observed app, selected external-agent targets, hook setup commands, and preview URL. It also checks whether dependencies are installed, auto-starts a local target preview when possible, and attempts one Studio bridge ingest. Use `--install` only when you want ForgeOS to run the detected install command for the target app. The bridge command keeps read-only ForgeOS snapshots flowing into the observer runtime, including changed files, hook proofs, DeltaDB status, generated freshness, and preview state. The doctor command proves whether preview, hooks, generated artifacts, and DeltaDB are trustworthy. The dev snapshot returns `summary.preview.targetAppUrl`, which is the URL the observer should embed for the app being built.
+
+When `codex app-server` is available, Studio reports the schema generation commands, the stdio connection command, and a `--probe` mode that performs only the documented initialize handshake. A successful handshake should show as `initialized`, which is stronger than `ready`: `ready` means the CLI surface is available; `initialized` means a Studio-owned app-server process answered the protocol. It does not expose remote WebSocket mode by default: any WebSocket listener should stay on loopback and use token or signed bearer auth before remote access.
+
+The normal local ports are split on purpose: Studio runs at `5173/3765`; the app under construction runs at `5174/3766`.
 
 ## What To Review First
 

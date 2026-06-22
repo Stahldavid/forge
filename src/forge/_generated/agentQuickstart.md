@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=8a11ed1c878594b797fd231584b012b0b7f1add75c6fdc4e6720ea21d6bfd61b
+// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=ba4328fa924005a8a6e04619b77df8b167cff33042faa489e66bab989b17e87a
 # Agent Quickstart
 
 Run:
@@ -35,5 +35,5 @@ Always finish with:
 
 ```bash
 forge generate
-forge verify --strict
+forge verify framework
 ```

@@ -115,16 +115,28 @@ export function serializePackageGraphJson(graph: PackageGraph): string {
   return serializeCanonical(graph);
 }
 
-export function serializePackageGraphTs(graph: PackageGraph): string {
-  return serializeConstFromJson("packageGraph", serializePackageGraphJson(graph));
+export function serializePackageGraphTs(_graph: PackageGraph): string {
+  return [
+    "import packageGraphJson from \"./packageGraph.json\" with { type: \"json\" };",
+    "",
+    "export type PackageGraph = typeof packageGraphJson;",
+    "export const packageGraph = packageGraphJson;",
+    "",
+  ].join("\n");
 }
 
 export function serializeRuntimeMatrixJson(matrix: RuntimeMatrix): string {
   return serializeCanonical(matrix);
 }
 
-export function serializeRuntimeMatrixTs(matrix: RuntimeMatrix): string {
-  return serializeConstFromJson("runtimeMatrix", serializeRuntimeMatrixJson(matrix));
+export function serializeRuntimeMatrixTs(_matrix: RuntimeMatrix): string {
+  return [
+    "import runtimeMatrixJson from \"./runtimeMatrix.json\" with { type: \"json\" };",
+    "",
+    "export type RuntimeMatrix = typeof runtimeMatrixJson;",
+    "export const runtimeMatrix = runtimeMatrixJson;",
+    "",
+  ].join("\n");
 }
 
 export function serializeImportGuardsJson(

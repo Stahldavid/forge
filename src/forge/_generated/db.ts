@@ -1,2 +1,2 @@
-// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=34af9d0c4498776568d3d0171658539c0a25ebe08af51c34526617eb944fe106
+// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=34af9d0c4498776568d3d0171658539c0a25ebe08af51c34526617eb944fe106
 export const tableMap = {} as const;

@@ -76,8 +76,8 @@ jobs:
       - name: Dependency vulnerability evidence
         run: npm run security:deps -- security/evidence/latest/dependency-audit.json
 
-      - name: Strict verification
-        run: node ./bin/forge.mjs verify --strict --script-timeout-ms 120000 | tee security/evidence/latest/verify-strict.txt
+      - name: Framework verification
+        run: node ./bin/forge.mjs verify framework --script-timeout-ms 120000 | tee security/evidence/latest/verify-framework.txt
 
       - name: Security assurance tests
         run: node ./bin/forge-bun.mjs test tests/security --timeout 120000 | tee security/evidence/latest/security-tests.txt

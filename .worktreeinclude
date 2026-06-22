@@ -1,0 +1,5 @@
+# No ignored local files are copied into Codex-managed worktrees by default.
+# Keep .env.local out unless a specific docs/release task needs RTD_TOKEN.
+#
+# If a worktree explicitly needs local secrets, add the narrow path here
+# temporarily and remove it again after that workflow.

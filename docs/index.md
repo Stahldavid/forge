@@ -73,6 +73,7 @@ When a feature needs an external package, ForgeOS keeps the same contract-first 
 - `AGENTS.md` for agent and human workflow instructions.
 - `src/forge/_generated/agentContract.json` for machine-readable project context.
 - `src/forge/_generated/agentTools.json` for AI-callable tools and auto-tools.
+- `src/forge/_generated/agentCairGuide.md` for compact CAIR navigation, guarded edits, and Forge-native action guidance.
 - `src/forge/_generated/appMap.md` for a human architecture map.
 - `src/forge/_generated/packageGraph.json` plus `dependencyApis` in `agentContract.json` for package/API evidence.
 - Runtime guards for commands, queries, liveQueries, actions, workflows, policies, packages, secrets, auth, AI placement, and frontend wiring.

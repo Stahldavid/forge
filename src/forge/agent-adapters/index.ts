@@ -331,6 +331,17 @@ function skill(name: string, description: string, body: string): string {
   return `---\nname: ${name}\ndescription: ${description}\n---\n\n# ${description}\n\n${body.trim()}\n`;
 }
 
+function codexAgentRole(name: string, description: string, developerInstructions: string): string {
+  return [
+    `name = "forge-${name}"`,
+    `description = "${description}"`,
+    "developer_instructions = '''",
+    developerInstructions.trim(),
+    "'''",
+    "",
+  ].join("\n");
+}
+
 function buildCodexFiles(_contract: AgentContract, options: { skills: boolean }): AgentExportFile[] {
   if (!options.skills) {
     return [];
@@ -379,11 +390,45 @@ Prefer targeted checks before full verification.
     path: `.codex/skills/${name}/SKILL.md`,
     content: skill(name, description, body),
   }));
-  const agents = ["explorer", "worker", "reviewer", "security"].map((name) => ({
+  const agents: Array<[string, string, string]> = [
+    ["explorer", "Explore a ForgeOS app contract, routes, runtime entries, policies, and generated context before editing.", `
+You are the ForgeOS explorer role.
+
+Use ForgeOS inspection commands before reading broad file trees:
+- forge status --json
+- forge changed --json
+- forge agent print-context --json
+- forge inspect all --brief --json
+
+Explain the app shape, key runtime entries, frontend bindings, policies, generated files, and likely files to inspect next. Prefer concise findings with exact file paths. Do not modify files.
+`],
+    ["worker", "Implement ForgeOS app changes using generated contracts, playbooks, and verification commands.", `
+You are the ForgeOS worker role.
+
+Before editing, read the generated agent context and changed-file summary. Prefer ForgeOS primitives such as forge do, forge make, forge add, forge refactor, and forge repair when they fit. Keep authored changes separate from generated artifacts, never edit src/forge/_generated directly, and run forge generate plus focused checks after source changes.
+
+Return the implemented change, files touched, verification commands, and any remaining risks.
+`],
+    ["reviewer", "Review ForgeOS changes with focus on behavior, generated drift, policies, tests, and handoff readiness.", `
+You are the ForgeOS reviewer role.
+
+Start from forge changed --json and forge review run --changed --json. Review authored source, tests, docs, and config before generated artifacts. Look for runtime boundary violations, stale generated files, missing tests, tenant/auth mistakes, frontend binding drift, and unclear handoff state.
+
+Lead with findings ordered by severity and include file paths and commands that prove the issue.
+`],
+    ["security", "Audit ForgeOS security boundaries, secrets, tenant scope, policies, hooks, and agent memory surfaces.", `
+You are the ForgeOS security role.
+
+Focus on command/query/liveQuery/action/workflow boundaries, process.env usage, ctx.secrets placement, tenant isolation, policy coverage, generated RLS artifacts, hook trust, Agent Memory privacy, and AI tool approval risks. Use forge inspect policies --json, forge auth check --json, forge ai redteam --json, and forge changed --json when relevant.
+
+Report concrete risks, impacted files, exploit path if applicable, and the smallest safe fix.
+`],
+  ];
+  const agentFiles = agents.map(([name, description, instructions]) => ({
     path: `.codex/agents/forge-${name}.toml`,
-    content: `name = "forge-${name}"\ndescription = "ForgeOS ${name} helper generated from agentAdapterManifest."\n`,
+    content: codexAgentRole(name, description, instructions),
   }));
-  return [...files, ...agents];
+  return [...files, ...agentFiles];
 }
 
 function mdc(description: string, globs: string[], body: string): string {
@@ -880,6 +925,23 @@ function eventBindings(event: AgentMemoryEventRecord): Record<string, unknown> {
     : {};
 }
 
+function eventPayload(event: AgentMemoryEventRecord): Record<string, unknown> {
+  const data = event.data;
+  const envelope = data && typeof data === "object" && "envelope" in data
+    ? (data as { envelope?: unknown }).envelope
+    : undefined;
+  const payload = envelope && typeof envelope === "object" && "payload" in envelope
+    ? (envelope as { payload?: unknown }).payload
+    : undefined;
+  return payload && typeof payload === "object" && !Array.isArray(payload)
+    ? payload as Record<string, unknown>
+    : {};
+}
+
+function eventIsForgeHookCanary(event: AgentMemoryEventRecord): boolean {
+  return eventPayload(event).forgeHookCanary === "FORGE_HOOK_SMOKE_CANARY";
+}
+
 function eventHasUsefulSignal(event: AgentMemoryEventRecord): boolean {
   const bindings = eventBindings(event);
   const files = bindings.files;
@@ -893,6 +955,52 @@ function eventHasUsefulSignal(event: AgentMemoryEventRecord): boolean {
     (Array.isArray(entries) && entries.length > 0) ||
     (Array.isArray(proofs) && proofs.length > 0)
   );
+}
+
+function eventIsNativeHookEvent(event: AgentMemoryEventRecord): boolean {
+  return (
+    !eventIsForgeHookCanary(event) &&
+    event.integrationKind === "native-hook" &&
+    event.trustLevel === "direct-hook"
+  );
+}
+
+function hookApprovalStatusFor(
+  target: AgentAdapterTarget,
+  installed: boolean,
+  nativeSignals: number,
+  memoryReadable = true,
+): "not-required" | "waiting-for-user-trust" | "trusted" | "memory-unavailable" {
+  if (target !== "codex" || !installed) {
+    return "not-required";
+  }
+  if (!memoryReadable) {
+    return "memory-unavailable";
+  }
+  return nativeSignals > 0 ? "trusted" : "waiting-for-user-trust";
+}
+
+function codexHookApprovalMessage(approvalStatus: ReturnType<typeof hookApprovalStatusFor>): string {
+  if (approvalStatus === "waiting-for-user-trust") {
+    return "ForgeOS has not seen a trusted native Codex hook signal yet; approve the Codex Desktop hook prompt if shown, then continue a Codex session in this workspace";
+  }
+  if (approvalStatus === "trusted") {
+    return "Codex Desktop hook trust is confirmed by a native hook signal";
+  }
+  if (approvalStatus === "memory-unavailable") {
+    return "Codex Desktop hook trust cannot be verified until Agent Memory is readable";
+  }
+  return "Codex Desktop hook trust is not required";
+}
+
+function hookApprovalNextActions(target: AgentAdapterTarget): string[] {
+  return target === "codex"
+    ? [
+        "Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)",
+        "Start or continue a Codex session in this workspace so a native hook event is emitted",
+        `forge agent hooks status --target ${target} --json`,
+      ]
+    : [];
 }
 
 function stringArray(value: unknown): string[] {
@@ -1097,6 +1205,10 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
       visibleInMemory: false,
       recentEvents: 0,
       usefulSignals: 0,
+      nativeSignals: 0,
+      canarySignals: 0,
+      approvalRequired: false,
+      approvalStatus: "not-required",
       checks: [{ name: "target", ok: false, message: diag.message }],
       nextActions: ["forge agent list-targets --json"],
       diagnostics: [diag],
@@ -1120,12 +1232,19 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
   const hookFiles = hookInstallFilesPresent(options.workspaceRoot, installResult);
   const memory = await readHookMemoryStatus(options.workspaceRoot, source, options.limit ?? 25);
   const usefulEvents = memory.events.filter(eventHasUsefulSignal);
+  const nativeEvents = memory.events.filter(eventIsNativeHookEvent);
+  const canaryEvents = memory.events.filter(eventIsForgeHookCanary);
   const installed = hookFiles.missing.length === 0;
   const bridgeWritable = installOk;
   const deltaWritable = memory.diagnostics.length === 0;
   const visibleInMemory = memory.events.length > 0;
   const usefulSignals = usefulEvents.length;
-  const ok = installed && bridgeWritable && deltaWritable && visibleInMemory && usefulSignals > 0;
+  const nativeSignals = nativeEvents.length;
+  const canarySignals = canaryEvents.length;
+  const approvalStatus = hookApprovalStatusFor(target, installed, nativeSignals, deltaWritable);
+  const approvalRequired = approvalStatus === "waiting-for-user-trust";
+  const trustedHookSignals = target === "codex" ? nativeSignals > 0 : true;
+  const ok = installed && bridgeWritable && deltaWritable && visibleInMemory && usefulSignals > 0 && trustedHookSignals && !approvalRequired;
   const nextActions = ok
     ? [
         `forge agent memory --entry ${source} --json`,
@@ -1133,7 +1252,8 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
       ]
     : [
         ...(!installed ? [`forge agent install ${installTarget} --json`] : []),
-        ...(installed && !visibleInMemory ? [`forge agent hooks smoke --target ${target} --json`] : []),
+        ...(approvalRequired ? hookApprovalNextActions(target) : []),
+        ...(installed && deltaWritable && !visibleInMemory ? [`forge agent hooks smoke --target ${target} --json`] : []),
         ...(visibleInMemory && usefulSignals === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
         ...(!deltaWritable ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
       ];
@@ -1148,6 +1268,10 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
     visibleInMemory,
     recentEvents: memory.events.length,
     usefulSignals,
+    nativeSignals,
+    canarySignals,
+    approvalRequired,
+    approvalStatus,
     ...(lastAgentSignal(memory.events) ? { lastSignal: lastAgentSignal(memory.events) } : {}),
     checks: [
       {
@@ -1179,6 +1303,29 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
         message: usefulSignals > 0
           ? `${usefulSignals} events include useful tool, file, command, status, entry, or proof signals`
           : "no useful tool, file, command, status, entry, or proof signals found",
+      },
+      {
+        name: "native-hook-signal",
+        ok: target !== "codex" || !deltaWritable || nativeSignals > 0,
+        message: target !== "codex"
+          ? "native Codex hook approval is not required for this target"
+          : !deltaWritable
+            ? "trusted Codex native hook signals cannot be verified until Agent Memory is readable"
+          : nativeSignals > 0
+            ? `${nativeSignals} trusted Codex native hook signal(s) visible`
+            : "Codex has not emitted a trusted native hook signal yet",
+        evidence: {
+          nativeSignals,
+          canarySignals,
+          memoryReadable: deltaWritable,
+          trustBoundary: target === "codex" ? "codex-desktop-hook-approval" : "not-required",
+        },
+      },
+      {
+        name: "codex-hook-approval",
+        ok: !approvalRequired && approvalStatus !== "memory-unavailable",
+        message: codexHookApprovalMessage(approvalStatus),
+        evidence: { approvalStatus, approvalRequired },
       },
     ],
     nextActions,
@@ -1234,10 +1381,22 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
   }
   const recentEvents = "events" in memoryResult ? memoryResult.events ?? [] : [];
   const usefulEvents = recentEvents.filter(eventHasUsefulSignal);
+  const nativeEvents = recentEvents.filter(eventIsNativeHookEvent);
+  const canaryEvents = recentEvents.filter(eventIsForgeHookCanary);
+  const nativeSignals = nativeEvents.length;
+  const canarySignals = canaryEvents.length;
   const adapterState = check.missing.length > 0 ? "missing" : check.stale.length > 0 ? "stale" : "ready";
+  const installed = !installTarget || hookFiles.missing.length === 0;
+  const memoryReadable = memoryDiagnostics.length === 0;
+  const approvalStatus = hookApprovalStatusFor(target, Boolean(installTarget && installed), nativeSignals, memoryReadable);
+  const approvalRequired = approvalStatus === "waiting-for-user-trust";
   const hookBridgeState = !installTarget
     ? "not-supported"
-    : hookFiles.missing.length === 0
+    : !memoryReadable
+      ? "memory-unavailable"
+    : approvalRequired
+      ? "waiting-for-user-trust"
+      : hookFiles.missing.length === 0
       ? "ready"
       : "missing";
   const checks = [
@@ -1282,6 +1441,29 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
         ? `${usefulEvents.length} events include files, entries, commands, tools, status, or proofs`
         : "events do not yet include useful files, entries, commands, tools, status, or proofs",
     },
+    {
+      name: "native-hook-signal",
+      ok: !installTarget || target !== "codex" || !memoryReadable || nativeSignals > 0,
+      message: !installTarget || target !== "codex"
+        ? "native Codex hook approval is not required for this target"
+        : !memoryReadable
+          ? "trusted Codex native hook signals cannot be verified until Agent Memory is readable"
+        : nativeSignals > 0
+          ? `${nativeSignals} trusted Codex native hook signal(s) visible`
+          : "Codex has not emitted a trusted native hook signal yet",
+      evidence: {
+        nativeSignals,
+        canarySignals,
+        memoryReadable,
+        trustBoundary: target === "codex" ? "codex-desktop-hook-approval" : "not-required",
+      },
+    },
+    {
+      name: "codex-hook-approval",
+      ok: !approvalRequired && approvalStatus !== "memory-unavailable",
+      message: codexHookApprovalMessage(approvalStatus),
+      evidence: { approvalStatus, approvalRequired },
+    },
     { name: "secret-scan", ok: !check.diagnostics.some((diag) => diag.code === FORGE_AGENT_SECRET_LEAK) },
   ];
   const ok = checks.every((item) => item.ok) && check.exitCode === 0;
@@ -1293,6 +1475,7 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     : [
         ...(check.missing.length > 0 || check.stale.length > 0 ? [`forge agent export --target ${target}`] : []),
         ...(installTarget && hookFiles.missing.length > 0 ? [`forge agent install ${installTarget} --json`] : []),
+        ...(approvalRequired ? hookApprovalNextActions(target) : []),
         ...(memoryDiagnostics.length > 0 ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
         ...(installTarget && recentEvents.length === 0 && memoryDiagnostics.length === 0 ? [`forge agent hooks smoke --target ${target} --json`] : []),
         ...(installTarget && recentEvents.length > 0 && usefulEvents.length === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
@@ -1303,8 +1486,12 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     summary: {
       adapter: adapterState,
       hookBridge: hookBridgeState,
+      approvalRequired,
+      approvalStatus,
       recentEvents: recentEvents.length,
       usefulSignals: usefulEvents.length,
+      nativeSignals,
+      canarySignals,
       ...(recentEvents.at(-1)?.capturedAt ? { lastEventAt: recentEvents.at(-1)?.capturedAt } : {}),
     },
     checks,
@@ -1423,7 +1610,8 @@ export async function runAgentOnboard(options: AgentCommandOptions): Promise<Age
     dev.ok &&
     agentContext.safeToEdit &&
     (!hookSmoke || hookSmoke.ok) &&
-    doctor.summary.adapter === "ready";
+    doctor.summary.adapter === "ready" &&
+    !doctor.summary.approvalRequired;
   const steps = [
     ...(preflightDev
       ? [{
@@ -1445,9 +1633,11 @@ export async function runAgentOnboard(options: AgentCommandOptions): Promise<Age
       ? [{
           name: "hook-smoke",
           ok: hookSmoke.ok,
-          message: hookSmoke.ok
-            ? `${target} hooks recorded a useful canary signal`
-            : `${target} hooks did not prove memory visibility`,
+          message: hookSmoke.approvalRequired
+            ? `${target} hook files and canary are visible, but Codex Desktop still needs user trust approval`
+            : hookSmoke.ok
+              ? `${target} hooks recorded a useful canary signal`
+              : `${target} hooks did not prove memory visibility`,
         }]
       : [{
           name: "hook-smoke",
@@ -1456,6 +1646,19 @@ export async function runAgentOnboard(options: AgentCommandOptions): Promise<Age
             ? "hook smoke skipped because this was a dry run"
             : "this target has no native hook bridge",
         }]),
+    ...(installTarget
+      ? [{
+          name: "hook-approval",
+          ok: !doctor.summary.approvalRequired,
+          message: doctor.summary.approvalRequired
+            ? "approve the installed hooks in Codex Desktop if prompted, then continue or start a Codex session in this workspace"
+            : doctor.summary.approvalStatus === "memory-unavailable"
+              ? "Codex hook trust cannot be verified until Agent Memory is readable"
+            : doctor.summary.approvalStatus === "trusted"
+              ? "Codex hook trust is confirmed by a native hook signal"
+              : "hook approval is not required for this target",
+        }]
+      : []),
     {
       name: "agent-doctor",
       ok: doctor.ok,
@@ -1496,7 +1699,11 @@ export async function runAgentOnboard(options: AgentCommandOptions): Promise<Age
     summary: {
       adapter: doctor.summary.adapter,
       hookBridge: doctor.summary.hookBridge,
+      approvalRequired: doctor.summary.approvalRequired,
+      approvalStatus: doctor.summary.approvalStatus,
       memorySignals: doctor.summary.usefulSignals,
+      nativeSignals: doctor.summary.nativeSignals,
+      canarySignals: doctor.summary.canarySignals,
       generatedFresh: agentContext.generatedFresh,
       generatedChanged: agentContext.generatedChanged,
       generatedChangedFiles: agentContext.generatedChangedFiles,
@@ -1544,6 +1751,10 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
       deltaWritable: false,
       visibleInMemory: false,
       usefulSignals: 0,
+      nativeSignals: 0,
+      canarySignals: 0,
+      approvalRequired: false,
+      approvalStatus: "not-required",
       checks: [{ name: "target", ok: false, message: diag.message }],
       nextActions: ["forge agent list-targets --json"],
       diagnostics: [diag],
@@ -1642,6 +1853,11 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
           ? "canary event is visible in agent memory"
           : "canary event was not visible in agent memory",
     },
+    {
+      name: "codex-hook-approval",
+      ok: !status.approvalRequired && status.approvalStatus !== "memory-unavailable",
+      message: codexHookApprovalMessage(status.approvalStatus),
+    },
   ];
   const diagnostics = [
     ...ingestDiagnostics,
@@ -1664,6 +1880,14 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
           suggestedCommands: [`forge agent hooks status --target ${target} --json`, `forge agent memory --entry ${source} --json`, "forge delta status --json"],
         })]
       : []),
+    ...(status.approvalRequired
+      ? [createDiagnostic({
+          severity: "warning",
+          code: "FORGE_AGENT_HOOK_APPROVAL_REQUIRED",
+          message: "Codex Desktop has installed hook files, but ForgeOS has not seen a trusted native hook signal yet. Approve the hook prompt if Codex shows one, then continue a Codex session in this workspace.",
+          suggestedCommands: hookApprovalNextActions(target),
+        })]
+      : []),
   ];
   const ok = checks.every((check) => check.ok);
   return {
@@ -1675,6 +1899,10 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
     deltaWritable: status.deltaWritable && ingestOk && memoryAfterSmoke.diagnostics.length === 0,
     visibleInMemory,
     usefulSignals: status.usefulSignals,
+    nativeSignals: status.nativeSignals,
+    canarySignals: status.canarySignals,
+    approvalRequired: status.approvalRequired,
+    approvalStatus: status.approvalStatus,
     ...(canaryEvent ? { lastSignal: lastAgentSignal([canaryEvent]) } : status.lastSignal ? { lastSignal: status.lastSignal } : {}),
     canary: {
       marker: canaryMarker,
@@ -1689,6 +1917,7 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
       ? [`forge agent hooks status --target ${target} --json`, `forge agent memory --entry ${source} --json`]
       : uniqueCommands([
           ...ingestNextActions,
+          ...(status.approvalRequired ? hookApprovalNextActions(target) : []),
           ...status.nextActions,
           `forge agent hooks status --target ${target} --json`,
           `forge agent memory --entry ${source} --json`,
@@ -1829,6 +2058,8 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
     return [
       `agent onboard ${result.ok ? "ready" : "needs attention"} for ${result.target}`,
       `ready to edit: ${result.readyToEdit ? "yes" : "no"}`,
+      `hook bridge: ${result.summary.hookBridge}`,
+      `hook approval: ${result.summary.approvalStatus}`,
       `generated fresh: ${result.summary.generatedFresh ? "yes" : "no"}`,
       `generated changed: ${result.summary.generatedChangedFiles}`,
       `changed files: ${result.summary.changedFiles}`,
@@ -1842,6 +2073,9 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
     const smoke = result as AgentHooksSmokeResult;
     return [
       `agent hooks smoke ${smoke.ok ? "ok" : "failed"} for ${smoke.target}`,
+      `approval: ${smoke.approvalStatus}`,
+      `native signals: ${smoke.nativeSignals}`,
+      `canary signals: ${smoke.canarySignals}`,
       ...smoke.checks.map((check) => `${check.ok ? "OK" : "FAIL"} ${check.name}${check.message ? `: ${check.message}` : ""}`),
       ...(smoke.canary
         ? [
@@ -1873,6 +2107,9 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
       `delta writable: ${result.deltaWritable ? "yes" : "no"}`,
       `visible in memory: ${result.visibleInMemory ? "yes" : "no"}`,
       `useful signals: ${result.usefulSignals}`,
+      `native signals: ${result.nativeSignals}`,
+      `canary signals: ${result.canarySignals}`,
+      `approval: ${result.approvalStatus}`,
       ...("recentEvents" in result ? [`recent events: ${result.recentEvents}`] : []),
       ...(result.lastSignal ? [`last signal: ${result.lastSignal.kind}${result.lastSignal.summary ? ` - ${result.lastSignal.summary}` : ""}`] : []),
       ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((command) => `  ${command}`)] : []),

@@ -1,9 +1,133 @@
-// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=6e6b3bd66db747fb0543e7144737ad55421d99a3d86930891d4510bc631e2a0c
+// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=b9776e42b25673ab4f11c2fd1210131db9888b89af639f30e24ea1a11f39fa55
 export const agentContract = {
   "actions": [],
+  "agentProtocols": [
+    {
+      "commands": [
+        "forge cair snapshot",
+        "forge cair query \"Q ST\"",
+        "forge cair query \"Q S name=<symbol>\"",
+        "forge cair query \"Q D S#1\"",
+        "forge cair query \"Q R S#1\"",
+        "forge cair query \"Q I S#1\"",
+        "forge cair action --plan \"A RN t=S#1 nn=<newName>\"",
+        "forge cair action \"A APPLY plan=<P#|path>\"",
+        "forge cair action \"A ROLLBACK journal=<path>\""
+      ],
+      "compactAliases": [
+        "Q ST=Q STATUS",
+        "Q S=Q SYMBOL",
+        "Q D=Q DEF",
+        "Q R=Q REFS",
+        "Q I=Q IMPACT",
+        "A RN=A RENAME.SYMBOL",
+        "A MV=A MOVE.SYMBOL",
+        "A OI=A ORGANIZE.IMPORTS",
+        "A FMT=A FORMAT",
+        "A MC=A MAKE.COMMAND",
+        "A MT=A MAKE.TABLE",
+        "A AT=A ADD.TEST",
+        "A WX=A WIRE.EXPORT"
+      ],
+      "guide": "src/forge/_generated/agentCairGuide.md",
+      "id": "cair",
+      "kind": "agent-protocol",
+      "mutationActions": [
+        "A RN t=S#1 nn=<newName>",
+        "A MV t=S#1 to=<path>",
+        "A OI f=M#1",
+        "A FMT f=M#1",
+        "A MC n=<command>",
+        "A MQ n=<query>",
+        "A MA n=<action>",
+        "A MT n=<table> fields=<fields>",
+        "A AT t=S#1 kind=unit",
+        "A WX t=S#1 file=src/index.ts",
+        "A APPLY plan=<P#|path>",
+        "A ROLLBACK journal=<path>"
+      ],
+      "preferredFor": [
+        "compact repository orientation",
+        "symbol lookup before file reads",
+        "semantic code edits",
+        "guarded refactors",
+        "Forge-native feature creation",
+        "impact-aware test selection",
+        "token-efficient programming"
+      ],
+      "readQueries": [
+        "Q ST",
+        "Q S name=<symbol>",
+        "Q D S#1",
+        "Q R S#1",
+        "Q I S#1",
+        "Q T S#1",
+        "Q DEP.API package=<pkg> symbol=<export>"
+      ],
+      "version": "0.5.0"
+    }
+  ],
   "ai": {
     "agents": [],
-    "generations": [],
+    "generations": [
+      {
+        "file": "src/forge/cli/ai.ts",
+        "method": "generateText",
+        "model": "unknown",
+        "provider": "openai",
+        "purpose": "cli_test"
+      },
+      {
+        "file": "src/forge/cli/ai.ts",
+        "method": "runAgent",
+        "model": "unknown",
+        "provider": "openai",
+        "purpose": "agent_model_redteam"
+      },
+      {
+        "file": "src/forge/compiler/integration/templates/ai.ts",
+        "method": "generateStructured",
+        "model": "unknown",
+        "provider": "openai"
+      },
+      {
+        "file": "src/forge/compiler/integration/templates/ai.ts",
+        "method": "generateText",
+        "model": "unknown",
+        "provider": "openai"
+      },
+      {
+        "file": "src/forge/compiler/integration/templates/ai.ts",
+        "method": "streamText",
+        "model": "unknown",
+        "provider": "openai"
+      },
+      {
+        "file": "src/forge/dev/server.ts",
+        "method": "generateText",
+        "model": "unknown",
+        "provider": "openai",
+        "purpose": "dev_test"
+      },
+      {
+        "file": "src/forge/dev/server.ts",
+        "method": "runAgent",
+        "model": "unknown",
+        "provider": "openai"
+      },
+      {
+        "file": "src/forge/make/templates.ts",
+        "method": "generateText",
+        "model": "mock",
+        "provider": "openai"
+      },
+      {
+        "file": "src/forge/runtime/context/create-context.ts",
+        "method": "runAgent",
+        "model": "unknown",
+        "provider": "openai"
+      }
+    ],
     "providers": [
       "anthropic",
       "gateway",
@@ -65,7 +189,7 @@ export const agentContract = {
       "forge generate",
       "forge check",
       "forge verify --standard",
-      "forge verify --strict"
+      "forge verify framework"
     ],
     "beforeEditing": [
       "forge agent onboard --target codex --json",
@@ -73,6 +197,8 @@ export const agentContract = {
       "forge changed --json",
       "forge handoff --json",
       "forge do inspect --json",
+      "forge cair snapshot",
+      "forge cair query \"Q ST\"",
       "forge dev --once --json",
       "forge agent print-context --json",
       "forge check --json"
@@ -7359,7 +7485,18 @@ export const agentContract = {
     }
   ],
   "telemetry": {
-    "events": [],
+    "events": [
+      "forge.ai.agent.completed",
+      "forge.ai.agent.failed",
+      "forge.ai.agent.started",
+      "forge.ai.agent.step.completed",
+      "forge.ai.tool.completed",
+      "forge.ai.tool.failed",
+      "forge.ai.tool.started",
+      "forge.liveQuery.error",
+      "forge.liveQuery.subscribed",
+      "forge.policy.denied"
+    ],
     "sinks": [
       "local"
     ]

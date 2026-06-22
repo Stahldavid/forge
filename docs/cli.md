@@ -101,17 +101,22 @@ See [Frontend](frontend.md) for hooks, capability map, and liveQuery.
 forge studio open ../customer-app --preview-port 5174 --target codex --json
 forge studio attach ../customer-app --preview-port 5174 --target codex --json
 forge studio snapshot ../customer-app --preview-port 5174 --target codex --json
+forge studio snapshot ../customer-app --preview-port 5174 --target codex --probe-codex-server --json
 forge studio doctor ../customer-app --preview-port 5174 --target codex --json
+forge studio codex-server ../customer-app --json
+forge studio codex-server ../customer-app --probe --json
 forge studio watch ../customer-app --preview-port 5174 --target codex --json
 ```
 
-Use `forge studio open` as the normal entrypoint for an observer workroom. It records the observed app, preview URL, preview status, ForgeOS posture, external-agent targets, app cwd, start command, preview URL, and hook commands in `.forge/studio/attachment.json`, then prepares the selected adapter and hook bridge. The browser remains an observer; Codex, Claude Code, or Cursor still edit the app externally. `forge studio attach` is the lower-level spelling for the same attachment write.
+Use `forge studio open` as the normal entrypoint for an observer workroom. It attaches the observed app, prepares the selected adapter and hook bridge, checks dependency readiness, starts the target preview when it is local and safe to start, and sends a one-shot snapshot to the Studio bridge when the Studio runtime is reachable. It returns `previewAutomation`, `bridge`, and the follow-up commands Studio should show. Pass `--install` to allow dependency installation, `--no-start` to keep preview startup manual, or `--no-bridge` to skip the Studio ingest attempt. The browser remains an observer; Codex, Claude Code, or Cursor still edit the app externally. `forge studio attach` is the lower-level command for writing `.forge/studio/attachment.json` and preparing adapters without startup/bridge orchestration.
 
-Use `forge studio snapshot` for the read-only refresh loop. It does not write the attachment manifest, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` diff buckets, `contextPacket`, hook proofs, DeltaDB status, and the commands Studio should surface. When `.forge/studio/attachment.json` already exists, snapshot reuses its preview URL and targets unless the current command overrides them.
+Use `forge studio snapshot` for the read-only refresh loop. It does not write the attachment manifest, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` diff buckets, `contextPacket`, hook proofs, DeltaDB status, and the commands Studio should surface. When `.forge/studio/attachment.json` already exists, snapshot reuses its preview URL and targets unless the current command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should also start `codex app-server`, perform the stdio `initialize` handshake, attach the result at `proofs.codexAppServer.handshake`, and exit without starting a thread or turn.
 
-Use `forge studio doctor` as the trust gate for Studio. It checks preview reachability, generated freshness, hook usefulness, and DeltaDB readability. Use `forge studio watch` when an observer UI wants a Studio-shaped JSON event; long-running file/reload streaming still comes from `forge dev --watch --json`.
+Use `forge studio doctor` as the trust gate for Studio. It checks preview reachability, generated freshness, hook usefulness, Codex hook approval state, DeltaDB readability, and optional Codex app-server availability. Add `--probe-codex-server` when the doctor or bridge should prove the app-server handshake, not only its availability. Use `forge studio codex-server` when the UI only needs that Codex-specific app-server proof: it returns schema generation commands, stdio connection guidance, and security notes without collecting the full Studio snapshot. Add `--write` to generate version-matched app-server schemas into `.forge/codex-app-server-schemas`; without `--write`, the command stays read-only. Add `--probe` to start `codex app-server` over stdio, send the documented `initialize`/`initialized` handshake, make safe read-only `model/list` and `account/read` RPCs, and then exit without starting a thread, turn, shell command, or browser-visible agent session. ForgeOS stores only sanitized readiness facts such as model count, sample model ids, account type, plan type, and `requiresOpenaiAuth`. Use `forge studio watch` when an observer UI wants a Studio-shaped JSON event; long-running file/reload streaming still comes from `forge dev --watch --json`.
 
 When an attach preview points at local port `5173`, ForgeOS assumes that is the Studio shell and automatically uses `5174` for the app being built. Pass `--force` only when `5173` is intentionally the target app.
+
+Studio flows keep ports separate by default: Forge Studio uses `5173` for its UI and `3765` for its runtime/bridge, while the observed app uses `5174` for preview and `3766` for its own ForgeOS runtime. The start command returned by `forge studio open` is therefore `forge dev --port 3766 --web-port 5174`.
 
 ## Introspection
 
@@ -153,6 +158,33 @@ forge doctor windows --json
 
 Use these when an agent needs to understand the project before changing it.
 
+## CAIR Agent Protocol
+
+```bash
+forge cair snapshot
+forge cair query "Q STATUS"
+forge cair query "Q DEF S#1"
+forge cair query "Q REFS S#1"
+forge cair query "Q IMPACT S#1"
+forge cair action --plan "A RENAME.SYMBOL target=S#1 newName=openTicket expect.file=src/commands/createTicket.ts expect.kind=command expect.hash=<hash>"
+forge cair action "A APPLY plan=<P#|.forge/cair/plans/...json>"
+forge cair action --plan "A MAKE.TABLE name=tickets fields=title:text"
+forge cair action --plan "A ADD.TEST target=S#1 kind=unit"
+forge cair action --plan "A WIRE.EXPORT target=S#1 file=src/index.ts"
+```
+
+CAIR is the compact agent language for reading and changing a Forge workspace. `snapshot` emits `@cair 0.5.0 snapshot=<hash>` plus compact module, symbol, package, API, and test identifiers. `query` answers semantic questions without forcing an agent to read whole files. `action --plan` writes a guarded plan to `.forge/cair/plans`; `A APPLY` applies that plan only when target file hashes still match; applied changes write rollback journals in `.forge/cair/journal`.
+
+Long-form verbs are stable for readability. v0.5 also supports compact aliases for token efficiency:
+
+| Long form | Compact |
+|-----------|---------|
+| `Q STATUS` / `Q SYMBOL` / `Q DEF` / `Q REFS` / `Q IMPACT` | `Q ST` / `Q S` / `Q D` / `Q R` / `Q I` |
+| `A RENAME.SYMBOL target=S#1 newName=x` | `A RN t=S#1 nn=x` |
+| `A ORGANIZE.IMPORTS file=M#1` / `A FORMAT file=M#1` | `A OI f=M#1` / `A FMT f=M#1` |
+| `A MAKE.COMMAND name=x` / `A MAKE.TABLE name=x` | `A MC n=x` / `A MT n=x` |
+| `A ADD.TEST target=S#1` / `A WIRE.EXPORT target=S#1` | `A AT t=S#1` / `A WX t=S#1` |
+
 ## Brownfield Import Analysis
 
 ```bash
@@ -179,6 +211,7 @@ forge verify --standard
 forge verify agent
 forge verify --strict
 forge verify release
+forge verify framework
 ```
 
 ### Verification
@@ -189,18 +222,29 @@ forge verify release
 | `forge verify --smoke` | Generated drift, Forge checks, typecheck (fast) |
 | `forge verify agent` | Alias for the standard external-agent loop |
 | `forge verify --standard` | Smoke + impact-selected tests (normal dev gate) |
-| `forge verify release` | Alias for strict release verification |
-| `forge verify --strict` | Full TestGraph in bounded parallel/isolated chunks + lint (handoff / CI) |
+| `forge verify release` | Alias for strict app release verification |
+| `forge verify --strict` | Strict app-level verification: app TestGraph in bounded parallel/isolated chunks + lint |
+| `forge verify framework` | Maintainer-only ForgeOS framework verification; runs the ForgeOS internal TestGraph |
 | `forge verify --changed` | Checks/tests for current diff only |
 
 ```bash
 forge verify --standard --script-timeout-ms 120000 --json
 forge verify --strict --test-jobs 4 --json
-forge verify --strict --test-plan --json
+forge verify framework --test-plan --json
+forge verify --standard --typechecker native --json
 forge do verify --json
 ```
 
-`--test-plan` prints the strict TestGraph lane/chunk plan without running tests. `--test-jobs` is the total TestGraph concurrency budget; isolated lane workers are reserved from that same budget so runtime-heavy files can overlap with ordinary chunks without oversubscribing the machine. With `--test-jobs 1`, lanes run sequentially while isolated chunks still execute one file at a time. Strict TestGraph runs write measured durations to `.forge/test-runs/testgraph-profile.json`; later plans use that profile to balance slow files across chunks.
+`forge verify` is app-first: it verifies the current ForgeOS app, not the ForgeOS framework package itself. In ordinary apps, `--strict` runs that app's TestGraph. In the `forgeos` framework checkout, internal framework tests are maintainer-only and require `forge verify framework` or `forge verify --internal`. `--test-plan` prints the strict TestGraph lane/chunk plan without running tests. `--test-jobs` is the total TestGraph concurrency budget; isolated lane workers are reserved from that same budget so runtime-heavy files can overlap with ordinary chunks without oversubscribing the machine. With `--test-jobs 1`, lanes run sequentially while isolated chunks still execute one file at a time. Strict TestGraph runs write measured durations to `.forge/test-runs/testgraph-profile.json`; later plans use that profile to balance slow files across chunks.
+
+`--typechecker native` uses the TypeScript 7 native checker when it is available and falls back to the stable `tsc` path with a warning when it is not. The recommended setup is an alias package, which keeps Forge's programmatic TypeScript API on the existing dependency while exposing the TS7 checker binary:
+
+```bash
+npm install -D typescript-7@npm:typescript@rc
+forge verify --standard --typechecker native
+```
+
+Resolution order is `FORGE_TS7_TSC`, local `typescript-7`, root `typescript` only when it is version 7 or newer, then `@typescript/native-preview` / `tsgo` for compatibility. `--typechecker auto` tries the native path first and falls back to `tsc`; `--typechecker ts7` is an alias for `native`; `--typechecker tsgo` keeps the old preview mode. Tune native parallelism with `FORGE_TS7_CHECKERS`, `FORGE_TS7_BUILDERS`, or force single-threaded mode with `FORGE_TS7_SINGLE_THREADED=1`.
 
 See [Testing and Repair](testing-and-repair.md).
 

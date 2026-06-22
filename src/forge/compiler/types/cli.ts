@@ -175,12 +175,13 @@ export interface VerifyOptions {
   standard?: boolean;
   scriptTimeoutMs?: number;
   testJobs?: number;
-  typechecker?: "tsc" | "tsgo" | "auto";
+  typechecker?: "tsc" | "native" | "ts7" | "tsgo" | "auto";
   fullTests?: boolean;
   testPlan?: boolean;
+  internal?: boolean;
 }
 
-export type VerifyProfile = "default" | "smoke" | "standard" | "strict" | "changed";
+export type VerifyProfile = "default" | "smoke" | "standard" | "strict" | "changed" | "internal";
 
 export type VerifyTestGraphLane = "parallel" | "isolated" | "serial";
 export type VerifyTestGraphLaneMode = "overlap" | "sequential";

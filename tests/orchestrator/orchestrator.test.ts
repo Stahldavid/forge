@@ -78,6 +78,12 @@ describe("plan", () => {
       expect(paths).toContain(`${GENERATED_DIR}/runtimeMatrix.json`);
       expect(paths).toContain(`${GENERATED_DIR}/importGuards.json`);
       expect(emitPlan.lock.packages.some((entry) => entry.name === "zod")).toBe(true);
+      const packageGraphTs = emitPlan.files.find((file) => file.path === `${GENERATED_DIR}/packageGraph.ts`)?.content ?? "";
+      const runtimeMatrixTs = emitPlan.files.find((file) => file.path === `${GENERATED_DIR}/runtimeMatrix.ts`)?.content ?? "";
+      expect(packageGraphTs).not.toContain("../compiler/");
+      expect(runtimeMatrixTs).not.toContain("../compiler/");
+      expect(packageGraphTs).toContain("export type PackageGraph = typeof packageGraphJson");
+      expect(runtimeMatrixTs).toContain("export type RuntimeMatrix = typeof runtimeMatrixJson");
     } finally {
       cleanupWorkspace(workspace);
     }

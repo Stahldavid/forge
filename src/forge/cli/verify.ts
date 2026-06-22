@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { availableParallelism, tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
+import { canonicalJson, serializeCanonical } from "../compiler/primitives/serialize.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
@@ -30,6 +31,7 @@ import { runPolicyCommand } from "./policy.ts";
 import { runAuthCommand } from "./auth.ts";
 import { runRlsCommand } from "./rls.ts";
 import { buildImpactTestPlan, diagnosticsForImpactTestRun, runImpactTestPlan } from "../impact/index.ts";
+import type { TestRunRecord, TestRunStep } from "../impact/types.ts";
 import { runAgentCheck } from "../agent-adapters/index.ts";
 import type { AgentAdapterTarget } from "../agent-adapters/types.ts";
 
@@ -40,7 +42,7 @@ interface PackageScripts {
 }
 
 const DEFAULT_SCRIPT_TIMEOUT_MS = 30 * 60 * 1000;
-type TypecheckerChoice = "tsc" | "tsgo" | "auto";
+type TypecheckerChoice = "tsc" | "native" | "ts7" | "tsgo" | "auto";
 
 interface ScriptRunResult {
   exitCode: number;
@@ -50,6 +52,17 @@ interface ScriptRunResult {
   durationMs: number;
   timedOut: boolean;
   spawnError?: boolean;
+}
+
+interface PackageJsonWithBin {
+  version?: unknown;
+  bin?: unknown;
+}
+
+interface TypecheckCandidate {
+  label: string;
+  argv: string[];
+  command: string;
 }
 
 function readPackageScripts(workspaceRoot: string): PackageScripts {
@@ -68,6 +81,27 @@ function readPackageScripts(workspaceRoot: string): PackageScripts {
   }
 }
 
+function readWorkspacePackageJson(workspaceRoot: string): Record<string, unknown> {
+  const packageJsonPath = join(workspaceRoot, "package.json");
+  if (!nodeFileSystem.exists(packageJsonPath)) {
+    return {};
+  }
+  try {
+    return JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function isForgeOsFrameworkWorkspace(workspaceRoot: string): boolean {
+  const pkg = readWorkspacePackageJson(workspaceRoot);
+  return (
+    pkg.name === "forgeos" &&
+    nodeFileSystem.exists(join(workspaceRoot, "src/forge/cli/verify.ts")) &&
+    nodeFileSystem.exists(join(workspaceRoot, "bin/forge.mjs"))
+  );
+}
+
 async function spawnPackageRun(
   workspaceRoot: string,
   scriptName: string,
@@ -79,6 +113,26 @@ async function spawnPackageRun(
     argv = [process.env.ComSpec ?? "cmd.exe", "/d", "/c", packageManager, "run", scriptName];
   }
   return spawnArgv(workspaceRoot, argv, timeoutMs, argv.join(" "));
+}
+
+function quoteWindowsCommandArg(value: string): string {
+  if (!/[\s"]/u.test(value)) {
+    return value;
+  }
+  return `"${value.replace(/"/g, "\"\"")}"`;
+}
+
+function wrapWindowsCommandScript(argv: string[]): string[] {
+  if (process.platform !== "win32" || !/\.(cmd|bat)$/iu.test(argv[0] ?? "")) {
+    return argv;
+  }
+  return [
+    process.env.ComSpec ?? "cmd.exe",
+    "/d",
+    "/s",
+    "/c",
+    argv.map(quoteWindowsCommandArg).join(" "),
+  ];
 }
 
 async function spawnArgv(
@@ -94,8 +148,9 @@ async function spawnArgv(
     let settled = false;
     let timedOut = false;
     let child: ReturnType<typeof spawn>;
+    const spawnCommand = wrapWindowsCommandScript(argv);
     try {
-      child = spawn(argv[0]!, argv.slice(1), {
+      child = spawn(spawnCommand[0]!, spawnCommand.slice(1), {
         cwd: workspaceRoot,
         env: envOverrides ? { ...process.env, ...envOverrides } : process.env,
         stdio: ["ignore", "pipe", "pipe"],
@@ -252,12 +307,229 @@ function packageScriptFailureDiagnostic(
   });
 }
 
+function strictGraphFailureDiagnostic(result: {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  command: string;
+  failedFiles: string[];
+  failedChunk?: number;
+  reportPath?: string;
+}): Diagnostic {
+  const excerpt = outputExcerpt(result.stdout, result.stderr);
+  const files = result.failedFiles.slice(0, 8);
+  const hidden = Math.max(0, result.failedFiles.length - files.length);
+  const fileSummary = files.length > 0
+    ? `${files.join(", ")}${hidden > 0 ? `, ... +${hidden} more` : ""}`
+    : "unknown files";
+  const report = result.reportPath ?? ".forge/test-runs/last.json";
+  return createDiagnostic({
+    severity: "error",
+    code: "FORGE_VERIFY_TESTS",
+    message: `strict TestGraph failed${result.failedChunk ? ` in chunk ${result.failedChunk}` : ""} with exit code ${result.exitCode}: ${fileSummary}`,
+    fixHint: excerpt
+      ? `Inspect ${report} and rerun the failing files. Last output: ${excerpt}`
+      : `Inspect ${report} and rerun the failing files.`,
+    suggestedCommands: [
+      result.failedFiles.length > 0
+        ? `bun test ${result.failedFiles.join(" ")}`
+        : result.command,
+      "forge repair diagnose --from-last-test-run --json",
+      "forge verify --strict",
+    ],
+  });
+}
+
 function resolveTypechecker(options: VerifyOptions): TypecheckerChoice {
   if (options.typechecker) {
     return options.typechecker;
   }
   const fromEnv = process.env.FORGE_TYPECHECKER;
-  return fromEnv === "tsgo" || fromEnv === "auto" || fromEnv === "tsc" ? fromEnv : "tsc";
+  return (
+    fromEnv === "native" ||
+    fromEnv === "ts7" ||
+    fromEnv === "tsgo" ||
+    fromEnv === "auto" ||
+    fromEnv === "tsc"
+  )
+    ? fromEnv
+    : "tsc";
+}
+
+function nodeModulePackageRoot(workspaceRoot: string, packageName: string): string {
+  return join(workspaceRoot, "node_modules", ...packageName.split("/"));
+}
+
+function readNodeModulePackageJson(
+  workspaceRoot: string,
+  packageName: string,
+): PackageJsonWithBin | undefined {
+  const packageJsonPath = join(nodeModulePackageRoot(workspaceRoot, packageName), "package.json");
+  if (!nodeFileSystem.exists(packageJsonPath)) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as PackageJsonWithBin;
+  } catch {
+    return undefined;
+  }
+}
+
+function packageVersion(workspaceRoot: string, packageName: string): string | undefined {
+  const version = readNodeModulePackageJson(workspaceRoot, packageName)?.version;
+  return typeof version === "string" ? version : undefined;
+}
+
+function packageMajorVersion(workspaceRoot: string, packageName: string): number | undefined {
+  const version = packageVersion(workspaceRoot, packageName);
+  const match = version?.match(/^(\d+)/u);
+  if (!match) {
+    return undefined;
+  }
+  const parsed = Number(match[1]);
+  return Number.isInteger(parsed) ? parsed : undefined;
+}
+
+function packageBinPath(workspaceRoot: string, packageName: string, binName: string): string | undefined {
+  const packageRoot = nodeModulePackageRoot(workspaceRoot, packageName);
+  const packageJson = readNodeModulePackageJson(workspaceRoot, packageName);
+  if (!packageJson) {
+    return undefined;
+  }
+
+  let relativeBin: string | undefined;
+  if (typeof packageJson.bin === "string") {
+    relativeBin = packageJson.bin;
+  } else if (packageJson.bin && typeof packageJson.bin === "object") {
+    const value = (packageJson.bin as Record<string, unknown>)[binName];
+    relativeBin = typeof value === "string" ? value : undefined;
+  }
+
+  const candidates = [
+    relativeBin ? join(packageRoot, relativeBin) : undefined,
+    join(packageRoot, "bin", binName),
+  ].filter((candidate): candidate is string => typeof candidate === "string");
+
+  return candidates.find((candidate) => nodeFileSystem.exists(candidate));
+}
+
+function isLikelyPath(value: string): boolean {
+  return value.includes("/") || value.includes("\\") || /^[a-z]:/iu.test(value);
+}
+
+function isNodeRunnableBin(executable: string): boolean {
+  if (/\.(cjs|js|mjs)$/iu.test(executable)) {
+    return true;
+  }
+  if (!nodeFileSystem.exists(executable)) {
+    return false;
+  }
+  try {
+    const head = (nodeFileSystem.readText(executable) ?? "").slice(0, 256);
+    const firstLine = head.split(/\r?\n/u)[0] ?? "";
+    return firstLine.includes("node") || head.includes("require(") || head.includes("import ");
+  } catch {
+    return false;
+  }
+}
+
+function argvForExecutable(executable: string, args: string[]): string[] {
+  const trimmed = executable.trim();
+  if (!isLikelyPath(trimmed)) {
+    return resolveCommandArgv([trimmed, ...args]);
+  }
+  return isNodeRunnableBin(trimmed) ? [process.execPath, trimmed, ...args] : [trimmed, ...args];
+}
+
+function argvForPackageBin(binPath: string, args: string[]): string[] {
+  return isNodeRunnableBin(binPath) ? [process.execPath, binPath, ...args] : [binPath, ...args];
+}
+
+function positiveIntegerEnv(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 ? String(parsed) : undefined;
+}
+
+function nativeTypecheckArgs(): string[] {
+  const args = ["--noEmit"];
+  const checkers = positiveIntegerEnv("FORGE_TS7_CHECKERS");
+  const builders = positiveIntegerEnv("FORGE_TS7_BUILDERS");
+  const singleThreaded = process.env.FORGE_TS7_SINGLE_THREADED?.trim().toLowerCase();
+  if (checkers) {
+    args.push("--checkers", checkers);
+  }
+  if (builders) {
+    args.push("--builders", builders);
+  }
+  if (singleThreaded === "1" || singleThreaded === "true" || singleThreaded === "yes") {
+    args.push("--singleThreaded");
+  }
+  return args;
+}
+
+function nativeTypecheckCandidates(workspaceRoot: string): TypecheckCandidate[] {
+  const args = nativeTypecheckArgs();
+  const candidates: TypecheckCandidate[] = [];
+  const explicitTsc = process.env.FORGE_TS7_TSC?.trim();
+  if (explicitTsc) {
+    candidates.push({
+      label: "FORGE_TS7_TSC",
+      argv: argvForExecutable(explicitTsc, args),
+      command: `${explicitTsc} ${args.join(" ")}`,
+    });
+  }
+
+  const aliasedTs7 = packageBinPath(workspaceRoot, "typescript-7", "tsc");
+  if (aliasedTs7) {
+    candidates.push({
+      label: "typescript-7",
+      argv: argvForPackageBin(aliasedTs7, args),
+      command: "typescript-7 tsc --noEmit",
+    });
+  }
+
+  if ((packageMajorVersion(workspaceRoot, "typescript") ?? 0) >= 7) {
+    const rootTs = packageBinPath(workspaceRoot, "typescript", "tsc");
+    if (rootTs) {
+      candidates.push({
+        label: "typescript@7",
+        argv: argvForPackageBin(rootTs, args),
+        command: "typescript@7 tsc --noEmit",
+      });
+    }
+  }
+
+  const nativePreview = packageBinPath(workspaceRoot, "@typescript/native-preview", "tsgo");
+  if (nativePreview) {
+    candidates.push({
+      label: "@typescript/native-preview",
+      argv: argvForPackageBin(nativePreview, args),
+      command: "@typescript/native-preview tsgo --noEmit",
+    });
+  }
+
+  return candidates;
+}
+
+function missingNativeTypecheckResult(): ScriptRunResult {
+  return {
+    exitCode: 1,
+    stdout: "",
+    stderr: [
+      "No TypeScript native checker was found.",
+      "Install an aliased RC with `npm install -D typescript-7@npm:typescript@rc`,",
+      "set FORGE_TS7_TSC, or install @typescript/native-preview.",
+    ].join(" "),
+    command: "typescript native --noEmit",
+    durationMs: 0,
+    timedOut: false,
+    spawnError: true,
+  };
 }
 
 async function runTscTypecheck(
@@ -272,9 +544,59 @@ async function runTscTypecheck(
   return spawnArgv(workspaceRoot, argv, timeoutMs, "tsc --noEmit");
 }
 
+async function runNativeTypecheck(workspaceRoot: string, timeoutMs: number): Promise<ScriptRunResult> {
+  const [candidate] = nativeTypecheckCandidates(workspaceRoot);
+  if (!candidate) {
+    return missingNativeTypecheckResult();
+  }
+  return spawnArgv(workspaceRoot, candidate.argv, timeoutMs, candidate.command);
+}
+
 async function runTsgoTypecheck(workspaceRoot: string, timeoutMs: number): Promise<ScriptRunResult> {
-  const argv = resolveCommandArgv(["tsgo", "--noEmit"]);
+  const args = nativeTypecheckArgs();
+  const nativePreview = packageBinPath(workspaceRoot, "@typescript/native-preview", "tsgo");
+  if (nativePreview) {
+    return spawnArgv(
+      workspaceRoot,
+      argvForPackageBin(nativePreview, args),
+      timeoutMs,
+      "@typescript/native-preview tsgo --noEmit",
+    );
+  }
+  const argv = resolveCommandArgv(["tsgo", ...args]);
   return spawnArgv(workspaceRoot, argv, timeoutMs, "tsgo --noEmit");
+}
+
+function typecheckAttemptSummary(label: string, result: ScriptRunResult): string {
+  if (result.timedOut) {
+    return `${label}: timed out`;
+  }
+  if (result.spawnError) {
+    return `${label}: command unavailable`;
+  }
+  return `${label}: exit code ${result.exitCode}`;
+}
+
+function typecheckerFallbackDiagnostic(
+  choice: TypecheckerChoice,
+  attempts: Array<{ label: string; result: ScriptRunResult }>,
+): Diagnostic {
+  const excerpt = attempts
+    .map((attempt) => outputExcerpt(attempt.result.stdout, attempt.result.stderr))
+    .find(Boolean);
+  return createDiagnostic({
+    severity: "warning",
+    code: "FORGE_VERIFY_TYPECHECKER_FALLBACK",
+    message: `${choice} typecheck failed; fell back to tsc (${attempts
+      .map((attempt) => typecheckAttemptSummary(attempt.label, attempt.result))
+      .join("; ")})`,
+    fixHint: excerpt ? `Last native output: ${excerpt}` : undefined,
+    suggestedCommands: [
+      "npm install -D typescript-7@npm:typescript@rc",
+      "npm install -D @typescript/native-preview",
+      "forge verify --typechecker tsc",
+    ],
+  });
 }
 
 async function runPreferredTypecheck(
@@ -287,28 +609,36 @@ async function runPreferredTypecheck(
     return { result: await runTscTypecheck(options.workspaceRoot, scripts, timeoutMs), diagnostics: [], label: "tsc" };
   }
 
-  const tsgo = await runTsgoTypecheck(options.workspaceRoot, timeoutMs);
-  if (tsgo.exitCode === 0) {
-    return { result: tsgo, diagnostics: [], label: "tsgo" };
+  const attempts: Array<{ label: string; result: ScriptRunResult }> = [];
+  if (choice === "native" || choice === "ts7" || choice === "auto") {
+    const native = await runNativeTypecheck(options.workspaceRoot, timeoutMs);
+    if (native.exitCode === 0) {
+      return {
+        result: native,
+        diagnostics: [],
+        label: choice === "auto" ? "auto->native" : choice,
+      };
+    }
+    attempts.push({ label: "native", result: native });
+  }
+
+  if (choice === "tsgo" || choice === "auto") {
+    const tsgo = await runTsgoTypecheck(options.workspaceRoot, timeoutMs);
+    if (tsgo.exitCode === 0) {
+      return {
+        result: tsgo,
+        diagnostics: [],
+        label: choice === "auto" ? "auto->tsgo" : "tsgo",
+      };
+    }
+    attempts.push({ label: "tsgo", result: tsgo });
   }
 
   const fallback = await runTscTypecheck(options.workspaceRoot, scripts, timeoutMs);
-  const diagnostics = [
-    createDiagnostic({
-      severity: "warning",
-      code: "FORGE_VERIFY_TSGO_FALLBACK",
-      message: `tsgo typecheck failed; fell back to tsc (${tsgo.spawnError ? "command unavailable" : `exit code ${tsgo.exitCode}`})`,
-      fixHint: outputExcerpt(tsgo.stdout, tsgo.stderr) || undefined,
-      suggestedCommands: [
-        "npm install -D @typescript/native-preview@beta",
-        "forge verify --typechecker tsc",
-      ],
-    }),
-  ];
   return {
     result: fallback,
-    diagnostics,
-    label: choice === "auto" ? "auto->tsc" : "tsgo->tsc",
+    diagnostics: [typecheckerFallbackDiagnostic(choice, attempts)],
+    label: `${choice}->tsc`,
   };
 }
 
@@ -409,6 +739,13 @@ interface StrictTestEntry {
   lane: StrictTestLane;
   estimatedMs: number;
   durationSource: VerifyTestGraphDurationSource;
+}
+
+interface StrictGraphChunkResult extends ScriptRunResult {
+  files: string[];
+  lane: StrictTestLane;
+  chunkIndex: number;
+  chunkCount: number;
 }
 
 interface TestGraphProfileFile {
@@ -833,8 +1170,8 @@ async function runStrictGraphChunkPool(
   timeoutMs: number,
   jobs: number,
   totalChunks = chunks.length,
-): Promise<{ results: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined>; timedOut: boolean }> {
-  const results: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined> = [];
+): Promise<{ results: Array<StrictGraphChunkResult | undefined>; timedOut: boolean }> {
+  const results: Array<StrictGraphChunkResult | undefined> = [];
   let nextChunk = 0;
   let stopScheduling = false;
 
@@ -853,7 +1190,13 @@ async function runStrictGraphChunkPool(
         totalChunks,
         timeoutMs,
       );
-      results[chunkIndex] = { ...result, files: chunk.files, lane: chunk.lane };
+      results[chunkIndex] = {
+        ...result,
+        files: chunk.files,
+        lane: chunk.lane,
+        chunkIndex: chunk.index,
+        chunkCount: totalChunks,
+      };
       if (result.exitCode !== 0) {
         stopScheduling = true;
         return;
@@ -870,7 +1213,7 @@ async function runStrictGraphChunkPool(
 
 function writeTestGraphProfile(
   workspaceRoot: string,
-  results: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined>,
+  results: Array<StrictGraphChunkResult | undefined>,
 ): void {
   const existing = readTestGraphProfile(workspaceRoot);
   const now = new Date().toISOString();
@@ -902,11 +1245,74 @@ function writeTestGraphProfile(
   nodeFileSystem.writeText(path, `${JSON.stringify(profile, null, 2)}\n`);
 }
 
+function strictGraphChunkToTestRunStep(result: StrictGraphChunkResult, timeoutMs: number): TestRunStep & {
+  files: string[];
+  lane: StrictTestLane;
+  chunkIndex: number;
+  chunkCount: number;
+  reproduceCommand: string;
+} {
+  return {
+    command: result.command,
+    ok: result.exitCode === 0,
+    exitCode: result.exitCode,
+    durationMs: result.durationMs,
+    timedOut: result.timedOut,
+    failureKind: packageScriptFailureKind(result),
+    stdout: result.stdout,
+    stderr: result.stderr,
+    files: result.files,
+    lane: result.lane,
+    chunkIndex: result.chunkIndex,
+    chunkCount: result.chunkCount,
+    reproduceCommand: `bun test ${result.files.join(" ")} --timeout ${timeoutMs}`,
+  };
+}
+
+function writeStrictGraphTestRunRecord(
+  workspaceRoot: string,
+  plan: VerifyTestGraphPlan,
+  results: StrictGraphChunkResult[],
+  timeoutMs: number,
+  durationMs: number,
+): TestRunRecord {
+  const commands = results.map((result) => result.command);
+  const record: TestRunRecord = {
+    schemaVersion: "0.1.0",
+    id: `run_${createHash("sha256")
+      .update(`${Date.now()}:${commands.join("|")}:${plan.fileCount}:${plan.chunkCount}`)
+      .digest("hex")
+      .slice(0, 12)}`,
+    changedHash: `sha256:${createHash("sha256").update(canonicalJson(plan.chunks)).digest("hex")}`,
+    planHash: `sha256:${createHash("sha256").update(canonicalJson(plan)).digest("hex")}`,
+    source: { mode: "changed", id: "verify-strict-testgraph" },
+    commands,
+    timeoutMs,
+    results: results.map((result) => strictGraphChunkToTestRunStep(result, timeoutMs)),
+    failed: results.filter((result) => result.exitCode !== 0).map((result) => result.command),
+    durationMs,
+  };
+  const runDir = join(workspaceRoot, ".forge/test-runs");
+  nodeFileSystem.mkdirp(runDir);
+  nodeFileSystem.writeText(join(runDir, "last.json"), serializeCanonical(record));
+  nodeFileSystem.writeText(join(runDir, `${record.id}.json`), serializeCanonical(record));
+  return record;
+}
+
 async function runStrictGraphTests(
   workspaceRoot: string,
   timeoutMs: number,
   testJobs?: number,
-): Promise<ScriptRunResult & { fileCount: number; chunkCount: number; jobs: number; isolatedJobs: number; plan: VerifyTestGraphPlan }> {
+): Promise<ScriptRunResult & {
+  fileCount: number;
+  chunkCount: number;
+  jobs: number;
+  isolatedJobs: number;
+  plan: VerifyTestGraphPlan;
+  failedFiles: string[];
+  failedChunk?: number;
+  reportPath?: string;
+}> {
   const plan = buildStrictTestGraphPlan(workspaceRoot, testJobs);
   if (plan.fileCount === 0) {
     return {
@@ -922,6 +1328,7 @@ async function runStrictGraphTests(
       jobs: 0,
       isolatedJobs: 0,
       plan,
+      failedFiles: [],
     };
   }
 
@@ -953,7 +1360,7 @@ async function runStrictGraphTests(
   const [parallelRun, isolatedRun] = plan.laneMode === "sequential"
     ? [await parallelPool(), await isolatedPool()]
     : await Promise.all([parallelPool(), isolatedPool()]);
-  const orderedResults: Array<(ScriptRunResult & { files: string[]; lane: StrictTestLane }) | undefined> = [];
+  const orderedResults: StrictGraphChunkResult[] = [];
   for (const result of parallelRun.results) {
     if (result) {
       orderedResults.push(result);
@@ -979,7 +1386,13 @@ async function runStrictGraphTests(
         plan.chunkCount,
         timeoutMs,
       );
-      orderedResults.push({ ...result, files: chunk.files, lane: chunk.lane });
+      orderedResults.push({
+        ...result,
+        files: chunk.files,
+        lane: chunk.lane,
+        chunkIndex: chunk.index,
+        chunkCount: plan.chunkCount,
+      });
       timedOut = timedOut || result.timedOut;
       if (result.exitCode !== 0) {
         break;
@@ -989,6 +1402,7 @@ async function runStrictGraphTests(
 
   writeTestGraphProfile(workspaceRoot, orderedResults);
 
+  let failedResult: StrictGraphChunkResult | undefined;
   for (const result of orderedResults) {
     if (!result) {
       continue;
@@ -1000,9 +1414,18 @@ async function runStrictGraphTests(
       exitCode = result.exitCode;
       command = result.command;
       failedOutput = { stdout: result.stdout, stderr: result.stderr };
+      failedResult = result;
       break;
     }
   }
+
+  const report = writeStrictGraphTestRunRecord(
+    workspaceRoot,
+    plan,
+    orderedResults,
+    timeoutMs,
+    Date.now() - started,
+  );
 
   return {
     exitCode,
@@ -1016,6 +1439,9 @@ async function runStrictGraphTests(
     jobs: plan.jobs,
     isolatedJobs: plan.isolatedJobs,
     plan,
+    failedFiles: failedResult?.files ?? [],
+    failedChunk: failedResult?.chunkIndex,
+    reportPath: `.forge/test-runs/${report.id}.json`,
   };
 }
 
@@ -1043,6 +1469,9 @@ function runStrictGraphTestChunk(
 }
 
 function resolveVerifyProfile(options: VerifyOptions): VerifyProfile {
+  if (options.internal) {
+    return "internal";
+  }
   if (options.changed) {
     return "changed";
   }
@@ -1144,9 +1573,39 @@ export async function runVerifyCommand(
   const scripts = readPackageScripts(options.workspaceRoot);
   const scriptTimeoutMs = resolveScriptTimeoutMs(options);
   const profile = resolveVerifyProfile(options);
+  const frameworkWorkspace = isForgeOsFrameworkWorkspace(options.workspaceRoot);
+  const canRunInternalTests = options.internal || !frameworkWorkspace;
   let testGraphPlan: VerifyTestGraphPlan | undefined;
 
   if (options.testPlan) {
+    if (frameworkWorkspace && !options.internal) {
+      steps.push({
+        name: "tests:framework-testgraph-plan",
+        ok: true,
+        skipped: true,
+        skipReason: "ForgeOS framework TestGraph is maintainer-only; use forge verify framework --test-plan --json",
+      });
+      diagnostics.push(
+        createDiagnostic({
+          severity: "warning",
+          code: "FORGE_VERIFY_INTERNAL_TESTS_SKIPPED",
+          message: "Skipped ForgeOS framework TestGraph plan during app-level verify.",
+          fixHint: "Run forge verify framework --test-plan --json when maintaining ForgeOS itself.",
+          suggestedCommands: [
+            "forge verify framework --test-plan --json",
+            "forge verify --standard --json",
+          ],
+        }),
+      );
+      return {
+        ok: true,
+        profile,
+        steps,
+        diagnostics,
+        durationMs: Date.now() - started,
+        exitCode: 0,
+      };
+    }
     testGraphPlan = buildStrictTestGraphPlan(options.workspaceRoot, options.testJobs);
     steps.push({
       name: "tests:testgraph-plan",
@@ -1245,7 +1704,7 @@ export async function runVerifyCommand(
   printProgress(options, "verify: forge-check");
   const checkStarted = Date.now();
   const forgeCheck = await runCheckCommand(options.workspaceRoot, {
-    strictSecrets: options.strict,
+    strictSecrets: options.strict || options.internal === true,
   });
   steps.push({
     name: "forge-check",
@@ -1255,7 +1714,7 @@ export async function runVerifyCommand(
   });
   diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);
 
-  if (profile === "strict" || profile === "standard") {
+  if (profile === "strict" || profile === "standard" || profile === "internal") {
     printProgress(options, "verify: policy-check-strict");
     const policyStarted = Date.now();
     const policyCheck = await runPolicyCommand({
@@ -1387,7 +1846,28 @@ export async function runVerifyCommand(
     steps.push(...impact.steps);
     diagnostics.push(...impact.diagnostics);
     steps.push(skippedStep("tests", "--standard uses impact-selected tests; use --strict for the full test script"));
-  } else if (profile === "strict" && !options.fullTests) {
+  } else if ((profile === "strict" || profile === "internal") && !options.fullTests) {
+    if (!canRunInternalTests) {
+      steps.push({
+        name: "tests:framework-testgraph",
+        ok: true,
+        skipped: true,
+        skipReason: "ForgeOS framework tests are maintainer-only; use forge verify framework or --internal",
+      });
+      diagnostics.push(
+        createDiagnostic({
+          severity: "warning",
+          code: "FORGE_VERIFY_INTERNAL_TESTS_SKIPPED",
+          message: "Skipped ForgeOS framework tests during app-level verify.",
+          fixHint: "Run forge verify framework when maintaining ForgeOS itself. App projects still run their own TestGraph under forge verify --strict.",
+          suggestedCommands: [
+            "forge verify framework",
+            "forge verify --internal",
+            "forge verify --standard",
+          ],
+        }),
+      );
+    } else {
     printProgress(options, `verify: tests (strict TestGraph, ${scriptTimeoutMs}ms timeout)`);
     const tests = await runStrictGraphTests(options.workspaceRoot, scriptTimeoutMs, options.testJobs);
     testGraphPlan = tests.plan;
@@ -1404,9 +1884,30 @@ export async function runVerifyCommand(
       diagnostics.push(timedOutDiagnostic("test", scriptTimeoutMs));
     } else if (tests.exitCode !== 0) {
       diagnostics.push(
-        packageScriptFailureDiagnostic("test", "FORGE_VERIFY_TESTS", tests),
+        strictGraphFailureDiagnostic(tests),
       );
     }
+    }
+  } else if ((profile === "strict" || profile === "internal") && options.fullTests && !canRunInternalTests) {
+    steps.push({
+      name: "tests:framework-full",
+      ok: true,
+      skipped: true,
+      skipReason: "ForgeOS framework package tests are maintainer-only; use forge verify framework --full or --internal --full",
+    });
+    diagnostics.push(
+      createDiagnostic({
+        severity: "warning",
+        code: "FORGE_VERIFY_INTERNAL_TESTS_SKIPPED",
+        message: "Skipped ForgeOS framework package tests during app-level verify.",
+        fixHint: "Run forge verify framework --full when maintaining ForgeOS itself.",
+        suggestedCommands: [
+          "forge verify framework --full",
+          "forge verify --internal --full",
+          "forge verify --standard",
+        ],
+      }),
+    );
   } else if (!scripts.test) {
     steps.push(skippedStep("tests", "no test script in package.json"));
   } else {

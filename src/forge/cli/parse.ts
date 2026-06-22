@@ -49,6 +49,7 @@ import type {
 import type { ForgeDoOptions } from "../intent/types.ts";
 import type { BenchCommandOptions, BenchSubcommand } from "../bench.ts";
 import type { BrownfieldImportCommandOptions } from "../brownfield-import/types.ts";
+import type { CairCommandOptions, CairSubcommand } from "../cair/types.ts";
 
 export type ForgeCommand =
   | { kind: "version"; json: boolean }
@@ -164,6 +165,7 @@ export type ForgeCommand =
   | { kind: "repair"; options: RepairCommandOptions }
   | { kind: "do"; options: ForgeDoOptions }
   | { kind: "bench"; options: BenchCommandOptions }
+  | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
@@ -176,11 +178,23 @@ export type ForgeCommand =
   | { kind: "handoff"; json: boolean; workspaceRoot: string }
   | {
       kind: "studio";
-      subcommand: "attach" | "snapshot" | "watch" | "open" | "doctor";
+      subcommand: "attach" | "snapshot" | "watch" | "open" | "doctor" | "bridge" | "codex-server";
       path?: string;
       previewUrl?: string;
       previewPort?: number;
+      studioUrl?: string;
+      intervalMs?: number;
+      once: boolean;
+      workspaceId?: string;
+      tenantId?: string;
+      userId?: string;
+      role?: string;
       targets: string[];
+      install?: boolean;
+      start?: boolean;
+      bridge?: boolean;
+      writeSchemas?: boolean;
+      probeAppServer?: boolean;
       json: boolean;
       dryRun: boolean;
       force: boolean;
@@ -199,7 +213,7 @@ export type ForgeCommand =
       json: boolean;
       workspaceRoot: string;
     }
-  | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number }
+  | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number; workspaceRoot: string }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
   | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean; full: boolean; brief: boolean }
   | { kind: "check"; json: boolean; dryRun: boolean; strictSecrets: boolean }
@@ -372,6 +386,7 @@ export const TOP_LEVEL_COMMANDS = [
   "repair",
   "do",
   "bench",
+  "cair",
   "delta",
   "session",
   "timeline",
@@ -613,6 +628,7 @@ const AI_SUBCOMMANDS: AiSubcommand[] = [
   "trace",
 ];
 const BENCH_SUBCOMMANDS: BenchSubcommand[] = ["compiler"];
+const CAIR_SUBCOMMANDS: CairSubcommand[] = ["snapshot", "query", "action"];
 
 function parseFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
@@ -1638,6 +1654,59 @@ export function parseCli(argv: string[]): ParsedCli {
         errors,
       };
     }
+    case "cair": {
+      const subcommand = rest[0] as CairSubcommand | undefined;
+      if (!subcommand || !CAIR_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge cair requires subcommand: snapshot, query, or action");
+        return { command: null, workspaceRoot, errors };
+      }
+      const formatRaw = parseOptionValue(argv, "--format");
+      if (formatRaw !== undefined && formatRaw !== "text" && formatRaw !== "json") {
+        errors.push("--format must be text or json");
+      }
+      const query = subcommand === "query" ? rest.slice(1).join(" ").trim() : undefined;
+      if (subcommand === "query" && !query) {
+        errors.push("forge cair query requires a CAIR query, for example: forge cair query \"Q STATUS\"");
+      }
+      const inputPath = parseOptionValue(argv, "--input");
+      const action = subcommand === "action"
+        ? rest.slice(1).filter((part, index, parts) => {
+          const previous = parts[index - 1];
+          if (part === "--dry-run" || part === "--plan" || part === "--json" || part === "--include-generated") {
+            return false;
+          }
+          if (part === "--format" || part === "--input") {
+            return false;
+          }
+          if (previous === "--format" || previous === "--input") {
+            return false;
+          }
+          return true;
+        }).join(" ").trim()
+        : undefined;
+      if (subcommand === "action" && !action && !inputPath) {
+        errors.push("forge cair action requires a CAIR action, for example: forge cair action \"A CREATE.FILE path=src/example.ts\"");
+      }
+      return {
+        command: {
+          kind: "cair",
+          options: {
+            subcommand,
+            workspaceRoot,
+            json: parseFlag(argv, "--json"),
+            format: formatRaw === "json" ? "json" : "text",
+            ...(query ? { query } : {}),
+            ...(action ? { action } : {}),
+            ...(inputPath ? { inputPath } : {}),
+            dryRun: parseFlag(argv, "--dry-run"),
+            plan: parseFlag(argv, "--plan"),
+            allowGenerated: parseFlag(argv, "--include-generated"),
+          },
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "status":
       return {
         command: {
@@ -1675,9 +1744,11 @@ export function parseCli(argv: string[]): ParsedCli {
         subcommand !== "snapshot" &&
         subcommand !== "watch" &&
         subcommand !== "open" &&
-        subcommand !== "doctor"
+        subcommand !== "doctor" &&
+        subcommand !== "bridge" &&
+        subcommand !== "codex-server"
       ) {
-        errors.push("forge studio requires subcommand: attach, snapshot, watch, open, or doctor");
+        errors.push("forge studio requires subcommand: attach, snapshot, watch, open, doctor, bridge, or codex-server");
         return { command: null, workspaceRoot, errors };
       }
       const previewPortRaw = parseOptionValue(argv, "--preview-port");
@@ -1688,12 +1759,23 @@ export function parseCli(argv: string[]): ParsedCli {
       ) {
         errors.push("--preview-port must be an integer >= 1");
       }
+      const intervalRaw = parseOptionValue(argv, "--interval-ms");
+      const intervalMs = intervalRaw !== undefined ? Number(intervalRaw) : undefined;
+      if (intervalRaw !== undefined && (!Number.isFinite(intervalMs) || intervalMs! < 1000)) {
+        errors.push("--interval-ms must be a number >= 1000");
+      }
       const targets = parseOptionValues(argv, "--target");
       const ignoredOptionValues = new Set(
         [
           ...targets,
           parseOptionValue(argv, "--preview-url"),
+          parseOptionValue(argv, "--studio-url"),
+          parseOptionValue(argv, "--workspace-id"),
+          parseOptionValue(argv, "--tenant-id"),
+          parseOptionValue(argv, "--user-id"),
+          parseOptionValue(argv, "--role"),
           previewPortRaw,
+          intervalRaw,
         ].filter((value): value is string => typeof value === "string"),
       );
       const studioPath = rest.slice(1).find((item) => !ignoredOptionValues.has(item));
@@ -1704,7 +1786,19 @@ export function parseCli(argv: string[]): ParsedCli {
           path: studioPath,
           previewUrl: parseOptionValue(argv, "--preview-url"),
           previewPort: previewPort ? Math.floor(previewPort) : undefined,
+          studioUrl: parseOptionValue(argv, "--studio-url"),
+          intervalMs: intervalMs ? Math.floor(intervalMs) : undefined,
+          once: parseFlag(argv, "--once"),
+          workspaceId: parseOptionValue(argv, "--workspace-id"),
+          tenantId: parseOptionValue(argv, "--tenant-id"),
+          userId: parseOptionValue(argv, "--user-id"),
+          role: parseOptionValue(argv, "--role"),
           targets: targets.length > 0 ? targets : ["codex"],
+          install: parseFlag(argv, "--install"),
+          start: !parseFlag(argv, "--no-start"),
+          bridge: !parseFlag(argv, "--no-bridge"),
+          writeSchemas: parseFlag(argv, "--write"),
+          probeAppServer: parseFlag(argv, "--probe") || parseFlag(argv, "--probe-codex-server"),
           json: parseFlag(argv, "--json"),
           dryRun: parseFlag(argv, "--dry-run"),
           force: parseFlag(argv, "--force"),
@@ -1727,6 +1821,7 @@ export function parseCli(argv: string[]): ParsedCli {
           dryRun: parseFlag(argv, "--dry-run"),
           json: parseFlag(argv, "--json"),
           concurrency: Math.max(1, Math.floor(concurrency || 4)),
+          workspaceRoot,
         },
         workspaceRoot,
         errors,
@@ -1928,18 +2023,38 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     case "verify":
       {
-        const profileAlias = rest[0];
-        const verifyProfiles = new Set(["quick", "smoke", "agent", "standard", "release", "strict", "changed"]);
-        if (profileAlias && !profileAlias.startsWith("--") && !verifyProfiles.has(profileAlias)) {
-          errors.push(
-            `unknown forge verify profile '${profileAlias}'; expected quick, smoke, agent, standard, release, strict, or changed`,
-          );
-        }
         const scriptTimeoutRaw = parseOptionValue(argv, "--script-timeout-ms");
         const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;
         const testJobsRaw = parseOptionValue(argv, "--test-jobs");
         const testJobs = testJobsRaw ? Number(testJobsRaw) : undefined;
         const typechecker = parseOptionValue(argv, "--typechecker");
+        const verifyOptionValues = new Set(
+          [scriptTimeoutRaw, testJobsRaw, typechecker]
+            .filter((value): value is string => typeof value === "string"),
+        );
+        const profileAlias = rest.find((item) => !verifyOptionValues.has(item));
+        const verifyProfiles = new Set([
+          "quick",
+          "smoke",
+          "agent",
+          "standard",
+          "release",
+          "strict",
+          "changed",
+          "framework",
+          "internal",
+          "maintainer",
+        ]);
+        if (profileAlias && !verifyProfiles.has(profileAlias)) {
+          errors.push(
+            `unknown forge verify profile '${profileAlias}'; expected quick, smoke, agent, standard, release, strict, changed, framework, internal, or maintainer`,
+          );
+        }
+        const internal =
+          parseFlag(argv, "--internal") ||
+          profileAlias === "framework" ||
+          profileAlias === "internal" ||
+          profileAlias === "maintainer";
         if (
           scriptTimeoutRaw !== undefined &&
           (!Number.isFinite(scriptTimeoutMs) || scriptTimeoutMs! < 1)
@@ -1955,10 +2070,12 @@ export function parseCli(argv: string[]): ParsedCli {
         if (
           typechecker !== undefined &&
           typechecker !== "tsc" &&
+          typechecker !== "native" &&
+          typechecker !== "ts7" &&
           typechecker !== "tsgo" &&
           typechecker !== "auto"
         ) {
-          errors.push("--typechecker must be one of: tsc, tsgo, auto");
+          errors.push("--typechecker must be one of: tsc, native, ts7, tsgo, auto");
         }
       return {
         command: {
@@ -1969,16 +2086,17 @@ export function parseCli(argv: string[]): ParsedCli {
             skipTests: parseFlag(argv, "--skip-tests"),
             skipTypecheck: parseFlag(argv, "--skip-typecheck"),
             skipEslint: parseFlag(argv, "--skip-eslint"),
-            strict: parseFlag(argv, "--strict") || profileAlias === "release" || profileAlias === "strict",
+            strict: internal || parseFlag(argv, "--strict") || profileAlias === "release" || profileAlias === "strict",
             changed: parseFlag(argv, "--changed") || profileAlias === "changed",
             fast: parseFlag(argv, "--fast") || profileAlias === "quick",
             smoke: parseFlag(argv, "--smoke") || profileAlias === "smoke",
             standard: parseFlag(argv, "--standard") || profileAlias === "agent" || profileAlias === "standard",
             scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,
             testJobs: testJobs ? Math.floor(testJobs) : undefined,
-            typechecker: typechecker as "tsc" | "tsgo" | "auto" | undefined,
+            typechecker: typechecker as "tsc" | "native" | "ts7" | "tsgo" | "auto" | undefined,
             fullTests: parseFlag(argv, "--full"),
             testPlan: parseFlag(argv, "--test-plan"),
+            internal,
           },
         },
         workspaceRoot,
@@ -2591,6 +2709,10 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--database-url",
     "--worker",
     "--no-worker",
+    "--no-start",
+    "--no-bridge",
+    "--probe",
+    "--probe-codex-server",
     "--once",
     "--limit",
     "--kind",
@@ -2607,6 +2729,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--strict-policies",
     "--strict",
     "--strict-secrets",
+    "--internal",
     "--env-file",
     "--skip-startup-console",
     "--redacted",
@@ -2633,6 +2756,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--web-port",
     "--preview-port",
     "--preview-url",
+    "--studio-url",
+    "--interval-ms",
+    "--workspace-id",
     "--poll-interval",
     "--allow-dev-auth",
     "--token",
@@ -2645,6 +2771,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--model-level",
     "--live",
     "--no-delta",
+    "--format",
   ]);
 
   for (let index = 0; index < argv.length; index++) {
@@ -2729,6 +2856,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--provider" ||
         arg === "--model" ||
         arg === "--prompt" ||
+        arg === "--format" ||
         arg === "--url" ||
         arg === "--template" ||
         arg === "--package-manager" ||
@@ -2738,6 +2866,9 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--web-port" ||
         arg === "--preview-port" ||
         arg === "--preview-url" ||
+        arg === "--studio-url" ||
+        arg === "--interval-ms" ||
+        arg === "--workspace-id" ||
         arg === "--poll-interval" ||
         arg === "--token"
         || arg === "--to" ||

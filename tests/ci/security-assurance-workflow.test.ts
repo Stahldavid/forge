@@ -20,7 +20,7 @@ describe("security assurance workflow", () => {
     expect(workflow).toContain("AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key");
     expect(workflow).toContain("ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key");
     expect(workflow).toContain("OPENAI_API_KEY: forge-ci-redacted-openai-key");
-    expect(workflow).toContain("node ./bin/forge.mjs verify --strict");
+    expect(workflow).toContain("node ./bin/forge.mjs verify framework");
     expect(workflow).toContain("node ./bin/forge-bun.mjs test tests/security");
     expect(workflow).toContain("actions/upload-artifact@v4");
     expect(workflow).toContain("security/evidence/latest");

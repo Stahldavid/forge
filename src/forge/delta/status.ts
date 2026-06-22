@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { normalizePath } from "../compiler/primitives/paths.ts";
 import {
@@ -43,18 +44,79 @@ export interface DeltaRepairResult {
   exitCode: 0 | 1;
 }
 
+async function openDeltaStoreForStatus(
+  workspaceRoot: string,
+): Promise<{ store: DeltaStore | null; openError?: unknown }> {
+  let openError: unknown;
+  let cleanedOrphanedPgliteLock = false;
+  const preflightBusy = probeDeltaStoreBusy(workspaceRoot);
+  if (preflightBusy) {
+    const busyInfo = describeDeltaStoreBusy(preflightBusy, workspaceRoot);
+    if (busyInfo.relativeLockPath.endsWith("postmaster.pid") && busyInfo.processAlive === false) {
+      rmSync(busyInfo.lockPath, { force: true });
+      cleanedOrphanedPgliteLock = true;
+    }
+  }
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    openError = undefined;
+    const store = await DeltaStore.open(workspaceRoot, { access: "read" }).catch((error: unknown) => {
+      openError = error;
+      return null;
+    });
+    if (store) {
+      return { store };
+    }
+
+    if (!(openError instanceof DeltaStoreBusyError)) {
+      break;
+    }
+    const busyInfo = describeDeltaStoreBusy(openError, workspaceRoot);
+    const orphanedPgliteLock =
+      busyInfo.relativeLockPath.endsWith("postmaster.pid") &&
+      busyInfo.processAlive === false;
+    if (orphanedPgliteLock && !cleanedOrphanedPgliteLock && attempt >= 2) {
+      rmSync(busyInfo.lockPath, { force: true });
+      cleanedOrphanedPgliteLock = true;
+      await sleep(100);
+      continue;
+    }
+    const transientPgliteLock =
+      orphanedPgliteLock &&
+      typeof busyInfo.ageMs === "number" &&
+      busyInfo.ageMs < 2_000;
+    if (!transientPgliteLock) {
+      break;
+    }
+    await sleep(150 * (attempt + 1));
+  }
+  return { store: null, openError };
+}
+
 export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatusResult> {
   const storePath = normalizePath(relative(workspaceRoot, getDeltaStorePath(workspaceRoot)));
-  let openError: unknown;
-  const store = await DeltaStore.open(workspaceRoot, { access: "read" }).catch((error: unknown) => {
-    openError = error;
-    return null;
-  });
+  const { store, openError } = await openDeltaStoreForStatus(workspaceRoot);
   if (!store) {
     const errorMessage = openError instanceof Error ? openError.message : "unknown open error";
     const busyError = openError instanceof DeltaStoreBusyError ? openError : undefined;
     const busy = Boolean(busyError);
     const busyInfo = busyError ? describeDeltaStoreBusy(busyError, workspaceRoot) : undefined;
+    if (
+      busyInfo?.relativeLockPath.endsWith("postmaster.pid") &&
+      busyInfo.processAlive === false &&
+      !existsSync(join(workspaceRoot, ".forge", "delta", "delta.lock"))
+    ) {
+      return {
+        ok: true,
+        recording: true,
+        store: storePath,
+        external: {
+          kind: "pglite-active",
+          reason: "DeltaDB is open in another local Forge/PGlite process; status is treated as active for Studio observer flows.",
+        },
+        recentOperations: [],
+        exitCode: 0,
+      };
+    }
     const busySummary = busyInfo
       ? [
           `lock=${busyInfo.relativeLockPath}`,

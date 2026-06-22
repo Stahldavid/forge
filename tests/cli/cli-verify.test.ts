@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import {
   runGenerateCommand,
   runVerifyCommand,
@@ -139,5 +139,141 @@ describe("Forge CLI verify", () => {
     expect(result.profile).toBe("standard");
     expect(result.steps.some((step) => step.name === "impact-tests")).toBe(true);
     expect(result.steps.find((step) => step.name === "tests")?.skipped).toBe(true);
+  });
+
+  test("verify --strict writes actionable TestGraph failure report", async () => {
+    const strictWorkspace = scaffoldGenerateWorkspace("cli-verify-strict-report");
+    try {
+      writeFileSync(
+        join(strictWorkspace, "package.json"),
+        JSON.stringify(
+          {
+            name: "forge-verify-strict-report-test",
+            private: true,
+            type: "module",
+            packageManager: "npm@10.9.0",
+            dependencies: { zod: "^3.24.0" },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      mkdirSync(join(strictWorkspace, "tests"), { recursive: true });
+      writeFileSync(
+        join(strictWorkspace, "tests", "strict-failure.test.ts"),
+        [
+          'import { describe, expect, test } from "bun:test";',
+          'describe("strict report", () => {',
+          '  test("fails with useful output", () => {',
+          '    console.error("strict chunk exploded");',
+          '    expect(1).toBe(2);',
+          "  });",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      await runGenerateCommand(defaultGenerateOptions(strictWorkspace));
+      const result = await runVerifyCommand({
+        workspaceRoot: strictWorkspace,
+        json: true,
+        skipTests: false,
+        skipTypecheck: true,
+        skipEslint: true,
+        strict: true,
+        testJobs: 1,
+      });
+
+      const reportPath = join(strictWorkspace, ".forge", "test-runs", "last.json");
+      const report = JSON.parse(readFileSync(reportPath, "utf8")) as {
+        failed?: string[];
+        results?: Array<{ files?: string[]; reproduceCommand?: string; stderr?: string }>;
+      };
+      const diagnostic = result.diagnostics.find((item) => item.code === "FORGE_VERIFY_TESTS");
+
+      expect(result.ok).toBe(false);
+      expect(existsSync(reportPath)).toBe(true);
+      expect(report.failed?.[0]).toContain("TestGraph chunk");
+      expect(report.results?.[0]?.files).toContain("tests/strict-failure.test.ts");
+      expect(report.results?.[0]?.reproduceCommand).toContain("tests/strict-failure.test.ts");
+      expect(report.results?.[0]?.stderr).toContain("strict chunk exploded");
+      expect(diagnostic?.message).toContain("tests/strict-failure.test.ts");
+      expect(diagnostic?.fixHint).toContain(".forge/test-runs");
+    } finally {
+      cleanupWorkspace(strictWorkspace);
+    }
+  });
+
+  test("verify --strict skips ForgeOS framework tests unless internal mode is explicit", async () => {
+    const frameworkWorkspace = scaffoldGenerateWorkspace("cli-verify-framework-skip");
+    try {
+      writeFileSync(
+        join(frameworkWorkspace, "package.json"),
+        JSON.stringify(
+          {
+            name: "forgeos",
+            private: true,
+            type: "module",
+            packageManager: "npm@10.9.0",
+            dependencies: { zod: "^3.24.0" },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      mkdirSync(join(frameworkWorkspace, "bin"), { recursive: true });
+      mkdirSync(join(frameworkWorkspace, "src", "forge", "cli"), { recursive: true });
+      mkdirSync(join(frameworkWorkspace, "tests"), { recursive: true });
+      writeFileSync(join(frameworkWorkspace, "bin", "forge.mjs"), "", "utf8");
+      writeFileSync(join(frameworkWorkspace, "src", "forge", "cli", "verify.ts"), "", "utf8");
+      writeFileSync(
+        join(frameworkWorkspace, "tests", "framework-internal.test.ts"),
+        [
+          'import { describe, expect, test } from "bun:test";',
+          'describe("framework internal", () => {',
+          '  test("is not part of app-level verify", () => {',
+          '    console.error("framework internal test executed");',
+          '    expect(1).toBe(2);',
+          "  });",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      await runGenerateCommand(defaultGenerateOptions(frameworkWorkspace));
+      const appLevel = await runVerifyCommand({
+        workspaceRoot: frameworkWorkspace,
+        json: true,
+        skipTests: false,
+        skipTypecheck: true,
+        skipEslint: true,
+        strict: true,
+      });
+      const internal = await runVerifyCommand({
+        workspaceRoot: frameworkWorkspace,
+        json: true,
+        skipTests: false,
+        skipTypecheck: true,
+        skipEslint: true,
+        strict: true,
+        internal: true,
+        testJobs: 1,
+      });
+
+      expect(appLevel.ok).toBe(true);
+      expect(appLevel.steps.find((step) => step.name === "tests:framework-testgraph")?.skipped).toBe(true);
+      expect(appLevel.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_INTERNAL_TESTS_SKIPPED")).toBe(true);
+      expect(internal.ok).toBe(false);
+      expect(internal.steps.some((step) => step.name === "tests:testgraph-strict")).toBe(true);
+      expect(internal.diagnostics.find((diagnostic) => diagnostic.code === "FORGE_VERIFY_TESTS")?.message).toContain(
+        "tests/framework-internal.test.ts",
+      );
+    } finally {
+      cleanupWorkspace(frameworkWorkspace);
+    }
   });
 });

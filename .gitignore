@@ -41,6 +41,7 @@ tests/**/.tmp/
 .DS_Store
 
 # Local debug outputs
+.playwright-cli/
 test-results*.txt
 test-run-output*.txt
 tsc-output*.txt

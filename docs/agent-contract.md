@@ -8,6 +8,7 @@ Important files:
 - `src/forge/_generated/agentContract.json`
 - `src/forge/_generated/agentTools.json`
 - `src/forge/_generated/agentTools.md`
+- `src/forge/_generated/agentCairGuide.md`
 - `src/forge/_generated/appMap.md`
 - `src/forge/_generated/runtimeRules.md`
 - `src/forge/_generated/operationPlaybooks.md`
@@ -25,6 +26,7 @@ The contract includes:
 - AI providers, model calls, tools, agents, approval hints, and runtime placement.
 - Agent endpoints: `/ai/agents/run` for JSON automation and `/ai/agents/chat` for AI SDK UIMessage streaming.
 - Frontend routes, components, providers, bridge files, and client bindings.
+- Agent protocols such as CAIR for compact semantic navigation and guarded edits.
 - Verification commands and common operation playbooks.
 
 ## Example shape
@@ -65,6 +67,14 @@ A small contract excerpt looks like this:
   "agentTools": [
     { "name": "forge_query_listTickets", "risk": "read", "needsApproval": false },
     { "name": "forge_command_createTicket", "risk": "write", "needsApproval": true }
+  ],
+  "agentProtocols": [
+    {
+      "id": "cair",
+      "kind": "agent-protocol",
+      "version": "0.5.0",
+      "guide": "src/forge/_generated/agentCairGuide.md"
+    }
   ]
 }
 ```

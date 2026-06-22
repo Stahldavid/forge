@@ -8,7 +8,7 @@ export const APP_GRAPH_ANALYZER_VERSION = "0.1.0";
 export const TREE_SITTER_GRAMMAR_VERSION = "0.23.2";
 
 /** Forge builder API → ForgeKind classifier version. */
-export const FORGE_CLASSIFIER_VERSION = "0.1.1";
+export const FORGE_CLASSIFIER_VERSION = "0.1.3";
 
 /** Generation orchestrator version (recorded on emitted AppGraph). */
 export { GENERATOR_VERSION } from "../../version.ts";

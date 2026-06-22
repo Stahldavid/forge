@@ -24,6 +24,8 @@ Prefer `forge do` **before** jumping to lower-level commands like `forge refacto
 
 Use `forge changed --json` when the worktree is large. It gives the agent the human-authored surface first, separates generated artifacts, flags untracked or uncategorized paths, and returns the focused verification commands to run next.
 
+For Codex Desktop workrooms, `forge studio snapshot` and `forge studio doctor` also report the optional `codex app-server` surface. The hook bridge remains the baseline because it works while the user keeps coding in Codex, Claude Code, or Cursor. The app-server proof is the Codex-specific deeper path: it tells Studio whether version-matched schemas can be generated and whether a Studio-owned Codex process can expose real thread, turn, approval, terminal, MCP, and file-change events. With `--probe-codex-server`, ForgeOS also proves safe read-only `model/list` and `account/read` RPCs after initialization, storing only sanitized readiness metadata.
+
 ## Basic usage
 
 ```bash
@@ -39,6 +41,44 @@ forge do connect-ui --json
 ```
 
 Always pass `--json` when an AI agent is driving the session. The response is machine-readable and includes fix hints.
+
+## Compact code navigation and edits
+
+Use CAIR when the agent needs code context or wants to apply a guarded edit without spending tokens on whole files:
+
+```bash
+forge cair snapshot
+forge cair query "Q S name=createTicket"
+forge cair query "Q D S#1"
+forge cair query "Q R S#1"
+forge cair query "Q I S#1"
+forge cair action --plan "A RN t=S#1 nn=openTicket"
+forge cair action "A APPLY plan=<P#|.forge/cair/plans/...json>"
+```
+
+CAIR v0.5 keeps both readable verbs and compact aliases. Prefer `Q D/R/I` before opening source, use `--plan` before mutation, and keep the returned journal path for rollback.
+
+## Observe a Codex workroom
+
+```bash
+forge studio open . --preview-port 5174 --target codex --json
+forge studio snapshot . --preview-port 5174 --target codex --json
+forge studio snapshot . --preview-port 5174 --target codex --probe-codex-server --json
+forge studio doctor . --preview-port 5174 --target codex --probe-codex-server --json
+forge studio codex-server . --json
+forge studio codex-server . --write --json
+forge studio codex-server . --probe --json
+```
+
+Look for:
+
+| JSON path | Meaning |
+|-----------|---------|
+| `proofs.hooks` | Whether native hook events are installed, trusted, and visible in Agent Memory |
+| `proofs.codexAppServer` | Whether `codex app-server` is available, whether the optional stdio handshake initialized, whether read-only protocol probes responded, and which schema/connect/probe commands to use |
+| `proofs.delta` | Whether Forge DeltaDB can read the durable event ledger |
+| `preview.status` | Whether the target app preview is reachable |
+| `contextPacket.commands` | Commands the next external agent should run before editing |
 
 ## Feature change loop
 

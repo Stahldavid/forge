@@ -136,14 +136,21 @@ export interface AgentPrintContextResult {
   exitCode: 0 | 1;
 }
 
+export type AgentHookBridgeState = "ready" | "missing" | "not-supported" | "waiting-for-user-trust" | "memory-unavailable";
+export type AgentHookApprovalStatus = "not-required" | "waiting-for-user-trust" | "trusted" | "memory-unavailable";
+
 export interface AgentDoctorResult {
   ok: boolean;
   target: AgentAdapterTarget;
   summary: {
     adapter: "ready" | "missing" | "stale";
-    hookBridge: "ready" | "missing" | "not-supported";
+    hookBridge: AgentHookBridgeState;
+    approvalRequired: boolean;
+    approvalStatus: AgentHookApprovalStatus;
     recentEvents: number;
     usefulSignals: number;
+    nativeSignals: number;
+    canarySignals: number;
     lastEventAt?: string;
   };
   checks: Array<{ name: string; ok: boolean; message?: string; evidence?: unknown }>;
@@ -178,8 +185,12 @@ export interface AgentOnboardResult {
   readyToEdit: boolean;
   summary: {
     adapter: "ready" | "missing" | "stale";
-    hookBridge: "ready" | "missing" | "not-supported";
+    hookBridge: AgentHookBridgeState;
+    approvalRequired: boolean;
+    approvalStatus: AgentHookApprovalStatus;
     memorySignals: number;
+    nativeSignals: number;
+    canarySignals: number;
     generatedFresh: boolean;
     generatedChanged: boolean;
     generatedChangedFiles: number;
@@ -216,6 +227,10 @@ export interface AgentHooksSmokeResult {
   deltaWritable: boolean;
   visibleInMemory: boolean;
   usefulSignals: number;
+  nativeSignals: number;
+  canarySignals: number;
+  approvalRequired: boolean;
+  approvalStatus: AgentHookApprovalStatus;
   lastSignal?: {
     kind: string;
     summary?: string;
@@ -247,6 +262,10 @@ export interface AgentHooksStatusResult {
   visibleInMemory: boolean;
   recentEvents: number;
   usefulSignals: number;
+  nativeSignals: number;
+  canarySignals: number;
+  approvalRequired: boolean;
+  approvalStatus: AgentHookApprovalStatus;
   lastSignal?: {
     kind: string;
     summary?: string;

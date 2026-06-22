@@ -1,5 +1,6 @@
 import type { SyntaxNode } from "tree-sitter";
 import { classifyForgeCallee } from "./classify.ts";
+import type { ForgeKind } from "../types/app-graph.ts";
 import type { RawSymbol } from "./types.ts";
 
 export interface SymbolNameInfo {
@@ -87,7 +88,113 @@ export function extractSymbolsFromTree(
   const symbols: RawSymbol[] = [];
   const visited = new Set<string>();
 
+  function record(
+    kind: ForgeKind,
+    name: string,
+    qualifiedName: string,
+    node: SyntaxNode,
+    exportPath: string,
+  ): void {
+    const key = `${kind}:${qualifiedName}:${node.startIndex}:${node.endIndex}`;
+    if (visited.has(key)) {
+      return;
+    }
+    visited.add(key);
+    symbols.push({
+      kind,
+      name,
+      qualifiedName,
+      file,
+      span: { start: node.startIndex, end: node.endIndex },
+      exportPath,
+      sourceSlice: source.slice(node.startIndex, node.endIndex),
+    });
+  }
+
+  function symbolNameForDeclaration(node: SyntaxNode): string | null {
+    const nameNode = node.childForFieldName("name");
+    if (
+      nameNode?.type === "identifier" ||
+      nameNode?.type === "type_identifier"
+    ) {
+      return nameNode.text;
+    }
+    return null;
+  }
+
+  function codeDeclarationKind(node: SyntaxNode): ForgeKind | null {
+    if (node.type === "function_declaration") return "code.function";
+    if (node.type === "class_declaration") return "code.class";
+    if (node.type === "interface_declaration") return "code.interface";
+    if (node.type === "type_alias_declaration") return "code.type";
+    if (node.type === "enum_declaration") return "code.enum";
+    return null;
+  }
+
+  function isProgramLevel(node: SyntaxNode): boolean {
+    return node.parent?.type === "program" ||
+      (node.parent?.type === "export_statement" && node.parent.parent?.type === "program");
+  }
+
+  function exportPathForNode(node: SyntaxNode): string {
+    return node.parent?.type === "export_statement" ? "export" : "";
+  }
+
+  function resolveVariableInitializerCallee(declarator: SyntaxNode): string | null {
+    const value = declarator.childForFieldName("value");
+    if (value?.type !== "call_expression") {
+      return null;
+    }
+    const functionNode = value.childForFieldName("function");
+    return functionNode?.type === "identifier" ? resolveCalleeName(functionNode) : null;
+  }
+
+  function recordCodeDeclaration(node: SyntaxNode): void {
+    if (!isProgramLevel(node)) {
+      return;
+    }
+    const kind = codeDeclarationKind(node);
+    if (!kind) {
+      return;
+    }
+    const name = symbolNameForDeclaration(node);
+    if (!name) {
+      return;
+    }
+    record(kind, name, name, node, exportPathForNode(node));
+  }
+
+  function recordCodeVariables(node: SyntaxNode): void {
+    if (
+      node.type !== "lexical_declaration" &&
+      node.type !== "variable_declaration"
+    ) {
+      return;
+    }
+    if (!isProgramLevel(node)) {
+      return;
+    }
+
+    for (const declarator of node.namedChildren) {
+      if (declarator.type !== "variable_declarator") {
+        continue;
+      }
+      const nameNode = declarator.childForFieldName("name");
+      if (nameNode?.type !== "identifier") {
+        continue;
+      }
+      const callee = resolveVariableInitializerCallee(declarator);
+      if (callee && classifyForgeCallee(callee)) {
+        continue;
+      }
+      record("code.const", nameNode.text, nameNode.text, declarator, exportPathForNode(node));
+    }
+  }
+
   function visit(node: SyntaxNode): void {
+    recordCodeDeclaration(node);
+    recordCodeVariables(node);
+
     if (node.type === "call_expression") {
       const functionNode = node.childForFieldName("function");
       if (functionNode && functionNode.type === "identifier") {

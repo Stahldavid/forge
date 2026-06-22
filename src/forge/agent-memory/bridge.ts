@@ -107,6 +107,13 @@ function isMemoryUnavailable(result: DeltaStore | AgentMemoryUnavailableResult):
   return "ok" in result && result.ok === false;
 }
 
+function isExternalPgliteRead(result: AgentMemoryUnavailableResult): boolean {
+  return Boolean(
+    result.busy?.relativeLockPath.endsWith("postmaster.pid") &&
+    result.busy.processAlive === false,
+  );
+}
+
 export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions): Promise<AgentMemoryCommandResult> {
   if (options.subcommand === "install") {
     return installAgentMemory(options);
@@ -130,6 +137,13 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
   }
   const store = await openMemoryStore(options.workspaceRoot, "read");
   if (isMemoryUnavailable(store)) {
+    if (isExternalPgliteRead(store)) {
+      return {
+        ok: true,
+        events: [],
+        exitCode: 0,
+      };
+    }
     return store;
   }
   try {

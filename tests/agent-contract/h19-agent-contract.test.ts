@@ -47,6 +47,7 @@ describe("H19 agent contract", () => {
         "runtimeRules.md",
         "operationPlaybooks.md",
         "agentQuickstart.md",
+        "agentCairGuide.md",
         "frontendGraph.json",
         "frontendGraph.ts",
       ]) {
@@ -64,6 +65,7 @@ describe("H19 agent contract", () => {
         secrets: unknown[];
         frontend: { present: boolean; routes: unknown[]; components: unknown[]; runtimeEndpoints: unknown[] };
         capabilityMap?: unknown;
+        agentProtocols: Array<{ id: string; version: string; guide: string; commands: string[]; preferredFor: string[] }>;
         commandsToRun: { beforeEditing: string[]; dev: string[] };
       }>(workspace, `${GENERATED}/agentContract.json`);
 
@@ -84,9 +86,21 @@ describe("H19 agent contract", () => {
       expect(contract.queries[0]?.http?.path.startsWith("/queries/")).toBe(true);
       expect(contract.liveQueries[0]?.http?.method).toBe("GET");
       expect(contract.commandsToRun.beforeEditing).toContain("forge handoff --json");
+      expect(contract.commandsToRun.beforeEditing).toContain("forge cair snapshot");
+      expect(contract.agentProtocols).toContainEqual(
+        expect.objectContaining({
+          id: "cair",
+          version: "0.5.0",
+          guide: "src/forge/_generated/agentCairGuide.md",
+        }),
+      );
       expect(contract.commandsToRun.dev).toContain("forge handoff --json");
       expect(readBody(workspace, "AGENTS.md")).toContain("forge handoff --json");
+      expect(readBody(workspace, "AGENTS.md")).toContain("src/forge/_generated/agentCairGuide.md");
       expect(readBody(workspace, `${GENERATED}/agentQuickstart.md`)).toContain("forge handoff --json");
+      expect(readBody(workspace, `${GENERATED}/agentCairGuide.md`)).toContain("# CAIR Agent Guide");
+      expect(readBody(workspace, `${GENERATED}/agentCairGuide.md`)).toContain('forge cair query "Q R S#1"');
+      expect(readBody(workspace, `${GENERATED}/agentCairGuide.md`)).toContain("A WX  = A WIRE.EXPORT");
 
       const tools = readJson<{
         autoTools: Array<{
@@ -171,6 +185,7 @@ describe("H19 agent contract", () => {
       expect(readBody(workspace, `${GENERATED}/agentTools.md`)).toContain(
         "## Auto Tools From Forge Runtime",
       );
+      expect(readBody(workspace, `${GENERATED}/agentCairGuide.md`)).toContain("## Forge-native actions");
     } finally {
       cleanupWorkspace(workspace);
     }

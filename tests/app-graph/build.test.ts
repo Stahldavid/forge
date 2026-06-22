@@ -24,6 +24,23 @@ describe("buildAppGraph", () => {
     );
   });
 
+  test("extracts top-level code symbols for agent navigation", async () => {
+    const graph = await buildAppGraph({
+      workspaceRoot: fixtureWorkspaceRoot(),
+      sources: [fixtureSource("code-symbols.ts")],
+    });
+
+    const byName = new Map(graph.symbols.map((symbol) => [symbol.name, symbol]));
+    expect(byName.get("runTask")?.kind).toBe("code.function");
+    expect(byName.get("localHelper")?.kind).toBe("code.function");
+    expect(byName.get("TaskRunner")?.kind).toBe("code.class");
+    expect(byName.get("TaskInput")?.kind).toBe("code.interface");
+    expect(byName.get("TaskResult")?.kind).toBe("code.type");
+    expect(byName.get("TaskState")?.kind).toBe("code.enum");
+    expect(byName.get("TASK_LIMIT")?.kind).toBe("code.const");
+    expect(byName.get("internalFlag")?.kind).toBe("code.const");
+  });
+
   test("produces order-independent symbol sets", async () => {
     const sources = [
       fixtureSource("commands.ts"),
@@ -153,5 +170,15 @@ describe("buildAppGraph", () => {
       importsNode?.localImports.some((imp) => imp.toModuleId.length > 0),
     ).toBe(true);
     expect(importsNode?.declaredContexts).toContain("command");
+    expect(
+      graph.edges.some(
+        (edge) => edge.kind === "imports" && edge.from === importsNode?.id,
+      ),
+    ).toBe(true);
+    expect(
+      graph.edges.some(
+        (edge) => edge.kind === "registers" && edge.to === importsNode?.id,
+      ),
+    ).toBe(true);
   });
 });

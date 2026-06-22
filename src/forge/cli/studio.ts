@@ -1,5 +1,7 @@
+import { spawn, spawnSync } from "node:child_process";
 import { createConnection } from "node:net";
 import { basename, join, resolve } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -11,14 +13,42 @@ import type { DevConsoleCycle, DevConsoleDiffPlan, DevConsoleGeneratedSummary } 
 import { runDevConsoleCycle } from "../dev-console/cycle.ts";
 import { runChangedCommand } from "./changed.ts";
 import { runDeltaStatus } from "../delta/index.ts";
+import {
+  codexAppServerCommands,
+  generateCodexAppServerSchemas,
+  inspectCodexAppServer,
+  probeCodexAppServerHandshake,
+  skippedCodexAppServerHandshake,
+  type CodexAppServerCommands,
+  type CodexAppServerHandshakeResult,
+  type CodexAppServerProof,
+  type CodexAppServerSchemaGenerationResult,
+} from "./codex-app-server.ts";
+
+const STUDIO_TARGET_RUNTIME_PORT = 3766;
+const STUDIO_LOCAL_TENANT_ID = "00000000-0000-4000-8000-000000000001";
+const STUDIO_LOCAL_USER_ID = "forge-studio-dev";
+const STUDIO_LOCAL_ROLE = "owner";
 
 export interface StudioAttachOptions {
   workspaceRoot: string;
-  subcommand?: "attach" | "snapshot" | "watch" | "open" | "doctor";
+  subcommand?: "attach" | "snapshot" | "watch" | "open" | "doctor" | "bridge" | "codex-server";
   path?: string;
   previewUrl?: string;
   previewPort?: number;
+  studioUrl?: string;
+  intervalMs?: number;
+  once?: boolean;
+  workspaceId?: string;
+  tenantId?: string;
+  userId?: string;
+  role?: string;
   targets: string[];
+  install?: boolean;
+  start?: boolean;
+  bridge?: boolean;
+  writeSchemas?: boolean;
+  probeAppServer?: boolean;
   json: boolean;
   dryRun: boolean;
   force: boolean;
@@ -77,6 +107,7 @@ export interface StudioAttachResult {
     installHooks: string[];
     checkHooks: string[];
     openContext: string;
+    codexAppServer?: CodexAppServerCommands;
   };
   diagnostics: Diagnostic[];
   nextActions: string[];
@@ -97,6 +128,7 @@ export interface StudioSnapshotResult {
     changed: string;
     handoff: string;
     watch: string;
+    bridge: string;
     doctor: string;
     open: string;
   };
@@ -109,7 +141,25 @@ export interface StudioSnapshotResult {
   proofs: {
     preview: StudioAttachResult["preview"]["status"];
     generated: StudioAttachResult["posture"]["generated"];
-    hooks: Array<{ target: string; ok: boolean; installed?: boolean; usefulSignals?: number; lastSignal?: unknown; nextActions?: string[] }>;
+    hooks: Array<{
+      target: string;
+      ok: boolean;
+      installed?: boolean;
+      bridgeWritable?: boolean;
+      deltaWritable?: boolean;
+      visibleInMemory?: boolean;
+      recentEvents?: number;
+      usefulSignals?: number;
+      nativeSignals?: number;
+      canarySignals?: number;
+      approvalRequired?: boolean;
+      approvalStatus?: string;
+      lastSignal?: unknown;
+      checks?: unknown[];
+      diagnostics?: Diagnostic[];
+      nextActions?: string[];
+    }>;
+    codexAppServer?: CodexAppServerProof;
     delta?: unknown;
   };
   diagnostics: Diagnostic[];
@@ -122,10 +172,13 @@ export interface StudioWatchResult {
   ok: boolean;
   action: "watch";
   stream: {
-    mode: "single-snapshot";
+    mode: "once" | "watch";
     event: "studio.snapshot";
     note: string;
     followCommand: string;
+    intervalMs: number;
+    dryRun: boolean;
+    emittedAt: string;
   };
   snapshot: StudioSnapshotResult;
   exitCode: 0 | 1;
@@ -144,6 +197,94 @@ export interface StudioDoctorResult {
     suggestedCommands: string[];
   }>;
   snapshot: StudioSnapshotResult;
+  diagnostics: Diagnostic[];
+  nextActions: string[];
+  exitCode: 0 | 1;
+}
+
+export interface StudioBridgeResult {
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  action: "bridge";
+  mode: "once" | "watch";
+  studioUrl: string;
+  endpoint: string;
+  intervalMs: number;
+  provider: string;
+  target: string;
+  posted: boolean;
+  dryRun: boolean;
+  snapshot: StudioSnapshotResult;
+  response?: unknown;
+  diagnostics: Diagnostic[];
+  nextActions: string[];
+  exitCode: 0 | 1;
+}
+
+export interface StudioOpenResult {
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  action: "open";
+  app: StudioAttachResult["app"];
+  preview: StudioAttachResult["preview"];
+  attach: StudioAttachResult;
+  previewAutomation: {
+    attempted: boolean;
+    started: boolean;
+    skippedReason?: "already-running" | "dry-run" | "disabled" | "non-local-preview" | "missing-dependencies" | "install-failed";
+    command: string;
+    cwd: string;
+    pid?: number;
+    statusBefore: StudioAttachResult["preview"]["status"];
+    statusAfter: StudioAttachResult["preview"]["status"];
+    install: {
+      required: boolean;
+      installed: boolean;
+      attempted: boolean;
+      command?: string;
+      cwd: string;
+      ok?: boolean;
+      exitCode?: number;
+    };
+  };
+  bridge: {
+    attempted: boolean;
+    ok: boolean;
+    posted: boolean;
+    dryRun: boolean;
+    mode?: "once" | "watch";
+    autoStarted?: boolean;
+    alreadyRunning?: boolean;
+    command?: string;
+    cwd?: string;
+    intervalMs?: number;
+    pid?: number;
+    studioUrl: string;
+    endpoint?: string;
+    diagnostics: Diagnostic[];
+    nextActions: string[];
+  };
+  commands: StudioAttachResult["commands"] & {
+    attach: string;
+    bridge: string;
+    doctor: string;
+    open: string;
+    install?: string;
+  };
+  diagnostics: Diagnostic[];
+  nextActions: string[];
+  exitCode: 0 | 1;
+}
+
+export interface StudioCodexServerResult {
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  action: "codex-server";
+  app: StudioAttachResult["app"];
+  proof: CodexAppServerProof;
+  schemaGeneration: CodexAppServerSchemaGenerationResult;
+  handshake: CodexAppServerHandshakeResult;
+  commands: CodexAppServerCommands;
   diagnostics: Diagnostic[];
   nextActions: string[];
   exitCode: 0 | 1;
@@ -185,6 +326,21 @@ function expandedTargets(targets: string[]): string[] {
   return normalized.includes("all")
     ? ["codex", "claude", "cursor"]
     : [...new Set(normalized)];
+}
+
+function providerName(target: string): string {
+  const normalized = normalizeTarget(target);
+  if (normalized === "claude") return "Claude Code";
+  if (normalized === "cursor") return "Cursor";
+  return "Codex";
+}
+
+function hasCodexTarget(targets: string[]): boolean {
+  return targets.map(normalizeTarget).includes("codex");
+}
+
+function normalizeStudioUrl(value?: string): string {
+  return (value?.trim() || process.env.FORGE_STUDIO_URL || "http://127.0.0.1:3765").replace(/\/+$/, "");
 }
 
 function localPreviewPort(url: string): number | undefined {
@@ -239,7 +395,7 @@ function previewFor(options: StudioAttachOptions, diagnostics: Diagnostic[]): St
       code: "FORGE_STUDIO_SELF_PREVIEW_AVOIDED",
       message: "preview pointed at http://127.0.0.1:5173, which is normally Forge Studio itself; using http://127.0.0.1:5174 for the target app preview",
       fixHint: "Start the app under construction on 5174, or pass --force if 5173 is intentionally the target app.",
-      suggestedCommands: ["forge studio attach . --preview-port 5174 --target codex --json", "forge dev --web-port 5174"],
+      suggestedCommands: ["forge studio attach . --preview-port 5174 --target codex --json", targetAppDevCommand(5174)],
     }));
     return withPreviewStatus({
       url: "http://127.0.0.1:5174",
@@ -368,8 +524,26 @@ function attachCommandFor(targets: string[], previewPort: number): string {
   return `forge studio attach . --preview-port ${previewPort} ${targetArgs} --json`;
 }
 
+function targetAppDevCommand(previewPort: number): string {
+  return `forge dev --port ${STUDIO_TARGET_RUNTIME_PORT} --web-port ${previewPort}`;
+}
+
 function forgeSourcePresent(appRoot: string): boolean {
   return nodeFileSystem.exists(join(appRoot, "src", "forge"));
+}
+
+async function withWorkspaceCwd<T>(workspaceRoot: string, fn: () => Promise<T>): Promise<T> {
+  const previous = process.cwd();
+  const target = resolve(workspaceRoot);
+  if (resolve(previous).toLowerCase() === target.toLowerCase()) {
+    return fn();
+  }
+  process.chdir(target);
+  try {
+    return await fn();
+  } finally {
+    process.chdir(previous);
+  }
 }
 
 function postureFromDevCycle(cycle: DevConsoleCycle): StudioAttachResult["posture"] {
@@ -437,13 +611,15 @@ async function inspectReadOnlyPosture(
     };
   }
   try {
-    const generated = await runGenerate({
-      workspaceRoot: appRoot,
-      check: true,
-      dryRun: false,
-      json: false,
-      concurrency: 4,
-    });
+    const generated = await withWorkspaceCwd(appRoot, () =>
+      runGenerate({
+        workspaceRoot: appRoot,
+        check: true,
+        dryRun: false,
+        json: false,
+        concurrency: 4,
+      })
+    );
     const changed = runChangedCommand(appRoot);
     const summary = changed.data.summary as { changedFiles?: number } | undefined;
     const diffPlan = changed.data.diffPlan as DevConsoleDiffPlan | undefined;
@@ -503,8 +679,18 @@ async function collectHookProofs(appRoot: string, targets: string[]): Promise<St
         target,
         ok: result.ok,
         installed: result.installed,
+        bridgeWritable: result.bridgeWritable,
+        deltaWritable: result.deltaWritable,
+        visibleInMemory: result.visibleInMemory,
+        recentEvents: result.recentEvents,
         usefulSignals: result.usefulSignals,
+        nativeSignals: result.nativeSignals,
+        canarySignals: result.canarySignals,
+        approvalRequired: result.approvalRequired,
+        approvalStatus: result.approvalStatus,
         ...(result.lastSignal ? { lastSignal: result.lastSignal } : {}),
+        checks: result.checks,
+        diagnostics: result.diagnostics,
         nextActions: result.nextActions,
       });
     } catch (error) {
@@ -541,6 +727,14 @@ function contextPacketFor(input: {
       input.commands.handoff,
       input.commands.probePreview,
       input.commands.doctor,
+      ...(input.commands.codexAppServer
+        ? [
+            input.commands.codexAppServer.inspect,
+            input.commands.codexAppServer.generateTypes,
+            input.commands.codexAppServer.generateJsonSchema,
+            input.commands.codexAppServer.probeHandshake,
+          ]
+        : []),
       ...input.commands.checkHooks,
     ],
     ...(input.posture.diffPlan ? { diffPlan: input.posture.diffPlan } : {}),
@@ -568,13 +762,14 @@ export async function runStudioAttachCommand(options: StudioAttachOptions): Prom
     ...(packageTemplate(pkg) ? { template: packageTemplate(pkg) } : {}),
   };
   const commands = {
-    startTargetApp: `forge dev --web-port ${initialPreview.port ?? 5174}`,
+    startTargetApp: targetAppDevCommand(initialPreview.port ?? 5174),
     startTargetAppCwd: appRoot,
     openPreview: initialPreview.url,
     probePreview: "forge dev --once --json",
     installHooks: targets.map((target) => `forge agent onboard --target ${target} --json`),
     checkHooks: targets.map((target) => `forge agent hooks status --target ${target} --json`),
     openContext: "forge agent context --current --json",
+    ...(hasCodexTarget(targets) ? { codexAppServer: codexAppServerCommands() } : {}),
   };
   const preview = {
     ...initialPreview,
@@ -678,13 +873,14 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
     ...(packageTemplate(pkg) ? { template: packageTemplate(pkg) } : {}),
   };
   const baseCommands = {
-    startTargetApp: `forge dev --web-port ${initialPreview.port ?? 5174}`,
+    startTargetApp: targetAppDevCommand(initialPreview.port ?? 5174),
     startTargetAppCwd: appRoot,
     openPreview: initialPreview.url,
     probePreview: "forge dev --once --json",
     installHooks: targets.map((target) => `forge agent onboard --target ${target} --json`),
     checkHooks: targets.map((target) => `forge agent hooks status --target ${target} --json`),
     openContext: "forge agent context --current --json",
+    ...(hasCodexTarget(targets) ? { codexAppServer: codexAppServerCommands() } : {}),
   };
   const preview = {
     ...initialPreview,
@@ -701,20 +897,48 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
     attach: attachCommandFor(targets, attachPreviewPort),
     changed: "forge changed --json",
     handoff: "forge handoff --json",
-    watch: `forge studio watch . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")} --json`,
-    doctor: `forge studio doctor . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")} --json`,
-    open: `forge studio open . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")} --json`,
+    watch: `forge studio watch . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")}${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
+    bridge: `forge studio bridge . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")} --studio-url http://127.0.0.1:3765${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
+    doctor: `forge studio doctor . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")}${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
+    open: `forge studio open . --preview-port ${attachPreviewPort} ${targets.map((target) => `--target ${target}`).join(" ")}${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
   };
   const hookProofs = await collectHookProofs(appRoot, targets);
+  const codexAppServerBase = hasCodexTarget(targets)
+    ? inspectCodexAppServer({ workspaceRoot: appRoot, relevant: true })
+    : undefined;
+  const codexAppServerHandshake = codexAppServerBase && options.probeAppServer
+      ? await probeCodexAppServerHandshake({
+        workspaceRoot: appRoot,
+        dryRun: options.dryRun,
+        available: codexAppServerBase.available ? true : undefined,
+        disabled: codexAppServerBase.state === "disabled",
+      })
+    : undefined;
+  const codexAppServer = codexAppServerBase
+    ? {
+        ...codexAppServerBase,
+        ...(codexAppServerHandshake ? { handshake: codexAppServerHandshake } : {}),
+        nextActions: codexAppServerHandshake
+          ? Array.from(new Set(codexAppServerHandshake.ok
+              ? codexAppServerHandshake.nextActions
+              : [...(codexAppServerBase.nextActions ?? []), ...codexAppServerHandshake.nextActions]))
+          : codexAppServerBase.nextActions,
+      }
+    : undefined;
   const delta = await runDeltaStatus(appRoot);
   const contextPacket = contextPacketFor({ appRoot, posture, commands });
-  const ok = posture.state !== "needs-attention" && changed.ok &&
+  const gitState = (changed.data as { git?: { available?: boolean } }).git;
+  const changedReadable = changed.ok || gitState?.available === false;
+  const ok = posture.state !== "needs-attention" && changedReadable &&
     diagnostics.every((diagnostic) => diagnostic.severity !== "error");
   const nextActions = [
     commands.startTargetApp,
     commands.probePreview,
     commands.changed,
     commands.doctor,
+    ...(codexAppServer && !codexAppServer.handshake && commands.codexAppServer?.probeHandshake
+      ? [commands.codexAppServer.probeHandshake]
+      : []),
     ...commands.checkHooks,
   ];
   return {
@@ -732,6 +956,7 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
       preview: preview.status,
       generated: posture.generated,
       hooks: hookProofs,
+      ...(codexAppServer ? { codexAppServer } : {}),
       delta,
     },
     diagnostics,
@@ -742,25 +967,472 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
 
 export async function runStudioWatchCommand(options: StudioAttachOptions): Promise<StudioWatchResult> {
   const snapshot = await runStudioSnapshotCommand(options);
+  const intervalMs = Math.max(1000, Math.floor(options.intervalMs ?? 5000));
+  const single = options.once || options.dryRun;
   return {
     schemaVersion: "0.1.0",
     ok: snapshot.ok,
     action: "watch",
     stream: {
-      mode: "single-snapshot",
+      mode: single ? "once" : "watch",
       event: "studio.snapshot",
-      note: "This command emits a Studio-compatible snapshot event. Long-running file streaming is provided by forge dev --watch --json today.",
+      note: single
+        ? "This command emitted one Studio-compatible snapshot event."
+        : "This command emits Studio-compatible snapshot events until stopped.",
       followCommand: "forge dev --watch --json",
+      intervalMs,
+      dryRun: options.dryRun,
+      emittedAt: new Date().toISOString(),
     },
     snapshot,
     exitCode: snapshot.exitCode,
   };
 }
 
+export async function runStudioWatchLoop(
+  options: StudioAttachOptions,
+  onResult: (result: StudioWatchResult) => void,
+): Promise<0 | 1> {
+  do {
+    const result = await runStudioWatchCommand(options);
+    onResult(result);
+    if (options.once || options.dryRun) {
+      return result.exitCode;
+    }
+    await new Promise((resolve) => setTimeout(resolve, Math.max(1000, Math.floor(options.intervalMs ?? 5000))));
+  } while (true);
+}
+
+async function postStudioSnapshot(input: {
+  studioUrl: string;
+  workspaceId?: string;
+  provider: string;
+  snapshot: StudioSnapshotResult;
+  bridge: {
+    mode: "once" | "watch";
+    intervalMs: number;
+    postedAt: string;
+  };
+  tenantId?: string;
+  userId?: string;
+  role?: string;
+}): Promise<{ ok: boolean; status: number; body: unknown; error?: string }> {
+  const endpoint = `${input.studioUrl}/commands/ingestStudioSnapshot`;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-forge-tenant-id": input.tenantId ?? process.env.FORGE_TENANT_ID ?? STUDIO_LOCAL_TENANT_ID,
+        "x-forge-user-id": input.userId ?? process.env.FORGE_USER_ID ?? STUDIO_LOCAL_USER_ID,
+        "x-forge-role": input.role ?? process.env.FORGE_ROLE ?? STUDIO_LOCAL_ROLE,
+      },
+      body: JSON.stringify({
+        args: {
+          ...(input.workspaceId ? { workspaceId: input.workspaceId } : {}),
+          provider: input.provider,
+          snapshot: input.snapshot,
+          bridge: {
+            ...input.bridge,
+            status: "received",
+          },
+        },
+      }),
+    });
+    const body = await response.json().catch(() => ({}));
+    return {
+      ok: response.ok && (body as { ok?: boolean }).ok !== false,
+      status: response.status,
+      body,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      body: {},
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export async function runStudioBridgeCommand(options: StudioAttachOptions): Promise<StudioBridgeResult> {
+  const targets = expandedTargets(options.targets.length > 0 ? options.targets : ["codex"]);
+  const target = targets[0] ?? "codex";
+  const provider = providerName(target);
+  const studioUrl = normalizeStudioUrl(options.studioUrl);
+  const endpoint = `${studioUrl}/commands/ingestStudioSnapshot`;
+  const intervalMs = Math.max(1000, Math.floor(options.intervalMs ?? 5000));
+  const diagnostics: Diagnostic[] = [];
+  const snapshot = await runStudioSnapshotCommand({
+    ...options,
+    targets,
+    dryRun: options.dryRun,
+  });
+
+  let posted = false;
+  let responseBody: unknown;
+  if (options.dryRun) {
+    diagnostics.push(createDiagnostic({
+      severity: "info",
+      code: "FORGE_STUDIO_BRIDGE_DRY_RUN",
+      message: `dry-run collected a Studio snapshot but did not POST it to ${endpoint}`,
+      suggestedCommands: [`forge studio bridge . --studio-url ${studioUrl} --target ${target} --preview-port ${snapshot.preview.port ?? 5174} --json`],
+    }));
+  } else {
+    const response = await postStudioSnapshot({
+      studioUrl,
+      workspaceId: options.workspaceId,
+      provider,
+      snapshot,
+      bridge: {
+        mode: options.once || options.dryRun ? "once" : "watch",
+        intervalMs,
+        postedAt: new Date().toISOString(),
+      },
+      tenantId: options.tenantId,
+      userId: options.userId,
+      role: options.role,
+    });
+    posted = response.ok;
+    responseBody = response.body;
+    if (!response.ok) {
+      diagnostics.push(createDiagnostic({
+        severity: "error",
+        code: response.status === 0 ? "FORGE_STUDIO_BRIDGE_UNREACHABLE" : "FORGE_STUDIO_BRIDGE_INGEST_FAILED",
+        message: response.status === 0
+          ? `cannot reach Forge Studio runtime at ${studioUrl}: ${response.error ?? "network request failed"}`
+          : `Forge Studio rejected snapshot ingest with HTTP ${response.status}`,
+        fixHint: `Start Forge Studio, then run forge studio bridge . --studio-url ${studioUrl} --target ${target} --preview-port ${snapshot.preview.port ?? 5174} --json`,
+        suggestedCommands: [
+          "npm run dev",
+          `forge studio doctor . --preview-port ${snapshot.preview.port ?? 5174} --target ${target} --json`,
+        ],
+      }));
+    }
+  }
+
+  const ok = diagnostics.every((diagnostic) => diagnostic.severity !== "error");
+  const nextActions = ok
+    ? [
+        `forge studio bridge . --studio-url ${studioUrl} --target ${target} --preview-port ${snapshot.preview.port ?? 5174} --json`,
+        snapshot.commands.doctor,
+        snapshot.commands.changed,
+      ]
+    : [
+        "Start Forge Studio with npm run dev",
+        `forge studio bridge . --studio-url ${studioUrl} --target ${target} --preview-port ${snapshot.preview.port ?? 5174} --json`,
+        snapshot.commands.doctor,
+      ];
+
+  return {
+    schemaVersion: "0.1.0",
+    ok,
+    action: "bridge",
+    mode: options.once || options.dryRun ? "once" : "watch",
+    studioUrl,
+    endpoint,
+    intervalMs,
+    provider,
+    target,
+    posted,
+    dryRun: options.dryRun,
+    snapshot,
+    ...(responseBody !== undefined ? { response: responseBody } : {}),
+    diagnostics,
+    nextActions,
+    exitCode: ok ? 0 : 1,
+  };
+}
+
+export async function runStudioBridgeLoop(
+  options: StudioAttachOptions,
+  onResult: (result: StudioBridgeResult) => void,
+): Promise<0 | 1> {
+  do {
+    const result = await runStudioBridgeCommand(options);
+    onResult(result);
+    if (options.once || options.dryRun) {
+      return result.exitCode;
+    }
+    await new Promise((resolve) => setTimeout(resolve, Math.max(1000, Math.floor(options.intervalMs ?? 5000))));
+  } while (true);
+}
+
+export async function runStudioCodexServerCommand(options: StudioAttachOptions): Promise<StudioCodexServerResult> {
+  const appRoot = resolve(options.workspaceRoot, options.path ?? ".").replace(/\\/g, "/");
+  const pkg = readPackageJson(appRoot);
+  const app = {
+    name: packageName(pkg, appRoot),
+    path: appRoot,
+    ...(packageTemplate(pkg) ? { template: packageTemplate(pkg) } : {}),
+  };
+  const proof = inspectCodexAppServer({
+    workspaceRoot: appRoot,
+    relevant: true,
+    forceRefresh: true,
+  });
+  const schemaGeneration = options.writeSchemas
+    ? generateCodexAppServerSchemas({
+        workspaceRoot: appRoot,
+        dryRun: options.dryRun,
+      })
+    : generateCodexAppServerSchemas({
+        workspaceRoot: appRoot,
+        dryRun: true,
+      });
+  const handshake = options.probeAppServer
+    ? await probeCodexAppServerHandshake({
+        workspaceRoot: appRoot,
+        dryRun: options.dryRun,
+        available: proof.available ? true : undefined,
+        disabled: proof.state === "disabled",
+      })
+    : skippedCodexAppServerHandshake({
+        reason: "not-requested",
+        dryRun: options.dryRun,
+      });
+  const ok = (proof.available || proof.state === "disabled") &&
+    (!options.writeSchemas || schemaGeneration.ok) &&
+    (!options.probeAppServer || handshake.ok);
+  const primaryNextActions = options.probeAppServer && proof.available && handshake.ok
+    ? options.writeSchemas && schemaGeneration.ok
+      ? []
+      : schemaGeneration.nextActions
+    : options.writeSchemas
+      ? schemaGeneration.nextActions
+      : proof.nextActions;
+  const nextActions = Array.from(new Set([
+    ...primaryNextActions,
+    ...(!options.probeAppServer ? handshake.nextActions : []),
+    ...(options.probeAppServer && !handshake.ok ? handshake.nextActions : []),
+  ]));
+  return {
+    schemaVersion: "0.1.0",
+    ok,
+    action: "codex-server",
+    app,
+    proof,
+    schemaGeneration,
+    handshake,
+    commands: codexAppServerCommands(),
+    diagnostics: [],
+    nextActions,
+    exitCode: ok ? 0 : 1,
+  };
+}
+
+function installPlanFor(pkg: Record<string, unknown>): { command: string; args: string[]; label: string } {
+  const packageManager = typeof pkg.packageManager === "string" ? pkg.packageManager : "";
+  if (packageManager.startsWith("bun")) {
+    return { command: "bun", args: ["install"], label: "bun install" };
+  }
+  if (packageManager.startsWith("pnpm")) {
+    return { command: "pnpm", args: ["install"], label: "pnpm install" };
+  }
+  if (packageManager.startsWith("yarn")) {
+    return { command: "yarn", args: ["install"], label: "yarn install" };
+  }
+  return { command: "npm", args: ["install"], label: "npm install" };
+}
+
+function dependencyStatusFor(appRoot: string, pkg: Record<string, unknown>): {
+  required: boolean;
+  installed: boolean;
+  command?: string;
+  cwd: string;
+} {
+  const hasRootPackage = nodeFileSystem.exists(join(appRoot, "package.json"));
+  const hasWebPackage = nodeFileSystem.exists(join(appRoot, "web", "package.json"));
+  if (!hasRootPackage && !hasWebPackage) {
+    return {
+      required: false,
+      installed: true,
+      cwd: appRoot,
+    };
+  }
+  const hasRootNodeModules = nodeFileSystem.exists(join(appRoot, "node_modules"));
+  const hasWebNodeModules = nodeFileSystem.exists(join(appRoot, "web", "node_modules"));
+  const plan = installPlanFor(pkg);
+  return {
+    required: true,
+    installed: hasRootNodeModules || hasWebNodeModules,
+    command: plan.label,
+    cwd: appRoot,
+  };
+}
+
+function runDependencyInstall(appRoot: string, pkg: Record<string, unknown>): {
+  ok: boolean;
+  exitCode: number;
+  command: string;
+} {
+  const plan = installPlanFor(pkg);
+  const result = spawnSync(plan.command, plan.args, {
+    cwd: appRoot,
+    encoding: "utf8",
+    stdio: "pipe",
+  });
+  return {
+    ok: result.status === 0,
+    exitCode: result.status ?? 1,
+    command: plan.label,
+  };
+}
+
+function spawnForgeDev(appRoot: string, previewPort: number): { pid?: number; error?: string } {
+  const cliEntry = process.argv[1];
+  const command = cliEntry ? process.execPath : "forge";
+  const args = cliEntry
+    ? [cliEntry, "dev", "--port", String(STUDIO_TARGET_RUNTIME_PORT), "--web-port", String(previewPort)]
+    : ["dev", "--port", String(STUDIO_TARGET_RUNTIME_PORT), "--web-port", String(previewPort)];
+  try {
+    const child = spawn(command, args, {
+      cwd: appRoot,
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+      shell: !cliEntry && process.platform === "win32",
+    });
+    child.unref();
+    return { pid: child.pid };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+function processIsRunning(pid: number | undefined): boolean {
+  if (!pid || !Number.isInteger(pid) || pid <= 0) {
+    return false;
+  }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function bridgeStatePath(appRoot: string): string {
+  return join(appRoot, ".forge", "studio", "bridge.json");
+}
+
+function readBridgeState(appRoot: string): { pid?: number; command?: string } | null {
+  const path = bridgeStatePath(appRoot);
+  if (!nodeFileSystem.exists(path)) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(nodeFileSystem.readText(path) ?? "{}") as { pid?: number; command?: string };
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function spawnForgeStudioBridge(input: {
+  appRoot: string;
+  previewPort: number;
+  targets: string[];
+  studioUrl: string;
+  intervalMs: number;
+  probeAppServer?: boolean;
+}): { pid?: number; command: string; alreadyRunning: boolean; error?: string } {
+  const existing = readBridgeState(input.appRoot);
+  if (existing?.pid && processIsRunning(existing.pid)) {
+    return {
+      pid: existing.pid,
+      command: existing.command ?? "forge studio bridge",
+      alreadyRunning: true,
+    };
+  }
+
+  const cliEntry = process.argv[1];
+  const command = cliEntry ? process.execPath : "forge";
+  const targetArgs = input.targets.flatMap((target) => ["--target", target]);
+  const args = [
+    ...(cliEntry ? [cliEntry] : []),
+    "studio",
+    "bridge",
+    input.appRoot,
+    "--preview-port",
+    String(input.previewPort),
+    ...targetArgs,
+    "--studio-url",
+    input.studioUrl,
+    "--interval-ms",
+    String(input.intervalMs),
+    "--json",
+    ...(input.probeAppServer ? ["--probe-codex-server"] : []),
+  ];
+  const label = `forge ${args.filter((arg) => arg !== cliEntry).join(" ")}`;
+  try {
+    nodeFileSystem.mkdirp(join(input.appRoot, ".forge", "studio"));
+    const child = spawn(command, args, {
+      cwd: input.appRoot,
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+      shell: !cliEntry && process.platform === "win32",
+    });
+    child.unref();
+    const state = {
+      pid: child.pid,
+      command: label,
+      studioUrl: input.studioUrl,
+      previewPort: input.previewPort,
+      intervalMs: input.intervalMs,
+      targets: input.targets,
+      startedAt: new Date().toISOString(),
+    };
+    nodeFileSystem.writeText(bridgeStatePath(input.appRoot), `${JSON.stringify(state, null, 2)}\n`);
+    return { pid: child.pid, command: label, alreadyRunning: false };
+  } catch (error) {
+    return {
+      command: label,
+      alreadyRunning: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function waitForPreviewAfterStart(
+  preview: Omit<StudioAttachResult["preview"], "status">,
+  startCommand: string,
+): Promise<StudioAttachResult["preview"]["status"]> {
+  let status = previewStatus("not-running", `preview is not reachable at ${preview.url}`, [startCommand, "forge dev --once --json"]);
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await sleep(attempt === 0 ? 500 : 1000);
+    status = await probeStudioPreview(preview, {
+      dryRun: false,
+      startCommand,
+      timeoutMs: 750,
+    });
+    if (status.state === "reachable") {
+      return status;
+    }
+  }
+  return status;
+}
+
 export async function runStudioDoctorCommand(options: StudioAttachOptions): Promise<StudioDoctorResult> {
   const snapshot = await runStudioSnapshotCommand(options);
   const hookProofs = snapshot.proofs.hooks;
   const delta = snapshot.proofs.delta as { recording?: boolean; diagnostics?: Diagnostic[]; exitCode?: number } | undefined;
+  const hookReady = hookProofs.some((proof) => proof.ok && (proof.nativeSignals ?? proof.usefulSignals ?? 0) > 0);
+  const hookMemoryUnavailable = hookProofs.some((proof) =>
+    proof.deltaWritable === false ||
+    proof.approvalStatus === "memory-unavailable" ||
+    (proof.diagnostics ?? []).some((diag) =>
+      ["FORGE_AGENT_MEMORY_UNAVAILABLE", "FORGE_DELTA_STORE_UNAVAILABLE", "FORGE_DELTA_BUSY"].includes(diag.code)
+    )
+  );
+  const hookWaitingForApproval = hookProofs.some((proof) =>
+    proof.approvalRequired === true || proof.approvalStatus === "waiting-for-user-trust"
+  );
+  const hookInstalled = hookProofs.some((proof) => proof.installed === true);
+  const codexAppServer = snapshot.proofs.codexAppServer;
+  const codexHandshake = codexAppServer?.handshake;
+  const codexHandshakeFailed = codexHandshake?.attempted === true && codexHandshake.ok !== true;
   const checks: StudioDoctorResult["checks"] = [
     {
       name: "preview",
@@ -778,16 +1450,20 @@ export async function runStudioDoctorCommand(options: StudioAttachOptions): Prom
     },
     {
       name: "hooks",
-      ok: hookProofs.some((proof) => proof.ok && (proof.usefulSignals ?? 0) > 0),
-      status: hookProofs.some((proof) => proof.ok && (proof.usefulSignals ?? 0) > 0)
+      ok: hookReady,
+      status: hookReady
         ? "ok"
-        : hookProofs.some((proof) => proof.ok)
+        : hookMemoryUnavailable || hookWaitingForApproval || hookInstalled
           ? "warning"
           : "failed",
-      message: hookProofs.some((proof) => proof.ok && (proof.usefulSignals ?? 0) > 0)
-        ? "hooks are installed and useful agent signals are visible"
-        : hookProofs.some((proof) => proof.ok)
-          ? "hooks are installed, but no useful agent signal is visible yet"
+      message: hookReady
+        ? "hooks are installed and trusted native agent signals are visible"
+        : hookMemoryUnavailable
+          ? "hooks are installed, but Agent Memory/DeltaDB is unavailable so hook trust cannot be verified"
+        : hookWaitingForApproval
+          ? "hooks are installed, but no trusted native Codex hook signal is visible yet"
+          : hookInstalled
+            ? "hooks are installed, but no trusted native agent signal is visible yet"
           : "no target reported a ready hook bridge",
       suggestedCommands: hookProofs.flatMap((proof) => proof.nextActions ?? [`forge agent hooks status --target ${proof.target} --json`]),
     },
@@ -798,6 +1474,25 @@ export async function runStudioDoctorCommand(options: StudioAttachOptions): Prom
       message: delta?.exitCode === 0 ? "DeltaDB status is readable" : "DeltaDB status needs attention",
       suggestedCommands: ["forge delta status --json", "forge agent hooks smoke --target codex --json"],
     },
+    ...(codexAppServer
+      ? [{
+          name: "codex-app-server",
+          ok: !codexHandshakeFailed,
+          status: codexHandshakeFailed
+            ? "failed" as const
+            : codexAppServer.available
+              ? "ok" as const
+              : "warning" as const,
+          message: codexHandshakeFailed
+            ? `Codex app-server handshake failed: ${codexHandshake?.error ?? "initialize did not complete"}`
+            : codexHandshake?.initialized
+              ? "Codex app-server initialized over stdio for deep Studio integration"
+              : codexAppServer.available
+                ? "Codex app-server is available for deep Studio integration"
+            : "Codex app-server is not available yet; Studio will rely on hooks, MCP, and Forge snapshots",
+          suggestedCommands: codexAppServer.nextActions,
+        }]
+      : []),
   ];
   const ok = checks.every((check) => check.ok);
   return {
@@ -813,11 +1508,258 @@ export async function runStudioDoctorCommand(options: StudioAttachOptions): Prom
   };
 }
 
-export async function runStudioOpenCommand(options: StudioAttachOptions): Promise<StudioAttachResult> {
-  return runStudioAttachCommand(options);
+export async function runStudioOpenCommand(options: StudioAttachOptions): Promise<StudioOpenResult> {
+  const attach = await runStudioAttachCommand(options);
+  const appRoot = attach.app.path;
+  const pkg = readPackageJson(appRoot);
+  const diagnostics: Diagnostic[] = [...attach.diagnostics];
+  const shouldStart = options.start !== false;
+  const shouldBridge = options.bridge !== false;
+  const previewPort = attach.preview.port ?? localPreviewPort(attach.preview.url);
+  const commands = {
+    ...attach.commands,
+    attach: attachCommandFor(attach.targets, previewPort ?? 5174),
+    bridge: `forge studio bridge . --preview-port ${previewPort ?? 5174} ${attach.targets.map((target) => `--target ${target}`).join(" ")} --studio-url ${normalizeStudioUrl(options.studioUrl)}${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
+    doctor: `forge studio doctor . --preview-port ${previewPort ?? 5174} ${attach.targets.map((target) => `--target ${target}`).join(" ")}${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
+    open: `forge studio open . --preview-port ${previewPort ?? 5174} ${attach.targets.map((target) => `--target ${target}`).join(" ")}${options.probeAppServer ? " --probe-codex-server" : ""} --json`,
+  };
+
+  const dependencyStatus = dependencyStatusFor(appRoot, pkg);
+  const install: StudioOpenResult["previewAutomation"]["install"] = {
+    required: dependencyStatus.required,
+    installed: dependencyStatus.installed,
+    attempted: false,
+    ...(dependencyStatus.command ? { command: dependencyStatus.command } : {}),
+    cwd: appRoot,
+  };
+
+  if (dependencyStatus.required && !dependencyStatus.installed) {
+    if (options.install && !options.dryRun) {
+      const installed = runDependencyInstall(appRoot, pkg);
+      install.attempted = true;
+      install.ok = installed.ok;
+      install.exitCode = installed.exitCode;
+      install.command = installed.command;
+      install.installed = installed.ok;
+      if (!installed.ok) {
+        diagnostics.push(createDiagnostic({
+          severity: "error",
+          code: "FORGE_STUDIO_DEPENDENCY_INSTALL_FAILED",
+          message: `dependency install failed in ${appRoot} with exit code ${installed.exitCode}`,
+          fixHint: `Run ${installed.command} in the target app, then retry forge studio open.`,
+          suggestedCommands: [installed.command, commands.open],
+        }));
+      }
+    } else {
+      diagnostics.push(createDiagnostic({
+        severity: "warning",
+        code: "FORGE_STUDIO_DEPENDENCIES_MISSING",
+        message: `target app dependencies are not installed in ${appRoot}`,
+        fixHint: options.dryRun
+          ? "dry-run does not install dependencies; rerun with --install when you want ForgeOS to install them."
+          : "Run the install command yourself, or rerun forge studio open with --install.",
+        suggestedCommands: [
+          dependencyStatus.command ?? "npm install",
+          `${commands.open} --install`,
+        ],
+      }));
+    }
+  }
+
+  let started = false;
+  let startAttempted = false;
+  let skippedReason: StudioOpenResult["previewAutomation"]["skippedReason"];
+  let previewStatusAfter = attach.preview.status;
+  let pid: number | undefined;
+
+  if (attach.preview.status.state === "reachable") {
+    skippedReason = "already-running";
+  } else if (options.dryRun) {
+    skippedReason = "dry-run";
+  } else if (!shouldStart) {
+    skippedReason = "disabled";
+  } else if (!previewPort) {
+    skippedReason = "non-local-preview";
+    diagnostics.push(createDiagnostic({
+      severity: "warning",
+      code: "FORGE_STUDIO_PREVIEW_NOT_LOCAL",
+      message: `cannot auto-start non-local preview URL ${attach.preview.url}`,
+      fixHint: "Use --preview-port for a local target app preview, or start the preview manually.",
+      suggestedCommands: [commands.startTargetApp, commands.probePreview],
+    }));
+  } else if (install.required && !install.installed) {
+    skippedReason = install.attempted ? "install-failed" : "missing-dependencies";
+  } else {
+    startAttempted = true;
+    const spawned = spawnForgeDev(appRoot, previewPort);
+    if (spawned.error) {
+      diagnostics.push(createDiagnostic({
+        severity: "error",
+        code: "FORGE_STUDIO_PREVIEW_START_FAILED",
+        message: `failed to start target app preview: ${spawned.error}`,
+        fixHint: `Run ${commands.startTargetApp} in ${appRoot}.`,
+        suggestedCommands: [commands.startTargetApp, commands.probePreview],
+      }));
+    } else {
+      started = true;
+      pid = spawned.pid;
+      previewStatusAfter = await waitForPreviewAfterStart(attach.preview, commands.startTargetApp);
+      if (previewStatusAfter.state !== "reachable") {
+        diagnostics.push(createDiagnostic({
+          severity: "warning",
+          code: "FORGE_STUDIO_PREVIEW_START_PENDING",
+          message: `started ${commands.startTargetApp}, but ${attach.preview.url} is not reachable yet`,
+          fixHint: "The dev server may still be compiling. Re-run forge studio doctor after it settles.",
+          suggestedCommands: [commands.probePreview, commands.doctor],
+        }));
+      }
+    }
+  }
+
+  const preview = {
+    ...attach.preview,
+    status: previewStatusAfter,
+  };
+
+  if (!options.dryRun && attach.filesWritten.includes(attach.manifestPath)) {
+    nodeFileSystem.writeText(
+      join(appRoot, attach.manifestPath),
+      renderManifest({
+        app: attach.app,
+        preview,
+        posture: attach.posture,
+        targets: attach.targets,
+        commands: attach.commands,
+      }),
+    );
+  }
+
+  let bridgeResult: StudioBridgeResult | undefined;
+  let autoBridge: ReturnType<typeof spawnForgeStudioBridge> | undefined;
+  if (shouldBridge && !options.dryRun) {
+    const intervalMs = Math.max(1000, Math.floor(options.intervalMs ?? 5000));
+    bridgeResult = await runStudioBridgeCommand({
+      ...options,
+      path: appRoot,
+      previewUrl: preview.url,
+      previewPort,
+      once: true,
+      targets: attach.targets,
+    });
+    diagnostics.push(...bridgeResult.diagnostics);
+    if (!options.dryRun && bridgeResult.ok && preview.status.state === "reachable" && previewPort) {
+      autoBridge = spawnForgeStudioBridge({
+        appRoot,
+        previewPort,
+        targets: attach.targets,
+        studioUrl: normalizeStudioUrl(options.studioUrl),
+        intervalMs,
+        probeAppServer: options.probeAppServer,
+      });
+      if (autoBridge.error) {
+        diagnostics.push(createDiagnostic({
+          severity: "warning",
+          code: "FORGE_STUDIO_BRIDGE_AUTOSTART_FAILED",
+          message: `initial snapshot was delivered, but the live Studio bridge could not be started: ${autoBridge.error}`,
+          fixHint: `Run ${autoBridge.command} in ${appRoot}.`,
+          suggestedCommands: [autoBridge.command, commands.doctor],
+        }));
+      }
+    }
+  }
+
+  const bridge = bridgeResult
+    ? {
+        attempted: true,
+        ok: bridgeResult.ok,
+        posted: bridgeResult.posted,
+        dryRun: bridgeResult.dryRun,
+        mode: autoBridge && !autoBridge.error ? "watch" as const : bridgeResult.mode,
+        autoStarted: Boolean(autoBridge && !autoBridge.error && !autoBridge.alreadyRunning),
+        alreadyRunning: Boolean(autoBridge?.alreadyRunning),
+        ...(autoBridge?.command ? { command: autoBridge.command } : {}),
+        cwd: appRoot,
+        intervalMs: Math.max(1000, Math.floor(options.intervalMs ?? 5000)),
+        ...(autoBridge?.pid ? { pid: autoBridge.pid } : {}),
+        studioUrl: bridgeResult.studioUrl,
+        endpoint: bridgeResult.endpoint,
+        diagnostics: bridgeResult.diagnostics,
+        nextActions: bridgeResult.nextActions,
+      }
+    : shouldBridge && options.dryRun
+      ? {
+          attempted: true,
+          ok: true,
+          posted: false,
+          dryRun: true,
+          mode: "watch" as const,
+          autoStarted: false,
+          alreadyRunning: false,
+          command: commands.bridge,
+          cwd: appRoot,
+          intervalMs: Math.max(1000, Math.floor(options.intervalMs ?? 5000)),
+          studioUrl: normalizeStudioUrl(options.studioUrl),
+          endpoint: `${normalizeStudioUrl(options.studioUrl)}/commands/ingestStudioSnapshot`,
+          diagnostics: [],
+          nextActions: [commands.bridge, commands.doctor],
+        }
+    : {
+        attempted: false,
+        ok: true,
+        posted: false,
+        dryRun: options.dryRun,
+        mode: "once" as const,
+        autoStarted: false,
+        alreadyRunning: false,
+        studioUrl: normalizeStudioUrl(options.studioUrl),
+        diagnostics: [],
+        nextActions: [`forge studio bridge . --preview-port ${previewPort ?? 5174} --target ${attach.targets[0] ?? "codex"} --json`],
+      };
+
+  const previewReady = options.dryRun || preview.status.state === "reachable";
+  const ok = attach.ok &&
+    previewReady &&
+    bridge.ok &&
+    diagnostics.every((diagnostic) => diagnostic.severity !== "error");
+  const nextActions = Array.from(new Set([
+    ...(install.required && !install.installed && install.command ? [install.command] : []),
+    ...(preview.status.state === "reachable" ? [] : [commands.startTargetApp, commands.probePreview]),
+    ...(bridge.attempted && !bridge.ok ? bridge.nextActions : []),
+    commands.doctor,
+    ...attach.commands.checkHooks,
+  ])).slice(0, 12);
+
+  return {
+    schemaVersion: "0.1.0",
+    ok,
+    action: "open",
+    app: attach.app,
+    preview,
+    attach,
+    previewAutomation: {
+      attempted: startAttempted,
+      started,
+      ...(skippedReason ? { skippedReason } : {}),
+      command: commands.startTargetApp,
+      cwd: appRoot,
+      ...(pid ? { pid } : {}),
+      statusBefore: attach.preview.status,
+      statusAfter: preview.status,
+      install,
+    },
+    bridge,
+    commands,
+    diagnostics,
+    nextActions,
+    exitCode: ok ? 0 : 1,
+  };
 }
 
 export function formatStudioAttachJson(result: StudioAttachResult): string {
+  return `${JSON.stringify(result, null, 2)}\n`;
+}
+
+export function formatStudioOpenJson(result: StudioOpenResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
 }
 
@@ -834,6 +1776,30 @@ export function formatStudioWatchJson(result: StudioWatchResult): string {
     snapshot: result.snapshot,
     exitCode: result.exitCode,
   }, null, 2)}\n`;
+}
+
+export function formatStudioBridgeJson(result: StudioBridgeResult): string {
+  return `${JSON.stringify(result, null, 2)}\n`;
+}
+
+export function formatStudioCodexServerJson(result: StudioCodexServerResult): string {
+  return `${JSON.stringify(result, null, 2)}\n`;
+}
+
+export function formatStudioBridgeEventJson(result: StudioBridgeResult): string {
+  return `${JSON.stringify({
+    schemaVersion: result.schemaVersion,
+    event: "studio.bridge",
+    ok: result.ok,
+    posted: result.posted,
+    dryRun: result.dryRun,
+    studioUrl: result.studioUrl,
+    provider: result.provider,
+    target: result.target,
+    snapshot: result.snapshot,
+    diagnostics: result.diagnostics,
+    exitCode: result.exitCode,
+  })}\n`;
 }
 
 export function formatStudioDoctorJson(result: StudioDoctorResult): string {
@@ -861,6 +1827,39 @@ export function formatStudioAttachHuman(result: StudioAttachResult): string {
   if (result.diagnostics.length > 0) {
     lines.push("", "Diagnostics:");
     lines.push(...result.diagnostics.slice(0, 8).map((diag) => `  ${diag.severity} ${diag.code}: ${diag.message}`));
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+export function formatStudioOpenHuman(result: StudioOpenResult): string {
+  const bridgeStatus = result.bridge.attempted
+    ? result.bridge.posted
+      ? "posted"
+      : result.bridge.dryRun
+        ? "dry-run"
+        : result.bridge.ok
+          ? "ready"
+          : "needs attention"
+    : "skipped";
+  const previewAutomation = result.previewAutomation.started
+    ? `started${result.previewAutomation.pid ? ` (pid ${result.previewAutomation.pid})` : ""}`
+    : result.previewAutomation.skippedReason ?? "not started";
+  const lines = [
+    `Forge Studio open: ${result.ok ? "ready" : "needs attention"}`,
+    `App: ${result.app.name}`,
+    `Path: ${result.app.path}`,
+    `Preview: ${result.preview.url}`,
+    `Preview status: ${result.preview.status.state} (${result.preview.status.reason})`,
+    `Preview automation: ${previewAutomation}`,
+    `Bridge: ${bridgeStatus} (${result.bridge.studioUrl})`,
+    `Start cwd: ${result.previewAutomation.cwd}`,
+    "",
+    "Next:",
+    ...result.nextActions.map((action) => `  ${action}`),
+  ];
+  if (result.diagnostics.length > 0) {
+    lines.push("", "Diagnostics:");
+    lines.push(...result.diagnostics.slice(0, 10).map((diag) => `  ${diag.severity} ${diag.code}: ${diag.message}`));
   }
   return `${lines.join("\n")}\n`;
 }
@@ -900,6 +1899,50 @@ export function formatStudioWatchHuman(result: StudioWatchResult): string {
   ].join("\n");
 }
 
+export function formatStudioBridgeHuman(result: StudioBridgeResult): string {
+  const lines = [
+    `Forge Studio bridge: ${result.ok ? "delivered" : "needs attention"}`,
+    `Studio runtime: ${result.studioUrl}`,
+    `Provider: ${result.provider}`,
+    `Preview: ${result.snapshot.preview.url}`,
+    `Posted: ${result.posted ? "yes" : result.dryRun ? "dry-run" : "no"}`,
+    `Snapshot posture: ${result.snapshot.posture.state} (${result.snapshot.posture.reason})`,
+    "",
+    "Next:",
+    ...result.nextActions.map((action) => `  ${action}`),
+  ];
+  if (result.diagnostics.length > 0) {
+    lines.push("", "Diagnostics:");
+    lines.push(...result.diagnostics.slice(0, 8).map((diag) => `  ${diag.severity} ${diag.code}: ${diag.message}`));
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+export function formatStudioCodexServerHuman(result: StudioCodexServerResult): string {
+  const lines = [
+    `Forge Studio Codex app-server: ${result.ok ? "ready" : "needs attention"}`,
+    `App: ${result.app.name}`,
+    `Path: ${result.app.path}`,
+    `State: ${result.proof.state}`,
+    `Available: ${result.proof.available ? "yes" : "no"}`,
+    `Inspect: ${result.commands.inspect}`,
+    `Schemas: ${result.commands.generateTypes}`,
+    `Schema generation: ${result.schemaGeneration.attempted ? result.schemaGeneration.ok ? "written" : "failed" : "planned"}`,
+    `Handshake: ${result.handshake.attempted ? result.handshake.ok ? "initialized" : "failed" : result.handshake.skippedReason ?? "not requested"}`,
+    `Connect: ${result.commands.connectStdio}`,
+    "",
+    "Checks:",
+    ...result.proof.checks.map((check) => {
+      const status = check.status === "ok" ? "OK" : check.status.toUpperCase();
+      return `  ${status} ${check.name}: ${check.message}`;
+    }),
+  ];
+  if (result.nextActions.length > 0) {
+    lines.push("", "Next:", ...result.nextActions.map((action) => `  ${action}`));
+  }
+  return `${lines.join("\n")}\n`;
+}
+
 export function formatStudioDoctorHuman(result: StudioDoctorResult): string {
   const lines = [
     `Forge Studio doctor: ${result.ok ? "ready" : "needs attention"}`,
@@ -907,7 +1950,10 @@ export function formatStudioDoctorHuman(result: StudioDoctorResult): string {
     `Path: ${result.app.path}`,
     "",
     "Checks:",
-    ...result.checks.map((check) => `  ${check.ok ? "OK" : check.status.toUpperCase()} ${check.name}: ${check.message}`),
+    ...result.checks.map((check) => {
+      const status = check.status === "ok" ? "OK" : check.status.toUpperCase();
+      return `  ${status} ${check.name}: ${check.message}`;
+    }),
   ];
   if (result.nextActions.length > 0) {
     lines.push("", "Next:", ...result.nextActions.map((action) => `  ${action}`));

@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,7 +6,16 @@ import { describe, expect, test } from "bun:test";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
-import { probeStudioPreview, runStudioAttachCommand, runStudioSnapshotCommand } from "../../src/forge/cli/studio.ts";
+import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
+import {
+  probeStudioPreview,
+  runStudioAttachCommand,
+  runStudioBridgeCommand,
+  runStudioCodexServerCommand,
+  runStudioOpenCommand,
+  runStudioSnapshotCommand,
+  runStudioWatchCommand,
+} from "../../src/forge/cli/studio.ts";
 import {
   buildStrictTestGraphPlan,
   chunkFiles,
@@ -36,6 +45,38 @@ async function listenOnRandomPort(): Promise<{ port: number; close: () => Promis
 }
 
 describe("Forge CLI", () => {
+  test("runGenerateCommand respects workspaceRoot when cwd differs", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-generate-workspace-root");
+    const otherCwd = mkdtempSync(join(tmpdir(), "forge-generate-cwd-"));
+    const previousCwd = process.cwd();
+    try {
+      const write = await runGenerateCommand({
+        workspaceRoot: workspace,
+        check: false,
+        dryRun: false,
+        json: true,
+        concurrency: 2,
+      });
+      expect(write.exitCode).toBe(0);
+
+      process.chdir(otherCwd);
+      const check = await runGenerateCommand({
+        workspaceRoot: workspace,
+        check: true,
+        dryRun: false,
+        json: true,
+        concurrency: 2,
+      });
+      expect(check.exitCode).toBe(0);
+      expect(check.changed).toEqual([]);
+      expect(process.cwd()).toBe(otherCwd);
+    } finally {
+      process.chdir(previousCwd);
+      cleanupWorkspace(workspace);
+      rmSync(otherCwd, { recursive: true, force: true });
+    }
+  });
+
   test("parseCli rejects unsupported inspect target", () => {
     const parsed = parseCli(["inspect", "unknown"]);
     expect(parsed.errors.length).toBeGreaterThan(0);
@@ -180,16 +221,29 @@ describe("Forge CLI", () => {
     }
   });
 
-  test("parseCli accepts studio open, watch, and doctor", () => {
-    for (const subcommand of ["open", "watch", "doctor"] as const) {
+  test("parseCli accepts studio open, watch, bridge, doctor, and codex-server", () => {
+    for (const subcommand of ["open", "watch", "bridge", "doctor", "codex-server"] as const) {
       const parsed = parseCli([
         "studio",
         subcommand,
         "C:/work/customer-app",
         "--preview-port",
         "5174",
+        "--studio-url",
+        "http://127.0.0.1:3765",
+        "--interval-ms",
+        "2000",
         "--target",
         "codex",
+        "--workspace-id",
+        "workspace_1",
+        "--tenant-id",
+        "tenant_1",
+        "--user-id",
+        "user_1",
+        "--role",
+        "owner",
+        "--once",
         "--json",
       ]);
 
@@ -199,8 +253,49 @@ describe("Forge CLI", () => {
         expect(parsed.command.subcommand).toBe(subcommand);
         expect(parsed.command.path).toBe("C:/work/customer-app");
         expect(parsed.command.previewPort).toBe(5174);
+        expect(parsed.command.studioUrl).toBe("http://127.0.0.1:3765");
+        expect(parsed.command.intervalMs).toBe(2000);
+        expect(parsed.command.workspaceId).toBe("workspace_1");
+        expect(parsed.command.tenantId).toBe("tenant_1");
+        expect(parsed.command.userId).toBe("user_1");
+        expect(parsed.command.role).toBe("owner");
+        expect(parsed.command.once).toBe(true);
+        expect(parsed.command.writeSchemas).toBe(false);
+        expect(parsed.command.probeAppServer).toBe(false);
         expect(parsed.command.targets).toEqual(["codex"]);
       }
+    }
+
+    const codexServer = parseCli(["studio", "codex-server", ".", "--write", "--probe", "--json"]);
+    expect(codexServer.errors).toEqual([]);
+    expect(codexServer.command?.kind).toBe("studio");
+    if (codexServer.command?.kind === "studio") {
+      expect(codexServer.command.subcommand).toBe("codex-server");
+      expect(codexServer.command.writeSchemas).toBe(true);
+      expect(codexServer.command.probeAppServer).toBe(true);
+    }
+
+    expect(hasUnknownOption(["studio", "open", "--install", "--no-start", "--no-bridge", "--probe-codex-server"])).toBeNull();
+    const open = parseCli([
+      "studio",
+      "open",
+      "C:/work/customer-app",
+      "--preview-port",
+      "5174",
+      "--probe-codex-server",
+      "--install",
+      "--no-start",
+      "--no-bridge",
+      "--json",
+    ]);
+    expect(open.errors).toEqual([]);
+    expect(open.command?.kind).toBe("studio");
+    if (open.command?.kind === "studio") {
+      expect(open.command.subcommand).toBe("open");
+      expect(open.command.install).toBe(true);
+      expect(open.command.start).toBe(false);
+      expect(open.command.bridge).toBe(false);
+      expect(open.command.probeAppServer).toBe(true);
     }
   });
 
@@ -250,7 +345,7 @@ describe("Forge CLI", () => {
         state: "not-checked",
         checked: false,
       });
-      expect(result.preview.status.suggestedCommands).toContain("forge dev --web-port 5174");
+      expect(result.preview.status.suggestedCommands).toContain("forge dev --port 3766 --web-port 5174");
       expect(result.posture).toMatchObject({
         checked: false,
         state: "not-checked",
@@ -258,7 +353,7 @@ describe("Forge CLI", () => {
       expect(result.posture.recommendedCommands).toContain("forge dev --once --json");
       expect(result.filesPlanned).toContain(".forge/studio/attachment.json");
       expect(result.filesWritten).toEqual([]);
-      expect(result.commands.startTargetApp).toBe("forge dev --web-port 5174");
+      expect(result.commands.startTargetApp).toBe("forge dev --port 3766 --web-port 5174");
       expect(result.commands.startTargetAppCwd).toBe(workspace.replace(/\\/g, "/"));
       expect(result.commands.openPreview).toBe("http://127.0.0.1:5174");
       expect(result.commands.probePreview).toBe("forge dev --once --json");
@@ -283,7 +378,7 @@ describe("Forge CLI", () => {
         isStudioSelfPreview: true,
       });
       expect(avoided.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_STUDIO_SELF_PREVIEW_AVOIDED")).toBe(true);
-      expect(avoided.commands.startTargetApp).toBe("forge dev --web-port 5174");
+      expect(avoided.commands.startTargetApp).toBe("forge dev --port 3766 --web-port 5174");
       expect(avoided.commands.openPreview).toBe("http://127.0.0.1:5174");
       expect(avoided.preview.status.state).toBe("not-checked");
 
@@ -341,6 +436,98 @@ describe("Forge CLI", () => {
     }
   });
 
+  test("studio open dry-run plans attach, preview automation, and bridge", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-studio-open-"));
+    try {
+      writeFileSync(
+        join(workspace, "package.json"),
+        `${JSON.stringify({ name: "customer-app", packageManager: "npm@10.0.0", forge: { template: "minimal-web" } }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const result = await runStudioOpenCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        studioUrl: "http://127.0.0.1:3765",
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.action).toBe("open");
+      expect(result.attach.action).toBe("attach");
+      expect(result.preview.url).toBe("http://127.0.0.1:5174");
+      expect(result.previewAutomation).toMatchObject({
+        attempted: false,
+        started: false,
+        skippedReason: "dry-run",
+      });
+      expect(result.previewAutomation.install).toMatchObject({
+        required: true,
+        installed: false,
+        attempted: false,
+        command: "npm install",
+      });
+      expect(result.bridge).toMatchObject({
+        attempted: true,
+        ok: true,
+        posted: false,
+        dryRun: true,
+        studioUrl: "http://127.0.0.1:3765",
+      });
+      expect(result.commands.attach).toBe("forge studio attach . --preview-port 5174 --target codex --json");
+      expect(result.commands.bridge).toBe("forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json");
+      expect(result.nextActions).toContain("npm install");
+      expect(result.nextActions).toContain("forge dev --port 3766 --web-port 5174");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("studio open does not start preview when dependencies are missing without install consent", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-studio-open-missing-deps-"));
+    const listener = await listenOnRandomPort();
+    const previewPort = listener.port;
+    await listener.close();
+    try {
+      writeFileSync(
+        join(workspace, "package.json"),
+        `${JSON.stringify({ name: "customer-app", packageManager: "bun@1.3.14" }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const result = await runStudioOpenCommand({
+        workspaceRoot: workspace,
+        previewPort,
+        targets: ["codex"],
+        bridge: false,
+        json: true,
+        dryRun: false,
+        force: false,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.previewAutomation).toMatchObject({
+        attempted: false,
+        started: false,
+        skippedReason: "missing-dependencies",
+      });
+      expect(result.previewAutomation.install).toMatchObject({
+        required: true,
+        installed: false,
+        attempted: false,
+        command: "bun install",
+      });
+      expect(result.bridge.attempted).toBe(false);
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_STUDIO_DEPENDENCIES_MISSING")).toBe(true);
+      expect(await Bun.file(join(workspace, ".forge", "studio", "attachment.json")).exists()).toBe(true);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   test("studio snapshot reports preview posture and changed state without writing manifest", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-snapshot");
     try {
@@ -370,13 +557,147 @@ describe("Forge CLI", () => {
       expect(result.contextPacket.commands).toContain("forge changed --json");
       expect(result.proofs.hooks[0]?.target).toBe("codex");
       expect(result.commands.attach).toBe("forge studio attach . --preview-port 5174 --target codex --json");
+      expect(result.commands.bridge).toBe("forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json");
       expect(result.commands.doctor).toBe("forge studio doctor . --preview-port 5174 --target codex --json");
       expect(result.nextActions).toContain("forge changed --json");
       expect(await Bun.file(join(workspace, ".forge", "studio", "attachment.json")).exists()).toBe(false);
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 20_000);
+
+  test("studio snapshot exposes Codex app-server proof without requiring it", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-codex-app-server");
+    const original = process.env.FORGE_CODEX_APP_SERVER;
+    try {
+      process.env.FORGE_CODEX_APP_SERVER = "off";
+      const result = await runStudioSnapshotCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+
+      expect(result.proofs.codexAppServer).toMatchObject({
+        checked: true,
+        relevant: true,
+        state: "disabled",
+        available: false,
+      });
+      expect(result.commands.codexAppServer?.inspect).toBe("codex app-server --help");
+      expect(result.commands.codexAppServer?.generateTypes).toBe("codex app-server generate-ts --out .forge/codex-app-server-schemas");
+      expect(result.contextPacket.commands).toContain("codex app-server --help");
+    } finally {
+      if (original === undefined) delete process.env.FORGE_CODEX_APP_SERVER;
+      else process.env.FORGE_CODEX_APP_SERVER = original;
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
+
+  test("studio snapshot can include Codex app-server handshake proof when requested", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-codex-app-server-probe");
+    const original = process.env.FORGE_CODEX_APP_SERVER;
+    try {
+      process.env.FORGE_CODEX_APP_SERVER = "off";
+      const result = await runStudioSnapshotCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        probeAppServer: true,
+        json: true,
+        dryRun: false,
+        force: false,
+      });
+
+      expect(result.proofs.codexAppServer).toMatchObject({
+        checked: true,
+        relevant: true,
+        state: "disabled",
+        available: false,
+        handshake: {
+          attempted: false,
+          ok: true,
+          initialized: false,
+          skippedReason: "disabled",
+        },
+      });
+      expect(result.commands.bridge).toContain("--probe-codex-server");
+      expect(result.commands.doctor).toContain("--probe-codex-server");
+    } finally {
+      if (original === undefined) delete process.env.FORGE_CODEX_APP_SERVER;
+      else process.env.FORGE_CODEX_APP_SERVER = original;
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
+
+  test("studio codex-server reports the optional app-server surface directly", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-codex-server-command");
+    const original = process.env.FORGE_CODEX_APP_SERVER;
+    try {
+      process.env.FORGE_CODEX_APP_SERVER = "off";
+      const result = await runStudioCodexServerCommand({
+        workspaceRoot: workspace,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.action).toBe("codex-server");
+      expect(result.proof.state).toBe("disabled");
+      expect(result.schemaGeneration).toMatchObject({
+        attempted: false,
+        dryRun: true,
+        ok: true,
+      });
+      expect(result.handshake).toMatchObject({
+        attempted: false,
+        ok: true,
+        skippedReason: "not-requested",
+      });
+      expect(result.commands.connectStdio).toBe("codex app-server");
+      expect(result.commands.probeHandshake).toBe("forge studio codex-server . --probe --json");
+      expect(result.nextActions).toContain("codex app-server --help");
+      expect(result.nextActions).toContain("forge studio codex-server . --probe --json");
+    } finally {
+      if (original === undefined) delete process.env.FORGE_CODEX_APP_SERVER;
+      else process.env.FORGE_CODEX_APP_SERVER = original;
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
+
+  test("studio codex-server --probe skips cleanly when app-server probing is disabled", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-codex-server-probe-disabled");
+    const original = process.env.FORGE_CODEX_APP_SERVER;
+    try {
+      process.env.FORGE_CODEX_APP_SERVER = "off";
+      const result = await runStudioCodexServerCommand({
+        workspaceRoot: workspace,
+        targets: ["codex"],
+        probeAppServer: true,
+        json: true,
+        dryRun: false,
+        force: false,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.handshake).toMatchObject({
+        attempted: false,
+        dryRun: false,
+        ok: true,
+        skippedReason: "disabled",
+        initialized: false,
+      });
+      expect(result.nextActions).not.toContain("forge studio codex-server . --probe --json");
+    } finally {
+      if (original === undefined) delete process.env.FORGE_CODEX_APP_SERVER;
+      else process.env.FORGE_CODEX_APP_SERVER = original;
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
 
   test("studio snapshot reuses existing attachment preview and targets", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-snapshot-attachment");
@@ -415,13 +736,179 @@ describe("Forge CLI", () => {
       expect(result.preview.url).toBe("http://127.0.0.1:5199");
       expect(result.preview.port).toBe(5199);
       expect(result.targets).toEqual(["codex", "claude"]);
-      expect(result.commands.startTargetApp).toBe("forge dev --web-port 5199");
+      expect(result.commands.startTargetApp).toBe("forge dev --port 3766 --web-port 5199");
       expect(result.commands.attach).toBe("forge studio attach . --preview-port 5199 --target codex --target claude --json");
+      expect(result.commands.bridge).toBe("forge studio bridge . --preview-port 5199 --target codex --target claude --studio-url http://127.0.0.1:3765 --json");
       expect(result.commands.checkHooks).toContain("forge agent hooks status --target claude --json");
     } finally {
       cleanupWorkspace(workspace);
     }
-  });
+  }, 20_000);
+
+  test("studio snapshot tolerates ready non-git workspaces", async () => {
+    const sourceWorkspace = scaffoldGenerateWorkspace("forge-studio-snapshot-no-git");
+    const workspace = mkdtempSync(join(tmpdir(), "forge-studio-snapshot-no-git-"));
+    cpSync(sourceWorkspace, workspace, { recursive: true, force: true });
+    cleanupWorkspace(sourceWorkspace);
+    try {
+      rmSync(join(workspace, ".git"), { recursive: true, force: true });
+      const attach = await runStudioAttachCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        json: true,
+        dryRun: false,
+        force: false,
+      });
+      expect(attach.ok).toBe(true);
+      rmSync(join(workspace, ".git"), { recursive: true, force: true });
+
+      const result = await runStudioSnapshotCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+
+      expect(result.posture.state).toBe("ready");
+      expect((result.changed.git as { available?: boolean }).available).toBe(false);
+      expect(result.changed.risks).toContain("git status is unavailable; changed-file analysis may be incomplete");
+      expect(result.ok).toBe(true);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
+
+  test("studio bridge dry-run collects and prepares a Studio ingest snapshot", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-bridge");
+    try {
+      const result = await runStudioBridgeCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 2000,
+        once: true,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.action).toBe("bridge");
+      expect(result.mode).toBe("once");
+      expect(result.studioUrl).toBe("http://127.0.0.1:3765");
+      expect(result.endpoint).toBe("http://127.0.0.1:3765/commands/ingestStudioSnapshot");
+      expect(result.provider).toBe("Codex");
+      expect(result.target).toBe("codex");
+      expect(result.intervalMs).toBe(2000);
+      expect(result.posted).toBe(false);
+      expect(result.dryRun).toBe(true);
+      expect(result.snapshot.action).toBe("snapshot");
+      expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_STUDIO_BRIDGE_DRY_RUN")).toBe(true);
+
+      const implicitOnce = await runStudioBridgeCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 2000,
+        once: false,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+      expect(implicitOnce.mode).toBe("once");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
+
+  test("studio watch dry-run emits a single snapshot event", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-watch-dry-run");
+    try {
+      const result = await runStudioWatchCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        intervalMs: 2000,
+        once: false,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+
+      expect(result.action).toBe("watch");
+      expect(result.stream.mode).toBe("once");
+      expect(result.stream.dryRun).toBe(true);
+      expect(result.stream.intervalMs).toBe(2000);
+      expect(result.snapshot.action).toBe("snapshot");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
+
+  test("studio bridge posts with Forge Studio local dev auth defaults", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-bridge-auth");
+    const originalFetch = globalThis.fetch;
+    const originalTenant = process.env.FORGE_TENANT_ID;
+    const originalUser = process.env.FORGE_USER_ID;
+    const originalRole = process.env.FORGE_ROLE;
+    let capturedHeaders: Headers | undefined;
+    let capturedBody: Record<string, any> | undefined;
+
+    try {
+      delete process.env.FORGE_TENANT_ID;
+      delete process.env.FORGE_USER_ID;
+      delete process.env.FORGE_ROLE;
+
+      globalThis.fetch = (async (_input, init) => {
+        capturedHeaders = new Headers(init?.headers);
+        capturedBody = JSON.parse(String(init?.body ?? "{}")) as Record<string, any>;
+        return new Response(JSON.stringify({ ok: true, result: { workspaceId: "workspace_1" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }) as typeof fetch;
+
+      const result = await runStudioBridgeCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 2000,
+        once: true,
+        targets: ["codex"],
+        json: true,
+        dryRun: false,
+        force: false,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.posted).toBe(true);
+      expect(capturedHeaders?.get("x-forge-tenant-id")).toBe("00000000-0000-4000-8000-000000000001");
+      expect(capturedHeaders?.get("x-forge-user-id")).toBe("forge-studio-dev");
+      expect(capturedHeaders?.get("x-forge-role")).toBe("owner");
+      expect(capturedBody?.args?.provider).toBe("Codex");
+      expect(capturedBody?.args?.snapshot?.action).toBe("snapshot");
+      expect(capturedBody?.args?.bridge).toMatchObject({
+        mode: "once",
+        intervalMs: 2000,
+        status: "received",
+      });
+      expect(typeof capturedBody?.args?.bridge?.postedAt).toBe("string");
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalTenant === undefined) delete process.env.FORGE_TENANT_ID;
+      else process.env.FORGE_TENANT_ID = originalTenant;
+      if (originalUser === undefined) delete process.env.FORGE_USER_ID;
+      else process.env.FORGE_USER_ID = originalUser;
+      if (originalRole === undefined) delete process.env.FORGE_ROLE;
+      else process.env.FORGE_ROLE = originalRole;
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
 
   test("studio preview probe reports local preview reachability", async () => {
     const listener = await listenOnRandomPort();
@@ -593,11 +1080,20 @@ describe("Forge CLI", () => {
     expect(release.command?.kind).toBe("verify");
     if (release.command?.kind === "verify") {
       expect(release.command.options.strict).toBe(true);
+      expect(release.command.options.internal).toBe(false);
+    }
+
+    const framework = parseCli(["verify", "framework", "--json"]);
+    expect(framework.errors).toEqual([]);
+    expect(framework.command?.kind).toBe("verify");
+    if (framework.command?.kind === "verify") {
+      expect(framework.command.options.strict).toBe(true);
+      expect(framework.command.options.internal).toBe(true);
     }
 
     const unknown = parseCli(["verify", "banana", "--json"]);
     expect(unknown.errors).toContain(
-      "unknown forge verify profile 'banana'; expected quick, smoke, agent, standard, release, strict, or changed",
+      "unknown forge verify profile 'banana'; expected quick, smoke, agent, standard, release, strict, changed, framework, internal, or maintainer",
     );
   });
 
@@ -682,13 +1178,20 @@ describe("Forge CLI", () => {
   });
 
   test("parseCli accepts verify typechecker, test jobs, test plan, and compiler bench", () => {
-    const verify = parseCli(["verify", "--typechecker", "auto", "--test-jobs", "3", "--test-plan", "--json"]);
+    const verify = parseCli(["verify", "--typechecker", "native", "--test-jobs", "3", "--test-plan", "--json"]);
     expect(verify.errors).toEqual([]);
     expect(verify.command?.kind).toBe("verify");
     if (verify.command?.kind === "verify") {
-      expect(verify.command.options.typechecker).toBe("auto");
+      expect(verify.command.options.typechecker).toBe("native");
       expect(verify.command.options.testJobs).toBe(3);
       expect(verify.command.options.testPlan).toBe(true);
+    }
+
+    const ts7 = parseCli(["verify", "--typechecker", "ts7", "--json"]);
+    expect(ts7.errors).toEqual([]);
+    expect(ts7.command?.kind).toBe("verify");
+    if (ts7.command?.kind === "verify") {
+      expect(ts7.command.options.typechecker).toBe("ts7");
     }
 
     const bench = parseCli(["bench", "compiler", "--json", "--iterations", "2", "--warmups", "0", "--concurrency", "3"]);
@@ -745,7 +1248,7 @@ describe("Forge CLI", () => {
     expect(singleWorkerPlan.laneMode).toBe("sequential");
     expect(singleWorkerPlan.jobs).toBe(1);
     expect(singleWorkerPlan.isolatedJobs).toBe(1);
-  });
+  }, 20_000);
 
   test("strict TestGraph lanes isolate global-heavy tests without serializing them", () => {
     expect(classifyStrictTestFile("tests/client/client-query.test.ts")).toBe("isolated");

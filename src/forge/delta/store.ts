@@ -177,6 +177,10 @@ export interface DeltaStatus {
   ok: true;
   recording: boolean;
   store: string;
+  external?: {
+    kind: "pglite-active";
+    reason: string;
+  };
   session?: {
     id: string;
     startedAt: string;
@@ -428,6 +432,26 @@ function deltaStoreInitialized(storePath: string): boolean {
   return existsSync(join(storePath, "PG_VERSION"));
 }
 
+function readPglitePostmasterHolder(storePath: string): Record<string, unknown> | null {
+  const postmasterPath = join(storePath, "postmaster.pid");
+  if (!existsSync(postmasterPath)) {
+    return null;
+  }
+  try {
+    const lines = readFileSync(postmasterPath, "utf8").split(/\r?\n/);
+    const pid = Number(lines[0]);
+    return {
+      ...(Number.isInteger(pid) && pid > 0 ? { pid } : {}),
+      createdAt: statSync(postmasterPath).mtime.toISOString(),
+      command: "pglite postmaster.pid",
+    };
+  } catch {
+    return {
+      command: "pglite postmaster.pid",
+    };
+  }
+}
+
 export class DeltaStore {
   private closed = false;
 
@@ -456,6 +480,12 @@ export class DeltaStore {
         await store.close().catch(() => undefined);
       } else if (lock) {
         releaseDeltaStoreLock(lock);
+      }
+      if (!(error instanceof DeltaStoreBusyError)) {
+        const holder = readPglitePostmasterHolder(storePath);
+        if (holder) {
+          throw new DeltaStoreBusyError(join(storePath, "postmaster.pid"), holder);
+        }
       }
       throw error;
     }

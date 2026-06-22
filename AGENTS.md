@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=8f0fa0558026b7bf99263295a7b05a2e4d4207a4411eb72c3ceb34ce66243772
+// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=25a55de28d8323877f25c217c3e0f01766b01352c50294f7919e429c3685fb6d
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -22,12 +22,32 @@ forge agent print-context --json
 forge check --json
 ```
 
+## CAIR first
+
+Before reading large files or hand-writing patches, prefer the generated CAIR guide:
+
+```bash
+forge cair snapshot
+forge cair query "Q ST"
+forge cair query "Q S name=<symbol>"
+forge cair query "Q D S#1"
+forge cair query "Q R S#1"
+forge cair query "Q I S#1"
+```
+
+Use `src/forge/_generated/agentCairGuide.md` for the full compact protocol. Plan CAIR mutations before applying them:
+
+```bash
+forge cair action --plan "A RN t=S#1 nn=<newName>"
+forge cair action "A APPLY plan=<returned-plan-path>"
+```
+
 After editing:
 
 ```bash
 forge generate
 forge check
-forge verify --strict
+forge verify framework
 ```
 
 ## Do not edit
@@ -95,7 +115,7 @@ forge ai agents --json
 forge ai trace <traceId> --json
 forge verify --smoke
 forge verify --standard
-forge verify --strict
+forge verify framework
 ```
 
 ## Data
@@ -174,7 +194,7 @@ forge do verify --json
 1. Add file in `src/commands`.
 2. Declare `auth: can("...")`.
 3. Run `forge generate`.
-4. Run `forge verify --strict`.
+4. Run `forge verify framework`.
 
 ### Scaffold a resource
 
@@ -241,7 +261,7 @@ forge test run --changed --timeout-ms 120000 --json
 forge verify --standard
 ```
 
-Use `forge verify --standard` for the normal agent development loop. Finish handoffs with `forge verify --strict` when the change is ready.
+Use `forge verify --standard` for the normal agent development loop. Finish handoffs with `forge verify framework` when the change is ready.
 
 ### Repair a failing check
 
@@ -300,7 +320,7 @@ forge deps upgrade-plan <package> --to latest
 forge deps inspect <package> --json
 forge deps api <package> <symbol> --json
 forge deps upgrade-apply <plan>
-forge verify --strict
+forge verify framework
 ```
 
 Do not manually edit `package.json` for package upgrades unless necessary.

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.18 input=d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b content=efbb4d093caec677fb650d6a8e12779b87dc5a62ca94a507919a1209bbe3fb8f
+// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=dd5941c03ce1c54085f76e44a20d9a5620115ba01593f4ab50b4c90f1d2cf55a
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.18",
-  "inputHash": "d037a38973574e99c5c6fe2374b25cddbe8b19b9f673974d1f9f4858c3f8b03b",
+  "inputHash": "708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -459,6 +459,30 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages ai",
+        "probable: packages zod"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ai",
+          "zod"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cair/cair.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages ai",
         "probable: packages zod"
       ]
     },
