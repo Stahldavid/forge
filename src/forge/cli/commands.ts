@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { classify } from "../compiler/classifier/classify.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
+import { FORGE_RELEASE_PACKAGE_PACK_FAILED } from "../compiler/diagnostics/codes.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { forgeAdd } from "../compiler/integration/add.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
@@ -967,7 +968,21 @@ interface ReleaseDoctorCheck {
   ok: boolean;
   requiredForPublish: boolean;
   state?: string;
-  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult;
+  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult | PackagePackCheckResult;
+}
+
+interface PackagePackCheckResult {
+  ok: boolean;
+  data: {
+    command: "npm pack --dry-run --json";
+    dryRun: true;
+    tarball: string | null;
+    fileCount: number;
+  };
+  diagnostics: ReturnType<typeof createDiagnostic>[];
+  nextActions?: string[];
+  failureKind?: string;
+  exitCode: 0 | 1;
 }
 
 interface ReleaseDoctorResult {
@@ -984,7 +999,87 @@ interface ReleaseDoctorResult {
   exitCode: 0 | 1;
 }
 
-async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: "release" }>): Promise<ReleaseDoctorResult> {
+function runPackagePackDryRun(workspaceRoot: string): PackagePackCheckResult {
+  const result = spawnSync("npm", ["pack", "--dry-run", "--json"], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  const command = "npm pack --dry-run --json" as const;
+  if (result.status !== 0) {
+    const failureDetail = result.error instanceof Error ? result.error.message : null;
+    return {
+      ok: false,
+      data: { command, dryRun: true, tarball: null, fileCount: 0 },
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_RELEASE_PACKAGE_PACK_FAILED,
+          message: "npm pack dry-run failed; release package contents could not be validated",
+          fixHint: (result.stderr || result.stdout || failureDetail || "Run npm pack --dry-run --json locally for details.").trim(),
+          suggestedCommands: ["npm pack --dry-run --json"],
+        }),
+      ],
+      nextActions: ["npm pack --dry-run --json"],
+      failureKind: "package-pack-failed",
+      exitCode: 1,
+    };
+  }
+  try {
+    const parsed = JSON.parse(result.stdout || "[]") as unknown;
+    const pack = Array.isArray(parsed)
+      ? (parsed[0] as { filename?: unknown; files?: unknown[] } | undefined)
+      : undefined;
+    if (typeof pack?.filename !== "string" || !Array.isArray(pack.files)) {
+      return {
+        ok: false,
+        data: { command, dryRun: true, tarball: null, fileCount: 0 },
+        diagnostics: [
+          createDiagnostic({
+            severity: "error",
+            code: FORGE_RELEASE_PACKAGE_PACK_FAILED,
+            message: "npm pack dry-run did not report package contents",
+            fixHint: "Run npm pack --dry-run --json locally and confirm it returns a tarball with file entries.",
+            suggestedCommands: ["npm pack --dry-run --json"],
+          }),
+        ],
+        nextActions: ["npm pack --dry-run --json"],
+        failureKind: "package-pack-missing-contents",
+        exitCode: 1,
+      };
+    }
+    return {
+      ok: true,
+      data: {
+        command,
+        dryRun: true,
+        tarball: pack.filename,
+        fileCount: pack.files.length,
+      },
+      diagnostics: [],
+      exitCode: 0,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      data: { command, dryRun: true, tarball: null, fileCount: 0 },
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_RELEASE_PACKAGE_PACK_FAILED,
+          message: "npm pack dry-run returned invalid JSON",
+          fixHint: error instanceof Error ? error.message : String(error),
+          suggestedCommands: ["npm pack --dry-run --json"],
+        }),
+      ],
+      nextActions: ["npm pack --dry-run --json"],
+      failureKind: "package-pack-invalid-json",
+      exitCode: 1,
+    };
+  }
+}
+
+export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: "release" }>): Promise<ReleaseDoctorResult> {
   const release = await runReleaseCommand({
     ...command,
     action: "check",
@@ -1013,6 +1108,7 @@ async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: "r
     workspaceRoot: command.workspaceRoot,
     json: command.json,
   });
+  const packagePack = runPackagePackDryRun(command.workspaceRoot);
   const checks: ReleaseDoctorCheck[] = [
     {
       name: "release-prepared",
@@ -1039,6 +1135,12 @@ async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: "r
       ok: docs.ok,
       requiredForPublish: true,
       result: docs,
+    },
+    {
+      name: "npm-pack-dry-run",
+      ok: packagePack.ok,
+      requiredForPublish: true,
+      result: packagePack,
     },
   ];
   const failed = checks.filter((check) => !check.ok).map((check) => check.name);

@@ -214,6 +214,7 @@ forge verify agent
 forge verify --strict
 forge verify release
 forge verify framework
+forge release doctor --json
 ```
 
 ### Verification
@@ -228,6 +229,7 @@ forge verify framework
 | `forge verify --strict` | Strict app-level verification: app TestGraph in bounded parallel/isolated chunks + lint |
 | `forge verify framework` | Maintainer-only ForgeOS framework verification; runs the ForgeOS internal TestGraph |
 | `forge verify --changed` | Checks/tests for current diff only |
+| `forge release doctor --json` | Release readiness aggregate, including `npm pack --dry-run --json` package validation |
 
 ```bash
 forge verify --standard --script-timeout-ms 120000 --json

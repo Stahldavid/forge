@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
+import { runGenerateCommand, runReleaseDoctorCommand } from "../../src/forge/cli/commands.ts";
 import { runReleaseCommand } from "../../src/forge/cli/release.ts";
 import { runSelfHostCommand } from "../../src/forge/cli/self-host.ts";
 import {
@@ -91,6 +91,45 @@ describe("H23 release self-host export", () => {
       expect(evidence.steps).toEqual([]);
     } finally {
       rmSync(temp, { recursive: true, force: true });
+    }
+  });
+
+  test("release doctor gates package contents with npm pack dry-run", async () => {
+    const workspace = scaffoldGenerateWorkspace("h23-release-doctor-pack");
+    try {
+      const packageJsonPath = join(workspace, "package.json");
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as Record<string, unknown>;
+      writeFileSync(
+        packageJsonPath,
+        JSON.stringify({ ...packageJson, version: "1.0.0" }, null, 2),
+        "utf8",
+      );
+      const result = await runReleaseDoctorCommand({
+        kind: "release",
+        area: "release",
+        action: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        env: "production",
+        allowDirty: true,
+        allowPublicSourcemaps: false,
+      });
+      const pack = result.checks.find((check) => check.name === "npm-pack-dry-run");
+      expect(pack).toMatchObject({
+        ok: true,
+        requiredForPublish: true,
+      });
+      const packResult = pack?.result as {
+        data?: { command: string; dryRun: boolean; tarball: string | null; fileCount: number };
+      } | undefined;
+      expect(packResult?.data).toMatchObject({
+        command: "npm pack --dry-run --json",
+        dryRun: true,
+      });
+      expect(packResult?.data?.tarball).toContain(".tgz");
+      expect(packResult?.data?.fileCount).toBeGreaterThan(0);
+    } finally {
+      cleanupWorkspace(workspace);
     }
   });
 

@@ -47,6 +47,10 @@ npm run release:publish-alpha
 
 The package uses the `alpha` dist-tag while the project is in private/public MVP hardening.
 
+Use `forge release doctor --json` before publishing when you need the Forge-native
+readiness aggregate. It checks prepared release state, sourcemaps, self-host
+readiness, docs, and the npm package contents via `npm pack --dry-run --json`.
+
 ## Trusted Publishing (npm)
 
 npm Trusted Publishing should point to:
