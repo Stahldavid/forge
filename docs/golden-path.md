@@ -28,6 +28,7 @@ Read:
 - `agentContext.recommendedCommands`
 
 If `forge changed --json` reports generated files, treat them as derived evidence. Review authored changes first.
+When generated artifacts are the only noise, use `forge changed --authored --json` to confirm there are no authored edits before deciding whether the repository should ignore or track those artifacts.
 
 ## 2. Onboard The External Agent
 

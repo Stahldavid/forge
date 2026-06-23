@@ -100,6 +100,15 @@ function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
   if (git.changeSummary.changed.total.count === 0) {
     return ["forge status --json", "forge dev --once --json"];
   }
+  const changed = git.changeSummary.changed;
+  const humanFiles = changed.total.count - changed.byType.generated.count;
+  if (humanFiles === 0 && changed.byType.generated.count > 0) {
+    return [
+      "forge changed --authored --json",
+      "forge status --json",
+      "forge generate --check --json",
+    ];
+  }
   return [
     "forge handoff --json",
     "forge test plan --changed --json",

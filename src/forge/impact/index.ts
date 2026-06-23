@@ -711,6 +711,17 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
     includeBrowser: options.includeBrowser,
     lastRunByCommand,
   });
+  const generatedTypeScriptOnly =
+    report.changedFiles.length > 0 &&
+    report.changedFiles.every((file) =>
+      file === "forge.lock" ||
+      file.startsWith("src/forge/_generated/") ||
+      (file.toLowerCase().endsWith(".md") && report.impacted.generatedArtifacts.length > 0)
+    ) &&
+    report.impacted.generatedArtifacts.some((file) => file.endsWith(".ts") || file.endsWith(".d.ts"));
+  const standardReason = generatedTypeScriptOnly
+    ? "generated TypeScript artifacts changed"
+    : "TypeScript surface changed";
   return {
     schemaVersion: "0.1.0",
     source: report.source,
@@ -725,7 +736,7 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
     ),
     tests,
     optionalChecks: ([
-      { kind: "forge", command: "forge verify --standard", cost: "standard", reason: "TypeScript surface changed" },
+      { kind: "forge", command: "forge verify --standard", cost: "standard", reason: standardReason },
     ] satisfies TestPlanCheck[]).filter((check) =>
       costAllowed(check.cost, options.maxCost, options.includeDocker, options.includeBrowser),
     ),

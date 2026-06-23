@@ -86,6 +86,8 @@ describe("H23 release self-host export", () => {
         dryRun: true,
       });
       expect(evidence.artifacts.plannedCommands).toContain("npm pack --json");
+      expect(evidence.artifacts.plannedCommands).toContain("forge generate --json");
+      expect(evidence.artifacts.plannedCommands).not.toContain("forge generate");
       expect(evidence.steps).toEqual([]);
     } finally {
       rmSync(temp, { recursive: true, force: true });

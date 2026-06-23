@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
 
 describe("npm publish workflow", () => {
@@ -89,5 +90,28 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
     expect(workflow).toContain("NPM_TOKEN is not configured; skipping latest dist-tag promotion.");
     expect(workflow).toContain("npm dist-tag add \"forgeos@$(node -p \"require('./package.json').version\")\" latest");
+  });
+
+  test("packed npm artifact excludes generated bulk and keeps release manifest", () => {
+    const result = spawnSync("npm", ["pack", "--dry-run", "--json"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    expect(result.status, result.stderr).toBe(0);
+    const [pack] = JSON.parse(result.stdout) as Array<{
+      files: Array<{ path: string }>;
+    }>;
+    const generatedFiles = pack.files
+      .map((file) => file.path)
+      .filter((path) => path.startsWith("src/forge/_generated/"))
+      .sort();
+
+    expect(generatedFiles).toEqual([
+      "src/forge/_generated/releaseManifest.json",
+      "src/forge/_generated/releaseManifest.ts",
+    ]);
+    expect(pack.files.some((file) => file.path === "src/forge/_generated/appGraph.json")).toBe(false);
+    expect(pack.files.some((file) => file.path === "src/forge/_generated/runtimeMatrix.json")).toBe(false);
   });
 });

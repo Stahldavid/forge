@@ -216,6 +216,32 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
   );
   const impactTestsRun = result.steps.some((step) => !step.skipped && step.name === "impact-tests");
   const skippedFullSuite = result.steps.some((step) => step.skipped && step.name === "tests");
+  const skippedImpactTests = result.steps.some((step) => step.skipped && step.name === "impact-tests");
+  const testCoverageMode = fullSuiteRun
+    ? "full"
+    : impactTestsRun
+      ? "impact"
+      : result.steps.some((step) => !step.skipped)
+        ? "checks-only"
+        : "none";
+  const testGraphPlan = result.testGraphPlan
+    ? {
+        schemaVersion: result.testGraphPlan.schemaVersion,
+        fileCount: result.testGraphPlan.fileCount,
+        chunkCount: result.testGraphPlan.chunkCount,
+        totalJobs: result.testGraphPlan.totalJobs,
+        laneMode: result.testGraphPlan.laneMode,
+        jobs: result.testGraphPlan.jobs,
+        isolatedJobs: result.testGraphPlan.isolatedJobs,
+        lanes: result.testGraphPlan.lanes,
+        criticalPathEstimateMs: result.testGraphPlan.criticalPathEstimateMs,
+        profilePath: result.testGraphPlan.profilePath,
+        profileFound: result.testGraphPlan.profileFound,
+        slowestFiles: result.testGraphPlan.slowestFiles,
+        recommendations: result.testGraphPlan.recommendations,
+        chunksIncluded: false,
+      }
+    : null;
   return {
     schemaVersion: "0.1.0",
     ok: result.ok,
@@ -226,14 +252,16 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
       skippedSteps: result.steps.filter((step) => step.skipped).map((step) => step.name),
       diagnostics: result.diagnostics.length,
       testCoverage: {
+        mode: testCoverageMode,
         fullSuiteRun,
         impactTestsRun,
+        skippedImpactTests,
         skippedFullSuite,
       },
     },
     steps: result.steps,
     diagnostics: result.diagnostics,
-    testGraphPlan: result.testGraphPlan ?? null,
+    testGraphPlan,
     durationMs: result.durationMs ?? null,
     nextActions: [...suggested],
     exitCode: result.exitCode,

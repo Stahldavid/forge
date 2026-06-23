@@ -20,6 +20,7 @@ import type {
   VerifyTestGraphPlanChunk,
 } from "../compiler/types/cli.ts";
 import {
+  FORGE_VERIFY_NO_TESTS_SELECTED,
   FORGE_VERIFY_POLICY,
   FORGE_VERIFY_SCRIPT_TIMEOUT,
 } from "../compiler/diagnostics/codes.ts";
@@ -1513,6 +1514,18 @@ async function runStandardImpactTests(
 
   if (commands.length === 0) {
     steps.push(skippedStep("impact-tests", "no changed files selected an impact test"));
+    diagnostics.push(
+      createDiagnostic({
+        severity: "warning",
+        code: FORGE_VERIFY_NO_TESTS_SELECTED,
+        message: "standard verification did not select any impact tests; only non-test checks ran",
+        fixHint: "Run forge verify --strict when you need full test-suite coverage.",
+        suggestedCommands: [
+          "forge test plan --changed --json",
+          "forge verify --strict",
+        ],
+      }),
+    );
     return { steps, diagnostics };
   }
 

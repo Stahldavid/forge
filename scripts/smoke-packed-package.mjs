@@ -159,7 +159,7 @@ const plannedCommands = [
   "npm install --global <tarball>",
   "forge --version",
   "forge new smoke-app --template minimal-web --package-manager npm --forge-spec <tarball> --install --no-git",
-  "forge generate",
+  "forge generate --json",
   "forge check --json",
   "forge dev --once --json",
   "forge verify --smoke --json --script-timeout-ms 120000",

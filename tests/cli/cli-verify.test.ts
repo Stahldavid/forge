@@ -174,17 +174,22 @@ describe("Forge CLI verify", () => {
     const json = buildVerifyJson(result) as {
       summary?: {
         testCoverage?: {
+          mode?: string;
           fullSuiteRun?: boolean;
           impactTestsRun?: boolean;
+          skippedImpactTests?: boolean;
           skippedFullSuite?: boolean;
         };
       };
     };
     expect(json.summary?.testCoverage).toEqual({
+      mode: "checks-only",
       fullSuiteRun: false,
       impactTestsRun: false,
+      skippedImpactTests: true,
       skippedFullSuite: true,
     });
+    expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_NO_TESTS_SELECTED")).toBe(true);
   });
 
   test("verify --strict writes actionable TestGraph failure report", async () => {
@@ -238,6 +243,13 @@ describe("Forge CLI verify", () => {
         results?: Array<{ files?: string[]; reproduceCommand?: string; stderr?: string }>;
       };
       const diagnostic = result.diagnostics.find((item) => item.code === "FORGE_VERIFY_TESTS");
+      const json = buildVerifyJson(result) as {
+        testGraphPlan?: {
+          chunkCount?: number;
+          chunksIncluded?: boolean;
+          chunks?: unknown[];
+        } | null;
+      };
 
       expect(result.ok).toBe(false);
       expect(existsSync(reportPath)).toBe(true);
@@ -247,6 +259,9 @@ describe("Forge CLI verify", () => {
       expect(report.results?.[0]?.stderr).toContain("strict chunk exploded");
       expect(diagnostic?.message).toContain("tests/strict-failure.test.ts");
       expect(diagnostic?.fixHint).toContain(".forge/test-runs");
+      expect(json.testGraphPlan?.chunkCount).toBeGreaterThan(0);
+      expect(json.testGraphPlan?.chunksIncluded).toBe(false);
+      expect(json.testGraphPlan?.chunks).toBeUndefined();
     } finally {
       cleanupWorkspace(strictWorkspace);
     }

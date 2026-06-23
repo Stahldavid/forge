@@ -16,6 +16,7 @@ import {
   FORGE_AI_DYNAMIC_PROVIDER,
   FORGE_AI_GENERATION_FAILED,
   FORGE_AI_USAGE_UNAVAILABLE,
+  FORGE_VERIFY_NO_TESTS_SELECTED,
   forgeDrift,
   forgeDupSymbol,
   forgeGuardViolation,
@@ -39,6 +40,7 @@ describe("diagnostic codes catalog", () => {
       FORGE_AI_DYNAMIC_PROVIDER,
       FORGE_AI_GENERATION_FAILED,
       FORGE_AI_USAGE_UNAVAILABLE,
+      FORGE_VERIFY_NO_TESTS_SELECTED,
     ]) {
       expect(DIAGNOSTIC_CODES).toContain(code);
     }

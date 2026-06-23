@@ -385,6 +385,41 @@ describe("H28 impact-based test planner", () => {
       .toBe("node ./bin/forge-bun.mjs test tests/commands/createTicket.test.ts");
   });
 
+  test("test plans label generated TypeScript artifact impact distinctly", () => {
+    const root = workspace();
+    spawnSync("git", ["init"], { cwd: root, windowsHide: true });
+    spawnSync("git", ["config", "user.email", "forge@example.test"], { cwd: root, windowsHide: true });
+    spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: root, windowsHide: true });
+    const graph = buildTestGraph({
+      workspaceRoot: root,
+      inputHash: "hash",
+      appGraph,
+      packageGraph,
+      sources: [],
+    });
+    writeGenerated(root, graph);
+    write(root, "src/forge/_generated/api.ts", "// @forge-generated\nexport const api = 1;\n");
+    spawnSync("git", ["add", "."], { cwd: root, windowsHide: true });
+    spawnSync("git", ["commit", "-m", "baseline"], { cwd: root, windowsHide: true });
+    write(root, "src/forge/_generated/api.ts", "// @forge-generated\nexport const api = 2;\n");
+
+    const plan = buildImpactTestPlan({
+      subcommand: "plan",
+      workspaceRoot: root,
+      json: true,
+      write: false,
+      changed: true,
+      staged: false,
+      maxCost: "standard",
+      includeDocker: false,
+      includeBrowser: false,
+      bail: false,
+    });
+
+    expect(plan.optionalChecks.find((check) => check.command === "forge verify --standard")?.reason)
+      .toBe("generated TypeScript artifacts changed");
+  });
+
   test("cost filtering excludes browser tests unless explicitly included", () => {
     const root = workspace();
     spawnSync("git", ["init"], { cwd: root, windowsHide: true });
