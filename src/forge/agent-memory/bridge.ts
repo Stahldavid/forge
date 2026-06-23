@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, watch, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
+import { createDeltaId } from "../delta/ids.ts";
 import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy } from "../delta/store.ts";
 import { extractAgentEventBindings, normalizeAgentEvent, summarizeAgentEvent } from "./normalize.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
@@ -114,6 +115,168 @@ function isExternalPgliteRead(result: AgentMemoryUnavailableResult): boolean {
   );
 }
 
+function fallbackMemoryPath(workspaceRoot: string): string {
+  return join(workspaceRoot, ".forge", "agent", "events.ndjson");
+}
+
+function hasExternalPglitePostmaster(workspaceRoot: string): boolean {
+  return existsSync(join(workspaceRoot, ".forge", "delta", "delta.db", "postmaster.pid")) &&
+    !existsSync(join(workspaceRoot, ".forge", "delta", "delta.lock"));
+}
+
+function shouldUseFallbackMemory(
+  result: AgentMemoryUnavailableResult,
+  workspaceRoot: string,
+): boolean {
+  return isExternalPgliteRead(result) || (!result.busy && hasExternalPglitePostmaster(workspaceRoot));
+}
+
+function eventRecordFromEnvelope(
+  envelope: AgentEventEnvelope,
+  summary: string | undefined,
+  bindings: Record<string, unknown>,
+): AgentMemoryEventRecord {
+  const capturedAt = envelope.event.timestamp || new Date().toISOString();
+  return {
+    id: createDeltaId("amem"),
+    externalEventId: createDeltaId("aevt"),
+    sourceName: String(envelope.source.agent),
+    integrationKind: String(envelope.source.integration),
+    trustLevel: envelope.capture.trustLevel,
+    externalSessionId: envelope.session.externalSessionId,
+    externalTurnId: envelope.session.turnId,
+    eventKind: envelope.event.kind,
+    normalizedKind: envelope.event.kind,
+    summary,
+    confidence: envelope.capture.confidence,
+    capturedAt,
+    data: { envelope, bindings },
+  };
+}
+
+function appendFallbackAgentMemoryEvent(
+  workspaceRoot: string,
+  envelope: AgentEventEnvelope,
+  summary: string | undefined,
+  bindings: Record<string, unknown>,
+): AgentMemoryEventRecord {
+  const file = fallbackMemoryPath(workspaceRoot);
+  mkdirSync(dirname(file), { recursive: true });
+  const event = eventRecordFromEnvelope(envelope, summary, bindings);
+  appendFileSync(file, `${JSON.stringify(event)}\n`, "utf8");
+  return event;
+}
+
+function readFallbackAgentMemoryEvents(
+  workspaceRoot: string,
+  target: string | undefined,
+  limit: number | undefined,
+): AgentMemoryEventRecord[] {
+  const file = fallbackMemoryPath(workspaceRoot);
+  if (!existsSync(file)) {
+    return [];
+  }
+  const events: AgentMemoryEventRecord[] = [];
+  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+    if (!line.trim()) {
+      continue;
+    }
+    try {
+      const parsed = JSON.parse(line) as unknown;
+      if (isAgentMemoryEventRecord(parsed) && agentMemoryEventMatchesTarget(parsed, target)) {
+        events.push(parsed);
+      }
+    } catch {
+      // Keep fallback recovery best effort; malformed lines should not break hooks.
+    }
+  }
+  return limit ? events.slice(-Math.max(1, Math.min(limit, 200))) : events;
+}
+
+function isAgentMemoryEventRecord(value: unknown): value is AgentMemoryEventRecord {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    typeof (value as { id?: unknown }).id === "string" &&
+    typeof (value as { sourceName?: unknown }).sourceName === "string" &&
+    typeof (value as { eventKind?: unknown }).eventKind === "string" &&
+    typeof (value as { capturedAt?: unknown }).capturedAt === "string",
+  );
+}
+
+function agentMemoryEventMatchesTarget(event: AgentMemoryEventRecord, target: string | undefined): boolean {
+  if (!target) {
+    return true;
+  }
+  return event.sourceName === target ||
+    event.summary?.includes(target) === true ||
+    JSON.stringify(event.data).includes(target);
+}
+
+function mergeAgentMemoryEvents(
+  primary: AgentMemoryEventRecord[],
+  fallback: AgentMemoryEventRecord[],
+  limit: number | undefined,
+): AgentMemoryEventRecord[] {
+  const seen = new Set<string>();
+  const merged = [...primary, ...fallback]
+    .filter((event) => {
+      if (seen.has(event.id)) {
+        return false;
+      }
+      seen.add(event.id);
+      return true;
+    })
+    .sort((left, right) => {
+      const byTime = left.capturedAt.localeCompare(right.capturedAt);
+      return byTime === 0 ? left.id.localeCompare(right.id) : byTime;
+    });
+  return limit ? merged.slice(-Math.max(1, Math.min(limit, 200))) : merged;
+}
+
+function isMissingAgentMemorySchema(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /agent_memory_events/i.test(message) && /does not exist|no such table|missing/i.test(message);
+}
+
+async function listAgentMemoryEventsWithSchemaRepair(
+  workspaceRoot: string,
+  target: string | undefined,
+  limit: number | undefined,
+): Promise<AgentMemoryEventRecord[] | AgentMemoryUnavailableResult> {
+  const fallbackEvents = readFallbackAgentMemoryEvents(workspaceRoot, target, limit);
+  let store = await openMemoryStore(workspaceRoot, "read");
+  if (isMemoryUnavailable(store)) {
+    if (shouldUseFallbackMemory(store, workspaceRoot)) {
+      return fallbackEvents;
+    }
+    return store;
+  }
+  try {
+    return mergeAgentMemoryEvents(await store.listAgentMemoryEvents({ target, limit }), fallbackEvents, limit);
+  } catch (error) {
+    await store.close().catch(() => undefined);
+    if (!isMissingAgentMemorySchema(error)) {
+      return memoryUnavailable(error, workspaceRoot);
+    }
+    const repairStore = await openMemoryStore(workspaceRoot, "write");
+    if (isMemoryUnavailable(repairStore)) {
+      return repairStore;
+    }
+    try {
+      await repairStore.init();
+      return await repairStore.listAgentMemoryEvents({ target, limit });
+    } catch (repairError) {
+      return memoryUnavailable(repairError, workspaceRoot);
+    } finally {
+      await repairStore.close();
+    }
+  } finally {
+    await store.close().catch(() => undefined);
+  }
+}
+
 export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions): Promise<AgentMemoryCommandResult> {
   if (options.subcommand === "install") {
     return installAgentMemory(options);
@@ -135,39 +298,42 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
       return memoryUnavailable(error, options.workspaceRoot);
     }
   }
-  const store = await openMemoryStore(options.workspaceRoot, "read");
-  if (isMemoryUnavailable(store)) {
-    if (isExternalPgliteRead(store)) {
-      return {
-        ok: true,
-        events: [],
-        exitCode: 0,
-      };
-    }
-    return store;
+  const events = await listAgentMemoryEventsWithSchemaRepair(options.workspaceRoot, options.entry, options.limit);
+  if (!Array.isArray(events)) {
+    return events;
   }
-  try {
-    return {
-      ok: true,
-      events: await store.listAgentMemoryEvents({ target: options.entry, limit: options.limit }),
-      exitCode: 0,
-    };
-  } finally {
-    await store.close();
-  }
+  return {
+    ok: true,
+    events,
+    exitCode: 0,
+  };
 }
 
 export async function ingestEnvelope(workspaceRoot: string, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {
+  const bindings = extractAgentEventBindings(envelope);
+  const summary = summarizeAgentEvent(envelope);
   const store = await openMemoryStore(workspaceRoot, "write");
   if (isMemoryUnavailable(store)) {
+    if (shouldUseFallbackMemory(store, workspaceRoot)) {
+      const event = appendFallbackAgentMemoryEvent(workspaceRoot, envelope, summary, bindings);
+      return {
+        ok: true,
+        event,
+        envelope,
+        exitCode: 0,
+        fallback: {
+          kind: "agent-events-ndjson",
+          path: ".forge/agent/events.ndjson",
+          reason: "pglite-active",
+        },
+      };
+    }
     return {
       ...store,
       envelope,
     };
   }
   try {
-    const bindings = extractAgentEventBindings(envelope);
-    const summary = summarizeAgentEvent(envelope);
     const event = await store.recordAgentMemoryEvent({ envelope, summary, bindings });
     return { ok: true, event, envelope, exitCode: 0 };
   } finally {
@@ -177,7 +343,7 @@ export async function ingestEnvelope(workspaceRoot: string, envelope: AgentEvent
 
 async function ingestAgentMemory(options: AgentMemoryCommandOptions): Promise<AgentIngestResult> {
   const source = options.source ?? options.target ?? "generic";
-  const raw = normalizeRawInput(options.input ?? await readStdinJson());
+  const raw = normalizeRawInput(options.input ?? await readStdinJson({ timeoutMs: 2000 }));
   if (!raw) {
     return { ok: false, exitCode: 1, error: "agent ingest requires JSON input on stdin or --input" };
   }
@@ -275,13 +441,17 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
     const content = readFileSync(watchFile, "utf8");
     const next = content.slice(bytesRead);
     bytesRead = content.length;
-    for (const raw of parseJsonLines(next)) {
-      const result = await ingestEnvelope(options.workspaceRoot, normalizeAgentEvent({
-        workspaceRoot: options.workspaceRoot,
-        source,
-        eventName: options.eventName,
-        raw,
-        integration: source === "cursor" ? "mcp" : "native-hook",
+    for (const line of parseJsonLines(next)) {
+      const queued = parseQueuedHookLine(line);
+      const payload = queued?.payload ?? line;
+      const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;
+      const ingestSource = queued?.source ?? source;
+      const result = await ingestEnvelope(ingestRoot, normalizeAgentEvent({
+        workspaceRoot: ingestRoot,
+        source: ingestSource,
+        eventName: queued?.eventName ?? options.eventName,
+        raw: payload,
+        integration: ingestSource === "cursor" ? "mcp" : "native-hook",
       }));
       if (result.ok) {
         eventsIngested += 1;
@@ -321,7 +491,7 @@ function installAgentMemory(options: AgentMemoryCommandOptions): AgentInstallRes
   const target = normalizeInstallTarget(options.target ?? options.source ?? "generic");
   const files =
     target === "codex"
-      ? codexInstallFiles()
+      ? codexInstallFiles(options.workspaceRoot)
       : target === "claude-code"
         ? claudeCodeInstallFiles()
         : target === "cursor"
@@ -549,16 +719,62 @@ function normalizeRawInput(input: unknown): Record<string, unknown> | null {
   return null;
 }
 
-async function readStdinJson(): Promise<unknown> {
+export async function readStdinJson(options?: { timeoutMs?: number }): Promise<unknown> {
   if (process.stdin.isTTY) {
     return undefined;
   }
+  const timeoutMs = options?.timeoutMs ?? 2000;
   const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+  let settled = false;
+
+  return await new Promise<unknown>((resolve) => {
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      process.stdin.removeListener("data", onData);
+      process.stdin.removeListener("end", finish);
+      process.stdin.removeListener("close", finish);
+      process.stdin.removeListener("error", finish);
+      const raw = Buffer.concat(chunks).toString("utf8").trim();
+      resolve(raw ? raw : undefined);
+    };
+    const onData = (chunk: Buffer | string) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+    };
+    const timer = setTimeout(() => {
+      process.stdin.destroy();
+      finish();
+    }, timeoutMs);
+    process.stdin.on("data", onData);
+    process.stdin.on("end", finish);
+    process.stdin.on("close", finish);
+    process.stdin.on("error", finish);
+    process.stdin.resume();
+  });
+}
+
+function parseQueuedHookLine(raw: Record<string, unknown>): {
+  source: string;
+  eventName?: string;
+  workspaceRoot?: string;
+  payload: Record<string, unknown>;
+} | null {
+  if (raw.forgeHookQueueV1 !== true) {
+    return null;
   }
-  const raw = Buffer.concat(chunks).toString("utf8").trim();
-  return raw ? raw : undefined;
+  const payload = raw.raw;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+  return {
+    source: typeof raw.source === "string" ? raw.source : "codex",
+    eventName: typeof raw.eventName === "string" ? raw.eventName : undefined,
+    workspaceRoot: typeof raw.workspaceRoot === "string" ? raw.workspaceRoot : undefined,
+    payload: payload as Record<string, unknown>,
+  };
 }
 
 function maybeMergeJson(path: string, generated: string): string {

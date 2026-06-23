@@ -18,7 +18,8 @@ import {
 import { configuredAgentTargets } from "../../src/forge/cli/verify.ts";
 import type { AgentCommandOptions } from "../../src/forge/agent-adapters/types.ts";
 import type { AgentContract } from "../../src/forge/compiler/agent-contract/types.ts";
-import { runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
+import { ingestEnvelope, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
+import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
 import { cleanupWorkspace, scaffoldGenerateWorkspace } from "../orchestrator/helpers.ts";
 
 const roots: string[] = [];
@@ -498,7 +499,10 @@ describe("H30 agent adapter export", () => {
       expect(result.commands.changed).toBe("forge changed --json");
       expect(result.commands.dev).toBe("forge dev --once --json");
       expect(result.commands.context).toBe("forge agent context --current --json");
-      expect(result.nextActions).toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
+      expect(result.nextActions).toContain(
+        "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
+      );
+      expect(result.nextActions).toContain("If Codex Desktop shows a hook approval prompt, approve it");
       expect(result.recommendedReadFiles).toContain("AGENTS.md");
     } finally {
       cleanupWorkspace(root);
@@ -533,6 +537,11 @@ describe("H30 agent adapter export", () => {
     expect(stillWaiting.usefulSignals).toBeGreaterThan(0);
     expect(stillWaiting.nativeSignals).toBe(0);
     expect(stillWaiting.canarySignals).toBeGreaterThan(0);
+    expect(stillWaiting.nextActions).toContain(
+      "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
+    );
+    expect(stillWaiting.nextActions).not.toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
+    expect(stillWaiting.checks.find((check) => check.name === "codex-hook-approval")?.message).toContain("smoke canary");
 
     await recordNativeCodexSignal(root);
     const ready = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
@@ -545,6 +554,39 @@ describe("H30 agent adapter export", () => {
     expect(ready.nativeSignals).toBeGreaterThan(0);
     expect(ready.approvalRequired).toBe(false);
     expect(ready.approvalStatus).toBe("trusted");
+  }, 45_000);
+
+  test("agent hooks status ignores native Codex signals from other workspaces", async () => {
+    const root = workspace();
+    const otherRoot = workspace();
+    const prepared = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
+    expect(prepared.ok).toBe(true);
+
+    const foreignEnvelope = normalizeAgentEvent({
+      workspaceRoot: otherRoot,
+      source: "codex",
+      eventName: "PostToolUse",
+      raw: {
+        session_id: "codex-native-foreign-session",
+        tool_name: "Edit",
+        cwd: otherRoot,
+        status: "completed",
+        tool_input: { file_path: "AGENTS.md" },
+        tool_response: { status: "success" },
+      },
+    });
+    const ingested = await ingestEnvelope(root, foreignEnvelope);
+    expect(ingested.ok).toBe(true);
+
+    const status = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(status.ok).toBe(false);
+    expect(status.installed).toBe(true);
+    expect(status.visibleInMemory).toBe(false);
+    expect(status.usefulSignals).toBe(0);
+    expect(status.nativeSignals).toBe(0);
+    expect(status.approvalStatus).toBe("waiting-for-user-trust");
+    expect(status.checks.find((check) => check.name === "workspace-scope")?.ok).toBe(true);
+    expect(status.nextActions).toContain("forge agent hooks smoke --target codex --json");
   }, 45_000);
 
   test("agent hooks smoke stores a canary hook event without bypassing Codex trust", async () => {
@@ -574,6 +616,9 @@ describe("H30 agent adapter export", () => {
       ok: true,
       message: "canary event was normalized and stored",
     });
+    expect(result.nextActions).toContain(
+      "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
+    );
     expect(result.checks.some((check) => check.name === "canary-memory-readable" && check.ok)).toBe(true);
     expect(result.checks.some((check) => check.name === "codex-hook-approval" && !check.ok)).toBe(true);
     expect(JSON.stringify(result.ingestResult)).toContain("FORGE_HOOK_SMOKE_CANARY");
@@ -620,7 +665,10 @@ describe("H30 agent adapter export", () => {
         nativeSignals: 0,
         canarySignals: 1,
       });
-      expect(needsApproval.nextActions).toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
+      expect(needsApproval.nextActions).toContain(
+        "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
+      );
+      expect(needsApproval.nextActions).toContain("If Codex Desktop shows a hook approval prompt, approve it");
 
       await recordNativeCodexSignal(root);
 

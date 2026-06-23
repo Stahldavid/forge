@@ -235,6 +235,7 @@ export interface AgentHooksSmokeResult {
     kind: string;
     summary?: string;
     capturedAt: string;
+    workspaceRoot?: string;
   };
   canary?: {
     marker: string;
@@ -243,6 +244,15 @@ export interface AgentHooksSmokeResult {
     ingestedEventId?: string;
     memoryEventsChecked: number;
     visible: boolean;
+  };
+  hookRunnerProbe?: {
+    ok: boolean;
+    durationMs: number;
+    exitCode: number | null;
+    queued: boolean;
+    stdinHangSafe: boolean;
+    stdinHangDurationMs?: number;
+    error?: string;
   };
   checks: Array<{ name: string; ok: boolean; message?: string }>;
   nextActions: string[];
@@ -270,7 +280,10 @@ export interface AgentHooksStatusResult {
     kind: string;
     summary?: string;
     capturedAt: string;
+    workspaceRoot?: string;
   };
+  workspaceRoot?: string;
+  ignoredOutOfWorkspaceEvents?: number;
   checks: Array<{ name: string; ok: boolean; message?: string; evidence?: unknown }>;
   nextActions: string[];
   installResult?: unknown;

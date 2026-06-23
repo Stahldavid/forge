@@ -18,6 +18,7 @@ import type { WorkflowRegistry, WorkflowSubscriptions } from "../compiler/types/
 import type { ActionSubscriptions } from "../compiler/types/action-subscriptions.ts";
 import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
 import { resolveCommandArgv } from "../compiler/package-manager/executor.ts";
+import { isVolatileForgeState } from "../workspace/change-summary.ts";
 import type {
   ImpactCommandOptions,
   ImpactReport,
@@ -165,12 +166,6 @@ function scopeGitFilesToWorkspace(workspaceRoot: string, files: string[]): strin
 function untrackedFiles(workspaceRoot: string): string[] {
   const result = git(["ls-files", "--others", "--exclude-standard"], workspaceRoot);
   return result.ok ? result.files : [];
-}
-
-function isVolatileForgeState(file: string): boolean {
-  const normalized = normalize(file);
-  return normalized.startsWith(".forge/locks/") ||
-    normalized.startsWith(".forge/test-runs/");
 }
 
 function sourceFromOptions(options: ImpactCommandOptions | TestCommandOptions): ImpactSource {

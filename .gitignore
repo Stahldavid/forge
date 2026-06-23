@@ -8,6 +8,9 @@ node_modules/
 .forge/local/
 .forge/locks/
 .forge/test-cache/
+.forge/agent/*.mjs
+.forge/agent/*.json
+.forge/agent/*.ndjson
 **/.forge/cache/
 **/.forge/pglite/
 **/.forge/delta/
@@ -16,6 +19,8 @@ node_modules/
 **/.forge/test-cache/
 **/.forge/test-runs/
 **/.forge/ui-runs/
+.codex/environments/
+.codex/scripts/
 .forge/releases/*
 !.forge/releases/.gitkeep
 .forge/upgrades/*

@@ -10,6 +10,7 @@ import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
   FORGE_AUTH_DEV_HEADERS_IN_PRODUCTION,
+  FORGE_DEV_DB_RESET,
   FORGE_DEV_INVOKE_FAILED,
   FORGE_DEV_SERVER_ERROR,
   FORGE_POLICY_DENIED,
@@ -26,10 +27,12 @@ import type { DevManifest } from "../compiler/types/dev-manifest.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { RuntimeGraph } from "../compiler/types/runtime-graph.ts";
 import { createDbAdapter } from "../runtime/db/factory.ts";
-import { applyMigrations } from "../runtime/db/migrate.ts";
+import { applyMigrations, getMigrationStatus, resetDatabase } from "../runtime/db/migrate.ts";
 import {
+  disposeRuntimeModuleNamespace,
   listEntries,
   prepareRuntimeEnvironment,
+  refreshRuntimeModuleNamespace,
   runEntry,
 } from "../runtime/executor.ts";
 import { listQueries, runQuery } from "../runtime/query/run-query.ts";
@@ -80,6 +83,33 @@ import {
   loadExternalServiceGraph,
   runExternalEntry,
 } from "../runtime/external/bridge.ts";
+
+async function applyDevMigrations(
+  adapter: NonNullable<Awaited<ReturnType<typeof createDbAdapter>>["adapter"]>,
+  sqlPlan: SqlPlan,
+  dbMode: DevServerOptions["db"],
+): Promise<Diagnostic[]> {
+  const shouldAutoReset =
+    (dbMode === "pglite" || dbMode === "memory") &&
+    process.env.FORGE_DEV_AUTO_RESET_DB !== "0";
+
+  if (shouldAutoReset) {
+    const status = await getMigrationStatus(adapter).catch(() => null);
+    const appliedChecksum = status?.applied.at(-1)?.checksum ?? null;
+    if (appliedChecksum && appliedChecksum !== sqlPlan.checksum) {
+      return [
+        createDiagnostic({
+          severity: "warning",
+          code: FORGE_DEV_DB_RESET,
+          message: "local dev database schema changed; reset app tables automatically",
+        }),
+        ...(await resetDatabase(adapter, sqlPlan)),
+      ];
+    }
+  }
+
+  return applyMigrations(adapter, sqlPlan);
+}
 
 interface FetchServer {
   hostname?: string;
@@ -764,7 +794,7 @@ export async function startDevServer(
     );
 
     if (sqlPlan) {
-      const migrationDiagnostics = await applyMigrations(adapter, sqlPlan);
+      const migrationDiagnostics = await applyDevMigrations(adapter, sqlPlan, dbMode);
       const errors = migrationDiagnostics.filter(
         (diagnostic) => diagnostic.severity === "error",
       );
@@ -784,6 +814,7 @@ export async function startDevServer(
     mockAi: options.mockAi,
     db: serverState.adapter,
   });
+  refreshRuntimeModuleNamespace("dev-start");
 
   function loadArtifacts(): {
     devManifest: DevManifest;
@@ -822,6 +853,7 @@ export async function startDevServer(
 
   async function reloadGeneratedArtifacts(reason = "manual"): Promise<DevServerReloadResult> {
     try {
+      refreshRuntimeModuleNamespace(reason);
       const fresh = loadArtifacts();
       currentRoutes = fresh.devManifest.routes;
       currentRuntimeEntryCount = fresh.runtimeGraph.entries.length;
@@ -835,7 +867,7 @@ export async function startDevServer(
         );
         if (sqlPlan) {
           migrated = true;
-          diagnostics.push(...(await applyMigrations(serverState.adapter, sqlPlan)));
+          diagnostics.push(...(await applyDevMigrations(serverState.adapter, sqlPlan, options.db)));
         }
         if (diagnostics.every((diagnostic) => diagnostic.severity !== "error")) {
           await ensureLiveInvalidationSchema(serverState.adapter);
@@ -2085,6 +2117,7 @@ export async function startDevServer(
       liveManager?.stop();
       server.stop(true);
       restoreRuntimeEnvironment();
+      disposeRuntimeModuleNamespace();
       const adapter = serverState.adapter;
       serverState.adapter = null;
       void adapter?.close().catch(() => undefined);

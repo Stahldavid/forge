@@ -202,6 +202,8 @@ function requiredGeneratedArtifacts(workspaceRoot: string): Array<{ name: string
     { name: "agents-md", path: "AGENTS.md", ok: nodeFileSystem.exists(join(workspaceRoot, "AGENTS.md")) },
     { name: "forge-lock", path: "forge.lock", ok: nodeFileSystem.exists(join(workspaceRoot, "forge.lock")) },
     { name: "agent-contract", path: `${GENERATED_DIR}/agentContract.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "agentContract.json")) },
+    { name: "agent-quickstart", path: `${GENERATED_DIR}/agentQuickstart.md`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "agentQuickstart.md")) },
+    { name: "agent-cair-guide", path: `${GENERATED_DIR}/agentCairGuide.md`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "agentCairGuide.md")) },
     { name: "capability-map", path: `${GENERATED_DIR}/capabilityMap.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "capabilityMap.json")) },
     { name: "runtime-matrix", path: `${GENERATED_DIR}/runtimeMatrix.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "runtimeMatrix.json")) },
     { name: "data-graph", path: `${GENERATED_DIR}/dataGraph.json`, ok: nodeFileSystem.exists(join(workspaceRoot, GENERATED_DIR, "dataGraph.json")) },
@@ -283,7 +285,21 @@ function runDoctorPhase(workspaceRoot: string): DevConsolePhase {
   );
 }
 
-function runFrontendPhase(workspaceRoot: string): DevConsolePhase {
+function withRuntimeFrontendUrls(
+  summary: FrontendSummary,
+  options: { apiUrl?: string; webUrl?: string },
+): FrontendSummary {
+  return {
+    ...summary,
+    ...(options.apiUrl ? { apiUrl: options.apiUrl } : {}),
+    ...(options.webUrl ? { devUrl: options.webUrl } : {}),
+  };
+}
+
+function runFrontendPhase(
+  workspaceRoot: string,
+  options: { apiUrl?: string; webUrl?: string } = {},
+): DevConsolePhase {
   const start = performance.now();
   const frontend = readJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);
   if (!frontend) {
@@ -297,7 +313,7 @@ function runFrontendPhase(workspaceRoot: string): DevConsolePhase {
     };
   }
 
-  const summary: FrontendSummary = {
+  const summary: FrontendSummary = withRuntimeFrontendUrls({
     present: frontend.present,
     framework: frontend.framework,
     routes: frontend.routes.map((route) => route.path),
@@ -305,7 +321,7 @@ function runFrontendPhase(workspaceRoot: string): DevConsolePhase {
     bridgeFiles: frontend.bridgeFiles,
     apiUrl: frontend.webManifest.urls.api,
     ...(frontend.dev ? { devUrl: frontend.dev.url, apiUrlEnv: frontend.dev.apiUrlEnv } : {}),
-  };
+  }, options);
   const diagnostics = frontend.diagnostics ?? [];
   const message = frontend.present
     ? `frontend ${frontend.framework} with ${frontend.routes.length} routes and ${frontend.clientBindings.length} bindings`
@@ -400,18 +416,25 @@ function buildDevSummary(input: {
   phases: DevConsolePhase[];
   diagnostics: Diagnostic[];
   nextActions: DevConsoleNextAction[];
+  apiUrl?: string;
+  webUrl?: string;
 }): DevConsoleSummary {
   const frontendPhase = input.phases.find((item) => item.name === "frontend");
-  const frontend =
+  const frontendBase =
     (frontendPhase?.details?.summary as FrontendSummary | undefined) ??
     defaultFrontendSummary(input.workspaceRoot);
+  const frontend = withRuntimeFrontendUrls(frontendBase, {
+    ...(input.apiUrl ? { apiUrl: input.apiUrl } : {}),
+    ...(input.webUrl ? { webUrl: input.webUrl } : {}),
+  });
   const capabilityMap = readJson<AgentCapabilityMap>(
     input.workspaceRoot,
     `${GENERATED_DIR}/capabilityMap.json`,
   );
   const warnings = input.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
   const errors = input.diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
-  const webUrl = frontend.devUrl;
+  const apiUrl = input.apiUrl ?? frontend.apiUrl ?? "http://127.0.0.1:3765";
+  const webUrl = input.webUrl ?? frontend.devUrl;
   const generated = buildGeneratedSummary(input.phases.find((item) => item.name === "generated"));
   const preview = previewSummaryFor({
     workspaceRoot: input.workspaceRoot,
@@ -428,7 +451,7 @@ function buildDevSummary(input: {
       skipped: input.phases.filter((item) => item.status === "skipped").length,
     },
     urls: {
-      api: frontend.apiUrl ?? "http://127.0.0.1:3765",
+      api: apiUrl,
       ...(webUrl ? { web: webUrl } : {}),
       suggestedPreview: preview.targetAppUrl,
     },
@@ -716,7 +739,10 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
   phases.push(generated);
   if (generated.ok) {
     phases.push(await runCheckPhase(workspaceRoot, options.strictSecrets ?? false));
-    phases.push(runFrontendPhase(workspaceRoot));
+    phases.push(runFrontendPhase(workspaceRoot, {
+      ...(options.apiUrl ? { apiUrl: options.apiUrl } : {}),
+      ...(options.webUrl ? { webUrl: options.webUrl } : {}),
+    }));
   } else {
     phases.push(
       skippedPhase(
@@ -747,6 +773,8 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
     phases,
     diagnostics,
     nextActions,
+    ...(options.apiUrl ? { apiUrl: options.apiUrl } : {}),
+    ...(options.webUrl ? { webUrl: options.webUrl } : {}),
   });
   return {
     schemaVersion: "0.1.0",

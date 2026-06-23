@@ -92,6 +92,25 @@ async function openDeltaStoreForStatus(
   return { store: null, openError };
 }
 
+function pgliteActiveStatus(workspaceRoot: string, storePath: string): DeltaStatusResult | null {
+  const postmasterPath = join(workspaceRoot, ".forge", "delta", "delta.db", "postmaster.pid");
+  const forgeLockPath = join(workspaceRoot, ".forge", "delta", "delta.lock");
+  if (!existsSync(postmasterPath) || existsSync(forgeLockPath)) {
+    return null;
+  }
+  return {
+    ok: true,
+    recording: true,
+    store: storePath,
+    external: {
+      kind: "pglite-active",
+      reason: "DeltaDB is open in another local Forge/PGlite process; status is treated as active for Studio observer flows.",
+    },
+    recentOperations: [],
+    exitCode: 0,
+  };
+}
+
 export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatusResult> {
   const storePath = normalizePath(relative(workspaceRoot, getDeltaStorePath(workspaceRoot)));
   const { store, openError } = await openDeltaStoreForStatus(workspaceRoot);
@@ -105,7 +124,7 @@ export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatus
       busyInfo.processAlive === false &&
       !existsSync(join(workspaceRoot, ".forge", "delta", "delta.lock"))
     ) {
-      return {
+      return pgliteActiveStatus(workspaceRoot, storePath) ?? {
         ok: true,
         recording: true,
         store: storePath,
@@ -116,6 +135,10 @@ export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatus
         recentOperations: [],
         exitCode: 0,
       };
+    }
+    const activePglite = pgliteActiveStatus(workspaceRoot, storePath);
+    if (activePglite) {
+      return activePglite;
     }
     const busySummary = busyInfo
       ? [

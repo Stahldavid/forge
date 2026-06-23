@@ -51,6 +51,26 @@ export function compactFiles(files: string[], sampleSize = 12): FileListSummary 
   };
 }
 
+export function isVolatileForgeState(file: string): boolean {
+  const lower = file.replace(/\\/g, "/").replace(/^\.\//, "").toLowerCase();
+  return (
+    lower.startsWith(".forge/locks/") ||
+    lower.startsWith(".forge/pglite/") ||
+    lower.startsWith(".forge/pglite.backups/") ||
+    lower.startsWith(".forge/runtime-cache/") ||
+    lower.startsWith(".forge/test-runs/") ||
+    lower.startsWith(".forge/ui-runs/") ||
+    lower.startsWith(".forge/local/") ||
+    lower.endsWith("/postmaster.pid") ||
+    lower.endsWith("/.s.pgsql.5432.lock") ||
+    lower.endsWith("/.s.pgsql.5432.lock.out")
+  );
+}
+
+export function filterVolatileForgeState(files: string[]): string[] {
+  return files.filter((file) => !isVolatileForgeState(file));
+}
+
 export function classifyChangeType(file: string): ChangeType {
   const normalized = file.replace(/\\/g, "/");
   const lower = normalized.toLowerCase();

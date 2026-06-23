@@ -17,12 +17,75 @@ export interface ParsedAiCall {
   purpose?: string;
 }
 
+function quotedOrCommentRanges(source: string): Array<{ start: number; end: number }> {
+  const ranges: Array<{ start: number; end: number }> = [];
+  let i = 0;
+
+  while (i < source.length) {
+    const char = source[i];
+    const next = source[i + 1];
+
+    if (char === "/" && next === "/") {
+      const start = i;
+      i += 2;
+      while (i < source.length && source[i] !== "\n") {
+        i += 1;
+      }
+      ranges.push({ start, end: i });
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      const start = i;
+      i += 2;
+      while (i < source.length && !(source[i] === "*" && source[i + 1] === "/")) {
+        i += 1;
+      }
+      i = Math.min(source.length, i + 2);
+      ranges.push({ start, end: i });
+      continue;
+    }
+
+    if (char === "\"" || char === "'" || char === "`") {
+      const quote = char;
+      const start = i;
+      i += 1;
+      while (i < source.length) {
+        if (source[i] === "\\") {
+          i += 2;
+          continue;
+        }
+        if (source[i] === quote) {
+          i += 1;
+          break;
+        }
+        i += 1;
+      }
+      ranges.push({ start, end: i });
+      continue;
+    }
+
+    i += 1;
+  }
+
+  return ranges;
+}
+
+function indexInsideRange(index: number, ranges: Array<{ start: number; end: number }>): boolean {
+  return ranges.some((range) => index >= range.start && index < range.end);
+}
+
 export function parseAiCallsFromSlice(sourceSlice: string): ParsedAiCall[] {
   const calls: ParsedAiCall[] = [];
+  const ignoredRanges = quotedOrCommentRanges(sourceSlice);
 
   for (const match of sourceSlice.matchAll(AI_METHOD_PATTERN)) {
-    const method = (match[1] ?? (match[2] ? "runAgent" : "")) as ParsedAiCall["method"];
     const start = match.index ?? 0;
+    if (indexInsideRange(start, ignoredRanges)) {
+      continue;
+    }
+
+    const method = (match[1] ?? (match[2] ? "runAgent" : "")) as ParsedAiCall["method"];
     const window = sourceSlice.slice(start, start + 600);
 
     let provider: ForgeAiProvider | undefined;
@@ -52,7 +115,13 @@ export function parseAiCallsFromSlice(sourceSlice: string): ParsedAiCall[] {
 const FORBIDDEN_AI_CONTEXT_PATTERN = /ctx\.(?:ai\.|agent\.run\s*\()/;
 
 export function detectCtxAiUsage(sourceSlice: string): boolean {
-  return FORBIDDEN_AI_CONTEXT_PATTERN.test(sourceSlice);
+  const ignoredRanges = quotedOrCommentRanges(sourceSlice);
+  for (const match of sourceSlice.matchAll(new RegExp(FORBIDDEN_AI_CONTEXT_PATTERN, "g"))) {
+    if (!indexInsideRange(match.index ?? 0, ignoredRanges)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 const DESCRIPTION_PATTERN = /description\s*:\s*["'`]([^"'`]+)["'`]/;

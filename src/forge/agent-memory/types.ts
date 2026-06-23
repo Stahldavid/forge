@@ -141,6 +141,11 @@ export interface AgentIngestResult {
   ok: boolean;
   event?: AgentMemoryEventRecord;
   envelope?: AgentEventEnvelope;
+  fallback?: {
+    kind: "agent-events-ndjson";
+    path: string;
+    reason: "pglite-active";
+  };
   exitCode: 0 | 1;
   error?: string;
   diagnostics?: Diagnostic[];

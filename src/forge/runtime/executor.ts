@@ -1,6 +1,8 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
-import { join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { register, type NamespacedUnregister } from "tsx/esm/api";
+import ts from "typescript";
 import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import { classify } from "../compiler/classifier/classify.ts";
@@ -254,6 +256,114 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
 }
 
 let activeDbAdapter: DbAdapter | null = null;
+let activeRuntimeImporter: NamespacedUnregister | null = null;
+let runtimeImportSequence = 0;
+let runtimeEntryImportNonce = 0;
+let runtimeEntryCacheEnabled = false;
+const runtimeCacheInstance = `${process.pid}-${Date.now()}`;
+
+export function refreshRuntimeModuleNamespace(reason = "runtime"): void {
+  const previous = activeRuntimeImporter;
+  runtimeEntryCacheEnabled = true;
+  runtimeImportSequence += 1;
+  activeRuntimeImporter = register({
+    namespace: `forge-runtime-${Date.now()}-${runtimeImportSequence}-${reason}`,
+  });
+  void previous?.unregister().catch(() => undefined);
+}
+
+export function disposeRuntimeModuleNamespace(): void {
+  const previous = activeRuntimeImporter;
+  activeRuntimeImporter = null;
+  runtimeEntryCacheEnabled = false;
+  void previous?.unregister().catch(() => undefined);
+}
+
+async function importRuntimeModule(specifier: string): Promise<Record<string, unknown>> {
+  if (activeRuntimeImporter) {
+    return (await activeRuntimeImporter.import(specifier, import.meta.url)) as Record<string, unknown>;
+  }
+  return (await import(specifier)) as Record<string, unknown>;
+}
+
+function resolveRelativeRuntimeImport(fromFile: string, specifier: string): string {
+  const base = resolve(dirname(fromFile), specifier);
+  const candidates = [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.js`,
+    `${base}.jsx`,
+    join(base, "index.ts"),
+    join(base, "index.tsx"),
+    join(base, "index.js"),
+    join(base, "index.jsx"),
+  ];
+  return candidates.find((candidate) => nodeFileSystem.exists(candidate)) ?? base;
+}
+
+function versionedRuntimeFileUrl(absolutePath: string): string {
+  const url = pathToFileURL(absolutePath);
+  if (runtimeImportSequence > 0) {
+    url.searchParams.set("forgeRuntime", String(runtimeImportSequence));
+  }
+  return url.href;
+}
+
+function rewriteRelativeRuntimeImports(source: string, fromFile: string): string {
+  const toVersionedUrl = (specifier: string) =>
+    versionedRuntimeFileUrl(resolveRelativeRuntimeImport(fromFile, specifier));
+  return source
+    .replace(/(\bfrom\s*["'])(\.[^"']+)(["'])/g, (_match, prefix: string, specifier: string, suffix: string) =>
+      `${prefix}${toVersionedUrl(specifier)}${suffix}`,
+    )
+    .replace(/(\bimport\s*["'])(\.[^"']+)(["'];?)/g, (_match, prefix: string, specifier: string, suffix: string) =>
+      `${prefix}${toVersionedUrl(specifier)}${suffix}`,
+    )
+    .replace(/(\bimport\s*\(\s*["'])(\.[^"']+)(["']\s*\))/g, (_match, prefix: string, specifier: string, suffix: string) =>
+      `${prefix}${toVersionedUrl(specifier)}${suffix}`,
+    );
+}
+
+async function importRuntimeEntryModule(workspaceRoot: string, absolutePath: string): Promise<Record<string, unknown>> {
+  if (!runtimeEntryCacheEnabled) {
+    return importRuntimeModule(versionedRuntimeFileUrl(absolutePath));
+  }
+
+  if (activeRuntimeImporter) {
+    refreshRuntimeModuleNamespace("entry");
+  } else {
+    runtimeImportSequence += 1;
+  }
+  const source = nodeFileSystem.readText(absolutePath);
+  if (source === null) {
+    throw new Error(`runtime entry file not found: ${absolutePath}`);
+  }
+  const rewritten = rewriteRelativeRuntimeImports(source, absolutePath);
+  const transpiled = ts.transpileModule(rewritten, {
+    compilerOptions: {
+      esModuleInterop: true,
+      jsx: ts.JsxEmit.ReactJSX,
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      target: ts.ScriptTarget.ES2022,
+    },
+    fileName: absolutePath,
+  });
+  const relativePath = relative(workspaceRoot, absolutePath).replace(/\\/g, "/");
+  runtimeEntryImportNonce += 1;
+  const cachePath = join(
+    workspaceRoot,
+    ".forge",
+    "runtime-cache",
+    runtimeCacheInstance,
+    String(runtimeImportSequence),
+    String(runtimeEntryImportNonce),
+    relativePath.replace(/\.[cm]?[jt]sx?$/, ".mjs"),
+  );
+  nodeFileSystem.writeText(cachePath, transpiled.outputText);
+  return (await import(versionedRuntimeFileUrl(cachePath))) as Record<string, unknown>;
+}
 
 function snapshotEnv(): Record<string, string | undefined> {
   return { ...process.env };
@@ -388,7 +498,7 @@ export async function runEntry(
     });
 
     const absolutePath = join(workspaceRoot, entry.file);
-    const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
+    const mod = await importRuntimeEntryModule(workspaceRoot, absolutePath);
     const resolved = resolveHandlerFromModule(mod, entry.name);
 
     if (!resolved) {

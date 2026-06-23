@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
+import { detectCtxAiUsage, parseAiCallsFromSlice } from "../../src/forge/compiler/ai-registry/parse.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import {
   cleanupWorkspace,
@@ -10,6 +11,33 @@ import {
 } from "../orchestrator/helpers.ts";
 
 describe("ai registry generation", () => {
+  test("ignores ctx.ai mentions inside strings and comments", () => {
+    const docsOnly = `
+      // ctx.ai.generateText({ provider: "openai" })
+      const docs = "Use ctx.ai.generateText({ provider, model, prompt }) in actions.";
+      const markdown = \`ctx.ai.generateStructured({ provider, model, schema })\`;
+    `;
+
+    expect(detectCtxAiUsage(docsOnly)).toBe(false);
+    expect(parseAiCallsFromSlice(docsOnly)).toEqual([]);
+
+    const realCall = `
+      await ctx.ai.generateText({
+        provider: "gateway",
+        model: "openai/gpt-4o-mini",
+        prompt: "triage",
+      });
+    `;
+    expect(detectCtxAiUsage(realCall)).toBe(true);
+    expect(parseAiCallsFromSlice(realCall)).toContainEqual(
+      expect.objectContaining({
+        method: "generateText",
+        provider: "gateway",
+        model: "openai/gpt-4o-mini",
+      }),
+    );
+  });
+
   test("emits aiRegistry, aiProviders, and aiModels artifacts", async () => {
     const workspace = scaffoldGenerateWorkspace("ai-registry");
     const workflowsDir = join(workspace, "src", "workflows");

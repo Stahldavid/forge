@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -417,6 +417,37 @@ describe("H33 forge dev console", () => {
         expect(evidence.state).toBe("regenerated");
         expect(evidence.changedFiles).toBeGreaterThan(0);
         expect(evidence.message).toContain("regenerated");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    15_000,
+  );
+
+  test(
+    "dev console self-heals missing agent-native guide artifacts before serving",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-missing-agent-guides");
+      try {
+        await runGenerate(defaultGenerateOptions(workspace));
+        const cairGuide = join(workspace, "src", "forge", "_generated", "agentCairGuide.md");
+        expect(existsSync(cairGuide)).toBe(true);
+        unlinkSync(cairGuide);
+
+        const cycle = await runDevConsoleCycle({
+          workspaceRoot: workspace,
+          mode: "once",
+          includeImpact: false,
+        });
+
+        const generated = cycle.phases.find((phase) => phase.name === "generated");
+        expect(cycle.ok).toBe(true);
+        expect(generated?.ok).toBe(true);
+        expect(generated?.message).toContain("regenerated");
+        expect(generated?.details?.sampleChanged as string[]).toContain("src/forge/_generated/agentCairGuide.md");
+        expect(existsSync(cairGuide)).toBe(true);
+        expect(cycle.phases.find((phase) => phase.name === "check")?.status).not.toBe("skipped");
+        expect(cycle.phases.find((phase) => phase.name === "frontend")?.status).not.toBe("skipped");
       } finally {
         cleanupWorkspace(workspace);
       }

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import {
   categorizeFiles,
   compactFiles,
+  filterVolatileForgeState,
   type CategorizedFileSummary,
   type FileListSummary,
 } from "./change-summary.ts";
@@ -96,9 +97,9 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
     }
   }
 
-  const stagedFiles = [...new Set(staged)].sort();
-  const unstagedFiles = [...new Set(unstaged)].sort();
-  const untrackedFiles = [...new Set(untracked)].sort();
+  const stagedFiles = filterVolatileForgeState([...new Set(staged)].sort());
+  const unstagedFiles = filterVolatileForgeState([...new Set(unstaged)].sort());
+  const untrackedFiles = filterVolatileForgeState([...new Set(untracked)].sort());
   const changedFiles = [...new Set([...stagedFiles, ...unstagedFiles, ...untrackedFiles])].sort();
 
   return {

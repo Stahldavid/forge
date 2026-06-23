@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=b9776e42b25673ab4f11c2fd1210131db9888b89af639f30e24ea1a11f39fa55
+// @forge-generated generator=0.1.0-alpha.18 input=0ee1bf2f038128efd72c20246ad0f70215b2e3ba0bf04eba957f20f4cdeea9cc content=32e130e095d191209d2072a9670741c359fa07bba1a6947bd94d1352f626928f
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -85,24 +85,6 @@ export const agentContract = {
         "purpose": "agent_model_redteam"
       },
       {
-        "file": "src/forge/compiler/integration/templates/ai.ts",
-        "method": "generateStructured",
-        "model": "unknown",
-        "provider": "openai"
-      },
-      {
-        "file": "src/forge/compiler/integration/templates/ai.ts",
-        "method": "generateText",
-        "model": "unknown",
-        "provider": "openai"
-      },
-      {
-        "file": "src/forge/compiler/integration/templates/ai.ts",
-        "method": "streamText",
-        "model": "unknown",
-        "provider": "openai"
-      },
-      {
         "file": "src/forge/dev/server.ts",
         "method": "generateText",
         "model": "unknown",
@@ -113,12 +95,6 @@ export const agentContract = {
         "file": "src/forge/dev/server.ts",
         "method": "runAgent",
         "model": "unknown",
-        "provider": "openai"
-      },
-      {
-        "file": "src/forge/make/templates.ts",
-        "method": "generateText",
-        "model": "mock",
         "provider": "openai"
       },
       {

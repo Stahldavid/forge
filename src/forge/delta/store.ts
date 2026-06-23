@@ -323,8 +323,9 @@ function lockLooksStale(holder: Record<string, unknown> | null): boolean {
   if (!holder) {
     return true;
   }
-  if (processLooksAlive(holder.pid)) {
-    return false;
+  const pid = typeof holder.pid === "number" && Number.isInteger(holder.pid) && holder.pid > 0 ? holder.pid : undefined;
+  if (pid) {
+    return !processLooksAlive(pid);
   }
   const createdAt = typeof holder.createdAt === "string" ? Date.parse(holder.createdAt) : NaN;
   return !Number.isFinite(createdAt) || Date.now() - createdAt > 30_000;
@@ -473,6 +474,18 @@ export class DeltaStore {
       store = new DeltaStore(workspaceRoot, storePath, adapter, lock);
       if (options.access !== "read" || !initializedBeforeOpen) {
         await store.init();
+      } else if (await store.needsSchemaInit()) {
+        await store.close();
+        store = null;
+        const migrateLock = acquireDeltaStoreLock(workspaceRoot);
+        try {
+          const migrateAdapter = await createPgliteAdapter(storePath);
+          store = new DeltaStore(workspaceRoot, storePath, migrateAdapter, migrateLock);
+          await store.init();
+        } catch (error) {
+          releaseDeltaStoreLock(migrateLock);
+          throw error;
+        }
       }
       return store;
     } catch (error) {
@@ -1026,6 +1039,20 @@ export class DeltaStore {
            graph_hash = EXCLUDED.graph_hash`,
       [latest, now, DELTA_SCHEMA_VERSION, graphHash],
     );
+  }
+
+  private async needsSchemaInit(): Promise<boolean> {
+    try {
+      const meta = await this.adapter.query(`SELECT value FROM delta_meta WHERE key = $1 LIMIT 1`, ["schemaVersion"]);
+      const version = typeof meta.rows[0]?.value === "string" ? meta.rows[0].value : "";
+      if (version !== DELTA_SCHEMA_VERSION) {
+        return true;
+      }
+      await this.adapter.query(`SELECT 1 FROM agent_memory_events LIMIT 1`);
+      return false;
+    } catch {
+      return true;
+    }
   }
 
   async explain(thing: string): Promise<Record<string, unknown>> {

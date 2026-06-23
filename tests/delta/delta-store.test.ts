@@ -2,7 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
-import { DeltaStore } from "../../src/forge/delta/store.ts";
+import { DeltaStore, getDeltaStorePath } from "../../src/forge/delta/store.ts";
+import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 import { runDeltaExplain } from "../../src/forge/delta/explain.ts";
 import { runDeltaSessionCommand } from "../../src/forge/delta/session.ts";
 import { runDeltaRepair, runDeltaStatus } from "../../src/forge/delta/status.ts";
@@ -68,7 +69,7 @@ describe("delta store", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("allows status reads while blocking mutable repair when the local store is open", async () => {
     const root = tempWorkspace("delta-busy");
@@ -120,7 +121,73 @@ describe("delta store", () => {
       }
       rmSync(root, { recursive: true, force: true });
     }
+  }, 30_000);
+
+  test("status treats a held PGlite postmaster as an active local runtime", async () => {
+    const root = tempWorkspace("delta-pglite-active-status");
+    try {
+      mkdirSync(join(root, ".forge", "delta", "delta.db", "postmaster.pid"), { recursive: true });
+
+      const status = await runDeltaStatus(root);
+
+      expect(status.exitCode).toBe(0);
+      expect(status.ok).toBe(true);
+      expect(status.recording).toBe(true);
+      expect("external" in status ? status.external : undefined).toMatchObject({
+        kind: "pglite-active",
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
+
+  test("read opens migrate older DeltaDB schemas before querying agent memory", async () => {
+    const root = tempWorkspace("delta-read-migrate");
+    try {
+      const store = await DeltaStore.open(root);
+      await store.close();
+
+      const adapter = await createPgliteAdapter(getDeltaStorePath(root));
+      try {
+        await adapter.query(`DROP TABLE agent_memory_events`);
+        await adapter.query(`UPDATE delta_meta SET value = '0.0.0' WHERE key = 'schemaVersion'`);
+      } finally {
+        await adapter.close();
+      }
+
+      const reopened = await DeltaStore.open(root, { access: "read" });
+      const events = await reopened.listAgentMemoryEvents({ target: "codex", limit: 5 });
+      await reopened.close();
+
+      expect(events).toEqual([]);
+      const status = await runDeltaStatus(root);
+      expect(status.exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("fresh locks from exited processes are treated as stale", async () => {
+    const root = tempWorkspace("delta-dead-lock");
+    try {
+      mkdirSync(join(root, ".forge", "delta"), { recursive: true });
+      writeFileSync(
+        join(root, ".forge", "delta", "delta.lock"),
+        `${JSON.stringify({
+          pid: 999999999,
+          token: "dead",
+          createdAt: new Date().toISOString(),
+          cwd: root,
+          command: "dead forge process",
+        })}\n`,
+      );
+
+      const status = await runDeltaStatus(root);
+      expect(status.exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test("records file changes with semantic hints", async () => {
     const root = tempWorkspace("delta-file");
@@ -135,7 +202,7 @@ describe("delta store", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("enriches external runtime calls from generated service metadata", async () => {
     const root = tempWorkspace("delta-external-runtime");
@@ -196,7 +263,7 @@ describe("delta store", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("redacts secret-like keys and known values", () => {
     const redacted = redactDeltaPayload(

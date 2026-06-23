@@ -736,6 +736,8 @@ export async function runDevCommand(
       mode: "startup",
       strictSecrets: false,
       includeImpact: true,
+      apiUrl: `http://${host}:${port}`,
+      ...(webUrl ? { webUrl } : {}),
     });
     if (options.json) {
       process.stdout.write(formatDevConsoleJson(startupCycle));
@@ -906,6 +908,11 @@ export async function runDevCommand(
     outboxWorkerHandle = handle.outboxWorker;
   }
 
+  const devConsoleUrlOptions = (): { apiUrl: string; webUrl?: string } => ({
+    apiUrl: handle.url,
+    ...(webHandle?.url ? { webUrl: webHandle.url } : {}),
+  });
+
   if (options.watch) {
     watchHandle = startDevWatch(workspaceRoot, async (changedCount, changedPaths) => {
       for (const changedPath of changedPaths) {
@@ -927,6 +934,7 @@ export async function runDevCommand(
           mode: "watch",
           strictSecrets: false,
           includeImpact: true,
+          ...devConsoleUrlOptions(),
         });
         if (!options.json) {
           process.stdout.write(
@@ -983,6 +991,7 @@ export async function runDevCommand(
           mode: "watch",
           strictSecrets: false,
           includeImpact: true,
+          ...devConsoleUrlOptions(),
         });
         if (options.json) {
           process.stdout.write(formatDevConsoleJson(cycle));

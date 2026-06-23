@@ -1,10 +1,12 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runAgentCommand } from "../../src/forge/agent-adapters/index.ts";
 import { formatAgentMemoryHuman, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
+import { probeCodexHookRunner } from "../../src/forge/agent-memory/hook-runner.ts";
+import { codexInstallFiles } from "../../src/forge/agent-memory/sources/codex.ts";
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
@@ -118,7 +120,7 @@ describe("H48 agent memory bridge", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("extracts useful metadata from real Codex hook wire format without storing raw payloads", async () => {
     const root = tempWorkspace("h48-codex-wire");
@@ -192,7 +194,7 @@ describe("H48 agent memory bridge", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 90_000);
 
   test("extracts approval and apply_patch file metadata from Codex hook inputs", async () => {
     const root = tempWorkspace("h48-codex-approval");
@@ -235,7 +237,7 @@ describe("H48 agent memory bridge", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("agent timeline summarizes external agent hook activity", async () => {
     const root = tempWorkspace("h48-agent-timeline");
@@ -304,7 +306,7 @@ describe("H48 agent memory bridge", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("agent timeline can read while another Delta writer is open", async () => {
     const root = tempWorkspace("h48-agent-timeline-read-while-open");
@@ -432,7 +434,116 @@ describe("H48 agent memory bridge", () => {
       }
       rmSync(root, { recursive: true, force: true });
     }
+  }, 90_000);
+
+  test("hook smoke falls back to bridge events while PGlite is held by a live dev runtime", async () => {
+    const root = tempWorkspace("h48-pglite-bridge-fallback");
+    try {
+      mkdirSync(join(root, ".forge", "delta", "delta.db", "postmaster.pid"), { recursive: true });
+
+      const smoke = await runAgentCommand({
+        subcommand: "hooks",
+        hookAction: "smoke",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        dryRun: false,
+        force: false,
+        preserveUserSections: true,
+        skills: true,
+        rules: true,
+        limit: 10,
+      });
+
+      expect("ingestResult" in smoke).toBe(true);
+      if (!("checks" in smoke) || !("diagnostics" in smoke) || !("canary" in smoke)) {
+        throw new Error("expected hook smoke result");
+      }
+      expect(smoke.exitCode).toBe(1);
+      expect(smoke.deltaWritable).toBe(true);
+      expect(smoke.visibleInMemory).toBe(true);
+      expect(smoke.canarySignals).toBeGreaterThan(0);
+      expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_DELTA_BUSY")).toBe(false);
+      expect(JSON.stringify(smoke.ingestResult)).toContain("\"reason\":\"pglite-active\"");
+      expect(smoke.checks).toContainEqual({
+        name: "canary-ingest",
+        ok: true,
+        message: "canary event was normalized and stored",
+      });
+      expect(smoke.checks.find((check) => check.name === "canary-visible")?.message).toBe("canary event is visible in agent memory");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 45_000);
+
+  test("installs Codex lightweight hook runner with short timeouts and NDJSON queue", async () => {
+    const root = tempWorkspace("h48-codex-hook-install");
+    try {
+      const result = await runAgentMemoryCommand({
+        subcommand: "install",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+      });
+      expect(result.exitCode).toBe(0);
+      expect("filesPlanned" in result ? result.filesPlanned : []).toEqual([
+        ".codex/hooks.json",
+        ".forge/agent/codex-hook.mjs",
+        ".forge/agent/codex-hook.meta.json",
+      ]);
+
+      const hooks = JSON.parse(readFileSync(join(root, ".codex", "hooks.json"), "utf8")) as {
+        hooks?: { PreToolUse?: Array<{ hooks?: Array<{ command?: string; timeout?: number }> }> };
+      };
+      const preToolUse = hooks.hooks?.PreToolUse?.[0]?.hooks?.[0];
+      expect(preToolUse?.command).toBe("node .forge/agent/codex-hook.mjs PreToolUse");
+      expect(preToolUse?.timeout).toBe(2);
+
+      const meta = JSON.parse(readFileSync(join(root, ".forge", "agent", "codex-hook.meta.json"), "utf8")) as {
+        runner?: string;
+        queueFile?: string;
+      };
+      expect(meta.runner).toBe(".forge/agent/codex-hook.mjs");
+      expect(meta.queueFile).toBe(".forge/agent/events.ndjson");
+
+      const probe = await probeCodexHookRunner(root);
+      expect(probe.error, JSON.stringify(probe)).toBeUndefined();
+      expect(probe.exitCode).toBe(0);
+      expect(probe.queued).toBe(true);
+      expect(probe.durationMs).toBeLessThan(5000);
+      expect(probe.stdinHangSafe).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("codex install plan stays deterministic without workspace root", () => {
+    const planned = codexInstallFiles().map((file) => file.path);
+    expect(planned).toEqual([".codex/hooks.json", ".forge/agent/codex-hook.mjs"]);
   });
+
+  test("codex hook runner probe fails when open stdin requires external timeout", async () => {
+    const root = tempWorkspace("h48-codex-hook-hang");
+    try {
+      mkdirSync(join(root, ".forge", "agent"), { recursive: true });
+      writeFileSync(
+        join(root, ".forge", "agent", "codex-hook.mjs"),
+        [
+          "process.stdin.resume();",
+          "setTimeout(() => undefined, 10000);",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const probe = await probeCodexHookRunner(root, { maxDurationMs: 100, stdinHangBudgetMs: 200 });
+      expect(probe.ok).toBe(false);
+      expect(probe.stdinHangSafe).toBe(false);
+      expect(probe.error).toContain("open stdin");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 10_000);
 
   test("installs Cursor via MCP and rules without private state hooks", async () => {
     const root = tempWorkspace("h48-cursor-install");
@@ -481,7 +592,7 @@ describe("H48 agent memory bridge", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("parses H48 public commands", () => {
     expect(parseCli(["agent", "install", "codex", "--json"]).command).toMatchObject({

@@ -1,5 +1,3 @@
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { createDiagnostic } from "../../compiler/diagnostics/create.ts";
 import {
   FORGE_DB_ADAPTER_UNAVAILABLE,
@@ -43,6 +41,7 @@ export interface RunEntryRuntime {
 export interface ResolvedHandler {
   invoke: (args: unknown) => Promise<unknown>;
   usesContext: boolean;
+  handler?: (ctx: unknown, args: unknown) => unknown | Promise<unknown>;
 }
 
 function needsDatabaseHint(
@@ -83,6 +82,7 @@ export function resolveHandlerFromModule(
 
     return {
       usesContext: true,
+      handler,
       invoke: async (args) => {
         if (runtime?.adapter && runtime.tableMap) {
           const tx = adapterAsTransaction(runtime.adapter);
@@ -162,11 +162,20 @@ export async function executeResolvedEntry(
     runtime?.adapter &&
     runtime.tableMap
   ) {
-    const absolutePath = join(workspaceRoot, entry.file);
-    const mod = (await import(pathToFileURL(absolutePath).href)) as Record<string, unknown>;
-    const exported = mod[entry.name];
-    const handler = (exported as { handler: (ctx: unknown, args: unknown) => unknown })
-      .handler;
+    const handler = resolved.handler;
+    if (!handler) {
+      return {
+        ok: false,
+        diagnostics: [
+          createDiagnostic({
+            severity: "error",
+            code: FORGE_RUNTIME_NOT_FOUND,
+            message: `runtime entry '${entry.name}' is missing a command handler`,
+            file: entry.file,
+          }),
+        ],
+      };
+    }
 
     return runCommandWithTransaction(
       entry,

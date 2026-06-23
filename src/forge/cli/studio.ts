@@ -154,6 +154,8 @@ export interface StudioSnapshotResult {
       canarySignals?: number;
       approvalRequired?: boolean;
       approvalStatus?: string;
+      workspaceRoot?: string;
+      ignoredOutOfWorkspaceEvents?: number;
       lastSignal?: unknown;
       checks?: unknown[];
       diagnostics?: Diagnostic[];
@@ -688,6 +690,8 @@ async function collectHookProofs(appRoot: string, targets: string[]): Promise<St
         canarySignals: result.canarySignals,
         approvalRequired: result.approvalRequired,
         approvalStatus: result.approvalStatus,
+        workspaceRoot: result.workspaceRoot,
+        ignoredOutOfWorkspaceEvents: result.ignoredOutOfWorkspaceEvents,
         ...(result.lastSignal ? { lastSignal: result.lastSignal } : {}),
         checks: result.checks,
         diagnostics: result.diagnostics,
@@ -738,6 +742,55 @@ function contextPacketFor(input: {
       ...input.commands.checkHooks,
     ],
     ...(input.posture.diffPlan ? { diffPlan: input.posture.diffPlan } : {}),
+  };
+}
+
+function mergeCodexAppServerHandshakeProof(
+  proof: CodexAppServerProof,
+  handshake: CodexAppServerHandshakeResult | undefined,
+): CodexAppServerProof {
+  if (!handshake) {
+    return proof;
+  }
+  const handshakeReady = handshake.ok && handshake.initialized;
+  const checks = handshakeReady && !proof.available
+    ? proof.checks.map((check) => {
+        if (check.name === "codex-cli") {
+          return {
+            ...check,
+            ok: true,
+            status: "ok" as const,
+            message: "Codex app-server initialized over stdio; CLI version probe is no longer blocking.",
+          };
+        }
+        if (check.name === "codex-app-server") {
+          return {
+            ...check,
+            ok: true,
+            status: "ok" as const,
+            message: "Codex app-server handshake succeeded over stdio.",
+          };
+        }
+        if (check.name === "codex-app-server-schemas") {
+          return {
+            ...check,
+            ok: true,
+            status: "ok" as const,
+            message: "Codex app-server is available; generate version-matched schemas when implementing the streaming client.",
+          };
+        }
+        return check;
+      })
+    : proof.checks;
+  const nextActions = Array.from(new Set(handshakeReady
+    ? handshake.nextActions
+    : [...(proof.nextActions ?? []), ...handshake.nextActions]));
+  return {
+    ...proof,
+    ...(handshakeReady ? { state: "ready" as const, available: true, error: undefined } : {}),
+    handshake,
+    checks,
+    nextActions,
   };
 }
 
@@ -915,15 +968,7 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
       })
     : undefined;
   const codexAppServer = codexAppServerBase
-    ? {
-        ...codexAppServerBase,
-        ...(codexAppServerHandshake ? { handshake: codexAppServerHandshake } : {}),
-        nextActions: codexAppServerHandshake
-          ? Array.from(new Set(codexAppServerHandshake.ok
-              ? codexAppServerHandshake.nextActions
-              : [...(codexAppServerBase.nextActions ?? []), ...codexAppServerHandshake.nextActions]))
-          : codexAppServerBase.nextActions,
-      }
+    ? mergeCodexAppServerHandshakeProof(codexAppServerBase, codexAppServerHandshake)
     : undefined;
   const delta = await runDeltaStatus(appRoot);
   const contextPacket = contextPacketFor({ appRoot, posture, commands });
@@ -1191,10 +1236,11 @@ export async function runStudioCodexServerCommand(options: StudioAttachOptions):
         reason: "not-requested",
         dryRun: options.dryRun,
       });
-  const ok = (proof.available || proof.state === "disabled") &&
+  const mergedProof = mergeCodexAppServerHandshakeProof(proof, handshake);
+  const ok = (mergedProof.available || mergedProof.state === "disabled") &&
     (!options.writeSchemas || schemaGeneration.ok) &&
     (!options.probeAppServer || handshake.ok);
-  const primaryNextActions = options.probeAppServer && proof.available && handshake.ok
+  const primaryNextActions = options.probeAppServer && mergedProof.available && handshake.ok
     ? options.writeSchemas && schemaGeneration.ok
       ? []
       : schemaGeneration.nextActions
@@ -1211,7 +1257,7 @@ export async function runStudioCodexServerCommand(options: StudioAttachOptions):
     ok,
     action: "codex-server",
     app,
-    proof,
+    proof: mergedProof,
     schemaGeneration,
     handshake,
     commands: codexAppServerCommands(),

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=708af382008551e1ec0972158bf7ba0ad9cb4c4c4a7356fc75bbc51cd0719fa5 content=658eacefde252986d4a71f1123138311ef1b8b2d51686e92d8955904545c4686
+// @forge-generated generator=0.1.0-alpha.18 input=0ee1bf2f038128efd72c20246ad0f70215b2e3ba0bf04eba957f20f4cdeea9cc content=6e5c4f49c3bf1ee22f44b3c30857b9ec41c851f517ca836728f85a29fe59ff49
 export const aiRegistry = {
   "agents": [],
   "analyzerVersion": "1.1.0",
@@ -19,24 +19,6 @@ export const aiRegistry = {
       "purpose": "agent_model_redteam"
     },
     {
-      "file": "src/forge/compiler/integration/templates/ai.ts",
-      "method": "generateStructured",
-      "model": "unknown",
-      "provider": "openai"
-    },
-    {
-      "file": "src/forge/compiler/integration/templates/ai.ts",
-      "method": "generateText",
-      "model": "unknown",
-      "provider": "openai"
-    },
-    {
-      "file": "src/forge/compiler/integration/templates/ai.ts",
-      "method": "streamText",
-      "model": "unknown",
-      "provider": "openai"
-    },
-    {
       "file": "src/forge/dev/server.ts",
       "method": "generateText",
       "model": "unknown",
@@ -50,12 +32,6 @@ export const aiRegistry = {
       "provider": "openai"
     },
     {
-      "file": "src/forge/make/templates.ts",
-      "method": "generateText",
-      "model": "mock",
-      "provider": "openai"
-    },
-    {
       "file": "src/forge/runtime/context/create-context.ts",
       "method": "runAgent",
       "model": "unknown",
@@ -63,7 +39,7 @@ export const aiRegistry = {
     }
   ],
   "generatorVersion": "0.1.0-alpha.18",
-  "inputHash": "ed9e2ced97656ea12779d933a134c512f4d54f88ac80f221c6459e8469e6f62f",
+  "inputHash": "cd0df1323b82ca962a909b18f70fe192d34d5d276fae8c97fbddf038f66bec51",
   "providers": [
     {
       "id": "anthropic",

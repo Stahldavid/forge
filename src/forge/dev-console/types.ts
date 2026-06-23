@@ -77,6 +77,8 @@ export interface DevConsoleOptions {
   mode: DevConsoleCycle["mode"];
   strictSecrets?: boolean;
   includeImpact?: boolean;
+  apiUrl?: string;
+  webUrl?: string;
 }
 
 export interface LastTestRunSummary {
