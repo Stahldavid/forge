@@ -315,4 +315,23 @@ Durable invalidations live in `_forge_live_invalidations`.
 
 Project-specific notes can go here.
 
+## Cursor Cloud specific instructions
+
+This repo is the ForgeOS framework/compiler itself (package `forgeos`), not a generated app. The development toolchain is Node.js (>= 22.14, present) plus **Bun**, which is the repo's test runner and canonical package manager (`bun.lock`). The Cloud VM snapshot has Bun pre-installed at `~/.bun/bin/bun` (added to `PATH` via `~/.bashrc`); if `bun` is not on `PATH` in a non-login shell, use `~/.bun/bin/bun` or `export PATH="$HOME/.bun/bin:$PATH"`.
+
+Standard commands (see `package.json`, `CONTRIBUTING.md`, `.github/workflows/ci.yml`):
+
+- Install deps: `bun install --ignore-scripts` (the update script runs this). `--ignore-scripts` matches CI; native deps like `tree-sitter` are not built and tests do not need them.
+- Lint: `npm run lint` (runs `node --import tsx ./src/forge/cli/lint-forge.ts`).
+- Typecheck: `npm run typecheck` (`tsc --noEmit`).
+- Tests: `bun test` (~2 min, 650 tests). 4 tests are skipped by design unless extra tooling/env is set (`FORGE_SMOKE_REAL=1`, a real Postgres, `FORGE_MAVEN`).
+- Generate + verify: `bun run forge generate` then `bun run forge verify --standard --script-timeout-ms 120000`.
+
+Non-obvious gotchas:
+
+- `bun run forge generate` rewrites `src/forge/_generated/**`, `forge.lock`, and the `// @forge-generated` header `input=` hash in `AGENTS.md`. These regenerated diffs are environment-dependent and should NOT be committed (per "Do not edit" above). `forge verify` regenerates internally, so `generate-check` can pass even while `git status` shows these as dirty. Run `git checkout -- .` to discard them before committing unrelated work.
+- The CLI runs under Node via `tsx` (`node ./bin/forge.mjs ...` or `npm run forge -- ...`); only the test runner needs Bun.
+- To run an actual Forge app end-to-end, scaffold one from a template and run the dev servers. From a temp dir: `node /workspace/bin/forge.mjs new notes-app --template minimal-web --package-manager npm --forge-spec "file:/workspace" --install --no-git`, then `cd notes-app && npm run dev`. `forge dev` starts the API runtime (pglite, default `http://127.0.0.1:3765`) and the Vite web app (default `http://127.0.0.1:5173`); use `forge dev --api-only` for backend only.
+- Hitting the runtime directly: POST `/commands/<name>` and `/queries/<name>` with body shaped as `{ "args": { ... } }`. In `dev-headers` auth mode pass `x-forge-user-id` and `x-forge-role` (e.g. `owner`) headers; `<ForgeProvider devAuth>` defaults to user `dev-user`, tenant `dev-tenant`, role `owner`.
+
 <!-- user-notes:end -->
