@@ -2678,6 +2678,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--apply",
     "--runtime-inspect",
     "--allow-scripts",
+    "--frontend",
+    "--backend",
     "--yes",
     "--force",
     "--no-generate",

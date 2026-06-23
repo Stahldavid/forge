@@ -1166,6 +1166,8 @@ describe("Forge CLI", () => {
   test("hasUnknownOption flags unrecognized options", () => {
     expect(hasUnknownOption(["generate", "--nope"])).toBe("--nope");
     expect(hasUnknownOption(["generate", "--check"])).toBeNull();
+    expect(hasUnknownOption(["add", "lucide-react", "--frontend"])).toBeNull();
+    expect(hasUnknownOption(["add", "hono", "--backend"])).toBeNull();
   });
 
   test("parseCli accepts verify profile aliases", () => {

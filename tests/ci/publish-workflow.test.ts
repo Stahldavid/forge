@@ -8,12 +8,16 @@ describe("npm publish workflow", () => {
     const pkg = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")) as {
       name?: string;
       bin?: Record<string, string>;
+      files?: string[];
       publishConfig?: Record<string, unknown>;
       scripts?: Record<string, string>;
     };
 
     expect(pkg.name).toBe("forgeos");
     expect(pkg.bin?.forge).toBe("bin/forge.mjs");
+    expect(pkg.files).toContain("!src/forge/_generated/**");
+    expect(pkg.files).toContain("src/forge/_generated/releaseManifest.json");
+    expect(pkg.files).toContain("src/forge/_generated/releaseManifest.ts");
     expect(pkg.publishConfig?.access).toBe("public");
     expect(pkg.publishConfig?.tag).toBe("alpha");
     expect(pkg.scripts?.release).toBe("changeset publish");

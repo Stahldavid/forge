@@ -145,7 +145,7 @@ describe("sql compiler", () => {
     expect(tableMap.tenants?.columns.map((column) => column.fieldName ?? column.name)).toContain("name");
   });
 
-  test.skip("reports unsupported field types", async () => {
+  test("reports unsupported field types", async () => {
     const appGraph = await buildAppGraph({
       workspaceRoot: fixtureWorkspaceRoot(),
       sources: [fixtureSource("bad-field.ts")],

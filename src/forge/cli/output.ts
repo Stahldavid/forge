@@ -207,6 +207,15 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
   } else {
     suggested.add("forge repair diagnose --from-last-test-run --json");
   }
+  const fullSuiteRun = result.steps.some(
+    (step) =>
+      !step.skipped &&
+      (step.name === "tests" ||
+        step.name === "tests:testgraph-strict" ||
+        step.name === "tests:framework-full"),
+  );
+  const impactTestsRun = result.steps.some((step) => !step.skipped && step.name === "impact-tests");
+  const skippedFullSuite = result.steps.some((step) => step.skipped && step.name === "tests");
   return {
     schemaVersion: "0.1.0",
     ok: result.ok,
@@ -216,6 +225,11 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
       failedSteps: result.steps.filter((step) => !step.ok && !step.skipped).map((step) => step.name),
       skippedSteps: result.steps.filter((step) => step.skipped).map((step) => step.name),
       diagnostics: result.diagnostics.length,
+      testCoverage: {
+        fullSuiteRun,
+        impactTestsRun,
+        skippedFullSuite,
+      },
     },
     steps: result.steps,
     diagnostics: result.diagnostics,

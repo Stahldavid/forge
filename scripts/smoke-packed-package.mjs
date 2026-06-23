@@ -60,6 +60,7 @@ function run(command, args, options = {}) {
     timeout: options.timeoutMs ?? commandTimeoutMs,
   });
   const durationMs = Date.now() - startedAt;
+  const allowedFailure = result.status !== 0 && options.allowFailure === true;
   evidence.steps.push({
     name: stepName,
     command: [command, ...args].join(" "),
@@ -67,10 +68,11 @@ function run(command, args, options = {}) {
     exitCode: result.status ?? null,
     signal: result.signal ?? null,
     durationMs,
-    ok: result.status === 0,
+    ok: result.status === 0 || allowedFailure,
+    allowedFailure,
     timedOut: result.error && result.error.message.includes("ETIMEDOUT"),
   });
-  console.log(`[release:smoke] ${result.status === 0 ? "ok" : "fail"} ${stepName} (${durationMs}ms)`);
+  console.log(`[release:smoke] ${result.status === 0 ? "ok" : allowedFailure ? "allowed-fail" : "fail"} ${stepName} (${durationMs}ms)`);
   if (result.status !== 0 && options.check !== false) {
     if (options.capture) {
       if (result.stdout) process.stdout.write(result.stdout);
@@ -219,7 +221,7 @@ try {
 
   const appRoot = join(tempRoot, "smoke-app");
   evidence.artifacts.appRoot = appRoot;
-  run(globalForge, ["generate"], { cwd: appRoot, env: smokeEnv, step: "app generate" });
+  runJson(globalForge, ["generate", "--json"], { cwd: appRoot, env: smokeEnv, step: "app generate" });
   runJson(globalForge, ["check", "--json"], { cwd: appRoot, env: smokeEnv, step: "app check" });
   runJson(globalForge, ["dev", "--once", "--json"], { cwd: appRoot, env: smokeEnv, step: "app dev once" });
   runJson(globalForge, ["verify", "--smoke", "--json", "--script-timeout-ms", "120000"], { cwd: appRoot, env: smokeEnv, step: "app verify smoke" });
@@ -229,6 +231,7 @@ try {
     cwd: appRoot,
     env: smokeEnv,
     capture: true,
+    allowFailure: true,
     check: false,
     step: "agent hooks status",
   });

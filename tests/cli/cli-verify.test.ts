@@ -10,6 +10,7 @@ import {
   defaultGenerateOptions,
   scaffoldGenerateWorkspace,
 } from "../orchestrator/helpers.ts";
+import { buildVerifyJson } from "../../src/forge/cli/output.ts";
 
 describe("Forge CLI verify", () => {
   // These cases share one scaffolded workspace (the fixture copy is the heavy
@@ -170,6 +171,20 @@ describe("Forge CLI verify", () => {
     expect(result.profile).toBe("standard");
     expect(result.steps.some((step) => step.name === "impact-tests")).toBe(true);
     expect(result.steps.find((step) => step.name === "tests")?.skipped).toBe(true);
+    const json = buildVerifyJson(result) as {
+      summary?: {
+        testCoverage?: {
+          fullSuiteRun?: boolean;
+          impactTestsRun?: boolean;
+          skippedFullSuite?: boolean;
+        };
+      };
+    };
+    expect(json.summary?.testCoverage).toEqual({
+      fullSuiteRun: false,
+      impactTestsRun: false,
+      skippedFullSuite: true,
+    });
   });
 
   test("verify --strict writes actionable TestGraph failure report", async () => {
