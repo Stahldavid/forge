@@ -54,7 +54,7 @@ describe("forge handoff", () => {
       expect(result.git.untracked.count).toBe(5);
       expect(result.git.changeSummary.changed.byType.source.sample).toContain("bin/handoff-helper.ts");
       expect(result.git.changeSummary.changed.byType.docs.sample).toContain("docs/handoff.md");
-      expect(result.git.changeSummary.changed.byType.operational.sample).toContain(".codex/hooks.json");
+      expect(result.git.changeSummary.changed.byType.config.sample).toContain(".codex/hooks.json");
       expect(result.git.changeSummary.changed.byType.other.sample).toContain(".handoff-note.txt");
       expect(result.git.changeSummary.changed.primaryTypes).toContain("source");
       expect(result.summary.untrackedFiles).toBe(5);
