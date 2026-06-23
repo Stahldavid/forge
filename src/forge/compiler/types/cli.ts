@@ -228,6 +228,7 @@ export interface VerifyResult {
   steps: VerifyStep[];
   diagnostics: Diagnostic[];
   testGraphPlan?: VerifyTestGraphPlan;
+  testCoverageReason?: string;
   durationMs?: number;
   exitCode: 0 | 1;
 }

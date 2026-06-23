@@ -179,6 +179,7 @@ describe("Forge CLI verify", () => {
           impactTestsRun?: boolean;
           skippedImpactTests?: boolean;
           skippedFullSuite?: boolean;
+          reason?: string | null;
         };
       };
     };
@@ -188,6 +189,7 @@ describe("Forge CLI verify", () => {
       impactTestsRun: false,
       skippedImpactTests: true,
       skippedFullSuite: true,
+      reason: "impact planner selected no test files for the current changes",
     });
     expect(result.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_VERIFY_NO_TESTS_SELECTED")).toBe(true);
   });

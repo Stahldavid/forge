@@ -41,6 +41,9 @@ export interface ImpactReport {
   ok: boolean;
   source: ImpactSource;
   changedFiles: string[];
+  authoredChangedFiles?: number;
+  generatedChangedFiles?: number;
+  derivedOnly?: boolean;
   impacted: ImpactedSystems;
   risk: ImpactRisk;
   recommendedChecks: string[];
@@ -70,6 +73,9 @@ export interface ImpactTestPlan {
   schemaVersion: "0.1.0";
   source: ImpactSource;
   changedFiles: string[];
+  authoredChangedFiles?: number;
+  generatedChangedFiles?: number;
+  derivedOnly?: boolean;
   impacted: ImpactedSystems;
   risk: ImpactRisk;
   requiredChecks: TestPlanCheck[];

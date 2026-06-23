@@ -420,6 +420,35 @@ describe("H28 impact-based test planner", () => {
       .toBe("generated TypeScript artifacts changed");
   });
 
+  test("impact reports generated metadata-only changes as derived-only", () => {
+    const root = workspace();
+    spawnSync("git", ["init"], { cwd: root, windowsHide: true });
+    spawnSync("git", ["config", "user.email", "forge@example.test"], { cwd: root, windowsHide: true });
+    spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: root, windowsHide: true });
+    write(root, "AGENTS.md", "// @forge-generated generator=test input=aaaa content=bbbb\n# AGENTS.md\n");
+    spawnSync("git", ["add", "."], { cwd: root, windowsHide: true });
+    spawnSync("git", ["commit", "-m", "baseline"], { cwd: root, windowsHide: true });
+    write(root, "AGENTS.md", "// @forge-generated generator=test input=cccc content=bbbb\n# AGENTS.md\n");
+
+    const report = analyzeImpact({
+      workspaceRoot: root,
+      json: true,
+      write: false,
+      changed: true,
+      staged: false,
+      includeGenerated: false,
+      excludeTests: false,
+    });
+
+    expect(report.authoredChangedFiles).toBe(0);
+    expect(report.generatedChangedFiles).toBe(1);
+    expect(report.derivedOnly).toBe(true);
+    expect(report.risk).toEqual({
+      level: "low",
+      reasons: ["Only derived generated artifacts changed"],
+    });
+  });
+
   test("cost filtering excludes browser tests unless explicitly included", () => {
     const root = workspace();
     spawnSync("git", ["init"], { cwd: root, windowsHide: true });

@@ -32,6 +32,8 @@ export type DiffPlan = {
   summary: string;
 };
 
+export type ChangeClassifier = (file: string) => ChangeType;
+
 export const CHANGE_TYPES: ChangeType[] = [
   "source",
   "tests",
@@ -155,13 +157,17 @@ export function classifyChangeType(file: string): ChangeType {
   return "other";
 }
 
-export function categorizeFiles(files: string[], sampleSize = 8): CategorizedFileSummary {
+export function categorizeFiles(
+  files: string[],
+  sampleSize = 8,
+  classify: ChangeClassifier = classifyChangeType,
+): CategorizedFileSummary {
   const sorted = [...files].sort();
   const groups = Object.fromEntries(
     CHANGE_TYPES.map((type) => [type, [] as string[]]),
   ) as Record<ChangeType, string[]>;
   for (const file of sorted) {
-    groups[classifyChangeType(file)].push(file);
+    groups[classify(file)].push(file);
   }
   const byType = Object.fromEntries(
     CHANGE_TYPES.map((type) => [type, compactFiles(groups[type], sampleSize)]),

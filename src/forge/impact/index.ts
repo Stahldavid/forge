@@ -18,7 +18,8 @@ import type { WorkflowRegistry, WorkflowSubscriptions } from "../compiler/types/
 import type { ActionSubscriptions } from "../compiler/types/action-subscriptions.ts";
 import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
 import { resolveCommandArgv } from "../compiler/package-manager/executor.ts";
-import { isVolatileForgeState } from "../workspace/change-summary.ts";
+import { categorizeFiles, isVolatileForgeState, type CategorizedFileSummary } from "../workspace/change-summary.ts";
+import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
 import type {
   ImpactCommandOptions,
   ImpactReport,
@@ -501,6 +502,27 @@ function riskFor(impact: ImpactedSystems, files: string[]): ImpactRisk {
   return { level, reasons: reasons.sort() };
 }
 
+function changeSummaryForImpact(
+  workspaceRoot: string,
+  source: ImpactSource,
+  changedFiles: string[],
+): CategorizedFileSummary {
+  if (source.mode === "changed" || source.mode === "staged") {
+    const git = buildWorkspaceGitSummary(workspaceRoot);
+    if (git.available) {
+      return source.mode === "staged" ? git.changeSummary.staged : git.changeSummary.changed;
+    }
+  }
+  return categorizeFiles(changedFiles);
+}
+
+function derivedOnlyRisk(): ImpactRisk {
+  return {
+    level: "low",
+    reasons: ["Only derived generated artifacts changed"],
+  };
+}
+
 function loadArtifacts(workspaceRoot: string) {
   return {
     appGraph: readJson<AppGraph>(workspaceRoot, `${GENERATED}/appGraph.json`, { schemaVersion: "", generatorVersion: "", analyzerVersion: "", inputHash: "", symbols: [], edges: [], moduleGraph: { nodes: [] }, diagnostics: [] }),
@@ -666,6 +688,10 @@ export function analyzeImpact(options: ImpactCommandOptions): ImpactReport {
   const detected = detectChangedFiles(options.workspaceRoot, source);
   const artifacts = loadArtifacts(options.workspaceRoot);
   const changedFiles = detected.files;
+  const changeSummary = changeSummaryForImpact(options.workspaceRoot, source, changedFiles);
+  const generatedChangedFiles = changeSummary.byType.generated.count;
+  const authoredChangedFiles = Math.max(0, changeSummary.total.count - generatedChangedFiles);
+  const derivedOnly = changeSummary.total.count > 0 && authoredChangedFiles === 0 && generatedChangedFiles > 0;
   const impacted = analyzeFiles({
     workspaceRoot: options.workspaceRoot,
     files: changedFiles,
@@ -673,12 +699,15 @@ export function analyzeImpact(options: ImpactCommandOptions): ImpactReport {
     excludeTests: options.excludeTests,
     ...artifacts,
   });
-  const risk = riskFor(impacted, changedFiles);
+  const risk = derivedOnly ? derivedOnlyRisk() : riskFor(impacted, changedFiles);
   const checks = requiredChecks(impacted).map((check) => check.command);
   return {
     ok: detected.diagnostics.every((diagnostic) => diagnostic.severity !== "error"),
     source,
     changedFiles,
+    authoredChangedFiles,
+    generatedChangedFiles,
+    derivedOnly,
     impacted,
     risk,
     recommendedChecks: checks,
@@ -726,6 +755,9 @@ export function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan
     schemaVersion: "0.1.0",
     source: report.source,
     changedFiles: report.changedFiles,
+    authoredChangedFiles: report.authoredChangedFiles,
+    generatedChangedFiles: report.generatedChangedFiles,
+    derivedOnly: report.derivedOnly,
     impacted: report.impacted,
     risk: report.risk,
     requiredChecks: [

@@ -27,7 +27,7 @@ Prefer **[Agent Workflow (`forge do`)](agent-workflow.md)** when you know the go
 
 `forge changed --json` is the dedicated current-diff view. It separates human-authored files from generated artifacts, highlights untracked or uncategorized paths, and returns the focused verification commands for the current work. Read `diffPlan` before opening raw diffs: it gives the authored-first diff command, the generated-artifact diff command, and whether generated files are collapsed by default.
 
-When generated artifacts dominate the worktree, use `forge changed --authored --json` or the `diffPlan.authoredDiffCommand` first. Template apps may ignore generated artifacts in git; framework checkouts keep them available as derived evidence and should review authored changes before generated output.
+When generated artifacts dominate the worktree, use `forge changed --authored --json` or the `diffPlan.authoredDiffCommand` first. Template apps may ignore generated artifacts in git; framework checkouts keep them available as derived evidence and should review authored changes before generated output. See [Generated Artifacts](generated-artifacts.md).
 
 Use `forge handoff --json` when switching between external code agents. It runs the compact dev diagnostic loop, summarizes git state, groups changed files by type (`source`, `tests`, `docs`, `generated`, `operational`, and related buckets), includes recent test/UI run status, and returns an `openingBrief`, high-value files to read, next commands, and handoff risks.
 

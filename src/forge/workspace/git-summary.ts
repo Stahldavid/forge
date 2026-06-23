@@ -1,9 +1,11 @@
 import { spawnSync } from "node:child_process";
 import {
   categorizeFiles,
+  classifyChangeType,
   compactFiles,
   filterVolatileForgeState,
   type CategorizedFileSummary,
+  type ChangeClassifier,
   type FileListSummary,
 } from "./change-summary.ts";
 
@@ -61,6 +63,61 @@ function runGit(
   return { ok: true, stdout: options.trim === false ? result.stdout : result.stdout.trim() };
 }
 
+function pathspecLiteral(file: string): string {
+  return `:(literal)${file}`;
+}
+
+function diffTouchesOnlyGeneratedMetadata(diff: string): boolean {
+  let changedLines = 0;
+  for (const line of diff.split(/\r?\n/)) {
+    if (
+      line.startsWith("diff --git ") ||
+      line.startsWith("index ") ||
+      line.startsWith("@@ ") ||
+      line.startsWith("--- ") ||
+      line.startsWith("+++ ")
+    ) {
+      continue;
+    }
+    if (!line.startsWith("+") && !line.startsWith("-")) {
+      continue;
+    }
+    changedLines += 1;
+    if (!line.slice(1).trimStart().startsWith("// @forge-generated")) {
+      return false;
+    }
+  }
+  return changedLines > 0;
+}
+
+function generatedMetadataOnlyChange(workspaceRoot: string, file: string): boolean {
+  const pathspec = pathspecLiteral(file);
+  const diffs = [
+    runGit(["diff", "--unified=0", "--", pathspec], workspaceRoot, { trim: false }),
+    runGit(["diff", "--cached", "--unified=0", "--", pathspec], workspaceRoot, { trim: false }),
+  ]
+    .filter((result) => result.ok)
+    .map((result) => result.stdout)
+    .filter((stdout) => stdout.trim().length > 0);
+  return diffs.length > 0 && diffs.every(diffTouchesOnlyGeneratedMetadata);
+}
+
+function workspaceChangeClassifier(workspaceRoot: string): ChangeClassifier {
+  const cache = new Map<string, ReturnType<ChangeClassifier>>();
+  return (file) => {
+    const cached = cache.get(file);
+    if (cached) {
+      return cached;
+    }
+    const baseType = classifyChangeType(file);
+    const type = baseType === "docs" && generatedMetadataOnlyChange(workspaceRoot, file)
+      ? "generated"
+      : baseType;
+    cache.set(file, type);
+    return type;
+  };
+}
+
 function parseStatusPath(line: string): string {
   const raw = line.slice(2).trimStart();
   const renamed = raw.split(" -> ");
@@ -101,6 +158,7 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
   const unstagedFiles = filterVolatileForgeState([...new Set(unstaged)].sort());
   const untrackedFiles = filterVolatileForgeState([...new Set(untracked)].sort());
   const changedFiles = [...new Set([...stagedFiles, ...unstagedFiles, ...untrackedFiles])].sort();
+  const classify = workspaceChangeClassifier(workspaceRoot);
 
   return {
     available: true,
@@ -111,10 +169,10 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
     unstaged: compactFiles(unstagedFiles),
     untracked: compactFiles(untrackedFiles),
     changeSummary: {
-      changed: categorizeFiles(changedFiles),
-      staged: categorizeFiles(stagedFiles),
-      unstaged: categorizeFiles(unstagedFiles),
-      untracked: categorizeFiles(untrackedFiles),
+      changed: categorizeFiles(changedFiles, 8, classify),
+      staged: categorizeFiles(stagedFiles, 8, classify),
+      unstaged: categorizeFiles(unstagedFiles, 8, classify),
+      untracked: categorizeFiles(untrackedFiles, 8, classify),
     },
     ...(status.ok ? {} : { error: status.error }),
   };

@@ -257,6 +257,7 @@ export function buildVerifyJson(result: VerifyResult): Record<string, unknown> {
         impactTestsRun,
         skippedImpactTests,
         skippedFullSuite,
+        reason: result.testCoverageReason ?? null,
       },
     },
     steps: result.steps,

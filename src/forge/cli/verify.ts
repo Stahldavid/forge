@@ -1490,7 +1490,7 @@ function resolveVerifyProfile(options: VerifyOptions): VerifyProfile {
 
 async function runStandardImpactTests(
   options: VerifyOptions,
-): Promise<{ steps: VerifyStep[]; diagnostics: Diagnostic[] }> {
+): Promise<{ steps: VerifyStep[]; diagnostics: Diagnostic[]; testCoverageReason?: string }> {
   const started = Date.now();
   const diagnostics: Diagnostic[] = [];
   const steps: VerifyStep[] = [];
@@ -1513,6 +1513,9 @@ async function runStandardImpactTests(
   const commands = impactOnlyPlan.tests.map((test) => test.command);
 
   if (commands.length === 0) {
+    const reason = plan.derivedOnly
+      ? "changed files are derived generated artifacts only"
+      : "impact planner selected no test files for the current changes";
     steps.push(skippedStep("impact-tests", "no changed files selected an impact test"));
     diagnostics.push(
       createDiagnostic({
@@ -1526,7 +1529,7 @@ async function runStandardImpactTests(
         ],
       }),
     );
-    return { steps, diagnostics };
+    return { steps, diagnostics, testCoverageReason: reason };
   }
 
   const record = await runImpactTestPlan(options.workspaceRoot, impactOnlyPlan, {
@@ -1589,6 +1592,7 @@ export async function runVerifyCommand(
   const frameworkWorkspace = isForgeOsFrameworkWorkspace(options.workspaceRoot);
   const canRunInternalTests = options.internal || !frameworkWorkspace;
   let testGraphPlan: VerifyTestGraphPlan | undefined;
+  let testCoverageReason: string | undefined;
 
   if (options.testPlan) {
     if (frameworkWorkspace && !options.internal) {
@@ -1858,6 +1862,7 @@ export async function runVerifyCommand(
     const impact = await runStandardImpactTests(options);
     steps.push(...impact.steps);
     diagnostics.push(...impact.diagnostics);
+    testCoverageReason = impact.testCoverageReason;
     steps.push(skippedStep("tests", "--standard uses impact-selected tests; use --strict for the full test script"));
   } else if ((profile === "strict" || profile === "internal") && !options.fullTests) {
     if (!canRunInternalTests) {
@@ -1965,6 +1970,7 @@ export async function runVerifyCommand(
     steps,
     diagnostics,
     testGraphPlan,
+    testCoverageReason,
     durationMs: Date.now() - started,
     exitCode: ok ? 0 : 1,
   };

@@ -252,7 +252,7 @@ src/forge/_generated/**
 forge.lock
 ```
 
-When generated artifacts are noisy, use `forge changed --authored --json` or `diffPlan.authoredDiffCommand` to review the human-authored surface first. Do not add generated cleanup commands to the workflow unless the repository has deliberately decided to ignore or untrack those artifacts.
+When generated artifacts are noisy, use `forge changed --authored --json` or `diffPlan.authoredDiffCommand` to review the human-authored surface first. Do not add generated cleanup commands to the workflow unless the repository has deliberately decided to ignore or untrack those artifacts. See [Generated Artifacts](generated-artifacts.md).
 
 After source changes:
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseCli } from "../../src/forge/cli/parse.ts";
@@ -370,6 +370,68 @@ describe("Forge CLI generation and inspection", () => {
       };
       expect(authoredDerived.generated.count).toBe(0);
       expect(authoredDerived.generated.sample).toEqual([]);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("changed treats generated metadata-only AGENTS diffs as generated", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-changed-generated-agents");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.email", "forge@example.com"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["commit", "-m", "initial"], { cwd: workspace, windowsHide: true });
+
+      const agentsPath = join(workspace, "AGENTS.md");
+      const agents = readFileSync(agentsPath, "utf8");
+      writeFileSync(
+        agentsPath,
+        agents.replace(/input=[a-f0-9]+/, "input=ffffffff"),
+        "utf8",
+      );
+
+      const changed = runChangedCommand(workspace);
+      expect(changed.exitCode).toBe(0);
+      expect(changed.data.summary).toMatchObject({
+        changedFiles: 1,
+        humanFiles: 0,
+        generatedFiles: 1,
+      });
+      const humanChanges = changed.data.humanChanges as { docs: { sample: string[] } };
+      const derivedChanges = changed.data.derivedChanges as { generated: { sample: string[] } };
+      expect(humanChanges.docs.sample).not.toContain("AGENTS.md");
+      expect(derivedChanges.generated.sample).toContain("AGENTS.md");
+      expect(changed.data.nextActions as string[]).toContain("forge changed --authored --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("changed keeps manual AGENTS edits in human docs bucket", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-changed-manual-agents");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.email", "forge@example.com"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["commit", "-m", "initial"], { cwd: workspace, windowsHide: true });
+
+      const agentsPath = join(workspace, "AGENTS.md");
+      writeFileSync(agentsPath, `${readFileSync(agentsPath, "utf8")}\n<!-- manual note -->\n`, "utf8");
+
+      const changed = runChangedCommand(workspace);
+      expect(changed.exitCode).toBe(0);
+      expect(changed.data.summary).toMatchObject({
+        changedFiles: 1,
+        humanFiles: 1,
+        generatedFiles: 0,
+      });
+      const humanChanges = changed.data.humanChanges as { docs: { sample: string[] } };
+      expect(humanChanges.docs.sample).toContain("AGENTS.md");
     } finally {
       cleanupWorkspace(workspace);
     }
