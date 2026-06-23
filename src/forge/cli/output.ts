@@ -5,6 +5,7 @@ import type {
   InspectResult,
   VerifyResult,
 } from "../compiler/types/cli.ts";
+import { uniqueNextActions } from "./next-actions.ts";
 
 function failureKindFromDiagnostics(errors: Diagnostic[]): string | undefined {
   if (errors.length === 0) {
@@ -98,6 +99,43 @@ export function buildGenerateJson(result: GenerateResult): Record<string, unknow
     errors: result.errors,
     diagnostics,
     nextActions: buildGenerateNextActions(result),
+    durationMs: null,
+    exitCode: result.exitCode,
+    failureKind: result.failureKind ?? null,
+  };
+}
+
+export function buildCheckJson(result: GenerateResult): Record<string, unknown> {
+  const diagnostics = [...result.errors, ...result.warnings];
+  const suggested = new Set<string>();
+  for (const diagnostic of diagnostics) {
+    for (const command of diagnostic.suggestedCommands ?? []) {
+      if (command !== "forge check --json") {
+        suggested.add(command);
+      }
+    }
+  }
+  if (result.exitCode !== 0) {
+    for (const diagnostic of result.errors.slice(0, 3)) {
+      suggested.add(`forge repair diagnose --diagnostic ${diagnostic.code} --json`);
+    }
+    suggested.add("forge generate");
+    suggested.add("forge check --json");
+  } else {
+    suggested.add("forge verify --changed");
+    suggested.add("forge handoff --json");
+  }
+  return {
+    schemaVersion: "0.1.0",
+    ok: result.exitCode === 0,
+    summary: {
+      warnings: result.warnings.length,
+      errors: result.errors.length,
+    },
+    warnings: result.warnings,
+    errors: result.errors,
+    diagnostics,
+    nextActions: uniqueNextActions([...suggested]),
     durationMs: null,
     exitCode: result.exitCode,
     failureKind: result.failureKind ?? null,

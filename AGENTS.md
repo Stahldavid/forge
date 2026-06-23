@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=0ee1bf2f038128efd72c20246ad0f70215b2e3ba0bf04eba957f20f4cdeea9cc content=25a55de28d8323877f25c217c3e0f01766b01352c50294f7919e429c3685fb6d
+// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=9b490444cd3dadb6f2c06484033cbcafd219bacb1570b1149c31320a9d929b4e
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -7,19 +7,23 @@
 
 This is a ForgeOS application named `forgeos`.
 
+## CLI entrypoint
+
+This is the ForgeOS framework checkout. Use `node bin/forge.mjs ...` so maintainer commands run against this source tree; reserve the global `forge` command for installed-package smoke tests.
+
 ## Required workflow
 
 Before editing:
 
 ```bash
-forge agent onboard --target codex --json
-forge status --json
-forge changed --json
-forge handoff --json
-forge do inspect --json
-forge dev --once --json
-forge agent print-context --json
-forge check --json
+node bin/forge.mjs agent onboard --target codex --json
+node bin/forge.mjs status --json
+node bin/forge.mjs changed --json
+node bin/forge.mjs handoff --json
+node bin/forge.mjs do inspect --json
+node bin/forge.mjs dev --once --json
+node bin/forge.mjs agent print-context --json
+node bin/forge.mjs check --json
 ```
 
 ## CAIR first
@@ -27,27 +31,27 @@ forge check --json
 Before reading large files or hand-writing patches, prefer the generated CAIR guide:
 
 ```bash
-forge cair snapshot
-forge cair query "Q ST"
-forge cair query "Q S name=<symbol>"
-forge cair query "Q D S#1"
-forge cair query "Q R S#1"
-forge cair query "Q I S#1"
+node bin/forge.mjs cair snapshot
+node bin/forge.mjs cair query "Q ST"
+node bin/forge.mjs cair query "Q S name=<symbol>"
+node bin/forge.mjs cair query "Q D S#1"
+node bin/forge.mjs cair query "Q R S#1"
+node bin/forge.mjs cair query "Q I S#1"
 ```
 
 Use `src/forge/_generated/agentCairGuide.md` for the full compact protocol. Plan CAIR mutations before applying them:
 
 ```bash
-forge cair action --plan "A RN t=S#1 nn=<newName>"
-forge cair action "A APPLY plan=<returned-plan-path>"
+node bin/forge.mjs cair action --plan "A RN t=S#1 nn=<newName>"
+node bin/forge.mjs cair action "A APPLY plan=<returned-plan-path>"
 ```
 
 After editing:
 
 ```bash
-forge generate
-forge check
-forge verify framework
+node bin/forge.mjs generate
+node bin/forge.mjs check
+node bin/forge.mjs verify framework
 ```
 
 ## Do not edit
@@ -58,7 +62,7 @@ Do not:
 - `forge.lock`
 - `deploy/docker-compose.yml`, unless changing deployment config intentionally
 
-Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to reduce visual noise. Recreate them with `forge generate` before checking, testing, or handing work off.
+Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to reduce visual noise. Recreate them with `node bin/forge.mjs generate` before checking, testing, or handing work off.
 
 ## Runtime model
 
@@ -68,7 +72,7 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 - Workflows orchestrate durable steps.
 - Production liveQuery uses a durable invalidation log; polling/notify are wakeups only.
 - Production API calls use `Authorization: Bearer <JWT>` in `jwt` or `oidc` auth mode.
-- `dev-headers` auth is for `forge dev`, tests, and local agent workflows only.
+- `dev-headers` auth is for `node bin/forge.mjs dev`, tests, and local agent workflows only.
 - AI is only allowed in actions, workflows, endpoints, and server code.
 - Secrets are accessed through `ctx.secrets`.
 
@@ -84,38 +88,38 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 ## Useful commands
 
 ```bash
-forge do "<objective>" --json
-forge do fix --json
-forge do verify --json
-forge dev --once --json
-forge dev
-forge handoff --json
-forge inspect app --json
-forge inspect all --json
-forge inspect all --full --json
-forge inspect frontend --json
-forge inspect capabilities --json
-forge inspect agent-tools --json
-forge deps inspect <package> --json
-forge deps api <package> <symbol> --json
-forge deps trace <package> --json
-forge auth check --json
-forge inspect runtime-matrix --json
-forge inspect policies --json
-forge inspect client --json
-forge inspect live-production --json
-forge live status --json
-forge doctor
-forge doctor windows --json
-forge setup windows --json
-forge agent print-context --json
-forge agent doctor --target codex --json
-forge ai tools --json
-forge ai agents --json
-forge ai trace <traceId> --json
-forge verify --smoke
-forge verify --standard
-forge verify framework
+node bin/forge.mjs do "<objective>" --json
+node bin/forge.mjs do fix --json
+node bin/forge.mjs do verify --json
+node bin/forge.mjs dev --once --json
+node bin/forge.mjs dev
+node bin/forge.mjs handoff --json
+node bin/forge.mjs inspect app --json
+node bin/forge.mjs inspect all --json
+node bin/forge.mjs inspect all --full --json
+node bin/forge.mjs inspect frontend --json
+node bin/forge.mjs inspect capabilities --json
+node bin/forge.mjs inspect agent-tools --json
+node bin/forge.mjs deps inspect <package> --json
+node bin/forge.mjs deps api <package> <symbol> --json
+node bin/forge.mjs deps trace <package> --json
+node bin/forge.mjs auth check --json
+node bin/forge.mjs inspect runtime-matrix --json
+node bin/forge.mjs inspect policies --json
+node bin/forge.mjs inspect client --json
+node bin/forge.mjs inspect live-production --json
+node bin/forge.mjs live status --json
+node bin/forge.mjs doctor
+node bin/forge.mjs doctor windows --json
+node bin/forge.mjs setup windows --json
+node bin/forge.mjs agent print-context --json
+node bin/forge.mjs agent doctor --target codex --json
+node bin/forge.mjs ai tools --json
+node bin/forge.mjs ai agents --json
+node bin/forge.mjs ai trace <traceId> --json
+node bin/forge.mjs verify --smoke
+node bin/forge.mjs verify --standard
+node bin/forge.mjs verify framework
 ```
 
 ## Data
@@ -181,31 +185,31 @@ Rules:
 Use:
 
 ```bash
-forge do "<objective>" --json
-forge do fix --json
-forge do connect-ui --json
-forge do verify --json
+node bin/forge.mjs do "<objective>" --json
+node bin/forge.mjs do fix --json
+node bin/forge.mjs do connect-ui --json
+node bin/forge.mjs do verify --json
 ```
 
-`forge do` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
+`node bin/forge.mjs do` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
 
 ### Add a command
 
 1. Add file in `src/commands`.
 2. Declare `auth: can("...")`.
-3. Run `forge generate`.
-4. Run `forge verify framework`.
+3. Run `node bin/forge.mjs generate`.
+4. Run `node bin/forge.mjs verify framework`.
 
 ### Scaffold a resource
 
 Use:
 
 ```bash
-forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
-forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
-forge make ui --framework vite --dry-run --json
-forge make ui --framework nuxt --dry-run --json
-forge make ai-chat support --dry-run --json
+node bin/forge.mjs make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
+node bin/forge.mjs make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
+node bin/forge.mjs make ui --framework vite --dry-run --json
+node bin/forge.mjs make ui --framework nuxt --dry-run --json
+node bin/forge.mjs make ai-chat support --dry-run --json
 ```
 
 Review the plan before applying when the resource touches schema or policies.
@@ -215,22 +219,22 @@ Review the plan before applying when the resource touches schema or policies.
 Use:
 
 ```bash
-forge dev --once --json
-forge dev
-forge inspect frontend --json
-forge inspect capabilities --json
+node bin/forge.mjs dev --once --json
+node bin/forge.mjs dev
+node bin/forge.mjs inspect frontend --json
+node bin/forge.mjs inspect capabilities --json
 ```
 
-`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
+`node bin/forge.mjs dev` starts the API runtime and web app together when `web/` exists. `node bin/forge.mjs dev --once --json` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
 
 ### Apply a feature blueprint
 
 Use:
 
 ```bash
-forge feature validate .forge/blueprints/<name>.json --json
-forge feature plan .forge/blueprints/<name>.json
-forge feature apply .forge/blueprints/<name>.json --yes
+node bin/forge.mjs feature validate .forge/blueprints/<name>.json --json
+node bin/forge.mjs feature plan .forge/blueprints/<name>.json
+node bin/forge.mjs feature apply .forge/blueprints/<name>.json --yes
 ```
 
 Review high-risk plans before applying. Use `--allow-high-risk` only when intentional.
@@ -240,10 +244,10 @@ Review high-risk plans before applying. Use `--allow-high-risk` only when intent
 Use:
 
 ```bash
-forge refactor rename field tickets.priority tickets.urgency --dry-run --json
-forge refactor rename field tickets.priority tickets.urgency --yes
-forge refactor rename command createTicket openTicket --dry-run --json
-forge refactor rename command createTicket openTicket --yes
+node bin/forge.mjs refactor rename field tickets.priority tickets.urgency --dry-run --json
+node bin/forge.mjs refactor rename field tickets.priority tickets.urgency --yes
+node bin/forge.mjs refactor rename command createTicket openTicket --dry-run --json
+node bin/forge.mjs refactor rename command createTicket openTicket --yes
 ```
 
 These codemods are AST-aware for `extract-action`, `rename command`, `rename field`, and `rename table`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
@@ -255,21 +259,21 @@ Never edit `src/forge/_generated/**` directly. Review migration hints before app
 Use:
 
 ```bash
-forge impact --changed --json
-forge test plan --changed --json
-forge test run --changed --timeout-ms 120000 --json
-forge verify --standard
+node bin/forge.mjs impact --changed --json
+node bin/forge.mjs test plan --changed --json
+node bin/forge.mjs test run --changed --timeout-ms 120000 --json
+node bin/forge.mjs verify --standard
 ```
 
-Use `forge verify --standard` for the normal agent development loop. Finish handoffs with `forge verify framework` when the change is ready.
+Use `node bin/forge.mjs verify --standard` for the normal agent development loop. Finish handoffs with `node bin/forge.mjs verify framework` when the change is ready.
 
 ### Repair a failing check
 
 When a Forge check fails, do not guess. Use:
 
 ```bash
-forge repair diagnose --from-last-test-run --json
-forge repair plan --from-last-test-run --write
+node bin/forge.mjs repair diagnose --from-last-test-run --json
+node bin/forge.mjs repair plan --from-last-test-run --write
 ```
 
 Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
@@ -279,11 +283,11 @@ Apply only high-confidence deterministic repairs automatically. Review medium or
 Use:
 
 ```bash
-forge generate
-forge inspect ai --json
-forge agent print-context --json
-forge ai check --json
-forge ai trace <traceId> --json
+node bin/forge.mjs generate
+node bin/forge.mjs inspect ai --json
+node bin/forge.mjs agent print-context --json
+node bin/forge.mjs ai check --json
+node bin/forge.mjs ai trace <traceId> --json
 ```
 
 Define tools with `aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })` and agents with `agent({ provider, model, instructions, tools, stopWhen })`. Execute agents with `ctx.agent.run` or `ctx.ai.runAgent` only from actions, workflows, endpoints, or server code. In dev, POST `/ai/agents/run` returns JSON for automation and POST `/ai/agents/chat` returns an AI SDK UIMessage stream for React `useChat`; both accept `agent: "<exportedAgentName>"` and use generated auto-tools from `agentTools.json`.
@@ -293,10 +297,10 @@ Define tools with `aiTool({ inputSchema, outputSchema, risk, needsApproval, hand
 Use:
 
 ```bash
-forge agent export --target generic
-forge agent export --target codex
-forge agent export --target cursor
-forge agent export --target claude
+node bin/forge.mjs agent export --target generic
+node bin/forge.mjs agent export --target codex
+node bin/forge.mjs agent export --target cursor
+node bin/forge.mjs agent export --target claude
 ```
 
 Adapter files are derived from `agentContract.json`, `appMap.md`, `runtimeRules.md`, `operationPlaybooks.md`, and this `AGENTS.md`. Do not treat Codex, Cursor, Claude, or custom adapter files as the source of truth.
@@ -306,7 +310,7 @@ Adapter files are derived from `agentContract.json`, `appMap.md`, `runtimeRules.
 Use:
 
 ```bash
-forge add <alias>
+node bin/forge.mjs add <alias>
 ```
 
 Do not install packages manually unless intentional.
@@ -316,11 +320,11 @@ Do not install packages manually unless intentional.
 Use:
 
 ```bash
-forge deps upgrade-plan <package> --to latest
-forge deps inspect <package> --json
-forge deps api <package> <symbol> --json
-forge deps upgrade-apply <plan>
-forge verify framework
+node bin/forge.mjs deps upgrade-plan <package> --to latest
+node bin/forge.mjs deps inspect <package> --json
+node bin/forge.mjs deps api <package> <symbol> --json
+node bin/forge.mjs deps upgrade-apply <plan>
+node bin/forge.mjs verify framework
 ```
 
 Do not manually edit `package.json` for package upgrades unless necessary.
@@ -330,9 +334,9 @@ Do not manually edit `package.json` for package upgrades unless necessary.
 Use:
 
 ```bash
-forge live status --json
-forge live invalidations list --json
-forge live debug <subscriptionId> --json
+node bin/forge.mjs live status --json
+node bin/forge.mjs live invalidations list --json
+node bin/forge.mjs live debug <subscriptionId> --json
 ```
 
 Durable invalidations live in `_forge_live_invalidations`.

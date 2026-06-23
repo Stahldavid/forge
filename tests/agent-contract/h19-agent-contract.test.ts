@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
@@ -165,6 +165,53 @@ describe("H19 agent contract", () => {
       );
     } finally {
       cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
+  test("AGENTS.md uses repo-local CLI for ForgeOS and installed CLI for apps", async () => {
+    const appWorkspace = scaffoldGenerateWorkspace("h19-cli-entrypoint-app");
+    const frameworkWorkspace = scaffoldGenerateWorkspace("h19-cli-entrypoint-framework");
+    try {
+      const appResult = await runGenerateCommand(defaultGenerateOptions(appWorkspace));
+      expect(appResult.exitCode).toBe(0);
+
+      const appAgents = readBody(appWorkspace, "AGENTS.md");
+      expect(appAgents).toContain("Use the installed `forge` command for app workflows.");
+      expect(appAgents).toContain("forge generate");
+      expect(appAgents).not.toContain("node bin/forge.mjs generate");
+
+      const frameworkPackagePath = join(frameworkWorkspace, "package.json");
+      const frameworkPackage = JSON.parse(readFileSync(frameworkPackagePath, "utf8")) as {
+        name: string;
+      };
+      frameworkPackage.name = "renamed-framework-checkout";
+      writeFileSync(frameworkPackagePath, `${JSON.stringify(frameworkPackage, null, 2)}\n`, "utf8");
+      mkdirSync(join(frameworkWorkspace, "bin"), { recursive: true });
+      writeFileSync(join(frameworkWorkspace, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
+
+      const frameworkResult = await runGenerateCommand(defaultGenerateOptions(frameworkWorkspace));
+      expect(frameworkResult.exitCode).toBe(0);
+
+      const frameworkAgents = readBody(frameworkWorkspace, "AGENTS.md");
+      expect(frameworkAgents).toContain("Use `node bin/forge.mjs ...`");
+      expect(frameworkAgents).toContain("node bin/forge.mjs generate");
+      expect(frameworkAgents).toContain("node bin/forge.mjs verify framework");
+
+      const frameworkQuickstart = readBody(frameworkWorkspace, `${GENERATED}/agentQuickstart.md`);
+      expect(frameworkQuickstart).toContain("node bin/forge.mjs handoff --json");
+      expect(frameworkQuickstart).toContain("node bin/forge.mjs verify framework");
+
+      const frameworkContract = readJson<{
+        commandsToRun: { beforeEditing: string[]; afterEditing: string[]; dev: string[] };
+        agentProtocols: Array<{ commands: string[] }>;
+      }>(frameworkWorkspace, `${GENERATED}/agentContract.json`);
+      expect(frameworkContract.commandsToRun.beforeEditing).toContain("node bin/forge.mjs handoff --json");
+      expect(frameworkContract.commandsToRun.afterEditing).toContain("node bin/forge.mjs verify framework");
+      expect(frameworkContract.commandsToRun.dev).toContain("node bin/forge.mjs dev");
+      expect(frameworkContract.agentProtocols[0]?.commands).toContain("node bin/forge.mjs cair snapshot");
+    } finally {
+      cleanupWorkspace(appWorkspace);
+      cleanupWorkspace(frameworkWorkspace);
     }
   }, 30_000);
 

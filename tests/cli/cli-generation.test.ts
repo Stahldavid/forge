@@ -250,8 +250,9 @@ describe("Forge CLI generation and inspection", () => {
         },
         studio: {
           attachCommand: "forge studio attach . --preview-port 5174 --target codex --json",
+          openCommand: "forge studio open . --preview-port 5174 --target codex --json",
           targetPreviewUrl: "http://127.0.0.1:5174",
-          startTargetAppCommand: "forge dev --web-port 5174",
+          startTargetAppCommand: "forge dev --port 3766 --web-port 5174",
           useful: false,
         },
         summary: {
@@ -355,6 +356,20 @@ describe("Forge CLI generation and inspection", () => {
         "generated",
       ]);
       expect(changed.data.nextActions as string[]).toContain("forge verify --changed");
+
+      const authored = runChangedCommand(workspace, { authoredOnly: true });
+      expect(authored.exitCode).toBe(0);
+      expect(authored.data.summary).toMatchObject({
+        view: "authored",
+        changedFiles: 2,
+        humanFiles: 2,
+        generatedFiles: 0,
+      });
+      const authoredDerived = authored.data.derivedChanges as {
+        generated: { count: number; sample: string[] };
+      };
+      expect(authoredDerived.generated.count).toBe(0);
+      expect(authoredDerived.generated.sample).toEqual([]);
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -381,6 +396,7 @@ describe("Forge CLI generation and inspection", () => {
         studio: {
           useful: true,
           attachCommand: "forge studio attach . --preview-port 5174 --target codex --json",
+          openCommand: "forge studio open . --preview-port 5174 --target codex --json",
           targetPreviewUrl: "http://127.0.0.1:5174",
         },
         summary: {
@@ -388,7 +404,7 @@ describe("Forge CLI generation and inspection", () => {
           routes: 1,
         },
       });
-      expect(status.data.nextActions as string[]).toContain("forge studio attach . --preview-port 5174 --target codex --json");
+      expect(status.data.nextActions as string[]).toContain("forge studio open . --preview-port 5174 --target codex --json");
     } finally {
       cleanupWorkspace(workspace);
     }

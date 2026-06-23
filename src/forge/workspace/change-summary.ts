@@ -83,6 +83,9 @@ export function classifyChangeType(file: string): ChangeType {
   ) {
     return "generated";
   }
+  if (lower === ".codex/hooks.json") {
+    return "config";
+  }
   if (
     lower.startsWith(".forge/") ||
     lower.startsWith(".codex/") ||

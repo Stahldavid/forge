@@ -2,6 +2,25 @@
 
 This page lists common ForgeOS command groups. Start with [CLI](cli.md) for the recommended workflow. Use this page when you need a specific lower-level command.
 
+## CLI entrypoint
+
+Generated apps use the installed ForgeOS CLI:
+
+```bash
+forge status --json
+forge verify --smoke
+npm run forge -- dev --once --json
+```
+
+The ForgeOS framework checkout uses the source-tree entrypoint so maintainer commands execute the code being edited:
+
+```bash
+node bin/forge.mjs status --json
+node bin/forge.mjs verify framework
+```
+
+Use the global `forge` command from the framework repo only when intentionally smoking the installed package path.
+
 ## App creation
 
 ```bash
@@ -44,7 +63,7 @@ forge do connect-ui --json
 
 `forge doctor agent --target codex --json` is the top-level spelling for agent readiness checks. It delegates to `forge agent doctor` and reports adapter freshness, hook bridge status, recent useful signals, next actions, and diagnostics.
 
-`forge studio open <path> --preview-port 5174 --target codex --json` is the recommended Studio entrypoint. It attaches an app directory to a Studio-style observer without moving the coding agent into the browser, writes `.forge/studio/attachment.json`, prepares the selected agent adapter/hook bridge, checks whether dependencies are installed, auto-starts the local target preview when possible, and attempts one bridge ingest to the Studio runtime. The JSON result includes `previewAutomation` for dependency/start evidence and `bridge` for Studio delivery evidence. Use `--install` to let ForgeOS run the detected install command, `--no-start` when another process owns preview startup, and `--no-bridge` for attach/start only. `forge studio attach` is the lower-level command for writing the attachment manifest and preparing adapters without startup/bridge orchestration. `commands.startTargetAppCwd`, `commands.startTargetApp`, `commands.openPreview`, and `commands.probePreview` tell Studio exactly what to show and where the command should run. `preview.status` reports whether a local preview was reachable, not running, or intentionally not checked. `posture` reports generated freshness and authored-first review commands. If a preview points at local port `5173`, ForgeOS treats it as likely Studio self-preview and shifts the target app preview to `5174` unless `--force` is provided.
+`forge studio open <path> --preview-port 5174 --target codex --json` is the recommended Studio entrypoint. It attaches an app directory to a Studio-style observer without moving the coding agent into the browser, writes `.forge/studio/attachment.json`, prepares the selected agent adapter/hook bridge, checks whether dependencies are installed, auto-starts the local target preview when possible, and attempts one bridge ingest to the Studio runtime. The JSON result includes `previewAutomation` for dependency/start evidence and `bridge` for Studio delivery evidence. Use `--install` to let ForgeOS run the detected install command, `--no-start` when another process owns preview startup, and `--no-bridge` for attach/start only. `forge studio attach` is the lower-level command for writing the attachment manifest and preparing adapters without startup/bridge orchestration. `commands.startTargetAppCwd`, `commands.startTargetApp`, `commands.openPreview`, and `commands.probePreview` tell Studio exactly what to show and where the command should run. `preview.status` reports whether a local preview was reachable, not running, or intentionally not checked. `posture` reports generated freshness and authored-first review commands. If a preview points at local port `5173`, ForgeOS treats it as likely Studio self-preview and shifts the target app preview to `5174` unless `--force` is provided. Live target preview state is recorded under `.forge/studio/preview.json`; a later `studio open` reuses a still-running matching preview instead of spawning a duplicate, and removes stale preview state when the recorded process is gone.
 
 `forge studio snapshot <path> --preview-port 5174 --target codex --json` is the read-only version for Studio refresh loops. It does not write `.forge/studio/attachment.json`, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` buckets, `diffPlan`, `contextPacket`, hook proofs, DeltaDB status, plus the commands the UI should show. If an attachment manifest already exists, snapshot reuses its preview URL and targets unless the command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should include the actual `codex app-server` stdio initialize proof under `proofs.codexAppServer.handshake`.
 

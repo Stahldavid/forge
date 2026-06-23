@@ -4,6 +4,7 @@ import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { runGenerateCommand } from "./commands.ts";
 import { runVerifyCommand } from "./verify.ts";
+import { selfHostPrepareNextActions, selfHostReadyNextActions } from "./next-actions.ts";
 
 export type SelfHostSubcommand = "compose" | "env" | "check" | "clean";
 
@@ -15,6 +16,7 @@ export interface SelfHostCommandOptions {
   postgresVersion: string;
   runtimePort: number;
   webPort: number;
+  preparedOnly?: boolean;
 }
 
 export interface SelfHostCheck {
@@ -26,8 +28,10 @@ export interface SelfHostCheck {
 export interface SelfHostCommandResult {
   ok: boolean;
   exitCode: 0 | 1;
+  state?: "ready" | "not-prepared" | "failed";
   files?: string[];
   checks?: SelfHostCheck[];
+  nextActions?: string[];
 }
 
 function deployDir(workspaceRoot: string): string {
@@ -392,6 +396,28 @@ export async function runSelfHostCommand(
   }
 
   const checks: SelfHostCheck[] = [];
+  const requiredDeployFiles = [
+    "docker-compose.yml",
+    "Dockerfile.runtime",
+    "Dockerfile.web",
+    ".dockerignore",
+    ".env.example",
+    "README.md",
+  ];
+  const missingDeployFiles = requiredDeployFiles.filter((file) => !nodeFileSystem.exists(join(dir, file)));
+  if (options.preparedOnly && missingDeployFiles.length > 0) {
+    return {
+      ok: true,
+      state: "not-prepared",
+      exitCode: 0,
+      checks: missingDeployFiles.map((file) => ({
+        name: `deploy/${file}`,
+        ok: true,
+        details: { state: "not-prepared", missing: true, command: "forge self-host compose" },
+      })),
+      nextActions: selfHostPrepareNextActions(),
+    };
+  }
   const generated = await runGenerateCommand({
     workspaceRoot: options.workspaceRoot,
     check: true,
@@ -399,7 +425,11 @@ export async function runSelfHostCommand(
     json: false,
     concurrency: 4,
   });
-  checks.push({ name: "generated", ok: generated.exitCode === 0 });
+  checks.push({
+    name: "generated",
+    ok: generated.exitCode === 0,
+    details: generated.exitCode === 0 ? undefined : { command: "forge generate" },
+  });
 
   const verify = await runVerifyCommand({
     workspaceRoot: options.workspaceRoot,
@@ -409,17 +439,19 @@ export async function runSelfHostCommand(
     skipEslint: true,
     strict: true,
   });
-  checks.push({ name: "verify-strict", ok: verify.exitCode === 0 });
+  checks.push({
+    name: "verify-strict",
+    ok: verify.exitCode === 0,
+    details: verify.exitCode === 0 ? undefined : { command: "forge verify --strict" },
+  });
 
-  for (const file of [
-    "docker-compose.yml",
-    "Dockerfile.runtime",
-    "Dockerfile.web",
-    ".dockerignore",
-    ".env.example",
-    "README.md",
-  ]) {
-    checks.push({ name: `deploy/${file}`, ok: nodeFileSystem.exists(join(dir, file)) });
+  for (const file of requiredDeployFiles) {
+    const exists = nodeFileSystem.exists(join(dir, file));
+    checks.push({
+      name: `deploy/${file}`,
+      ok: exists,
+      details: exists ? undefined : { missing: true, command: "forge self-host compose" },
+    });
   }
 
   const envExample = nodeFileSystem.exists(join(dir, ".env.example"))
@@ -452,7 +484,13 @@ export async function runSelfHostCommand(
   });
 
   const ok = checks.every((check) => check.ok);
-  return { ok, exitCode: ok ? 0 : 1, checks };
+  return {
+    ok,
+    state: ok ? "ready" : "failed",
+    exitCode: ok ? 0 : 1,
+    checks,
+    nextActions: ok ? selfHostReadyNextActions() : selfHostPrepareNextActions(),
+  };
 }
 
 export function formatSelfHostHuman(result: SelfHostCommandResult): string {
@@ -460,9 +498,13 @@ export function formatSelfHostHuman(result: SelfHostCommandResult): string {
     return `wrote self-host files:\n${result.files.map((file) => `  ${file}`).join("\n")}\n`;
   }
   if (result.checks) {
-    return `${result.checks
+    const lines = result.checks
       .map((check) => `${check.ok ? "ok" : "fail"} ${check.name}`)
-      .join("\n")}\n`;
+      .join("\n");
+    const next = result.nextActions && result.nextActions.length > 0
+      ? `\nNext:\n${result.nextActions.map((action) => `  ${action}`).join("\n")}\n`
+      : "\n";
+    return `${lines}${next}`;
   }
   return result.ok ? "self-host clean complete\n" : "self-host command failed\n";
 }

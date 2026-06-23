@@ -22,3 +22,4 @@ forge.lock
 .forge/reviews/
 .forge/impact/
 .forge/agent-adapters/
+.forge/studio/

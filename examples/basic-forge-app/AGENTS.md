@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=112d41c02e7965fbb889b1dbe222352f195ce3ff939126ef371c031897d52ba8 content=457bb890d3f26ac39b174af262505e869215557c82a4d4cb23debde826c021be
+// @forge-generated generator=0.1.0-alpha.18 input=112d41c02e7965fbb889b1dbe222352f195ce3ff939126ef371c031897d52ba8 content=6b3fa99a5ae9904d0c6d35038135cb64fedcd68c15db72a39597307f3ef4ec5c
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -6,6 +6,10 @@
 ## Project
 
 This is a ForgeOS application named `basic-forge-app`.
+
+## CLI entrypoint
+
+Use the installed `forge` command for app workflows.
 
 ## Required workflow
 
@@ -20,6 +24,26 @@ forge do inspect --json
 forge dev --once --json
 forge agent print-context --json
 forge check --json
+```
+
+## CAIR first
+
+Before reading large files or hand-writing patches, prefer the generated CAIR guide:
+
+```bash
+forge cair snapshot
+forge cair query "Q ST"
+forge cair query "Q S name=<symbol>"
+forge cair query "Q D S#1"
+forge cair query "Q R S#1"
+forge cair query "Q I S#1"
+```
+
+Use `src/forge/_generated/agentCairGuide.md` for the full compact protocol. Plan CAIR mutations before applying them:
+
+```bash
+forge cair action --plan "A RN t=S#1 nn=<newName>"
+forge cair action "A APPLY plan=<returned-plan-path>"
 ```
 
 After editing:

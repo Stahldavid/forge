@@ -1,7 +1,8 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createConnection } from "node:net";
-import { basename, join, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { normalizePath } from "../compiler/primitives/paths.ts";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -233,10 +234,18 @@ export interface StudioOpenResult {
   previewAutomation: {
     attempted: boolean;
     started: boolean;
+    alreadyRunning?: boolean;
     skippedReason?: "already-running" | "dry-run" | "disabled" | "non-local-preview" | "missing-dependencies" | "install-failed";
     command: string;
     cwd: string;
     pid?: number;
+    owner?: {
+      kind: "forge-managed" | "external-process" | "preexisting-reachable-preview" | "not-owned" | "dry-run";
+      pid?: number;
+      command?: string;
+      evidence: string;
+      statePath?: string;
+    };
     statusBefore: StudioAttachResult["preview"]["status"];
     statusAfter: StudioAttachResult["preview"]["status"];
     install: {
@@ -1325,12 +1334,75 @@ function runDependencyInstall(appRoot: string, pkg: Record<string, unknown>): {
   };
 }
 
-function spawnForgeDev(appRoot: string, previewPort: number): { pid?: number; error?: string } {
+function previewStatePath(appRoot: string): string {
+  return join(appRoot, ".forge", "studio", "preview.json");
+}
+
+function readPreviewState(appRoot: string): { pid?: number; command?: string; previewPort?: number; runtimePort?: number } | null {
+  const path = previewStatePath(appRoot);
+  if (!nodeFileSystem.exists(path)) {
+    return null;
+  }
+  try {
+    return JSON.parse(nodeFileSystem.readText(path) ?? "{}") as {
+      pid?: number;
+      command?: string;
+      previewPort?: number;
+      runtimePort?: number;
+    };
+  } catch {
+    return null;
+  }
+}
+
+function livePreviewState(appRoot: string, previewPort: number): { pid?: number; command?: string } | null {
+  const state = readPreviewState(appRoot);
+  if (!state?.pid) {
+    return null;
+  }
+  if (state.previewPort === previewPort && processIsRunning(state.pid)) {
+    return { pid: state.pid, command: state.command };
+  }
+  if (!processIsRunning(state.pid)) {
+    nodeFileSystem.remove(previewStatePath(appRoot));
+  }
+  return null;
+}
+
+function writePreviewState(input: {
+  appRoot: string;
+  pid?: number;
+  previewPort: number;
+  command: string;
+}): void {
+  if (!input.pid || !processIsRunning(input.pid)) {
+    return;
+  }
+  nodeFileSystem.mkdirp(join(input.appRoot, ".forge", "studio"));
+  nodeFileSystem.writeText(previewStatePath(input.appRoot), `${JSON.stringify({
+    pid: input.pid,
+    command: input.command,
+    previewPort: input.previewPort,
+    runtimePort: STUDIO_TARGET_RUNTIME_PORT,
+    startedAt: new Date().toISOString(),
+  }, null, 2)}\n`);
+}
+
+function spawnForgeDev(appRoot: string, previewPort: number): { pid?: number; command: string; alreadyRunning: boolean; error?: string } {
+  const existing = livePreviewState(appRoot, previewPort);
+  if (existing?.pid) {
+    return {
+      pid: existing.pid,
+      command: existing.command ?? targetAppDevCommand(previewPort),
+      alreadyRunning: true,
+    };
+  }
   const cliEntry = process.argv[1];
   const command = cliEntry ? process.execPath : "forge";
   const args = cliEntry
     ? [cliEntry, "dev", "--port", String(STUDIO_TARGET_RUNTIME_PORT), "--web-port", String(previewPort)]
     : ["dev", "--port", String(STUDIO_TARGET_RUNTIME_PORT), "--web-port", String(previewPort)];
+  const label = targetAppDevCommand(previewPort);
   try {
     const child = spawn(command, args, {
       cwd: appRoot,
@@ -1340,9 +1412,14 @@ function spawnForgeDev(appRoot: string, previewPort: number): { pid?: number; er
       shell: !cliEntry && process.platform === "win32",
     });
     child.unref();
-    return { pid: child.pid };
+    writePreviewState({ appRoot, pid: child.pid, previewPort, command: label });
+    return { pid: child.pid, command: label, alreadyRunning: false };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : String(error) };
+    return {
+      command: label,
+      alreadyRunning: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -1356,6 +1433,40 @@ function processIsRunning(pid: number | undefined): boolean {
   } catch {
     return false;
   }
+}
+
+function detectListeningProcess(port: number): { pid?: number; command?: string; evidence: string } | null {
+  const lsof = spawnSync("lsof", [`-iTCP:${port}`, "-sTCP:LISTEN", "-n", "-P", "-Fp", "-Fc"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    windowsHide: true,
+  });
+  if (lsof.status === 0 && lsof.stdout) {
+    const pid = /^p(\d+)$/m.exec(lsof.stdout)?.[1];
+    const command = /^c(.+)$/m.exec(lsof.stdout)?.[1];
+    return {
+      ...(pid ? { pid: Number(pid) } : {}),
+      ...(command ? { command } : {}),
+      evidence: "lsof reported a listener on the preview port",
+    };
+  }
+  const ss = spawnSync("ss", ["-ltnp", `sport = :${port}`], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    windowsHide: true,
+  });
+  if (ss.status === 0 && ss.stdout) {
+    const pid = /pid=(\d+)/.exec(ss.stdout)?.[1];
+    const command = /users:\(\("([^"]+)"/.exec(ss.stdout)?.[1];
+    if (pid || command) {
+      return {
+        ...(pid ? { pid: Number(pid) } : {}),
+        ...(command ? { command } : {}),
+        evidence: "ss reported a listener on the preview port",
+      };
+    }
+  }
+  return null;
 }
 
 function bridgeStatePath(appRoot: string): string {
@@ -1617,11 +1728,28 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   let skippedReason: StudioOpenResult["previewAutomation"]["skippedReason"];
   let previewStatusAfter = attach.preview.status;
   let pid: number | undefined;
+  let previewOwner: StudioOpenResult["previewAutomation"]["owner"];
 
   if (attach.preview.status.state === "reachable") {
     skippedReason = "already-running";
+    const listener = previewPort ? detectListeningProcess(previewPort) : null;
+    previewOwner = listener
+      ? {
+          kind: "external-process",
+          ...(listener.pid ? { pid: listener.pid } : {}),
+          ...(listener.command ? { command: listener.command } : {}),
+          evidence: `${attach.preview.url} was reachable before ForgeOS attempted startup; ${listener.evidence}`,
+        }
+      : {
+          kind: "preexisting-reachable-preview",
+          evidence: `${attach.preview.url} was reachable before ForgeOS attempted to start the target app`,
+        };
   } else if (options.dryRun) {
     skippedReason = "dry-run";
+    previewOwner = {
+      kind: "dry-run",
+      evidence: "dry-run did not inspect or start a preview process",
+    };
   } else if (!shouldStart) {
     skippedReason = "disabled";
   } else if (!previewPort) {
@@ -1638,7 +1766,22 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   } else {
     startAttempted = true;
     const spawned = spawnForgeDev(appRoot, previewPort);
-    if (spawned.error) {
+    if (spawned.alreadyRunning) {
+      startAttempted = false;
+      skippedReason = "already-running";
+      pid = spawned.pid;
+      previewOwner = {
+        kind: "forge-managed",
+        ...(pid ? { pid } : {}),
+        evidence: "live .forge/studio/preview.json matched the preview port and process is alive",
+        statePath: normalizePath(relative(appRoot, previewStatePath(appRoot))),
+      };
+      previewStatusAfter = await probeStudioPreview(attach.preview, {
+        dryRun: false,
+        startCommand: commands.startTargetApp,
+        timeoutMs: 750,
+      });
+    } else if (spawned.error) {
       diagnostics.push(createDiagnostic({
         severity: "error",
         code: "FORGE_STUDIO_PREVIEW_START_FAILED",
@@ -1649,6 +1792,12 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     } else {
       started = true;
       pid = spawned.pid;
+      previewOwner = {
+        kind: "forge-managed",
+        ...(pid ? { pid } : {}),
+        evidence: "ForgeOS started the target preview for this studio open request",
+        statePath: normalizePath(relative(appRoot, previewStatePath(appRoot))),
+      };
       previewStatusAfter = await waitForPreviewAfterStart(attach.preview, commands.startTargetApp);
       if (previewStatusAfter.state !== "reachable") {
         diagnostics.push(createDiagnostic({
@@ -1785,10 +1934,12 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     previewAutomation: {
       attempted: startAttempted,
       started,
+      alreadyRunning: skippedReason === "already-running",
       ...(skippedReason ? { skippedReason } : {}),
       command: commands.startTargetApp,
       cwd: appRoot,
       ...(pid ? { pid } : {}),
+      ...(previewOwner ? { owner: previewOwner } : {}),
       statusBefore: attach.preview.status,
       statusAfter: preview.status,
       install,
@@ -1890,6 +2041,9 @@ export function formatStudioOpenHuman(result: StudioOpenResult): string {
   const previewAutomation = result.previewAutomation.started
     ? `started${result.previewAutomation.pid ? ` (pid ${result.previewAutomation.pid})` : ""}`
     : result.previewAutomation.skippedReason ?? "not started";
+  const owner = result.previewAutomation.owner
+    ? `${result.previewAutomation.owner.kind}${result.previewAutomation.owner.pid ? ` (pid ${result.previewAutomation.owner.pid})` : ""}`
+    : "unknown";
   const lines = [
     `Forge Studio open: ${result.ok ? "ready" : "needs attention"}`,
     `App: ${result.app.name}`,
@@ -1897,6 +2051,7 @@ export function formatStudioOpenHuman(result: StudioOpenResult): string {
     `Preview: ${result.preview.url}`,
     `Preview status: ${result.preview.status.state} (${result.preview.status.reason})`,
     `Preview automation: ${previewAutomation}`,
+    `Preview owner: ${owner}`,
     `Bridge: ${bridgeStatus} (${result.bridge.studioUrl})`,
     `Start cwd: ${result.previewAutomation.cwd}`,
     "",

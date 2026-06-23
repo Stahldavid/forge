@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import {
   runWindowsDoctorCommand,
@@ -62,7 +64,7 @@ describe("Windows CLI diagnostics", () => {
     const parsed = parseCli(["doctor", "mac"]);
 
     expect(parsed.command).toBeNull();
-    expect(parsed.errors).toContain("forge doctor supports subcommand: windows");
+    expect(parsed.errors).toContain("forge doctor supports subcommand: windows or agent");
   });
 
   test("doctor windows detects suspicious Kiro Bun shims while resolving real Bun", async () => {
@@ -94,5 +96,15 @@ describe("Windows CLI diagnostics", () => {
     expect(result.actions.every((action) => action.applied === false)).toBe(true);
     expect(result.actions.find((action) => action.name === "set-forge-bun")?.command)
       .toContain("setx FORGE_BUN");
+  });
+
+  test("Codex app-server probe waits for process close before cleanup", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src", "forge", "cli", "codex-app-server.ts"),
+      "utf8",
+    );
+    expect(source).toContain('child.once("close"');
+    expect(source).not.toContain('child.once("exit"');
+    expect(source).not.toContain('child.on("exit"');
   });
 });

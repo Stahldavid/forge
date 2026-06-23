@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.18 input=0ee1bf2f038128efd72c20246ad0f70215b2e3ba0bf04eba957f20f4cdeea9cc content=9455e3ab1be0d5e1694bf21caa0ac3d38ed9ecb614f8bc3555216a651ccd57c2
+// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=0a26d1c5851c6223a7730cef1e94266b03560225d393d19355fd70e12bd90c84
 # CAIR Agent Guide
 
 Project: forgeos
@@ -10,8 +10,8 @@ CAIR is the compact agent protocol for reading and changing this Forge workspace
 ## First commands
 
 ```bash
-forge cair snapshot
-forge cair query "Q ST"
+node bin/forge.mjs cair snapshot
+node bin/forge.mjs cair query "Q ST"
 ```
 
 The snapshot emits compact ids:
@@ -25,12 +25,12 @@ The snapshot emits compact ids:
 ## Read before editing
 
 ```bash
-forge cair query "Q S name=<symbol>"
-forge cair query "Q D S#1"
-forge cair query "Q R S#1"
-forge cair query "Q I S#1"
-forge cair query "Q T S#1"
-forge cair query "Q DEP.API package=<pkg> symbol=<export>"
+node bin/forge.mjs cair query "Q S name=<symbol>"
+node bin/forge.mjs cair query "Q D S#1"
+node bin/forge.mjs cair query "Q R S#1"
+node bin/forge.mjs cair query "Q I S#1"
+node bin/forge.mjs cair query "Q T S#1"
+node bin/forge.mjs cair query "Q DEP.API package=<pkg> symbol=<export>"
 ```
 
 Only open source files after CAIR shows that the exact file or body is needed.
@@ -40,19 +40,19 @@ Only open source files after CAIR shows that the exact file or body is needed.
 Never apply semantic mutations first. Create a plan:
 
 ```bash
-forge cair action --plan "A RN t=S#1 nn=<newName>"
+node bin/forge.mjs cair action --plan "A RN t=S#1 nn=<newName>"
 ```
 
 Apply the returned plan path:
 
 ```bash
-forge cair action "A APPLY plan=<P#|.forge/cair/plans/...json>"
+node bin/forge.mjs cair action "A APPLY plan=<P#|.forge/cair/plans/...json>"
 ```
 
 Keep returned journal paths for rollback:
 
 ```bash
-forge cair action "A ROLLBACK journal=.forge/cair/journal/<journal>.json"
+node bin/forge.mjs cair action "A ROLLBACK journal=.forge/cair/journal/<journal>.json"
 ```
 
 ## Semantic actions
@@ -125,9 +125,9 @@ A RB  = A ROLLBACK
 After CAIR edits, run the narrowest useful checks:
 
 ```bash
-forge check --json
-forge verify --standard
-forge verify framework
+node bin/forge.mjs check --json
+node bin/forge.mjs verify --standard
+node bin/forge.mjs verify framework
 ```
 
 ## Constraints

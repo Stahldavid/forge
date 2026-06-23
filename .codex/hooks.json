@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event SessionStart",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs SessionStart",
+            "timeout": 3,
             "statusMessage": "Recording Codex session start"
           }
         ]
@@ -19,8 +19,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event UserPromptSubmit",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs UserPromptSubmit",
+            "timeout": 3,
             "statusMessage": "Recording Codex prompt metadata"
           }
         ]
@@ -32,8 +32,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event PreToolUse",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs PreToolUse",
+            "timeout": 2,
             "statusMessage": "Recording Codex tool request"
           }
         ]
@@ -45,8 +45,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event PermissionRequest",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs PermissionRequest",
+            "timeout": 3,
             "statusMessage": "Recording Codex approval request"
           }
         ]
@@ -58,8 +58,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event PostToolUse",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs PostToolUse",
+            "timeout": 2,
             "statusMessage": "Recording Codex tool result"
           }
         ]
@@ -71,8 +71,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event SubagentStart",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs SubagentStart",
+            "timeout": 3,
             "statusMessage": "Recording Codex subagent start"
           }
         ]
@@ -84,8 +84,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event SubagentStop",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs SubagentStop",
+            "timeout": 3,
             "statusMessage": "Recording Codex subagent stop"
           }
         ]
@@ -97,8 +97,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event PreCompact",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs PreCompact",
+            "timeout": 3,
             "statusMessage": "Recording Codex compaction start"
           }
         ]
@@ -110,8 +110,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event PostCompact",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs PostCompact",
+            "timeout": 3,
             "statusMessage": "Recording Codex compaction result"
           }
         ]
@@ -123,8 +123,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "forge agent ingest codex --event Stop",
-            "timeout": 30,
+            "command": "node .forge/agent/codex-hook.mjs Stop",
+            "timeout": 3,
             "statusMessage": "Recording Codex turn stop"
           }
         ]

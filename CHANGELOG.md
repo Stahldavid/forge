@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-Alpha DX hardening:
+## 0.1.0-alpha.19
+
+Alpha hardening:
 
 - Added the `agent-workroom` app template for Forge Studio style demos: external
   agents edit the app, while ForgeOS shows preview URL, agent signals, check
@@ -17,6 +19,12 @@ Alpha DX hardening:
 - Added human-friendly verifier aliases: `forge verify quick`, `forge verify agent`, and `forge verify release`.
 - Made `forge status --human` an explicit accepted spelling and documented `forge add <npm-package> --workspace web` as the normal package-add path.
 - Made bare `forge inspect` default to the compact `summary` target instead of returning a usage error.
+- Added `forge release doctor`, `release check --allow-missing-local-release`, and `self-host check --prepared-only` so release readiness can distinguish hard failures from not-yet-prepared local artifacts.
+- Hardened the public packed-package smoke with dry-run mode, per-step JSON evidence, step timeouts, installed-global CLI coverage, hook smoke readiness, Studio open coverage, and preview-port cleanup checks.
+- Expanded `forge docs check` with YAML shape checks, internal Markdown link validation, optional ReadTheDocs-style venv installation, and strict MkDocs build execution.
+- Added authored-only review paths through `forge changed --authored` and `forge diff authored`, keeping generated artifacts collapsed unless explicitly requested.
+- Added `forge delta status --verbose --json` for schema, lock, path, and aggregate-count diagnostics without expanding the default status payload.
+- Added explicit hook readiness levels (`none`, `canary`, `trusted-native`) and documented `.codex/hooks.json` as versioned adapter configuration while keeping `.forge/agent/**` as local operational state.
 
 ## 0.1.0-alpha.18
 

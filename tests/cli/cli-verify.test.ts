@@ -54,6 +54,37 @@ describe("Forge CLI verify", () => {
     );
   });
 
+  test("default verify is app-scoped and uses the app test script", async () => {
+    writePackageJson({
+      name: "forge-verify-app-default-test",
+      private: true,
+      type: "module",
+      packageManager: "npm@10.9.0",
+      scripts: {
+        test: "node -e \"console.error('app test executed'); process.exit(7)\"",
+      },
+      dependencies: { zod: "^3.24.0" },
+    });
+    await runGenerateCommand(defaultGenerateOptions(workspace));
+    const result = await runVerifyCommand({
+      workspaceRoot: workspace,
+      json: true,
+      skipTests: false,
+      skipTypecheck: true,
+      skipEslint: true,
+      strict: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.profile).toBe("default");
+    expect(result.steps.find((step) => step.name === "tests")?.failureKind).toBe("script-failure");
+    expect(result.steps.some((step) => step.name === "tests:testgraph-strict")).toBe(false);
+    expect(result.steps.some((step) => step.name === "tests:framework-testgraph")).toBe(false);
+    expect(result.diagnostics.find((diagnostic) => diagnostic.code === "FORGE_VERIFY_TESTS")?.fixHint).toContain(
+      "app test executed",
+    );
+  });
+
   test("verify reports package script timeouts", async () => {
     writePackageJson({
       name: "forge-verify-timeout-test",

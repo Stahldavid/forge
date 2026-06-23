@@ -41,6 +41,11 @@ import type {
 import { createDiagnostic } from "../diagnostics/create.ts";
 import { CAIR_SCHEMA_VERSION } from "../../cair/types.ts";
 import { AUTH_ENV, DEFAULT_AUTH_CLAIMS } from "../../runtime/auth/config.ts";
+import {
+  forgeCliCommandForWorkspace,
+  forgeCliCommandsForWorkspace,
+  shouldUseLocalForgeCli,
+} from "../../workspace/forge-cli.ts";
 import type {
   AgentCapabilityMap,
   AgentCapabilityMapEntry,
@@ -60,6 +65,7 @@ import type {
 const AGENTS_USER_START = "<!-- user-notes:start -->";
 const AGENTS_USER_END = "<!-- user-notes:end -->";
 const DEFAULT_USER_NOTES = "Project-specific notes can go here.";
+const AGENTS_USER_NOTES_TOKEN = "__FORGE_AGENTS_USER_NOTES__";
 
 export interface AgentContractInput {
   workspaceRoot: string;
@@ -282,14 +288,14 @@ function runtimeRules(): AgentRuntimeRule[] {
   ];
 }
 
-function agentProtocols(): AgentProtocolInfo[] {
+function agentProtocols(workspaceRoot: string): AgentProtocolInfo[] {
   return [
     {
       id: "cair",
       kind: "agent-protocol",
       version: CAIR_SCHEMA_VERSION,
       guide: "src/forge/_generated/agentCairGuide.md",
-      commands: [
+      commands: forgeCliCommandsForWorkspace(workspaceRoot, [
         "forge cair snapshot",
         "forge cair query \"Q ST\"",
         "forge cair query \"Q S name=<symbol>\"",
@@ -299,7 +305,7 @@ function agentProtocols(): AgentProtocolInfo[] {
         "forge cair action --plan \"A RN t=S#1 nn=<newName>\"",
         "forge cair action \"A APPLY plan=<P#|path>\"",
         "forge cair action \"A ROLLBACK journal=<path>\"",
-      ],
+      ]),
       preferredFor: [
         "compact repository orientation",
         "symbol lookup before file reads",
@@ -1141,7 +1147,7 @@ export function buildAgentContractArtifacts(
     queries: queryInfos,
     liveQueries: liveQueryInfos,
   });
-  const protocols = agentProtocols();
+  const protocols = agentProtocols(input.workspaceRoot);
   const contract: AgentContract = {
     schemaVersion: "0.1.0",
     generatorVersion: GENERATOR_VERSION,
@@ -1330,9 +1336,9 @@ export function buildAgentContractArtifacts(
     playbooks: playbooks(),
     agentProtocols: protocols,
     commandsToRun: {
-      beforeEditing: ["forge agent onboard --target codex --json", "forge status --json", "forge changed --json", "forge handoff --json", "forge do inspect --json", "forge cair snapshot", "forge cair query \"Q ST\"", "forge dev --once --json", "forge agent print-context --json", "forge check --json"],
-      afterEditing: ["forge generate", "forge check", "forge verify --standard", finalVerifyCommand(project.name)],
-      dev: ["forge dev", "forge dev --once --json", "forge handoff --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"],
+      beforeEditing: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge agent onboard --target codex --json", "forge status --json", "forge changed --json", "forge handoff --json", "forge do inspect --json", "forge cair snapshot", "forge cair query \"Q ST\"", "forge dev --once --json", "forge agent print-context --json", "forge check --json"]),
+      afterEditing: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge generate", "forge check", "forge verify --standard", finalVerifyCommand(input.workspaceRoot)]),
+      dev: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge dev", "forge dev --once --json", "forge handoff --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"]),
     },
   };
 
@@ -1341,7 +1347,7 @@ export function buildAgentContractArtifacts(
     ? (nodeFileSystem.readText(existingAgentsPath) ?? "")
     : null;
   const userNotes = extractUserNotes(existingAgents);
-  const agentsMd = renderAgentsMd(contract, userNotes);
+  const agentsMd = renderAgentsMd(contract, userNotes, input.workspaceRoot);
   const toolRegistry = buildAgentToolRegistry(contract);
   const capabilityMap = buildCapabilityMap(contract);
   const capabilityMapMd = renderCapabilityMapMd(capabilityMap);
@@ -1349,8 +1355,8 @@ export function buildAgentContractArtifacts(
   const appMapMd = renderAppMapMd(contract);
   const runtimeRulesMd = renderRuntimeRulesMd(contract.rules);
   const operationPlaybooksMd = renderOperationPlaybooksMd(contract.playbooks);
-  const agentQuickstartMd = renderAgentQuickstartMd(project.name);
-  const agentCairGuideMd = renderAgentCairGuideMd(contract);
+  const agentQuickstartMd = renderAgentQuickstartMd(input.workspaceRoot);
+  const agentCairGuideMd = renderAgentCairGuideMd(contract, input.workspaceRoot);
   const diagnostics = scanAgentContractForLeaks(contract, [
     agentsMd,
     agentToolsMd,
@@ -1420,12 +1426,22 @@ export function serializeAgentToolRegistryTs(registry: AgentToolRegistry): strin
   return `export const agentTools = ${JSON.stringify(parsed, null, 2)} as const;\n`;
 }
 
-function finalVerifyCommand(projectName: string): string {
-  return projectName === "forgeos" ? "forge verify framework" : "forge verify --strict";
+function localizeForgeCliMarkdown(workspaceRoot: string, markdown: string): string {
+  return shouldUseLocalForgeCli(workspaceRoot)
+    ? markdown.replace(/\bforge (?=[a-z])/g, "node bin/forge.mjs ")
+    : markdown;
 }
 
-function renderAgentsMd(contract: AgentContract, userNotes: string): string {
-  const finalVerify = finalVerifyCommand(contract.project.name);
+function finalVerifyCommand(workspaceRoot: string): string {
+  const command = shouldUseLocalForgeCli(workspaceRoot) ? "forge verify framework" : "forge verify --strict";
+  return forgeCliCommandForWorkspace(workspaceRoot, command);
+}
+
+function renderAgentsMd(contract: AgentContract, userNotes: string, workspaceRoot: string): string {
+  const finalVerify = finalVerifyCommand(workspaceRoot);
+  const cliEntrypoint = shouldUseLocalForgeCli(workspaceRoot)
+    ? "This is the ForgeOS framework checkout. Use `node bin/forge.mjs ...` so maintainer commands run against this source tree; reserve the global `forge` command for installed-package smoke tests."
+    : "Use the installed `forge` command for app workflows.";
   const tenantTables = contract.data.tables
     .filter((table) => table.tenantScoped)
     .map((table) => `${table.name} via ${table.tenantField}`);
@@ -1440,13 +1456,17 @@ function renderAgentsMd(contract: AgentContract, userNotes: string): string {
     `${agent.name}: ${agent.provider}/${agent.model} with ${agent.tools.length > 0 ? agent.tools.join(", ") : "no tools"}`,
   );
 
-  return normalizeNewlines(`# AGENTS.md
+  const generated = localizeForgeCliMarkdown(workspaceRoot, `# AGENTS.md
 
 <!-- forge-generated:start -->
 
 ## Project
 
 This is a ForgeOS application named \`${contract.project.name}\`.
+
+## CLI entrypoint
+
+${cliEntrypoint}
 
 ## Required workflow
 
@@ -1783,10 +1803,11 @@ Durable invalidations live in \`_forge_live_invalidations\`.
 
 ${AGENTS_USER_START}
 
-${userNotes}
+${AGENTS_USER_NOTES_TOKEN}
 
 ${AGENTS_USER_END}
 `);
+  return normalizeNewlines(generated.replace(AGENTS_USER_NOTES_TOKEN, () => userNotes));
 }
 
 function renderAppMapMd(contract: AgentContract): string {
@@ -2147,9 +2168,9 @@ function renderOperationPlaybooksMd(playbookEntries: AgentPlaybook[]): string {
   return normalizeNewlines(lines.join("\n"));
 }
 
-function renderAgentQuickstartMd(projectName: string): string {
-  const finalVerify = finalVerifyCommand(projectName);
-  return normalizeNewlines(`# Agent Quickstart
+function renderAgentQuickstartMd(workspaceRoot: string): string {
+  const finalVerify = finalVerifyCommand(workspaceRoot);
+  return normalizeNewlines(localizeForgeCliMarkdown(workspaceRoot, `# Agent Quickstart
 
 Run:
 
@@ -2187,12 +2208,12 @@ Always finish with:
 forge generate
 ${finalVerify}
 \`\`\`
-`);
+`));
 }
 
-function renderAgentCairGuideMd(contract: AgentContract): string {
+function renderAgentCairGuideMd(contract: AgentContract, workspaceRoot: string): string {
   const cair = contract.agentProtocols.find((protocol) => protocol.id === "cair");
-  const finalVerify = finalVerifyCommand(contract.project.name);
+  const finalVerify = finalVerifyCommand(workspaceRoot);
   const summary = [
     `commands=${contract.commands.length}`,
     `queries=${contract.queries.length}`,
@@ -2201,7 +2222,7 @@ function renderAgentCairGuideMd(contract: AgentContract): string {
     `workflows=${contract.workflows.length}`,
     `tables=${contract.data.tables.length}`,
   ].join(" ");
-  return normalizeNewlines(`# CAIR Agent Guide
+  return normalizeNewlines(localizeForgeCliMarkdown(workspaceRoot, `# CAIR Agent Guide
 
 Project: ${contract.project.name}
 CAIR version: ${cair?.version ?? CAIR_SCHEMA_VERSION}
@@ -2338,5 +2359,5 @@ ${finalVerify}
 - Do not bypass \`--plan\` for semantic edits.
 - Do not use CAIR as blind text replacement when a semantic action exists.
 - Use TypeScript language service, ast-grep, ts-morph, or raw file reads only as implementation backends or fallbacks. CAIR is the agent-facing protocol.
-`);
+`));
 }

@@ -14,6 +14,7 @@ import type { LiveSubcommand } from "./live.ts";
 import type { ForgeAiProvider } from "../runtime/ai/types.ts";
 import type { NewPackageManager, NewTemplateName } from "./new.ts";
 import type { SelfHostSubcommand } from "./self-host.ts";
+import type { DocsSubcommand } from "./docs.ts";
 import type { AgentContractSubcommand } from "./agent-contract.ts";
 import type { AuthSubcommand } from "./auth.ts";
 import type { RlsSubcommand } from "./rls.ts";
@@ -94,6 +95,15 @@ export type ForgeCommand =
       postgresVersion: string;
       runtimePort: number;
       webPort: number;
+      preparedOnly?: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "docs";
+      subcommand: DocsSubcommand;
+      json: boolean;
+      build: boolean;
+      installVenv: boolean;
       workspaceRoot: string;
     }
   | {
@@ -155,6 +165,7 @@ export type ForgeCommand =
       json: boolean;
       allowDirty: boolean;
       allowPublicSourcemaps: boolean;
+      allowMissingLocalRelease?: boolean;
       workspaceRoot: string;
     }
   | { kind: "make"; options: MakeCommandOptions }
@@ -172,9 +183,10 @@ export type ForgeCommand =
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
   | { kind: "import"; options: BrownfieldImportCommandOptions }
-  | { kind: "delta"; subcommand: "status" | "repair"; json: boolean; workspaceRoot: string; dryRun: boolean; yes: boolean }
+  | { kind: "delta"; subcommand: "status" | "repair"; json: boolean; workspaceRoot: string; dryRun: boolean; yes: boolean; verbose: boolean }
   | { kind: "status"; json: boolean; workspaceRoot: string }
-  | { kind: "changed"; json: boolean; workspaceRoot: string }
+  | { kind: "changed"; json: boolean; authoredOnly: boolean; workspaceRoot: string }
+  | { kind: "diff"; target: "authored" | "generated" | "full"; json: boolean; workspaceRoot: string }
   | { kind: "handoff"; json: boolean; workspaceRoot: string }
   | {
       kind: "studio";
@@ -366,6 +378,7 @@ export const TOP_LEVEL_COMMANDS = [
   "serve",
   "worker",
   "self-host",
+  "docs",
   "agent-contract",
   "agent",
   "mcp",
@@ -395,6 +408,7 @@ export const TOP_LEVEL_COMMANDS = [
   "import",
   "status",
   "changed",
+  "diff",
   "handoff",
   "studio",
   "generate",
@@ -923,6 +937,26 @@ export function parseCli(argv: string[]): ParsedCli {
           postgresVersion: parseOptionValue(argv, "--postgres-version") ?? "16",
           runtimePort: Math.floor(runtimePort),
           webPort: Math.floor(webPort),
+          preparedOnly: parseFlag(argv, "--prepared-only"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "docs": {
+      const subcommand = rest[0] as DocsSubcommand | undefined;
+      if (subcommand !== "check") {
+        errors.push("forge docs requires subcommand: check");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "docs",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          build: parseFlag(argv, "--build"),
+          installVenv: parseFlag(argv, "--install-venv"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1267,6 +1301,7 @@ export function parseCli(argv: string[]): ParsedCli {
           json: parseFlag(argv, "--json"),
           allowDirty: parseFlag(argv, "--allow-dirty"),
           allowPublicSourcemaps: parseFlag(argv, "--allow-public-sourcemaps"),
+          allowMissingLocalRelease: parseFlag(argv, "--allow-missing-local-release"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1722,11 +1757,29 @@ export function parseCli(argv: string[]): ParsedCli {
         command: {
           kind: "changed",
           json: parseFlag(argv, "--json"),
+          authoredOnly: parseFlag(argv, "--authored"),
           workspaceRoot,
         },
         workspaceRoot,
         errors,
       };
+    case "diff": {
+      const target = (rest[0] ?? "authored") as "authored" | "generated" | "full";
+      if (!["authored", "generated", "full"].includes(target)) {
+        errors.push("forge diff requires target: authored, generated, or full");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "diff",
+          target,
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "handoff":
       return {
         command: {
@@ -1840,6 +1893,7 @@ export function parseCli(argv: string[]): ParsedCli {
           json: parseFlag(argv, "--json"),
           dryRun: parseFlag(argv, "--dry-run"),
           yes: parseFlag(argv, "--yes"),
+          verbose: parseFlag(argv, "--verbose"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2683,6 +2737,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--allow-high-risk",
     "--to",
     "--changed",
+    "--authored",
     "--env",
     "--input",
     "--provider",
@@ -2690,6 +2745,10 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--release",
     "--allow-dirty",
     "--allow-public-sourcemaps",
+    "--allow-missing-local-release",
+    "--prepared-only",
+    "--build",
+    "--install-venv",
     "--with-release",
     "--concurrency",
     "--iterations",
@@ -2767,6 +2826,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-rules",
     "--full",
     "--brief",
+    "--verbose",
     "--run-tests",
     "--model-level",
     "--live",

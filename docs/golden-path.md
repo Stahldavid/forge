@@ -15,6 +15,8 @@ forge dev --once --json
 forge inspect all --brief --json
 ```
 
+In a generated app, `forge` means the installed/package-script CLI for that app. In the ForgeOS framework checkout, use `node bin/forge.mjs ...` for the same commands and reserve global `forge` for public package smoke tests.
+
 Read:
 
 - `summary.generated`
@@ -90,6 +92,12 @@ Use strict verification before release, high-risk merges, or public package publ
 
 ```bash
 forge verify --strict
+```
+
+Framework maintainers use the explicit framework gate:
+
+```bash
+node bin/forge.mjs verify framework
 ```
 
 ## 5. Smoke The Public Path

@@ -9,12 +9,15 @@ import {
   describeDeltaStoreBusy,
   getDeltaStorePath,
   probeDeltaStoreBusy,
+  summarizeDeltaStoreBusy,
   type DeltaStatus,
+  type DeltaStatusDetails,
   type DeltaStoreBusyInfo,
 } from "./store.ts";
+import { DELTA_SCHEMA_VERSION } from "./schema.ts";
 
 export type DeltaStatusResult =
-  | (DeltaStatus & { exitCode: 0 })
+  | (DeltaStatus & { details?: DeltaStatusDetails; exitCode: 0 })
   | {
       ok: false;
       recording: false;
@@ -24,6 +27,10 @@ export type DeltaStatusResult =
       nextActions: string[];
       exitCode: 1;
     };
+
+export interface DeltaStatusOptions {
+  verbose?: boolean;
+}
 
 export interface DeltaRepairOptions {
   workspaceRoot: string;
@@ -92,7 +99,38 @@ async function openDeltaStoreForStatus(
   return { store: null, openError };
 }
 
-function pgliteActiveStatus(workspaceRoot: string, storePath: string): DeltaStatusResult | null {
+function pgliteStatusDetails(workspaceRoot: string, storePath: string): DeltaStatusDetails {
+  const lockPath = join(workspaceRoot, ".forge", "delta", "delta.lock");
+  const postmasterPath = join(workspaceRoot, ".forge", "delta", "delta.db", "postmaster.pid");
+  return {
+    schema: {
+      expectedVersion: DELTA_SCHEMA_VERSION,
+    },
+    paths: {
+      store: storePath,
+      lock: normalizePath(relative(workspaceRoot, lockPath)),
+      postmaster: normalizePath(relative(workspaceRoot, postmasterPath)),
+    },
+    locks: {
+      forgeLockPresent: existsSync(lockPath),
+      postmasterPresent: existsSync(postmasterPath),
+    },
+    counts: {
+      sessions: 0,
+      operations: 0,
+      fileChanges: 0,
+      commandRuns: 0,
+      runtimeCalls: 0,
+      proofs: 0,
+      artifacts: 0,
+      workSessions: 0,
+      agentMemoryEvents: 0,
+      semanticEvents: 0,
+    },
+  };
+}
+
+function pgliteActiveStatus(workspaceRoot: string, storePath: string, options: DeltaStatusOptions = {}): DeltaStatusResult | null {
   const postmasterPath = join(workspaceRoot, ".forge", "delta", "delta.db", "postmaster.pid");
   const forgeLockPath = join(workspaceRoot, ".forge", "delta", "delta.lock");
   if (!existsSync(postmasterPath) || existsSync(forgeLockPath)) {
@@ -107,11 +145,12 @@ function pgliteActiveStatus(workspaceRoot: string, storePath: string): DeltaStat
       reason: "DeltaDB is open in another local Forge/PGlite process; status is treated as active for Studio observer flows.",
     },
     recentOperations: [],
+    ...(options.verbose ? { details: pgliteStatusDetails(workspaceRoot, storePath) } : {}),
     exitCode: 0,
   };
 }
 
-export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatusResult> {
+export async function runDeltaStatus(workspaceRoot: string, options: DeltaStatusOptions = {}): Promise<DeltaStatusResult> {
   const storePath = normalizePath(relative(workspaceRoot, getDeltaStorePath(workspaceRoot)));
   const { store, openError } = await openDeltaStoreForStatus(workspaceRoot);
   if (!store) {
@@ -124,7 +163,7 @@ export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatus
       busyInfo.processAlive === false &&
       !existsSync(join(workspaceRoot, ".forge", "delta", "delta.lock"))
     ) {
-      return pgliteActiveStatus(workspaceRoot, storePath) ?? {
+      return pgliteActiveStatus(workspaceRoot, storePath, options) ?? {
         ok: true,
         recording: true,
         store: storePath,
@@ -133,21 +172,15 @@ export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatus
           reason: "DeltaDB is open in another local Forge/PGlite process; status is treated as active for Studio observer flows.",
         },
         recentOperations: [],
+        ...(options.verbose ? { details: pgliteStatusDetails(workspaceRoot, storePath) } : {}),
         exitCode: 0,
       };
     }
-    const activePglite = pgliteActiveStatus(workspaceRoot, storePath);
+    const activePglite = pgliteActiveStatus(workspaceRoot, storePath, options);
     if (activePglite) {
       return activePglite;
     }
-    const busySummary = busyInfo
-      ? [
-          `lock=${busyInfo.relativeLockPath}`,
-          busyInfo.pid ? `pid=${busyInfo.pid}` : undefined,
-          busyInfo.processAlive ? "process=alive" : "process=unknown-or-exited",
-          typeof busyInfo.ageMs === "number" ? `age=${Math.round(busyInfo.ageMs / 1000)}s` : undefined,
-        ].filter(Boolean).join(", ")
-      : undefined;
+    const busySummary = busyInfo ? summarizeDeltaStoreBusy(busyInfo) : undefined;
     return {
       ok: false,
       recording: false,
@@ -189,8 +222,10 @@ export async function runDeltaStatus(workspaceRoot: string): Promise<DeltaStatus
     };
   }
   try {
+    const status = await store.status();
     return {
-      ...(await store.status()),
+      ...status,
+      ...(options.verbose ? { details: await store.statusDetails() } : {}),
       exitCode: 0,
     };
   } finally {
@@ -237,12 +272,7 @@ export async function runDeltaRepair(options: DeltaRepairOptions): Promise<Delta
   const busy = probeDeltaStoreBusy(options.workspaceRoot);
   if (busy) {
     const busyInfo = describeDeltaStoreBusy(busy, options.workspaceRoot);
-    const busySummary = [
-      `lock=${busyInfo.relativeLockPath}`,
-      busyInfo.pid ? `pid=${busyInfo.pid}` : undefined,
-      busyInfo.processAlive ? "process=alive" : "process=unknown-or-exited",
-      typeof busyInfo.ageMs === "number" ? `age=${Math.round(busyInfo.ageMs / 1000)}s` : undefined,
-    ].filter(Boolean).join(", ");
+    const busySummary = summarizeDeltaStoreBusy(busyInfo);
     return {
       ok: false,
       applied: false,
@@ -406,6 +436,17 @@ export function formatDeltaStatusHuman(result: DeltaStatusResult): string {
   } else {
     for (const operation of result.recentOperations) {
       lines.push(`  ${operation.timestamp.slice(11, 16)} ${operation.kind}${operation.summary ? ` ${operation.summary}` : ""}`);
+    }
+  }
+  if (result.details) {
+    lines.push("");
+    lines.push("Details:");
+    lines.push(`  schema: ${result.details.schema.storedVersion ?? "unknown"} (expected ${result.details.schema.expectedVersion})`);
+    lines.push(`  lock: ${result.details.locks.forgeLockPresent ? "present" : "absent"} at ${result.details.paths.lock}`);
+    lines.push(`  postmaster: ${result.details.locks.postmasterPresent ? "present" : "absent"} at ${result.details.paths.postmaster}`);
+    lines.push("  counts:");
+    for (const [name, count] of Object.entries(result.details.counts)) {
+      lines.push(`    ${name}: ${count}`);
     }
   }
   return `${lines.join("\n")}\n`;

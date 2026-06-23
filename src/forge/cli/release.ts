@@ -18,12 +18,14 @@ import {
   providerConfigDiagnostics,
 } from "../runtime/release/runtime.ts";
 import { symbolicateStacktrace } from "../runtime/release/symbolicate.ts";
+import { releasePrepareNextActions, releaseReadyNextActions } from "./next-actions.ts";
 
 export type ReleaseArea = "release" | "artifacts" | "sourcemaps";
 export type ReleaseAction =
   | "prepare"
   | "inspect"
   | "check"
+  | "doctor"
   | "finalize"
   | "collect"
   | "list"
@@ -44,12 +46,15 @@ export interface ReleaseCommandOptions {
   target?: ReleaseExportProvider;
   allowDirty: boolean;
   allowPublicSourcemaps: boolean;
+  allowMissingLocalRelease?: boolean;
 }
 
 export interface ReleaseCommandResult {
   ok: boolean;
   data?: unknown;
   diagnostics: Diagnostic[];
+  nextActions?: string[];
+  failureKind?: string;
   exitCode: 0 | 1;
 }
 
@@ -125,19 +130,34 @@ export async function runReleaseCommand(
     const dir = latestReleaseDir(options.workspaceRoot);
     const diagnostics: Diagnostic[] = [];
     if (!dir || !nodeFileSystem.exists(join(dir, "release.json"))) {
-      diagnostics.push(
-        createDiagnostic({
-          severity: "error",
+      if (options.allowMissingLocalRelease) {
+        diagnostics.push(createDiagnostic({
+          severity: "warning",
           code: FORGE_RELEASE_ID_MISSING,
-          message: "no prepared local release found",
-        }),
-      );
+          message: "no prepared local release found; treating this as not-prepared because --allow-missing-local-release was provided",
+          fixHint: "Run forge release prepare when you want to validate a concrete release bundle.",
+          suggestedCommands: releasePrepareNextActions(),
+        }));
+      } else {
+        diagnostics.push(
+          createDiagnostic({
+            severity: "error",
+            code: FORGE_RELEASE_ID_MISSING,
+            message: "no prepared local release found; run forge release prepare before release check/finalize",
+            fixHint: "Prepare a local release first, then re-run the release gate.",
+            suggestedCommands: releasePrepareNextActions(),
+          }),
+        );
+      }
     }
+    const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
     return {
-      ok: diagnostics.length === 0,
-      data: { releaseDir: dir },
+      ok: errors.length === 0,
+      data: { releaseDir: dir, state: diagnostics.length === 0 ? "prepared" : "missing-prepared-release" },
       diagnostics,
-      exitCode: diagnostics.length === 0 ? 0 : 1,
+      nextActions: diagnostics.length === 0 ? releaseReadyNextActions() : releasePrepareNextActions(),
+      failureKind: errors.length === 0 ? undefined : "missing-prepared-release",
+      exitCode: errors.length === 0 ? 0 : 1,
     };
   }
 
@@ -256,7 +276,7 @@ export async function runReleaseCommand(
     };
   }
 
-  return { ok: false, diagnostics: [], exitCode: 1 };
+  return { ok: false, diagnostics: [], failureKind: "unsupported-release-command", exitCode: 1 };
 }
 
 function missingRelease(): ReleaseCommandResult {
@@ -266,9 +286,13 @@ function missingRelease(): ReleaseCommandResult {
       createDiagnostic({
         severity: "error",
         code: FORGE_RELEASE_ID_MISSING,
-        message: "release not found",
+        message: "release not found; pass --release <id> or run forge release prepare first",
+        fixHint: "Inspect the prepared releases directory or create a new local release.",
+        suggestedCommands: ["forge release prepare --env production", "forge release inspect --json"],
       }),
     ],
+    nextActions: ["forge release prepare --env production", "forge release inspect --json"],
+    failureKind: "missing-prepared-release",
     exitCode: 1,
   };
 }

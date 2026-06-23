@@ -528,7 +528,11 @@ describe("H30 agent adapter export", () => {
     expect(waiting.nextActions).toContain("forge agent hooks smoke --target codex --json");
 
     const smoke = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
-    expect(smoke.ok).toBe(false);
+    expect(smoke.ok).toBe(true);
+    expect(smoke.exitCode).toBe(0);
+    expect(smoke.smokeReady).toBe(true);
+    expect(smoke.trustedNativeReady).toBe(false);
+    expect(smoke.readinessLevel).toBe("canary");
     expect(smoke.approvalRequired).toBe(true);
     expect(smoke.canary?.visible).toBe(true);
     const stillWaiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
@@ -592,7 +596,11 @@ describe("H30 agent adapter export", () => {
   test("agent hooks smoke stores a canary hook event without bypassing Codex trust", async () => {
     const root = workspace();
     const result = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
+    expect(result.exitCode).toBe(0);
+    expect(result.smokeReady).toBe(true);
+    expect(result.trustedNativeReady).toBe(false);
+    expect(result.readinessLevel).toBe("canary");
     expect(result.installed).toBe(true);
     expect(result.bridgeWritable).toBe(true);
     expect(result.deltaWritable).toBe(true);
@@ -620,9 +628,13 @@ describe("H30 agent adapter export", () => {
       "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
     );
     expect(result.checks.some((check) => check.name === "canary-memory-readable" && check.ok)).toBe(true);
-    expect(result.checks.some((check) => check.name === "codex-hook-approval" && !check.ok)).toBe(true);
+    expect(result.checks.some((check) => check.name === "codex-hook-approval" && check.ok)).toBe(true);
+    expect(result.diagnostics.some((diag) => diag.code === "FORGE_AGENT_HOOK_APPROVAL_REQUIRED")).toBe(true);
     expect(JSON.stringify(result.ingestResult)).toContain("FORGE_HOOK_SMOKE_CANARY");
     const human = formatAgentHuman(result);
+    expect(human).toContain("smoke ready: yes");
+    expect(human).toContain("trusted native ready: no");
+    expect(human).toContain("readiness level: canary");
     expect(human).toContain("approval: waiting-for-user-trust");
     expect(human).toContain("Canary:");
     expect(human).toContain("marker: FORGE_HOOK_SMOKE_CANARY");
@@ -651,7 +663,11 @@ describe("H30 agent adapter export", () => {
       const prepared = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
       expect(prepared.ok).toBe(true);
       const smoke = await runAgentHooksSmoke({ ...options(root, "codex"), subcommand: "hooks", hookAction: "smoke" });
-      expect(smoke.ok).toBe(false);
+      expect(smoke.ok).toBe(true);
+      expect(smoke.exitCode).toBe(0);
+      expect(smoke.smokeReady).toBe(true);
+      expect(smoke.trustedNativeReady).toBe(false);
+      expect(smoke.readinessLevel).toBe("canary");
 
       const needsApproval = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
       expect(needsApproval.ok).toBe(false);

@@ -131,6 +131,22 @@ describe("self-host deploy packaging", () => {
         webPort: 3000,
       });
       expect(missingArtifacts.exitCode).toBe(1);
+      expect(missingArtifacts.nextActions).toContain("forge self-host compose");
+
+      const preparedOnly = await runSelfHostCommand({
+        subcommand: "check",
+        workspaceRoot: project,
+        json: false,
+        withWeb: true,
+        postgresVersion: "16",
+        runtimePort: 3765,
+        webPort: 3000,
+        preparedOnly: true,
+      });
+      expect(preparedOnly.exitCode).toBe(0);
+      expect(preparedOnly.ok).toBe(true);
+      expect(preparedOnly.state).toBe("not-prepared");
+      expect(preparedOnly.nextActions).toContain("forge self-host compose");
 
       await runSelfHostCommand({
         subcommand: "compose",
@@ -155,6 +171,7 @@ describe("self-host deploy packaging", () => {
       expect(checked.checks?.map((check) => check.name)).toContain("generated");
       expect(checked.checks?.map((check) => check.name)).toContain("env-example-secrets");
       expect(checked.checks?.map((check) => check.name)).toContain("auth-config");
+      expect(checked.nextActions).toContain("docker compose -f deploy/docker-compose.yml config");
     } finally {
       cleanupWorkspace(workspace);
     }

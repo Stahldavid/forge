@@ -134,15 +134,28 @@ function buildReviewFocus(humanChanges: HumanChangeSummary, derivedChanges: Deri
   };
 }
 
-export function runChangedCommand(workspaceRoot: string): ChangedCommandResult {
+export function runChangedCommand(workspaceRoot: string, options: { authoredOnly?: boolean } = {}): ChangedCommandResult {
   const git = buildWorkspaceGitSummary(workspaceRoot);
   const changed = git.changeSummary.changed;
   const humanChanges = selectHumanChangeSummary(changed);
   const derivedChanges = selectDerivedChangeSummary(changed);
+  const authoredChanged: CategorizedFileSummary = {
+    ...changed,
+    total: { ...changed.total, count: humanChanges.total },
+    byType: {
+      ...changed.byType,
+      generated: { count: 0, sample: [], hidden: 0 },
+    },
+    primaryTypes: changed.primaryTypes.filter((type) => type !== "generated"),
+  };
+  const viewChanged = options.authoredOnly ? authoredChanged : changed;
+  const viewDerivedChanges: DerivedChangeSummary = options.authoredOnly
+    ? { total: 0, generated: { count: 0, sample: [], hidden: 0 } }
+    : derivedChanges;
   const risks = buildRisks(git);
   const recommendedCommands = buildRecommendedCommands(git);
-  const reviewFocus = buildReviewFocus(humanChanges, derivedChanges);
-  const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(changed);
+  const reviewFocus = buildReviewFocus(humanChanges, viewDerivedChanges);
+  const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
 
   return {
     ok: git.available,
@@ -152,27 +165,28 @@ export function runChangedCommand(workspaceRoot: string): ChangedCommandResult {
       summary: {
         branch: git.branch,
         commit: git.commit,
-        changedFiles: changed.total.count,
+        view: options.authoredOnly ? "authored" : "all",
+        changedFiles: viewChanged.total.count,
         humanFiles: humanChanges.total,
-        generatedFiles: derivedChanges.total,
+        generatedFiles: viewDerivedChanges.total,
         stagedFiles: git.staged.count,
         unstagedFiles: git.unstaged.count,
         untrackedFiles: git.untracked.count,
-        primaryTypes: changed.primaryTypes,
-        changeTypes: summarizeChangeTypes(changed),
+        primaryTypes: viewChanged.primaryTypes,
+        changeTypes: summarizeChangeTypes(viewChanged),
       },
       git: {
         available: git.available,
         ...(git.error ? { error: git.error } : {}),
         branch: git.branch,
         commit: git.commit,
-        changed: git.changeSummary.changed,
+        changed: viewChanged,
         staged: git.changeSummary.staged,
         unstaged: git.changeSummary.unstaged,
         untracked: git.changeSummary.untracked,
       },
       humanChanges,
-      derivedChanges,
+      derivedChanges: viewDerivedChanges,
       reviewFocus,
       diffPlan,
       risks,

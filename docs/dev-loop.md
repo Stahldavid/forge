@@ -31,6 +31,8 @@ Use `forge dev` when you want a live local app. Use `forge dev --once --json` wh
 
 This is why `forge dev --once --json` is usually the first command after `forge do inspect --json`.
 
+Generated apps should run the `forge` command or their `npm run forge -- ...` package script. In the ForgeOS framework checkout, maintainer diagnostics should use `node bin/forge.mjs ...` so `dev --once`, `status`, and generated AGENTS guidance come from the source tree being edited instead of a stale global install.
+
 ## Typical local session
 
 ```bash

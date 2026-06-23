@@ -138,6 +138,7 @@ export interface AgentPrintContextResult {
 
 export type AgentHookBridgeState = "ready" | "missing" | "not-supported" | "waiting-for-user-trust" | "memory-unavailable";
 export type AgentHookApprovalStatus = "not-required" | "waiting-for-user-trust" | "trusted" | "memory-unavailable";
+export type AgentHookReadinessLevel = "none" | "canary" | "trusted-native";
 
 export interface AgentDoctorResult {
   ok: boolean;
@@ -222,6 +223,9 @@ export interface AgentHooksSmokeResult {
   ok: boolean;
   target: AgentAdapterTarget;
   installTarget?: string;
+  smokeReady: boolean;
+  trustedNativeReady: boolean;
+  readinessLevel: AgentHookReadinessLevel;
   installed: boolean;
   bridgeWritable: boolean;
   deltaWritable: boolean;

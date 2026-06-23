@@ -786,7 +786,7 @@ export async function probeCodexAppServerHandshake(options: {
     child.once("error", (error) => {
       finish({ ok: false, initialized: false, error: error.message });
     });
-    child.once("exit", (code, exitSignal) => {
+    child.once("close", (code, exitSignal) => {
       exitCode = code;
       signal = exitSignal;
       if (!settled) {

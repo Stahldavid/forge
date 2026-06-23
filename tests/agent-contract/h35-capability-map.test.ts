@@ -86,7 +86,7 @@ describe("H35 capability map", () => {
       const naturalAlias = await runInspectCommand("capabilities", project);
       expect(naturalAlias.exitCode).toBe(0);
       expect((naturalAlias.data as { entries?: unknown[] }).entries?.length).toBeGreaterThan(0);
-      const all = await runInspectCommand("all", project);
+      const all = await runInspectCommand("all", project, { full: true });
       expect((all.data as { capabilityMap?: unknown }).capabilityMap).toBeTruthy();
     } finally {
       cleanupWorkspace(workspace);

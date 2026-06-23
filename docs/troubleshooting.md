@@ -56,6 +56,32 @@ Human-readable playbooks also live in:
 | Frontend route not connected | `forge inspect capabilities --json` | Use generated hooks and the local `web/**/lib/forge.ts` bridge. |
 | Windows app picker opens for Bun | `forge doctor windows --json` | Set a safe Bun path or use the Node CLI path. |
 | Tests hang or run too long | `forge verify --standard --script-timeout-ms 120000 --json` | Use impact tests first; reserve strict verification for handoff. |
+| Stale global `forge` in framework checkout | `node bin/forge.mjs status --json` | Use the source-tree entrypoint while maintaining ForgeOS; use global `forge` only for package smoke. |
+| Codex hooks waiting for approval | `forge agent hooks status --target codex --json` | Approve the Codex Desktop hook prompt, continue a Codex session, then rerun status. |
+| DeltaDB or PGlite busy | `forge delta status --json` | Wait for the owning pid/command or inspect `.forge/delta/delta.lock` before repair. |
+| Studio preview points at Studio | `forge studio doctor . --preview-port 5174 --target codex --json` | Use the target app preview on `5174`; avoid self-preview on `5173`. |
+
+## CLI entrypoint mismatch
+
+**Symptom:** A ForgeOS maintainer command shows old help text, generated AGENTS mention unavailable commands, or `forge verify` behaves differently from the source tree.
+
+**Cause:** The global `forge` binary can lag behind the framework checkout.
+
+**Fix in generated apps:**
+
+```bash
+forge status --json
+forge verify --smoke
+```
+
+**Fix in the ForgeOS framework checkout:**
+
+```bash
+node bin/forge.mjs status --json
+node bin/forge.mjs verify framework
+```
+
+Use global `forge` from this repository only when intentionally validating the installed package path.
 
 ## Stale generated artifacts
 
@@ -174,6 +200,53 @@ forge verify --standard --skip-typecheck
 ```
 
 For release handoff, fix root cause — do not skip gates permanently.
+
+`forge verify` is app-scoped. It should not run ForgeOS framework tests in ordinary generated apps. Framework maintainers must opt into the internal gate with `node bin/forge.mjs verify framework`.
+
+## Agent hooks approval and stale events
+
+**Symptom:** `forge agent hooks smoke --target codex --json` passes, but `forge agent hooks status --target codex --json` reports `approvalRequired`, `waiting-for-user-trust`, missing native signals, or stale hook signals.
+
+**Cause:** The smoke canary proves ForgeOS ingestion and DeltaDB memory. Codex Desktop still has a separate trust prompt before it executes native hook files. Hook events are queued in `.forge/agent/events.ndjson` and drained from checkpoints, so old canary events do not prove that Codex has approved and emitted a fresh native event.
+
+**Fix:**
+
+```bash
+forge agent hooks status --target codex --json
+forge agent hooks smoke --target codex --json
+```
+
+Approve the Codex Desktop hook prompt, continue or start a Codex session in the same workspace, then rerun status. If the status remains stale, inspect the JSON `approvalStatus`, `nativeSignals`, `canarySignals`, and suggested commands before reinstalling hooks.
+
+## DeltaDB and PGlite busy
+
+**Symptom:** A mutating agent-memory, timeline, session, or repair command returns `FORGE_DELTA_BUSY`, or Studio reports DeltaDB/PGlite is active.
+
+**Cause:** Another local ForgeOS or external-agent process owns the PGlite writer lock. Read-only commands should still work; writer operations fail fast instead of hanging.
+
+**Fix:**
+
+```bash
+forge delta status --json
+forge agent hooks status --target codex --json
+```
+
+Read the JSON `busy` block for lock path, pid, process-alive signal, lock age, cwd, and command. Wait for the owning command to finish when it is alive. If the process is gone, inspect `.forge/delta/delta.lock` before running repair.
+
+## Studio target preview issues
+
+**Symptom:** Studio opens an iframe of itself, starts duplicate target previews, or reports preview state that does not match the app.
+
+**Cause:** Studio reserves `127.0.0.1:5173` for the observer app. The target app should normally run on preview port `5174`. ForgeOS records target preview state in `.forge/studio/preview.json` and reuses a live matching process instead of starting another one.
+
+**Fix:**
+
+```bash
+forge studio doctor . --preview-port 5174 --target codex --json
+forge studio open . --preview-port 5174 --target codex --json
+```
+
+If another tool owns preview startup, pass `--no-start`. If the recorded preview process has exited, rerun `studio open`; stale preview state is removed before a new start attempt. `.forge/studio/*.json` files are local operational state and should not be committed.
 
 ## Repair workflow
 

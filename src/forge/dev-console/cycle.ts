@@ -27,6 +27,7 @@ import type { TestRunRecord } from "../impact/types.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import type { UiRunReport } from "../ui/types.ts";
 import { buildDiffPlanFromChangeSummary, categorizeFiles, summarizeChangeTypes } from "../workspace/change-summary.ts";
+import { forgeCliCommandForWorkspace, forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import type {
   DevConsoleCycle,
   DevConsoleAgentContext,
@@ -155,7 +156,7 @@ async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase
       sampleChanged: changed.sample,
       hiddenChanged: changed.hidden,
       unchangedCount: result.unchanged.length,
-      fullCommand: "forge generate --json",
+      fullCommand: forgeCliCommandForWorkspace(workspaceRoot, "forge generate --json"),
       ...(result.cache ? { cache: result.cache } : {}),
     },
     message: result.exitCode === 0
@@ -390,7 +391,7 @@ function previewSummaryFor(input: {
   };
 }
 
-function buildGeneratedSummary(phaseItem: DevConsolePhase | undefined): DevConsoleGeneratedSummary {
+function buildGeneratedSummary(workspaceRoot: string, phaseItem: DevConsolePhase | undefined): DevConsoleGeneratedSummary {
   const changedFiles = Number(phaseItem?.details?.changed ?? 0);
   const sampleChanged = Array.isArray(phaseItem?.details?.sampleChanged)
     ? phaseItem.details.sampleChanged.filter((item): item is string => typeof item === "string")
@@ -405,8 +406,8 @@ function buildGeneratedSummary(phaseItem: DevConsolePhase | undefined): DevConso
     sampleChanged,
     hiddenChanged,
     message: phaseItem?.message ?? "generated phase did not report a message",
-    command: "forge generate",
-    checkCommand: "forge generate --check --json",
+    command: forgeCliCommandForWorkspace(workspaceRoot, "forge generate"),
+    checkCommand: forgeCliCommandForWorkspace(workspaceRoot, "forge generate --check --json"),
   };
 }
 
@@ -435,7 +436,7 @@ function buildDevSummary(input: {
   const errors = input.diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
   const apiUrl = input.apiUrl ?? frontend.apiUrl ?? "http://127.0.0.1:3765";
   const webUrl = input.webUrl ?? frontend.devUrl;
-  const generated = buildGeneratedSummary(input.phases.find((item) => item.name === "generated"));
+  const generated = buildGeneratedSummary(input.workspaceRoot, input.phases.find((item) => item.name === "generated"));
   const preview = previewSummaryFor({
     workspaceRoot: input.workspaceRoot,
     ...(webUrl ? { webUrl } : {}),
@@ -465,6 +466,7 @@ function buildDevSummary(input: {
       warnings: 0,
     },
     agentContext: buildAgentContext({
+      workspaceRoot: input.workspaceRoot,
       phases: input.phases,
       diagnostics: input.diagnostics,
       nextActions: input.nextActions,
@@ -605,7 +607,7 @@ function uniqueActions(actions: DevConsoleNextAction[]): DevConsoleNextAction[] 
   return result;
 }
 
-function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[] {
+function nextActionsFromPhases(workspaceRoot: string, phases: DevConsolePhase[]): DevConsoleNextAction[] {
   const actions: DevConsoleNextAction[] = [];
   const diagnostics = phases.flatMap((item) => item.diagnostics);
   if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -679,7 +681,10 @@ function nextActionsFromPhases(phases: DevConsolePhase[]): DevConsoleNextAction[
     });
   }
 
-  return uniqueActions(actions).slice(0, 12);
+  return uniqueActions(actions).slice(0, 12).map((action) => ({
+    ...action,
+    command: forgeCliCommandForWorkspace(workspaceRoot, action.command),
+  }));
 }
 
 function phaseDetails<T>(phases: DevConsolePhase[], name: DevConsolePhase["name"], key: string): T | undefined {
@@ -687,6 +692,7 @@ function phaseDetails<T>(phases: DevConsolePhase[], name: DevConsolePhase["name"
 }
 
 function buildAgentContext(input: {
+  workspaceRoot: string;
   phases: DevConsolePhase[];
   diagnostics: Diagnostic[];
   nextActions: DevConsoleNextAction[];
@@ -707,12 +713,12 @@ function buildAgentContext(input: {
     ...input.diagnostics.flatMap((diagnostic) => diagnostic.docs ?? []),
     ...input.diagnostics.flatMap((diagnostic) => diagnostic.file ? [diagnostic.file] : []),
   ];
-  const fullCommands = [
+  const fullCommands = forgeCliCommandsForWorkspace(input.workspaceRoot, [
     "forge inspect all --full --json",
     "forge changed --json",
     "forge impact --changed --json",
     "forge generate --json",
-  ];
+  ]);
   return {
     safeToEdit: generated?.ok === true && errorDiagnostics.length === 0,
     generatedFresh: generated?.ok === true,
@@ -766,7 +772,7 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
 
   const diagnostics = phases.flatMap((item) => item.diagnostics);
   const ok = phases.every((item) => item.ok);
-  const nextActions = nextActionsFromPhases(phases);
+  const nextActions = nextActionsFromPhases(workspaceRoot, phases);
   const summary = buildDevSummary({
     workspaceRoot,
     ok,

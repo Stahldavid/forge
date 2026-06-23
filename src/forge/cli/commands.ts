@@ -1,4 +1,5 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
+import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { classify } from "../compiler/classifier/classify.ts";
@@ -36,6 +37,7 @@ import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import {
   attachFailureKind,
   buildAddJson,
+  buildCheckJson,
   buildGenerateJson,
   buildInspectJson,
   formatJsonResult,
@@ -66,6 +68,7 @@ import {
   formatCairJson,
   runCairCommand,
 } from "../cair/index.ts";
+import { uniqueNextActions } from "./next-actions.ts";
 import {
   formatRunJson,
   formatRunListHuman,
@@ -156,7 +159,8 @@ import { formatNewHuman, runNewCommand } from "./new.ts";
 import { formatBuildHuman, runBuildCommand } from "./build.ts";
 import { runServeCommand } from "./serve.ts";
 import { runWorkerCommand } from "./worker.ts";
-import { formatSelfHostHuman, runSelfHostCommand } from "./self-host.ts";
+import { formatSelfHostHuman, runSelfHostCommand, type SelfHostCommandResult } from "./self-host.ts";
+import { formatDocsCheckHuman, runDocsCheckCommand, type DocsCheckResult } from "./docs.ts";
 import {
   formatAgentContractHuman,
   runAgentContractPrint,
@@ -185,6 +189,7 @@ import { formatDepsHuman, formatDepsJson, runDepsCommand } from "./deps.ts";
 import {
   formatReleaseHuman,
   formatReleaseJson,
+  type ReleaseCommandResult,
   runReleaseCommand,
 } from "./release.ts";
 import { formatMakeHuman, formatMakeJson, runMakeCommand } from "./make.ts";
@@ -957,6 +962,105 @@ export async function runCheckCommand(
   });
 }
 
+interface ReleaseDoctorCheck {
+  name: string;
+  ok: boolean;
+  requiredForPublish: boolean;
+  state?: string;
+  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult;
+}
+
+interface ReleaseDoctorResult {
+  schemaVersion: "0.1.0";
+  ok: boolean;
+  readyToPublish: boolean;
+  summary: {
+    checks: number;
+    failed: string[];
+    notPrepared: string[];
+  };
+  checks: ReleaseDoctorCheck[];
+  nextActions: string[];
+  exitCode: 0 | 1;
+}
+
+async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: "release" }>): Promise<ReleaseDoctorResult> {
+  const release = await runReleaseCommand({
+    ...command,
+    action: "check",
+    allowMissingLocalRelease: true,
+    provider: command.provider as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
+    target: command.target as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
+  });
+  const sourcemaps = await runReleaseCommand({
+    ...command,
+    area: "sourcemaps",
+    action: "check",
+    provider: command.provider as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
+    target: command.target as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
+  });
+  const selfHost = await runSelfHostCommand({
+    subcommand: "check",
+    workspaceRoot: command.workspaceRoot,
+    json: command.json,
+    withWeb: true,
+    postgresVersion: "16",
+    runtimePort: 3765,
+    webPort: 3000,
+    preparedOnly: true,
+  });
+  const docs = runDocsCheckCommand({
+    workspaceRoot: command.workspaceRoot,
+    json: command.json,
+  });
+  const checks: ReleaseDoctorCheck[] = [
+    {
+      name: "release-prepared",
+      ok: release.ok,
+      requiredForPublish: true,
+      state: (release.data as { state?: string } | undefined)?.state,
+      result: release,
+    },
+    {
+      name: "sourcemaps",
+      ok: sourcemaps.ok,
+      requiredForPublish: true,
+      result: sourcemaps,
+    },
+    {
+      name: "self-host",
+      ok: selfHost.ok,
+      requiredForPublish: false,
+      state: selfHost.state,
+      result: selfHost,
+    },
+    {
+      name: "docs",
+      ok: docs.ok,
+      requiredForPublish: true,
+      result: docs,
+    },
+  ];
+  const failed = checks.filter((check) => !check.ok).map((check) => check.name);
+  const notPrepared = checks
+    .filter((check) => check.state === "missing-prepared-release" || check.state === "not-prepared")
+    .map((check) => check.name);
+  const readyToPublish = failed.length === 0 && notPrepared.length === 0;
+  return {
+    schemaVersion: "0.1.0",
+    ok: failed.length === 0,
+    readyToPublish,
+    summary: {
+      checks: checks.length,
+      failed,
+      notPrepared,
+    },
+    checks,
+    nextActions: uniqueNextActions(checks.flatMap((check) => check.result.nextActions ?? [])),
+    exitCode: failed.length === 0 ? 0 : 1,
+  };
+}
+
 function formatManifestHuman(result: {
   subcommand: "validate" | "import";
   path: string;
@@ -1357,6 +1461,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return result.exitCode;
     }
+    case "docs": {
+      const result = runDocsCheckCommand(command);
+      if (command.json) {
+        process.stdout.write(formatJsonResult(result));
+      } else {
+        process.stdout.write(formatDocsCheckHuman(result));
+      }
+      return result.exitCode;
+    }
     case "agent-contract": {
       if (command.subcommand === "print") {
         const result = runAgentContractPrint(command.workspaceRoot);
@@ -1469,6 +1582,22 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "release": {
+      if (command.action === "doctor") {
+        const result = await runReleaseDoctorCommand(command);
+        if (command.json) {
+          process.stdout.write(formatJsonResult(result));
+        } else {
+          process.stdout.write(
+            [
+              `release doctor ${result.ok ? "ok" : "failed"}`,
+              `ready to publish: ${result.readyToPublish ? "yes" : "no"}`,
+              ...result.checks.map((check) => `${check.ok ? "ok" : "fail"} ${check.name}${check.state ? ` (${check.state})` : ""}`),
+              ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((action) => `  ${action}`)] : []),
+            ].join("\n").concat("\n"),
+          );
+        }
+        return result.exitCode;
+      }
       const result = await runReleaseCommand({
         ...command,
         provider: command.provider as import("../compiler/release/types.ts").ReleaseExportProvider | undefined,
@@ -1572,7 +1701,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(command.json ? formatDeltaRepairJson(result) : formatDeltaRepairHuman(result));
         return result.exitCode;
       }
-      const result = await runDeltaStatus(command.workspaceRoot);
+      const result = await runDeltaStatus(command.workspaceRoot, { verbose: command.verbose });
       process.stdout.write(command.json ? formatDeltaStatusJson(result) : formatDeltaStatusHuman(result));
       return result.exitCode;
     }
@@ -1700,13 +1829,41 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "changed": {
-      const result = runChangedCommand(command.workspaceRoot);
+      const result = runChangedCommand(command.workspaceRoot, {
+        authoredOnly: command.authoredOnly,
+      });
       if (command.json) {
         process.stdout.write(formatJsonResult(result.data));
       } else {
         process.stdout.write(formatChangedHuman(result));
       }
       return result.exitCode;
+    }
+    case "diff": {
+      const changed = runChangedCommand(command.workspaceRoot);
+      const diffPlan = changed.data.diffPlan as { authoredDiffCommand: string; generatedDiffCommand: string; fullDiffCommand: string };
+      const commandText = command.target === "generated"
+        ? diffPlan.generatedDiffCommand
+        : command.target === "full"
+          ? diffPlan.fullDiffCommand
+          : diffPlan.authoredDiffCommand;
+      if (command.json) {
+        process.stdout.write(formatJsonResult({
+          schemaVersion: "0.1.0",
+          ok: changed.ok,
+          target: command.target,
+          command: commandText,
+          exitCode: changed.exitCode,
+        }));
+        return changed.exitCode;
+      }
+      const result = spawnSync(commandText, {
+        cwd: command.workspaceRoot,
+        shell: true,
+        stdio: "inherit",
+        windowsHide: true,
+      });
+      return result.status === 0 ? 0 : 1;
     }
     case "handoff": {
       const result = await runHandoffCommand(command);
@@ -1788,7 +1945,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         strictSecrets: command.strictSecrets,
       });
       if (command.json) {
-        process.stdout.write(formatJsonResult(buildGenerateJson(result)));
+        process.stdout.write(formatJsonResult(buildCheckJson(result)));
       } else {
         writeHumanGenerate(result);
       }

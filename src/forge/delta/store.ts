@@ -1,5 +1,5 @@
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, isAbsolute, join, relative } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
 import { hashStable, hashUtf8Bytes } from "../compiler/primitives/hash.ts";
@@ -188,6 +188,37 @@ export interface DeltaStatus {
   };
   workSession?: DeltaWorkSessionSummary;
   recentOperations: Array<{ id: string; kind: string; summary?: string; timestamp: string }>;
+  details?: DeltaStatusDetails;
+}
+
+export interface DeltaStatusDetails {
+  schema: {
+    expectedVersion: string;
+    storedVersion?: string;
+    lastOperationId?: string;
+    lastRebuildAt?: string;
+  };
+  paths: {
+    store: string;
+    lock: string;
+    postmaster: string;
+  };
+  locks: {
+    forgeLockPresent: boolean;
+    postmasterPresent: boolean;
+  };
+  counts: {
+    sessions: number;
+    operations: number;
+    fileChanges: number;
+    commandRuns: number;
+    runtimeCalls: number;
+    proofs: number;
+    artifacts: number;
+    workSessions: number;
+    agentMemoryEvents: number;
+    semanticEvents: number;
+  };
 }
 
 export type DeltaWorkSessionKind = "auto" | "agent" | "human" | "ci" | "git" | "manual-corrected";
@@ -331,6 +362,27 @@ function lockLooksStale(holder: Record<string, unknown> | null): boolean {
   return !Number.isFinite(createdAt) || Date.now() - createdAt > 30_000;
 }
 
+function redactDeltaBusyCommand(command: string): string {
+  return command
+    .replace(/\b(Bearer)\s+[A-Za-z0-9._~+/=-]+/gi, "$1 [REDACTED]")
+    .replace(/\b(token|secret|password|passwd|api[-_]?key|authorization)=\S+/gi, "$1=[REDACTED]")
+    .replace(/(--(?:token|secret|password|passwd|api-key|authorization))\s+\S+/gi, "$1 [REDACTED]");
+}
+
+function displayDeltaBusyCwd(workspaceRoot: string, cwd: string): string {
+  if (!isAbsolute(cwd)) {
+    return cwd;
+  }
+  const rel = normalizePath(relative(workspaceRoot, cwd));
+  if (rel === "") {
+    return ".";
+  }
+  if (rel === ".." || rel.startsWith("../")) {
+    return "[outside-workspace]";
+  }
+  return rel;
+}
+
 export function describeDeltaStoreBusy(
   error: DeltaStoreBusyError,
   workspaceRoot: string,
@@ -342,8 +394,8 @@ export function describeDeltaStoreBusy(
     : undefined;
   const createdAt = typeof holder?.createdAt === "string" ? holder.createdAt : undefined;
   const createdMs = createdAt ? Date.parse(createdAt) : NaN;
-  const cwd = typeof holder?.cwd === "string" ? holder.cwd : undefined;
-  const command = typeof holder?.command === "string" ? holder.command : undefined;
+  const cwd = typeof holder?.cwd === "string" ? displayDeltaBusyCwd(workspaceRoot, holder.cwd) : undefined;
+  const command = typeof holder?.command === "string" ? redactDeltaBusyCommand(holder.command) : undefined;
   return {
     code: "FORGE_DELTA_BUSY",
     lockPath: error.lockPath,
@@ -356,6 +408,17 @@ export function describeDeltaStoreBusy(
     ...(command ? { command } : {}),
     holderKnown: Boolean(holder),
   };
+}
+
+export function summarizeDeltaStoreBusy(info: DeltaStoreBusyInfo): string {
+  return [
+    `lock=${info.relativeLockPath}`,
+    info.pid ? `pid=${info.pid}` : undefined,
+    info.processAlive ? "process=alive" : "process=unknown-or-exited",
+    typeof info.ageMs === "number" ? `age=${Math.round(info.ageMs / 1000)}s` : undefined,
+    info.cwd ? `cwd=${info.cwd}` : undefined,
+    info.command ? `command=${info.command}` : undefined,
+  ].filter(Boolean).join(", ");
 }
 
 function acquireDeltaStoreLock(workspaceRoot: string): DeltaStoreLock {
@@ -869,6 +932,60 @@ export class DeltaStore {
         summary: typeof row.summary === "string" ? row.summary : undefined,
         timestamp: String(row.timestamp),
       })),
+    };
+  }
+
+  async statusDetails(): Promise<DeltaStatusDetails> {
+    const metaRows = await this.adapter.query(
+      `SELECT key, value FROM delta_meta WHERE key IN ('schemaVersion', 'semantic.lastOperationId', 'semantic.lastRebuildAt')`,
+    );
+    const meta = new Map(metaRows.rows.map((row) => [String(row.key), String(row.value)]));
+    const countQueries = await Promise.all([
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM sessions`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM operations`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM file_changes`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM command_runs`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM runtime_calls`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM proofs`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM artifacts`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM work_sessions`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM agent_memory_events`),
+      this.adapter.query(`SELECT COUNT(*)::int AS count FROM timeline_events`),
+    ]);
+    const countAt = (index: number) => Number(countQueries[index]?.rows[0]?.count ?? 0);
+    const lockPath = getDeltaLockPath(this.workspaceRoot);
+    const postmasterPath = join(this.storePath, "postmaster.pid");
+    const storedVersion = meta.get("schemaVersion");
+    const lastOperationId = meta.get("semantic.lastOperationId");
+    const lastRebuildAt = meta.get("semantic.lastRebuildAt");
+    return {
+      schema: {
+        expectedVersion: DELTA_SCHEMA_VERSION,
+        ...(storedVersion ? { storedVersion } : {}),
+        ...(lastOperationId ? { lastOperationId } : {}),
+        ...(lastRebuildAt ? { lastRebuildAt } : {}),
+      },
+      paths: {
+        store: normalizePath(relative(this.workspaceRoot, this.storePath)),
+        lock: normalizePath(relative(this.workspaceRoot, lockPath)),
+        postmaster: normalizePath(relative(this.workspaceRoot, postmasterPath)),
+      },
+      locks: {
+        forgeLockPresent: existsSync(lockPath),
+        postmasterPresent: existsSync(postmasterPath),
+      },
+      counts: {
+        sessions: countAt(0),
+        operations: countAt(1),
+        fileChanges: countAt(2),
+        commandRuns: countAt(3),
+        runtimeCalls: countAt(4),
+        proofs: countAt(5),
+        artifacts: countAt(6),
+        workSessions: countAt(7),
+        agentMemoryEvents: countAt(8),
+        semanticEvents: countAt(9),
+      },
     };
   }
 

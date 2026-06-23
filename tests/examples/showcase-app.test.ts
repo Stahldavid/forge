@@ -17,6 +17,7 @@ describe("ForgeOS showcase app", () => {
 
     expect(read(".gitignore")).toContain("src/forge/_generated/");
     expect(read(".gitignore")).toContain(".forge/agent-adapters/");
+    expect(read(".gitignore")).toContain(".forge/studio/");
     expect(read("README.md")).toContain("ForgeOS Agent-Native Support App");
     expect(read("README.md")).toContain("public proof app");
     expect(read("README.md")).toContain("capabilityMap");

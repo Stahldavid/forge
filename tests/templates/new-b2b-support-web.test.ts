@@ -88,6 +88,7 @@ describe("b2b-support-web template", () => {
       expect(read(project, ".gitignore")).toContain(".forge/reviews/");
       expect(read(project, ".gitignore")).toContain(".forge/impact/");
       expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
+      expect(read(project, ".gitignore")).toContain(".forge/studio/");
 
       expect(read(project, "src/forge/schema.ts")).toContain("tickets");
       expect(read(project, "src/policies.ts")).toContain("billing.manage");

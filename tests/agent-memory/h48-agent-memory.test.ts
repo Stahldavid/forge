@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runAgentCommand } from "../../src/forge/agent-adapters/index.ts";
-import { formatAgentMemoryHuman, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
+import { drainAgentMemoryQueueFile, formatAgentMemoryHuman, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
 import { probeCodexHookRunner } from "../../src/forge/agent-memory/hook-runner.ts";
 import { codexInstallFiles } from "../../src/forge/agent-memory/sources/codex.ts";
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
@@ -13,6 +13,21 @@ import { DeltaStore } from "../../src/forge/delta/store.ts";
 
 function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
+}
+
+function queuedCodexHookLine(root: string, eventName: string, sessionId: string): string {
+  return JSON.stringify({
+    forgeHookQueueV1: true,
+    source: "codex",
+    eventName,
+    workspaceRoot: root,
+    enqueuedAt: "2026-01-01T00:00:00.000Z",
+    raw: {
+      session_id: sessionId,
+      hook_event_name: eventName,
+      tool_name: eventName === "PreToolUse" ? "shell" : undefined,
+    },
+  });
 }
 
 describe("H48 agent memory bridge", () => {
@@ -459,7 +474,7 @@ describe("H48 agent memory bridge", () => {
       if (!("checks" in smoke) || !("diagnostics" in smoke) || !("canary" in smoke)) {
         throw new Error("expected hook smoke result");
       }
-      expect(smoke.exitCode).toBe(1);
+      expect(smoke.exitCode).toBe(0);
       expect(smoke.deltaWritable).toBe(true);
       expect(smoke.visibleInMemory).toBe(true);
       expect(smoke.canarySignals).toBeGreaterThan(0);
@@ -544,6 +559,108 @@ describe("H48 agent memory bridge", () => {
       rmSync(root, { recursive: true, force: true });
     }
   }, 10_000);
+
+  test("drains Codex hook queue idempotently across watcher restarts", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-idempotent");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(
+        queueFile,
+        [
+          queuedCodexHookLine(root, "SessionStart", "codex-session-restart-1"),
+          queuedCodexHookLine(root, "PreToolUse", "codex-session-restart-1"),
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const first = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(first.errors).toEqual([]);
+      expect(first.eventsIngested).toBe(2);
+
+      const restarted = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(restarted.errors).toEqual([]);
+      expect(restarted.eventsIngested).toBe(0);
+
+      const store = await DeltaStore.open(root);
+      const events = await store.listAgentMemoryEvents({ target: "codex" });
+      await store.close();
+      expect(events).toHaveLength(2);
+      expect(readFileSync(`${queueFile}.checkpoint.json`, "utf8")).toContain("\"offset\"");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("retains partial Codex hook queue line until newline completes it", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-partial");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const firstLine = queuedCodexHookLine(root, "SessionStart", "codex-session-partial-1");
+      const secondLine = queuedCodexHookLine(root, "PostToolUse", "codex-session-partial-1");
+      writeFileSync(queueFile, `${firstLine}\n${secondLine.slice(0, -8)}`, "utf8");
+
+      const first = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(first.errors).toEqual([]);
+      expect(first.eventsIngested).toBe(1);
+      expect(first.pendingBytes).toBeGreaterThan(0);
+
+      writeFileSync(queueFile, `${firstLine}\n${secondLine}\n`, "utf8");
+      const completed = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(completed.errors).toEqual([]);
+      expect(completed.eventsIngested).toBe(1);
+
+      const store = await DeltaStore.open(root);
+      const events = await store.listAgentMemoryEvents({ target: "codex" });
+      await store.close();
+      expect(events).toHaveLength(2);
+      expect(events.map((event) => event.eventKind).sort()).toEqual([
+        "agent.session.started",
+        "agent.tool.completed",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("compacts consumed Codex hook queue lines into bounded local history", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-retention");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const firstLine = queuedCodexHookLine(root, "SessionStart", "codex-session-retention-1");
+      const secondLine = queuedCodexHookLine(root, "PreToolUse", "codex-session-retention-1");
+      const partialLine = queuedCodexHookLine(root, "PostToolUse", "codex-session-retention-1").slice(0, -4);
+      writeFileSync(queueFile, `${firstLine}\n${secondLine}\n${partialLine}`, "utf8");
+
+      const drained = await drainAgentMemoryQueueFile({
+        workspaceRoot: root,
+        watchFile: queueFile,
+        source: "codex",
+        compactAfterBytes: 1,
+        historyMaxBytes: 4096,
+      });
+
+      expect(drained.errors).toEqual([]);
+      expect(drained.eventsIngested).toBe(2);
+      expect(drained.compacted).toBe(true);
+      expect(readFileSync(queueFile, "utf8")).toBe(partialLine);
+      expect(readFileSync(drained.historyFile, "utf8")).toContain("codex-session-retention-1");
+      expect(readFileSync(`${queueFile}.checkpoint.json`, "utf8")).toContain("\"offset\": 0");
+
+      const store = await DeltaStore.open(root);
+      const events = await store.listAgentMemoryEvents({ target: "codex" });
+      await store.close();
+      expect(events).toHaveLength(2);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test("installs Cursor via MCP and rules without private state hooks", async () => {
     const root = tempWorkspace("h48-cursor-install");

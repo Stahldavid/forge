@@ -1894,6 +1894,9 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
     return {
       ok: false,
       target,
+      smokeReady: false,
+      trustedNativeReady: false,
+      readinessLevel: "none",
       installed: false,
       bridgeWritable: false,
       deltaWritable: false,
@@ -2006,7 +2009,7 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
     },
     {
       name: "codex-hook-approval",
-      ok: !status.approvalRequired && status.approvalStatus !== "memory-unavailable",
+      ok: status.approvalStatus !== "memory-unavailable",
       message: codexHookApprovalMessage(status.approvalStatus, status.canarySignals),
     },
     ...(installTarget === "codex"
@@ -2070,11 +2073,21 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
         })]
       : []),
   ];
-  const ok = checks.every((check) => check.ok);
+  const smokeReady = checks.every((check) => check.ok);
+  const trustedNativeReady =
+    status.approvalStatus === "trusted" || status.approvalStatus === "not-required";
+  const readinessLevel = trustedNativeReady
+    ? "trusted-native"
+    : smokeReady
+      ? "canary"
+      : "none";
   return {
-    ok,
+    ok: smokeReady,
     target,
     installTarget,
+    smokeReady,
+    trustedNativeReady,
+    readinessLevel,
     installed: status.installed,
     bridgeWritable: installOk,
     deltaWritable: status.deltaWritable && ingestOk && memoryAfterSmoke.diagnostics.length === 0,
@@ -2095,8 +2108,12 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
       visible: visibleInMemory,
     },
     checks,
-    nextActions: ok
-      ? [`forge agent hooks status --target ${target} --json`, `forge agent memory --entry ${source} --json`]
+    nextActions: smokeReady
+      ? uniqueCommands([
+          ...(status.approvalRequired ? hookApprovalNextActions(target, status.canarySignals) : []),
+          `forge agent hooks status --target ${target} --json`,
+          `forge agent memory --entry ${source} --json`,
+        ])
       : uniqueCommands([
           ...ingestNextActions,
           ...(status.approvalRequired ? hookApprovalNextActions(target, status.canarySignals) : []),
@@ -2109,7 +2126,7 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
     installResult,
     ...(ingestResult ? { ingestResult } : {}),
     diagnostics,
-    exitCode: ok ? 0 : 1,
+    exitCode: smokeReady ? 0 : 1,
   };
 }
 
@@ -2255,6 +2272,9 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
     const smoke = result as AgentHooksSmokeResult;
     return [
       `agent hooks smoke ${smoke.ok ? "ok" : "failed"} for ${smoke.target}`,
+      `smoke ready: ${smoke.smokeReady ? "yes" : "no"}`,
+      `trusted native ready: ${smoke.trustedNativeReady ? "yes" : "no"}`,
+      `readiness level: ${smoke.readinessLevel}`,
       `approval: ${smoke.approvalStatus}`,
       `native signals: ${smoke.nativeSignals}`,
       `canary signals: ${smoke.canarySignals}`,

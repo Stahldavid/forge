@@ -49,6 +49,22 @@ Run once without global install:
 npx forgeos@alpha --help
 ```
 
+In generated apps, use the installed or package-script CLI shown by that app:
+
+```bash
+forge status --json
+npm run forge -- dev --once --json
+```
+
+If you are maintaining the ForgeOS framework checkout itself, run the source-tree entrypoint instead:
+
+```bash
+node bin/forge.mjs status --json
+node bin/forge.mjs verify framework
+```
+
+Do not ask app users to run framework verification. `forge verify` is app-scoped; `verify framework` is only for this repository.
+
 Use the lower-level command when you need explicit flags:
 
 ```bash

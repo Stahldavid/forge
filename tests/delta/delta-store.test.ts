@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
-import { DeltaStore, getDeltaStorePath } from "../../src/forge/delta/store.ts";
+import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy, getDeltaStorePath } from "../../src/forge/delta/store.ts";
 import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 import { runDeltaExplain } from "../../src/forge/delta/explain.ts";
 import { runDeltaSessionCommand } from "../../src/forge/delta/session.ts";
@@ -63,9 +63,47 @@ describe("delta store", () => {
       await store.close();
 
       expect(status.recording).toBe(true);
+      expect(status.details).toBeUndefined();
       expect(status.recentOperations.length).toBeGreaterThan(0);
       expect(timeline.some((entry) => entry.kind === "runtime.entry.executed")).toBe(true);
       expect(explain.type).toBe("runtime-entry");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("delta status verbose includes aggregate store details without changing default output", async () => {
+    const root = tempWorkspace("delta-status-verbose");
+    try {
+      const store = await DeltaStore.open(root);
+      const actorId = await store.ensureActor("forge", "test");
+      const sessionId = await store.createSession({ source: "forge-command" });
+      await store.appendOperation({
+        sessionId,
+        actorId,
+        kind: "command.executed",
+        summary: "forge check success",
+        data: { command: "forge check --json" },
+      });
+      await store.close();
+
+      const compact = await runDeltaStatus(root);
+      const verbose = await runDeltaStatus(root, { verbose: true });
+
+      expect(compact.exitCode).toBe(0);
+      if (compact.exitCode !== 0) {
+        throw new Error("expected compact status success");
+      }
+      expect(compact.details).toBeUndefined();
+      expect(verbose.exitCode).toBe(0);
+      if (verbose.exitCode !== 0) {
+        throw new Error("expected verbose status success");
+      }
+      expect(verbose.details?.schema.storedVersion).toBeDefined();
+      expect(verbose.details?.paths.store).toBe(".forge/delta/delta.db");
+      expect(verbose.details?.locks.forgeLockPresent).toBe(false);
+      expect(verbose.details?.counts.operations).toBeGreaterThanOrEqual(1);
+      expect(JSON.stringify(verbose)).not.toContain(root);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -107,6 +145,9 @@ describe("delta store", () => {
         processAlive: true,
         holderKnown: true,
       });
+      expect(repair.diagnostics[0]?.message).toContain("cwd=");
+      expect(repair.diagnostics[0]?.message).toContain("command=");
+      expect(repair.diagnostics[0]?.message).not.toContain(root);
       expect(repair.busy?.pid).toBe(process.pid);
       expect(repair.nextActions).toContain("forge agent timeline --json");
       expect(repair.applied).toBe(false);
@@ -122,6 +163,30 @@ describe("delta store", () => {
       rmSync(root, { recursive: true, force: true });
     }
   }, 30_000);
+
+  test("busy lock diagnostics redact command secrets and relativize cwd", () => {
+    const root = tempWorkspace("delta-busy-redaction");
+    try {
+      const busy = describeDeltaStoreBusy(
+        new DeltaStoreBusyError(join(root, ".forge", "delta", "delta.lock"), {
+          pid: process.pid,
+          createdAt: new Date().toISOString(),
+          cwd: join(root, "packages", "app"),
+          command: "forge check --token sk_test_secret apiKey=abc123 Authorization=Bearer-secret Bearer raw-token",
+        }),
+        root,
+      );
+      expect(busy.cwd).toBe("packages/app");
+      expect(busy.command).toContain("--token [REDACTED]");
+      expect(busy.command).toContain("apiKey=[REDACTED]");
+      expect(busy.command).toContain("Authorization=[REDACTED]");
+      expect(busy.command).toContain("Bearer [REDACTED]");
+      expect(busy.command).not.toContain("sk_test_secret");
+      expect(busy.command).not.toContain("raw-token");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 
   test("status treats a held PGlite postmaster as an active local runtime", async () => {
     const root = tempWorkspace("delta-pglite-active-status");
@@ -281,7 +346,11 @@ describe("delta store", () => {
   });
 
   test("parses public delta commands", () => {
-    expect(parseCli(["delta", "status", "--json"]).command?.kind).toBe("delta");
+    const status = parseCli(["delta", "status", "--json", "--verbose"]).command;
+    expect(status?.kind).toBe("delta");
+    if (status?.kind === "delta") {
+      expect(status.verbose).toBe(true);
+    }
     const timeline = parseCli(["timeline", "billing.createInvoice", "--kind", "runtime.entry.executed"]).command;
     expect(timeline?.kind).toBe("timeline");
     if (timeline?.kind === "timeline") {

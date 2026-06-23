@@ -1,25 +1,25 @@
-// @forge-generated generator=0.1.0-alpha.18 input=0ee1bf2f038128efd72c20246ad0f70215b2e3ba0bf04eba957f20f4cdeea9cc content=ba4328fa924005a8a6e04619b77df8b167cff33042faa489e66bab989b17e87a
+// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=66f694c6d1f17562f52023a8aca0bb7ed88783bb1f249525132cdf6e7c4a1698
 # Agent Quickstart
 
 Run:
 
 ```bash
-forge agent onboard --target codex --json
-forge status --json
-forge changed --json
-forge handoff --json
-forge do inspect --json
-forge do fix --json
-forge do verify --json
-forge dev --once --json
-forge dev
-forge agent print-context --json
-forge inspect frontend --json
-forge inspect capabilities --json
-forge inspect agent-tools --json
-forge inspect all --json
-forge check --json
-forge ai trace <traceId> --json
+node bin/forge.mjs agent onboard --target codex --json
+node bin/forge.mjs status --json
+node bin/forge.mjs changed --json
+node bin/forge.mjs handoff --json
+node bin/forge.mjs do inspect --json
+node bin/forge.mjs do fix --json
+node bin/forge.mjs do verify --json
+node bin/forge.mjs dev --once --json
+node bin/forge.mjs dev
+node bin/forge.mjs agent print-context --json
+node bin/forge.mjs inspect frontend --json
+node bin/forge.mjs inspect capabilities --json
+node bin/forge.mjs inspect agent-tools --json
+node bin/forge.mjs inspect all --json
+node bin/forge.mjs check --json
+node bin/forge.mjs ai trace <traceId> --json
 ```
 
 Never edit:
@@ -29,11 +29,11 @@ src/forge/_generated/**
 forge.lock
 ```
 
-If generated files are ignored by git, recreate them with `forge generate`.
+If generated files are ignored by git, recreate them with `node bin/forge.mjs generate`.
 
 Always finish with:
 
 ```bash
-forge generate
-forge verify framework
+node bin/forge.mjs generate
+node bin/forge.mjs verify framework
 ```

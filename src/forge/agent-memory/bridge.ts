@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, watch, writeFileSy
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { createDeltaId } from "../delta/ids.ts";
-import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy } from "../delta/store.ts";
+import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy, summarizeDeltaStoreBusy } from "../delta/store.ts";
 import { extractAgentEventBindings, normalizeAgentEvent, summarizeAgentEvent } from "./normalize.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
 import { claudeCodeInstallFiles, claudeCodeInstallResult } from "./sources/claude-code.ts";
@@ -49,14 +49,7 @@ function memoryUnavailable(error: unknown, workspaceRoot: string): AgentMemoryUn
   const message = error instanceof Error ? error.message : "agent memory store is unavailable";
   const busy = error instanceof DeltaStoreBusyError;
   const busyInfo = busy ? describeDeltaStoreBusy(error, workspaceRoot) : undefined;
-  const busySummary = busyInfo
-    ? [
-        `lock=${busyInfo.relativeLockPath}`,
-        busyInfo.pid ? `pid=${busyInfo.pid}` : undefined,
-        busyInfo.processAlive ? "process=alive" : "process=unknown-or-exited",
-        typeof busyInfo.ageMs === "number" ? `age=${Math.round(busyInfo.ageMs / 1000)}s` : undefined,
-      ].filter(Boolean).join(", ")
-    : undefined;
+  const busySummary = busyInfo ? summarizeDeltaStoreBusy(busyInfo) : undefined;
   return {
     ok: false,
     error: busySummary ? `${message} (${busySummary})` : message,
@@ -357,34 +350,202 @@ async function ingestAgentMemory(options: AgentMemoryCommandOptions): Promise<Ag
   return ingestEnvelope(options.workspaceRoot, envelope);
 }
 
-function parseJsonLines(content: string): Array<Record<string, unknown>> {
-  const trimmed = content.trim();
-  if (!trimmed) {
-    return [];
+function queueCheckpointPath(watchFile: string): string {
+  return `${watchFile}.checkpoint.json`;
+}
+
+function queueHistoryPath(watchFile: string): string {
+  return `${watchFile}.history`;
+}
+
+function readQueueCheckpoint(watchFile: string, fileSize: number): number {
+  const checkpointFile = queueCheckpointPath(watchFile);
+  if (!existsSync(checkpointFile)) {
+    return 0;
   }
-  if (trimmed.startsWith("{")) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is Record<string, unknown> =>
-          Boolean(item) && typeof item === "object" && !Array.isArray(item)
-        );
-      }
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return [parsed as Record<string, unknown>];
-      }
-    } catch {
-      // Fall through to NDJSON parsing below.
+  try {
+    const parsed = JSON.parse(readFileSync(checkpointFile, "utf8")) as unknown;
+    const offset = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as { offset?: unknown }).offset
+      : undefined;
+    if (typeof offset !== "number" || !Number.isFinite(offset) || offset < 0) {
+      return 0;
+    }
+    return offset > fileSize ? 0 : Math.floor(offset);
+  } catch {
+    return 0;
+  }
+}
+
+function writeQueueCheckpoint(watchFile: string, offset: number): void {
+  const checkpointFile = queueCheckpointPath(watchFile);
+  mkdirSync(dirname(checkpointFile), { recursive: true });
+  writeFileSync(
+    checkpointFile,
+    `${JSON.stringify({
+      schema: "forge.agent-hook-queue-checkpoint.v1",
+      file: watchFile,
+      offset,
+      updatedAt: new Date().toISOString(),
+    }, null, 2)}\n`,
+    "utf8",
+  );
+}
+
+const DEFAULT_QUEUE_COMPACT_AFTER_BYTES = 256 * 1024;
+const DEFAULT_QUEUE_HISTORY_MAX_BYTES = 1024 * 1024;
+
+function trimBufferStart(buffer: Buffer, maxBytes: number): Buffer {
+  if (buffer.length <= maxBytes) {
+    return buffer;
+  }
+  return buffer.subarray(buffer.length - maxBytes);
+}
+
+function compactAgentMemoryQueueFile(options: {
+  watchFile: string;
+  originalBuffer: Buffer;
+  consumedOffset: number;
+  compactAfterBytes: number;
+  historyMaxBytes: number;
+}): { compacted: boolean; historyFile: string } {
+  const historyFile = queueHistoryPath(options.watchFile);
+  if (options.consumedOffset < options.compactAfterBytes) {
+    return { compacted: false, historyFile };
+  }
+  const currentBuffer = readFileSync(options.watchFile);
+  const originalConsumed = options.originalBuffer.subarray(0, options.consumedOffset);
+  const currentPrefix = currentBuffer.subarray(0, options.consumedOffset);
+  if (!currentPrefix.equals(originalConsumed)) {
+    return { compacted: false, historyFile };
+  }
+  mkdirSync(dirname(historyFile), { recursive: true });
+  const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);
+  writeFileSync(
+    historyFile,
+    trimBufferStart(Buffer.concat([existingHistory, originalConsumed]), options.historyMaxBytes),
+  );
+  writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
+  writeQueueCheckpoint(options.watchFile, 0);
+  return { compacted: true, historyFile };
+}
+
+function splitCompleteJsonLines(buffer: Buffer): {
+  complete: Array<{ raw: string; endOffset: number }>;
+  completeBytes: number;
+  pendingBytes: number;
+} {
+  const lastNewline = buffer.lastIndexOf(10);
+  if (lastNewline < 0) {
+    return { complete: [], completeBytes: 0, pendingBytes: buffer.length };
+  }
+  const completeBytes = lastNewline + 1;
+  const text = buffer.subarray(0, completeBytes).toString("utf8");
+  const lines: Array<{ raw: string; endOffset: number }> = [];
+  let offset = 0;
+  for (const rawLine of text.split(/(?<=\n)/)) {
+    if (!rawLine) {
+      continue;
+    }
+    const byteLength = Buffer.byteLength(rawLine);
+    offset += byteLength;
+    const normalized = rawLine.replace(/\r?\n$/, "");
+    lines.push({ raw: normalized, endOffset: offset });
+  }
+  return { complete: lines, completeBytes, pendingBytes: buffer.length - completeBytes };
+}
+
+export async function drainAgentMemoryQueueFile(options: {
+  workspaceRoot: string;
+  watchFile: string;
+  source: string;
+  eventName?: string;
+  startOffset?: number;
+  compactAfterBytes?: number;
+  historyMaxBytes?: number;
+}): Promise<{
+  eventsIngested: number;
+  errors: string[];
+  bytesRead: number;
+  pendingBytes: number;
+  checkpointFile: string;
+  compacted: boolean;
+  historyFile: string;
+}> {
+  const historyFile = queueHistoryPath(options.watchFile);
+  if (!existsSync(options.watchFile)) {
+    return {
+      eventsIngested: 0,
+      errors: [],
+      bytesRead: 0,
+      pendingBytes: 0,
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: false,
+      historyFile,
+    };
+  }
+  const fileBuffer = readFileSync(options.watchFile);
+  let bytesRead = options.startOffset ?? readQueueCheckpoint(options.watchFile, fileBuffer.length);
+  if (bytesRead > fileBuffer.length) {
+    bytesRead = 0;
+  }
+  const { complete, pendingBytes } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));
+  let eventsIngested = 0;
+  const errors: string[] = [];
+  let consumedOffset = bytesRead;
+
+  for (const line of complete) {
+    if (!line.raw.trim()) {
+      consumedOffset = bytesRead + line.endOffset;
+      writeQueueCheckpoint(options.watchFile, consumedOffset);
+      continue;
+    }
+    const parsed = normalizeRawInput(line.raw);
+    if (!parsed) {
+      errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);
+      break;
+    }
+    const queued = parseQueuedHookLine(parsed);
+    const payload = queued?.payload ?? parsed;
+    const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;
+    const ingestSource = queued?.source ?? options.source;
+    const result = await ingestEnvelope(ingestRoot, normalizeAgentEvent({
+      workspaceRoot: ingestRoot,
+      source: ingestSource,
+      eventName: queued?.eventName ?? options.eventName,
+      raw: payload,
+      integration: ingestSource === "cursor" ? "mcp" : "native-hook",
+    }));
+    if (result.ok) {
+      eventsIngested += 1;
+      consumedOffset = bytesRead + line.endOffset;
+      writeQueueCheckpoint(options.watchFile, consumedOffset);
+    } else {
+      errors.push(result.error ?? "agent memory ingest failed");
+      break;
     }
   }
-  const values: Array<Record<string, unknown>> = [];
-  for (const line of content.split(/\r?\n/)) {
-    const parsed = normalizeRawInput(line);
-    if (parsed) {
-      values.push(parsed);
-    }
-  }
-  return values;
+
+  const retention = errors.length === 0 && consumedOffset > 0
+    ? compactAgentMemoryQueueFile({
+        watchFile: options.watchFile,
+        originalBuffer: fileBuffer,
+        consumedOffset,
+        compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,
+        historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,
+      })
+    : { compacted: false, historyFile };
+  const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;
+
+  return {
+    eventsIngested,
+    errors,
+    bytesRead: bytesAfterRetention,
+    pendingBytes,
+    checkpointFile: queueCheckpointPath(options.watchFile),
+    compacted: retention.compacted,
+    historyFile: retention.historyFile,
+  };
 }
 
 async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promise<AgentIngestWatchResult> {
@@ -431,55 +592,41 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
     };
   }
 
-  let bytesRead = 0;
   let eventsIngested = 0;
   const errors: string[] = [];
+  let pendingIngest = Promise.resolve();
   const ingestNewContent = async () => {
-    if (!existsSync(watchFile)) {
-      return;
-    }
-    const content = readFileSync(watchFile, "utf8");
-    const next = content.slice(bytesRead);
-    bytesRead = content.length;
-    for (const line of parseJsonLines(next)) {
-      const queued = parseQueuedHookLine(line);
-      const payload = queued?.payload ?? line;
-      const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;
-      const ingestSource = queued?.source ?? source;
-      const result = await ingestEnvelope(ingestRoot, normalizeAgentEvent({
-        workspaceRoot: ingestRoot,
-        source: ingestSource,
-        eventName: queued?.eventName ?? options.eventName,
-        raw: payload,
-        integration: ingestSource === "cursor" ? "mcp" : "native-hook",
-      }));
-      if (result.ok) {
-        eventsIngested += 1;
-      } else {
-        errors.push(result.error ?? "agent memory ingest failed");
-      }
-    }
+    const result = await drainAgentMemoryQueueFile({
+      workspaceRoot: options.workspaceRoot,
+      watchFile,
+      source,
+      eventName: options.eventName,
+    });
+    eventsIngested += result.eventsIngested;
+    errors.push(...result.errors);
   };
 
   await ingestNewContent();
   return await new Promise<AgentIngestWatchResult>((resolve) => {
     const watcher = watch(watchFile, { persistent: true }, () => {
-      void ingestNewContent();
+      pendingIngest = pendingIngest.then(ingestNewContent, ingestNewContent);
     });
     const shutdown = () => {
       watcher.close();
-      resolve({
-        ok: errors.length === 0,
-        watch: true,
-        source,
-        file,
-        eventsIngested,
-        errors,
-        nextActions: [
-          `forge agent memory --entry ${source} --json`,
-          `forge agent hooks status --target ${source} --json`,
-        ],
-        exitCode: errors.length === 0 ? 0 : 1,
+      void pendingIngest.finally(() => {
+        resolve({
+          ok: errors.length === 0,
+          watch: true,
+          source,
+          file,
+          eventsIngested,
+          errors,
+          nextActions: [
+            `forge agent memory --entry ${source} --json`,
+            `forge agent hooks status --target ${source} --json`,
+          ],
+          exitCode: errors.length === 0 ? 0 : 1,
+        });
       });
     };
     process.once("SIGINT", shutdown);

@@ -11,6 +11,8 @@ node_modules/
 .forge/agent/*.mjs
 .forge/agent/*.json
 .forge/agent/*.ndjson
+.forge/agent/*.history
+.forge/studio/*.json
 **/.forge/cache/
 **/.forge/pglite/
 **/.forge/delta/
@@ -19,6 +21,7 @@ node_modules/
 **/.forge/test-cache/
 **/.forge/test-runs/
 **/.forge/ui-runs/
+**/.forge/studio/*.json
 .codex/environments/
 .codex/scripts/
 .forge/releases/*

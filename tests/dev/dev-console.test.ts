@@ -391,6 +391,49 @@ describe("H33 forge dev console", () => {
   );
 
   test(
+    "dev console uses the repo-local CLI entrypoint in the ForgeOS framework checkout",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-framework-entrypoint");
+      try {
+        writeFileSync(
+          join(workspace, "package.json"),
+          JSON.stringify(
+            {
+              name: "forgeos",
+              private: true,
+              type: "module",
+              dependencies: { zod: "^3.24.0" },
+            },
+            null,
+            2,
+          ),
+          "utf8",
+        );
+        mkdirSync(join(workspace, "bin"), { recursive: true });
+        writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+        await runGenerate(defaultGenerateOptions(workspace));
+
+        const cycle = await runDevConsoleCycle({
+          workspaceRoot: workspace,
+          mode: "once",
+          includeImpact: false,
+        });
+
+        expect(cycle.summary.generated).toMatchObject({
+          command: "node bin/forge.mjs generate",
+          checkCommand: "node bin/forge.mjs generate --check --json",
+        });
+        expect(cycle.summary.agentContext.recommendedCommands[0]).toBe("node bin/forge.mjs dev");
+        expect(cycle.summary.agentContext.useFullCommands).toContain("node bin/forge.mjs inspect all --full --json");
+        expect(cycle.nextActions[0]?.command).toBe("node bin/forge.mjs dev");
+      } finally {
+        cleanupWorkspace(workspace);
+      }
+    },
+    15_000,
+  );
+
+  test(
     "dev console marks generated artifacts fresh after self-healing stale files",
     async () => {
       const workspace = scaffoldGenerateWorkspace("dev-console-self-heal-fresh");

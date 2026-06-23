@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
+import { runDocsCheckCommand } from "../../src/forge/cli/docs.ts";
 
 function read(path: string): string {
   return readFileSync(path, "utf8");
@@ -48,6 +49,14 @@ const PUBLIC_PAGES = [
 ] as const;
 
 describe("ReadTheDocs documentation", () => {
+  test("forge docs check validates the public documentation gate", () => {
+    const result = runDocsCheckCommand({ workspaceRoot: process.cwd(), json: true });
+    expect(result.ok).toBe(true);
+    expect(result.exitCode).toBe(0);
+    expect(result.checks.some((check) => check.name === ".readthedocs.yaml" && check.ok)).toBe(true);
+    expect(result.nextActions).toContain("mkdocs build --strict");
+  });
+
   test("has a v2 ReadTheDocs MkDocs configuration", () => {
     const config = read(".readthedocs.yaml");
     expect(config).toContain("version: 2");
@@ -97,6 +106,7 @@ describe("ReadTheDocs documentation", () => {
     }
     expect(read("docs/getting-started.md")).toContain("npm create forgeos-app@alpha");
     expect(read("docs/getting-started.md")).toContain("Open the web URL");
+    expect(read("docs/getting-started.md")).toContain("node bin/forge.mjs verify framework");
     expect(read("docs/tutorial-first-app.md")).toContain("npm run forge -- dev --once --json");
     expect(read("docs/architecture.md")).toContain("flowchart TD");
     expect(read("docs/architecture.md")).toContain("Package and integration contract");
@@ -122,6 +132,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/agent-feature-tutorial.md")).toContain("Add integrations only through Forge");
     expect(read("docs/dev-loop.md")).toContain("forge dev --once --json");
     expect(read("docs/dev-loop.md")).toContain("API URL");
+    expect(read("docs/dev-loop.md")).toContain("stale global install");
     expect(read("docs/runtime-by-example.md")).toContain("create support tickets");
     expect(read("docs/runtime-by-example.md")).toContain("ctx.emit");
     expect(read("docs/frontend.md")).toContain("useLiveQuery");
@@ -152,9 +163,14 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/troubleshooting.md")).toContain("LiveQuery stale");
     expect(read("docs/troubleshooting.md")).toContain("Error map");
     expect(read("docs/troubleshooting.md")).toContain("forge handoff --json");
+    expect(read("docs/troubleshooting.md")).toContain("waiting-for-user-trust");
+    expect(read("docs/troubleshooting.md")).toContain("FORGE_DELTA_BUSY");
+    expect(read("docs/troubleshooting.md")).toContain("Studio target preview issues");
     expect(read("docs/agent-contract.md")).toContain("forge agent export");
     expect(read("docs/agent-contract.md")).toContain("dependencyApis");
     expect(read("docs/agent-contract.md")).toContain("Package API evidence");
+    expect(read("docs/agent-memory.md")).toContain(".codex/hooks.json");
+    expect(read("docs/agent-memory.md")).toContain(".forge/agent/**");
     expect(read("docs/ai.md")).toContain("ctx.ai.generateText");
     expect(read("docs/ai.md")).toContain("generateStructured");
     expect(read("docs/ai.md")).toContain("Choose the right AI path");
@@ -209,6 +225,8 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/cli-reference.md")).toContain("forge rls mutate-test --json");
     expect(read("docs/cli-reference.md")).toContain("forge ai redteam --json");
     expect(read("docs/cli-reference.md")).toContain("npm run release:publish-alpha");
+    expect(read("docs/cli-reference.md")).toContain("Live target preview state is recorded under `.forge/studio/preview.json`");
+    expect(read("docs/agent-memory.md")).toContain(".forge/agent/events.ndjson");
     expect(read("docs/production-readiness.md")).toContain("Threat Model");
     expect(read("docs/security-and-data.md")).toContain("Production Readiness");
     expect(read("docs/security-and-data.md")).toContain("Threat Model");

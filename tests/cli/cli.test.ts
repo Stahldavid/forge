@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
+import { buildCheckJson } from "../../src/forge/cli/output.ts";
+import { classifyChangeType } from "../../src/forge/workspace/change-summary.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
@@ -150,12 +152,45 @@ describe("Forge CLI", () => {
       expect(changed.command.json).toBe(true);
     }
 
+    const authoredChanged = parseCli(["changed", "--authored", "--json"]);
+    expect(authoredChanged.errors).toEqual([]);
+    expect(authoredChanged.command?.kind).toBe("changed");
+    if (authoredChanged.command?.kind === "changed") {
+      expect(authoredChanged.command.authoredOnly).toBe(true);
+    }
+
+    const diff = parseCli(["diff", "authored", "--json"]);
+    expect(diff.errors).toEqual([]);
+    expect(diff.command).toMatchObject({ kind: "diff", target: "authored", json: true });
+
     const handoff = parseCli(["handoff", "--json"]);
     expect(handoff.errors).toEqual([]);
     expect(handoff.command?.kind).toBe("handoff");
     if (handoff.command?.kind === "handoff") {
       expect(handoff.command.json).toBe(true);
     }
+  });
+
+  test("parseCli accepts docs check and classifies tracked Codex hooks as config", () => {
+    const parsed = parseCli(["docs", "check", "--json"]);
+    expect(parsed.command).toMatchObject({
+      kind: "docs",
+      subcommand: "check",
+      json: true,
+    });
+    expect(classifyChangeType(".codex/hooks.json")).toBe("config");
+  });
+
+  test("check JSON success does not recommend running check again", () => {
+    const json = buildCheckJson({
+      changed: [],
+      unchanged: [],
+      warnings: [],
+      errors: [],
+      exitCode: 0,
+    });
+    expect(json.nextActions).not.toContain("forge check --json");
+    expect(json.nextActions).toContain("forge verify --changed");
   });
 
   test("parseCli accepts explicit human status output", () => {
@@ -527,6 +562,50 @@ describe("Forge CLI", () => {
       rmSync(workspace, { recursive: true, force: true });
     }
   });
+
+  test("studio open reuses a live target preview process instead of spawning a duplicate", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-studio-open-preview-state");
+    try {
+      mkdirSync(join(workspace, ".forge", "studio"), { recursive: true });
+      writeFileSync(
+        join(workspace, ".forge", "studio", "preview.json"),
+        `${JSON.stringify({
+          pid: process.pid,
+          command: "forge dev --port 3766 --web-port 5174",
+          previewPort: 5174,
+          runtimePort: 3766,
+          startedAt: new Date(0).toISOString(),
+        }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const result = await runStudioOpenCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        bridge: false,
+        json: true,
+        dryRun: false,
+        force: false,
+      });
+
+      expect(result.previewAutomation).toMatchObject({
+        attempted: false,
+        started: false,
+        alreadyRunning: true,
+        skippedReason: "already-running",
+        pid: process.pid,
+        owner: {
+          kind: "forge-managed",
+          pid: process.pid,
+          statePath: ".forge/studio/preview.json",
+        },
+      });
+      expect(result.previewAutomation.statusAfter.state).toBe("not-running");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 20_000);
 
   test("studio snapshot reports preview posture and changed state without writing manifest", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-snapshot");
@@ -972,6 +1051,7 @@ describe("Forge CLI", () => {
       expect(preview.command.subcommand).toBe("repair");
       expect(preview.command.dryRun).toBe(true);
       expect(preview.command.yes).toBe(false);
+      expect(preview.command.verbose).toBe(false);
     }
 
     const apply = parseCli(["delta", "repair", "--yes", "--json"]);
@@ -980,6 +1060,34 @@ describe("Forge CLI", () => {
     if (apply.command?.kind === "delta") {
       expect(apply.command.subcommand).toBe("repair");
       expect(apply.command.yes).toBe(true);
+    }
+  });
+
+  test("parseCli accepts release doctor and prepared-only gates", () => {
+    const releaseDoctor = parseCli(["release", "doctor", "--json"]);
+    expect(releaseDoctor.errors).toEqual([]);
+    expect(releaseDoctor.command).toMatchObject({ kind: "release", action: "doctor", json: true });
+
+    const releaseCheck = parseCli(["release", "check", "--allow-missing-local-release", "--json"]);
+    expect(releaseCheck.errors).toEqual([]);
+    expect(releaseCheck.command?.kind).toBe("release");
+    if (releaseCheck.command?.kind === "release") {
+      expect(releaseCheck.command.allowMissingLocalRelease).toBe(true);
+    }
+
+    const selfHost = parseCli(["self-host", "check", "--prepared-only", "--json"]);
+    expect(selfHost.errors).toEqual([]);
+    expect(selfHost.command?.kind).toBe("self-host");
+    if (selfHost.command?.kind === "self-host") {
+      expect(selfHost.command.preparedOnly).toBe(true);
+    }
+
+    const docs = parseCli(["docs", "check", "--build", "--install-venv", "--json"]);
+    expect(docs.errors).toEqual([]);
+    expect(docs.command?.kind).toBe("docs");
+    if (docs.command?.kind === "docs") {
+      expect(docs.command.build).toBe(true);
+      expect(docs.command.installVenv).toBe(true);
     }
   });
 
