@@ -1021,6 +1021,7 @@ function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {
   const lines = [
     `Forge Agent Context (${result.scope}${result.entry ? `: ${result.entry}` : ""})`,
     "",
+    `target: ${formatAgentContextTarget(result)}`,
     `events: ${summary.events}`,
     `sources: ${summary.sources.length > 0 ? summary.sources.join(", ") : "none"}`,
     `tools: ${summary.tools.length > 0 ? summary.tools.join(", ") : "none"}`,
@@ -1065,6 +1066,21 @@ function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {
     }
   }
   return `${lines.join("\n")}\n`;
+}
+
+function formatAgentContextTarget(result: AgentMemoryContextPack): string {
+  const target = result.scopeTarget;
+  const parts: string[] = [target.kind];
+  if (target.value) {
+    parts.push(target.value);
+  }
+  if (target.semanticTarget && target.semanticTarget !== target.value) {
+    parts.push(`semantic=${target.semanticTarget}`);
+  }
+  if (target.currentSessionId) {
+    parts.push(`session=${target.currentSessionId}`);
+  }
+  return parts.join(" ");
 }
 
 function formatAgentMemoryEventsHuman(events: AgentMemoryEventRecord[]): string {

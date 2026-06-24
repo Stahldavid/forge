@@ -10,7 +10,7 @@ on:
       templates:
         description: Comma-separated templates
         required: true
-        default: "minimal-web"
+        default: "minimal-web,nuxt-web"
   schedule:
     - cron: "0 7 * * 1"
 
@@ -65,7 +65,7 @@ jobs:
           SPEC="${{ inputs['forge-spec'] || 'file:$GITHUB_WORKSPACE' }}"
           node scripts/field-test-forgeos.mjs \
             --package-managers "${{ matrix.package-manager }}" \
-            --templates "${{ inputs.templates || 'minimal-web' }}" \
+            --templates "${{ inputs.templates || 'minimal-web,nuxt-web' }}" \
             --forge-spec "$SPEC" \
             --install \
             --runtime-probes \

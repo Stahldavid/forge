@@ -48,6 +48,7 @@ export async function buildAgentMemoryContext(input: {
     return {
       ok: true,
       scope,
+      scopeTarget: contextScopeTarget(input, scope, target, currentSession?.id),
       entry: input.entry,
       change: input.change,
       proof: input.proof,
@@ -115,6 +116,33 @@ function contextTarget(
     return input.change.includes(":") ? input.change : `session:${input.change}`;
   }
   return undefined;
+}
+
+function contextScopeTarget(
+  input: { entry?: string; change?: string; proof?: string; handoff?: boolean },
+  scope: AgentMemoryContextPack["scope"],
+  semanticTarget: string | undefined,
+  currentSessionId: string | undefined,
+): AgentMemoryContextPack["scopeTarget"] {
+  if (scope === "entry") {
+    return { kind: "entry", value: input.entry, semanticTarget };
+  }
+  if (scope === "proof") {
+    return { kind: "proof", value: input.proof, semanticTarget };
+  }
+  if (scope === "change") {
+    const value = input.change ?? "current";
+    return {
+      kind: "change",
+      value,
+      ...(semanticTarget ? { semanticTarget } : {}),
+      ...(value === "current" && currentSessionId ? { currentSessionId } : {}),
+    };
+  }
+  if (scope === "handoff") {
+    return { kind: "handoff", value: "handoff", currentSessionId };
+  }
+  return { kind: "current-session", value: "current", currentSessionId };
 }
 
 function eventTarget(

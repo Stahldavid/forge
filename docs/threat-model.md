@@ -15,6 +15,8 @@ This document covers ForgeOS framework-level risks:
 - package and import guards;
 - frontend capability map;
 - AI tools and agents;
+- agent memory, DeltaDB, and CAIR agent protocols;
+- Studio bridge and brownfield import surfaces;
 - diagnostics, traces, telemetry, repair, review, and generated files.
 
 It does not replace an application-specific threat model. Every production app still needs its own review of business logic, data sensitivity, providers, deployments, and user roles.
@@ -46,6 +48,9 @@ ForgeOS aims to:
 | Outbox/workflows | Side effects must happen after commit and be auditable |
 | Package graph/import guards | Packages must only run in allowed contexts |
 | AI tools and traces | Tool calls can read/write data and may expose sensitive context |
+| Agent memory and DeltaDB | Local provenance can be stale, inferred, or over-trusted |
+| CAIR plans and journals | Compact protocol actions can mutate source if applied blindly |
+| Studio bridge and imports | Local inspection bridges and external manifests can widen the trusted input set |
 | Frontend capability map | UI-to-runtime drift can bypass intended flows or hide broken features |
 
 ## Trust boundaries
@@ -71,6 +76,9 @@ Important boundaries:
 | Source to generated contract | stale or misleading generated files | `forge generate --check`, deterministic outputs, drift checks |
 | Package to runtime context | network SDK inside command/query/liveQuery | PackageGraph, runtime matrix, import guards |
 | Agent to app tools | unsafe writes, prompt injection, data exfiltration | typed tools, risk/approval metadata, tenant/auth context, traces |
+| Agent history to developer decisions | inferred history mistaken for proof | DeltaDB confidence, work-session `needs-review`, `forge explain` contract fallback labels |
+| CAIR action to source tree | compact plan applies unintended edits | dry-run plans, journals, guard checks, impact-aware verification |
+| Studio/import inputs to generated graph | local bridge or external manifest injects stale claims | validation diagnostics, explicit source metadata, generate/check gates |
 
 ## Threats and mitigations
 

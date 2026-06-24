@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.23
+
+### Patch Changes
+
+- Tighten the post-alpha.22 release surface and package evidence.
+
+  - Add a dedicated Nuxt template smoke workflow that installs `nuxt-web`, runs Forge generation/checks, runs Nuxt typecheck, and probes `forge dev --once`.
+  - Include `nuxt-web` in the default field-test template matrix.
+  - Add explicit `scopeTarget` metadata and human-readable target output for `forge agent context --change`, `--proof`, and `--handoff`.
+  - Teach `forge explain` to fall back to the current generated agent contract when DeltaDB has no runtime history, while marking the result as contract-defined instead of executed.
+  - Downgrade read-only observation commands such as `forge status`, `forge changed`, `forge handoff`, `forge explain`, `forge timeline`, and CAIR queries to low-confidence context-gathering sessions in DeltaDB.
+  - Package `docs/cair-protocol.md` in the npm tarball and expand the public security/threat-model docs for DeltaDB, agent memory, CAIR, Studio bridge, brownfield import, and Nuxt surfaces.
+
 ## 0.1.0-alpha.22
 
 ### Patch Changes

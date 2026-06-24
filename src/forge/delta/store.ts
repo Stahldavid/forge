@@ -2809,6 +2809,12 @@ function scoreWorkSessionCandidate(
 ): { score: number; signals: DeltaWorkSessionSignal[] } {
   const signals: DeltaWorkSessionSignal[] = [];
   const metadata = candidate.metadata;
+  if (isObservationOnlyContext(context) && !isObservationOnlyWorkSession(metadata)) {
+    return {
+      score: 0.15,
+      signals: [{ signal: "observation-only", weight: 0.15, value: context.commands[0] }],
+    };
+  }
   addSignalIfOverlap(signals, "sameTraceId", 0.4, context.traces, metadata.traces);
   addSignalIfOverlap(signals, "sameManifestService", 0.35, context.services, metadata.services);
   addSignalIfOverlap(signals, "sameRuntimeEntry", 0.3, context.entries, metadata.entries);
@@ -2951,6 +2957,9 @@ function normalizeWorkSessionMetadata(value: Record<string, unknown>): DeltaWork
 }
 
 function inferWorkSessionTitle(context: DeltaOperationContext, metadata: DeltaWorkSessionMetadata): string {
+  if (isObservationOnlyWorkSession(metadata)) {
+    return "Observe project context";
+  }
   if (context.kind === "manifest.imported" && metadata.services[0]) {
     return `Import ${metadata.services[0]} external service`;
   }
@@ -2979,6 +2988,9 @@ function inferWorkSessionTitle(context: DeltaOperationContext, metadata: DeltaWo
 }
 
 function inferIntent(context: DeltaOperationContext, metadata: DeltaWorkSessionMetadata): string {
+  if (isObservationOnlyWorkSession(metadata)) {
+    return "context-gathering";
+  }
   if (context.kind === "manifest.imported" || metadata.fileClusters.includes("manifest.change")) {
     return "external-runtime-import";
   }
@@ -2999,6 +3011,9 @@ function inferIntent(context: DeltaOperationContext, metadata: DeltaWorkSessionM
 
 function summarizeWorkSession(metadata: DeltaWorkSessionMetadata): string {
   const parts: string[] = [];
+  if (isObservationOnlyWorkSession(metadata)) {
+    return `Observed project context with ${metadata.commands.slice(0, 3).join(", ")}.`;
+  }
   if (metadata.services[0]) {
     parts.push(`worked on ${metadata.services[0]}`);
   }
@@ -3018,6 +3033,9 @@ function summarizeWorkSession(metadata: DeltaWorkSessionMetadata): string {
 }
 
 function initialWorkSessionConfidence(context: DeltaOperationContext): number {
+  if (isObservationOnlyContext(context)) {
+    return 0.36;
+  }
   if (context.kind === "manifest.imported") {
     return 0.78;
   }
@@ -3041,6 +3059,65 @@ function isDiagnosticRepairChain(context: DeltaOperationContext, metadata: Delta
     (context.diagnostics.length > 0 && metadata.fileClusters.some((cluster) => cluster.includes("policy") || cluster.includes("command") || cluster.includes("query"))) ||
     (metadata.diagnostics.length > 0 && context.fileClusters.some((cluster) => cluster.includes("policy") || cluster.includes("command") || cluster.includes("query")))
   );
+}
+
+const OBSERVATION_COMMAND_PREFIXES = [
+  "agent context",
+  "agent print-context",
+  "agent timeline",
+  "cair query",
+  "cair snapshot",
+  "changed",
+  "delta status",
+  "doctor",
+  "explain",
+  "handoff",
+  "inspect",
+  "live status",
+  "status",
+  "timeline",
+];
+
+function isObservationOnlyContext(context: DeltaOperationContext): boolean {
+  return (
+    context.commands.length > 0 &&
+    context.files.length === 0 &&
+    context.entries.length === 0 &&
+    context.diagnostics.length === 0 &&
+    context.proofs.length === 0 &&
+    context.services.length === 0 &&
+    context.traces.length === 0 &&
+    context.commands.every(isObservationCommand)
+  );
+}
+
+function isObservationOnlyWorkSession(metadata: DeltaWorkSessionMetadata): boolean {
+  return (
+    metadata.commands.length > 0 &&
+    metadata.files.length === 0 &&
+    metadata.entries.length === 0 &&
+    metadata.diagnostics.length === 0 &&
+    metadata.proofs.length === 0 &&
+    metadata.services.length === 0 &&
+    metadata.traces.length === 0 &&
+    metadata.commands.every(isObservationCommand)
+  );
+}
+
+function isObservationCommand(command: string): boolean {
+  const normalized = normalizeForgeCommand(command);
+  return OBSERVATION_COMMAND_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix} `));
+}
+
+function normalizeForgeCommand(command: string): string {
+  return command
+    .trim()
+    .replace(/^node\s+(?:\.\/)?bin\/forge\.mjs(?:\s+|$)/u, "")
+    .replace(/^bun\s+run\s+forge(?:\s+|$)/u, "")
+    .replace(/^npm\s+run\s+forge\s+--(?:\s+|$)/u, "")
+    .replace(/^forge(?:\s+|$)/u, "")
+    .replace(/\s+/gu, " ")
+    .trim();
 }
 
 function hasAnyOverlap(...groups: string[][]): boolean {

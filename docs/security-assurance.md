@@ -64,6 +64,20 @@ The current implementation covers adversarial fixtures for runtime boundaries, r
 
 By default, `forge security prove` aggregates structural proofs and invariant metadata. Pass `--full` or `--run-tests` to execute the invariant security tests inside the proof command and include the resulting test status in `proofs.securityTests`.
 
+## Alpha Surface Review
+
+Recent alpha surfaces add useful agent and migration workflows, but they also expand the assurance perimeter. Treat these as explicit surfaces in release review:
+
+| Surface | Primary risk | Required control |
+|---------|--------------|------------------|
+| DeltaDB and agent memory | local history can imply stronger provenance than was observed | commands must label current-contract fallbacks, redact agent payloads, and mark low-confidence observation sessions as `needs-review` |
+| CAIR query/action protocol | compact mutation plans can hide impact | mutation actions must plan before apply, write journals, and stay behind generated guard checks |
+| Studio bridge | browser tooling can accidentally cross from inspect to mutate | bridge commands must keep explicit subcommands, local binding, and no secret echoing |
+| Brownfield import | external manifests can overstate runtime capabilities | imports must preserve source metadata, validation diagnostics, and generated contract drift checks |
+| Nuxt template and frontend bindings | generated client wiring can drift from runtime entries | CI must install the template, run Forge check, run Nuxt typecheck, and probe `forge dev --once` |
+
+For release candidates, include the relevant field report or focused test output alongside normal security evidence when one of these surfaces changed.
+
 ## Local Security Gate
 
 Run the focused gate locally:
@@ -87,6 +101,7 @@ Run the broader gate before release:
 ```bash
 node ./bin/forge.mjs verify --strict --script-timeout-ms 120000
 npm run field:test -- --package-managers npm --templates minimal-web,nuxt-web --forge-spec "npm:forgeos@alpha" --install --runtime-probes --json
+npm run field:test -- --package-managers npm --templates nuxt-web --forge-spec "npm:forgeos@alpha" --install --runtime-probes --json
 ```
 
 ## Evidence

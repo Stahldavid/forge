@@ -14,8 +14,18 @@ describe("field test workflow", () => {
     expect(workflow).toContain("node-version: [22, 24]");
     expect(workflow).toContain("package-manager: [npm, pnpm, yarn, bun]");
     expect(workflow).toContain("scripts/field-test-forgeos.mjs");
+    expect(workflow).toContain("minimal-web,nuxt-web");
     expect(workflow).toContain("--runtime-probes");
     expect(workflow).toContain("--write-report");
     expect(workflow).toContain("actions/upload-artifact@v4");
+  });
+
+  test("has a dedicated Nuxt template smoke with typecheck", () => {
+    const workflow = readFileSync(".github/workflows/nuxt-template-smoke.yml", "utf8");
+    expect(workflow).toContain("Nuxt Template Smoke");
+    expect(workflow).toContain("--template nuxt-web");
+    expect(workflow).toContain("--install");
+    expect(workflow).toContain("npm run typecheck");
+    expect(workflow).toContain("npm run dev -- --once --json");
   });
 });

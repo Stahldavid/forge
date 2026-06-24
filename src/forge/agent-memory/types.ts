@@ -93,6 +93,12 @@ export interface AgentMemoryContextEvent {
 export interface AgentMemoryContextPack {
   ok: true;
   scope: "current" | "entry" | "change" | "proof" | "handoff";
+  scopeTarget: {
+    kind: "current-session" | "entry" | "change" | "proof" | "handoff";
+    value?: string;
+    semanticTarget?: string;
+    currentSessionId?: string;
+  };
   entry?: string;
   change?: string;
   proof?: string;

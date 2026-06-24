@@ -101,6 +101,40 @@ describe("delta work session inference", () => {
     }
   });
 
+  test("keeps read-only observation commands as low-confidence context gathering", async () => {
+    const root = tempWorkspace("delta-session-observation");
+    try {
+      const store = await DeltaStore.open(root);
+      const recorderSession = await store.createSession({ source: "forge-command", git: { branch: "main", head: "a1" } });
+      await store.recordFilePath(recorderSession, "src/commands/createInvoice.ts", "modified");
+      await store.appendOperation({
+        sessionId: recorderSession,
+        kind: "command.executed",
+        summary: "forge status --json",
+        data: { command: "node bin/forge.mjs status --json" },
+        commandRun: {
+          commandName: "node bin/forge.mjs status --json",
+          argv: ["node", "bin/forge.mjs", "status", "--json"],
+          exitCode: 0,
+        },
+      });
+
+      const sessions = await store.listWorkSessions();
+      await store.close();
+
+      const observation = sessions.find((session) => session.inferredIntent === "context-gathering");
+      const sourceChange = sessions.find((session) => session.inferredIntent === "source-change");
+      expect(sourceChange).toBeDefined();
+      expect(observation).toBeDefined();
+      expect(observation?.title).toBe("Observe project context");
+      expect(observation?.status).toBe("needs-review");
+      expect(observation?.confidence).toBeLessThan(0.4);
+      expect(observation?.metadata.commands).toContain("node bin/forge.mjs status --json");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("supports timeline by session and manual corrections", async () => {
     const root = tempWorkspace("delta-session-corrections");
     try {

@@ -99,10 +99,17 @@ describe("H48 agent memory bridge", () => {
         expect(context.agentMemory.entries).toContain("billing.createInvoice");
         expect(context.agentMemory.toolCalls.some((call) => call.tool === "forge.manifest_import")).toBe(true);
         expect(context.agentMemory.events[0]?.entries).toContain("billing.createInvoice");
+        expect(context.scope).toBe("entry");
+        expect(context.scopeTarget).toMatchObject({
+          kind: "entry",
+          value: "billing.createInvoice",
+          semanticTarget: "billing.createInvoice",
+        });
         expect(JSON.stringify(context)).not.toContain("\"envelope\"");
         expect(JSON.stringify(context)).not.toContain("\"payload\"");
         const human = formatAgentMemoryHuman(context);
         expect(human).toContain("Forge Agent Context (entry: billing.createInvoice)");
+        expect(human).toContain("target: entry billing.createInvoice");
         expect(human).toContain("events: 1");
         expect(human).toContain("tools: forge.manifest_import");
         expect(human).not.toContain("\"payload\"");
@@ -118,6 +125,8 @@ describe("H48 agent memory bridge", () => {
       expect("agentMemory" in handoffContext).toBe(true);
       if ("agentMemory" in handoffContext) {
         const state = handoffContext.currentState as { reasons?: Array<{ signal?: string; weight?: number; value?: string }> };
+        expect(handoffContext.scope).toBe("handoff");
+        expect(handoffContext.scopeTarget.kind).toBe("handoff");
         expect(state.reasons?.some((reason) => reason.signal && reason.weight !== undefined)).toBe(true);
         expect(handoffContext.recommendedCommands).toContain("forge handoff --json");
       }
@@ -958,6 +967,44 @@ describe("H48 agent memory bridge", () => {
       options: { subcommand: "timeline", target: "codex", limit: 5, json: true },
     });
     expect(parseCli(["mcp", "serve"]).command).toMatchObject({ kind: "mcp", subcommand: "serve" });
+  });
+
+  test("returns explicit scope targets for change and proof context", async () => {
+    const root = tempWorkspace("h48-context-scopes");
+    try {
+      const change = await runAgentMemoryCommand({
+        subcommand: "context",
+        workspaceRoot: root,
+        json: true,
+        target: "generic",
+        change: "current",
+      });
+      expect("agentMemory" in change).toBe(true);
+      if ("agentMemory" in change) {
+        expect(change.scope).toBe("change");
+        expect(change.scopeTarget).toMatchObject({ kind: "change", value: "current" });
+        expect(change.recommendedCommands).toContain("forge timeline --session current --json");
+      }
+
+      const proof = await runAgentMemoryCommand({
+        subcommand: "context",
+        workspaceRoot: root,
+        json: true,
+        target: "generic",
+        proof: "security-prove",
+      });
+      expect("agentMemory" in proof).toBe(true);
+      if ("agentMemory" in proof) {
+        expect(proof.scope).toBe("proof");
+        expect(proof.scopeTarget).toMatchObject({
+          kind: "proof",
+          value: "security-prove",
+          semanticTarget: "proof:security-prove",
+        });
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

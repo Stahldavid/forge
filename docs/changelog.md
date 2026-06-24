@@ -6,6 +6,23 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.23
+
+- Tightened the post-alpha.22 release surface and package evidence:
+  added a dedicated Nuxt template smoke workflow, included `nuxt-web` in the
+  default field-test template matrix, packaged `docs/cair-protocol.md`, and
+  expanded the security/threat-model docs for DeltaDB, agent memory, CAIR,
+  Studio bridge, brownfield import, and Nuxt surfaces.
+- `forge agent context` now returns explicit `scopeTarget` metadata and prints
+  the resolved context target for entry, change, proof, and handoff packs.
+- `forge explain` now falls back to the current generated agent contract when
+  DeltaDB has no runtime history, marking the entry as contract-defined rather
+  than executed.
+- DeltaDB work-session inference now treats read-only observation commands such
+  as `forge status`, `forge changed`, `forge handoff`, `forge explain`,
+  `forge timeline`, and CAIR queries as low-confidence context-gathering
+  sessions.
+
 ## 0.1.0-alpha.22
 
 - Added focused post-alpha.21 workflow improvements without expanding MCP tools:

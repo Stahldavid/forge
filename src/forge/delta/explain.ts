@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { DeltaStore } from "./store.ts";
 
 export interface DeltaExplainResult {
@@ -13,10 +15,11 @@ export async function runDeltaExplain(input: {
 }): Promise<DeltaExplainResult> {
   const store = await DeltaStore.open(input.workspaceRoot, { access: "read" });
   try {
+    const explanation = await store.explain(input.thing);
     return {
       ok: true,
       thing: input.thing,
-      explanation: await store.explain(input.thing),
+      explanation: enrichWithCurrentAgentContract(input.workspaceRoot, input.thing, explanation),
       exitCode: 0,
     };
   } finally {
@@ -68,6 +71,9 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
     lines.push("Runtime:");
     lines.push(`  kind: ${String(runtime.entry_kind ?? "unknown")}`);
     lines.push(`  result: ${String(runtime.result ?? "unknown")}`);
+    if (runtime.source) {
+      lines.push(`  source: ${String(runtime.source)}`);
+    }
     if (runtime.diagnostic_code) {
       lines.push(`  diagnostic: ${String(runtime.diagnostic_code)}`);
     }
@@ -92,6 +98,22 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
       if (value !== undefined) {
         lines.push(`  ${key}: ${Array.isArray(value) ? value.join(", ") : String(value)}`);
       }
+    }
+  }
+  const currentContract = explanation.currentContract as Record<string, unknown> | null | undefined;
+  if (currentContract) {
+    lines.push("");
+    lines.push("Current contract:");
+    lines.push(`  kind: ${String(currentContract.kind ?? "unknown")}`);
+    lines.push(`  name: ${String(currentContract.name ?? result.thing)}`);
+    if (currentContract.auth) {
+      lines.push(`  auth: ${String(currentContract.auth)}`);
+    }
+    if (currentContract.policy) {
+      lines.push(`  policy: ${String(currentContract.policy)}`);
+    }
+    if (currentContract.sourceFile) {
+      lines.push(`  file: ${String(currentContract.sourceFile)}`);
     }
   }
   lines.push("");
@@ -123,4 +145,94 @@ export function formatDeltaExplainHuman(result: DeltaExplainResult): string {
 
 export function formatDeltaExplainJson(result: DeltaExplainResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
+}
+
+function enrichWithCurrentAgentContract(
+  workspaceRoot: string,
+  thing: string,
+  explanation: Record<string, unknown>,
+): Record<string, unknown> {
+  const currentContract = currentContractForThing(workspaceRoot, thing);
+  if (!currentContract) {
+    return explanation;
+  }
+  const runtime = explanation.runtime && typeof explanation.runtime === "object"
+    ? explanation.runtime as Record<string, unknown>
+    : null;
+  return {
+    ...explanation,
+    type: explanation.type === "unknown" ? "runtime-entry" : explanation.type,
+    runtime: runtime ?? {
+      entry_name: currentContract.name,
+      entry_kind: currentContract.kind,
+      result: "defined",
+      source: "agentContract",
+      ...(currentContract.policy ? { policy: currentContract.policy } : {}),
+      ...(typeof currentContract.tenantScoped === "boolean" ? { tenant_scoped: currentContract.tenantScoped } : {}),
+      ...(typeof currentContract.needsApproval === "boolean" ? { needs_approval: currentContract.needsApproval } : {}),
+    },
+    currentContract,
+  };
+}
+
+function currentContractForThing(workspaceRoot: string, thing: string): Record<string, unknown> | undefined {
+  const contractPath = join(workspaceRoot, "src", "forge", "_generated", "agentContract.json");
+  if (!existsSync(contractPath)) {
+    return undefined;
+  }
+  try {
+    const contract = JSON.parse(readFileSync(contractPath, "utf8")) as Record<string, unknown>;
+    const collections: Array<[keyof typeof runtimeKinds, string]> = [
+      ["commands", "command"],
+      ["queries", "query"],
+      ["liveQueries", "liveQuery"],
+      ["actions", "action"],
+      ["workflows", "workflow"],
+    ];
+    for (const [collection, kind] of collections) {
+      const entries = Array.isArray(contract[collection]) ? contract[collection] as Record<string, unknown>[] : [];
+      for (const entry of entries) {
+        const name = runtimeEntryName(entry);
+        if (!name) {
+          continue;
+        }
+        if (name === thing || `${kind}:${name}` === thing || entry.id === thing || entry.exportName === thing) {
+          return {
+            source: "src/forge/_generated/agentContract.json",
+            kind,
+            name,
+            ...(stringValue(entry.auth) ? { auth: stringValue(entry.auth) } : {}),
+            ...(stringValue(entry.policy) ? { policy: stringValue(entry.policy) } : {}),
+            ...(typeof entry.tenantScoped === "boolean" ? { tenantScoped: entry.tenantScoped } : {}),
+            ...(typeof entry.needsApproval === "boolean" ? { needsApproval: entry.needsApproval } : {}),
+            ...(stringValue(entry.risk) ? { risk: stringValue(entry.risk) } : {}),
+            ...(stringValue(entry.file) ? { sourceFile: stringValue(entry.file) } : {}),
+            ...(stringValue(entry.path) ? { sourceFile: stringValue(entry.path) } : {}),
+          };
+        }
+      }
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
+const runtimeKinds = {
+  commands: "command",
+  queries: "query",
+  liveQueries: "liveQuery",
+  actions: "action",
+  workflows: "workflow",
+} as const;
+
+function runtimeEntryName(entry: Record<string, unknown>): string | undefined {
+  return stringValue(entry.name)
+    ?? stringValue(entry.exportName)
+    ?? stringValue(entry.id)
+    ?? stringValue(entry.entryName);
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }

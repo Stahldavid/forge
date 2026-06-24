@@ -342,6 +342,49 @@ describe("delta store", () => {
     }
   }, 30_000);
 
+  test("explain falls back to the current agent contract when Delta has no runtime history", async () => {
+    const root = tempWorkspace("delta-explain-contract-fallback");
+    try {
+      mkdirSync(join(root, "src", "forge", "_generated"), { recursive: true });
+      writeFileSync(join(root, "src", "forge", "_generated", "agentContract.json"), JSON.stringify({
+        commands: [
+          {
+            name: "billing.createInvoice",
+            auth: "can('billing.manage')",
+            policy: "billing.manage",
+            tenantScoped: true,
+            file: "src/commands/billing.createInvoice.ts",
+          },
+        ],
+        queries: [],
+        liveQueries: [],
+        actions: [],
+        workflows: [],
+      }));
+
+      const explain = await runDeltaExplain({ workspaceRoot: root, thing: "billing.createInvoice" });
+
+      expect(explain.exitCode).toBe(0);
+      expect(explain.explanation.type).toBe("runtime-entry");
+      expect(explain.explanation.runtime).toMatchObject({
+        entry_name: "billing.createInvoice",
+        entry_kind: "command",
+        result: "defined",
+        source: "agentContract",
+      });
+      expect(explain.explanation.currentContract).toMatchObject({
+        source: "src/forge/_generated/agentContract.json",
+        kind: "command",
+        name: "billing.createInvoice",
+        policy: "billing.manage",
+        tenantScoped: true,
+      });
+      expect(JSON.stringify(explain.explanation.semanticTimeline)).toContain("No semantic history found");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("busy lock diagnostics redact command secrets and relativize cwd", () => {
     const root = tempWorkspace("delta-busy-redaction");
     try {

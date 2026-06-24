@@ -1,0 +1,72 @@
+name: Nuxt Template Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      forge-spec:
+        description: Forge package spec to test
+        required: true
+        default: "file:$GITHUB_WORKSPACE"
+  pull_request:
+    paths:
+      - ".github/workflows/nuxt-template-smoke.yml"
+      - "bin/**"
+      - "src/**"
+      - "templates/nuxt-web/**"
+      - "package.json"
+      - "bun.lock"
+      - "scripts/field-test-forgeos.mjs"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/nuxt-template-smoke.yml"
+      - "bin/**"
+      - "src/**"
+      - "templates/nuxt-web/**"
+      - "package.json"
+      - "bun.lock"
+      - "scripts/field-test-forgeos.mjs"
+
+jobs:
+  nuxt-template-smoke:
+    name: Nuxt template install, typecheck, and runtime probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install workspace dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Create Nuxt app
+        run: |
+          SPEC="${{ inputs['forge-spec'] || 'file:$GITHUB_WORKSPACE' }}"
+          node bin/forge.mjs new nuxt-smoke \
+            --template nuxt-web \
+            --package-manager npm \
+            --forge-spec "$SPEC" \
+            --install \
+            --no-git
+
+      - name: Generate and check
+        working-directory: nuxt-smoke
+        run: |
+          npm run generate
+          npm run check
+
+      - name: Typecheck Nuxt app
+        working-directory: nuxt-smoke
+        run: npm run typecheck
+
+      - name: Run runtime probes
+        working-directory: nuxt-smoke
+        run: npm run dev -- --once --json
