@@ -1,5 +1,17 @@
 # forgeos
 
+## 0.1.0-alpha.21
+
+### Patch Changes
+
+- Harden Codex hook queue privacy and brownfield import classification.
+
+  - Queue new Codex hook events as redacted payloads instead of storing raw prompts, tool inputs, tool responses, or transcripts in `.forge/agent/events.ndjson`.
+  - Compact consumed hook queue history into redacted `.history` lines so old raw queue entries are not copied forward during drain retention.
+  - Scope brownfield route classification to the detected route handler, so read-only GET handlers are not marked command-like because a sibling route in the same file writes state.
+  - Mark read-shaped `POST /search`, `/query`, `/filter`, `/lookup`, and `/graphql` routes as `command-candidate` with `ambiguous-post-query` risk instead of treating them as normal writes.
+  - Sync the public docs changelog/CLI reference and clarify the alpha/latest npm dist-tag policy.
+
 ## 0.1.0-alpha.20
 
 ### Patch Changes

@@ -130,6 +130,35 @@ forge import inspect --target candidate-entries --json
 
 Bare `forge inspect` defaults to `summary`. Use `forge inspect all --brief --json` as the first aggregate read when context budget matters. It returns summary counts, preferred entrypoints, artifact status, and high-value file refs without embedding the larger framework/test/dependency payloads. Use `forge inspect all --json` for the compact diagnostic bundle and `--full` only when a tool needs the full generated machine contract. The `all` variants include a `payload` block that names the mode, what was included or omitted, and the command to switch to brief/compact/full output.
 
+## CAIR agent protocol
+
+```bash
+forge cair snapshot
+forge cair query "Q STATUS"
+forge cair query "Q ST"
+forge cair query "Q S name=createTicket"
+forge cair query "Q D S#1"
+forge cair query "Q R S#1"
+forge cair query "Q I S#1"
+forge cair query "Q DEP.API package=zod symbol=object"
+forge cair action --plan "A RN t=S#1 nn=openTicket"
+forge cair action "A APPLY plan=<P#|.forge/cair/plans/...json>"
+forge cair action "A ROLLBACK journal=.forge/cair/journal/<journal>.json"
+```
+
+CAIR is the compact agent protocol for semantic repository navigation and guarded edits. Use `snapshot` and `query` before opening whole files when symbol, reference, impact, or package API context is enough. Mutations should be planned first with `action --plan`; applying a plan checks target hashes and writes a rollback journal.
+
+Common compact aliases:
+
+| Long form | Compact |
+|-----------|---------|
+| `Q STATUS` | `Q ST` |
+| `Q SYMBOL` | `Q S` |
+| `Q DEF` | `Q D` |
+| `Q REFS` | `Q R` |
+| `Q IMPACT` | `Q I` |
+| `A RENAME.SYMBOL target=S#1 newName=x` | `A RN t=S#1 nn=x` |
+
 ## Verification
 
 ```bash

@@ -11,7 +11,7 @@ export interface BrownfieldImportCommandOptions {
 
 export type ImportedAssurance = "static-scan";
 export type ImportedReviewStatus = "needs-review" | "approved" | "rejected";
-export type ImportedEntryKind = "command" | "query" | "unknown";
+export type ImportedEntryKind = "command" | "command-candidate" | "query" | "unknown";
 export type ImportedRouteSource = "next-app-router" | "next-pages-api" | "express" | "nest" | "unknown";
 
 export interface ImportedDependencyInventory {

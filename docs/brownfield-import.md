@@ -58,6 +58,18 @@ Command-like, destructive, external, or unknown entries also keep:
 
 These defaults prevent a static guess from becoming an executable agent tool.
 
+Brownfield classification is intentionally conservative:
+
+- route handlers are classified from the most specific handler text ForgeOS can
+  identify, so a read-only `GET` route is not treated as a write just because a
+  sibling `POST` in the same file mutates state
+- mutating methods, destructive paths, database writes, and external side
+  effects remain command-like and approval-required
+- read-shaped `POST /search`, `/query`, `/filter`, `/lookup`, and `/graphql`
+  routes are emitted as `kind: "command-candidate"` with
+  `ambiguous-post-query` risk until a human decides whether they should become
+  Forge queries or commands
+
 ## Import Analysis Versus Adapters
 
 Use brownfield import when you need a map. Use an adapter when you need execution.

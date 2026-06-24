@@ -6,6 +6,36 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.21
+
+Alpha.21 hardens external-agent privacy and brownfield import polish:
+
+- Codex hook runner queue entries now store redacted payloads instead of raw
+  prompts, tool inputs, tool responses, or transcripts.
+- Consumed hook queue history is compacted as redacted `.history` entries, so
+  old raw queue lines are not copied forward during retention.
+- Brownfield import now scopes write/side-effect heuristics to the detected
+  route handler when possible, preventing sibling mutating routes from making a
+  read-only GET route look command-like.
+- Read-shaped `POST /search`, `/query`, `/filter`, `/lookup`, and `/graphql`
+  routes are emitted as `command-candidate` with `ambiguous-post-query` risk
+  until a human review decides whether they should become Forge queries or
+  commands.
+- CLI/reference docs now include the CAIR agent protocol and clarify the
+  `alpha`/`latest` npm dist-tag policy.
+
+## 0.1.0-alpha.20
+
+Generated-change and hook queue fixes:
+
+- Fixed generated-change diagnostics for `AGENTS.md` generated blocks and
+  `.forge/agent/context.json`.
+- Skipped probe, invalid, and out-of-workspace queued hook events during Agent
+  Memory drain, and bounded large hook queue inspection.
+- Preserved empty stdio command arguments, diagnosed malformed command strings,
+  and supported structured `service.commandArgs` in external manifests.
+- Included the basic example client demo in typecheck coverage.
+
 ## 0.1.0-alpha.19
 
 Alpha hardening:

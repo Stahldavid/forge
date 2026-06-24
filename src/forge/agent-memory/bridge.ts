@@ -4,6 +4,7 @@ import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { createDeltaId } from "../delta/ids.ts";
 import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy, summarizeDeltaStoreBusy } from "../delta/store.ts";
 import { extractAgentEventBindings, normalizeAgentEvent, summarizeAgentEvent } from "./normalize.ts";
+import { redactAgentPayload } from "./redaction.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
 import { claudeCodeInstallFiles, claudeCodeInstallResult } from "./sources/claude-code.ts";
 import { codexInstallFiles, codexInstallResult, privacyDefaults } from "./sources/codex.ts";
@@ -497,13 +498,60 @@ function compactAgentMemoryQueueFile(options: {
   }
   mkdirSync(dirname(historyFile), { recursive: true });
   const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);
+  const redactedConsumedHistory = redactedQueueHistoryBuffer(originalConsumed);
   writeFileSync(
     historyFile,
-    trimBufferStart(Buffer.concat([existingHistory, originalConsumed]), options.historyMaxBytes),
+    trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),
   );
   writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
   writeQueueCheckpoint(options.watchFile, 0);
   return { compacted: true, historyFile };
+}
+
+function redactedQueueHistoryBuffer(consumedBuffer: Buffer): Buffer {
+  const { complete } = splitCompleteJsonLines(consumedBuffer);
+  const lines: string[] = [];
+  for (const line of complete) {
+    if (!line.raw.trim()) {
+      continue;
+    }
+    const parsed = normalizeRawInput(line.raw);
+    if (!parsed) {
+      lines.push(JSON.stringify({
+        forgeHookQueueV1: true,
+        historyRedacted: true,
+        rawStored: false,
+        payloadRedacted: true,
+        payload: { _parseError: true },
+      }));
+      continue;
+    }
+    lines.push(JSON.stringify(redactedQueueHistoryEntry(parsed)));
+  }
+  return Buffer.from(lines.length > 0 ? `${lines.join("\n")}\n` : "", "utf8");
+}
+
+function redactedQueueHistoryEntry(parsed: Record<string, unknown>): Record<string, unknown> {
+  if (parsed.forgeHookQueueV1 !== true) {
+    return {
+      historyRedacted: true,
+      rawStored: false,
+      payloadRedacted: true,
+      payload: redactAgentPayload(parsed).value,
+    };
+  }
+  const queuedPayload = objectField(parsed, "payload") ?? objectField(parsed, "raw") ?? {};
+  return {
+    forgeHookQueueV1: true,
+    source: typeof parsed.source === "string" ? parsed.source : "codex",
+    eventName: typeof parsed.eventName === "string" ? parsed.eventName : undefined,
+    workspaceRoot: typeof parsed.workspaceRoot === "string" ? parsed.workspaceRoot : undefined,
+    enqueuedAt: typeof parsed.enqueuedAt === "string" ? parsed.enqueuedAt : undefined,
+    historyRedacted: true,
+    rawStored: false,
+    payloadRedacted: true,
+    payload: parsed.payloadRedacted === true ? queuedPayload : redactAgentPayload(queuedPayload).value,
+  };
 }
 
 function splitCompleteJsonLines(buffer: Buffer): {
@@ -1104,6 +1152,11 @@ function normalizeRawInput(input: unknown): Record<string, unknown> | null {
   return null;
 }
 
+function objectField(value: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
+  const child = value[key];
+  return child && typeof child === "object" && !Array.isArray(child) ? child as Record<string, unknown> : undefined;
+}
+
 export async function readStdinJson(options?: { timeoutMs?: number }): Promise<unknown> {
   if (process.stdin.isTTY) {
     return undefined;
@@ -1150,15 +1203,15 @@ function parseQueuedHookLine(raw: Record<string, unknown>): {
   if (raw.forgeHookQueueV1 !== true) {
     return null;
   }
-  const payload = raw.raw;
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+  const payload = objectField(raw, "payload") ?? objectField(raw, "raw");
+  if (!payload) {
     return null;
   }
   return {
     source: typeof raw.source === "string" ? raw.source : "codex",
     eventName: typeof raw.eventName === "string" ? raw.eventName : undefined,
     workspaceRoot: typeof raw.workspaceRoot === "string" ? raw.workspaceRoot : undefined,
-    payload: payload as Record<string, unknown>,
+    payload,
   };
 }
 

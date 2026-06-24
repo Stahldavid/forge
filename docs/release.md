@@ -9,7 +9,7 @@ Related packages:
 | `forgeos@alpha` | Framework, compiler, CLI, templates |
 | `create-forgeos-app@alpha` | `npm create forgeos-app@alpha` scaffolding wrapper |
 
-Current release line: **`forgeos@alpha`**. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel. See [Changelog](changelog.md) for version history and `npm view forgeos dist-tags --json` for the registry state.
+Current release line: **`forgeos@alpha`**. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel and may intentionally lag while a prerelease hardens. See [Changelog](changelog.md) for version history and `npm view forgeos dist-tags --json` for the registry state.
 
 ## Public Quickstart Validation
 
@@ -46,6 +46,8 @@ npm run release:publish-alpha
 ```
 
 The package uses the `alpha` dist-tag while the project is in private/public MVP hardening.
+
+`latest` promotion is a separate maintainer decision. Trusted Publishing can publish `forgeos@alpha` through OIDC without an npm token, but moving `latest` requires npm write authentication. Configure `NPM_TOKEN` only when maintainers intentionally want the publish workflow to run `npm dist-tag add forgeos@<version> latest`; otherwise the workflow skips that step and leaves `latest` unchanged.
 
 Use `forge release doctor --json` before publishing when you need the Forge-native
 readiness aggregate. It checks prepared release state, sourcemaps, self-host

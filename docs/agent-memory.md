@@ -29,7 +29,7 @@ forge mcp serve
 
 `forge agent hooks smoke --target codex --json` records an explicit canary event and verifies that it becomes visible in local agent memory. The smoke JSON includes a `canary` block with the marker, source, ingested event id, number of memory events inspected, and whether the exact event is visible. A visible canary proves the ForgeOS ingestion path and DeltaDB memory store. It does not bypass the Codex Desktop trust prompt. If approval is pending, approve the hooks in Codex Desktop, continue or start a Codex session in the same workspace, then run `forge agent hooks status --target codex --json` again.
 
-Native hooks enqueue newline-delimited events in `.forge/agent/events.ndjson`. The watch ingester drains that queue from a checkpoint, keeps partial trailing lines for the next pass, and compacts drained history so repeated status/smoke checks do not duplicate old hook events. If a hook status looks stale, inspect the checkpoint and history files only as local operational state; rerun status after Codex Desktop has approved hooks and emitted a fresh native event.
+Native hooks enqueue newline-delimited events in `.forge/agent/events.ndjson`. New Codex hook entries are written as redacted payloads: raw prompts, completions, tool arguments, tool responses, transcripts, cookies, authorization headers, API keys, and private tokens are not written to the queue. The watch ingester drains that queue from a checkpoint, keeps partial trailing lines for the next pass, and compacts consumed history into redacted `.history` lines so repeated status/smoke checks do not duplicate old hook events. If a hook status looks stale, inspect the checkpoint and history files only as local operational state; rerun status after Codex Desktop has approved hooks and emitted a fresh native event.
 
 `.codex/hooks.json` is the versioned Codex adapter configuration that tells Codex Desktop which ForgeOS hook commands may run in this workspace. Treat changes to that file like source changes: review them in PRs and keep them intentionally small. `.forge/agent/**`, including `events.ndjson`, checkpoints, history, canary markers, and exported context snapshots, is local operational state. Do not commit those files as proof of hook readiness; regenerate or reingest them with `forge agent hooks status --target codex --json` and `forge agent hooks smoke --target codex --json` when a machine or workspace needs fresh evidence.
 
@@ -84,7 +84,7 @@ Agent memory uses the same redaction posture as DeltaDB:
 
 - store stable identifiers, paths, hashes, timestamps, summaries, and safe metadata
 - redact secret-like keys and known secret values
-- avoid raw prompts, completions, transcripts, request bodies, tool arguments, and tool responses
+- avoid raw prompts, completions, transcripts, request bodies, tool arguments, and tool responses in both durable memory and the normal Codex hook queue path
 - keep memory local unless the user exports or syncs it through a separate workflow
 
 ## Relationship To DeltaDB

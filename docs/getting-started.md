@@ -14,7 +14,7 @@ cd notes-app
 npm run dev
 ```
 
-`npm create forgeos-app@alpha` creates a new app without installing ForgeOS globally. It is the best first command for new users. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel.
+`npm create forgeos-app@alpha` creates a new app without installing ForgeOS globally. It is the best first command for new users. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel and may lag behind alpha while a prerelease hardens.
 
 The generated app contains:
 

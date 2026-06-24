@@ -8,6 +8,7 @@ import type {
   ImportedDependencyInventory,
   ImportedFrontendCall,
   ImportedInventory,
+  ImportedEntryKind,
   ImportedRiskFinding,
   ImportedRiskReport,
   ImportedRoute,
@@ -365,7 +366,53 @@ function collectEnv(workspaceRoot: string, files: SourceFile[]): ImportedInvento
 }
 
 function sourceTextForRoute(route: ImportedRoute, files: SourceFile[]): string {
-  return files.find((file) => file.relativePath === route.file)?.text ?? "";
+  const text = files.find((file) => file.relativePath === route.file)?.text ?? "";
+  if (!text) {
+    return "";
+  }
+  return scopedSourceTextForRoute(route, text) ?? text;
+}
+
+function scopedSourceTextForRoute(route: ImportedRoute, text: string): string | null {
+  if (route.source === "next-app-router" && route.handler) {
+    return sliceUntilNextMatch(
+      text,
+      new RegExp(`export\\s+(?:async\\s+)?function\\s+${escapeRegExp(route.handler)}\\b`, "u"),
+      /export\s+(?:async\s+)?function\s+(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\b/gu,
+    );
+  }
+  if (route.source === "express") {
+    const method = route.method.toLowerCase();
+    const matcher = new RegExp(`\\b(?:app|router)\\s*\\.\\s*${escapeRegExp(method)}\\s*\\(\\s*["'\`]${escapeRegExp(route.path)}["'\`]`, "u");
+    return sliceUntilNextMatch(
+      text,
+      matcher,
+      /\b(?:app|router)\s*\.\s*(?:get|post|put|patch|delete|all)\s*\(\s*["'`][^"'`]+["'`]/giu,
+    );
+  }
+  if (route.source === "nest") {
+    const method = route.method.charAt(0).toUpperCase() + route.method.slice(1).toLowerCase();
+    return sliceUntilNextMatch(
+      text,
+      new RegExp(`@${escapeRegExp(method)}\\s*\\(`, "u"),
+      /@(Get|Post|Put|Patch|Delete|All)\s*\(/gu,
+    );
+  }
+  return null;
+}
+
+function sliceUntilNextMatch(text: string, startPattern: RegExp, nextPattern: RegExp): string | null {
+  const start = text.search(startPattern);
+  if (start < 0) {
+    return null;
+  }
+  nextPattern.lastIndex = start + 1;
+  const next = nextPattern.exec(text);
+  return text.slice(start, next?.index ?? text.length);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCandidateEntry, "kind" | "confidence" | "risks" | "evidence" | "needsApproval"> {
@@ -381,8 +428,16 @@ function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCan
   const auth = /(auth|session|currentuser|getserversession|clerk|nextauth|requireuser|requireauth)/u.test(lowerText);
   const tenant = /(tenantid|tenant_id|organizationid|orgid|accountid)/u.test(lowerText);
   const methodUnknown = method === "ANY" || method === "ALL";
-  if (!isQuery || writes) {
+  const ambiguousPostQuery = method === "POST" &&
+    /(?:^|\/)(search|query|filter|lookup|graphql)(?:$|\/)/u.test(lowerPath) &&
+    !writes &&
+    !isDestructive &&
+    !external;
+  if ((!isQuery && !ambiguousPostQuery) || writes) {
     risks.add("writes-state");
+  }
+  if (ambiguousPostQuery) {
+    risks.add("ambiguous-post-query");
   }
   if (isDestructive) {
     risks.add("destructive");
@@ -403,6 +458,15 @@ function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCan
     risks.add("method-unknown");
   }
   const commandLike = !isQuery || writes || isDestructive || external;
+  if (ambiguousPostQuery) {
+    return {
+      kind: "command-candidate",
+      confidence: 0.55,
+      risks: Array.from(risks).sort(),
+      evidence,
+      needsApproval: true,
+    };
+  }
   return {
     kind: commandLike ? "command" : "query",
     confidence: commandLike ? (isDestructive ? 0.9 : 0.78) : 0.86,
@@ -412,7 +476,7 @@ function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCan
   };
 }
 
-function nameForCandidate(route: ImportedRoute, kind: "command" | "query" | "unknown"): string {
+function nameForCandidate(route: ImportedRoute, kind: ImportedEntryKind): string {
   const nouns = route.path
     .replace(/^\/api\//u, "")
     .replace(/:\w+\*?/gu, "byId")
@@ -424,6 +488,7 @@ function nameForCandidate(route: ImportedRoute, kind: "command" | "query" | "unk
   const method = route.method.toUpperCase();
   const action =
     kind === "query" ? "read" :
+    kind === "command-candidate" ? "candidate" :
     method === "POST" ? "create" :
     method === "PUT" || method === "PATCH" ? "update" :
     method === "DELETE" ? "delete" :

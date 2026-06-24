@@ -2,7 +2,7 @@
 
 ForgeOS is an agent-native application framework and compiler. It gives AI coding agents and humans a generated contract for the app they are editing: commands, queries, liveQueries, policies, data, secrets, frontend routes, runtime rules, AI tools, and the commands needed to verify a change.
 
-The current npm release line is **`forgeos@alpha`**. During alpha, use the `@alpha` tag explicitly; the `latest` tag is not the active release channel. See [Changelog](changelog.md) for version history.
+The current npm release line is **`forgeos@alpha`**. During alpha, use the `@alpha` tag explicitly; the `latest` tag is not the active release channel and may lag behind alpha while a prerelease hardens. See [Changelog](changelog.md) for version history.
 
 ## Quickstart
 

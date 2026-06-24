@@ -1,4 +1,5 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -560,6 +561,53 @@ describe("H48 agent memory bridge", () => {
     }
   }, 10_000);
 
+  test("codex hook runner queues redacted payloads instead of raw hook input", () => {
+    const root = tempWorkspace("h48-codex-hook-redacted-queue");
+    try {
+      const runner = join(process.cwd(), "src", "forge", "agent-memory", "sources", "codex-hook-runner.mjs");
+      const secret = "sk_h48_queue_secret_123456";
+      const result = spawnSync("node", [runner, "PostToolUse"], {
+        cwd: root,
+        input: JSON.stringify({
+          session_id: "codex-session-redacted-queue",
+          hook_event_name: "PostToolUse",
+          prompt: `do the publish with ${secret}`,
+          tool_name: "Bash",
+          tool_use_id: "toolu_redacted_queue",
+          tool_input: {
+            command: `forge run billing.createInvoice --args '{"apiKey":"${secret}"}'`,
+          },
+          tool_response: {
+            exitCode: 0,
+            stdout: `created invoice with ${secret}`,
+          },
+        }),
+        encoding: "utf8",
+        windowsHide: true,
+      });
+      expect(result.status).toBe(0);
+
+      const queueFile = join(root, ".forge", "agent", "events.ndjson");
+      const serialized = readFileSync(queueFile, "utf8");
+      const [line] = serialized.trim().split(/\r?\n/u);
+      const entry = JSON.parse(line ?? "{}") as Record<string, unknown>;
+      const payload = entry.payload as Record<string, unknown>;
+
+      expect(entry.raw).toBeUndefined();
+      expect(entry.rawStored).toBe(false);
+      expect(entry.payloadRedacted).toBe(true);
+      expect(payload.commandStored).toBe(false);
+      expect(payload.commandSummary).toContain("forge run billing.createInvoice");
+      expect(payload.responseStored).toBe(false);
+      expect(serialized).not.toContain(secret);
+      expect(serialized).not.toContain("do the publish");
+      expect(serialized).not.toContain("\"tool_input\":{\"command\"");
+      expect(serialized).not.toContain("\"tool_response\":{\"exitCode\"");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("drains Codex hook queue idempotently across watcher restarts", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-idempotent");
     try {
@@ -768,7 +816,22 @@ describe("H48 agent memory bridge", () => {
       const agentDir = join(root, ".forge", "agent");
       mkdirSync(agentDir, { recursive: true });
       const queueFile = join(agentDir, "events.ndjson");
-      const firstLine = queuedCodexHookLine(root, "SessionStart", "codex-session-retention-1");
+      const secret = "sk_h48_history_secret_123456";
+      const firstLine = JSON.stringify({
+        forgeHookQueueV1: true,
+        source: "codex",
+        eventName: "PreToolUse",
+        workspaceRoot: root,
+        enqueuedAt: "2026-01-01T00:00:00.000Z",
+        raw: {
+          session_id: "codex-session-retention-1",
+          hook_event_name: "PreToolUse",
+          tool_name: "Bash",
+          tool_input: {
+            command: `forge run billing.createInvoice --args '{"apiKey":"${secret}"}'`,
+          },
+        },
+      });
       const secondLine = queuedCodexHookLine(root, "PreToolUse", "codex-session-retention-1");
       const partialLine = queuedCodexHookLine(root, "PostToolUse", "codex-session-retention-1").slice(0, -4);
       writeFileSync(queueFile, `${firstLine}\n${secondLine}\n${partialLine}`, "utf8");
@@ -785,7 +848,12 @@ describe("H48 agent memory bridge", () => {
       expect(drained.eventsIngested).toBe(2);
       expect(drained.compacted).toBe(true);
       expect(readFileSync(queueFile, "utf8")).toBe(partialLine);
-      expect(readFileSync(drained.historyFile, "utf8")).toContain("codex-session-retention-1");
+      const history = readFileSync(drained.historyFile, "utf8");
+      expect(history).toContain("codex-session-retention-1");
+      expect(history).toContain("\"payloadRedacted\":true");
+      expect(history).not.toContain(secret);
+      expect(history).not.toContain("\"raw\":");
+      expect(history).not.toContain("forge run billing.createInvoice --args");
       expect(readFileSync(`${queueFile}.checkpoint.json`, "utf8")).toContain("\"offset\": 0");
 
       const store = await DeltaStore.open(root);

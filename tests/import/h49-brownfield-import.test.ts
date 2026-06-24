@@ -76,6 +76,16 @@ function makeWorkspace(): string {
     `
       import express from "express";
       const router = express.Router();
+      router.get("/api/tickets", async (req, res) => {
+        res.json([{ title: "read only" }]);
+      });
+      router.post("/api/tickets", async (req, res) => {
+        await prisma.ticket.create({ data: req.body });
+        res.json({ ok: true });
+      });
+      router.post("/api/search", async (req, res) => {
+        res.json({ results: [] });
+      });
       router.post("/api/checkout", async (req, res) => {
         const tenantId = req.body.tenantId;
         await stripe.checkout.sessions.create({});
@@ -117,6 +127,9 @@ describe("H49 brownfield import analyze", () => {
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("GET /api/tickets/:id");
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("POST /api/tickets/:id");
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("ANY /api/billing/refund");
+      expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("GET /api/tickets");
+      expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("POST /api/tickets");
+      expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("POST /api/search");
       expect(result.routes.map((route) => `${route.method} ${route.path}`)).toContain("POST /api/checkout");
       expect(result.frontendCalls.some((call) => call.url === "/api/checkout" && call.client === "axios")).toBe(true);
       expect(result.candidateEntries.length).toBeGreaterThanOrEqual(3);
@@ -128,6 +141,14 @@ describe("H49 brownfield import analyze", () => {
       const destructive = result.candidateEntries.find((entry) => entry.method === "DELETE");
       expect(destructive?.needsApproval).toBe(true);
       expect(destructive?.risks).toContain("destructive");
+      const expressRead = result.candidateEntries.find((entry) => entry.method === "GET" && entry.path === "/api/tickets");
+      expect(expressRead?.kind).toBe("query");
+      expect(expressRead?.risks).not.toContain("writes-state");
+      const search = result.candidateEntries.find((entry) => entry.method === "POST" && entry.path === "/api/search");
+      expect(search?.kind).toBe("command-candidate");
+      expect(search?.confidence).toBeLessThan(0.7);
+      expect(search?.risks).toContain("ambiguous-post-query");
+      expect(search?.risks).not.toContain("writes-state");
       expect(result.riskReport?.findings.some((finding) => finding.code === "FORGE_IMPORT_TENANT_SPOOFABLE")).toBe(true);
 
       for (const relativePath of Object.values(BROWNFIELD_IMPORT_ARTIFACTS)) {
