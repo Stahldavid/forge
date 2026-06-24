@@ -29,6 +29,9 @@ export interface AgentMemoryCommandOptions {
   eventName?: string;
   input?: unknown;
   entry?: string;
+  change?: string;
+  proof?: string;
+  handoff?: boolean;
   current?: boolean;
   dryRun?: boolean;
   force?: boolean;
@@ -308,6 +311,9 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
       return await buildAgentMemoryContext({
         workspaceRoot: options.workspaceRoot,
         entry: options.entry,
+        change: options.change,
+        proof: options.proof,
+        handoff: options.handoff,
         limit: options.limit,
       });
     } catch (error) {
@@ -1050,6 +1056,12 @@ function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {
     lines.push("", "Open questions:");
     for (const question of result.agentMemory.openQuestions.slice(0, 5)) {
       lines.push(`  - ${question}`);
+    }
+  }
+  if (result.recommendedCommands.length > 0) {
+    lines.push("", "Next:");
+    for (const command of result.recommendedCommands.slice(0, 6)) {
+      lines.push(`  ${command}`);
     }
   }
   return `${lines.join("\n")}\n`;

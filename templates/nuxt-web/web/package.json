@@ -1,0 +1,17 @@
+{
+  "name": "__FORGE_APP_NAME__-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1",
+    "build": "nuxt build",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "nuxt": "^4.0.0",
+    "vue": "^3.5.38"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

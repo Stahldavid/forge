@@ -318,7 +318,7 @@ async function runRuntimeProbes({ appDir, packageManager, template, timeoutMs })
       status: entries.status,
     });
 
-    if (template === "minimal-web") {
+    if (template === "minimal-web" || template === "nuxt-web") {
       const create = await fetchJson(`${serverUrl}/commands/createNote`, {
         body: JSON.stringify({ args: { body: "Created by ForgeOS field test.", title: "Field test note" } }),
         headers: authHeaders(),

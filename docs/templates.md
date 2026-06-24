@@ -8,6 +8,7 @@ Recommended:
 
 ```bash
 npm create forgeos-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha my-app -- --template nuxt-web
 cd my-app
 npm run dev
 ```
@@ -35,6 +36,7 @@ forge new my-app \
 | Template | Stack | Includes | Best for |
 |----------|-------|----------|----------|
 | `minimal-web` | Forge backend + Vite React `web/` | Basic CRUD patterns, `ForgeProvider`, client bridge | Learning Forge, prototypes |
+| `nuxt-web` | Forge backend + Nuxt Vue `web/` | Notes command/liveQuery, client/server Nuxt plugins, `useNotes`, Vue composables, Nitro runtime-config route | Vue/Nuxt apps |
 | `agent-workroom` | Forge backend + Vite React observer UI | App preview, terminal-like external-agent signals, generated state, diff focus, check runs, handoff evidence, liveQuery | Demonstrating ForgeOS as an agent-native development environment |
 | Nuxt UI shell via `forge make ui --framework nuxt` | Forge backend + Nuxt Vue `web/` | Nuxt plugin, Vue composables, runtime config bridge | Vue/Nuxt apps |
 | `b2b-support-web` | Forge + Next-style `web/` | Tickets, policies, Stripe hooks, AI triage workflow, liveQuery | Full-stack showcase, B2B support apps |
@@ -87,6 +89,10 @@ Template apps often **gitignore**:
 ```txt
 src/forge/_generated/**
 forge.lock
+.forge/delta/**
+.forge/agent/*.ndjson
+.forge/agent/*.history
+.forge/studio/**
 .forge/test-plans/**
 .forge/repairs/**
 ```
@@ -104,6 +110,7 @@ Without generate, `forge doctor` reports stale or missing artifacts.
 
 ```txt
 Need only API + small UI     -> minimal-web
+Need Vue/Nuxt starter        -> nuxt-web
 Need external-agent demo     -> agent-workroom
 Need tickets + billing + AI  -> b2b-support-web
 Custom domain                -> minimal-web + forge make resource ...

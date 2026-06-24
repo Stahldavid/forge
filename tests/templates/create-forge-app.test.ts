@@ -50,6 +50,8 @@ describe("create-forge-app", () => {
     expect(result.stdout).toContain(`create-forge-app ${pkg.version}`);
     expect(result.stdout).toContain("npm create forgeos-app@alpha <app-name>");
     expect(result.stdout).toContain("--template minimal-web");
+    expect(result.stdout).toContain("--template nuxt-web");
+    expect(result.stdout).toContain("--template agent-workroom");
   });
 
   test("passes ForgeOS public alias defaults to forge new", () => {

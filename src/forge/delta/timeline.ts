@@ -5,7 +5,16 @@ export interface DeltaTimelineResult {
   session?: string;
   target?: string;
   rebuilt?: boolean;
+  causal?: boolean;
+  staleProofs?: boolean;
   timeline: DeltaSemanticTimelineResult;
+  summary: {
+    events: number;
+    causalEdges: number;
+    proofStatus?: string;
+    staleProofs: Array<{ proof: string; lastRunAt?: string; lastRelevantChangeAt?: string }>;
+    causalChains: Array<{ kind: string; from: string; to: string; confidence: number; reason?: Record<string, unknown> }>;
+  };
   exitCode: 0;
 }
 
@@ -16,23 +25,78 @@ export async function runDeltaTimeline(input: {
   session?: string;
   limit?: number;
   rebuild?: boolean;
+  causal?: boolean;
+  staleProofs?: boolean;
 }): Promise<DeltaTimelineResult> {
   const store = await DeltaStore.open(input.workspaceRoot, { access: input.rebuild ? "write" : "read" });
   try {
     if (input.rebuild) {
       await store.rebuildSemanticTimeline();
     }
+    const timeline = await store.semanticTimeline({ target: input.target, kind: input.kind, workSessionId: input.session, limit: input.limit });
     return {
       ok: true,
       session: input.session,
       target: input.target,
       rebuilt: input.rebuild || undefined,
-      timeline: await store.semanticTimeline({ target: input.target, kind: input.kind, workSessionId: input.session, limit: input.limit }),
+      causal: input.causal || undefined,
+      staleProofs: input.staleProofs || undefined,
+      timeline,
+      summary: summarizeTimeline(timeline),
       exitCode: 0,
     };
   } finally {
     await store.close();
   }
+}
+
+function summarizeTimeline(timeline: DeltaSemanticTimelineResult): DeltaTimelineResult["summary"] {
+  const eventById = new Map(timeline.events.map((event) => [event.id, event]));
+  const proofStatus = typeof timeline.currentState.proofStatus === "string" ? timeline.currentState.proofStatus : undefined;
+  const rawProofEntities = uniqueStrings(
+    timeline.events.flatMap((event) =>
+      event.entities
+        .filter((entity) => entity.kind === "proof")
+        .map((entity) => entity.name)
+    ),
+  );
+  const proofEntities = timeline.entity?.kind === "proof"
+    ? [timeline.entity.name]
+    : rawProofEntities.filter((proof) => !/^forge\s/u.test(proof));
+  const lastProofRun = latestTimestamp(timeline.events.filter((event) => event.kind === "proof.passed" || event.kind === "proof.failed"));
+  const lastRelevantChange = latestTimestamp(timeline.events.filter((event) =>
+    event.kind === "modified" ||
+    event.kind === "policy.changed" ||
+    event.kind === "generated" ||
+    event.kind === "imported"
+  ));
+  return {
+    events: timeline.events.length,
+    causalEdges: timeline.causalEdges.length,
+    ...(proofStatus ? { proofStatus } : {}),
+    staleProofs: proofStatus === "stale"
+      ? (proofEntities.length > 0 ? proofEntities : ["unknown"]).map((proof) => ({
+        proof,
+        ...(lastProofRun ? { lastRunAt: lastProofRun } : {}),
+        ...(lastRelevantChange ? { lastRelevantChangeAt: lastRelevantChange } : {}),
+      }))
+      : [],
+    causalChains: timeline.causalEdges.slice(0, 12).map((edge) => ({
+      kind: edge.kind,
+      from: eventById.get(edge.from)?.title ?? edge.from,
+      to: eventById.get(edge.to)?.title ?? edge.to,
+      confidence: edge.confidence,
+      ...(edge.reason ? { reason: edge.reason } : {}),
+    })),
+  };
+}
+
+function latestTimestamp(events: DeltaSemanticTimelineResult["events"]): string | undefined {
+  return [...events].sort((left, right) => right.timestamp.localeCompare(left.timestamp))[0]?.timestamp;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)].sort();
 }
 
 export function formatDeltaTimelineHuman(result: DeltaTimelineResult): string {
@@ -73,6 +137,16 @@ export function formatDeltaTimelineHuman(result: DeltaTimelineResult): string {
       if (value !== undefined) {
         lines.push(`  ${key}: ${Array.isArray(value) ? value.join(", ") : String(value)}`);
       }
+    }
+    lines.push("");
+  }
+  if (result.summary.proofStatus || result.summary.staleProofs.length > 0) {
+    lines.push("Proof status");
+    if (result.summary.proofStatus) {
+      lines.push(`  status: ${result.summary.proofStatus}`);
+    }
+    for (const proof of result.summary.staleProofs) {
+      lines.push(`  stale: ${proof.proof}${proof.lastRelevantChangeAt ? ` after ${proof.lastRelevantChangeAt}` : ""}`);
     }
     lines.push("");
   }

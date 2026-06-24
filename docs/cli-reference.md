@@ -25,7 +25,9 @@ Use the global `forge` command from the framework repo only when intentionally s
 
 ```bash
 npm create forgeos-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
 forge new my-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@alpha" --install --no-git
+forge new nuxt-notes --template nuxt-web --package-manager npm --forge-spec "npm:forgeos@alpha" --install --no-git
 forge new workroom --template agent-workroom --package-manager npm --no-install --no-git
 ```
 
@@ -67,7 +69,7 @@ When generated artifacts dominate the worktree, read `forge changed --authored -
 
 `forge studio open <path> --preview-port 5174 --target codex --json` is the recommended Studio entrypoint. It attaches an app directory to a Studio-style observer without moving the coding agent into the browser, writes `.forge/studio/attachment.json`, prepares the selected agent adapter/hook bridge, checks whether dependencies are installed, auto-starts the local target preview when possible, and attempts one bridge ingest to the Studio runtime. The JSON result includes `previewAutomation` for dependency/start evidence and `bridge` for Studio delivery evidence. Use `--install` to let ForgeOS run the detected install command, `--no-start` when another process owns preview startup, and `--no-bridge` for attach/start only. `forge studio attach` is the lower-level command for writing the attachment manifest and preparing adapters without startup/bridge orchestration. `commands.startTargetAppCwd`, `commands.startTargetApp`, `commands.openPreview`, and `commands.probePreview` tell Studio exactly what to show and where the command should run. `preview.status` reports whether a local preview was reachable, not running, or intentionally not checked. `posture` reports generated freshness and authored-first review commands. If a preview points at local port `5173`, ForgeOS treats it as likely Studio self-preview and shifts the target app preview to `5174` unless `--force` is provided. Live target preview state is recorded under `.forge/studio/preview.json`; a later `studio open` reuses a still-running matching preview instead of spawning a duplicate, and removes stale preview state when the recorded process is gone.
 
-`forge studio snapshot <path> --preview-port 5174 --target codex --json` is the read-only version for Studio refresh loops. It does not write `.forge/studio/attachment.json`, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` buckets, `diffPlan`, `contextPacket`, hook proofs, DeltaDB status, plus the commands the UI should show. If an attachment manifest already exists, snapshot reuses its preview URL and targets unless the command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should include the actual `codex app-server` stdio initialize proof under `proofs.codexAppServer.handshake`.
+`forge studio snapshot <path> --preview-port 5174 --target codex --json` is the read-only version for Studio refresh loops. It does not write `.forge/studio/attachment.json`, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` buckets, `diffPlan`, `contextPacket`, a `handoff` block with the recommended `forge agent context --handoff --json` command, hook proofs, DeltaDB status, plus the commands the UI should show. If an attachment manifest already exists, snapshot reuses its preview URL and targets unless the command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should include the actual `codex app-server` stdio initialize proof under `proofs.codexAppServer.handshake`.
 
 `forge studio bridge <path> --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json` is the official ForgeOS-to-Studio signal bridge. It collects the same read-only snapshot and posts it to the Studio runtime command `ingestStudioSnapshot` with local dev-auth headers. Use `--once` for a single ingest, `--dry-run` to prove the snapshot contract without network delivery, and `--interval-ms 5000` to control the continuous bridge cadence. Bridge success means the snapshot was delivered or dry-run collected; the embedded snapshot can still report generated drift, preview down, or hook warnings so Studio can show the actual evidence.
 
@@ -181,8 +183,16 @@ Unknown positional profiles fail early with the accepted profile list instead of
 
 ```bash
 forge delta status --json
+forge delta status --verbose --json
+forge doctor delta --json
+forge delta compact --dry-run --json
+forge delta prune --older-than 30d --dry-run --json
+forge delta prune --older-than 30d --yes --json
+forge delta export --redacted --output .forge/delta/export.json --json
 forge timeline --json
 forge timeline billing.createInvoice --json
+forge timeline billing.createInvoice --causal --json
+forge timeline --stale-proofs --json
 forge timeline policy:billing.manage --json
 forge timeline --session current --json
 forge timeline rebuild --json
@@ -196,6 +206,8 @@ forge session merge current worksess_... --json
 forge session split current op_... --json
 forge session detach op_... --json
 ```
+
+Use `doctor delta` for the fast recorder trust gate. Use `delta compact` and `delta prune` for local agent queue-history maintenance. Use `delta export --redacted` for a safe support bundle; non-redacted exports are rejected. `timeline --causal` and `timeline --stale-proofs` keep the same projection but make the intended causal/stale-proof read explicit in JSON.
 
 ## Authoring
 

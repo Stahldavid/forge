@@ -1,4 +1,4 @@
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
@@ -160,6 +160,10 @@ export interface DeltaSemanticTimelineFilter extends DeltaTimelineFilter {
   until?: string;
 }
 
+export interface DeltaSemanticTimelineReadOptions {
+  refresh?: boolean;
+}
+
 export interface DeltaSemanticTimelineResult {
   entity?: DeltaTimelineEntityRef;
   currentState: Record<string, unknown>;
@@ -218,6 +222,27 @@ export interface DeltaStatusDetails {
     workSessions: number;
     agentMemoryEvents: number;
     semanticEvents: number;
+  };
+  operational: {
+    storeExists: boolean;
+    storeSizeBytes?: number;
+    queuePath: string;
+    queueExists: boolean;
+    queueSizeBytes: number;
+    queuePendingEvents: number;
+    queueRedaction: "none" | "redacted" | "legacy-raw-present" | "mixed" | "unknown";
+    queueHistoryPath: string;
+    queueHistoryExists: boolean;
+    queueHistorySizeBytes: number;
+    queueHistoryLines: number;
+    lastCompactionAt?: string;
+    oldestOperationAt?: string;
+    newestOperationAt?: string;
+    estimatedOverhead: "low" | "medium" | "high";
+  };
+  health: {
+    status: "ok" | "warning";
+    checks: Array<{ name: string; status: "ok" | "warning"; message: string }>;
   };
 }
 
@@ -952,12 +977,59 @@ export class DeltaStore {
       this.adapter.query(`SELECT COUNT(*)::int AS count FROM agent_memory_events`),
       this.adapter.query(`SELECT COUNT(*)::int AS count FROM timeline_events`),
     ]);
+    const operationWindow = await this.adapter.query(
+      `SELECT MIN(timestamp) AS oldest, MAX(timestamp) AS newest FROM operations`,
+    );
     const countAt = (index: number) => Number(countQueries[index]?.rows[0]?.count ?? 0);
     const lockPath = getDeltaLockPath(this.workspaceRoot);
     const postmasterPath = join(this.storePath, "postmaster.pid");
+    const queuePath = join(this.workspaceRoot, ".forge", "agent", "events.ndjson");
+    const queueHistoryPath = join(this.workspaceRoot, ".forge", "agent", "events.ndjson.history");
+    const queueExists = existsSync(queuePath);
+    const queueSizeBytes = queueExists ? statSync(queuePath).size : 0;
+    const queueHistoryExists = existsSync(queueHistoryPath);
+    const queueHistoryStat = queueHistoryExists ? statSync(queueHistoryPath) : undefined;
+    const queueHistorySizeBytes = queueHistoryStat?.size ?? 0;
+    const operationCount = countAt(1);
+    const queueRedaction = inspectAgentQueueRedaction(queuePath);
+    const queuePendingEvents = countNdjsonLines(queuePath);
+    const queueHistoryLines = countNdjsonLines(queueHistoryPath);
     const storedVersion = meta.get("schemaVersion");
     const lastOperationId = meta.get("semantic.lastOperationId");
     const lastRebuildAt = meta.get("semantic.lastRebuildAt");
+    const checks: DeltaStatusDetails["health"]["checks"] = [
+      {
+        name: "schema",
+        status: !storedVersion || storedVersion === DELTA_SCHEMA_VERSION ? "ok" : "warning",
+        message: storedVersion
+          ? `schema ${storedVersion}, expected ${DELTA_SCHEMA_VERSION}`
+          : `schema will initialize as ${DELTA_SCHEMA_VERSION}`,
+      },
+      {
+        name: "locks",
+        status: existsSync(lockPath) ? "warning" : "ok",
+        message: existsSync(lockPath) ? `${normalizePath(relative(this.workspaceRoot, lockPath))} is present` : "no Forge writer lock present",
+      },
+      {
+        name: "queue-redaction",
+        status: queueRedaction === "legacy-raw-present" || queueRedaction === "mixed" ? "warning" : "ok",
+        message: queueRedaction === "none"
+          ? "agent queue is empty or absent"
+          : queueRedaction === "redacted"
+            ? "agent queue contains redacted hook entries"
+            : queueRedaction === "mixed"
+              ? "agent queue contains both redacted and legacy raw hook entries"
+              : queueRedaction === "legacy-raw-present"
+                ? "agent queue contains legacy raw hook entries; drain/compact it"
+                : "agent queue redaction status is unknown",
+      },
+      {
+        name: "semantic-projection",
+        status: lastOperationId ? "ok" : operationCount > 0 ? "warning" : "ok",
+        message: lastOperationId ? `projected through ${lastOperationId}` : operationCount > 0 ? "semantic timeline has not projected operations yet" : "no operations recorded yet",
+      },
+    ];
+    const storeStat = existsSync(this.storePath) ? statSync(this.storePath) : undefined;
     return {
       schema: {
         expectedVersion: DELTA_SCHEMA_VERSION,
@@ -976,7 +1048,7 @@ export class DeltaStore {
       },
       counts: {
         sessions: countAt(0),
-        operations: countAt(1),
+        operations: operationCount,
         fileChanges: countAt(2),
         commandRuns: countAt(3),
         runtimeCalls: countAt(4),
@@ -985,6 +1057,27 @@ export class DeltaStore {
         workSessions: countAt(7),
         agentMemoryEvents: countAt(8),
         semanticEvents: countAt(9),
+      },
+      operational: {
+        storeExists: existsSync(this.storePath),
+        ...(storeStat && storeStat.isFile() ? { storeSizeBytes: storeStat.size } : {}),
+        queuePath: normalizePath(relative(this.workspaceRoot, queuePath)),
+        queueExists,
+        queueSizeBytes,
+        queuePendingEvents,
+        queueRedaction,
+        queueHistoryPath: normalizePath(relative(this.workspaceRoot, queueHistoryPath)),
+        queueHistoryExists,
+        queueHistorySizeBytes,
+        queueHistoryLines,
+        ...(queueHistoryStat ? { lastCompactionAt: queueHistoryStat.mtime.toISOString() } : {}),
+        ...(typeof operationWindow.rows[0]?.oldest === "string" ? { oldestOperationAt: String(operationWindow.rows[0].oldest) } : {}),
+        ...(typeof operationWindow.rows[0]?.newest === "string" ? { newestOperationAt: String(operationWindow.rows[0].newest) } : {}),
+        estimatedOverhead: estimatedDeltaOverhead(operationCount, queueSizeBytes),
+      },
+      health: {
+        status: checks.some((check) => check.status === "warning") ? "warning" : "ok",
+        checks,
       },
     };
   }
@@ -1034,8 +1127,13 @@ export class DeltaStore {
     return result.rows.reverse().map(rowToTimelineEntry);
   }
 
-  async semanticTimeline(filter: DeltaSemanticTimelineFilter = {}): Promise<DeltaSemanticTimelineResult> {
-    await this.ensureSemanticTimelineFresh();
+  async semanticTimeline(
+    filter: DeltaSemanticTimelineFilter = {},
+    options: DeltaSemanticTimelineReadOptions = {},
+  ): Promise<DeltaSemanticTimelineResult> {
+    if (options.refresh !== false) {
+      await this.ensureSemanticTimelineFresh();
+    }
     const limit = Math.max(1, Math.min(filter.limit ?? 50, 200));
     const entity = parseTimelineEntityTarget(filter.target);
     const params: unknown[] = [];
@@ -2254,6 +2352,9 @@ function semanticEventKindForOperation(
   if (context.kind === "git.commit.detected" || context.kind === "git.mapping.detected") {
     return "git.exported";
   }
+  if (context.kind.startsWith("cair.")) {
+    return context.kind;
+  }
   if (context.kind.startsWith("agent.") || context.kind.startsWith("approval.")) {
     return context.kind;
   }
@@ -2304,6 +2405,15 @@ function semanticTitleForOperation(
   if (eventKind === "git.exported") {
     return "Exported to Git";
   }
+  if (eventKind.startsWith("cair.")) {
+    const verb = typeof context.data.actionVerb === "string"
+      ? context.data.actionVerb
+      : typeof context.data.queryVerb === "string"
+        ? context.data.queryVerb
+        : undefined;
+    const label = eventKind.replace(/^cair\./, "").replace(/\./g, " ");
+    return `CAIR ${label}${verb ? `: ${verb}` : ""}`;
+  }
   if (eventKind === "agent.prompt.submitted") {
     return `${agentNameFromContext(context) ?? "Agent"} submitted a prompt`;
   }
@@ -2323,7 +2433,7 @@ function semanticSeverity(eventKind: string): string {
   if (eventKind === "failed" || eventKind === "denied" || eventKind === "proof.failed" || eventKind.endsWith(".failed") || eventKind.endsWith(".denied")) {
     return "error";
   }
-  if (eventKind === "proof.passed" || eventKind === "executed" || eventKind.endsWith(".completed")) {
+  if (eventKind === "proof.passed" || eventKind === "executed" || eventKind.endsWith(".completed") || eventKind === "cair.plan.applied") {
     return "success";
   }
   if (eventKind === "policy.changed" || eventKind === "dependency.added" || eventKind === "dependency.upgraded") {
@@ -2372,6 +2482,12 @@ function timelineEntitiesFromContext(
   }
   add("agent", agentNameFromContext(context), "source", 0.95);
   add("agent-tool", context.data.toolName, eventKind.startsWith("agent.tool") ? "primary" : "affected", 0.95);
+  if (context.kind.startsWith("cair.")) {
+    add("cair", "protocol", "source", 0.95);
+    add("cair-action", context.data.actionVerb, eventKind.includes("action") || eventKind.includes("plan") ? "primary" : "affected", 0.9);
+    add("cair-query", context.data.queryVerb, eventKind === "cair.query.run" ? "primary" : "affected", 0.9);
+    add("file", context.data.inputPath, "source", 0.75);
+  }
   for (const service of context.services) {
     add("external-service", service, eventKind === "imported" ? "primary" : "source", 0.88);
   }
@@ -2580,6 +2696,89 @@ function uniqueEdges(edges: DeltaSemanticTimelineEdge[]): DeltaSemanticTimelineE
 
 function latestEventTimestamp(events: DeltaSemanticTimelineEvent[], kinds: string[]): string | undefined {
   return [...events].reverse().find((event) => kinds.includes(event.kind))?.timestamp;
+}
+
+function inspectAgentQueueRedaction(queuePath: string): DeltaStatusDetails["operational"]["queueRedaction"] {
+  if (!existsSync(queuePath)) {
+    return "none";
+  }
+  try {
+    const size = statSync(queuePath).size;
+    if (size === 0) {
+      return "none";
+    }
+    const fd = openSync(queuePath, "r");
+    let sample = "";
+    try {
+      const buffer = Buffer.alloc(Math.min(size, 64_000));
+      const bytesRead = readSync(fd, buffer, 0, buffer.length, 0);
+      sample = buffer.subarray(0, bytesRead).toString("utf8");
+    } finally {
+      closeSync(fd);
+    }
+    if (!sample.trim()) {
+      return "none";
+    }
+    const hasRedacted = sample.includes("\"payloadRedacted\":true") || sample.includes("\"rawStored\":false");
+    const hasLegacyRaw = sample.includes("\"raw\":") || sample.includes("\"rawStored\":true");
+    if (hasRedacted && hasLegacyRaw) {
+      return "mixed";
+    }
+    if (hasLegacyRaw) {
+      return "legacy-raw-present";
+    }
+    return hasRedacted ? "redacted" : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+function countNdjsonLines(path: string): number {
+  if (!existsSync(path)) {
+    return 0;
+  }
+  try {
+    const size = statSync(path).size;
+    if (size === 0) {
+      return 0;
+    }
+    const fd = openSync(path, "r");
+    let count = 0;
+    let previous = "";
+    try {
+      const buffer = Buffer.alloc(64_000);
+      let position = 0;
+      for (;;) {
+        const bytesRead = readSync(fd, buffer, 0, buffer.length, position);
+        if (bytesRead === 0) {
+          break;
+        }
+        const text = previous + buffer.subarray(0, bytesRead).toString("utf8");
+        const lines = text.split(/\r?\n/u);
+        previous = lines.pop() ?? "";
+        count += lines.filter((line) => line.trim().length > 0).length;
+        position += bytesRead;
+      }
+      if (previous.trim().length > 0) {
+        count += 1;
+      }
+    } finally {
+      closeSync(fd);
+    }
+    return count;
+  } catch {
+    return 0;
+  }
+}
+
+function estimatedDeltaOverhead(operationCount: number, queueSizeBytes: number): "low" | "medium" | "high" {
+  if (operationCount > 50_000 || queueSizeBytes > 20_000_000) {
+    return "high";
+  }
+  if (operationCount > 5_000 || queueSizeBytes > 2_000_000) {
+    return "medium";
+  }
+  return "low";
 }
 
 function semanticOpenQuestions(

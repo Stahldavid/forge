@@ -4,6 +4,7 @@ Create a ForgeOS app without installing ForgeOS globally first.
 
 ```bash
 npm create forgeos-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha my-app -- --template nuxt-web
 cd my-app
 npm run dev
 ```
@@ -20,6 +21,8 @@ Examples:
 
 ```bash
 npm create forgeos-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
+npm create forgeos-app@alpha workroom -- --template agent-workroom
 npm create forgeos-app@alpha support-app -- --template b2b-support-web
 npm create forgeos-app@alpha notes-app -- --template minimal-web --no-install --no-git
 ```

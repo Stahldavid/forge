@@ -89,7 +89,7 @@ export function TicketList() {
 
 ## Nuxt and Vue composables
 
-Nuxt apps use `web/plugins/forge.ts` to install the Forge Vue plugin from runtime config. Components import generated composables from `web/composables/forge.ts`:
+Nuxt apps use `web/plugins/forge.client.ts` and `web/plugins/forge.server.ts` to install the Forge Vue plugin from runtime config in browser and SSR contexts. Components import generated composables from `web/composables/forge.ts` or domain composables such as `web/composables/useNotes.ts`:
 
 ```vue
 <script setup lang="ts">
@@ -101,6 +101,7 @@ const createTicket = useForgeCommand(api.commands.createTicket);
 ```
 
 The Nuxt template stores the runtime URL in `runtimeConfig.public.forgeUrl`, which can be overridden with `NUXT_PUBLIC_FORGE_URL`.
+It also includes a minimal Nitro route under `web/server/api/forge-health.get.ts` to show server-side runtime-config access without bypassing generated Forge bindings in components.
 
 ## ForgeProvider and dev auth
 

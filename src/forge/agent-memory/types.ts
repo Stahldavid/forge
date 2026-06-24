@@ -92,9 +92,12 @@ export interface AgentMemoryContextEvent {
 
 export interface AgentMemoryContextPack {
   ok: true;
-  scope: "current" | "entry";
+  scope: "current" | "entry" | "change" | "proof" | "handoff";
   entry?: string;
+  change?: string;
+  proof?: string;
   currentState: Record<string, unknown>;
+  recommendedCommands: string[];
   agentMemory: {
     summary: {
       events: number;

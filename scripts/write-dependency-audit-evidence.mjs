@@ -111,6 +111,8 @@ function buildTargets() {
     { name: "create-forgeos-app", manifest: "packages/create-forge-app/package.json" },
     { name: "template:minimal-web", manifest: "templates/minimal-web/package.json" },
     { name: "template:minimal-web-web", manifest: "templates/minimal-web/web/package.json" },
+    { name: "template:nuxt-web", manifest: "templates/nuxt-web/package.json" },
+    { name: "template:nuxt-web-web", manifest: "templates/nuxt-web/web/package.json" },
     { name: "template:b2b-support-web", manifest: "templates/b2b-support-web/package.json" },
     { name: "template:b2b-support-web-web", manifest: "templates/b2b-support-web/web/package.json" },
   ].map((target) => ({

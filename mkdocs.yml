@@ -64,6 +64,7 @@ nav:
   - Dev Loop: dev-loop.md
   - Forge DeltaDB: forge-deltadb.md
   - Agent Memory: agent-memory.md
+  - CAIR Protocol: cair-protocol.md
   - Brownfield Import: brownfield-import.md
   - CLI: cli.md
   - CLI Reference: cli-reference.md
@@ -94,4 +95,3 @@ nav:
   - Self-Host: self-host.md
   - Release: release.md
   - Changelog: changelog.md
-

@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -6,7 +6,7 @@ import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy, getDeltaStoreP
 import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 import { runDeltaExplain } from "../../src/forge/delta/explain.ts";
 import { runDeltaSessionCommand } from "../../src/forge/delta/session.ts";
-import { runDeltaRepair, runDeltaStatus } from "../../src/forge/delta/status.ts";
+import { runDeltaCompact, runDeltaDoctor, runDeltaExport, runDeltaPrune, runDeltaRepair, runDeltaStatus } from "../../src/forge/delta/status.ts";
 import { runDeltaTimeline } from "../../src/forge/delta/timeline.ts";
 import { redactDeltaPayload } from "../../src/forge/delta/redaction.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
@@ -36,6 +36,85 @@ describe("delta store", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test("delta compact and prune maintain redacted local queue history", async () => {
+    const root = tempWorkspace("delta-maintenance");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const historyPath = join(agentDir, "events.ndjson.history");
+      writeFileSync(
+        historyPath,
+        [
+          JSON.stringify({ enqueuedAt: "2020-01-01T00:00:00.000Z", payload: { token: "sk_delta_secret_123456" } }),
+          JSON.stringify({ enqueuedAt: new Date().toISOString(), payload: { summary: "safe" } }),
+        ].join("\n") + "\n",
+        "utf8",
+      );
+
+      const compact = await runDeltaCompact({ workspaceRoot: root });
+      expect(compact.exitCode).toBe(0);
+      expect(compact.files[0]?.linesAfter).toBe(2);
+      const compacted = readFileSync(historyPath, "utf8");
+      expect(compacted).not.toContain("sk_delta_secret_123456");
+      expect(compacted).toContain("[REDACTED]");
+
+      const dryRun = await runDeltaPrune({ workspaceRoot: root, olderThan: "30d", dryRun: true });
+      expect(dryRun.exitCode).toBe(0);
+      expect(dryRun.applied).toBe(false);
+      expect(dryRun.files[0]?.prunedLines).toBe(1);
+
+      const planned = await runDeltaPrune({ workspaceRoot: root, olderThan: "30d" });
+      expect(planned.needsConfirmation).toBe(true);
+      expect(readFileSync(historyPath, "utf8").split(/\n/u).filter(Boolean)).toHaveLength(2);
+
+      const pruned = await runDeltaPrune({ workspaceRoot: root, olderThan: "30d", yes: true });
+      expect(pruned.applied).toBe(true);
+      expect(readFileSync(historyPath, "utf8").split(/\n/u).filter(Boolean)).toHaveLength(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("delta export requires redacted mode and writes redacted local evidence", async () => {
+    const root = tempWorkspace("delta-export");
+    try {
+      const store = await DeltaStore.open(root);
+      const actorId = await store.ensureActor("forge", "test");
+      const sessionId = await store.createSession({ source: "forge-command" });
+      await store.appendOperation({
+        sessionId,
+        actorId,
+        kind: "command.executed",
+        summary: "forge check success",
+        data: { command: "forge check --json", token: "sk_delta_export_secret" },
+      });
+      await store.close();
+
+      const rejected = await runDeltaExport({ workspaceRoot: root, redacted: false });
+      expect(rejected.exitCode).toBe(1);
+      expect(rejected.diagnostics[0]?.code).toBe("FORGE_DELTA_EXPORT_REDACTED_REQUIRED");
+
+      const exported = await runDeltaExport({
+        workspaceRoot: root,
+        redacted: true,
+        output: ".forge/delta/export.json",
+        limit: 10,
+      });
+      expect(exported.exitCode).toBe(0);
+      expect(exported.written).toBe(true);
+      expect(exported.output).toBe(".forge/delta/export.json");
+      const file = readFileSync(join(root, ".forge", "delta", "export.json"), "utf8");
+      expect(file).not.toContain("sk_delta_export_secret");
+      expect(file).toContain("[REDACTED]");
+      expect(exported.data?.semanticTimeline).toMatchObject({
+        events: [],
+        projection: { lastRebuildAt: undefined },
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test("initializes, records operations, and returns status", async () => {
     const root = tempWorkspace("delta-store");
@@ -99,11 +178,110 @@ describe("delta store", () => {
       if (verbose.exitCode !== 0) {
         throw new Error("expected verbose status success");
       }
-      expect(verbose.details?.schema.storedVersion).toBeDefined();
-      expect(verbose.details?.paths.store).toBe(".forge/delta/delta.db");
-      expect(verbose.details?.locks.forgeLockPresent).toBe(false);
-      expect(verbose.details?.counts.operations).toBeGreaterThanOrEqual(1);
+      const details = verbose.details;
+      expect(details).toBeDefined();
+      if (!details) {
+        throw new Error("expected verbose details");
+      }
+      expect(details.schema.storedVersion).toBeDefined();
+      expect(details.paths.store).toBe(".forge/delta/delta.db");
+      expect(details.locks.forgeLockPresent).toBe(false);
+      expect(details.counts.operations).toBeGreaterThanOrEqual(1);
+      expect(["ok", "warning"]).toContain(details.health.status);
+      expect(details.health.checks.some((check) => check.name === "queue-redaction")).toBe(true);
+      expect(details.operational.queuePath).toBe(".forge/agent/events.ndjson");
+      expect(details.operational.queuePendingEvents).toBe(0);
+      expect(details.operational.queueHistoryPath).toBe(".forge/agent/events.ndjson.history");
+      expect(details.operational.queueHistoryLines).toBe(0);
+      expect(details.operational.queueRedaction).toBe("none");
+      expect(details.operational.estimatedOverhead).toBe("low");
+      expect(details.operational.oldestOperationAt).toBeDefined();
       expect(JSON.stringify(verbose)).not.toContain(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("delta doctor checks recorder health, queue posture, and gitignore coverage", async () => {
+    const root = tempWorkspace("delta-doctor");
+    try {
+      writeFileSync(join(root, ".gitignore"), ".forge/delta/\n.forge/agent/*.ndjson\n.forge/studio/\n");
+      const store = await DeltaStore.open(root);
+      await store.close();
+
+      const result = await runDeltaDoctor(root);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.checks.map((check) => check.name)).toEqual(expect.arrayContaining([
+        "delta-status",
+        "delta-writable",
+        "schema-current",
+        "queue-drain",
+        "queue-redaction",
+        "gitignore-operational-state",
+      ]));
+      expect(result.checks.find((check) => check.name === "gitignore-operational-state")?.ok).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("delta doctor treats an active PGlite runtime as a writable warning", async () => {
+    const root = tempWorkspace("delta-doctor-pglite-active");
+    try {
+      writeFileSync(join(root, ".gitignore"), ".forge/delta/\n.forge/agent/*.ndjson\n.forge/studio/\n");
+      mkdirSync(join(root, ".forge", "delta", "delta.db", "postmaster.pid"), { recursive: true });
+
+      const result = await runDeltaDoctor(root);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.ok).toBe(true);
+      const writable = result.checks.find((check) => check.name === "delta-writable");
+      expect(writable).toMatchObject({
+        ok: false,
+        severity: "warning",
+      });
+      expect(writable?.message).toContain("PGlite runtime");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("records CAIR activity as semantic timeline events", async () => {
+    const root = tempWorkspace("delta-cair-recording");
+    try {
+      const argv = ["cair", "query", "Q", "ST"];
+      const parsed = parseCli(argv);
+      expect(parsed.errors).toEqual([]);
+      if (!parsed.command) {
+        throw new Error("expected parsed CAIR command");
+      }
+
+      if (parsed.command.kind !== "cair") {
+        throw new Error("expected parsed CAIR command kind");
+      }
+      const command = {
+        ...parsed.command,
+        options: {
+          ...parsed.command.options,
+          workspaceRoot: root,
+        },
+      };
+
+      await recordParsedCliCommand({
+        command,
+        argv,
+        exitCode: 0,
+        durationMs: 12,
+      });
+
+      const store = await DeltaStore.open(root, { access: "read" });
+      const timeline = await store.semanticTimeline({ target: "cair:protocol" });
+      await store.close();
+
+      expect(timeline.events.some((event) => event.kind === "cair.query.run")).toBe(true);
+      expect(timeline.events.some((event) => event.entities.some((entity) => entity.kind === "cair"))).toBe(true);
+      expect(JSON.stringify(timeline)).toContain("\"queryVerb\":\"Q ST\"");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -108,6 +108,20 @@ describe("H48 agent memory bridge", () => {
         expect(human).not.toContain("\"payload\"");
       }
 
+      const handoffContext = await runAgentMemoryCommand({
+        subcommand: "context",
+        workspaceRoot: root,
+        json: true,
+        target: "generic",
+        handoff: true,
+      });
+      expect("agentMemory" in handoffContext).toBe(true);
+      if ("agentMemory" in handoffContext) {
+        const state = handoffContext.currentState as { reasons?: Array<{ signal?: string; weight?: number; value?: string }> };
+        expect(state.reasons?.some((reason) => reason.signal && reason.weight !== undefined)).toBe(true);
+        expect(handoffContext.recommendedCommands).toContain("forge handoff --json");
+      }
+
       const memory = await runAgentMemoryCommand({
         subcommand: "memory",
         workspaceRoot: root,
@@ -926,6 +940,18 @@ describe("H48 agent memory bridge", () => {
     expect(parseCli(["agent", "context", "--current", "--json"]).command).toMatchObject({
       kind: "agent",
       options: { subcommand: "context", current: true, json: true },
+    });
+    expect(parseCli(["agent", "context", "--change", "current", "--json"]).command).toMatchObject({
+      kind: "agent",
+      options: { subcommand: "context", change: "current", entry: undefined, json: true },
+    });
+    expect(parseCli(["agent", "context", "--proof", "security-prove", "--json"]).command).toMatchObject({
+      kind: "agent",
+      options: { subcommand: "context", proof: "security-prove", entry: undefined, json: true },
+    });
+    expect(parseCli(["agent", "context", "--handoff", "--json"]).command).toMatchObject({
+      kind: "agent",
+      options: { subcommand: "context", handoff: true, entry: undefined, json: true },
     });
     expect(parseCli(["agent", "timeline", "--target", "codex", "--limit", "5", "--json"]).command).toMatchObject({
       kind: "agent",

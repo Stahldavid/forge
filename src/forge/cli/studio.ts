@@ -139,6 +139,15 @@ export interface StudioSnapshotResult {
     commands: string[];
     diffPlan?: DevConsoleDiffPlan;
   };
+  handoff: {
+    previewUrl: string;
+    currentSession?: { id?: string; title?: string; status?: string; confidence?: number };
+    changedFiles?: number;
+    generatedState?: string;
+    deltaHealth?: string;
+    agentContextCommand: string;
+    recommendedCommands: string[];
+  };
   proofs: {
     preview: StudioAttachResult["preview"]["status"];
     generated: StudioAttachResult["posture"]["generated"];
@@ -981,6 +990,13 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
     : undefined;
   const delta = await runDeltaStatus(appRoot);
   const contextPacket = contextPacketFor({ appRoot, posture, commands });
+  const handoff = studioHandoffFor({
+    previewUrl: preview.url,
+    posture,
+    changed: changed.data,
+    delta,
+    commands,
+  });
   const gitState = (changed.data as { git?: { available?: boolean } }).git;
   const changedReadable = changed.ok || gitState?.available === false;
   const ok = posture.state !== "needs-attention" && changedReadable &&
@@ -1006,6 +1022,7 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
     changed: changed.data,
     commands,
     contextPacket,
+    handoff,
     proofs: {
       preview: preview.status,
       generated: posture.generated,
@@ -1016,6 +1033,43 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
     diagnostics,
     nextActions,
     exitCode: ok ? 0 : 1,
+  };
+}
+
+function studioHandoffFor(input: {
+  previewUrl: string;
+  posture: StudioSnapshotResult["posture"];
+  changed: Record<string, unknown>;
+  delta: unknown;
+  commands: StudioSnapshotResult["commands"];
+}): StudioSnapshotResult["handoff"] {
+  const changedSummary = input.changed.summary as { changedFiles?: unknown } | undefined;
+  const deltaRecord = input.delta && typeof input.delta === "object" && !Array.isArray(input.delta)
+    ? input.delta as { workSession?: { id?: unknown; title?: unknown; status?: unknown; confidence?: unknown }; details?: { health?: { status?: unknown } } }
+    : undefined;
+  const workSession = deltaRecord?.workSession;
+  return {
+    previewUrl: input.previewUrl,
+    ...(workSession
+      ? {
+          currentSession: {
+            ...(typeof workSession.id === "string" ? { id: workSession.id } : {}),
+            ...(typeof workSession.title === "string" ? { title: workSession.title } : {}),
+            ...(typeof workSession.status === "string" ? { status: workSession.status } : {}),
+            ...(typeof workSession.confidence === "number" ? { confidence: workSession.confidence } : {}),
+          },
+        }
+      : {}),
+    ...(typeof changedSummary?.changedFiles === "number" ? { changedFiles: changedSummary.changedFiles } : {}),
+    generatedState: input.posture.generated?.state,
+    deltaHealth: typeof deltaRecord?.details?.health?.status === "string" ? deltaRecord.details.health.status : undefined,
+    agentContextCommand: "forge agent context --handoff --json",
+    recommendedCommands: [
+      input.commands.handoff,
+      "forge agent context --handoff --json",
+      input.commands.changed,
+      input.commands.doctor,
+    ],
   };
 }
 

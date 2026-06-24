@@ -229,6 +229,58 @@ function detectRouteUses(file: string, text: string, clientManifest: ClientManif
   return uses;
 }
 
+function localComposableNames(file: string, text: string): string[] {
+  const relName = componentNameForFile(file);
+  const names = [relName.startsWith("use") ? relName : `use${relName.slice(0, 1).toUpperCase()}${relName.slice(1)}`];
+  for (const match of text.matchAll(/export\s+function\s+(use[A-Z][A-Za-z0-9_]*)\s*\(/g)) {
+    if (match[1]) {
+      names.push(match[1]);
+    }
+  }
+  return uniqueSorted(names);
+}
+
+function buildComposableUseIndex(
+  webRoot: string,
+  sourceFiles: string[],
+  clientManifest: ClientManifest,
+): Map<string, ReturnType<typeof detectUses>> {
+  const index = new Map<string, ReturnType<typeof detectUses>>();
+  for (const file of sourceFiles) {
+    const rel = toPosix(relative(webRoot, file));
+    if (!rel.startsWith("composables/") && !rel.startsWith("src/composables/")) {
+      continue;
+    }
+    if (rel.endsWith("/forge.ts") || rel === "composables/forge.ts" || rel === "src/composables/forge.ts") {
+      continue;
+    }
+    const text = nodeFileSystem.readText(file) ?? "";
+    const uses = detectUses(text, clientManifest);
+    for (const name of localComposableNames(file, text)) {
+      index.set(name, uses);
+    }
+  }
+  return index;
+}
+
+function detectLocalComposableUses(
+  text: string,
+  composableUseIndex: Map<string, ReturnType<typeof detectUses>>,
+): ReturnType<typeof detectUses> {
+  let uses: ReturnType<typeof detectUses> = {
+    usesCommands: [],
+    usesQueries: [],
+    usesLiveQueries: [],
+    rawForgeFetches: [],
+  };
+  for (const [name, composableUses] of composableUseIndex) {
+    if (new RegExp(`\\b${name}\\s*\\(`).test(text)) {
+      uses = mergeUses(uses, composableUses);
+    }
+  }
+  return uses;
+}
+
 function devCommandFor(webRoot: string, framework: FrontendGraph["framework"]): string {
   const pkg = readJson<{ scripts?: Record<string, string> }>(join(webRoot, "package.json"));
   if (pkg?.scripts?.dev) {
@@ -347,6 +399,7 @@ export function buildFrontendGraph(input: {
   const bridgeFiles: string[] = [];
   const diagnostics: FrontendGraph["diagnostics"] = [];
   const textByRel = new Map<string, string>();
+  const composableUseIndex = buildComposableUseIndex(webRoot, sourceFiles, input.clientManifest);
 
   for (const file of sourceFiles) {
     const rel = toPosix(relative(input.workspaceRoot, file));
@@ -359,7 +412,10 @@ export function buildFrontendGraph(input: {
       rel === "web/composables/forge.ts" ||
       rel === "web/plugins/forge.ts";
     textByRel.set(rel, text);
-    const uses = detectUses(text, input.clientManifest);
+    const uses = mergeUses(
+      detectUses(text, input.clientManifest),
+      detectLocalComposableUses(text, composableUseIndex),
+    );
     if (isComponentFile(webRoot, file, text)) {
       components.push({ name: componentNameForText(file, text), file: rel, ...uses });
     }
@@ -469,7 +525,7 @@ export function buildFrontendGraph(input: {
         ? "Nuxt app does not expose a Forge plugin; generated composables may not be wired"
         : "web app does not expose a ForgeProvider; generated hooks may not be wired",
       fixHint: framework === "nuxt"
-        ? "Create web/plugins/forge.ts and call provideForge with runtimeConfig.public.forgeUrl and devAuth for local development."
+        ? "Create web/plugins/forge.client.ts and web/plugins/forge.server.ts and install ForgeVuePlugin with runtimeConfig.public.forgeUrl and devAuth for local development."
         : "Mount ForgeProvider once in the web app root/provider layer and pass devAuth for local development.",
       suggestedCommands: ["forge inspect frontend --json", `forge make ui --framework ${framework === "nuxt" ? "nuxt" : "vite"} --dry-run --json`],
       docs: ["src/forge/_generated/frontendGraph.json", "AGENTS.md"],

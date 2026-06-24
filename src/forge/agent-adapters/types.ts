@@ -34,6 +34,9 @@ export interface AgentCommandOptions {
   hookAction?: "smoke" | "status" | string;
   input?: unknown;
   entry?: string;
+  change?: string;
+  proof?: string;
+  handoff?: boolean;
   current?: boolean;
   limit?: number;
   watch?: boolean;

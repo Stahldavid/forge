@@ -695,6 +695,7 @@ const STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: num
   { pattern: /^tests\/templates\/new-b2b-support-web\.test\.ts$/, estimatedMs: 12_000 },
   { pattern: /^tests\/templates\/new-agent-workroom\.test\.ts$/, estimatedMs: 12_000 },
   { pattern: /^tests\/templates\/new-minimal-web\.test\.ts$/, estimatedMs: 12_000 },
+  { pattern: /^tests\/templates\/new-nuxt-web\.test\.ts$/, estimatedMs: 12_000 },
   { pattern: /^tests\/templates\/create-forge-app\.test\.ts$/, estimatedMs: 8_000 },
 ];
 const STRICT_ISOLATED_TEST_PATTERNS = [
@@ -730,6 +731,7 @@ const STRICT_ISOLATED_TEST_PATTERNS = [
   /^tests\/templates\/new-b2b-support-web\.test\.ts$/,
   /^tests\/templates\/new-agent-workroom\.test\.ts$/,
   /^tests\/templates\/new-minimal-web\.test\.ts$/,
+  /^tests\/templates\/new-nuxt-web\.test\.ts$/,
   /^tests\/telemetry\/telemetry-dev-server\.test\.ts$/,
 ];
 const STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [];

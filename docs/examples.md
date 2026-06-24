@@ -67,6 +67,65 @@ src/forge/_generated/
 
 Use this template to learn the full local loop without extra integrations.
 
+## Nuxt web app
+
+Create it:
+
+```bash
+npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
+cd nuxt-notes
+npm run dev
+```
+
+Initial source tree:
+
+```txt
+nuxt-notes/
+  forge.config.ts
+  package.json
+  src/
+    actions/
+      logNoteCreated.ts
+    commands/
+      createNote.ts
+    forge/
+      schema.ts
+    policies.ts
+    queries/
+      listNotes.ts
+      liveNotes.ts
+  web/
+    app.vue
+    nuxt.config.ts
+    package.json
+    components/
+      LiveNotes.vue
+      NoteComposer.vue
+    composables/
+      forge.ts
+      useNotes.ts
+    plugins/
+      forge.client.ts
+      forge.server.ts
+    server/api/
+      forge-health.get.ts
+```
+
+Capabilities:
+
+| Capability | Where to look |
+|------------|---------------|
+| Command | `src/commands/createNote.ts` |
+| LiveQuery | `src/queries/liveNotes.ts` |
+| Nuxt plugins | `web/plugins/forge.client.ts`, `web/plugins/forge.server.ts` |
+| Vue composable bridge | `web/composables/forge.ts` |
+| Domain composable | `web/composables/useNotes.ts` |
+| Nitro route | `web/server/api/forge-health.get.ts` |
+| UI | `web/app.vue`, `web/components/*.vue` |
+
+Use this template when you want a Nuxt/Vue starter with generated Forge Vue
+composables and `NUXT_PUBLIC_FORGE_URL` runtime configuration already wired.
+
 ## Agent workroom app
 
 Create it:

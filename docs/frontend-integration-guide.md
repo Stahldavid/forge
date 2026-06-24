@@ -11,7 +11,8 @@ web/
   src/ or app/
   lib/forge.ts
   composables/forge.ts       # Nuxt/Vue
-  plugins/forge.ts           # Nuxt provider
+  plugins/forge.client.ts    # Nuxt browser provider
+  plugins/forge.server.ts    # Nuxt SSR provider
   components/**
 src/forge/_generated/
   client.ts
@@ -44,7 +45,7 @@ Local development usually uses dev auth:
 
 Production apps should use the configured auth mode and pass bearer tokens through the client transport.
 
-Nuxt apps install the Forge Vue plugin from `web/plugins/forge.ts` and read `runtimeConfig.public.forgeUrl`, overrideable through `NUXT_PUBLIC_FORGE_URL`.
+Nuxt apps install the Forge Vue plugin from `web/plugins/forge.client.ts` and `web/plugins/forge.server.ts`, then read `runtimeConfig.public.forgeUrl`, overrideable through `NUXT_PUBLIC_FORGE_URL`.
 
 ## Hooks
 

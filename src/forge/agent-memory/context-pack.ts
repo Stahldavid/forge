@@ -4,14 +4,26 @@ import type { AgentMemoryContextEvent, AgentMemoryContextPack, AgentMemoryEventR
 export async function buildAgentMemoryContext(input: {
   workspaceRoot: string;
   entry?: string;
+  change?: string;
+  proof?: string;
+  handoff?: boolean;
   limit?: number;
 }): Promise<AgentMemoryContextPack> {
   const store = await DeltaStore.open(input.workspaceRoot, { access: "read" });
   try {
-    const target = input.entry;
-    const events = await store.listAgentMemoryEvents({ target, limit: input.limit ?? 50 });
-    const timeline = target ? await store.semanticTimeline({ target, limit: input.limit ?? 50 }) : undefined;
-    const current = target ? timeline?.currentState ?? {} : await currentSessionState(store);
+    const scope = contextScope(input);
+    const target = contextTarget(input, scope);
+    const currentSession = await store.currentWorkSession();
+    const sessionId = scope === "change" && (input.change === "current" || !input.change)
+      ? currentSession?.id
+      : undefined;
+    const events = await store.listAgentMemoryEvents({ target: eventTarget(input, scope), limit: input.limit ?? 50 });
+    const timeline = target || sessionId
+      ? await store.semanticTimeline({ target, workSessionId: sessionId, limit: input.limit ?? 50 })
+      : undefined;
+    const current = timeline?.currentState && Object.keys(timeline.currentState).length > 0
+      ? timeline.currentState
+      : await currentSessionState(store, currentSession);
     const goals = events
       .filter((event) => event.normalizedKind === "agent.prompt.submitted")
       .map((event) => ({
@@ -35,9 +47,12 @@ export async function buildAgentMemoryContext(input: {
     const openQuestions = timeline?.openQuestions ?? [];
     return {
       ok: true,
-      scope: target ? "entry" : "current",
-      entry: target,
+      scope,
+      entry: input.entry,
+      change: input.change,
+      proof: input.proof,
       currentState: current,
+      recommendedCommands: recommendedCommands(scope, input, currentSession?.id),
       agentMemory: {
         summary: {
           events: contextEventItems.length,
@@ -68,6 +83,84 @@ export async function buildAgentMemoryContext(input: {
   }
 }
 
+function contextScope(input: {
+  entry?: string;
+  change?: string;
+  proof?: string;
+  handoff?: boolean;
+}): AgentMemoryContextPack["scope"] {
+  if (input.handoff) {
+    return "handoff";
+  }
+  if (input.proof) {
+    return "proof";
+  }
+  if (input.change) {
+    return "change";
+  }
+  return input.entry ? "entry" : "current";
+}
+
+function contextTarget(
+  input: { entry?: string; change?: string; proof?: string },
+  scope: AgentMemoryContextPack["scope"],
+): string | undefined {
+  if (scope === "entry") {
+    return input.entry;
+  }
+  if (scope === "proof") {
+    return input.proof?.includes(":") ? input.proof : `proof:${input.proof}`;
+  }
+  if (scope === "change" && input.change && input.change !== "current") {
+    return input.change.includes(":") ? input.change : `session:${input.change}`;
+  }
+  return undefined;
+}
+
+function eventTarget(
+  input: { entry?: string; change?: string; proof?: string },
+  scope: AgentMemoryContextPack["scope"],
+): string | undefined {
+  if (scope === "entry") {
+    return input.entry;
+  }
+  if (scope === "proof") {
+    return input.proof;
+  }
+  if (scope === "change" && input.change !== "current") {
+    return input.change;
+  }
+  return undefined;
+}
+
+function recommendedCommands(
+  scope: AgentMemoryContextPack["scope"],
+  input: { entry?: string; change?: string; proof?: string },
+  currentSessionId: string | undefined,
+): string[] {
+  const commands = [
+    "forge agent timeline --json",
+    "forge delta status --verbose --json",
+  ];
+  if (scope === "entry" && input.entry) {
+    commands.push(`forge timeline ${input.entry} --json`);
+    commands.push(`forge explain ${input.entry} --json`);
+  }
+  if (scope === "proof" && input.proof) {
+    commands.push(`forge timeline proof:${input.proof.replace(/^proof:/u, "")} --json`);
+  }
+  if (scope === "change") {
+    commands.push(`forge timeline --session ${input.change === "current" || !input.change ? "current" : input.change} --json`);
+    commands.push("forge changed --json");
+  }
+  if (scope === "handoff") {
+    commands.push("forge handoff --json");
+    commands.push(`forge timeline --session ${currentSessionId ?? "current"} --json`);
+    commands.push("forge changed --json");
+  }
+  return [...new Set(commands)];
+}
+
 function contextEvents(events: AgentMemoryEventRecord[]): AgentMemoryContextEvent[] {
   return events.map((event) => {
     const eventBindings = bindings(event);
@@ -92,8 +185,8 @@ function contextEvents(events: AgentMemoryEventRecord[]): AgentMemoryContextEven
   });
 }
 
-async function currentSessionState(store: DeltaStore): Promise<Record<string, unknown>> {
-  const session = await store.currentWorkSession();
+async function currentSessionState(store: DeltaStore, currentSession?: Awaited<ReturnType<DeltaStore["currentWorkSession"]>>): Promise<Record<string, unknown>> {
+  const session = currentSession ?? await store.currentWorkSession();
   return session
     ? {
         sessionId: session.id,
@@ -101,6 +194,11 @@ async function currentSessionState(store: DeltaStore): Promise<Record<string, un
         inferredIntent: session.inferredIntent,
         confidence: session.confidence,
         status: session.status,
+        reasons: session.reasons.slice(0, 5).map((reason) => ({
+          signal: reason.signal,
+          weight: reason.weight,
+          ...(reason.value ? { value: reason.value } : {}),
+        })),
       }
     : {};
 }

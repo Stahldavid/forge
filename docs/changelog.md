@@ -6,6 +6,19 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.22
+
+- Added focused post-alpha.21 workflow improvements without expanding MCP tools:
+  scoped Agent Memory context packs, DeltaDB verbose health details, Semantic
+  Timeline stale-proof/causal summaries, Studio snapshot handoff metadata,
+  local Delta maintenance commands (`compact`, `prune`, redacted `export`),
+  `forge doctor delta`, CAIR timeline events, and a dedicated CAIR Protocol
+  documentation page.
+- Added an official `nuxt-web` template: a Forge notes backend plus Nuxt app
+  using client/server Forge plugins, `web/composables/useNotes.ts`, generated
+  Vue composables, a Nitro runtime-config route, and
+  `NUXT_PUBLIC_FORGE_URL`.
+
 ## 0.1.0-alpha.21
 
 Alpha.21 hardens external-agent privacy and brownfield import polish:

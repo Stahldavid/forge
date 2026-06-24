@@ -86,7 +86,7 @@ Run the broader gate before release:
 
 ```bash
 node ./bin/forge.mjs verify --strict --script-timeout-ms 120000
-npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "npm:forgeos@alpha" --install --runtime-probes --json
+npm run field:test -- --package-managers npm --templates minimal-web,nuxt-web --forge-spec "npm:forgeos@alpha" --install --runtime-probes --json
 ```
 
 ## Evidence

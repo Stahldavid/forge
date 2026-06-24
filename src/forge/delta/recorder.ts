@@ -260,6 +260,27 @@ async function recordSpecializedCommand(
     return;
   }
 
+  if (command.kind === "cair") {
+    const cairKind = cairOperationKind(command);
+    await store.appendOperation({
+      sessionId,
+      actorId,
+      kind: cairKind,
+      summary: cairSummary(command, cairKind, exitCode),
+      data: {
+        subcommand: command.options.subcommand,
+        exitCode,
+        ...(command.options.query ? { queryVerb: compactCairVerb(command.options.query) } : {}),
+        ...(command.options.action ? { actionVerb: compactCairVerb(command.options.action) } : {}),
+        ...(command.options.inputPath ? { inputPath: command.options.inputPath } : {}),
+        dryRun: Boolean(command.options.dryRun),
+        plan: Boolean(command.options.plan),
+        allowGenerated: Boolean(command.options.allowGenerated),
+      },
+    });
+    return;
+  }
+
   if (command.kind === "check" || command.kind === "verify") {
     await store.appendOperation({
       sessionId,
@@ -274,6 +295,45 @@ async function recordSpecializedCommand(
       },
     });
   }
+}
+
+function cairOperationKind(command: Extract<ForgeCommand, { kind: "cair" }>): string {
+  if (command.options.subcommand === "snapshot") {
+    return "cair.snapshot.created";
+  }
+  if (command.options.subcommand === "query") {
+    return "cair.query.run";
+  }
+  const actionVerb = compactCairVerb(command.options.action ?? "");
+  if (command.options.plan) {
+    return "cair.plan.created";
+  }
+  if (actionVerb === "A APPLY") {
+    return "cair.plan.applied";
+  }
+  if (command.options.dryRun) {
+    return "cair.action.previewed";
+  }
+  return "cair.action.run";
+}
+
+function cairSummary(command: Extract<ForgeCommand, { kind: "cair" }>, kind: string, exitCode: number): string {
+  const suffix = exitCode === 0 ? "completed" : "failed";
+  if (command.options.subcommand === "query") {
+    return `CAIR query ${compactCairVerb(command.options.query ?? "")} ${suffix}`;
+  }
+  if (command.options.subcommand === "action") {
+    return `CAIR ${kind.replace(/^cair\./, "").replace(/\./g, " ")} ${compactCairVerb(command.options.action ?? "")} ${suffix}`;
+  }
+  return `CAIR snapshot ${suffix}`;
+}
+
+function compactCairVerb(input: string): string {
+  const parts = input.trim().split(/\s+/u).filter(Boolean);
+  if (parts.length === 0) {
+    return "unknown";
+  }
+  return parts.slice(0, 2).join(" ");
 }
 
 const noopRecorder: AmbientDeltaRecorder = {

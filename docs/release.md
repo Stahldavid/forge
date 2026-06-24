@@ -27,7 +27,7 @@ Or use the field-test harness from the framework repository:
 ```bash
 npm run field:test -- \
   --package-managers npm \
-  --templates minimal-web,b2b-support-web \
+  --templates minimal-web,nuxt-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
   --install \
   --runtime-probes \
@@ -111,7 +111,7 @@ npm run security:deps
 npm run release:verify-public-alpha
 npm run field:test -- \
   --package-managers npm \
-  --templates minimal-web \
+  --templates minimal-web,nuxt-web \
   --forge-spec "npm:forgeos@alpha" \
   --install \
   --runtime-probes \

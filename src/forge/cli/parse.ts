@@ -112,7 +112,7 @@ export type ForgeCommand =
       json: boolean;
       workspaceRoot: string;
     }
-  | { kind: "doctor"; target?: "project" | "windows" | "agent"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
+  | { kind: "doctor"; target?: "project" | "windows" | "agent" | "delta"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
   | { kind: "setup"; target: "windows"; json: boolean; yes: boolean; workspaceRoot: string }
   | {
       kind: "security";
@@ -183,7 +183,19 @@ export type ForgeCommand =
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
   | { kind: "import"; options: BrownfieldImportCommandOptions }
-  | { kind: "delta"; subcommand: "status" | "repair"; json: boolean; workspaceRoot: string; dryRun: boolean; yes: boolean; verbose: boolean }
+  | {
+      kind: "delta";
+      subcommand: "status" | "repair" | "compact" | "prune" | "export";
+      json: boolean;
+      workspaceRoot: string;
+      dryRun: boolean;
+      yes: boolean;
+      verbose: boolean;
+      olderThan?: string;
+      output?: string;
+      limit?: number;
+      redacted: boolean;
+    }
   | { kind: "status"; json: boolean; workspaceRoot: string }
   | { kind: "changed"; json: boolean; authoredOnly: boolean; workspaceRoot: string }
   | { kind: "diff"; target: "authored" | "generated" | "full"; json: boolean; workspaceRoot: string }
@@ -212,7 +224,7 @@ export type ForgeCommand =
       force: boolean;
       workspaceRoot: string;
     }
-  | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; workspaceRoot: string }
+  | { kind: "timeline"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; causal: boolean; staleProofs: boolean; workspaceRoot: string }
   | { kind: "explain"; thing: string; json: boolean; workspaceRoot: string }
   | {
       kind: "session";
@@ -480,7 +492,7 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "map",
 ];
 
-const NEW_TEMPLATES: NewTemplateName[] = ["agent-workroom", "b2b-support-web", "minimal-web"];
+const NEW_TEMPLATES: NewTemplateName[] = ["agent-workroom", "b2b-support-web", "minimal-web", "nuxt-web"];
 const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
 const SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = ["compose", "env", "check", "clean"];
 const AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [
@@ -1015,6 +1027,22 @@ export function parseCli(argv: string[]): ParsedCli {
         (subcommand === "timeline" ? rest[1] : undefined) ??
         (subcommand === "timeline" ? "all" : undefined) ??
         (subcommand === "hooks" || subcommand === "onboard" ? "codex" : "generic");
+      const contextOptionValues = new Set(
+        [
+          parseOptionValue(argv, "--entry"),
+          parseOptionValue(argv, "--change"),
+          parseOptionValue(argv, "--proof"),
+          parseOptionValue(argv, "--event"),
+          parseOptionValue(argv, "--input"),
+          parseOptionValue(argv, "--target"),
+          parseOptionValue(argv, "--file"),
+          limitRaw,
+          pollIntervalRaw,
+        ].filter((value): value is string => typeof value === "string"),
+      );
+      const contextEntry = subcommand === "context"
+        ? rest.slice(1).find((part) => !part.startsWith("--") && !contextOptionValues.has(part))
+        : undefined;
       return {
         command: {
           kind: "agent",
@@ -1031,7 +1059,10 @@ export function parseCli(argv: string[]): ParsedCli {
             eventName: parseOptionValue(argv, "--event"),
             hookAction: subcommand === "hooks" ? rest[1] : undefined,
             input,
-            entry: parseOptionValue(argv, "--entry") ?? (subcommand === "context" && rest[1] !== "--current" ? rest[1] : undefined),
+            entry: parseOptionValue(argv, "--entry") ?? contextEntry,
+            change: parseOptionValue(argv, "--change"),
+            proof: parseOptionValue(argv, "--proof"),
+            handoff: parseFlag(argv, "--handoff"),
             current: parseFlag(argv, "--current"),
             limit: limit ? Math.floor(limit) : undefined,
             watch: parseFlag(argv, "--watch"),
@@ -1152,14 +1183,14 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "doctor":
-      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent") {
-        errors.push("forge doctor supports subcommand: windows or agent");
+      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent" && rest[0] !== "delta") {
+        errors.push("forge doctor supports subcommand: windows, agent, or delta");
         return { command: null, workspaceRoot, errors };
       }
       return {
         command: {
           kind: "doctor",
-          target: rest[0] === "windows" ? "windows" : rest[0] === "agent" ? "agent" : "project",
+          target: rest[0] === "windows" ? "windows" : rest[0] === "agent" ? "agent" : rest[0] === "delta" ? "delta" : "project",
           agentTarget: rest[0] === "agent"
             ? (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ?? (rest[1] as AgentAdapterTarget | undefined) ?? "codex"
             : undefined,
@@ -1882,10 +1913,12 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "delta": {
       const subcommand = rest[0];
-      if (subcommand !== "status" && subcommand !== "repair") {
-        errors.push("forge delta requires subcommand: status or repair");
+      if (subcommand !== "status" && subcommand !== "repair" && subcommand !== "compact" && subcommand !== "prune" && subcommand !== "export") {
+        errors.push("forge delta requires subcommand: status, repair, compact, prune, or export");
         return { command: null, workspaceRoot, errors };
       }
+      const limitRaw = parseOptionValue(argv, "--limit");
+      const limit = limitRaw ? Number(limitRaw) : undefined;
       return {
         command: {
           kind: "delta",
@@ -1894,6 +1927,10 @@ export function parseCli(argv: string[]): ParsedCli {
           dryRun: parseFlag(argv, "--dry-run"),
           yes: parseFlag(argv, "--yes"),
           verbose: parseFlag(argv, "--verbose"),
+          olderThan: parseOptionValue(argv, "--older-than"),
+          output: parseOptionValue(argv, "--output"),
+          limit: Number.isFinite(limit) ? limit : undefined,
+          redacted: parseFlag(argv, "--redacted"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1933,7 +1970,10 @@ export function parseCli(argv: string[]): ParsedCli {
       const kindFilter = parseOptionValue(argv, "--kind");
       const sessionId = parseOptionValue(argv, "--session");
       const rebuild = rest[0] === "rebuild";
-      const target = rebuild ? undefined : rest.find((item) => item !== kindFilter && item !== limitRaw && item !== sessionId);
+      const optionValues = new Set([limitRaw, kindFilter, sessionId].filter((value): value is string => typeof value === "string"));
+      const target = rebuild
+        ? undefined
+        : rest.find((item) => !item.startsWith("--") && !optionValues.has(item));
       const limit = limitRaw ? Number(limitRaw) : undefined;
       if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {
         errors.push("--limit must be a number >= 1");
@@ -1948,6 +1988,8 @@ export function parseCli(argv: string[]): ParsedCli {
             json: parseFlag(argv, "--json"),
             rebuild,
             forAgent: parseFlag(argv, "--for-agent"),
+            causal: parseFlag(argv, "--causal"),
+            staleProofs: parseFlag(argv, "--stale-proofs"),
             workspaceRoot,
           },
         workspaceRoot,
@@ -2642,6 +2684,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--json",
     "--human",
     "--for-agent",
+    "--causal",
+    "--stale-proofs",
     "--dry-run",
     "--plan",
     "--staged",
@@ -2698,6 +2742,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--emit",
     "--event",
     "--entry",
+    "--change",
+    "--proof",
+    "--handoff",
     "--current",
     "--trigger",
     "--component",
@@ -2794,6 +2841,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--env-file",
     "--skip-startup-console",
     "--redacted",
+    "--older-than",
+    "--output",
     "--mock-ai",
     "--ai",
     "--provider",
@@ -2857,6 +2906,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--emit" ||
         arg === "--event" ||
         arg === "--entry" ||
+        arg === "--change" ||
+        arg === "--proof" ||
         arg === "--trigger" ||
         arg === "--component" ||
         arg === "--package" ||
@@ -2901,6 +2952,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--db" ||
         arg === "--database-url" ||
         arg === "--limit" ||
+        arg === "--older-than" ||
+        arg === "--output" ||
         arg === "--kind" ||
         arg === "--session" ||
         arg === "--input" ||

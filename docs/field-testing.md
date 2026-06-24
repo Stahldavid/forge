@@ -57,7 +57,7 @@ With `--runtime-probes`, the harness:
 10. calls a template query through `POST /queries/...`;
 11. writes an optional JSON report with commands, durations, status codes, and trace IDs.
 
-The minimal template probe creates a note with `createNote` and confirms it is returned by `listNotes`. The B2B support template probe creates a ticket with `createTicket` and confirms it is returned by `listTickets`.
+The minimal and Nuxt template probes create a note with `createNote` and confirm it is returned by `listNotes`. The B2B support template probe creates a ticket with `createTicket` and confirms it is returned by `listTickets`.
 
 ## Local Field Test (framework repo)
 
@@ -84,7 +84,7 @@ Run against the published alpha package:
 ```bash
 npm run field:test -- \
   --package-managers npm,pnpm,yarn,bun \
-  --templates minimal-web,b2b-support-web \
+  --templates minimal-web,nuxt-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
   --install \
   --runtime-probes \

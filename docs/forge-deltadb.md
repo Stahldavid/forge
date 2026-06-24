@@ -8,6 +8,11 @@ The recorder is ambient. Developers do not start or close work manually. Forge a
 
 ```bash
 forge delta status
+forge delta status --verbose --json
+forge doctor delta --json
+forge delta compact --dry-run --json
+forge delta prune --older-than 30d --dry-run --json
+forge delta export --redacted --output .forge/delta/export.json --json
 forge timeline
 forge explain billing.createInvoice
 forge timeline --session current
@@ -34,9 +39,21 @@ It does not store raw prompts, model outputs, full runtime response bodies, auth
 
 `forge delta status` shows whether recording is available, where the local store lives, the current inferred work session, the latest recorder session, and recent operations. A recorder session is the technical command/dev process that wrote operations. A work session is the H45 projection that groups related operations into human-readable work.
 
+`forge delta status --verbose --json` adds operational health: schema version, lock paths, aggregate counts, agent queue size, pending queue events, queue-history size, last compaction timestamp, queue redaction status, oldest/newest operation timestamps, semantic projection state, and a low/medium/high overhead estimate. Use it as the fast Delta health check before reaching for repair or long verification.
+
+`forge doctor delta --json` is the recorder trust gate. It checks whether DeltaDB is readable and writable, whether the schema is current, whether the hook queue is drained, whether queue payloads are redacted, and whether local operational state is covered by `.gitignore`.
+
+`forge delta compact` keeps local agent queue history bounded and redacted. It rewrites `.forge/agent/events.ndjson.history` to valid JSON lines, applies the same Delta redaction pass, and keeps the newest compacted history within the local size budget. Use `--dry-run --json` first when diagnosing a large or old queue history.
+
+`forge delta prune --older-than 30d` removes old local agent queue history lines by timestamp. Without `--yes`, a mutating prune reports the plan and next command instead of writing. Use `--dry-run --json` for evidence, then `--yes --json` when the prune is intentional.
+
+`forge delta export --redacted` writes or prints a redacted local support bundle containing status details, recent timeline events, Semantic Timeline data, and Agent Memory summaries. The command refuses non-redacted export. Add `--output .forge/delta/export.json` to write the bundle inside the workspace.
+
 `forge timeline` prints the H47 Semantic Timeline projection. It is not the source of truth; it is a rebuildable view over the local operation log, inferred work sessions, runtime calls, proofs, diagnostics, artifacts, and Git mappings.
 
-DeltaDB separates read and write access. Read-only commands such as `forge delta status`, `forge timeline`, `forge explain`, `forge session list`, `forge session show`, `forge agent timeline`, `forge agent context`, `forge agent memory`, and MCP read tools can run while another ForgeOS or external-agent process is recording events. Mutating operations such as event recording, agent ingest, hook smoke writes, timeline rebuild, session edits, and `forge delta repair --yes` fail fast with `FORGE_DELTA_BUSY` instead of waiting on the embedded database indefinitely. Busy JSON results include a `busy` block with the lock path, pid when known, whether the process still appears alive, lock age, cwd, and command. Retry after the running command exits, or inspect `.forge/delta/delta.lock` if the process appears stuck.
+DeltaDB separates read and write access. Read-oriented commands such as `forge delta status`, `forge timeline`, `forge explain`, `forge session list`, `forge session show`, `forge agent timeline`, `forge agent context`, and `forge agent memory` are designed for the fast orientation loop while another ForgeOS or external-agent process may be recording events. Mutating DeltaDB operations such as event recording, agent ingest, hook smoke writes, timeline rebuild, session edits, and `forge delta repair --yes` fail fast with `FORGE_DELTA_BUSY` instead of waiting on the embedded database indefinitely. `forge delta export --redacted` also reports `FORGE_DELTA_BUSY` if the local store is locked, so retry after the writer exits. Busy JSON results include a `busy` block with the lock path, pid when known, whether the process still appears alive, lock age, cwd, and command.
+
+`forge delta compact` and `forge delta prune` maintain `.forge/agent/events.ndjson.history`, not the embedded PGlite store. They are intentionally local retention tools: review with `--dry-run --json`, then apply prune with `--yes --json` when the retention cut is intentional.
 
 ```bash
 forge timeline src/policies.ts
@@ -45,6 +62,8 @@ forge timeline policy:billing.manage
 forge timeline diagnostic:FORGE_POLICY_DENIED
 forge timeline proof:security-prove
 forge timeline --kind proof.passed
+forge timeline billing.createInvoice --causal --json
+forge timeline --stale-proofs --json
 forge timeline --session current
 forge timeline --session worksess_...
 forge timeline rebuild
@@ -52,7 +71,7 @@ forge timeline --json
 forge timeline billing.createInvoice --json --for-agent
 ```
 
-Semantic timelines group raw operations into entity-oriented events such as `imported`, `generated`, `denied`, `policy.changed`, `executed`, `proof.passed`, `proof.failed`, `diagnostic.emitted`, and `git.exported`. Each event is linked to entities like runtime entries, files, policies, diagnostics, external services, proofs, dependencies, sessions, and Git commits. Timeline edges record causal hints such as a diagnostic likely being fixed by a policy change and then validated by a successful runtime call.
+Semantic timelines group raw operations into entity-oriented events such as `imported`, `generated`, `denied`, `policy.changed`, `executed`, `proof.passed`, `proof.failed`, `diagnostic.emitted`, `git.exported`, and `cair.*` events for CAIR snapshots, queries, plans, and applies. Each event is linked to entities like runtime entries, files, policies, diagnostics, external services, proofs, dependencies, sessions, Git commits, and CAIR actions. Timeline edges record causal hints such as a diagnostic likely being fixed by a policy change and then validated by a successful runtime call. JSON timeline output also includes a compact summary with event counts, causal chain labels, and stale proof hints when a relevant change happened after the latest proof. `--causal` and `--stale-proofs` make those intended reads explicit for agents and UIs.
 
 The projection can be rebuilt at any time:
 

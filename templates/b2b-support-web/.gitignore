@@ -12,6 +12,9 @@ forge.lock
 
 .forge/cache/
 .forge/pglite/
+.forge/delta/
+.forge/agent/*.ndjson
+.forge/agent/*.history
 .forge/local/
 .forge/locks/
 .forge/test-cache/
@@ -23,3 +26,4 @@ forge.lock
 .forge/reviews/
 .forge/impact/
 .forge/agent-adapters/
+.forge/studio/

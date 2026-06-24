@@ -131,6 +131,7 @@ Before moving a release beyond alpha, collect at least one passing field-test re
 - Node 22 and Node 24;
 - npm, pnpm, yarn, and Bun where the package manager is available;
 - `minimal-web` with runtime probes;
+- `nuxt-web` with runtime probes before announcing Vue/Nuxt changes;
 - `b2b-support-web` with runtime probes before announcing frontend/runtime changes.
 
 Use:
@@ -138,7 +139,7 @@ Use:
 ```bash
 npm run field:test -- \
   --package-managers npm,pnpm,yarn,bun \
-  --templates minimal-web,b2b-support-web \
+  --templates minimal-web,nuxt-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
   --install \
   --runtime-probes \

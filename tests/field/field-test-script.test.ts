@@ -12,7 +12,7 @@ describe("field-test script", () => {
         "--package-managers",
         "npm,pnpm",
         "--templates",
-        "minimal-web,b2b-support-web",
+        "minimal-web,nuxt-web,b2b-support-web",
         "--forge-spec",
         "npm:forgeos@alpha",
         "--runtime-probes",
@@ -30,8 +30,9 @@ describe("field-test script", () => {
     expect(payload.ok).toBe(true);
     expect(payload.forgeSpec).toBe("npm:forgeos@alpha");
     expect(payload.runtimeProbes).toBe(true);
-    expect(payload.cases).toHaveLength(4);
+    expect(payload.cases).toHaveLength(6);
     expect(payload.cases).toContainEqual({ packageManager: "npm", template: "minimal-web" });
+    expect(payload.cases).toContainEqual({ packageManager: "npm", template: "nuxt-web" });
     expect(payload.cases).toContainEqual({ packageManager: "pnpm", template: "b2b-support-web" });
   });
 });

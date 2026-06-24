@@ -634,6 +634,12 @@ describe("Forge CLI", () => {
         then: "generated",
       });
       expect(result.contextPacket.commands).toContain("forge changed --json");
+      expect(result.handoff).toMatchObject({
+        previewUrl: "http://127.0.0.1:5174",
+        generatedState: "stale-risk",
+        agentContextCommand: "forge agent context --handoff --json",
+      });
+      expect(result.handoff.recommendedCommands).toContain("forge agent context --handoff --json");
       expect(result.proofs.hooks[0]?.target).toBe("codex");
       expect(result.commands.attach).toBe("forge studio attach . --preview-port 5174 --target codex --json");
       expect(result.commands.bridge).toBe("forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json");
@@ -1061,6 +1067,36 @@ describe("Forge CLI", () => {
       expect(apply.command.subcommand).toBe("repair");
       expect(apply.command.yes).toBe(true);
     }
+
+    const compact = parseCli(["delta", "compact", "--dry-run", "--json"]);
+    expect(compact.errors).toEqual([]);
+    expect(compact.command).toMatchObject({
+      kind: "delta",
+      subcommand: "compact",
+      dryRun: true,
+      json: true,
+    });
+
+    const prune = parseCli(["delta", "prune", "--older-than", "30d", "--yes", "--json"]);
+    expect(prune.errors).toEqual([]);
+    expect(prune.command).toMatchObject({
+      kind: "delta",
+      subcommand: "prune",
+      olderThan: "30d",
+      yes: true,
+      json: true,
+    });
+
+    const exported = parseCli(["delta", "export", "--redacted", "--output", ".forge/delta/export.json", "--limit", "25", "--json"]);
+    expect(exported.errors).toEqual([]);
+    expect(exported.command).toMatchObject({
+      kind: "delta",
+      subcommand: "export",
+      redacted: true,
+      output: ".forge/delta/export.json",
+      limit: 25,
+      json: true,
+    });
   });
 
   test("parseCli accepts release doctor and prepared-only gates", () => {
@@ -1140,6 +1176,14 @@ describe("Forge CLI", () => {
       expect(doctorAgent.command.target).toBe("agent");
       expect(doctorAgent.command.agentTarget).toBe("cursor");
     }
+
+    const doctorDelta = parseCli(["doctor", "delta", "--json"]);
+    expect(doctorDelta.errors).toEqual([]);
+    expect(doctorDelta.command).toMatchObject({
+      kind: "doctor",
+      target: "delta",
+      json: true,
+    });
 
     const ingestWatch = parseCli([
       "agent",

@@ -15,13 +15,17 @@ forge agent ingest codex --event UserPromptSubmit --input '{"hook_event_name":"U
 forge agent hooks status --target codex --json
 forge agent hooks smoke --target codex --json
 forge agent context --json
+forge agent context --entry billing.createInvoice --json
+forge agent context --change current --json
+forge agent context --proof security-prove --json
+forge agent context --handoff --json
 forge agent memory --json
 forge agent timeline --json
 forge agent timeline --target codex --json
 forge mcp serve
 ```
 
-`forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. The MCP surface reads local project context; it does not make imported memories executable runtime entries.
+`forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. The MCP surface is intentionally kept read/context oriented; ForgeOS does not duplicate mutating CLI workflows as new MCP tools during alpha hardening.
 
 `forge agent onboard --target codex --json` is the recommended first command when an external agent enters a ForgeOS repo. It prepares the adapter files, records a smoke canary, runs the compact dev diagnostic cycle, and returns whether the agent is ready to edit.
 
@@ -35,13 +39,13 @@ Native hooks enqueue newline-delimited events in `.forge/agent/events.ndjson`. N
 
 `forge agent timeline --json` is the compact external-agent activity view. It reads redacted hook/MCP/import events, groups the visible sessions, files, entries, tools, proofs, and status signals, and returns an ordered event list for demos, handoffs, and agent-native UIs. Use `--target codex`, `--target claude`, or `--target cursor` to focus one provider.
 
-`forge agent context --current --json` returns a compact context pack for external agents. It includes a `summary` with counts, sources, tools, and latest event time, plus goals, tool calls, files, entries, approvals, proofs, and compact recent event metadata. Full normalized envelopes remain available through `forge agent memory --json` for explicit inspection.
+`forge agent context --current --json` returns a compact context pack for external agents. It includes a `summary` with counts, sources, tools, and latest event time, plus goals, tool calls, files, entries, approvals, proofs, current session confidence reasons, and compact recent event metadata. Use `--entry <name>` for a runtime entry, `--change current` for the inferred current work session, `--proof <kind>` for proof freshness context, and `--handoff` when preparing a compact next-agent packet. Full normalized envelopes remain available through `forge agent memory --json` for explicit inspection.
 
 Without `--json`, `forge agent context` and `forge agent memory` print compact terminal summaries instead of dumping full event payloads. Use human mode for quick orientation and `--json` when another tool needs the structured contract or detailed audit view.
 
 If the local DeltaDB-backed memory store is unavailable, hook commands return structured JSON with `FORGE_AGENT_MEMORY_UNAVAILABLE` and repair commands instead of throwing raw runtime errors:
 
-Agent memory reads are non-blocking: `forge agent timeline`, `forge agent context`, MCP read tools, and memory list commands can read while another ForgeOS or agent process is recording events. Mutating operations such as ingest, hook smoke writes, timeline rebuild, session edits, and Delta repair still use the local writer lock and may return `FORGE_DELTA_BUSY` with retry guidance instead of appearing to hang. Busy responses include a `busy` object with the lock path, pid when known, process-alive signal, lock age, cwd, and command so agents can decide whether to wait, inspect, or repair.
+Agent memory reads are non-blocking: `forge agent timeline`, `forge agent context`, and memory list commands can read while another ForgeOS or agent process is recording events. Mutating operations such as ingest, hook smoke writes, timeline rebuild, session edits, and Delta repair still use the local writer lock and may return `FORGE_DELTA_BUSY` with retry guidance instead of appearing to hang. Busy responses include a `busy` object with the lock path, pid when known, process-alive signal, lock age, cwd, and command so agents can decide whether to wait, inspect, or repair.
 
 ```bash
 forge delta status --json

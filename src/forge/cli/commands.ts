@@ -128,6 +128,14 @@ import {
 import {
   formatDeltaExplainHuman,
   formatDeltaExplainJson,
+  formatDeltaCompactHuman,
+  formatDeltaCompactJson,
+  formatDeltaDoctorHuman,
+  formatDeltaDoctorJson,
+  formatDeltaExportHuman,
+  formatDeltaExportJson,
+  formatDeltaPruneHuman,
+  formatDeltaPruneJson,
   formatDeltaRepairHuman,
   formatDeltaRepairJson,
   formatDeltaStatusHuman,
@@ -137,6 +145,10 @@ import {
   formatDeltaTimelineHuman,
   formatDeltaTimelineJson,
   runDeltaExplain,
+  runDeltaCompact,
+  runDeltaDoctor,
+  runDeltaExport,
+  runDeltaPrune,
   runDeltaRepair,
   runDeltaSessionCommand,
   runDeltaStatus,
@@ -1641,6 +1653,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         }
         return result.exitCode;
       }
+      if (command.target === "delta") {
+        const result = await runDeltaDoctor(command.workspaceRoot);
+        process.stdout.write(command.json ? formatDeltaDoctorJson(result) : formatDeltaDoctorHuman(result));
+        return result.exitCode;
+      }
       const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });
       if (command.json) {
         process.stdout.write(formatDoctorJson(result));
@@ -1808,6 +1825,34 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "delta": {
+      if (command.subcommand === "compact") {
+        const result = await runDeltaCompact({
+          workspaceRoot: command.workspaceRoot,
+          dryRun: command.dryRun,
+        });
+        process.stdout.write(command.json ? formatDeltaCompactJson(result) : formatDeltaCompactHuman(result));
+        return result.exitCode;
+      }
+      if (command.subcommand === "prune") {
+        const result = await runDeltaPrune({
+          workspaceRoot: command.workspaceRoot,
+          olderThan: command.olderThan,
+          dryRun: command.dryRun,
+          yes: command.yes,
+        });
+        process.stdout.write(command.json ? formatDeltaPruneJson(result) : formatDeltaPruneHuman(result));
+        return result.exitCode;
+      }
+      if (command.subcommand === "export") {
+        const result = await runDeltaExport({
+          workspaceRoot: command.workspaceRoot,
+          redacted: command.redacted,
+          output: command.output,
+          limit: command.limit,
+        });
+        process.stdout.write(command.json ? formatDeltaExportJson(result) : formatDeltaExportHuman(result));
+        return result.exitCode;
+      }
       if (command.subcommand === "repair") {
         const result = await runDeltaRepair({
           workspaceRoot: command.workspaceRoot,
@@ -1842,6 +1887,8 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         session: command.sessionId,
         limit: command.limit,
         rebuild: command.rebuild,
+        causal: command.causal,
+        staleProofs: command.staleProofs,
       });
       process.stdout.write(command.json ? formatDeltaTimelineJson(result) : formatDeltaTimelineHuman(result));
       return result.exitCode;

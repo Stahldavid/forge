@@ -35,6 +35,7 @@ Use `forge handoff --json` when switching between external code agents. It runs 
 
 ```bash
 npm create forgeos-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
 cd notes-app
 npm run dev
 ```
@@ -52,6 +53,9 @@ forge new notes-app \
 
 Use `--template agent-workroom` when you want an app preview plus an
 external-agent evidence room instead of a domain CRUD starter.
+Use `--template nuxt-web` when you want the same notes loop on Nuxt/Vue
+with `web/plugins/forge.client.ts`, `web/plugins/forge.server.ts`,
+`web/composables/useNotes.ts`, and generated Forge Vue composables.
 
 See [Getting Started](getting-started.md) and [Templates](templates.md).
 
@@ -112,7 +116,7 @@ forge studio watch ../customer-app --preview-port 5174 --target codex --json
 
 Use `forge studio open` as the normal entrypoint for an observer workroom. It attaches the observed app, prepares the selected adapter and hook bridge, checks dependency readiness, starts the target preview when it is local and safe to start, and sends a one-shot snapshot to the Studio bridge when the Studio runtime is reachable. It returns `previewAutomation`, `bridge`, and the follow-up commands Studio should show. Pass `--install` to allow dependency installation, `--no-start` to keep preview startup manual, or `--no-bridge` to skip the Studio ingest attempt. The browser remains an observer; Codex, Claude Code, or Cursor still edit the app externally. `forge studio attach` is the lower-level command for writing `.forge/studio/attachment.json` and preparing adapters without startup/bridge orchestration.
 
-Use `forge studio snapshot` for the read-only refresh loop. It does not write the attachment manifest, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` diff buckets, `contextPacket`, hook proofs, DeltaDB status, and the commands Studio should surface. When `.forge/studio/attachment.json` already exists, snapshot reuses its preview URL and targets unless the current command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should also start `codex app-server`, perform the stdio `initialize` handshake, attach the result at `proofs.codexAppServer.handshake`, and exit without starting a thread or turn.
+Use `forge studio snapshot` for the read-only refresh loop. It does not write the attachment manifest, does not prepare adapters, and does not regenerate stale artifacts. It returns app metadata, preview status, ForgeOS posture, `forge changed` diff buckets, `contextPacket`, a handoff block with `forge agent context --handoff --json`, hook proofs, DeltaDB status, and the commands Studio should surface. When `.forge/studio/attachment.json` already exists, snapshot reuses its preview URL and targets unless the current command overrides them. Add `--probe-codex-server` when a Codex-targeted snapshot should also start `codex app-server`, perform the stdio `initialize` handshake, attach the result at `proofs.codexAppServer.handshake`, and exit without starting a thread or turn.
 
 Use `forge studio doctor` as the trust gate for Studio. It checks preview reachability, generated freshness, hook usefulness, Codex hook approval state, DeltaDB readability, and optional Codex app-server availability. Add `--probe-codex-server` when the doctor or bridge should prove the app-server handshake, not only its availability. Use `forge studio codex-server` when the UI only needs that Codex-specific app-server proof: it returns schema generation commands, stdio connection guidance, and security notes without collecting the full Studio snapshot. Add `--write` to generate version-matched app-server schemas into `.forge/codex-app-server-schemas`; without `--write`, the command stays read-only. Add `--probe` to start `codex app-server` over stdio, send the documented `initialize`/`initialized` handshake, make safe read-only `model/list` and `account/read` RPCs, and then exit without starting a thread, turn, shell command, or browser-visible agent session. ForgeOS stores only sanitized readiness facts such as model count, sample model ids, account type, plan type, and `requiresOpenaiAuth`. Use `forge studio watch` when an observer UI wants a Studio-shaped JSON event; long-running file/reload streaming still comes from `forge dev --watch --json`.
 
@@ -125,6 +129,9 @@ Studio flows keep ports separate by default: Forge Studio uses `5173` for its UI
 ```bash
 forge status --json
 forge agent print-context --json
+forge delta status --verbose --json
+forge doctor delta --json
+forge delta export --redacted --json
 forge inspect --json
 forge inspect summary --json
 forge inspect all --brief --json
@@ -159,6 +166,8 @@ forge doctor windows --json
 | `imported` | Brownfield import artifacts from `.forge/import` |
 
 Use these when an agent needs to understand the project before changing it.
+
+For local DeltaDB maintenance, use `forge doctor delta --json` to check writability, queue drain, queue redaction, and gitignore posture. Use `forge delta compact --dry-run --json` to inspect queue-history compaction, `forge delta prune --older-than 30d --dry-run --json` before applying retention with `--yes`, and `forge delta export --redacted --json` for a redacted support bundle.
 
 ## CAIR Agent Protocol
 

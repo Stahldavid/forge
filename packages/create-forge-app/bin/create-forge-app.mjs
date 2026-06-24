@@ -23,10 +23,12 @@ function usage() {
 
 Usage:
   npm create forgeos-app@alpha <app-name> -- --template minimal-web
+  npm create forgeos-app@alpha <app-name> -- --template nuxt-web
+  npm create forgeos-app@alpha <app-name> -- --template agent-workroom
   npm create forgeos-app@alpha <app-name> -- --template b2b-support-web
 
 Options passed through to ForgeOS:
-  --template <name>          minimal-web | b2b-support-web
+  --template <name>          minimal-web | nuxt-web | agent-workroom | b2b-support-web
   --package-manager <name>   npm | pnpm | yarn | bun
   --install                  install dependencies after scaffolding
   --no-install               scaffold only

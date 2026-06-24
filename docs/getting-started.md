@@ -10,6 +10,7 @@ Recommended public quickstart:
 
 ```bash
 npm create forgeos-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
 cd notes-app
 npm run dev
 ```
@@ -81,6 +82,7 @@ forge new notes-app \
 | Template | Best for |
 |----------|----------|
 | `minimal-web` | Learning Forge, small prototypes |
+| `nuxt-web` | Nuxt/Vue apps with generated Forge composables |
 | `agent-workroom` | Showing ForgeOS as an external-agent development cockpit |
 | `b2b-support-web` | Tickets, policies, Stripe, AI triage, liveQuery showcase |
 

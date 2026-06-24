@@ -8,7 +8,7 @@ import { run as runGenerate } from "../compiler/orchestrator/run.ts";
 import { resolvePackageManagerArgv } from "../compiler/package-manager/executor.ts";
 import { moduleDir } from "../platform/module.ts";
 
-export type NewTemplateName = "agent-workroom" | "b2b-support-web" | "minimal-web";
+export type NewTemplateName = "agent-workroom" | "b2b-support-web" | "minimal-web" | "nuxt-web";
 export type NewPackageManager = "bun" | "npm" | "pnpm" | "yarn";
 
 export interface NewCommandOptions {
@@ -46,6 +46,8 @@ const REQUIRED_GITIGNORE_PATHS = [
   ".forge/cache/",
   ".forge/pglite/",
   ".forge/delta/",
+  ".forge/agent/*.ndjson",
+  ".forge/agent/*.history",
   ".forge/local/",
   ".forge/test-cache/",
   ".forge/test-runs/",

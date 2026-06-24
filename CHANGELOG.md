@@ -1,5 +1,22 @@
 # forgeos
 
+## Unreleased
+
+## 0.1.0-alpha.22
+
+### Patch Changes
+
+- Improve the post-alpha.21 agent workflow without adding new MCP tools.
+
+  - Add `forge agent context` scopes for entry, change, proof, and handoff context packs.
+  - Add DeltaDB verbose health details for queue redaction, operation age, semantic projection state, and overhead posture.
+  - Add `forge delta compact`, `forge delta prune`, and redacted `forge delta export` for local Delta maintenance and support bundles.
+  - Add `forge doctor delta` for recorder writability, queue drain, redaction, and gitignore checks.
+  - Add Semantic Timeline summary data for stale proofs and causal chains.
+  - Record CAIR snapshot/query/action activity as Delta timeline events without adding new MCP tools.
+  - Add a Studio snapshot handoff block and a dedicated CAIR Protocol documentation page.
+  - Add an official `nuxt-web` template with a Forge notes backend, client/server Nuxt plugins, a `useNotes` composable, a Nitro runtime-config route, and generated Vue composables.
+
 ## 0.1.0-alpha.21
 
 ### Patch Changes
@@ -22,8 +39,6 @@
   - Skip probe, invalid, and out-of-workspace queued hook events during Agent Memory drain, and bound queue inspection for large hook queues.
   - Preserve empty stdio command arguments, diagnose malformed command strings, and support structured `service.commandArgs` in external manifests.
   - Include the basic example client demo in typecheck coverage.
-
-## Unreleased
 
 ## 0.1.0-alpha.19
 

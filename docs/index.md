@@ -104,8 +104,9 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Compiler/runtime architecture | [Architecture](architecture.md) |
 | Generated artifact policy | [Generated Artifacts](generated-artifacts.md) |
 | Template file trees | [Examples](examples.md) |
-| Templates (`minimal-web`, `agent-workroom`, `b2b-support-web`) | [Templates](templates.md) |
+| Templates (`minimal-web`, `nuxt-web`, `agent-workroom`, `b2b-support-web`) | [Templates](templates.md) |
 | Agent intent router (`forge do`) | [Agent Workflow](agent-workflow.md) |
+| Compact agent navigation and guarded edits | [CAIR Protocol](cair-protocol.md) |
 | External-agent demo shape | [Agent-Native Demo](agent-native-demo.md) |
 | Agent issue-to-handoff loop | [Agent Playbook](agent-playbook.md) |
 | Build a feature with an agent | [Build a Feature with an Agent](agent-feature-tutorial.md) |

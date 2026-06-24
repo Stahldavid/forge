@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
+import { runDeltaTimeline } from "../../src/forge/delta/timeline.ts";
 
 function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
@@ -159,6 +160,13 @@ describe("delta semantic timeline", () => {
 
       expect(proof.currentState.proofStatus).toBe("stale");
       expect(proof.openQuestions).toContain("Proof is stale after the latest relevant change");
+
+      const result = await runDeltaTimeline({ workspaceRoot: root, target: "proof:security-prove" });
+      expect(result.summary.proofStatus).toBe("stale");
+      expect(result.summary.staleProofs).toEqual([
+        expect.objectContaining({ proof: "security-prove" }),
+      ]);
+      expect(result.summary.causalEdges).toBeGreaterThanOrEqual(0);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -230,6 +238,14 @@ describe("delta semantic timeline", () => {
     if (rebuild?.kind === "timeline") {
       expect(rebuild.rebuild).toBe(true);
       expect(rebuild.target).toBeUndefined();
+    }
+
+    const causal = parseCli(["timeline", "billing.createInvoice", "--causal", "--stale-proofs", "--json"]).command;
+    expect(causal?.kind).toBe("timeline");
+    if (causal?.kind === "timeline") {
+      expect(causal.target).toBe("billing.createInvoice");
+      expect(causal.causal).toBe(true);
+      expect(causal.staleProofs).toBe(true);
     }
   });
 });
