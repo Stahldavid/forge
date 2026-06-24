@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=3d831f6e0bac8206a0e2d9aa2029409f4ff3c616f41e247be1a8ef4f5873a507
+// @forge-generated generator=0.1.0-alpha.23 input=eec97c876c38e3c86c16e6a488b4abbd0d9253406b5e3a492f6674a134d0d950 content=80f265021423d8abf4f52fcfc6ab09f25a3022e0923f0e4088e7678b3b23228e
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.20",
-  "inputHash": "52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89",
+  "generatorVersion": "0.1.0-alpha.23",
+  "inputHash": "eec97c876c38e3c86c16e6a488b4abbd0d9253406b5e3a492f6674a134d0d950",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -3832,6 +3832,28 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/templates/new-nuxt-web.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages vue"
       ]
     },
     {

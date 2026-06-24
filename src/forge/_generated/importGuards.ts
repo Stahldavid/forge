@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=ad7ecb223cb611bfbf7d20074dfbd842c862146bfdb7e34494f1d57faf66623f
+// @forge-generated generator=0.1.0-alpha.23 input=eec97c876c38e3c86c16e6a488b4abbd0d9253406b5e3a492f6674a134d0d950 content=e1bdcbc474093cd679c196e74ea5a6222ab3e7a26334713c213acb2b51962d2a
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -669,7 +669,7 @@ export const importGuards = {
       ],
       "rationale": {
         "shared": "insufficient signals to prove shared-safe purity",
-        "client": "node builtins/process not allowed in client",
+        "client": "insufficient signals for client compatibility",
         "server": "server-side context allows IO capabilities",
         "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
         "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",

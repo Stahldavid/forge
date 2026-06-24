@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=ef5f2f9965e7bf267fcc663071d1f9a0fd2097e9eb9873fb9754fe3747d1455e
+// @forge-generated generator=0.1.0-alpha.23 input=eec97c876c38e3c86c16e6a488b4abbd0d9253406b5e3a492f6674a134d0d950 content=ef5f2f9965e7bf267fcc663071d1f9a0fd2097e9eb9873fb9754fe3747d1455e
 # Operation Playbooks
 
 ## Choose the right workflow
