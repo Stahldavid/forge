@@ -302,9 +302,62 @@ async function runHttpExternalEntry(
   };
 }
 
-function parseCommandLine(command: string): string[] {
-  const parts = command.match(/(?:[^\s"]+|"[^"]*")+/g) ?? [];
-  return parts.map((part) => part.replace(/^"|"$/g, ""));
+export function parseExternalCommandLine(command: string): string[] {
+  const parts: string[] = [];
+  let current = "";
+  let quote: "'" | "\"" | null = null;
+  let escaping = false;
+
+  const push = () => {
+    if (current.length > 0) {
+      parts.push(current);
+      current = "";
+    }
+  };
+
+  for (const char of command) {
+    if (escaping) {
+      current += char;
+      escaping = false;
+      continue;
+    }
+    if (quote === "'") {
+      if (char === "'") {
+        quote = null;
+      } else {
+        current += char;
+      }
+      continue;
+    }
+    if (quote === "\"") {
+      if (char === "\"") {
+        quote = null;
+      } else if (char === "\\") {
+        escaping = true;
+      } else {
+        current += char;
+      }
+      continue;
+    }
+    if (char === "\\") {
+      escaping = true;
+      continue;
+    }
+    if (char === "'" || char === "\"") {
+      quote = char;
+      continue;
+    }
+    if (/\s/.test(char)) {
+      push();
+      continue;
+    }
+    current += char;
+  }
+  if (escaping) {
+    current += "\\";
+  }
+  push();
+  return parts;
 }
 
 async function runStdioExternalEntry(
@@ -332,7 +385,7 @@ async function runStdioExternalEntry(
     };
   }
 
-  const [executable, ...args] = parseCommandLine(service.command);
+  const [executable, ...args] = parseExternalCommandLine(service.command);
   if (!executable) {
     return {
       ok: false,

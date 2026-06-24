@@ -1,6 +1,8 @@
 import { action } from "forge/server";
-import { posthogServer } from "../lib/posthogServer.js";
+import { createPosthogServer } from "../lib/posthogServer.js";
 
-export const capturePosthog = action(async () => {
-  return posthogServer;
+export const capturePosthog = action({
+  handler: async (ctx) => {
+    return createPosthogServer(ctx.secrets, ctx.env);
+  },
 });

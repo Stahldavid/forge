@@ -45,6 +45,22 @@ export type AgentMemoryCommandResult =
   | { ok: true; events: AgentMemoryEventRecord[]; exitCode: 0 }
   | AgentMemoryUnavailableResult;
 
+export interface AgentMemoryQueueInspectionResult {
+  exists: boolean;
+  source: string;
+  file: string;
+  events: number;
+  nativeSignals: number;
+  canarySignals: number;
+  usefulSignals: number;
+  ignoredOutOfWorkspaceEvents: number;
+  bytesRead: number;
+  pendingBytes: number;
+  checkpointFile: string;
+  errors: string[];
+  latestEventAt?: string;
+}
+
 function memoryUnavailable(error: unknown, workspaceRoot: string): AgentMemoryUnavailableResult {
   const message = error instanceof Error ? error.message : "agent memory store is unavailable";
   const busy = error instanceof DeltaStoreBusyError;
@@ -278,6 +294,9 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
     if (options.watch) {
       return watchAgentMemoryIngest(options);
     }
+    if (options.file) {
+      return ingestAgentMemoryQueueFile(options);
+    }
     return ingestAgentMemory(options);
   }
   if (options.subcommand === "context") {
@@ -348,6 +367,60 @@ async function ingestAgentMemory(options: AgentMemoryCommandOptions): Promise<Ag
     integration: source === "cursor" ? "mcp" : "native-hook",
   });
   return ingestEnvelope(options.workspaceRoot, envelope);
+}
+
+async function ingestAgentMemoryQueueFile(options: AgentMemoryCommandOptions): Promise<AgentIngestWatchResult> {
+  const source = options.source ?? options.target ?? "generic";
+  const watchFile = isAbsolute(options.file ?? "")
+    ? options.file as string
+    : resolve(options.workspaceRoot, options.file ?? "");
+  if (!options.file) {
+    return {
+      ok: false,
+      watch: false,
+      source,
+      eventsIngested: 0,
+      errors: ["agent ingest --file requires --file <events.jsonl|events.ndjson>"],
+      nextActions: [`forge agent ingest ${source} --file .forge/agent/events.ndjson --json`],
+      exitCode: 1,
+    };
+  }
+  if (!existsSync(watchFile)) {
+    return {
+      ok: false,
+      watch: false,
+      source,
+      file: options.file,
+      eventsIngested: 0,
+      errors: [`queue file does not exist: ${options.file}`],
+      nextActions: [`forge agent hooks status --target ${source} --json`],
+      exitCode: 1,
+    };
+  }
+  const drained = await drainAgentMemoryQueueFile({
+    workspaceRoot: options.workspaceRoot,
+    watchFile,
+    source,
+    eventName: options.eventName,
+  });
+  return {
+    ok: drained.errors.length === 0,
+    watch: false,
+    source,
+    file: options.file,
+    eventsIngested: drained.eventsIngested,
+    errors: drained.errors,
+    bytesRead: drained.bytesRead,
+    pendingBytes: drained.pendingBytes,
+    checkpointFile: drained.checkpointFile,
+    compacted: drained.compacted,
+    historyFile: drained.historyFile,
+    nextActions: [
+      `forge agent memory --entry ${source} --json`,
+      `forge agent hooks status --target ${source} --json`,
+    ],
+    exitCode: drained.errors.length === 0 ? 0 : 1,
+  };
 }
 
 function queueCheckpointPath(watchFile: string): string {
@@ -548,6 +621,119 @@ export async function drainAgentMemoryQueueFile(options: {
   };
 }
 
+function queuedEventHasUsefulSignal(envelope: AgentEventEnvelope): boolean {
+  const bindings = extractAgentEventBindings(envelope);
+  const files = bindings.files;
+  const entries = bindings.entries;
+  const proofs = bindings.proofs;
+  return (
+    typeof bindings.toolName === "string" ||
+    typeof bindings.command === "string" ||
+    typeof bindings.status === "string" ||
+    (Array.isArray(files) && files.length > 0) ||
+    (Array.isArray(entries) && entries.length > 0) ||
+    (Array.isArray(proofs) && proofs.length > 0)
+  );
+}
+
+function queuedEventTimestamp(raw: Record<string, unknown>, envelope: AgentEventEnvelope): string | undefined {
+  const enqueuedAt = raw.enqueuedAt;
+  return typeof enqueuedAt === "string" && enqueuedAt.length > 0
+    ? enqueuedAt
+    : envelope.event.timestamp;
+}
+
+function workspaceRootsMatch(left: string | undefined, right: string): boolean {
+  if (!left) {
+    return true;
+  }
+  return resolve(left) === resolve(right);
+}
+
+export function inspectAgentMemoryQueueFile(options: {
+  workspaceRoot: string;
+  watchFile: string;
+  source: string;
+  eventName?: string;
+}): AgentMemoryQueueInspectionResult {
+  const checkpointFile = queueCheckpointPath(options.watchFile);
+  const base = {
+    exists: existsSync(options.watchFile),
+    source: options.source,
+    file: options.watchFile,
+    events: 0,
+    nativeSignals: 0,
+    canarySignals: 0,
+    usefulSignals: 0,
+    ignoredOutOfWorkspaceEvents: 0,
+    bytesRead: 0,
+    pendingBytes: 0,
+    checkpointFile,
+    errors: [] as string[],
+  };
+  if (!base.exists) {
+    return base;
+  }
+  const fileBuffer = readFileSync(options.watchFile);
+  const bytesRead = readQueueCheckpoint(options.watchFile, fileBuffer.length);
+  const { complete, pendingBytes } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));
+  const result: AgentMemoryQueueInspectionResult = {
+    ...base,
+    bytesRead,
+    pendingBytes,
+  };
+  for (const line of complete) {
+    if (!line.raw.trim()) {
+      continue;
+    }
+    const parsed = normalizeRawInput(line.raw);
+    if (!parsed) {
+      result.errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);
+      continue;
+    }
+    const queued = parseQueuedHookLine(parsed);
+    const payload = queued?.payload ?? parsed;
+    const source = queued?.source ?? options.source;
+    if (source !== options.source) {
+      continue;
+    }
+    const workspaceRoot = queued?.workspaceRoot ?? options.workspaceRoot;
+    if (!workspaceRootsMatch(workspaceRoot, options.workspaceRoot)) {
+      result.ignoredOutOfWorkspaceEvents += 1;
+      continue;
+    }
+    const envelope = normalizeAgentEvent({
+      workspaceRoot,
+      source,
+      eventName: queued?.eventName ?? options.eventName,
+      raw: payload,
+      integration: source === "cursor" ? "mcp" : "native-hook",
+    });
+    const canary = envelope.payload.forgeHookCanary === "FORGE_HOOK_SMOKE_CANARY";
+    if (
+      envelope.payload.forgeHookProbe === true ||
+      envelope.payload._parseError === true ||
+      envelope.payload._invalidPayload === true
+    ) {
+      continue;
+    }
+    result.events += 1;
+    if (canary) {
+      result.canarySignals += 1;
+    } else if (envelope.source.integration === "native-hook" && envelope.capture.trustLevel === "direct-hook") {
+      result.nativeSignals += 1;
+    }
+    if (queuedEventHasUsefulSignal(envelope)) {
+      result.usefulSignals += 1;
+    }
+    const timestamp = queuedEventTimestamp(parsed, envelope);
+    if (timestamp && (!result.latestEventAt || timestamp > result.latestEventAt)) {
+      result.latestEventAt = timestamp;
+    }
+  }
+  return result;
+}
+
 async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promise<AgentIngestWatchResult> {
   const source = options.source ?? options.target ?? "generic";
   const file = options.file;
@@ -691,7 +877,7 @@ export function formatAgentMemoryHuman(result: AgentMemoryCommandResult): string
   }
   if ("watch" in result) {
     return [
-      `agent memory watch ${result.ok ? "ready" : "failed"} for ${result.source}`,
+      `agent memory ${result.watch ? "watch" : "queue ingest"} ${result.ok ? "ready" : "failed"} for ${result.source}`,
       ...(result.file ? [`file: ${result.file}`] : []),
       `events ingested: ${result.eventsIngested}`,
       ...(result.errors.length > 0 ? ["errors:", ...result.errors.map((error) => `- ${error}`)] : []),

@@ -263,7 +263,7 @@ function runtimeRules(): AgentRuntimeRule[] {
     {
       context: "command",
       allowed: ["ctx.db writes", "ctx.emit", "ctx.telemetry buffered events"],
-      forbidden: ["network packages", "ctx.secrets", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "process.env", "filesystem access"],
+      forbidden: ["network packages", "ctx.secrets", "ctx.ai", "ctx.ai.runAgent", "ctx.agent.run", "direct secret/env access", "filesystem access"],
     },
     {
       context: "query",
@@ -1536,7 +1536,7 @@ Template apps may ignore \`src/forge/_generated/**\` and \`forge.lock\` in git t
 ## Runtime rules
 
 - Do not import network packages inside \`command\`, \`query\`, or \`liveQuery\`.
-- Do not use \`process.env\` directly.
+- Do not read secrets or server runtime config through \`process.env\` in Forge runtime code; use \`ctx.secrets\` or generated config context. Public frontend bridge env such as \`NEXT_PUBLIC_*\` and \`NUXT_PUBLIC_*\` is allowed in web bridge files.
 - Do not access cross-tenant data.
 - Commands must use \`ctx.emit\` for side effects.
 - Actions and workflows handle side effects after commit.

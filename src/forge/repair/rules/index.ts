@@ -228,7 +228,7 @@ export const repairRules: RepairRule[] = [
         failureKind: "secrets",
         code: "FORGE_SECRET_DIRECT_PROCESS_ENV",
         summary: `Secret/config usage is unsafe or missing for ${secret}.`,
-        likelyCause: "Code reads process.env directly, accesses secrets in a forbidden runtime, or the environment lacks a required secret.",
+        likelyCause: "Code reads secret/config values through process.env in Forge runtime code, accesses secrets in a forbidden runtime, or the environment lacks a required secret.",
         confidence: "high",
         suggestedRepairs: [
           {
@@ -466,7 +466,7 @@ export function explainDiagnostic(code: string): string {
     FORGE_GUARD_VIOLATION: "A package or capability is used in a runtime context where it is forbidden. Move side effects to actions/workflows.",
     FORGE_POLICY_UNKNOWN: "A runtime entry references a missing policy. Create or correct the policy, then simulate expected roles.",
     FORGE_POLICY_DENIED: "The caller auth context does not satisfy the policy. Fix test auth or intentionally update policy roles.",
-    FORGE_SECRET_DIRECT_PROCESS_ENV: "Code reads process.env directly. Use ctx.secrets/ctx.config in allowed runtime contexts.",
+    FORGE_SECRET_DIRECT_PROCESS_ENV: "Code reads secret/config values through process.env in Forge runtime code. Use ctx.secrets/ctx.config in allowed runtime contexts.",
     FORGE_AI_FORBIDDEN_CONTEXT: "AI is being used in a deterministic context. Move AI calls to action/workflow/server runtime.",
     FORGE_WORKFLOW_STEP_FAILED: "A workflow step failed. Inspect the workflow run and trace before retrying.",
     FORGE_OUTBOX_PROCESS_FAILED: "An outbox delivery failed. Inspect the subscribed action and retry after fixing the cause.",

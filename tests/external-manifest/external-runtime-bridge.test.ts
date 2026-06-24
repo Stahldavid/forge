@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { importExternalManifest } from "../../src/forge/compiler/external-manifest/registry.ts";
+import { parseExternalCommandLine } from "../../src/forge/runtime/external/bridge.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -16,6 +17,23 @@ import {
 } from "./external-runtime-helpers.ts";
 
 describe("external runtime bridge", () => {
+  test("parses stdio command lines with spaces, quotes, and escapes", () => {
+    expect(parseExternalCommandLine("node 'scripts/my cli.js' --name \"ACME Corp\" escaped\\ value")).toEqual([
+      "node",
+      "scripts/my cli.js",
+      "--name",
+      "ACME Corp",
+      "escaped value",
+    ]);
+    expect(parseExternalCommandLine("python -m forge_adapter --label \"quote \\\" inside\"")).toEqual([
+      "python",
+      "-m",
+      "forge_adapter",
+      "--label",
+      "quote \" inside",
+    ]);
+  });
+
   test("executes HTTP external commands and queries with Forge auth and policy", async () => {
     const external = await startExternalHttpService();
     const { root, tenantA } = await scaffoldClientWorkspace("external-runtime", { generate: false });

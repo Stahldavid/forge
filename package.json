@@ -109,5 +109,8 @@
     "@types/react-test-renderer": "^19.1.0",
     "fast-check": "^3.23.2",
     "react-test-renderer": "^19.2.7"
+  },
+  "overrides": {
+    "read-yaml-file": "^3.0.0"
   }
 }

@@ -149,6 +149,7 @@ export interface AgentDoctorResult {
     approvalRequired: boolean;
     approvalStatus: AgentHookApprovalStatus;
     recentEvents: number;
+    queuedEvents?: number;
     usefulSignals: number;
     nativeSignals: number;
     canarySignals: number;
@@ -275,6 +276,7 @@ export interface AgentHooksStatusResult {
   deltaWritable: boolean;
   visibleInMemory: boolean;
   recentEvents: number;
+  queuedEvents?: number;
   usefulSignals: number;
   nativeSignals: number;
   canarySignals: number;

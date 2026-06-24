@@ -4,7 +4,7 @@ Demonstrates:
 
 - generated integration surface (`src/forge/_generated/`, recreated locally)
 - runtime matrix and import guards
-- transitive import guard (`badStripeCommand` → `stripeClient` → `stripe`)
+- expected-fail transitive import guard demo (`guard-violation-demo/badStripeCommand.ts` → `stripeClient` → `stripe`)
 - package-aware adapters from `forge add`
 - event-driven actions via durable outbox (H7)
 - lightweight workflows triggered by outbox events (H8)
@@ -29,9 +29,21 @@ This example is source-only. `src/forge/_generated/`, `forge.lock`, `bun.lock`, 
 npm run verify
 ```
 
-`forge check` reports `FORGE_GUARD_VIOLATION` for `src/commands/badStripeCommand.ts` because it transitively imports Stripe in a `command` context.
+This should pass for the main example app.
 
-`src/actions/createCheckout.ts` is allowed: Stripe is compatible with the `action` context.
+`src/actions/createCheckout.ts` is allowed: Stripe is compatible with the `action` context, and the secret is read through `ctx.secrets`.
+
+## Import guard demo
+
+The expected-fail guard demo is kept outside `src/` so normal verification stays green.
+
+```bash
+cp guard-violation-demo/badStripeCommand.ts src/commands/badStripeCommand.ts
+npm run forge:check
+rm src/commands/badStripeCommand.ts
+```
+
+`forge check` reports `FORGE_GUARD_VIOLATION` because the copied command transitively imports Stripe in a `command` context.
 
 ## Run commands locally
 
@@ -40,7 +52,6 @@ After `forge:generate`:
 ```bash
 npm run forge:run -- --list
 npm run forge:run -- createTicket
-npm run forge:run -- badStripeCommand   # blocked by import guards
 npm run forge:run -- createCheckout --mock
 ```
 

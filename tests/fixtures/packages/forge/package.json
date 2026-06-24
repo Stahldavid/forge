@@ -4,9 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./server": "./server.js",
-    "./schema": "./schema.js",
-    "./policy": "./policy.js",
-    "./react": "./react.js"
+    "./server": {
+      "types": "./server/index.ts",
+      "default": "./server.js"
+    },
+    "./schema": {
+      "types": "./schema/index.ts",
+      "default": "./schema.js"
+    },
+    "./policy": {
+      "types": "./policy/index.ts",
+      "default": "./policy.js"
+    },
+    "./react": {
+      "types": "./react/index.ts",
+      "default": "./react.js"
+    }
   }
 }

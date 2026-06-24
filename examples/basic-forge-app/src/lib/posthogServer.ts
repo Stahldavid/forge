@@ -1,3 +1,9 @@
-import { PostHog } from "posthog-node";
+import { createPostHog, type PostHog } from "posthog-node";
+import type { ForgeContext } from "forge/server";
 
-export const posthogServer = new PostHog(process.env.POSTHOG_KEY ?? "phc_placeholder");
+export function createPosthogServer(
+  secrets: ForgeContext["secrets"],
+  _env: ForgeContext["env"],
+): PostHog {
+  return createPostHog(secrets.get("POSTHOG_KEY"));
+}

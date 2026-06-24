@@ -19,9 +19,14 @@ export interface TelemetryContext {
 }
 
 export interface ForgeContext {
-  db: Record<string, unknown>;
+  db: Record<string, any>;
   emit: (eventType: string, payload: unknown) => Promise<void>;
   env: Record<string, string | undefined>;
+  secrets: {
+    get(name: string): string;
+    optional(name: string): string | undefined;
+    has(name: string): boolean;
+  };
   /** Injected at runtime by the Forge runner — stub in builder types only. */
   telemetry: TelemetryContext;
 }

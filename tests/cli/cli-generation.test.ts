@@ -400,6 +400,11 @@ describe("Forge CLI generation and inspection", () => {
         humanFiles: 0,
         generatedFiles: 1,
       });
+      expect(changed.data.generatedExplanation).toMatchObject({
+        kind: "versioned-generated-only",
+      });
+      expect(JSON.stringify(changed.data.generatedExplanation)).toContain("generate --check");
+      expect(JSON.stringify(changed.data.generatedExplanation)).toContain("HEAD");
       const humanChanges = changed.data.humanChanges as { docs: { sample: string[] } };
       const derivedChanges = changed.data.derivedChanges as { generated: { sample: string[] } };
       expect(humanChanges.docs.sample).not.toContain("AGENTS.md");
@@ -471,4 +476,31 @@ describe("Forge CLI generation and inspection", () => {
       cleanupWorkspace(workspace);
     }
   }, 30_000);
+
+  test("status explains generated git dirtiness separately from generator freshness", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-status-generated-dirty");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.email", "forge@example.com"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["commit", "-m", "initial"], { cwd: workspace, windowsHide: true });
+      writeFileSync(join(workspace, "forge.lock"), "changed generated lock\n", "utf8");
+
+      const status = runStatusCommand(workspace);
+      expect(status.exitCode).toBe(0);
+      expect(status.data.generated).toMatchObject({
+        state: "ready",
+        driftClean: true,
+        git: {
+          authoredFiles: 0,
+          generatedFiles: 1,
+        },
+      });
+      expect(JSON.stringify(status.data.generated)).toContain("generate --check can be clean");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
 });

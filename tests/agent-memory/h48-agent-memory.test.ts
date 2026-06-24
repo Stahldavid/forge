@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runAgentCommand } from "../../src/forge/agent-adapters/index.ts";
-import { drainAgentMemoryQueueFile, formatAgentMemoryHuman, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
+import { drainAgentMemoryQueueFile, formatAgentMemoryHuman, inspectAgentMemoryQueueFile, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
 import { probeCodexHookRunner } from "../../src/forge/agent-memory/hook-runner.ts";
 import { codexInstallFiles } from "../../src/forge/agent-memory/sources/codex.ts";
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
@@ -589,6 +589,51 @@ describe("H48 agent memory bridge", () => {
       await store.close();
       expect(events).toHaveLength(2);
       expect(readFileSync(`${queueFile}.checkpoint.json`, "utf8")).toContain("\"offset\"");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("inspects and drains Codex hook queue with one-shot ingest", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-inspect");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(
+        queueFile,
+        [
+          queuedCodexHookLine(root, "PostToolUse", "codex-session-inspect-1"),
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const inspected = inspectAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(inspected.exists).toBe(true);
+      expect(inspected.events).toBe(1);
+      expect(inspected.nativeSignals).toBe(1);
+      expect(inspected.usefulSignals).toBe(1);
+
+      const drained = await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        source: "codex",
+        file: ".forge/agent/events.ndjson",
+      });
+      expect(drained.exitCode).toBe(0);
+      expect("watch" in drained && drained.watch).toBe(false);
+      expect("eventsIngested" in drained ? drained.eventsIngested : 0).toBe(1);
+
+      const afterDrain = inspectAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(afterDrain.events).toBe(0);
+
+      const store = await DeltaStore.open(root);
+      const events = await store.listAgentMemoryEvents({ target: "codex" });
+      await store.close();
+      expect(events).toHaveLength(1);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

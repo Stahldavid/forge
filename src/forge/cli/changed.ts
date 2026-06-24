@@ -32,6 +32,13 @@ interface ReviewFocus {
   summary: string;
 }
 
+interface GeneratedChangeExplanation {
+  kind: "none" | "mixed-with-authored" | "versioned-generated-only";
+  generatorCheckMeaning: string;
+  gitMeaning: string;
+  summary: string;
+}
+
 function emptyCategory(summary: CategorizedFileSummary, category: keyof CategorizedFileSummary["byType"]): boolean {
   return summary.byType[category].count === 0;
 }
@@ -143,6 +150,34 @@ function buildReviewFocus(humanChanges: HumanChangeSummary, derivedChanges: Deri
   };
 }
 
+function buildGeneratedChangeExplanation(
+  humanChanges: HumanChangeSummary,
+  derivedChanges: DerivedChangeSummary,
+): GeneratedChangeExplanation {
+  if (derivedChanges.total === 0) {
+    return {
+      kind: "none",
+      generatorCheckMeaning: "forge generate --check verifies generated files match current workspace inputs.",
+      gitMeaning: "git status has no generated artifact changes.",
+      summary: "No generated artifacts changed.",
+    };
+  }
+  if (humanChanges.total === 0) {
+    return {
+      kind: "versioned-generated-only",
+      generatorCheckMeaning: "forge generate --check verifies generated files match current workspace inputs; it does not mean generated artifacts match HEAD.",
+      gitMeaning: "git status is showing versioned generated artifacts that differ from HEAD.",
+      summary: "Generated artifacts are consistent with current inputs but differ from git HEAD; review or discard them intentionally.",
+    };
+  }
+  return {
+    kind: "mixed-with-authored",
+    generatorCheckMeaning: "forge generate --check verifies generated files match current workspace inputs.",
+    gitMeaning: "git status includes generated artifacts alongside authored changes.",
+    summary: "Review authored changes first; generated artifacts should be explained by those source inputs.",
+  };
+}
+
 export function runChangedCommand(workspaceRoot: string, options: { authoredOnly?: boolean } = {}): ChangedCommandResult {
   const git = buildWorkspaceGitSummary(workspaceRoot);
   const changed = git.changeSummary.changed;
@@ -164,6 +199,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const risks = buildRisks(git);
   const recommendedCommands = buildRecommendedCommands(git);
   const reviewFocus = buildReviewFocus(humanChanges, viewDerivedChanges);
+  const generatedExplanation = buildGeneratedChangeExplanation(humanChanges, viewDerivedChanges);
   const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
 
   return {
@@ -197,6 +233,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       humanChanges,
       derivedChanges: viewDerivedChanges,
       reviewFocus,
+      generatedExplanation,
       diffPlan,
       risks,
       recommendedCommands,
@@ -211,6 +248,7 @@ export function formatChangedHuman(result: ChangedCommandResult): string {
   const human = result.data.humanChanges as Record<string, { count: number; sample: string[]; hidden: number } | number>;
   const derived = result.data.derivedChanges as Record<string, { count: number; sample: string[]; hidden: number } | number>;
   const reviewFocus = result.data.reviewFocus as { summary?: string; suggestedOrder?: string[] } | undefined;
+  const generatedExplanation = result.data.generatedExplanation as { summary?: string } | undefined;
   const diffPlan = result.data.diffPlan as { summary?: string; authoredDiffCommand?: string; generatedDiffCommand?: string; generatedCollapsedByDefault?: boolean } | undefined;
   const risks = (result.data.risks as string[] | undefined) ?? [];
   const nextActions = (result.data.nextActions as string[] | undefined) ?? [];
@@ -227,6 +265,9 @@ export function formatChangedHuman(result: ChangedCommandResult): string {
     if (reviewFocus.suggestedOrder && reviewFocus.suggestedOrder.length > 0) {
       lines.push(`Review order: ${reviewFocus.suggestedOrder.join(" -> ")}`);
     }
+  }
+  if (generatedExplanation?.summary) {
+    lines.push(`Generated explanation: ${generatedExplanation.summary}`);
   }
 
   if (diffPlan?.summary) {

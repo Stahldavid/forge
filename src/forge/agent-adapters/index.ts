@@ -43,6 +43,7 @@ import type { AgentMemoryEventRecord } from "../agent-memory/types.ts";
 import {
   formatAgentMemoryHuman,
   formatAgentMemoryJson,
+  inspectAgentMemoryQueueFile,
   runAgentMemoryCommand,
   type AgentMemoryCommandResult,
 } from "../agent-memory/bridge.ts";
@@ -193,7 +194,7 @@ export function buildAgentContext(contract: AgentContract): AgentContext {
     },
     knownPitfalls: [
       "Do not edit src/forge/_generated/** directly.",
-      "Do not use process.env directly in app code.",
+      "Do not read secrets or server runtime config through process.env in Forge runtime code; public frontend bridge env is allowed.",
       "Do not import network packages in command/query/liveQuery.",
       "Preserve tenant isolation and policy declarations.",
       "Use forge make, forge feature, forge refactor, forge impact, and forge repair before hand-editing architecture.",
@@ -487,7 +488,7 @@ function buildCursorFiles(_contract: AgentContract, options: { rules: boolean })
         `# ForgeOS Security Rules
 
 - Never include secret values in generated files, logs, or adapter exports.
-- Use \`ctx.secrets\`; do not read \`process.env\` directly in app code.
+- Use \`ctx.secrets\` or generated config context for runtime secrets/config; public frontend bridge env is allowed.
 - Preserve tenant-scoped reads and writes.
 - Run \`forge policy check --strict-policies\` after access changes.`,
       ),
@@ -537,7 +538,7 @@ Critical rules:
 - Commands cannot use network packages, secrets, or AI.
 - Queries/liveQueries are read-only.
 - Use \`ctx.emit\` for side effects.
-- Use \`ctx.secrets\`, never \`process.env\`.
+- Use \`ctx.secrets\` or generated config context for runtime secrets/config; public frontend bridge env is allowed.
 `;
   return [
     { path: "CLAUDE.md", content: claude },
@@ -951,6 +952,13 @@ function eventIsForgeHookCanary(event: AgentMemoryEventRecord): boolean {
   return eventPayload(event).forgeHookCanary === "FORGE_HOOK_SMOKE_CANARY";
 }
 
+function eventIsForgeHookProbe(event: AgentMemoryEventRecord): boolean {
+  const payload = eventPayload(event);
+  return payload.forgeHookProbe === true ||
+    payload._parseError === true ||
+    payload._invalidPayload === true;
+}
+
 function eventHasUsefulSignal(event: AgentMemoryEventRecord): boolean {
   const bindings = eventBindings(event);
   const files = bindings.files;
@@ -969,6 +977,7 @@ function eventHasUsefulSignal(event: AgentMemoryEventRecord): boolean {
 function eventIsNativeHookEvent(event: AgentMemoryEventRecord): boolean {
   return (
     !eventIsForgeHookCanary(event) &&
+    !eventIsForgeHookProbe(event) &&
     event.integrationKind === "native-hook" &&
     event.trustLevel === "direct-hook"
   );
@@ -1023,6 +1032,17 @@ function hookApprovalNextActions(target: AgentAdapterTarget, canarySignals = 0):
         "Start or continue a Codex session in this workspace so a native hook event is emitted",
         `forge agent hooks status --target ${target} --json`,
       ];
+}
+
+function inspectQueuedHookSignals(workspaceRoot: string, installTarget: string | null) {
+  if (installTarget !== "codex") {
+    return undefined;
+  }
+  return inspectAgentMemoryQueueFile({
+    workspaceRoot,
+    watchFile: join(workspaceRoot, ".forge", "agent", "events.ndjson"),
+    source: "codex",
+  });
 }
 
 function stringArray(value: unknown): string[] {
@@ -1288,6 +1308,7 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
       : true;
   const hookFiles = hookInstallFilesPresent(options.workspaceRoot, installResult);
   const memory = await readHookMemoryStatus(options.workspaceRoot, source, options.limit ?? 25);
+  const queuedHooks = inspectQueuedHookSignals(options.workspaceRoot, installTarget);
   const usefulEvents = memory.events.filter(eventHasUsefulSignal);
   const nativeEvents = memory.events.filter(eventIsNativeHookEvent);
   const canaryEvents = memory.events.filter(eventIsForgeHookCanary);
@@ -1295,9 +1316,11 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
   const bridgeWritable = installOk;
   const deltaWritable = memory.diagnostics.length === 0;
   const visibleInMemory = memory.events.length > 0;
-  const usefulSignals = usefulEvents.length;
-  const nativeSignals = nativeEvents.length;
-  const canarySignals = canaryEvents.length;
+  const queuedEvents = queuedHooks?.events ?? 0;
+  const usefulSignals = usefulEvents.length + (queuedHooks?.usefulSignals ?? 0);
+  const nativeSignals = nativeEvents.length + (queuedHooks?.nativeSignals ?? 0);
+  const canarySignals = canaryEvents.length + (queuedHooks?.canarySignals ?? 0);
+  const visibleHookSignals = visibleInMemory || queuedEvents > 0;
   const approvalStatus = hookApprovalStatusFor(target, installed, nativeSignals, deltaWritable);
   const approvalRequired = approvalStatus === "waiting-for-user-trust";
   const trustedHookSignals = target === "codex" ? nativeSignals > 0 : true;
@@ -1317,22 +1340,24 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
   const usesLightweightRunner = codexHookInspection?.usesLightweightRunner === true;
   const hookCommandHealthy = installTarget !== "codex" || (usesLightweightRunner && !usesLegacyForgeCli);
   const hookVersionHealthy = installTarget !== "codex" || !usesLightweightRunner || codexVersionMatch?.matches === true;
-  const ok = installed && bridgeWritable && deltaWritable && visibleInMemory && usefulSignals > 0 && trustedHookSignals && !approvalRequired && hookCommandHealthy && hookVersionHealthy;
+  const ok = installed && bridgeWritable && deltaWritable && visibleHookSignals && usefulSignals > 0 && trustedHookSignals && !approvalRequired && hookCommandHealthy && hookVersionHealthy;
   const nextActions = ok
-    ? [
+    ? uniqueCommands([
+        ...(queuedEvents > 0 ? [`forge agent ingest ${source} --file .forge/agent/events.ndjson --json`] : []),
         `forge agent memory --entry ${source} --json`,
         `forge agent context --current --json`,
-      ]
-    : [
+      ])
+    : uniqueCommands([
         ...(!installed ? [`forge agent install ${installTarget} --json`] : []),
         ...(usesLegacyForgeCli ? [`forge agent install ${installTarget} --force --json`] : []),
         ...(codexVersionMatch && !codexVersionMatch.matches ? [`forge agent install ${installTarget} --force --json`] : []),
         ...(approvalRequired ? hookApprovalNextActions(target, canarySignals) : []),
-        ...(installed && deltaWritable && !visibleInMemory ? [`forge agent hooks smoke --target ${target} --json`] : []),
-        ...(visibleInMemory && usefulSignals === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
+        ...(installed && deltaWritable && !visibleHookSignals ? [`forge agent hooks smoke --target ${target} --json`] : []),
+        ...(visibleHookSignals && usefulSignals === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
         ...(!deltaWritable ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
+        ...(queuedEvents > 0 ? [`forge agent ingest ${source} --file .forge/agent/events.ndjson --json`] : []),
         ...(usesLightweightRunner ? [`forge agent ingest ${source} --watch --file .forge/agent/events.ndjson --json`] : []),
-      ];
+      ]);
 
   return {
     ok,
@@ -1343,6 +1368,7 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
     deltaWritable,
     visibleInMemory,
     recentEvents: memory.events.length,
+    queuedEvents,
     usefulSignals,
     nativeSignals,
     canarySignals,
@@ -1372,15 +1398,21 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
       },
       {
         name: "visible-in-memory",
-        ok: visibleInMemory,
+        ok: visibleHookSignals,
         message: visibleInMemory
           ? `${memory.events.length} recent ${source} events visible for this workspace`
+          : queuedEvents > 0
+            ? `${queuedEvents} queued ${source} hook event(s) visible for this workspace and waiting for ingest`
           : memory.ignoredOutOfWorkspaceEvents > 0
             ? `ignored ${memory.ignoredOutOfWorkspaceEvents} ${source} event(s) from other workspaces`
             : "no hook events visible in memory yet",
         evidence: {
           workspaceRoot: memory.workspaceRoot,
           ignoredOutOfWorkspaceEvents: memory.ignoredOutOfWorkspaceEvents,
+          queuedEvents,
+          queuedNativeSignals: queuedHooks?.nativeSignals ?? 0,
+          queuedCanarySignals: queuedHooks?.canarySignals ?? 0,
+          queuedLatestEventAt: queuedHooks?.latestEventAt,
         },
       },
       {
@@ -1409,11 +1441,13 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
           : !deltaWritable
             ? "trusted Codex native hook signals cannot be verified until Agent Memory is readable"
           : nativeSignals > 0
-            ? `${nativeSignals} trusted Codex native hook signal(s) visible`
+            ? `${nativeSignals} trusted Codex native hook signal(s) visible or queued`
             : "Codex has not emitted a trusted native hook signal yet",
         evidence: {
           nativeSignals,
           canarySignals,
+          queuedNativeSignals: queuedHooks?.nativeSignals ?? 0,
+          queuedCanarySignals: queuedHooks?.canarySignals ?? 0,
           memoryReadable: deltaWritable,
           trustBoundary: target === "codex" ? "codex-desktop-hook-approval" : "not-required",
         },
@@ -1508,13 +1542,17 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     ? hookInstallFilesPresent(options.workspaceRoot, installResult)
     : { planned: [], missing: [] };
   const memory = await readHookMemoryStatus(options.workspaceRoot, source, options.limit ?? 25);
+  const queuedHooks = inspectQueuedHookSignals(options.workspaceRoot, installTarget);
   const memoryDiagnostics = memory.diagnostics;
   const recentEvents = memory.events;
   const usefulEvents = recentEvents.filter(eventHasUsefulSignal);
   const nativeEvents = recentEvents.filter(eventIsNativeHookEvent);
   const canaryEvents = recentEvents.filter(eventIsForgeHookCanary);
-  const nativeSignals = nativeEvents.length;
-  const canarySignals = canaryEvents.length;
+  const queuedEvents = queuedHooks?.events ?? 0;
+  const visibleHookSignals = recentEvents.length > 0 || queuedEvents > 0;
+  const usefulSignals = usefulEvents.length + (queuedHooks?.usefulSignals ?? 0);
+  const nativeSignals = nativeEvents.length + (queuedHooks?.nativeSignals ?? 0);
+  const canarySignals = canaryEvents.length + (queuedHooks?.canarySignals ?? 0);
   const adapterState = check.missing.length > 0 ? "missing" : check.stale.length > 0 ? "stale" : "ready";
   const installed = !installTarget || hookFiles.missing.length === 0;
   const memoryReadable = memoryDiagnostics.length === 0;
@@ -1552,11 +1590,13 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     },
     {
       name: "recent-memory",
-      ok: (!installTarget || recentEvents.length > 0) && memoryDiagnostics.length === 0,
+      ok: (!installTarget || visibleHookSignals) && memoryDiagnostics.length === 0,
       message: memoryDiagnostics.length > 0
         ? "agent memory store is unavailable"
         : recentEvents.length > 0
         ? `${recentEvents.length} recent ${source} memory events for this workspace`
+        : queuedEvents > 0
+          ? `${queuedEvents} queued ${source} hook event(s) for this workspace are waiting for ingest`
         : memory.ignoredOutOfWorkspaceEvents > 0
           ? `ignored ${memory.ignoredOutOfWorkspaceEvents} ${source} event(s) from other workspaces`
           : "no recent agent memory events found",
@@ -1569,6 +1609,10 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
           capturedAt: event.capturedAt,
           workspaceRoot: eventWorkspaceRoot(event),
         })),
+        queuedEvents,
+        queuedNativeSignals: queuedHooks?.nativeSignals ?? 0,
+        queuedCanarySignals: queuedHooks?.canarySignals ?? 0,
+        queuedLatestEventAt: queuedHooks?.latestEventAt,
       },
     },
     {
@@ -1584,9 +1628,9 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     },
     {
       name: "useful-signals",
-      ok: !installTarget || usefulEvents.length > 0,
-      message: usefulEvents.length > 0
-        ? `${usefulEvents.length} events include files, entries, commands, tools, status, or proofs`
+      ok: !installTarget || usefulSignals > 0,
+      message: usefulSignals > 0
+        ? `${usefulSignals} events include files, entries, commands, tools, status, or proofs`
         : "events do not yet include useful files, entries, commands, tools, status, or proofs",
     },
     {
@@ -1597,11 +1641,13 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
         : !memoryReadable
           ? "trusted Codex native hook signals cannot be verified until Agent Memory is readable"
         : nativeSignals > 0
-          ? `${nativeSignals} trusted Codex native hook signal(s) visible`
+          ? `${nativeSignals} trusted Codex native hook signal(s) visible or queued`
           : "Codex has not emitted a trusted native hook signal yet",
       evidence: {
         nativeSignals,
         canarySignals,
+        queuedNativeSignals: queuedHooks?.nativeSignals ?? 0,
+        queuedCanarySignals: queuedHooks?.canarySignals ?? 0,
         memoryReadable,
         trustBoundary: target === "codex" ? "codex-desktop-hook-approval" : "not-required",
       },
@@ -1625,8 +1671,9 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
         ...(installTarget && hookFiles.missing.length > 0 ? [`forge agent install ${installTarget} --json`] : []),
         ...(approvalRequired ? hookApprovalNextActions(target, canarySignals) : []),
         ...(memoryDiagnostics.length > 0 ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
-        ...(installTarget && recentEvents.length === 0 && memoryDiagnostics.length === 0 ? [`forge agent hooks smoke --target ${target} --json`] : []),
-        ...(installTarget && recentEvents.length > 0 && usefulEvents.length === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
+        ...(installTarget && !visibleHookSignals && memoryDiagnostics.length === 0 ? [`forge agent hooks smoke --target ${target} --json`] : []),
+        ...(installTarget && visibleHookSignals && usefulSignals === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
+        ...(queuedEvents > 0 ? [`forge agent ingest ${source} --file .forge/agent/events.ndjson --json`] : []),
       ];
   return {
     ok,
@@ -1637,10 +1684,13 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
       approvalRequired,
       approvalStatus,
       recentEvents: recentEvents.length,
-      usefulSignals: usefulEvents.length,
+      queuedEvents,
+      usefulSignals,
       nativeSignals,
       canarySignals,
-      ...(recentEvents.at(-1)?.capturedAt ? { lastEventAt: recentEvents.at(-1)?.capturedAt } : {}),
+      ...(recentEvents.at(-1)?.capturedAt || queuedHooks?.latestEventAt
+        ? { lastEventAt: queuedHooks?.latestEventAt ?? recentEvents.at(-1)?.capturedAt }
+        : {}),
     },
     checks,
     nextActions,
@@ -2313,6 +2363,7 @@ export function formatAgentHuman(result: Awaited<ReturnType<typeof runAgentComma
       `canary signals: ${result.canarySignals}`,
       `approval: ${result.approvalStatus}`,
       ...("recentEvents" in result ? [`recent events: ${result.recentEvents}`] : []),
+      ...("queuedEvents" in result ? [`queued events: ${result.queuedEvents ?? 0}`] : []),
       ...(result.lastSignal ? [`last signal: ${result.lastSignal.kind}${result.lastSignal.summary ? ` - ${result.lastSignal.summary}` : ""}`] : []),
       ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((command) => `  ${command}`)] : []),
     ].join("\n") + "\n";

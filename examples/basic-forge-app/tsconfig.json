@@ -1,11 +1,22 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "strict": true,
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/actions/**/*.ts",
+    "src/commands/**/*.ts",
+    "src/lib/**/*.ts",
+    "src/policies.ts",
+    "src/queries/**/*.ts",
+    "src/workflows/**/*.ts",
+    "src/forge/schema.ts"
+  ],
+  "exclude": ["src/forge/_generated/**"]
 }

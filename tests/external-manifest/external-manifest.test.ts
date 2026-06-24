@@ -7,6 +7,7 @@ import {
   importExternalManifest,
   readExternalManifestFile,
 } from "../../src/forge/compiler/external-manifest/registry.ts";
+import { validateExternalManifest } from "../../src/forge/compiler/external-manifest/validate.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -72,6 +73,36 @@ function writeManifest(root: string): string {
 }
 
 describe("external Forge manifests", () => {
+  test("rejects transport manifests missing required connection fields", () => {
+    const baseManifest = {
+      forgeProtocol: "1.0",
+      language: "node",
+      service: {
+        name: "billing",
+      },
+      entries: [
+        {
+          name: "listInvoices",
+          kind: "query",
+        },
+      ],
+    };
+
+    const http = validateExternalManifest({
+      ...baseManifest,
+      service: { ...baseManifest.service, transport: "http" },
+    });
+    expect(http.manifest).toBeNull();
+    expect(http.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_EXTERNAL_SERVICE_BASE_URL")).toBe(true);
+
+    const stdio = validateExternalManifest({
+      ...baseManifest,
+      service: { ...baseManifest.service, transport: "stdio" },
+    });
+    expect(stdio.manifest).toBeNull();
+    expect(stdio.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_EXTERNAL_SERVICE_COMMAND")).toBe(true);
+  });
+
   test("validates, imports, and exposes external services in generated contracts", async () => {
     const workspace = scaffoldGenerateWorkspace("external-manifest");
     try {

@@ -1,6 +1,9 @@
 import { action } from "forge/server";
-import { stripe } from "../lib/stripeClient.js";
+import { createStripeClient } from "../lib/stripeClient.js";
 
-export const createCheckout = action(async () => {
-  return stripe.checkout;
+export const createCheckout = action({
+  handler: async (ctx) => {
+    const stripe = createStripeClient(ctx.secrets);
+    return stripe.customers;
+  },
 });

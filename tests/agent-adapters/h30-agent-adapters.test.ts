@@ -354,6 +354,33 @@ async function recordNativeCodexSignal(root: string) {
   return result;
 }
 
+function recordQueuedNativeCodexSignal(root: string) {
+  const agentDir = join(root, ".forge", "agent");
+  mkdirSync(agentDir, { recursive: true });
+  const queueFile = join(agentDir, "events.ndjson");
+  const existing = existsSync(queueFile) ? readFileSync(queueFile, "utf8") : "";
+  const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
+  writeFileSync(
+    queueFile,
+    `${existing}${separator}${JSON.stringify({
+      forgeHookQueueV1: true,
+      source: "codex",
+      eventName: "PostToolUse",
+      workspaceRoot: root,
+      enqueuedAt: "2026-01-01T00:00:00.000Z",
+      raw: {
+        session_id: "codex-native-queued-session",
+        hook_event_name: "PostToolUse",
+        tool_name: "Edit",
+        cwd: root,
+        status: "completed",
+        tool_input: { file_path: "AGENTS.md" },
+        tool_response: { status: "success" },
+      },
+    })}\n`,
+  );
+}
+
 afterEach(() => {
   for (const root of roots.splice(0)) {
     rmSync(root, { recursive: true, force: true });
@@ -558,6 +585,39 @@ describe("H30 agent adapter export", () => {
     expect(ready.nativeSignals).toBeGreaterThan(0);
     expect(ready.approvalRequired).toBe(false);
     expect(ready.approvalStatus).toBe("trusted");
+  }, 45_000);
+
+  test("agent hooks status trusts queued native Codex hook signals before memory drain", async () => {
+    const root = workspace();
+    const prepared = await runAgentPrepare({ ...options(root, "codex"), subcommand: "prepare" });
+    expect(prepared.ok).toBe(true);
+
+    const waiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(waiting.approvalStatus).toBe("waiting-for-user-trust");
+
+    recordQueuedNativeCodexSignal(root);
+
+    const status = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
+    expect(status.ok).toBe(true);
+    expect(status.visibleInMemory).toBe(false);
+    expect(status.queuedEvents).toBeGreaterThan(0);
+    expect(status.nativeSignals).toBeGreaterThan(0);
+    expect(status.usefulSignals).toBeGreaterThan(0);
+    expect(status.approvalRequired).toBe(false);
+    expect(status.approvalStatus).toBe("trusted");
+    expect(status.nextActions).toContain("forge agent ingest codex --file .forge/agent/events.ndjson --json");
+    expect(status.nextActions).not.toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
+
+    const doctor = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
+    expect(doctor.ok).toBe(true);
+    expect(doctor.summary).toMatchObject({
+      hookBridge: "ready",
+      approvalRequired: false,
+      approvalStatus: "trusted",
+      recentEvents: 0,
+      queuedEvents: 1,
+      nativeSignals: 1,
+    });
   }, 45_000);
 
   test("agent hooks status ignores native Codex signals from other workspaces", async () => {

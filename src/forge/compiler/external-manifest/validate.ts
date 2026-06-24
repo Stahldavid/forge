@@ -228,6 +228,24 @@ export function validateExternalManifest(
       options.file,
     ));
   }
+  if (service.transport === "http" && !isString(service.baseUrl)) {
+    diagnostics.push(externalDiagnostic(
+      "error",
+      "FORGE_EXTERNAL_SERVICE_BASE_URL",
+      `external service '${String(service.name || "unknown")}' uses http transport and must declare a non-empty baseUrl`,
+      options.file,
+      "Set service.baseUrl to the external runtime base URL.",
+    ));
+  }
+  if (service.transport === "stdio" && !isString(service.command)) {
+    diagnostics.push(externalDiagnostic(
+      "error",
+      "FORGE_EXTERNAL_SERVICE_COMMAND",
+      `external service '${String(service.name || "unknown")}' uses stdio transport and must declare a non-empty command`,
+      options.file,
+      "Set service.command to the executable and arguments used to start the external runtime.",
+    ));
+  }
 
   const entries = Array.isArray(value.entries)
     ? value.entries

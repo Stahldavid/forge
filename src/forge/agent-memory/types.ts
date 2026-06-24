@@ -154,12 +154,17 @@ export interface AgentIngestResult {
 
 export interface AgentIngestWatchResult {
   ok: boolean;
-  watch: true;
+  watch: boolean;
   source: string;
   file?: string;
   dryRun?: boolean;
   eventsIngested: number;
   errors: string[];
+  bytesRead?: number;
+  pendingBytes?: number;
+  checkpointFile?: string;
+  compacted?: boolean;
+  historyFile?: string;
   nextActions: string[];
   exitCode: 0 | 1;
 }

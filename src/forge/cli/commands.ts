@@ -694,6 +694,14 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
   const generatedNextActions = generatedState === "ready"
     ? ["forge dev", "forge generate --check --json"]
     : ["forge generate", "forge check --json", "forge inspect drift --json"];
+  const changed = gitSummary.changeSummary.changed;
+  const generatedGitFiles = changed.byType.generated.count;
+  const authoredGitFiles = changed.total.count - generatedGitFiles;
+  const generatedGitExplanation = generatedGitFiles === 0
+    ? "git status has no generated artifact changes"
+    : authoredGitFiles === 0
+      ? "forge generate --check can be clean while git shows generated artifacts changed: generated files match current workspace inputs but differ from HEAD"
+      : "git status includes generated artifacts alongside authored changes; review authored inputs first";
   const frontendPresent = summaryBlock.frontendPresent === true;
   const studio = {
     openCommand: "forge studio open . --preview-port 5174 --target codex --json",
@@ -725,6 +733,12 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
         safeDevCommand: "forge dev",
         checkCommand: "forge generate --check --json",
         repairCommand: "forge generate",
+        git: {
+          changedFiles: changed.total.count,
+          authoredFiles: authoredGitFiles,
+          generatedFiles: generatedGitFiles,
+          explanation: generatedGitExplanation,
+        },
         nextActions: generatedNextActions,
       },
       studio,

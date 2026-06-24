@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { FORGE_GUARD_VIOLATION } from "../../src/forge/compiler/diagnostics/codes.ts";
 
@@ -64,8 +64,18 @@ describe("examples/basic-forge-app", () => {
     expectSuccess(generated);
 
     const checked = await runExampleCli(["check", "--json"]);
-    expect(checked.exitCode).toBe(1);
-    const checkedJson = JSON.parse(checked.stdout) as {
+    expectSuccess(checked);
+
+    const demoCommand = join(EXAMPLE_ROOT, "src", "commands", "badStripeCommand.ts");
+    writeFileSync(
+      demoCommand,
+      readFileSync(join(EXAMPLE_ROOT, "guard-violation-demo", "badStripeCommand.ts"), "utf8"),
+      "utf8",
+    );
+    const guardDemo = await runExampleCli(["check", "--json"]);
+    rmSync(demoCommand, { force: true });
+    expect(guardDemo.exitCode).toBe(1);
+    const checkedJson = JSON.parse(guardDemo.stdout) as {
       errors?: Array<{ code?: string; file?: string }>;
     };
     expect(
@@ -93,16 +103,12 @@ describe("examples/basic-forge-app", () => {
     rmSync(join(EXAMPLE_ROOT, ".forge", "pglite"), { recursive: true, force: true });
 
     const dev = await runExampleCli(["dev", "--once", "--json", "--db", "pglite"]);
-    expect(dev.exitCode).toBe(1);
+    expect(dev.exitCode).toBe(0);
     const devJson = JSON.parse(dev.stdout) as {
       ok?: boolean;
       diagnostics?: Array<{ code?: string; file?: string }>;
     };
-    expect(devJson.ok).toBe(false);
-    expect(
-      devJson.diagnostics?.some(
-        (diagnostic) => diagnostic.code === FORGE_GUARD_VIOLATION,
-      ),
-    ).toBe(true);
+    expect(devJson.ok).toBe(true);
+    expect(devJson.diagnostics?.some((diagnostic) => diagnostic.code === FORGE_GUARD_VIOLATION)).toBe(false);
   }, 120_000);
 });

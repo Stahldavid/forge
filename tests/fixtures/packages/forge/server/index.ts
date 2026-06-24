@@ -15,9 +15,14 @@ export type {
 } from "./ai.ts";
 
 export interface ForgeContext {
-  db: Record<string, unknown>;
+  db: Record<string, any>;
   emit: (eventType: string, payload: unknown) => Promise<void>;
   env: Record<string, string | undefined>;
+  secrets: {
+    get(name: string): string;
+    optional(name: string): string | undefined;
+    has(name: string): boolean;
+  };
   telemetry: import("./telemetry.ts").TelemetryContext;
   auth: AuthContext;
   /** Injected by Forge runtime on server/action/workflow/endpoint contexts. */
@@ -153,8 +158,9 @@ export interface WorkflowRunRecord {
 export interface WorkflowRunContext {
   input: unknown;
   steps: Record<string, { output: unknown }>;
-  db: Record<string, unknown>;
+  db: Record<string, any>;
   env: Record<string, string | undefined>;
+  secrets: ForgeContext["secrets"];
   telemetry: import("./telemetry.ts").TelemetryContext;
   auth: AuthContext;
   ai: import("./ai.ts").AiContext;

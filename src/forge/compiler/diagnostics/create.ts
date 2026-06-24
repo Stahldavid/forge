@@ -49,7 +49,7 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
   }
   if (code === "FORGE_SECRET_DIRECT_PROCESS_ENV") {
     return {
-      fixHint: "Use ctx.secrets or ctx.config instead of reading process.env directly from app runtime code.",
+      fixHint: "Use ctx.secrets or ctx.config for Forge runtime secrets/config; public frontend bridge env may use the framework's public env surface.",
       suggestedCommands: ["forge repair diagnose --diagnostic FORGE_SECRET_DIRECT_PROCESS_ENV --json", "forge refactor replace-process-env <ENV_NAME> --dry-run --json"],
       docs: ["src/forge/_generated/runtimeRules.md"],
     };
