@@ -101,6 +101,19 @@ describe("external Forge manifests", () => {
     });
     expect(stdio.manifest).toBeNull();
     expect(stdio.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_EXTERNAL_SERVICE_COMMAND")).toBe(true);
+
+    const structuredStdio = validateExternalManifest({
+      ...baseManifest,
+      service: { ...baseManifest.service, transport: "stdio", commandArgs: ["node", "adapter.js", ""] },
+    });
+    expect(structuredStdio.manifest?.service.commandArgs).toEqual(["node", "adapter.js", ""]);
+
+    const invalidStructuredStdio = validateExternalManifest({
+      ...baseManifest,
+      service: { ...baseManifest.service, transport: "stdio", commandArgs: [] },
+    });
+    expect(invalidStructuredStdio.manifest).toBeNull();
+    expect(invalidStructuredStdio.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_EXTERNAL_SERVICE_COMMAND_ARGS")).toBe(true);
   });
 
   test("validates, imports, and exposes external services in generated contracts", async () => {

@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   categorizeFiles,
   classifyChangeType,
@@ -90,6 +92,102 @@ function diffTouchesOnlyGeneratedMetadata(diff: string): boolean {
   return changedLines > 0;
 }
 
+function generatedLineSet(text: string): Set<number> {
+  const generated = new Set<number>();
+  const lines = text.split(/\r?\n/);
+  if (lines[0]?.trimStart().startsWith("// @forge-generated")) {
+    generated.add(1);
+  }
+  let inGeneratedBlock = false;
+  lines.forEach((line, index) => {
+    const lineNumber = index + 1;
+    if (line.includes("<!-- forge-generated:start -->")) {
+      inGeneratedBlock = true;
+      generated.add(lineNumber);
+      return;
+    }
+    if (inGeneratedBlock) {
+      generated.add(lineNumber);
+    }
+    if (line.includes("<!-- forge-generated:end -->")) {
+      inGeneratedBlock = false;
+    }
+  });
+  return generated;
+}
+
+function headFileText(workspaceRoot: string, file: string): string | null {
+  const result = runGit(["show", `HEAD:${file}`], workspaceRoot, { trim: false });
+  return result.ok ? result.stdout : null;
+}
+
+function worktreeFileText(workspaceRoot: string, file: string): string | null {
+  try {
+    return readFileSync(join(workspaceRoot, file), "utf8");
+  } catch {
+    return null;
+  }
+}
+
+function parseHunkStart(header: string, marker: "-" | "+"): number {
+  const pattern = marker === "-"
+    ? /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/
+    : /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/;
+  const match = header.match(pattern);
+  return match ? Number(match[1]) : 1;
+}
+
+function diffTouchesOnlyGeneratedRegions(diff: string, oldText: string | null, newText: string | null): boolean {
+  if (!oldText || !newText) {
+    return diffTouchesOnlyGeneratedMetadata(diff);
+  }
+  const oldGenerated = generatedLineSet(oldText);
+  const newGenerated = generatedLineSet(newText);
+  if (oldGenerated.size === 0 && newGenerated.size === 0) {
+    return diffTouchesOnlyGeneratedMetadata(diff);
+  }
+
+  let changedLines = 0;
+  let oldLine = 1;
+  let newLine = 1;
+  for (const line of diff.split(/\r?\n/)) {
+    if (line.startsWith("@@ ")) {
+      oldLine = parseHunkStart(line, "-");
+      newLine = parseHunkStart(line, "+");
+      continue;
+    }
+    if (
+      line.startsWith("diff --git ") ||
+      line.startsWith("index ") ||
+      line.startsWith("--- ") ||
+      line.startsWith("+++ ")
+    ) {
+      continue;
+    }
+    if (line.startsWith("-")) {
+      changedLines += 1;
+      if (!oldGenerated.has(oldLine) && !line.slice(1).trimStart().startsWith("// @forge-generated")) {
+        return false;
+      }
+      oldLine += 1;
+      continue;
+    }
+    if (line.startsWith("+")) {
+      changedLines += 1;
+      if (!newGenerated.has(newLine) && !line.slice(1).trimStart().startsWith("// @forge-generated")) {
+        return false;
+      }
+      newLine += 1;
+      continue;
+    }
+    if (line.startsWith(" ")) {
+      oldLine += 1;
+      newLine += 1;
+    }
+  }
+  return changedLines > 0;
+}
+
 function generatedMetadataOnlyChange(workspaceRoot: string, file: string): boolean {
   const pathspec = pathspecLiteral(file);
   const diffs = [
@@ -99,7 +197,9 @@ function generatedMetadataOnlyChange(workspaceRoot: string, file: string): boole
     .filter((result) => result.ok)
     .map((result) => result.stdout)
     .filter((stdout) => stdout.trim().length > 0);
-  return diffs.length > 0 && diffs.every(diffTouchesOnlyGeneratedMetadata);
+  const oldText = headFileText(workspaceRoot, file);
+  const newText = worktreeFileText(workspaceRoot, file);
+  return diffs.length > 0 && diffs.every((diff) => diffTouchesOnlyGeneratedRegions(diff, oldText, newText));
 }
 
 function workspaceChangeClassifier(workspaceRoot: string): ChangeClassifier {

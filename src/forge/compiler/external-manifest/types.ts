@@ -27,6 +27,7 @@ export interface ForgeExternalManifestService {
   transport: ForgeExternalTransportKind;
   baseUrl?: string;
   command?: string;
+  commandArgs?: string[];
   health?: string;
 }
 
@@ -75,6 +76,7 @@ export interface ForgeExternalService {
   transport: ForgeExternalTransportKind;
   baseUrl?: string;
   command?: string;
+  commandArgs?: string[];
   health?: string;
   entries: ForgeExternalServiceEntry[];
 }

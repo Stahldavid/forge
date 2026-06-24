@@ -56,6 +56,9 @@ export interface AgentMemoryQueueInspectionResult {
   ignoredOutOfWorkspaceEvents: number;
   bytesRead: number;
   pendingBytes: number;
+  inspectedBytes?: number;
+  skippedBytes?: number;
+  truncated?: boolean;
   checkpointFile: string;
   errors: string[];
   latestEventAt?: string;
@@ -528,6 +531,49 @@ function splitCompleteJsonLines(buffer: Buffer): {
   return { complete: lines, completeBytes, pendingBytes: buffer.length - completeBytes };
 }
 
+const DEFAULT_QUEUE_INSPECT_MAX_BYTES = 1024 * 1024;
+
+function inspectionBufferFromCheckpoint(fileBuffer: Buffer, checkpointOffset: number, maxBytes: number): {
+  buffer: Buffer;
+  offset: number;
+  truncated: boolean;
+  skippedBytes: number;
+} {
+  const availableBytes = Math.max(0, fileBuffer.length - checkpointOffset);
+  if (availableBytes <= maxBytes) {
+    return {
+      buffer: fileBuffer.subarray(checkpointOffset),
+      offset: checkpointOffset,
+      truncated: false,
+      skippedBytes: 0,
+    };
+  }
+  let offset = fileBuffer.length - maxBytes;
+  const firstNewline = fileBuffer.subarray(offset).indexOf(10);
+  if (firstNewline >= 0) {
+    offset += firstNewline + 1;
+  }
+  return {
+    buffer: fileBuffer.subarray(offset),
+    offset,
+    truncated: true,
+    skippedBytes: Math.max(0, offset - checkpointOffset),
+  };
+}
+
+function shouldSkipQueuedHookEnvelope(
+  envelope: AgentEventEnvelope,
+  options: { source: string; workspaceRoot: string },
+): boolean {
+  return (
+    envelope.source.agent !== options.source ||
+    !workspaceRootsMatch(envelope.workspace.root, options.workspaceRoot) ||
+    envelope.payload.forgeHookProbe === true ||
+    envelope.payload._parseError === true ||
+    envelope.payload._invalidPayload === true
+  );
+}
+
 export async function drainAgentMemoryQueueFile(options: {
   workspaceRoot: string;
   watchFile: string;
@@ -582,13 +628,19 @@ export async function drainAgentMemoryQueueFile(options: {
     const payload = queued?.payload ?? parsed;
     const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;
     const ingestSource = queued?.source ?? options.source;
-    const result = await ingestEnvelope(ingestRoot, normalizeAgentEvent({
+    const envelope = normalizeAgentEvent({
       workspaceRoot: ingestRoot,
       source: ingestSource,
       eventName: queued?.eventName ?? options.eventName,
       raw: payload,
       integration: ingestSource === "cursor" ? "mcp" : "native-hook",
-    }));
+    });
+    if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
+      consumedOffset = bytesRead + line.endOffset;
+      writeQueueCheckpoint(options.watchFile, consumedOffset);
+      continue;
+    }
+    const result = await ingestEnvelope(ingestRoot, envelope);
     if (result.ok) {
       eventsIngested += 1;
       consumedOffset = bytesRead + line.endOffset;
@@ -676,10 +728,14 @@ export function inspectAgentMemoryQueueFile(options: {
   }
   const fileBuffer = readFileSync(options.watchFile);
   const bytesRead = readQueueCheckpoint(options.watchFile, fileBuffer.length);
-  const { complete, pendingBytes } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));
+  const inspected = inspectionBufferFromCheckpoint(fileBuffer, bytesRead, DEFAULT_QUEUE_INSPECT_MAX_BYTES);
+  const { complete, pendingBytes } = splitCompleteJsonLines(inspected.buffer);
   const result: AgentMemoryQueueInspectionResult = {
     ...base,
     bytesRead,
+    inspectedBytes: inspected.buffer.length,
+    skippedBytes: inspected.skippedBytes,
+    truncated: inspected.truncated,
     pendingBytes,
   };
   for (const line of complete) {
@@ -688,20 +744,13 @@ export function inspectAgentMemoryQueueFile(options: {
     }
     const parsed = normalizeRawInput(line.raw);
     if (!parsed) {
-      result.errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);
+      result.errors.push(`could not parse queued hook line at byte ${inspected.offset + line.endOffset}`);
       continue;
     }
     const queued = parseQueuedHookLine(parsed);
     const payload = queued?.payload ?? parsed;
     const source = queued?.source ?? options.source;
-    if (source !== options.source) {
-      continue;
-    }
     const workspaceRoot = queued?.workspaceRoot ?? options.workspaceRoot;
-    if (!workspaceRootsMatch(workspaceRoot, options.workspaceRoot)) {
-      result.ignoredOutOfWorkspaceEvents += 1;
-      continue;
-    }
     const envelope = normalizeAgentEvent({
       workspaceRoot,
       source,
@@ -709,12 +758,15 @@ export function inspectAgentMemoryQueueFile(options: {
       raw: payload,
       integration: source === "cursor" ? "mcp" : "native-hook",
     });
+    if (source !== options.source) {
+      continue;
+    }
+    if (!workspaceRootsMatch(workspaceRoot, options.workspaceRoot)) {
+      result.ignoredOutOfWorkspaceEvents += 1;
+      continue;
+    }
     const canary = envelope.payload.forgeHookCanary === "FORGE_HOOK_SMOKE_CANARY";
-    if (
-      envelope.payload.forgeHookProbe === true ||
-      envelope.payload._parseError === true ||
-      envelope.payload._invalidPayload === true
-    ) {
+    if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
       continue;
     }
     result.events += 1;

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=794e323e7fe53c33634e2eb72489f37337c5eab982099b9fe25a07c79428d4fc
+// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=8ad66a135ec9153b55da2f2ac2a7454a4ebd19e66b485bf1402f9474b596d9de
 export const agentTools = {
   "agents": [],
   "autoTools": [],
   "explicitTools": [],
-  "generatorVersion": "0.1.0-alpha.19",
+  "generatorVersion": "0.1.0-alpha.20",
   "project": {
     "name": "forgeos",
     "type": "forgeos-app"

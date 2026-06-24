@@ -80,6 +80,7 @@ export function classifyChangeType(file: string): ChangeType {
 
   if (
     lower.startsWith("src/forge/_generated/") ||
+    lower === ".forge/agent/context.json" ||
     lower === "forge.lock" ||
     lower.endsWith("/forge.lock")
   ) {
@@ -199,7 +200,7 @@ export function buildDiffPlanFromChangeSummary(summary: CategorizedFileSummary):
     generatedFiles,
     authoredFiles,
     authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
-    generatedDiffCommand: "git diff -- src/forge/_generated forge.lock",
+    generatedDiffCommand: 'git diff -- src/forge/_generated forge.lock AGENTS.md ":(glob)**/AGENTS.md" .forge/agent/context.json',
     fullDiffCommand: "git diff",
     summary: generatedFiles > 0
       ? `${authoredFiles} authored file(s) first; ${generatedFiles} generated artifact(s) are derived and should be reviewed after the source cause.`

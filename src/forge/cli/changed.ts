@@ -91,8 +91,9 @@ function buildRisks(git: WorkspaceGitSummary): string[] {
   if (changed.byType.other.count > 0) {
     risks.push(`${changed.byType.other.count} changed file(s) were not recognized by ForgeOS categories`);
   }
-  if (!emptyCategory(changed, "generated") && changed.byType.source.count === 0) {
-    risks.push("only generated artifacts changed; verify the source edit or generator input that produced them");
+  const humanChanges = selectHumanChangeSummary(changed);
+  if (!emptyCategory(changed, "generated") && humanChanges.total === 0) {
+    risks.push("only generated artifacts changed; verify the source edit, generator input, or intentional regeneration that produced them");
   }
   if (changed.total.count > 50) {
     risks.push(`${changed.total.count} changed file(s) detected; use the grouped summaries before reviewing raw diffs`);

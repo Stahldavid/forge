@@ -586,8 +586,11 @@ describe("H33 forge dev console", () => {
           then: "generated",
           generatedCollapsedByDefault: true,
           authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
-          generatedDiffCommand: "git diff -- src/forge/_generated forge.lock",
         });
+        expect(cycle.summary.agentContext.diffPlan?.generatedDiffCommand).toContain("src/forge/_generated");
+        expect(cycle.summary.agentContext.diffPlan?.generatedDiffCommand).toContain("forge.lock");
+        expect(cycle.summary.agentContext.diffPlan?.generatedDiffCommand).toContain("AGENTS.md");
+        expect(cycle.summary.agentContext.diffPlan?.generatedDiffCommand).toContain(".forge/agent/context.json");
         expect(cycle.summary.agentContext.diffPlan?.generatedFiles).toBeGreaterThan(0);
         expect(cycle.summary.agentContext.diffPlan?.authoredFiles).toBeGreaterThan(12);
         expect(cycle.summary.agentContext.recommendedCommands).toContain("forge do verify --json");

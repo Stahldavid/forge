@@ -303,21 +303,34 @@ async function runHttpExternalEntry(
 }
 
 export function parseExternalCommandLine(command: string): string[] {
+  return parseExternalCommandLineDetailed(command).args;
+}
+
+export interface ExternalCommandLineParseResult {
+  args: string[];
+  diagnostics: string[];
+}
+
+export function parseExternalCommandLineDetailed(command: string): ExternalCommandLineParseResult {
   const parts: string[] = [];
   let current = "";
   let quote: "'" | "\"" | null = null;
   let escaping = false;
+  let tokenStarted = false;
+  const diagnostics: string[] = [];
 
   const push = () => {
-    if (current.length > 0) {
+    if (tokenStarted || current.length > 0) {
       parts.push(current);
       current = "";
+      tokenStarted = false;
     }
   };
 
   for (const char of command) {
     if (escaping) {
       current += char;
+      tokenStarted = true;
       escaping = false;
       continue;
     }
@@ -326,6 +339,7 @@ export function parseExternalCommandLine(command: string): string[] {
         quote = null;
       } else {
         current += char;
+        tokenStarted = true;
       }
       continue;
     }
@@ -336,6 +350,7 @@ export function parseExternalCommandLine(command: string): string[] {
         escaping = true;
       } else {
         current += char;
+        tokenStarted = true;
       }
       continue;
     }
@@ -345,6 +360,7 @@ export function parseExternalCommandLine(command: string): string[] {
     }
     if (char === "'" || char === "\"") {
       quote = char;
+      tokenStarted = true;
       continue;
     }
     if (/\s/.test(char)) {
@@ -352,12 +368,18 @@ export function parseExternalCommandLine(command: string): string[] {
       continue;
     }
     current += char;
+    tokenStarted = true;
   }
   if (escaping) {
     current += "\\";
+    tokenStarted = true;
+    diagnostics.push("stdio command ends with a trailing escape");
+  }
+  if (quote) {
+    diagnostics.push(`stdio command has an unterminated ${quote === "'" ? "single" : "double"} quote`);
   }
   push();
-  return parts;
+  return { args: parts, diagnostics };
 }
 
 async function runStdioExternalEntry(
@@ -366,7 +388,7 @@ async function runStdioExternalEntry(
   call: ExternalRuntimeCall,
   traceId: string,
 ): Promise<ExternalRuntimeResult> {
-  if (!service.command) {
+  if (!service.command && !service.commandArgs?.length) {
     return {
       ok: false,
       diagnostics: [
@@ -385,7 +407,28 @@ async function runStdioExternalEntry(
     };
   }
 
-  const [executable, ...args] = parseExternalCommandLine(service.command);
+  const parsedCommand = service.commandArgs?.length
+    ? { args: service.commandArgs, diagnostics: [] }
+    : parseExternalCommandLineDetailed(service.command ?? "");
+  if (parsedCommand.diagnostics.length > 0) {
+    return {
+      ok: false,
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_EXTERNAL_RUNTIME_UNSUPPORTED,
+          message: `external service '${service.name}' has an invalid stdio command: ${parsedCommand.diagnostics.join("; ")}`,
+          file: `external:${service.name}`,
+          docs: ["docs/forge-protocol.md"],
+        }),
+      ],
+      traceId,
+      exitCode: 1,
+      service,
+      entry,
+    };
+  }
+  const [executable, ...args] = parsedCommand.args;
   if (!executable) {
     return {
       ok: false,

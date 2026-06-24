@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=9b490444cd3dadb6f2c06484033cbcafd219bacb1570b1149c31320a9d929b4e
+// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=0d493cf0e41b71cb652d5e0e1b0c1f83d2a1281b748321f0b00f0773ba93074e
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -79,7 +79,7 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 ## Runtime rules
 
 - Do not import network packages inside `command`, `query`, or `liveQuery`.
-- Do not use `process.env` directly.
+- Do not read secrets or server runtime config through `process.env` in Forge runtime code; use `ctx.secrets` or generated config context. Public frontend bridge env such as `NEXT_PUBLIC_*` and `NUXT_PUBLIC_*` is allowed in web bridge files.
 - Do not access cross-tenant data.
 - Commands must use `ctx.emit` for side effects.
 - Actions and workflows handle side effects after commit.

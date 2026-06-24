@@ -375,10 +375,12 @@ describe("Forge CLI generation and inspection", () => {
     }
   });
 
-  test("changed treats generated metadata-only AGENTS diffs as generated", async () => {
+  test("changed treats generated AGENTS and agent context diffs as generated", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-changed-generated-agents");
     try {
       await runGenerateCommand(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, ".forge", "agent"), { recursive: true });
+      writeFileSync(join(workspace, ".forge", "agent", "context.json"), "{\"schemaVersion\":\"0.1.0\"}\n", "utf8");
       spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
       spawnSync("git", ["config", "user.email", "forge@example.com"], { cwd: workspace, windowsHide: true });
       spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
@@ -389,16 +391,19 @@ describe("Forge CLI generation and inspection", () => {
       const agents = readFileSync(agentsPath, "utf8");
       writeFileSync(
         agentsPath,
-        agents.replace(/input=[a-f0-9]+/, "input=ffffffff"),
+        agents
+          .replace(/input=[a-f0-9]+/, "input=ffffffff")
+          .replace("Do not import network packages inside", "Do not import remote packages inside"),
         "utf8",
       );
+      writeFileSync(join(workspace, ".forge", "agent", "context.json"), "{\"schemaVersion\":\"0.1.1\"}\n", "utf8");
 
       const changed = runChangedCommand(workspace);
       expect(changed.exitCode).toBe(0);
       expect(changed.data.summary).toMatchObject({
-        changedFiles: 1,
+        changedFiles: 2,
         humanFiles: 0,
-        generatedFiles: 1,
+        generatedFiles: 2,
       });
       expect(changed.data.generatedExplanation).toMatchObject({
         kind: "versioned-generated-only",
@@ -409,6 +414,7 @@ describe("Forge CLI generation and inspection", () => {
       const derivedChanges = changed.data.derivedChanges as { generated: { sample: string[] } };
       expect(humanChanges.docs.sample).not.toContain("AGENTS.md");
       expect(derivedChanges.generated.sample).toContain("AGENTS.md");
+      expect(derivedChanges.generated.sample).toContain(".forge/agent/context.json");
       expect(changed.data.nextActions as string[]).toContain("forge changed --authored --json");
     } finally {
       cleanupWorkspace(workspace);

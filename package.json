@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.19",
+  "version": "0.1.0-alpha.20",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "files": [
@@ -27,6 +27,10 @@
       "src"
     ]
   },
+  "workspaces": [
+    ".",
+    "packages/*"
+  ],
   "bin": {
     "forge": "bin/forge.mjs"
   },

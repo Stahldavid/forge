@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=35d3f792e4751a97c0ddf3857d3df0c7a6893526f535415ac6606216659e992a
+// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=fffc424877734b8ab2d6014ad8add00f5cff546fbc86ef3e1702cef83806d94b
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -244,7 +244,7 @@ export const agentContract = {
       },
       "runtimeTypeMismatches": [],
       "source": "static",
-      "version": "3.0.85"
+      "version": "3.0.84"
     },
     {
       "entrypoints": [
@@ -366,7 +366,7 @@ export const agentContract = {
       },
       "runtimeTypeMismatches": [],
       "source": "static",
-      "version": "3.0.74"
+      "version": "3.0.71"
     },
     {
       "entrypoints": [
@@ -1375,7 +1375,7 @@ export const agentContract = {
       },
       "runtimeTypeMismatches": [],
       "source": "static",
-      "version": "6.0.209"
+      "version": "6.0.205"
     },
     {
       "entrypoints": [
@@ -8333,7 +8333,7 @@ export const agentContract = {
       }
     }
   },
-  "generatorVersion": "0.1.0-alpha.19",
+  "generatorVersion": "0.1.0-alpha.20",
   "integrations": [
     {
       "alias": "ai-gateway",
@@ -8453,7 +8453,7 @@ export const agentContract = {
         "edge"
       ],
       "name": "@ai-sdk/anthropic",
-      "version": "3.0.85"
+      "version": "3.0.84"
     },
     {
       "allowedContexts": [
@@ -8473,7 +8473,7 @@ export const agentContract = {
         "edge"
       ],
       "name": "@ai-sdk/openai",
-      "version": "3.0.74"
+      "version": "3.0.71"
     },
     {
       "allowedContexts": [
@@ -8633,7 +8633,7 @@ export const agentContract = {
         "edge"
       ],
       "name": "ai",
-      "version": "6.0.209"
+      "version": "6.0.205"
     },
     {
       "allowedContexts": [
@@ -9082,7 +9082,7 @@ export const agentContract = {
         "ctx.ai",
         "ctx.ai.runAgent",
         "ctx.agent.run",
-        "process.env",
+        "direct secret/env access",
         "filesystem access"
       ]
     },

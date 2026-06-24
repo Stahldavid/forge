@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.20
+
+### Patch Changes
+
+- Fix generated-change diagnostics, Codex hook queue handling, and external stdio command parsing.
+
+  - Classify generated `AGENTS.md` blocks and `.forge/agent/context.json` as derived artifacts in `forge changed`/`forge status`.
+  - Skip probe, invalid, and out-of-workspace queued hook events during Agent Memory drain, and bound queue inspection for large hook queues.
+  - Preserve empty stdio command arguments, diagnose malformed command strings, and support structured `service.commandArgs` in external manifests.
+  - Include the basic example client demo in typecheck coverage.
+
 ## Unreleased
 
 ## 0.1.0-alpha.19

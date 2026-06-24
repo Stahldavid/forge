@@ -33,6 +33,14 @@ function stringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
+function commandArgsArray(value: unknown): value is string[] {
+  return Array.isArray(value) &&
+    value.length > 0 &&
+    typeof value[0] === "string" &&
+    value[0].length > 0 &&
+    value.every((item) => typeof item === "string");
+}
+
 function externalDiagnostic(
   severity: Diagnostic["severity"],
   code: string,
@@ -237,13 +245,24 @@ export function validateExternalManifest(
       "Set service.baseUrl to the external runtime base URL.",
     ));
   }
-  if (service.transport === "stdio" && !isString(service.command)) {
+  const hasCommand = isString(service.command);
+  const hasCommandArgs = commandArgsArray(service.commandArgs);
+  if (service.commandArgs !== undefined && !hasCommandArgs) {
+    diagnostics.push(externalDiagnostic(
+      "error",
+      "FORGE_EXTERNAL_SERVICE_COMMAND_ARGS",
+      `external service '${String(service.name || "unknown")}' commandArgs must be a non-empty string array`,
+      options.file,
+      "Set service.commandArgs to an array whose first item is the executable.",
+    ));
+  }
+  if (service.transport === "stdio" && !hasCommand && !hasCommandArgs) {
     diagnostics.push(externalDiagnostic(
       "error",
       "FORGE_EXTERNAL_SERVICE_COMMAND",
-      `external service '${String(service.name || "unknown")}' uses stdio transport and must declare a non-empty command`,
+      `external service '${String(service.name || "unknown")}' uses stdio transport and must declare a non-empty command or commandArgs`,
       options.file,
-      "Set service.command to the executable and arguments used to start the external runtime.",
+      "Set service.command to a command line string or service.commandArgs to a structured executable/args array.",
     ));
   }
 
@@ -279,7 +298,8 @@ export function validateExternalManifest(
         name: service.name as string,
         transport: service.transport as ForgeExternalTransportKind,
         ...(isString(service.baseUrl) ? { baseUrl: service.baseUrl } : {}),
-        ...(isString(service.command) ? { command: service.command } : {}),
+        ...(hasCommand ? { command: service.command as string } : {}),
+        ...(hasCommandArgs ? { commandArgs: service.commandArgs as string[] } : {}),
         ...(isString(service.health) ? { health: service.health } : {}),
       },
       entries,

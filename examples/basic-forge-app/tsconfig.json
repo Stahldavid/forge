@@ -12,6 +12,7 @@
   "include": [
     "src/actions/**/*.ts",
     "src/commands/**/*.ts",
+    "src/client/**/*.ts",
     "src/lib/**/*.ts",
     "src/policies.ts",
     "src/queries/**/*.ts",

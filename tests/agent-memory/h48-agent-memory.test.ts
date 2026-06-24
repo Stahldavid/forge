@@ -639,6 +639,96 @@ describe("H48 agent memory bridge", () => {
     }
   }, 30_000);
 
+  test("skips probe, invalid, and out-of-workspace queued hook lines during drain", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-skip-noise");
+    const otherRoot = tempWorkspace("h48-codex-hook-queue-skip-other");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(
+        queueFile,
+        [
+          queuedCodexHookLine(root, "PostToolUse", "codex-session-skip-1"),
+          JSON.stringify({
+            forgeHookQueueV1: true,
+            source: "codex",
+            eventName: "SessionStart",
+            workspaceRoot: root,
+            raw: { forgeHookProbe: true },
+          }),
+          JSON.stringify({
+            forgeHookQueueV1: true,
+            source: "codex",
+            eventName: "SessionStart",
+            workspaceRoot: root,
+            raw: { _parseError: true },
+          }),
+          queuedCodexHookLine(otherRoot, "PostToolUse", "codex-session-skip-other"),
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const inspected = inspectAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(inspected.events).toBe(1);
+      expect(inspected.ignoredOutOfWorkspaceEvents).toBe(1);
+
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(drained.errors).toEqual([]);
+      expect(drained.eventsIngested).toBe(1);
+
+      const afterDrain = inspectAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(afterDrain.events).toBe(0);
+
+      const store = await DeltaStore.open(root);
+      const events = await store.listAgentMemoryEvents({ target: "codex" });
+      await store.close();
+      expect(events).toHaveLength(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(otherRoot, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("bounds queued hook inspection while preserving recent useful signals", () => {
+    const root = tempWorkspace("h48-codex-hook-queue-bounded-inspect");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const oldLargeLine = JSON.stringify({
+        forgeHookQueueV1: true,
+        source: "codex",
+        eventName: "SessionStart",
+        workspaceRoot: root,
+        raw: {
+          session_id: "codex-session-large-old",
+          hook_event_name: "SessionStart",
+          padding: "x".repeat(1024 * 1024 + 2048),
+        },
+      });
+      writeFileSync(
+        queueFile,
+        [
+          oldLargeLine,
+          queuedCodexHookLine(root, "PostToolUse", "codex-session-large-recent"),
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const inspected = inspectAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(inspected.truncated).toBe(true);
+      expect(inspected.skippedBytes).toBeGreaterThan(0);
+      expect(inspected.events).toBe(1);
+      expect(inspected.nativeSignals).toBe(1);
+      expect(inspected.usefulSignals).toBe(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("retains partial Codex hook queue line until newline completes it", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-partial");
     try {

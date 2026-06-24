@@ -15,7 +15,8 @@ export async function runForgeClientDemo(baseUrl: string): Promise<void> {
   console.log("createTicket", created);
 }
 
-if (import.meta.main) {
-  const url = process.argv[2] ?? "http://127.0.0.1:3765";
+if ((import.meta as ImportMeta & { main?: boolean }).main) {
+  const argv = (globalThis as typeof globalThis & { process?: { argv?: string[] } }).process?.argv ?? [];
+  const url = argv[2] ?? "http://127.0.0.1:3765";
   await runForgeClientDemo(url);
 }

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { importExternalManifest } from "../../src/forge/compiler/external-manifest/registry.ts";
-import { parseExternalCommandLine } from "../../src/forge/runtime/external/bridge.ts";
+import { parseExternalCommandLine, parseExternalCommandLineDetailed } from "../../src/forge/runtime/external/bridge.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -32,6 +32,22 @@ describe("external runtime bridge", () => {
       "--label",
       "quote \" inside",
     ]);
+    expect(parseExternalCommandLine("node adapter.js --empty \"\" --single ''")).toEqual([
+      "node",
+      "adapter.js",
+      "--empty",
+      "",
+      "--single",
+      "",
+    ]);
+    expect(parseExternalCommandLineDetailed("node \"unterminated")).toMatchObject({
+      args: ["node", "unterminated"],
+      diagnostics: ["stdio command has an unterminated double quote"],
+    });
+    expect(parseExternalCommandLineDetailed("node trailing\\")).toMatchObject({
+      args: ["node", "trailing\\"],
+      diagnostics: ["stdio command ends with a trailing escape"],
+    });
   });
 
   test("executes HTTP external commands and queries with Forge auth and policy", async () => {

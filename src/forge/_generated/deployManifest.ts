@@ -1,14 +1,14 @@
-// @forge-generated generator=0.1.0-alpha.19 input=bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16 content=d3f9231a107542bb85a09fdfaa8a155fbca37f8105b15f36c210b5b86541a52e
+// @forge-generated generator=0.1.0-alpha.20 input=52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89 content=f50c50805c7e102a57f03ab0c09951a7a33af486d7f51ffc357602b12338ce1a
 export const deployManifest = {
   "attributes": {
     "deployment.environment": "local",
-    "forge.deploy_id": "local-forgeos@0.1.0-alpha.19+unknown",
-    "forge.generated_hash": "bc0acfe814a5985cc4e818ea3aabd00bf4df870c2a7f98542671de2228b16a16",
-    "forge.release_id": "forgeos@0.1.0-alpha.19+unknown",
-    "service.version": "forgeos@0.1.0-alpha.19+unknown"
+    "forge.deploy_id": "local-forgeos@0.1.0-alpha.20+unknown",
+    "forge.generated_hash": "52fbf6548db00164619ce319c27000e8c901cb8b66be95b11e809827b08dee89",
+    "forge.release_id": "forgeos@0.1.0-alpha.20+unknown",
+    "service.version": "forgeos@0.1.0-alpha.20+unknown"
   },
-  "deployId": "local-forgeos@0.1.0-alpha.19+unknown",
+  "deployId": "local-forgeos@0.1.0-alpha.20+unknown",
   "environment": "local",
-  "releaseId": "forgeos@0.1.0-alpha.19+unknown",
+  "releaseId": "forgeos@0.1.0-alpha.20+unknown",
   "schemaVersion": "0.1.0"
 } as const;

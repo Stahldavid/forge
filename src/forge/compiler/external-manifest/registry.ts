@@ -65,6 +65,7 @@ function serviceFromManifest(manifest: ForgeExternalManifest): ForgeExternalServ
     transport: manifest.service.transport,
     ...(manifest.service.baseUrl ? { baseUrl: manifest.service.baseUrl } : {}),
     ...(manifest.service.command ? { command: manifest.service.command } : {}),
+    ...(manifest.service.commandArgs ? { commandArgs: manifest.service.commandArgs } : {}),
     ...(manifest.service.health ? { health: manifest.service.health } : {}),
     entries,
   };
