@@ -859,7 +859,9 @@ describe("Forge CLI", () => {
 
       expect(result.posture.state).toBe("ready");
       expect((result.changed.git as { available?: boolean }).available).toBe(false);
-      expect(result.changed.risks).toContain("git status is unavailable; changed-file analysis may be incomplete");
+      expect(result.changed.risks).toContain(
+        "git status is unavailable; using filesystem inventory as untracked-file analysis",
+      );
       expect(result.ok).toBe(true);
     } finally {
       cleanupWorkspace(workspace);

@@ -200,6 +200,13 @@ function chooseSchemaFile(workspaceRoot: string): string {
   return "src/forge/schema.ts";
 }
 
+function schemaHasTenantsTable(workspaceRoot: string): boolean {
+  const schema = readIfExists(workspaceRoot, chooseSchemaFile(workspaceRoot)) ?? "";
+  return schema.includes('name: "tenants"') ||
+    schema.includes("name: 'tenants'") ||
+    /\btenants\s*=\s*(?:defineTable|table)\s*\(/.test(schema);
+}
+
 function choosePolicyFile(workspaceRoot: string): string {
   if (fileExists(workspaceRoot, "src/policies.ts")) {
     return "src/policies.ts";
@@ -551,6 +558,8 @@ function buildIntent(options: MakeCommandOptions): {
     kind === "command"
       ? actionName?.replace(/^(create|update|delete)/, "") || "create"
       : "read";
+  const tenantScoped =
+    options.tenantScoped || (kind === "resource" && schemaHasTenantsTable(options.workspaceRoot));
 
   return {
     diagnostics,
@@ -560,7 +569,7 @@ function buildIntent(options: MakeCommandOptions): {
       table,
       field: fieldOptions.field,
       fields,
-      tenantScoped: options.tenantScoped || kind === "resource",
+      tenantScoped,
       crud: options.withCrud || kind === "resource",
       liveQuery: options.withLiveQuery || kind === "resource" || kind === "livequery",
       react:
@@ -898,7 +907,7 @@ function buildPlan(options: MakeCommandOptions): MakePlan {
     kind: "resource" as const,
     name: options.name ?? "resource",
     fields: [],
-    tenantScoped: true,
+    tenantScoped: false,
     crud: true,
     liveQuery: true,
     react: true,

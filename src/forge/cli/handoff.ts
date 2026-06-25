@@ -140,6 +140,7 @@ function buildOpeningBrief(input: {
 }): string {
   const agent = input.dev.summary.agentContext;
   const changedByType = summarizeChangeTypes(input.git.changeSummary.changed);
+  const changedFiles = Math.max(agent.changedFiles, input.git.changed.count);
   const tests = input.recentRuns.test
     ? input.recentRuns.test.ok
       ? "last test run passed"
@@ -150,7 +151,7 @@ function buildOpeningBrief(input: {
     : "no blocking issues";
   return [
     `ForgeOS handoff: ${input.dev.ok ? "dev diagnostics are clean" : "dev diagnostics need attention"}.`,
-    `${agent.changedFiles} changed file(s)${changedByType ? `: ${changedByType}` : ""}; ${input.git.staged.count} staged, ${input.git.untracked.count} untracked.`,
+    `${changedFiles} changed file(s)${changedByType ? `: ${changedByType}` : ""}; ${input.git.staged.count} staged, ${input.git.untracked.count} untracked.`,
     `${tests}; ${blockers}.`,
     `Next command: ${input.dev.summary.primaryAction?.command ?? input.dev.nextActions[0]?.command ?? "forge dev"}.`,
   ].join(" ");
@@ -168,6 +169,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
   const agent = dev.summary.agentContext;
   const risks = [
     ...agent.blockingIssues,
+    ...(!git.available ? ["git status is unavailable; using filesystem inventory as untracked-file analysis"] : []),
     ...(git.untracked.count > 0 ? [`${git.untracked.count} untracked file(s) are not in git history`] : []),
     ...(recentRuns.test && !recentRuns.test.ok ? ["last test run failed"] : []),
     ...(recentRuns.ui && !recentRuns.ui.ok ? ["last UI run failed"] : []),
@@ -181,6 +183,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
     agent.blockingIssues.length === 0 &&
     (!recentRuns.test || recentRuns.test.ok) &&
     (!recentRuns.ui || recentRuns.ui.ok);
+  const changedFiles = Math.max(agent.changedFiles, git.changed.count);
 
   return {
     schemaVersion: "0.1.0",
@@ -192,7 +195,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
       generatedChanged: agent.generatedChanged,
       generatedChangedFiles: agent.generatedChangedFiles,
       frontendReady: agent.frontendReady,
-      changedFiles: agent.changedFiles,
+      changedFiles,
       stagedFiles: git.staged.count,
       unstagedFiles: git.unstaged.count,
       untrackedFiles: git.untracked.count,

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runCompilerBenchCommand } from "../../src/forge/bench.ts";
@@ -372,6 +373,34 @@ describe("Forge CLI generation and inspection", () => {
       expect(authoredDerived.generated.sample).toEqual([]);
     } finally {
       cleanupWorkspace(workspace);
+    }
+  });
+
+  test("changed succeeds in non-git workspaces using filesystem inventory", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "cli-changed-no-git-"));
+    try {
+      mkdirSync(join(workspace, "src", "commands"), { recursive: true });
+      mkdirSync(join(workspace, "src", "forge", "_generated"), { recursive: true });
+      writeFileSync(join(workspace, "src", "commands", "changed.ts"), "export const ok = true;\n", "utf8");
+      writeFileSync(join(workspace, "src", "forge", "_generated", "client.ts"), "export const generated = true;\n", "utf8");
+
+      const changed = runChangedCommand(workspace);
+      expect(changed.exitCode).toBe(0);
+      expect(changed.ok).toBe(true);
+      expect(changed.data.git).toMatchObject({
+        available: false,
+        source: "filesystem",
+      });
+      expect(changed.data.summary).toMatchObject({
+        untrackedFiles: expect.any(Number),
+      });
+      expect((changed.data.risks as string[])).toContain(
+        "git status is unavailable; using filesystem inventory as untracked-file analysis",
+      );
+      const humanChanges = changed.data.humanChanges as { source: { sample: string[] } };
+      expect(humanChanges.source.sample).toContain("src/commands/changed.ts");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
     }
   });
 

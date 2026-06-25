@@ -407,7 +407,7 @@ const DELTA_STORE_RETRY_DELAYS_MS = [25, 75, 150];
 async function openDeltaStoreWithRetry(workspaceRoot: string): Promise<DeltaStore> {
   for (let attempt = 0; ; attempt += 1) {
     try {
-      return await DeltaStore.open(workspaceRoot);
+      return await DeltaStore.open(workspaceRoot, { waitMs: 1_500, retryDelayMs: 50 });
     } catch (error) {
       if (!(error instanceof DeltaStoreBusyError) || attempt >= DELTA_STORE_RETRY_DELAYS_MS.length) {
         throw error;

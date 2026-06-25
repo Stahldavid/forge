@@ -883,6 +883,47 @@ describe("H48 agent memory bridge", () => {
     }
   });
 
+  test("queue drain waits for a short-lived Delta writer before reporting busy", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-waits");
+    let store: DeltaStore | null = null;
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(
+        queueFile,
+        [
+          queuedCodexHookLine(root, "PostToolUse", "codex-session-waits"),
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      store = await DeltaStore.open(root);
+      const delayedClose = setTimeout(() => {
+        void store?.close().then(() => {
+          store = null;
+        });
+      }, 100);
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      clearTimeout(delayedClose);
+      expect(drained.errors).toEqual([]);
+      expect(drained.busy).toBeUndefined();
+      expect(drained.eventsIngested).toBe(1);
+
+      const readStore = await DeltaStore.open(root, { access: "read" });
+      const events = await readStore.listAgentMemoryEvents({ target: "codex" });
+      await readStore.close();
+      expect(events).toHaveLength(1);
+      expect(events[0]?.externalSessionId).toBe("codex-session-waits");
+    } finally {
+      if (store) {
+        await store.close();
+      }
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("retains partial Codex hook queue line until newline completes it", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-partial");
     try {

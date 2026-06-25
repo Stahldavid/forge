@@ -120,6 +120,45 @@ describe("H25 forge make", () => {
     }
   });
 
+  test("does not make resources tenant-scoped unless tenants exist or flag is explicit", async () => {
+    const root = scaffoldGenerateWorkspace("h25-resource-global");
+    try {
+      writeFileSync(
+        join(root, "src", "forge", "schema.ts"),
+        `
+          import { defineTable } from "forge/server";
+          export const notes = defineTable({
+            name: "notes",
+            fields: { id: "uuid", title: "text" },
+          });
+        `,
+        "utf8",
+      );
+      mkdirSync(join(root, "src", "commands"), { recursive: true });
+      mkdirSync(join(root, "src", "queries"), { recursive: true });
+
+      const result = await runMakeCommand(
+        makeOptions(root, {
+          name: "invoices",
+          fieldsRaw: "amount:number,status:enum(draft,paid)",
+          tenantScoped: false,
+          dryRun: true,
+          plan: true,
+        }),
+      );
+
+      expect(result.ok).toBe(true);
+      expect(result.plan?.intent.tenantScoped).toBe(false);
+      expect(result.diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
+        "FORGE_MAKE_TENANTS_TABLE_MISSING",
+      );
+      const schemaPatch = result.plan?.filesToModify.find((file) => file.file === "src/forge/schema.ts");
+      expect(schemaPatch?.afterPreview).not.toContain("tenantId");
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
   test("plans a Vite UI shell with ForgeProvider devAuth and bridge", async () => {
     const root = scaffoldMakeWorkspace("h25-ui");
     try {

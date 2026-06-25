@@ -116,7 +116,10 @@ async function openMemoryStore(
   const retryDelays = access === "write" ? [25, 75, 150] : [];
   for (let attempt = 0; ; attempt += 1) {
     try {
-      return await DeltaStore.open(workspaceRoot, { access });
+      return await DeltaStore.open(workspaceRoot, {
+        access,
+        ...(access === "write" ? { waitMs: 1_500, retryDelayMs: 50 } : {}),
+      });
     } catch (error) {
       if (!(error instanceof DeltaStoreBusyError) || attempt >= retryDelays.length) {
         return memoryUnavailable(error, workspaceRoot);

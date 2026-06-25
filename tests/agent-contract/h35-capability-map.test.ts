@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 import { runDoctorCommand } from "../../src/forge/cli/doctor.ts";
@@ -137,6 +137,41 @@ describe("H35 capability map", () => {
         ].join("\n"),
         "utf8",
       );
+      writeFileSync(
+        join(project, "src", "queries", "listOnboardingTasks.ts"),
+        [
+          'import { can, query } from "forge/server";',
+          "",
+          "export const listOnboardingTasks = query({",
+          '  auth: can("tasks.read"),',
+          "  handler: async (ctx) => {",
+          "    const { onboardingTasks: tasks } = ctx.db;",
+          "    return tasks.where({ status: 'open' });",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      mkdirSync(join(project, "src", "commands"), { recursive: true });
+      writeFileSync(
+        join(project, "src", "commands", "completeOnboardingTask.ts"),
+        [
+          'import { can, command } from "forge/server";',
+          "",
+          "export const completeOnboardingTask = command({",
+          '  auth: can("tasks.update"),',
+          "  handler: async (ctx, args: { id: string }) => {",
+          "    const tasks = ctx.db.onboardingTasks;",
+          "    const current = await tasks.get(args.id);",
+          "    await tasks.update(args.id, { status: 'done' });",
+          "    return current;",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
 
       const generated = await runGenerateCommand(defaultGenerateOptions(project));
       expect(generated.exitCode).toBe(0);
@@ -152,6 +187,13 @@ describe("H35 capability map", () => {
       expect(contract.liveQueries.find((entry) => entry.name === "liveOnboardingTasks")?.dependencies).toEqual([
         { table: "onboardingTasks", scope: "tenant" },
       ]);
+      expect(contract.queries.find((entry) => entry.name === "listOnboardingTasks")?.tablesRead).toEqual([
+        "onboardingTasks",
+      ]);
+      expect(contract.commands.find((entry) => entry.name === "completeOnboardingTask")).toMatchObject({
+        tablesRead: ["onboardingTasks"],
+        tablesWritten: ["onboardingTasks"],
+      });
 
       const map = readCapabilityMap(project);
       expect(map.entries).toContainEqual(

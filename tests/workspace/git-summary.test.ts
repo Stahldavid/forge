@@ -28,13 +28,21 @@ function git(root: string, args: string[]): void {
 }
 
 describe("workspace git summary", () => {
-  test("returns an unavailable empty summary outside git", () => {
+  test("uses filesystem inventory outside git", () => {
     const root = workspace("forge-git-summary-no-git");
     try {
+      write(root, "src/commands/createTicket.ts", "export const ok = true;\n");
+      write(root, "src/forge/_generated/client.ts", "export const generated = true;\n");
+      write(root, "node_modules/ignored/index.js", "ignored\n");
       const summary = buildWorkspaceGitSummary(root);
       expect(summary.available).toBe(false);
-      expect(summary.changed.count).toBe(0);
-      expect(summary.changeSummary.changed.total.count).toBe(0);
+      expect(summary.source).toBe("filesystem");
+      expect(summary.changed.sample).toContain("src/commands/createTicket.ts");
+      expect(summary.changed.sample).toContain("src/forge/_generated/client.ts");
+      expect(summary.changed.sample).not.toContain("node_modules/ignored/index.js");
+      expect(summary.untracked.count).toBe(summary.changed.count);
+      expect(summary.changeSummary.changed.byType.source.sample).toContain("src/commands/createTicket.ts");
+      expect(summary.changeSummary.changed.byType.generated.sample).toContain("src/forge/_generated/client.ts");
       expect(summary.error).toBeTruthy();
     } finally {
       rmSync(root, { recursive: true, force: true });

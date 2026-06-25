@@ -82,8 +82,7 @@ function buildRisks(git: WorkspaceGitSummary): string[] {
   const risks: string[] = [];
   const changed = git.changeSummary.changed;
   if (!git.available) {
-    risks.push("git status is unavailable; changed-file analysis may be incomplete");
-    return risks;
+    risks.push("git status is unavailable; using filesystem inventory as untracked-file analysis");
   }
   if (git.untracked.count > 0) {
     risks.push(`${git.untracked.count} untracked file(s) are not in git history`);
@@ -103,7 +102,7 @@ function buildRisks(git: WorkspaceGitSummary): string[] {
 
 function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
   if (!git.available) {
-    return ["git status --short", "forge status --json"];
+    return ["forge status --json", "forge handoff --json", "git init"];
   }
   if (git.changeSummary.changed.total.count === 0) {
     return ["forge status --json", "forge dev --once --json"];
@@ -202,12 +201,13 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const reviewFocus = buildReviewFocus(humanChanges, viewDerivedChanges);
   const generatedExplanation = buildGeneratedChangeExplanation(humanChanges, viewDerivedChanges);
   const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
+  const ok = git.available || git.source === "filesystem";
 
   return {
-    ok: git.available,
+    ok,
     data: {
       schemaVersion: "0.1.0",
-      ok: git.available,
+      ok,
       summary: {
         branch: git.branch,
         commit: git.commit,
@@ -223,6 +223,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       },
       git: {
         available: git.available,
+        source: git.source,
         ...(git.error ? { error: git.error } : {}),
         branch: git.branch,
         commit: git.commit,
@@ -240,7 +241,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       recommendedCommands,
       nextActions: recommendedCommands,
     },
-    exitCode: git.available ? 0 : 1,
+    exitCode: ok ? 0 : 1,
   };
 }
 

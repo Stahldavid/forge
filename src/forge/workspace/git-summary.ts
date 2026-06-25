@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { normalizePath } from "../compiler/primitives/paths.ts";
 import {
   categorizeFiles,
   classifyChangeType,
@@ -13,6 +14,7 @@ import {
 
 export interface WorkspaceGitSummary {
   available: boolean;
+  source?: "git" | "filesystem";
   branch?: string;
   commit?: string;
   changed: FileListSummary;
@@ -28,18 +30,64 @@ export interface WorkspaceGitSummary {
   error?: string;
 }
 
-function emptySummary(error?: string): WorkspaceGitSummary {
+const FALLBACK_IGNORED_DIRS = new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  "coverage",
+  ".next",
+  ".nuxt",
+  ".turbo",
+  ".cache",
+]);
+
+function listWorkspaceFiles(root: string): string[] {
+  const files: string[] = [];
+  const visit = (dir: string): void => {
+    let entries: Array<{ name: string; isDirectory: () => boolean; isFile: () => boolean }> = [];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.isDirectory() && FALLBACK_IGNORED_DIRS.has(entry.name)) {
+        continue;
+      }
+      const absolute = join(dir, entry.name);
+      const rel = normalizePath(relative(root, absolute));
+      if (!rel || rel === ".") {
+        continue;
+      }
+      if (entry.isDirectory()) {
+        visit(absolute);
+        continue;
+      }
+      if (entry.isFile()) {
+        files.push(rel);
+      }
+    }
+  };
+  visit(root);
+  return filterVolatileForgeState(files).sort();
+}
+
+function filesystemSummary(workspaceRoot: string, error?: string): WorkspaceGitSummary {
+  const files = listWorkspaceFiles(workspaceRoot);
+  const classify = workspaceChangeClassifier(workspaceRoot);
   return {
     available: false,
-    changed: compactFiles([]),
+    source: "filesystem",
+    changed: compactFiles(files),
     staged: compactFiles([]),
     unstaged: compactFiles([]),
-    untracked: compactFiles([]),
+    untracked: compactFiles(files),
     changeSummary: {
-      changed: categorizeFiles([]),
+      changed: categorizeFiles(files, 8, classify),
       staged: categorizeFiles([]),
       unstaged: categorizeFiles([]),
-      untracked: categorizeFiles([]),
+      untracked: categorizeFiles(files, 8, classify),
     },
     ...(error ? { error } : {}),
   };
@@ -227,7 +275,7 @@ function parseStatusPath(line: string): string {
 export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSummary {
   const root = runGit(["rev-parse", "--show-toplevel"], workspaceRoot);
   if (!root.ok) {
-    return emptySummary(root.error);
+    return filesystemSummary(workspaceRoot, root.error);
   }
 
   const status = runGit(["status", "--porcelain=v1", "-uall"], workspaceRoot, { trim: false });
@@ -262,6 +310,7 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
 
   return {
     available: true,
+    source: "git",
     ...(branch.ok ? { branch: branch.stdout } : {}),
     ...(commit.ok ? { commit: commit.stdout } : {}),
     changed: compactFiles(changedFiles),

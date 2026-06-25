@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.26
+
+### Patch Changes
+
+- Harden the field-demo loop after the Team Onboarding app exercise.
+
+  - Let `forge changed` and `forge handoff` summarize non-git workspaces with a filesystem inventory instead of reporting zero useful changes.
+  - Keep `forge make resource` global by default unless a tenants table exists or `--tenant-scoped` is explicit.
+  - Expand capability-map table detection for aliased `ctx.db` usage.
+  - Wait through short-lived DeltaDB writer locks before reporting `FORGE_DELTA_BUSY`.
+
 ## Unreleased
 
 ## 0.1.0-alpha.25

@@ -186,6 +186,38 @@ function sourceText(workspaceRoot: string, file: string | undefined): string {
   return nodeFileSystem.readText(absolute) ?? "";
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function addDbAliasesForText(
+  text: string,
+  tableNames: Set<string>,
+  aliases: Map<string, string>,
+): void {
+  for (const match of text.matchAll(
+    /\b(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*ctx\.db(?:\.([A-Za-z_$][A-Za-z0-9_$]*)|\[\s*["'`]([^"'`]+)["'`]\s*\])/g,
+  )) {
+    const alias = match[1] ?? "";
+    const table = match[2] ?? match[3] ?? "";
+    if (alias && tableNames.has(table)) {
+      aliases.set(alias, table);
+    }
+  }
+
+  for (const match of text.matchAll(/\b(?:const|let|var)\s*\{([^}]+)\}\s*=\s*ctx\.db/g)) {
+    const body = match[1] ?? "";
+    for (const part of body.split(",")) {
+      const [rawTable, rawAlias] = part.split(":").map((value) => value.trim());
+      const table = rawTable?.replace(/["'`]/g, "") ?? "";
+      const alias = (rawAlias ?? rawTable ?? "").replace(/\s*=.*$/, "").trim();
+      if (tableNames.has(table) && alias) {
+        aliases.set(alias, table);
+      }
+    }
+  }
+}
+
 function dbTablesForText(
   text: string,
   tableNames: Set<string>,
@@ -197,6 +229,24 @@ function dbTablesForText(
     const op = match[2] ?? "";
     if (tableNames.has(table) && ops.has(op)) {
       tables.push(table);
+    }
+  }
+  for (const match of text.matchAll(/ctx\.db\s*\[\s*["'`]([^"'`]+)["'`]\s*\]\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+    const table = match[1] ?? "";
+    const op = match[2] ?? "";
+    if (tableNames.has(table) && ops.has(op)) {
+      tables.push(table);
+    }
+  }
+  const aliases = new Map<string, string>();
+  addDbAliasesForText(text, tableNames, aliases);
+  for (const [alias, table] of aliases) {
+    const aliasPattern = new RegExp(`\\b${escapeRegExp(alias)}\\s*\\.\\s*([A-Za-z_$][A-Za-z0-9_$]*)`, "g");
+    for (const match of text.matchAll(aliasPattern)) {
+      const op = match[1] ?? "";
+      if (ops.has(op)) {
+        tables.push(table);
+      }
     }
   }
   return uniqueSorted(tables);

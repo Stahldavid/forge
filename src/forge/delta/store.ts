@@ -348,6 +348,12 @@ interface DeltaStoreLock {
   token: string;
 }
 
+export interface DeltaStoreOpenOptions {
+  access?: DeltaStoreAccess;
+  waitMs?: number;
+  retryDelayMs?: number;
+}
+
 function getDeltaLockPath(workspaceRoot: string): string {
   return join(workspaceRoot, ".forge", "delta", "delta.lock");
 }
@@ -488,6 +494,33 @@ function acquireDeltaStoreLock(workspaceRoot: string): DeltaStoreLock {
   throw new DeltaStoreBusyError(lockPath, readLockHolder(lockPath));
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function acquireDeltaStoreLockWithWait(
+  workspaceRoot: string,
+  options: { waitMs?: number; retryDelayMs?: number } = {},
+): Promise<DeltaStoreLock> {
+  const waitMs = Math.max(0, options.waitMs ?? 0);
+  const retryDelayMs = Math.max(10, options.retryDelayMs ?? 50);
+  const started = Date.now();
+  for (;;) {
+    try {
+      return acquireDeltaStoreLock(workspaceRoot);
+    } catch (error) {
+      if (!(error instanceof DeltaStoreBusyError)) {
+        throw error;
+      }
+      const elapsed = Date.now() - started;
+      if (elapsed >= waitMs) {
+        throw error;
+      }
+      await sleep(Math.min(retryDelayMs, waitMs - elapsed));
+    }
+  }
+}
+
 export function probeDeltaStoreBusy(workspaceRoot: string): DeltaStoreBusyError | null {
   const lockPath = getDeltaLockPath(workspaceRoot);
   if (!existsSync(lockPath)) {
@@ -551,11 +584,11 @@ export class DeltaStore {
     private readonly lock: DeltaStoreLock | null,
   ) {}
 
-  static async open(workspaceRoot: string, options: { access?: DeltaStoreAccess } = {}): Promise<DeltaStore> {
+  static async open(workspaceRoot: string, options: DeltaStoreOpenOptions = {}): Promise<DeltaStore> {
     const storePath = getDeltaStorePath(workspaceRoot);
     mkdirSync(dirname(storePath), { recursive: true });
     const initializedBeforeOpen = deltaStoreInitialized(storePath);
-    const lock = options.access === "read" ? null : acquireDeltaStoreLock(workspaceRoot);
+    const lock = options.access === "read" ? null : await acquireDeltaStoreLockWithWait(workspaceRoot, options);
     let store: DeltaStore | null = null;
     try {
       const adapter = await createPgliteAdapter(storePath);
@@ -565,7 +598,7 @@ export class DeltaStore {
       } else if (await store.needsSchemaInit()) {
         await store.close();
         store = null;
-        const migrateLock = acquireDeltaStoreLock(workspaceRoot);
+        const migrateLock = await acquireDeltaStoreLockWithWait(workspaceRoot, options);
         try {
           const migrateAdapter = await createPgliteAdapter(storePath);
           store = new DeltaStore(workspaceRoot, storePath, migrateAdapter, migrateLock);

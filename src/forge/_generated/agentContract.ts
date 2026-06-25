@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.25 input=93e9f4f72ca6f1bde1a9ff909c546319cbcfd3965c2a9f4099c06e0c81dbab7a content=f954dfe2d9e258b5ba4e271c2cbcb30b3b9ea8f30171848da52a309b922f023e
+// @forge-generated generator=0.1.0-alpha.26 input=778efcf6ab1654d740a63150785427347e3b87d5b7720acc9f26a9e512e0e5fa content=ae79cc631cf292db0dcee6fa20a65be5c31e6a02b067c4e93365e3e876367321
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -7177,7 +7177,7 @@ export const agentContract = {
       }
     }
   },
-  "generatorVersion": "0.1.0-alpha.25",
+  "generatorVersion": "0.1.0-alpha.26",
   "integrations": [
     {
       "alias": "ai-gateway",

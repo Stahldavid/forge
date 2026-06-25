@@ -6,6 +6,15 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.26
+
+- Hardened the field-demo loop after the Team Onboarding app exercise:
+  non-git workspaces now get a filesystem-backed `changed`/`handoff` summary,
+  `forge make resource` stays global unless tenant scope is explicit or already
+  modeled, capability-map extraction sees aliased `ctx.db` table usage, and
+  Agent Memory waits through short-lived DeltaDB writer locks before reporting
+  `FORGE_DELTA_BUSY`.
+
 ## 0.1.0-alpha.25
 
 - Hardened DeltaDB and Agent Memory for concurrent `forge dev` usage:
