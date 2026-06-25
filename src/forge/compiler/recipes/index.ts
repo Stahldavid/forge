@@ -15,6 +15,7 @@ export {
   POSTHOG_RECIPE,
   SENTRY_RECIPE,
   ZOD_RECIPE,
+  CONVEX_RECIPE,
   AI_RECIPE,
   AI_PROVIDER_RECIPES,
 } from "./definitions.ts";

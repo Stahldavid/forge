@@ -1,6 +1,6 @@
 # ForgeOS
 
-ForgeOS is an agent-native application framework and compiler. It gives AI coding agents and humans a generated contract for the app they are editing: commands, queries, liveQueries, policies, data, secrets, frontend routes, runtime rules, AI tools, and the commands needed to verify a change.
+ForgeOS is the contract layer for agentic software development. It gives AI coding agents and humans a generated contract for the app they are editing: commands, queries, liveQueries, policies, data, secrets, frontend routes, runtime rules, AI tools, and the commands needed to verify a change.
 
 The current npm release line is **`forgeos@alpha`**. During alpha, use the `@alpha` tag explicitly; the `latest` tag is not the active release channel and may lag behind alpha while a prerelease hardens. See [Changelog](changelog.md) for version history.
 
@@ -98,6 +98,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Five-minute mental model | [The Five-Minute ForgeOS Model](five-minute-model.md) |
 | Install and first app | [Getting Started](getting-started.md) |
 | Alpha hardening path | [Alpha Golden Path](golden-path.md) |
+| Stable alpha support boundary | [Stable Alpha Surface](stable-alpha.md) |
 | Full first app walkthrough | [First App Tutorial](tutorial-first-app.md) |
 | Why ForgeOS exists | [Why ForgeOS](why-forgeos.md) |
 | Public capability map | [Capabilities](capabilities.md) |
@@ -106,6 +107,8 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Template file trees | [Examples](examples.md) |
 | Templates (`minimal-web`, `nuxt-web`, `agent-workroom`, `b2b-support-web`) | [Templates](templates.md) |
 | Agent intent router (`forge do`) | [Agent Workflow](agent-workflow.md) |
+| Safe-change loop for coding agents | [AI Coding with ForgeOS](ai-coding-with-forgeos.md) |
+| Three short proof demos | [Agent-Native Demos](demos.md) |
 | Compact agent navigation and guarded edits | [CAIR Protocol](cair-protocol.md) |
 | External-agent demo shape | [Agent-Native Demo](agent-native-demo.md) |
 | Agent issue-to-handoff loop | [Agent Playbook](agent-playbook.md) |
@@ -135,6 +138,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Inspect SDK APIs before coding | [CLI - Dependency API oracle](cli.md#dependency-api-oracle-for-agents-and-upgrades) |
 | Package graph, runtime compatibility, API evidence | [Package Intelligence](package-intelligence.md) |
 | Integration recipes | [Recipes](recipes.md) |
+| Convex app-contract recipe | [ForgeOS for Convex Apps](convex.md) |
 | Payment flows and webhooks | [Payments](payments.md) |
 | AST-aware refactors | [Codemods](codemods.md) |
 
@@ -143,6 +147,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | Agent-readable contract | [Agent Contract](agent-contract.md) |
+| Repeatable agent eval plan | [Agent Evals](agent-evals.md) |
 | Impact tests, repair, verify gates | [Testing and Repair](testing-and-repair.md) |
 | Guard violations, verify, repair | [Troubleshooting](troubleshooting.md) |
 | External app validation | [Field Testing](field-testing.md) |

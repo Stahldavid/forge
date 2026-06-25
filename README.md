@@ -1,6 +1,6 @@
 # ForgeOS
 
-Agent-native application framework and compiler for building Forge apps without a mandatory dashboard. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
+The contract layer for agentic software development. ForgeOS turns application source into deterministic runtime contracts, generated clients, safety checks, and machine-readable context that humans and AI coding agents can use safely.
 
 **Status:** private/public alpha MVP, implemented through H49. ForgeOS already includes the compiler, local runtime, frontend SDK, production auth, RLS compiler, liveQuery, self-host artifacts, generated agent contract, guided dev loop, repair/review/test tooling, AST-aware codemods, package intelligence, native AI tools/agents, DeltaDB work memory, external agent memory ingestion, brownfield import analysis, npm alpha publishing, and Read the Docs public docs. Public release hardening is still focused on deeper semantic codemods, broader field reports, and more production mileage.
 
@@ -8,7 +8,7 @@ Public docs live at [forgeos.readthedocs.io](https://forgeos.readthedocs.io/). T
 
 Start with [Why ForgeOS](https://forgeos.readthedocs.io/en/latest/why-forgeos/) to understand the agent-native design.
 
-For the short version, read [The Five-Minute ForgeOS Model](https://forgeos.readthedocs.io/en/latest/five-minute-model/) and [Alpha Golden Path](https://forgeos.readthedocs.io/en/latest/golden-path/). The important distinction is that external coding agents are the primary ForgeOS workflow; integrated AI SDK features are available for apps that need in-product AI, but they are not the main development loop.
+For the short version, read [The Five-Minute ForgeOS Model](https://forgeos.readthedocs.io/en/latest/five-minute-model/), [Alpha Golden Path](https://forgeos.readthedocs.io/en/latest/golden-path/), and [Stable Alpha Surface](https://forgeos.readthedocs.io/en/latest/stable-alpha/). The important distinction is that external coding agents are the primary ForgeOS workflow; integrated AI SDK features are available for apps that need in-product AI, but they are not the main development loop.
 
 ## Agent-First Quickstart
 

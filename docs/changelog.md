@@ -6,6 +6,22 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.24
+
+- Consolidated the public alpha adoption surface: MIT license, package license
+  metadata, private GitHub Security Advisory disclosure, stable-alpha status
+  matrix, AI-coding loop, three short agent demos, and repeatable agent eval
+  task specs.
+- `forge new --json` now returns structured JSON for scaffold automation
+  instead of human next-step text.
+- Added the initial `forge add convex` app-contract recipe with runtime
+  placement guardrails, optional Convex environment names, generated docs, and
+  a mock testkit. The deeper Convex schema/API importer is documented as
+  planned rather than implied.
+- Expanded field-report expectations and release/doc tests for license,
+  security disclosure, create-app help, Convex recipes, and public docs
+  navigation.
+
 ## 0.1.0-alpha.23
 
 - Tightened the post-alpha.22 release surface and package evidence:

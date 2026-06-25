@@ -63,6 +63,7 @@ export type ForgeCommand =
       git: boolean;
       forgePackageSpec?: string;
       localForge: boolean;
+      json: boolean;
       workspaceRoot: string;
     }
   | { kind: "build"; json: boolean; workspaceRoot: string }
@@ -860,6 +861,7 @@ export function parseCli(argv: string[]): ParsedCli {
           git: !parseFlag(argv, "--no-git"),
           forgePackageSpec,
           localForge,
+          json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
         workspaceRoot,

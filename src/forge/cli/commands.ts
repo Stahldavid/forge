@@ -168,7 +168,7 @@ import {
   runSecretsCommand,
 } from "./secrets.ts";
 import { formatAiHuman, formatAiJson, runAiCommand } from "./ai.ts";
-import { formatNewHuman, runNewCommand } from "./new.ts";
+import { formatNewHuman, formatNewJson, runNewCommand } from "./new.ts";
 import { formatBuildHuman, runBuildCommand } from "./build.ts";
 import { runServeCommand } from "./serve.ts";
 import { runWorkerCommand } from "./worker.ts";
@@ -1559,7 +1559,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         localForge: command.localForge,
         workspaceRoot: command.workspaceRoot,
       });
-      process.stdout.write(formatNewHuman(result));
+      process.stdout.write(command.json ? formatNewJson(result) : formatNewHuman(result));
       return result.exitCode;
     }
     case "build": {

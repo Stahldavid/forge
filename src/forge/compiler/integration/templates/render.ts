@@ -1,5 +1,6 @@
 import type { IntegrationTemplateInput } from "./types.ts";
 import * as ai from "./ai.ts";
+import * as convex from "./convex.ts";
 import * as posthog from "./posthog.ts";
 import * as sentry from "./sentry.ts";
 import * as stripe from "./stripe.ts";
@@ -52,6 +53,7 @@ const TESTKIT_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   stripe: { "stripe.mock.ts": stripe.renderStripeTestkit },
   posthog: { "posthog.mock.ts": posthog.renderPosthogTestkit },
   sentry: { "sentry.mock.ts": sentry.renderSentryTestkit },
+  convex: { "convex.mock.ts": convex.renderConvexTestkit },
   ai: { "ai.mock.ts": ai.renderAiTestkitLegacy },
 };
 
@@ -60,6 +62,7 @@ const DOC_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   stripe: { "stripe.md": stripe.renderStripeDoc },
   posthog: { "posthog.md": posthog.renderPosthogDoc },
   sentry: { "sentry.md": sentry.renderSentryDoc },
+  convex: { "convex.md": convex.renderConvexDoc },
   ai: { "ai.md": ai.renderAiDoc },
 };
 

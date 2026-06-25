@@ -51,6 +51,7 @@ nav:
   - Five-Minute Model: five-minute-model.md
   - Getting Started: getting-started.md
   - Alpha Golden Path: golden-path.md
+  - Stable Alpha Surface: stable-alpha.md
   - First App Tutorial: tutorial-first-app.md
   - Why ForgeOS: why-forgeos.md
   - Capabilities: capabilities.md
@@ -58,6 +59,8 @@ nav:
   - Examples: examples.md
   - Templates: templates.md
   - Agent Workflow: agent-workflow.md
+  - AI Coding with ForgeOS: ai-coding-with-forgeos.md
+  - Agent-Native Demos: demos.md
   - Agent-Native Demo: agent-native-demo.md
   - Agent Playbook: agent-playbook.md
   - Build a Feature with an Agent: agent-feature-tutorial.md
@@ -81,9 +84,11 @@ nav:
       - forge add: forge-add.md
       - Package Intelligence: package-intelligence.md
       - Recipes: recipes.md
+      - Convex: convex.md
       - Payments: payments.md
   - Codemods: codemods.md
   - Agent Contract: agent-contract.md
+  - Agent Evals: agent-evals.md
   - Testing & Repair: testing-and-repair.md
   - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md

@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.23 input=eec97c876c38e3c86c16e6a488b4abbd0d9253406b5e3a492f6674a134d0d950 content=bc95d9e3e56ba934fec89c139c657b9e001f82efaaa9ce682cb64ad052640467
+// @forge-generated generator=0.1.0-alpha.24 input=39a7799ce0d6a71823dac10eaa13053e61eb77cb610a1245f2ea90d381769517 content=9a8acc711aff3c287e3f0b220ed07c99252627f91157d7fb30af365867913be5
 export const uiTestManifest = {
   "defaultBaseUrl": "http://127.0.0.1:3000",
   "framework": "unknown",
-  "generatorVersion": "0.1.0-alpha.23",
+  "generatorVersion": "0.1.0-alpha.24",
   "routes": [
     {
       "name": "home",

@@ -323,6 +323,52 @@ describe("forge add integration", () => {
     }
   });
 
+  test("adds convex as an app-contract package recipe", async () => {
+    const workspace = scaffoldAddWorkspace("add-convex");
+    try {
+      const result = await forgeAdd("convex", {
+        workspaceRoot: workspace,
+        json: false,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "auto",
+        pmAdapter: createFixturePmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.mode).toBe("integration");
+      expect(result.recipeVersion).toBe("1.0.0");
+      expect(result.recipePackages).toEqual(["convex"]);
+      expect(result.requiredSecrets).toEqual([]);
+      expect(result.optionalSecrets?.sort()).toEqual([
+        "CONVEX_DEPLOYMENT",
+        "CONVEX_DEPLOY_KEY",
+        "CONVEX_URL",
+        "NEXT_PUBLIC_CONVEX_URL",
+      ]);
+      expect(existsSync(join(workspace, "src/forge/_generated/docs/convex.md"))).toBe(true);
+      expect(existsSync(join(workspace, "src/forge/_generated/testkits/convex.mock.ts"))).toBe(true);
+      expect(readFileSync(join(workspace, "src/forge/_generated/docs/convex.md"), "utf8")).toContain(
+        "Convex is treated as an agent-friendly backend package",
+      );
+
+      const matrix = JSON.parse(
+        stripDeterministicHeader(
+          readFileSync(join(workspace, "src/forge/_generated/runtimeMatrix.json"), "utf8"),
+        ),
+      ) as { entries: Array<{ packageName: string; incompatible: string[]; compatible: string[] }> };
+      const convex = matrix.entries.find((entry) => entry.packageName === "convex");
+      expect(convex?.compatible).toContain("client");
+      expect(convex?.compatible).toContain("server");
+      expect(convex?.incompatible).toContain("command");
+      expect(convex?.incompatible).toContain("query");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("dry-run reports would-change paths without writing", async () => {
     const workspace = scaffoldAddWorkspace("add-dry-run");
     try {

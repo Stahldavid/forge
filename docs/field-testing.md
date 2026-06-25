@@ -112,6 +112,29 @@ Each result includes:
 
 A passing runtime probe means the generated app was not merely scaffolded; it accepted real runtime calls through Forge's HTTP boundary.
 
+## Field report contract
+
+When publishing or reviewing field reports, include enough context for another maintainer to reproduce the result:
+
+- ForgeOS version or commit;
+- package source, such as `npm:forgeos@alpha`, a packed tarball, or `file:.`;
+- OS, architecture, Node version, and package manager version;
+- template and install mode;
+- command transcript or JSON report path;
+- runtime probe status codes and trace IDs;
+- whether generated artifacts were ignored or regenerated;
+- failures, retries, and manual steps.
+
+For public alpha promotion, prefer a small set of high-signal reports over a broad list of unverified claims:
+
+- one Linux npm `minimal-web` report with runtime probes;
+- one Windows npm `minimal-web` report with runtime probes;
+- one macOS report for a non-minimal template;
+- one package-manager variation report, such as pnpm or Bun;
+- one failure report that documents the diagnostic and fix.
+
+Field reports should complement agent evals. Field tests prove that generated apps run outside the repository; evals prove that agents can change those apps safely.
+
 ## Related pages
 
 - [Getting Started](getting-started.md)

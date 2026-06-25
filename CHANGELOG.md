@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.24
+
+### Patch Changes
+
+- Consolidate the public alpha adoption surface and agent-contract positioning.
+
+  - Add an explicit MIT `LICENSE`, package license metadata, and a private GitHub Security Advisory disclosure path.
+  - Add stable-alpha, AI-coding, agent demo, Convex, and agent-eval documentation pages, plus a runner-agnostic eval task scaffold.
+  - Fix `forge new --json` so scaffold automation receives structured JSON instead of human next-step text.
+  - Add the first `forge add convex` app-contract recipe with runtime placement guardrails, optional Convex environment names, generated docs, and a mock testkit.
+  - Expand field-report expectations and package/release tests for license, security disclosure, docs, create-app help, Convex recipes, and JSON scaffold output.
+
 ## 0.1.0-alpha.23
 
 ### Patch Changes

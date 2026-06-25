@@ -3,6 +3,7 @@ import type { PackageRecipe } from "../types/integration.ts";
 import {
   AI_PROVIDER_RECIPES,
   AI_RECIPE,
+  CONVEX_RECIPE,
   FORGE_RECIPE,
   POSTHOG_RECIPE,
   REFERENCE_ALIASES,
@@ -23,6 +24,7 @@ const REFERENCE_RECIPES: Record<string, IntegrationRecipe> = {
   posthog: POSTHOG_RECIPE,
   sentry: SENTRY_RECIPE,
   zod: ZOD_RECIPE,
+  convex: CONVEX_RECIPE,
   forge: FORGE_RECIPE,
   ai: AI_RECIPE,
 };
@@ -32,6 +34,7 @@ const ALL_RECIPES: IntegrationRecipe[] = [
   POSTHOG_RECIPE,
   SENTRY_RECIPE,
   ZOD_RECIPE,
+  CONVEX_RECIPE,
   FORGE_RECIPE,
   AI_RECIPE,
   ...AI_PROVIDER_RECIPES,

@@ -9,6 +9,7 @@ function read(path: string): string {
 const PUBLIC_PAGES = [
   "index.md",
   "getting-started.md",
+  "stable-alpha.md",
   "tutorial-first-app.md",
   "why-forgeos.md",
   "capabilities.md",
@@ -16,6 +17,8 @@ const PUBLIC_PAGES = [
   "examples.md",
   "templates.md",
   "agent-workflow.md",
+  "ai-coding-with-forgeos.md",
+  "demos.md",
   "agent-playbook.md",
   "agent-feature-tutorial.md",
   "dev-loop.md",
@@ -32,9 +35,11 @@ const PUBLIC_PAGES = [
   "forge-add.md",
   "package-intelligence.md",
   "recipes.md",
+  "convex.md",
   "payments.md",
   "codemods.md",
   "agent-contract.md",
+  "agent-evals.md",
   "testing-and-repair.md",
   "troubleshooting.md",
   "field-testing.md",
@@ -66,9 +71,12 @@ describe("ReadTheDocs documentation", () => {
     expect(config).toContain("requirements: docs/requirements.txt");
     expect(config).toContain("search:");
     expect(config).toContain("docs/why-forgeos.md: 10");
+    expect(config).toContain("docs/stable-alpha.md: 10");
+    expect(config).toContain("docs/ai-coding-with-forgeos.md: 10");
     expect(config).toContain("docs/agent-playbook.md: 9");
     expect(config).toContain("docs/dev-loop.md: 9");
     expect(config).toContain("docs/package-intelligence.md: 8");
+    expect(config).toContain("docs/convex.md: 8");
   });
 
   test("uses Material theme with RTD-safe defaults", () => {
@@ -115,8 +123,12 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/examples.md")).toContain("Public proof app");
     expect(read("docs/examples.md")).toContain("npm run proof:capabilities");
     expect(read("docs/index.md")).toContain("npm create forgeos-app@alpha");
+    expect(read("docs/index.md")).toContain("Stable Alpha Surface");
+    expect(read("docs/index.md")).toContain("AI Coding with ForgeOS");
+    expect(read("docs/index.md")).toContain("Agent Evals");
     expect(read("docs/index.md")).toContain("Agent Workflow");
     expect(read("docs/index.md")).toContain("Inspect SDK APIs before coding");
+    expect(read("docs/index.md")).toContain("Convex app-contract recipe");
     expect(read("docs/capabilities.md")).toContain("H39-H43");
     expect(read("docs/capabilities.md")).toContain("Native AI agents");
     expect(read("docs/agent-workflow.md")).toContain("forge do");
@@ -124,6 +136,16 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/agent-workflow.md")).toContain("forge handoff --json");
     expect(read("docs/agent-workflow.md")).toContain("Integration change loop");
     expect(read("docs/agent-workflow.md")).toContain("forge deps api stripe checkout.sessions.create");
+    expect(read("docs/stable-alpha.md")).toContain("Generate a trusted contract");
+    expect(read("docs/stable-alpha.md")).toContain("MCP server and external agent memory");
+    expect(read("docs/ai-coding-with-forgeos.md")).toContain("contract layer for agentic software development");
+    expect(read("docs/ai-coding-with-forgeos.md")).toContain("safe change");
+    expect(read("docs/ai-coding-with-forgeos.md")).toContain("forge agent onboard --target codex --json");
+    expect(read("docs/demos.md")).toContain("Agent understands app");
+    expect(read("docs/demos.md")).toContain("Agent blocked by policy");
+    expect(read("docs/agent-evals.md")).toContain("Can an agent modify an existing app");
+    expect(read("docs/agent-evals.md")).toContain("Generated-file drift");
+    expect(read("docs/agent-evals.md")).toContain("Convex app-contract");
     expect(read("docs/agent-playbook.md")).toContain("issue-to-handoff loop");
     expect(read("docs/agent-playbook.md")).toContain("forge status --json");
     expect(read("docs/agent-playbook.md")).toContain("forge handoff --json");
@@ -149,11 +171,17 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/field-testing.md")).toContain("GET /health");
     expect(read("docs/field-testing.md")).toContain("POST /commands");
     expect(read("docs/field-testing.md")).toContain("field-report");
+    expect(read("docs/field-testing.md")).toContain("Field report contract");
     expect(read("docs/forge-add.md")).toContain("forge add stripe");
     expect(read("docs/forge-add.md")).toContain("forge deps api");
     expect(read("docs/forge-add.md")).toContain("summarizes the useful API surface");
     expect(read("docs/package-intelligence.md")).toContain("forge deps runtime-compat");
     expect(read("docs/package-intelligence.md")).toContain("The agent should not call an SDK from memory");
+    expect(read("docs/recipes.md")).toContain("Alias:          convex");
+    expect(read("docs/recipes.md")).toContain("ForgeOS for Convex Apps");
+    expect(read("docs/convex.md")).toContain("Convex makes the backend easy for agents to build");
+    expect(read("docs/convex.md")).toContain("forge add convex");
+    expect(read("docs/convex.md")).toContain("Planned");
     expect(read("docs/payments.md")).toContain("checkout.requested");
     expect(read("docs/payments.md")).toContain("verifyWebhookSignature");
     expect(read("docs/codemods.md")).toContain("extract-action");

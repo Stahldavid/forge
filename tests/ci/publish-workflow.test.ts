@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
@@ -12,10 +12,13 @@ describe("npm publish workflow", () => {
       files?: string[];
       publishConfig?: Record<string, unknown>;
       scripts?: Record<string, string>;
+      license?: string;
     };
 
     expect(pkg.name).toBe("forgeos");
+    expect(pkg.license).toBe("MIT");
     expect(pkg.bin?.forge).toBe("bin/forge.mjs");
+    expect(pkg.files).toContain("LICENSE");
     expect(pkg.files).toContain("!src/forge/_generated/**");
     expect(pkg.files).toContain("src/forge/_generated/releaseManifest.json");
     expect(pkg.files).toContain("src/forge/_generated/releaseManifest.ts");
@@ -33,8 +36,10 @@ describe("npm publish workflow", () => {
       name?: string;
       bin?: Record<string, string>;
       publishConfig?: Record<string, unknown>;
+      license?: string;
     };
     expect(createPkg.name).toBe("create-forgeos-app");
+    expect(createPkg.license).toBe("MIT");
     expect(createPkg.bin?.["create-forgeos-app"]).toBe("bin/create-forge-app.mjs");
     expect(createPkg.bin?.["create-forge-app"]).toBe("bin/create-forge-app.mjs");
     expect(createPkg.bin?.["forgeos-app"]).toBe("bin/create-forge-app.mjs");
@@ -90,6 +95,10 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
     expect(workflow).toContain("NPM_TOKEN is not configured; skipping latest dist-tag promotion.");
     expect(workflow).toContain("npm dist-tag add \"forgeos@$(node -p \"require('./package.json').version\")\" latest");
+    expect(existsSync(join(process.cwd(), "LICENSE"))).toBe(true);
+    expect(readFileSync(join(process.cwd(), "SECURITY.md"), "utf8")).toContain(
+      "https://github.com/Stahldavid/forge/security/advisories/new",
+    );
   });
 
   test("packed npm artifact excludes generated bulk and keeps release manifest", () => {
@@ -113,5 +122,6 @@ describe("npm publish workflow", () => {
     ]);
     expect(pack.files.some((file) => file.path === "src/forge/_generated/appGraph.json")).toBe(false);
     expect(pack.files.some((file) => file.path === "src/forge/_generated/runtimeMatrix.json")).toBe(false);
+    expect(pack.files.some((file) => file.path === "LICENSE")).toBe(true);
   });
 });

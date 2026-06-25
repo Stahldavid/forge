@@ -17,12 +17,16 @@ search:
   ranking:
     docs/why-forgeos.md: 10
     docs/getting-started.md: 10
+    docs/stable-alpha.md: 10
+    docs/ai-coding-with-forgeos.md: 10
     docs/tutorial-first-app.md: 9
+    docs/demos.md: 9
     docs/agent-playbook.md: 9
     docs/dev-loop.md: 9
     docs/agent-feature-tutorial.md: 9
     docs/agent-contract.md: 8
     docs/package-intelligence.md: 8
+    docs/convex.md: 8
     docs/frontend.md: 8
     docs/frontend-integration-guide.md: 8
     docs/troubleshooting.md: 7

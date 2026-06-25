@@ -10,7 +10,11 @@ ForgeOS is currently an alpha project. Security reports are welcome.
 
 ## Reporting A Vulnerability
 
-Until a dedicated private disclosure channel is published, avoid posting exploit details, secret leakage, tenant bypasses, or supply-chain vulnerabilities in public issues.
+Use GitHub private vulnerability reporting for sensitive reports:
+
+<https://github.com/Stahldavid/forge/security/advisories/new>
+
+Do not post exploit details, secret leakage, tenant bypasses, or supply-chain vulnerabilities in public issues. Public issues are appropriate only for non-sensitive hardening requests, documentation fixes, and already-remediated disclosures.
 
 Send a minimal report to the repository maintainer with:
 

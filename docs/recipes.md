@@ -96,6 +96,29 @@ Zod is allowed in **all** runtime contexts — ideal for shared input schemas be
 
 Generated: `packages/zod.shared.ts`, `testkits/zod.mock.ts`.
 
+### convex
+
+```text
+Alias:          convex
+Package:        convex (>=1.0.0)
+Recipe version: 1.0.0
+```
+
+Convex is classified as an agent-friendly backend package that ForgeOS can wrap with app-contract evidence and runtime guardrails.
+
+Allowed: `client`, `server`, `action`, `workflow`, `endpoint`, `test`, `build`.
+
+Denied: `shared`, `query`, `liveQuery`, `command`, `edge`.
+
+Optional environment names: `NEXT_PUBLIC_CONVEX_URL`, `CONVEX_URL`, `CONVEX_DEPLOYMENT`, `CONVEX_DEPLOY_KEY`.
+
+Generated artifacts:
+
+- `testkits/convex.mock.ts`
+- `docs/convex.md`
+
+The current alpha recipe does not import `convex/schema.ts` or `convex/_generated/api.d.ts` yet. See [ForgeOS for Convex Apps](convex.md) for the planned importer.
+
 ### ai
 
 ```text

@@ -52,6 +52,7 @@ describe("create-forge-app", () => {
     expect(result.stdout).toContain("--template minimal-web");
     expect(result.stdout).toContain("--template nuxt-web");
     expect(result.stdout).toContain("--template agent-workroom");
+    expect(result.stdout).toContain("--template b2b-support-web");
   });
 
   test("passes ForgeOS public alias defaults to forge new", () => {

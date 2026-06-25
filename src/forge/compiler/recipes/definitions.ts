@@ -190,6 +190,30 @@ export const ZOD_RECIPE: IntegrationRecipe = {
   docs: ["zod.md"],
 };
 
+export const CONVEX_RECIPE: IntegrationRecipe = {
+  alias: "convex",
+  packages: [{ packageName: "convex" }],
+  supportedVersionRange: ">=1.0.0",
+  recipeVersion: "1.0.0",
+  contexts: {
+    allowed: ["client", "server", "action", "workflow", "endpoint", "test", "build"],
+    denied: ["shared", "query", "liveQuery", "command", "edge"],
+  },
+  capabilities: networkCapability(
+    ["*.convex.cloud", "*.convex.site"],
+    ["recipe:convex", "Convex client/server package connects to Convex deployments"],
+  ),
+  secrets: [
+    secret("NEXT_PUBLIC_CONVEX_URL", false),
+    secret("CONVEX_URL", false),
+    secret("CONVEX_DEPLOYMENT", false),
+    secret("CONVEX_DEPLOY_KEY", false),
+  ],
+  adapters: [],
+  testkits: ["convex.mock.ts"],
+  docs: ["convex.md"],
+};
+
 export const FORGE_RECIPE: IntegrationRecipe = {
   alias: "forge",
   packages: [{ packageName: "forge" }],
@@ -283,6 +307,7 @@ export const REFERENCE_ALIASES = [
   "posthog",
   "sentry",
   "zod",
+  "convex",
   "ai",
 ] as const;
 

@@ -549,7 +549,7 @@ export async function forgeAdd(
     const error = createDiagnostic({
       severity: "error",
       code: "FORGE_UNKNOWN_ALIAS",
-      message: `unknown integration alias '${alias}'; supported: stripe, posthog, sentry, zod, ai. For npm packages, use 'forge add package ${alias}' or 'forge add ${alias}'.`,
+      message: `unknown integration alias '${alias}'; supported: stripe, posthog, sentry, zod, convex, ai. For npm packages, use 'forge add package ${alias}' or 'forge add ${alias}'.`,
       suggestedCommands: [`forge add package ${alias} --dry-run --json`, "forge add --help"],
     });
     return finalizeAddResult({

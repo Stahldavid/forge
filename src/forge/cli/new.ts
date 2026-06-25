@@ -535,3 +535,11 @@ export function formatNewHuman(result: NewCommandResult): string {
     "",
   ].join("\n");
 }
+
+export function formatNewJson(result: NewCommandResult): string {
+  return `${JSON.stringify({
+    schemaVersion: "0.1.0",
+    ok: result.exitCode === 0,
+    ...result,
+  }, null, 2)}\n`;
+}
