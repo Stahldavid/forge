@@ -157,11 +157,11 @@ export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
   const integrationNextActions =
     result.exitCode === 0 && result.mode === "integration" && result.targetKind === "forge-integration"
       ? [
+          "forge generate",
           ...(result.recipePackages ?? []).map((pkg) => `forge deps inspect ${pkg} --json`),
           ...((result.requiredSecrets?.length ?? 0) > 0 || (result.optionalSecrets?.length ?? 0) > 0
             ? ["forge secrets check --json", "forge inspect secrets --json"]
             : []),
-          "forge generate",
           "forge check --json",
           "forge verify --smoke",
         ]

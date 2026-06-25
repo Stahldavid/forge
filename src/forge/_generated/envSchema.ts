@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.26 input=778efcf6ab1654d740a63150785427347e3b87d5b7720acc9f26a9e512e0e5fa content=a3d1351f5a64cfe2964d5140049c55de5620e2abfb8187bbb244990852cfbbef
+// @forge-generated generator=0.1.0-alpha.27 input=c421aa52eea72a123ad08deaf57d3e0438100460fc40d12edf5d5fe2fff0e58f content=a3d1351f5a64cfe2964d5140049c55de5620e2abfb8187bbb244990852cfbbef
 export const envSchema = {
   "variables": [
     {

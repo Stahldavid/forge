@@ -3,7 +3,7 @@ import type { Dependency } from "../types/package-graph.ts";
 import type { PackageManager } from "../types/runtime.ts";
 import type { SourceFileIndex } from "./workspace-index.ts";
 
-export const ORCHESTRATOR_MANIFEST_VERSION = "1";
+export const ORCHESTRATOR_MANIFEST_VERSION = "2";
 
 export interface DiscoverContext {
   workspaceRoot: string;

@@ -8,6 +8,7 @@ import type { GenerateResult } from "../types/cli.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import { discover } from "./discover.ts";
 import { loadManifest } from "./manifest.ts";
+import { ORCHESTRATOR_MANIFEST_VERSION } from "./types.ts";
 
 export type FastGenerateCheckResult =
   | {
@@ -55,6 +56,9 @@ export function runFastGenerateCheck(workspaceRootInput: string): FastGenerateCh
   const manifest = loadManifest(cacheDir);
   const trackedFiles = Object.keys(manifest.fileHashes).sort();
 
+  if (manifest.schemaVersion !== ORCHESTRATOR_MANIFEST_VERSION) {
+    return { kind: "miss", reason: "manifest schema version changed" };
+  }
   if (!manifest.inputFingerprint || trackedFiles.length === 0) {
     return { kind: "miss", reason: "manifest missing input fingerprint or file hashes" };
   }

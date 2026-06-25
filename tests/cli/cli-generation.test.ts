@@ -381,8 +381,13 @@ describe("Forge CLI generation and inspection", () => {
     try {
       mkdirSync(join(workspace, "src", "commands"), { recursive: true });
       mkdirSync(join(workspace, "src", "forge", "_generated"), { recursive: true });
+      mkdirSync(join(workspace, ".forge", "cache"), { recursive: true });
+      mkdirSync(join(workspace, ".forge", "delta", "delta.db"), { recursive: true });
       writeFileSync(join(workspace, "src", "commands", "changed.ts"), "export const ok = true;\n", "utf8");
       writeFileSync(join(workspace, "src", "forge", "_generated", "client.ts"), "export const generated = true;\n", "utf8");
+      writeFileSync(join(workspace, ".forge", "cache", "manifest.json"), "{}\n", "utf8");
+      writeFileSync(join(workspace, ".forge", "delta", "delta.db", "events.jsonl"), "{}\n", "utf8");
+      writeFileSync(join(workspace, "forge.lock"), "{}\n", "utf8");
 
       const changed = runChangedCommand(workspace);
       expect(changed.exitCode).toBe(0);
@@ -399,6 +404,35 @@ describe("Forge CLI generation and inspection", () => {
       );
       const humanChanges = changed.data.humanChanges as { source: { sample: string[] } };
       expect(humanChanges.source.sample).toContain("src/commands/changed.ts");
+
+      const authored = runChangedCommand(workspace, { authoredOnly: true });
+      expect(authored.exitCode).toBe(0);
+      expect(authored.data.summary).toMatchObject({
+        view: "authored",
+        changedFiles: 1,
+        humanFiles: 1,
+        generatedFiles: 0,
+        untrackedFiles: 1,
+      });
+      const authoredGit = authored.data.git as {
+        changed: {
+          total: { sample: string[] };
+          byType: {
+            generated: { count: number };
+            operational: { count: number };
+            source: { sample: string[] };
+          };
+        };
+        untracked: { total: { count: number; sample: string[] } };
+      };
+      expect(authoredGit.changed.total.sample).toEqual(["src/commands/changed.ts"]);
+      expect(authoredGit.changed.byType.source.sample).toContain("src/commands/changed.ts");
+      expect(authoredGit.changed.byType.generated.count).toBe(0);
+      expect(authoredGit.changed.byType.operational.count).toBe(0);
+      expect(authoredGit.untracked.total).toMatchObject({
+        count: 1,
+        sample: ["src/commands/changed.ts"],
+      });
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

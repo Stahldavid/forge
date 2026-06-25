@@ -6,6 +6,19 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.27
+
+- Stabilized the `forge add convex` loop: integration docs/testkits are now
+  re-emitted by the main generator, partial `forge add` plans no longer remove
+  unrelated generated files, stale fast-check manifest hashes are pruned instead
+  of merged, and `forge add --json` includes changed package-manager files.
+- Made runtime mock mode tolerate Bun builds without `Bun.mock.module` while
+  still applying mock secret environment variables.
+- Filtered generated and operational filesystem noise from
+  `forge changed --authored` in non-git workspaces.
+- Excluded Java build outputs such as `target/`, `.class`, and `.jar` files
+  from the published npm tarball.
+
 ## 0.1.0-alpha.26
 
 - Hardened the field-demo loop after the Team Onboarding app exercise:

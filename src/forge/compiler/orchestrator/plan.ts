@@ -94,6 +94,8 @@ import { detectCapabilities } from "../classifier/capabilities.ts";
 import { detectSecrets } from "../classifier/secrets.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
 import { RECIPE_SCHEMA_VERSION } from "../recipes/definitions.ts";
+import type { IntegrationRecipe } from "../types/integration.ts";
+import type { RuntimeContext } from "../types/runtime.ts";
 import {
   FORGE_LOCK_SCHEMA_VERSION,
   GENERATED_DIR,
@@ -104,6 +106,14 @@ import { hashStable } from "../primitives/hash.ts";
 import { stableSortEmitFiles } from "../primitives/sort.ts";
 import { detectOrphanedGeneratedFiles } from "./orphans.ts";
 import type { DiscoverContext } from "./types.ts";
+import {
+  createRenderContext,
+  parseAdapterContext,
+  renderAdapterModule,
+  renderIntegrationDoc,
+  renderIntegrationModule,
+  renderTestkitModule,
+} from "../integration/render.ts";
 import {
   serializeAppGraphJson,
   serializeDataGraphJson,
@@ -233,6 +243,156 @@ function makeEmitFile(path: string, content: string): EmitFile {
   };
 }
 
+function primaryPackageName(recipe: IntegrationRecipe): string {
+  return recipe.packages[0]?.packageName ?? recipe.alias;
+}
+
+function packageNamesForRecipe(recipe: IntegrationRecipe): string[] {
+  return recipe.packages.map((pkg) => pkg.packageName);
+}
+
+function compatibleContextsForRecipe(pkg: ClassifiedPackage): RuntimeContext[] {
+  const recipe = pkg.recipe ?? resolveByPackageName(pkg.api.name);
+  if (!recipe) {
+    return [...pkg.classification.compatible];
+  }
+
+  const contexts = new Set<RuntimeContext>(recipe.contexts.allowed);
+  for (const recipePackage of recipe.packages) {
+    for (const ctx of recipePackage.contexts?.allowed ?? []) {
+      contexts.add(ctx);
+    }
+  }
+  for (const ctx of pkg.classification.compatible) {
+    contexts.add(ctx);
+  }
+  return [...contexts];
+}
+
+function shouldEmitAdapter(
+  adapterFilename: string,
+  compatible: RuntimeContext[],
+): boolean {
+  const context = parseAdapterContext(adapterFilename);
+  return context === null || compatible.includes(context);
+}
+
+function buildRecipeGeneratedFiles(pkg: ClassifiedPackage): string[] {
+  const recipe = pkg.recipe ?? resolveByPackageName(pkg.api.name);
+  if (!recipe) {
+    return [];
+  }
+
+  const compatible = compatibleContextsForRecipe(pkg);
+  const paths: string[] = [];
+
+  for (const adapter of recipe.adapters) {
+    if (shouldEmitAdapter(adapter, compatible)) {
+      paths.push(`${GENERATED_DIR}/packages/${adapter}`);
+    }
+  }
+  for (const integration of recipe.integrations ?? []) {
+    paths.push(`${GENERATED_DIR}/integrations/${integration}`);
+  }
+  for (const testkit of recipe.testkits) {
+    paths.push(`${GENERATED_DIR}/testkits/${testkit}`);
+  }
+  for (const doc of recipe.docs) {
+    paths.push(`${GENERATED_DIR}/docs/${doc}`);
+  }
+
+  paths.push(
+    `${GENERATED_DIR}/runtimeMatrix.ts`,
+    `${GENERATED_DIR}/runtimeMatrix.json`,
+    `${GENERATED_DIR}/importGuards.ts`,
+    `${GENERATED_DIR}/importGuards.json`,
+  );
+
+  return paths.sort();
+}
+
+function buildIntegrationArtifactFiles(pkg: ClassifiedPackage): EmitFile[] {
+  const recipe = pkg.recipe ?? resolveByPackageName(pkg.api.name);
+  if (!recipe) {
+    return [];
+  }
+
+  const compatible = compatibleContextsForRecipe(pkg);
+  const incompatible = [...pkg.classification.incompatible];
+  const secrets = detectSecrets(pkg.api, recipe);
+  const packageNames = packageNamesForRecipe(recipe);
+  const packageName = primaryPackageName(recipe);
+  const templateCtx = createRenderContext({
+    alias: recipe.alias,
+    recipe,
+    context: "server",
+    packageName,
+    packageNames,
+    secrets,
+    compatible,
+    incompatible,
+  });
+  const files: EmitFile[] = [];
+
+  for (const adapter of recipe.adapters) {
+    if (!shouldEmitAdapter(adapter, compatible)) {
+      continue;
+    }
+    const context = parseAdapterContext(adapter) ?? "server";
+    files.push(
+      makeEmitFile(
+        `${GENERATED_DIR}/packages/${adapter}`,
+        renderAdapterModule({
+          alias: recipe.alias,
+          recipe,
+          context,
+          packageName,
+          packageNames,
+          secrets,
+          compatible,
+          incompatible,
+        }),
+      ),
+    );
+  }
+
+  for (const integration of recipe.integrations ?? []) {
+    files.push(
+      makeEmitFile(
+        `${GENERATED_DIR}/integrations/${integration}`,
+        renderIntegrationModule(integration, templateCtx),
+      ),
+    );
+  }
+
+  for (const testkit of recipe.testkits) {
+    files.push(
+      makeEmitFile(
+        `${GENERATED_DIR}/testkits/${testkit}`,
+        renderTestkitModule(recipe.alias, packageName, templateCtx),
+      ),
+    );
+  }
+
+  for (const doc of recipe.docs) {
+    files.push(
+      makeEmitFile(
+        `${GENERATED_DIR}/docs/${doc}`,
+        renderIntegrationDoc({
+          alias: recipe.alias,
+          recipe,
+          packageNames,
+          secrets,
+          compatible,
+          incompatible,
+        }),
+      ),
+    );
+  }
+
+  return files;
+}
+
 function buildLockEntry(pkg: ClassifiedPackage): ForgeLockEntry {
   const recipe = pkg.recipe ?? resolveByPackageName(pkg.api.name);
   const secrets = detectSecrets(pkg.api, recipe ?? undefined);
@@ -250,7 +410,7 @@ function buildLockEntry(pkg: ClassifiedPackage): ForgeLockEntry {
       secrets,
     },
     secrets,
-    generatedFiles: [],
+    generatedFiles: buildRecipeGeneratedFiles(pkg),
     contentChecksum: pkg.api.contentChecksum,
   };
 }
@@ -412,6 +572,7 @@ export function plan(input: PlanInput): EmitPlan {
     apiSurface,
     sources: input.ctx.sources,
   });
+  const integrationArtifactFiles = input.classified.flatMap(buildIntegrationArtifactFiles);
   const supportArtifactsMs = performance.now() - checkpoint;
   checkpoint = performance.now();
 
@@ -517,6 +678,7 @@ export function plan(input: PlanInput): EmitPlan {
       `${GENERATED_DIR}/importGuards.json`,
       serializeImportGuardsJson(matrix, input.appGraph.moduleGraph),
     ),
+    ...integrationArtifactFiles,
     makeEmitFile(
       `${GENERATED_DIR}/dataGraph.ts`,
       serializeDataGraphTs(dataGraph),

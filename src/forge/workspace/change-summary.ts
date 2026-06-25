@@ -183,6 +183,40 @@ export function categorizeFiles(
   };
 }
 
+export function filterCategorizedSummary(
+  summary: CategorizedFileSummary,
+  includeTypes: ChangeType[],
+  sampleSize = 8,
+): CategorizedFileSummary {
+  const include = new Set(includeTypes);
+  const byType = Object.fromEntries(
+    CHANGE_TYPES.map((type) => {
+      const current = summary.byType[type];
+      return [
+        type,
+        include.has(type) ? current : { count: 0, sample: [], hidden: 0 },
+      ];
+    }),
+  ) as Record<ChangeType, FileListSummary>;
+  const totalCount = includeTypes.reduce((count, type) => count + summary.byType[type].count, 0);
+  const totalSample = includeTypes
+    .flatMap((type) => summary.byType[type].sample)
+    .sort()
+    .slice(0, sampleSize);
+  const primaryTypes = CHANGE_TYPES
+    .filter((type) => byType[type].count > 0)
+    .sort((left, right) => byType[right].count - byType[left].count);
+  return {
+    total: {
+      count: totalCount,
+      sample: totalSample,
+      hidden: Math.max(0, totalCount - totalSample.length),
+    },
+    byType,
+    primaryTypes,
+  };
+}
+
 export function summarizeChangeTypes(summary: CategorizedFileSummary): string {
   return summary.primaryTypes
     .slice(0, 5)

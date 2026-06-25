@@ -20,7 +20,6 @@ import { PACKAGE_ANALYZER_VERSION } from "../package-graph/constants.ts";
 import { RECIPE_SCHEMA_VERSION } from "../recipes/definitions.ts";
 import { hashStable } from "../primitives/hash.ts";
 import { stableSortEmitFiles, stableSortStrings } from "../primitives/index.ts";
-import { detectOrphanedGeneratedFiles } from "../orchestrator/orphans.ts";
 import type { DiscoverContext } from "../orchestrator/types.ts";
 import {
   createRenderContext,
@@ -254,17 +253,9 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
   const lockEntry = buildLockEntry(recipe, classified, generatedFiles);
   const lock = mergeLockPackages(input.existingLock, lockEntry, ctx);
 
-  const sortedFiles = stableSortEmitFiles(files);
-  const plannedPathSet = new Set(sortedFiles.map((file) => file.path));
-  const orphanedFiles = detectOrphanedGeneratedFiles(
-    ctx.workspaceRoot,
-    ctx.generatedDir,
-    plannedPathSet,
-  );
-
   return {
-    files: sortedFiles,
-    orphanedFiles,
+    files: stableSortEmitFiles(files),
+    orphanedFiles: [],
     lock,
   };
 }

@@ -83,7 +83,7 @@ export function updateManifestAfterWrite(
 ): OrchestratorManifest {
   return {
     ...manifest,
-    fileHashes: { ...manifest.fileHashes, ...fileHashes },
+    fileHashes,
     priorAppGraph,
     inputFingerprint,
     ...(sourceFileIndex !== undefined ? { sourceFileIndex } : {}),

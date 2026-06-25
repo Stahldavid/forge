@@ -19,6 +19,12 @@ describe("npm publish workflow", () => {
     expect(pkg.license).toBe("MIT");
     expect(pkg.bin?.forge).toBe("bin/forge.mjs");
     expect(pkg.files).toContain("LICENSE");
+    expect(pkg.files).toContain("!adapters/**/target/**");
+    expect(pkg.files).toContain("!adapters/**/*.class");
+    expect(pkg.files).toContain("!adapters/**/*.jar");
+    expect(pkg.files).toContain("!examples/**/target/**");
+    expect(pkg.files).toContain("!examples/**/*.class");
+    expect(pkg.files).toContain("!examples/**/*.jar");
     expect(pkg.files).toContain("!src/forge/_generated/**");
     expect(pkg.files).toContain("src/forge/_generated/releaseManifest.json");
     expect(pkg.files).toContain("src/forge/_generated/releaseManifest.ts");
@@ -123,5 +129,8 @@ describe("npm publish workflow", () => {
     expect(pack.files.some((file) => file.path === "src/forge/_generated/appGraph.json")).toBe(false);
     expect(pack.files.some((file) => file.path === "src/forge/_generated/runtimeMatrix.json")).toBe(false);
     expect(pack.files.some((file) => file.path === "LICENSE")).toBe(true);
+    expect(pack.files.some((file) => file.path.includes("/target/"))).toBe(false);
+    expect(pack.files.some((file) => file.path.endsWith(".class"))).toBe(false);
+    expect(pack.files.some((file) => file.path.endsWith(".jar"))).toBe(false);
   });
 });

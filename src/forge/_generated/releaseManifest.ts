@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.26 input=778efcf6ab1654d740a63150785427347e3b87d5b7720acc9f26a9e512e0e5fa content=967d4e05aa540b3e3d843fa6ed4516658ab4c364c1d8c42a14f36c57b75dff71
+// @forge-generated generator=0.1.0-alpha.27 input=c421aa52eea72a123ad08deaf57d3e0438100460fc40d12edf5d5fe2fff0e58f content=3a34de2474ecf200ab734c0a01f9dd2c6a780af76bd650d3238c8b46313542b3
 export const releaseManifest = {
   "defaultProvider": "local",
   "diagnostics": [],
@@ -19,7 +19,7 @@ export const releaseManifest = {
     "custom"
   ],
   "packageName": "forgeos",
-  "packageVersion": "0.1.0-alpha.26",
-  "releaseId": "forgeos@0.1.0-alpha.26+unknown",
+  "packageVersion": "0.1.0-alpha.27",
+  "releaseId": "forgeos@0.1.0-alpha.27+unknown",
   "schemaVersion": "0.1.0"
 } as const;

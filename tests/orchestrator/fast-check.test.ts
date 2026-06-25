@@ -11,6 +11,7 @@ import {
   GENERATED_DIR,
 } from "../../src/forge/compiler/emitter/constants.ts";
 import { runFastGenerateCheck } from "../../src/forge/compiler/orchestrator/fast-check.ts";
+import { loadManifest } from "../../src/forge/compiler/orchestrator/manifest.ts";
 import { run } from "../../src/forge/compiler/orchestrator/run.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/index.ts";
 import {
@@ -90,6 +91,64 @@ describe("fast generated check", () => {
           (diag) => diag.code === FORGE_ORPHANED_GENERATED_FILE,
         ),
       ).toBe(true);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("misses when the cached manifest schema is stale", async () => {
+    const workspace = scaffoldGenerateWorkspace("fast-check-stale-schema");
+    try {
+      await run(defaultGenerateOptions(workspace));
+      const manifestPath = join(workspace, ".forge", "cache", "manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+        schemaVersion?: string;
+      };
+      writeFileSync(
+        manifestPath,
+        `${JSON.stringify({ ...manifest, schemaVersion: "0" }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const checked = runFastGenerateCheck(workspace);
+      expect(checked.kind).toBe("miss");
+      if (checked.kind !== "miss") return;
+      expect(checked.reason).toContain("schema");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("write mode replaces stale manifest hashes instead of merging them", async () => {
+    const workspace = scaffoldGenerateWorkspace("fast-check-prune-manifest");
+    try {
+      await run(defaultGenerateOptions(workspace));
+      const manifestPath = join(workspace, ".forge", "cache", "manifest.json");
+      const stalePath = `${GENERATED_DIR}/stale.ts`;
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+        fileHashes?: Record<string, string>;
+      };
+      writeFileSync(
+        manifestPath,
+        `${JSON.stringify({
+          ...manifest,
+          fileHashes: {
+            ...(manifest.fileHashes ?? {}),
+            [stalePath]: "stale",
+          },
+        }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const regenerated = await run(defaultGenerateOptions(workspace));
+      expect(regenerated.exitCode).toBe(0);
+      const refreshed = loadManifest(join(workspace, ".forge", "cache"));
+      expect(refreshed.fileHashes[stalePath]).toBeUndefined();
+
+      const checked = runFastGenerateCheck(workspace);
+      expect(checked.kind).toBe("hit");
+      if (checked.kind !== "hit") return;
+      expect(checked.result.exitCode).toBe(0);
     } finally {
       cleanupWorkspace(workspace);
     }

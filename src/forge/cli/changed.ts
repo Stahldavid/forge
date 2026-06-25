@@ -1,5 +1,9 @@
 import type { CategorizedFileSummary, DiffPlan } from "../workspace/change-summary.ts";
-import { buildDiffPlanFromChangeSummary, summarizeChangeTypes } from "../workspace/change-summary.ts";
+import {
+  buildDiffPlanFromChangeSummary,
+  filterCategorizedSummary,
+  summarizeChangeTypes,
+} from "../workspace/change-summary.ts";
 import { buildWorkspaceGitSummary, type WorkspaceGitSummary } from "../workspace/git-summary.ts";
 
 export interface ChangedCommandResult {
@@ -38,6 +42,8 @@ interface GeneratedChangeExplanation {
   gitMeaning: string;
   summary: string;
 }
+
+const AUTHORED_CHANGE_TYPES = ["source", "tests", "docs", "config", "assets", "other"] as const;
 
 function emptyCategory(summary: CategorizedFileSummary, category: keyof CategorizedFileSummary["byType"]): boolean {
   return summary.byType[category].count === 0;
@@ -183,23 +189,22 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const changed = git.changeSummary.changed;
   const humanChanges = selectHumanChangeSummary(changed);
   const derivedChanges = selectDerivedChangeSummary(changed);
-  const authoredChanged: CategorizedFileSummary = {
-    ...changed,
-    total: { ...changed.total, count: humanChanges.total },
-    byType: {
-      ...changed.byType,
-      generated: { count: 0, sample: [], hidden: 0 },
-    },
-    primaryTypes: changed.primaryTypes.filter((type) => type !== "generated"),
-  };
+  const authoredChanged = filterCategorizedSummary(changed, [...AUTHORED_CHANGE_TYPES]);
+  const authoredStaged = filterCategorizedSummary(git.changeSummary.staged, [...AUTHORED_CHANGE_TYPES]);
+  const authoredUnstaged = filterCategorizedSummary(git.changeSummary.unstaged, [...AUTHORED_CHANGE_TYPES]);
+  const authoredUntracked = filterCategorizedSummary(git.changeSummary.untracked, [...AUTHORED_CHANGE_TYPES]);
+  const viewHumanChanges = options.authoredOnly ? selectHumanChangeSummary(authoredChanged) : humanChanges;
   const viewChanged = options.authoredOnly ? authoredChanged : changed;
+  const viewStaged = options.authoredOnly ? authoredStaged : git.changeSummary.staged;
+  const viewUnstaged = options.authoredOnly ? authoredUnstaged : git.changeSummary.unstaged;
+  const viewUntracked = options.authoredOnly ? authoredUntracked : git.changeSummary.untracked;
   const viewDerivedChanges: DerivedChangeSummary = options.authoredOnly
     ? { total: 0, generated: { count: 0, sample: [], hidden: 0 } }
     : derivedChanges;
   const risks = buildRisks(git);
   const recommendedCommands = buildRecommendedCommands(git);
-  const reviewFocus = buildReviewFocus(humanChanges, viewDerivedChanges);
-  const generatedExplanation = buildGeneratedChangeExplanation(humanChanges, viewDerivedChanges);
+  const reviewFocus = buildReviewFocus(viewHumanChanges, viewDerivedChanges);
+  const generatedExplanation = buildGeneratedChangeExplanation(viewHumanChanges, viewDerivedChanges);
   const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
   const ok = git.available || git.source === "filesystem";
 
@@ -213,11 +218,11 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
         commit: git.commit,
         view: options.authoredOnly ? "authored" : "all",
         changedFiles: viewChanged.total.count,
-        humanFiles: humanChanges.total,
+        humanFiles: viewHumanChanges.total,
         generatedFiles: viewDerivedChanges.total,
-        stagedFiles: git.staged.count,
-        unstagedFiles: git.unstaged.count,
-        untrackedFiles: git.untracked.count,
+        stagedFiles: viewStaged.total.count,
+        unstagedFiles: viewUnstaged.total.count,
+        untrackedFiles: viewUntracked.total.count,
         primaryTypes: viewChanged.primaryTypes,
         changeTypes: summarizeChangeTypes(viewChanged),
       },
@@ -228,11 +233,11 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
         branch: git.branch,
         commit: git.commit,
         changed: viewChanged,
-        staged: git.changeSummary.staged,
-        unstaged: git.changeSummary.unstaged,
-        untracked: git.changeSummary.untracked,
+        staged: viewStaged,
+        unstaged: viewUnstaged,
+        untracked: viewUntracked,
       },
-      humanChanges,
+      humanChanges: viewHumanChanges,
       derivedChanges: viewDerivedChanges,
       reviewFocus,
       generatedExplanation,

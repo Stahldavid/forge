@@ -1,5 +1,19 @@
 # forgeos
 
+## 0.1.0-alpha.27
+
+### Patch Changes
+
+- Stabilize `forge add convex` and generated integration artifacts.
+
+  - Re-emit integration adapters, docs, and testkits from the main generator so `forge generate --check` and `forge verify --smoke` stay clean after `forge add`.
+  - Keep partial `forge add` plans from deleting unrelated generated files before the full generator can reconcile the workspace.
+  - Include changed package-manager files such as `package.json` and lockfiles in `forge add --json` handoffs.
+  - Replace stale fast-check manifest hashes instead of merging them, and invalidate old manifest schemas to avoid phantom generated drift.
+  - Skip Bun module mock registration when the active Bun runtime does not expose `Bun.mock.module`, while still applying mock secret env vars.
+  - Filter generated and operational filesystem noise from `forge changed --authored` in non-git workspaces.
+  - Keep Java build outputs such as `target/`, `.class`, and `.jar` files out of the published npm tarball.
+
 ## 0.1.0-alpha.26
 
 ### Patch Changes

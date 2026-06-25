@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.26 input=778efcf6ab1654d740a63150785427347e3b87d5b7720acc9f26a9e512e0e5fa content=3a0c12a66741d47e5365b0826e91424cb3e5838294f99e13a43ca7306e0aa0ea
+// @forge-generated generator=0.1.0-alpha.27 input=c421aa52eea72a123ad08deaf57d3e0438100460fc40d12edf5d5fe2fff0e58f content=6c372cb6f11eb4910ca7f917cbf6ac32d2a9102d0e1ec36a5fcd23fe1c7feeeb
 export * from "./actionSubscriptions";
 export * from "./agentAdapterManifest";
 export * from "./agentContract";
@@ -40,6 +40,10 @@ export * from "./makeTemplates";
 export * from "./mockMap";
 export * from "./packageGraph";
 export * from "./packageUpgradeRegistry";
+export * from "./packages/ai.anthropic.server";
+export * from "./packages/ai.gateway.server";
+export * from "./packages/ai.openai.server";
+export * from "./packages/zod.shared";
 export * from "./permissionMatrix";
 export * from "./policyRegistry";
 export * from "./queryRegistry";
@@ -62,6 +66,10 @@ export * from "./telemetrySinks";
 export * from "./tenantScope";
 export * from "./testGraph";
 export * from "./testPlanRegistry";
+export * from "./testkits/ai.anthropic.mock";
+export * from "./testkits/ai.gateway.mock";
+export * from "./testkits/ai.openai.mock";
+export * from "./testkits/zod.mock";
 export * from "./uiRoutes";
 export * from "./uiScenarios";
 export * from "./uiTestManifest";

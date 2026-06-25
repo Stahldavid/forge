@@ -213,6 +213,23 @@ function capitalizeSegment(value: string): string {
 }
 
 async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promise<void> {
+  if (lock) {
+    for (const pkg of lock.packages) {
+      for (const secret of pkg.secrets) {
+        if (!process.env[secret.envVar]) {
+          process.env[secret.envVar] = `sk_forge_mock_${secret.envVar.toLowerCase()}`;
+        }
+      }
+    }
+  }
+
+  const bunMock = (globalThis as typeof globalThis & {
+    Bun?: { mock?: { module?: (specifier: string, factory: () => unknown) => void } };
+  }).Bun?.mock;
+  if (typeof bunMock?.module !== "function") {
+    return;
+  }
+
   const mockMap = loadMockMap(workspaceRoot);
 
   for (const [packageName, relativePath] of Object.entries(mockMap).sort()) {
@@ -225,11 +242,7 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
     const factoryName = `create${capitalizeSegment(packageName)}Mock`;
     const factory = mod[factoryName];
 
-    const bunMock = Bun as typeof Bun & {
-      mock: { module: (specifier: string, factory: () => unknown) => void };
-    };
-
-    bunMock.mock.module(packageName, () => {
+    bunMock.module(packageName, () => {
       if (typeof factory === "function") {
         const mockValue = (factory as () => unknown)();
         if (typeof mockValue === "function") {
@@ -242,16 +255,6 @@ async function applyMocks(workspaceRoot: string, lock: ForgeLock | null): Promis
       }
       return mod;
     });
-  }
-
-  if (lock) {
-    for (const pkg of lock.packages) {
-      for (const secret of pkg.secrets) {
-        if (!process.env[secret.envVar]) {
-          process.env[secret.envVar] = `sk_forge_mock_${secret.envVar.toLowerCase()}`;
-        }
-      }
-    }
   }
 }
 

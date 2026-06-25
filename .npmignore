@@ -5,6 +5,12 @@ node_modules/
 .forge/
 tests/
 examples/
+adapters/**/target/
+examples/**/target/
+*.class
+*.jar
+**/*.class
+**/*.jar
 src/forge/_generated/**
 !src/forge/_generated/
 !src/forge/_generated/releaseManifest.json

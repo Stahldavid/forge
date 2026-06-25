@@ -344,6 +344,39 @@ function dependencyFromInstall(
   };
 }
 
+function fileHashOrNull(path: string): string | null {
+  if (!nodeFileSystem.exists(path)) {
+    return null;
+  }
+  return hashStable(nodeFileSystem.readText(path) ?? "");
+}
+
+function snapshotPackageManagerFiles(
+  workspaceRoot: string,
+  pm: PackageManagerAdapter,
+): Map<string, string | null> {
+  const paths = ["package.json", pm.lockfile];
+  return new Map(
+    paths.map((path) => [
+      path,
+      fileHashOrNull(join(workspaceRoot, path)),
+    ]),
+  );
+}
+
+function changedPackageManagerFiles(
+  workspaceRoot: string,
+  before: Map<string, string | null>,
+): string[] {
+  const changed: string[] = [];
+  for (const [path, previousHash] of before) {
+    if (fileHashOrNull(join(workspaceRoot, path)) !== previousHash) {
+      changed.push(path);
+    }
+  }
+  return changed.sort();
+}
+
 async function analyzeRecipePackages(
   recipe: NonNullable<ReturnType<typeof resolveRecipe>>,
   ctx: ReturnType<typeof discover>,
@@ -635,6 +668,7 @@ export async function forgeAdd(
   const snapshot = snapshotVersionControlled(options.workspaceRoot);
 
   try {
+    const packageManagerBefore = snapshotPackageManagerFiles(options.workspaceRoot, pm);
     for (const pkg of recipe.packages) {
       await pm.add(pkg.packageName, {
         cwd: options.workspaceRoot,
@@ -735,7 +769,10 @@ export async function forgeAdd(
       alias: normalized,
       mode: "integration",
       ...recipeResultMetadata(recipe),
-      changed: emitResult.changed,
+      changed: [
+        ...changedPackageManagerFiles(options.workspaceRoot, packageManagerBefore),
+        ...emitResult.changed,
+      ],
       unchanged: emitResult.unchanged,
       warnings: warningsCombined,
       errors: [],

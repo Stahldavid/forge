@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { forgeAdd } from "../../src/forge/compiler/integration/add.ts";
+import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { buildAddJson, writeHumanAdd } from "../../src/forge/cli/output.ts";
 import { loadExistingForgeLock } from "../../src/forge/compiler/integration/plan.ts";
 import { parseAdapterContext } from "../../src/forge/compiler/integration/render.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
+import { defaultGenerateOptions } from "../orchestrator/helpers.ts";
 import {
   cleanupWorkspace,
   createFailingPmAdapter,
@@ -275,6 +277,9 @@ describe("forge add integration", () => {
       });
       expect(json.nextActions as string[]).toContain("forge deps inspect stripe --json");
       expect(json.nextActions as string[]).toContain("forge secrets check --json");
+      expect((json.nextActions as string[]).indexOf("forge generate")).toBeLessThan(
+        (json.nextActions as string[]).indexOf("forge deps inspect stripe --json"),
+      );
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -326,6 +331,13 @@ describe("forge add integration", () => {
   test("adds convex as an app-contract package recipe", async () => {
     const workspace = scaffoldAddWorkspace("add-convex");
     try {
+      mkdirSync(join(workspace, "src/forge/_generated/docs"), { recursive: true });
+      writeFileSync(
+        join(workspace, "src/forge/_generated/docs/AGENTS.md"),
+        "# Existing generated doc\n",
+        "utf8",
+      );
+
       const result = await forgeAdd("convex", {
         workspaceRoot: workspace,
         json: false,
@@ -341,6 +353,7 @@ describe("forge add integration", () => {
       expect(result.mode).toBe("integration");
       expect(result.recipeVersion).toBe("1.0.0");
       expect(result.recipePackages).toEqual(["convex"]);
+      expect(result.changed).toContain("package.json");
       expect(result.requiredSecrets).toEqual([]);
       expect(result.optionalSecrets?.sort()).toEqual([
         "CONVEX_DEPLOYMENT",
@@ -350,6 +363,7 @@ describe("forge add integration", () => {
       ]);
       expect(existsSync(join(workspace, "src/forge/_generated/docs/convex.md"))).toBe(true);
       expect(existsSync(join(workspace, "src/forge/_generated/testkits/convex.mock.ts"))).toBe(true);
+      expect(existsSync(join(workspace, "src/forge/_generated/docs/AGENTS.md"))).toBe(true);
       expect(readFileSync(join(workspace, "src/forge/_generated/docs/convex.md"), "utf8")).toContain(
         "Convex is treated as an agent-friendly backend package",
       );
@@ -364,6 +378,19 @@ describe("forge add integration", () => {
       expect(convex?.compatible).toContain("server");
       expect(convex?.incompatible).toContain("command");
       expect(convex?.incompatible).toContain("query");
+
+      const json = buildAddJson(result);
+      expect((json.nextActions as string[]).indexOf("forge generate")).toBeLessThan(
+        (json.nextActions as string[]).indexOf("forge deps inspect convex --json"),
+      );
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+      const checked = await runGenerateCommand({
+        ...defaultGenerateOptions(workspace),
+        check: true,
+      });
+      expect(checked.exitCode).toBe(0);
     } finally {
       cleanupWorkspace(workspace);
     }
