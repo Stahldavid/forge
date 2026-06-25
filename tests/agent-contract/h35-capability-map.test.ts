@@ -4,7 +4,7 @@ import { describe, expect, test } from "bun:test";
 import { runDoctorCommand } from "../../src/forge/cli/doctor.ts";
 import { runGenerateCommand, runInspectCommand } from "../../src/forge/cli/commands.ts";
 import { runNewCommand } from "../../src/forge/cli/new.ts";
-import type { AgentCapabilityMap } from "../../src/forge/compiler/agent-contract/types.ts";
+import type { AgentCapabilityMap, AgentContract } from "../../src/forge/compiler/agent-contract/types.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import {
   cleanupWorkspace,
@@ -20,6 +20,14 @@ function readCapabilityMap(project: string): AgentCapabilityMap {
       readFileSync(join(project, GENERATED, "capabilityMap.json"), "utf8"),
     ),
   ) as AgentCapabilityMap;
+}
+
+function readAgentContract(project: string): AgentContract {
+  return JSON.parse(
+    stripDeterministicHeader(
+      readFileSync(join(project, GENERATED, "agentContract.json"), "utf8"),
+    ),
+  ) as AgentContract;
 }
 
 async function createMinimalProject(name: string): Promise<{ workspace: string; project: string }> {
@@ -88,6 +96,73 @@ describe("H35 capability map", () => {
       expect((naturalAlias.data as { entries?: unknown[] }).entries?.length).toBeGreaterThan(0);
       const all = await runInspectCommand("all", project, { full: true });
       expect((all.data as { capabilityMap?: unknown }).capabilityMap).toBeTruthy();
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
+  test("capability map marks camelCase tenant-scoped liveQuery dependencies as tenant", async () => {
+    const { workspace, project } = await createMinimalProject("h35-capability-tenant-camel-table");
+    try {
+      writeFileSync(
+        join(project, "src", "forge", "schema.ts"),
+        [
+          readFileSync(join(project, "src", "forge", "schema.ts"), "utf8"),
+          "",
+          "export const onboardingTasks = defineTable({",
+          '  name: "onboardingTasks",',
+          "  fields: {",
+          '    id: "uuid",',
+          '    tenantId: "text",',
+          '    title: "text",',
+          '    status: "text",',
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(project, "src", "queries", "liveOnboardingTasks.ts"),
+        [
+          'import { can, liveQuery } from "forge/server";',
+          "",
+          "export const liveOnboardingTasks = liveQuery({",
+          '  auth: can("tasks.read"),',
+          "  handler: async (ctx) => {",
+          "    return ctx.db.onboardingTasks.all();",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(project));
+      expect(generated.exitCode).toBe(0);
+
+      const contract = readAgentContract(project);
+      expect(contract.data.tables).toContainEqual(
+        expect.objectContaining({
+          name: "onboardingTasks",
+          tenantScoped: true,
+          tenantField: "tenantId",
+        }),
+      );
+      expect(contract.liveQueries.find((entry) => entry.name === "liveOnboardingTasks")?.dependencies).toEqual([
+        { table: "onboardingTasks", scope: "tenant" },
+      ]);
+
+      const map = readCapabilityMap(project);
+      expect(map.entries).toContainEqual(
+        expect.objectContaining({
+          id: "runtime:liveQuery:liveOnboardingTasks",
+          status: "backend-only",
+          runtime: expect.objectContaining({
+            dependencies: [{ table: "onboardingTasks", scope: "tenant" }],
+          }),
+        }),
+      );
     } finally {
       cleanupWorkspace(workspace);
     }

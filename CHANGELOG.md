@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.25
+
+### Patch Changes
+
+- Harden DeltaDB and Agent Memory under real `forge dev` concurrency.
+
+  - Stop long-running dev recorders from holding the DeltaDB writer lock between events.
+  - Retry short transient DeltaDB writer conflicts before reporting `FORGE_DELTA_BUSY`.
+  - Keep Codex hook queue checkpoints unchanged when Agent Memory ingest is blocked by a busy DeltaDB writer, then retry safely instead of losing queued events.
+  - Add watcher backoff metadata for lock recovery and document the safe queue/DeltaDB behavior.
+
+- Fix tenant-scope reporting in the generated agent contract and capability map.
+
+  - Match tenant-scoped tables by both authored/camelCase table names and generated SQL snake_case table names.
+  - Report camelCase liveQuery dependencies such as `onboardingTasks` as `tenant` scoped when `tenantScope.json` confirms `tenant_id`.
+  - Add regression coverage for the Team Onboarding style liveQuery/capability-map path.
+
 ## 0.1.0-alpha.24
 
 ### Patch Changes

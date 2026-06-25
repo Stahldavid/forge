@@ -7,6 +7,7 @@ import { detectSecrets } from "../classifier/secrets.ts";
 import { GENERATOR_VERSION } from "../emitter/constants.ts";
 import { stripDeterministicHeader } from "../primitives/header.ts";
 import { canonicalJson, normalizeNewlines, serializeCanonical } from "../primitives/serialize.ts";
+import { toSnakeCase } from "../data-graph/sql/naming.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
 import {
   defaultRuntimeCompatibility,
@@ -286,6 +287,35 @@ function runtimeRules(): AgentRuntimeRule[] {
       forbidden: ["non-idempotent step behavior without guards"],
     },
   ];
+}
+
+type TenantTableInfo = {
+  tenantIdColumn: string;
+  tenantField: string;
+};
+
+function buildTenantTableLookup(tenantScope: TenantScope, dataGraph: DataGraph): Map<string, TenantTableInfo> {
+  const lookup = new Map<string, TenantTableInfo>();
+  for (const scoped of tenantScope.tables) {
+    const table = dataGraph.tables.find((candidate) =>
+      candidate.name === scoped.table ||
+      candidate.exportName === scoped.exportName ||
+      toSnakeCase(candidate.name) === scoped.table ||
+      toSnakeCase(candidate.exportName) === scoped.table
+    );
+    const tenantField = table?.fields.find((field) => toSnakeCase(field.name) === scoped.tenantIdColumn)?.name ??
+      scoped.tenantIdColumn;
+    const info = { tenantIdColumn: scoped.tenantIdColumn, tenantField };
+    for (const key of uniqueSorted([
+      scoped.table,
+      scoped.exportName,
+      table?.name,
+      table?.exportName,
+    ].filter((key): key is string => typeof key === "string" && key.length > 0))) {
+      lookup.set(key, info);
+    }
+  }
+  return lookup;
 }
 
 function agentProtocols(workspaceRoot: string): AgentProtocolInfo[] {
@@ -1037,9 +1067,7 @@ export function buildAgentContractArtifacts(
   input: AgentContractInput,
 ): AgentContractArtifacts {
   const project = readPackageInfo(input.workspaceRoot);
-  const tenantTables = new Map(
-    input.tenantScope.tables.map((table) => [table.table, table.tenantIdColumn]),
-  );
+  const tenantTables = buildTenantTableLookup(input.tenantScope, input.dataGraph);
   const commandAuth = new Map(
     input.policyRegistry.commandAuth.map((binding) => [binding.commandName, binding.auth]),
   );
@@ -1183,13 +1211,16 @@ export function buildAgentContractArtifacts(
       }),
     ),
     data: {
-      tables: sorted(input.dataGraph.tables, (table) => table.name).map((table) => ({
-        name: table.name,
-        file: table.file,
-        tenantScoped: tenantTables.has(table.name),
-        ...(tenantTables.has(table.name) ? { tenantField: tenantTables.get(table.name) } : {}),
-        fields: uniqueSorted(table.fields.map((field) => field.name)),
-      })),
+      tables: sorted(input.dataGraph.tables, (table) => table.name).map((table) => {
+        const tenantInfo = tenantTables.get(table.name);
+        return {
+          name: table.name,
+          file: table.file,
+          tenantScoped: Boolean(tenantInfo),
+          ...(tenantInfo ? { tenantField: tenantInfo.tenantField } : {}),
+          fields: uniqueSorted(table.fields.map((field) => field.name)),
+        };
+      }),
     },
     policies: sorted(input.policyRegistry.policies, (policy) => policy.name).map((policy) => ({
       name: policy.name,

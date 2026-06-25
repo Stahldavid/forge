@@ -1,3 +1,3 @@
-export const FORGEOS_VERSION = "0.1.0-alpha.24";
+export const FORGEOS_VERSION = "0.1.0-alpha.25";
 export const GENERATOR_VERSION = FORGEOS_VERSION;
 export const CLI_VERSION = FORGEOS_VERSION;

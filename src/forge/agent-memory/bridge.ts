@@ -113,10 +113,16 @@ async function openMemoryStore(
   workspaceRoot: string,
   access: "read" | "write" = "write",
 ): Promise<DeltaStore | AgentMemoryUnavailableResult> {
-  try {
-    return await DeltaStore.open(workspaceRoot, { access });
-  } catch (error) {
-    return memoryUnavailable(error, workspaceRoot);
+  const retryDelays = access === "write" ? [25, 75, 150] : [];
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await DeltaStore.open(workspaceRoot, { access });
+    } catch (error) {
+      if (!(error instanceof DeltaStoreBusyError) || attempt >= retryDelays.length) {
+        return memoryUnavailable(error, workspaceRoot);
+      }
+      await sleep(retryDelays[attempt] ?? 0);
+    }
   }
 }
 
@@ -129,6 +135,10 @@ function isExternalPgliteRead(result: AgentMemoryUnavailableResult): boolean {
     result.busy?.relativeLockPath.endsWith("postmaster.pid") &&
     result.busy.processAlive === false,
   );
+}
+
+function isDeltaBusyIngestResult(result: AgentIngestResult): boolean {
+  return result.ok === false && result.busy?.code === "FORGE_DELTA_BUSY";
 }
 
 function fallbackMemoryPath(workspaceRoot: string): string {
@@ -413,23 +423,29 @@ async function ingestAgentMemoryQueueFile(options: AgentMemoryCommandOptions): P
     source,
     eventName: options.eventName,
   });
+  const errors = [
+    ...drained.errors,
+    ...(drained.busy ? ["DeltaDB is busy; queue checkpoint was not advanced"] : []),
+  ];
   return {
-    ok: drained.errors.length === 0,
+    ok: errors.length === 0,
     watch: false,
     source,
     file: options.file,
     eventsIngested: drained.eventsIngested,
-    errors: drained.errors,
+    errors,
     bytesRead: drained.bytesRead,
     pendingBytes: drained.pendingBytes,
     checkpointFile: drained.checkpointFile,
     compacted: drained.compacted,
     historyFile: drained.historyFile,
+    ...(drained.busy ? { busy: drained.busy, pendingDueToBusy: true } : {}),
     nextActions: [
+      ...(drained.busy ? ["forge delta status --json"] : []),
       `forge agent memory --entry ${source} --json`,
       `forge agent hooks status --target ${source} --json`,
     ],
-    exitCode: drained.errors.length === 0 ? 0 : 1,
+    exitCode: errors.length === 0 ? 0 : 1,
   };
 }
 
@@ -644,6 +660,7 @@ export async function drainAgentMemoryQueueFile(options: {
   checkpointFile: string;
   compacted: boolean;
   historyFile: string;
+  busy?: AgentMemoryUnavailableResult["busy"];
 }> {
   const historyFile = queueHistoryPath(options.watchFile);
   if (!existsSync(options.watchFile)) {
@@ -699,6 +716,17 @@ export async function drainAgentMemoryQueueFile(options: {
       eventsIngested += 1;
       consumedOffset = bytesRead + line.endOffset;
       writeQueueCheckpoint(options.watchFile, consumedOffset);
+    } else if (isDeltaBusyIngestResult(result)) {
+      return {
+        eventsIngested,
+        errors,
+        bytesRead,
+        pendingBytes,
+        checkpointFile: queueCheckpointPath(options.watchFile),
+        compacted: false,
+        historyFile,
+        busy: result.busy,
+      };
     } else {
       errors.push(result.error ?? "agent memory ingest failed");
       break;
@@ -886,7 +914,19 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
 
   let eventsIngested = 0;
   const errors: string[] = [];
+  let busyRetries = 0;
+  let lastBusy: AgentMemoryUnavailableResult["busy"] | undefined;
   let pendingIngest = Promise.resolve();
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  const scheduleBusyRetry = () => {
+    if (retryTimer) {
+      return;
+    }
+    retryTimer = setTimeout(() => {
+      retryTimer = undefined;
+      pendingIngest = pendingIngest.then(ingestNewContent, ingestNewContent);
+    }, 500);
+  };
   const ingestNewContent = async () => {
     const result = await drainAgentMemoryQueueFile({
       workspaceRoot: options.workspaceRoot,
@@ -895,6 +935,13 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
       eventName: options.eventName,
     });
     eventsIngested += result.eventsIngested;
+    if (result.busy) {
+      busyRetries += 1;
+      lastBusy = result.busy;
+      scheduleBusyRetry();
+      return;
+    }
+    lastBusy = undefined;
     errors.push(...result.errors);
   };
 
@@ -904,6 +951,10 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
       pendingIngest = pendingIngest.then(ingestNewContent, ingestNewContent);
     });
     const shutdown = () => {
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = undefined;
+      }
       watcher.close();
       void pendingIngest.finally(() => {
         resolve({
@@ -913,7 +964,9 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
           file,
           eventsIngested,
           errors,
+          ...(lastBusy ? { busy: lastBusy, pendingDueToBusy: true, busyRetries } : {}),
           nextActions: [
+            ...(lastBusy ? ["forge delta status --json"] : []),
             `forge agent memory --entry ${source} --json`,
             `forge agent hooks status --target ${source} --json`,
           ],
@@ -969,6 +1022,10 @@ function installAgentMemory(options: AgentMemoryCommandOptions): AgentInstallRes
     return claudeCodeInstallResult(filesWritten, planned);
   }
   return cursorInstallResult(filesWritten, planned);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function formatAgentMemoryJson(result: AgentMemoryCommandResult): string {

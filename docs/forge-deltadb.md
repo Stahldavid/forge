@@ -6,6 +6,11 @@ When Forge commands or `forge dev` run, Forge writes a local operation log under
 
 The recorder is ambient. Developers do not start or close work manually. Forge also infers work sessions from the raw operation stream, so related file changes, runtime calls, diagnostics, proofs, manifest imports, agent tool calls, and Forge commands are grouped automatically.
 
+`forge dev` keeps a long-lived development process, but it must not monopolize
+the DeltaDB writer lock. Runtime calls and file-change observations are recorded
+with short-lived DeltaDB writes so external-agent ingestion can keep draining
+Codex/Claude/Cursor hook events while the app preview is running.
+
 ```bash
 forge delta status
 forge delta status --verbose --json
@@ -52,6 +57,11 @@ It does not store raw prompts, model outputs, full runtime response bodies, auth
 `forge timeline` prints the H47 Semantic Timeline projection. It is not the source of truth; it is a rebuildable view over the local operation log, inferred work sessions, runtime calls, proofs, diagnostics, artifacts, and Git mappings.
 
 DeltaDB separates read and write access. Read-oriented commands such as `forge delta status`, `forge timeline`, `forge explain`, `forge session list`, `forge session show`, `forge agent timeline`, `forge agent context`, and `forge agent memory` are designed for the fast orientation loop while another ForgeOS or external-agent process may be recording events. Mutating DeltaDB operations such as event recording, agent ingest, hook smoke writes, timeline rebuild, session edits, and `forge delta repair --yes` fail fast with `FORGE_DELTA_BUSY` instead of waiting on the embedded database indefinitely. `forge delta export --redacted` also reports `FORGE_DELTA_BUSY` if the local store is locked, so retry after the writer exits. Busy JSON results include a `busy` block with the lock path, pid when known, whether the process still appears alive, lock age, cwd, and command.
+
+For hook queue ingestion, a busy writer does not advance the queue checkpoint.
+`forge agent ingest <source> --watch --file .forge/agent/events.ndjson --json`
+backs off and retries so agent events are not dropped during short DeltaDB write
+contention.
 
 `forge delta compact` and `forge delta prune` maintain `.forge/agent/events.ndjson.history`, not the embedded PGlite store. They are intentionally local retention tools: review with `--dry-run --json`, then apply prune with `--yes --json` when the retention cut is intentional.
 

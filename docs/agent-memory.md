@@ -35,6 +35,11 @@ forge mcp serve
 
 Native hooks enqueue newline-delimited events in `.forge/agent/events.ndjson`. New Codex hook entries are written as redacted payloads: raw prompts, completions, tool arguments, tool responses, transcripts, cookies, authorization headers, API keys, and private tokens are not written to the queue. The watch ingester drains that queue from a checkpoint, keeps partial trailing lines for the next pass, and compacts consumed history into redacted `.history` lines so repeated status/smoke checks do not duplicate old hook events. If a hook status looks stale, inspect the checkpoint and history files only as local operational state; rerun status after Codex Desktop has approved hooks and emitted a fresh native event.
 
+The queue checkpoint advances only after an event is stored. If DeltaDB is
+temporarily busy because another Forge process is writing, the watcher backs off
+and retries instead of marking the event consumed. This lets `forge dev` stay
+running while Codex hook events continue flowing into Agent Memory.
+
 `.codex/hooks.json` is the versioned Codex adapter configuration that tells Codex Desktop which ForgeOS hook commands may run in this workspace. Treat changes to that file like source changes: review them in PRs and keep them intentionally small. `.forge/agent/**`, including `events.ndjson`, checkpoints, history, canary markers, and exported context snapshots, is local operational state. Do not commit those files as proof of hook readiness; regenerate or reingest them with `forge agent hooks status --target codex --json` and `forge agent hooks smoke --target codex --json` when a machine or workspace needs fresh evidence.
 
 `forge agent timeline --json` is the compact external-agent activity view. It reads redacted hook/MCP/import events, groups the visible sessions, files, entries, tools, proofs, and status signals, and returns an ordered event list for demos, handoffs, and agent-native UIs. Use `--target codex`, `--target claude`, or `--target cursor` to focus one provider.

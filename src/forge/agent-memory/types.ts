@@ -155,6 +155,7 @@ export interface AgentIngestResult {
     path: string;
     reason: "pglite-active";
   };
+  busy?: AgentMemoryUnavailableResult["busy"];
   exitCode: 0 | 1;
   error?: string;
   diagnostics?: Diagnostic[];
@@ -174,6 +175,9 @@ export interface AgentIngestWatchResult {
   checkpointFile?: string;
   compacted?: boolean;
   historyFile?: string;
+  busy?: AgentMemoryUnavailableResult["busy"];
+  pendingDueToBusy?: boolean;
+  busyRetries?: number;
   nextActions: string[];
   exitCode: 0 | 1;
 }

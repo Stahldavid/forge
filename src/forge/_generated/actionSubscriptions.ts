@@ -1,10 +1,10 @@
-// @forge-generated generator=0.1.0-alpha.24 input=39a7799ce0d6a71823dac10eaa13053e61eb77cb610a1245f2ea90d381769517 content=46f4ba09d19e083e7e32508ca136156dba491a4e4684c273dca37c4322f6726e
+// @forge-generated generator=0.1.0-alpha.25 input=93e9f4f72ca6f1bde1a9ff909c546319cbcfd3965c2a9f4099c06e0c81dbab7a content=1cfbfb9261bd338620c5776a250628a0e2eb6f7733a7ab0fc4535dcc05c84fae
 export const actionSubscriptions = {
   "analyzerVersion": "0.1.0",
   "byEvent": {},
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.24",
-  "inputHash": "1c83f824ec06ad26c9d0a38e6bd67d0ccfa7e0e680a78ebf73cfa64ab009f1ad",
+  "generatorVersion": "0.1.0-alpha.25",
+  "inputHash": "ae47f8debf3d5ea9c49d9e209d98c3e01e1e59ce5e37fe54a814822fa3f4e192",
   "schemaVersion": "0.1.0",
   "subscriptions": []
 } as const;

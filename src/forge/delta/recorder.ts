@@ -4,7 +4,7 @@ import type { ForgeCommand } from "../cli/parse.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { normalizePath } from "../compiler/primitives/paths.ts";
 import { hashUtf8Bytes } from "../compiler/primitives/hash.ts";
-import { DeltaStore, type DeltaRuntimeCallInput } from "./store.ts";
+import { DeltaStore, DeltaStoreBusyError, type DeltaRuntimeCallInput } from "./store.ts";
 import { classifyArtifactKind } from "./classifier.ts";
 import { readDeltaGitSnapshot } from "./git-observer.ts";
 
@@ -28,70 +28,129 @@ export async function createAmbientDeltaRecorder(
   if (isDeltaDisabled()) {
     return noopRecorder;
   }
-  try {
-    const store = await DeltaStore.open(workspaceRoot);
-    const actorId = await store.ensureActor("forge", "forge-cli", { pid: process.pid });
-    const sessionId = await store.createSession({
+  let actorId: string | undefined;
+  let sessionId: string | undefined;
+  let accepting = true;
+  let closed = false;
+  let queue = Promise.resolve();
+
+  const withStore = async (fn: (store: DeltaStore) => Promise<void>): Promise<void> => {
+    const store = await openDeltaStoreWithRetry(workspaceRoot);
+    try {
+      await fn(store);
+    } finally {
+      await store.close();
+    }
+  };
+
+  const enqueue = (fn: (store: DeltaStore) => Promise<void>): Promise<void> => {
+    queue = queue.then(() => safeDelta(() => withStore(fn)));
+    return queue;
+  };
+
+  const ensureSession = async (store: DeltaStore): Promise<{ actorId: string; sessionId: string } | null> => {
+    if (actorId && sessionId) {
+      return { actorId, sessionId };
+    }
+    actorId = await store.ensureActor("forge", "forge-cli", { pid: process.pid });
+    sessionId = await store.createSession({
       source,
       summary,
       metadata: { actorId },
       git: readDeltaGitSnapshot(workspaceRoot),
     });
-    return {
-      sessionId,
-      async recordRuntimeCall(input) {
-        await safeDelta(async () => {
-          const failedCode = input.diagnosticCode ?? diagnosticCode(input.diagnostics);
-          await store.appendOperation({
-            sessionId,
-            actorId,
-            kind: input.result === "denied"
-              ? "runtime.entry.denied"
-              : input.result === "failed"
-                ? "runtime.entry.failed"
-                : "runtime.entry.executed",
-            summary: `${input.entryName} ${input.result ?? "executed"}`,
-            data: {
-              entryName: input.entryName,
-              entryKind: input.entryKind,
-              result: input.result,
-              traceId: input.traceId,
-              diagnosticCode: failedCode,
-            },
-            runtimeCall: { ...input, diagnosticCode: failedCode },
-          });
+    return { actorId, sessionId };
+  };
+
+  await enqueue(async (store) => {
+    await ensureSession(store);
+  });
+
+  return {
+    get sessionId() {
+      return sessionId;
+    },
+    async recordRuntimeCall(input) {
+      if (!accepting) {
+        return;
+      }
+      await enqueue(async (store) => {
+        const session = await ensureSession(store);
+        if (!session) {
+          return;
+        }
+        const failedCode = input.diagnosticCode ?? diagnosticCode(input.diagnostics);
+        await store.appendOperation({
+          sessionId: session.sessionId,
+          actorId: session.actorId,
+          kind: input.result === "denied"
+            ? "runtime.entry.denied"
+            : input.result === "failed"
+              ? "runtime.entry.failed"
+              : "runtime.entry.executed",
+          summary: `${input.entryName} ${input.result ?? "executed"}`,
+          data: {
+            entryName: input.entryName,
+            entryKind: input.entryKind,
+            result: input.result,
+            traceId: input.traceId,
+            diagnosticCode: failedCode,
+          },
+          runtimeCall: { ...input, diagnosticCode: failedCode },
         });
-      },
-      async recordAgentTool(input) {
-        await safeDelta(async () => {
-          await store.appendOperation({
-            sessionId,
-            actorId,
-            kind: "agent.tool.called",
-            summary: `${input.toolName} ${input.status}`,
-            data: {
-              toolName: input.toolName,
-              risk: input.risk,
-              status: input.status,
-              traceId: input.traceId,
-              durationMs: input.durationMs,
-            },
-          });
+      });
+    },
+    async recordAgentTool(input) {
+      if (!accepting) {
+        return;
+      }
+      await enqueue(async (store) => {
+        const session = await ensureSession(store);
+        if (!session) {
+          return;
+        }
+        await store.appendOperation({
+          sessionId: session.sessionId,
+          actorId: session.actorId,
+          kind: "agent.tool.called",
+          summary: `${input.toolName} ${input.status}`,
+          data: {
+            toolName: input.toolName,
+            risk: input.risk,
+            status: input.status,
+            traceId: input.traceId,
+            durationMs: input.durationMs,
+          },
         });
-      },
-      async recordFileChanged(path, changeType = "modified") {
-        await safeDelta(() => store.recordFilePath(sessionId, path, changeType));
-      },
-      async close(closeSummary) {
-        await safeDelta(async () => {
-          await store.endSession(sessionId, closeSummary);
-          await store.close();
-        });
-      },
-    };
-  } catch {
-    return noopRecorder;
-  }
+      });
+    },
+    async recordFileChanged(path, changeType = "modified") {
+      if (!accepting) {
+        return;
+      }
+      await enqueue(async (store) => {
+        const session = await ensureSession(store);
+        if (!session) {
+          return;
+        }
+        await store.recordFilePath(session.sessionId, path, changeType);
+      });
+    },
+    async close(closeSummary) {
+      if (closed) {
+        await queue;
+        return;
+      }
+      accepting = false;
+      closed = true;
+      await enqueue(async (store) => {
+        if (!sessionId) {
+          return;
+        }
+        await store.endSession(sessionId, closeSummary);
+      });
+    },
+  };
 }
 
 export async function recordParsedCliCommand(input: {
@@ -342,6 +401,25 @@ const noopRecorder: AmbientDeltaRecorder = {
   async recordFileChanged() {},
   async close() {},
 };
+
+const DELTA_STORE_RETRY_DELAYS_MS = [25, 75, 150];
+
+async function openDeltaStoreWithRetry(workspaceRoot: string): Promise<DeltaStore> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await DeltaStore.open(workspaceRoot);
+    } catch (error) {
+      if (!(error instanceof DeltaStoreBusyError) || attempt >= DELTA_STORE_RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+      await sleep(DELTA_STORE_RETRY_DELAYS_MS[attempt] ?? 0);
+    }
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function safeDelta(fn: () => Promise<void>): Promise<void> {
   try {

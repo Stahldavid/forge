@@ -6,6 +6,19 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.25
+
+- Hardened DeltaDB and Agent Memory for concurrent `forge dev` usage:
+  dev recorders now release the writer lock between events, Agent Memory ingest
+  retries short transient writer conflicts, and queued Codex hook events keep
+  their checkpoint unchanged when DeltaDB is temporarily busy.
+- Fixed tenant-scope reporting in the generated agent contract and capability
+  map for camelCase authored tables such as `onboardingTasks`, so liveQuery
+  dependencies now report `tenant` scope when `tenantScope.json` confirms the
+  table is tenant-scoped.
+- Added regression tests and docs for the DeltaDB lock recovery path and the
+  Team Onboarding style capability-map tenant-scope path.
+
 ## 0.1.0-alpha.24
 
 - Consolidated the public alpha adoption surface: MIT license, package license
