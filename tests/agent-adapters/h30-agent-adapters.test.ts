@@ -504,17 +504,18 @@ describe("H30 agent adapter export", () => {
     expect(JSON.stringify(result.commands)).toContain("forge agent hooks smoke --target codex --json");
   });
 
-  test("agent onboard prepares adapters and stops at the Codex hook approval boundary", async () => {
+  test("agent onboard accepts visible Codex hook canary while native proof is pending", async () => {
     const root = scaffoldGenerateWorkspace("agent-onboard-codex");
     try {
       const result = await runAgentOnboard({ ...options(root, "codex"), subcommand: "onboard" });
-      expect(result.ok).toBe(false);
-      expect(result.readyToEdit).toBe(false);
+      expect(result.ok).toBe(true);
+      expect(result.readyToEdit).toBe(true);
       expect(result.summary).toMatchObject({
         adapter: "ready",
-        hookBridge: "waiting-for-user-trust",
-        approvalRequired: true,
-        approvalStatus: "waiting-for-user-trust",
+        hookBridge: "ready",
+        approvalRequired: false,
+        approvalStatus: "accepted",
+        nativeTrustStatus: "waiting-for-native-signal",
         safeToEdit: true,
       });
       expect(typeof result.summary.generatedFresh).toBe("boolean");
@@ -526,10 +527,9 @@ describe("H30 agent adapter export", () => {
       expect(result.commands.changed).toBe("forge changed --json");
       expect(result.commands.dev).toBe("forge dev --once --json");
       expect(result.commands.context).toBe("forge agent context --current --json");
-      expect(result.nextActions).toContain(
-        "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
+      expect(result.steps.find((step) => step.name === "hook-approval")?.message).toContain(
+        "trusted native signal proof is still pending",
       );
-      expect(result.nextActions).toContain("If Codex Desktop shows a hook approval prompt, approve it");
       expect(result.recommendedReadFiles).toContain("AGENTS.md");
     } finally {
       cleanupWorkspace(root);
@@ -560,19 +560,22 @@ describe("H30 agent adapter export", () => {
     expect(smoke.smokeReady).toBe(true);
     expect(smoke.trustedNativeReady).toBe(false);
     expect(smoke.readinessLevel).toBe("canary");
-    expect(smoke.approvalRequired).toBe(true);
+    expect(smoke.approvalRequired).toBe(false);
     expect(smoke.canary?.visible).toBe(true);
     const stillWaiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
-    expect(stillWaiting.ok).toBe(false);
+    expect(stillWaiting.ok).toBe(true);
     expect(stillWaiting.visibleInMemory).toBe(true);
     expect(stillWaiting.usefulSignals).toBeGreaterThan(0);
     expect(stillWaiting.nativeSignals).toBe(0);
     expect(stillWaiting.canarySignals).toBeGreaterThan(0);
+    expect(stillWaiting.approvalRequired).toBe(false);
+    expect(stillWaiting.approvalStatus).toBe("accepted");
+    expect(stillWaiting.nativeTrustStatus).toBe("waiting-for-native-signal");
     expect(stillWaiting.nextActions).toContain(
-      "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
+      "forge agent memory --entry codex --json",
     );
     expect(stillWaiting.nextActions).not.toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
-    expect(stillWaiting.checks.find((check) => check.name === "codex-hook-approval")?.message).toContain("smoke canary");
+    expect(stillWaiting.checks.find((check) => check.name === "codex-hook-approval")?.message).toContain("accepted");
 
     await recordNativeCodexSignal(root);
     const ready = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
@@ -649,6 +652,7 @@ describe("H30 agent adapter export", () => {
     expect(status.usefulSignals).toBe(0);
     expect(status.nativeSignals).toBe(0);
     expect(status.approvalStatus).toBe("waiting-for-user-trust");
+    expect(status.nativeTrustStatus).toBe("waiting-for-native-signal");
     expect(status.checks.find((check) => check.name === "workspace-scope")?.ok).toBe(true);
     expect(status.nextActions).toContain("forge agent hooks smoke --target codex --json");
   }, 45_000);
@@ -668,8 +672,9 @@ describe("H30 agent adapter export", () => {
     expect(result.usefulSignals).toBeGreaterThan(0);
     expect(result.nativeSignals).toBe(0);
     expect(result.canarySignals).toBeGreaterThan(0);
-    expect(result.approvalRequired).toBe(true);
-    expect(result.approvalStatus).toBe("waiting-for-user-trust");
+    expect(result.approvalRequired).toBe(false);
+    expect(result.approvalStatus).toBe("accepted");
+    expect(result.nativeTrustStatus).toBe("waiting-for-native-signal");
     expect(result.lastSignal?.summary).toContain("forge agent hooks smoke");
     expect(result.canary).toMatchObject({
       marker: "FORGE_HOOK_SMOKE_CANARY",
@@ -684,18 +689,18 @@ describe("H30 agent adapter export", () => {
       ok: true,
       message: "canary event was normalized and stored",
     });
-    expect(result.nextActions).toContain(
-      "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
-    );
+    expect(result.nextActions).toContain("forge agent hooks status --target codex --json");
+    expect(result.nextActions).toContain("forge agent memory --entry codex --json");
     expect(result.checks.some((check) => check.name === "canary-memory-readable" && check.ok)).toBe(true);
     expect(result.checks.some((check) => check.name === "codex-hook-approval" && check.ok)).toBe(true);
-    expect(result.diagnostics.some((diag) => diag.code === "FORGE_AGENT_HOOK_APPROVAL_REQUIRED")).toBe(true);
+    expect(result.diagnostics.some((diag) => diag.code === "FORGE_AGENT_HOOK_APPROVAL_REQUIRED")).toBe(false);
     expect(JSON.stringify(result.ingestResult)).toContain("FORGE_HOOK_SMOKE_CANARY");
     const human = formatAgentHuman(result);
     expect(human).toContain("smoke ready: yes");
     expect(human).toContain("trusted native ready: no");
     expect(human).toContain("readiness level: canary");
-    expect(human).toContain("approval: waiting-for-user-trust");
+    expect(human).toContain("approval: accepted");
+    expect(human).toContain("native trust: waiting-for-native-signal");
     expect(human).toContain("Canary:");
     expect(human).toContain("marker: FORGE_HOOK_SMOKE_CANARY");
     expect(human).toContain("ingested id:");
@@ -729,22 +734,20 @@ describe("H30 agent adapter export", () => {
       expect(smoke.trustedNativeReady).toBe(false);
       expect(smoke.readinessLevel).toBe("canary");
 
-      const needsApproval = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
-      expect(needsApproval.ok).toBe(false);
-      expect(needsApproval.summary).toMatchObject({
+      const needsNativeSignal = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
+      expect(needsNativeSignal.ok).toBe(true);
+      expect(needsNativeSignal.summary).toMatchObject({
         adapter: "ready",
-        hookBridge: "waiting-for-user-trust",
-        approvalRequired: true,
-        approvalStatus: "waiting-for-user-trust",
+        hookBridge: "ready",
+        approvalRequired: false,
+        approvalStatus: "accepted",
+        nativeTrustStatus: "waiting-for-native-signal",
         recentEvents: 1,
         usefulSignals: 1,
         nativeSignals: 0,
         canarySignals: 1,
       });
-      expect(needsApproval.nextActions).toContain(
-        "Continue or send one Codex message in this workspace so a normal native hook event is emitted",
-      );
-      expect(needsApproval.nextActions).toContain("If Codex Desktop shows a hook approval prompt, approve it");
+      expect(needsNativeSignal.nextActions).toContain("forge agent context --current --json");
 
       await recordNativeCodexSignal(root);
 

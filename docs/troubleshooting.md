@@ -205,9 +205,9 @@ For release handoff, fix root cause — do not skip gates permanently.
 
 ## Agent hooks approval and stale events
 
-**Symptom:** `forge agent hooks smoke --target codex --json` passes, but `forge agent hooks status --target codex --json` reports `approvalRequired`, `waiting-for-user-trust`, missing native signals, or stale hook signals.
+**Symptom:** `forge agent hooks smoke --target codex --json` passes, but `forge agent hooks status --target codex --json` reports missing native signals or stale hook signals.
 
-**Cause:** The smoke canary proves ForgeOS ingestion and DeltaDB memory. Codex Desktop still has a separate trust prompt before it executes native hook files. Hook events are queued in `.forge/agent/events.ndjson` and drained from checkpoints, so old canary events do not prove that Codex has approved and emitted a fresh native event.
+**Cause:** The smoke canary proves ForgeOS ingestion and DeltaDB memory. Once a canary or useful hook event is visible, ForgeOS reports `approvalStatus: "accepted"` and the hooks are sufficient for local editing. A separate `nativeTrustStatus: "waiting-for-native-signal"` means ForgeOS has not yet seen a trusted native Codex Desktop event for stronger provenance. Hook events are queued in `.forge/agent/events.ndjson` and drained from checkpoints, so old canary events do not prove that Codex has emitted a fresh native event.
 
 **Fix:**
 
@@ -216,7 +216,7 @@ forge agent hooks status --target codex --json
 forge agent hooks smoke --target codex --json
 ```
 
-Approve the Codex Desktop hook prompt, continue or start a Codex session in the same workspace, then rerun status. If the status remains stale, inspect the JSON `approvalStatus`, `nativeSignals`, `canarySignals`, and suggested commands before reinstalling hooks.
+Approve the Codex Desktop hook prompt if status is still `waiting-for-user-trust`, continue or start a Codex session in the same workspace, then rerun status. If the status remains stale, inspect the JSON `approvalStatus`, `nativeTrustStatus`, `nativeSignals`, `canarySignals`, and suggested commands before reinstalling hooks.
 
 ## DeltaDB and PGlite busy
 

@@ -6,6 +6,15 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.28
+
+- Accepted visible Codex hook canaries as sufficient for local editing while
+  reporting native Codex provenance separately through `nativeTrustStatus`, so
+  `waiting-for-user-trust` no longer implies missing user approval when the
+  canary path is already working.
+- Added regression coverage and docs for the split between hook approval,
+  canary readiness, and trusted native Codex signal proof.
+
 ## 0.1.0-alpha.27
 
 - Stabilized the `forge add convex` loop: integration docs/testkits are now

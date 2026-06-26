@@ -342,7 +342,7 @@ forge agent export --target claude
 
 `forge agent context` and `forge agent memory` use compact human-readable summaries by default. Add `--json` for machine-readable context and detailed memory audit events. Agent memory read commands should not block on the DeltaDB writer lock; write commands such as ingest, hook smoke, repair, timeline rebuild, and session mutations may fail fast with `FORGE_DELTA_BUSY`.
 
-Codex Desktop has an additional trust boundary for newly installed hooks. `forge agent hooks smoke --target codex --json` writes a ForgeOS canary and proves that Agent Memory can read it, but it does not mean Codex Desktop has approved and executed the native hook files. `forge agent hooks status --target codex --json` reports `approvalStatus`, `approvalRequired`, `nativeSignals`, and `canarySignals`; `waiting-for-user-trust` means the user must approve the Codex hook prompt and then continue a Codex session in the workspace.
+Codex Desktop has an additional trust boundary for newly installed hooks. `forge agent hooks smoke --target codex --json` writes a ForgeOS canary and proves that Agent Memory can read it. `forge agent hooks status --target codex --json` reports `approvalStatus`, `approvalRequired`, `nativeTrustStatus`, `nativeSignals`, and `canarySignals`; `waiting-for-user-trust` means no canary, useful hook event, or native signal has appeared yet, while `approvalStatus: "accepted"` with `nativeTrustStatus: "waiting-for-native-signal"` is sufficient for local editing but still lacks native Codex provenance proof.
 
 `forge agent ingest <source> --watch --file <path>` is explicit and opt-in. It tails JSON or NDJSON hook/export files and records normalized Agent Memory events until interrupted.
 

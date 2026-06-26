@@ -54,7 +54,7 @@ flowchart LR
 
 The browser UI, if one exists, is not where Codex or Claude Code lives. The browser can show what ForgeOS knows: files, timeline, hooks, memory, checks, and handoff state. The coding agent remains the external editor/operator.
 
-For Codex Desktop, hook installation also has a user trust step. ForgeOS can install hook files and write a smoke canary, but it treats the setup as pending until Codex Desktop is approved by the user and a trusted native hook signal appears. In Studio this shows up as `waiting-for-user-trust`, not as a failed app build.
+For Codex Desktop, hook installation also has a user trust step. ForgeOS can install hook files and write a smoke canary. Once that canary or another useful hook event is visible, the setup is accepted for local editing; if a trusted native hook event has not appeared yet, Studio reports `nativeTrustStatus: "waiting-for-native-signal"` rather than implying that user approval is still missing.
 
 Codex also has a deeper integration surface: `codex app-server`. Forge Studio treats it as optional and diagnostic-first. Hooks remain the universal observer path; app-server adds a richer Codex-specific path for streamed thread/turn/item events, approvals, terminal output, MCP status, and generated version-matched schemas when Studio owns a Codex app-server process. Studio snapshots expose availability under `proofs.codexAppServer` when the target is Codex; add `--probe-codex-server` when the observer should start `codex app-server`, send the documented stdio `initialize`/`initialized` handshake, make safe read-only `model/list` and `account/read` RPCs, and store the sanitized proof under `proofs.codexAppServer.handshake`.
 

@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0-alpha.28
+
+### Patch Changes
+
+- Accept visible Codex hook canaries as sufficient for local editing while reporting native Codex provenance separately through `nativeTrustStatus`.
+
 ## 0.1.0-alpha.27
 
 ### Patch Changes

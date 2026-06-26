@@ -260,13 +260,17 @@ try {
     readinessLevel: hookSmoke.readinessLevel ?? null,
     stdinHangSafe: hookSmoke.hookRunnerProbe?.stdinHangSafe === true,
     approvalRequired: hookSmoke.approvalRequired === true,
+    approvalStatus: hookSmoke.approvalStatus ?? null,
+    nativeTrustStatus: hookSmoke.nativeTrustStatus ?? null,
   };
   assert(hookSmoke.ok === true && hookSmoke.smokeReady === true, "hook smoke did not pass the canary contract");
   assert(hookSmoke.trustedNativeReady === false, "hook smoke should not claim trusted native readiness from a canary alone");
   assert(hookSmoke.hookRunnerProbe?.stdinHangSafe === true, "hook smoke did not prove stdin hang safety");
+  assert(hookSmoke.approvalRequired === false, "hook smoke should accept a visible canary for local editing");
+  assert(hookSmoke.approvalStatus === "accepted", "hook smoke should report accepted approval after a visible canary");
   assert(
-    (hookSmoke.diagnostics ?? []).some((diag) => diag.code === "FORGE_AGENT_HOOK_APPROVAL_REQUIRED"),
-    "hook smoke did not preserve the approval-required warning",
+    hookSmoke.nativeTrustStatus === "waiting-for-native-signal",
+    "hook smoke should keep native Codex provenance separate from canary readiness",
   );
 
   let studioPid;

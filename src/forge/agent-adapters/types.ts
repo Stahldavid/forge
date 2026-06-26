@@ -140,7 +140,8 @@ export interface AgentPrintContextResult {
 }
 
 export type AgentHookBridgeState = "ready" | "missing" | "not-supported" | "waiting-for-user-trust" | "memory-unavailable";
-export type AgentHookApprovalStatus = "not-required" | "waiting-for-user-trust" | "trusted" | "memory-unavailable";
+export type AgentHookApprovalStatus = "not-required" | "waiting-for-user-trust" | "accepted" | "trusted" | "memory-unavailable";
+export type AgentHookNativeTrustStatus = "not-required" | "waiting-for-native-signal" | "trusted" | "memory-unavailable";
 export type AgentHookReadinessLevel = "none" | "canary" | "trusted-native";
 
 export interface AgentDoctorResult {
@@ -151,6 +152,7 @@ export interface AgentDoctorResult {
     hookBridge: AgentHookBridgeState;
     approvalRequired: boolean;
     approvalStatus: AgentHookApprovalStatus;
+    nativeTrustStatus: AgentHookNativeTrustStatus;
     recentEvents: number;
     queuedEvents?: number;
     usefulSignals: number;
@@ -193,6 +195,7 @@ export interface AgentOnboardResult {
     hookBridge: AgentHookBridgeState;
     approvalRequired: boolean;
     approvalStatus: AgentHookApprovalStatus;
+    nativeTrustStatus: AgentHookNativeTrustStatus;
     memorySignals: number;
     nativeSignals: number;
     canarySignals: number;
@@ -239,6 +242,7 @@ export interface AgentHooksSmokeResult {
   canarySignals: number;
   approvalRequired: boolean;
   approvalStatus: AgentHookApprovalStatus;
+  nativeTrustStatus: AgentHookNativeTrustStatus;
   lastSignal?: {
     kind: string;
     summary?: string;
@@ -285,6 +289,7 @@ export interface AgentHooksStatusResult {
   canarySignals: number;
   approvalRequired: boolean;
   approvalStatus: AgentHookApprovalStatus;
+  nativeTrustStatus: AgentHookNativeTrustStatus;
   lastSignal?: {
     kind: string;
     summary?: string;
