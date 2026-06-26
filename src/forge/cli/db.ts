@@ -7,6 +7,9 @@ import { buildAppGraph } from "../compiler/app-graph/build.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import {
   FORGE_RLS_APPLY_FAILED,
+  FORGE_DB_ADAPTER_UNAVAILABLE,
+  FORGE_PGLITE_STORE_ABORTED,
+  FORGE_PGLITE_STORE_ACTIVE,
   FORGE_RUNTIME_NOT_FOUND,
 } from "../compiler/diagnostics/codes.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
@@ -23,14 +26,19 @@ import {
   resetDatabase,
 } from "../runtime/db/migrate.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
+import {
+  DEFAULT_PGLITE_DIR,
+  repairLocalPgliteStore,
+} from "../runtime/db/pglite-adapter.ts";
 
-export type DbSubcommand = "diff" | "migrate" | "reset" | "status" | "doctor" | "rls-check";
+export type DbSubcommand = "diff" | "migrate" | "reset" | "status" | "doctor" | "repair" | "rls-check";
 
 export interface DbCommandOptions {
   subcommand: DbSubcommand;
   workspaceRoot: string;
   db: DbAdapterKind;
   databaseUrl?: string;
+  local?: boolean;
   json: boolean;
 }
 
@@ -285,7 +293,86 @@ async function runDbDoctor(
   }
 }
 
+async function runDbRepair(options: DbCommandOptions): Promise<DbCommandResult> {
+  if (!options.local) {
+    return {
+      ok: false,
+      data: {
+        schemaVersion: "0.1.0",
+        repaired: false,
+        adapter: options.db,
+        local: false,
+        nextActions: ["forge db repair --local --adapter pglite --json"],
+      },
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: "FORGE_CLI_USAGE",
+          message: "local database repair requires --local",
+          fixHint: "Pass --local to confirm you want Forge to repair the local development database store.",
+          suggestedCommands: ["forge db repair --local --adapter pglite --json"],
+        }),
+      ],
+      exitCode: 1,
+    };
+  }
+
+  if (options.db !== "pglite") {
+    return {
+      ok: false,
+      data: {
+        schemaVersion: "0.1.0",
+        repaired: false,
+        adapter: options.db,
+        nextActions: ["forge db repair --local --adapter pglite --json"],
+      },
+      diagnostics: [
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_DB_ADAPTER_UNAVAILABLE,
+          message: "local repair currently supports only the pglite adapter",
+          fixHint: "Use --adapter pglite for the local Forge dev database store.",
+          suggestedCommands: ["forge db repair --local --adapter pglite --json"],
+        }),
+      ],
+      exitCode: 1,
+    };
+  }
+
+  const dataDir = join(options.workspaceRoot, DEFAULT_PGLITE_DIR);
+  const result = await repairLocalPgliteStore(dataDir);
+  const diagnostics = result.ok
+    ? []
+    : [
+        createDiagnostic({
+          severity: "error",
+          code: result.before.state === "active" ? FORGE_PGLITE_STORE_ACTIVE : FORGE_PGLITE_STORE_ABORTED,
+          message: result.message,
+          fixHint: result.before.state === "active"
+            ? "Stop the running forge dev process before repairing the PGlite store."
+            : "Archive the local PGlite store and retry forge dev, or use --db memory for non-persistent validation.",
+          suggestedCommands: result.nextActions,
+        }),
+      ];
+
+  return {
+    ok: result.ok,
+    data: {
+      schemaVersion: "0.1.0",
+      adapter: "pglite",
+      local: true,
+      ...result,
+    },
+    diagnostics,
+    exitCode: result.ok ? 0 : 1,
+  };
+}
+
 export async function runDbCommand(options: DbCommandOptions): Promise<DbCommandResult> {
+  if (options.subcommand === "repair") {
+    return runDbRepair(options);
+  }
+
   const { plan, diagnostics: planDiagnostics } = await loadSqlPlan(options.workspaceRoot);
 
   if (!plan) {
@@ -427,7 +514,7 @@ export function formatDbHuman(subcommand: DbSubcommand, result: DbCommandResult)
     return "database reset complete\n";
   }
 
-  if (subcommand === "status" || subcommand === "diff" || subcommand === "doctor") {
+  if (subcommand === "status" || subcommand === "diff" || subcommand === "doctor" || subcommand === "repair") {
     return `${JSON.stringify(result.data, null, 2)}\n`;
   }
 

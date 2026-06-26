@@ -56,6 +56,7 @@ import type { CairCommandOptions, CairSubcommand } from "../cair/types.ts";
 
 export type ForgeCommand =
   | { kind: "version"; json: boolean }
+  | { kind: "last"; json: boolean; workspaceRoot: string }
   | {
       kind: "new";
       name: string;
@@ -115,7 +116,7 @@ export type ForgeCommand =
       json: boolean;
       workspaceRoot: string;
     }
-  | { kind: "doctor"; target?: "project" | "windows" | "agent" | "delta"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
+  | { kind: "doctor"; target?: "project" | "windows" | "agent" | "delta" | "pglite"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
   | { kind: "setup"; target: "windows"; json: boolean; yes: boolean; workspaceRoot: string }
   | {
       kind: "security";
@@ -289,6 +290,7 @@ export type ForgeCommand =
       subcommand: DbSubcommand;
       db: DbAdapterKind;
       databaseUrl?: string;
+      local?: boolean;
       json: boolean;
       workspaceRoot: string;
     }
@@ -404,6 +406,7 @@ export interface ParsedCli {
 
 export const TOP_LEVEL_COMMANDS = [
   "version",
+  "last",
   "new",
   "build",
   "serve",
@@ -849,6 +852,12 @@ export function parseCli(argv: string[]): ParsedCli {
         workspaceRoot,
         errors,
       };
+    case "last":
+      return {
+        command: { kind: "last", json: parseFlag(argv, "--json"), workspaceRoot },
+        workspaceRoot,
+        errors,
+      };
     case "new": {
       const name = rest[0];
       if (!name) {
@@ -1213,14 +1222,22 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "doctor":
-      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent" && rest[0] !== "delta") {
-        errors.push("forge doctor supports subcommand: windows, agent, or delta");
+      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent" && rest[0] !== "delta" && rest[0] !== "pglite") {
+        errors.push("forge doctor supports subcommand: windows, agent, delta, or pglite");
         return { command: null, workspaceRoot, errors };
       }
       return {
         command: {
           kind: "doctor",
-          target: rest[0] === "windows" ? "windows" : rest[0] === "agent" ? "agent" : rest[0] === "delta" ? "delta" : "project",
+          target: rest[0] === "windows"
+            ? "windows"
+            : rest[0] === "agent"
+              ? "agent"
+              : rest[0] === "delta"
+                ? "delta"
+                : rest[0] === "pglite"
+                  ? "pglite"
+                  : "project",
           agentTarget: rest[0] === "agent"
             ? (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ?? (rest[1] as AgentAdapterTarget | undefined) ?? "codex"
             : undefined,
@@ -2466,16 +2483,17 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "db": {
       const subcommand = rest[0] as DbSubcommand | undefined;
-      if (!subcommand || !["diff", "migrate", "reset", "status", "doctor", "rls-check"].includes(subcommand)) {
-        errors.push("forge db requires subcommand: diff, migrate, reset, status, doctor, or rls-check");
+      if (!subcommand || !["diff", "migrate", "reset", "status", "doctor", "repair", "rls-check"].includes(subcommand)) {
+        errors.push("forge db requires subcommand: diff, migrate, reset, status, doctor, repair, or rls-check");
         return { command: null, workspaceRoot, errors };
       }
       return {
         command: {
           kind: "db",
           subcommand,
-          db: parseAdapterKind(parseOptionValue(argv, "--db")),
+          db: parseAdapterKind(parseOptionValue(argv, "--adapter") ?? parseOptionValue(argv, "--db")),
           databaseUrl: parseOptionValue(argv, "--database-url"),
+          local: parseFlag(argv, "--local"),
           json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
@@ -2882,6 +2900,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--watch",
     "--no-watch",
     "--db",
+    "--adapter",
+    "--local",
     "--database-url",
     "--worker",
     "--no-worker",
@@ -3018,6 +3038,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--port" ||
         arg === "--host" ||
         arg === "--db" ||
+        arg === "--adapter" ||
         arg === "--database-url" ||
         arg === "--limit" ||
         arg === "--older-than" ||

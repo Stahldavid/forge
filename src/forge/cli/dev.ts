@@ -29,6 +29,9 @@ import { startDevWatch } from "../dev/watch.ts";
 import type { DevServerHandle } from "../dev/types.ts";
 import { createAmbientDeltaRecorder } from "../delta/index.ts";
 import { resetCompileSessions } from "../compiler/orchestrator/session.ts";
+import { FORGE_PGLITE_STORE_ABORTED } from "../compiler/diagnostics/codes.ts";
+import { isPgliteAbortMessage } from "../runtime/db/pglite-adapter.ts";
+import { writeLastRunRecord } from "./last-run.ts";
 
 export interface DevCommandOptions {
   workspaceRoot: string;
@@ -156,6 +159,18 @@ interface DevStartupSummary {
   pid: number;
 }
 
+interface DevStartFailure {
+  message: string;
+  code?: string;
+  failureKind: "port_busy" | "pglite_store_aborted" | "dev_start_failed";
+  nextActions: string[];
+  busy?: {
+    port: number;
+    host: string;
+    suggestedCommands: string[];
+  };
+}
+
 function nextPreviewPort(webUrl?: string): number {
   if (!webUrl) {
     return 5174;
@@ -223,6 +238,55 @@ async function isPortAvailable(host: string, port: number): Promise<boolean> {
       });
     });
   });
+}
+
+function classifyDevStartFailure(input: {
+  rawMessage: string;
+  host: string;
+  port: number;
+  webPort?: number;
+  db: DevCommandOptions["db"];
+}): DevStartFailure {
+  const lowerMessage = input.rawMessage.toLowerCase();
+  const busy =
+    lowerMessage.includes("eaddrinuse") ||
+    lowerMessage.includes("address already in use") ||
+    /port\s+\d+\s+.*in use/i.test(input.rawMessage);
+  if (busy) {
+    const suggestedCommands = [
+      `forge dev --port 0${input.webPort ? ` --web-port ${input.webPort}` : ""} --json`,
+      "forge doctor windows --json",
+    ];
+    return {
+      message: `${input.rawMessage}. Port ${input.port} appears busy; stop the existing process or rerun with --port 0 / --port <free-port>.`,
+      failureKind: "port_busy",
+      nextActions: suggestedCommands,
+      busy: {
+        port: input.port,
+        host: input.host,
+        suggestedCommands,
+      },
+    };
+  }
+
+  if (input.db === "pglite" && isPgliteAbortMessage(input.rawMessage)) {
+    return {
+      message: `${input.rawMessage}. Local PGlite store may be corrupted or stale at .forge/pglite.`,
+      code: FORGE_PGLITE_STORE_ABORTED,
+      failureKind: "pglite_store_aborted",
+      nextActions: [
+        "forge doctor pglite --json",
+        "forge db repair --local --adapter pglite --json",
+        "forge dev --db memory --json",
+      ],
+    };
+  }
+
+  return {
+    message: input.rawMessage,
+    failureKind: "dev_start_failed",
+    nextActions: ["forge dev --once --json", "forge check --json"],
+  };
 }
 
 export async function resolveAvailableWebPort(input: {
@@ -705,6 +769,7 @@ export async function runDevCommand(
   options: DevCommandOptions,
 ): Promise<DevCommandResult> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
+  const startedAt = new Date();
 
   if (options.once) {
     const cycle = await runDevConsoleCycle({
@@ -838,37 +903,53 @@ export async function runDevCommand(
     });
   } catch (error) {
     await deltaRecorder.close("forge dev failed to start");
+    const finishedAt = new Date();
     const rawMessage =
       error instanceof Error ? error.message : "failed to start dev server";
-    const lowerMessage = rawMessage.toLowerCase();
-    const busy =
-      lowerMessage.includes("eaddrinuse") ||
-      lowerMessage.includes("address already in use") ||
-      /port\s+\d+\s+.*in use/i.test(rawMessage);
-    const message = busy
-      ? `${rawMessage}. Port ${port} appears busy; stop the existing process or rerun with --port 0 / --port <free-port>.`
-      : rawMessage;
+    const failure = classifyDevStartFailure({
+      rawMessage,
+      host,
+      port,
+      webPort: options.webPort,
+      db: options.db,
+    });
+    writeLastRunRecord(workspaceRoot, {
+      schemaVersion: "0.1.0",
+      command: "forge dev",
+      ok: false,
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      ...(failure.code ? { code: failure.code } : {}),
+      failureKind: failure.failureKind,
+      message: failure.message,
+      nextActions: failure.nextActions,
+      details: {
+        db: options.db,
+        host,
+        port,
+      },
+    });
     if (options.json) {
       process.stdout.write(
         `${JSON.stringify({
           ok: false,
-          error: message,
-          failureKind: busy ? "port_busy" : "dev_start_failed",
-          busy: busy
-            ? {
-                port,
-                host,
-                suggestedCommands: [
-                  `forge dev --port 0${options.webPort ? ` --web-port ${options.webPort}` : ""} --json`,
-                  "forge doctor windows --json",
-                ],
-              }
-            : undefined,
+          error: failure.message,
+          code: failure.code,
+          failureKind: failure.failureKind,
+          busy: failure.busy,
+          nextActions: failure.nextActions,
           exitCode: 1,
         })}\n`,
       );
     } else {
-      console.error(`error: ${message}`);
+      console.error(`error${failure.code ? ` ${failure.code}` : ""}: ${failure.message}`);
+      if (failure.nextActions.length > 0) {
+        console.error("next:");
+        for (const action of failure.nextActions) {
+          console.error(`  ${action}`);
+        }
+      }
     }
     return { exitCode: 1 };
   }
@@ -899,6 +980,29 @@ export async function runDevCommand(
   }
   if (options.open) {
     openBrowser(webHandle?.url ?? handle.url);
+  }
+
+  {
+    const finishedAt = new Date();
+    writeLastRunRecord(workspaceRoot, {
+      schemaVersion: "0.1.0",
+      command: "forge dev",
+      ok: true,
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      nextActions: [
+        webHandle?.url ?? handle.url,
+        "forge last --json",
+      ],
+      details: {
+        db: handle.state.db.kind,
+        apiUrl: handle.url,
+        webUrl: webHandle?.url,
+        watch: options.watch,
+        worker: options.worker,
+      },
+    });
   }
 
   let watchHandle: { stop: () => void } | null = null;

@@ -6,6 +6,11 @@ import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
+import {
+  DEFAULT_PGLITE_DIR,
+  inspectPgliteStore,
+  type PgliteStoreInspection,
+} from "../runtime/db/pglite-adapter.ts";
 
 export interface DoctorCheck {
   name: string;
@@ -17,6 +22,14 @@ export interface DoctorCheck {
 export interface DoctorResult {
   ok: boolean;
   checks: DoctorCheck[];
+  exitCode: 0 | 1;
+}
+
+export interface PgliteDoctorResult {
+  ok: boolean;
+  inspection: PgliteStoreInspection;
+  checks: DoctorCheck[];
+  nextActions: string[];
   exitCode: 0 | 1;
 }
 
@@ -193,6 +206,50 @@ export async function runDoctorCommand(options: {
   };
 }
 
+export async function runPgliteDoctorCommand(options: {
+  workspaceRoot: string;
+}): Promise<PgliteDoctorResult> {
+  const dataDir = join(options.workspaceRoot, DEFAULT_PGLITE_DIR);
+  const inspection = await inspectPgliteStore(dataDir);
+  const ok = inspection.state === "missing" || inspection.state === "healthy";
+  const checks: DoctorCheck[] = [
+    {
+      name: "pglite-store",
+      ok,
+      severity: inspection.state === "active" ? "warning" : "error",
+      message: ok
+        ? `PGlite store is ${inspection.state}`
+        : inspection.error ?? `PGlite store is ${inspection.state}`,
+    },
+    {
+      name: "pglite-openable",
+      ok: inspection.openable,
+      severity: inspection.state === "active" ? "warning" : "error",
+      message: inspection.openable
+        ? undefined
+        : "local PGlite store cannot be opened by Forge dev",
+    },
+  ];
+
+  if (inspection.lockFiles.length > 0) {
+    checks.push({
+      name: "pglite-lock-files",
+      ok: inspection.state === "healthy",
+      severity: inspection.state === "active" ? "warning" : "error",
+      message: `lock files present: ${inspection.lockFiles.join(", ")}`,
+    });
+  }
+
+  const exitOk = checks.every((check) => check.ok || check.severity === "warning");
+  return {
+    ok: exitOk,
+    inspection,
+    checks,
+    nextActions: inspection.nextActions,
+    exitCode: exitOk ? 0 : 1,
+  };
+}
+
 export function formatDoctorJson(result: DoctorResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
 }
@@ -205,5 +262,28 @@ export function formatDoctorHuman(result: DoctorResult): string {
   }
   lines.push("");
   lines.push(result.ok ? "Project is coherent." : "Project needs attention.");
+  return `${lines.join("\n")}\n`;
+}
+
+export function formatPgliteDoctorJson(result: PgliteDoctorResult): string {
+  return `${JSON.stringify(result, null, 2)}\n`;
+}
+
+export function formatPgliteDoctorHuman(result: PgliteDoctorResult): string {
+  const lines = ["Forge PGlite Doctor", ""];
+  for (const check of result.checks) {
+    const marker = check.ok ? "OK" : check.severity === "warning" ? "WARN" : "FAIL";
+    lines.push(`${marker} ${check.name}${check.message ? ` - ${check.message}` : ""}`);
+  }
+  lines.push("");
+  lines.push(`Store: ${result.inspection.dataDir}`);
+  lines.push(`State: ${result.inspection.state}`);
+  if (result.nextActions.length > 0) {
+    lines.push("");
+    lines.push("Next actions:");
+    for (const action of result.nextActions) {
+      lines.push(`  ${action}`);
+    }
+  }
   return `${lines.join("\n")}\n`;
 }

@@ -1803,4 +1803,31 @@ describe("Forge CLI", () => {
     }
   });
 
+  test("parseCli accepts pglite doctor and db repair aliases", () => {
+    const last = parseCli(["last", "--json"]);
+    expect(last.errors).toEqual([]);
+    expect(last.command?.kind).toBe("last");
+    if (last.command?.kind === "last") {
+      expect(last.command.json).toBe(true);
+    }
+
+    const doctor = parseCli(["doctor", "pglite", "--json"]);
+    expect(doctor.errors).toEqual([]);
+    expect(doctor.command?.kind).toBe("doctor");
+    if (doctor.command?.kind === "doctor") {
+      expect(doctor.command.target).toBe("pglite");
+      expect(doctor.command.json).toBe(true);
+    }
+
+    const repair = parseCli(["db", "repair", "--local", "--adapter", "pglite", "--json"]);
+    expect(repair.errors).toEqual([]);
+    expect(repair.command?.kind).toBe("db");
+    if (repair.command?.kind === "db") {
+      expect(repair.command.subcommand).toBe("repair");
+      expect(repair.command.db).toBe("pglite");
+      expect(repair.command.local).toBe(true);
+      expect(repair.command.json).toBe(true);
+    }
+  });
+
 });

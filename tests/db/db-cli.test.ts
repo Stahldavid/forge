@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runDbCommand } from "../../src/forge/cli/db.ts";
+import { runPgliteDoctorCommand } from "../../src/forge/cli/doctor.ts";
 import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
 import { buildDataGraph } from "../../src/forge/compiler/data-graph/build.ts";
 import { buildSqlPlan } from "../../src/forge/compiler/data-graph/sql/ddl.ts";
@@ -89,4 +90,85 @@ describe("db cli", () => {
     },
     20_000,
   );
+
+  test("repair reports missing local pglite store as no-op", async () => {
+    const workspace = tempWorkspace("db-cli-pglite-repair-missing");
+    try {
+      const repaired = await runDbCommand({
+        subcommand: "repair",
+        workspaceRoot: workspace,
+        db: "pglite",
+        local: true,
+        json: true,
+      });
+
+      expect(repaired.exitCode).toBe(0);
+      expect(repaired.ok).toBe(true);
+      expect(JSON.stringify(repaired.data)).toContain("\"repaired\":false");
+      expect(JSON.stringify(repaired.data)).toContain("\"state\":\"missing\"");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("repair requires explicit local flag", async () => {
+    const workspace = tempWorkspace("db-cli-pglite-repair-local-required");
+    try {
+      const repaired = await runDbCommand({
+        subcommand: "repair",
+        workspaceRoot: workspace,
+        db: "pglite",
+        json: true,
+      });
+
+      expect(repaired.exitCode).toBe(1);
+      expect(repaired.ok).toBe(false);
+      expect(repaired.diagnostics[0]?.code).toBe("FORGE_CLI_USAGE");
+      expect(JSON.stringify(repaired.data)).toContain("\"local\":false");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("repair refuses active local pglite store", async () => {
+    const workspace = tempWorkspace("db-cli-pglite-repair-active");
+    try {
+      const dataDir = join(workspace, ".forge", "pglite");
+      mkdirSync(dataDir, { recursive: true });
+      writeFileSync(join(dataDir, "postmaster.pid"), `${process.pid}\n`, "utf8");
+
+      const repaired = await runDbCommand({
+        subcommand: "repair",
+        workspaceRoot: workspace,
+        db: "pglite",
+        local: true,
+        json: true,
+      });
+
+      expect(repaired.exitCode).toBe(1);
+      expect(repaired.ok).toBe(false);
+      expect(repaired.diagnostics[0]?.code).toBe("FORGE_PGLITE_STORE_ACTIVE");
+      expect(JSON.stringify(repaired.data)).toContain("\"state\":\"active\"");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("pglite doctor reports active local store as warning", async () => {
+    const workspace = tempWorkspace("db-cli-pglite-doctor-active");
+    try {
+      const dataDir = join(workspace, ".forge", "pglite");
+      mkdirSync(dataDir, { recursive: true });
+      writeFileSync(join(dataDir, "postmaster.pid"), `${process.pid}\n`, "utf8");
+
+      const doctor = await runPgliteDoctorCommand({ workspaceRoot: workspace });
+
+      expect(doctor.exitCode).toBe(0);
+      expect(doctor.ok).toBe(true);
+      expect(doctor.inspection.state).toBe("active");
+      expect(doctor.nextActions).toContain("forge doctor pglite --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
 });

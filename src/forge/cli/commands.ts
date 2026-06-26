@@ -181,6 +181,9 @@ import {
 import {
   formatDoctorHuman,
   formatDoctorJson,
+  formatPgliteDoctorHuman,
+  formatPgliteDoctorJson,
+  runPgliteDoctorCommand,
   runDoctorCommand,
 } from "./doctor.ts";
 import {
@@ -202,6 +205,11 @@ import {
   formatWorkOSJson,
   runWorkOSCommand,
 } from "./workos.ts";
+import {
+  formatLastHuman,
+  formatLastJson,
+  runLastCommand,
+} from "./last-run.ts";
 import { formatRlsHuman, formatRlsJson, runRlsCommand } from "./rls.ts";
 import {
   formatSecurityHuman,
@@ -272,6 +280,7 @@ import { getActiveDbAdapter } from "../runtime/executor.ts";
 import { CLI_VERSION, FORGEOS_VERSION } from "../version.ts";
 import type { CategorizedFileSummary } from "../workspace/change-summary.ts";
 import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
+import { startCommandHeartbeat } from "./progress.ts";
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
@@ -1558,6 +1567,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return 0;
     }
+    case "last": {
+      const result = runLastCommand({ workspaceRoot: command.workspaceRoot });
+      process.stdout.write(command.json ? formatLastJson(result) : formatLastHuman(result));
+      return result.exitCode;
+    }
     case "new": {
       const result = await runNewCommand({
         name: command.name,
@@ -1666,6 +1680,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       if (command.target === "delta") {
         const result = await runDeltaDoctor(command.workspaceRoot);
         process.stdout.write(command.json ? formatDeltaDoctorJson(result) : formatDeltaDoctorHuman(result));
+        return result.exitCode;
+      }
+      if (command.target === "pglite") {
+        const result = await runPgliteDoctorCommand({ workspaceRoot: command.workspaceRoot });
+        process.stdout.write(command.json ? formatPgliteDoctorJson(result) : formatPgliteDoctorHuman(result));
         return result.exitCode;
       }
       const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });
@@ -1930,13 +1949,23 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "agent": {
-      const result = await runAgentCommand(command.options);
-      if (command.options.json) {
-        process.stdout.write(formatAgentJson(result));
-      } else {
-        process.stdout.write(formatAgentHuman(result));
+      const heartbeat = command.options.subcommand === "onboard"
+        ? startCommandHeartbeat({
+            label: `agent onboard ${command.options.target ?? "codex"}`,
+            initialPhase: "prepare-hooks-memory-and-dev-snapshot",
+          })
+        : null;
+      try {
+        const result = await runAgentCommand(command.options);
+        if (command.options.json) {
+          process.stdout.write(formatAgentJson(result));
+        } else {
+          process.stdout.write(formatAgentHuman(result));
+        }
+        return result.exitCode;
+      } finally {
+        heartbeat?.stop();
       }
-      return result.exitCode;
     }
     case "mcp": {
       return runMcpServe(command.workspaceRoot);
@@ -2286,6 +2315,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         workspaceRoot: command.workspaceRoot,
         db: command.db,
         databaseUrl: command.databaseUrl,
+        local: command.local,
         json: command.json,
       });
 

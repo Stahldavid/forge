@@ -4,7 +4,7 @@ import { FORGE_DB_CONNECT_FAILED } from "../../compiler/diagnostics/codes.ts";
 import type { Diagnostic } from "../../compiler/types/diagnostic.ts";
 import type { DbAdapter, DbAdapterKind } from "./adapter.ts";
 import { createMemoryAdapter } from "./memory-adapter.ts";
-import { createPgliteAdapter } from "./pglite-adapter.ts";
+import { createPgliteAdapter, DEFAULT_PGLITE_DIR } from "./pglite-adapter.ts";
 import { createPostgresAdapter } from "./postgres-adapter.ts";
 
 export interface CreateDbAdapterOptions {
@@ -18,8 +18,6 @@ export interface CreateDbAdapterResult {
   adapter: DbAdapter | null;
   diagnostics: Diagnostic[];
 }
-
-const DEFAULT_PGLITE_DIR = ".forge/pglite";
 
 export async function createDbAdapter(
   options: CreateDbAdapterOptions,
