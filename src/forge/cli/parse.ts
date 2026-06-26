@@ -17,6 +17,8 @@ import type { SelfHostSubcommand } from "./self-host.ts";
 import type { DocsSubcommand } from "./docs.ts";
 import type { AgentContractSubcommand } from "./agent-contract.ts";
 import type { AuthSubcommand } from "./auth.ts";
+import type { AuthMdSubcommand } from "./authmd.ts";
+import type { WorkOSSubcommand } from "./workos.ts";
 import type { RlsSubcommand } from "./rls.ts";
 import type { SecuritySubcommand } from "./security.ts";
 import type { DepsSubcommand } from "./deps.ts";
@@ -129,6 +131,22 @@ export type ForgeCommand =
       subcommand: AuthSubcommand;
       json: boolean;
       token?: string;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "authmd";
+      subcommand: AuthMdSubcommand;
+      json: boolean;
+      output?: string;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "workos";
+      subcommand: WorkOSSubcommand;
+      json: boolean;
+      file?: string;
+      yes: boolean;
+      dryRun: boolean;
       workspaceRoot: string;
     }
   | {
@@ -401,6 +419,8 @@ export const TOP_LEVEL_COMMANDS = [
   "setup",
   "security",
   "auth",
+  "authmd",
+  "workos",
   "rls",
   "deps",
   "release",
@@ -509,6 +529,8 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
   "jwks",
   "prove",
 ];
+const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
+const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
 const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test", "mutate-test"];
 const DEPS_SUBCOMMANDS: DepsSubcommand[] = [
@@ -821,6 +843,12 @@ export function parseCli(argv: string[]): ParsedCli {
   const [commandName, ...rest] = positional;
 
   switch (commandName) {
+    case "version":
+      return {
+        command: { kind: "version", json: parseFlag(argv, "--json") },
+        workspaceRoot,
+        errors,
+      };
     case "new": {
       const name = rest[0];
       if (!name) {
@@ -1252,6 +1280,44 @@ export function parseCli(argv: string[]): ParsedCli {
           subcommand,
           json: parseFlag(argv, "--json"),
           token: parseOptionValue(argv, "--token"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "authmd": {
+      const subcommand = rest[0] as AuthMdSubcommand | undefined;
+      if (!subcommand || !AUTHMD_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge authmd requires subcommand: generate or check");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "authmd",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          output: parseOptionValue(argv, "--output"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "workos": {
+      const subcommand = rest[0] as WorkOSSubcommand | undefined;
+      if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge workos requires subcommand: install, doctor, or seed");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "workos",
+          subcommand,
+          json: parseFlag(argv, "--json"),
+          file: parseOptionValue(argv, "--file"),
+          yes: parseFlag(argv, "--yes"),
+          dryRun: parseFlag(argv, "--dry-run"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2065,7 +2131,7 @@ export function parseCli(argv: string[]): ParsedCli {
       const explicitMode =
         subcommand === "package"
           ? "package"
-          : subcommand === "integration"
+          : subcommand === "integration" || subcommand === "auth"
             ? "integration"
             : "auto";
       const alias = explicitMode === "auto" ? rest[0] : rest[1];

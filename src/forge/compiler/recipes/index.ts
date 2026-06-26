@@ -16,6 +16,7 @@ export {
   SENTRY_RECIPE,
   ZOD_RECIPE,
   CONVEX_RECIPE,
+  WORKOS_RECIPE,
   AI_RECIPE,
   AI_PROVIDER_RECIPES,
 } from "./definitions.ts";

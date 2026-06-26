@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +9,8 @@ import { classifyChangeType } from "../../src/forge/workspace/change-summary.ts"
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
+import { runAuthMdCommand } from "../../src/forge/cli/authmd.ts";
+import { runWorkOSCommand } from "../../src/forge/cli/workos.ts";
 import {
   probeStudioPreview,
   runStudioAttachCommand,
@@ -349,6 +351,258 @@ describe("Forge CLI", () => {
     expect(backend.command?.kind).toBe("add");
     if (backend.command?.kind === "add") {
       expect(backend.command.options.packageTarget).toBe("backend");
+    }
+
+    const workos = parseCli(["add", "auth", "workos", "--json"]);
+    expect(workos.errors).toEqual([]);
+    expect(workos.command?.kind).toBe("add");
+    if (workos.command?.kind === "add") {
+      expect(workos.command.alias).toBe("workos");
+      expect(workos.command.options.mode).toBe("integration");
+      expect(workos.command.options.json).toBe(true);
+    }
+  });
+
+  test("authmd generate writes public auth metadata and check detects drift", async () => {
+    const workspace = scaffoldGenerateWorkspace("forge-authmd");
+    try {
+      const generated = await runGenerateCommand({
+        workspaceRoot: workspace,
+        check: false,
+        dryRun: false,
+        json: true,
+        concurrency: 2,
+      });
+      expect(generated.exitCode).toBe(0);
+
+      const parsed = parseCli(["authmd", "generate", "--json"]);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.command?.kind).toBe("authmd");
+
+      const write = runAuthMdCommand({
+        subcommand: "generate",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(write.exitCode).toBe(0);
+      expect(write.changed).toBe(true);
+      expect(existsSync(join(workspace, "public", "auth.md"))).toBe(true);
+      expect(existsSync(join(workspace, "public", ".well-known", "oauth-protected-resource"))).toBe(true);
+      expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## Protected Resource Metadata");
+      expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain(
+        "## OAuth 2.0 Protected Resource Metadata",
+      );
+      expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## Risk And Approval Metadata");
+      expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## Actions");
+      expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## App Docs");
+      const metadataContent = readFileSync(
+        join(workspace, "public", ".well-known", "oauth-protected-resource"),
+        "utf8",
+      );
+      expect(metadataContent).toContain('"resource_documentation": "/auth.md"');
+      const metadata = JSON.parse(metadataContent) as {
+        forge: { risks: Array<{ kind: string; name: string; risk: string }>; docs: string[]; actions: string[] };
+      };
+      expect(Array.isArray(metadata.forge.risks)).toBe(true);
+      expect(Array.isArray(metadata.forge.docs)).toBe(true);
+      expect(Array.isArray(metadata.forge.actions)).toBe(true);
+      expect(
+        readFileSync(join(workspace, "public", ".well-known", "oauth-protected-resource"), "utf8"),
+      ).toContain('"resource_documentation": "/auth.md"');
+
+      const check = runAuthMdCommand({
+        subcommand: "check",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(check.exitCode).toBe(0);
+      expect(check.changed).toBe(false);
+
+      writeFileSync(join(workspace, "public", "auth.md"), "# stale\n", "utf8");
+      const stale = runAuthMdCommand({
+        subcommand: "check",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(stale.exitCode).toBe(1);
+      expect(stale.diagnostics[0]?.code).toBe("FORGE_AUTHMD_DRIFT");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("workos doctor and seed validate local adapter artifacts", () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-workos-cli-"));
+    try {
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
+      mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      writeFileSync(
+        join(workspace, "package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/node": "^7.0.0" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/authRegistry.json"),
+        JSON.stringify({ claims: { userId: "sub", tenantId: "organization_id" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/secretRegistry.json"),
+        JSON.stringify({
+          secrets: [
+            { envVar: "WORKOS_API_KEY" },
+            { envVar: "WORKOS_CLIENT_ID" },
+            { envVar: "WORKOS_COOKIE_PASSWORD" },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(join(workspace, ".env.example"), "WORKOS_API_KEY=\n", "utf8");
+      writeFileSync(join(workspace, "src/policies.workos.ts"), "export {};\n", "utf8");
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"),
+        [
+          "permissions:",
+          "  - slug: 'onboarding:read'",
+          "  - slug: 'invitations:create'",
+          "  - slug: 'tasks:update'",
+          "resource_types:",
+          "  - slug: 'organization'",
+          "  - slug: 'project'",
+          "  - slug: 'taskGroup'",
+          "  - slug: 'task'",
+          "roles:",
+          "  - slug: 'owner'",
+          "  - slug: 'manager'",
+          "  - slug: 'member'",
+          "organizations:",
+          "  - name: 'Acme Corp'",
+          "    domains: ['acme.test']",
+          "  - name: 'Globex'",
+          "    domains: ['globex.test']",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"),
+        'export const config = { provider: "workos" }; export function verifyWorkOSWebhook() {} export function handleWorkOSWebhook() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"),
+        'export const workosAuthHttpRoutes = ["/login", "/callback", "/logout", "/session"]; export function handleWorkOSAuthRequest() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/session.ts"),
+        "export function encodeWorkOSSession() {} export function decodeWorkOSSession() {} export function workOSSessionToClaims() {}\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"),
+        'export const workosWebhookHttpRoute = { path: "/webhooks/workos" }; export function handleWorkOSWebhookRequest() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"),
+        'export class ForgeWorkOSFgaDecisionCache {} export function canWorkOS() { return { permissionSlug: "x", resourceExternalId: "y" }; } export function syncWorkOSResourceGraph() {} export function workOSResourceRecords() {} export function assertWorkOSResourceTenant() { throw new Error("FORGE_WORKOS_CROSS_TENANT_RESOURCE"); }\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/fga.ts"),
+        'export const forgeWorkOSResourceTypes = ["organization", "project", "task"];\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/policies.workos.ts"),
+        'import { canPermission } from "forge/policy"; export const policies = { "invitations.create": canPermission("invitations:create"), "tasks.update": canPermission("tasks:update") };\n',
+        "utf8",
+      );
+
+      const parsedInstall = parseCli(["workos", "install", "--yes", "--json"]);
+      expect(parsedInstall.errors).toEqual([]);
+      expect(parsedInstall.command?.kind).toBe("workos");
+      if (parsedInstall.command?.kind === "workos") {
+        expect(parsedInstall.command.subcommand).toBe("install");
+        expect(parsedInstall.command.yes).toBe(true);
+      }
+
+      const parsed = parseCli(["workos", "doctor", "--json"]);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.command?.kind).toBe("workos");
+
+      const install = runWorkOSCommand({
+        subcommand: "install",
+        workspaceRoot: workspace,
+        json: true,
+        yes: true,
+        dryRun: false,
+        commandRunner: (command, args, options) => {
+          expect(command).toBe("npx");
+          expect(args).toEqual(["--yes", "workos@latest", "install"]);
+          expect(options.cwd).toBe(workspace);
+          return { status: 0, stdout: "workos install ok\n", stderr: "" };
+        },
+      });
+      expect(install.exitCode).toBe(0);
+      expect(install.applied).toBe(true);
+      expect(install.stdout).toBe("workos install ok\n");
+
+      const doctor = runWorkOSCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+      });
+      expect(doctor.exitCode).toBe(0);
+      expect(doctor.ok).toBe(true);
+      expect(doctor.applied).toBe(false);
+      expect(doctor.command).toEqual(["npx", "--yes", "workos@latest", "doctor"]);
+      expect(doctor.checks.map((check) => check.name)).toContain("webhook-http-handler");
+      expect(doctor.checks.map((check) => check.name)).toContain("authkit-routes");
+      expect(doctor.checks.map((check) => check.name)).toContain("authkit-session");
+      expect(doctor.checks.map((check) => check.name)).toContain("seed-organizations");
+      expect(doctor.checks.map((check) => check.name)).toContain("seed-roles-permissions");
+      expect(doctor.checks.map((check) => check.name)).toContain("seed-resource-types");
+      const delegatedDoctor = runWorkOSCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: true,
+        dryRun: false,
+        commandRunner: (command, args, options) => {
+          expect(command).toBe("npx");
+          expect(args).toEqual(["--yes", "workos@latest", "doctor"]);
+          expect(options.cwd).toBe(workspace);
+          return { status: 0, stdout: "workos doctor ok\n", stderr: "" };
+        },
+      });
+      expect(delegatedDoctor.exitCode).toBe(0);
+      expect(delegatedDoctor.applied).toBe(true);
+      expect(delegatedDoctor.stdout).toBe("workos doctor ok\n");
+
+      const seed = runWorkOSCommand({
+        subcommand: "seed",
+        workspaceRoot: workspace,
+        json: true,
+        file: "src/forge/_generated/integrations/workos/workos-seed.yml",
+        yes: false,
+        dryRun: false,
+      });
+      expect(seed.exitCode).toBe(0);
+      expect(seed.applied).toBe(false);
+      expect(seed.command).toEqual([
+        "npx",
+        "--yes",
+        "workos@latest",
+        "seed",
+        "--file",
+        "src/forge/_generated/integrations/workos/workos-seed.yml",
+      ]);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
     }
   });
 
@@ -1308,6 +1562,29 @@ describe("Forge CLI", () => {
       const parsed = JSON.parse(output) as { version?: string; cliVersion?: string };
       expect(parsed.version).toBe(parsed.cliVersion);
       expect(parsed.version).toMatch(/^\d+\.\d+\.\d+-alpha\.\d+$/);
+    } finally {
+      process.stdout.write = originalWrite;
+    }
+  });
+
+  test("main accepts version command alias with JSON output", async () => {
+    const parsed = parseCli(["version", "--json"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toEqual({ kind: "version", json: true });
+
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let output = "";
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      output += String(chunk);
+      return true;
+    }) as typeof process.stdout.write;
+
+    try {
+      const code = await main(["version", "--json"]);
+      expect(code).toBe(0);
+      const body = JSON.parse(output) as { version?: string; cliVersion?: string };
+      expect(body.version).toBe(body.cliVersion);
+      expect(body.version).toMatch(/^\d+\.\d+\.\d+-alpha\.\d+$/);
     } finally {
       process.stdout.write = originalWrite;
     }

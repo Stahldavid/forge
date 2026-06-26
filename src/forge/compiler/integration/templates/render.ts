@@ -4,6 +4,7 @@ import * as convex from "./convex.ts";
 import * as posthog from "./posthog.ts";
 import * as sentry from "./sentry.ts";
 import * as stripe from "./stripe.ts";
+import * as workos from "./workos.ts";
 import * as zod from "./zod.ts";
 
 type TemplateRenderer = (input: IntegrationTemplateInput) => string;
@@ -27,6 +28,9 @@ const ADAPTER_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   ai: {
     "ai.server.ts": ai.renderAiServerAdapter,
   },
+  workos: {
+    "workos.server.ts": workos.renderWorkosServerAdapter,
+  },
 };
 
 const INTEGRATION_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
@@ -46,6 +50,17 @@ const INTEGRATION_RENDERERS: Record<string, Record<string, TemplateRenderer>> = 
     "ai/generations.ts": ai.renderAiGenerations,
     "ai/testkit.ts": ai.renderAiTestkit,
   },
+  workos: {
+    "workos/authkit.ts": workos.renderWorkosAuthkit,
+    "workos/auth-routes.ts": workos.renderWorkosAuthRoutes,
+    "workos/fga.ts": workos.renderWorkosFga,
+    "workos/http-handler.ts": workos.renderWorkosHttpHandler,
+    "workos/resource-map.ts": workos.renderWorkosResourceMap,
+    "workos/seed.ts": workos.renderWorkosSeed,
+    "workos/session.ts": workos.renderWorkosSession,
+    "workos/webhook.ts": workos.renderWorkosWebhook,
+    "workos/workos-seed.yml": workos.renderWorkosSeedYaml,
+  },
 };
 
 const TESTKIT_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
@@ -55,6 +70,7 @@ const TESTKIT_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   sentry: { "sentry.mock.ts": sentry.renderSentryTestkit },
   convex: { "convex.mock.ts": convex.renderConvexTestkit },
   ai: { "ai.mock.ts": ai.renderAiTestkitLegacy },
+  workos: { "workos.mock.ts": workos.renderWorkosTestkit },
 };
 
 const DOC_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
@@ -64,6 +80,14 @@ const DOC_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   sentry: { "sentry.md": sentry.renderSentryDoc },
   convex: { "convex.md": convex.renderConvexDoc },
   ai: { "ai.md": ai.renderAiDoc },
+  workos: { "workos.md": workos.renderWorkosDoc },
+};
+
+const ROOT_FILE_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
+  workos: {
+    ".env.example": workos.renderWorkosEnvExample,
+    "src/policies.workos.ts": workos.renderWorkosPolicies,
+  },
 };
 
 function lookup(
@@ -100,6 +124,13 @@ export function renderQualityDoc(
   input: IntegrationTemplateInput,
 ): string | null {
   return lookup(DOC_RENDERERS, input.alias, filename)?.(input) ?? null;
+}
+
+export function renderQualityRootFile(
+  filename: string,
+  input: IntegrationTemplateInput,
+): string | null {
+  return lookup(ROOT_FILE_RENDERERS, input.alias, filename)?.(input) ?? null;
 }
 
 export function buildTemplateInput(input: {

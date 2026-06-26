@@ -9,6 +9,7 @@ import {
   REFERENCE_ALIASES,
   SENTRY_RECIPE,
   STRIPE_RECIPE,
+  WORKOS_RECIPE,
   ZOD_RECIPE,
 } from "./definitions.ts";
 
@@ -25,6 +26,7 @@ const REFERENCE_RECIPES: Record<string, IntegrationRecipe> = {
   sentry: SENTRY_RECIPE,
   zod: ZOD_RECIPE,
   convex: CONVEX_RECIPE,
+  workos: WORKOS_RECIPE,
   forge: FORGE_RECIPE,
   ai: AI_RECIPE,
 };
@@ -35,6 +37,7 @@ const ALL_RECIPES: IntegrationRecipe[] = [
   SENTRY_RECIPE,
   ZOD_RECIPE,
   CONVEX_RECIPE,
+  WORKOS_RECIPE,
   FORGE_RECIPE,
   AI_RECIPE,
   ...AI_PROVIDER_RECIPES,

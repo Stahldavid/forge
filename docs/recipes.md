@@ -119,6 +119,54 @@ Generated artifacts:
 
 The current alpha recipe does not import `convex/schema.ts` or `convex/_generated/api.d.ts` yet. See [ForgeOS for Convex Apps](convex.md) for the planned importer.
 
+### workos
+
+```text
+Alias:          workos
+Package:        @workos-inc/node (>=10.0.0)
+Recipe version: 1.0.0
+```
+
+WorkOS is the preferred ForgeOS auth recipe for B2B multi-tenant AuthKit, organization roles/permissions, Admin Portal, and FGA evaluation.
+
+Allowed: `server`, `action`, `workflow`, `endpoint`, `test`, `build`.
+
+Denied: `shared`, `client`, `query`, `liveQuery`, `command`, `edge`.
+
+Secrets: `WORKOS_API_KEY`, `WORKOS_CLIENT_ID`, `WORKOS_COOKIE_PASSWORD`; optional `WORKOS_REDIRECT_URI`, `WORKOS_WEBHOOK_SECRET`.
+
+Generated artifacts:
+
+- `packages/workos.server.ts`
+- `integrations/workos/auth-routes.ts`
+- `integrations/workos/authkit.ts`
+- `integrations/workos/fga.ts`
+- `integrations/workos/http-handler.ts`
+- `integrations/workos/resource-map.ts`
+- `integrations/workos/seed.ts`
+- `integrations/workos/session.ts`
+- `integrations/workos/webhook.ts`
+- `integrations/workos/workos-seed.yml`
+- `testkits/workos.mock.ts`
+- `docs/workos.md`
+- `.env.example`
+- `src/policies.workos.ts`
+
+Agent-oriented setup:
+
+```bash
+forge add auth workos
+forge workos install --yes --json
+forge workos doctor --json
+forge workos doctor --yes --json
+forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
+forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json
+forge auth check --json
+forge auth prove --json
+```
+
+The Forge recipe registers package/runtime/secrets evidence, emits WorkOS claim mapping into generated auth artifacts, writes production env names, provides a WorkOS-derived Forge policy template using `canPermission(...)`, generates AuthKit session/login/callback/logout helpers, and generates a resource bridge from Forge app concepts to WorkOS FGA resource refs. The bridge can sync Forge resource graphs into WorkOS resources and then perform cached resource-level `authorization.check` calls with telemetry from server/action/workflow/endpoint contexts. `forge workos install --yes`, `forge workos doctor --yes`, and `forge workos seed --yes` delegate to the authenticated WorkOS CLI after local contract checks pass.
+
 ### ai
 
 ```text

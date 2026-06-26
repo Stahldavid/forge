@@ -152,7 +152,32 @@ describe("H20 auth resource server", () => {
         schemaVersion: "0.1.0",
         generatorVersion: "test",
         inputHash: "test",
-        entries: [{ policy: "tickets.create", roles: ["owner", "member"] }],
+        entries: [{ policy: "tickets.create", roles: ["owner", "member"], permissions: [] }],
+      },
+    );
+
+    expect(result.allowed).toBe(true);
+  });
+
+  test("permissions array satisfies canPermission policy evaluation", () => {
+    const result = evaluateCommandAuth(
+      {
+        kind: "user",
+        userId: "u1",
+        tenantId: "org_acme",
+        permissions: ["invitations:create"],
+      },
+      {
+        commandName: "inviteMember",
+        file: "src/commands/inviteMember.ts",
+        symbolId: "inviteMember",
+        auth: { kind: "policy", policy: "invitations.create" },
+      },
+      {
+        schemaVersion: "0.1.0",
+        generatorVersion: "test",
+        inputHash: "test",
+        entries: [{ policy: "invitations.create", roles: [], permissions: ["invitations:create"] }],
       },
     );
 

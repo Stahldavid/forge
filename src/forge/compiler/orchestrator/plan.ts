@@ -223,7 +223,7 @@ import {
   serializeVueManifestJson,
   buildMockMapEntries,
 } from "./serialize.ts";
-import { buildDefaultAuthRegistry, AUTH_ENV } from "../../runtime/auth/config.ts";
+import { buildDefaultAuthRegistry, buildWorkOSAuthRegistry, AUTH_ENV } from "../../runtime/auth/config.ts";
 import type { EnvSchema } from "../types/secret-registry.ts";
 import { recordPlanProfile } from "./plan-profile.ts";
 
@@ -462,6 +462,12 @@ function augmentEnvSchemaWithAuthVars(schema: EnvSchema): EnvSchema {
   };
 }
 
+function hasWorkOSAuth(classified: PlanInput["classified"]): boolean {
+  return classified.some((item) =>
+    item.recipe?.alias === "workos" || item.api.name === "@workos-inc/node"
+  );
+}
+
 export function plan(input: PlanInput): EmitPlan {
   const started = performance.now();
   let checkpoint = started;
@@ -485,7 +491,9 @@ export function plan(input: PlanInput): EmitPlan {
     ),
   );
   const configRegistry = buildConfigRegistry(secretRegistry);
-  const authRegistry = buildDefaultAuthRegistry(tenantScope.tables.length > 0);
+  const authRegistry = hasWorkOSAuth(input.classified)
+    ? buildWorkOSAuthRegistry(tenantScope.tables.length > 0)
+    : buildDefaultAuthRegistry(tenantScope.tables.length > 0);
   const aiRegistry = buildAiRegistry(input.appGraph, input.classified);
   const aiModels = buildAiModels();
   const queryRegistry = buildQueryRegistry(input.appGraph);

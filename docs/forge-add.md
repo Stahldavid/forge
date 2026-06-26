@@ -25,6 +25,7 @@ Use an integration recipe when Forge should install packages and emit adapters, 
 ```bash
 forge add stripe
 forge add integration stripe
+forge add auth workos
 ```
 
 When a target matches a known recipe, the bare form keeps the recipe behavior for compatibility. Use `forge add package <spec>` to force a normal npm package install for a name that also has a recipe.
@@ -43,6 +44,7 @@ Top-level recipe aliases:
 | `posthog` | `posthog-js`, `posthog-node` | Product analytics (client + server split) |
 | `sentry` | `@sentry/nextjs`, `@sentry/node`, `@sentry/browser` | Error monitoring |
 | `zod` | `zod` | Shared validation schemas |
+| `workos` | `@workos-inc/node` | B2B AuthKit, organizations, roles, permissions, and FGA |
 | `ai` | `ai` | AI SDK core (server/action/workflow) |
 
 AI provider aliases are also available (for example `ai-provider-openai`, `ai-provider-anthropic`, `ai-gateway`). These resolve through the recipe registry but are typically added via their package names after `forge add ai`.
@@ -51,7 +53,7 @@ Unknown explicit integration aliases fail with `FORGE_UNKNOWN_ALIAS`:
 
 ```bash
 forge add integration unknown-vendor
-# supported: stripe, posthog, sentry, zod, ai
+# supported: stripe, posthog, sentry, zod, convex, workos, ai
 ```
 
 ## Basic workflow
@@ -93,9 +95,12 @@ forge add stripe --dry-run --json
 forge add lucide-react --workspace web --dry-run --json
 forge add frontend:lucide-react --dry-run --json
 forge add hono --backend --dry-run --json
+forge add auth workos --dry-run --json
 ```
 
 The JSON response includes `mode`, `targetKind`, `target`, `explanation`, `changed`, `warnings`, `errors`, and `failureKind` when applicable. `targetKind` is `npm-package` for normal package installs and `forge-integration` for recipe-backed integrations, so Studio and external agents can explain what will happen without inferring it from filenames. For normal npm packages it also includes `packageSpec`, `packageName`, `packageTarget`, `packageTargetReason`, `packageManager`, `installCommand`, `nativeInstallCommand`, `avoidedManualCommand`, `installCwd`, optional `installWorkspace`, and package-oriented `nextActions` such as `forge deps inspect <package> --json`, `forge generate`, and `forge check --json`. `packageSpec` preserves the exact install request, such as `@tanstack/react-query@latest`; `packageName` strips the version/range and is what Forge uses for `forge deps inspect`. With `--workspace web` or `frontend:<package>`, `installCwd` is the resolved frontend directory and `installWorkspace` records the semantic target; Forge does not require npm/pnpm/yarn workspace metadata just to add a frontend package. `avoidedManualCommand` shows the native package-manager command Forge is managing so users do not need to run `npm install`, `bun add`, `pnpm add`, or `yarn add` separately. For recipe-backed integrations it includes `recipeVersion`, `recipePackages`, `requiredSecrets`, `optionalSecrets`, and integration-oriented `nextActions` such as `forge deps inspect <package> --json` and `forge secrets check --json`. This lets an external code agent show the exact install or integration plan before mutating `package.json`.
+
+`forge add auth workos` is the auth-provider form for the WorkOS recipe. It installs the WorkOS Node SDK, emits AuthKit/FGA generated artifacts, registers WorkOS secret names, writes a production-oriented `.env.example`, emits WorkOS-derived Forge policy templates, and returns Forge/WorkOS follow-up commands such as `forge workos install --json`, `forge workos install --yes --json`, `forge workos doctor --json`, `forge workos doctor --yes --json`, `forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json`, and `forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json`. The WorkOS CLI remains responsible for authenticated hosted WorkOS changes; Forge validates the local app contract, claim mapping, seed file, webhook handler, webhook verifier, and FGA bridge before an agent applies those changes.
 
 Human output prints the same normal-package essentials: package spec, normalized package name when different, target, package target, target reason, install cwd, install workspace, install command, avoided manual command, and the same `Next:` commands returned by JSON.
 
@@ -114,6 +119,40 @@ For `forge add stripe`, Forge emits:
 | Updated `importGuards.json` | Enforcement metadata for `forge check` |
 | Updated `secretRegistry.json` | Required secret names (never values) |
 | Updated `forge.lock` | Lock integrity for reproducible generation |
+
+For `forge add auth workos`, Forge emits:
+
+| Artifact | Purpose |
+|----------|---------|
+| `src/forge/_generated/packages/workos.server.ts` | Server-side WorkOS client factory using `ctx.secrets` |
+| `src/forge/_generated/integrations/workos/auth-routes.ts` | Framework-agnostic AuthKit routes for `/login`, `/callback`, `/logout`, and `/session` |
+| `src/forge/_generated/integrations/workos/authkit.ts` | AuthKit env/claim mapping checklist |
+| `src/forge/_generated/integrations/workos/fga.ts` | Permission and resource-check helpers |
+| `src/forge/_generated/integrations/workos/http-handler.ts` | Framework-agnostic `Request -> Response` handler for `POST /webhooks/workos` |
+| `src/forge/_generated/integrations/workos/resource-map.ts` | Forge resource graph to WorkOS FGA resource refs and `canWorkOS(...)` |
+| `src/forge/_generated/integrations/workos/seed.ts` | Seed command metadata |
+| `src/forge/_generated/integrations/workos/session.ts` | Signed AuthKit session cookie helpers and Forge claim normalization |
+| `src/forge/_generated/integrations/workos/webhook.ts` | WorkOS webhook signature verification helper for `/webhooks/workos` |
+| `src/forge/_generated/integrations/workos/workos-seed.yml` | Declarative WorkOS permissions, roles, resource types, orgs, redirect URIs, and CORS origins |
+| `src/forge/_generated/testkits/workos.mock.ts` | Mock WorkOS org/FGA client for tests |
+| `src/forge/_generated/docs/workos.md` | Agent-readable WorkOS setup notes |
+| `.env.example` | Production auth and WorkOS env names without secret values |
+| `src/policies.workos.ts` | Generated policy template derived from WorkOS permissions |
+
+WorkOS-specific checks:
+
+```bash
+forge workos install --json
+forge workos install --yes --json
+forge workos doctor --json
+forge workos doctor --yes --json
+forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
+forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes
+```
+
+The generated AuthKit and webhook handlers are intentionally framework-agnostic. Mount `handleWorkOSAuthRequest(request, { workos, config, resolveOrganization })` for `/login`, `/callback`, `/logout`, and `/session`. Mount `handleWorkOSWebhookRequest(request, { secrets, replayStore, onEvent })` at `POST /webhooks/workos`; Forge verifies the handlers exist and that `workos-seed.yml` points WorkOS at the same webhook path. In local `forge dev`, Forge exposes `/login`, `/callback`, `/logout`, `/session`, and `POST /webhooks/workos` automatically when the generated WorkOS artifacts are present, using loaded WorkOS env files for AuthKit sessions and webhook replay protection.
+
+The generated FGA bridge is intentionally server-side. Use `syncWorkOSResourceGraph(...)` after app resources are created or renamed to mirror organization/project/team/task resources into WorkOS. Use `canWorkOS(...)` from actions, workflows, endpoints, or server code for resource-level decisions; it calls WorkOS `authorization.check` with `organizationMembershipId`, `permissionSlug`, `resourceTypeSlug`, and `resourceExternalId`, supports a small TTL decision cache, emits optional telemetry, and denies by default on provider errors. Keep Forge command/query/liveQuery policies claim-based with `canPermission(...)`; do not import the WorkOS SDK into deterministic runtime entries.
 
 Inspect the result:
 

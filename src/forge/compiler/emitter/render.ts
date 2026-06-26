@@ -71,6 +71,10 @@ export function render(file: EmitFile, context: RenderContext): string {
     return body;
   }
 
+  if (file.header === "none") {
+    return body;
+  }
+
   return prependDeterministicHeader(body, {
     generatorVersion: context.generatorVersion,
     inputHash: context.inputHash,

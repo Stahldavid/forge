@@ -22,6 +22,18 @@ function roleAllowed(
   return roles.some((role) => entry.roles.includes(role));
 }
 
+function permissionAllowed(
+  matrix: PermissionMatrix,
+  policy: string,
+  permissions: string[],
+): boolean {
+  const entry = matrix.entries.find((candidate) => candidate.policy === policy);
+  if (!entry) {
+    return false;
+  }
+  return permissions.some((permission) => (entry.permissions ?? []).includes(permission));
+}
+
 function authRoles(auth: Extract<AuthContext, { kind: "user" }>): string[] {
   return [...new Set([...(auth.role ? [auth.role] : []), ...(auth.roles ?? [])])];
 }
@@ -93,7 +105,8 @@ function evaluateAuthRequirement(
   }
 
   const roles = authRoles(auth);
-  const allowed = roleAllowed(matrix, resolved.policy, roles);
+  const allowed = roleAllowed(matrix, resolved.policy, roles) ||
+    permissionAllowed(matrix, resolved.policy, auth.permissions ?? []);
   const role = primaryRole(roles);
   if (allowed) {
     return { allowed: true, policy: resolved.policy, role };
@@ -102,7 +115,7 @@ function evaluateAuthRequirement(
   return {
     allowed: false,
     code: FORGE_POLICY_DENIED,
-    message: `role '${role}' denied for policy '${resolved.policy}'`,
+    message: `role '${role}' and permissions denied for policy '${resolved.policy}'`,
     policy: resolved.policy,
     role,
   };

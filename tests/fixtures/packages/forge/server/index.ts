@@ -275,6 +275,38 @@ export function liveQuery<TArgs = unknown, TResult = unknown>(
   };
 }
 
+export type WebhookProvider = "generic" | "github" | "stripe" | "workos";
+
+export interface WebhookReplayStore {
+  has(eventId: string): boolean | Promise<boolean>;
+  add(eventId: string): void | Promise<void>;
+}
+
+export interface WebhookVerificationInput {
+  provider: WebhookProvider;
+  secret: string;
+  payload: string | Uint8Array;
+  signatureHeader: string | null | undefined;
+  timestampHeader?: string | null;
+  eventId?: string;
+  replayStore?: WebhookReplayStore;
+  nowSeconds?: number;
+  toleranceSeconds?: number;
+}
+
+export interface WebhookVerificationResult {
+  ok: boolean;
+  code?: string;
+  reason?: string;
+  provider: WebhookProvider;
+}
+
+export async function verifyWebhookSignature(
+  input: WebhookVerificationInput,
+): Promise<WebhookVerificationResult> {
+  return { ok: true, provider: input.provider };
+}
+
 export { defineTable } from "../schema/index.ts";
 export type { AuthRequirement, PolicyDefinition } from "../policy/index.ts";
-export { can, canRole, definePolicies, public_, system } from "../policy/index.ts";
+export { can, canPermission, canRole, definePolicies, public_, system } from "../policy/index.ts";

@@ -6,6 +6,26 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.29
+
+- Added the first WorkOS/AuthKit adapter surface: `forge add auth workos`
+  generates local AuthKit wiring, `.env.example`, `workos-seed.yml`, demo
+  organizations, roles, permissions, redirect/CORS/webhook hints, JWT/OIDC
+  claim mapping, and permission-derived Forge policies.
+- Added `forge authmd generate` and `forge authmd check`, including
+  `public/auth.md`, OAuth protected-resource metadata, command/policy/tenant
+  requirements, approval metadata, and `forge dev` serving for `/auth.md` and
+  `/.well-known/oauth-protected-resource`.
+- Added local WorkOS/FGA scaffolding without requiring real WorkOS credentials:
+  resource graph helpers, cross-tenant guards, FGA check cache/fallback
+  telemetry, a mock WorkOS testkit, and Acme/Globex multi-tenant regression
+  coverage.
+- Taught Forge auth and policies to evaluate permission claims alongside
+  roles, including dev-header permission simulation.
+- Added `forge version --json` as a command alias and improved the generated
+  agent contract/capability map so table reads performed by imported local
+  helpers are captured.
+
 ## 0.1.0-alpha.28
 
 - Accepted visible Codex hook canaries as sufficient for local editing while

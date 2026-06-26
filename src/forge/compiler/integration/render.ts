@@ -8,6 +8,7 @@ import {
   renderQualityAdapter,
   renderQualityDoc,
   renderQualityIntegration,
+  renderQualityRootFile,
   renderQualityTestkit,
 } from "./templates/index.ts";
 import type { IntegrationTemplateInput } from "./templates/types.ts";
@@ -186,4 +187,23 @@ export function renderIntegrationDoc(input: {
   }
 
   return skeletonDoc(ctx);
+}
+
+export function renderRootFile(
+  relativePath: string,
+  input: IntegrationTemplateInput,
+): string {
+  const quality = renderQualityRootFile(relativePath, input);
+  if (quality) {
+    return quality;
+  }
+
+  return [
+    `/** Forge generated root file for ${input.alias}: ${relativePath}. */`,
+    `export const forgeIntegrationRootFile = ${serializeCanonical({
+      alias: input.alias,
+      path: relativePath,
+    }).trim()} as const;`,
+    "",
+  ].join("\n");
 }

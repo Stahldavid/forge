@@ -146,3 +146,20 @@ export function buildDefaultAuthRegistry(
     requiresTenant,
   };
 }
+
+export function buildWorkOSAuthRegistry(
+  requiresTenant: boolean,
+): AuthRegistryArtifact {
+  return {
+    ...buildDefaultAuthRegistry(requiresTenant),
+    claims: {
+      userId: "sub",
+      tenantId: "organization_id",
+      role: "role",
+      roles: "roles",
+      permissions: "permissions",
+      email: "email",
+      name: "name",
+    },
+  };
+}

@@ -1,5 +1,7 @@
 const POLICY_ROLE_PATTERN =
   /["']([^"']+)["']\s*:\s*canRole\s*\(\s*([^)]*)\)/g;
+const POLICY_PERMISSION_PATTERN =
+  /["']([^"']+)["']\s*:\s*canPermission\s*\(\s*([^)]*)\)/g;
 
 const COMMAND_AUTH_CAN_PATTERN = /auth\s*:\s*can\s*\(\s*["']([^"']+)["']\s*\)/;
 const COMMAND_AUTH_PUBLIC_PATTERN = /auth\s*:\s*public_\s*\(\s*\)/;
@@ -16,15 +18,28 @@ function parseRolesFromCanRoleArg(arg: string): string[] {
   return roles;
 }
 
+function parseStringsFromArg(arg: string): string[] {
+  const values: string[] = [];
+  for (const match of arg.matchAll(/["']([^"']+)["']/g)) {
+    const value = match[1];
+    if (value && !values.includes(value)) {
+      values.push(value);
+    }
+  }
+  return values;
+}
+
 export function parsePoliciesFromSlice(sourceSlice: string): Array<{
   name: string;
-  kind: "roles" | "public" | "system";
+  kind: "roles" | "permissions" | "public" | "system";
   roles: string[];
+  permissions: string[];
 }> {
   const policies: Array<{
     name: string;
-    kind: "roles" | "public" | "system";
+    kind: "roles" | "permissions" | "public" | "system";
     roles: string[];
+    permissions: string[];
   }> = [];
 
   for (const match of sourceSlice.matchAll(POLICY_ROLE_PATTERN)) {
@@ -37,6 +52,21 @@ export function parsePoliciesFromSlice(sourceSlice: string): Array<{
       name,
       kind: "roles",
       roles: parseRolesFromCanRoleArg(rolesArg),
+      permissions: [],
+    });
+  }
+
+  for (const match of sourceSlice.matchAll(POLICY_PERMISSION_PATTERN)) {
+    const name = match[1];
+    const permissionsArg = match[2] ?? "";
+    if (!name) {
+      continue;
+    }
+    policies.push({
+      name,
+      kind: "permissions",
+      roles: [],
+      permissions: parseStringsFromArg(permissionsArg),
     });
   }
 

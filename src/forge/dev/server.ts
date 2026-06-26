@@ -1,5 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import {
+  createHmac,
+  timingSafeEqual,
+} from "node:crypto";
+import { createRequire } from "node:module";
+import {
   createServer,
   type IncomingMessage,
   type Server as NodeHttpServer,
@@ -23,7 +28,7 @@ import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
-import type { DevManifest } from "../compiler/types/dev-manifest.ts";
+import type { DevManifest, DevRoute } from "../compiler/types/dev-manifest.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { RuntimeGraph } from "../compiler/types/runtime-graph.ts";
 import { createDbAdapter } from "../runtime/db/factory.ts";
@@ -73,6 +78,10 @@ import type { AgentToolRegistry } from "../compiler/agent-contract/types.ts";
 import { loadLiveQueryRegistry } from "../runtime/live/registry.ts";
 import { createLiveSubscriptionManager } from "../runtime/live/subscription-manager.ts";
 import { createSseResponse } from "../runtime/live/sse.ts";
+import {
+  MemoryWebhookReplayStore,
+  verifyWebhookSignature,
+} from "../runtime/webhooks/security.ts";
 import {
   ensureLiveInvalidationSchema,
   listLiveInvalidations,
@@ -302,14 +311,256 @@ function htmlResponse(body: string, status = 200): Response {
   });
 }
 
+function redirectResponse(location: string, extraHeaders: Record<string, string> = {}): Response {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: location,
+      "Access-Control-Allow-Origin": "*",
+      ...extraHeaders,
+    },
+  });
+}
+
+function markdownResponse(body: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      "Content-Type": "text/markdown; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
 function corsPreflight(): Response {
   return new Response(null, {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Authorization, Content-Type, x-forge-user-id, x-forge-tenant-id, x-forge-role",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type, WorkOS-Signature, x-forge-user-id, x-forge-tenant-id, x-forge-role, x-forge-roles, x-forge-permissions",
     },
+  });
+}
+
+function hasWorkOSWebhookEndpoint(workspaceRoot: string): boolean {
+  return existsSync(join(workspaceRoot, `${GENERATED_DIR}/integrations/workos/http-handler.ts`));
+}
+
+function hasWorkOSAuthRoutes(workspaceRoot: string): boolean {
+  return existsSync(join(workspaceRoot, `${GENERATED_DIR}/integrations/workos/auth-routes.ts`));
+}
+
+function hasPublicAuthMd(workspaceRoot: string): boolean {
+  return existsSync(join(workspaceRoot, "public/auth.md"));
+}
+
+function hasPublicAuthMetadata(workspaceRoot: string): boolean {
+  return existsSync(join(workspaceRoot, "public/.well-known/oauth-protected-resource"));
+}
+
+function withGeneratedIntegrationRoutes(workspaceRoot: string, routes: DevRoute[]): DevRoute[] {
+  const next = [...routes];
+  if (
+    hasWorkOSAuthRoutes(workspaceRoot)
+  ) {
+    for (const route of [
+      { method: "GET" as const, path: "/login" },
+      { method: "GET" as const, path: "/callback" },
+      { method: "POST" as const, path: "/logout" },
+      { method: "GET" as const, path: "/session" },
+    ]) {
+      if (!next.some((candidate) => candidate.method === route.method && candidate.path === route.path)) {
+        next.push({ ...route, purpose: "auth" });
+      }
+    }
+  }
+  if (
+    hasPublicAuthMd(workspaceRoot) &&
+    !next.some((route) => route.method === "GET" && route.path === "/auth.md")
+  ) {
+    next.push({
+      method: "GET",
+      path: "/auth.md",
+      purpose: "auth-md",
+    });
+  }
+  if (
+    hasPublicAuthMetadata(workspaceRoot) &&
+    !next.some((route) => route.method === "GET" && route.path === "/.well-known/oauth-protected-resource")
+  ) {
+    next.push({
+      method: "GET",
+      path: "/.well-known/oauth-protected-resource",
+      purpose: "auth-metadata",
+    });
+  }
+  if (
+    hasWorkOSWebhookEndpoint(workspaceRoot) &&
+    !next.some((route) => route.method === "POST" && route.path === "/webhooks/workos")
+  ) {
+    next.push({
+      method: "POST",
+      path: "/webhooks/workos",
+      purpose: "webhook",
+    });
+  }
+  return next.sort((a, b) =>
+    a.path === b.path ? a.method.localeCompare(b.method) : a.path.localeCompare(b.path),
+  );
+}
+
+interface WorkOSDevSession {
+  user: Record<string, unknown>;
+  accessToken: string;
+  refreshToken?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
+  role?: string;
+  roles?: string[];
+  permissions?: string[];
+  issuedAt: number;
+}
+
+function normalizeLocalRedirect(value: string | null | undefined, fallback = "/"): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return fallback;
+  }
+  return value;
+}
+
+function workOSDevCookieName(envStore: ReturnType<typeof getRuntimeEnvStore>): string {
+  return envStore.resolve("WORKOS_COOKIE_NAME") || "forgeos_workos_session";
+}
+
+function base64urlJson(value: unknown): string {
+  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+}
+
+function decodeBase64urlJson(value: string): unknown {
+  return JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as unknown;
+}
+
+function hmacBase64url(secret: string, payload: string): string {
+  return createHmac("sha256", secret).update(payload).digest("base64url");
+}
+
+function safeEqualString(left: string, right: string): boolean {
+  const a = Buffer.from(left);
+  const b = Buffer.from(right);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+function encodeWorkOSDevSession(session: WorkOSDevSession, cookiePassword: string): string {
+  const payload = base64urlJson(session);
+  return `${payload}.${hmacBase64url(cookiePassword, payload)}`;
+}
+
+function decodeWorkOSDevSession(value: string | undefined, cookiePassword: string): WorkOSDevSession | null {
+  if (!value) {
+    return null;
+  }
+  const [payload, signature] = value.split(".");
+  if (!payload || !signature || !safeEqualString(signature, hmacBase64url(cookiePassword, payload))) {
+    return null;
+  }
+  return decodeBase64urlJson(payload) as WorkOSDevSession;
+}
+
+function readRequestCookie(request: Request, name: string): string | undefined {
+  return (request.headers.get("cookie") ?? "")
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+}
+
+function workOSDevSessionClaims(session: WorkOSDevSession): Record<string, unknown> {
+  const email = typeof session.user.email === "string" ? session.user.email : undefined;
+  const firstName = typeof session.user.firstName === "string" ? session.user.firstName : undefined;
+  const lastName = typeof session.user.lastName === "string" ? session.user.lastName : undefined;
+  return {
+    sub: String(session.user.id ?? ""),
+    ...(email ? { email } : {}),
+    ...(firstName || lastName ? { name: [firstName, lastName].filter(Boolean).join(" ") } : {}),
+    ...(session.organizationId ? { organization_id: session.organizationId } : {}),
+    ...(session.organizationMembershipId ? { organization_membership_id: session.organizationMembershipId } : {}),
+    ...(session.role ? { role: session.role } : {}),
+    ...(session.roles ? { roles: session.roles } : {}),
+    ...(session.permissions ? { permissions: session.permissions } : {}),
+  };
+}
+
+function createWorkOSDevSessionCookie(
+  envStore: ReturnType<typeof getRuntimeEnvStore>,
+  session: WorkOSDevSession,
+): string {
+  const cookiePassword = envStore.resolve("WORKOS_COOKIE_PASSWORD") ?? "";
+  const cookieName = workOSDevCookieName(envStore);
+  const value = encodeWorkOSDevSession(session, cookiePassword);
+  return `${cookieName}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`;
+}
+
+function clearWorkOSDevSessionCookie(envStore: ReturnType<typeof getRuntimeEnvStore>): string {
+  return `${workOSDevCookieName(envStore)}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+}
+
+function workOSConfigDiagnostics(envStore: ReturnType<typeof getRuntimeEnvStore>, requireApiKey: boolean): Diagnostic[] {
+  const required = [
+    "WORKOS_CLIENT_ID",
+    "WORKOS_REDIRECT_URI",
+    "WORKOS_COOKIE_PASSWORD",
+    ...(requireApiKey ? ["WORKOS_API_KEY"] : []),
+  ];
+  return required
+    .filter((name) => !envStore.resolve(name))
+    .map((name) =>
+      createDiagnostic({
+        severity: "error",
+        code: FORGE_DEV_SERVER_ERROR,
+        message: `${name} is required for WorkOS AuthKit dev routes`,
+        fixHint: "Run forge add auth workos, copy .env.example to .env.local, and fill WorkOS values.",
+      }),
+    );
+}
+
+function workOSAuthorizationUrl(envStore: ReturnType<typeof getRuntimeEnvStore>, state: string): string {
+  const url = new URL("https://api.workos.com/user_management/authorize");
+  url.searchParams.set("provider", "authkit");
+  url.searchParams.set("client_id", envStore.resolve("WORKOS_CLIENT_ID") ?? "");
+  url.searchParams.set("redirect_uri", envStore.resolve("WORKOS_REDIRECT_URI") ?? "");
+  if (state) {
+    url.searchParams.set("state", state);
+  }
+  return url.toString();
+}
+
+async function authenticateWorkOSCode(workspaceRoot: string, envStore: ReturnType<typeof getRuntimeEnvStore>, code: string) {
+  const req = createRequire(join(workspaceRoot, "package.json"));
+  const localEntry = join(workspaceRoot, "node_modules/@workos-inc/node/index.js");
+  const resolved = existsSync(localEntry) ? localEntry : req.resolve("@workos-inc/node");
+  const workosModule = await import(pathToFileURL(resolved).href) as {
+    createWorkOS?: (options: { apiKey: string; clientId: string }) => unknown;
+    WorkOS?: new (options: { apiKey: string; clientId: string }) => unknown;
+  };
+  const client = workosModule.createWorkOS
+    ? workosModule.createWorkOS({
+        apiKey: envStore.resolve("WORKOS_API_KEY") ?? "",
+        clientId: envStore.resolve("WORKOS_CLIENT_ID") ?? "",
+      })
+    : workosModule.WorkOS
+      ? new workosModule.WorkOS({
+          apiKey: envStore.resolve("WORKOS_API_KEY") ?? "",
+          clientId: envStore.resolve("WORKOS_CLIENT_ID") ?? "",
+        })
+      : null;
+  const userManagement = (client as { userManagement?: { authenticateWithCode?: (input: { code: string; clientId: string }) => Promise<Record<string, unknown>> } } | null)?.userManagement;
+  if (!userManagement?.authenticateWithCode) {
+    throw new Error("@workos-inc/node does not expose userManagement.authenticateWithCode");
+  }
+  return userManagement.authenticateWithCode({
+    code,
+    clientId: envStore.resolve("WORKOS_CLIENT_ID") ?? "",
   });
 }
 
@@ -848,14 +1099,14 @@ export async function startDevServer(
   }
 
   const initialArtifacts = loadArtifacts();
-  let currentRoutes = devManifest.routes;
+  let currentRoutes = withGeneratedIntegrationRoutes(workspaceRoot, devManifest.routes);
   let currentRuntimeEntryCount = runtimeGraph.entries.length;
 
   async function reloadGeneratedArtifacts(reason = "manual"): Promise<DevServerReloadResult> {
     try {
       refreshRuntimeModuleNamespace(reason);
       const fresh = loadArtifacts();
-      currentRoutes = fresh.devManifest.routes;
+      currentRoutes = withGeneratedIntegrationRoutes(workspaceRoot, fresh.devManifest.routes);
       currentRuntimeEntryCount = fresh.runtimeGraph.entries.length;
       const diagnostics: Diagnostic[] = [];
       let migrated = false;
@@ -930,6 +1181,7 @@ export async function startDevServer(
         pollIntervalMs: Number(process.env.FORGE_LIVE_POLL_INTERVAL_MS ?? "1000"),
       })
     : null;
+  const workosReplayStore = new MemoryWebhookReplayStore();
 
   if (options.worker && serverState.adapter) {
     serverState.outboxWorker = startOutboxWorker(
@@ -994,7 +1246,7 @@ export async function startDevServer(
           ].sort((a, b) =>
             a.path === b.path ? a.kind.localeCompare(b.kind) : a.path.localeCompare(b.path),
           );
-          const routes = currentDevManifest.routes.map((route) => ({
+          const routes = currentRoutes.map((route) => ({
             method: route.method,
             path: route.path,
             purpose: route.purpose,
@@ -1095,6 +1347,268 @@ export async function startDevServer(
               lastRevision: 0,
             },
             liveStatus: liveManager?.status() ?? null,
+          });
+        }
+
+        if (["/login", "/callback", "/logout", "/session"].includes(pathname)) {
+          if (!hasWorkOSAuthRoutes(workspaceRoot)) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_RUNTIME_NOT_FOUND,
+                    message: "WorkOS AuthKit routes are not installed",
+                    fixHint: "Run forge add auth workos, then forge generate.",
+                  }),
+                ],
+              },
+              404,
+            );
+          }
+
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+
+          if (pathname === "/login") {
+            if (request.method !== "GET") {
+              return jsonResponse({ ok: false, error: "method_not_allowed" }, 405, { Allow: "GET, OPTIONS" });
+            }
+            const diagnostics = workOSConfigDiagnostics(envStore, false);
+            if (diagnostics.length > 0) {
+              return jsonResponse({ ok: false, diagnostics }, 503);
+            }
+            const returnTo = normalizeLocalRedirect(new URL(request.url).searchParams.get("returnTo"));
+            return redirectResponse(workOSAuthorizationUrl(envStore, returnTo));
+          }
+
+          if (pathname === "/callback") {
+            if (request.method !== "GET") {
+              return jsonResponse({ ok: false, error: "method_not_allowed" }, 405, { Allow: "GET, OPTIONS" });
+            }
+            const diagnostics = workOSConfigDiagnostics(envStore, true);
+            if (diagnostics.length > 0) {
+              return jsonResponse({ ok: false, diagnostics }, 503);
+            }
+            const url = new URL(request.url);
+            const code = url.searchParams.get("code");
+            if (!code) {
+              return jsonResponse({ ok: false, error: "missing_code" }, 400);
+            }
+            try {
+              const result = await authenticateWorkOSCode(workspaceRoot, envStore, code);
+              const user = (result.user ?? {}) as Record<string, unknown>;
+              const organization = (result.organization ?? {}) as Record<string, unknown>;
+              const membership = (result.organizationMembership ?? {}) as Record<string, unknown>;
+              const accessToken = typeof result.accessToken === "string" ? result.accessToken : "";
+              const refreshToken = typeof result.refreshToken === "string" ? result.refreshToken : undefined;
+              const session: WorkOSDevSession = {
+                user,
+                accessToken,
+                ...(refreshToken ? { refreshToken } : {}),
+                ...(typeof result.organizationId === "string"
+                  ? { organizationId: result.organizationId }
+                  : typeof organization.id === "string"
+                    ? { organizationId: organization.id }
+                    : {}),
+                ...(typeof result.organizationMembershipId === "string"
+                  ? { organizationMembershipId: result.organizationMembershipId }
+                  : typeof membership.id === "string"
+                    ? { organizationMembershipId: membership.id }
+                    : {}),
+                ...(typeof result.role === "string" ? { role: result.role } : {}),
+                ...(Array.isArray(result.roles)
+                  ? { roles: result.roles.filter((role): role is string => typeof role === "string") }
+                  : {}),
+                ...(Array.isArray(result.permissions)
+                  ? {
+                      permissions: result.permissions.filter(
+                        (permission): permission is string => typeof permission === "string",
+                      ),
+                    }
+                  : {}),
+                issuedAt: Math.floor(Date.now() / 1000),
+              };
+              return redirectResponse(
+                normalizeLocalRedirect(
+                  url.searchParams.get("state"),
+                  normalizeLocalRedirect(envStore.resolve("WORKOS_POST_LOGIN_REDIRECT_URI"), "/"),
+                ),
+                { "Set-Cookie": createWorkOSDevSessionCookie(envStore, session) },
+              );
+            } catch (error) {
+              return jsonResponse(
+                {
+                  ok: false,
+                  diagnostics: [
+                    createDiagnostic({
+                      severity: "error",
+                      code: FORGE_DEV_SERVER_ERROR,
+                      message: error instanceof Error ? error.message : "WorkOS callback failed",
+                      fixHint: "Ensure @workos-inc/node is installed and WorkOS env values are valid.",
+                    }),
+                  ],
+                },
+                500,
+              );
+            }
+          }
+
+          if (pathname === "/logout") {
+            if (request.method !== "POST") {
+              return jsonResponse({ ok: false, error: "method_not_allowed" }, 405, { Allow: "POST, OPTIONS" });
+            }
+            return redirectResponse(
+              normalizeLocalRedirect(envStore.resolve("WORKOS_POST_LOGOUT_REDIRECT_URI"), "/"),
+              { "Set-Cookie": clearWorkOSDevSessionCookie(envStore) },
+            );
+          }
+
+          if (pathname === "/session") {
+            if (request.method !== "GET") {
+              return jsonResponse({ ok: false, error: "method_not_allowed" }, 405, { Allow: "GET, OPTIONS" });
+            }
+            const cookiePassword = envStore.resolve("WORKOS_COOKIE_PASSWORD");
+            if (!cookiePassword) {
+              return jsonResponse({ ok: false, diagnostics: workOSConfigDiagnostics(envStore, false) }, 503);
+            }
+            const session = decodeWorkOSDevSession(
+              readRequestCookie(request, workOSDevCookieName(envStore)),
+              cookiePassword,
+            );
+            return session
+              ? jsonResponse({ ok: true, session: { user: session.user, claims: workOSDevSessionClaims(session) } })
+              : jsonResponse({ ok: false, session: null }, 401);
+          }
+        }
+
+        if (request.method === "GET" && pathname === "/auth.md") {
+          const authMdPath = join(workspaceRoot, "public/auth.md");
+          if (!existsSync(authMdPath)) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_RUNTIME_NOT_FOUND,
+                    message: "public/auth.md was not found",
+                    fixHint: "Run forge authmd generate.",
+                  }),
+                ],
+              },
+              404,
+            );
+          }
+          return markdownResponse(readFileSync(authMdPath, "utf8"));
+        }
+
+        if (request.method === "GET" && pathname === "/.well-known/oauth-protected-resource") {
+          const metadataPath = join(workspaceRoot, "public/.well-known/oauth-protected-resource");
+          if (!existsSync(metadataPath)) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_RUNTIME_NOT_FOUND,
+                    message: "public/.well-known/oauth-protected-resource was not found",
+                    fixHint: "Run forge authmd generate.",
+                  }),
+                ],
+              },
+              404,
+            );
+          }
+          return jsonResponse(JSON.parse(readFileSync(metadataPath, "utf8")));
+        }
+
+        if (pathname === "/webhooks/workos") {
+          if (!hasWorkOSWebhookEndpoint(workspaceRoot)) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_RUNTIME_NOT_FOUND,
+                    message: "WorkOS webhook endpoint is not installed",
+                    fixHint: "Run forge add auth workos, then forge generate.",
+                  }),
+                ],
+              },
+              404,
+            );
+          }
+          if (request.method !== "POST") {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: FORGE_DEV_INVOKE_FAILED,
+                    message: "WorkOS webhook endpoint requires POST /webhooks/workos",
+                  }),
+                ],
+                example: {
+                  method: "POST",
+                  path: "/webhooks/workos",
+                  headers: { "WorkOS-Signature": "t=<ms>,v1=<hex>" },
+                },
+              },
+              405,
+              { Allow: "POST, OPTIONS" },
+            );
+          }
+
+          const payload = await request.text();
+          let eventId: string | undefined;
+          let eventType: string | undefined;
+          try {
+            const parsed = JSON.parse(payload) as { id?: unknown; event?: unknown; type?: unknown };
+            eventId = typeof parsed.id === "string" ? parsed.id : undefined;
+            eventType =
+              typeof parsed.event === "string"
+                ? parsed.event
+                : typeof parsed.type === "string"
+                  ? parsed.type
+                  : undefined;
+          } catch {
+            // Signature verification still returns the authoritative failure for malformed bodies.
+          }
+
+          const envStore = getRuntimeEnvStore(workspaceRoot);
+          const secret = envStore.resolve("WORKOS_WEBHOOK_SECRET") ?? "";
+          const verification = await verifyWebhookSignature({
+            provider: "workos",
+            secret,
+            payload,
+            signatureHeader: request.headers.get("WorkOS-Signature"),
+            eventId,
+            replayStore: workosReplayStore,
+          });
+          if (!verification.ok) {
+            return jsonResponse(
+              {
+                ok: false,
+                diagnostics: [
+                  createDiagnostic({
+                    severity: "error",
+                    code: verification.code ?? FORGE_DEV_SERVER_ERROR,
+                    message: verification.reason ?? "WorkOS webhook signature verification failed",
+                  }),
+                ],
+              },
+              401,
+            );
+          }
+          return jsonResponse({
+            ok: true,
+            provider: "workos",
+            eventId: eventId ?? null,
+            event: eventType ?? "unknown",
           });
         }
 

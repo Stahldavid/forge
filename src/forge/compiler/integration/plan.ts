@@ -27,6 +27,7 @@ import {
   renderAdapterModule,
   renderIntegrationDoc,
   renderIntegrationModule,
+  renderRootFile,
   renderTestkitModule,
 } from "./render.ts";
 
@@ -104,6 +105,10 @@ function buildGeneratedPaths(
 
   for (const integration of recipe.integrations ?? []) {
     paths.push(`${GENERATED_DIR}/integrations/${integration}`);
+  }
+
+  for (const rootFile of recipe.rootFiles ?? []) {
+    paths.push(rootFile);
   }
 
   paths.push(
@@ -219,6 +224,16 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
         renderIntegrationModule(integration, templateCtx),
       ),
     );
+  }
+
+  for (const rootFile of recipe.rootFiles ?? []) {
+    const content = renderRootFile(rootFile, templateCtx);
+    files.push({
+      path: rootFile,
+      content,
+      contentHash: hashStable(content),
+      header: rootFile.endsWith(".env.example") ? "none" : "deterministic",
+    });
   }
 
   for (const testkit of recipe.testkits) {

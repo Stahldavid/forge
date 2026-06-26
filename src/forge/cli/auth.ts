@@ -4,10 +4,11 @@ import {
   FORGE_AUTH_INVALID_AUDIENCE,
   FORGE_AUTH_JWKS_FAILED,
 } from "../compiler/diagnostics/codes.ts";
-import { loadAuthConfigFromEnv } from "../runtime/auth/config.ts";
+import { loadAuthConfigFromEnv, type AuthClaimsMapping } from "../runtime/auth/config.ts";
 import { mapClaimsToAuthContext } from "../runtime/auth/claims.ts";
 import { ForgeAuthError } from "../runtime/auth/errors.ts";
 import { verifyJwtToken } from "../runtime/auth/verifier.ts";
+import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 
 export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove";
 
@@ -26,9 +27,42 @@ export interface AuthCommandResult {
   exitCode: 0 | 1;
 }
 
+function detectWorkOS(workspaceRoot: string, claims: AuthClaimsMapping) {
+  const secretRegistry = loadSecretRegistry(workspaceRoot);
+  const secretNames = new Set((secretRegistry?.secrets ?? []).map((secret) => secret.name));
+  const detected =
+    secretNames.has("WORKOS_API_KEY") ||
+    secretNames.has("WORKOS_CLIENT_ID") ||
+    claims.tenantId === "organization_id";
+  const expectedClaims = {
+    userId: "sub",
+    email: "email",
+    tenantId: "organization_id",
+    role: "role",
+    roles: "roles",
+    permissions: "permissions",
+  };
+  const claimStatus = Object.entries(expectedClaims).map(([name, expected]) => ({
+    name,
+    expected,
+    actual: claims[name as keyof AuthClaimsMapping],
+    ok: claims[name as keyof AuthClaimsMapping] === expected,
+  }));
+  return {
+    detected,
+    requiredSecretsRegistered: ["WORKOS_API_KEY", "WORKOS_CLIENT_ID", "WORKOS_COOKIE_PASSWORD"].every((name) =>
+      secretNames.has(name)
+    ),
+    webhookSecretRegistered: secretNames.has("WORKOS_WEBHOOK_SECRET"),
+    expectedClaims,
+    claimStatus,
+  };
+}
+
 function validateConfig(workspaceRoot: string): AuthCommandResult {
   const config = loadAuthConfigFromEnv(workspaceRoot);
   const errors: { code: string; message: string }[] = [];
+  const workos = detectWorkOS(workspaceRoot, config.claims);
 
   if ((config.mode === "jwt" || config.mode === "oidc") && !config.issuer) {
     errors.push({
@@ -60,6 +94,7 @@ function validateConfig(workspaceRoot: string): AuthCommandResult {
       algorithms: config.algorithms,
       claims: config.claims,
       requiresTenant: config.requiresTenant,
+      workos,
       errors,
     },
     error: errors[0],
@@ -69,6 +104,7 @@ function validateConfig(workspaceRoot: string): AuthCommandResult {
 
 function publicConfig(workspaceRoot: string): AuthCommandResult {
   const config = loadAuthConfigFromEnv(workspaceRoot);
+  const workos = detectWorkOS(workspaceRoot, config.claims);
   return {
     ok: true,
     mode: config.mode,
@@ -80,6 +116,7 @@ function publicConfig(workspaceRoot: string): AuthCommandResult {
       algorithms: config.algorithms,
       claims: config.claims,
       requiresTenant: config.requiresTenant,
+      workos,
     },
     exitCode: 0,
   };
@@ -166,7 +203,9 @@ export async function runAuthCommand(
   if (options.subcommand === "prove") {
     const checked = validateConfig(options.workspaceRoot);
     const config = loadAuthConfigFromEnv(options.workspaceRoot);
+    const workos = detectWorkOS(options.workspaceRoot, config.claims);
     const productionMode = config.mode === "jwt" || config.mode === "oidc";
+    const workosClaimsOk = workos.claimStatus.every((claim) => claim.ok);
     return {
       ok: checked.ok,
       mode: config.mode,
@@ -191,7 +230,23 @@ export async function runAuthCommand(
             status: checked.ok ? "passed" : "failed",
             evidence: checked.data,
           },
+          {
+            id: "INV-WORKOS-001",
+            name: "WorkOS adapter claim mapping is explicit when WorkOS is present",
+            status: !workos.detected ? "not-applicable" : workosClaimsOk ? "passed" : "failed",
+            evidence: workos.claimStatus,
+          },
+          {
+            id: "INV-WORKOS-002",
+            name: "WorkOS required secret names are registered without values",
+            status: !workos.detected ? "not-applicable" : workos.requiredSecretsRegistered ? "passed" : "failed",
+            evidence: {
+              required: ["WORKOS_API_KEY", "WORKOS_CLIENT_ID", "WORKOS_COOKIE_PASSWORD"],
+              webhookSecretRegistered: workos.webhookSecretRegistered,
+            },
+          },
         ],
+        workos,
         checkedAt: "deterministic",
       },
       error: checked.error,

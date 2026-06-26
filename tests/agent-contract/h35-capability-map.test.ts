@@ -210,6 +210,112 @@ describe("H35 capability map", () => {
     }
   }, 30_000);
 
+  test("agent contract includes table reads performed by imported local helpers", async () => {
+    const { workspace, project } = await createMinimalProject("h35-capability-helper-reads");
+    try {
+      writeFileSync(
+        join(project, "src", "forge", "schema.ts"),
+        [
+          readFileSync(join(project, "src", "forge", "schema.ts"), "utf8"),
+          "",
+          "export const organizations = defineTable({",
+          '  name: "organizations",',
+          "  fields: {",
+          '    id: "uuid",',
+          '    name: "text",',
+          "  },",
+          "});",
+          "",
+          "export const projects = defineTable({",
+          '  name: "projects",',
+          "  fields: {",
+          '    id: "uuid",',
+          '    organizationId: "text",',
+          '    name: "text",',
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      mkdirSync(join(project, "src", "authz"), { recursive: true });
+      writeFileSync(
+        join(project, "src", "authz", "membership.ts"),
+        [
+          "export async function requireMembership(ctx: { db: any; auth?: { tenantId?: string } }) {",
+          '  const organizationId = ctx.auth?.tenantId ?? "org-acme";',
+          "  const organization = await ctx.db.organizations.get(organizationId);",
+          "  if (!organization) {",
+          '    throw new Error("organization membership required");',
+          "  }",
+          "  return organization;",
+          "}",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(project, "src", "queries", "listProjects.ts"),
+        [
+          'import { can, query } from "forge/server";',
+          'import { requireMembership } from "../authz/membership";',
+          "",
+          "export const listProjects = query({",
+          '  auth: can("projects.read"),',
+          "  handler: async (ctx) => {",
+          "    await requireMembership(ctx);",
+          "    return ctx.db.projects.all();",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(project, "src", "queries", "liveProjects.ts"),
+        [
+          'import { can, liveQuery } from "forge/server";',
+          'import { requireMembership } from "../authz/membership";',
+          "",
+          "export const liveProjects = liveQuery({",
+          '  auth: can("projects.read"),',
+          "  handler: async (ctx) => {",
+          "    await requireMembership(ctx);",
+          "    return ctx.db.projects.where({ organizationId: ctx.auth?.tenantId ?? 'org-acme' });",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(project));
+      expect(generated.exitCode).toBe(0);
+
+      const contract = readAgentContract(project);
+      expect(contract.queries.find((entry) => entry.name === "listProjects")?.tablesRead).toEqual([
+        "organizations",
+        "projects",
+      ]);
+      expect(contract.liveQueries.find((entry) => entry.name === "liveProjects")?.tablesRead).toEqual([
+        "organizations",
+        "projects",
+      ]);
+
+      const map = readCapabilityMap(project);
+      expect(map.entries).toContainEqual(
+        expect.objectContaining({
+          id: "runtime:query:listProjects",
+          runtime: expect.objectContaining({
+            tablesRead: ["organizations", "projects"],
+          }),
+        }),
+      );
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
   test("capability map reports raw runtime fetch warnings", async () => {
     const { workspace, project } = await createMinimalProject("h35-capability-raw-fetch");
     try {

@@ -256,6 +256,12 @@ forge deps upgrade-apply .forge/upgrades/<plan>.json
 ```bash
 forge auth check --json
 forge auth prove --json
+forge authmd generate
+forge authmd check --json
+forge workos install --yes --json
+forge workos doctor --json
+forge workos doctor --yes --json
+forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json
 forge secrets prove --json

@@ -113,4 +113,43 @@ describe("security assurance: webhook authenticity", () => {
     expect(invalid.ok).toBe(false);
     expect(invalid.code).toBe(FORGE_WEBHOOK_SIGNATURE_INVALID);
   });
+
+  test("validates WorkOS webhook signatures with millisecond timestamps", async () => {
+    const secret = "workos-webhook-secret";
+    const payload = JSON.stringify({ id: "event_workos_1", event: "organization_membership.updated" });
+    const timestampMs = 1_800_000_000_123;
+    const signature = hmac(secret, `${timestampMs}.${payload}`);
+
+    const valid = await verifyWebhookSignature({
+      provider: "workos",
+      secret,
+      payload,
+      signatureHeader: `t=${timestampMs},v1=${signature}`,
+      nowSeconds: timestampMs / 1000,
+      toleranceSeconds: 180,
+    });
+    expect(valid.ok).toBe(true);
+
+    const stale = await verifyWebhookSignature({
+      provider: "workos",
+      secret,
+      payload,
+      signatureHeader: `t=${timestampMs},v1=${signature}`,
+      nowSeconds: timestampMs / 1000 + 240,
+      toleranceSeconds: 180,
+    });
+    expect(stale.ok).toBe(false);
+    expect(stale.code).toBe(FORGE_WEBHOOK_TIMESTAMP_INVALID);
+
+    const tampered = await verifyWebhookSignature({
+      provider: "workos",
+      secret,
+      payload: JSON.stringify({ id: "event_workos_1", event: "organization.deleted" }),
+      signatureHeader: `t=${timestampMs},v1=${signature}`,
+      nowSeconds: timestampMs / 1000,
+      toleranceSeconds: 180,
+    });
+    expect(tampered.ok).toBe(false);
+    expect(tampered.code).toBe(FORGE_WEBHOOK_SIGNATURE_INVALID);
+  });
 });

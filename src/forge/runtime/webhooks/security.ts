@@ -6,7 +6,7 @@ import {
   FORGE_WEBHOOK_TIMESTAMP_INVALID,
 } from "../../compiler/diagnostics/codes.ts";
 
-export type WebhookProvider = "generic" | "github" | "stripe";
+export type WebhookProvider = "generic" | "github" | "stripe" | "workos";
 
 export interface WebhookReplayStore {
   has(eventId: string): boolean | Promise<boolean>;
@@ -69,12 +69,14 @@ function fail(
   return { ok: false, provider, code, reason };
 }
 
-function parseStripeHeader(header: string): { timestamp?: number; signatures: string[] } {
+function parseTimestampedSignatureHeader(header: string): { timestampRaw?: string; timestamp?: number; signatures: string[] } {
   const signatures: string[] = [];
+  let timestampRaw: string | undefined;
   let timestamp: number | undefined;
   for (const part of header.split(",")) {
     const [key, value] = part.split("=", 2).map((item) => item.trim());
     if (key === "t") {
+      timestampRaw = value;
       const parsed = Number(value);
       if (Number.isFinite(parsed)) {
         timestamp = parsed;
@@ -84,7 +86,7 @@ function parseStripeHeader(header: string): { timestamp?: number; signatures: st
       signatures.push(value);
     }
   }
-  return { timestamp, signatures };
+  return { timestampRaw, timestamp, signatures };
 }
 
 function validateTimestamp(input: {
@@ -131,9 +133,11 @@ export async function verifyWebhookSignature(
   let valid = false;
   let timestamp: number | undefined;
 
-  if (input.provider === "stripe") {
-    const parsed = parseStripeHeader(signatureHeader);
-    timestamp = parsed.timestamp;
+  if (input.provider === "stripe" || input.provider === "workos") {
+    const parsed = parseTimestampedSignatureHeader(signatureHeader);
+    timestamp = input.provider === "workos" && parsed.timestamp !== undefined
+      ? parsed.timestamp / 1000
+      : parsed.timestamp;
     const timestampFailure = validateTimestamp({
       provider: input.provider,
       timestamp,
@@ -143,7 +147,8 @@ export async function verifyWebhookSignature(
     if (timestampFailure) {
       return timestampFailure;
     }
-    const signedPayload = `${timestamp}.${Buffer.from(bytes(input.payload)).toString("utf8")}`;
+    const timestampForSignature = parsed.timestampRaw ?? String(parsed.timestamp);
+    const signedPayload = `${timestampForSignature}.${Buffer.from(bytes(input.payload)).toString("utf8")}`;
     const expected = hmacHex(input.secret, signedPayload);
     valid = parsed.signatures.some((signature) => safeEqualHex(signature, expected));
   } else if (input.provider === "github") {

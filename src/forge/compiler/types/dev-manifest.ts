@@ -14,6 +14,10 @@ export interface DevRoute {
     | "ai-agent-chat"
     | "ai-agent-run"
     | "ai-providers"
+    | "auth"
+    | "auth-md"
+    | "auth-metadata"
+    | "webhook"
     | "queries"
     | "query";
   entryName?: string;

@@ -4,5 +4,6 @@ export {
   renderQualityAdapter,
   renderQualityDoc,
   renderQualityIntegration,
+  renderQualityRootFile,
   renderQualityTestkit,
 } from "./render.ts";

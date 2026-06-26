@@ -162,6 +162,18 @@ export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
           ...((result.requiredSecrets?.length ?? 0) > 0 || (result.optionalSecrets?.length ?? 0) > 0
             ? ["forge secrets check --json", "forge inspect secrets --json"]
             : []),
+          ...(result.alias === "workos"
+            ? [
+                "forge workos install --json",
+                "forge workos install --yes --json",
+                "forge workos doctor --json",
+                "forge workos doctor --yes --json",
+                "forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json",
+                "forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json",
+                "forge auth check --json",
+                "forge auth prove --json",
+              ]
+            : []),
           "forge check --json",
           "forge verify --smoke",
         ]

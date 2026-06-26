@@ -7,8 +7,8 @@ describe("policy simulate", () => {
     generatorVersion: "test",
     inputHash: "test",
     entries: [
-      { policy: "tickets.create", roles: ["owner", "admin", "member"] },
-      { policy: "billing.manage", roles: ["owner", "admin"] },
+      { policy: "tickets.create", roles: ["owner", "admin", "member"], permissions: [] },
+      { policy: "billing.manage", roles: ["owner", "admin"], permissions: [] },
     ],
   };
 

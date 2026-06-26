@@ -196,7 +196,7 @@ export function writeExternalRuntimeArtifacts(
         schemaVersion: "1.0.0",
         generatorVersion: GENERATOR_VERSION,
         inputHash: graph.inputHash,
-        entries: [{ policy: "billing.manage", roles: ["admin", "owner"] }],
+        entries: [{ policy: "billing.manage", roles: ["admin", "owner"], permissions: [] }],
       },
       null,
       2,

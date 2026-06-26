@@ -214,6 +214,43 @@ export const CONVEX_RECIPE: IntegrationRecipe = {
   docs: ["convex.md"],
 };
 
+export const WORKOS_RECIPE: IntegrationRecipe = {
+  alias: "workos",
+  packages: [{ packageName: "@workos-inc/node" }],
+  supportedVersionRange: ">=10.0.0",
+  recipeVersion: "1.0.0",
+  contexts: {
+    allowed: ["server", "action", "workflow", "endpoint", "test", "build"],
+    denied: ["shared", "client", "query", "liveQuery", "command", "edge"],
+  },
+  capabilities: networkCapability(
+    ["api.workos.com"],
+    ["recipe:workos", "WorkOS SDK calls AuthKit, Organizations, Admin Portal, and FGA APIs"],
+  ),
+  secrets: [
+    secret("WORKOS_API_KEY"),
+    secret("WORKOS_CLIENT_ID"),
+    secret("WORKOS_COOKIE_PASSWORD"),
+    secret("WORKOS_REDIRECT_URI", false),
+    secret("WORKOS_WEBHOOK_SECRET", false),
+  ],
+  adapters: ["workos.server.ts"],
+  integrations: [
+    "workos/authkit.ts",
+    "workos/auth-routes.ts",
+    "workos/fga.ts",
+    "workos/http-handler.ts",
+    "workos/resource-map.ts",
+    "workos/seed.ts",
+    "workos/session.ts",
+    "workos/webhook.ts",
+    "workos/workos-seed.yml",
+  ],
+  rootFiles: [".env.example", "src/policies.workos.ts"],
+  testkits: ["workos.mock.ts"],
+  docs: ["workos.md"],
+};
+
 export const FORGE_RECIPE: IntegrationRecipe = {
   alias: "forge",
   packages: [{ packageName: "forge" }],
@@ -308,6 +345,7 @@ export const REFERENCE_ALIASES = [
   "sentry",
   "zod",
   "convex",
+  "workos",
   "ai",
 ] as const;
 

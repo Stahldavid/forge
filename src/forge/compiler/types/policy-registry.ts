@@ -2,8 +2,9 @@ import type { Diagnostic } from "./diagnostic.ts";
 
 export interface PolicyRule {
   name: string;
-  kind: "roles" | "public" | "system";
+  kind: "roles" | "permissions" | "public" | "system";
   roles: string[];
+  permissions: string[];
   file: string;
   symbolId: string;
 }
@@ -33,6 +34,7 @@ export interface QueryAuthBinding {
 export interface PermissionMatrixEntry {
   policy: string;
   roles: string[];
+  permissions: string[];
 }
 
 export interface TenantScopeEntry {

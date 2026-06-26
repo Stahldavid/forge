@@ -4,24 +4,29 @@ export interface AuthHeaderInput {
   userId?: string;
   tenantId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
 }
 
 export interface CliAuthInput {
   userId?: string;
   tenantId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
 }
 
 export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
   const { userId, tenantId, role } = input;
-  if (userId && role) {
+  const roles = [...new Set([...(role ? [role] : []), ...(input.roles ?? [])])];
+  if (userId && (role || roles.length > 0 || (input.permissions ?? []).length > 0)) {
     return {
       kind: "user",
       userId,
       ...(tenantId ? { tenantId } : {}),
-      role,
-      roles: [role],
-      permissions: [],
+      ...(role ? { role } : roles[0] ? { role: roles[0] } : {}),
+      roles,
+      permissions: [...new Set(input.permissions ?? [])].sort(),
       token: {
         issuer: "dev-headers",
         audience: "dev",
@@ -34,6 +39,24 @@ export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
   return { kind: "anonymous" };
 }
 
+function parseHeaderList(value: string | null): string[] {
+  if (!value) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
+    }
+  } catch {
+    // Fall through to comma-separated dev header parsing.
+  }
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 export function resolveAuthFromCli(input: CliAuthInput): AuthContext {
   return resolveAuthFromHeaders(input);
 }
@@ -43,6 +66,8 @@ export function parseAuthHeaders(headers: Headers): AuthContext {
     userId: headers.get("x-forge-user-id") ?? undefined,
     tenantId: headers.get("x-forge-tenant-id") ?? undefined,
     role: headers.get("x-forge-role") ?? undefined,
+    roles: parseHeaderList(headers.get("x-forge-roles")),
+    permissions: parseHeaderList(headers.get("x-forge-permissions")),
   });
 }
 

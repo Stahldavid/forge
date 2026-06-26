@@ -91,8 +91,9 @@ export interface AgentDataInfo {
 
 export interface AgentPolicyInfo {
   name: string;
-  kind: "roles" | "public" | "system";
+  kind: "roles" | "permissions" | "public" | "system";
   roles: string[];
+  permissions: string[];
   file: string;
 }
 

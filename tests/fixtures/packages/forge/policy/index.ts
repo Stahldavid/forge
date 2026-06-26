@@ -1,5 +1,6 @@
 export type PolicyDefinition =
   | { kind: "roles"; roles: string[] }
+  | { kind: "permissions"; permissions: string[] }
   | { kind: "public" }
   | { kind: "system" };
 
@@ -11,6 +12,10 @@ export type AuthRequirement =
 
 export function canRole(...roles: string[]): PolicyDefinition {
   return { kind: "roles", roles: [...roles] };
+}
+
+export function canPermission(...permissions: string[]): PolicyDefinition {
+  return { kind: "permissions", permissions: [...permissions] };
 }
 
 export function can(policy: string): AuthRequirement {

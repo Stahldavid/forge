@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { forgeAdd } from "../../src/forge/compiler/integration/add.ts";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { buildAddJson, writeHumanAdd } from "../../src/forge/cli/output.ts";
+import { runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { loadExistingForgeLock } from "../../src/forge/compiler/integration/plan.ts";
 import { parseAdapterContext } from "../../src/forge/compiler/integration/render.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
+import { mapClaimsToAuthContext } from "../../src/forge/runtime/auth/claims.ts";
 import { defaultGenerateOptions } from "../orchestrator/helpers.ts";
 import {
   cleanupWorkspace,
@@ -395,6 +398,377 @@ describe("forge add integration", () => {
       cleanupWorkspace(workspace);
     }
   });
+
+  test("adds workos auth adapter with AuthKit and FGA artifacts", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos");
+    try {
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFixturePmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.mode).toBe("integration");
+      expect(result.recipeVersion).toBe("1.0.0");
+      expect(result.recipePackages).toEqual(["@workos-inc/node"]);
+      expect(result.requiredSecrets?.sort()).toEqual([
+        "WORKOS_API_KEY",
+        "WORKOS_CLIENT_ID",
+        "WORKOS_COOKIE_PASSWORD",
+      ]);
+      expect(result.optionalSecrets?.sort()).toEqual([
+        "WORKOS_REDIRECT_URI",
+        "WORKOS_WEBHOOK_SECRET",
+      ]);
+
+      const expectedFiles = [
+        "src/forge/_generated/packages/workos.server.ts",
+        "src/forge/_generated/integrations/workos/auth-routes.ts",
+        "src/forge/_generated/integrations/workos/authkit.ts",
+        "src/forge/_generated/integrations/workos/fga.ts",
+        "src/forge/_generated/integrations/workos/http-handler.ts",
+        "src/forge/_generated/integrations/workos/resource-map.ts",
+        "src/forge/_generated/integrations/workos/seed.ts",
+        "src/forge/_generated/integrations/workos/session.ts",
+        "src/forge/_generated/integrations/workos/webhook.ts",
+        "src/forge/_generated/integrations/workos/workos-seed.yml",
+        "src/forge/_generated/testkits/workos.mock.ts",
+        "src/forge/_generated/docs/workos.md",
+        ".env.example",
+        "src/policies.workos.ts",
+      ];
+      for (const file of expectedFiles) {
+        expect(existsSync(join(workspace, file))).toBe(true);
+      }
+
+      expect(readFileSync(join(workspace, "src/forge/_generated/packages/workos.server.ts"), "utf8")).toContain(
+        "createForgeWorkOS",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/packages/workos.server.ts"), "utf8")).toContain(
+        "createWorkOS({",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/packages/workos.server.ts"), "utf8")).toContain(
+        'clientId: secrets.get("WORKOS_CLIENT_ID")',
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+        "permissions:",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+        "organizations:",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+        "Acme Corp",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+        "Globex",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+        "webhook_endpoints:",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+        "resource_types:",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8")).toContain(
+        "handleWorkOSAuthRequest",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8")).toContain(
+        "/callback",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/session.ts"), "utf8")).toContain(
+        "workOSSessionToClaims",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"), "utf8")).toContain(
+        "verifyWorkOSWebhook",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"), "utf8")).toContain(
+        'provider: "workos"',
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"), "utf8")).toContain(
+        "handleWorkOSWebhook",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"), "utf8")).toContain(
+        "handleWorkOSWebhookRequest",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"), "utf8")).toContain(
+        "/webhooks/workos",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
+        "canWorkOS",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
+        "assertWorkOSResourceTenant",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
+        "FORGE_WORKOS_CROSS_TENANT_RESOURCE",
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
+        "organization\" | \"project\" | \"team\" | \"task",
+      );
+      expect(readFileSync(join(workspace, ".env.example"), "utf8")).toContain("FORGE_AUTH_MODE=oidc");
+      expect(readFileSync(join(workspace, ".env.example"), "utf8")).toContain("WORKOS_WEBHOOK_SECRET=");
+      expect(readFileSync(join(workspace, "src/policies.workos.ts"), "utf8")).toContain(
+        '"invitations.create": canPermission("invitations:create")',
+      );
+      expect(readFileSync(join(workspace, "src/forge/_generated/docs/workos.md"), "utf8")).toContain(
+        "WorkOS is the preferred ForgeOS auth adapter",
+      );
+
+      const json = buildAddJson(result);
+      expect(json).toMatchObject({
+        alias: "workos",
+        targetKind: "forge-integration",
+        recipePackages: ["@workos-inc/node"],
+      });
+      expect(json.nextActions as string[]).toContain("forge workos install --json");
+      expect(json.nextActions as string[]).toContain("forge workos install --yes --json");
+      expect(json.nextActions as string[]).toContain("forge workos doctor --yes --json");
+      expect(json.nextActions as string[]).toContain(
+        "forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json",
+      );
+
+      const matrix = JSON.parse(
+        stripDeterministicHeader(
+          readFileSync(join(workspace, "src/forge/_generated/runtimeMatrix.json"), "utf8"),
+        ),
+      ) as { entries: Array<{ packageName: string; incompatible: string[]; compatible: string[] }> };
+      const workos = matrix.entries.find((entry) => entry.packageName === "@workos-inc/node");
+      expect(workos?.compatible).toContain("server");
+      expect(workos?.compatible).toContain("endpoint");
+      expect(workos?.incompatible).toContain("command");
+      expect(workos?.incompatible).toContain("query");
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+      const authRegistry = JSON.parse(
+        stripDeterministicHeader(
+          readFileSync(join(workspace, "src/forge/_generated/authRegistry.json"), "utf8"),
+        ),
+      ) as { claims: { tenantId?: string; userId: string; email?: string; permissions?: string } };
+      expect(authRegistry.claims).toMatchObject({
+        userId: "sub",
+        email: "email",
+        tenantId: "organization_id",
+        permissions: "permissions",
+      });
+      const acmeAuth = mapClaimsToAuthContext(
+        {
+          sub: "user_1",
+          email: "owner@acme.test",
+          organization_id: "org_acme",
+          role: "owner",
+          permissions: ["onboarding:read", "invitations:create"],
+        },
+        {
+          mode: "oidc",
+          algorithms: ["RS256"],
+          claims: authRegistry.claims,
+          requiresTenant: true,
+        },
+        { authProvider: "oidc" },
+      );
+      const globexAuth = mapClaimsToAuthContext(
+        {
+          sub: "user_2",
+          email: "member@globex.test",
+          organization_id: "org_globex",
+          role: "member",
+          permissions: ["onboarding:read", "tasks:update"],
+        },
+        {
+          mode: "oidc",
+          algorithms: ["RS256"],
+          claims: authRegistry.claims,
+          requiresTenant: true,
+        },
+        { authProvider: "oidc" },
+      );
+      expect(acmeAuth.kind).toBe("user");
+      expect(globexAuth.kind).toBe("user");
+      if (acmeAuth.kind === "user" && globexAuth.kind === "user") {
+        expect(acmeAuth.tenantId).toBe("org_acme");
+        expect(globexAuth.tenantId).toBe("org_globex");
+        expect(acmeAuth.tenantId).not.toBe(globexAuth.tenantId);
+        expect(acmeAuth.permissions).toContain("invitations:create");
+        expect(globexAuth.permissions).not.toContain("invitations:create");
+      }
+      const resourceMap = await import(
+        pathToFileURL(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts")).href
+      ) as {
+        buildOnboardingResourceGraph(input: { organizationId: string; projects?: string[] }): {
+          organization: unknown;
+          projects: unknown[];
+        };
+        workosResource(kind: "organization", id: string): unknown;
+        assertWorkOSResourceTenant(input: { resource: unknown; organization: unknown }): void;
+        syncWorkOSResourceGraph(input: {
+          client: unknown;
+          organizationId: string;
+          graph: unknown;
+          mode?: "create" | "upsert";
+          telemetry?: { emit(event: string, properties: Record<string, unknown>): void };
+        }): Promise<{ synced: number; records: unknown[] }>;
+        canWorkOS(input: {
+          client: unknown;
+          organizationMembershipId: string;
+          permission: string;
+          resource: unknown;
+          organization?: unknown;
+          cache?: unknown;
+          telemetry?: { emit(event: string, properties: Record<string, unknown>): void };
+        }): Promise<boolean>;
+        ForgeWorkOSFgaDecisionCache: new (ttlMs?: number) => unknown;
+      };
+      const testkit = await import(
+        pathToFileURL(join(workspace, "src/forge/_generated/testkits/workos.mock.ts")).href
+      ) as {
+        createWorkOSMock(): {
+          getResources(): unknown[];
+          getAccessChecks(): Array<{ organizationMembershipId: string; authorized: boolean; reason: string }>;
+        };
+      };
+      const acmeGraph = resourceMap.buildOnboardingResourceGraph({
+        organizationId: "org_acme",
+        projects: ["onboarding"],
+      });
+      const globexOrganization = resourceMap.workosResource("organization", "org_globex");
+      expect(() =>
+        resourceMap.assertWorkOSResourceTenant({
+          resource: acmeGraph.projects[0],
+          organization: acmeGraph.organization,
+        }),
+      ).not.toThrow();
+      expect(() =>
+        resourceMap.assertWorkOSResourceTenant({
+          resource: acmeGraph.projects[0],
+          organization: globexOrganization,
+        }),
+      ).toThrow("FORGE_WORKOS_CROSS_TENANT_RESOURCE");
+      const workosMock = testkit.createWorkOSMock();
+      const telemetryEvents: string[] = [];
+      const sync = await resourceMap.syncWorkOSResourceGraph({
+        client: workosMock,
+        organizationId: "org_acme",
+        graph: acmeGraph,
+        mode: "upsert",
+        telemetry: { emit: (event) => telemetryEvents.push(event) },
+      });
+      expect(sync.synced).toBe(1);
+      expect(sync.records).toHaveLength(1);
+      expect(workosMock.getResources()).toHaveLength(1);
+      expect(telemetryEvents).toContain("forge.workos.fga.resource.created");
+      const decisionCache = new resourceMap.ForgeWorkOSFgaDecisionCache(60_000);
+      await expect(resourceMap.canWorkOS({
+        client: workosMock,
+        organizationMembershipId: "om_acme_owner",
+        permission: "invitations:create",
+        resource: acmeGraph.projects[0],
+        organization: acmeGraph.organization,
+        cache: decisionCache,
+      })).resolves.toBe(true);
+      await expect(resourceMap.canWorkOS({
+        client: workosMock,
+        organizationMembershipId: "om_globex_member",
+        permission: "invitations:create",
+        resource: acmeGraph.projects[0],
+        organization: acmeGraph.organization,
+      })).resolves.toBe(false);
+      expect(workosMock.getAccessChecks()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ organizationMembershipId: "om_acme_owner", authorized: true }),
+          expect.objectContaining({ organizationMembershipId: "om_globex_member", authorized: false, reason: "cross_tenant" }),
+        ]),
+      );
+      const checked = await runGenerateCommand({
+        ...defaultGenerateOptions(workspace),
+        check: true,
+      });
+      expect(checked.exitCode).toBe(0);
+      const authProof = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(authProof.exitCode).toBe(0);
+      expect(authProof.data).toMatchObject({
+        kind: "auth-proof",
+        workos: {
+          detected: true,
+          requiredSecretsRegistered: true,
+          webhookSecretRegistered: true,
+        },
+      });
+      expect(JSON.stringify(authProof.data)).toContain("INV-WORKOS-001");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("generated workos adapter typechecks against the WorkOS v10 factory API", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-typecheck");
+    try {
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFixturePmAdapter(),
+      });
+      expect(result.exitCode).toBe(0);
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+
+      writeFileSync(
+        join(workspace, "tsconfig.workos.json"),
+        JSON.stringify(
+          {
+            compilerOptions: {
+              target: "ES2022",
+              module: "NodeNext",
+              moduleResolution: "NodeNext",
+              strict: true,
+              allowImportingTsExtensions: true,
+              skipLibCheck: true,
+              types: [],
+            },
+            include: [
+              "src/forge/_generated/packages/workos.server.ts",
+              "src/forge/_generated/integrations/workos/*.ts",
+              "src/forge/_generated/testkits/workos.mock.ts",
+              "src/forge/_generated/secretsContext.ts",
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      const tsc = Bun.spawnSync({
+        cmd: [
+          process.execPath,
+          join(process.cwd(), "node_modules", "typescript", "bin", "tsc"),
+          "--noEmit",
+          "-p",
+          "tsconfig.workos.json",
+        ],
+        cwd: workspace,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      expect(tsc.exitCode, `${tsc.stdout.toString()}\n${tsc.stderr.toString()}`).toBe(0);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 15_000);
 
   test("dry-run reports would-change paths without writing", async () => {
     const workspace = scaffoldAddWorkspace("add-dry-run");

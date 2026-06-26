@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { nodeFileSystem } from "../fs/index.ts";
 import type { ApiSurface } from "../api-surface/build.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
@@ -186,6 +186,99 @@ function sourceText(workspaceRoot: string, file: string | undefined): string {
   return nodeFileSystem.readText(absolute) ?? "";
 }
 
+function normalizeProjectPath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+function isWorkspaceChild(workspaceRoot: string, absolutePath: string): boolean {
+  const relativePath = relative(resolve(workspaceRoot), absolutePath);
+  return relativePath === "" || (!relativePath.startsWith("..") && !isAbsolute(relativePath));
+}
+
+function localImportSpecifiers(text: string): string[] {
+  const specifiers: string[] = [];
+  const importPattern =
+    /\b(?:import|export)\s+(type\s+)?(?:[^"'`]*?\s+from\s+)?["'`](\.{1,2}\/[^"'`]+)["'`]/g;
+  for (const match of text.matchAll(importPattern)) {
+    if (match[1]) {
+      continue;
+    }
+    const specifier = match[2] ?? "";
+    if (specifier) {
+      specifiers.push(specifier);
+    }
+  }
+  return uniqueSorted(specifiers);
+}
+
+function resolveLocalImport(workspaceRoot: string, fromFile: string, specifier: string): string | undefined {
+  const basePath = normalizeProjectPath(join(dirname(fromFile), specifier));
+  const candidates = extname(basePath)
+    ? [basePath]
+    : [
+        `${basePath}.ts`,
+        `${basePath}.tsx`,
+        `${basePath}.js`,
+        `${basePath}.jsx`,
+        `${basePath}.mjs`,
+        `${basePath}.cjs`,
+        join(basePath, "index.ts"),
+        join(basePath, "index.tsx"),
+        join(basePath, "index.js"),
+      ];
+  for (const candidate of candidates.map(normalizeProjectPath)) {
+    if (candidate.includes("/node_modules/") || candidate.startsWith("node_modules/")) {
+      continue;
+    }
+    if (candidate.startsWith("src/forge/_generated/")) {
+      continue;
+    }
+    const absolute = resolve(workspaceRoot, candidate);
+    if (!isWorkspaceChild(workspaceRoot, absolute) || !nodeFileSystem.exists(absolute)) {
+      continue;
+    }
+    return normalizeProjectPath(relative(resolve(workspaceRoot), absolute));
+  }
+  return undefined;
+}
+
+function sourceTextWithLocalImports(
+  workspaceRoot: string,
+  file: string | undefined,
+  maxDepth = 2,
+): string {
+  if (!file) {
+    return "";
+  }
+  const chunks: string[] = [];
+  const visited = new Set<string>();
+
+  const visit = (currentFile: string, depth: number): void => {
+    const normalizedFile = normalizeProjectPath(currentFile);
+    if (visited.has(normalizedFile)) {
+      return;
+    }
+    visited.add(normalizedFile);
+    const text = sourceText(workspaceRoot, normalizedFile);
+    if (!text) {
+      return;
+    }
+    chunks.push(text);
+    if (depth >= maxDepth) {
+      return;
+    }
+    for (const specifier of localImportSpecifiers(text)) {
+      const imported = resolveLocalImport(workspaceRoot, normalizedFile, specifier);
+      if (imported) {
+        visit(imported, depth + 1);
+      }
+    }
+  };
+
+  visit(file, 0);
+  return chunks.join("\n");
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -258,11 +351,11 @@ function dbTablesForFile(
   tableNames: Set<string>,
   ops: Set<string>,
 ): string[] {
-  return dbTablesForText(sourceText(workspaceRoot, file), tableNames, ops);
+  return dbTablesForText(sourceTextWithLocalImports(workspaceRoot, file), tableNames, ops);
 }
 
 function emittedEventsForFile(workspaceRoot: string, file: string | undefined): string[] {
-  const text = sourceText(workspaceRoot, file);
+  const text = sourceTextWithLocalImports(workspaceRoot, file);
   return uniqueSorted(
     [...text.matchAll(/ctx\.emit\s*\(\s*["'`]([^"'`]+)["'`]/g)]
       .map((match) => match[1] ?? ""),
@@ -1276,6 +1369,7 @@ export function buildAgentContractArtifacts(
       name: policy.name,
       kind: policy.kind,
       roles: uniqueSorted(policy.roles),
+      permissions: uniqueSorted(policy.permissions ?? []),
       file: policy.file,
     })),
     packages: sorted(input.packageGraph.packages, (pkg) => pkg.name).map((pkg) => {

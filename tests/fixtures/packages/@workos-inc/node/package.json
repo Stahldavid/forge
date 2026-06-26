@@ -1,0 +1,11 @@
+{
+  "name": "@workos-inc/node",
+  "version": "10.7.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  }
+}

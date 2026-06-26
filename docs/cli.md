@@ -298,6 +298,12 @@ See [Package Intelligence](package-intelligence.md) and [forge add — Dependenc
 
 ```bash
 forge auth check --json
+forge authmd generate
+forge authmd check --json
+forge workos install --yes --json
+forge workos doctor --json
+forge workos doctor --yes --json
+forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json
 forge env check --json

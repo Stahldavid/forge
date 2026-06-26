@@ -57,10 +57,11 @@ function stableSortQueryAuth(bindings: QueryAuthBinding[]): QueryAuthBinding[] {
 
 function buildPermissionMatrix(policies: PolicyRule[]): PermissionMatrixEntry[] {
   return policies
-    .filter((policy) => policy.kind === "roles")
+    .filter((policy) => policy.kind === "roles" || policy.kind === "permissions")
     .map((policy) => ({
       policy: policy.name,
       roles: [...policy.roles].sort(),
+      permissions: [...policy.permissions].sort(),
     }))
     .sort((a, b) => (a.policy < b.policy ? -1 : a.policy > b.policy ? 1 : 0));
 }
@@ -98,6 +99,7 @@ export function buildPolicyRegistry(
           name: parsed.name,
           kind: parsed.kind,
           roles: parsed.roles,
+          permissions: parsed.permissions,
           file: symbol.file,
           symbolId: symbol.id,
         };

@@ -192,6 +192,16 @@ import {
   runWindowsSetupCommand,
 } from "./windows.ts";
 import { formatAuthHuman, formatAuthJson, runAuthCommand } from "./auth.ts";
+import {
+  formatAuthMdHuman,
+  formatAuthMdJson,
+  runAuthMdCommand,
+} from "./authmd.ts";
+import {
+  formatWorkOSHuman,
+  formatWorkOSJson,
+  runWorkOSCommand,
+} from "./workos.ts";
 import { formatRlsHuman, formatRlsJson, runRlsCommand } from "./rls.ts";
 import {
   formatSecurityHuman,
@@ -1693,6 +1703,24 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(formatAuthJson(result));
       } else {
         process.stdout.write(formatAuthHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "authmd": {
+      const result = runAuthMdCommand(command);
+      if (command.json) {
+        process.stdout.write(formatAuthMdJson(result));
+      } else {
+        process.stdout.write(formatAuthMdHuman(result));
+      }
+      return result.exitCode;
+    }
+    case "workos": {
+      const result = runWorkOSCommand(command);
+      if (command.json) {
+        process.stdout.write(formatWorkOSJson(result));
+      } else {
+        process.stdout.write(formatWorkOSHuman(result));
       }
       return result.exitCode;
     }

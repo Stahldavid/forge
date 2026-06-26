@@ -1,6 +1,7 @@
 export type ForgeAuthRule =
   | { kind: "policy"; policy: string }
   | { kind: "roles"; roles: string[] }
+  | { kind: "permissions"; permissions: string[] }
   | { kind: "public" };
 
 export type ForgeDefinition<T extends Record<string, unknown>> = T;
@@ -132,6 +133,10 @@ export function can(policy: string): ForgeAuthRule {
 
 export function canRole(...roles: string[]): ForgeAuthRule {
   return { kind: "roles", roles };
+}
+
+export function canPermission(...permissions: string[]): ForgeAuthRule {
+  return { kind: "permissions", permissions };
 }
 
 export function public_(): ForgeAuthRule {

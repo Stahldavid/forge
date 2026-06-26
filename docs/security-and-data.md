@@ -35,10 +35,20 @@ Check auth configuration:
 
 ```bash
 forge auth check --json
+forge authmd generate
+forge authmd check --json
 forge inspect auth --json
 ```
 
 Production deployments must not rely on `dev-headers`. Forge emits guardrails when dev auth is enabled in production-like modes.
+
+`forge authmd generate` writes `public/auth.md`, an agent-readable public authorization summary derived from `agentContract.json`, and `public/.well-known/oauth-protected-resource`, a JSON protected-resource metadata document for automated clients. It lists protected resource metadata, claim mapping, tenant requirements, commands, queries, liveQueries, policies, and agent-tool risk/approval metadata. Use `forge authmd check --json` in CI to catch drift across both files.
+
+When `public/auth.md` or `public/.well-known/oauth-protected-resource` exists, `forge dev` serves them at `GET /auth.md` and `GET /.well-known/oauth-protected-resource` so agents and authorization-aware clients can discover the public authorization surface from the runtime.
+
+For WorkOS, `forge add auth workos` also emits `Request -> Response` AuthKit handlers for `/login`, `/callback`, `/logout`, and `/session`, a webhook handler for `POST /webhooks/workos`, permission-first Forge policy templates, and FGA helpers that can assert a resource belongs to the organization being checked. `forge dev` exposes the generated AuthKit routes and `POST /webhooks/workos` automatically when the WorkOS artifacts are present, reads WorkOS env values from the loaded env files, signs local AuthKit session cookies, verifies `WorkOS-Signature` with `WORKOS_WEBHOOK_SECRET`, and rejects replayed event ids. `forge workos doctor --json` verifies the generated seed, demo organizations, resource types, roles, permissions, AuthKit route helper, session helper, webhook handler, signature verifier, and cross-tenant FGA guard.
+
+For resource-level WorkOS FGA, Forge generates `syncWorkOSResourceGraph(...)`, `workOSResourceRecords(...)`, `canWorkOS(...)`, and `ForgeWorkOSFgaDecisionCache`. The sync helper mirrors Forge app resources into WorkOS authorization resources. The check helper uses the WorkOS Authorization API shape `organizationMembershipId`, `permissionSlug`, `resourceTypeSlug`, and `resourceExternalId`, with optional telemetry and deny-by-default fallback. Keep those calls in server/action/workflow/endpoint code; command/query/liveQuery policies should continue to use deterministic claim checks such as `canPermission(...)`.
 
 ## Policies (RBAC)
 

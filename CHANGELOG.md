@@ -1,5 +1,17 @@
 # forgeos
 
+## 0.1.0-alpha.29
+
+### Patch Changes
+
+- Add the first WorkOS/AuthKit adapter and local auth metadata tooling.
+
+  - Add `forge add auth workos`, generated WorkOS seed/config/docs, AuthKit routes, webhook handling, JWT/OIDC claim mapping, and permission-derived Forge policies.
+  - Add `forge authmd generate` and `forge authmd check`, including `/auth.md` and OAuth protected-resource metadata served by `forge dev`.
+  - Add a local WorkOS/FGA testkit, resource-graph helpers, cross-tenant guards, FGA cache/fallback telemetry, and mock multi-tenant regression coverage.
+  - Teach Forge auth and policies to understand permission claims alongside roles.
+  - Add `forge version --json` as a command alias and capture local helper table reads in the generated agent contract/capability map.
+
 ## 0.1.0-alpha.28
 
 ### Patch Changes

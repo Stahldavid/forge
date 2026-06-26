@@ -18,6 +18,7 @@ export interface IntegrationRecipe {
   secrets: SecretRequirement[];
   adapters: string[];
   integrations?: string[];
+  rootFiles?: string[];
   testkits: string[];
   docs: string[];
   frameworkTarget?: string;

@@ -7,6 +7,8 @@ export interface EmitFile {
   contentHash: string;
   /** Skip JSON canonicalization round-trip when content is already canonical. */
   canonical?: boolean;
+  /** Skip the Forge deterministic header for files whose syntax does not allow // comments. */
+  header?: "deterministic" | "none";
 }
 
 export interface EmitPlan {
