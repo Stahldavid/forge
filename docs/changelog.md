@@ -6,6 +6,22 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.31
+
+- Added Forge workspace baselines for non-git app directories:
+  `forge baseline create` records a local baseline and `forge changed` /
+  `forge handoff` can now report baseline diffs instead of noisy full
+  filesystem inventories.
+- Added `forge auth status` and production-aware `forge auth prove --prod`
+  posture checks so local `dev-headers` auth is clearly distinguished from
+  JWT/OIDC production authentication.
+- Expanded `forge doctor windows` with local PGlite store posture and cleanup
+  guidance, and made PGlite abort inspection preserve the surrounding process
+  exit code.
+- Added `forge ui audit` and wired it into `forge verify --smoke` for web apps
+  to catch missing route scenarios, missing stable Forge test IDs, and missing
+  policy-denied coverage for sensitive flows.
+
 ## 0.1.0-alpha.30
 
 - Hardened the WorkOS/AuthKit adapter and dev telemetry after the alpha.29

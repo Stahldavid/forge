@@ -210,6 +210,11 @@ import {
   formatLastJson,
   runLastCommand,
 } from "./last-run.ts";
+import {
+  formatBaselineHuman,
+  formatBaselineJson,
+  runBaselineCommand,
+} from "./baseline.ts";
 import { formatRlsHuman, formatRlsJson, runRlsCommand } from "./rls.ts";
 import {
   formatSecurityHuman,
@@ -1570,6 +1575,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "last": {
       const result = runLastCommand({ workspaceRoot: command.workspaceRoot });
       process.stdout.write(command.json ? formatLastJson(result) : formatLastHuman(result));
+      return result.exitCode;
+    }
+    case "baseline": {
+      const result = runBaselineCommand(command);
+      process.stdout.write(command.json ? formatBaselineJson(result) : formatBaselineHuman(result));
       return result.exitCode;
     }
     case "new": {

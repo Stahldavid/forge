@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import {
   runWindowsDoctorCommand,
@@ -80,6 +83,31 @@ describe("Windows CLI diagnostics", () => {
     const shim = result.checks.find((check) => check.name === "windows-bun-shims");
     expect(shim?.ok).toBe(false);
     expect(shim?.message).toContain("Kiro-Cli");
+  });
+
+  test("doctor windows includes local PGlite store posture", async () => {
+    const root = join(tmpdir(), `forge-windows-pglite-${randomUUID()}`);
+    try {
+      const dataDir = join(root, ".forge", "pglite");
+      mkdirSync(dataDir, { recursive: true });
+      writeFileSync(join(dataDir, "postmaster.pid"), `${process.pid}\n`, "utf8");
+
+      const result = await runWindowsDoctorCommand({
+        workspaceRoot: root,
+        probe: winProbe({
+          platform: "win32",
+          pgliteDataDir: dataDir,
+        }),
+      });
+
+      const check = result.checks.find((item) => item.name === "windows-pglite-store");
+      expect(check?.message).toContain("PGlite local store");
+      expect(check?.message).toContain("active");
+      expect(check?.suggestedCommands).toContain("forge doctor pglite --json");
+    } finally {
+      process.exitCode = undefined;
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   test("setup windows dry-run plans safe environment fixes", async () => {

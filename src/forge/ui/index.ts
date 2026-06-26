@@ -641,6 +641,9 @@ function selectScenarios(options: UiCommandOptions, scenarios: UiScenario[]): Ui
 }
 
 export async function runUiCommand(options: UiCommandOptions): Promise<UiCommandResult> {
+  if (options.subcommand === "audit") {
+    return runUiAudit(options);
+  }
   if (options.subcommand === "doctor") {
     return runUiDoctor(options);
   }
@@ -668,6 +671,48 @@ export async function runUiCommand(options: UiCommandOptions): Promise<UiCommand
     report,
     diagnostics: report.diagnostics,
     exitCode: report.summary.ok ? 0 : 1,
+  };
+}
+
+function runUiAudit(options: UiCommandOptions): UiCommandResult {
+  const manifest = loadUiManifest(options.workspaceRoot);
+  const scenarios = loadUiScenarios(options.workspaceRoot);
+  const diagnostics: Diagnostic[] = [];
+  const scenarioRoutes = new Set(scenarios.map((scenario) => scenario.route));
+  const scenarioNames = scenarios.map((scenario) => scenario.name);
+  const selectorSet = new Set(manifest.selectors);
+
+  if (manifest.routes.length === 0) {
+    diagnostics.push(diagnostic("warning", "FORGE_UI_ROUTE_FAILED", "No frontend routes are present in uiTestManifest."));
+  }
+  if (manifest.routes.length > 0 && scenarios.length === 0) {
+    diagnostics.push(diagnostic("error", "FORGE_UI_TESTID_MISSING", "Frontend routes exist but no UI scenarios were generated."));
+  }
+  for (const route of manifest.routes) {
+    if (!scenarioRoutes.has(route.path)) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_ROUTE_FAILED", `No UI scenario covers route '${route.path}'.`));
+    }
+    const usesRuntime = route.uses.commands.length > 0 || route.uses.queries.length > 0 || route.uses.liveQueries.length > 0;
+    if (usesRuntime && selectorSet.size === 0) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_TESTID_MISSING", `Route '${route.path}' uses Forge runtime bindings but no stable data-forge-testid selectors were detected.`));
+    }
+  }
+  const hasPolicySensitiveRuntime = scenarios.some((scenario) =>
+    scenario.requires.policies.length > 0 || scenario.requires.commands.length > 0
+  );
+  if (hasPolicySensitiveRuntime && !scenarioNames.some((name) => name.includes("policy-denied"))) {
+    diagnostics.push(diagnostic("warning", "FORGE_UI_POLICY_ERROR_MISSING", "Policy-sensitive UI flows should include a visible policy-denied scenario."));
+  }
+  if (manifest.routes.length > 0 && !manifest.selectors.some((selector) => selector.includes("data-forge-testid"))) {
+    diagnostics.push(diagnostic("warning", "FORGE_UI_TESTID_MISSING", "No data-forge-testid selectors were captured for UI smoke/audit stability."));
+  }
+
+  return {
+    ok: diagnostics.every((item) => item.severity !== "error"),
+    manifest,
+    scenarios,
+    diagnostics,
+    exitCode: diagnostics.some((item) => item.severity === "error") ? 1 : 0,
   };
 }
 

@@ -277,10 +277,90 @@ describe("H20 auth resource server", () => {
     expect(auth.errors).toEqual([]);
     expect(auth.command?.kind).toBe("auth");
 
+    const status = parseCli(["auth", "status", "--json"]);
+    expect(status.errors).toEqual([]);
+    expect(status.command?.kind).toBe("auth");
+
+    const proveProd = parseCli(["auth", "prove", "--prod", "--token", "abc", "--json"]);
+    expect(proveProd.errors).toEqual([]);
+    expect(proveProd.command?.kind).toBe("auth");
+    if (proveProd.command?.kind === "auth") {
+      expect(proveProd.command.prod).toBe(true);
+    }
+
     const serve = parseCli(["serve", "--allow-dev-auth"]);
     expect(serve.errors).toEqual([]);
     expect(serve.command?.kind).toBe("serve");
   });
+
+  test("auth status makes dev headers local-only", async () => {
+    const workspace = scaffoldGenerateWorkspace("h20-auth-status");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      process.env.FORGE_AUTH_MODE = "dev-headers";
+      const result = await runAuthCommand({
+        subcommand: "status",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.data).toMatchObject({
+        mode: "dev-headers",
+        localOnly: true,
+        productionReady: false,
+      });
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
+  test("auth prove --prod requires production mode and token", async () => {
+    const workspace = scaffoldGenerateWorkspace("h20-auth-prod-proof");
+    const fixture = await createJwtFixture();
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      process.env.FORGE_AUTH_MODE = "dev-headers";
+      const local = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        prod: true,
+        token: fixture.token,
+      });
+      expect(local.ok).toBe(false);
+      expect(local.error?.code).toBe("FORGE_AUTH_MODE_INVALID");
+
+      process.env.FORGE_AUTH_MODE = "jwt";
+      process.env.FORGE_AUTH_ISSUER = fixture.issuer;
+      process.env.FORGE_AUTH_AUDIENCE = fixture.audience;
+      process.env.FORGE_AUTH_JWKS_URI = fixture.jwksUri;
+
+      const missingToken = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        prod: true,
+      });
+      expect(missingToken.ok).toBe(false);
+      expect(missingToken.error?.code).toBe("FORGE_AUTH_MISSING_TOKEN");
+
+      const proof = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        prod: true,
+        token: fixture.token,
+      });
+      expect(proof.ok).toBe(true);
+      expect(proof.data).toMatchObject({
+        prod: true,
+        productionReady: true,
+      });
+    } finally {
+      fixture.stop();
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
 
   test("forge serve rejects dev-headers before requiring database", async () => {
     const workspace = scaffoldGenerateWorkspace("h20-serve-dev-headers");

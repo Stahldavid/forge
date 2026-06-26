@@ -9,6 +9,7 @@ import {
   cleanupWorkspace,
   defaultGenerateOptions,
   scaffoldGenerateWorkspace,
+  tempWorkspace,
 } from "../orchestrator/helpers.ts";
 import { buildVerifyJson } from "../../src/forge/cli/output.ts";
 
@@ -144,6 +145,39 @@ describe("Forge CLI verify", () => {
     expect(diagnostic?.message).toContain("exit code 7");
     expect(diagnostic?.fixHint).toContain("typecheck exploded");
   });
+
+  test("smoke verify runs UI audit when a web app is present", async () => {
+    const root = tempWorkspace("cli-verify-ui-audit");
+    try {
+      writeFileSync(join(root, "package.json"), JSON.stringify({
+        name: "forge-verify-ui-audit",
+        private: true,
+        type: "module",
+        dependencies: { zod: "^3.24.0" },
+      }, null, 2), "utf8");
+      mkdirSync(join(root, "web"), { recursive: true });
+      writeFileSync(join(root, "web", "package.json"), JSON.stringify({
+        private: true,
+        type: "module",
+      }, null, 2), "utf8");
+      await runGenerateCommand(defaultGenerateOptions(root));
+
+      const result = await runVerifyCommand({
+        workspaceRoot: root,
+        json: true,
+        smoke: true,
+        skipTypecheck: true,
+        skipTests: true,
+        skipEslint: true,
+        strict: false,
+      });
+
+      expect(result.steps.some((step) => step.name === "ui-audit")).toBe(true);
+      expect(result.steps.find((step) => step.name === "ui-audit")?.ok).toBe(true);
+    } finally {
+      cleanupWorkspace(root);
+    }
+  }, 30_000);
 
   test("verify --standard uses impact tests instead of the full test script", async () => {
     writePackageJson({

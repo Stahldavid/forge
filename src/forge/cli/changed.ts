@@ -87,10 +87,12 @@ function selectDerivedChangeSummary(summary: CategorizedFileSummary): DerivedCha
 function buildRisks(git: WorkspaceGitSummary): string[] {
   const risks: string[] = [];
   const changed = git.changeSummary.changed;
-  if (!git.available) {
+  if (!git.available && git.source === "forge-baseline") {
+    risks.push("git status is unavailable; using Forge workspace baseline for non-git change tracking");
+  } else if (!git.available) {
     risks.push("git status is unavailable; using filesystem inventory as untracked-file analysis");
   }
-  if (git.untracked.count > 0) {
+  if (git.untracked.count > 0 && git.source !== "forge-baseline") {
     risks.push(`${git.untracked.count} untracked file(s) are not in git history`);
   }
   if (changed.byType.other.count > 0) {
@@ -107,8 +109,11 @@ function buildRisks(git: WorkspaceGitSummary): string[] {
 }
 
 function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
+  if (!git.available && git.source === "forge-baseline") {
+    return ["forge handoff --json", "forge test plan --changed --json", "forge verify --changed", "git init"];
+  }
   if (!git.available) {
-    return ["forge status --json", "forge handoff --json", "git init"];
+    return ["forge baseline create --reason initial-scaffold --json", "forge status --json", "forge handoff --json", "git init"];
   }
   if (git.changeSummary.changed.total.count === 0) {
     return ["forge status --json", "forge dev --once --json"];
@@ -206,7 +211,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const reviewFocus = buildReviewFocus(viewHumanChanges, viewDerivedChanges);
   const generatedExplanation = buildGeneratedChangeExplanation(viewHumanChanges, viewDerivedChanges);
   const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
-  const ok = git.available || git.source === "filesystem";
+  const ok = git.available || git.source === "filesystem" || git.source === "forge-baseline";
 
   return {
     ok,
@@ -216,6 +221,8 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       summary: {
         branch: git.branch,
         commit: git.commit,
+        workspaceMode: git.workspaceMode ?? (git.available ? "git" : "nonGit"),
+        tracking: git.tracking ?? git.source,
         view: options.authoredOnly ? "authored" : "all",
         changedFiles: viewChanged.total.count,
         humanFiles: viewHumanChanges.total,
@@ -229,6 +236,9 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       git: {
         available: git.available,
         source: git.source,
+        workspaceMode: git.workspaceMode,
+        tracking: git.tracking,
+        baseline: git.baseline,
         ...(git.error ? { error: git.error } : {}),
         branch: git.branch,
         commit: git.commit,

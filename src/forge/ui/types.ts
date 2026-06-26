@@ -2,6 +2,7 @@ import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 import type { TestCost } from "../compiler/types/test-graph.ts";
 
 export type UiSubcommand =
+  | "audit"
   | "smoke"
   | "test"
   | "scenario"

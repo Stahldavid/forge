@@ -14,6 +14,7 @@ import {
   runStatusCommand,
   formatStatusHuman,
 } from "../../src/forge/cli/commands.ts";
+import { runBaselineCommand } from "../../src/forge/cli/baseline.ts";
 import { buildInspectJson } from "../../src/forge/cli/output.ts";
 import {
   cleanupWorkspace,
@@ -432,6 +433,58 @@ describe("Forge CLI generation and inspection", () => {
       expect(authoredGit.untracked.total).toMatchObject({
         count: 1,
         sample: ["src/commands/changed.ts"],
+      });
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("changed uses Forge baseline in non-git workspaces when present", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "cli-changed-baseline-"));
+    try {
+      mkdirSync(join(workspace, "src", "commands"), { recursive: true });
+      writeFileSync(join(workspace, "src", "commands", "changed.ts"), "export const ok = true;\n", "utf8");
+      runBaselineCommand({
+        subcommand: "create",
+        workspaceRoot: workspace,
+        json: true,
+        reason: "initial-scaffold",
+      });
+      writeFileSync(join(workspace, "src", "commands", "changed.ts"), "export const ok = false;\n", "utf8");
+      writeFileSync(join(workspace, "src", "commands", "next.ts"), "export const next = true;\n", "utf8");
+
+      const changed = runChangedCommand(workspace);
+      expect(changed.exitCode).toBe(0);
+      expect(changed.data.summary).toMatchObject({
+        workspaceMode: "nonGit",
+        tracking: "forge-baseline",
+        changedFiles: 2,
+      });
+      expect((changed.data.risks as string[])).toContain(
+        "git status is unavailable; using Forge workspace baseline for non-git change tracking",
+      );
+      const git = changed.data.git as { baseline?: { reason?: string; added?: number; modified?: number } };
+      expect(git.baseline).toMatchObject({ reason: "initial-scaffold", added: 1, modified: 1 });
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("baseline status is optional inside git workspaces", () => {
+    const workspace = mkdtempSync(join(tmpdir(), "cli-baseline-git-"));
+    try {
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      const result = runBaselineCommand({
+        subcommand: "status",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.ok).toBe(true);
+      expect(result.required).toBe(false);
+      expect(result.summary).toMatchObject({
+        files: 0,
+        tracking: "git",
       });
     } finally {
       rmSync(workspace, { recursive: true, force: true });

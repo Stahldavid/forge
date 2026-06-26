@@ -17,6 +17,7 @@ import type { SelfHostSubcommand } from "./self-host.ts";
 import type { DocsSubcommand } from "./docs.ts";
 import type { AgentContractSubcommand } from "./agent-contract.ts";
 import type { AuthSubcommand } from "./auth.ts";
+import type { BaselineSubcommand } from "./baseline.ts";
 import type { AuthMdSubcommand } from "./authmd.ts";
 import type { WorkOSSubcommand } from "./workos.ts";
 import type { RlsSubcommand } from "./rls.ts";
@@ -57,6 +58,7 @@ import type { CairCommandOptions, CairSubcommand } from "../cair/types.ts";
 export type ForgeCommand =
   | { kind: "version"; json: boolean }
   | { kind: "last"; json: boolean; workspaceRoot: string }
+  | { kind: "baseline"; subcommand: BaselineSubcommand; json: boolean; reason?: string; workspaceRoot: string }
   | {
       kind: "new";
       name: string;
@@ -132,6 +134,7 @@ export type ForgeCommand =
       subcommand: AuthSubcommand;
       json: boolean;
       token?: string;
+      prod?: boolean;
       workspaceRoot: string;
     }
   | {
@@ -407,6 +410,7 @@ export interface ParsedCli {
 export const TOP_LEVEL_COMMANDS = [
   "version",
   "last",
+  "baseline",
   "new",
   "build",
   "serve",
@@ -531,7 +535,9 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
   "test-token",
   "jwks",
   "prove",
+  "status",
 ];
+const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
 const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
@@ -656,6 +662,7 @@ const REVIEW_CATEGORIES: ReviewFindingCategory[] = [
   "agent",
 ];
 const UI_SUBCOMMANDS: UiSubcommand[] = [
+  "audit",
   "smoke",
   "test",
   "scenario",
@@ -858,6 +865,24 @@ export function parseCli(argv: string[]): ParsedCli {
         workspaceRoot,
         errors,
       };
+    case "baseline": {
+      const subcommand = (rest[0] ?? "status") as BaselineSubcommand;
+      if (!BASELINE_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge baseline requires subcommand: create or status");
+        return { command: null, workspaceRoot, errors };
+      }
+      return {
+        command: {
+          kind: "baseline",
+          subcommand,
+          reason: parseOptionValue(argv, "--reason"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
     case "new": {
       const name = rest[0];
       if (!name) {
@@ -1175,7 +1200,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "ui": {
       const subcommand = (rest[0] ?? "smoke") as UiSubcommand;
       if (!UI_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge ui requires subcommand: smoke, test, scenario, route, snapshot, report, doctor, or list");
+        errors.push("forge ui requires subcommand: audit, smoke, test, scenario, route, snapshot, report, doctor, or list");
         return { command: null, workspaceRoot, errors };
       }
       const timeoutRaw = parseOptionValue(argv, "--timeout");
@@ -1288,7 +1313,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "auth": {
       const subcommand = rest[0] as AuthSubcommand | undefined;
       if (!subcommand || !AUTH_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge auth requires subcommand: check, config, decode, test-token, jwks, or prove");
+        errors.push("forge auth requires subcommand: check, config, decode, test-token, jwks, prove, or status");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -1297,6 +1322,7 @@ export function parseCli(argv: string[]): ParsedCli {
           subcommand,
           json: parseFlag(argv, "--json"),
           token: parseOptionValue(argv, "--token"),
+          prod: parseFlag(argv, "--prod"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2960,6 +2986,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--poll-interval",
     "--allow-dev-auth",
     "--token",
+    "--prod",
+    "--reason",
     "--no-preserve-user-sections",
     "--no-skills",
     "--no-rules",
@@ -3033,6 +3061,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--test-jobs" ||
         arg === "--typechecker" ||
         arg === "--name" ||
+        arg === "--reason" ||
         arg === "--auth-token" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||

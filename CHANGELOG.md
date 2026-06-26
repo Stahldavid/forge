@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.31
+
+### Patch Changes
+
+- Smooth the ForgeOS field-demo DX after the alpha.30 app-server and WorkOS exercises.
+
+  - Add `forge baseline create` and `forge baseline status` so non-git template workspaces can establish a local baseline and get useful `forge changed` / `forge handoff` diffs instead of noisy filesystem inventories.
+  - Add `forge auth status` and production-focused `forge auth prove --prod` output so `dev-headers` is clearly labeled as local-only while JWT/OIDC proofs show production auth posture.
+  - Expand `forge doctor windows` with local PGlite store posture and cleanup guidance, including safer PGlite abort inspection that does not poison the surrounding process exit code.
+  - Add `forge ui audit` and run it during `forge verify --smoke` when a web app is present, catching missing UI scenarios, missing stable Forge test IDs, and missing policy-denied coverage for sensitive routes.
+
 ## 0.1.0-alpha.30
 
 ### Patch Changes

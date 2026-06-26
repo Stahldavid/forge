@@ -130,6 +130,8 @@ export async function inspectPgliteStore(dataDir: string): Promise<PgliteStoreIn
   }
 
   let adapter: DbAdapter | null = null;
+  const previousExitCode = process.exitCode;
+  let restoreExitCode = false;
   try {
     adapter = new PgliteAdapter(dataDir);
     await adapter.query("SELECT 1");
@@ -145,6 +147,10 @@ export async function inspectPgliteStore(dataDir: string): Promise<PgliteStoreIn
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const aborted = isPgliteAbortMessage(message);
+    if (aborted) {
+      restoreExitCode = true;
+      process.exitCode = previousExitCode;
+    }
     return {
       dataDir,
       exists: true,
@@ -160,6 +166,9 @@ export async function inspectPgliteStore(dataDir: string): Promise<PgliteStoreIn
     };
   } finally {
     await adapter?.close().catch(() => undefined);
+    if (restoreExitCode) {
+      process.exitCode = previousExitCode;
+    }
   }
 }
 

@@ -31,6 +31,7 @@ import { lintForgeGuards } from "./lint-forge.ts";
 import { runPolicyCommand } from "./policy.ts";
 import { runAuthCommand } from "./auth.ts";
 import { runRlsCommand } from "./rls.ts";
+import { runUiCommand } from "../ui/index.ts";
 import { buildImpactTestPlan, diagnosticsForImpactTestRun, runImpactTestPlan } from "../impact/index.ts";
 import type { TestRunRecord, TestRunStep } from "../impact/types.ts";
 import { runAgentCheck } from "../agent-adapters/index.ts";
@@ -1853,6 +1854,36 @@ export async function runVerifyCommand(
         packageScriptFailureDiagnostic("typecheck", "FORGE_VERIFY_TYPECHECK", typecheck),
       );
     }
+  }
+
+  if (profile === "smoke" && nodeFileSystem.exists(join(options.workspaceRoot, "web"))) {
+    printProgress(options, "verify: ui-audit");
+    const uiStarted = Date.now();
+    const uiAudit = await runUiCommand({
+      subcommand: "audit",
+      workspaceRoot: options.workspaceRoot,
+      json: false,
+      headed: false,
+      browser: "chromium",
+      trace: "off",
+      screenshot: "off",
+      video: "off",
+      baseUrl: "http://127.0.0.1:3000",
+      runtimeUrl: "http://127.0.0.1:3765",
+      reuseServers: true,
+      startServers: false,
+      all: false,
+      changed: false,
+      ci: false,
+      timeoutMs: 30_000,
+    });
+    steps.push({
+      name: "ui-audit",
+      ok: uiAudit.exitCode === 0,
+      exitCode: uiAudit.exitCode,
+      durationMs: Date.now() - uiStarted,
+    });
+    diagnostics.push(...uiAudit.diagnostics);
   }
 
   if (profile === "smoke") {

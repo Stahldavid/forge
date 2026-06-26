@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { describe, expect, test } from "bun:test";
 import { buildWorkspaceGitSummary } from "../../src/forge/workspace/git-summary.ts";
+import { createWorkspaceBaseline, writeWorkspaceBaseline } from "../../src/forge/workspace/baseline.ts";
 
 function workspace(name: string): string {
   const root = join(tmpdir(), `${name}-${randomUUID()}`);
@@ -44,6 +45,41 @@ describe("workspace git summary", () => {
       expect(summary.changeSummary.changed.byType.source.sample).toContain("src/commands/createTicket.ts");
       expect(summary.changeSummary.changed.byType.generated.sample).toContain("src/forge/_generated/client.ts");
       expect(summary.error).toBeTruthy();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("uses Forge baseline outside git when present", () => {
+    const root = workspace("forge-git-summary-baseline");
+    try {
+      write(root, "src/commands/createTicket.ts", "export const ok = true;\n");
+      write(root, "src/forge/_generated/client.ts", "export const generated = true;\n");
+      const baseline = createWorkspaceBaseline({
+        workspaceRoot: root,
+        files: ["src/commands/createTicket.ts", "src/forge/_generated/client.ts"],
+        reason: "initial-scaffold",
+        now: new Date("2024-01-01T00:00:00.000Z"),
+      });
+      writeWorkspaceBaseline(root, baseline);
+
+      write(root, "src/commands/createTicket.ts", "export const ok = false;\n");
+      write(root, "src/commands/newCommand.ts", "export const next = true;\n");
+
+      const summary = buildWorkspaceGitSummary(root);
+      expect(summary.available).toBe(false);
+      expect(summary.source).toBe("forge-baseline");
+      expect(summary.tracking).toBe("forge-baseline");
+      expect(summary.changed.sample).toContain("src/commands/createTicket.ts");
+      expect(summary.changed.sample).toContain("src/commands/newCommand.ts");
+      expect(summary.changed.sample).not.toContain("src/forge/_generated/client.ts");
+      expect(summary.baseline).toMatchObject({
+        present: true,
+        reason: "initial-scaffold",
+        added: 1,
+        modified: 1,
+        deleted: 0,
+      });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

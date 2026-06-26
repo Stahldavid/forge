@@ -29,6 +29,8 @@ export interface HandoffCommandResult {
     untrackedFiles: number;
     lastTestRun: "passed" | "failed" | "missing";
     lastUiRun: "passed" | "failed" | "missing";
+    workspaceMode: "git" | "nonGit";
+    tracking: string;
   };
   dev: {
     ok: boolean;
@@ -66,6 +68,9 @@ export interface HandoffCommandResult {
       unstaged: CategorizedFileSummary;
       untracked: CategorizedFileSummary;
     };
+    workspaceMode?: string;
+    tracking?: string;
+    baseline?: unknown;
     error?: string;
   };
   recentRuns: {
@@ -169,8 +174,12 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
   const agent = dev.summary.agentContext;
   const risks = [
     ...agent.blockingIssues,
-    ...(!git.available ? ["git status is unavailable; using filesystem inventory as untracked-file analysis"] : []),
-    ...(git.untracked.count > 0 ? [`${git.untracked.count} untracked file(s) are not in git history`] : []),
+    ...(!git.available && git.source === "forge-baseline"
+      ? ["git status is unavailable; using Forge workspace baseline for non-git change tracking"]
+      : !git.available
+        ? ["git status is unavailable; using filesystem inventory as untracked-file analysis"]
+        : []),
+    ...(git.untracked.count > 0 && git.source !== "forge-baseline" ? [`${git.untracked.count} untracked file(s) are not in git history`] : []),
     ...(recentRuns.test && !recentRuns.test.ok ? ["last test run failed"] : []),
     ...(recentRuns.ui && !recentRuns.ui.ok ? ["last UI run failed"] : []),
   ];
@@ -201,6 +210,8 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
       untrackedFiles: git.untracked.count,
       lastTestRun: recentRuns.test ? (recentRuns.test.ok ? "passed" : "failed") : "missing",
       lastUiRun: recentRuns.ui ? (recentRuns.ui.ok ? "passed" : "failed") : "missing",
+      workspaceMode: git.workspaceMode ?? (git.available ? "git" : "nonGit"),
+      tracking: git.tracking ?? git.source ?? "git",
     },
     dev: {
       ok: dev.ok,

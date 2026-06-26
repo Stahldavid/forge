@@ -59,6 +59,7 @@ export function isVolatileForgeState(file: string): boolean {
     lower.startsWith(".forge/locks/") ||
     lower.startsWith(".forge/pglite/") ||
     lower.startsWith(".forge/pglite.backups/") ||
+    lower === ".forge/baseline.json" ||
     lower.startsWith(".forge/runtime-cache/") ||
     lower.startsWith(".forge/test-runs/") ||
     lower.startsWith(".forge/ui-runs/") ||

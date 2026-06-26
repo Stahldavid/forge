@@ -161,6 +161,21 @@ describe("H32 UI / browser test bridge", () => {
     expect(result.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_PLAYWRIGHT_MISSING");
   });
 
+  test("ui audit validates generated routes and policy-denied coverage without browser", async () => {
+    const root = workspace();
+    writeGenerated(root);
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.manifest?.routes.length).toBeGreaterThan(0);
+    expect(result.scenarios?.map((scenario) => scenario.name)).toContain("policy-denied-visible");
+    expect(result.diagnostics.filter((diag) => diag.severity === "error")).toEqual([]);
+  });
+
   test("repair can diagnose from last UI run", () => {
     const root = workspace();
     const report: UiRunReport = {

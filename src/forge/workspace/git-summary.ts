@@ -11,10 +11,26 @@ import {
   type ChangeClassifier,
   type FileListSummary,
 } from "./change-summary.ts";
+import {
+  diffWorkspaceBaseline,
+  readWorkspaceBaseline,
+  type WorkspaceBaseline,
+} from "./baseline.ts";
 
 export interface WorkspaceGitSummary {
   available: boolean;
-  source?: "git" | "filesystem";
+  source?: "git" | "filesystem" | "forge-baseline";
+  workspaceMode?: "git" | "nonGit";
+  tracking?: "git" | "filesystem-inventory" | "forge-baseline";
+  baseline?: {
+    present: boolean;
+    createdAt?: string;
+    reason?: string;
+    files?: number;
+    added?: number;
+    modified?: number;
+    deleted?: number;
+  };
   branch?: string;
   commit?: string;
   changed: FileListSummary;
@@ -42,7 +58,7 @@ const FALLBACK_IGNORED_DIRS = new Set([
   ".cache",
 ]);
 
-function listWorkspaceFiles(root: string): string[] {
+export function listWorkspaceFiles(root: string): string[] {
   const files: string[] = [];
   const visit = (dir: string): void => {
     let entries: Array<{ name: string; isDirectory: () => boolean; isFile: () => boolean }> = [];
@@ -73,12 +89,56 @@ function listWorkspaceFiles(root: string): string[] {
   return filterVolatileForgeState(files).sort();
 }
 
+function summarizeBaseline(
+  baseline: WorkspaceBaseline,
+  diff?: ReturnType<typeof diffWorkspaceBaseline>,
+): WorkspaceGitSummary["baseline"] {
+  return {
+    present: true,
+    createdAt: baseline.createdAt,
+    ...(baseline.reason ? { reason: baseline.reason } : {}),
+    files: Object.keys(baseline.files).length,
+    ...(diff
+      ? {
+          added: diff.added.length,
+          modified: diff.modified.length,
+          deleted: diff.deleted.length,
+        }
+      : {}),
+  };
+}
+
 function filesystemSummary(workspaceRoot: string, error?: string): WorkspaceGitSummary {
   const files = listWorkspaceFiles(workspaceRoot);
   const classify = workspaceChangeClassifier(workspaceRoot);
+  const baseline = readWorkspaceBaseline(workspaceRoot);
+  if (baseline) {
+    const diff = diffWorkspaceBaseline({ workspaceRoot, baseline, files });
+    return {
+      available: false,
+      source: "forge-baseline",
+      workspaceMode: "nonGit",
+      tracking: "forge-baseline",
+      baseline: summarizeBaseline(baseline, diff),
+      changed: compactFiles(diff.changed),
+      staged: compactFiles([]),
+      unstaged: compactFiles(diff.modified),
+      untracked: compactFiles(diff.added),
+      changeSummary: {
+        changed: categorizeFiles(diff.changed, 8, classify),
+        staged: categorizeFiles([]),
+        unstaged: categorizeFiles(diff.modified, 8, classify),
+        untracked: categorizeFiles(diff.added, 8, classify),
+      },
+      ...(error ? { error } : {}),
+    };
+  }
   return {
     available: false,
     source: "filesystem",
+    workspaceMode: "nonGit",
+    tracking: "filesystem-inventory",
+    baseline: { present: false },
     changed: compactFiles(files),
     staged: compactFiles([]),
     unstaged: compactFiles([]),
@@ -311,6 +371,9 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
   return {
     available: true,
     source: "git",
+    workspaceMode: "git",
+    tracking: "git",
+    baseline: { present: readWorkspaceBaseline(workspaceRoot) !== null },
     ...(branch.ok ? { branch: branch.stdout } : {}),
     ...(commit.ok ? { commit: commit.stdout } : {}),
     changed: compactFiles(changedFiles),

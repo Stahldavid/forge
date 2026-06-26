@@ -10,6 +10,10 @@ import { tmpdir } from "node:os";
 import { delimiter, join, win32 } from "node:path";
 import { resolveBunExecutable } from "../compiler/package-manager/bun-executable.ts";
 import { resolveCommandArgv } from "../compiler/package-manager/executor.ts";
+import {
+  DEFAULT_PGLITE_DIR,
+  inspectPgliteStore,
+} from "../runtime/db/pglite-adapter.ts";
 
 export interface WindowsCheck {
   name: string;
@@ -57,6 +61,7 @@ export interface WindowsProbe {
   platform?: NodeJS.Platform;
   runCommand?: (command: string, args: string[]) => CommandResult;
   symlinkAllowed?: () => boolean;
+  pgliteDataDir?: string;
 }
 
 function defaultRunCommand(command: string, args: string[]): CommandResult {
@@ -294,6 +299,23 @@ export async function runWindowsDoctorCommand(options: {
     checks.push(executionPolicyCheck(probe));
     checks.push(symlinkCheck(probe));
   }
+
+  const pgliteDir = probe.pgliteDataDir ?? join(options.workspaceRoot, DEFAULT_PGLITE_DIR);
+  const pglite = await inspectPgliteStore(pgliteDir);
+  checks.push({
+    name: "windows-pglite-store",
+    ok: pglite.state === "missing" || pglite.state === "healthy" || pglite.state === "active",
+    severity: pglite.state === "aborted" || pglite.state === "unhealthy" ? "error" : "warning",
+    message: pglite.error
+      ? `PGlite local store is ${pglite.state}: ${pglite.error}`
+      : `PGlite local store is ${pglite.state}`,
+    fixHint: pglite.state === "aborted" || pglite.state === "unhealthy"
+      ? "Repair the local development PGlite store or use memory DB for non-persistent validation."
+      : pglite.state === "active"
+        ? "A forge dev process currently owns the local PGlite store; stop it before repair."
+        : undefined,
+    suggestedCommands: pglite.nextActions,
+  });
 
   const ok = checks.every((check) => check.ok || check.severity !== "error");
   return { ok, platform, checks, exitCode: ok ? 0 : 1 };

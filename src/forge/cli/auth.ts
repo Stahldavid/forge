@@ -10,13 +10,14 @@ import { ForgeAuthError } from "../runtime/auth/errors.ts";
 import { verifyJwtToken } from "../runtime/auth/verifier.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 
-export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove";
+export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove" | "status";
 
 export interface AuthCommandOptions {
   subcommand: AuthSubcommand;
   workspaceRoot: string;
   json: boolean;
   token?: string;
+  prod?: boolean;
 }
 
 export interface AuthCommandResult {
@@ -59,11 +60,8 @@ function detectWorkOS(workspaceRoot: string, claims: AuthClaimsMapping) {
   };
 }
 
-function validateConfig(workspaceRoot: string): AuthCommandResult {
-  const config = loadAuthConfigFromEnv(workspaceRoot);
+function configErrors(config: ReturnType<typeof loadAuthConfigFromEnv>): { code: string; message: string }[] {
   const errors: { code: string; message: string }[] = [];
-  const workos = detectWorkOS(workspaceRoot, config.claims);
-
   if ((config.mode === "jwt" || config.mode === "oidc") && !config.issuer) {
     errors.push({
       code: FORGE_AUTH_INVALID_ISSUER,
@@ -82,6 +80,39 @@ function validateConfig(workspaceRoot: string): AuthCommandResult {
       message: "FORGE_AUTH_JWKS_URI is required for jwt auth",
     });
   }
+  return errors;
+}
+
+function buildAuthPosture(workspaceRoot: string) {
+  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const productionMode = config.mode === "jwt" || config.mode === "oidc";
+  const errors = configErrors(config);
+  const configReady = errors.length === 0;
+  return {
+    schemaVersion: "0.1.0",
+    mode: config.mode,
+    localOnly: config.mode === "dev-headers",
+    productionReady: productionMode && configReady,
+    requiresTenant: config.requiresTenant,
+    bearerHeader: productionMode ? "Authorization: Bearer <token>" : null,
+    tenantClaim: config.claims.tenantId ?? "tenant_id",
+    reason: productionMode
+      ? configReady
+        ? "jwt/oidc production auth configuration is present"
+        : "jwt/oidc production auth is selected but required settings are missing"
+      : "dev-headers auth is local-only and is not real production authentication",
+    nextActions: productionMode
+      ? configReady
+        ? ["forge auth prove --prod --token <jwt> --json", "forge serve --json"]
+        : ["forge auth check --json", "configure FORGE_AUTH_ISSUER, FORGE_AUTH_AUDIENCE, and FORGE_AUTH_JWKS_URI or OIDC issuer"]
+      : ["set FORGE_AUTH_MODE=jwt or oidc for production", "forge auth prove --prod --token <jwt> --json"],
+  };
+}
+
+function validateConfig(workspaceRoot: string): AuthCommandResult {
+  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const errors = configErrors(config);
+  const workos = detectWorkOS(workspaceRoot, config.claims);
 
   return {
     ok: errors.length === 0,
@@ -94,6 +125,7 @@ function validateConfig(workspaceRoot: string): AuthCommandResult {
       algorithms: config.algorithms,
       claims: config.claims,
       requiresTenant: config.requiresTenant,
+      authPosture: buildAuthPosture(workspaceRoot),
       workos,
       errors,
     },
@@ -116,6 +148,7 @@ function publicConfig(workspaceRoot: string): AuthCommandResult {
       algorithms: config.algorithms,
       claims: config.claims,
       requiresTenant: config.requiresTenant,
+      authPosture: buildAuthPosture(workspaceRoot),
       workos,
     },
     exitCode: 0,
@@ -197,6 +230,15 @@ async function testToken(
 export async function runAuthCommand(
   options: AuthCommandOptions,
 ): Promise<AuthCommandResult> {
+  if (options.subcommand === "status") {
+    const posture = buildAuthPosture(options.workspaceRoot);
+    return {
+      ok: true,
+      mode: posture.mode,
+      data: posture,
+      exitCode: 0,
+    };
+  }
   if (options.subcommand === "check") {
     return validateConfig(options.workspaceRoot);
   }
@@ -206,15 +248,28 @@ export async function runAuthCommand(
     const workos = detectWorkOS(options.workspaceRoot, config.claims);
     const productionMode = config.mode === "jwt" || config.mode === "oidc";
     const workosClaimsOk = workos.claimStatus.every((claim) => claim.ok);
+    const posture = buildAuthPosture(options.workspaceRoot);
+    const tokenProof = options.token ? await testToken(options.workspaceRoot, options.token) : null;
+    const prodError = options.prod && !productionMode
+      ? { code: "FORGE_AUTH_MODE_INVALID", message: "forge auth prove --prod requires FORGE_AUTH_MODE=jwt or oidc" }
+      : options.prod && !options.token
+        ? { code: "FORGE_AUTH_MISSING_TOKEN", message: "forge auth prove --prod requires --token" }
+        : options.prod && tokenProof && !tokenProof.ok
+          ? tokenProof.error
+          : undefined;
+    const proofOk = checked.ok && (!options.prod || (productionMode && tokenProof?.ok === true));
     return {
-      ok: checked.ok,
+      ok: proofOk,
       mode: config.mode,
       data: {
         schemaVersion: "0.1.0",
         kind: "auth-proof",
-        ok: checked.ok,
+        ok: proofOk,
         mode: config.mode,
         productionReady: productionMode && checked.ok,
+        prod: options.prod === true,
+        authPosture: posture,
+        ...(tokenProof ? { tokenProof: tokenProof.ok ? tokenProof.data : tokenProof.error } : {}),
         invariants: [
           {
             id: "INV-001",
@@ -249,8 +304,8 @@ export async function runAuthCommand(
         workos,
         checkedAt: "deterministic",
       },
-      error: checked.error,
-      exitCode: checked.exitCode,
+      error: prodError ?? checked.error,
+      exitCode: proofOk ? 0 : 1,
     };
   }
   if (options.subcommand === "config") {

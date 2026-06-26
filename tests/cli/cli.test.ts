@@ -171,6 +171,14 @@ describe("Forge CLI", () => {
     if (handoff.command?.kind === "handoff") {
       expect(handoff.command.json).toBe(true);
     }
+
+    const baseline = parseCli(["baseline", "create", "--reason", "initial-scaffold", "--json"]);
+    expect(baseline.errors).toEqual([]);
+    expect(baseline.command?.kind).toBe("baseline");
+    if (baseline.command?.kind === "baseline") {
+      expect(baseline.command.subcommand).toBe("create");
+      expect(baseline.command.reason).toBe("initial-scaffold");
+    }
   });
 
   test("parseCli accepts docs check and classifies tracked Codex hooks as config", () => {
@@ -1505,6 +1513,28 @@ describe("Forge CLI", () => {
     expect(unknown.errors).toContain(
       "unknown forge verify profile 'banana'; expected quick, smoke, agent, standard, release, strict, changed, framework, internal, or maintainer",
     );
+  });
+
+  test("parseCli accepts auth status/prod and ui audit", () => {
+    const auth = parseCli(["auth", "prove", "--prod", "--token", "abc", "--json"]);
+    expect(auth.errors).toEqual([]);
+    expect(auth.command?.kind).toBe("auth");
+    if (auth.command?.kind === "auth") {
+      expect(auth.command.subcommand).toBe("prove");
+      expect(auth.command.prod).toBe(true);
+      expect(auth.command.token).toBe("abc");
+    }
+
+    const status = parseCli(["auth", "status", "--json"]);
+    expect(status.errors).toEqual([]);
+    expect(status.command?.kind).toBe("auth");
+
+    const audit = parseCli(["ui", "audit", "--json"]);
+    expect(audit.errors).toEqual([]);
+    expect(audit.command?.kind).toBe("ui");
+    if (audit.command?.kind === "ui") {
+      expect(audit.command.options.subcommand).toBe("audit");
+    }
   });
 
   test("main returns exit 1 for unrecognized command", async () => {
