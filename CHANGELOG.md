@@ -1,5 +1,15 @@
 # forgeos
 
+## 0.1.0-alpha.30
+
+### Patch Changes
+
+- Harden the WorkOS/AuthKit adapter and dev telemetry after the alpha.29 field app test.
+
+  - Normalize WorkOS AuthKit `User` objects before generated auth routes pass them to Forge session and organization-resolution helpers, so apps typecheck against the WorkOS SDK without unsafe direct `Record<string, unknown>` casts.
+  - Keep telemetry best-effort when a database adapter applies `INSERT ... RETURNING` but omits returned rows, preventing telemetry from surfacing as `FORGE_DEV_SERVER_ERROR`.
+  - Add regression coverage for generated WorkOS adapter typechecking and telemetry inserts that return no rows.
+
 ## 0.1.0-alpha.29
 
 ### Patch Changes

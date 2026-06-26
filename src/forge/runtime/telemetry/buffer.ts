@@ -34,7 +34,10 @@ export async function insertTelemetryEvent(
 
   const id = Number(result.rows[0]?.id);
   if (!Number.isFinite(id)) {
-    throw new Error("telemetry insert did not return id");
+    // Some adapters can successfully apply INSERT ... RETURNING while omitting
+    // returned rows. Telemetry must not turn a successful runtime request into
+    // FORGE_DEV_SERVER_ERROR; SQL execution failures still throw from runQuery.
+    return 0;
   }
   return id;
 }

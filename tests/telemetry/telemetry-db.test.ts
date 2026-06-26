@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
 import { buildDataGraph } from "../../src/forge/compiler/data-graph/build.ts";
 import { buildSqlPlan } from "../../src/forge/compiler/data-graph/sql/ddl.ts";
+import type { DbAdapter } from "../../src/forge/runtime/db/adapter.ts";
 import { createMemoryAdapter } from "../../src/forge/runtime/db/memory-adapter.ts";
 import { applyMigrations, resetDatabase } from "../../src/forge/runtime/db/migrate.ts";
 import { recordExceptionOutsideTx } from "../../src/forge/runtime/telemetry/buffer.ts";
@@ -70,5 +71,25 @@ describe("telemetry db", () => {
 
     const rows = await adapter.query(`SELECT id FROM _forge_telemetry_events`);
     expect(rows.rows).toHaveLength(0);
+  });
+
+  test("does not fail runtime when adapter omits telemetry returning rows", async () => {
+    const adapter: DbAdapter = {
+      kind: "postgres",
+      query: async () => ({ rows: [], rowCount: 1 }),
+      begin: async () => ({
+        query: async () => ({ rows: [], rowCount: 1 }),
+        commit: async () => {},
+        rollback: async () => {},
+      }),
+      close: async () => {},
+    };
+
+    await expect(
+      recordExceptionOutsideTx(adapter, new Error("boom"), generateTraceId(), {
+        kind: "command",
+        name: "createTicket",
+      }),
+    ).resolves.toBeUndefined();
   });
 });

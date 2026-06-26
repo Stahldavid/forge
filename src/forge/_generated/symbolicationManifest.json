@@ -1,1 +1,1 @@
-{"diagnostics":[],"localSymbolication":true,"providers":["local","sentry-compatible","sentry","glitchtip","bugsink","otel","custom"],"releaseId":"forgeos@0.1.0-alpha.29+unknown","schemaVersion":"0.1.0","sourceMapCount":0}
+{"diagnostics":[],"localSymbolication":true,"providers":["local","sentry-compatible","sentry","glitchtip","bugsink","otel","custom"],"releaseId":"forgeos@0.1.0-alpha.30+unknown","schemaVersion":"0.1.0","sourceMapCount":0}

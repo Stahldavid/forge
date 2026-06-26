@@ -6,6 +6,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.30
+
+- Hardened the WorkOS/AuthKit adapter and dev telemetry after the alpha.29
+  field app test.
+- Generated WorkOS AuthKit routes now normalize SDK `User` objects before
+  passing them into Forge session and organization-resolution helpers, so apps
+  typecheck cleanly against the WorkOS SDK without unsafe direct
+  `Record<string, unknown>` casts.
+- Telemetry is now best-effort when a database adapter applies
+  `INSERT ... RETURNING` but omits returned rows, preventing telemetry from
+  surfacing as `FORGE_DEV_SERVER_ERROR`.
+- Added regression coverage for generated WorkOS adapter typechecking and
+  telemetry inserts that return no rows.
+
 ## 0.1.0-alpha.29
 
 - Added the first WorkOS/AuthKit adapter surface: `forge add auth workos`

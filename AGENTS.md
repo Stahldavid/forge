@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.29 input=b7e3d13ed54a83a393e821d2a309404ee70f774794cda86187334aab958f539c content=0d493cf0e41b71cb652d5e0e1b0c1f83d2a1281b748321f0b00f0773ba93074e
+// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=0d493cf0e41b71cb652d5e0e1b0c1f83d2a1281b748321f0b00f0773ba93074e
 # AGENTS.md
 
 <!-- forge-generated:start -->

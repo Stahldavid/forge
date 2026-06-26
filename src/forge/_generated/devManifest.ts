@@ -1,10 +1,10 @@
-// @forge-generated generator=0.1.0-alpha.29 input=b7e3d13ed54a83a393e821d2a309404ee70f774794cda86187334aab958f539c content=ac120a1742cfc6952bf7ae6e3d9f0fb5593e95966769931109358d601da5ccd5
+// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=203c57b6b0e2a7b812f11b6b34e5b44bd7ac2d44558219ad1d3918fba63dbafd
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
   "entries": [],
-  "generatorVersion": "0.1.0-alpha.29",
-  "inputHash": "5d09d87c3580f180a807e5aa10bc0963f39a9ff792c09d624efb8bc10211d839",
+  "generatorVersion": "0.1.0-alpha.30",
+  "inputHash": "902df536503444c897cf2317025809da17aa8a783d3a08cf51e0d493abe18da5",
   "routes": [
     {
       "method": "GET",

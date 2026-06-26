@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.29 input=b7e3d13ed54a83a393e821d2a309404ee70f774794cda86187334aab958f539c content=ae0423959a75bee69dfbfb72e217b7fa1d0519f2dca6452f271f38b8359ed609
+// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=441baaa8e63465869189b9b4471cb7694f7a10102d7760c69a5f0770215e4288
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.29",
-  "inputHash": "b7e3d13ed54a83a393e821d2a309404ee70f774794cda86187334aab958f539c",
+  "generatorVersion": "0.1.0-alpha.30",
+  "inputHash": "126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -3641,14 +3641,16 @@ export const testGraph = {
       "reasons": []
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "postgres"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -3656,7 +3658,9 @@ export const testGraph = {
       },
       "file": "tests/telemetry/telemetry-db.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages postgres"
+      ]
     },
     {
       "confidence": "weak",
