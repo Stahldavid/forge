@@ -228,7 +228,20 @@ describe("delta store", () => {
   test("delta doctor checks recorder health, queue posture, and gitignore coverage", async () => {
     const root = tempWorkspace("delta-doctor");
     try {
-      writeFileSync(join(root, ".gitignore"), ".forge/delta/\n.forge/agent/*.ndjson\n.forge/studio/\n");
+      writeFileSync(
+        join(root, ".gitignore"),
+        [
+          ".codex/",
+          ".forge/delta/",
+          ".forge/agent/",
+          ".forge/agent/*.ndjson",
+          ".forge/agent/*.history",
+          ".forge/last-run.json",
+          ".forge/runtime-cache/",
+          ".forge/studio/",
+          "",
+        ].join("\n"),
+      );
       const store = await DeltaStore.open(root);
       await store.close();
 

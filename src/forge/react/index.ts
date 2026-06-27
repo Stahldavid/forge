@@ -173,13 +173,15 @@ function resolveDevAuth(devAuth: ForgeDevAuthConfig | undefined): ForgeReactAuth
   return {
     userId: config.userId ?? "dev-user",
     tenantId: config.tenantId ?? config.organizationId ?? "dev-tenant",
-    organizationId: config.organizationId ?? config.tenantId ?? "dev-tenant",
-    organizationMembershipId: config.organizationMembershipId,
     role: config.role ?? "owner",
-    roles: config.roles,
-    permissions: config.permissions,
-    claims: config.claims,
-    headers: config.headers,
+    ...(config.organizationId ? { organizationId: config.organizationId } : {}),
+    ...(config.organizationMembershipId
+      ? { organizationMembershipId: config.organizationMembershipId }
+      : {}),
+    ...(config.roles ? { roles: config.roles } : {}),
+    ...(config.permissions ? { permissions: config.permissions } : {}),
+    ...(config.claims ? { claims: config.claims } : {}),
+    ...(config.headers ? { headers: config.headers } : {}),
   };
 }
 

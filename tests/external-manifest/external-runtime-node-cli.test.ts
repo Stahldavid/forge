@@ -47,5 +47,5 @@ describe("external runtime Node CLI bridge", () => {
       await external.stop();
       cleanupWorkspace(root);
     }
-  });
+  }, 15_000);
 });

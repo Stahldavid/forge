@@ -23,7 +23,14 @@ export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
   const { userId, role } = input;
   const tenantId = input.tenantId ?? input.organizationId;
   const roles = [...new Set([...(role ? [role] : []), ...(input.roles ?? [])])];
-  const hasClaims = Object.keys(input.claims ?? {}).length > 0 || Boolean(input.organizationId);
+  const claims = {
+    ...(input.claims ?? {}),
+    ...(input.organizationId ? { organization_id: input.organizationId } : {}),
+    ...(input.organizationMembershipId
+      ? { organization_membership_id: input.organizationMembershipId }
+      : {}),
+  };
+  const hasClaims = Object.keys(claims).length > 0;
   if (userId && (role || roles.length > 0 || (input.permissions ?? []).length > 0 || hasClaims)) {
     return {
       kind: "user",
@@ -38,13 +45,7 @@ export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
         subject: userId,
         authProvider: "dev-headers",
       },
-      claims: {
-        ...(input.claims ?? {}),
-        ...(input.organizationId ? { organization_id: input.organizationId } : {}),
-        ...(input.organizationMembershipId
-          ? { organization_membership_id: input.organizationMembershipId }
-          : {}),
-      },
+      ...(hasClaims ? { claims } : {}),
     };
   }
   return { kind: "anonymous" };
