@@ -1,5 +1,13 @@
 # forgeos
 
+## 0.1.0-alpha.33
+
+### Patch Changes
+
+- Fix the Nuxt template smoke by adding the explicit `vue-tsc` dev dependency
+  required by `nuxt typecheck`, so newly scaffolded `nuxt-web` apps can run
+  `npm run typecheck` after install without manual package repair.
+
 ## 0.1.0-alpha.32
 
 ### Patch Changes

@@ -6,6 +6,12 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.33
+
+- Fixed the Nuxt template smoke by adding the explicit `vue-tsc` dev
+  dependency required by `nuxt typecheck`, so newly scaffolded `nuxt-web` apps
+  can run `npm run typecheck` after install without manual package repair.
+
 ## 0.1.0-alpha.32
 
 - Accepted `create-forgeos-app --git` as a supported/no-op compatibility flag

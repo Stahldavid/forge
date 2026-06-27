@@ -65,6 +65,8 @@ describe("nuxt-web template", () => {
       expect(existsSync(join(project, "web", "server", "api", "forge-health.get.ts"))).toBe(true);
       expect(read(project, "package.json")).toContain('"template": "nuxt-web"');
       expect(read(project, "web/package.json")).toContain('"nuxt": "^4.0.0"');
+      expect(read(project, "web/package.json")).toContain('"vue-tsc": "^3.3.5"');
+      expect(read(project, "web/tsconfig.json")).toContain('"allowImportingTsExtensions": true');
       expect(read(project, "web/nuxt.config.ts")).toContain("NUXT_PUBLIC_FORGE_URL");
       expect(read(project, "web/plugins/forge.client.ts")).toContain("ForgeVuePlugin");
       expect(read(project, "web/plugins/forge.server.ts")).toContain("ForgeVuePlugin");
