@@ -16,6 +16,7 @@ import {
 } from "./store.ts";
 import { DELTA_SCHEMA_VERSION } from "./schema.ts";
 import { redactDeltaPayload } from "./redaction.ts";
+import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
 export type DeltaStatusResult =
   | (DeltaStatus & { details?: DeltaStatusDetails; exitCode: 0 })
@@ -132,6 +133,23 @@ export interface DeltaDoctorResult {
   status?: DeltaStatusResult;
   nextActions: string[];
   exitCode: 0 | 1;
+}
+
+function normalizeDeltaCliCommandHints<T>(workspaceRoot: string, result: T): T {
+  if (!result || typeof result !== "object") {
+    return result;
+  }
+  const value = result as Record<string, unknown>;
+  const normalized: Record<string, unknown> = { ...value };
+  for (const key of ["nextActions", "diagnostics", "checks"]) {
+    if (key in normalized) {
+      normalized[key] = normalizeForgeCliCommandsInValue(workspaceRoot, normalized[key], key);
+    }
+  }
+  if ("status" in normalized) {
+    normalized.status = normalizeDeltaCliCommandHints(workspaceRoot, normalized.status);
+  }
+  return normalized as T;
 }
 
 async function openDeltaStoreForStatus(
@@ -258,7 +276,7 @@ function pgliteActiveStatus(workspaceRoot: string, storePath: string, options: D
   };
 }
 
-export async function runDeltaStatus(workspaceRoot: string, options: DeltaStatusOptions = {}): Promise<DeltaStatusResult> {
+async function runDeltaStatusRaw(workspaceRoot: string, options: DeltaStatusOptions = {}): Promise<DeltaStatusResult> {
   const storePath = normalizePath(relative(workspaceRoot, getDeltaStorePath(workspaceRoot)));
   const { store, openError } = await openDeltaStoreForStatus(workspaceRoot);
   if (!store) {
@@ -341,6 +359,10 @@ export async function runDeltaStatus(workspaceRoot: string, options: DeltaStatus
   }
 }
 
+export async function runDeltaStatus(workspaceRoot: string, options: DeltaStatusOptions = {}): Promise<DeltaStatusResult> {
+  return normalizeDeltaCliCommandHints(workspaceRoot, await runDeltaStatusRaw(workspaceRoot, options));
+}
+
 function timestampForPath(date = new Date()): string {
   return date.toISOString().replace(/[:.]/g, "-");
 }
@@ -349,7 +371,7 @@ function deltaBackupPath(workspaceRoot: string, storePath: string): string {
   return join(workspaceRoot, ".forge", "delta", "backups", `${basename(storePath)}.${timestampForPath()}`);
 }
 
-export async function runDeltaRepair(options: DeltaRepairOptions): Promise<DeltaRepairResult> {
+async function runDeltaRepairRaw(options: DeltaRepairOptions): Promise<DeltaRepairResult> {
   const absoluteStorePath = getDeltaStorePath(options.workspaceRoot);
   const store = normalizePath(relative(options.workspaceRoot, absoluteStorePath));
   const backupAbsolute = deltaBackupPath(options.workspaceRoot, absoluteStorePath);
@@ -483,7 +505,11 @@ export async function runDeltaRepair(options: DeltaRepairOptions): Promise<Delta
   }
 }
 
-export async function runDeltaDoctor(workspaceRoot: string): Promise<DeltaDoctorResult> {
+export async function runDeltaRepair(options: DeltaRepairOptions): Promise<DeltaRepairResult> {
+  return normalizeDeltaCliCommandHints(options.workspaceRoot, await runDeltaRepairRaw(options));
+}
+
+async function runDeltaDoctorRaw(workspaceRoot: string): Promise<DeltaDoctorResult> {
   const status = await runDeltaStatus(workspaceRoot, { verbose: true });
   const details = status.exitCode === 0 ? status.details : undefined;
   const checks: DeltaDoctorCheck[] = [
@@ -628,6 +654,10 @@ export async function runDeltaDoctor(workspaceRoot: string): Promise<DeltaDoctor
   };
 }
 
+export async function runDeltaDoctor(workspaceRoot: string): Promise<DeltaDoctorResult> {
+  return normalizeDeltaCliCommandHints(workspaceRoot, await runDeltaDoctorRaw(workspaceRoot));
+}
+
 function readGitignore(workspaceRoot: string): string {
   try {
     return readFileSync(join(workspaceRoot, ".gitignore"), "utf8");
@@ -699,7 +729,7 @@ function compactLines(text: string, maxBytes = 256_000): { text: string; linesBe
   };
 }
 
-export async function runDeltaCompact(options: DeltaCompactOptions): Promise<DeltaCompactResult> {
+async function runDeltaCompactRaw(options: DeltaCompactOptions): Promise<DeltaCompactResult> {
   const historyPath = agentQueueHistoryPath(options.workspaceRoot);
   const relativeHistoryPath = normalizePath(relative(options.workspaceRoot, historyPath));
   if (!existsSync(historyPath)) {
@@ -747,6 +777,10 @@ export async function runDeltaCompact(options: DeltaCompactOptions): Promise<Del
   };
 }
 
+export async function runDeltaCompact(options: DeltaCompactOptions): Promise<DeltaCompactResult> {
+  return normalizeDeltaCliCommandHints(options.workspaceRoot, await runDeltaCompactRaw(options));
+}
+
 function parseOlderThan(value: string | undefined): { cutoff?: Date; error?: string } {
   if (!value) {
     return { error: "forge delta prune requires --older-than <duration>, for example 30d" };
@@ -761,7 +795,7 @@ function parseOlderThan(value: string | undefined): { cutoff?: Date; error?: str
   return { cutoff: new Date(Date.now() - amount * multiplier) };
 }
 
-export async function runDeltaPrune(options: DeltaPruneOptions): Promise<DeltaPruneResult> {
+async function runDeltaPruneRaw(options: DeltaPruneOptions): Promise<DeltaPruneResult> {
   const parsed = parseOlderThan(options.olderThan);
   if (!parsed.cutoff) {
     return {
@@ -841,6 +875,10 @@ export async function runDeltaPrune(options: DeltaPruneOptions): Promise<DeltaPr
   };
 }
 
+export async function runDeltaPrune(options: DeltaPruneOptions): Promise<DeltaPruneResult> {
+  return normalizeDeltaCliCommandHints(options.workspaceRoot, await runDeltaPruneRaw(options));
+}
+
 function resolveExportPath(workspaceRoot: string, output: string): string {
   const absolute = resolve(workspaceRoot, output);
   const rel = relative(resolve(workspaceRoot), absolute);
@@ -850,7 +888,7 @@ function resolveExportPath(workspaceRoot: string, output: string): string {
   return absolute;
 }
 
-export async function runDeltaExport(options: DeltaExportOptions): Promise<DeltaExportResult> {
+async function runDeltaExportRaw(options: DeltaExportOptions): Promise<DeltaExportResult> {
   if (!options.redacted) {
     return {
       ok: false,
@@ -868,12 +906,9 @@ export async function runDeltaExport(options: DeltaExportOptions): Promise<Delta
     };
   }
   const limit = Math.max(1, Math.min(Math.floor(options.limit ?? 100), 500));
-  const store = await DeltaStore.open(options.workspaceRoot, { access: "read" }).catch((error: unknown) => {
-    if (error instanceof DeltaStoreBusyError) {
-      return error;
-    }
-    throw error;
-  });
+  const store: DeltaStore | DeltaStoreBusyError | Error = await DeltaStore.open(options.workspaceRoot, { access: "read" }).catch((error: unknown) =>
+    error instanceof Error ? error : new Error(String(error)),
+  );
   if (store instanceof DeltaStoreBusyError) {
     const busy = describeDeltaStoreBusy(store, options.workspaceRoot);
     return {
@@ -889,6 +924,34 @@ export async function runDeltaExport(options: DeltaExportOptions): Promise<Delta
         suggestedCommands: ["forge delta status --json"],
       })],
       nextActions: ["forge delta status --json"],
+      exitCode: 1,
+    };
+  }
+  if (store instanceof Error) {
+    const message = store.message || "unknown Delta store open failure";
+    const pgliteAbort = /Aborted\(\)|postmaster|pglite/iu.test(message);
+    return {
+      ok: false,
+      subcommand: "export",
+      redacted: true,
+      written: false,
+      diagnostics: [createDiagnostic({
+        severity: "error",
+        code: "FORGE_DELTA_EXPORT_FAILED",
+        message: `Forge Delta export could not open the local store: ${message}`,
+        fixHint: pgliteAbort
+          ? "The local PGlite Delta store may be stale or corrupt. Inspect status first; if no Forge process is active, run a dry-run repair before removing local memory."
+          : "Inspect Delta status before retrying the export.",
+        suggestedCommands: [
+          "forge delta status --verbose --json",
+          "forge delta repair --dry-run --json",
+          "forge doctor windows --json",
+        ],
+      })],
+      nextActions: [
+        "forge delta status --verbose --json",
+        "forge delta repair --dry-run --json",
+      ],
       exitCode: 1,
     };
   }
@@ -928,6 +991,10 @@ export async function runDeltaExport(options: DeltaExportOptions): Promise<Delta
   } finally {
     await store.close();
   }
+}
+
+export async function runDeltaExport(options: DeltaExportOptions): Promise<DeltaExportResult> {
+  return normalizeDeltaCliCommandHints(options.workspaceRoot, await runDeltaExportRaw(options));
 }
 
 export function formatDeltaStatusHuman(result: DeltaStatusResult): string {

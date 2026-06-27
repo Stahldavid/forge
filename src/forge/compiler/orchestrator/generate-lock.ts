@@ -37,12 +37,22 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function lockTimeoutDiagnostic(lockPath: string, timeoutMs: number): Diagnostic {
+function lockTimeoutDiagnostic(lockPath: string, timeoutMs: number, ownerPid: number | null): Diagnostic {
+  const owner = ownerPid === null ? "unknown owner" : `owner pid ${ownerPid}`;
   return createDiagnostic({
     severity: "error",
     code: "FORGE_GENERATE_LOCKED",
-    message: `forge generate is already running or a stale generate lock exists at ${lockPath} after ${timeoutMs}ms`,
+    message:
+      `forge generate is already running (${owner}) or a stale generate lock exists at ${lockPath} after ${timeoutMs}ms. ` +
+      "Avoid running forge generate, forge dev --once, and forge verify concurrently in the same workspace.",
     file: lockPath,
+    fixHint:
+      "Wait for the active Forge command to finish. If the owner pid is gone, remove .forge/locks/generate.lock and retry.",
+    suggestedCommands: [
+      "forge status --json",
+      "forge generate --check --json",
+      "forge dev --once --json",
+    ],
   });
 }
 
@@ -125,9 +135,10 @@ export async function acquireGenerateLock(
       }
 
       if (Date.now() - startedAt >= timeoutMs) {
+        const ownerPid = readLockOwnerPid(lockPath);
         return {
           ok: false,
-          diagnostic: lockTimeoutDiagnostic(lockPath, timeoutMs),
+          diagnostic: lockTimeoutDiagnostic(lockPath, timeoutMs, ownerPid),
           failureKind: GENERATE_LOCK_FAILURE_KIND,
         };
       }

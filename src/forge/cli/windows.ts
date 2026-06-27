@@ -14,6 +14,7 @@ import {
   DEFAULT_PGLITE_DIR,
   inspectPgliteStore,
 } from "../runtime/db/pglite-adapter.ts";
+import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 
 export interface WindowsCheck {
   name: string;
@@ -314,7 +315,7 @@ export async function runWindowsDoctorCommand(options: {
       : pglite.state === "active"
         ? "A forge dev process currently owns the local PGlite store; stop it before repair."
         : undefined,
-    suggestedCommands: pglite.nextActions,
+    suggestedCommands: forgeCliCommandsForWorkspace(options.workspaceRoot, pglite.nextActions),
   });
 
   const ok = checks.every((check) => check.ok || check.severity !== "error");

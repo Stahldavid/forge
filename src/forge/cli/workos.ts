@@ -43,7 +43,8 @@ export type WorkOSCommandRunner = (
   },
 ) => { status: number | null; stdout: string; stderr: string };
 
-const DEFAULT_SEED_FILE = `${GENERATED_DIR}/integrations/workos/workos-seed.yml`;
+const DEFAULT_SEED_FILE = "workos-seed.yml";
+const GENERATED_SEED_FILE = `${GENERATED_DIR}/integrations/workos/workos-seed.yml`;
 
 function runExternalCommand(
   command: string[],
@@ -102,7 +103,7 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     ...(packageJson?.dependencies ?? {}),
     ...(packageJson?.devDependencies ?? {}),
   };
-  const seedFile = readText(workspaceRoot, DEFAULT_SEED_FILE);
+  const seedFile = readText(workspaceRoot, DEFAULT_SEED_FILE) || readText(workspaceRoot, GENERATED_SEED_FILE);
   const authRoutes = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/auth-routes.ts`);
   const fga = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/fga.ts`);
   const resourceMap = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/resource-map.ts`);
@@ -134,8 +135,8 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     },
     {
       name: "seed-file",
-      ok: exists(workspaceRoot, DEFAULT_SEED_FILE),
-      detail: `${DEFAULT_SEED_FILE} exists`,
+      ok: exists(workspaceRoot, DEFAULT_SEED_FILE) || exists(workspaceRoot, GENERATED_SEED_FILE),
+      detail: `${DEFAULT_SEED_FILE} exists at the app root; generated fallback is ${GENERATED_SEED_FILE}`,
     },
     {
       name: "seed-organizations",

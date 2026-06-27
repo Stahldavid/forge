@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { cpSync, statSync } from "node:fs";
-import { dirname, join, parse, relative, resolve } from "node:path";
+import { basename, dirname, join, parse, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
@@ -17,6 +17,7 @@ export interface NewCommandOptions {
   packageManager: NewPackageManager;
   install: boolean;
   git: boolean;
+  fieldTest?: boolean;
   forgePackageSpec?: string;
   localForge?: boolean;
   workspaceRoot: string;
@@ -29,6 +30,11 @@ export interface NewCommandResult {
   packageManager: NewPackageManager;
   installed: boolean;
   gitInitialized: boolean;
+  fieldTest: {
+    requested: boolean;
+    ok: boolean;
+    steps: Array<{ name: string; ok: boolean; command: string }>;
+  };
   generated: boolean;
   gitHygiene: {
     ok: boolean;
@@ -195,10 +201,47 @@ function ensureProjectName(name: string): string | null {
   if (!name.trim()) {
     return "forge new requires a project name";
   }
-  if (name.includes("/") || name.includes("\\") || name === "." || name === "..") {
+  if (name === ".") {
+    return null;
+  }
+  if (name.includes("/") || name.includes("\\") || name === "..") {
     return "project name must be a directory name, not a path";
   }
   return null;
+}
+
+function isCurrentDirectoryTarget(name: string): boolean {
+  return name === ".";
+}
+
+function targetDirectoryFor(options: NewCommandOptions): string {
+  return isCurrentDirectoryTarget(options.name)
+    ? resolve(options.workspaceRoot)
+    : resolve(options.workspaceRoot, options.name);
+}
+
+function sanitizePackageName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[._-]+|[._-]+$/g, "") || "forge-app";
+}
+
+function projectNameForTarget(options: NewCommandOptions, targetDir: string): string {
+  return isCurrentDirectoryTarget(options.name)
+    ? sanitizePackageName(basename(targetDir))
+    : options.name;
+}
+
+function blockingExistingEntries(targetDir: string): string[] {
+  const allowed = new Set([".git", ".DS_Store", "Thumbs.db"]);
+  return nodeFileSystem
+    .readDir(targetDir)
+    .map((entry) => entry.name)
+    .filter((name) => !allowed.has(name))
+    .sort();
 }
 
 function analyzeGitHygiene(targetDir: string): NewCommandResult["gitHygiene"] {
@@ -380,6 +423,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
       packageManager: options.packageManager,
       installed: false,
       gitInitialized: false,
+      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },
       generated: false,
       gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
       exitCode: 1,
@@ -397,6 +441,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
       packageManager: options.packageManager,
       installed: false,
       gitInitialized: false,
+      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },
       generated: false,
       gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
       exitCode: 1,
@@ -405,15 +450,18 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     };
   }
 
-  const targetDir = resolve(options.workspaceRoot, options.name);
-  if (nodeFileSystem.exists(targetDir)) {
+  const targetDir = targetDirectoryFor(options);
+  const appName = projectNameForTarget(options, targetDir);
+  const currentDirectoryTarget = isCurrentDirectoryTarget(options.name);
+  if (nodeFileSystem.exists(targetDir) && !currentDirectoryTarget) {
     return {
-      name: options.name,
+      name: appName,
       template: options.template,
       targetDir,
       packageManager: options.packageManager,
       installed: false,
       gitInitialized: false,
+      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },
       generated: false,
       gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
       exitCode: 1,
@@ -421,13 +469,32 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
       nextSteps: [],
     };
   }
+  if (nodeFileSystem.exists(targetDir) && currentDirectoryTarget) {
+    const blocking = blockingExistingEntries(targetDir);
+    if (blocking.length > 0) {
+      return {
+        name: appName,
+        template: options.template,
+        targetDir,
+        packageManager: options.packageManager,
+        installed: false,
+        gitInitialized: false,
+        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },
+        generated: false,
+        gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },
+        exitCode: 1,
+        message: `current directory is not empty: ${blocking.slice(0, 6).join(", ")}${blocking.length > 6 ? ` (+${blocking.length - 6})` : ""}`,
+        nextSteps: [],
+      };
+    }
+  }
 
   nodeFileSystem.mkdirp(targetDir);
   cpSync(source, targetDir, { recursive: true, force: true });
   ensureGitignore(targetDir);
   replaceTokens(
     targetDir,
-    options.name,
+    appName,
     options.packageManager,
     forgePackageSpec(targetDir, options),
   );
@@ -438,12 +505,13 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     installed = installCode === 0;
     if (!installed) {
       return {
-        name: options.name,
+        name: appName,
         template: options.template,
         targetDir,
         packageManager: options.packageManager,
         installed,
         gitInitialized: false,
+        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },
         generated: false,
         gitHygiene: analyzeGitHygiene(targetDir),
         exitCode: 1,
@@ -472,12 +540,13 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     }
     if (!generated) {
       return {
-        name: options.name,
+        name: appName,
         template: options.template,
         targetDir,
         packageManager: options.packageManager,
         installed,
         gitInitialized: false,
+        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },
         generated,
         gitHygiene: analyzeGitHygiene(targetDir),
         exitCode: 1,
@@ -493,26 +562,68 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     gitInitialized = gitCode === 0;
   }
 
+  const fieldTestSteps: NewCommandResult["fieldTest"]["steps"] = [];
+  if (options.fieldTest && installed) {
+    const steps: Array<{ name: string; command: string; args: string[] }> = [
+      { name: "workos", command: options.packageManager, args: ["run", "forge", "--", "add", "auth", "workos", "--json"] },
+      { name: "authmd", command: options.packageManager, args: ["run", "forge", "--", "authmd", "generate", "--json"] },
+      { name: "check", command: options.packageManager, args: ["run", "forge", "--", "check", "--json"] },
+    ];
+    for (const step of steps) {
+      const code = await spawnCommand(step.command, step.args, targetDir);
+      fieldTestSteps.push({ name: step.name, ok: code === 0, command: [step.command, ...step.args].join(" ") });
+      if (code !== 0) {
+        break;
+      }
+    }
+    if (gitInitialized && fieldTestSteps.every((step) => step.ok)) {
+      const addCode = await spawnCommand("git", ["add", "-A"], targetDir);
+      const commitCode = addCode === 0
+        ? await spawnCommand("git", [
+          "-c",
+          "user.name=ForgeOS",
+          "-c",
+          "user.email=forgeos@example.invalid",
+          "commit",
+          "-m",
+          "Initial ForgeOS field-test scaffold",
+        ], targetDir)
+        : 1;
+      fieldTestSteps.push({
+        name: "baseline-commit",
+        ok: addCode === 0 && commitCode === 0,
+        command: 'git add -A && git commit -m "Initial ForgeOS field-test scaffold"',
+      });
+    }
+  }
+  const fieldTest = {
+    requested: Boolean(options.fieldTest),
+    ok: !options.fieldTest || (installed && fieldTestSteps.length > 0 && fieldTestSteps.every((step) => step.ok)),
+    steps: fieldTestSteps,
+  };
+
   const nextSteps = [
-    `cd ${options.name}`,
+    ...(currentDirectoryTarget ? [] : [`cd ${options.name}`]),
     ...(installed ? [] : [`${options.packageManager} install`]),
     ...(generated ? [] : [`${options.packageManager} run generate`]),
+    ...(options.fieldTest ? [`${options.packageManager} run forge -- agent onboard --target codex --json`] : []),
     `${options.packageManager} run dev -- --open`,
     `${options.packageManager} run verify`,
   ];
   const gitHygiene = analyzeGitHygiene(targetDir);
 
   return {
-    name: options.name,
+    name: appName,
     template: options.template,
     targetDir,
     packageManager: options.packageManager,
     installed,
     gitInitialized,
+    fieldTest,
     generated,
     gitHygiene,
-    exitCode: 0,
-    message: `Created ${options.name} from template ${options.template}.`,
+    exitCode: fieldTest.ok ? 0 : 1,
+    message: `Created ${appName} from template ${options.template}.`,
     nextSteps,
   };
 }
@@ -524,6 +635,13 @@ export function formatNewHuman(result: NewCommandResult): string {
 
   return [
     result.message,
+    ...(result.fieldTest.requested
+      ? [
+          result.fieldTest.ok
+            ? "Field-test setup completed: WorkOS, auth.md, check, and baseline commit are ready."
+            : `warning: field-test setup did not complete: ${result.fieldTest.steps.find((step) => !step.ok)?.name ?? "not-run"}`,
+        ]
+      : []),
     ...(result.gitHygiene.ok
       ? ["Generated and operational Forge files are ignored by git."]
       : [

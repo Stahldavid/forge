@@ -23,6 +23,7 @@ function usage() {
 
 Usage:
   npm create forgeos-app@alpha <app-name> -- --template minimal-web
+  npm create forgeos-app@alpha . -- --template minimal-web
   npm create forgeos-app@alpha <app-name> -- --template nuxt-web
   npm create forgeos-app@alpha <app-name> -- --template agent-workroom
   npm create forgeos-app@alpha <app-name> -- --template b2b-support-web
@@ -32,6 +33,7 @@ Options passed through to ForgeOS:
   --package-manager <name>   npm | pnpm | yarn | bun
   --install                  install dependencies after scaffolding
   --no-install               scaffold only
+  --git                      initialize git (default; accepted for explicit scripts)
   --no-git                   skip git init
   --forge-spec <spec>        dependency spec written as the generated app's forge alias
   --local-forge              use a local ForgeOS checkout when running from the monorepo

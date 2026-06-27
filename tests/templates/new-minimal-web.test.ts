@@ -52,6 +52,24 @@ describe("minimal-web template", () => {
     });
   });
 
+  test("parseCli accepts current-directory scaffold target", () => {
+    const parsed = parseCli([
+      "new",
+      ".",
+      "--template",
+      "minimal-web",
+      "--no-install",
+      "--no-git",
+    ]);
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "new",
+      name: ".",
+      install: false,
+    });
+  });
+
   test("parseCli rejects conflicting forge package source flags", () => {
     const parsed = parseCli([
       "new",
@@ -162,6 +180,52 @@ describe("minimal-web template", () => {
       cleanupWorkspace(workspace);
     }
   }, 30_000);
+
+  test("forge new can scaffold into the current empty directory", async () => {
+    const workspace = tempWorkspace("new-minimal-web-current-dir");
+    try {
+      const result = await runNewCommand({
+        name: ".",
+        template: "minimal-web",
+        packageManager: "npm",
+        install: false,
+        git: false,
+        workspaceRoot: workspace,
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.targetDir).toBe(workspace);
+      expect(result.name).toContain("new-minimal-web-current-dir");
+      expect(result.name).toBe(result.name.toLowerCase());
+      expect(result.nextSteps).not.toContain("cd .");
+      expect(existsSync(join(workspace, "web", "index.html"))).toBe(true);
+      expect(read(workspace, "package.json")).toContain(`"name": "${result.name}"`);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("forge new refuses to scaffold into a non-empty current directory", async () => {
+    const workspace = tempWorkspace("new-minimal-web-current-dir-non-empty");
+    try {
+      writeFileSync(join(workspace, "README.md"), "# existing\n", "utf8");
+      const result = await runNewCommand({
+        name: ".",
+        template: "minimal-web",
+        packageManager: "npm",
+        install: false,
+        git: false,
+        workspaceRoot: workspace,
+      });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.message).toContain("current directory is not empty");
+      expect(result.message).toContain("README.md");
+      expect(existsSync(join(workspace, "web", "index.html"))).toBe(false);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
 
   test("forge new can use an explicit Forge package spec for external smokes", async () => {
     const workspace = tempWorkspace("new-minimal-web-forge-spec");

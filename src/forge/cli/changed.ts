@@ -4,6 +4,7 @@ import {
   filterCategorizedSummary,
   summarizeChangeTypes,
 } from "../workspace/change-summary.ts";
+import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { buildWorkspaceGitSummary, type WorkspaceGitSummary } from "../workspace/git-summary.ts";
 
 export interface ChangedCommandResult {
@@ -44,6 +45,7 @@ interface GeneratedChangeExplanation {
 }
 
 const AUTHORED_CHANGE_TYPES = ["source", "tests", "docs", "config", "assets", "other"] as const;
+const REVIEW_CHANGE_TYPES = ["source", "tests", "docs", "config", "assets"] as const;
 
 function emptyCategory(summary: CategorizedFileSummary, category: keyof CategorizedFileSummary["byType"]): boolean {
   return summary.byType[category].count === 0;
@@ -102,10 +104,16 @@ function buildRisks(git: WorkspaceGitSummary): string[] {
   if (!emptyCategory(changed, "generated") && humanChanges.total === 0) {
     risks.push("only generated artifacts changed; verify the source edit, generator input, or intentional regeneration that produced them");
   }
-  if (changed.total.count > 50) {
-    risks.push(`${changed.total.count} changed file(s) detected; use the grouped summaries before reviewing raw diffs`);
-  }
   return risks;
+}
+
+function buildAdvisories(git: WorkspaceGitSummary): string[] {
+  const advisories: string[] = [];
+  const changed = git.changeSummary.changed;
+  if (changed.total.count > 50) {
+    advisories.push(`${changed.total.count} changed file(s) detected; use grouped summaries before reviewing raw diffs`);
+  }
+  return advisories;
 }
 
 function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
@@ -127,7 +135,12 @@ function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
       "forge generate --check --json",
     ];
   }
+  const authoredGeneratedInputs =
+    changed.byType.source.count +
+    changed.byType.config.count +
+    changed.byType.operational.count;
   return [
+    ...(authoredGeneratedInputs > 0 ? ["forge generate --check --json"] : []),
     "forge handoff --json",
     "forge test plan --changed --json",
     "forge verify --changed",
@@ -189,7 +202,7 @@ function buildGeneratedChangeExplanation(
   };
 }
 
-export function runChangedCommand(workspaceRoot: string, options: { authoredOnly?: boolean } = {}): ChangedCommandResult {
+export function runChangedCommand(workspaceRoot: string, options: { authoredOnly?: boolean; reviewOnly?: boolean } = {}): ChangedCommandResult {
   const git = buildWorkspaceGitSummary(workspaceRoot);
   const changed = git.changeSummary.changed;
   const humanChanges = selectHumanChangeSummary(changed);
@@ -198,16 +211,25 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const authoredStaged = filterCategorizedSummary(git.changeSummary.staged, [...AUTHORED_CHANGE_TYPES]);
   const authoredUnstaged = filterCategorizedSummary(git.changeSummary.unstaged, [...AUTHORED_CHANGE_TYPES]);
   const authoredUntracked = filterCategorizedSummary(git.changeSummary.untracked, [...AUTHORED_CHANGE_TYPES]);
-  const viewHumanChanges = options.authoredOnly ? selectHumanChangeSummary(authoredChanged) : humanChanges;
-  const viewChanged = options.authoredOnly ? authoredChanged : changed;
-  const viewStaged = options.authoredOnly ? authoredStaged : git.changeSummary.staged;
-  const viewUnstaged = options.authoredOnly ? authoredUnstaged : git.changeSummary.unstaged;
-  const viewUntracked = options.authoredOnly ? authoredUntracked : git.changeSummary.untracked;
-  const viewDerivedChanges: DerivedChangeSummary = options.authoredOnly
+  const reviewChanged = filterCategorizedSummary(changed, [...REVIEW_CHANGE_TYPES]);
+  const reviewStaged = filterCategorizedSummary(git.changeSummary.staged, [...REVIEW_CHANGE_TYPES]);
+  const reviewUnstaged = filterCategorizedSummary(git.changeSummary.unstaged, [...REVIEW_CHANGE_TYPES]);
+  const reviewUntracked = filterCategorizedSummary(git.changeSummary.untracked, [...REVIEW_CHANGE_TYPES]);
+  const viewHumanChanges = options.reviewOnly
+    ? selectHumanChangeSummary(reviewChanged)
+    : options.authoredOnly
+      ? selectHumanChangeSummary(authoredChanged)
+      : humanChanges;
+  const viewChanged = options.reviewOnly ? reviewChanged : options.authoredOnly ? authoredChanged : changed;
+  const viewStaged = options.reviewOnly ? reviewStaged : options.authoredOnly ? authoredStaged : git.changeSummary.staged;
+  const viewUnstaged = options.reviewOnly ? reviewUnstaged : options.authoredOnly ? authoredUnstaged : git.changeSummary.unstaged;
+  const viewUntracked = options.reviewOnly ? reviewUntracked : options.authoredOnly ? authoredUntracked : git.changeSummary.untracked;
+  const viewDerivedChanges: DerivedChangeSummary = options.authoredOnly || options.reviewOnly
     ? { total: 0, generated: { count: 0, sample: [], hidden: 0 } }
     : derivedChanges;
   const risks = buildRisks(git);
-  const recommendedCommands = buildRecommendedCommands(git);
+  const advisories = buildAdvisories(git);
+  const recommendedCommands = forgeCliCommandsForWorkspace(workspaceRoot, buildRecommendedCommands(git));
   const reviewFocus = buildReviewFocus(viewHumanChanges, viewDerivedChanges);
   const generatedExplanation = buildGeneratedChangeExplanation(viewHumanChanges, viewDerivedChanges);
   const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
@@ -223,7 +245,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
         commit: git.commit,
         workspaceMode: git.workspaceMode ?? (git.available ? "git" : "nonGit"),
         tracking: git.tracking ?? git.source,
-        view: options.authoredOnly ? "authored" : "all",
+        view: options.reviewOnly ? "review" : options.authoredOnly ? "authored" : "all",
         changedFiles: viewChanged.total.count,
         humanFiles: viewHumanChanges.total,
         generatedFiles: viewDerivedChanges.total,
@@ -253,6 +275,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       generatedExplanation,
       diffPlan,
       risks,
+      advisories,
       recommendedCommands,
       nextActions: recommendedCommands,
     },
@@ -268,6 +291,7 @@ export function formatChangedHuman(result: ChangedCommandResult): string {
   const generatedExplanation = result.data.generatedExplanation as { summary?: string } | undefined;
   const diffPlan = result.data.diffPlan as { summary?: string; authoredDiffCommand?: string; generatedDiffCommand?: string; generatedCollapsedByDefault?: boolean } | undefined;
   const risks = (result.data.risks as string[] | undefined) ?? [];
+  const advisories = (result.data.advisories as string[] | undefined) ?? [];
   const nextActions = (result.data.nextActions as string[] | undefined) ?? [];
   const lines = [
     `Forge changed: ${result.ok ? "ready" : "git unavailable"}`,
@@ -309,6 +333,9 @@ export function formatChangedHuman(result: ChangedCommandResult): string {
 
   if (risks.length > 0) {
     lines.push("", "Risks:", ...risks.map((risk) => `  ${risk}`));
+  }
+  if (advisories.length > 0) {
+    lines.push("", "Notes:", ...advisories.map((advisory) => `  ${advisory}`));
   }
 
   lines.push("", "Next:", ...nextActions.map((command) => `  ${command}`));

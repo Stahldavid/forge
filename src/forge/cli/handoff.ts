@@ -6,6 +6,7 @@ import type { DevConsoleCycle, DevConsolePhase } from "../dev-console/types.ts";
 import type { TestRunRecord } from "../impact/types.ts";
 import type { UiRunReport } from "../ui/types.ts";
 import { summarizeChangeTypes, type CategorizedFileSummary } from "../workspace/change-summary.ts";
+import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
 
 export interface HandoffCommandOptions {
@@ -92,6 +93,14 @@ export interface HandoffCommandResult {
     recommendedCommands: string[];
     risks: string[];
   };
+  diagnosticSummary: {
+    total: number;
+    sample: Diagnostic[];
+    hidden: number;
+    bySeverity: Record<string, number>;
+    byCode: Record<string, number>;
+    fullDiagnosticsCommands: string[];
+  };
   diagnostics: Diagnostic[];
   nextActions: string[];
   exitCode: 0 | 1;
@@ -162,11 +171,37 @@ function buildOpeningBrief(input: {
   ].join(" ");
 }
 
+function compactDiagnostics(
+  workspaceRoot: string,
+  diagnostics: Diagnostic[],
+  sampleSize = 8,
+): HandoffCommandResult["diagnosticSummary"] {
+  const bySeverity: Record<string, number> = {};
+  const byCode: Record<string, number> = {};
+  for (const diagnostic of diagnostics) {
+    bySeverity[diagnostic.severity] = (bySeverity[diagnostic.severity] ?? 0) + 1;
+    byCode[diagnostic.code] = (byCode[diagnostic.code] ?? 0) + 1;
+  }
+  return {
+    total: diagnostics.length,
+    sample: diagnostics.slice(0, sampleSize),
+    hidden: Math.max(0, diagnostics.length - sampleSize),
+    bySeverity,
+    byCode,
+    fullDiagnosticsCommands: forgeCliCommandsForWorkspace(workspaceRoot, [
+      "forge dev --once --json",
+      "forge inspect all --full --json",
+      "forge generate --check --json",
+    ]),
+  };
+}
+
 export async function runHandoffCommand(options: HandoffCommandOptions): Promise<HandoffCommandResult> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
   const dev = await runDevConsoleCycle({
     workspaceRoot,
     mode: "once",
+    generatedMode: "check",
     includeImpact: true,
   });
   const git = buildWorkspaceGitSummary(workspaceRoot);
@@ -185,14 +220,17 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
   ];
   const nextActions = [
     ...agent.recommendedCommands,
-    ...(git.changed.count > 0 ? ["forge review run --changed --json"] : []),
-    "forge handoff --json",
+    ...forgeCliCommandsForWorkspace(workspaceRoot, [
+      ...(git.changed.count > 0 ? ["forge review run --changed --json"] : []),
+      "forge handoff --json",
+    ]),
   ];
   const ok = dev.ok &&
     agent.blockingIssues.length === 0 &&
     (!recentRuns.test || recentRuns.test.ok) &&
     (!recentRuns.ui || recentRuns.ui.ok);
   const changedFiles = Math.max(agent.changedFiles, git.changed.count);
+  const diagnosticSummary = compactDiagnostics(workspaceRoot, dev.diagnostics);
 
   return {
     schemaVersion: "0.1.0",
@@ -231,7 +269,8 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
       recommendedCommands: [...new Set(nextActions)].slice(0, 10),
       risks,
     },
-    diagnostics: dev.diagnostics,
+    diagnosticSummary,
+    diagnostics: diagnosticSummary.sample,
     nextActions: [...new Set(nextActions)].slice(0, 10),
     exitCode: ok ? 0 : 1,
   };
@@ -255,6 +294,14 @@ export function formatHandoffHuman(result: HandoffCommandResult): string {
   if (result.nextAgent.risks.length > 0) {
     lines.push("", "Risks:");
     lines.push(...result.nextAgent.risks.slice(0, 6).map((risk) => `  ${risk}`));
+  }
+  if (result.diagnosticSummary.total > 0) {
+    lines.push(
+      "",
+      "Diagnostics:",
+      `  ${result.diagnosticSummary.total} total` +
+        (result.diagnosticSummary.hidden > 0 ? ` (${result.diagnosticSummary.hidden} hidden in compact handoff)` : ""),
+    );
   }
   const changedTypes = summarizeChangeTypes(result.git.changeSummary.changed);
   if (changedTypes) {

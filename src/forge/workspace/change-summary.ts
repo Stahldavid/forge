@@ -90,6 +90,9 @@ export function classifyChangeType(file: string): ChangeType {
   if (lower === ".codex/hooks.json") {
     return "config";
   }
+  if (lower.startsWith(".playwright-cli/")) {
+    return "operational";
+  }
   if (
     lower.startsWith(".forge/") ||
     lower.startsWith(".codex/") ||
@@ -131,6 +134,7 @@ export function classifyChangeType(file: string): ChangeType {
   }
   if (
     basename === "package.json" ||
+    basename === ".env.example" ||
     basename === "bun.lock" ||
     basename === "package-lock.json" ||
     basename === "pnpm-lock.yaml" ||
@@ -152,7 +156,9 @@ export function classifyChangeType(file: string): ChangeType {
     lower.startsWith("web/") ||
     lower.startsWith("templates/") ||
     lower.startsWith("examples/") ||
-    lower.startsWith("bin/")
+    /^packages\/[^/]+\/(bin|src)\//.test(lower) ||
+    lower.startsWith("bin/") ||
+    lower.startsWith("scripts/")
   ) {
     return "source";
   }

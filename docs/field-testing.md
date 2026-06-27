@@ -59,6 +59,33 @@ With `--runtime-probes`, the harness:
 
 The minimal and Nuxt template probes create a note with `createNote` and confirm it is returned by `listNotes`. The B2B support template probe creates a ticket with `createTicket` and confirms it is returned by `listTickets`.
 
+Add `--auth-probes` when the report should also prove the auth/agent-ready path in the generated app:
+
+```bash
+npm run field:test -- \
+  --package-managers npm \
+  --templates minimal-web \
+  --forge-spec "npm:forgeos@alpha" \
+  --install \
+  --runtime-probes \
+  --auth-probes \
+  --write-report field-reports/npm-minimal-web-auth.json \
+  --json
+```
+
+With `--auth-probes`, the harness additionally runs:
+
+1. `forge add auth workos --json`;
+2. `forge authmd generate --json`;
+3. `forge authmd check --json`;
+4. `forge workos doctor --json`;
+5. `forge workos seed --file workos-seed.yml --dry-run --json`;
+6. `forge auth prove --scenario multi-tenant --json`;
+7. `HEAD` and `GET` probes for `/auth.md`;
+8. `HEAD` and `GET` probes for `/.well-known/oauth-protected-resource`.
+
+This mode is still local and non-destructive: WorkOS seeding is dry-run by default, and the multi-tenant proof verifies the generated local contract, seed, auth metadata, and claim mapping without requiring real WorkOS credentials.
+
 ## Local Field Test (framework repo)
 
 Run a dry plan:
@@ -76,6 +103,7 @@ npm run field:test -- \
   --forge-spec "file:." \
   --install \
   --runtime-probes \
+  --auth-probes \
   --json
 ```
 

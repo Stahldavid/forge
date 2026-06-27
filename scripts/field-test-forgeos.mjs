@@ -10,6 +10,7 @@ const repoRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
 function parseArgs(argv) {
   const args = {
+    authProbes: false,
     dryRun: false,
     install: true,
     json: false,
@@ -24,7 +25,8 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === "--dry-run") args.dryRun = true;
+    if (arg === "--auth-probes") args.authProbes = true;
+    else if (arg === "--dry-run") args.dryRun = true;
     else if (arg === "--install") args.install = true;
     else if (arg === "--no-install") args.install = false;
     else if (arg === "--json") args.json = true;
@@ -213,6 +215,16 @@ async function fetchJson(url, options = {}) {
   };
 }
 
+async function fetchProbe(url, options = {}) {
+  const response = await fetch(url, options);
+  const text = options.method === "HEAD" ? "" : await response.text();
+  return {
+    body: text,
+    ok: response.ok,
+    status: response.status,
+  };
+}
+
 async function waitForHealth(url, timeoutMs) {
   const startedAt = Date.now();
   let lastError = "not started";
@@ -266,7 +278,7 @@ async function stopProcessTree(child) {
   child.kill("SIGTERM");
 }
 
-async function runRuntimeProbes({ appDir, packageManager, template, timeoutMs }) {
+async function runRuntimeProbes({ appDir, authProbes, packageManager, template, timeoutMs }) {
   const pm = commandName(packageManager);
   const port = await getFreePort();
   const serverUrl = `http://127.0.0.1:${port}`;
@@ -317,6 +329,24 @@ async function runRuntimeProbes({ appDir, packageManager, template, timeoutMs })
       ok: entries.ok && entries.body?.ok === true,
       status: entries.status,
     });
+
+    if (authProbes) {
+      for (const [method, path] of [
+        ["HEAD", "/auth.md"],
+        ["GET", "/auth.md"],
+        ["HEAD", "/.well-known/oauth-protected-resource"],
+        ["GET", "/.well-known/oauth-protected-resource"],
+      ]) {
+        const probe = await fetchProbe(`${serverUrl}${path}`, { method });
+        steps.push({
+          command: `${method} ${serverUrl}${path}`,
+          durationMs: Date.now() - startedAt,
+          exitCode: probe.ok ? 0 : 1,
+          ok: probe.ok,
+          status: probe.status,
+        });
+      }
+    }
 
     if (template === "minimal-web" || template === "nuxt-web") {
       const create = await fetchJson(`${serverUrl}/commands/createNote`, {
@@ -407,7 +437,7 @@ function windowsBatchTarget(command, args) {
   };
 }
 
-async function fieldCase({ appRoot, forgeSpec, install, packageManager, runtimeProbes, template, timeoutMs }) {
+async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManager, runtimeProbes, template, timeoutMs }) {
   const appName = `${template}-${packageManager}-field`.replace(/[^a-zA-Z0-9_-]/g, "-");
   const appDir = join(appRoot, appName);
   const steps = [];
@@ -429,6 +459,45 @@ async function fieldCase({ appRoot, forgeSpec, install, packageManager, runtimeP
   if (install) {
     const pm = commandName(packageManager);
     steps.push(await runCommand(pm, packageScriptArgs(packageManager, "generate"), { cwd: appDir, timeoutMs }));
+    if (authProbes) {
+      steps.push(
+        await runCommand(pm, packageScriptArgs(packageManager, "forge", ["add", "auth", "workos", "--json"]), {
+          cwd: appDir,
+          timeoutMs,
+        }),
+      );
+      steps.push(
+        await runCommand(pm, packageScriptArgs(packageManager, "forge", ["authmd", "generate", "--json"]), {
+          cwd: appDir,
+          timeoutMs,
+        }),
+      );
+      steps.push(
+        await runCommand(pm, packageScriptArgs(packageManager, "forge", ["authmd", "check", "--json"]), {
+          cwd: appDir,
+          timeoutMs,
+        }),
+      );
+      steps.push(
+        await runCommand(pm, packageScriptArgs(packageManager, "forge", ["workos", "doctor", "--json"]), {
+          cwd: appDir,
+          timeoutMs,
+        }),
+      );
+      steps.push(
+        await runCommand(
+          pm,
+          packageScriptArgs(packageManager, "forge", ["workos", "seed", "--file", "workos-seed.yml", "--dry-run", "--json"]),
+          { cwd: appDir, timeoutMs },
+        ),
+      );
+      steps.push(
+        await runCommand(pm, packageScriptArgs(packageManager, "forge", ["auth", "prove", "--scenario", "multi-tenant", "--json"]), {
+          cwd: appDir,
+          timeoutMs,
+        }),
+      );
+    }
     steps.push(
       await runCommand(pm, packageScriptArgs(packageManager, "forge", ["dev", "--once", "--json"]), {
         cwd: appDir,
@@ -444,7 +513,7 @@ async function fieldCase({ appRoot, forgeSpec, install, packageManager, runtimeP
     );
 
     if (runtimeProbes) {
-      const runtime = await runRuntimeProbes({ appDir, packageManager, template, timeoutMs });
+      const runtime = await runRuntimeProbes({ appDir, authProbes, packageManager, template, timeoutMs });
       steps.push(...runtime.steps);
       return {
         appDir,
@@ -473,7 +542,15 @@ async function main() {
   );
 
   if (args.dryRun) {
-    const plan = { cases, forgeSpec: args.forgeSpec, install: args.install, ok: true, runtimeProbes: args.runtimeProbes, timeoutMs: args.timeoutMs };
+    const plan = {
+      authProbes: args.authProbes,
+      cases,
+      forgeSpec: args.forgeSpec,
+      install: args.install,
+      ok: true,
+      runtimeProbes: args.runtimeProbes,
+      timeoutMs: args.timeoutMs,
+    };
     console.log(args.json ? JSON.stringify(plan, null, 2) : `Planned ${cases.length} ForgeOS field test case(s).`);
     return;
   }
@@ -490,6 +567,7 @@ async function main() {
       results.push(
         await fieldCase({
           appRoot,
+          authProbes: args.authProbes,
           forgeSpec: args.forgeSpec,
           install: args.install,
           packageManager: testCase.packageManager,
@@ -509,6 +587,7 @@ async function main() {
 
   const summary = {
     appRoot: args.keep ? appRoot : undefined,
+    authProbes: args.authProbes,
     forgeSpec: args.forgeSpec,
     install: args.install,
     ok: results.every((result) => result.ok),

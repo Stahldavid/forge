@@ -7,6 +7,7 @@ interface MemoryRow {
 interface MemoryTable {
   rows: MemoryRow[];
   nextSerial: number;
+  columnTypes: Map<string, string>;
 }
 
 function normalizeRows(rows: MemoryRow[]): DbQueryResult {
@@ -16,8 +17,8 @@ function normalizeRows(rows: MemoryRow[]): DbQueryResult {
   };
 }
 
-function parseNow(): string {
-  return new Date().toISOString();
+function parseNow(): Date {
+  return new Date();
 }
 
 function compareValue(left: unknown, right: unknown): boolean {
@@ -50,6 +51,42 @@ function parseTableName(sql: string): string | null {
     }
   }
   return null;
+}
+
+function parseColumnTypes(sql: string): Map<string, string> {
+  if (!parseTableName(sql)) {
+    return new Map();
+  }
+  const tableNameMatch =
+    sql.match(/CREATE TABLE IF NOT EXISTS\s+"?([^"\s(]+)"?/i) ??
+    sql.match(/CREATE TABLE\s+"?([^"\s(]+)"?/i);
+  if (!tableNameMatch?.[0]) {
+    return new Map();
+  }
+
+  const start = sql.indexOf("(", tableNameMatch.index! + tableNameMatch[0].length);
+  const end = sql.lastIndexOf(")");
+  if (start < 0 || end <= start) {
+    return new Map();
+  }
+
+  const types = new Map<string, string>();
+  for (const definition of splitSqlList(sql.slice(start + 1, end))) {
+    const trimmed = definition.trim();
+    if (/^(CONSTRAINT|PRIMARY|UNIQUE|FOREIGN|CHECK)\b/i.test(trimmed)) {
+      continue;
+    }
+    const match = trimmed.match(/^"?(\w+)"?\s+([a-zA-Z][a-zA-Z0-9_]*(?:\s+precision)?)/);
+    if (match?.[1] && match?.[2]) {
+      types.set(match[1], match[2].toLowerCase());
+    }
+  }
+  return types;
+}
+
+function isTimestampType(sqlType: string | undefined): boolean {
+  if (!sqlType) return false;
+  return ["timestamp", "timestamptz", "timestamp with time zone", "timestamp without time zone"].includes(sqlType);
 }
 
 function splitSqlList(value: string): string[] {
@@ -111,8 +148,47 @@ function parseSqlLiteral(token: string, params: unknown[]): unknown {
   return Number.isFinite(numeric) ? numeric : token;
 }
 
+function sqlParamValue(params: unknown[], index: string | undefined): unknown {
+  if (!index) {
+    return undefined;
+  }
+  return params[Number(index) - 1];
+}
+
 function deterministicUuid(serial: number): string {
   return `00000000-0000-0000-0000-${String(serial).padStart(12, "0")}`;
+}
+
+function coerceColumnValue(tableName: string, table: MemoryTable, column: string, value: unknown): unknown {
+  if (!isTimestampType(table.columnTypes.get(column))) {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return value;
+  }
+  if (value === "") {
+    throw new Error(`FORGE_DB_INVALID_TIMESTAMP: empty timestamp value for ${tableName}.${column}`);
+  }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new Error(`FORGE_DB_INVALID_TIMESTAMP: invalid timestamp value for ${tableName}.${column}`);
+    }
+    return value;
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      throw new Error(`FORGE_DB_INVALID_TIMESTAMP: invalid timestamp value for ${tableName}.${column}`);
+    }
+    return date;
+  }
+  throw new Error(`FORGE_DB_INVALID_TIMESTAMP: unsupported timestamp value for ${tableName}.${column}`);
+}
+
+function coerceRowValues(tableName: string, table: MemoryTable, row: MemoryRow): void {
+  for (const column of Object.keys(row)) {
+    row[column] = coerceColumnValue(tableName, table, column, row[column]);
+  }
 }
 
 function applySystemDefaults(tableName: string, row: MemoryRow): void {
@@ -215,8 +291,11 @@ export class MemoryAdapter implements DbAdapter {
       const match =
         trimmed.match(/CREATE TABLE IF NOT EXISTS "([^"]+)"/i) ??
         trimmed.match(/CREATE TABLE IF NOT EXISTS ([a-z_][a-z0-9_]*)/i);
-      if (match?.[1] && !this.tables.has(match[1])) {
-        this.tables.set(match[1], { rows: [], nextSerial: 1 });
+      if (match?.[1]) {
+        const table = this.ensureTable(match[1]);
+        for (const [column, sqlType] of parseColumnTypes(trimmed)) {
+          table.columnTypes.set(column, sqlType);
+        }
       }
       return { rows: [], rowCount: 0 };
     }
@@ -331,6 +410,7 @@ export class MemoryAdapter implements DbAdapter {
     }
 
     applySystemDefaults(tableName, row);
+    coerceRowValues(tableName, table, row);
 
     table.rows.push(row);
 
@@ -570,9 +650,9 @@ export class MemoryAdapter implements DbAdapter {
 
     const setMatch = sql.match(/SET (.+?) WHERE/i);
     const assignments = setMatch?.[1]?.split(",") ?? [];
-    const whereMatch = sql.match(/WHERE\s+"?(\w+)"?\s*=\s*\$\d+/i);
+    const whereMatch = sql.match(/WHERE\s+"?(\w+)"?\s*=\s*\$(\d+)/i);
     const whereColumn = whereMatch?.[1] ?? "id";
-    const whereValue = params[params.length - 1];
+    const whereValue = sqlParamValue(params, whereMatch?.[2]) ?? params[params.length - 1];
 
     let updated = 0;
     for (const row of table.rows) {
@@ -625,6 +705,7 @@ export class MemoryAdapter implements DbAdapter {
         } else {
           row[column] = parseSqlLiteral(expression, params);
         }
+        row[column] = coerceColumnValue(tableName, table, column, row[column]);
       }
 
       updated += 1;
@@ -668,6 +749,7 @@ export class MemoryAdapter implements DbAdapter {
       snapshot.set(name, {
         rows: table.rows.map((row) => ({ ...row })),
         nextSerial: table.nextSerial,
+        columnTypes: new Map(table.columnTypes),
       });
     }
     const sequenceSnapshot = new Map(this.sequences);
@@ -695,7 +777,7 @@ export class MemoryAdapter implements DbAdapter {
     if (existing) {
       return existing;
     }
-    const created = { rows: [], nextSerial: 1 };
+    const created = { rows: [], nextSerial: 1, columnTypes: new Map<string, string>() };
     this.tables.set(name, created);
     return created;
   }

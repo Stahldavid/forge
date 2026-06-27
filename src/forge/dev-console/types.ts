@@ -75,6 +75,7 @@ export interface DevConsoleCycle {
 export interface DevConsoleOptions {
   workspaceRoot: string;
   mode: DevConsoleCycle["mode"];
+  generatedMode?: "write" | "check";
   strictSecrets?: boolean;
   includeImpact?: boolean;
   apiUrl?: string;

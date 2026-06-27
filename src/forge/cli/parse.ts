@@ -69,6 +69,7 @@ export type ForgeCommand =
       forgePackageSpec?: string;
       localForge: boolean;
       json: boolean;
+      fieldTest: boolean;
       workspaceRoot: string;
     }
   | { kind: "build"; json: boolean; workspaceRoot: string }
@@ -135,6 +136,7 @@ export type ForgeCommand =
       json: boolean;
       token?: string;
       prod?: boolean;
+      scenario?: string;
       workspaceRoot: string;
     }
   | {
@@ -220,7 +222,7 @@ export type ForgeCommand =
       redacted: boolean;
     }
   | { kind: "status"; json: boolean; workspaceRoot: string }
-  | { kind: "changed"; json: boolean; authoredOnly: boolean; workspaceRoot: string }
+  | { kind: "changed"; json: boolean; authoredOnly: boolean; reviewOnly: boolean; workspaceRoot: string }
   | { kind: "diff"; target: "authored" | "generated" | "full"; json: boolean; workspaceRoot: string }
   | { kind: "handoff"; json: boolean; workspaceRoot: string }
   | {
@@ -912,6 +914,9 @@ export function parseCli(argv: string[]): ParsedCli {
       if (install && noInstall) {
         errors.push("use either --install or --no-install, not both");
       }
+      if (parseFlag(argv, "--field-test") && noInstall) {
+        errors.push("forge new --field-test requires installation; remove --no-install");
+      }
 
       return {
         command: {
@@ -924,6 +929,7 @@ export function parseCli(argv: string[]): ParsedCli {
           forgePackageSpec,
           localForge,
           json: parseFlag(argv, "--json"),
+          fieldTest: parseFlag(argv, "--field-test"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1323,6 +1329,7 @@ export function parseCli(argv: string[]): ParsedCli {
           json: parseFlag(argv, "--json"),
           token: parseOptionValue(argv, "--token"),
           prod: parseFlag(argv, "--prod"),
+          scenario: parseOptionValue(argv, "--scenario"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1900,6 +1907,7 @@ export function parseCli(argv: string[]): ParsedCli {
           kind: "changed",
           json: parseFlag(argv, "--json"),
           authoredOnly: parseFlag(argv, "--authored"),
+          reviewOnly: parseFlag(argv, "--review"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2899,6 +2907,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--to",
     "--changed",
     "--authored",
+    "--review",
     "--env",
     "--input",
     "--provider",
@@ -2969,7 +2978,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--local-forge",
     "--install",
     "--no-install",
+    "--git",
     "--no-git",
+    "--field-test",
     "--with-web",
     "--no-web",
     "--api-only",
@@ -2987,6 +2998,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--allow-dev-auth",
     "--token",
     "--prod",
+    "--scenario",
     "--reason",
     "--no-preserve-user-sections",
     "--no-skills",

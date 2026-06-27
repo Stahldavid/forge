@@ -17,6 +17,11 @@ function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
 }
 
+function markFrameworkCheckout(root: string): void {
+  mkdirSync(join(root, "bin"), { recursive: true });
+  writeFileSync(join(root, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
+}
+
 function queuedCodexHookLine(root: string, eventName: string, sessionId: string): string {
   return JSON.stringify({
     forgeHookQueueV1: true,
@@ -343,6 +348,49 @@ describe("H48 agent memory bridge", () => {
       expect(timeline.events.some((event) => event.status === "requested")).toBe(true);
       expect(JSON.stringify(timeline)).not.toContain("sk_h48_timeline_secret");
       expect(timeline.nextActions).toContain("forge agent context --current --json");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("agent timeline localizes next actions without rewriting recorded command history", async () => {
+    const root = tempWorkspace("h48-agent-timeline-local-cli");
+    try {
+      markFrameworkCheckout(root);
+      await runAgentMemoryCommand({
+        subcommand: "ingest",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        eventName: "PreToolUse",
+        input: {
+          session_id: "codex-session-local",
+          hook_event_name: "PreToolUse",
+          tool_name: "Bash",
+          tool_input: { command: "forge check --json" },
+        },
+      });
+
+      const timeline = await runAgentCommand({
+        subcommand: "timeline",
+        workspaceRoot: root,
+        json: true,
+        target: "codex",
+        dryRun: false,
+        force: false,
+        preserveUserSections: true,
+        skills: true,
+        rules: true,
+        limit: 10,
+      });
+
+      expect("timeline" in timeline).toBe(true);
+      if (!("timeline" in timeline)) {
+        throw new Error("expected agent timeline result");
+      }
+      expect(timeline.nextActions).toContain("node bin/forge.mjs agent context --current --json");
+      expect(timeline.nextActions).not.toContain("forge agent context --current --json");
+      expect(timeline.events.some((event) => event.command === "forge check --json")).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

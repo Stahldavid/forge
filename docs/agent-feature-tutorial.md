@@ -73,7 +73,7 @@ Use a dry run:
 
 ```bash
 forge make resource task \
-  --fields title:text,status:enum(open,done) \
+  --fields title:text,status:enum=open+done \
   --with-ui \
   --dry-run \
   --json
@@ -93,7 +93,7 @@ Review the plan. The important parts are:
 
 ```bash
 forge make resource task \
-  --fields title:text,status:enum(open,done) \
+  --fields title:text,status:enum=open+done \
   --with-ui \
   --yes
 ```

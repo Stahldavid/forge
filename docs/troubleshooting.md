@@ -39,6 +39,11 @@ forge setup windows --yes
 | `forge repair diagnose --json` | Structured failure analysis |
 | `forge telemetry inspect <traceId>` | Policy/runtime errors with trace id |
 
+`forge handoff --json` is intentionally compact. If many diagnostics are
+present, start with `diagnosticSummary.byCode`, `diagnosticSummary.sample`, and
+`diagnosticSummary.fullDiagnosticsCommands` before expanding the full failure
+context.
+
 Human-readable playbooks also live in:
 
 - `AGENTS.md`

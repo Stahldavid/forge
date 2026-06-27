@@ -57,6 +57,101 @@ function uniqueSorted(values: Array<string | undefined>): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value)))].sort();
 }
 
+function walkFiles(root: string, relative = ""): string[] {
+  const absolute = relative ? join(root, relative) : root;
+  return nodeFileSystem.readDir(absolute).flatMap((entry) => {
+    const child = relative ? `${relative}/${entry.name}` : entry.name;
+    const normalized = normalize(child);
+    if (entry.isDirectory) {
+      if (["node_modules", ".next", ".nuxt", "dist", "build", ".vite"].includes(entry.name)) {
+        return [];
+      }
+      return walkFiles(root, normalized);
+    }
+    return entry.isFile ? [normalized] : [];
+  });
+}
+
+function listWebSourceFiles(workspaceRoot: string, webRoot: string): Array<{ path: string; text: string }> {
+  if (!webRoot) return [];
+  const absoluteWebRoot = join(workspaceRoot, normalize(webRoot));
+  if (!nodeFileSystem.exists(absoluteWebRoot)) return [];
+  return walkFiles(absoluteWebRoot)
+    .filter((file) => /\.(tsx|jsx|vue|svelte|html)$/.test(file))
+    .map((file) => {
+      const path = `${normalize(webRoot)}/${file}`;
+      return { path, text: readText(workspaceRoot, path) };
+    })
+    .filter((source) => source.text.trim().length > 0);
+}
+
+function readOptionalGeneratedJson(workspaceRoot: string, name: string): unknown {
+  try {
+    return readJson<unknown>(workspaceRoot, `${GENERATED}/${name}`, null);
+  } catch {
+    return null;
+  }
+}
+
+function hasTenantScopedData(workspaceRoot: string): boolean {
+  const dataGraph = readOptionalGeneratedJson(workspaceRoot, "dataGraph.json") as { tables?: Array<Record<string, unknown>> } | null;
+  return (dataGraph?.tables ?? []).some((table) =>
+    table?.tenantScoped === true ||
+    table?.tenantScope === true ||
+    typeof table?.tenantField === "string" ||
+    (Array.isArray(table?.fields) && table.fields.some((field) =>
+      typeof field === "object" &&
+      field !== null &&
+      ("tenantId" === (field as { name?: string }).name || "tenant_id" === (field as { name?: string }).name)
+    ))
+  );
+}
+
+function hasProductionAuthMode(workspaceRoot: string): boolean {
+  const agentContract = readOptionalGeneratedJson(workspaceRoot, "agentContract.json") as { auth?: { modes?: string[]; production?: unknown } } | null;
+  const modes = agentContract?.auth?.modes ?? [];
+  return modes.includes("jwt") || modes.includes("oidc") || Boolean(agentContract?.auth?.production);
+}
+
+function looksLikeAuthFlow(text: string): boolean {
+  return /sign\s*in|signin|login|logout|authkit|organization|tenant|session|workos|clerk|auth0/i.test(text);
+}
+
+function hasMainLandmark(text: string): boolean {
+  return /<main[\s>]|role=["']main["']|<header[\s>]|<nav[\s>]/i.test(text);
+}
+
+function hasRuntimeDataHook(text: string): boolean {
+  return /\b(useLiveQuery|useQuery|useForgeLiveQuery|useForgeQuery)\b/.test(text);
+}
+
+function hasStateText(text: string, pattern: RegExp): boolean {
+  return pattern.test(text);
+}
+
+function findFormWithoutLabel(text: string): boolean {
+  if (!/<(form|input|select|textarea)\b/i.test(text)) return false;
+  const controls = text.match(/<(input|select|textarea)\b[^>]*>/gi) ?? [];
+  return controls.some((control) => {
+    if (/\b(type=["']?(hidden|submit|button|checkbox|radio)["']?)/i.test(control)) return false;
+    if (/\b(aria-label|aria-labelledby|title)=/i.test(control)) return false;
+    const id = /\bid=["']([^"']+)["']/i.exec(control)?.[1];
+    if (id && new RegExp(`<label\\b[^>]*\\bfor=["']${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`, "i").test(text)) {
+      return false;
+    }
+    return !/<label\b/i.test(text);
+  });
+}
+
+function findUnnamedButton(text: string): boolean {
+  const buttons = text.match(/<button\b[\s\S]*?<\/button>/gi) ?? [];
+  return buttons.some((button) => {
+    if (/\b(aria-label|aria-labelledby|title)=/i.test(button)) return false;
+    const inner = button.replace(/<button\b[^>]*>/i, "").replace(/<\/button>/i, "").replace(/<[^>]+>/g, "").trim();
+    return inner.length === 0;
+  });
+}
+
 function routeName(path: string): string {
   if (path === "/") return "home";
   return path.replace(/^\//, "").replace(/[^a-zA-Z0-9]+/g, "-") || "route";
@@ -678,6 +773,8 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
   const manifest = loadUiManifest(options.workspaceRoot);
   const scenarios = loadUiScenarios(options.workspaceRoot);
   const diagnostics: Diagnostic[] = [];
+  const webSources = listWebSourceFiles(options.workspaceRoot, manifest.webRoot);
+  const webText = webSources.map((source) => source.text).join("\n");
   const scenarioRoutes = new Set(scenarios.map((scenario) => scenario.route));
   const scenarioNames = scenarios.map((scenario) => scenario.name);
   const selectorSet = new Set(manifest.selectors);
@@ -705,6 +802,38 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
   }
   if (manifest.routes.length > 0 && !manifest.selectors.some((selector) => selector.includes("data-forge-testid"))) {
     diagnostics.push(diagnostic("warning", "FORGE_UI_TESTID_MISSING", "No data-forge-testid selectors were captured for UI smoke/audit stability."));
+  }
+  if (manifest.webRoot && manifest.routes.length > 0 && webSources.length === 0) {
+    diagnostics.push(diagnostic("warning", "FORGE_UI_SOURCE_MISSING", `No frontend source files were found under '${manifest.webRoot}' for static UX audit.`));
+  }
+  if (webSources.length > 0 && !webSources.some((source) => hasMainLandmark(source.text))) {
+    diagnostics.push(diagnostic("warning", "FORGE_UI_LANDMARK_MISSING", "Frontend source does not appear to include a main/header/nav landmark; add semantic landmarks for scanning and accessibility."));
+  }
+  for (const source of webSources) {
+    if (findFormWithoutLabel(source.text)) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_FORM_LABEL_MISSING", "Form controls should have labels or aria-label/aria-labelledby for accessible testing and real users.", source.path));
+    }
+    if (findUnnamedButton(source.text)) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_BUTTON_NAME_MISSING", "Icon-only or empty buttons should include aria-label/title text.", source.path));
+    }
+  }
+  if (webSources.some((source) => hasRuntimeDataHook(source.text))) {
+    if (!hasStateText(webText, /\b(isLoading|loading|pending|skeleton|spinner|carregando|loading\.\.\.)\b/i)) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_LOADING_STATE_MISSING", "Forge data-bound UI should expose a loading or pending state."));
+    }
+    if (!hasStateText(webText, /\b(error|erro|failed|failure|FORGE_|traceId|trace)\b/i)) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_ERROR_STATE_MISSING", "Forge data-bound UI should surface runtime/policy errors with enough context to debug."));
+    }
+    if (!hasStateText(webText, /\b(empty|no\s+\w+|none|vazio|sem\s+\w+|length\s*===\s*0)\b/i)) {
+      diagnostics.push(diagnostic("warning", "FORGE_UI_EMPTY_STATE_MISSING", "Forge data-bound UI should include an empty state so first-run apps do not look broken."));
+    }
+  }
+  if ((hasTenantScopedData(options.workspaceRoot) || hasProductionAuthMode(options.workspaceRoot)) && webSources.length > 0 && !looksLikeAuthFlow(webText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_AUTH_FLOW_MISSING",
+      "Tenant-scoped or production-auth app has no obvious sign-in/session/organization UI; local devAuth is not a production auth flow.",
+    ));
   }
 
   return {

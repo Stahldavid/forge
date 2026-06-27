@@ -11,6 +11,7 @@ import {
   inspectPgliteStore,
   type PgliteStoreInspection,
 } from "../runtime/db/pglite-adapter.ts";
+import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
 export interface DoctorCheck {
   name: string;
@@ -241,13 +242,13 @@ export async function runPgliteDoctorCommand(options: {
   }
 
   const exitOk = checks.every((check) => check.ok || check.severity === "warning");
-  return {
+  return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
     ok: exitOk,
     inspection,
     checks,
     nextActions: inspection.nextActions,
     exitCode: exitOk ? 0 : 1,
-  };
+  });
 }
 
 export function formatDoctorJson(result: DoctorResult): string {

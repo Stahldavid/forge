@@ -159,8 +159,8 @@ forge add auth workos
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
-forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
-forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json
+forge workos seed --file workos-seed.yml --json
+forge workos seed --file workos-seed.yml --yes --json
 forge auth check --json
 forge auth prove --json
 ```

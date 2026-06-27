@@ -36,7 +36,7 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
       "forge make ui --framework vite --dry-run --json",
       "forge make ui --framework nuxt --dry-run --json",
       "forge make ai-chat support --dry-run --json",
-      "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
+      "forge make resource <name> --fields title:text,status:enum=open+closed --dry-run --json",
       "forge make resource <name> --fields title:text --with-ui --yes",
       "forge make apply <planId>",
       "forge make rollback <planId>",
@@ -146,7 +146,7 @@ export function buildMakeRegistry(generatorVersion: string): MakeRegistryArtifac
           "tests/make-generated/*",
         ],
         modifies: ["src/forge/schema.ts", "src/policies.ts"],
-        examples: ["forge make resource invoices --fields amount:number,status:enum(draft,paid) --with-ui --yes"],
+        examples: ["forge make resource invoices --fields amount:number,status:enum=draft+paid --with-ui --yes"],
       },
     ],
   };

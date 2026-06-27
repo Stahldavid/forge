@@ -89,6 +89,8 @@ describe("Windows CLI diagnostics", () => {
     const root = join(tmpdir(), `forge-windows-pglite-${randomUUID()}`);
     try {
       const dataDir = join(root, ".forge", "pglite");
+      mkdirSync(join(root, "bin"), { recursive: true });
+      writeFileSync(join(root, "bin", "forge.mjs"), "", "utf8");
       mkdirSync(dataDir, { recursive: true });
       writeFileSync(join(dataDir, "postmaster.pid"), `${process.pid}\n`, "utf8");
 
@@ -103,7 +105,7 @@ describe("Windows CLI diagnostics", () => {
       const check = result.checks.find((item) => item.name === "windows-pglite-store");
       expect(check?.message).toContain("PGlite local store");
       expect(check?.message).toContain("active");
-      expect(check?.suggestedCommands).toContain("forge doctor pglite --json");
+      expect(check?.suggestedCommands).toContain("node bin/forge.mjs doctor pglite --json");
     } finally {
       process.exitCode = undefined;
       rmSync(root, { recursive: true, force: true });

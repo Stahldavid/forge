@@ -25,6 +25,7 @@ import {
   type CodexAppServerProof,
   type CodexAppServerSchemaGenerationResult,
 } from "./codex-app-server.ts";
+import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
 const STUDIO_TARGET_RUNTIME_PORT = 3766;
 const STUDIO_LOCAL_TENANT_ID = "00000000-0000-4000-8000-000000000001";
@@ -900,7 +901,7 @@ export async function runStudioAttachCommand(options: StudioAttachOptions): Prom
         "forge dev --once --json",
       ];
 
-  return {
+  return normalizeForgeCliCommandsInValue(appRoot, {
     schemaVersion: "0.1.0",
     ok,
     action: "attach",
@@ -916,7 +917,7 @@ export async function runStudioAttachCommand(options: StudioAttachOptions): Prom
     diagnostics,
     nextActions,
     exitCode: ok ? 0 : 1,
-  };
+  });
 }
 
 export async function runStudioSnapshotCommand(options: StudioAttachOptions): Promise<StudioSnapshotResult> {
@@ -1011,7 +1012,7 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
       : []),
     ...commands.checkHooks,
   ];
-  return {
+  return normalizeForgeCliCommandsInValue(appRoot, {
     schemaVersion: "0.1.0",
     ok,
     action: "snapshot",
@@ -1033,7 +1034,7 @@ export async function runStudioSnapshotCommand(options: StudioAttachOptions): Pr
     diagnostics,
     nextActions,
     exitCode: ok ? 0 : 1,
-  };
+  });
 }
 
 function studioHandoffFor(input: {
@@ -1077,7 +1078,7 @@ export async function runStudioWatchCommand(options: StudioAttachOptions): Promi
   const snapshot = await runStudioSnapshotCommand(options);
   const intervalMs = Math.max(1000, Math.floor(options.intervalMs ?? 5000));
   const single = options.once || options.dryRun;
-  return {
+  return normalizeForgeCliCommandsInValue(snapshot.app.path, {
     schemaVersion: "0.1.0",
     ok: snapshot.ok,
     action: "watch",
@@ -1094,7 +1095,7 @@ export async function runStudioWatchCommand(options: StudioAttachOptions): Promi
     },
     snapshot,
     exitCode: snapshot.exitCode,
-  };
+  });
 }
 
 export async function runStudioWatchLoop(
@@ -1232,7 +1233,7 @@ export async function runStudioBridgeCommand(options: StudioAttachOptions): Prom
         snapshot.commands.doctor,
       ];
 
-  return {
+  return normalizeForgeCliCommandsInValue(snapshot.app.path, {
     schemaVersion: "0.1.0",
     ok,
     action: "bridge",
@@ -1249,7 +1250,7 @@ export async function runStudioBridgeCommand(options: StudioAttachOptions): Prom
     diagnostics,
     nextActions,
     exitCode: ok ? 0 : 1,
-  };
+  });
 }
 
 export async function runStudioBridgeLoop(
@@ -1315,7 +1316,7 @@ export async function runStudioCodexServerCommand(options: StudioAttachOptions):
     ...(!options.probeAppServer ? handshake.nextActions : []),
     ...(options.probeAppServer && !handshake.ok ? handshake.nextActions : []),
   ]));
-  return {
+  return normalizeForgeCliCommandsInValue(appRoot, {
     schemaVersion: "0.1.0",
     ok,
     action: "codex-server",
@@ -1327,7 +1328,7 @@ export async function runStudioCodexServerCommand(options: StudioAttachOptions):
     diagnostics: [],
     nextActions,
     exitCode: ok ? 0 : 1,
-  };
+  });
 }
 
 function installPlanFor(pkg: Record<string, unknown>): { command: string; args: string[]; label: string } {
@@ -1706,7 +1707,7 @@ export async function runStudioDoctorCommand(options: StudioAttachOptions): Prom
       : []),
   ];
   const ok = checks.every((check) => check.ok);
-  return {
+  return normalizeForgeCliCommandsInValue(snapshot.app.path, {
     schemaVersion: "0.1.0",
     ok,
     action: "doctor",
@@ -1716,7 +1717,7 @@ export async function runStudioDoctorCommand(options: StudioAttachOptions): Prom
     diagnostics: snapshot.diagnostics,
     nextActions: checks.flatMap((check) => check.ok ? [] : check.suggestedCommands).slice(0, 12),
     exitCode: ok ? 0 : 1,
-  };
+  });
 }
 
 export async function runStudioOpenCommand(options: StudioAttachOptions): Promise<StudioOpenResult> {
@@ -1978,7 +1979,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     ...attach.commands.checkHooks,
   ])).slice(0, 12);
 
-  return {
+  return normalizeForgeCliCommandsInValue(appRoot, {
     schemaVersion: "0.1.0",
     ok,
     action: "open",
@@ -2003,7 +2004,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     diagnostics,
     nextActions,
     exitCode: ok ? 0 : 1,
-  };
+  });
 }
 
 export function formatStudioAttachJson(result: StudioAttachResult): string {

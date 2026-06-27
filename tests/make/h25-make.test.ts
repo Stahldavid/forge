@@ -159,6 +159,71 @@ describe("H25 forge make", () => {
     }
   });
 
+  test("accepts shell-friendly enum fields without parenthesized --fields", async () => {
+    const root = scaffoldMakeWorkspace("h25-enum-shell-safe");
+    try {
+      const result = await runMakeCommand(
+        makeOptions(root, {
+          name: "approvals",
+          fieldsRaw: "status:enum=draft+approved+rejected:default=draft:index",
+          dryRun: true,
+          plan: true,
+        }),
+      );
+
+      expect(result.ok).toBe(true);
+      const schemaPatch = result.plan?.filesToModify.find((file) => file.file === "src/forge/schema.ts");
+      expect(schemaPatch?.afterPreview).toContain('status: "enum:draft,approved,rejected"');
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("accepts --field enum with --values for shell-safe resource creation", async () => {
+    const root = scaffoldMakeWorkspace("h25-enum-values");
+    try {
+      const result = await runMakeCommand(
+        makeOptions(root, {
+          name: "approvals",
+          fieldSpecs: ["status:enum:default=draft:index"],
+          values: "draft,approved,rejected",
+          dryRun: true,
+          plan: true,
+        }),
+      );
+
+      expect(result.ok).toBe(true);
+      const schemaPatch = result.plan?.filesToModify.find((file) => file.file === "src/forge/schema.ts");
+      expect(schemaPatch?.afterPreview).toContain('status: "enum:draft,approved,rejected"');
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
+  test("reports an actionable diagnostic for enum fields without values", async () => {
+    const root = scaffoldMakeWorkspace("h25-enum-missing-values");
+    try {
+      const result = await runMakeCommand(
+        makeOptions(root, {
+          name: "approvals",
+          fieldSpecs: ["status:enum"],
+          dryRun: true,
+          plan: true,
+        }),
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: "FORGE_MAKE_FIELD_INVALID",
+          message: expect.stringContaining("status:enum=open+closed"),
+        }),
+      );
+    } finally {
+      cleanupWorkspace(root);
+    }
+  });
+
   test("plans a Vite UI shell with ForgeProvider devAuth and bridge", async () => {
     const root = scaffoldMakeWorkspace("h25-ui");
     try {

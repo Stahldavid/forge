@@ -51,9 +51,23 @@ function parseType(raw: string): {
       enumValues: splitTopLevel(enumMatch[1] ?? "").map((part) => part.trim()),
     };
   }
+  const enumEqualsMatch = raw.match(/^enum=(.*)$/);
+  if (enumEqualsMatch) {
+    return {
+      type: "enum",
+      enumValues: String(enumEqualsMatch[1] ?? "")
+        .split(/[|+]/)
+        .map((part) => part.trim())
+        .filter(Boolean),
+    };
+  }
   const refMatch = raw.match(/^ref\((.*)\)$/);
   if (refMatch) {
     return { type: "ref", refTable: refMatch[1]?.trim() };
+  }
+  const refEqualsMatch = raw.match(/^ref=(.*)$/);
+  if (refEqualsMatch) {
+    return { type: "ref", refTable: refEqualsMatch[1]?.trim() };
   }
   return FIELD_TYPES.has(raw as MakeFieldType)
     ? { type: raw as MakeFieldType }
@@ -89,6 +103,18 @@ export function parseFieldSpec(raw: string): {
   }
 
   if (diagnostics.length > 0 || !nameRaw || !parsedType.type) {
+    return { diagnostics };
+  }
+
+  if (parsedType.type === "enum" && (!parsedType.enumValues || parsedType.enumValues.length === 0)) {
+    diagnostics.push(
+      createDiagnostic({
+        severity: "error",
+          code: "FORGE_MAKE_FIELD_INVALID",
+          message:
+          `enum field '${nameRaw}' in '${raw}' needs values; use '${nameRaw}:enum(open,closed)' quoted for your shell or '${nameRaw}:enum=open+closed'`,
+      }),
+    );
     return { diagnostics };
   }
 

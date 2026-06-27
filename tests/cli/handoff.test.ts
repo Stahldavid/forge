@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
@@ -63,7 +63,64 @@ describe("forge handoff", () => {
       expect(result.nextAgent.recommendedReadFiles).toContain("AGENTS.md");
       expect(result.nextAgent.recommendedCommands).toContain("forge review run --changed --json");
       expect(result.nextAgent.risks).toContain("5 untracked file(s) are not in git history");
+      expect(result.diagnosticSummary.total).toBe(result.diagnostics.length);
       expect(result.exitCode).toBe(0);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
+  test("does not rewrite generated artifacts while building a handoff", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-handoff-readonly");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      const stalePath = join(workspace, "src", "forge", "_generated", "appGraph.json");
+      const staleContent = "{\"stale\":true}\n";
+      writeFileSync(stalePath, staleContent, "utf8");
+
+      const result = await runHandoffCommand({
+        workspaceRoot: workspace,
+        json: true,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.summary.generatedFresh).toBe(false);
+      expect(result.dev.phases.find((phase) => phase.name === "generated")?.message).toContain("handoff did not rewrite files");
+      expect(readFileSync(stalePath, "utf8")).toBe(staleContent);
+      expect(result.nextActions[0]).toBe("forge generate");
+      expect(result.nextActions).toContain("forge generate");
+      expect(result.diagnosticSummary.total).toBeGreaterThan(0);
+      expect(result.diagnosticSummary.byCode.FORGE_DRIFT).toBeGreaterThan(0);
+      expect(result.diagnostics.length).toBeLessThanOrEqual(8);
+      expect(result.diagnosticSummary.fullDiagnosticsCommands).toContain("forge dev --once --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
+  test("uses repo-local Forge CLI commands when a checkout has bin/forge.mjs", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-handoff-local-forge");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
+      git(workspace, ["init"]);
+      git(workspace, ["config", "user.email", "forge@example.test"]);
+      git(workspace, ["config", "user.name", "Forge Test"]);
+      git(workspace, ["add", "."]);
+      git(workspace, ["commit", "--no-gpg-sign", "--no-verify", "-m", "baseline"]);
+      mkdirSync(join(workspace, "docs"), { recursive: true });
+      writeFileSync(join(workspace, "docs", "handoff.md"), "# Handoff\n", "utf8");
+
+      const result = await runHandoffCommand({
+        workspaceRoot: workspace,
+        json: true,
+      });
+
+      expect(result.nextActions).toContain("node bin/forge.mjs review run --changed --json");
+      expect(result.nextActions).toContain("node bin/forge.mjs handoff --json");
+      expect(result.nextActions).not.toContain("forge review run --changed --json");
+      expect(result.nextActions).not.toContain("forge handoff --json");
     } finally {
       cleanupWorkspace(workspace);
     }

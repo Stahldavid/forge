@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.32
+
+### Patch Changes
+
+- Harden the alpha field-test loop after real Codex, WorkOS, PGlite, and app-server exercises.
+
+  - Accept `create-forgeos-app --git` as a supported/no-op compatibility flag when git initialization is already handled by the scaffold path, and keep `npm create forgeos-app@alpha .` working from empty current directories.
+  - Reject schema definitions that try to model `id` as a normal text field so generated SQL cannot silently create the wrong primary-key shape.
+  - Fix tenant-scoped updates in the in-memory database adapter and bring memory timestamp behavior closer to PGlite by rejecting empty timestamp strings and returning `Date` objects for timestamp columns.
+  - Improve smoke/generate drift diagnostics and keep `forge handoff` read-only with respect to generated artifacts.
+  - Copy generated WorkOS seed data to a root-level `workos-seed.yml` for app DX, serve `HEAD /auth.md` and `HEAD /.well-known/oauth-protected-resource`, and make local-vs-production auth posture more explicit.
+  - Normalize suggested Forge commands in framework checkouts so `agent`, `delta`, `studio`, `status`, `changed`, `handoff`, doctors, and WorkOS/auth helpers recommend `node bin/forge.mjs ...` instead of a possibly stale global `forge`.
+  - Return structured JSON diagnostics for Delta/PGlite export/open failures instead of leaking raw PGlite stack output, and improve Windows/PGlite repair guidance.
+  - Expand `forge ui audit` with static UX/auth-readiness warnings for missing semantic landmarks, unlabeled form controls, unnamed buttons, missing loading/error/empty states, and tenant/prod-auth apps that still only show local dev auth posture.
+
 ## 0.1.0-alpha.31
 
 ### Patch Changes
@@ -10,6 +25,10 @@
   - Add `forge auth status` and production-focused `forge auth prove --prod` output so `dev-headers` is clearly labeled as local-only while JWT/OIDC proofs show production auth posture.
   - Expand `forge doctor windows` with local PGlite store posture and cleanup guidance, including safer PGlite abort inspection that does not poison the surrounding process exit code.
   - Add `forge ui audit` and run it during `forge verify --smoke` when a web app is present, catching missing UI scenarios, missing stable Forge test IDs, and missing policy-denied coverage for sensitive routes.
+  - Expand `forge ui audit` with static UX/auth-readiness warnings for missing semantic landmarks, unlabeled form controls, unnamed buttons, missing loading/error/empty states, and tenant/prod-auth apps that still only show local dev auth posture.
+  - Bring the in-memory DB adapter closer to PGlite for timestamp fields by rejecting empty timestamp values and returning `Date` objects for `timestamp`/`timestamptz` columns.
+  - Make `forge handoff` use a read-only generated-artifact check so preparing a handoff no longer rewrites `src/forge/_generated/**`, `forge.lock`, or generated `AGENTS.md` noise; `forge dev --once` still self-heals stale artifacts.
+  - Allow `forge new .` / `npm create forgeos-app@alpha .` from an empty current directory, while refusing non-empty directories to avoid overwriting existing apps.
 
 ## 0.1.0-alpha.30
 

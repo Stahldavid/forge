@@ -1482,7 +1482,7 @@ export async function startDevServer(
           }
         }
 
-        if (request.method === "GET" && pathname === "/auth.md") {
+        if ((request.method === "GET" || request.method === "HEAD") && pathname === "/auth.md") {
           const authMdPath = join(workspaceRoot, "public/auth.md");
           if (!existsSync(authMdPath)) {
             return jsonResponse(
@@ -1500,10 +1500,10 @@ export async function startDevServer(
               404,
             );
           }
-          return markdownResponse(readFileSync(authMdPath, "utf8"));
+          return request.method === "HEAD" ? new Response(null, { status: 200, headers: { "content-type": "text/markdown; charset=utf-8" } }) : markdownResponse(readFileSync(authMdPath, "utf8"));
         }
 
-        if (request.method === "GET" && pathname === "/.well-known/oauth-protected-resource") {
+        if ((request.method === "GET" || request.method === "HEAD") && pathname === "/.well-known/oauth-protected-resource") {
           const metadataPath = join(workspaceRoot, "public/.well-known/oauth-protected-resource");
           if (!existsSync(metadataPath)) {
             return jsonResponse(
@@ -1521,7 +1521,7 @@ export async function startDevServer(
               404,
             );
           }
-          return jsonResponse(JSON.parse(readFileSync(metadataPath, "utf8")));
+          return request.method === "HEAD" ? new Response(null, { status: 200, headers: { "content-type": "application/json; charset=utf-8" } }) : jsonResponse(JSON.parse(readFileSync(metadataPath, "utf8")));
         }
 
         if (pathname === "/webhooks/workos") {

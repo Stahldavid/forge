@@ -6,6 +6,32 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.32
+
+- Accepted `create-forgeos-app --git` as a supported/no-op compatibility flag
+  when git initialization is already handled by the scaffold path, and kept
+  `npm create forgeos-app@alpha .` working from empty current directories.
+- Added stronger schema validation for `id` so apps cannot accidentally model
+  the primary key as a normal text field and generate incorrect SQL.
+- Fixed tenant-scoped updates in the in-memory database adapter and made memory
+  timestamp handling closer to PGlite by rejecting empty timestamp strings and
+  returning `Date` objects for timestamp columns.
+- Improved smoke/generate drift diagnostics and kept `forge handoff` read-only
+  with respect to generated artifacts.
+- Improved WorkOS/auth app DX: root-level `workos-seed.yml`, `HEAD /auth.md`,
+  `HEAD /.well-known/oauth-protected-resource`, and clearer local-vs-production
+  auth posture.
+- Normalized suggested Forge commands in framework checkouts so `agent`,
+  `delta`, `studio`, `status`, `changed`, `handoff`, doctors, and WorkOS/auth
+  helpers recommend `node bin/forge.mjs ...` instead of a possibly stale global
+  `forge`.
+- Returned structured JSON diagnostics for Delta/PGlite export/open failures
+  instead of raw PGlite stack output, and expanded Windows/PGlite repair hints.
+- Expanded `forge ui audit` with static UX/auth-readiness warnings for missing
+  semantic landmarks, unlabeled form controls, unnamed buttons, missing
+  loading/error/empty states, and tenant/prod-auth apps that still only expose
+  local dev auth posture.
+
 ## 0.1.0-alpha.31
 
 - Added Forge workspace baselines for non-git app directories:
@@ -20,7 +46,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
   exit code.
 - Added `forge ui audit` and wired it into `forge verify --smoke` for web apps
   to catch missing route scenarios, missing stable Forge test IDs, and missing
-  policy-denied coverage for sensitive flows.
+  policy-denied coverage for sensitive flows. It now also reports static
+  UX/auth-readiness warnings for missing semantic landmarks, unlabeled form
+  controls, unnamed buttons, missing loading/error/empty states, and
+  tenant/prod-auth apps that still only expose local dev auth posture.
+- Brought the in-memory DB adapter closer to PGlite for timestamp fields by
+  rejecting empty timestamp values and returning `Date` objects for
+  `timestamp`/`timestamptz` columns.
+- Made `forge handoff` use a read-only generated-artifact check so preparing a
+  handoff no longer rewrites `src/forge/_generated/**`, `forge.lock`, or
+  generated `AGENTS.md` noise; `forge dev --once` still self-heals stale
+  artifacts.
+- Allowed `forge new .` / `npm create forgeos-app@alpha .` from an empty
+  current directory, while refusing non-empty directories to avoid overwriting
+  existing apps.
 
 ## 0.1.0-alpha.30
 

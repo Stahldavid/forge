@@ -31,6 +31,7 @@ import { createAmbientDeltaRecorder } from "../delta/index.ts";
 import { resetCompileSessions } from "../compiler/orchestrator/session.ts";
 import { FORGE_PGLITE_STORE_ABORTED } from "../compiler/diagnostics/codes.ts";
 import { isPgliteAbortMessage } from "../runtime/db/pglite-adapter.ts";
+import { forgeCliCommandForWorkspace, forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { writeLastRunRecord } from "./last-run.ts";
 
 export interface DevCommandOptions {
@@ -95,6 +96,7 @@ interface DevStartupSummary {
   schemaVersion: "0.1.0";
   ok: true;
   mode: "dev";
+  warnings: Array<{ code: string; message: string; nextAction?: string }>;
   api: {
     url: string;
     host: string;
@@ -287,6 +289,63 @@ function classifyDevStartFailure(input: {
     failureKind: "dev_start_failed",
     nextActions: ["forge dev --once --json", "forge check --json"],
   };
+}
+
+function writeDevStartFailure(input: {
+  workspaceRoot: string;
+  startedAt: Date;
+  finishedAt: Date;
+  options: DevCommandOptions;
+  host: string;
+  port: number;
+  failure: DevStartFailure;
+}): DevCommandResult {
+  const nextActions = forgeCliCommandsForWorkspace(input.workspaceRoot, input.failure.nextActions);
+  const busy = input.failure.busy
+    ? {
+        ...input.failure.busy,
+        suggestedCommands: forgeCliCommandsForWorkspace(input.workspaceRoot, input.failure.busy.suggestedCommands),
+      }
+    : undefined;
+  writeLastRunRecord(input.workspaceRoot, {
+    schemaVersion: "0.1.0",
+    command: forgeCliCommandForWorkspace(input.workspaceRoot, "forge dev"),
+    ok: false,
+    startedAt: input.startedAt.toISOString(),
+    finishedAt: input.finishedAt.toISOString(),
+    durationMs: input.finishedAt.getTime() - input.startedAt.getTime(),
+    ...(input.failure.code ? { code: input.failure.code } : {}),
+    failureKind: input.failure.failureKind,
+    message: input.failure.message,
+    nextActions,
+    details: {
+      db: input.options.db,
+      host: input.host,
+      port: input.port,
+    },
+  });
+  if (input.options.json) {
+    process.stdout.write(
+      `${JSON.stringify({
+        ok: false,
+        error: input.failure.message,
+        code: input.failure.code,
+        failureKind: input.failure.failureKind,
+        busy,
+        nextActions,
+        exitCode: 1,
+      })}\n`,
+    );
+  } else {
+    console.error(`error${input.failure.code ? ` ${input.failure.code}` : ""}: ${input.failure.message}`);
+    if (nextActions.length > 0) {
+      console.error("next:");
+      for (const action of nextActions) {
+        console.error(`  ${action}`);
+      }
+    }
+  }
+  return { exitCode: 1 };
 }
 
 export async function resolveAvailableWebPort(input: {
@@ -493,6 +552,16 @@ function buildStartupSummary(input: {
     ? [...new Set(frontend.clientBindings.map((binding) => `${binding.kind}:${binding.name}`))].sort()
     : [];
   const browserUrl = input.web?.url ?? input.handle.url;
+  const warnings = input.handle.state.db.kind === "memory"
+    ? [
+        {
+          code: "FORGE_DEV_MEMORY_DB_FIDELITY",
+          message:
+            "Memory DB is fast and non-persistent; PGlite/Postgres remain the authoritative checks for full SQL constraints and adapter fidelity.",
+          nextAction: `rerun with ${forgeCliCommandForWorkspace(input.workspaceRoot, "forge dev --db pglite --once --json")} before treating the result as database-realistic`,
+        },
+      ]
+    : [];
   const preview = previewSummaryFor({
     workspaceRoot: input.workspaceRoot,
     host: input.handle.host,
@@ -502,6 +571,7 @@ function buildStartupSummary(input: {
     schemaVersion: "0.1.0",
     ok: true,
     mode: "dev",
+    warnings,
     api: {
       url: input.handle.url,
       host: input.handle.host,
@@ -553,15 +623,15 @@ function buildStartupSummary(input: {
       changedFiles: input.generated?.changedFiles ?? 0,
       sampleChanged: input.generated?.sampleChanged ?? [],
       hiddenChanged: input.generated?.hiddenChanged ?? 0,
-      command: input.generated?.command ?? "forge generate",
-      checkCommand: input.generated?.checkCommand ?? "forge generate --check --json",
+      command: input.generated?.command ?? forgeCliCommandForWorkspace(input.workspaceRoot, "forge generate"),
+      checkCommand: input.generated?.checkCommand ?? forgeCliCommandForWorkspace(input.workspaceRoot, "forge generate --check --json"),
       message: input.generated?.message ?? (buildInfoRaw ? "generated artifacts are loaded" : "generated build info is missing"),
     },
     next: {
       browserUrl,
       apiIndex: input.handle.url,
-      inspect: "forge inspect summary --json",
-      verify: "forge dev --once --json",
+      inspect: forgeCliCommandForWorkspace(input.workspaceRoot, "forge inspect summary --json"),
+      verify: forgeCliCommandForWorkspace(input.workspaceRoot, "forge dev --once --json"),
     },
     pid: process.pid,
   };
@@ -582,6 +652,12 @@ function printStartupHuman(summary: DevStartupSummary): void {
   lines.push(`  Generated: ${summary.generated.state}${summary.generated.changedFiles > 0 ? ` (${summary.generated.changedFiles} changed)` : ""}${summary.generated.runtimeStaleRisk ? " (stale risk)" : ""}`);
   lines.push(`  Generated note: ${summary.generated.message}`);
   lines.push(`  Generated check: ${summary.generated.checkCommand}`);
+  for (const warning of summary.warnings) {
+    lines.push(`  Warning ${warning.code}: ${warning.message}`);
+    if (warning.nextAction) {
+      lines.push(`  Next: ${warning.nextAction}`);
+    }
+  }
   lines.push("");
 
   lines.push("Web app");
@@ -683,12 +759,15 @@ export function generatedEvidenceFromCycle(cycle: DevConsoleCycle): DevStartupGe
     sampleChanged,
     hiddenChanged,
     message: phase?.message ?? "generated phase did not report a message",
-    command: "forge generate",
-    checkCommand: "forge generate --check --json",
+    command: cycle.summary.generated.command,
+    checkCommand: cycle.summary.generated.checkCommand,
   };
 }
 
-export function generatedEvidenceFromGenerateResult(result: DevGenerateResult): DevStartupGeneratedEvidence {
+export function generatedEvidenceFromGenerateResult(
+  result: DevGenerateResult,
+  options: { workspaceRoot?: string } = {},
+): DevStartupGeneratedEvidence {
   return {
     ok: result.ok,
     state: result.ok ? result.changed.length > 0 ? "regenerated" : "fresh" : "stale-risk",
@@ -700,8 +779,12 @@ export function generatedEvidenceFromGenerateResult(result: DevGenerateResult): 
         ? `regenerated ${result.changed.length} generated artifacts`
         : "generated artifacts are up to date"
       : "generated artifacts could not be regenerated",
-    command: "forge generate",
-    checkCommand: "forge generate --check --json",
+    command: options.workspaceRoot
+      ? forgeCliCommandForWorkspace(options.workspaceRoot, "forge generate")
+      : "forge generate",
+    checkCommand: options.workspaceRoot
+      ? forgeCliCommandForWorkspace(options.workspaceRoot, "forge generate --check --json")
+      : "forge generate --check --json",
   };
 }
 
@@ -725,16 +808,20 @@ export function buildDevWatchGenerateFailureEvent(input: {
   changedCount: number;
   changedPaths: string[];
   result: DevGenerateResult;
+  workspaceRoot?: string;
 }): DevWatchGenerateFailureEvent {
+  const nextActions = input.workspaceRoot
+    ? forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge dev --once --json", "forge check --json"])
+    : ["forge dev --once --json", "forge check --json"];
   return {
     schemaVersion: "0.1.0",
     event: "dev.generate_failed",
     ok: false,
     changedFiles: input.changedCount,
     changedPaths: input.changedPaths,
-    generated: generatedEvidenceFromGenerateResult(input.result),
+    generated: generatedEvidenceFromGenerateResult(input.result, { workspaceRoot: input.workspaceRoot }),
     diagnostics: input.result.diagnostics,
-    nextActions: ["forge dev --once --json", "forge check --json"],
+    nextActions,
   };
 }
 
@@ -744,7 +831,11 @@ export function buildDevWatchReloadEvent(input: {
   generated: DevGenerateResult;
   reload: Awaited<ReturnType<DevServerHandle["reload"]>>;
   cycle: DevConsoleCycle;
+  workspaceRoot?: string;
 }): DevWatchReloadEvent {
+  const failureNextActions = input.workspaceRoot
+    ? forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge dev --once --json", "forge check --json"])
+    : ["forge dev --once --json", "forge check --json"];
   return {
     schemaVersion: "0.1.0",
     event: "dev.reload",
@@ -756,12 +847,12 @@ export function buildDevWatchReloadEvent(input: {
     runtimeEntries: input.reload.runtimeEntries,
     worker: input.reload.worker,
     diagnostics: input.reload.diagnostics,
-    generated: generatedEvidenceFromGenerateResult(input.generated),
+    generated: generatedEvidenceFromGenerateResult(input.generated, { workspaceRoot: input.workspaceRoot }),
     preview: input.cycle.summary.preview,
     agentContext: input.cycle.summary.agentContext,
     nextActions: input.reload.ok
       ? input.cycle.summary.agentContext.recommendedCommands
-      : ["forge dev --once --json", "forge check --json"],
+      : failureNextActions,
   };
 }
 
@@ -784,6 +875,24 @@ export async function runDevCommand(
 
   const host = resolveDevHost(options.host);
   const port = resolveDevPort(options.port);
+  if (!options.webOnly && !(await isPortAvailable(host, port))) {
+    const failure = classifyDevStartFailure({
+      rawMessage: `listen EADDRINUSE: address already in use ${host}:${port}`,
+      host,
+      port,
+      webPort: options.webPort,
+      db: options.db,
+    });
+    return writeDevStartFailure({
+      workspaceRoot,
+      startedAt,
+      finishedAt: new Date(),
+      options,
+      host,
+      port,
+      failure,
+    });
+  }
   const requestedWebPort = options.webPort ?? detectDefaultWebPort(workspaceRoot);
   const shouldStartWeb =
     options.webOnly === true ||
@@ -913,45 +1022,15 @@ export async function runDevCommand(
       webPort: options.webPort,
       db: options.db,
     });
-    writeLastRunRecord(workspaceRoot, {
-      schemaVersion: "0.1.0",
-      command: "forge dev",
-      ok: false,
-      startedAt: startedAt.toISOString(),
-      finishedAt: finishedAt.toISOString(),
-      durationMs: finishedAt.getTime() - startedAt.getTime(),
-      ...(failure.code ? { code: failure.code } : {}),
-      failureKind: failure.failureKind,
-      message: failure.message,
-      nextActions: failure.nextActions,
-      details: {
-        db: options.db,
-        host,
-        port,
-      },
+    return writeDevStartFailure({
+      workspaceRoot,
+      startedAt,
+      finishedAt,
+      options,
+      host,
+      port,
+      failure,
     });
-    if (options.json) {
-      process.stdout.write(
-        `${JSON.stringify({
-          ok: false,
-          error: failure.message,
-          code: failure.code,
-          failureKind: failure.failureKind,
-          busy: failure.busy,
-          nextActions: failure.nextActions,
-          exitCode: 1,
-        })}\n`,
-      );
-    } else {
-      console.error(`error${failure.code ? ` ${failure.code}` : ""}: ${failure.message}`);
-      if (failure.nextActions.length > 0) {
-        console.error("next:");
-        for (const action of failure.nextActions) {
-          console.error(`  ${action}`);
-        }
-      }
-    }
-    return { exitCode: 1 };
   }
 
   const webHandle = !shouldStartWeb
@@ -990,11 +1069,11 @@ export async function runDevCommand(
       ok: true,
       startedAt: startedAt.toISOString(),
       finishedAt: finishedAt.toISOString(),
-      durationMs: finishedAt.getTime() - startedAt.getTime(),
-      nextActions: [
-        webHandle?.url ?? handle.url,
-        "forge last --json",
-      ],
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
+    nextActions: [
+      webHandle?.url ?? handle.url,
+      forgeCliCommandForWorkspace(workspaceRoot, "forge last --json"),
+    ],
       details: {
         db: handle.state.db.kind,
         apiUrl: handle.url,
@@ -1059,6 +1138,7 @@ export async function runDevCommand(
             },
             reload,
             cycle,
+            workspaceRoot,
           }))}\n`);
         }
         if (!reload.ok && !options.json) {
@@ -1083,6 +1163,7 @@ export async function runDevCommand(
               diagnostics: [...result.errors, ...result.warnings],
               exitCode: 1,
             },
+            workspaceRoot,
           }))}\n`);
         } else {
           console.error(`[forge dev] regeneration failed after ${changedCount} changed files; runtime was not reloaded`);

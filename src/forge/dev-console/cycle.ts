@@ -133,11 +133,11 @@ function compactFileList(files: string[], sampleSize = 12): {
   };
 }
 
-async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase> {
+async function runGeneratedPhase(workspaceRoot: string, mode: "write" | "check" = "write"): Promise<DevConsolePhase> {
   const start = performance.now();
   const result = await runGenerate({
     workspaceRoot,
-    check: false,
+    check: mode === "check",
     dryRun: false,
     json: false,
     concurrency: 4,
@@ -145,10 +145,15 @@ async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase
   const diagnostics = [...result.errors, ...result.warnings];
   const durationMs = msSince(start);
   const changed = compactFileList(result.changed);
+  const ok = result.exitCode === 0;
+  const fullCommand = forgeCliCommandForWorkspace(
+    workspaceRoot,
+    mode === "check" ? "forge generate --check --json" : "forge generate --json",
+  );
   return {
     name: "generated",
-    ok: result.exitCode === 0,
-    status: result.exitCode === 0 ? (diagnostics.some((diag) => diag.severity === "warning") ? "warning" : "ok") : "failed",
+    ok,
+    status: ok ? (diagnostics.some((diag) => diag.severity === "warning") ? "warning" : "ok") : "failed",
     diagnostics,
     durationMs,
     details: {
@@ -156,14 +161,19 @@ async function runGeneratedPhase(workspaceRoot: string): Promise<DevConsolePhase
       sampleChanged: changed.sample,
       hiddenChanged: changed.hidden,
       unchangedCount: result.unchanged.length,
-      fullCommand: forgeCliCommandForWorkspace(workspaceRoot, "forge generate --json"),
+      mode,
+      fullCommand,
       ...(result.cache ? { cache: result.cache } : {}),
     },
-    message: result.exitCode === 0
+    message: ok
       ? result.changed.length > 0
-        ? `regenerated ${result.changed.length} generated artifacts`
+        ? mode === "check"
+          ? `${result.changed.length} generated artifact(s) would change; run forge generate`
+          : `regenerated ${result.changed.length} generated artifacts`
         : "generated artifacts are up to date"
-      : "generated artifacts could not be regenerated",
+      : mode === "check"
+        ? "generated artifacts are stale; handoff did not rewrite files"
+        : "generated artifacts could not be regenerated",
   };
 }
 
@@ -506,8 +516,8 @@ function runImpactPhase(workspaceRoot: string): DevConsolePhase {
         hiddenChangedFiles: Math.max(0, report.changedFiles.length - 12),
         changeSummary,
         risk: report.risk.level,
-        recommendedChecks: report.recommendedChecks,
-        fullCommand: "forge impact --changed --json",
+        recommendedChecks: forgeCliCommandsForWorkspace(workspaceRoot, report.recommendedChecks),
+        fullCommand: forgeCliCommandForWorkspace(workspaceRoot, "forge impact --changed --json"),
       };
     })()
     : undefined;
@@ -626,14 +636,22 @@ function nextActionsFromPhases(workspaceRoot: string, phases: DevConsolePhase[])
   }
   const generated = phases.find((item) => item.name === "generated");
   if (generated && !generated.ok) {
+    const generatedHasErrors = generated.diagnostics.some((diagnostic) => diagnostic.severity === "error");
+    if (generatedHasErrors) {
+      actions.push({
+        command: "forge do fix --json",
+        reason: "generated artifacts could not be checked; use the guided repair path before lower-level commands",
+        confidence: "high",
+      });
+    }
     actions.push({
-      command: "forge do fix --json",
-      reason: "generated artifacts are stale; use the guided repair path before lower-level commands",
+      command: "forge generate",
+      reason: generatedHasErrors ? "regenerate artifacts after guided repair" : "generated artifacts are stale",
       confidence: "high",
     });
     actions.push({
-      command: "forge generate",
-      reason: "generated artifacts are stale",
+      command: "forge generate --check",
+      reason: "confirm generated artifacts are fresh after regeneration",
       confidence: "high",
     });
   }
@@ -685,6 +703,22 @@ function nextActionsFromPhases(workspaceRoot: string, phases: DevConsolePhase[])
     ...action,
     command: forgeCliCommandForWorkspace(workspaceRoot, action.command),
   }));
+}
+
+function normalizeDiagnosticCommands(workspaceRoot: string, diagnostics: Diagnostic[]): Diagnostic[] {
+  return diagnostics.map((diagnostic) => diagnostic.suggestedCommands?.length
+    ? {
+        ...diagnostic,
+        suggestedCommands: forgeCliCommandsForWorkspace(workspaceRoot, diagnostic.suggestedCommands),
+      }
+    : diagnostic);
+}
+
+function normalizePhaseCommands(workspaceRoot: string, input: DevConsolePhase): DevConsolePhase {
+  return {
+    ...input,
+    diagnostics: normalizeDiagnosticCommands(workspaceRoot, input.diagnostics),
+  };
 }
 
 function phaseDetails<T>(phases: DevConsolePhase[], name: DevConsolePhase["name"], key: string): T | undefined {
@@ -741,7 +775,7 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
   resetCompileSessions();
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
   const phases: DevConsolePhase[] = [];
-  const generated = await runGeneratedPhase(workspaceRoot);
+  const generated = await runGeneratedPhase(workspaceRoot, options.generatedMode ?? "write");
   phases.push(generated);
   if (generated.ok) {
     phases.push(await runCheckPhase(workspaceRoot, options.strictSecrets ?? false));
@@ -770,13 +804,14 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
   phases.push(runLastTestPhase(workspaceRoot));
   phases.push(runLastUiPhase(workspaceRoot));
 
-  const diagnostics = phases.flatMap((item) => item.diagnostics);
-  const ok = phases.every((item) => item.ok);
-  const nextActions = nextActionsFromPhases(workspaceRoot, phases);
+  const normalizedPhases = phases.map((item) => normalizePhaseCommands(workspaceRoot, item));
+  const diagnostics = normalizedPhases.flatMap((item) => item.diagnostics);
+  const ok = normalizedPhases.every((item) => item.ok);
+  const nextActions = nextActionsFromPhases(workspaceRoot, normalizedPhases);
   const summary = buildDevSummary({
     workspaceRoot,
     ok,
-    phases,
+    phases: normalizedPhases,
     diagnostics,
     nextActions,
     ...(options.apiUrl ? { apiUrl: options.apiUrl } : {}),
@@ -787,7 +822,7 @@ export async function runDevConsoleCycle(options: DevConsoleOptions): Promise<De
     ok,
     mode: options.mode,
     summary,
-    phases,
+    phases: normalizedPhases,
     diagnostics,
     nextActions,
     exitCode: ok ? 0 : 1,

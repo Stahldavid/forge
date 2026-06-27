@@ -438,6 +438,7 @@ describe("forge add integration", () => {
         "src/forge/_generated/integrations/workos/session.ts",
         "src/forge/_generated/integrations/workos/webhook.ts",
         "src/forge/_generated/integrations/workos/workos-seed.yml",
+        "workos-seed.yml",
         "src/forge/_generated/testkits/workos.mock.ts",
         "src/forge/_generated/docs/workos.md",
         ".env.example",
@@ -456,22 +457,22 @@ describe("forge add integration", () => {
       expect(readFileSync(join(workspace, "src/forge/_generated/packages/workos.server.ts"), "utf8")).toContain(
         'clientId: secrets.get("WORKOS_CLIENT_ID")',
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
         "permissions:",
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
         "organizations:",
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
         "Acme Corp",
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
         "Globex",
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
         "webhook_endpoints:",
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"), "utf8")).toContain(
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
         "resource_types:",
       );
       expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8")).toContain(
@@ -529,7 +530,7 @@ describe("forge add integration", () => {
       expect(json.nextActions as string[]).toContain("forge workos install --yes --json");
       expect(json.nextActions as string[]).toContain("forge workos doctor --yes --json");
       expect(json.nextActions as string[]).toContain(
-        "forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json",
+        "forge workos seed --file workos-seed.yml --yes --json",
       );
 
       const matrix = JSON.parse(

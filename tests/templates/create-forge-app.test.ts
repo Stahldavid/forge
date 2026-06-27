@@ -53,6 +53,8 @@ describe("create-forge-app", () => {
     expect(result.stdout).toContain("--template nuxt-web");
     expect(result.stdout).toContain("--template agent-workroom");
     expect(result.stdout).toContain("--template b2b-support-web");
+    expect(result.stdout).toContain("--git");
+    expect(result.stdout).toContain("--no-git");
   });
 
   test("passes ForgeOS public alias defaults to forge new", () => {
@@ -88,6 +90,62 @@ describe("create-forge-app", () => {
         "--forge-spec",
         "npm:forgeos@alpha",
       ]);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("accepts explicit --git and forwards it to forge new", () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "create-forge-app-git-test-"));
+    try {
+      const capturedPath = join(tempRoot, "captured.json");
+      const fakeForgeBin = join(tempRoot, "fake-forge.mjs");
+      writeFileSync(
+        fakeForgeBin,
+        `
+          import { writeFileSync } from "node:fs";
+          writeFileSync(process.env.CREATE_FORGE_APP_CAPTURE, JSON.stringify(process.argv.slice(2)));
+          process.exit(0);
+        `,
+        "utf8",
+      );
+      const result = runCreate(["notes-app", "--git", "--no-install"], tempRoot, {
+        CREATE_FORGE_APP_CAPTURE: capturedPath,
+        CREATE_FORGE_APP_FORGE_BIN: fakeForgeBin,
+      });
+
+      expect(result.status).toBe(0);
+      const captured = JSON.parse(readFileSync(capturedPath, "utf8")) as string[];
+      expect(captured).toContain("--git");
+      expect(captured).not.toContain("--no-git");
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("forwards current-directory scaffold target", () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "create-forge-app-dot-test-"));
+    try {
+      const capturedPath = join(tempRoot, "captured.json");
+      const fakeForgeBin = join(tempRoot, "fake-forge.mjs");
+      writeFileSync(
+        fakeForgeBin,
+        `
+          import { writeFileSync } from "node:fs";
+          writeFileSync(process.env.CREATE_FORGE_APP_CAPTURE, JSON.stringify(process.argv.slice(2)));
+          process.exit(0);
+        `,
+        "utf8",
+      );
+      const result = runCreate([".", "--no-install", "--no-git"], tempRoot, {
+        CREATE_FORGE_APP_CAPTURE: capturedPath,
+        CREATE_FORGE_APP_FORGE_BIN: fakeForgeBin,
+      });
+
+      expect(result.status).toBe(0);
+      const captured = JSON.parse(readFileSync(capturedPath, "utf8")) as string[];
+      expect(captured).toContain(".");
+      expect(captured).toContain("--no-git");
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }

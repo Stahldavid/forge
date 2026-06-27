@@ -5,6 +5,7 @@ import type {
   InspectResult,
   VerifyResult,
 } from "../compiler/types/cli.ts";
+import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { uniqueNextActions } from "./next-actions.ts";
 
 function failureKindFromDiagnostics(errors: Diagnostic[]): string | undefined {
@@ -55,7 +56,32 @@ function summarizeGeneratedArtifacts(paths: string[]): Record<string, number> {
   return groups;
 }
 
+function compactList(items: string[], sampleSize = 12): { count: number; sample: string[]; hidden: number } {
+  return {
+    count: items.length,
+    sample: items.slice(0, sampleSize),
+    hidden: Math.max(0, items.length - sampleSize),
+  };
+}
+
+function summarizeDiagnostics(diagnostics: Diagnostic[]): Record<string, number> {
+  const summary: Record<string, number> = {};
+  for (const diagnostic of diagnostics) {
+    summary[diagnostic.code] = (summary[diagnostic.code] ?? 0) + 1;
+  }
+  return summary;
+}
+
 function buildGenerateNextActions(result: GenerateResult): string[] {
+  if (result.exitCode !== 0 && result.errors.length === 0 && result.changed.length > 0) {
+    return [
+      "forge generate --json",
+      "forge generate --check --json",
+      "forge changed --review --json",
+      "forge check --json",
+    ];
+  }
+
   const suggested = new Set<string>();
   for (const diagnostic of [...result.errors, ...result.warnings]) {
     for (const command of diagnostic.suggestedCommands ?? []) {
@@ -80,8 +106,29 @@ function buildGenerateNextActions(result: GenerateResult): string[] {
   return [...suggested];
 }
 
-export function buildGenerateJson(result: GenerateResult): Record<string, unknown> {
+export function buildGenerateJson(
+  result: GenerateResult,
+  options: { workspaceRoot?: string } = {},
+): Record<string, unknown> {
   const diagnostics = [...result.errors, ...result.warnings];
+  const changed = compactList(result.changed);
+  const unchanged = compactList(result.unchanged);
+  const drift =
+    result.exitCode !== 0 && result.errors.length === 0 && result.changed.length > 0
+      ? {
+          kind: "generated-drift",
+          message: `${result.changed.length} generated artifact(s) would change; run forge generate before handoff or verification.`,
+          changedGroups: summarizeGeneratedArtifacts(result.changed),
+          sampleChanged: changed.sample,
+          hiddenChanged: changed.hidden,
+          repairCommand: options.workspaceRoot
+            ? forgeCliCommandsForWorkspace(options.workspaceRoot, ["forge generate"])[0]
+            : "forge generate",
+          checkCommand: options.workspaceRoot
+            ? forgeCliCommandsForWorkspace(options.workspaceRoot, ["forge generate --check --json"])[0]
+            : "forge generate --check --json",
+        }
+      : null;
   return {
     schemaVersion: "0.1.0",
     ok: result.exitCode === 0,
@@ -92,20 +139,32 @@ export function buildGenerateJson(result: GenerateResult): Record<string, unknow
       errors: result.errors.length,
       changedGroups: summarizeGeneratedArtifacts(result.changed),
       unchangedGroups: summarizeGeneratedArtifacts(result.unchanged),
+      changedSample: changed.sample,
+      hiddenChanged: changed.hidden,
+      unchangedSample: unchanged.sample,
+      hiddenUnchanged: unchanged.hidden,
+      diagnosticGroups: summarizeDiagnostics(diagnostics),
+      ...(drift ? { message: drift.message } : {}),
     },
+    ...(drift ? { drift } : {}),
     changed: result.changed,
     unchanged: result.unchanged,
     warnings: result.warnings,
     errors: result.errors,
     diagnostics,
-    nextActions: buildGenerateNextActions(result),
+    nextActions: options.workspaceRoot
+      ? forgeCliCommandsForWorkspace(options.workspaceRoot, buildGenerateNextActions(result))
+      : buildGenerateNextActions(result),
     durationMs: null,
     exitCode: result.exitCode,
     failureKind: result.failureKind ?? null,
   };
 }
 
-export function buildCheckJson(result: GenerateResult): Record<string, unknown> {
+export function buildCheckJson(
+  result: GenerateResult,
+  options: { workspaceRoot?: string } = {},
+): Record<string, unknown> {
   const diagnostics = [...result.errors, ...result.warnings];
   const suggested = new Set<string>();
   for (const diagnostic of diagnostics) {
@@ -135,15 +194,20 @@ export function buildCheckJson(result: GenerateResult): Record<string, unknown> 
     warnings: result.warnings,
     errors: result.errors,
     diagnostics,
-    nextActions: uniqueNextActions([...suggested]),
+    nextActions: options.workspaceRoot
+      ? forgeCliCommandsForWorkspace(options.workspaceRoot, uniqueNextActions([...suggested]))
+      : uniqueNextActions([...suggested]),
     durationMs: null,
     exitCode: result.exitCode,
     failureKind: result.failureKind ?? null,
   };
 }
 
-export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
-  const base = buildGenerateJson(result);
+export function buildAddJson(
+  result: ForgeAddResult,
+  options: { workspaceRoot?: string } = {},
+): Record<string, unknown> {
+  const base = buildGenerateJson(result, options);
   const packageInspectName = result.packageName ?? result.alias;
   const packageNextActions =
     result.mode === "package" && packageInspectName
@@ -168,8 +232,8 @@ export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
                 "forge workos install --yes --json",
                 "forge workos doctor --json",
                 "forge workos doctor --yes --json",
-                "forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json",
-                "forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --yes --json",
+                "forge workos seed --file workos-seed.yml --json",
+                "forge workos seed --file workos-seed.yml --yes --json",
                 "forge auth check --json",
                 "forge auth prove --json",
               ]
@@ -199,7 +263,9 @@ export function buildAddJson(result: ForgeAddResult): Record<string, unknown> {
     ...(result.installCwd ? { installCwd: result.installCwd } : {}),
     ...(result.installWorkspace ? { installWorkspace: result.installWorkspace } : {}),
     ...base,
-    nextActions: packageNextActions ?? integrationNextActions ?? base.nextActions,
+    nextActions: options.workspaceRoot
+      ? forgeCliCommandsForWorkspace(options.workspaceRoot, packageNextActions ?? integrationNextActions ?? (base.nextActions as string[]))
+      : packageNextActions ?? integrationNextActions ?? base.nextActions,
   };
 }
 
@@ -347,14 +413,30 @@ export function buildInspectJson(result: InspectResult): Record<string, unknown>
 }
 
 export function writeHumanGenerate(result: GenerateResult): void {
-  for (const path of result.changed) {
+  const changed = compactList(result.changed, 20);
+  const unchanged = compactList(result.unchanged, 20);
+  if (result.exitCode !== 0 && result.errors.length === 0 && result.changed.length > 0) {
+    console.error(`generated drift: ${result.changed.length} artifact(s) would change; run forge generate`);
+  }
+  for (const path of changed.sample) {
     console.log(`changed: ${path}`);
   }
-  for (const path of result.unchanged) {
+  if (changed.hidden > 0) {
+    console.log(`changed: ... ${changed.hidden} more`);
+  }
+  for (const path of unchanged.sample) {
     console.log(`unchanged: ${path}`);
   }
-  for (const diagnostic of [...result.warnings, ...result.errors]) {
+  if (unchanged.hidden > 0) {
+    console.log(`unchanged: ... ${unchanged.hidden} more`);
+  }
+  const diagnostics = [...result.warnings, ...result.errors];
+  const diagnosticSample = diagnostics.slice(0, 20);
+  for (const diagnostic of diagnosticSample) {
     console.error(`${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`);
+  }
+  if (diagnostics.length > diagnosticSample.length) {
+    console.error(`diagnostics: ... ${diagnostics.length - diagnosticSample.length} more`);
   }
 }
 

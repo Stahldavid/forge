@@ -114,6 +114,8 @@ describe("db cli", () => {
   test("repair requires explicit local flag", async () => {
     const workspace = tempWorkspace("db-cli-pglite-repair-local-required");
     try {
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
       const repaired = await runDbCommand({
         subcommand: "repair",
         workspaceRoot: workspace,
@@ -124,7 +126,9 @@ describe("db cli", () => {
       expect(repaired.exitCode).toBe(1);
       expect(repaired.ok).toBe(false);
       expect(repaired.diagnostics[0]?.code).toBe("FORGE_CLI_USAGE");
+      expect(repaired.diagnostics[0]?.suggestedCommands).toContain("node bin/forge.mjs db repair --local --adapter pglite --json");
       expect(JSON.stringify(repaired.data)).toContain("\"local\":false");
+      expect(JSON.stringify(repaired.data)).not.toContain("\"forge db repair");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -157,6 +161,8 @@ describe("db cli", () => {
   test("pglite doctor reports active local store as warning", async () => {
     const workspace = tempWorkspace("db-cli-pglite-doctor-active");
     try {
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
       const dataDir = join(workspace, ".forge", "pglite");
       mkdirSync(dataDir, { recursive: true });
       writeFileSync(join(dataDir, "postmaster.pid"), `${process.pid}\n`, "utf8");
@@ -166,7 +172,8 @@ describe("db cli", () => {
       expect(doctor.exitCode).toBe(0);
       expect(doctor.ok).toBe(true);
       expect(doctor.inspection.state).toBe("active");
-      expect(doctor.nextActions).toContain("forge doctor pglite --json");
+      expect(doctor.nextActions).toContain("node bin/forge.mjs doctor pglite --json");
+      expect(doctor.inspection.nextActions).toContain("node bin/forge.mjs doctor pglite --json");
     } finally {
       cleanupWorkspace(workspace);
     }

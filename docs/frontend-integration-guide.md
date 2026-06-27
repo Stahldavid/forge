@@ -127,7 +127,7 @@ forge inspect frontend --json
 For a resource with UI:
 
 ```bash
-forge make resource notes --fields title:text,status:enum(open,done) --with-ui --dry-run --json
+forge make resource notes --fields title:text,status:enum=open+done --with-ui --dry-run --json
 ```
 
 ## Verify frontend wiring

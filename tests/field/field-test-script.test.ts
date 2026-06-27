@@ -16,12 +16,14 @@ describe("field-test script", () => {
         "--forge-spec",
         "npm:forgeos@alpha",
         "--runtime-probes",
+        "--auth-probes",
       ],
       { encoding: "utf8" },
     );
 
     expect(result.status).toBe(0);
     const payload = JSON.parse(result.stdout) as {
+      authProbes: boolean;
       cases: Array<{ packageManager: string; template: string }>;
       forgeSpec: string;
       ok: boolean;
@@ -30,6 +32,7 @@ describe("field-test script", () => {
     expect(payload.ok).toBe(true);
     expect(payload.forgeSpec).toBe("npm:forgeos@alpha");
     expect(payload.runtimeProbes).toBe(true);
+    expect(payload.authProbes).toBe(true);
     expect(payload.cases).toHaveLength(6);
     expect(payload.cases).toContainEqual({ packageManager: "npm", template: "minimal-web" });
     expect(payload.cases).toContainEqual({ packageManager: "npm", template: "nuxt-web" });

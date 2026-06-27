@@ -151,6 +151,31 @@ describe("H33 forge dev console", () => {
         exitCode: 1,
       },
     });
+    const localWorkspace = tempWorkspace("dev-watch-generate-failure-local-cli");
+    try {
+      mkdirSync(join(localWorkspace, "bin"), { recursive: true });
+      writeFileSync(join(localWorkspace, "bin", "forge.mjs"), "", "utf8");
+      const localEvent = buildDevWatchGenerateFailureEvent({
+        changedCount: 1,
+        changedPaths: ["src/forge/schema.ts"],
+        workspaceRoot: localWorkspace,
+        result: {
+          ok: false,
+          changed: [],
+          unchanged: [],
+          diagnostics: [],
+          exitCode: 1,
+        },
+      });
+      expect(localEvent.generated.command).toBe("node bin/forge.mjs generate");
+      expect(localEvent.generated.checkCommand).toBe("node bin/forge.mjs generate --check --json");
+      expect(localEvent.nextActions).toEqual([
+        "node bin/forge.mjs dev --once --json",
+        "node bin/forge.mjs check --json",
+      ]);
+    } finally {
+      cleanupWorkspace(localWorkspace);
+    }
 
     expect(event).toMatchObject({
       schemaVersion: "0.1.0",
@@ -200,6 +225,30 @@ describe("H33 forge dev console", () => {
           },
           cycle,
         });
+        mkdirSync(join(workspace, "bin"), { recursive: true });
+        writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+        const localEvent = buildDevWatchReloadEvent({
+          changedCount: 1,
+          changedPaths: ["src/forge/schema.ts"],
+          workspaceRoot: workspace,
+          generated: {
+            ok: true,
+            changed: ["src/forge/_generated/appGraph.json"],
+            unchanged: [],
+            diagnostics: [],
+            exitCode: 0,
+          },
+          reload: {
+            ok: false,
+            reason: "test",
+            migrated: false,
+            routes: 1,
+            runtimeEntries: 1,
+            worker: "running",
+            diagnostics: [],
+          },
+          cycle,
+        });
 
         expect(event).toMatchObject({
           schemaVersion: "0.1.0",
@@ -221,6 +270,12 @@ describe("H33 forge dev console", () => {
             generatedFresh: true,
           },
         });
+        expect(localEvent.generated.command).toBe("node bin/forge.mjs generate");
+        expect(localEvent.generated.checkCommand).toBe("node bin/forge.mjs generate --check --json");
+        expect(localEvent.nextActions).toEqual([
+          "node bin/forge.mjs dev --once --json",
+          "node bin/forge.mjs check --json",
+        ]);
         expect(event.agentContext.diffPlan?.authoredDiffCommand).toContain("git diff -- .");
       } finally {
         cleanupWorkspace(workspace);
@@ -235,7 +290,6 @@ describe("H33 forge dev console", () => {
       const workspace = scaffoldGenerateWorkspace("dev-console-port-busy");
       const occupied = await listenOnRandomPort();
       try {
-        await runGenerate(defaultGenerateOptions(workspace));
         const captured = await captureStdout(() =>
           runDevCommand({
             workspaceRoot: workspace,
@@ -269,6 +323,45 @@ describe("H33 forge dev console", () => {
         });
         expect(payload.busy?.suggestedCommands?.[0]).toContain("forge dev --port 0");
         expect(payload.busy?.suggestedCommands).toContain("forge doctor windows --json");
+      } finally {
+        await occupied.close();
+        cleanupWorkspace(workspace);
+      }
+    },
+    20_000,
+  );
+
+  test(
+    "forge dev port-busy failures use the repo-local CLI entrypoint in the framework checkout",
+    async () => {
+      const workspace = scaffoldGenerateWorkspace("dev-console-port-busy-local-cli");
+      const occupied = await listenOnRandomPort();
+      try {
+        mkdirSync(join(workspace, "bin"), { recursive: true });
+        writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+        const captured = await captureStdout(() =>
+          runDevCommand({
+            workspaceRoot: workspace,
+            host: "127.0.0.1",
+            port: occupied.port,
+            mock: false,
+            mockAi: false,
+            watch: false,
+            json: true,
+            db: "memory",
+            worker: false,
+            telemetry: [],
+            skipStartupConsole: true,
+          }),
+        );
+        const payload = JSON.parse(captured.output.trim()) as {
+          nextActions?: string[];
+          busy?: { suggestedCommands?: string[] };
+        };
+
+        expect(payload.nextActions?.[0]).toContain("node bin/forge.mjs dev --port 0");
+        expect(payload.busy?.suggestedCommands?.[0]).toContain("node bin/forge.mjs dev --port 0");
+        expect(payload.busy?.suggestedCommands).toContain("node bin/forge.mjs doctor windows --json");
       } finally {
         await occupied.close();
         cleanupWorkspace(workspace);

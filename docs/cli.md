@@ -23,13 +23,13 @@ switches to the other depth.
 
 Prefer **[Agent Workflow (`forge do`)](agent-workflow.md)** when you know the goal but not the exact command.
 
-`forge status --json` is the cheapest first read. It reports project health, a structured `generated` block (`state`, `ready`, `driftClean`, missing artifact count, table drift count, and repair/check commands), handoff readiness, next actions, and a compact `git.changed` summary grouped by file type.
+`forge status --json` is the cheapest first read. It reports project health, a structured `generated` block (`state`, `ready`, `driftClean`, freshness, missing artifact count, table drift count, and repair/check commands), handoff readiness, next actions, and a compact `git.changed` summary grouped by file type. When authored source/config changes exist but generated files are not dirty, `generated.state` becomes `check-needed` and the first next action is `forge generate --check --json`; this avoids claiming freshness before the heavier generated check has proved it.
 
-`forge changed --json` is the dedicated current-diff view. It separates human-authored files from generated artifacts, highlights untracked or uncategorized paths, and returns the focused verification commands for the current work. Read `diffPlan` before opening raw diffs: it gives the authored-first diff command, the generated-artifact diff command, and whether generated files are collapsed by default.
+`forge changed --json` is the dedicated current-diff view. It separates human-authored files from generated artifacts, highlights untracked or uncategorized paths, and returns the focused verification commands for the current work. Large clean authored diffs appear in `advisories` instead of `risks`, so agents can note review volume without treating it as a correctness problem. Read `diffPlan` before opening raw diffs: it gives the authored-first diff command, the generated-artifact diff command, and whether generated files are collapsed by default.
 
 When generated artifacts dominate the worktree, use `forge changed --authored --json` or the `diffPlan.authoredDiffCommand` first. Template apps may ignore generated artifacts in git; framework checkouts keep them available as derived evidence and should review authored changes before generated output. See [Generated Artifacts](generated-artifacts.md).
 
-Use `forge handoff --json` when switching between external code agents. It runs the compact dev diagnostic loop, summarizes git state, groups changed files by type (`source`, `tests`, `docs`, `generated`, `operational`, and related buckets), includes recent test/UI run status, and returns an `openingBrief`, high-value files to read, next commands, and handoff risks.
+Use `forge handoff --json` when switching between external code agents. It runs the compact dev diagnostic loop, summarizes git state, groups changed files by type (`source`, `tests`, `docs`, `generated`, `operational`, and related buckets), includes recent test/UI run status, and returns an `openingBrief`, high-value files to read, next commands, and handoff risks. `diagnosticSummary` keeps noisy failures readable by grouping diagnostics by severity/code, returning a small sample, and listing commands for the full diagnostic payload.
 
 ## Create an App
 
@@ -226,6 +226,11 @@ forge verify framework
 forge release doctor --json
 ```
 
+For generated drift, `forge generate --check --json` returns a compact `drift`
+block plus `summary.changedSample`, `summary.hiddenChanged`, and
+`summary.diagnosticGroups`. Use `drift.repairCommand` to refresh artifacts and
+`drift.checkCommand` to prove they are fresh after regeneration.
+
 ### Verification
 
 | Command | Runs |
@@ -303,7 +308,7 @@ forge authmd check --json
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
-forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
+forge workos seed --file workos-seed.yml --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json
 forge env check --json
@@ -344,7 +349,7 @@ See [AI](ai.md) for runtime placement, simple generation, agents, and tool appro
 
 ```bash
 forge make list --json
-forge make resource notes --fields title:text,status:enum(open,done) --with-ui --yes
+forge make resource notes --fields title:text,status:enum=open+done --with-ui --yes
 forge make ui --framework vite --yes
 forge make ui --framework nuxt --yes
 forge make ai-chat support --yes

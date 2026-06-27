@@ -30,6 +30,7 @@ import {
   DEFAULT_PGLITE_DIR,
   repairLocalPgliteStore,
 } from "../runtime/db/pglite-adapter.ts";
+import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
 export type DbSubcommand = "diff" | "migrate" | "reset" | "status" | "doctor" | "repair" | "rls-check";
 
@@ -258,7 +259,7 @@ async function runDbDoctor(
       .sort();
     const ok = inspected.diagnostics.length === 0 && missingTables.length === 0 && missingColumns.length === 0;
 
-    return {
+    return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
       ok,
       data: {
         schemaVersion: "0.1.0",
@@ -287,7 +288,7 @@ async function runDbDoctor(
         ...inspected.diagnostics,
       ],
       exitCode: ok ? 0 : 1,
-    };
+    });
   } finally {
     await adapter.close();
   }
@@ -295,7 +296,7 @@ async function runDbDoctor(
 
 async function runDbRepair(options: DbCommandOptions): Promise<DbCommandResult> {
   if (!options.local) {
-    return {
+    return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
       ok: false,
       data: {
         schemaVersion: "0.1.0",
@@ -314,11 +315,11 @@ async function runDbRepair(options: DbCommandOptions): Promise<DbCommandResult> 
         }),
       ],
       exitCode: 1,
-    };
+    });
   }
 
   if (options.db !== "pglite") {
-    return {
+    return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
       ok: false,
       data: {
         schemaVersion: "0.1.0",
@@ -336,7 +337,7 @@ async function runDbRepair(options: DbCommandOptions): Promise<DbCommandResult> 
         }),
       ],
       exitCode: 1,
-    };
+    });
   }
 
   const dataDir = join(options.workspaceRoot, DEFAULT_PGLITE_DIR);
@@ -355,7 +356,7 @@ async function runDbRepair(options: DbCommandOptions): Promise<DbCommandResult> 
         }),
       ];
 
-  return {
+  return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
     ok: result.ok,
     data: {
       schemaVersion: "0.1.0",
@@ -365,7 +366,7 @@ async function runDbRepair(options: DbCommandOptions): Promise<DbCommandResult> 
     },
     diagnostics,
     exitCode: result.ok ? 0 : 1,
-  };
+  });
 }
 
 export async function runDbCommand(options: DbCommandOptions): Promise<DbCommandResult> {

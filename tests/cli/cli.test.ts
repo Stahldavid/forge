@@ -10,6 +10,7 @@ import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { runAuthMdCommand } from "../../src/forge/cli/authmd.ts";
+import { runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { runWorkOSCommand } from "../../src/forge/cli/workos.ts";
 import {
   probeStudioPreview,
@@ -161,6 +162,13 @@ describe("Forge CLI", () => {
       expect(authoredChanged.command.authoredOnly).toBe(true);
     }
 
+    const reviewChanged = parseCli(["changed", "--review", "--json"]);
+    expect(reviewChanged.errors).toEqual([]);
+    expect(reviewChanged.command?.kind).toBe("changed");
+    if (reviewChanged.command?.kind === "changed") {
+      expect(reviewChanged.command.reviewOnly).toBe(true);
+    }
+
     const diff = parseCli(["diff", "authored", "--json"]);
     expect(diff.errors).toEqual([]);
     expect(diff.command).toMatchObject({ kind: "diff", target: "authored", json: true });
@@ -181,6 +189,17 @@ describe("Forge CLI", () => {
     }
   });
 
+  test("parseCli accepts explicit forge new --git as the default git behavior", () => {
+    const parsed = parseCli(["new", "demo-app", "--template", "minimal-web", "--git", "--no-install"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "new",
+      name: "demo-app",
+      git: true,
+      install: false,
+    });
+  });
+
   test("parseCli accepts docs check and classifies tracked Codex hooks as config", () => {
     const parsed = parseCli(["docs", "check", "--json"]);
     expect(parsed.command).toMatchObject({
@@ -189,6 +208,8 @@ describe("Forge CLI", () => {
       json: true,
     });
     expect(classifyChangeType(".codex/hooks.json")).toBe("config");
+    expect(classifyChangeType("scripts/field-test-forgeos.mjs")).toBe("source");
+    expect(classifyChangeType("packages/create-forge-app/bin/create-forge-app.mjs")).toBe("source");
   });
 
   test("check JSON success does not recommend running check again", () => {
@@ -201,6 +222,22 @@ describe("Forge CLI", () => {
     });
     expect(json.nextActions).not.toContain("forge check --json");
     expect(json.nextActions).toContain("forge verify --changed");
+  });
+
+  test("check JSON can use repo-local Forge CLI commands", () => {
+    const json = buildCheckJson(
+      {
+        changed: [],
+        unchanged: [],
+        warnings: [],
+        errors: [],
+        exitCode: 0,
+      },
+      { workspaceRoot: process.cwd() },
+    );
+    expect(json.nextActions).toContain("node bin/forge.mjs verify --changed");
+    expect(json.nextActions).toContain("node bin/forge.mjs handoff --json");
+    expect(json.nextActions).not.toContain("forge handoff --json");
   });
 
   test("parseCli accepts explicit human status output", () => {
@@ -467,9 +504,7 @@ describe("Forge CLI", () => {
       );
       writeFileSync(join(workspace, ".env.example"), "WORKOS_API_KEY=\n", "utf8");
       writeFileSync(join(workspace, "src/policies.workos.ts"), "export {};\n", "utf8");
-      writeFileSync(
-        join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"),
-        [
+      const seedYaml = [
           "permissions:",
           "  - slug: 'onboarding:read'",
           "  - slug: 'invitations:create'",
@@ -489,7 +524,15 @@ describe("Forge CLI", () => {
           "  - name: 'Globex'",
           "    domains: ['globex.test']",
           "",
-        ].join("\n"),
+        ].join("\n");
+      writeFileSync(
+        join(workspace, "workos-seed.yml"),
+        seedYaml,
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"),
+        seedYaml,
         "utf8",
       );
       writeFileSync(
@@ -595,7 +638,6 @@ describe("Forge CLI", () => {
         subcommand: "seed",
         workspaceRoot: workspace,
         json: true,
-        file: "src/forge/_generated/integrations/workos/workos-seed.yml",
         yes: false,
         dryRun: false,
       });
@@ -607,8 +649,70 @@ describe("Forge CLI", () => {
         "workos@latest",
         "seed",
         "--file",
-        "src/forge/_generated/integrations/workos/workos-seed.yml",
+        "workos-seed.yml",
       ]);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("auth prove supports a local multi-tenant WorkOS proof scenario", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-auth-prove-mt-"));
+    try {
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+      mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      mkdirSync(join(workspace, "public/.well-known"), { recursive: true });
+      writeFileSync(
+        join(workspace, "src/forge/_generated/authRegistry.json"),
+        JSON.stringify({
+          defaultMode: "dev-headers",
+          requiresTenant: true,
+          claims: { userId: "sub", tenantId: "organization_id", permissions: "permissions" },
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/secretRegistry.json"),
+        JSON.stringify({
+          secrets: [
+            { name: "WORKOS_API_KEY" },
+            { name: "WORKOS_CLIENT_ID" },
+            { name: "WORKOS_COOKIE_PASSWORD" },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(join(workspace, "workos-seed.yml"), "organizations:\n  - name: Acme Corp\n", "utf8");
+      writeFileSync(join(workspace, "public/auth.md"), "# auth.md\n", "utf8");
+      writeFileSync(join(workspace, "public/.well-known/oauth-protected-resource"), "{}\n", "utf8");
+
+      const parsed = parseCli(["auth", "prove", "--scenario", "multi-tenant", "--json"]);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.command).toMatchObject({ kind: "auth", subcommand: "prove", scenario: "multi-tenant" });
+
+      const result = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        scenario: "multi-tenant",
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.data).toMatchObject({
+        kind: "auth-proof",
+        scenario: "multi-tenant",
+        multiTenantProof: { ok: true },
+      });
+      expect(JSON.stringify(result.data)).toContain("node bin/forge.mjs workos doctor --json");
+      expect(JSON.stringify(result.data)).not.toContain("\"forge workos doctor --json\"");
+
+      const check = await runAuthCommand({
+        subcommand: "check",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(JSON.stringify(check.data)).toContain("node bin/forge.mjs auth prove --prod --token <jwt> --json");
+      expect(JSON.stringify(check.data)).not.toContain("\"forge auth prove --prod --token <jwt> --json\"");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
@@ -908,10 +1012,25 @@ describe("Forge CLI", () => {
       expect(result.commands.doctor).toBe("forge studio doctor . --preview-port 5174 --target codex --json");
       expect(result.nextActions).toContain("forge changed --json");
       expect(await Bun.file(join(workspace, ".forge", "studio", "attachment.json")).exists()).toBe(false);
+
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+      const localResult = await runStudioSnapshotCommand({
+        workspaceRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+      expect(localResult.commands.changed).toBe("node bin/forge.mjs changed --json");
+      expect(localResult.commands.doctor).toBe("node bin/forge.mjs studio doctor . --preview-port 5174 --target codex --json");
+      expect(localResult.nextActions).toContain("node bin/forge.mjs changed --json");
+      expect(JSON.stringify(localResult)).not.toContain("\"forge changed --json\"");
     } finally {
       cleanupWorkspace(workspace);
     }
-  }, 20_000);
+  }, 30_000);
 
   test("studio snapshot exposes Codex app-server proof without requiring it", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-codex-app-server");
@@ -1009,6 +1128,19 @@ describe("Forge CLI", () => {
       expect(result.commands.probeHandshake).toBe("forge studio codex-server . --probe --json");
       expect(result.nextActions).toContain("codex app-server --help");
       expect(result.nextActions).toContain("forge studio codex-server . --probe --json");
+
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+      const localResult = await runStudioCodexServerCommand({
+        workspaceRoot: workspace,
+        targets: ["codex"],
+        json: true,
+        dryRun: true,
+        force: false,
+      });
+      expect(localResult.commands.probeHandshake).toBe("node bin/forge.mjs studio codex-server . --probe --json");
+      expect(localResult.nextActions).toContain("node bin/forge.mjs studio codex-server . --probe --json");
+      expect(JSON.stringify(localResult)).not.toContain("\"forge studio codex-server . --probe --json\"");
     } finally {
       if (original === undefined) delete process.env.FORGE_CODEX_APP_SERVER;
       else process.env.FORGE_CODEX_APP_SERVER = original;

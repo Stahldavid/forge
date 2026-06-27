@@ -246,7 +246,17 @@ function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] 
     });
   }
 
-  if (!columns.some((column) => column.primaryKey) && columns.length > 0) {
+  if (hasIdField && !columns.some((column) => column.name === "id" && column.primaryKey)) {
+    const idField = fields.find((field) => field.name === "id");
+    diagnostics.push(
+      createDiagnostic({
+        severity: "error",
+        code: FORGE_DB_INVALID_SQL_PLAN,
+        message: `table '${table.name}' declares id as '${idField?.type ?? "unknown"}'; Forge runtime requires id: "uuid" or no id field so Forge can generate one`,
+        file: table.file,
+      }),
+    );
+  } else if (!columns.some((column) => column.primaryKey) && columns.length > 0) {
     columns[0]!.primaryKey = true;
   }
 

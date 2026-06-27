@@ -9,6 +9,9 @@ import { mapClaimsToAuthContext } from "../runtime/auth/claims.ts";
 import { ForgeAuthError } from "../runtime/auth/errors.ts";
 import { verifyJwtToken } from "../runtime/auth/verifier.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
 export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove" | "status";
 
@@ -18,6 +21,7 @@ export interface AuthCommandOptions {
   json: boolean;
   token?: string;
   prod?: boolean;
+  scenario?: string;
 }
 
 export interface AuthCommandResult {
@@ -88,7 +92,7 @@ function buildAuthPosture(workspaceRoot: string) {
   const productionMode = config.mode === "jwt" || config.mode === "oidc";
   const errors = configErrors(config);
   const configReady = errors.length === 0;
-  return {
+  return normalizeForgeCliCommandsInValue(workspaceRoot, {
     schemaVersion: "0.1.0",
     mode: config.mode,
     localOnly: config.mode === "dev-headers",
@@ -96,6 +100,15 @@ function buildAuthPosture(workspaceRoot: string) {
     requiresTenant: config.requiresTenant,
     bearerHeader: productionMode ? "Authorization: Bearer <token>" : null,
     tenantClaim: config.claims.tenantId ?? "tenant_id",
+    productionChecklist: [
+      { item: "auth mode is jwt or oidc", ok: productionMode },
+      { item: "FORGE_AUTH_ISSUER configured", ok: Boolean(config.issuer) },
+      { item: "FORGE_AUTH_AUDIENCE configured", ok: Boolean(config.audience) },
+      { item: "FORGE_AUTH_JWKS_URI or OIDC discovery configured", ok: config.mode === "oidc" || Boolean(config.jwksUri) },
+      { item: "tenant claim mapped", ok: Boolean(config.claims.tenantId) },
+      { item: "permission claim mapped", ok: Boolean(config.claims.permissions) },
+      { item: "dev-headers disabled for public runtime", ok: config.mode !== "dev-headers" },
+    ],
     reason: productionMode
       ? configReady
         ? "jwt/oidc production auth configuration is present"
@@ -106,7 +119,58 @@ function buildAuthPosture(workspaceRoot: string) {
         ? ["forge auth prove --prod --token <jwt> --json", "forge serve --json"]
         : ["forge auth check --json", "configure FORGE_AUTH_ISSUER, FORGE_AUTH_AUDIENCE, and FORGE_AUTH_JWKS_URI or OIDC issuer"]
       : ["set FORGE_AUTH_MODE=jwt or oidc for production", "forge auth prove --prod --token <jwt> --json"],
-  };
+  });
+}
+
+function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof detectWorkOS>, requiresTenant: boolean) {
+  const rootSeedPresent = existsSync(join(workspaceRoot, "workos-seed.yml"));
+  const generatedSeedPresent = existsSync(join(workspaceRoot, "src/forge/_generated/integrations/workos/workos-seed.yml"));
+  const authMdPresent = existsSync(join(workspaceRoot, "public/auth.md"));
+  const metadataPresent = existsSync(join(workspaceRoot, "public/.well-known/oauth-protected-resource"));
+  const permissions = ["onboarding:read", "invitations:create", "tasks:update"];
+  const permissionVocabularyPresent = workos.detected && workos.claimStatus.some((claim) => claim.name === "permissions" && claim.ok);
+  const checks = [
+    {
+      id: "tenant-claim",
+      ok: requiresTenant && workos.claimStatus.some((claim) => claim.name === "tenantId" && claim.ok),
+      evidence: "Forge tenant claim maps to WorkOS organization_id and tenant auth is required.",
+    },
+    {
+      id: "permission-claim",
+      ok: permissionVocabularyPresent,
+      evidence: "Forge permissions claim maps to WorkOS permissions.",
+    },
+    {
+      id: "seed-organizations",
+      ok: rootSeedPresent || generatedSeedPresent,
+      evidence: rootSeedPresent ? "workos-seed.yml exists at app root." : "generated WorkOS seed exists.",
+    },
+    {
+      id: "agent-auth-metadata",
+      ok: authMdPresent && metadataPresent,
+      evidence: "public/auth.md and protected resource metadata are present.",
+    },
+  ];
+  return normalizeForgeCliCommandsInValue(workspaceRoot, {
+    scenario: "multi-tenant",
+    ok: checks.every((check) => check.ok),
+    claims: {
+      acme: { organization_id: "org_acme", role: "owner", permissions },
+      globex: { organization_id: "org_globex", role: "member", permissions: ["onboarding:read", "tasks:update"] },
+    },
+    invariants: [
+      "Acme and Globex must use different organization_id claim values.",
+      "Tenant-scoped reads must include the active organization_id.",
+      "Tenant-scoped writes must verify the resource tenant before mutation.",
+      "Role-only UI affordances are not sufficient; policies must use permissions/claims.",
+    ],
+    checks,
+    nextActions: [
+      "forge workos doctor --json",
+      "forge workos seed --file workos-seed.yml --dry-run --json",
+      "run an HTTP E2E with Acme and Globex tokens before production",
+    ],
+  });
 }
 
 function validateConfig(workspaceRoot: string): AuthCommandResult {
@@ -258,8 +322,12 @@ export async function runAuthCommand(
           ? tokenProof.error
           : undefined;
     const proofOk = checked.ok && (!options.prod || (productionMode && tokenProof?.ok === true));
+    const multiTenantProof = options.scenario === "multi-tenant"
+      ? buildMultiTenantProof(options.workspaceRoot, workos, config.requiresTenant)
+      : null;
+    const scenarioOk = !multiTenantProof || multiTenantProof.ok;
     return {
-      ok: proofOk,
+      ok: proofOk && scenarioOk,
       mode: config.mode,
       data: {
         schemaVersion: "0.1.0",
@@ -268,8 +336,10 @@ export async function runAuthCommand(
         mode: config.mode,
         productionReady: productionMode && checked.ok,
         prod: options.prod === true,
+        scenario: options.scenario ?? null,
         authPosture: posture,
         ...(tokenProof ? { tokenProof: tokenProof.ok ? tokenProof.data : tokenProof.error } : {}),
+        ...(multiTenantProof ? { multiTenantProof } : {}),
         invariants: [
           {
             id: "INV-001",
@@ -305,7 +375,7 @@ export async function runAuthCommand(
         checkedAt: "deterministic",
       },
       error: prodError ?? checked.error,
-      exitCode: proofOk ? 0 : 1,
+      exitCode: proofOk && scenarioOk ? 0 : 1,
     };
   }
   if (options.subcommand === "config") {

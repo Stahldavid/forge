@@ -90,8 +90,8 @@ forge changed --json
 forge handoff --json
 forge do inspect --json
 forge dev --once --json
-forge make resource task --fields title:text,status:enum(open,done) --with-ui --dry-run --json
-forge make resource task --fields title:text,status:enum(open,done) --with-ui --yes
+forge make resource task --fields title:text,status:enum=open+done --with-ui --dry-run --json
+forge make resource task --fields title:text,status:enum=open+done --with-ui --yes
 forge generate
 forge check --json
 forge inspect capabilities --json

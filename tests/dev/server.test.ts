@@ -287,10 +287,18 @@ describe("dev server", () => {
         expect(response.status).toBe(200);
         expect(response.headers.get("content-type")).toContain("text/markdown");
         expect(await response.text()).toContain("Tenant required");
+        const authHead = await fetch(`${handle.url}/auth.md`, { method: "HEAD" });
+        expect(authHead.status).toBe(200);
+        expect(authHead.headers.get("content-type")).toContain("text/markdown");
+        expect(await authHead.text()).toBe("");
         const metadata = await fetch(`${handle.url}/.well-known/oauth-protected-resource`);
         expect(metadata.status).toBe(200);
         const metadataBody = await metadata.json() as { resource_documentation: string; scopes_supported?: string[] };
         expect(metadataBody).toMatchObject({ resource_documentation: "/auth.md" });
+        const metadataHead = await fetch(`${handle.url}/.well-known/oauth-protected-resource`, { method: "HEAD" });
+        expect(metadataHead.status).toBe(200);
+        expect(metadataHead.headers.get("content-type")).toContain("application/json");
+        expect(await metadataHead.text()).toBe("");
         const agentAuthDoc = await fetch(`${handle.url}${metadataBody.resource_documentation}`);
         expect(agentAuthDoc.status).toBe(200);
         expect(await agentAuthDoc.text()).toContain("auth.md");

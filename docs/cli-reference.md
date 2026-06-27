@@ -25,6 +25,7 @@ Use the global `forge` command from the framework repo only when intentionally s
 
 ```bash
 npm create forgeos-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha . -- --template minimal-web
 npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
 forge new my-app --template minimal-web --package-manager npm --forge-spec "npm:forgeos@alpha" --install --no-git
 forge new nuxt-notes --template nuxt-web --package-manager npm --forge-spec "npm:forgeos@alpha" --install --no-git
@@ -53,15 +54,15 @@ forge do verify --json
 forge do connect-ui --json
 ```
 
-`forge handoff --json` creates a compact work handoff for the next external code agent: dev diagnostic summary, git state, changed-file categories, recent test/UI run status, opening brief, recommended read files, next commands, and risks. The `git.changeSummary` block separates source, tests, docs, generated artifacts, operational files, assets, config, and other paths so large generated diffs do not hide the real edit surface.
+`forge handoff --json` creates a compact work handoff for the next external code agent: dev diagnostic summary, git state, changed-file categories, recent test/UI run status, opening brief, recommended read files, next commands, and risks. The `git.changeSummary` block separates source, tests, docs, generated artifacts, operational files, assets, config, and other paths so large generated diffs do not hide the real edit surface. When diagnostics are numerous, `diagnosticSummary` reports total counts, grouped codes, a small sample, hidden count, and full-diagnostic commands instead of embedding a giant repeated warning list.
 
-`forge changed --json` is the dedicated diff-orientation command. It separates human-authored changes from generated artifacts, reports staged/unstaged/untracked buckets, lists risks such as untracked or uncategorized files, and recommends the next verification commands. Its `diffPlan` gives an authored-first diff command, a generated-only diff command, and a compact reason for collapsing generated artifacts until the source cause is understood.
+`forge changed --json` is the dedicated diff-orientation command. It separates human-authored changes from generated artifacts, reports staged/unstaged/untracked buckets, lists risks such as untracked or uncategorized files, and recommends the next verification commands. Large clean authored diffs are reported as `advisories`, not risks, so review tools can warn about volume without implying a broken handoff. Its `diffPlan` gives an authored-first diff command, a generated-only diff command, and a compact reason for collapsing generated artifacts until the source cause is understood.
 
 When generated artifacts dominate the worktree, read `forge changed --authored --json` or the returned `diffPlan.authoredDiffCommand` before opening raw diffs. Template apps may ignore generated artifacts in git; framework checkouts keep them available as derived evidence.
 
 `forge add <package> --frontend`, `forge add frontend:<package>`, `forge add <package> --backend`, and `forge add backend:<package>` are normal npm package installs with explicit app-side intent. JSON includes `packageTarget`, `packageTargetReason`, `nativeInstallCommand`, and `avoidedManualCommand`, so Studio and agents can show which package.json will change and which native package-manager command Forge is managing.
 
-`forge status --json` also includes a lightweight `git` block with categorized changed, staged, unstaged, and untracked files. Its top-level `generated` block gives Studio and external agents an explicit state (`ready`, `missing-artifacts`, or `drift`) plus the safe dev/check/repair commands, so they do not have to infer stale generated state from filenames. Its `studio` block gives the open/attach/snapshot/bridge/watch/doctor commands, target preview URL, start command, and probe command for observer UIs. The human output prints the same generated and Studio detail. Use it when you need quick orientation before the fuller `handoff` or `dev --once` snapshots.
+`forge status --json` also includes a lightweight `git` block with categorized changed, staged, unstaged, and untracked files. Its top-level `generated` block gives Studio and external agents an explicit state (`ready`, `check-needed`, `missing-artifacts`, or `drift`) plus the safe dev/check/repair commands, so they do not have to infer stale generated state from filenames. `check-needed` means required artifacts are present but authored source/config changes could affect generated output, so agents should run `forge generate --check --json` before treating freshness as proven. Its `studio` block gives the open/attach/snapshot/bridge/watch/doctor commands, target preview URL, start command, and probe command for observer UIs. The human output prints the same generated and Studio detail. Use it when you need quick orientation before the fuller `handoff` or `dev --once` snapshots.
 
 `forge agent onboard --target codex --json` is the one-command entry point for a freshly opened external agent session. It prepares the target adapter, installs/proves hooks when supported, runs the compact dev diagnostic snapshot, and returns `readyToEdit`, recommended read files, and next commands.
 
@@ -104,6 +105,13 @@ forge doctor
 forge doctor --json
 forge doctor windows --json
 ```
+
+When `forge generate --check --json` finds generated drift, JSON includes a
+compact `drift` object with `kind: "generated-drift"`, changed artifact groups,
+sample paths, hidden counts, and the repair/check commands. The top-level
+`summary` mirrors that with `changedSample`, `hiddenChanged`, and
+`diagnosticGroups`, so agents can decide whether to regenerate without reading
+hundreds of repeated `FORGE_DRIFT` diagnostics.
 
 ## Inspection
 
@@ -213,8 +221,8 @@ Use `doctor delta` for the fast recorder trust gate. Use `delta compact` and `de
 
 ```bash
 forge make list --json
-forge make resource notes --fields title:text,status:enum(open,done) --with-ui --dry-run --json
-forge make resource notes --fields title:text,status:enum(open,done) --with-ui --yes
+forge make resource notes --fields title:text,status:enum=open+done --with-ui --dry-run --json
+forge make resource notes --fields title:text,status:enum=open+done --with-ui --yes
 forge make ui --framework vite --dry-run --json
 forge make ui --framework nuxt --dry-run --json
 forge make ai-chat support --dry-run --json
@@ -261,7 +269,7 @@ forge authmd check --json
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
-forge workos seed --file src/forge/_generated/integrations/workos/workos-seed.yml --json
+forge workos seed --file workos-seed.yml --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json
 forge secrets prove --json
@@ -307,11 +315,20 @@ forge review run --changed --json
 ## UI and browser tests
 
 ```bash
+forge ui audit --json
 forge ui smoke --json
 forge ui scenario <name> --json
 forge ui route <path> --json
 forge ui doctor --json
 ```
+
+`forge ui audit --json` is a cheap no-browser gate. It validates route/scenario
+coverage and stable `data-forge-testid` selectors, then scans frontend source
+for UX readiness signals: semantic landmarks, accessible form labels, named
+buttons, loading/error/empty states for Forge data hooks, and an obvious
+sign-in/session/organization flow when generated metadata shows tenant-scoped
+data or production auth modes. These are warnings by default so smoke checks
+stay fast, but they give agents concrete UI fixes before browser testing.
 
 ## LiveQuery
 

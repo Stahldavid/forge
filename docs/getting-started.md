@@ -10,12 +10,14 @@ Recommended public quickstart:
 
 ```bash
 npm create forgeos-app@alpha notes-app -- --template minimal-web
+npm create forgeos-app@alpha . -- --template minimal-web
 npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
 cd notes-app
 npm run dev
 ```
 
 `npm create forgeos-app@alpha` creates a new app without installing ForgeOS globally. It is the best first command for new users. During alpha, use the `@alpha` tag explicitly; `latest` is not the active release channel and may lag behind alpha while a prerelease hardens.
+Use the `.` form only after creating and entering an empty target directory.
 
 The generated app contains:
 

@@ -56,6 +56,7 @@ import {
 } from "../agent-memory/hook-runner.ts";
 import { releaseManifest } from "../_generated/releaseManifest.ts";
 import { runDevConsoleCycle } from "../dev-console/cycle.ts";
+import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
 export const AGENT_ADAPTER_VERSION = "agent-adapter-0.1.0";
 export const AGENT_FORMAT_VERSION = "2026-06";
@@ -75,6 +76,25 @@ function diagnostic(
   file?: string,
 ): Diagnostic {
   return createDiagnostic({ severity, code, message, ...(file ? { file } : {}) });
+}
+
+function normalizeAgentCliCommandHints<T>(workspaceRoot: string, result: T): T {
+  if (!result || typeof result !== "object") {
+    return result;
+  }
+  const value = result as Record<string, unknown>;
+  const normalized: Record<string, unknown> = { ...value };
+  for (const key of ["nextActions", "diagnostics", "commands", "checks", "steps"]) {
+    if (key in normalized) {
+      normalized[key] = normalizeForgeCliCommandsInValue(workspaceRoot, normalized[key], key);
+    }
+  }
+  for (const key of ["installResult", "ingestResult"]) {
+    if (key in normalized) {
+      normalized[key] = normalizeAgentCliCommandHints(workspaceRoot, normalized[key]);
+    }
+  }
+  return normalized as T;
 }
 
 function readText(workspaceRoot: string, relative: string): string | null {
@@ -2222,9 +2242,11 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
   };
 }
 
-export async function runAgentCommand(options: AgentCommandOptions): Promise<
+type AgentCommandResult =
   AgentExportResult | AgentCheckResult | AgentTargetsResult | AgentPrintContextResult | AgentDoctorResult | AgentPrepareResult | AgentOnboardResult | AgentHooksSmokeResult | AgentHooksStatusResult | AgentTimelineResult | AgentMemoryCommandResult
-> {
+;
+
+async function runAgentCommandRaw(options: AgentCommandOptions): Promise<AgentCommandResult> {
   if (options.subcommand === "list-targets") {
     return runAgentListTargets(options.workspaceRoot);
   }
@@ -2293,6 +2315,10 @@ export async function runAgentCommand(options: AgentCommandOptions): Promise<
     ],
     exitCode: 1,
   };
+}
+
+export async function runAgentCommand(options: AgentCommandOptions): Promise<AgentCommandResult> {
+  return normalizeAgentCliCommandHints(options.workspaceRoot, await runAgentCommandRaw(options));
 }
 
 export function formatAgentJson(result: Awaited<ReturnType<typeof runAgentCommand>>): string {

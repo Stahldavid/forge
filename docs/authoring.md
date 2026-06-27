@@ -21,14 +21,16 @@ Scaffold schema, policies, commands, queries, liveQuery, optional UI, and tests:
 
 ```bash
 forge make resource invoices \
-  --fields amount:number,status:enum(draft,paid) \
+  --fields amount:number,status:enum=draft+paid \
   --dry-run --json
 
 forge make resource invoices \
-  --fields amount:number,status:enum(draft,paid) \
+  --fields amount:number,status:enum=draft+paid \
   --with-ui \
   --yes
 ```
+
+`enum=open+closed` is the shell-safe form. The parenthesized form, such as `enum(open,closed)`, is also supported when quoted for your shell.
 
 Creates or modifies:
 

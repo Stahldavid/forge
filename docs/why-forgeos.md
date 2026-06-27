@@ -212,7 +212,7 @@ See [forge add](forge-add.md) for the full integration workflow and dependency A
 ForgeOS includes refactor and authoring commands designed for app-wide edits:
 
 ```bash
-forge make resource tickets --fields title:text,status:enum(open,closed) --with-ui --dry-run --json
+forge make resource tickets --fields title:text,status:enum=open+closed --with-ui --dry-run --json
 forge refactor rename command createTicket openTicket --dry-run --json
 forge refactor rename field tickets.priority tickets.urgency --dry-run --json
 forge refactor rename table tickets supportTickets --dry-run --json

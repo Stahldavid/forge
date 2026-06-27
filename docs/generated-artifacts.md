@@ -35,6 +35,12 @@ forge generate --check --json
 Generated metadata-only changes, such as an `@forge-generated` header hash
 change, are treated as generated output rather than authored documentation.
 
+When `forge generate --check --json` detects drift, the response is compact by
+default. Read `drift.kind`, `drift.changedGroups`, `drift.sampleChanged`,
+`drift.hiddenChanged`, and `summary.diagnosticGroups` first. The complete
+`changed` and `warnings` arrays remain available for automation, but agents
+should not start by expanding every repeated `FORGE_DRIFT` diagnostic.
+
 ## Tracking Policy Changes
 
 `.gitignore` does not affect files that Git already tracks. Moving a repository

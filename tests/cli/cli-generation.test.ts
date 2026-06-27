@@ -15,7 +15,7 @@ import {
   formatStatusHuman,
 } from "../../src/forge/cli/commands.ts";
 import { runBaselineCommand } from "../../src/forge/cli/baseline.ts";
-import { buildInspectJson } from "../../src/forge/cli/output.ts";
+import { buildGenerateJson, buildInspectJson } from "../../src/forge/cli/output.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -63,6 +63,54 @@ describe("Forge CLI generation and inspection", () => {
       });
       expect(result.changed.length).toBeGreaterThan(0);
       expect(result.exitCode).toBe(0);
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("generate --check reports large drift with compact agent-facing summary", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-generate-check-drift-summary");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      writeFileSync(join(workspace, "src", "forge", "_generated", "appGraph.json"), "{\"stale\":true}\n", "utf8");
+
+      const result = await runGenerateCommand({
+        ...defaultGenerateOptions(workspace),
+        check: true,
+      });
+      const json = buildGenerateJson(result);
+      const localJson = buildGenerateJson(result, { workspaceRoot: process.cwd() });
+
+      expect(result.exitCode).toBe(1);
+      expect(json.drift).toMatchObject({
+        kind: "generated-drift",
+        repairCommand: "forge generate",
+        checkCommand: "forge generate --check --json",
+      });
+      expect(JSON.stringify(json.drift)).toContain("generated artifact");
+      expect(json.summary).toMatchObject({
+        changed: expect.any(Number),
+        hiddenChanged: expect.any(Number),
+        diagnosticGroups: {
+          FORGE_DRIFT: expect.any(Number),
+        },
+      });
+      expect(json.nextActions as string[]).toEqual([
+        "forge generate --json",
+        "forge generate --check --json",
+        "forge changed --review --json",
+        "forge check --json",
+      ]);
+      expect(localJson.drift).toMatchObject({
+        repairCommand: "node bin/forge.mjs generate",
+        checkCommand: "node bin/forge.mjs generate --check --json",
+      });
+      expect(localJson.nextActions as string[]).toEqual([
+        "node bin/forge.mjs generate --json",
+        "node bin/forge.mjs generate --check --json",
+        "node bin/forge.mjs changed --review --json",
+        "node bin/forge.mjs check --json",
+      ]);
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -241,9 +289,11 @@ describe("Forge CLI generation and inspection", () => {
         schemaVersion: "0.1.0",
         ok: true,
         generated: {
-          state: "ready",
+          state: "check-needed",
           ready: true,
           driftClean: true,
+          freshness: "unverified",
+          authoredGeneratedInputs: 1,
           missingArtifacts: 0,
           tableDrift: 0,
           safeDevCommand: "forge dev",
@@ -258,7 +308,7 @@ describe("Forge CLI generation and inspection", () => {
           useful: false,
         },
         summary: {
-          generated: "ready",
+          generated: "check-needed",
           frontendPresent: false,
           routes: 0,
         },
@@ -284,9 +334,9 @@ describe("Forge CLI generation and inspection", () => {
       expect(git.changed.byType.docs.sample).toContain("docs/status.md");
       expect(git.changed.primaryTypes).toContain("source");
       expect(Number((status.data.summary as Record<string, unknown>).missingDefaultAgentFiles)).toBeGreaterThan(0);
-      expect((status.data.nextActions as string[])[0]).toBe("forge handoff --json");
+      expect((status.data.nextActions as string[])[0]).toBe("forge generate --check --json");
       expect(status.data.nextActions as string[]).toContain("forge changed --json");
-      expect((status.data.generated as { nextActions: string[] }).nextActions).toContain("forge dev");
+      expect((status.data.generated as { nextActions: string[] }).nextActions).toContain("forge generate --check --json");
       const human = formatStatusHuman(status);
       expect(human).toContain("Generated detail: missing artifacts 0, table drift 0");
       expect(human).toContain("Generated check: forge generate --check --json");
@@ -357,6 +407,7 @@ describe("Forge CLI generation and inspection", () => {
         "docs",
         "generated",
       ]);
+      expect((changed.data.nextActions as string[])[0]).toBe("forge generate --check --json");
       expect(changed.data.nextActions as string[]).toContain("forge verify --changed");
 
       const authored = runChangedCommand(workspace, { authoredOnly: true });
@@ -434,6 +485,46 @@ describe("Forge CLI generation and inspection", () => {
         count: 1,
         sample: ["src/commands/changed.ts"],
       });
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("changed reports large clean diffs as advisory instead of risk", () => {
+    const workspace = mkdtempSync(join(tmpdir(), "cli-changed-large-clean-"));
+    try {
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      for (let index = 0; index < 51; index += 1) {
+        mkdirSync(join(workspace, "docs"), { recursive: true });
+        writeFileSync(join(workspace, "docs", `note-${index}.md`), `# Note ${index}\n`, "utf8");
+      }
+
+      const changed = runChangedCommand(workspace, { reviewOnly: true });
+      const risks = changed.data.risks as string[];
+      const advisories = changed.data.advisories as string[];
+
+      expect(changed.exitCode).toBe(0);
+      expect(risks).not.toContain("51 changed file(s) detected; use the grouped summaries before reviewing raw diffs");
+      expect(advisories).toContain("51 changed file(s) detected; use grouped summaries before reviewing raw diffs");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("changed uses repo-local Forge CLI commands when bin/forge.mjs exists", () => {
+    const workspace = mkdtempSync(join(tmpdir(), "cli-changed-local-forge-"));
+    try {
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      mkdirSync(join(workspace, "src", "commands"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
+      writeFileSync(join(workspace, "src", "commands", "changed.ts"), "export const ok = true;\n", "utf8");
+
+      const changed = runChangedCommand(workspace, { reviewOnly: true });
+      expect(changed.exitCode).toBe(0);
+      expect(changed.data.nextActions as string[]).toContain("node bin/forge.mjs generate --check --json");
+      expect(changed.data.nextActions as string[]).toContain("node bin/forge.mjs handoff --json");
+      expect(changed.data.nextActions as string[]).not.toContain("forge handoff --json");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
@@ -599,6 +690,30 @@ describe("Forge CLI generation and inspection", () => {
     }
   }, 30_000);
 
+  test("status uses repo-local Forge CLI commands when bin/forge.mjs exists", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-status-local-forge");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
+
+      const status = runStatusCommand(workspace);
+      const nextActions = status.data.nextActions as string[];
+      const generated = status.data.generated as { nextActions: string[]; checkCommand: string };
+      const studio = status.data.studio as { openCommand: string; startTargetAppCommand: string };
+
+      expect(nextActions).toContain("node bin/forge.mjs handoff --json");
+      expect(nextActions).not.toContain("forge handoff --json");
+      expect(nextActions).toContain("node bin/forge.mjs dev");
+      expect(generated.nextActions).toContain("node bin/forge.mjs dev --once --json");
+      expect(generated.checkCommand).toBe("node bin/forge.mjs generate --check --json");
+      expect(studio.openCommand).toBe("node bin/forge.mjs studio open . --preview-port 5174 --target codex --json");
+      expect(studio.startTargetAppCommand).toBe("node bin/forge.mjs dev --port 3766 --web-port 5174");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("status explains generated git dirtiness separately from generator freshness", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-status-generated-dirty");
     try {
@@ -615,6 +730,7 @@ describe("Forge CLI generation and inspection", () => {
       expect(status.data.generated).toMatchObject({
         state: "ready",
         driftClean: true,
+        freshness: "verified-or-unchanged",
         git: {
           authoredFiles: 0,
           generatedFiles: 1,

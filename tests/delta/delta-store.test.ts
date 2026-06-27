@@ -16,6 +16,11 @@ function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
 }
 
+function markFrameworkCheckout(root: string): void {
+  mkdirSync(join(root, "bin"), { recursive: true });
+  writeFileSync(join(root, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
+}
+
 describe("delta store", () => {
   test("delta repair dry-run plans a backup without mutating the store", async () => {
     const root = tempWorkspace("delta-repair-preview");
@@ -32,6 +37,24 @@ describe("delta store", () => {
       expect(result.backupPath).toContain(".forge/delta/backups/delta.db.");
       expect(result.actions.some((action) => action.kind === "backup")).toBe(true);
       expect(result.nextActions).toContain("forge delta repair --yes --json");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("delta command hints use the repo-local Forge CLI in framework checkouts", async () => {
+    const root = tempWorkspace("delta-local-cli-hints");
+    try {
+      markFrameworkCheckout(root);
+      mkdirSync(join(root, ".forge", "delta", "delta.db"), { recursive: true });
+
+      const repair = await runDeltaRepair({ workspaceRoot: root, dryRun: true, yes: false });
+      expect(repair.nextActions).toContain("node bin/forge.mjs delta repair --yes --json");
+      expect(repair.nextActions).not.toContain("forge delta repair --yes --json");
+
+      const rejectedExport = await runDeltaExport({ workspaceRoot: root, redacted: false });
+      expect(rejectedExport.nextActions).toContain("node bin/forge.mjs delta export --redacted --json");
+      expect(rejectedExport.diagnostics[0]?.suggestedCommands).toContain("node bin/forge.mjs delta export --redacted --json");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

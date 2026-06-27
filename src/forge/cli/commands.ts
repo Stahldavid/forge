@@ -284,6 +284,7 @@ import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
 import { getActiveDbAdapter } from "../runtime/executor.ts";
 import { CLI_VERSION, FORGEOS_VERSION } from "../version.ts";
 import type { CategorizedFileSummary } from "../workspace/change-summary.ts";
+import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
 import { startCommandHeartbeat } from "./progress.ts";
 
@@ -722,33 +723,69 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
   const driftClean = driftSummary.ok === true;
   const ok = driftClean && generatedReady;
   const handoffDefaultReady = handoffSummary.defaultReady === true;
-  const generatedState = !generatedReady
-    ? "missing-artifacts"
-    : driftClean
-      ? "ready"
-      : "drift";
-  const generatedNextActions = generatedState === "ready"
-    ? ["forge dev", "forge generate --check --json"]
-    : ["forge generate", "forge check --json", "forge inspect drift --json"];
   const changed = gitSummary.changeSummary.changed;
   const generatedGitFiles = changed.byType.generated.count;
   const authoredGitFiles = changed.total.count - generatedGitFiles;
+  const authoredGeneratedInputs =
+    changed.byType.source.count +
+    changed.byType.config.count +
+    changed.byType.operational.count;
+  const generatedNeedsCheck = generatedReady && driftClean && generatedGitFiles === 0 && authoredGeneratedInputs > 0;
+  const generatedState = !generatedReady
+    ? "missing-artifacts"
+    : generatedNeedsCheck
+      ? "check-needed"
+    : driftClean
+      ? "ready"
+      : "drift";
+  const generatedNextActionsRaw = generatedState === "ready"
+    ? ["forge dev", "forge generate --check --json"]
+    : generatedState === "check-needed"
+      ? ["forge generate --check --json", "forge handoff --json", "forge dev --once --json"]
+    : ["forge generate", "forge check --json", "forge inspect drift --json"];
+  const generatedNextActions = forgeCliCommandsForWorkspace(workspaceRoot, generatedNextActionsRaw);
   const generatedGitExplanation = generatedGitFiles === 0
-    ? "git status has no generated artifact changes"
+    ? generatedNeedsCheck
+      ? "git status has no generated artifact changes, but authored source/config changes mean freshness is unverified until forge generate --check runs"
+      : "git status has no generated artifact changes"
     : authoredGitFiles === 0
       ? "forge generate --check can be clean while git shows generated artifacts changed: generated files match current workspace inputs but differ from HEAD"
       : "git status includes generated artifacts alongside authored changes; review authored inputs first";
+  const [safeDevCommand, generatedCheckCommand, generatedRepairCommand] = forgeCliCommandsForWorkspace(workspaceRoot, [
+    "forge dev",
+    "forge generate --check --json",
+    "forge generate",
+  ]);
   const frontendPresent = summaryBlock.frontendPresent === true;
+  const [
+    studioOpenCommand,
+    studioAttachCommand,
+    studioSnapshotCommand,
+    studioWatchCommand,
+    studioBridgeCommand,
+    studioDoctorCommand,
+    studioStartTargetAppCommand,
+    studioProbeCommand,
+  ] = forgeCliCommandsForWorkspace(workspaceRoot, [
+    "forge studio open . --preview-port 5174 --target codex --json",
+    "forge studio attach . --preview-port 5174 --target codex --json",
+    "forge studio snapshot . --preview-port 5174 --target codex --json",
+    "forge studio watch . --preview-port 5174 --target codex --json",
+    "forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json",
+    "forge studio doctor . --preview-port 5174 --target codex --json",
+    "forge dev --port 3766 --web-port 5174",
+    "forge dev --once --json",
+  ]);
   const studio = {
-    openCommand: "forge studio open . --preview-port 5174 --target codex --json",
-    attachCommand: "forge studio attach . --preview-port 5174 --target codex --json",
-    snapshotCommand: "forge studio snapshot . --preview-port 5174 --target codex --json",
-    watchCommand: "forge studio watch . --preview-port 5174 --target codex --json",
-    bridgeCommand: "forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json",
-    doctorCommand: "forge studio doctor . --preview-port 5174 --target codex --json",
+    openCommand: studioOpenCommand,
+    attachCommand: studioAttachCommand,
+    snapshotCommand: studioSnapshotCommand,
+    watchCommand: studioWatchCommand,
+    bridgeCommand: studioBridgeCommand,
+    doctorCommand: studioDoctorCommand,
     targetPreviewUrl: "http://127.0.0.1:5174",
-    startTargetAppCommand: "forge dev --port 3766 --web-port 5174",
-    probeCommand: "forge dev --once --json",
+    startTargetAppCommand: studioStartTargetAppCommand,
+    probeCommand: studioProbeCommand,
     useful: frontendPresent,
     note: frontendPresent
       ? "Attach this app to Forge Studio as an external-agent workroom; Studio should preview the target app on 5174."
@@ -764,11 +801,13 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
         state: generatedState,
         ready: generatedReady,
         driftClean,
+        freshness: generatedNeedsCheck ? "unverified" : generatedState === "ready" ? "verified-or-unchanged" : "attention",
+        authoredGeneratedInputs,
         missingArtifacts,
         tableDrift,
-        safeDevCommand: "forge dev",
-        checkCommand: "forge generate --check --json",
-        repairCommand: "forge generate",
+        safeDevCommand,
+        checkCommand: generatedCheckCommand,
+        repairCommand: generatedRepairCommand,
         git: {
           changedFiles: changed.total.count,
           authoredFiles: authoredGitFiles,
@@ -809,8 +848,11 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
         },
       },
       git,
-      nextActions: ok
-        ? [
+      nextActions: forgeCliCommandsForWorkspace(
+        workspaceRoot,
+        ok
+          ? [
+            ...(generatedState === "check-needed" ? ["forge generate --check --json"] : []),
             "forge handoff --json",
             "forge changed --json",
             "forge dev",
@@ -819,7 +861,7 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
             "forge inspect handoff --json",
             "forge verify --changed",
           ]
-        : [
+          : [
             "forge generate",
             "forge handoff --json",
             "forge changed --json",
@@ -827,6 +869,7 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
             "forge inspect drift --json",
             "forge agent prepare --target codex --json",
           ],
+      ),
     },
     exitCode: ok ? 0 : 1,
   };
@@ -1589,6 +1632,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         packageManager: command.packageManager,
         install: command.install,
         git: command.git,
+        fieldTest: command.fieldTest,
         forgePackageSpec: command.forgePackageSpec,
         localForge: command.localForge,
         workspaceRoot: command.workspaceRoot,
@@ -1651,7 +1695,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         concurrency: 4,
       });
       if (command.json) {
-        process.stdout.write(formatJsonResult(buildGenerateJson(result)));
+        process.stdout.write(formatJsonResult(buildGenerateJson(result, { workspaceRoot: command.workspaceRoot })));
       } else {
         process.stdout.write(formatAgentContractHuman(command.subcommand, result));
         writeHumanGenerate(result);
@@ -2015,7 +2059,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       });
 
       if (command.json) {
-        process.stdout.write(formatJsonResult(buildGenerateJson(result)));
+        process.stdout.write(formatJsonResult(buildGenerateJson(result, { workspaceRoot: command.workspaceRoot })));
       } else {
         writeHumanGenerate(result);
       }
@@ -2025,7 +2069,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "add": {
       const result = await runAddCommand(command.alias, command.options);
       if (command.options.json) {
-        process.stdout.write(formatJsonResult(buildAddJson(result)));
+        process.stdout.write(formatJsonResult(buildAddJson(result, { workspaceRoot: command.options.workspaceRoot })));
       } else {
         writeHumanAdd(result);
       }
@@ -2061,6 +2105,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "changed": {
       const result = runChangedCommand(command.workspaceRoot, {
         authoredOnly: command.authoredOnly,
+        reviewOnly: command.reviewOnly,
       });
       if (command.json) {
         process.stdout.write(formatJsonResult(result.data));
@@ -2171,11 +2216,12 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "check": {
-      const result = await runCheckCommand(process.cwd(), {
+      const checkWorkspaceRoot = process.cwd();
+      const result = await runCheckCommand(checkWorkspaceRoot, {
         strictSecrets: command.strictSecrets,
       });
       if (command.json) {
-        process.stdout.write(formatJsonResult(buildCheckJson(result)));
+        process.stdout.write(formatJsonResult(buildCheckJson(result, { workspaceRoot: checkWorkspaceRoot })));
       } else {
         writeHumanGenerate(result);
       }

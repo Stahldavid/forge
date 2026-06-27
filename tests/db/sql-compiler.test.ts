@@ -41,7 +41,7 @@ describe("sql compiler", () => {
     const second = serializeSqlPlanJson(buildSqlPlan(buildDataGraph(appGraph)));
 
     expect(first).toBe(second);
-    expect(JSON.parse(first).diagnostics).toEqual([]);
+    expect(JSON.parse(first).diagnostics).toEqual(plan.diagnostics);
   });
 
   test("orders tables before dependents with inline foreign keys", () => {
@@ -143,6 +143,39 @@ describe("sql compiler", () => {
     expect(table?.columns?.map((column) => column.fieldName ?? column.name)).toContain("name");
     expect(table?.sql).toContain("\"name\" text NOT NULL");
     expect(tableMap.tenants?.columns.map((column) => column.fieldName ?? column.name)).toContain("name");
+  });
+
+  test("rejects text id fields instead of silently choosing another primary key", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "approvalRequests",
+          name: "approvalRequests",
+          symbolId: "approvalRequests",
+          exportName: "approvalRequests",
+          file: "src/forge/schema.ts",
+          fields: [
+            { name: "id", type: "text" },
+            { name: "amount", type: "number" },
+            { name: "title", type: "text" },
+          ],
+        },
+      ],
+    });
+
+    expect(plan.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "FORGE_DB_INVALID_SQL_PLAN",
+        severity: "error",
+        file: "src/forge/schema.ts",
+      }),
+    );
+    expect(plan.tables[0]?.columns?.find((column) => column.name === "amount")?.primaryKey).not.toBe(true);
   });
 
   test("reports unsupported field types", async () => {

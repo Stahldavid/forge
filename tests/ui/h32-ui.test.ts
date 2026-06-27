@@ -176,6 +176,57 @@ describe("H32 UI / browser test bridge", () => {
     expect(result.diagnostics.filter((diag) => diag.severity === "error")).toEqual([]);
   });
 
+  test("ui audit reports static UX and production-auth readiness warnings", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/dataGraph.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      generatorVersion: "0.0.0",
+      analyzerVersion: "test",
+      inputHash: "hash",
+      tables: [{
+        table: "projects",
+        fields: [{ name: "id", type: "text" }, { name: "tenantId", type: "text" }],
+      }],
+      diagnostics: [],
+    }));
+    write(root, "src/forge/_generated/agentContract.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      auth: { modes: ["dev-headers", "jwt"] },
+    }));
+    write(root, "web/app/page.tsx", `
+      import { useLiveQuery } from "../src/lib/forge";
+
+      export default function Page() {
+        const board = useLiveQuery("liveTickets", {});
+        return (
+          <div>
+            <form>
+              <input name="email" />
+              <button><span /></button>
+            </form>
+            <pre>{JSON.stringify(board.data)}</pre>
+          </div>
+        );
+      }
+    `);
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    const codes = result.diagnostics.map((diag) => diag.code);
+
+    expect(result.ok).toBe(true);
+    expect(codes).toContain("FORGE_UI_AUTH_FLOW_MISSING");
+    expect(codes).toContain("FORGE_UI_LANDMARK_MISSING");
+    expect(codes).toContain("FORGE_UI_FORM_LABEL_MISSING");
+    expect(codes).toContain("FORGE_UI_BUTTON_NAME_MISSING");
+    expect(codes).toContain("FORGE_UI_LOADING_STATE_MISSING");
+    expect(codes).toContain("FORGE_UI_ERROR_STATE_MISSING");
+    expect(codes).toContain("FORGE_UI_EMPTY_STATE_MISSING");
+  });
+
   test("repair can diagnose from last UI run", () => {
     const root = workspace();
     const report: UiRunReport = {

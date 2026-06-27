@@ -8,10 +8,15 @@ Recommended:
 
 ```bash
 npm create forgeos-app@alpha my-app -- --template minimal-web
+npm create forgeos-app@alpha . -- --template minimal-web
 npm create forgeos-app@alpha my-app -- --template nuxt-web
 cd my-app
 npm run dev
 ```
+
+Use `.` from an empty current directory when you already created and entered
+the target folder. ForgeOS refuses `.` when the directory contains app files, so
+scaffolding does not overwrite existing work.
 
 Expected result:
 

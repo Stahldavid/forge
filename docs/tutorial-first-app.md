@@ -109,13 +109,13 @@ Read the plan before applying it. For a real app change that adds schema, comman
 Example resource command:
 
 ```bash
-npm run forge -- make resource task --fields title:text,status:enum(open,done) --with-ui --dry-run --json
+npm run forge -- make resource task --fields title:text,status:enum=open+done --with-ui --dry-run --json
 ```
 
 Apply only after reviewing the generated plan:
 
 ```bash
-npm run forge -- make resource task --fields title:text,status:enum(open,done) --with-ui --yes
+npm run forge -- make resource task --fields title:text,status:enum=open+done --with-ui --yes
 ```
 
 ## 7. Regenerate and check

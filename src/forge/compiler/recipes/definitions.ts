@@ -246,7 +246,7 @@ export const WORKOS_RECIPE: IntegrationRecipe = {
     "workos/webhook.ts",
     "workos/workos-seed.yml",
   ],
-  rootFiles: [".env.example", "src/policies.workos.ts"],
+  rootFiles: [".env.example", "src/policies.workos.ts", "workos-seed.yml"],
   testkits: ["workos.mock.ts"],
   docs: ["workos.md"],
 };

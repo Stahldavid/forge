@@ -475,9 +475,14 @@ function parseFieldOptions(options: MakeCommandOptions): {
   field?: MakeFieldSpec;
   diagnostics: Diagnostic[];
 } {
+  const fieldSpecs = options.fieldSpecs.map((fieldSpec) =>
+    options.values && /^[a-zA-Z][a-zA-Z0-9_]*:enum(?::|$)/.test(fieldSpec)
+      ? fieldSpec.replace(":enum", `:enum(${options.values})`)
+      : fieldSpec,
+  );
   const rawFields = [
     ...(options.fieldsRaw ? [options.fieldsRaw] : []),
-    ...options.fieldSpecs,
+    ...fieldSpecs,
   ];
   const parsed = parseFields(rawFields);
   const diagnostics = [...parsed.diagnostics];

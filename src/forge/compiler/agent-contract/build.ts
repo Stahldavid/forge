@@ -615,7 +615,7 @@ function playbooks(): AgentPlaybook[] {
     {
       title: "Scaffold a resource",
       steps: [
-        "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
+        "Run forge make resource <name> --fields name:type,status:enum=open+closed --dry-run --json.",
         "Review the plan and diagnostics.",
         "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",
@@ -1838,8 +1838,8 @@ forge do verify --json
 Use:
 
 \`\`\`bash
-forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
-forge make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
+forge make resource <name> --fields title:text,status:enum=open+closed --dry-run --json
+forge make resource <name> --fields title:text,status:enum=open+closed --with-ui --yes
 forge make ui --framework vite --dry-run --json
 forge make ui --framework nuxt --dry-run --json
 forge make ai-chat support --dry-run --json
