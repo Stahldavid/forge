@@ -28,6 +28,7 @@ export interface WorkOSCommandResult {
   checks: WorkOSCheck[];
   command?: string[];
   applied?: boolean;
+  data?: unknown;
   stdout?: string;
   stderr?: string;
   exitCode: 0 | 1;
@@ -87,6 +88,180 @@ function includesAll(haystack: string, needles: string[]): boolean {
   return needles.every((needle) => haystack.includes(needle));
 }
 
+function uniqueSorted(values: Iterable<string>): string[] {
+  return [...new Set([...values].filter(Boolean))].sort();
+}
+
+function quotedValues(text: string): string[] {
+  return [...text.matchAll(/["']([^"']+)["']/g)].map((match) => match[1]!).filter(Boolean);
+}
+
+interface WorkOSSeedSummary {
+  exists: boolean;
+  valid: boolean;
+  path: string;
+  permissions: string[];
+  roles: string[];
+  resourceTypes: string[];
+  organizations: string[];
+  domains: string[];
+  diagnostics: string[];
+}
+
+function parseSlug(line: string): string | null {
+  const match = /(?:^|\s)-?\s*slug:\s*["']?([^"',\]\s]+)["']?/.exec(line);
+  return match?.[1] ?? null;
+}
+
+function parseName(line: string): string | null {
+  const match = /(?:^|\s)-?\s*name:\s*["']?([^"'\]]+(?:\s[^"'\]]+)*)["']?/.exec(line);
+  return match?.[1]?.trim() ?? null;
+}
+
+function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEED_FILE): WorkOSSeedSummary {
+  const seedPath = exists(workspaceRoot, preferredPath)
+    ? preferredPath
+    : exists(workspaceRoot, GENERATED_SEED_FILE)
+      ? GENERATED_SEED_FILE
+      : preferredPath;
+  const raw = readText(workspaceRoot, seedPath);
+  const permissions = new Set<string>();
+  const roles = new Set<string>();
+  const resourceTypes = new Set<string>();
+  const organizations = new Set<string>();
+  const domains = new Set<string>();
+  const diagnostics: string[] = [];
+  let section = "";
+
+  if (!raw.trim()) {
+    return {
+      exists: false,
+      valid: false,
+      path: seedPath,
+      permissions: [],
+      roles: [],
+      resourceTypes: [],
+      organizations: [],
+      domains: [],
+      diagnostics: [`${seedPath} is missing or empty`],
+    };
+  }
+
+  for (const line of raw.split(/\r?\n/)) {
+    const rootSection = /^([a-zA-Z_][\w-]*):\s*$/.exec(line);
+    if (rootSection) {
+      section = rootSection[1]!;
+      continue;
+    }
+
+    const slug = parseSlug(line);
+    if (slug) {
+      if (section === "permissions") {
+        permissions.add(slug);
+      } else if (section === "roles") {
+        roles.add(slug);
+      } else if (section === "resource_types") {
+        resourceTypes.add(slug);
+      }
+    }
+
+    if (section === "organizations") {
+      const name = parseName(line);
+      if (name) {
+        organizations.add(name);
+      }
+      for (const value of quotedValues(line)) {
+        if (value.includes(".")) {
+          domains.add(value);
+        }
+      }
+    }
+
+    for (const match of line.matchAll(/-\s*["']?([a-zA-Z0-9_.-]+:[a-zA-Z0-9_.-]+)["']?/g)) {
+      permissions.add(match[1]!);
+    }
+  }
+
+  if (permissions.size === 0) diagnostics.push("no permission slugs found");
+  if (roles.size === 0) diagnostics.push("no role slugs found");
+  if (resourceTypes.size === 0) diagnostics.push("no resource_types slugs found");
+  if (organizations.size === 0) diagnostics.push("no organizations found");
+
+  return {
+    exists: true,
+    valid: diagnostics.length === 0,
+    path: seedPath,
+    permissions: uniqueSorted(permissions),
+    roles: uniqueSorted(roles),
+    resourceTypes: uniqueSorted(resourceTypes),
+    organizations: uniqueSorted(organizations),
+    domains: uniqueSorted(domains),
+    diagnostics,
+  };
+}
+
+function collectPolicyPermissions(workspaceRoot: string): string[] {
+  const registry = readJson(workspaceRoot, `${GENERATED_DIR}/policyRegistry.json`) as {
+    policies?: Array<{ permissions?: string[] }>;
+  } | null;
+  const permissions = new Set<string>();
+  for (const policy of registry?.policies ?? []) {
+    for (const permission of policy.permissions ?? []) {
+      permissions.add(permission);
+    }
+  }
+  for (const path of ["src/policies.ts", "src/policies.workos.ts"]) {
+    const text = readText(workspaceRoot, path);
+    for (const match of text.matchAll(/canPermission\s*\(([^)]*)\)/g)) {
+      for (const value of quotedValues(match[1] ?? "")) {
+        permissions.add(value);
+      }
+    }
+  }
+  return uniqueSorted(permissions);
+}
+
+function singularResourceName(name: string): string {
+  if (name.endsWith("ies")) {
+    return `${name.slice(0, -3)}y`;
+  }
+  if (name.endsWith("ses")) {
+    return name.slice(0, -2);
+  }
+  if (name.endsWith("s") && name.length > 1) {
+    return name.slice(0, -1);
+  }
+  return name;
+}
+
+function collectExpectedResourceTypes(workspaceRoot: string): string[] {
+  const dataGraph = readJson(workspaceRoot, `${GENERATED_DIR}/dataGraph.json`) as {
+    tables?: Array<{ name?: string; fields?: Array<{ name?: string }> }>;
+  } | null;
+  const agentContract = readJson(workspaceRoot, `${GENERATED_DIR}/agentContract.json`) as {
+    auth?: { requiresTenant?: boolean };
+  } | null;
+  const resourceTypes = new Set<string>();
+  const tenantScopedTables = (dataGraph?.tables ?? []).filter((table) =>
+    (table.fields ?? []).some((field) => field.name === "tenantId")
+  );
+  if (agentContract?.auth?.requiresTenant || tenantScopedTables.length > 0) {
+    resourceTypes.add("organization");
+  }
+  for (const table of tenantScopedTables) {
+    if (!table.name || ["organizations", "organization", "memberships", "membership"].includes(table.name)) {
+      continue;
+    }
+    resourceTypes.add(singularResourceName(table.name));
+  }
+  return uniqueSorted(resourceTypes);
+}
+
+function missingValues(expected: string[], actual: string[]): string[] {
+  const actualSet = new Set(actual);
+  return expected.filter((value) => !actualSet.has(value));
+}
+
 function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
   const packageJson = readJson(workspaceRoot, "package.json") as {
     dependencies?: Record<string, string>;
@@ -103,7 +278,11 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     ...(packageJson?.dependencies ?? {}),
     ...(packageJson?.devDependencies ?? {}),
   };
-  const seedFile = readText(workspaceRoot, DEFAULT_SEED_FILE) || readText(workspaceRoot, GENERATED_SEED_FILE);
+  const seed = parseSeedFile(workspaceRoot);
+  const activePermissions = collectPolicyPermissions(workspaceRoot);
+  const expectedResourceTypes = collectExpectedResourceTypes(workspaceRoot);
+  const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
+  const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
   const authRoutes = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/auth-routes.ts`);
   const fga = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/fga.ts`);
   const resourceMap = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/resource-map.ts`);
@@ -135,30 +314,33 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     },
     {
       name: "seed-file",
-      ok: exists(workspaceRoot, DEFAULT_SEED_FILE) || exists(workspaceRoot, GENERATED_SEED_FILE),
-      detail: `${DEFAULT_SEED_FILE} exists at the app root; generated fallback is ${GENERATED_SEED_FILE}`,
+      ok: seed.exists,
+      detail: seed.exists
+        ? `${seed.path} exists with ${seed.permissions.length} permission(s), ${seed.roles.length} role(s), ${seed.resourceTypes.length} resource type(s)`
+        : `${DEFAULT_SEED_FILE} or ${GENERATED_SEED_FILE} is required`,
     },
     {
       name: "seed-organizations",
-      ok: includesAll(seedFile, ["Acme Corp", "Globex", "acme.test", "globex.test"]),
-      detail: "seed file contains Acme/Globex demo organizations and domains",
+      ok: seed.organizations.length > 0,
+      detail: seed.organizations.length > 0
+        ? `seed file contains organization(s): ${seed.organizations.join(", ")}`
+        : "seed file should contain at least one demo organization",
     },
     {
       name: "seed-roles-permissions",
-      ok: includesAll(seedFile, [
-        "owner",
-        "manager",
-        "member",
-        "onboarding:read",
-        "invitations:create",
-        "tasks:update",
-      ]),
-      detail: "seed file contains owner/manager/member roles and onboarding permissions",
+      ok: seed.roles.length > 0 &&
+        (activePermissions.length === 0 ? seed.permissions.length > 0 : missingSeedPermissions.length === 0),
+      detail: missingSeedPermissions.length === 0
+        ? `seed covers ${activePermissions.length} active policy permission(s) with role(s): ${seed.roles.join(", ")}`
+        : `seed missing active policy permission(s): ${missingSeedPermissions.join(", ")}`,
     },
     {
       name: "seed-resource-types",
-      ok: includesAll(seedFile, ["resource_types:", "organization", "project", "taskGroup", "task"]),
-      detail: "seed file contains WorkOS FGA resource types for the Forge app graph",
+      ok: seed.resourceTypes.length > 0 &&
+        (expectedResourceTypes.length === 0 || missingSeedResources.length === 0),
+      detail: missingSeedResources.length === 0
+        ? `seed resource_types cover app graph: ${expectedResourceTypes.length > 0 ? expectedResourceTypes.join(", ") : seed.resourceTypes.join(", ")}`
+        : `seed missing resource_type(s) for app graph: ${missingSeedResources.join(", ")}`,
     },
     {
       name: "authkit-routes",
@@ -192,14 +374,17 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
         "permissionSlug",
         "resourceExternalId",
       ]) &&
-        includesAll(fga, ["forgeWorkOSResourceTypes", "organization", "project", "task"]),
+        includesAll(fga, ["forgeWorkOSResourceTypes"]),
       detail: "WorkOS FGA resource-map bridge exists with sync, cache, telemetry, official check shape, and cross-tenant guard",
     },
     {
       name: "policies",
       ok: exists(workspaceRoot, "src/policies.workos.ts") &&
-        includesAll(policies, ["canPermission", "invitations:create", "tasks:update"]),
-      detail: "WorkOS-derived Forge policy template exists and is permission-first",
+        policies.includes("canPermission") &&
+        missingValues(activePermissions, quotedValues(policies)).length === 0,
+      detail: activePermissions.length === 0
+        ? "WorkOS-derived Forge policy template exists and is permission-first"
+        : `WorkOS-derived policy template covers active permission(s): ${activePermissions.join(", ")}`,
     },
   ];
 }
@@ -280,19 +465,60 @@ export function runWorkOSInstallCommand(options: WorkOSCommandOptions): WorkOSCo
 
 export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   const file = options.file ?? DEFAULT_SEED_FILE;
+  const seed = parseSeedFile(options.workspaceRoot, file);
+  const activePermissions = collectPolicyPermissions(options.workspaceRoot);
+  const expectedResourceTypes = collectExpectedResourceTypes(options.workspaceRoot);
+  const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
+  const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
+  const unusedSeedPermissions = seed.permissions.filter((permission) => !activePermissions.includes(permission));
   const checks = [
     {
       name: "seed-file",
-      ok: exists(options.workspaceRoot, file),
-      detail: `${file} exists`,
+      ok: seed.exists,
+      detail: seed.exists ? `${seed.path} exists` : `${file} exists`,
+    },
+    {
+      name: "seed-yaml-shape",
+      ok: seed.valid,
+      detail: seed.valid ? "seed contains permissions, roles, resource_types, and organizations" : seed.diagnostics.join("; "),
+    },
+    {
+      name: "seed-policy-coverage",
+      ok: missingSeedPermissions.length === 0,
+      detail: missingSeedPermissions.length === 0
+        ? `seed covers ${activePermissions.length} active permission(s)`
+        : `seed missing active permission(s): ${missingSeedPermissions.join(", ")}`,
+    },
+    {
+      name: "seed-resource-coverage",
+      ok: missingSeedResources.length === 0,
+      detail: missingSeedResources.length === 0
+        ? `seed covers app resource type(s): ${expectedResourceTypes.join(", ") || "none required"}`
+        : `seed missing resource type(s): ${missingSeedResources.join(", ")}`,
     },
   ];
   const command = ["npx", "--yes", "workos@latest", "seed", "--file", file];
   if (!checks.every((check) => check.ok)) {
-    return { ok: false, kind: "workos-seed", checks, command, applied: false, exitCode: 1 };
+    return {
+      ok: false,
+      kind: "workos-seed",
+      checks,
+      command,
+      applied: false,
+      data: { seed, activePermissions, expectedResourceTypes, unusedSeedPermissions },
+      exitCode: 1,
+    };
   }
   if (!options.yes || options.dryRun) {
-    return { ok: true, kind: "workos-seed", checks, command, applied: false, exitCode: 0 };
+    return {
+      ok: true,
+      kind: "workos-seed",
+      checks,
+      command,
+      applied: false,
+      data: { seed, activePermissions, expectedResourceTypes, unusedSeedPermissions },
+      exitCode: 0,
+    };
   }
   const child = runExternalCommand(command, options);
   return {
@@ -301,6 +527,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     checks,
     command,
     applied: child.status === 0,
+    data: { seed, activePermissions, expectedResourceTypes, unusedSeedPermissions },
     stdout: child.stdout,
     stderr: child.stderr,
     exitCode: child.status === 0 ? 0 : 1,

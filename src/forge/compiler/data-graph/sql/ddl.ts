@@ -34,6 +34,7 @@ const SYSTEM_LIVE_SUBSCRIPTION_DEBUG_SQL = `CREATE TABLE IF NOT EXISTS _forge_li
 
 interface ParsedFieldType {
   sqlType: string;
+  nullable?: boolean;
   references?: { table: string; column: string };
   checkConstraint?: string;
 }
@@ -102,28 +103,35 @@ function parseFieldType(
   tableName: string,
   diagnostics: Diagnostic[],
 ): ParsedFieldType | null {
-  const raw = field.type.trim().toLowerCase();
+  const declared = field.type.trim();
+  const nullable = declared.endsWith("?");
+  const raw = (nullable ? declared.slice(0, -1) : declared).trim().toLowerCase();
+
+  const withNullability = (parsed: Omit<ParsedFieldType, "nullable">): ParsedFieldType => ({
+    ...parsed,
+    ...(nullable ? { nullable: true } : {}),
+  });
 
   if (raw === "uuid") {
-    return { sqlType: "uuid" };
+    return withNullability({ sqlType: "uuid" });
   }
   if (raw === "text" || raw === "string") {
-    return { sqlType: "text" };
+    return withNullability({ sqlType: "text" });
   }
   if (raw === "number") {
-    return { sqlType: "double precision" };
+    return withNullability({ sqlType: "double precision" });
   }
   if (raw === "integer" || raw === "int") {
-    return { sqlType: "integer" };
+    return withNullability({ sqlType: "integer" });
   }
   if (raw === "boolean" || raw === "bool") {
-    return { sqlType: "boolean" };
+    return withNullability({ sqlType: "boolean" });
   }
-  if (raw === "timestamp") {
-    return { sqlType: "timestamptz" };
+  if (raw === "timestamp" || raw === "timestamptz") {
+    return withNullability({ sqlType: "timestamptz" });
   }
   if (raw === "json") {
-    return { sqlType: "jsonb" };
+    return withNullability({ sqlType: "jsonb" });
   }
 
   if (raw.startsWith("enum:")) {
@@ -144,13 +152,14 @@ function parseFieldType(
     }
     const checkValues = values.map((value) => `'${value.replace(/'/g, "''")}'`).join(", ");
     return {
+      ...(nullable ? { nullable: true } : {}),
       sqlType: "text",
       checkConstraint: `${quoteIdent(toSnakeCase(field.name))} IN (${checkValues})`,
     };
   }
 
   if (raw.startsWith("enum_")) {
-    return { sqlType: "text" };
+    return withNullability({ sqlType: "text" });
   }
 
   if (raw.startsWith("ref:")) {
@@ -166,6 +175,7 @@ function parseFieldType(
       return null;
     }
     return {
+      ...(nullable ? { nullable: true } : {}),
       sqlType: "uuid",
       references: { table: toSnakeCase(refTable), column: "id" },
     };
@@ -173,6 +183,7 @@ function parseFieldType(
 
   if (raw === "ref") {
     return {
+      ...(nullable ? { nullable: true } : {}),
       sqlType: "uuid",
       references: { table: toSnakeCase(field.name.replace(/Id$/i, "")), column: "id" },
     };
@@ -190,7 +201,7 @@ function parseFieldType(
 
 function defaultExprForField(field: DataField): string | undefined {
   const name = field.name;
-  const type = field.type.trim().toLowerCase();
+  const type = field.type.trim().replace(/\?$/, "").toLowerCase();
 
   if (name === "id" && type === "uuid") {
     return "gen_random_uuid()";
@@ -238,7 +249,7 @@ function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] 
       name: snakeName,
       fieldName: field.name,
       sqlType: parsed.sqlType,
-      nullable: false,
+      nullable: isPrimaryKey ? false : parsed.nullable === true,
       primaryKey: isPrimaryKey,
       defaultExpr,
       references: parsed.references,
@@ -250,7 +261,7 @@ function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] 
     const idField = fields.find((field) => field.name === "id");
     diagnostics.push(
       createDiagnostic({
-        severity: "error",
+        severity: "warning",
         code: FORGE_DB_INVALID_SQL_PLAN,
         message: `table '${table.name}' declares id as '${idField?.type ?? "unknown"}'; Forge runtime requires id: "uuid" or no id field so Forge can generate one`,
         file: table.file,

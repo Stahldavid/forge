@@ -4,13 +4,18 @@ import { join, resolve } from "node:path";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import { classify } from "../compiler/classifier/classify.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
-import { FORGE_RELEASE_PACKAGE_PACK_FAILED } from "../compiler/diagnostics/codes.ts";
+import {
+  FORGE_DB_EMPTY_TIMESTAMP_LITERAL,
+  FORGE_RELEASE_PACKAGE_PACK_FAILED,
+} from "../compiler/diagnostics/codes.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { forgeAdd } from "../compiler/integration/add.ts";
 import { checkImportGuards } from "../compiler/guards/check-import-guards.ts";
 import { checkDirectProcessEnvUsage } from "../compiler/guards/check-process-env.ts";
 import { checkAiUsageInApp } from "../compiler/guards/check-ai-usage.ts";
 import { checkQueryUsageInApp } from "../compiler/guards/check-query-usage.ts";
+import { buildDataGraph } from "../compiler/data-graph/build.ts";
+import { buildSqlPlan } from "../compiler/data-graph/sql/ddl.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import { run } from "../compiler/orchestrator/run.ts";
 import {
@@ -1003,12 +1008,70 @@ async function loadRuntimeMatrixForCheck(
   return buildRuntimeMatrix(classified);
 }
 
+function normalizeSchemaType(type: string): string {
+  return type.trim().replace(/\?$/, "").toLowerCase();
+}
+
+function timestampFieldNames(dataGraph: DataGraph): Set<string> {
+  const fields = new Set<string>();
+  for (const table of dataGraph.tables) {
+    for (const field of table.fields) {
+      if (["timestamp", "timestamptz"].includes(normalizeSchemaType(field.type))) {
+        fields.add(field.name);
+      }
+    }
+  }
+  return fields;
+}
+
+function checkEmptyTimestampLiterals(
+  appGraph: Awaited<ReturnType<typeof buildAppGraphForSession>>,
+  dataGraph: DataGraph,
+): ReturnType<typeof createDiagnostic>[] {
+  const fields = timestampFieldNames(dataGraph);
+  if (fields.size === 0) {
+    return [];
+  }
+  const diagnostics: ReturnType<typeof createDiagnostic>[] = [];
+  const runtimeKinds = new Set(["command", "query", "liveQuery", "action", "workflow"]);
+  for (const symbol of appGraph.symbols) {
+    if (!runtimeKinds.has(symbol.kind)) {
+      continue;
+    }
+    const sourceSlice = typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
+    if (!sourceSlice) {
+      continue;
+    }
+    for (const field of fields) {
+      const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const pattern = new RegExp(`\\b${escaped}\\s*:\\s*(["']{2})`);
+      const emptyTemplatePattern = new RegExp(`\\b${escaped}\\s*:\\s*\`\``);
+      if (!pattern.test(sourceSlice) && !emptyTemplatePattern.test(sourceSlice)) {
+        continue;
+      }
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_DB_EMPTY_TIMESTAMP_LITERAL,
+          message:
+            `Forge timestamp field '${field}' is assigned an empty string in ${symbol.kind} '${symbol.name}'.`,
+          file: symbol.file,
+          span: symbol.span,
+        }),
+      );
+    }
+  }
+  return diagnostics;
+}
+
 export async function runCheckCommand(
   workspaceRoot: string,
   options?: { strictSecrets?: boolean },
 ): Promise<GenerateResult> {
   const session = getCompileSession(workspaceRoot);
   const appGraph = await buildAppGraphForSession(session);
+  const dataGraph = buildDataGraph(appGraph);
+  const sqlPlan = buildSqlPlan(dataGraph);
 
   const matrix = await loadRuntimeMatrixForCheck(workspaceRoot);
   const guardDiagnostics = checkImportGuards(appGraph.moduleGraph, matrix);
@@ -1029,12 +1092,17 @@ export async function runCheckCommand(
       `${GENERATED_DIR}/capabilityMap.json`,
     )?.diagnostics ?? [];
   const externalDiagnostics = buildExternalServiceGraph(workspaceRoot).diagnostics;
+  const timestampLiteralDiagnostics = checkEmptyTimestampLiterals(appGraph, dataGraph);
 
   const allDiagnostics = [
+    ...appGraph.diagnostics,
+    ...dataGraph.diagnostics,
+    ...sqlPlan.diagnostics,
     ...guardDiagnostics,
     ...processEnvDiagnostics,
     ...aiDiagnostics,
     ...queryDiagnostics,
+    ...timestampLiteralDiagnostics,
     ...frontendDiagnostics,
     ...capabilityDiagnostics,
     ...externalDiagnostics,
@@ -1314,7 +1382,7 @@ function runManifestCommand(command: Extract<ForgeCommand, { kind: "manifest" }>
 export async function runInspectCommand(
   target: InspectTarget,
   workspaceRoot: string,
-  options: { full?: boolean; brief?: boolean } = {},
+  options: { full?: boolean; brief?: boolean; ergonomics?: boolean } = {},
 ): Promise<InspectResult> {
   const dataPaths: Partial<Record<InspectTarget, string>> = {
     app: `${GENERATED_DIR}/appGraph.json`,
@@ -1408,6 +1476,47 @@ export async function runInspectCommand(
       warnings: [],
       errors: [],
       exitCode: 0,
+    };
+  }
+
+  if (target === "ui" && options.ergonomics) {
+    const result = await runUiCommand({
+      subcommand: "audit",
+      workspaceRoot,
+      json: true,
+      headed: false,
+      browser: "chromium",
+      trace: "off",
+      screenshot: "off",
+      video: "off",
+      baseUrl: "http://127.0.0.1:3000",
+      runtimeUrl: "http://127.0.0.1:3765",
+      reuseServers: false,
+      startServers: false,
+      all: true,
+      changed: false,
+      ci: false,
+      timeoutMs: 30_000,
+    });
+    return {
+      target,
+      data: {
+        schemaVersion: "0.1.0",
+        mode: "ergonomics",
+        ok: result.ok,
+        manifest: result.manifest,
+        scenarios: result.scenarios ?? [],
+        diagnostics: result.diagnostics,
+        nextActions: [
+          "forge ui audit --json",
+          "forge inspect frontend --json",
+          "forge inspect capabilities --json",
+        ],
+      },
+      warnings: result.diagnostics.filter((diagnostic) => diagnostic.severity === "warning"),
+      errors: result.diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
+      exitCode: result.exitCode,
+      failureKind: result.exitCode === 0 ? undefined : "ui_ergonomics",
     };
   }
 
@@ -2106,6 +2215,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       const result = runChangedCommand(command.workspaceRoot, {
         authoredOnly: command.authoredOnly,
         reviewOnly: command.reviewOnly,
+        commitReady: command.commitReady,
       });
       if (command.json) {
         process.stdout.write(formatJsonResult(result.data));
@@ -2203,8 +2313,8 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "inspect": {
       const result = await runInspectCommand(
         command.target,
-        process.cwd(),
-        { full: command.full, brief: command.brief },
+        command.workspaceRoot,
+        { full: command.full, brief: command.brief, ergonomics: command.ergonomics },
       );
       if (command.json) {
         process.stdout.write(formatJsonResult(buildInspectJson(result)));
@@ -2346,6 +2456,8 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         telemetry: command.telemetry,
         envFile: command.envFile,
         skipStartupConsole: command.skipStartupConsole,
+        detach: command.detach,
+        lifecycle: command.lifecycle,
       });
       return result.exitCode;
     }

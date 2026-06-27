@@ -1,4 +1,5 @@
 import type { SecretRequirement } from "../types/capability.ts";
+import type { AppGraph } from "../types/app-graph.ts";
 import type { IntegrationRecipe } from "../types/integration.ts";
 import type { RuntimeContext } from "../types/runtime.ts";
 import { RUNTIME_CONTEXTS } from "../types/runtime.ts";
@@ -93,6 +94,8 @@ export function createRenderContext(input: {
   secrets: SecretRequirement[];
   compatible: RuntimeContext[];
   incompatible: RuntimeContext[];
+  workspaceRoot?: string;
+  appGraph?: AppGraph;
 }): IntegrationTemplateInput {
   return buildTemplateInput(input);
 }
@@ -106,6 +109,8 @@ export function renderAdapterModule(input: {
   secrets: SecretRequirement[];
   compatible: RuntimeContext[];
   incompatible: RuntimeContext[];
+  workspaceRoot?: string;
+  appGraph?: AppGraph;
 }): string {
   const ctx = createRenderContext(input);
   const adapterFilename = `${input.alias}.${input.context}.ts`;
@@ -168,6 +173,8 @@ export function renderIntegrationDoc(input: {
   secrets: SecretRequirement[];
   compatible: RuntimeContext[];
   incompatible: RuntimeContext[];
+  workspaceRoot?: string;
+  appGraph?: AppGraph;
 }): string {
   const ctx = buildTemplateInput({
     alias: input.alias,
@@ -178,6 +185,8 @@ export function renderIntegrationDoc(input: {
     secrets: input.secrets,
     compatible: input.compatible,
     incompatible: input.incompatible,
+    workspaceRoot: input.workspaceRoot,
+    appGraph: input.appGraph,
   });
 
   const docName = `${input.alias}.md`;

@@ -143,7 +143,11 @@ export function public_(): ForgeAuthRule {
   return { kind: "public" };
 }
 
-export function command<T extends ForgeCommandDefinition>(definition: T): ForgeDefinition<T> {
+export function command<
+  TArgs = unknown,
+  TResult = unknown,
+  T extends ForgeCommandDefinition<TArgs, TResult> = ForgeCommandDefinition<TArgs, TResult>,
+>(definition: T): ForgeDefinition<T> {
   return definition;
 }
 

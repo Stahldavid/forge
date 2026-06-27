@@ -191,6 +191,8 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
     secrets,
     compatible,
     incompatible,
+    workspaceRoot: ctx.workspaceRoot,
+    appGraph,
   });
 
   const files: EmitFile[] = [];
@@ -212,6 +214,8 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
           secrets,
           compatible,
           incompatible,
+          workspaceRoot: ctx.workspaceRoot,
+          appGraph,
         }),
       ),
     );
@@ -256,6 +260,8 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
           secrets,
           compatible,
           incompatible,
+          workspaceRoot: ctx.workspaceRoot,
+          appGraph,
         }),
       ),
     );

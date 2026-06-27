@@ -76,6 +76,28 @@ describe("buildAppGraph", () => {
     expect(graph.symbols.length).toBeGreaterThan(1);
   });
 
+  test("emits a strong diagnostic for unnamed default runtime exports", async () => {
+    const text = 'import { command } from "forge/server";\nexport default command({ handler: async () => ({ ok: true }) });\n';
+    const graph = await buildAppGraph({
+      workspaceRoot: fixtureWorkspaceRoot(),
+      sources: [{
+        path: "src/commands/createVendor.ts",
+        text,
+        contentHash: hashStable(text),
+      }],
+    });
+
+    expect(graph.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "FORGE_RUNTIME_EXPORT_NAME_REQUIRED",
+        severity: "error",
+        file: "src/commands/createVendor.ts",
+      }),
+    );
+    expect(graph.diagnostics.find((diagnostic) => diagnostic.code === "FORGE_RUNTIME_EXPORT_NAME_REQUIRED")?.fixHint)
+      .toContain("export const");
+  });
+
   test("does not dup across modules with same qualified name", async () => {
     const graph = await buildAppGraph({
       workspaceRoot: fixtureWorkspaceRoot(),

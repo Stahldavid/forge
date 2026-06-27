@@ -123,7 +123,30 @@ export interface ImpactCommandOptions {
   riskThreshold?: ImpactRiskLevel;
 }
 
-export type TestSubcommand = "plan" | "run" | "explain";
+export type TestSubcommand = "plan" | "run" | "explain" | "authz";
+
+export interface AuthzProofCheck {
+  name: string;
+  ok: boolean;
+  message: string;
+  evidence?: unknown;
+}
+
+export interface AuthzTestProof {
+  schemaVersion: "0.1.0";
+  tenant: string;
+  otherTenant: string;
+  checks: AuthzProofCheck[];
+  summary: {
+    ok: boolean;
+    tenantScopedTables: number;
+    protectedCommands: number;
+    protectedQueries: number;
+    capabilityPolicyBindings: number;
+  };
+  limitations: string[];
+  nextActions: string[];
+}
 
 export interface TestCommandOptions {
   subcommand: TestSubcommand;
@@ -144,6 +167,8 @@ export interface TestCommandOptions {
   bail: boolean;
   report?: string;
   timeoutMs?: number;
+  tenant?: string;
+  otherTenant?: string;
 }
 
 export interface ImpactResult {
@@ -152,6 +177,7 @@ export interface ImpactResult {
   plan?: ImpactTestPlan;
   test?: TestGraphEntry;
   run?: TestRunRecord;
+  authz?: AuthzTestProof;
   diagnostics: Diagnostic[];
   exitCode: 0 | 1;
 }

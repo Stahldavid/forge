@@ -171,11 +171,38 @@ describe("sql compiler", () => {
     expect(plan.diagnostics).toContainEqual(
       expect.objectContaining({
         code: "FORGE_DB_INVALID_SQL_PLAN",
-        severity: "error",
+        severity: "warning",
         file: "src/forge/schema.ts",
       }),
     );
     expect(plan.tables[0]?.columns?.find((column) => column.name === "amount")?.primaryKey).not.toBe(true);
+  });
+
+  test("emits nullable timestamp columns for optional timestamp fields", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "reviews",
+          name: "reviews",
+          symbolId: "reviews",
+          exportName: "reviews",
+          file: "src/forge/schema.ts",
+          fields: [
+            { name: "id", type: "uuid" },
+            { name: "reviewedAt", type: "timestamp?" },
+          ],
+        },
+      ],
+    });
+
+    expect(plan.tables[0]?.sql).toContain('"reviewed_at" timestamptz');
+    expect(plan.tables[0]?.sql).not.toContain('"reviewed_at" timestamptz NOT NULL');
+    expect(plan.tables[0]?.columns?.find((column) => column.name === "id")?.nullable).toBe(false);
   });
 
   test("reports unsupported field types", async () => {

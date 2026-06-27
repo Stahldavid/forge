@@ -143,6 +143,8 @@ export function buildTemplateInput(input: {
   secrets: IntegrationTemplateInput["secrets"];
   compatible: IntegrationTemplateInput["compatible"];
   incompatible: IntegrationTemplateInput["incompatible"];
+  workspaceRoot?: string;
+  appGraph?: IntegrationTemplateInput["appGraph"];
 }): IntegrationTemplateInput {
   return input;
 }

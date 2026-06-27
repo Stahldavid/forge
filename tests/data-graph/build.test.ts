@@ -42,6 +42,22 @@ describe("buildDataGraph", () => {
     ]);
   });
 
+  test("parses nullable field helper as optional schema type", async () => {
+    const text = [
+      'import { defineTable, nullable } from "forge/schema";',
+      'export const reviews = defineTable("reviews", { reviewedAt: nullable("timestamp") });',
+      "",
+    ].join("\n");
+    const appGraph = await buildAppGraph({
+      workspaceRoot: fixtureWorkspaceRoot(),
+      sources: [{ path: "src/forge/schema.ts", text, contentHash: "nullable-timestamp" }],
+    });
+
+    const dataGraph = buildDataGraph(appGraph);
+
+    expect(dataGraph.tables[0]?.fields).toContainEqual({ name: "reviewedAt", type: "timestamp?" });
+  });
+
   test("warns on duplicate table names", async () => {
     const appGraph = await buildAppGraph({
       workspaceRoot: fixtureWorkspaceRoot(),

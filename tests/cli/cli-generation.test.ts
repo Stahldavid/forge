@@ -127,6 +127,100 @@ describe("Forge CLI generation and inspection", () => {
     }
   });
 
+  test("check reports empty timestamp literals in runtime code", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-check-empty-timestamp");
+    try {
+      writeFileSync(
+        join(workspace, "src/forge/schema.ts"),
+        'import { defineTable } from "forge/schema";\nexport const reviews = defineTable("reviews", { reviewedAt: "timestamp" });\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/commands.ts"),
+        'import { command } from "forge/server";\nexport const createReview = command({ handler: async (ctx) => ctx.db.insert("reviews", { reviewedAt: "" }) });\n',
+        "utf8",
+      );
+      const result = await runCheckCommand(workspace);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: "FORGE_DB_EMPTY_TIMESTAMP_LITERAL",
+          file: "src/forge/commands.ts",
+        }),
+      );
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("inspect ui ergonomics exposes static UX diagnostics", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-ui-ergonomics-"));
+    try {
+      mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      mkdirSync(join(workspace, "web/src"), { recursive: true });
+      writeFileSync(
+        join(workspace, "src/forge/_generated/uiTestManifest.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          generatorVersion: "test",
+          framework: "react",
+          webRoot: "web",
+          defaultBaseUrl: "http://127.0.0.1:5173",
+          runtimeUrl: "http://127.0.0.1:3765",
+          routes: [
+            {
+              path: "/",
+              name: "home",
+              uses: { commands: ["createVendor"], queries: [], liveQueries: ["liveVendors"], components: ["App"] },
+            },
+          ],
+          scenarios: ["home-loads"],
+          selectors: [],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/uiScenarios.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          scenarios: [
+            {
+              name: "home-loads",
+              description: "home loads",
+              route: "/",
+              cost: "browser",
+              steps: [{ kind: "goto", path: "/" }],
+              requires: {
+                commands: ["createVendor"],
+                queries: [],
+                liveQueries: ["liveVendors"],
+                policies: ["vendors:read"],
+                components: ["App"],
+                workflows: [],
+              },
+            },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/src/App.tsx"),
+        'import { useLiveQuery } from "./lib/forge";\nexport function App() { useLiveQuery("liveVendors", {}); return <section><button></button></section>; }\n',
+        "utf8",
+      );
+
+      const result = await runInspectCommand("ui", workspace, { ergonomics: true });
+
+      expect(result.exitCode).toBe(0);
+      expect(JSON.stringify(result.data)).toContain("ergonomics");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_BUTTON_NAME_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_EMPTY_STATE_MISSING");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   test("compiler bench reports public phase timings", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-bench-compiler");
     try {

@@ -72,6 +72,7 @@ export function snapshotAuth(auth: AuthContext): AuthSnapshot {
       ...(auth.email ? { email: auth.email } : {}),
       ...(auth.name ? { name: auth.name } : {}),
       ...(auth.token ? { token: auth.token } : {}),
+      ...(auth.claims ? { claims: auth.claims } : {}),
     };
   }
 

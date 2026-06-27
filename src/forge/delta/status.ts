@@ -632,7 +632,16 @@ async function runDeltaDoctorRaw(workspaceRoot: string): Promise<DeltaDoctorResu
   });
 
   const gitignore = readGitignore(workspaceRoot);
-  const requiredGitignore = [".forge/delta/", ".forge/agent/*.ndjson", ".forge/studio"];
+  const requiredGitignore = [
+    ".codex/",
+    ".forge/delta/",
+    ".forge/agent/",
+    ".forge/agent/*.ndjson",
+    ".forge/agent/*.history",
+    ".forge/last-run.json",
+    ".forge/runtime-cache/",
+    ".forge/studio",
+  ];
   const missingGitignore = requiredGitignore.filter((entry) => !gitignore.includes(entry));
   checks.push({
     name: "gitignore-operational-state",

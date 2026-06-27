@@ -310,7 +310,7 @@ function generatedMetadataOnlyChange(workspaceRoot: string, file: string): boole
   return diffs.length > 0 && diffs.every((diff) => diffTouchesOnlyGeneratedRegions(diff, oldText, newText));
 }
 
-function workspaceChangeClassifier(workspaceRoot: string): ChangeClassifier {
+export function workspaceChangeClassifier(workspaceRoot: string): ChangeClassifier {
   const cache = new Map<string, ReturnType<ChangeClassifier>>();
   return (file) => {
     const cached = cache.get(file);

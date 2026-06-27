@@ -12,6 +12,7 @@ import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
 import { runAuthMdCommand } from "../../src/forge/cli/authmd.ts";
 import { runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { runWorkOSCommand } from "../../src/forge/cli/workos.ts";
+import { runTestCommand } from "../../src/forge/impact/index.ts";
 import {
   probeStudioPreview,
   runStudioAttachCommand,
@@ -169,6 +170,14 @@ describe("Forge CLI", () => {
       expect(reviewChanged.command.reviewOnly).toBe(true);
     }
 
+    const commitReadyChanged = parseCli(["changed", "--commit-ready", "--json"]);
+    expect(commitReadyChanged.errors).toEqual([]);
+    expect(commitReadyChanged.command).toMatchObject({
+      kind: "changed",
+      commitReady: true,
+      json: true,
+    });
+
     const diff = parseCli(["diff", "authored", "--json"]);
     expect(diff.errors).toEqual([]);
     expect(diff.command).toMatchObject({ kind: "diff", target: "authored", json: true });
@@ -180,12 +189,64 @@ describe("Forge CLI", () => {
       expect(handoff.command.json).toBe(true);
     }
 
+    const commitReadyHandoff = parseCli(["handoff", "--commit-ready", "--json"]);
+    expect(commitReadyHandoff.errors).toEqual([]);
+    expect(commitReadyHandoff.command).toMatchObject({
+      kind: "handoff",
+      commitReady: true,
+      json: true,
+    });
+
     const baseline = parseCli(["baseline", "create", "--reason", "initial-scaffold", "--json"]);
     expect(baseline.errors).toEqual([]);
     expect(baseline.command?.kind).toBe("baseline");
     if (baseline.command?.kind === "baseline") {
       expect(baseline.command.subcommand).toBe("create");
       expect(baseline.command.reason).toBe("initial-scaffold");
+    }
+  });
+
+  test("parseCli accepts dev lifecycle, authz proof, and UI ergonomics inspection", () => {
+    expect(hasUnknownOption(["dev", "--detach", "--json"])).toBeNull();
+    expect(hasUnknownOption(["inspect", "ui", "--ergonomics", "--json"])).toBeNull();
+    expect(hasUnknownOption(["test", "authz", "--tenant", "acme", "--other-tenant", "globex", "--json"])).toBeNull();
+
+    const devStatus = parseCli(["dev", "status", "--json"]);
+    expect(devStatus.errors).toEqual([]);
+    expect(devStatus.command).toMatchObject({ kind: "dev", lifecycle: "status", json: true });
+
+    const devDetach = parseCli(["dev", "--detach", "--db", "memory", "--port", "0", "--json"]);
+    expect(devDetach.errors).toEqual([]);
+    expect(devDetach.command).toMatchObject({ kind: "dev", detach: true, db: "memory", port: 0 });
+
+    const authz = parseCli(["test", "authz", "--tenant", "acme", "--other-tenant", "globex", "--json"]);
+    expect(authz.errors).toEqual([]);
+    expect(authz.command).toMatchObject({
+      kind: "test",
+      options: { subcommand: "authz", tenant: "acme", otherTenant: "globex" },
+    });
+
+    const inspect = parseCli(["inspect", "ui", "--ergonomics", "--json"]);
+    expect(inspect.errors).toEqual([]);
+    expect(inspect.command).toMatchObject({ kind: "inspect", target: "ui", ergonomics: true });
+  });
+
+  test("dev help is command-specific", async () => {
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let output = "";
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      output += String(chunk);
+      return true;
+    }) as typeof process.stdout.write;
+
+    try {
+      const code = await main(["dev", "--help"]);
+      expect(code).toBe(0);
+      expect(output).toContain("forge dev --db memory --port 3777 --web-port 5174");
+      expect(output).toContain("forge dev --detach --db memory --port 0 --json");
+      expect(output).not.toContain("Start with one of these:");
+    } finally {
+      process.stdout.write = originalWrite;
     }
   });
 
@@ -656,6 +717,137 @@ describe("Forge CLI", () => {
     }
   });
 
+  test("workos doctor derives permissions and resources from the app contract", () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-workos-vendor-cli-"));
+    try {
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
+      mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      writeFileSync(
+        join(workspace, "package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/node": "^7.0.0" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/authRegistry.json"),
+        JSON.stringify({ claims: { userId: "sub", tenantId: "organization_id" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/secretRegistry.json"),
+        JSON.stringify({
+          secrets: [
+            { envVar: "WORKOS_API_KEY" },
+            { envVar: "WORKOS_CLIENT_ID" },
+            { envVar: "WORKOS_COOKIE_PASSWORD" },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/policyRegistry.json"),
+        JSON.stringify({
+          policies: [
+            { name: "vendors:read", permissions: ["vendors:read"] },
+            { name: "access:approve", permissions: ["access:approve"] },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/dataGraph.json"),
+        JSON.stringify({
+          tables: [
+            { name: "vendors", fields: [{ name: "tenantId" }, { name: "name" }] },
+            { name: "accessRequests", fields: [{ name: "tenantId" }, { name: "status" }] },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/agentContract.json"),
+        JSON.stringify({ auth: { requiresTenant: true } }),
+        "utf8",
+      );
+      writeFileSync(join(workspace, ".env.example"), "WORKOS_API_KEY=\n", "utf8");
+      writeFileSync(
+        join(workspace, "src/policies.workos.ts"),
+        'import { canPermission } from "forge/policy"; export const policies = { "vendors.read": canPermission("vendors:read"), "access.approve": canPermission("access:approve") };\n',
+        "utf8",
+      );
+      const seedYaml = [
+        "permissions:",
+        "  - slug: 'vendors:read'",
+        "  - slug: 'access:approve'",
+        "resource_types:",
+        "  - slug: 'organization'",
+        "  - slug: 'vendor'",
+        "  - slug: 'accessRequest'",
+        "roles:",
+        "  - slug: 'vendor'",
+        "  - slug: 'auditor'",
+        "organizations:",
+        "  - name: 'Acme Corp'",
+        "    domains: ['acme.test']",
+        "",
+      ].join("\n");
+      writeFileSync(join(workspace, "workos-seed.yml"), seedYaml, "utf8");
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"),
+        'export const config = { provider: "workos" }; export function verifyWorkOSWebhook() {} export function handleWorkOSWebhook() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"),
+        'export const workosAuthHttpRoutes = ["/login", "/callback", "/logout", "/session"]; export function handleWorkOSAuthRequest() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/session.ts"),
+        "export function encodeWorkOSSession() {} export function decodeWorkOSSession() {} export function workOSSessionToClaims() {}\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"),
+        'export const workosWebhookHttpRoute = { path: "/webhooks/workos" }; export function handleWorkOSWebhookRequest() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"),
+        'export class ForgeWorkOSFgaDecisionCache {} export function canWorkOS() { return { permissionSlug: "x", resourceExternalId: "y" }; } export function syncWorkOSResourceGraph() {} export function workOSResourceRecords() {} export function assertWorkOSResourceTenant() { throw new Error("FORGE_WORKOS_CROSS_TENANT_RESOURCE"); }\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/fga.ts"),
+        'export const forgeWorkOSResourceTypes = [{ slug: "organization" }, { slug: "vendor" }, { slug: "accessRequest" }];\n',
+        "utf8",
+      );
+
+      const doctor = runWorkOSCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+      });
+      const seed = runWorkOSCommand({
+        subcommand: "seed",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: true,
+        file: "workos-seed.yml",
+      });
+
+      expect(doctor.exitCode).toBe(0);
+      expect(seed.exitCode).toBe(0);
+      expect(JSON.stringify(doctor.checks)).toContain("vendors:read");
+      expect(JSON.stringify(doctor.checks)).not.toContain("onboarding:read");
+      expect(JSON.stringify(seed.data)).toContain("accessRequest");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   test("auth prove supports a local multi-tenant WorkOS proof scenario", async () => {
     const workspace = mkdtempSync(join(tmpdir(), "forge-auth-prove-mt-"));
     try {
@@ -713,6 +905,99 @@ describe("Forge CLI", () => {
       });
       expect(JSON.stringify(check.data)).toContain("node bin/forge.mjs auth prove --prod --token <jwt> --json");
       expect(JSON.stringify(check.data)).not.toContain("\"forge auth prove --prod --token <jwt> --json\"");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("test authz proves generated tenant and policy contract", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-test-authz-"));
+    try {
+      mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      writeFileSync(
+        join(workspace, "src/forge/_generated/policyRegistry.json"),
+        JSON.stringify({
+          policies: [
+            { name: "vendors:read", kind: "permissions", permissions: ["vendors:read"], roles: [], file: "src/policies.ts", symbolId: "p1" },
+            { name: "access:approve", kind: "permissions", permissions: ["access:approve"], roles: [], file: "src/policies.ts", symbolId: "p2" },
+          ],
+          commandAuth: [
+            { commandName: "approveAccess", file: "src/commands/approveAccess.ts", symbolId: "c1", auth: { kind: "policy", policy: "access:approve" } },
+          ],
+          queryAuth: [
+            { queryName: "listVendors", file: "src/queries/listVendors.ts", symbolId: "q1", auth: { kind: "policy", policy: "vendors:read" } },
+          ],
+          diagnostics: [],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/tenantScope.json"),
+        JSON.stringify({
+          tables: [{ table: "vendors", exportName: "vendors", tenantIdColumn: "organization_id", file: "src/forge/schema.ts" }],
+          diagnostics: [],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/capabilityMap.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          generatorVersion: "test",
+          project: { name: "vendor-access", type: "forgeos-app" },
+          summary: { covered: 1, backendOnly: 0, frontendOnly: 0, warnings: 0 },
+          entries: [
+            {
+              id: "approveAccess",
+              status: "covered",
+              userAction: "Approve vendor access",
+              runtime: {
+                kind: "command",
+                name: "approveAccess",
+                hook: "useCommand",
+                http: { method: "POST", path: "/commands/approveAccess" },
+                policy: "access:approve",
+                tablesRead: ["vendors"],
+                tablesWritten: ["vendors"],
+                emits: [],
+                dependencies: [{ table: "vendors", scope: "tenant" }],
+              },
+              notes: [],
+            },
+          ],
+          diagnostics: [],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/agentContract.json"),
+        JSON.stringify({ auth: { requiresTenant: true } }),
+        "utf8",
+      );
+
+      const result = await runTestCommand({
+        subcommand: "authz",
+        workspaceRoot: workspace,
+        json: true,
+        write: false,
+        changed: false,
+        staged: false,
+        maxCost: "standard",
+        includeDocker: false,
+        includeBrowser: false,
+        bail: false,
+        tenant: "acme",
+        otherTenant: "globex",
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.authz?.summary).toMatchObject({
+        ok: true,
+        tenantScopedTables: 1,
+        protectedCommands: 1,
+        protectedQueries: 1,
+        capabilityPolicyBindings: 1,
+      });
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
@@ -931,14 +1216,17 @@ describe("Forge CLI", () => {
 
   test("studio open reuses a live target preview process instead of spawning a duplicate", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-open-preview-state");
+    const reserved = await listenOnRandomPort();
+    const previewPort = reserved.port;
+    await reserved.close();
     try {
       mkdirSync(join(workspace, ".forge", "studio"), { recursive: true });
       writeFileSync(
         join(workspace, ".forge", "studio", "preview.json"),
         `${JSON.stringify({
           pid: process.pid,
-          command: "forge dev --port 3766 --web-port 5174",
-          previewPort: 5174,
+          command: `forge dev --port 3766 --web-port ${previewPort}`,
+          previewPort,
           runtimePort: 3766,
           startedAt: new Date(0).toISOString(),
         }, null, 2)}\n`,
@@ -947,7 +1235,7 @@ describe("Forge CLI", () => {
 
       const result = await runStudioOpenCommand({
         workspaceRoot: workspace,
-        previewPort: 5174,
+        previewPort,
         targets: ["codex"],
         bridge: false,
         json: true,

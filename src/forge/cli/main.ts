@@ -15,6 +15,7 @@ function formatHelp(): string {
     "  forge changed --json      Group changed files into human, generated, and risk buckets",
     "  forge changed --authored --json  Show only authored changed files, excluding generated artifacts",
     "  forge changed --review --json  Show review-focused app/config/docs changes, excluding local agent/browser artifacts",
+    "  forge changed --commit-ready --json  Show files suitable for git add, excluding generated and operational artifacts",
     "  forge new my-app --template minimal-web --field-test  Create an installed WorkOS/auth.md field-test app",
     "  forge diff authored       Run the authored-only git diff pathspec",
     "  forge handoff --json      Compact work handoff for the next external code agent",
@@ -75,7 +76,42 @@ function formatHelp(): string {
   ].join("\n");
 }
 
+function formatDevHelp(): string {
+  return [
+    "ForgeOS dev",
+    "",
+    "Usage:",
+    "  forge dev [status|stop] [options]",
+    "",
+    "Options:",
+    "  --db memory|pglite|postgres|none  Choose the development database adapter",
+    "  --port <port>                     API runtime port; use 0 for an ephemeral port",
+    "  --web-port <port>                 Web dev server port",
+    "  --host <host>                     Bind host, default 127.0.0.1",
+    "  --no-web                          Start API/runtime only",
+    "  --api-only                        Start API/runtime only",
+    "  --web-only                        Start web server only, expecting an API runtime",
+    "  --no-worker                       Disable local worker",
+    "  --no-watch                        Disable file watching",
+    "  --once --json                     Run one-shot diagnostics without starting servers",
+    "  --detach --json                   Start dev in the background with .forge/dev/dev.pid and .forge/dev/dev.log",
+    "",
+    "Examples:",
+    "  forge dev --db memory --port 3777 --web-port 5174",
+    "  forge dev --db pglite --once --json",
+    "  forge dev --detach --db memory --port 0 --json",
+    "  forge dev status --json",
+    "  forge dev stop --json",
+    "",
+  ].join("\n");
+}
+
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
+  if (argv[0] === "dev" && (argv.includes("--help") || argv.includes("-h"))) {
+    process.stdout.write(formatDevHelp());
+    return 0;
+  }
+
   if (argv.length === 0 || argv.includes("--help") || argv.includes("-h")) {
     process.stdout.write(formatHelp());
     return 0;

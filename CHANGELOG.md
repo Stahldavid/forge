@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.34
+
+### Patch Changes
+
+- Harden the ForgeOS app-building DX after the Vendor Access field test.
+
+  - Make `forge workos doctor` and `forge workos seed --dry-run` app-aware by deriving active permissions and resource types from generated policies, data graph, agent contract, authored WorkOS policies, and `workos-seed.yml` instead of assuming onboarding-specific slugs.
+  - Add strong diagnostics for unnamed runtime default exports so `export default command(...)` reports `FORGE_RUNTIME_EXPORT_NAME_REQUIRED` with a named-export fix hint before generated API, frontend bindings, or capability maps drift.
+  - Extend local `devAuth` for React, Vue, generated clients, and runtime auth parsing with WorkOS-like `permissions`, `roles`, `claims`, `organizationId`, and `organizationMembershipId`.
+  - Add nullable timestamp schema support through `timestamp?` / `nullable("timestamp")` and teach `forge check` to flag empty timestamp literals in commands, queries, and liveQueries.
+  - Add `forge dev --detach`, `forge dev status`, `forge dev stop`, and command-specific `forge dev --help` with explicit DB/port examples for agent-run app previews.
+  - Add `forge changed --commit-ready` and `forge handoff --commit-ready` so agents can stage exactly authored commit files while excluding generated and operational artifacts.
+  - Add `forge test authz` for a cheap generated-contract proof of tenant scope, policy bindings, and capability-map authz coverage.
+  - Expose static UI/UX readiness through `forge inspect ui --ergonomics`.
+
 ## 0.1.0-alpha.33
 
 ### Patch Changes

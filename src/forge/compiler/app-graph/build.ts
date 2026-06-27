@@ -3,6 +3,8 @@ import { hashStable } from "../primitives/hash.ts";
 import { normalizePath } from "../primitives/paths.ts";
 import { stableSortEdges, stableSortSymbols } from "../primitives/sort.ts";
 import type { AppGraph, ForgeEdge, ForgeSymbol, SourceFile } from "../types/app-graph.ts";
+import { FORGE_RUNTIME_EXPORT_NAME_REQUIRED } from "../diagnostics/codes.ts";
+import { createDiagnostic } from "../diagnostics/create.ts";
 import { detectDuplicateSymbols } from "./dup-symbol.ts";
 import { buildModuleGraph } from "./module-graph.ts";
 import { incrementalParse } from "./parser.ts";
@@ -97,6 +99,46 @@ function buildAppGraphEdges(
   return edges;
 }
 
+const NAMED_EXPORT_REQUIRED_KINDS = new Set([
+  "command",
+  "query",
+  "liveQuery",
+  "action",
+  "workflow",
+  "endpoint",
+]);
+
+function detectUnnamedForgeExports(symbols: ForgeSymbol[]): AppGraph["diagnostics"] {
+  return symbols
+    .filter((symbol) =>
+      NAMED_EXPORT_REQUIRED_KINDS.has(symbol.kind) &&
+      symbol.meta.exportPath === "default"
+    )
+    .map((symbol) =>
+      createDiagnostic({
+        severity: "error",
+        code: FORGE_RUNTIME_EXPORT_NAME_REQUIRED,
+        message:
+          `Forge ${symbol.kind} in ${symbol.file} uses export default; runtime entries must be named exports for stable API names.`,
+        file: symbol.file,
+        span: symbol.span,
+        fixHint:
+          `Replace \`export default ${symbol.kind}(...)\` with \`export const ${suggestExportName(symbol)} = ${symbol.kind}(...)\`.`,
+        suggestedCommands: ["forge check --json", "forge generate"],
+      })
+    );
+}
+
+function suggestExportName(symbol: ForgeSymbol): string {
+  const base = symbol.file
+    .split("/")
+    .pop()
+    ?.replace(/\.[cm]?[jt]sx?$/, "")
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, next: string) => next.toUpperCase())
+    .replace(/^[^a-zA-Z_]+/, "") || symbol.kind;
+  return base || symbol.kind;
+}
+
 export async function buildAppGraph(
   options: AppGraphBuildOptions,
 ): Promise<AppGraph> {
@@ -141,6 +183,7 @@ export async function buildAppGraph(
   const symbolsMs = Date.now() - checkpoint;
   checkpoint = Date.now();
   const dupDiagnostics = detectDuplicateSymbols(forgeSymbols);
+  const unnamedExportDiagnostics = detectUnnamedForgeExports(forgeSymbols);
   const duplicatesMs = Date.now() - checkpoint;
   checkpoint = Date.now();
   const moduleGraph = buildModuleGraph(
@@ -166,7 +209,7 @@ export async function buildAppGraph(
     symbols: sortedSymbols,
     edges: stableSortEdges(buildAppGraphEdges(sortedSymbols, moduleGraph)),
     moduleGraph,
-    diagnostics: [...parseDiagnostics, ...dupDiagnostics],
+    diagnostics: [...parseDiagnostics, ...dupDiagnostics, ...unnamedExportDiagnostics],
   };
   recordAppGraphProfile(graph, {
     normalizeMs,

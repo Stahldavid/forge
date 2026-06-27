@@ -1,7 +1,107 @@
 import type { IntegrationTemplateInput } from "./types.ts";
+import { buildDataGraph } from "../../data-graph/build.ts";
 
 const SECRETS_IMPORT = 'import type { SecretsContext } from "../secretsContext.js";';
 const CONFIG_IMPORT = 'import type { ConfigContext } from "../secretsContext.js";';
+
+const FALLBACK_PERMISSIONS = [
+  "onboarding:read",
+  "projects:manage",
+  "members:manage",
+  "invitations:create",
+  "tasks:manage",
+  "tasks:update",
+] as const;
+
+const FALLBACK_RESOURCE_TYPES = [
+  { slug: "organization", name: "Organization" },
+  { slug: "project", name: "Project", parent: "organization" },
+  { slug: "team", name: "Team", parent: "organization" },
+  { slug: "taskGroup", name: "Task Group", parent: "project" },
+  { slug: "task", name: "Task", parent: "project" },
+] as const;
+
+function quotedValues(text: string): string[] {
+  return [...text.matchAll(/["']([^"']+)["']/g)].map((match) => match[1]!).filter(Boolean);
+}
+
+function uniqueSorted(values: Iterable<string>): string[] {
+  return [...new Set([...values].filter(Boolean))].sort();
+}
+
+function toTitle(value: string): string {
+  return value
+    .replace(/[:._-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function policyNameForPermission(permission: string): string {
+  return permission.replace(/:/g, ".").replace(/[^a-zA-Z0-9_.-]+/g, ".");
+}
+
+function singularResourceName(name: string): string {
+  if (name.endsWith("ies")) return `${name.slice(0, -3)}y`;
+  if (name.endsWith("ses")) return name.slice(0, -2);
+  if (name.endsWith("s") && name.length > 1) return name.slice(0, -1);
+  return name;
+}
+
+function permissionsFromApp(input: IntegrationTemplateInput): string[] {
+  const permissions = new Set<string>();
+  for (const symbol of input.appGraph?.symbols ?? []) {
+    const sourceSlice = typeof symbol.meta.sourceSlice === "string" ? symbol.meta.sourceSlice : "";
+    for (const match of sourceSlice.matchAll(/canPermission\s*\(([^)]*)\)/g)) {
+      for (const value of quotedValues(match[1] ?? "")) {
+        permissions.add(value);
+      }
+    }
+  }
+  return permissions.size > 0 ? uniqueSorted(permissions) : [...FALLBACK_PERMISSIONS];
+}
+
+function resourceTypesFromApp(input: IntegrationTemplateInput): Array<{ slug: string; name: string; parent?: string }> {
+  if (!input.appGraph) {
+    return [...FALLBACK_RESOURCE_TYPES];
+  }
+  const dataGraph = buildDataGraph(input.appGraph);
+  const tenantTables = dataGraph.tables.filter((table) =>
+    table.fields.some((field) => field.name === "tenantId")
+  );
+  if (tenantTables.length === 0) {
+    return [...FALLBACK_RESOURCE_TYPES];
+  }
+  const resourceTypes = new Map<string, { slug: string; name: string; parent?: string }>();
+  resourceTypes.set("organization", { slug: "organization", name: "Organization" });
+  for (const table of tenantTables) {
+    if (["organization", "organizations", "membership", "memberships"].includes(table.name)) {
+      continue;
+    }
+    const slug = singularResourceName(table.name);
+    resourceTypes.set(slug, { slug, name: toTitle(slug), parent: "organization" });
+  }
+  return [...resourceTypes.values()].sort((a, b) => a.slug.localeCompare(b.slug));
+}
+
+function readPermissions(permissions: string[]): string[] {
+  return permissions.filter((permission) => /(^|:)read$|read|list|view/i.test(permission));
+}
+
+function updatePermissions(permissions: string[]): string[] {
+  return permissions.filter((permission) => /update|progress|write/i.test(permission));
+}
+
+function rolePermissions(permissions: string[]): Record<string, string[]> {
+  const member = uniqueSorted([...readPermissions(permissions), ...updatePermissions(permissions)]);
+  return {
+    owner: permissions,
+    manager: permissions,
+    member: member.length > 0 ? member : permissions.slice(0, 1),
+  };
+}
 
 export function renderWorkosServerAdapter(_input: IntegrationTemplateInput): string {
   return [
@@ -110,7 +210,8 @@ export function renderWorkosAuthkit(_input: IntegrationTemplateInput): string {
   ].join("\n");
 }
 
-export function renderWorkosPolicies(_input: IntegrationTemplateInput): string {
+export function renderWorkosPolicies(input: IntegrationTemplateInput): string {
+  const permissions = permissionsFromApp(input);
   return [
     "/** Forge generated WorkOS-derived policy template.",
     " * Import or merge these policies into src/policies.ts after reviewing names against your app.",
@@ -118,21 +219,15 @@ export function renderWorkosPolicies(_input: IntegrationTemplateInput): string {
     'import { canPermission, definePolicies } from "forge/policy";',
     "",
     "export const workosPermissionPolicies = definePolicies({",
-    '  "onboarding.read": canPermission("onboarding:read"),',
-    '  "projects.manage": canPermission("projects:manage"),',
-    '  "members.manage": canPermission("members:manage"),',
-    '  "invitations.create": canPermission("invitations:create"),',
-    '  "tasks.manage": canPermission("tasks:manage"),',
-    '  "tasks.update": canPermission("tasks:update"),',
+    ...permissions.map((permission) =>
+      `  "${policyNameForPermission(permission)}": canPermission("${permission}"),`
+    ),
     "});",
     "",
     "export const workosPermissionPolicyMap = {",
-    '  "onboarding:read": "onboarding.read",',
-    '  "projects:manage": "projects.manage",',
-    '  "members:manage": "members.manage",',
-    '  "invitations:create": "invitations.create",',
-    '  "tasks:manage": "tasks.manage",',
-    '  "tasks:update": "tasks.update",',
+    ...permissions.map((permission) =>
+      `  "${permission}": "${policyNameForPermission(permission)}",`
+    ),
     "} as const;",
     "",
   ].join("\n");
@@ -163,46 +258,29 @@ export function renderWorkosEnvExample(_input: IntegrationTemplateInput): string
   ].join("\n");
 }
 
-export function renderWorkosFga(_input: IntegrationTemplateInput): string {
+export function renderWorkosFga(input: IntegrationTemplateInput): string {
+  const permissions = permissionsFromApp(input);
+  const roles = rolePermissions(permissions);
+  const resourceTypes = resourceTypesFromApp(input);
   return [
     "/** Forge generated WorkOS FGA bridge helpers. */",
     "",
     "export const forgeWorkOSDefaultPermissions = [",
-    '  "onboarding:read",',
-    '  "projects:manage",',
-    '  "members:manage",',
-    '  "invitations:create",',
-    '  "tasks:manage",',
-    '  "tasks:update",',
+    ...permissions.map((permission) => `  "${permission}",`),
     "] as const;",
     "",
     "export type ForgeWorkOSPermission = (typeof forgeWorkOSDefaultPermissions)[number];",
     "",
     "export const forgeWorkOSDefaultRoles = {",
-    "  owner: [",
-    '    "onboarding:read",',
-    '    "projects:manage",',
-    '    "members:manage",',
-    '    "invitations:create",',
-    '    "tasks:manage",',
-    '    "tasks:update",',
-    "  ],",
-    "  manager: [",
-    '    "onboarding:read",',
-    '    "members:manage",',
-    '    "invitations:create",',
-    '    "tasks:manage",',
-    '    "tasks:update",',
-    "  ],",
-    '  member: ["onboarding:read", "tasks:update"],',
+    ...Object.entries(roles).map(([role, rolePerms]) =>
+      `  ${role}: [${rolePerms.map((permission) => `"${permission}"`).join(", ")}],`
+    ),
     "} as const satisfies Record<string, readonly ForgeWorkOSPermission[]>;",
     "",
     "export const forgeWorkOSResourceTypes = [",
-    '  { slug: "organization", description: "WorkOS organization / Forge tenant root" },',
-    '  { slug: "project", parent: "organization", description: "Project under an organization" },',
-    '  { slug: "team", parent: "organization", description: "Team under an organization" },',
-    '  { slug: "taskGroup", parent: "project", description: "Task group under a project" },',
-    '  { slug: "task", parent: "project", description: "Onboarding task under a project" },',
+    ...resourceTypes.map((resource) =>
+      `  { slug: "${resource.slug}",${resource.parent ? ` parent: "${resource.parent}",` : ""} description: "${resource.name} resource" },`
+    ),
     "] as const;",
     "",
     "export interface ForgeWorkOSAccessCheckInput {",
@@ -225,13 +303,23 @@ export function renderWorkosFga(_input: IntegrationTemplateInput): string {
   ].join("\n");
 }
 
-export function renderWorkosResourceMap(_input: IntegrationTemplateInput): string {
+export function renderWorkosResourceMap(input: IntegrationTemplateInput): string {
+  const resourceTypes = resourceTypesFromApp(input);
+  const helperResourceKinds = uniqueSorted([
+    "organization",
+    ...resourceTypes.map((resource) => resource.slug),
+    "project",
+    "team",
+    "taskGroup",
+    "task",
+  ]);
+  const resourceKindUnion = helperResourceKinds.map((resource) => `"${resource}"`).join(" | ");
   return [
     "/** Forge generated WorkOS FGA resource bridge.",
     " * Keep calls to WorkOS Authorization API in server/action/workflow/endpoint contexts.",
     " */",
     "",
-    "export type ForgeWorkOSResourceKind = \"organization\" | \"project\" | \"team\" | \"task\" | \"taskGroup\";",
+    `export type ForgeWorkOSResourceKind = ${resourceKindUnion};`,
     "export type ForgeWorkOSFgaFallback = \"deny\" | \"throw\";",
     "",
     "export interface ForgeWorkOSResourceRef {",
@@ -244,6 +332,7 @@ export function renderWorkosResourceMap(_input: IntegrationTemplateInput): strin
     "",
     "export interface ForgeWorkOSApplicationGraph {",
     "  organization: ForgeWorkOSResourceRef;",
+    "  resources: ForgeWorkOSResourceRef[];",
     "  projects: ForgeWorkOSResourceRef[];",
     "  teams: ForgeWorkOSResourceRef[];",
     "  tasks: ForgeWorkOSResourceRef[];",
@@ -310,7 +399,8 @@ export function renderWorkosResourceMap(_input: IntegrationTemplateInput): strin
     "    const parent = projectId ? projects.find((project) => project.externalId === workosResource(\"project\", projectId, organization).externalId) ?? organization : organization;",
     "    return workosResource(\"task\", task.id, parent, task.name);",
     "  });",
-    "  return { organization, projects, teams, tasks: [...taskGroups, ...tasks] };",
+    "  const resources = [...projects, ...teams, ...taskGroups, ...tasks];",
+    "  return { organization, resources, projects, teams, tasks: [...taskGroups, ...tasks] };",
     "}",
     "",
     "export interface ForgeWorkOSAuthorizationClient {",
@@ -362,7 +452,8 @@ export function renderWorkosResourceMap(_input: IntegrationTemplateInput): strin
     "",
     "export function workOSResourceRecords(input: { organizationId: string; graph: ForgeWorkOSApplicationGraph }): ForgeWorkOSResourceRecord[] {",
     "  const organization = input.graph.organization;",
-    "  const resources = [...input.graph.projects, ...input.graph.teams, ...input.graph.tasks]",
+    "  const legacyResources = [...(input.graph.projects ?? []), ...(input.graph.teams ?? []), ...(input.graph.tasks ?? [])];",
+    "  const resources = [...(input.graph.resources ?? []), ...legacyResources]",
     "    .flatMap((resource) => flattenResource(resource))",
     "    .filter((resource) => resource.kind !== \"organization\");",
     "  const byKey = new Map<string, ForgeWorkOSResourceRecord>();",
@@ -815,63 +906,33 @@ export function renderWorkosSeed(_input: IntegrationTemplateInput): string {
   ].join("\n");
 }
 
-export function renderWorkosSeedYaml(_input: IntegrationTemplateInput): string {
+export function renderWorkosSeedYaml(input: IntegrationTemplateInput): string {
+  const permissions = permissionsFromApp(input);
+  const roles = rolePermissions(permissions);
+  const resourceTypes = resourceTypesFromApp(input);
   return [
     "# Forge generated WorkOS seed file.",
     "# Review names, domains, redirect URIs, and origins before applying to a real WorkOS environment.",
     "permissions:",
-    "  - name: 'Onboarding Read'",
-    "    slug: 'onboarding:read'",
-    "  - name: 'Projects Manage'",
-    "    slug: 'projects:manage'",
-    "  - name: 'Members Manage'",
-    "    slug: 'members:manage'",
-    "  - name: 'Invitations Create'",
-    "    slug: 'invitations:create'",
-    "  - name: 'Tasks Manage'",
-    "    slug: 'tasks:manage'",
-    "  - name: 'Tasks Update'",
-    "    slug: 'tasks:update'",
+    ...permissions.flatMap((permission) => [
+      `  - name: '${toTitle(permission)}'`,
+      `    slug: '${permission}'`,
+    ]),
     "",
     "resource_types:",
-    "  - slug: 'organization'",
-    "    name: 'Organization'",
-    "  - slug: 'project'",
-    "    name: 'Project'",
-    "    parent: 'organization'",
-    "  - slug: 'team'",
-    "    name: 'Team'",
-    "    parent: 'organization'",
-    "  - slug: 'taskGroup'",
-    "    name: 'Task Group'",
-    "    parent: 'project'",
-    "  - slug: 'task'",
-    "    name: 'Task'",
-    "    parent: 'project'",
+    ...resourceTypes.flatMap((resource) => [
+      `  - slug: '${resource.slug}'`,
+      `    name: '${resource.name}'`,
+      ...(resource.parent ? [`    parent: '${resource.parent}'`] : []),
+    ]),
     "",
     "roles:",
-    "  - name: 'Owner'",
-    "    slug: 'owner'",
-    "    permissions:",
-    "      - 'onboarding:read'",
-    "      - 'projects:manage'",
-    "      - 'members:manage'",
-    "      - 'invitations:create'",
-    "      - 'tasks:manage'",
-    "      - 'tasks:update'",
-    "  - name: 'Manager'",
-    "    slug: 'manager'",
-    "    permissions:",
-    "      - 'onboarding:read'",
-    "      - 'members:manage'",
-    "      - 'invitations:create'",
-    "      - 'tasks:manage'",
-    "      - 'tasks:update'",
-    "  - name: 'Member'",
-    "    slug: 'member'",
-    "    permissions:",
-    "      - 'onboarding:read'",
-    "      - 'tasks:update'",
+    ...Object.entries(roles).flatMap(([role, rolePermissions]) => [
+      `  - name: '${toTitle(role)}'`,
+      `    slug: '${role}'`,
+      "    permissions:",
+      ...rolePermissions.map((permission) => `      - '${permission}'`),
+    ]),
     "",
     "organizations:",
     "  - name: 'Acme Corp'",
@@ -894,7 +955,12 @@ export function renderWorkosSeedYaml(_input: IntegrationTemplateInput): string {
   ].join("\n");
 }
 
-export function renderWorkosTestkit(_input: IntegrationTemplateInput): string {
+export function renderWorkosTestkit(input: IntegrationTemplateInput): string {
+  const permissions = permissionsFromApp(input);
+  const roles = rolePermissions(permissions);
+  const ownerPermissions = JSON.stringify(roles.owner);
+  const managerPermissions = JSON.stringify(roles.manager);
+  const memberPermissions = JSON.stringify(roles.member);
   return [
     "/** Forge generated mock testkit for WorkOS auth and authorization. */",
     "",
@@ -907,9 +973,9 @@ export function renderWorkosTestkit(_input: IntegrationTemplateInput): string {
     "  organizations.set(\"org_acme\", { id: \"org_acme\", name: \"Acme Corp\" });",
     "  organizations.set(\"org_globex\", { id: \"org_globex\", name: \"Globex\" });",
     "  const memberships = new Map<string, Membership>([",
-    "    [\"om_acme_owner\", { id: \"om_acme_owner\", organizationId: \"org_acme\", roleSlug: \"owner\", permissions: [\"onboarding:read\", \"projects:manage\", \"members:manage\", \"invitations:create\", \"tasks:manage\", \"tasks:update\"] }],",
-    "    [\"om_acme_member\", { id: \"om_acme_member\", organizationId: \"org_acme\", roleSlug: \"member\", permissions: [\"onboarding:read\", \"tasks:update\"] }],",
-    "    [\"om_globex_member\", { id: \"om_globex_member\", organizationId: \"org_globex\", roleSlug: \"member\", permissions: [\"onboarding:read\", \"tasks:update\"] }],",
+    `    ["om_acme_owner", { id: "om_acme_owner", organizationId: "org_acme", roleSlug: "owner", permissions: ${ownerPermissions} }],`,
+    `    ["om_acme_member", { id: "om_acme_member", organizationId: "org_acme", roleSlug: "member", permissions: ${memberPermissions} }],`,
+    `    ["om_globex_member", { id: "om_globex_member", organizationId: "org_globex", roleSlug: "member", permissions: ${memberPermissions} }],`,
     "  ]);",
     "  const resources = new Map<string, Resource>();",
     "  const roleAssignments: RoleAssignment[] = [];",
@@ -934,7 +1000,7 @@ export function renderWorkosTestkit(_input: IntegrationTemplateInput): string {
     "    userManagement: {",
     "      createOrganizationMembership: async (input: { organizationId: string; roleSlug: string; userId?: string }) => {",
     "        const id = `om_${input.organizationId}_${memberships.size + 1}`;",
-    "        const permissions = input.roleSlug === \"owner\" ? [\"onboarding:read\", \"projects:manage\", \"members:manage\", \"invitations:create\", \"tasks:manage\", \"tasks:update\"] : input.roleSlug === \"manager\" ? [\"onboarding:read\", \"members:manage\", \"invitations:create\", \"tasks:manage\", \"tasks:update\"] : [\"onboarding:read\", \"tasks:update\"];",
+    `        const permissions = input.roleSlug === "owner" ? ${ownerPermissions} : input.roleSlug === "manager" ? ${managerPermissions} : ${memberPermissions};`,
     "        const membership = { id, organizationId: input.organizationId, roleSlug: input.roleSlug, permissions };",
     "        memberships.set(id, membership);",
     "        return membership;",

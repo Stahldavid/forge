@@ -12,7 +12,12 @@ import type { App, InjectionKey, MaybeRefOrGetter, ShallowRef } from "vue";
 export type ForgeVueAuth = {
   userId?: string;
   tenantId?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
+  claims?: Record<string, unknown>;
   token?: string;
   getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
@@ -33,7 +38,12 @@ export type ForgeDevAuthConfig =
   | {
       userId?: string;
       tenantId?: string;
+      organizationId?: string;
+      organizationMembershipId?: string;
       role?: string;
+      roles?: string[];
+      permissions?: string[];
+      claims?: Record<string, unknown>;
       headers?: Record<string, string>;
     };
 
@@ -178,8 +188,13 @@ function resolveDevAuth(devAuth: ForgeDevAuthConfig | undefined): ForgeVueAuthPr
   const config = typeof devAuth === "object" ? devAuth : {};
   return {
     userId: config.userId ?? "dev-user",
-    tenantId: config.tenantId ?? "dev-tenant",
+    tenantId: config.tenantId ?? config.organizationId ?? "dev-tenant",
+    organizationId: config.organizationId ?? config.tenantId ?? "dev-tenant",
+    organizationMembershipId: config.organizationMembershipId,
     role: config.role ?? "owner",
+    roles: config.roles,
+    permissions: config.permissions,
+    claims: config.claims,
     headers: config.headers,
   };
 }

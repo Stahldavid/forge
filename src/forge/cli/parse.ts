@@ -222,9 +222,9 @@ export type ForgeCommand =
       redacted: boolean;
     }
   | { kind: "status"; json: boolean; workspaceRoot: string }
-  | { kind: "changed"; json: boolean; authoredOnly: boolean; reviewOnly: boolean; workspaceRoot: string }
+  | { kind: "changed"; json: boolean; authoredOnly: boolean; reviewOnly: boolean; commitReady: boolean; workspaceRoot: string }
   | { kind: "diff"; target: "authored" | "generated" | "full"; json: boolean; workspaceRoot: string }
-  | { kind: "handoff"; json: boolean; workspaceRoot: string }
+  | { kind: "handoff"; json: boolean; commitReady: boolean; workspaceRoot: string }
   | {
       kind: "studio";
       subcommand: "attach" | "snapshot" | "watch" | "open" | "doctor" | "bridge" | "codex-server";
@@ -264,7 +264,7 @@ export type ForgeCommand =
     }
   | { kind: "generate"; check: boolean; dryRun: boolean; json: boolean; concurrency: number; workspaceRoot: string }
   | { kind: "add"; alias: string; options: AddOptions & { workspaceRoot: string } }
-  | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean; full: boolean; brief: boolean }
+  | { kind: "inspect"; target: InspectTarget; json: boolean; dryRun: boolean; full: boolean; brief: boolean; ergonomics: boolean; workspaceRoot: string }
   | { kind: "check"; json: boolean; dryRun: boolean; strictSecrets: boolean }
   | { kind: "verify"; options: VerifyOptions }
   | { kind: "run"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string; queryMode?: boolean; args?: unknown }
@@ -288,6 +288,8 @@ export type ForgeCommand =
       telemetry: string[];
       envFile?: string;
       skipStartupConsole: boolean;
+      detach: boolean;
+      lifecycle?: "status" | "stop";
       workspaceRoot: string;
     }
   | {
@@ -618,7 +620,7 @@ const RENAME_TARGETS: RenameTarget[] = [
   "workflow",
   "event",
 ];
-const TEST_SUBCOMMANDS: TestSubcommand[] = ["plan", "run", "explain"];
+const TEST_SUBCOMMANDS: TestSubcommand[] = ["plan", "run", "explain", "authz"];
 const TEST_COSTS: TestCost[] = ["instant", "fast", "standard", "slow", "docker", "browser"];
 const REPAIR_SUBCOMMANDS: RepairSubcommand[] = [
   "diagnose",
@@ -1696,7 +1698,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "test": {
       const subcommand = rest[0] as TestSubcommand | undefined;
       if (!subcommand || !TEST_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge test requires subcommand: plan, run, or explain");
+        errors.push("forge test requires subcommand: plan, run, explain, or authz");
         return { command: null, workspaceRoot, errors };
       }
       const timeoutRaw = parseOptionValue(argv, "--timeout-ms");
@@ -1715,7 +1717,7 @@ export function parseCli(argv: string[]): ParsedCli {
             workspaceRoot,
             json: parseFlag(argv, "--json"),
             write: parseFlag(argv, "--write"),
-            changed: parseFlag(argv, "--changed") || (!parseFlag(argv, "--staged") && !parseOptionValue(argv, "--since") && !parseOptionValue(argv, "--feature") && !parseOptionValue(argv, "--refactor") && !parseOptionValue(argv, "--upgrade") && !parseOptionValue(argv, "--plan") && subcommand !== "explain"),
+            changed: parseFlag(argv, "--changed") || (!parseFlag(argv, "--staged") && !parseOptionValue(argv, "--since") && !parseOptionValue(argv, "--feature") && !parseOptionValue(argv, "--refactor") && !parseOptionValue(argv, "--upgrade") && !parseOptionValue(argv, "--plan") && subcommand !== "explain" && subcommand !== "authz"),
             staged: parseFlag(argv, "--staged"),
             since: parseOptionValue(argv, "--since"),
             featureId: parseOptionValue(argv, "--feature"),
@@ -1729,6 +1731,8 @@ export function parseCli(argv: string[]): ParsedCli {
             bail: parseFlag(argv, "--bail"),
             report: parseOptionValue(argv, "--report"),
             timeoutMs: timeoutMs ? Math.floor(timeoutMs) : undefined,
+            tenant: parseOptionValue(argv, "--tenant") ?? "acme",
+            otherTenant: parseOptionValue(argv, "--other-tenant") ?? "globex",
           },
         },
         workspaceRoot,
@@ -1908,6 +1912,7 @@ export function parseCli(argv: string[]): ParsedCli {
           json: parseFlag(argv, "--json"),
           authoredOnly: parseFlag(argv, "--authored"),
           reviewOnly: parseFlag(argv, "--review"),
+          commitReady: parseFlag(argv, "--commit-ready"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1935,6 +1940,7 @@ export function parseCli(argv: string[]): ParsedCli {
         command: {
           kind: "handoff",
           json: parseFlag(argv, "--json"),
+          commitReady: parseFlag(argv, "--commit-ready"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2220,6 +2226,8 @@ export function parseCli(argv: string[]): ParsedCli {
           dryRun: parseFlag(argv, "--dry-run"),
           full: parseFlag(argv, "--full"),
           brief: parseFlag(argv, "--brief"),
+          ergonomics: parseFlag(argv, "--ergonomics"),
+          workspaceRoot,
         },
         workspaceRoot,
         errors,
@@ -2472,6 +2480,7 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "dev": {
+      const lifecycle = rest[0] === "status" || rest[0] === "stop" ? rest[0] : undefined;
       const portRaw = parseOptionValue(argv, "--port");
       const port = portRaw !== undefined ? Number(portRaw) : undefined;
       if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {
@@ -2509,6 +2518,8 @@ export function parseCli(argv: string[]): ParsedCli {
             .filter(Boolean),
           envFile: parseOptionValue(argv, "--env-file"),
           skipStartupConsole: parseFlag(argv, "--skip-startup-console"),
+          detach: parseFlag(argv, "--detach"),
+          lifecycle,
           workspaceRoot,
         },
         workspaceRoot,
@@ -2956,6 +2967,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--telemetry",
     "--user-id",
     "--tenant-id",
+    "--tenant",
+    "--other-tenant",
     "--role",
     "--strict-policies",
     "--strict",
@@ -2981,6 +2994,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--git",
     "--no-git",
     "--field-test",
+    "--commit-ready",
+    "--detach",
+    "--ergonomics",
     "--with-web",
     "--no-web",
     "--api-only",
@@ -3093,6 +3109,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--file" ||
         arg === "--telemetry" ||
         arg === "--user-id" ||
+        arg === "--tenant" ||
+        arg === "--other-tenant" ||
         arg === "--tenant-id" ||
         arg === "--role" ||
         arg === "--strict-policies" ||

@@ -499,18 +499,13 @@ describe("forge add integration", () => {
       expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"), "utf8")).toContain(
         "/webhooks/workos",
       );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
-        "canWorkOS",
-      );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
-        "assertWorkOSResourceTenant",
-      );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
-        "FORGE_WORKOS_CROSS_TENANT_RESOURCE",
-      );
-      expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8")).toContain(
-        "organization\" | \"project\" | \"team\" | \"task",
-      );
+      const resourceMapSource = readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8");
+      expect(resourceMapSource).toContain("canWorkOS");
+      expect(resourceMapSource).toContain("assertWorkOSResourceTenant");
+      expect(resourceMapSource).toContain("FORGE_WORKOS_CROSS_TENANT_RESOURCE");
+      for (const kind of ["organization", "project", "team", "taskGroup", "task"]) {
+        expect(resourceMapSource).toContain(`"${kind}"`);
+      }
       expect(readFileSync(join(workspace, ".env.example"), "utf8")).toContain("FORGE_AUTH_MODE=oidc");
       expect(readFileSync(join(workspace, ".env.example"), "utf8")).toContain("WORKOS_WEBHOOK_SECRET=");
       expect(readFileSync(join(workspace, "src/policies.workos.ts"), "utf8")).toContain(

@@ -47,6 +47,13 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       docs: ["src/forge/_generated/runtimeRules.md", "AGENTS.md"],
     };
   }
+  if (code === "FORGE_RUNTIME_EXPORT_NAME_REQUIRED") {
+    return {
+      fixHint: "Forge runtime entries must be named exports. Replace `export default command(...)` with `export const createThing = command(...)` so generated API, frontend bindings, and capability maps have a stable name.",
+      suggestedCommands: ["forge check --json", "forge generate"],
+      docs: ["AGENTS.md", "src/forge/_generated/runtimeRules.md"],
+    };
+  }
   if (code === "FORGE_SECRET_DIRECT_PROCESS_ENV") {
     return {
       fixHint: "Use ctx.secrets or ctx.config for Forge runtime secrets/config; public frontend bridge env may use the framework's public env surface.",
@@ -73,6 +80,13 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       fixHint: "Inspect generated RLS SQL and validate tenant isolation before applying migrations.",
       suggestedCommands: ["forge rls check --json", "forge rls test --db postgres --json"],
       docs: ["src/forge/_generated/agentContract.json"],
+    };
+  }
+  if (code === "FORGE_DB_EMPTY_TIMESTAMP_LITERAL") {
+    return {
+      fixHint: "Do not use an empty string for timestamp fields. Use a real ISO timestamp, omit an optional timestamp field, declare it as `timestamp?` / `nullable(\"timestamp\")`, or model it as text if empty string is meaningful.",
+      suggestedCommands: ["forge check --json", "forge dev --db pglite --once --json"],
+      docs: ["AGENTS.md"],
     };
   }
   if (code.startsWith("FORGE_UI_")) {

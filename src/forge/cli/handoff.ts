@@ -8,10 +8,12 @@ import type { UiRunReport } from "../ui/types.ts";
 import { summarizeChangeTypes, type CategorizedFileSummary } from "../workspace/change-summary.ts";
 import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
+import { runChangedCommand } from "./changed.ts";
 
 export interface HandoffCommandOptions {
   workspaceRoot: string;
   json: boolean;
+  commitReady?: boolean;
 }
 
 export interface HandoffCommandResult {
@@ -92,6 +94,10 @@ export interface HandoffCommandResult {
     recommendedReadFiles: string[];
     recommendedCommands: string[];
     risks: string[];
+  };
+  commitReady?: {
+    count: number;
+    files: string[];
   };
   diagnosticSummary: {
     total: number;
@@ -205,6 +211,9 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
     includeImpact: true,
   });
   const git = buildWorkspaceGitSummary(workspaceRoot);
+  const commitReady = options.commitReady
+    ? runChangedCommand(workspaceRoot, { commitReady: true }).data.commitReady as { count: number; files: string[] } | undefined
+    : undefined;
   const recentRuns = summarizeRecentRuns(workspaceRoot);
   const agent = dev.summary.agentContext;
   const risks = [
@@ -269,6 +278,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
       recommendedCommands: [...new Set(nextActions)].slice(0, 10),
       risks,
     },
+    ...(commitReady ? { commitReady } : {}),
     diagnosticSummary,
     diagnostics: diagnosticSummary.sample,
     nextActions: [...new Set(nextActions)].slice(0, 10),
@@ -302,6 +312,13 @@ export function formatHandoffHuman(result: HandoffCommandResult): string {
       `  ${result.diagnosticSummary.total} total` +
         (result.diagnosticSummary.hidden > 0 ? ` (${result.diagnosticSummary.hidden} hidden in compact handoff)` : ""),
     );
+  }
+  if (result.commitReady) {
+    lines.push("", "Commit-ready files:", `  ${result.commitReady.count}`);
+    lines.push(...result.commitReady.files.slice(0, 8).map((file) => `  ${file}`));
+    if (result.commitReady.files.length > 8) {
+      lines.push(`  ... ${result.commitReady.files.length - 8} more`);
+    }
   }
   const changedTypes = summarizeChangeTypes(result.git.changeSummary.changed);
   if (changedTypes) {

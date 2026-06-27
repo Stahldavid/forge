@@ -3,9 +3,12 @@ import type { AuthContext } from "./types.ts";
 export interface AuthHeaderInput {
   userId?: string;
   tenantId?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
   role?: string;
   roles?: string[];
   permissions?: string[];
+  claims?: Record<string, unknown>;
 }
 
 export interface CliAuthInput {
@@ -17,9 +20,11 @@ export interface CliAuthInput {
 }
 
 export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
-  const { userId, tenantId, role } = input;
+  const { userId, role } = input;
+  const tenantId = input.tenantId ?? input.organizationId;
   const roles = [...new Set([...(role ? [role] : []), ...(input.roles ?? [])])];
-  if (userId && (role || roles.length > 0 || (input.permissions ?? []).length > 0)) {
+  const hasClaims = Object.keys(input.claims ?? {}).length > 0 || Boolean(input.organizationId);
+  if (userId && (role || roles.length > 0 || (input.permissions ?? []).length > 0 || hasClaims)) {
     return {
       kind: "user",
       userId,
@@ -33,7 +38,13 @@ export function resolveAuthFromHeaders(input: AuthHeaderInput): AuthContext {
         subject: userId,
         authProvider: "dev-headers",
       },
-      claims: {},
+      claims: {
+        ...(input.claims ?? {}),
+        ...(input.organizationId ? { organization_id: input.organizationId } : {}),
+        ...(input.organizationMembershipId
+          ? { organization_membership_id: input.organizationMembershipId }
+          : {}),
+      },
     };
   }
   return { kind: "anonymous" };
@@ -57,6 +68,21 @@ function parseHeaderList(value: string | null): string[] {
     .filter(Boolean);
 }
 
+function parseClaims(value: string | null): Record<string, unknown> | undefined {
+  if (!value) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Invalid dev claims should not break the whole request; policies can still use explicit headers.
+  }
+  return undefined;
+}
+
 export function resolveAuthFromCli(input: CliAuthInput): AuthContext {
   return resolveAuthFromHeaders(input);
 }
@@ -65,9 +91,12 @@ export function parseAuthHeaders(headers: Headers): AuthContext {
   return resolveAuthFromHeaders({
     userId: headers.get("x-forge-user-id") ?? undefined,
     tenantId: headers.get("x-forge-tenant-id") ?? undefined,
+    organizationId: headers.get("x-forge-organization-id") ?? undefined,
+    organizationMembershipId: headers.get("x-forge-organization-membership-id") ?? undefined,
     role: headers.get("x-forge-role") ?? undefined,
     roles: parseHeaderList(headers.get("x-forge-roles")),
     permissions: parseHeaderList(headers.get("x-forge-permissions")),
+    claims: parseClaims(headers.get("x-forge-claims")),
   });
 }
 

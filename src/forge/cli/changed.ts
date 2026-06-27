@@ -1,11 +1,18 @@
+import { spawnSync } from "node:child_process";
 import type { CategorizedFileSummary, DiffPlan } from "../workspace/change-summary.ts";
 import {
   buildDiffPlanFromChangeSummary,
+  categorizeFiles,
   filterCategorizedSummary,
   summarizeChangeTypes,
 } from "../workspace/change-summary.ts";
 import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
-import { buildWorkspaceGitSummary, type WorkspaceGitSummary } from "../workspace/git-summary.ts";
+import {
+  buildWorkspaceGitSummary,
+  listWorkspaceFiles,
+  workspaceChangeClassifier,
+  type WorkspaceGitSummary,
+} from "../workspace/git-summary.ts";
 
 export interface ChangedCommandResult {
   ok: boolean;
@@ -148,6 +155,89 @@ function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
   ];
 }
 
+function parseStatusPath(line: string): string {
+  const raw = line.slice(2).trimStart();
+  const renamed = raw.split(" -> ");
+  return (renamed[renamed.length - 1] ?? raw).replace(/\\/g, "/");
+}
+
+function gitStatusFiles(workspaceRoot: string): {
+  changed: string[];
+  staged: string[];
+  unstaged: string[];
+  untracked: string[];
+} | null {
+  const result = spawnSync("git", ["status", "--porcelain=v1", "-uall"], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  const staged = new Set<string>();
+  const unstaged = new Set<string>();
+  const untracked = new Set<string>();
+  for (const line of result.stdout.split(/\r?\n/).filter(Boolean)) {
+    const x = line[0] ?? " ";
+    const y = line[1] ?? " ";
+    const file = parseStatusPath(line);
+    if (x === "?" && y === "?") {
+      untracked.add(file);
+      continue;
+    }
+    if (x !== " ") {
+      staged.add(file);
+    }
+    if (y !== " ") {
+      unstaged.add(file);
+    }
+  }
+  return {
+    changed: [...new Set([...staged, ...unstaged, ...untracked])].sort(),
+    staged: [...staged].sort(),
+    unstaged: [...unstaged].sort(),
+    untracked: [...untracked].sort(),
+  };
+}
+
+function isCommitReadyPath(file: string): boolean {
+  const lower = file.replace(/\\/g, "/").replace(/^\.\//, "").toLowerCase();
+  return !(
+    lower.startsWith(".forge/") ||
+    lower.startsWith(".codex/") ||
+    lower.startsWith("src/forge/_generated/") ||
+    lower === "forge.lock" ||
+    lower.endsWith("/forge.lock")
+  );
+}
+
+function commitReadySummary(workspaceRoot: string): {
+  changed: CategorizedFileSummary;
+  staged: CategorizedFileSummary;
+  unstaged: CategorizedFileSummary;
+  untracked: CategorizedFileSummary;
+  files: string[];
+} {
+  const classifier = workspaceChangeClassifier(workspaceRoot);
+  const status = gitStatusFiles(workspaceRoot) ?? {
+    changed: listWorkspaceFiles(workspaceRoot),
+    staged: [],
+    unstaged: [],
+    untracked: listWorkspaceFiles(workspaceRoot),
+  };
+  const filter = (files: string[]) =>
+    files.filter((file) => isCommitReadyPath(file) && !["generated", "operational"].includes(classifier(file)));
+  const changed = filter(status.changed);
+  return {
+    changed: categorizeFiles(changed, 12, classifier),
+    staged: categorizeFiles(filter(status.staged), 12, classifier),
+    unstaged: categorizeFiles(filter(status.unstaged), 12, classifier),
+    untracked: categorizeFiles(filter(status.untracked), 12, classifier),
+    files: changed,
+  };
+}
+
 function buildReviewFocus(humanChanges: HumanChangeSummary, derivedChanges: DerivedChangeSummary): ReviewFocus {
   const authoredOrder = ([
     "source",
@@ -202,7 +292,7 @@ function buildGeneratedChangeExplanation(
   };
 }
 
-export function runChangedCommand(workspaceRoot: string, options: { authoredOnly?: boolean; reviewOnly?: boolean } = {}): ChangedCommandResult {
+export function runChangedCommand(workspaceRoot: string, options: { authoredOnly?: boolean; reviewOnly?: boolean; commitReady?: boolean } = {}): ChangedCommandResult {
   const git = buildWorkspaceGitSummary(workspaceRoot);
   const changed = git.changeSummary.changed;
   const humanChanges = selectHumanChangeSummary(changed);
@@ -215,16 +305,19 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const reviewStaged = filterCategorizedSummary(git.changeSummary.staged, [...REVIEW_CHANGE_TYPES]);
   const reviewUnstaged = filterCategorizedSummary(git.changeSummary.unstaged, [...REVIEW_CHANGE_TYPES]);
   const reviewUntracked = filterCategorizedSummary(git.changeSummary.untracked, [...REVIEW_CHANGE_TYPES]);
+  const commitReady = options.commitReady ? commitReadySummary(workspaceRoot) : null;
   const viewHumanChanges = options.reviewOnly
     ? selectHumanChangeSummary(reviewChanged)
+    : options.commitReady && commitReady
+      ? selectHumanChangeSummary(commitReady.changed)
     : options.authoredOnly
       ? selectHumanChangeSummary(authoredChanged)
       : humanChanges;
-  const viewChanged = options.reviewOnly ? reviewChanged : options.authoredOnly ? authoredChanged : changed;
-  const viewStaged = options.reviewOnly ? reviewStaged : options.authoredOnly ? authoredStaged : git.changeSummary.staged;
-  const viewUnstaged = options.reviewOnly ? reviewUnstaged : options.authoredOnly ? authoredUnstaged : git.changeSummary.unstaged;
-  const viewUntracked = options.reviewOnly ? reviewUntracked : options.authoredOnly ? authoredUntracked : git.changeSummary.untracked;
-  const viewDerivedChanges: DerivedChangeSummary = options.authoredOnly || options.reviewOnly
+  const viewChanged = options.reviewOnly ? reviewChanged : options.commitReady && commitReady ? commitReady.changed : options.authoredOnly ? authoredChanged : changed;
+  const viewStaged = options.reviewOnly ? reviewStaged : options.commitReady && commitReady ? commitReady.staged : options.authoredOnly ? authoredStaged : git.changeSummary.staged;
+  const viewUnstaged = options.reviewOnly ? reviewUnstaged : options.commitReady && commitReady ? commitReady.unstaged : options.authoredOnly ? authoredUnstaged : git.changeSummary.unstaged;
+  const viewUntracked = options.reviewOnly ? reviewUntracked : options.commitReady && commitReady ? commitReady.untracked : options.authoredOnly ? authoredUntracked : git.changeSummary.untracked;
+  const viewDerivedChanges: DerivedChangeSummary = options.authoredOnly || options.reviewOnly || options.commitReady
     ? { total: 0, generated: { count: 0, sample: [], hidden: 0 } }
     : derivedChanges;
   const risks = buildRisks(git);
@@ -245,7 +338,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
         commit: git.commit,
         workspaceMode: git.workspaceMode ?? (git.available ? "git" : "nonGit"),
         tracking: git.tracking ?? git.source,
-        view: options.reviewOnly ? "review" : options.authoredOnly ? "authored" : "all",
+        view: options.reviewOnly ? "review" : options.commitReady ? "commit-ready" : options.authoredOnly ? "authored" : "all",
         changedFiles: viewChanged.total.count,
         humanFiles: viewHumanChanges.total,
         generatedFiles: viewDerivedChanges.total,
@@ -274,6 +367,7 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
       reviewFocus,
       generatedExplanation,
       diffPlan,
+      ...(commitReady ? { commitReady: { files: commitReady.files, count: commitReady.files.length } } : {}),
       risks,
       advisories,
       recommendedCommands,

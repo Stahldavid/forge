@@ -36,6 +36,22 @@ function unwrapStringLiteral(node: SyntaxNode): string | null {
   return null;
 }
 
+function unwrapNullableType(node: SyntaxNode): string | null {
+  if (node.type !== "call_expression") {
+    return null;
+  }
+  const functionNode = node.childForFieldName("function");
+  if (functionNode?.type !== "identifier" || functionNode.text !== "nullable") {
+    return null;
+  }
+  const argsNode = node.childForFieldName("arguments");
+  const firstArg = argsNode?.namedChildren.find((child) =>
+    child.type !== "," && child.type !== "comment" && child.type !== "(" && child.type !== ")"
+  );
+  const inner = firstArg ? unwrapStringLiteral(firstArg) : null;
+  return inner ? `${inner}?` : null;
+}
+
 function extractFieldsFromObject(objectNode: SyntaxNode, options: { skipConfigName?: boolean } = {}): DataField[] {
   const fields: DataField[] = [];
 
@@ -64,7 +80,7 @@ function extractFieldsFromObject(objectNode: SyntaxNode, options: { skipConfigNa
       continue;
     }
 
-    const typeValue = unwrapStringLiteral(valueNode);
+    const typeValue = unwrapStringLiteral(valueNode) ?? unwrapNullableType(valueNode);
     if (typeValue !== null) {
       fields.push({ name: key, type: typeValue });
     }

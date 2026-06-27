@@ -4,7 +4,12 @@ export function renderClientTypesTs(): string {
   return `export type ForgeStaticAuth = {
   userId?: string;
   tenantId?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
+  claims?: Record<string, unknown>;
   token?: string;
   getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
@@ -14,7 +19,12 @@ export function renderClientTypesTs(): string {
 export type ForgeResolvedAuth = {
   userId?: string;
   tenantId?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
+  claims?: Record<string, unknown>;
   token?: string;
   getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
@@ -159,7 +169,12 @@ async function resolveAuthHeaders(
       typeof value === "string" &&
       key !== "userId" &&
       key !== "tenantId" &&
+      key !== "organizationId" &&
+      key !== "organizationMembershipId" &&
       key !== "role" &&
+      key !== "roles" &&
+      key !== "permissions" &&
+      key !== "claims" &&
       key !== "token"
     ) {
       headers[key] = value;
@@ -172,8 +187,24 @@ async function resolveAuthHeaders(
   if (resolved.tenantId) {
     headers["x-forge-tenant-id"] = resolved.tenantId;
   }
+  if (resolved.organizationId) {
+    headers["x-forge-organization-id"] = resolved.organizationId;
+    headers["x-forge-tenant-id"] ??= resolved.organizationId;
+  }
+  if (resolved.organizationMembershipId) {
+    headers["x-forge-organization-membership-id"] = resolved.organizationMembershipId;
+  }
   if (resolved.role) {
     headers["x-forge-role"] = resolved.role;
+  }
+  if (Array.isArray(resolved.roles)) {
+    headers["x-forge-roles"] = JSON.stringify(resolved.roles);
+  }
+  if (Array.isArray(resolved.permissions)) {
+    headers["x-forge-permissions"] = JSON.stringify(resolved.permissions);
+  }
+  if (resolved.claims && typeof resolved.claims === "object") {
+    headers["x-forge-claims"] = JSON.stringify(resolved.claims);
   }
 
   return headers;

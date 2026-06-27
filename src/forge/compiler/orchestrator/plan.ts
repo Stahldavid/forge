@@ -1093,6 +1093,13 @@ export function plan(input: PlanInput): EmitPlan {
     orphanedFiles,
     lock,
     diagnostics: [
+      ...dataGraph.diagnostics,
+      ...sqlPlan.diagnostics,
+      ...runtimeGraph.diagnostics,
+      ...queryRegistry.diagnostics,
+      ...liveQueryRegistry.diagnostics,
+      ...policyRegistry.diagnostics,
+      ...tenantScope.diagnostics,
       ...agentArtifacts.diagnostics,
       ...rlsArtifacts.diagnostics,
       ...frontendGraph.diagnostics.map((diagnostic) =>

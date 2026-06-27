@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { closeSync, openSync } from "node:fs";
 import { createServer as createNetServer } from "node:net";
 import { run } from "../compiler/orchestrator/run.ts";
 import { basename, join } from "node:path";
@@ -56,6 +57,8 @@ export interface DevCommandOptions {
   mode?: "dev" | "serve";
   allowDevAuth?: boolean;
   skipStartupConsole?: boolean;
+  detach?: boolean;
+  lifecycle?: "status" | "stop";
 }
 
 export interface DevCommandResult {
@@ -171,6 +174,221 @@ interface DevStartFailure {
     host: string;
     suggestedCommands: string[];
   };
+}
+
+const DEV_STATE_DIR = ".forge/dev";
+const DEV_PID_FILE = `${DEV_STATE_DIR}/dev.pid`;
+const DEV_LOG_FILE = `${DEV_STATE_DIR}/dev.log`;
+
+function devStatePaths(workspaceRoot: string): { dir: string; pidFile: string; logFile: string } {
+  return {
+    dir: join(workspaceRoot, DEV_STATE_DIR),
+    pidFile: join(workspaceRoot, DEV_PID_FILE),
+    logFile: join(workspaceRoot, DEV_LOG_FILE),
+  };
+}
+
+function readDetachedDevPid(workspaceRoot: string): number | null {
+  const text = nodeFileSystem.readText(devStatePaths(workspaceRoot).pidFile);
+  if (text === null) {
+    return null;
+  }
+  const pid = Number(text.trim());
+  return Number.isInteger(pid) && pid > 0 ? pid : null;
+}
+
+function isProcessRunning(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error instanceof Error && "code" in error && error.code === "EPERM";
+  }
+}
+
+function removeDevPidFile(workspaceRoot: string): void {
+  const paths = devStatePaths(workspaceRoot);
+  if (nodeFileSystem.exists(paths.pidFile)) {
+    nodeFileSystem.remove(paths.pidFile);
+  }
+}
+
+function printDevLifecycleResult(input: {
+  options: DevCommandOptions;
+  ok: boolean;
+  action: "detach" | "status" | "stop";
+  running: boolean;
+  pid?: number;
+  logFile: string;
+  message: string;
+  exitCode: 0 | 1;
+}): DevCommandResult {
+  const payload = {
+    ok: input.ok,
+    action: input.action,
+    running: input.running,
+    ...(input.pid !== undefined ? { pid: input.pid } : {}),
+    logFile: input.logFile,
+    message: input.message,
+    nextActions: input.running
+      ? ["forge dev status --json", "forge dev stop --json", `tail -f ${input.logFile}`]
+      : ["forge dev --detach --json"],
+    exitCode: input.exitCode,
+  };
+  if (input.options.json) {
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  } else {
+    process.stdout.write(`${input.message}\n`);
+    if (input.pid !== undefined) process.stdout.write(`pid: ${input.pid}\n`);
+    process.stdout.write(`log: ${input.logFile}\n`);
+  }
+  return { exitCode: input.exitCode };
+}
+
+function buildDetachedDevArgs(options: DevCommandOptions): string[] {
+  const args = ["dev", "--skip-startup-console"];
+  if (options.host) args.push("--host", options.host);
+  if (options.port !== undefined) args.push("--port", String(options.port));
+  if (options.mock) args.push("--mock");
+  if (options.mockAi) args.push("--mock-ai");
+  if (!options.watch) args.push("--no-watch");
+  if (options.db) args.push("--db", options.db);
+  if (options.databaseUrl) args.push("--database-url", options.databaseUrl);
+  if (!options.worker) args.push("--no-worker");
+  if (options.withWeb === false) args.push("--no-web");
+  if (options.apiOnly) args.push("--api-only");
+  if (options.webOnly) args.push("--web-only");
+  if (options.open) args.push("--open");
+  if (options.webPort !== undefined) args.push("--web-port", String(options.webPort));
+  if (options.telemetry.length > 0) args.push("--telemetry", options.telemetry.join(","));
+  if (options.envFile) args.push("--env-file", options.envFile);
+  return args;
+}
+
+function runDevStatus(options: DevCommandOptions): DevCommandResult {
+  const paths = devStatePaths(options.workspaceRoot);
+  const pid = readDetachedDevPid(options.workspaceRoot);
+  const running = pid !== null && isProcessRunning(pid);
+  if (pid !== null && !running) {
+    removeDevPidFile(options.workspaceRoot);
+  }
+  return printDevLifecycleResult({
+    options,
+    ok: true,
+    action: "status",
+    running,
+    ...(pid !== null ? { pid } : {}),
+    logFile: paths.logFile,
+    message: running ? "forge dev detached server is running" : "forge dev detached server is not running",
+    exitCode: 0,
+  });
+}
+
+function runDevStop(options: DevCommandOptions): DevCommandResult {
+  const paths = devStatePaths(options.workspaceRoot);
+  const pid = readDetachedDevPid(options.workspaceRoot);
+  if (pid === null || !isProcessRunning(pid)) {
+    removeDevPidFile(options.workspaceRoot);
+    return printDevLifecycleResult({
+      options,
+      ok: true,
+      action: "stop",
+      running: false,
+      ...(pid !== null ? { pid } : {}),
+      logFile: paths.logFile,
+      message: "no detached forge dev server was running",
+      exitCode: 0,
+    });
+  }
+  process.kill(pid, "SIGTERM");
+  removeDevPidFile(options.workspaceRoot);
+  return printDevLifecycleResult({
+    options,
+    ok: true,
+    action: "stop",
+    running: false,
+    pid,
+    logFile: paths.logFile,
+    message: "stopped detached forge dev server",
+    exitCode: 0,
+  });
+}
+
+function runDevDetach(options: DevCommandOptions): DevCommandResult {
+  if (options.once) {
+    return printDevLifecycleResult({
+      options,
+      ok: false,
+      action: "detach",
+      running: false,
+      logFile: devStatePaths(options.workspaceRoot).logFile,
+      message: "forge dev --detach cannot be combined with --once",
+      exitCode: 1,
+    });
+  }
+  const existingPid = readDetachedDevPid(options.workspaceRoot);
+  const paths = devStatePaths(options.workspaceRoot);
+  nodeFileSystem.mkdirp(paths.dir);
+  if (existingPid !== null && isProcessRunning(existingPid)) {
+    return printDevLifecycleResult({
+      options,
+      ok: true,
+      action: "detach",
+      running: true,
+      pid: existingPid,
+      logFile: paths.logFile,
+      message: "forge dev detached server is already running",
+      exitCode: 0,
+    });
+  }
+
+  const cliPath = process.argv[1];
+  if (!cliPath) {
+    return printDevLifecycleResult({
+      options,
+      ok: false,
+      action: "detach",
+      running: false,
+      logFile: paths.logFile,
+      message: "could not resolve current forge CLI path for detached dev server",
+      exitCode: 1,
+    });
+  }
+
+  const fd = openSync(paths.logFile, "a");
+  try {
+    const child = spawn(process.execPath, [cliPath, ...buildDetachedDevArgs(options)], {
+      cwd: options.workspaceRoot,
+      detached: true,
+      stdio: ["ignore", fd, fd],
+      windowsHide: true,
+    });
+    if (child.pid === undefined) {
+      return printDevLifecycleResult({
+        options,
+        ok: false,
+        action: "detach",
+        running: false,
+        logFile: paths.logFile,
+        message: "detached forge dev process started without a pid",
+        exitCode: 1,
+      });
+    }
+    child.unref();
+    nodeFileSystem.writeText(paths.pidFile, `${child.pid}\n`);
+    return printDevLifecycleResult({
+      options,
+      ok: true,
+      action: "detach",
+      running: true,
+      pid: child.pid,
+      logFile: paths.logFile,
+      message: "started detached forge dev server",
+      exitCode: 0,
+    });
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function nextPreviewPort(webUrl?: string): number {
@@ -861,6 +1079,16 @@ export async function runDevCommand(
 ): Promise<DevCommandResult> {
   const workspaceRoot = options.workspaceRoot.replace(/\\/g, "/");
   const startedAt = new Date();
+
+  if (options.lifecycle === "status") {
+    return runDevStatus({ ...options, workspaceRoot });
+  }
+  if (options.lifecycle === "stop") {
+    return runDevStop({ ...options, workspaceRoot });
+  }
+  if (options.detach) {
+    return runDevDetach({ ...options, workspaceRoot });
+  }
 
   if (options.once) {
     const cycle = await runDevConsoleCycle({

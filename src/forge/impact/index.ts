@@ -11,12 +11,15 @@ import type { AppGraph } from "../compiler/types/app-graph.ts";
 import type { DataGraph } from "../compiler/types/data-graph.ts";
 import type { PackageGraph } from "../compiler/types/package-graph.ts";
 import type { PolicyRegistry } from "../compiler/types/policy-registry.ts";
+import type { TenantScope } from "../compiler/types/policy-registry.ts";
 import type { RuntimeGraph } from "../compiler/types/runtime-graph.ts";
 import type { QueryRegistry } from "../compiler/types/query-registry.ts";
 import type { LiveQueryRegistry } from "../compiler/types/live-query-registry.ts";
 import type { WorkflowRegistry, WorkflowSubscriptions } from "../compiler/types/workflow-registry.ts";
 import type { ActionSubscriptions } from "../compiler/types/action-subscriptions.ts";
 import type { TestCost, TestGraph } from "../compiler/types/test-graph.ts";
+import type { AgentCapabilityMap } from "../compiler/agent-contract/types.ts";
+import type { AgentContract } from "../compiler/agent-contract/types.ts";
 import { resolveCommandArgv } from "../compiler/package-manager/executor.ts";
 import { categorizeFiles, isVolatileForgeState, type CategorizedFileSummary } from "../workspace/change-summary.ts";
 import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
@@ -28,6 +31,7 @@ import type {
   ImpactedSystems,
   ImpactResult,
   ImpactTestPlan,
+  AuthzTestProof,
   TargetedTest,
   TestCommandOptions,
   TestPlanCheck,
@@ -1045,6 +1049,139 @@ export function explainTest(workspaceRoot: string, testFile: string): ImpactResu
   return { ok: true, test, diagnostics: [], exitCode: 0 };
 }
 
+function buildAuthzTestProof(options: TestCommandOptions): ImpactResult {
+  const tenant = options.tenant ?? "acme";
+  const otherTenant = options.otherTenant ?? "globex";
+  const policyRegistry = readJson<PolicyRegistry>(options.workspaceRoot, `${GENERATED}/policyRegistry.json`, {
+    schemaVersion: "",
+    generatorVersion: "",
+    analyzerVersion: "",
+    inputHash: "",
+    policies: [],
+    commandAuth: [],
+    queryAuth: [],
+    diagnostics: [],
+  });
+  const tenantScope = readJson<TenantScope>(options.workspaceRoot, `${GENERATED}/tenantScope.json`, {
+    schemaVersion: "",
+    generatorVersion: "",
+    inputHash: "",
+    tables: [],
+    diagnostics: [],
+  });
+  const capabilityMap = readJson<AgentCapabilityMap>(options.workspaceRoot, `${GENERATED}/capabilityMap.json`, {
+    schemaVersion: "0.1.0",
+    generatorVersion: "",
+    project: { name: "", type: "forgeos-app" },
+    summary: { covered: 0, backendOnly: 0, frontendOnly: 0, warnings: 0 },
+    entries: [],
+    diagnostics: [],
+  });
+  const agentContract = readJson<AgentContract | null>(options.workspaceRoot, `${GENERATED}/agentContract.json`, null);
+  const policyByName = new Map(policyRegistry.policies.map((policy) => [policy.name, policy]));
+  const protectedCommands = policyRegistry.commandAuth.filter((entry) => entry.auth.kind === "policy");
+  const protectedQueries = policyRegistry.queryAuth.filter((entry) => entry.auth.kind === "policy");
+  const capabilityPolicyBindings = capabilityMap.entries.filter((entry) => entry.runtime?.policy).length;
+  const capabilityMissingPolicy = capabilityMap.entries.filter((entry) => {
+    const runtime = entry.runtime;
+    if (!runtime) return false;
+    const touchesTenantData =
+      runtime.dependencies.some((dependency) => dependency.scope === "tenant") ||
+      runtime.tablesRead.some((table) => tenantScope.tables.some((scoped) => scoped.table === table)) ||
+      runtime.tablesWritten.some((table) => tenantScope.tables.some((scoped) => scoped.table === table));
+    return touchesTenantData && !runtime.policy;
+  });
+  const permissionBackedPolicies = policyRegistry.policies.filter((policy) => policy.permissions.length > 0);
+  const roleBackedPolicies = policyRegistry.policies.filter((policy) => policy.roles.length > 0);
+  const missingPolicyBindings = [
+    ...protectedCommands.map((entry) => entry.auth.kind === "policy" ? entry.auth.policy : undefined),
+    ...protectedQueries.map((entry) => entry.auth.kind === "policy" ? entry.auth.policy : undefined),
+  ].filter((policy): policy is string => typeof policy === "string" && !policyByName.has(policy));
+  const checks: AuthzTestProof["checks"] = [
+    {
+      name: "tenant-scope-present",
+      ok: tenantScope.tables.length > 0 || agentContract?.auth.requiresTenant !== true,
+      message: tenantScope.tables.length > 0
+        ? "tenant-scoped tables are present in tenantScope.json"
+        : "no tenant-scoped tables are declared",
+      evidence: tenantScope.tables.map((table) => ({ table: table.table, tenantIdColumn: table.tenantIdColumn })),
+    },
+    {
+      name: "runtime-policies-bound",
+      ok: protectedCommands.length + protectedQueries.length > 0,
+      message: protectedCommands.length + protectedQueries.length > 0
+        ? "runtime entries are bound to policies"
+        : "no policy-bound commands or queries were found",
+      evidence: {
+        commands: protectedCommands.map((entry) => ({ name: entry.commandName, policy: entry.auth.kind === "policy" ? entry.auth.policy : null })),
+        queries: protectedQueries.map((entry) => ({ name: entry.queryName, policy: entry.auth.kind === "policy" ? entry.auth.policy : null })),
+      },
+    },
+    {
+      name: "policy-bindings-resolve",
+      ok: missingPolicyBindings.length === 0,
+      message: missingPolicyBindings.length === 0
+        ? "all runtime policy bindings resolve to policyRegistry entries"
+        : `missing policy definitions: ${missingPolicyBindings.join(", ")}`,
+      evidence: missingPolicyBindings,
+    },
+    {
+      name: "permission-or-role-backed",
+      ok: permissionBackedPolicies.length > 0 || roleBackedPolicies.length > 0,
+      message: permissionBackedPolicies.length > 0
+        ? "policies include permission-backed rules suitable for WorkOS-like auth"
+        : roleBackedPolicies.length > 0
+          ? "policies are role-backed; production auth should map roles or permissions explicitly"
+          : "policies are not backed by roles or permissions",
+      evidence: policyRegistry.policies.map((policy) => ({
+        name: policy.name,
+        roles: policy.roles,
+        permissions: policy.permissions,
+      })),
+    },
+    {
+      name: "capability-map-policies",
+      ok: capabilityMissingPolicy.length === 0,
+      message: capabilityMissingPolicy.length === 0
+        ? "tenant-sensitive capability-map runtime entries carry policy metadata"
+        : "some tenant-sensitive capability-map runtime entries have no policy metadata",
+      evidence: capabilityMissingPolicy.map((entry) => ({
+        id: entry.id,
+        runtime: entry.runtime ? { kind: entry.runtime.kind, name: entry.runtime.name } : null,
+        dependencies: entry.runtime?.dependencies ?? [],
+      })),
+    },
+  ];
+  const ok = checks.every((check) => check.ok);
+  const authz: AuthzTestProof = {
+    schemaVersion: "0.1.0",
+    tenant,
+    otherTenant,
+    checks,
+    summary: {
+      ok,
+      tenantScopedTables: tenantScope.tables.length,
+      protectedCommands: protectedCommands.length,
+      protectedQueries: protectedQueries.length,
+      capabilityPolicyBindings,
+    },
+    limitations: [
+      "This is a generated-contract proof, not a live HTTP/FGA execution.",
+      "Run forge dev --db memory and an app-specific HTTP harness to prove real token/claim enforcement.",
+    ],
+    nextActions: [
+      `forge dev --db memory --port 0 --json`,
+      `forge test authz --tenant ${tenant} --other-tenant ${otherTenant} --json`,
+      "forge inspect policies --json",
+      "forge inspect capabilities --json",
+    ],
+  };
+  const diagnostics = checks
+    .filter((check) => !check.ok)
+    .map((check) => diag("error", "FORGE_AUTHZ_PROOF_FAILED", check.message));
+  return { ok, authz, diagnostics, exitCode: ok ? 0 : 1 };
+}
+
 export function diagnosticsForImpactTestRun(run: TestRunRecord): Diagnostic[] {
   const timedOut = run.results.filter((result) => result.timedOut).map((result) => result.command);
   if (timedOut.length > 0) {
@@ -1077,6 +1214,9 @@ export function diagnosticsForImpactTestRun(run: TestRunRecord): Diagnostic[] {
 }
 
 export async function runTestCommand(options: TestCommandOptions): Promise<ImpactResult> {
+  if (options.subcommand === "authz") {
+    return buildAuthzTestProof(options);
+  }
   if (options.subcommand === "explain") {
     return explainTest(options.workspaceRoot, options.testFile ?? "");
   }
@@ -1145,7 +1285,7 @@ export function formatImpactJson(result: ImpactResult): string {
       exitCode: result.exitCode,
     }, null, 2)}\n`;
   }
-  return `${JSON.stringify(result.report ?? result.plan ?? result.test ?? result.run ?? result, null, 2)}\n`;
+  return `${JSON.stringify(result.report ?? result.plan ?? result.test ?? result.run ?? result.authz ?? result, null, 2)}\n`;
 }
 
 export function formatImpactHuman(result: ImpactResult): string {
@@ -1192,6 +1332,23 @@ ${result.run.results.map((step) => {
   const resolution = step.failureKind === "command-resolution-error" ? `, command resolution failed: ${step.stderr ?? "unknown error"}` : "";
   return `${step.ok ? "OK" : "FAIL"} ${step.command} (${step.durationMs}ms${timeout}${resolution})`;
 }).join("\n")}
+`;
+  }
+  if (result.authz) {
+    const proof = result.authz;
+    return `Authz proof ${proof.summary.ok ? "ok" : "failed"}
+
+Tenant: ${proof.tenant}
+Other tenant: ${proof.otherTenant}
+
+Checks:
+${proof.checks.map((check) => `  - ${check.ok ? "OK" : "FAIL"} ${check.name}: ${check.message}`).join("\n")}
+
+Limitations:
+${proof.limitations.map((item) => `  - ${item}`).join("\n")}
+
+Next:
+${proof.nextActions.map((item) => `  - ${item}`).join("\n")}
 `;
   }
   return result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
