@@ -148,13 +148,6 @@ function parseSqlLiteral(token: string, params: unknown[]): unknown {
   return Number.isFinite(numeric) ? numeric : token;
 }
 
-function sqlParamValue(params: unknown[], index: string | undefined): unknown {
-  if (!index) {
-    return undefined;
-  }
-  return params[Number(index) - 1];
-}
-
 function deterministicUuid(serial: number): string {
   return `00000000-0000-0000-0000-${String(serial).padStart(12, "0")}`;
 }
@@ -277,6 +270,16 @@ function projectRows(sql: string, rows: MemoryRow[]): MemoryRow[] {
     }
     return projected;
   });
+}
+
+function extractWhereClause(sql: string): string | null {
+  const whereIndex = sql.search(/\bWHERE\b/i);
+  if (whereIndex < 0) {
+    return null;
+  }
+  const afterWhere = sql.slice(whereIndex);
+  const endMatch = afterWhere.match(/\b(ORDER\s+BY|GROUP\s+BY|LIMIT|RETURNING)\b/i);
+  return endMatch?.index === undefined ? afterWhere : afterWhere.slice(0, endMatch.index);
 }
 
 export class MemoryAdapter implements DbAdapter {
@@ -554,31 +557,33 @@ export class MemoryAdapter implements DbAdapter {
   }
 
   private filterRows(rows: MemoryRow[], sql: string, params: unknown[]): MemoryRow[] {
-    if (/status\s*=\s*'pending'/i.test(sql) && /next_attempt_at\s*<=\s*now\(\)/i.test(sql)) {
+    const whereSql = extractWhereClause(sql) ?? sql;
+
+    if (/status\s*=\s*'pending'/i.test(whereSql) && /next_attempt_at\s*<=\s*now\(\)/i.test(whereSql)) {
       return rows.filter((row) => row.status === "pending");
     }
 
-    if (/trace_id\s*=\s*\$\d+/i.test(sql)) {
+    if (/trace_id\s*=\s*\$\d+/i.test(whereSql)) {
       return rows.filter((row) => row.trace_id === params[0]);
     }
 
-    if (/status\s+IN\s*\(\s*'pending'\s*,\s*'running'\s*,\s*'failed'\s*\)/i.test(sql)) {
+    if (/status\s+IN\s*\(\s*'pending'\s*,\s*'running'\s*,\s*'failed'\s*\)/i.test(whereSql)) {
       return rows.filter((row) =>
         ["pending", "running", "failed"].includes(String(row.status)),
       );
     }
 
-    if (/status\s+NOT\s+IN\s*\(\s*'completed'\s*,\s*'skipped'\s*\)/i.test(sql)) {
+    if (/status\s+NOT\s+IN\s*\(\s*'completed'\s*,\s*'skipped'\s*\)/i.test(whereSql)) {
       return rows.filter(
         (row) => !["completed", "skipped"].includes(String(row.status)),
       );
     }
 
-    if (/status\s*=\s*'dead'/i.test(sql) && /COUNT/i.test(sql)) {
+    if (/status\s*=\s*'dead'/i.test(whereSql) && /COUNT/i.test(sql)) {
       return rows.filter((row) => row.status === "dead");
     }
 
-    if (/step_index\s*<\s*\$\d+/i.test(sql) && /status\s*!=\s*'completed'/i.test(sql)) {
+    if (/step_index\s*<\s*\$\d+/i.test(whereSql) && /status\s*!=\s*'completed'/i.test(whereSql)) {
       const threshold = Number(params[1]);
       const runId = params[0];
       return rows.filter(
@@ -589,16 +594,16 @@ export class MemoryAdapter implements DbAdapter {
       );
     }
 
-    if (/idempotency_key\s*=\s*\$\d+/i.test(sql)) {
+    if (/idempotency_key\s*=\s*\$\d+/i.test(whereSql)) {
       return rows.filter((row) => row.idempotency_key === params[0]);
     }
 
-    if (/status\s*=\s*'dead'/i.test(sql)) {
+    if (/status\s*=\s*'dead'/i.test(whereSql)) {
       return rows.filter((row) => row.status === "dead");
     }
 
     const conditions = [
-      ...sql.matchAll(
+      ...whereSql.matchAll(
         /(?:^|\s|AND\s)(?:\w+\.)?"?(\w+)"?\s*(=|<=|>=|>|<|!=)\s*(\$\d+|now\(\)|'[^']*'|"[^"]*"|\d+)/gi,
       ),
     ];
@@ -650,13 +655,11 @@ export class MemoryAdapter implements DbAdapter {
 
     const setMatch = sql.match(/SET (.+?) WHERE/i);
     const assignments = setMatch?.[1]?.split(",") ?? [];
-    const whereMatch = sql.match(/WHERE\s+"?(\w+)"?\s*=\s*\$(\d+)/i);
-    const whereColumn = whereMatch?.[1] ?? "id";
-    const whereValue = sqlParamValue(params, whereMatch?.[2]) ?? params[params.length - 1];
+    const matchingRows = /WHERE/i.test(sql) ? new Set(this.filterRows(table.rows, sql, params)) : new Set(table.rows);
 
     let updated = 0;
     for (const row of table.rows) {
-      if (row[whereColumn] !== whereValue) {
+      if (!matchingRows.has(row)) {
         continue;
       }
 
