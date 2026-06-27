@@ -6,6 +6,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.35
+
+- Hardened field-test regressions found while building WorkOS-style
+  multi-tenant apps.
+- Resolved camelCase `ref:` targets such as `ref:accessRequests` to canonical
+  SQL table names like `access_requests`, and reported unknown refs before
+  invalid SQL reaches PGlite.
+- Allowed WorkOS-like local dev auth headers through dev-server CORS,
+  including organization, membership, permissions, roles, and claims headers.
+- Taught the generated agent contract and capability map to recognize
+  camelCase `ctx.db` aliases for snake_case tables.
+- Avoided printing fake `http://127.0.0.1:0` API URLs in
+  `forge dev --port 0` startup diagnostics.
+
 ## 0.1.0-alpha.34
 
 - Hardened the ForgeOS app-building DX after the Vendor Access field test.

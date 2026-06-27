@@ -595,6 +595,17 @@ export async function resolveAvailableWebPort(input: {
   };
 }
 
+export function devStartupConsoleUrlOptions(input: {
+  host: string;
+  port: number;
+  webUrl?: string;
+}): { apiUrl?: string; webUrl?: string } {
+  return {
+    ...(input.port === 0 ? {} : { apiUrl: `http://${input.host}:${input.port}` }),
+    ...(input.webUrl ? { webUrl: input.webUrl } : {}),
+  };
+}
+
 export interface DevWatchGenerateFailureEvent {
   schemaVersion: "0.1.0";
   event: "dev.generate_failed";
@@ -1138,8 +1149,7 @@ export async function runDevCommand(
       mode: "startup",
       strictSecrets: false,
       includeImpact: true,
-      apiUrl: `http://${host}:${port}`,
-      ...(webUrl ? { webUrl } : {}),
+      ...devStartupConsoleUrlOptions({ host, port, ...(webUrl ? { webUrl } : {}) }),
     });
     if (options.json) {
       process.stdout.write(formatDevConsoleJson(startupCycle));

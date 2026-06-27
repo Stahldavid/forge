@@ -210,6 +210,126 @@ describe("H35 capability map", () => {
     }
   }, 30_000);
 
+  test("capability map resolves camelCase db aliases for snake_case tables", async () => {
+    const { workspace, project } = await createMinimalProject("h35-capability-snake-table-aliases");
+    try {
+      writeFileSync(
+        join(project, "src", "forge", "schema.ts"),
+        [
+          readFileSync(join(project, "src", "forge", "schema.ts"), "utf8"),
+          "",
+          "export const organizations = defineTable({",
+          '  name: "organizations",',
+          "  fields: {",
+          '    id: "uuid",',
+          '    name: "text",',
+          "  },",
+          "});",
+          "",
+          "export const accessRequests = defineTable({",
+          '  name: "access_requests",',
+          "  fields: {",
+          '    id: "uuid",',
+          '    tenantId: "ref:organizations",',
+          '    title: "text",',
+          '    status: "text",',
+          "  },",
+          "});",
+          "",
+          "export const evidenceDocuments = defineTable({",
+          '  name: "evidence_documents",',
+          "  fields: {",
+          '    id: "uuid",',
+          '    tenantId: "ref:organizations",',
+          '    requestId: "ref:accessRequests",',
+          '    title: "text",',
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(project, "src", "queries", "listAccessRequests.ts"),
+        [
+          'import { can, query } from "forge/server";',
+          "",
+          "export const listAccessRequests = query({",
+          '  auth: can("access:read"),',
+          "  handler: async (ctx) => {",
+          "    const requests = await ctx.db.accessRequests.where({ tenantId: ctx.auth?.tenantId ?? 'org-acme' });",
+          "    const documents = await ctx.db.evidenceDocuments.where({ requestId: requests[0]?.id ?? 'req-none' });",
+          "    return { requests, documents };",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(project, "src", "queries", "liveAccessRequests.ts"),
+        [
+          'import { can, liveQuery } from "forge/server";',
+          "",
+          "export const liveAccessRequests = liveQuery({",
+          '  auth: can("access:read"),',
+          "  handler: async (ctx) => {",
+          "    const { accessRequests, evidenceDocuments } = ctx.db;",
+          "    const requests = await accessRequests.all();",
+          "    const documents = await evidenceDocuments.all();",
+          "    return { requests, documents };",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(project));
+      expect(generated.exitCode).toBe(0);
+
+      const contract = readAgentContract(project);
+      expect(contract.data.tables).toContainEqual(
+        expect.objectContaining({
+          name: "access_requests",
+          tenantScoped: true,
+        }),
+      );
+      expect(contract.data.tables).toContainEqual(
+        expect.objectContaining({
+          name: "evidence_documents",
+          tenantScoped: true,
+        }),
+      );
+      expect(contract.queries.find((entry) => entry.name === "listAccessRequests")?.tablesRead).toEqual(
+        expect.arrayContaining(["access_requests", "evidence_documents"]),
+      );
+      expect(contract.liveQueries.find((entry) => entry.name === "liveAccessRequests")?.tablesRead).toEqual(
+        expect.arrayContaining(["access_requests", "evidence_documents"]),
+      );
+
+      const map = readCapabilityMap(project);
+      expect(map.entries).toContainEqual(
+        expect.objectContaining({
+          id: "runtime:query:listAccessRequests",
+          runtime: expect.objectContaining({
+            tablesRead: expect.arrayContaining(["access_requests", "evidence_documents"]),
+          }),
+        }),
+      );
+      expect(map.entries).toContainEqual(
+        expect.objectContaining({
+          id: "runtime:liveQuery:liveAccessRequests",
+          runtime: expect.objectContaining({
+            tablesRead: expect.arrayContaining(["access_requests", "evidence_documents"]),
+          }),
+        }),
+      );
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
   test("agent contract includes table reads performed by imported local helpers", async () => {
     const { workspace, project } = await createMinimalProject("h35-capability-helper-reads");
     try {

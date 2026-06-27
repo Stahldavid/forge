@@ -333,12 +333,27 @@ function markdownResponse(body: string, status = 200): Response {
 }
 
 function corsPreflight(): Response {
+  const allowedHeaders = [
+    "Authorization",
+    "Content-Type",
+    "WorkOS-Signature",
+    "x-forge-user-id",
+    "x-forge-tenant-id",
+    "x-forge-organization-id",
+    "x-forge-organization-membership-id",
+    "x-forge-role",
+    "x-forge-roles",
+    "x-forge-permissions",
+    "x-forge-claims",
+    "x-forge-auth-kind",
+    "x-forge-trace-id",
+  ];
   return new Response(null, {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Authorization, Content-Type, WorkOS-Signature, x-forge-user-id, x-forge-tenant-id, x-forge-role, x-forge-roles, x-forge-permissions",
+      "Access-Control-Allow-Headers": allowedHeaders.join(", "),
     },
   });
 }

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
-import { buildDevWatchGenerateFailureEvent, buildDevWatchReloadEvent, ensureGeneratedForDev, generatedEvidenceFromCycle, resolveAvailableWebPort, runDevCommand } from "../../src/forge/cli/dev.ts";
+import { buildDevWatchGenerateFailureEvent, buildDevWatchReloadEvent, devStartupConsoleUrlOptions, ensureGeneratedForDev, generatedEvidenceFromCycle, resolveAvailableWebPort, runDevCommand } from "../../src/forge/cli/dev.ts";
 import {
   formatDevConsoleJson,
   runDevConsoleCycle,
@@ -387,6 +387,28 @@ describe("H33 forge dev console", () => {
     } finally {
       await occupied.close();
     }
+  });
+
+  test("forge dev startup diagnostics omit fake API URLs for dynamic ports", () => {
+    expect(
+      devStartupConsoleUrlOptions({
+        host: "127.0.0.1",
+        port: 0,
+        webUrl: "http://127.0.0.1:5173",
+      }),
+    ).toEqual({
+      webUrl: "http://127.0.0.1:5173",
+    });
+    expect(
+      devStartupConsoleUrlOptions({
+        host: "127.0.0.1",
+        port: 3765,
+        webUrl: "http://127.0.0.1:5173",
+      }),
+    ).toEqual({
+      apiUrl: "http://127.0.0.1:3765",
+      webUrl: "http://127.0.0.1:5173",
+    });
   });
 
   test(

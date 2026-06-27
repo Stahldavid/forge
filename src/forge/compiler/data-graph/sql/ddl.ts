@@ -102,39 +102,41 @@ function parseFieldType(
   field: DataField,
   tableName: string,
   diagnostics: Diagnostic[],
+  refTables: Map<string, string>,
 ): ParsedFieldType | null {
   const declared = field.type.trim();
   const nullable = declared.endsWith("?");
-  const raw = (nullable ? declared.slice(0, -1) : declared).trim().toLowerCase();
+  const raw = (nullable ? declared.slice(0, -1) : declared).trim();
+  const lowered = raw.toLowerCase();
 
   const withNullability = (parsed: Omit<ParsedFieldType, "nullable">): ParsedFieldType => ({
     ...parsed,
     ...(nullable ? { nullable: true } : {}),
   });
 
-  if (raw === "uuid") {
+  if (lowered === "uuid") {
     return withNullability({ sqlType: "uuid" });
   }
-  if (raw === "text" || raw === "string") {
+  if (lowered === "text" || lowered === "string") {
     return withNullability({ sqlType: "text" });
   }
-  if (raw === "number") {
+  if (lowered === "number") {
     return withNullability({ sqlType: "double precision" });
   }
-  if (raw === "integer" || raw === "int") {
+  if (lowered === "integer" || lowered === "int") {
     return withNullability({ sqlType: "integer" });
   }
-  if (raw === "boolean" || raw === "bool") {
+  if (lowered === "boolean" || lowered === "bool") {
     return withNullability({ sqlType: "boolean" });
   }
-  if (raw === "timestamp" || raw === "timestamptz") {
+  if (lowered === "timestamp" || lowered === "timestamptz") {
     return withNullability({ sqlType: "timestamptz" });
   }
-  if (raw === "json") {
+  if (lowered === "json") {
     return withNullability({ sqlType: "jsonb" });
   }
 
-  if (raw.startsWith("enum:")) {
+  if (lowered.startsWith("enum:")) {
     const values = raw
       .slice("enum:".length)
       .split(",")
@@ -158,11 +160,11 @@ function parseFieldType(
     };
   }
 
-  if (raw.startsWith("enum_")) {
+  if (lowered.startsWith("enum_")) {
     return withNullability({ sqlType: "text" });
   }
 
-  if (raw.startsWith("ref:")) {
+  if (lowered.startsWith("ref:")) {
     const refTable = raw.slice("ref:".length).trim();
     if (!refTable) {
       diagnostics.push(
@@ -174,14 +176,25 @@ function parseFieldType(
       );
       return null;
     }
+    const resolvedRefTable = refTables.get(refTable) ?? refTables.get(toSnakeCase(refTable));
+    if (!resolvedRefTable) {
+      diagnostics.push(
+        createDiagnostic({
+          severity: "error",
+          code: FORGE_DB_INVALID_SQL_PLAN,
+          message: `unknown ref target '${refTable}' on ${tableName}.${field.name}; expected one of ${[...new Set(refTables.values())].sort().join(", ")}`,
+        }),
+      );
+      return null;
+    }
     return {
       ...(nullable ? { nullable: true } : {}),
       sqlType: "uuid",
-      references: { table: toSnakeCase(refTable), column: "id" },
+      references: { table: resolvedRefTable, column: "id" },
     };
   }
 
-  if (raw === "ref") {
+  if (lowered === "ref") {
     return {
       ...(nullable ? { nullable: true } : {}),
       sqlType: "uuid",
@@ -197,6 +210,18 @@ function parseFieldType(
     }),
   );
   return null;
+}
+
+function buildReferenceTableLookup(tables: DataTable[]): Map<string, string> {
+  const lookup = new Map<string, string>();
+  for (const table of tables) {
+    const sqlTableName = toSnakeCase(table.name);
+    lookup.set(table.name, sqlTableName);
+    lookup.set(table.exportName, sqlTableName);
+    lookup.set(sqlTableName, sqlTableName);
+    lookup.set(toSnakeCase(table.exportName), sqlTableName);
+  }
+  return lookup;
 }
 
 function defaultExprForField(field: DataField): string | undefined {
@@ -217,7 +242,11 @@ function defaultExprForField(field: DataField): string | undefined {
   return undefined;
 }
 
-function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] {
+function buildColumns(
+  table: DataTable,
+  diagnostics: Diagnostic[],
+  refTables: Map<string, string>,
+): ColumnDef[] {
   const columns: ColumnDef[] = [];
   const fields = [...table.fields].sort((a, b) =>
     a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
@@ -236,7 +265,7 @@ function buildColumns(table: DataTable, diagnostics: Diagnostic[]): ColumnDef[] 
   }
 
   for (const field of fields) {
-    const parsed = parseFieldType(field, table.name, diagnostics);
+    const parsed = parseFieldType(field, table.name, diagnostics, refTables);
     if (!parsed) {
       continue;
     }
@@ -311,9 +340,13 @@ function buildForeignKeyIndexes(tableName: string, columns: ColumnDef[]): IndexD
   return indexes;
 }
 
-function buildTableChange(table: DataTable, diagnostics: Diagnostic[]): SqlChange | null {
+function buildTableChange(
+  table: DataTable,
+  diagnostics: Diagnostic[],
+  refTables: Map<string, string>,
+): SqlChange | null {
   const tableName = toSnakeCase(table.name);
-  const columns = buildColumns(table, diagnostics);
+  const columns = buildColumns(table, diagnostics, refTables);
 
   if (columns.length === 0) {
     diagnostics.push(
@@ -351,6 +384,7 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
   const diagnostics: Diagnostic[] = [];
   const tables: SqlChange[] = [];
   const indexes: SqlChange[] = [];
+  const refTables = buildReferenceTableLookup(dataGraph.tables);
 
   const systemTables: SqlChange[] = [
     {
@@ -406,7 +440,7 @@ export function buildSqlPlan(dataGraph: DataGraph): SqlPlan {
   ];
 
   for (const table of stableSortTables(dataGraph.tables)) {
-    const change = buildTableChange(table, diagnostics);
+    const change = buildTableChange(table, diagnostics, refTables);
     if (!change) {
       continue;
     }

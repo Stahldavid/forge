@@ -83,6 +83,52 @@ describe("dev server", () => {
     }
   });
 
+  test("allows WorkOS-like devAuth headers in browser CORS preflight", async () => {
+    const workspace = scaffoldGenerateWorkspace("dev-server-dev-auth-cors");
+    try {
+      const generated = await run(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+
+      const handle = await startDevServer({
+        workspaceRoot: workspace,
+        host: "127.0.0.1",
+        port: 0,
+        mock: false,
+        json: false,
+        db: "none",
+      });
+
+      try {
+        const preflight = await fetch(`${handle.url}/queries/listNotes`, {
+          method: "OPTIONS",
+          headers: {
+            Origin: "http://127.0.0.1:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": [
+              "content-type",
+              "x-forge-user-id",
+              "x-forge-organization-id",
+              "x-forge-organization-membership-id",
+              "x-forge-permissions",
+              "x-forge-claims",
+            ].join(", "),
+          },
+        });
+        const allowed = preflight.headers.get("access-control-allow-headers") ?? "";
+
+        expect(preflight.status).toBe(204);
+        expect(allowed).toContain("x-forge-organization-id");
+        expect(allowed).toContain("x-forge-organization-membership-id");
+        expect(allowed).toContain("x-forge-permissions");
+        expect(allowed).toContain("x-forge-claims");
+      } finally {
+        handle.stop();
+      }
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("serves generated WorkOS webhook endpoint with signature and replay checks", async () => {
     const workspace = scaffoldGenerateWorkspace("dev-server-workos-webhook");
     try {

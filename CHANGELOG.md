@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.35
+
+### Patch Changes
+
+- Harden field-test regressions found while building WorkOS-style multi-tenant apps.
+
+  - Resolve camelCase `ref:` targets such as `ref:accessRequests` to canonical SQL table names like `access_requests`, and report unknown refs before invalid SQL reaches PGlite.
+  - Allow WorkOS-like local dev auth headers through dev-server CORS, including organization, membership, permissions, roles, and claims headers.
+  - Teach the generated agent contract and capability map to recognize camelCase `ctx.db` aliases for snake_case tables.
+  - Avoid printing fake `http://127.0.0.1:0` API URLs in `forge dev --port 0` startup diagnostics.
+
 ## 0.1.0-alpha.34
 
 ### Patch Changes

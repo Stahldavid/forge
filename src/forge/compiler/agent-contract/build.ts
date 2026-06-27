@@ -283,9 +283,33 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function toSnakeCaseName(name: string): string {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[-\s]+/g, "_")
+    .toLowerCase();
+}
+
+function toCamelCaseName(name: string): string {
+  return name.replace(/[_-]([a-zA-Z0-9])/g, (_match, char: string) => char.toUpperCase());
+}
+
+function dbTableLookup(dataGraph: AgentContractInput["dataGraph"]): Map<string, string> {
+  const lookup = new Map<string, string>();
+  for (const table of dataGraph.tables) {
+    lookup.set(table.name, table.name);
+    lookup.set(table.exportName, table.name);
+    lookup.set(toSnakeCaseName(table.name), table.name);
+    lookup.set(toSnakeCaseName(table.exportName), table.name);
+    lookup.set(toCamelCaseName(table.name), table.name);
+    lookup.set(toCamelCaseName(table.exportName), table.name);
+  }
+  return lookup;
+}
+
 function addDbAliasesForText(
   text: string,
-  tableNames: Set<string>,
+  tableLookup: Map<string, string>,
   aliases: Map<string, string>,
 ): void {
   for (const match of text.matchAll(
@@ -293,8 +317,9 @@ function addDbAliasesForText(
   )) {
     const alias = match[1] ?? "";
     const table = match[2] ?? match[3] ?? "";
-    if (alias && tableNames.has(table)) {
-      aliases.set(alias, table);
+    const canonicalTable = tableLookup.get(table);
+    if (alias && canonicalTable) {
+      aliases.set(alias, canonicalTable);
     }
   }
 
@@ -304,8 +329,9 @@ function addDbAliasesForText(
       const [rawTable, rawAlias] = part.split(":").map((value) => value.trim());
       const table = rawTable?.replace(/["'`]/g, "") ?? "";
       const alias = (rawAlias ?? rawTable ?? "").replace(/\s*=.*$/, "").trim();
-      if (tableNames.has(table) && alias) {
-        aliases.set(alias, table);
+      const canonicalTable = tableLookup.get(table);
+      if (canonicalTable && alias) {
+        aliases.set(alias, canonicalTable);
       }
     }
   }
@@ -313,26 +339,28 @@ function addDbAliasesForText(
 
 function dbTablesForText(
   text: string,
-  tableNames: Set<string>,
+  tableLookup: Map<string, string>,
   ops: Set<string>,
 ): string[] {
   const tables: string[] = [];
   for (const match of text.matchAll(/ctx\.db\.([A-Za-z_$][A-Za-z0-9_$]*)\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
     const table = match[1] ?? "";
     const op = match[2] ?? "";
-    if (tableNames.has(table) && ops.has(op)) {
-      tables.push(table);
+    const canonicalTable = tableLookup.get(table);
+    if (canonicalTable && ops.has(op)) {
+      tables.push(canonicalTable);
     }
   }
   for (const match of text.matchAll(/ctx\.db\s*\[\s*["'`]([^"'`]+)["'`]\s*\]\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
     const table = match[1] ?? "";
     const op = match[2] ?? "";
-    if (tableNames.has(table) && ops.has(op)) {
-      tables.push(table);
+    const canonicalTable = tableLookup.get(table);
+    if (canonicalTable && ops.has(op)) {
+      tables.push(canonicalTable);
     }
   }
   const aliases = new Map<string, string>();
-  addDbAliasesForText(text, tableNames, aliases);
+  addDbAliasesForText(text, tableLookup, aliases);
   for (const [alias, table] of aliases) {
     const aliasPattern = new RegExp(`\\b${escapeRegExp(alias)}\\s*\\.\\s*([A-Za-z_$][A-Za-z0-9_$]*)`, "g");
     for (const match of text.matchAll(aliasPattern)) {
@@ -348,10 +376,10 @@ function dbTablesForText(
 function dbTablesForFile(
   workspaceRoot: string,
   file: string | undefined,
-  tableNames: Set<string>,
+  tableLookup: Map<string, string>,
   ops: Set<string>,
 ): string[] {
-  return dbTablesForText(sourceTextWithLocalImports(workspaceRoot, file), tableNames, ops);
+  return dbTablesForText(sourceTextWithLocalImports(workspaceRoot, file), tableLookup, ops);
 }
 
 function emittedEventsForFile(workspaceRoot: string, file: string | undefined): string[] {
@@ -1222,7 +1250,7 @@ export function buildAgentContractArtifacts(
   );
 
   const runtimeEntries = new Map(input.runtimeGraph.entries.map((entry) => [entry.name, entry]));
-  const tableNames = new Set(input.dataGraph.tables.map((table) => table.name));
+  const tableLookup = dbTableLookup(input.dataGraph);
   const externalEntries = input.externalServices?.services.flatMap((service) => service.entries) ?? [];
   const localCommandInfos: AgentContract["commands"] = sorted(Object.keys(input.apiSurface.commands), (name) => name).map((name) => {
     const entry = runtimeEntries.get(name);
@@ -1232,8 +1260,8 @@ export function buildAgentContractArtifacts(
       file,
       source: "local" as const,
       policy: authPolicy(commandAuth.get(name)),
-      tablesRead: dbTablesForFile(input.workspaceRoot, file, tableNames, DB_READ_OPS),
-      tablesWritten: dbTablesForFile(input.workspaceRoot, file, tableNames, DB_WRITE_OPS),
+      tablesRead: dbTablesForFile(input.workspaceRoot, file, tableLookup, DB_READ_OPS),
+      tablesWritten: dbTablesForFile(input.workspaceRoot, file, tableLookup, DB_WRITE_OPS),
       emits: emittedEventsForFile(input.workspaceRoot, file),
       allowedPackages: entry ? packageNamesForModule(input.appGraph, entry.moduleId) : [],
       forbiddenCapabilities: forbiddenForContext(input.classified, "command"),
@@ -1268,7 +1296,7 @@ export function buildAgentContractArtifacts(
     policy: authPolicy(queryAuth.get(query.name)),
     readOnly: true,
     tenantScoped: input.tenantScope.tables.length > 0,
-    tablesRead: dbTablesForFile(input.workspaceRoot, query.file, tableNames, DB_READ_OPS),
+    tablesRead: dbTablesForFile(input.workspaceRoot, query.file, tableLookup, DB_READ_OPS),
     allowedPackages: packageNamesForModule(input.appGraph, query.moduleId),
     forbiddenCapabilities: forbiddenForContext(input.classified, "query"),
     http: httpEndpointFor("query", query.name),
@@ -1296,7 +1324,7 @@ export function buildAgentContractArtifacts(
   );
   const liveQueryInfos: AgentContract["liveQueries"] = sorted(input.liveQueryRegistry.liveQueries, (liveQuery) => liveQuery.name).map(
     (liveQuery) => {
-      const tablesRead = dbTablesForFile(input.workspaceRoot, liveQuery.file, tableNames, DB_READ_OPS);
+      const tablesRead = dbTablesForFile(input.workspaceRoot, liveQuery.file, tableLookup, DB_READ_OPS);
       return {
         name: liveQuery.name,
         file: liveQuery.file,

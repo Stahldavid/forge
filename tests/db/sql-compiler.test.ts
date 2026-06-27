@@ -116,6 +116,82 @@ describe("sql compiler", () => {
     expect(tableMap.app_blueprints?.tableName).toBe("app_blueprints");
   });
 
+  test("resolves camelCase ref targets to canonical SQL table names", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "accessRequests",
+          name: "access_requests",
+          symbolId: "accessRequests",
+          exportName: "accessRequests",
+          file: "src/forge/schema.ts",
+          fields: [
+            { name: "id", type: "uuid" },
+            { name: "title", type: "text" },
+          ],
+        },
+        {
+          id: "evidenceDocuments",
+          name: "evidence_documents",
+          symbolId: "evidenceDocuments",
+          exportName: "evidenceDocuments",
+          file: "src/forge/schema.ts",
+          fields: [
+            { name: "id", type: "uuid" },
+            { name: "requestId", type: "ref:accessRequests" },
+            { name: "title", type: "text" },
+          ],
+        },
+      ],
+    });
+
+    const evidenceTable = plan.tables.find((table) => table.table === "evidence_documents");
+    expect(plan.diagnostics.filter((diagnostic) => diagnostic.severity === "error")).toEqual([]);
+    expect(evidenceTable?.sql).toContain(
+      '"request_id" uuid NOT NULL REFERENCES "access_requests" ("id")',
+    );
+  });
+
+  test("reports unknown ref targets before generating invalid SQL", () => {
+    const plan = buildSqlPlan({
+      schemaVersion: "1.0.0",
+      generatorVersion: "test",
+      analyzerVersion: "test",
+      inputHash: "test",
+      diagnostics: [],
+      tables: [
+        {
+          id: "evidenceDocuments",
+          name: "evidence_documents",
+          symbolId: "evidenceDocuments",
+          exportName: "evidenceDocuments",
+          file: "src/forge/schema.ts",
+          fields: [
+            { name: "id", type: "uuid" },
+            { name: "requestId", type: "ref:accessRequests" },
+            { name: "title", type: "text" },
+          ],
+        },
+      ],
+    });
+
+    expect(plan.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "FORGE_DB_INVALID_SQL_PLAN",
+        severity: "error",
+        message: expect.stringContaining("unknown ref target 'accessRequests'"),
+      }),
+    );
+    expect(plan.tables.find((table) => table.table === "evidence_documents")?.sql).not.toContain(
+      "accessrequests",
+    );
+  });
+
   test("preserves source fields named name in SQL and runtime table map", () => {
     const plan = buildSqlPlan({
       schemaVersion: "1.0.0",
