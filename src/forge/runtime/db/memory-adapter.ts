@@ -148,6 +148,32 @@ function parseSqlLiteral(token: string, params: unknown[]): unknown {
   return Number.isFinite(numeric) ? numeric : token;
 }
 
+function parseUpdateExpression(
+  row: MemoryRow,
+  column: string,
+  expression: string,
+  params: unknown[],
+): unknown {
+  const paramMatch = expression.match(/\$(\d+)/);
+  const normalizedExpression = expression.replace(/"/g, "").replace(/\s+/g, " ");
+
+  if (normalizedExpression.toLowerCase() === `${column.toLowerCase()} + 1`) {
+    return Number(row[column] ?? 0) + 1;
+  }
+
+  const coalesceMatch = expression.match(/^COALESCE\(\s*"?(\w+)"?\s*,\s*(.+)\)$/i);
+  if (coalesceMatch?.[1] && coalesceMatch[2]) {
+    const existing = row[coalesceMatch[1]];
+    return existing ?? parseUpdateExpression(row, column, coalesceMatch[2].trim(), params);
+  }
+
+  if (paramMatch?.[1]) {
+    return params[Number(paramMatch[1]) - 1];
+  }
+
+  return parseSqlLiteral(expression, params);
+}
+
 function deterministicUuid(serial: number): string {
   return `00000000-0000-0000-0000-${String(serial).padStart(12, "0")}`;
 }
@@ -654,7 +680,7 @@ export class MemoryAdapter implements DbAdapter {
     }
 
     const setMatch = sql.match(/SET (.+?) WHERE/i);
-    const assignments = setMatch?.[1]?.split(",") ?? [];
+    const assignments = setMatch?.[1] ? splitSqlList(setMatch[1]) : [];
     const matchingRows = /WHERE/i.test(sql) ? new Set(this.filterRows(table.rows, sql, params)) : new Set(table.rows);
 
     let updated = 0;
@@ -691,23 +717,19 @@ export class MemoryAdapter implements DbAdapter {
       }
 
       for (const assignment of assignments) {
-        const [rawColumn, rawExpression] = assignment.split("=");
-        const column = rawColumn?.trim().replace(/"/g, "");
+        const equalsIndex = assignment.indexOf("=");
+        if (equalsIndex < 0) {
+          continue;
+        }
+        const rawColumn = assignment.slice(0, equalsIndex);
+        const rawExpression = assignment.slice(equalsIndex + 1);
+        const column = rawColumn.trim().replace(/"/g, "");
         if (!column) {
           continue;
         }
 
-        const expression = rawExpression?.trim() ?? "";
-        const paramMatch = expression.match(/\$(\d+)/);
-        const normalizedExpression = expression.replace(/"/g, "").replace(/\s+/g, " ");
-
-        if (normalizedExpression.toLowerCase() === `${column.toLowerCase()} + 1`) {
-          row[column] = Number(row[column] ?? 0) + 1;
-        } else if (paramMatch?.[1]) {
-          row[column] = params[Number(paramMatch[1]) - 1];
-        } else {
-          row[column] = parseSqlLiteral(expression, params);
-        }
+        const expression = rawExpression.trim();
+        row[column] = parseUpdateExpression(row, column, expression, params);
         row[column] = coerceColumnValue(tableName, table, column, row[column]);
       }
 

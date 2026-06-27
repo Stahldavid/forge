@@ -739,7 +739,7 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
       ? "ready"
       : "drift";
   const generatedNextActionsRaw = generatedState === "ready"
-    ? ["forge dev", "forge generate --check --json"]
+    ? ["forge dev", "forge dev --once --json", "forge generate --check --json"]
     : generatedState === "check-needed"
       ? ["forge generate --check --json", "forge handoff --json", "forge dev --once --json"]
     : ["forge generate", "forge check --json", "forge inspect drift --json"];
