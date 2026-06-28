@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=84fe2595a381c828250960db18263fa63e5cb6c4ccacd7ac53d9518ad8cd5435
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=9239f8f13d9d4408e24264af50c13c04ea635aa1d88fa1c9b3990215ddd65780
 export const makeRegistry = {
   "commands": [
     "forge make list --json",
@@ -6,12 +6,12 @@ export const makeRegistry = {
     "forge make ui --framework vite --dry-run --json",
     "forge make ui --framework nuxt --dry-run --json",
     "forge make ai-chat support --dry-run --json",
-    "forge make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json",
+    "forge make resource <name> --fields title:text,status:enum=open+closed --dry-run --json",
     "forge make resource <name> --fields title:text --with-ui --yes",
     "forge make apply <planId>",
     "forge make rollback <planId>"
   ],
-  "generatorVersion": "0.1.0-alpha.30",
+  "generatorVersion": "0.1.0-alpha.37",
   "planDirectory": ".forge/make-plans",
   "primitives": [
     {
@@ -163,7 +163,7 @@ export const makeRegistry = {
         "tests/make-generated/*"
       ],
       "examples": [
-        "forge make resource invoices --fields amount:number,status:enum(draft,paid) --with-ui --yes"
+        "forge make resource invoices --fields amount:number,status:enum=draft+paid --with-ui --yes"
       ],
       "modifies": [
         "src/forge/schema.ts",

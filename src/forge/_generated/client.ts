@@ -1,7 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=a9ef50bacbd3eafa1a6b2048ca37597e5b1266f73b64b1c7e7ba258615b60841
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=94691ea509d451ef65ae7140dca5cb1ef8fd16a26970ec06d6ae649538540768
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
+  ForgeCommandResult,
   ForgeClient,
   ForgeClientConfig,
   ExternalCommandRef,
@@ -17,6 +18,7 @@ export type {
   ForgeAuthProvider,
   ForgeClient,
   ForgeClientConfig,
+  ForgeCommandResult,
   ForgeStaticAuth,
   QueryName,
   CommandName,
@@ -58,7 +60,12 @@ async function resolveAuthHeaders(
       typeof value === "string" &&
       key !== "userId" &&
       key !== "tenantId" &&
+      key !== "organizationId" &&
+      key !== "organizationMembershipId" &&
       key !== "role" &&
+      key !== "roles" &&
+      key !== "permissions" &&
+      key !== "claims" &&
       key !== "token"
     ) {
       headers[key] = value;
@@ -71,8 +78,24 @@ async function resolveAuthHeaders(
   if (resolved.tenantId) {
     headers["x-forge-tenant-id"] = resolved.tenantId;
   }
+  if (resolved.organizationId) {
+    headers["x-forge-organization-id"] = resolved.organizationId;
+    headers["x-forge-tenant-id"] ??= resolved.organizationId;
+  }
+  if (resolved.organizationMembershipId) {
+    headers["x-forge-organization-membership-id"] = resolved.organizationMembershipId;
+  }
   if (resolved.role) {
     headers["x-forge-role"] = resolved.role;
+  }
+  if (Array.isArray(resolved.roles)) {
+    headers["x-forge-roles"] = JSON.stringify(resolved.roles);
+  }
+  if (Array.isArray(resolved.permissions)) {
+    headers["x-forge-permissions"] = JSON.stringify(resolved.permissions);
+  }
+  if (resolved.claims && typeof resolved.claims === "object") {
+    headers["x-forge-claims"] = JSON.stringify(resolved.claims);
   }
 
   return headers;
@@ -126,6 +149,10 @@ class ForgeHttpClient implements ForgeClient {
     return this.invoke("commands", name, args);
   }
 
+  commandResult(name: string, args: unknown): Promise<ForgeCommandResult<unknown>> {
+    return this.invokeResult("commands", name, args);
+  }
+
   externalQuery(name: ExternalQueryRef, args: unknown): Promise<unknown> {
     return this.invokeExternal("queries", name, args);
   }
@@ -165,27 +192,61 @@ class ForgeHttpClient implements ForgeClient {
     name: string,
     args: unknown,
   ): Promise<unknown> {
+    const result = await this.invokeResult(kind, name, args);
+    if (!result.ok) {
+      throw new ForgeError(result.error.message, {
+        code: result.error.code,
+        traceId: result.traceId,
+        status: result.status,
+        details: result.error.details ?? result.diagnostics,
+      });
+    }
+    return result.result;
+  }
+
+  private async invokeResult(
+    kind: "queries" | "commands",
+    name: string,
+    args: unknown,
+  ): Promise<ForgeCommandResult<unknown>> {
     const baseUrl = this.config.url.replace(/\/$/, "");
     const url = `${baseUrl}/${kind}/${encodeURIComponent(name)}`;
     const authHeaders = await resolveAuthHeaders(this.config.auth);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify({ args }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
+        body: JSON.stringify({ args }),
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        status: 0,
+        error: {
+          code: "FORGE_NETWORK_ERROR",
+          message: error instanceof Error ? error.message : "network request failed",
+          details: error,
+        },
+      };
+    }
 
     let body: unknown;
     try {
       body = await response.json();
     } catch {
-      throw new ForgeError(`HTTP ${response.status}`, {
-        code: "FORGE_HTTP_ERROR",
+      return {
+        ok: false,
         status: response.status,
-      });
+        error: {
+          code: "FORGE_HTTP_ERROR",
+          message: `HTTP ${response.status}`,
+        },
+      };
     }
 
     const payload = parseJsonPayload(body);
@@ -199,15 +260,26 @@ class ForgeHttpClient implements ForgeClient {
         payload.error?.message ??
         diagnostic?.message ??
         `Request failed with status ${response.status}`;
-      throw new ForgeError(message, {
-        code,
-        traceId: payload.traceId,
+      return {
+        ok: false,
         status: response.status,
-        details: payload.error?.details ?? payload.diagnostics,
-      });
+        traceId: payload.traceId,
+        diagnostics: payload.diagnostics,
+        error: {
+          code,
+          message,
+          details: payload.error?.details ?? payload.diagnostics,
+        },
+      };
     }
 
-    return payload.result;
+    return {
+      ok: true,
+      result: payload.result,
+      status: response.status,
+      traceId: payload.traceId,
+      diagnostics: payload.diagnostics,
+    };
   }
 
   private async invokeExternal(

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=7a3f50ffd129a6969d3bea362759c9e28714bb74d46746f402c2e2ab01b9853c
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=4cfce78d6b321a78dbfbf28116e9af89864631bbd1324ff58acdb261a4477f08
 "use client";
 
 import { createForgeReactBindings } from "forge/react";
@@ -11,8 +11,11 @@ export type {
   ForgeReactAuthProvider,
   ForgeReactClient,
   ForgeReactError,
+  ForgeCommandCallResult,
   UseCommandOptions,
   UseCommandResult,
+  UseCommandResultHook,
+  UseCommandResultOptions,
   UseLiveQueryOptions,
   UseLiveQueryResult,
   UseQueryOptions,
@@ -26,4 +29,5 @@ export const useForgeClient = forgeReact.useForgeClient;
 export const useAuth = forgeReact.useAuth;
 export const useQuery = forgeReact.useQuery;
 export const useCommand = forgeReact.useCommand;
+export const useCommandResult = forgeReact.useCommandResult;
 export const useLiveQuery = forgeReact.useLiveQuery;

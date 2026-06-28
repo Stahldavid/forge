@@ -119,6 +119,10 @@ interface PackageResolution {
   current: PackageApi;
 }
 
+function matchesPackageName(candidate: PackageApi, packageName: string): boolean {
+  return candidate.name === packageName || candidate.packageName === packageName;
+}
+
 function parseNpmAliasSpec(spec: string): NpmAliasSpec | null {
   if (!spec.startsWith("npm:")) {
     return null;
@@ -162,6 +166,12 @@ function dependencyType(workspaceRoot: string, packageName: string): DependencyT
   if (packageName in (pkg.devDependencies ?? {})) {
     return "devDependency";
   }
+  for (const entry of dependencyEntries(pkg)) {
+    const alias = parseNpmAliasSpec(entry.spec);
+    if (alias?.packageName === packageName) {
+      return entry.type;
+    }
+  }
   return "dependency";
 }
 
@@ -180,7 +190,8 @@ function resolvePackageForUpgrade(workspaceRoot: string, requestedName: string):
   if (aliasEntry) {
     const alias = parseNpmAliasSpec(aliasEntry.spec);
     const packageName = alias?.packageName ?? aliasEntry.name;
-    const current = graph.packages.find((candidate) => candidate.name === packageName);
+    const current = graph.packages.find((candidate) => matchesPackageName(candidate, packageName)) ??
+      graph.packages.find((candidate) => candidate.name === aliasEntry.name);
     if (current) {
       return {
         requestedName,
@@ -194,18 +205,23 @@ function resolvePackageForUpgrade(workspaceRoot: string, requestedName: string):
     }
   }
 
-  const current = graph.packages.find((candidate) => candidate.name === requestedName);
+  const current = graph.packages.find((candidate) => matchesPackageName(candidate, requestedName));
   if (!current) {
     return null;
   }
-  const directEntry = entries.find((entry) => entry.name === requestedName);
+  const directEntry = entries.find((entry) => {
+    const alias = parseNpmAliasSpec(entry.spec);
+    return entry.name === requestedName || alias?.packageName === requestedName;
+  });
+  const alias = directEntry ? parseNpmAliasSpec(directEntry.spec) : null;
+  const packageName = alias?.packageName ?? current.packageName ?? requestedName;
   return {
     requestedName,
-    packageName: requestedName,
-    dependencyName: requestedName,
+    packageName,
+    dependencyName: directEntry?.name ?? requestedName,
     dependencySpec: directEntry?.spec,
     dependencyType: directEntry?.type ?? dependencyType(workspaceRoot, requestedName),
-    isNpmAlias: false,
+    isNpmAlias: Boolean(alias),
     current,
   };
 }
@@ -632,18 +648,19 @@ export function listOutdatedFromFixture(options: {
 
   return graph.packages
     .flatMap((pkg) => {
-      const metadata = fixtureMetadata(registryDir, pkg.name);
+      const packageName = pkg.packageName ?? pkg.name;
+      const metadata = fixtureMetadata(registryDir, packageName);
       const latest = metadata?.["dist-tags"]?.latest;
       if (!latest || latest === pkg.version) {
         return [];
       }
-      const recipe = resolveByPackageName(pkg.name);
+      const recipe = resolveByPackageName(packageName);
       return [{
-        name: pkg.name,
+        name: packageName,
         current: pkg.version,
         wanted: latest,
         latest,
-        type: dependencyType(options.workspaceRoot, pkg.name),
+        type: dependencyType(options.workspaceRoot, packageName),
         managedByRecipe: Boolean(recipe),
         ...(recipe?.alias ? { recipe: recipe.alias } : {}),
       }];

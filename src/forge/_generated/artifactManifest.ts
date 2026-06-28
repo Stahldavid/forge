@@ -1,7 +1,7 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=ae74830f1771b4a7ed33b588114f6c5d8ebb083c77f072b6240c8651e37ea985
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=b4e555c35edd490e94015862f95f0756df6acc615ee26d4b9e69ceeffd38e8d2
 export const artifactManifest = {
   "artifacts": [],
   "diagnostics": [],
-  "releaseId": "forgeos@0.1.0-alpha.30+unknown",
+  "releaseId": "forgeos@0.1.0-alpha.37+unknown",
   "schemaVersion": "0.1.0"
 } as const;

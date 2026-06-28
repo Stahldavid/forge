@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=b2ea367f87d62b4121a906e74b74aad5b1bf7f59d8fca099553708b069cb650e
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=045d3372bc1851752fa92dd9b8e821155d8e8b85843cc956be2dea1e726b9a77
 export const testPlanRegistry = {
   "commands": [
     "forge impact --changed --json",
@@ -26,7 +26,7 @@ export const testPlanRegistry = {
     "src/forge/_generated/testPlanRegistry.json",
     "src/forge/_generated/testPlanRegistry.ts"
   ],
-  "generatorVersion": "0.1.0-alpha.30",
+  "generatorVersion": "0.1.0-alpha.37",
   "planDirectory": ".forge/test-plans",
   "runDirectory": ".forge/test-runs",
   "schemaVersion": "0.1.0"

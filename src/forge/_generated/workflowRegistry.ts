@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=54064c2be9b1d26dfe6a020599b3083b0670623a14e4f9c2173d77f8cb109308
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=4faa1b472a907b8af5cb793b9d4465dacbf2eff1e811fa6d5a647966f51784a5
 export const workflowRegistry = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.30",
-  "inputHash": "946d9a66666455584ba5617d6d7f94817ee9961228b599340d2bd8c09b5ccedb",
+  "generatorVersion": "0.1.0-alpha.37",
+  "inputHash": "1ac93240bd92a438dfa2dfa8ee4e5a2b7e8a0b98551296c92691ee3de7ee9cdc",
   "schemaVersion": "0.1.0",
   "workflows": []
 } as const;

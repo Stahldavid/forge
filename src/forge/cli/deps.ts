@@ -93,7 +93,9 @@ function findPackage(workspaceRoot: string, packageName: string): {
   const lock = nodeFileSystem.exists(join(workspaceRoot, "forge.lock"))
     ? (JSON.parse((nodeFileSystem.readText(join(workspaceRoot, "forge.lock")) ?? "")) as ForgeLock)
     : null;
-  const pkg = graph?.packages.find((candidate) => candidate.name === packageName);
+  const pkg = graph?.packages.find((candidate) =>
+    candidate.name === packageName || candidate.packageName === packageName
+  );
   return { graph, pkg, lock };
 }
 

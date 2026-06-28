@@ -6,6 +6,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.37
+
+- Fixed `forge deps upgrade-plan` for npm alias installs used by ForgeOS apps.
+- Recorded the real package name from package metadata in generated package
+  graph entries when a dependency is installed through an alias such as
+  `forge: npm:forgeos@...`.
+- Resolved upgrade plans by either the real package name (`forgeos`) or the
+  dependency alias (`forge`) while preserving install specs like
+  `forge@npm:forgeos@0.1.0-alpha.37`.
+- Avoided attempting to resolve the unrelated public `forge@alpha` package when
+  an app asks to upgrade its ForgeOS alias dependency.
+- Added regression coverage for aliased package graph entries where the import
+  name and real npm package name differ.
+
 ## 0.1.0-alpha.36
 
 - Smoothed the alpha field-test loop after the Vendor Access app exercise.

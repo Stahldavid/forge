@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.37
+
+### Patch Changes
+
+- Fix `forge deps upgrade-plan` for npm alias installs used by ForgeOS apps.
+
+  - Record the real package name from package metadata in the generated package graph when a dependency is installed through an alias such as `forge: npm:forgeos@...`.
+  - Resolve upgrade plans by either the real package name (`forgeos`) or the dependency alias (`forge`) while preserving install specs like `forge@npm:forgeos@0.1.0-alpha.37`.
+  - Avoid attempting to resolve the unrelated public `forge@alpha` package when an app asks to upgrade its ForgeOS alias dependency.
+  - Add regression coverage for aliased package graph entries where the import name and real npm package name differ.
+
 ## 0.1.0-alpha.36
 
 ### Patch Changes

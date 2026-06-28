@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=2520199ec3f4c84499c472cb5652998979f149c2f282d911d6887abe3dddddbc
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=1ca58543486d47cd1af6400eb0d40a9e37cd92b464213be85131e525da959387
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -7177,7 +7177,7 @@ export const agentContract = {
       }
     }
   },
-  "generatorVersion": "0.1.0-alpha.30",
+  "generatorVersion": "0.1.0-alpha.37",
   "integrations": [
     {
       "alias": "ai-gateway",
@@ -7782,7 +7782,7 @@ export const agentContract = {
     },
     {
       "steps": [
-        "Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.",
+        "Run forge make resource <name> --fields name:type,status:enum=open+closed --dry-run --json.",
         "Review the plan and diagnostics.",
         "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",

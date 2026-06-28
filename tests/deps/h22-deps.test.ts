@@ -190,6 +190,95 @@ describe("H22 package upgrade planner", () => {
     }
   }, 30_000);
 
+  test("upgrade-plan resolves real package names from aliased package graph entries", async () => {
+    const workspace = await scaffoldDepsWorkspace("h22-real-name-alias");
+    const previousRegistry = process.env.FORGE_DEPS_REGISTRY_DIR;
+    try {
+      process.env.FORGE_DEPS_REGISTRY_DIR = REGISTRY;
+      const packageJsonPath = join(workspace, "package.json");
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+        dependencies: Record<string, string>;
+      };
+      packageJson.dependencies = {
+        schemas: "npm:zod@4.0.1",
+        stripe: "18.0.0",
+      };
+      writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+      const packageGraphPath = join(workspace, "src", "forge", "_generated", "packageGraph.json");
+      const packageGraph = JSON.parse(stripDeterministicHeader(readFileSync(packageGraphPath, "utf8"))) as {
+        packages: Array<Record<string, unknown>>;
+      };
+      const zod = packageGraph.packages.find((pkg) => pkg.name === "zod");
+      expect(zod).toBeDefined();
+      zod!.name = "schemas";
+      zod!.packageName = "zod";
+      writeFileSync(packageGraphPath, `${JSON.stringify(packageGraph, null, 2)}\n`, "utf8");
+
+      const byRealPackage = await runDepsCommand({
+        subcommand: "upgrade-plan",
+        packageName: "zod",
+        target: "latest",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+
+      expect(byRealPackage.exitCode).toBe(0);
+      const realData = byRealPackage.data as {
+        plan: {
+          packageName: string;
+          requestedPackageName?: string;
+          dependencyAlias?: string;
+          from: { spec: string };
+          to: { spec: string };
+        };
+      };
+      expect(realData.plan.packageName).toBe("zod");
+      expect(realData.plan.dependencyAlias).toBe("schemas");
+      expect(realData.plan.from.spec).toBe("schemas@npm:zod@4.0.1");
+      expect(realData.plan.to.spec).toBe("schemas@npm:zod@4.0.2");
+
+      const byAlias = await runDepsCommand({
+        subcommand: "upgrade-plan",
+        packageName: "schemas",
+        target: "latest",
+        json: true,
+        yes: false,
+        allowScripts: false,
+        skipTests: false,
+        dryRun: false,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+
+      expect(byAlias.exitCode).toBe(0);
+      const aliasData = byAlias.data as {
+        plan: {
+          packageName: string;
+          requestedPackageName?: string;
+          dependencyAlias?: string;
+          to: { spec: string };
+        };
+      };
+      expect(aliasData.plan.packageName).toBe("zod");
+      expect(aliasData.plan.requestedPackageName).toBe("schemas");
+      expect(aliasData.plan.dependencyAlias).toBe("schemas");
+      expect(aliasData.plan.to.spec).toBe("schemas@npm:zod@4.0.2");
+    } finally {
+      if (previousRegistry === undefined) {
+        delete process.env.FORGE_DEPS_REGISTRY_DIR;
+      } else {
+        process.env.FORGE_DEPS_REGISTRY_DIR = previousRegistry;
+      }
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
   test("deps CLI exposes outdated, inspect, diff, and upgrade-plan", async () => {
     const workspace = await scaffoldDepsWorkspace("h22-cli");
     try {

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=ef5f2f9965e7bf267fcc663071d1f9a0fd2097e9eb9873fb9754fe3747d1455e
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=8a956fa0e82d619924f0a376d55800f99935aef6e8df67d0047ce5488effce74
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -67,7 +67,7 @@
 
 ## Scaffold a resource
 
-1. Run forge make resource <name> --fields name:type,status:enum(open,closed) --dry-run --json.
+1. Run forge make resource <name> --fields name:type,status:enum=open+closed --dry-run --json.
 2. Review the plan and diagnostics.
 3. Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.
 4. Run forge generate.

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=441baaa8e63465869189b9b4471cb7694f7a10102d7760c69a5f0770215e4288
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=b5cc0db29e9dde75cd55935fad9ae28e246b8a0bbb961143529d343662c69ef2
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.30",
-  "inputHash": "126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57",
+  "generatorVersion": "0.1.0-alpha.37",
+  "inputHash": "3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -637,14 +637,17 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "react",
+          "tsx"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -652,7 +655,10 @@ export const testGraph = {
       },
       "file": "tests/cli/cli-generation.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages react",
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "weak",

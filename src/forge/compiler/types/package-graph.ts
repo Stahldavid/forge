@@ -92,7 +92,13 @@ export interface Entrypoint {
 }
 
 export interface PackageApi {
+  /**
+   * Import/dependency name used by the app, which may be an npm alias such as
+   * "forge" for "npm:forgeos@...".
+   */
   name: string;
+  /** Real package.json name when it differs from the dependency/import name. */
+  packageName?: string;
   version: string;
   packageManager: PackageManager;
   resolutionMode: ResolutionMode;

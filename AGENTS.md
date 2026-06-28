@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=0d493cf0e41b71cb652d5e0e1b0c1f83d2a1281b748321f0b00f0773ba93074e
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=721818a6f9a664aa898092d4aa5cd68cbbd8ad6e150c7d3ad3ef785a2e3fcf53
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -205,8 +205,8 @@ node bin/forge.mjs do verify --json
 Use:
 
 ```bash
-node bin/forge.mjs make resource <name> --fields title:text,status:enum(open,closed) --dry-run --json
-node bin/forge.mjs make resource <name> --fields title:text,status:enum(open,closed) --with-ui --yes
+node bin/forge.mjs make resource <name> --fields title:text,status:enum=open+closed --dry-run --json
+node bin/forge.mjs make resource <name> --fields title:text,status:enum=open+closed --with-ui --yes
 node bin/forge.mjs make ui --framework vite --dry-run --json
 node bin/forge.mjs make ui --framework nuxt --dry-run --json
 node bin/forge.mjs make ai-chat support --dry-run --json

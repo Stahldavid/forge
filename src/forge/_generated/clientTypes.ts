@@ -1,8 +1,13 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=b893b27f895193111546b90974f4ad1540aef6ede0d9ab3a11972a1dce2519e2
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=a2fdc10666b8e754bcaafae919a025a35f5eba0e0d0940925d01a49b126e2878
 export type ForgeStaticAuth = {
   userId?: string;
   tenantId?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
+  claims?: Record<string, unknown>;
   token?: string;
   getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
@@ -12,7 +17,12 @@ export type ForgeStaticAuth = {
 export type ForgeResolvedAuth = {
   userId?: string;
   tenantId?: string;
+  organizationId?: string;
+  organizationMembershipId?: string;
   role?: string;
+  roles?: string[];
+  permissions?: string[];
+  claims?: Record<string, unknown>;
   token?: string;
   getToken?: () => string | Promise<string>;
   headers?: Record<string, string>;
@@ -74,6 +84,22 @@ export type LiveSnapshot<T> = {
   traceId?: string;
 };
 
+export type ForgeCommandResult<T = unknown> =
+  | {
+      ok: true;
+      result: T;
+      status: number;
+      traceId?: string;
+      diagnostics?: { code: string; message: string }[];
+    }
+  | {
+      ok: false;
+      error: { code: string; message: string; details?: unknown };
+      status: number;
+      traceId?: string;
+      diagnostics?: { code: string; message: string }[];
+    };
+
 export type LiveQueryOptions = {
   signal?: AbortSignal;
 };
@@ -84,6 +110,7 @@ export type ForgeClient = {
   readonly lastTraceId?: string;
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
+  commandResult<Name extends CommandName>(name: Name, args: unknown): Promise<ForgeCommandResult<unknown>>;
   externalQuery<Name extends ExternalQueryRef>(name: Name, args: unknown): Promise<unknown>;
   externalCommand<Name extends ExternalCommandRef>(name: Name, args: unknown): Promise<unknown>;
   liveQuery<Name extends LiveQueryName>(

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.30 input=126f7f78b3bd4495b73c6a82f3fc9d5661b8040ee4a43d68eef6b59fc7e33d57 content=975974dafdbcfed85fb72f86852a6850994277123b5e5be3dee4714e526717d5
+// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=975974dafdbcfed85fb72f86852a6850994277123b5e5be3dee4714e526717d5
 /** Forge generated mock testkit for zod. */
 import { z } from "zod";
 

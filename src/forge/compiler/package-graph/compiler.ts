@@ -271,6 +271,7 @@ export class PackageGraphCompiler {
 
     const partialApi = {
       name: dep.name,
+      ...(packageJson.name && packageJson.name !== dep.name ? { packageName: packageJson.name } : {}),
       version: dep.version,
       packageManager: dep.packageManager,
       resolutionMode: opts.resolutionMode,
@@ -454,10 +455,11 @@ function portableDtsPath(dtsPath: string, dep: Pick<Dependency, "installPath" | 
 }
 
 function readPackageJson(installPath: string): {
+  name?: string;
   exports?: unknown;
 } {
   const raw = readTextFile(join(installPath, "package.json"));
-  return JSON.parse(raw) as { exports?: unknown };
+  return JSON.parse(raw) as { name?: string; exports?: unknown };
 }
 
 function resolveSandboxBackend(
