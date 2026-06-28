@@ -9,6 +9,7 @@ Demonstrates:
 - event-driven actions via durable outbox (H7)
 - lightweight workflows triggered by outbox events (H8)
 - trace-correlated telemetry via `ctx.telemetry` (H9)
+- a root `organizations` table with tenant-scoped `tickets.tenantId`
 
 ## Setup
 
@@ -109,7 +110,7 @@ npm run forge:db:migrate
 npm run forge:db:reset
 ```
 
-`createTicket` persists rows to the `tickets` table and writes `ticket.created` to the transactional outbox.
+`createTicket` persists rows to the tenant-scoped `tickets` table and writes `ticket.created` to the transactional outbox. The example uses `organizations` as the root tenant resource and `tickets.tenantId` as the scoped foreign key.
 
 ## Dev server
 

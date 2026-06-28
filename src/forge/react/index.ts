@@ -45,6 +45,22 @@ export type ForgeReactError = Error & {
   details?: unknown;
 };
 
+export type ForgeCommandCallResult<T = unknown> =
+  | {
+      ok: true;
+      result: T;
+      status: number;
+      traceId?: string;
+      diagnostics?: { code: string; message: string }[];
+    }
+  | {
+      ok: false;
+      error: { code: string; message: string; details?: unknown };
+      status: number;
+      traceId?: string;
+      diagnostics?: { code: string; message: string }[];
+    };
+
 export type LiveSnapshot<T> = {
   subscriptionId: string;
   revision: number;
@@ -56,6 +72,7 @@ export type ForgeReactClient = {
   lastTraceId?: string;
   query(name: string, args: unknown): Promise<unknown>;
   command(name: string, args: unknown): Promise<unknown>;
+  commandResult?(name: string, args: unknown): Promise<ForgeCommandCallResult<unknown>>;
   liveQuery(
     name: string,
     args: unknown,
@@ -96,6 +113,22 @@ export type UseCommandResult<TArgs, TResult> = {
   reset: () => void;
 };
 
+export type UseCommandResultOptions<TResult> = {
+  onSuccess?: (result: TResult) => void;
+  onError?: (error: ForgeReactError) => void;
+  onSettled?: (result: ForgeCommandCallResult<TResult>) => void;
+};
+
+export type UseCommandResultHook<TArgs, TResult> = {
+  run: (args: TArgs) => Promise<ForgeCommandCallResult<TResult>>;
+  loading: boolean;
+  error: ForgeReactError | null;
+  result: ForgeCommandCallResult<TResult> | undefined;
+  data: TResult | undefined;
+  traceId?: string;
+  reset: () => void;
+};
+
 export type UseLiveQueryOptions = {
   enabled?: boolean;
 };
@@ -123,6 +156,10 @@ export type ForgeReactBindings<TClient extends ForgeReactClient = ForgeReactClie
     name: string,
     options?: UseCommandOptions<TResult>,
   ) => UseCommandResult<TArgs, TResult>;
+  useCommandResult: <TArgs = unknown, TResult = unknown>(
+    name: string,
+    options?: UseCommandResultOptions<TResult>,
+  ) => UseCommandResultHook<TArgs, TResult>;
   useLiveQuery: <TResult = unknown>(
     name: string,
     args: unknown,
@@ -163,6 +200,29 @@ function toForgeError(error: unknown): ForgeReactError {
   const wrapped = new Error(String(error)) as ForgeReactError;
   wrapped.code = "FORGE_REACT_ERROR";
   return wrapped;
+}
+
+function commandErrorToForgeError(result: Extract<ForgeCommandCallResult, { ok: false }>): ForgeReactError {
+  const error = new Error(result.error.message) as ForgeReactError;
+  error.code = result.error.code;
+  error.status = result.status;
+  error.traceId = result.traceId;
+  error.details = result.error.details ?? result.diagnostics;
+  return error;
+}
+
+function caughtErrorToCommandResult(error: unknown): ForgeCommandCallResult<never> {
+  const forgeError = toForgeError(error);
+  return {
+    ok: false,
+    status: forgeError.status ?? 0,
+    traceId: forgeError.traceId,
+    error: {
+      code: forgeError.code ?? "FORGE_REACT_COMMAND_FAILED",
+      message: forgeError.message,
+      details: forgeError.details,
+    },
+  };
 }
 
 function resolveDevAuth(devAuth: ForgeDevAuthConfig | undefined): ForgeReactAuthProvider | undefined {
@@ -344,6 +404,86 @@ export function createForgeReactBindings<TClient extends ForgeReactClient>(
     };
   }
 
+  function useCommandResult<TArgs = unknown, TResult = unknown>(
+    name: string,
+    options?: UseCommandResultOptions<TResult>,
+  ): UseCommandResultHook<TArgs, TResult> {
+    const client = useForgeClient();
+    const [state, setState] = React.useState<{
+      loading: boolean;
+      error: ForgeReactError | null;
+      result: ForgeCommandCallResult<TResult> | undefined;
+      data: TResult | undefined;
+      traceId?: string;
+    }>({
+      loading: false,
+      error: null,
+      result: undefined,
+      data: undefined,
+    });
+
+    const run = React.useCallback(
+      async (args: TArgs): Promise<ForgeCommandCallResult<TResult>> => {
+        setState((prev) => ({ ...prev, loading: true, error: null }));
+        let result: ForgeCommandCallResult<TResult>;
+        if (typeof client.commandResult === "function") {
+          result = (await client.commandResult(name, args)) as ForgeCommandCallResult<TResult>;
+        } else {
+          try {
+            const data = (await client.command(name, args)) as TResult;
+            result = {
+              ok: true,
+              result: data,
+              status: 200,
+              traceId: client.lastTraceId,
+            };
+          } catch (error) {
+            result = caughtErrorToCommandResult(error);
+          }
+        }
+
+        if (result.ok) {
+          setState({
+            loading: false,
+            error: null,
+            result,
+            data: result.result,
+            traceId: result.traceId ?? client.lastTraceId,
+          });
+          options?.onSuccess?.(result.result);
+        } else {
+          const forgeError = commandErrorToForgeError(result);
+          setState({
+            loading: false,
+            error: forgeError,
+            result,
+            data: undefined,
+            traceId: result.traceId,
+          });
+          options?.onError?.(forgeError);
+        }
+        options?.onSettled?.(result);
+        return result;
+      },
+      [client, name, options?.onError, options?.onSettled, options?.onSuccess],
+    );
+
+    const reset = React.useCallback(() => {
+      setState({
+        loading: false,
+        error: null,
+        result: undefined,
+        data: undefined,
+      });
+    }, []);
+
+    return {
+      ...state,
+      run,
+      reset,
+    };
+  }
+
   function useLiveQuery<TResult = unknown>(
     name: string,
     args: unknown,
@@ -430,6 +570,7 @@ export function createForgeReactBindings<TClient extends ForgeReactClient>(
     useAuth,
     useQuery,
     useCommand,
+    useCommandResult,
     useLiveQuery,
   };
 }

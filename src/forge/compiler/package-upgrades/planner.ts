@@ -102,7 +102,62 @@ function readPackageJson(workspaceRoot: string): {
   };
 }
 
-function dependencyType(workspaceRoot: string, packageName: string): "dependency" | "devDependency" {
+type DependencyType = "dependency" | "devDependency";
+
+interface NpmAliasSpec {
+  packageName: string;
+  versionOrRange?: string;
+}
+
+interface PackageResolution {
+  requestedName: string;
+  packageName: string;
+  dependencyName: string;
+  dependencySpec?: string;
+  dependencyType: DependencyType;
+  isNpmAlias: boolean;
+  current: PackageApi;
+}
+
+function parseNpmAliasSpec(spec: string): NpmAliasSpec | null {
+  if (!spec.startsWith("npm:")) {
+    return null;
+  }
+  const target = spec.slice("npm:".length);
+  if (!target) {
+    return null;
+  }
+  const separator =
+    target.startsWith("@")
+      ? target.indexOf("@", target.indexOf("/") + 1)
+      : target.indexOf("@");
+  if (separator === -1) {
+    return { packageName: target };
+  }
+  return {
+    packageName: target.slice(0, separator),
+    versionOrRange: target.slice(separator + 1),
+  };
+}
+
+function dependencyEntries(
+  pkg: ReturnType<typeof readPackageJson>,
+): Array<{ type: DependencyType; name: string; spec: string }> {
+  return [
+    ...Object.entries(pkg.dependencies ?? {}).map(([name, spec]) => ({
+      type: "dependency" as const,
+      name,
+      spec,
+    })),
+    ...Object.entries(pkg.devDependencies ?? {}).map(([name, spec]) => ({
+      type: "devDependency" as const,
+      name,
+      spec,
+    })),
+  ];
+}
+
+function dependencyType(workspaceRoot: string, packageName: string): DependencyType {
   const pkg = readPackageJson(workspaceRoot);
   if (packageName in (pkg.devDependencies ?? {})) {
     return "devDependency";
@@ -110,9 +165,59 @@ function dependencyType(workspaceRoot: string, packageName: string): "dependency
   return "dependency";
 }
 
-function currentPackageApi(workspaceRoot: string, packageName: string): PackageApi | null {
+function resolvePackageForUpgrade(workspaceRoot: string, requestedName: string): PackageResolution | null {
   const graph = readGeneratedJson<PackageGraph>(workspaceRoot, `${GENERATED_DIR}/packageGraph.json`);
-  return graph?.packages.find((pkg) => pkg.name === packageName) ?? null;
+  if (!graph) {
+    return null;
+  }
+  const pkg = readPackageJson(workspaceRoot);
+  const entries = dependencyEntries(pkg);
+
+  const aliasEntry = entries.find((entry) => {
+    const alias = parseNpmAliasSpec(entry.spec);
+    return entry.name === requestedName || alias?.packageName === requestedName;
+  });
+  if (aliasEntry) {
+    const alias = parseNpmAliasSpec(aliasEntry.spec);
+    const packageName = alias?.packageName ?? aliasEntry.name;
+    const current = graph.packages.find((candidate) => candidate.name === packageName);
+    if (current) {
+      return {
+        requestedName,
+        packageName,
+        dependencyName: aliasEntry.name,
+        dependencySpec: aliasEntry.spec,
+        dependencyType: aliasEntry.type,
+        isNpmAlias: Boolean(alias),
+        current,
+      };
+    }
+  }
+
+  const current = graph.packages.find((candidate) => candidate.name === requestedName);
+  if (!current) {
+    return null;
+  }
+  const directEntry = entries.find((entry) => entry.name === requestedName);
+  return {
+    requestedName,
+    packageName: requestedName,
+    dependencyName: requestedName,
+    dependencySpec: directEntry?.spec,
+    dependencyType: directEntry?.type ?? dependencyType(workspaceRoot, requestedName),
+    isNpmAlias: false,
+    current,
+  };
+}
+
+function packageSpecForDependency(
+  resolution: Pick<PackageResolution, "packageName" | "dependencyName" | "isNpmAlias">,
+  version: string,
+): string {
+  if (resolution.isNpmAlias) {
+    return `${resolution.dependencyName}@npm:${resolution.packageName}@${version}`;
+  }
+  return `${resolution.packageName}@${version}`;
 }
 
 function fixtureMetadata(registryDir: string | undefined, packageName: string): {
@@ -348,9 +453,9 @@ export async function createUpgradePlan(
 ): Promise<UpgradePlannerResult> {
   const diagnostics: Diagnostic[] = [];
   const packageManager = detectPackageManager(options.workspaceRoot);
-  const current = currentPackageApi(options.workspaceRoot, options.packageName);
+  const resolution = resolvePackageForUpgrade(options.workspaceRoot, options.packageName);
 
-  if (!current) {
+  if (!resolution) {
     return {
       ok: false,
       diagnostics: [
@@ -363,10 +468,11 @@ export async function createUpgradePlan(
       exitCode: 1,
     };
   }
+  const current = resolution.current;
 
   const targetInfo = await resolveTargetVersion({
     workspaceRoot: options.workspaceRoot,
-    packageName: options.packageName,
+    packageName: resolution.packageName,
     currentVersion: current.version,
     target: options.target,
     registryDir: options.registryDir ?? process.env.FORGE_DEPS_REGISTRY_DIR,
@@ -388,7 +494,7 @@ export async function createUpgradePlan(
 
   const analyzed = await analyzeTargetPackage({
     workspaceRoot: options.workspaceRoot,
-    packageName: options.packageName,
+    packageName: resolution.packageName,
     versionInfo: targetInfo,
     packageManager,
     registryDir: options.registryDir ?? process.env.FORGE_DEPS_REGISTRY_DIR,
@@ -398,7 +504,7 @@ export async function createUpgradePlan(
     return { ok: false, diagnostics, exitCode: 1 };
   }
 
-  const recipe = resolveByPackageName(options.packageName) ?? undefined;
+  const recipe = resolveByPackageName(resolution.packageName) ?? undefined;
   const currentClassified = { api: current, classification: classify(current, recipe), recipe };
   const targetClassified = {
     api: analyzed.api,
@@ -425,7 +531,7 @@ export async function createUpgradePlan(
   }
 
   const affected = analyzeUpgradeImpact({
-    packageName: options.packageName,
+    packageName: resolution.packageName,
     appGraph,
     runtimeGraph,
     queryRegistry,
@@ -436,21 +542,35 @@ export async function createUpgradePlan(
   const bump = semverBump(current.version, analyzed.api.version);
   const risk = buildRiskReport({ bump, apiDiff, runtimeDiff, affected });
   const commands = recommendedCommands(affected);
+  const toInfo = {
+    ...targetInfo,
+    version: analyzed.api.version,
+    spec: packageSpecForDependency(resolution, analyzed.api.version),
+  };
   const planDir = packagePlanDir(
     options.workspaceRoot,
-    options.packageName,
+    resolution.dependencyName,
     current.version,
     analyzed.api.version,
   );
-  const id = `${packageKey(options.packageName)}-${current.version}-to-${analyzed.api.version}`;
+  const id = `${packageKey(resolution.dependencyName)}-${current.version}-to-${analyzed.api.version}`;
   const plan: PackageUpgradePlan = {
     schemaVersion: "0.1.0",
     plannerVersion: GENERATOR_VERSION,
     id,
-    packageName: options.packageName,
+    packageName: resolution.packageName,
+    ...(resolution.requestedName !== resolution.packageName
+      ? { requestedPackageName: resolution.requestedName }
+      : {}),
+    ...(resolution.isNpmAlias ? { dependencyAlias: resolution.dependencyName } : {}),
     ...(recipe?.alias ? { integrationAlias: recipe.alias } : {}),
-    from: { version: current.version, spec: `${options.packageName}@${current.version}` },
-    to: { ...targetInfo, version: analyzed.api.version },
+    from: {
+      version: current.version,
+      spec: resolution.isNpmAlias
+        ? packageSpecForDependency(resolution, current.version)
+        : `${resolution.packageName}@${current.version}`,
+    },
+    to: toInfo,
     packageManager,
     semver: {
       bump,

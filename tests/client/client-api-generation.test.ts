@@ -31,16 +31,19 @@ describe("client api generation", () => {
       const clientTs = readFileSync(join(root, GENERATED_DIR, "client.ts"), "utf8");
       expect(clientTs).toContain("createForgeClient");
       expect(clientTs).toContain("ForgeHttpClient");
+      expect(clientTs).toContain("commandResult");
 
       const clientTypes = readFileSync(join(root, GENERATED_DIR, "clientTypes.ts"), "utf8");
       expect(clientTypes).toContain("ForgeClient");
       expect(clientTypes).toContain("ForgeError");
+      expect(clientTypes).toContain("ForgeCommandResult");
       expect(clientTypes).toContain("LiveSnapshot");
       expect(clientTypes).toContain("liveQuery");
 
       const reactTs = readFileSync(join(root, GENERATED_DIR, "react.ts"), "utf8");
       expect(reactTs).toContain('"use client"');
       expect(reactTs).toContain("ForgeProvider");
+      expect(reactTs).toContain("useCommandResult");
       expect(reactTs).toContain("useLiveQuery");
     } finally {
       cleanupWorkspace(root);

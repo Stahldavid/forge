@@ -6,6 +6,21 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.36
+
+- Smoothed the alpha field-test loop after the Vendor Access app exercise.
+- Taught `forge deps upgrade-plan` to resolve npm alias dependencies such as
+  `forge: npm:forgeos@alpha`, while preserving alias install specs like
+  `forge@npm:forgeos@0.1.0-alpha.36` in generated upgrade plans.
+- Normalized `auth.md` runtime risk rendering so Commands and Risk/Approval
+  metadata agree that commands default to `write`.
+- Added non-throwing command proof APIs through generated
+  `client.commandResult(...)` and React `useCommandResult(...)`, so expected
+  policy denials can be rendered as structured results instead of noisy
+  unhandled browser failures.
+- Updated the basic example schema/docs to use `organizations` as the root
+  tenant table instead of a self-referential `tenants` root.
+
 ## 0.1.0-alpha.35
 
 - Hardened field-test regressions found while building WorkOS-style

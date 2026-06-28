@@ -147,6 +147,49 @@ describe("H22 package upgrade planner", () => {
     }
   }, 30_000);
 
+  test("upgrade-plan resolves npm aliases and preserves alias install specs", async () => {
+    const workspace = await scaffoldDepsWorkspace("h22-alias");
+    try {
+      const packageJsonPath = join(workspace, "package.json");
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+        dependencies: Record<string, string>;
+      };
+      packageJson.dependencies = {
+        schemas: "npm:zod@4.0.1",
+        stripe: "18.0.0",
+      };
+      writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+      const byRealPackage = await createUpgradePlan({
+        workspaceRoot: workspace,
+        packageName: "zod",
+        target: { kind: "semver-bump", bump: "patch" },
+        registryDir: REGISTRY,
+      });
+
+      expect(byRealPackage.exitCode).toBe(0);
+      expect(byRealPackage.plan?.packageName).toBe("zod");
+      expect(byRealPackage.plan?.dependencyAlias).toBe("schemas");
+      expect(byRealPackage.plan?.from.spec).toBe("schemas@npm:zod@4.0.1");
+      expect(byRealPackage.plan?.to.spec).toBe("schemas@npm:zod@4.0.2");
+
+      const byAlias = await createUpgradePlan({
+        workspaceRoot: workspace,
+        packageName: "schemas",
+        target: { kind: "semver-bump", bump: "patch" },
+        registryDir: REGISTRY,
+      });
+
+      expect(byAlias.exitCode).toBe(0);
+      expect(byAlias.plan?.packageName).toBe("zod");
+      expect(byAlias.plan?.requestedPackageName).toBe("schemas");
+      expect(byAlias.plan?.dependencyAlias).toBe("schemas");
+      expect(byAlias.plan?.to.spec).toBe("schemas@npm:zod@4.0.2");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
   test("deps CLI exposes outdated, inspect, diff, and upgrade-plan", async () => {
     const workspace = await scaffoldDepsWorkspace("h22-cli");
     try {

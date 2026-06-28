@@ -86,6 +86,22 @@ export type LiveSnapshot<T> = {
   traceId?: string;
 };
 
+export type ForgeCommandResult<T = unknown> =
+  | {
+      ok: true;
+      result: T;
+      status: number;
+      traceId?: string;
+      diagnostics?: { code: string; message: string }[];
+    }
+  | {
+      ok: false;
+      error: { code: string; message: string; details?: unknown };
+      status: number;
+      traceId?: string;
+      diagnostics?: { code: string; message: string }[];
+    };
+
 export type LiveQueryOptions = {
   signal?: AbortSignal;
 };
@@ -96,6 +112,7 @@ export type ForgeClient = {
   readonly lastTraceId?: string;
   query<Name extends QueryName>(name: Name, args: unknown): Promise<unknown>;
   command<Name extends CommandName>(name: Name, args: unknown): Promise<unknown>;
+  commandResult<Name extends CommandName>(name: Name, args: unknown): Promise<ForgeCommandResult<unknown>>;
   externalQuery<Name extends ExternalQueryRef>(name: Name, args: unknown): Promise<unknown>;
   externalCommand<Name extends ExternalCommandRef>(name: Name, args: unknown): Promise<unknown>;
   liveQuery<Name extends LiveQueryName>(
@@ -113,6 +130,7 @@ export function renderClientTs(): string {
   return `import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,
+  ForgeCommandResult,
   ForgeClient,
   ForgeClientConfig,
   ExternalCommandRef,
@@ -128,6 +146,7 @@ export type {
   ForgeAuthProvider,
   ForgeClient,
   ForgeClientConfig,
+  ForgeCommandResult,
   ForgeStaticAuth,
   QueryName,
   CommandName,
@@ -258,6 +277,10 @@ class ForgeHttpClient implements ForgeClient {
     return this.invoke("commands", name, args);
   }
 
+  commandResult(name: string, args: unknown): Promise<ForgeCommandResult<unknown>> {
+    return this.invokeResult("commands", name, args);
+  }
+
   externalQuery(name: ExternalQueryRef, args: unknown): Promise<unknown> {
     return this.invokeExternal("queries", name, args);
   }
@@ -297,27 +320,61 @@ class ForgeHttpClient implements ForgeClient {
     name: string,
     args: unknown,
   ): Promise<unknown> {
+    const result = await this.invokeResult(kind, name, args);
+    if (!result.ok) {
+      throw new ForgeError(result.error.message, {
+        code: result.error.code,
+        traceId: result.traceId,
+        status: result.status,
+        details: result.error.details ?? result.diagnostics,
+      });
+    }
+    return result.result;
+  }
+
+  private async invokeResult(
+    kind: "queries" | "commands",
+    name: string,
+    args: unknown,
+  ): Promise<ForgeCommandResult<unknown>> {
     const baseUrl = this.config.url.replace(/\\/$/, "");
     const url = \`\${baseUrl}/\${kind}/\${encodeURIComponent(name)}\`;
     const authHeaders = await resolveAuthHeaders(this.config.auth);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify({ args }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
+        body: JSON.stringify({ args }),
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        status: 0,
+        error: {
+          code: "FORGE_NETWORK_ERROR",
+          message: error instanceof Error ? error.message : "network request failed",
+          details: error,
+        },
+      };
+    }
 
     let body: unknown;
     try {
       body = await response.json();
     } catch {
-      throw new ForgeError(\`HTTP \${response.status}\`, {
-        code: "FORGE_HTTP_ERROR",
+      return {
+        ok: false,
         status: response.status,
-      });
+        error: {
+          code: "FORGE_HTTP_ERROR",
+          message: \`HTTP \${response.status}\`,
+        },
+      };
     }
 
     const payload = parseJsonPayload(body);
@@ -331,15 +388,26 @@ class ForgeHttpClient implements ForgeClient {
         payload.error?.message ??
         diagnostic?.message ??
         \`Request failed with status \${response.status}\`;
-      throw new ForgeError(message, {
-        code,
-        traceId: payload.traceId,
+      return {
+        ok: false,
         status: response.status,
-        details: payload.error?.details ?? payload.diagnostics,
-      });
+        traceId: payload.traceId,
+        diagnostics: payload.diagnostics,
+        error: {
+          code,
+          message,
+          details: payload.error?.details ?? payload.diagnostics,
+        },
+      };
     }
 
-    return payload.result;
+    return {
+      ok: true,
+      result: payload.result,
+      status: response.status,
+      traceId: payload.traceId,
+      diagnostics: payload.diagnostics,
+    };
   }
 
   private async invokeExternal(
@@ -524,8 +592,11 @@ export type {
   ForgeReactAuthProvider,
   ForgeReactClient,
   ForgeReactError,
+  ForgeCommandCallResult,
   UseCommandOptions,
   UseCommandResult,
+  UseCommandResultHook,
+  UseCommandResultOptions,
   UseLiveQueryOptions,
   UseLiveQueryResult,
   UseQueryOptions,
@@ -539,6 +610,7 @@ export const useForgeClient = forgeReact.useForgeClient;
 export const useAuth = forgeReact.useAuth;
 export const useQuery = forgeReact.useQuery;
 export const useCommand = forgeReact.useCommand;
+export const useCommandResult = forgeReact.useCommandResult;
 export const useLiveQuery = forgeReact.useLiveQuery;
 `;
 }
@@ -551,8 +623,11 @@ export function renderReactDts(): string {
   ForgeReactAuthProvider,
   ForgeReactClient,
   ForgeReactError,
+  ForgeCommandCallResult,
   UseCommandOptions,
   UseCommandResult,
+  UseCommandResultHook,
+  UseCommandResultOptions,
   UseLiveQueryOptions,
   UseLiveQueryResult,
   UseQueryOptions,
@@ -564,6 +639,7 @@ export declare const useForgeClient: import("forge/react").ForgeReactBindings["u
 export declare const useAuth: import("forge/react").ForgeReactBindings["useAuth"];
 export declare const useQuery: import("forge/react").ForgeReactBindings["useQuery"];
 export declare const useCommand: import("forge/react").ForgeReactBindings["useCommand"];
+export declare const useCommandResult: import("forge/react").ForgeReactBindings["useCommandResult"];
 export declare const useLiveQuery: import("forge/react").ForgeReactBindings["useLiveQuery"];
 `;
 }

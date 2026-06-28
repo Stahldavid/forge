@@ -64,6 +64,8 @@ interface AgentToolsLike {
   }>;
 }
 
+type RuntimeEntryKind = "command" | "query" | "liveQuery" | "action";
+
 function readGeneratedJson<T>(workspaceRoot: string, relativePath: string): T | null {
   const absolute = join(workspaceRoot, relativePath);
   if (!nodeFileSystem.exists(absolute)) {
@@ -76,11 +78,32 @@ function outputPath(options: AuthMdCommandOptions): string {
   return options.output?.trim() || "public/auth.md";
 }
 
-function listRuntimeEntries(title: string, entries: RuntimeEntry[] | undefined): string[] {
+function runtimeEntryRisk(kind: RuntimeEntryKind, entry: RuntimeEntry): string {
+  if (entry.risk) {
+    return entry.risk;
+  }
+  if (kind === "command") {
+    return "write";
+  }
+  if (kind === "action") {
+    return "external";
+  }
+  return "read";
+}
+
+function runtimeEntryNeedsApproval(kind: RuntimeEntryKind, entry: RuntimeEntry): boolean {
+  return entry.needsApproval ?? kind === "action";
+}
+
+function listRuntimeEntries(
+  title: string,
+  kind: RuntimeEntryKind,
+  entries: RuntimeEntry[] | undefined,
+): string[] {
   const rows = (entries ?? []).map((entry) =>
     `| \`${entry.name}\` | ${entry.policy ? `\`${entry.policy}\`` : "none"} | ${
       entry.requiresAuth === false ? "no" : "yes"
-    } | ${entry.risk ?? "read"} | ${String(entry.needsApproval ?? false)} |`
+    } | ${runtimeEntryRisk(kind, entry)} | ${String(runtimeEntryNeedsApproval(kind, entry))} |`
   );
   return [
     `## ${title}`,
@@ -115,16 +138,16 @@ function existingDocLinks(workspaceRoot: string): string[] {
 
 function riskMetadata(contract: AgentContractLike | null, tools: AgentToolsLike | null) {
   const runtime = [
-    ...(contract?.commands ?? []).map((entry) => ({ kind: "command", ...entry, risk: entry.risk ?? "write" })),
-    ...(contract?.queries ?? []).map((entry) => ({ kind: "query", ...entry, risk: entry.risk ?? "read" })),
-    ...(contract?.liveQueries ?? []).map((entry) => ({ kind: "liveQuery", ...entry, risk: entry.risk ?? "read" })),
-    ...(contract?.actions ?? []).map((entry) => ({ kind: "action", ...entry, risk: entry.risk ?? "external" })),
+    ...(contract?.commands ?? []).map((entry) => ({ kind: "command" as const, ...entry })),
+    ...(contract?.queries ?? []).map((entry) => ({ kind: "query" as const, ...entry })),
+    ...(contract?.liveQueries ?? []).map((entry) => ({ kind: "liveQuery" as const, ...entry })),
+    ...(contract?.actions ?? []).map((entry) => ({ kind: "action" as const, ...entry })),
   ].map((entry) => ({
     kind: entry.kind,
     name: entry.name,
     policy: entry.policy ?? null,
-    risk: entry.risk ?? "read",
-    needs_approval: entry.needsApproval ?? (entry.kind === "action"),
+    risk: runtimeEntryRisk(entry.kind, entry),
+    needs_approval: runtimeEntryNeedsApproval(entry.kind, entry),
     requires_auth: entry.requiresAuth !== false,
   }));
   const aiTools = (tools?.tools ?? []).map((tool) => ({
@@ -232,10 +255,10 @@ function renderAuthMd(workspaceRoot: string): AuthMdCommandResult & { content: s
     `- Roles: \`${auth?.claims?.roles ?? "roles"}\``,
     `- Permissions: \`${auth?.claims?.permissions ?? "permissions"}\``,
     "",
-    ...listRuntimeEntries("Commands", contract?.commands),
-    ...listRuntimeEntries("Queries", contract?.queries),
-    ...listRuntimeEntries("Live Queries", contract?.liveQueries),
-    ...listRuntimeEntries("Actions", contract?.actions),
+    ...listRuntimeEntries("Commands", "command", contract?.commands),
+    ...listRuntimeEntries("Queries", "query", contract?.queries),
+    ...listRuntimeEntries("Live Queries", "liveQuery", contract?.liveQueries),
+    ...listRuntimeEntries("Actions", "action", contract?.actions),
     "## Policies",
     "",
     "| Policy | Kind | Roles | Permissions |",

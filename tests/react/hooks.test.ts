@@ -202,6 +202,56 @@ describe("React hooks", () => {
     expect(command.error).toBeNull();
   });
 
+  test("useCommandResult returns expected denials without throwing", async () => {
+    const client = createMockClient({
+      commandResult: async () => ({
+        ok: false,
+        status: 403,
+        traceId: "trace-denied",
+        error: {
+          code: "FORGE_POLICY_DENIED",
+          message: "member cannot invite users",
+        },
+      }),
+    });
+    const bindings = createForgeReactBindings(() => client);
+    let command!: ReturnType<typeof bindings.useCommandResult<{ email: string }, { id: string }>>;
+    let settled: unknown;
+
+    function Harness() {
+      command = bindings.useCommandResult<{ email: string }, { id: string }>("createInvitation", {
+        onSettled: (result) => {
+          settled = result;
+        },
+      });
+      return null;
+    }
+
+    await act(async () => {
+      create(
+        React.createElement(
+          bindings.ForgeProvider,
+          { url: "http://forge.test" },
+          React.createElement(Harness),
+        ),
+      );
+    });
+
+    let result!: Awaited<ReturnType<typeof command.run>>;
+    await act(async () => {
+      result = await command.run({ email: "member@example.com" });
+    });
+
+    expect(result.ok).toBe(false);
+    expect(command.loading).toBe(false);
+    expect(command.result).toEqual(result);
+    expect(command.data).toBeUndefined();
+    expect(command.error?.code).toBe("FORGE_POLICY_DENIED");
+    expect(command.error?.status).toBe(403);
+    expect(command.traceId).toBe("trace-denied");
+    expect(settled).toEqual(result);
+  });
+
   test("useLiveQuery receives snapshots and unsubscribes on unmount", async () => {
     let onSnapshot!: (snapshot: LiveSnapshot<unknown>) => void;
     let signal: AbortSignal | undefined;

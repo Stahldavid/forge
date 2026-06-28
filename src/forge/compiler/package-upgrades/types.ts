@@ -146,6 +146,8 @@ export interface PackageUpgradePlan {
   plannerVersion: string;
   id: string;
   packageName: string;
+  requestedPackageName?: string;
+  dependencyAlias?: string;
   integrationAlias?: string;
   from: PackageVersionInfo;
   to: PackageVersionInfo;

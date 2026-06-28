@@ -501,6 +501,9 @@ describe("Forge CLI", () => {
       expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## Risk And Approval Metadata");
       expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## Actions");
       expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain("## App Docs");
+      expect(readFileSync(join(workspace, "public", "auth.md"), "utf8")).toContain(
+        "| `charge` | `public` | yes | write | false |",
+      );
       const metadataContent = readFileSync(
         join(workspace, "public", ".well-known", "oauth-protected-resource"),
         "utf8",
@@ -510,6 +513,9 @@ describe("Forge CLI", () => {
         forge: { risks: Array<{ kind: string; name: string; risk: string }>; docs: string[]; actions: string[] };
       };
       expect(Array.isArray(metadata.forge.risks)).toBe(true);
+      expect(metadata.forge.risks).toContainEqual(
+        expect.objectContaining({ kind: "command", name: "charge", risk: "write" }),
+      );
       expect(Array.isArray(metadata.forge.docs)).toBe(true);
       expect(Array.isArray(metadata.forge.actions)).toBe(true);
       expect(

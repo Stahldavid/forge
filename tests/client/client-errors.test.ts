@@ -32,4 +32,31 @@ describe("client errors", () => {
       cleanupWorkspace(root);
     }
   });
+
+  test("client.commandResult returns policy denial without throwing", async () => {
+    const { root, tenantA } = await scaffoldClientWorkspace("client-command-result");
+    const handle = await startClientDevServer(root, { db: "memory" });
+
+    try {
+      const { createForgeClient, api } = await import(
+        `${root}/src/forge/_generated/client.ts`
+      );
+
+      const client = createForgeClient({
+        url: handle.url,
+        auth: { userId: "u1", tenantId: tenantA, role: "member" },
+      });
+
+      const result = await client.commandResult(api.commands.manageBilling, {});
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(FORGE_POLICY_DENIED);
+        expect(result.status).toBe(403);
+        expect(result.traceId).toBeDefined();
+      }
+    } finally {
+      handle.stop();
+      cleanupWorkspace(root);
+    }
+  });
 });
