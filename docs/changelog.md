@@ -6,6 +6,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.41
+
+- Fixed package install detection for npm workspace apps that hoist frontend
+  dependencies. `forge add auth workos` now recognizes
+  `@workos-inc/authkit-react` when it is installed for `web/` but resolved from
+  an ancestor `node_modules`.
+
+## 0.1.0-alpha.40
+
+- Completed the WorkOS/AuthKit production-like app setup loop, including
+  no-dashboard WorkOS setup, browser AuthKit doctor checks, generated Vite React
+  AuthKit bridge, production auth readiness checks, and improved dev lifecycle
+  diagnostics.
+
 ## 0.1.0-alpha.39
 
 - Hardened real WorkOS seed setup: generated `workos-seed.yml` files no longer

@@ -39,7 +39,7 @@ function seedInstalledPackage(
   name: string,
   version: string,
 ): void {
-  const segments = name.startsWith("@") ? name.slice(1).split("/") : [name];
+  const segments = name.startsWith("@") ? name.split("/") : [name];
   const pkgDir = join(cwd, "node_modules", ...segments);
   mkdirSync(pkgDir, { recursive: true });
   writeFileSync(
@@ -68,6 +68,15 @@ describe("readInstalledVersion", () => {
   test("returns null when package is missing", () => {
     const root = makeTempWorkspace();
     expect(readInstalledVersion("missing-pkg", root)).toBeNull();
+  });
+
+  test("reads hoisted workspace package versions from ancestor node_modules", () => {
+    const root = makeTempWorkspace();
+    const web = join(root, "web");
+    mkdirSync(web, { recursive: true });
+    seedInstalledPackage(root, "@workos-inc/authkit-react", "0.16.1");
+
+    expect(readInstalledVersion("@workos-inc/authkit-react", web)).toBe("0.16.1");
   });
 });
 
@@ -137,6 +146,32 @@ describe("PackageManagerAdapter with mock executor", () => {
     expect(calls[0]?.cwd).toBe(root);
     expect(calls[0]?.argv).toContain("--ignore-scripts");
     expect(result.resolvedVersion).toBe("3.24.1");
+  });
+
+  test("add accepts packages hoisted to an ancestor node_modules by npm workspaces", async () => {
+    const root = makeTempWorkspace();
+    const web = join(root, "web");
+    mkdirSync(web, { recursive: true });
+    writeFileSync(join(root, "package.json"), "{}", "utf8");
+    writeFileSync(join(web, "package.json"), "{}", "utf8");
+
+    const calls: { argv: string[]; cwd: string }[] = [];
+    const executor: CommandExecutor = {
+      async run(argv, options) {
+        calls.push({ argv: [...argv], cwd: options.cwd });
+        seedInstalledPackage(root, "@workos-inc/authkit-react", "0.16.1");
+        return { exitCode: 0, stdout: "", stderr: "" };
+      },
+    };
+
+    const adapter = createPackageManagerAdapter("npm", { executor });
+    const result = await adapter.add("@workos-inc/authkit-react", {
+      cwd: web,
+      ignoreScripts: true,
+    });
+
+    expect(calls[0]?.cwd).toBe(web);
+    expect(result.resolvedVersion).toBe("0.16.1");
   });
 
   test("add omits --ignore-scripts when allow-scripts opt-in", async () => {

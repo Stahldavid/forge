@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.41
+
+### Patch Changes
+
+- Fix package install detection for npm workspace apps that hoist frontend
+  dependencies to an ancestor `node_modules`.
+
+  - `forge add auth workos` now recognizes `@workos-inc/authkit-react` when npm
+    installs it from a `web/` workspace but physically hoists it to the root
+    workspace.
+  - Package version detection now walks ancestor `node_modules` directories,
+    matching Node/workspace resolution more closely.
+  - Add regression coverage for scoped hoisted workspace packages and the
+    WorkOS AuthKit install path.
+
 ## 0.1.0-alpha.40
 
 ### Patch Changes
