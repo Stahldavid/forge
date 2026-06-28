@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { closeSync, openSync } from "node:fs";
+import { closeSync, readFileSync, readlinkSync, openSync } from "node:fs";
 import { createServer as createNetServer } from "node:net";
 import { run } from "../compiler/orchestrator/run.ts";
 import { basename, join } from "node:path";
@@ -213,12 +213,30 @@ function removeDevPidFile(workspaceRoot: string): void {
   }
 }
 
+function processDetails(pid: number): { pid: number; cwd?: string; command?: string } {
+  const details: { pid: number; cwd?: string; command?: string } = { pid };
+  try {
+    details.cwd = readlinkSync(`/proc/${pid}/cwd`);
+  } catch {
+    // /proc is Linux-only; process metadata is best-effort.
+  }
+  try {
+    const raw = readFileSync(`/proc/${pid}/cmdline`, "utf8");
+    const command = raw.split("\0").filter(Boolean).join(" ");
+    if (command) details.command = command;
+  } catch {
+    // /proc is Linux-only; process metadata is best-effort.
+  }
+  return details;
+}
+
 function printDevLifecycleResult(input: {
   options: DevCommandOptions;
   ok: boolean;
   action: "detach" | "status" | "stop";
   running: boolean;
   pid?: number;
+  process?: { pid: number; cwd?: string; command?: string };
   logFile: string;
   message: string;
   exitCode: 0 | 1;
@@ -228,6 +246,7 @@ function printDevLifecycleResult(input: {
     action: input.action,
     running: input.running,
     ...(input.pid !== undefined ? { pid: input.pid } : {}),
+    ...(input.process ? { process: input.process } : {}),
     logFile: input.logFile,
     message: input.message,
     nextActions: input.running
@@ -240,6 +259,8 @@ function printDevLifecycleResult(input: {
   } else {
     process.stdout.write(`${input.message}\n`);
     if (input.pid !== undefined) process.stdout.write(`pid: ${input.pid}\n`);
+    if (input.process?.cwd) process.stdout.write(`cwd: ${input.process.cwd}\n`);
+    if (input.process?.command) process.stdout.write(`command: ${input.process.command}\n`);
     process.stdout.write(`log: ${input.logFile}\n`);
   }
   return { exitCode: input.exitCode };
@@ -278,6 +299,7 @@ function runDevStatus(options: DevCommandOptions): DevCommandResult {
     action: "status",
     running,
     ...(pid !== null ? { pid } : {}),
+    ...(pid !== null && running ? { process: processDetails(pid) } : {}),
     logFile: paths.logFile,
     message: running ? "forge dev detached server is running" : "forge dev detached server is not running",
     exitCode: 0,
@@ -295,6 +317,7 @@ function runDevStop(options: DevCommandOptions): DevCommandResult {
       action: "stop",
       running: false,
       ...(pid !== null ? { pid } : {}),
+      ...(pid !== null ? { process: processDetails(pid) } : {}),
       logFile: paths.logFile,
       message: "no detached forge dev server was running",
       exitCode: 0,
@@ -308,6 +331,7 @@ function runDevStop(options: DevCommandOptions): DevCommandResult {
     action: "stop",
     running: false,
     pid,
+    process: processDetails(pid),
     logFile: paths.logFile,
     message: "stopped detached forge dev server",
     exitCode: 0,
@@ -336,6 +360,7 @@ function runDevDetach(options: DevCommandOptions): DevCommandResult {
       action: "detach",
       running: true,
       pid: existingPid,
+      process: processDetails(existingPid),
       logFile: paths.logFile,
       message: "forge dev detached server is already running",
       exitCode: 0,
@@ -382,6 +407,7 @@ function runDevDetach(options: DevCommandOptions): DevCommandResult {
       action: "detach",
       running: true,
       pid: child.pid,
+      process: processDetails(child.pid),
       logFile: paths.logFile,
       message: "started detached forge dev server",
       exitCode: 0,
@@ -474,6 +500,8 @@ function classifyDevStartFailure(input: {
     /port\s+\d+\s+.*in use/i.test(input.rawMessage);
   if (busy) {
     const suggestedCommands = [
+      "forge dev status --json",
+      "forge dev stop --json",
       `forge dev --port 0${input.webPort ? ` --web-port ${input.webPort}` : ""} --json`,
       "forge doctor windows --json",
     ];

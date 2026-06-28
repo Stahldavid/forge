@@ -1318,6 +1318,16 @@ export async function startDevServer(
           const aiRegistry = loadAiRegistry(workspaceRoot);
           const aiCheck = checkAiProviders(envStore, aiRegistry, secretRegistry);
           const mockAi = isMockAiEnabled({ mockAi: options.mockAi });
+          const productionAuthMode = authConfig.mode === "oidc" || authConfig.mode === "jwt";
+          const missingAuthConfig = [
+            ...(productionAuthMode && !authConfig.issuer ? ["FORGE_AUTH_ISSUER"] : []),
+            ...(productionAuthMode && !authConfig.jwksUri ? ["FORGE_AUTH_JWKS_URI"] : []),
+          ];
+          const workosClientId = envStore.resolve("WORKOS_CLIENT_ID") || envStore.resolve("VITE_WORKOS_CLIENT_ID");
+          const suggestedWorkOSJwksUri = workosClientId
+            ? `https://api.workos.com/sso/jwks/${workosClientId}`
+            : "https://api.workos.com/sso/jwks/<WORKOS_CLIENT_ID>";
+          const authProductionReady = !productionAuthMode || missingAuthConfig.length === 0;
 
           return jsonResponse({
             ok: true,
@@ -1346,6 +1356,12 @@ export async function startDevServer(
               audienceConfigured: Boolean(authConfig.audience),
               jwksConfigured: Boolean(authConfig.jwksUri),
               requiresTenant: authConfig.requiresTenant,
+              ready: authProductionReady,
+              productionReady: authProductionReady,
+              missing: missingAuthConfig,
+              ...(missingAuthConfig.includes("FORGE_AUTH_JWKS_URI")
+                ? { suggestedWorkOSJwksUri }
+                : {}),
             },
             env: {
               loadedFiles: envStore.loadedFiles,

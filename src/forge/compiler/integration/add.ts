@@ -354,8 +354,9 @@ function fileHashOrNull(path: string): string | null {
 function snapshotPackageManagerFiles(
   workspaceRoot: string,
   pm: PackageManagerAdapter,
+  extraPaths: string[] = [],
 ): Map<string, string | null> {
-  const paths = ["package.json", pm.lockfile];
+  const paths = [...new Set(["package.json", pm.lockfile, ...extraPaths])];
   return new Map(
     paths.map((path) => [
       path,
@@ -375,6 +376,70 @@ function changedPackageManagerFiles(
     }
   }
   return changed.sort();
+}
+
+function workosFrontendWorkspace(workspaceRoot: string): string | undefined {
+  return findFrontendWorkspace(workspaceRoot);
+}
+
+function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string): {
+  changed: string[];
+  warnings: Diagnostic[];
+} {
+  const mainRel = `${frontendWorkspace}/src/main.tsx`;
+  const mainPath = join(workspaceRoot, mainRel);
+  const current = nodeFileSystem.readText(mainPath);
+  if (current === null) {
+    return {
+      changed: [],
+      warnings: [
+        createDiagnostic({
+          severity: "warning",
+          code: "FORGE_WORKOS_AUTHKIT_ROOT_NOT_FOUND",
+          message: `generated WorkOS AuthKit bridge, but ${mainRel} was not found`,
+          fixHint: "Wrap the web app root with ForgeWorkOSAuthProvider from ./lib/workos-auth.",
+          suggestedCommands: ["forge workos doctor --json", "forge inspect ui --json"],
+        }),
+      ],
+    };
+  }
+  if (current.includes("ForgeWorkOSAuthProvider")) {
+    return { changed: [], warnings: [] };
+  }
+
+  const canRewriteDefaultViteRoot =
+    current.includes('import { ForgeProvider, forgeUrl } from "./lib/forge";') &&
+    current.includes("<ForgeProvider url={forgeUrl} devAuth>") &&
+    current.includes("</ForgeProvider>");
+
+  if (!canRewriteDefaultViteRoot) {
+    return {
+      changed: [],
+      warnings: [
+        createDiagnostic({
+          severity: "warning",
+          code: "FORGE_WORKOS_AUTHKIT_ROOT_CUSTOM",
+          message: `generated WorkOS AuthKit bridge, but ${mainRel} is custom and was not rewritten automatically`,
+          fixHint: "Import ForgeWorkOSAuthProvider from ./lib/workos-auth and wrap the app root with it so AuthKit tokens are passed to ForgeProvider.",
+          suggestedCommands: ["forge workos doctor --json", "forge inspect ui --json"],
+        }),
+      ],
+    };
+  }
+
+  const next = current
+    .replace(
+      'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+      'import { ForgeWorkOSAuthProvider } from "./lib/workos-auth";',
+    )
+    .replace("<ForgeProvider url={forgeUrl} devAuth>", "<ForgeWorkOSAuthProvider>")
+    .replace("</ForgeProvider>", "</ForgeWorkOSAuthProvider>");
+
+  if (next !== current) {
+    nodeFileSystem.writeText(mainPath, next);
+    return { changed: [mainRel], warnings: [] };
+  }
+  return { changed: [], warnings: [] };
 }
 
 async function analyzeRecipePackages(
@@ -668,10 +733,21 @@ export async function forgeAdd(
   const snapshot = snapshotVersionControlled(options.workspaceRoot);
 
   try {
-    const packageManagerBefore = snapshotPackageManagerFiles(options.workspaceRoot, pm);
+    const frontendWorkspace = normalized === "workos" ? workosFrontendWorkspace(options.workspaceRoot) : undefined;
+    const packageManagerBefore = snapshotPackageManagerFiles(
+      options.workspaceRoot,
+      pm,
+      frontendWorkspace ? [packageJsonRelativeFor(frontendWorkspace)] : [],
+    );
     for (const pkg of recipe.packages) {
       await pm.add(pkg.packageName, {
         cwd: options.workspaceRoot,
+        ignoreScripts: !options.allowScripts,
+      });
+    }
+    if (frontendWorkspace) {
+      await pm.add("@workos-inc/authkit-react", {
+        cwd: join(options.workspaceRoot, frontendWorkspace),
         ignoreScripts: !options.allowScripts,
       });
     }
@@ -705,7 +781,11 @@ export async function forgeAdd(
       mode: "write",
     });
 
-    const warningsCombined = [...warnings, ...emitResult.warnings];
+    const workosWeb = normalized === "workos" && frontendWorkspace
+      ? connectWorkOSReactRoot(options.workspaceRoot, frontendWorkspace)
+      : { changed: [] as string[], warnings: [] as Diagnostic[] };
+
+    const warningsCombined = [...warnings, ...emitResult.warnings, ...workosWeb.warnings];
     const errors = [...analyzeErrors, ...emitResult.errors];
 
     if (errors.length > 0) {
@@ -772,6 +852,7 @@ export async function forgeAdd(
       changed: [
         ...changedPackageManagerFiles(options.workspaceRoot, packageManagerBefore),
         ...emitResult.changed,
+        ...workosWeb.changed,
       ],
       unchanged: emitResult.unchanged,
       warnings: warningsCombined,

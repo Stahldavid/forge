@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.39 input=f8919744f953e216381deb3344bfadd99210164d5b86a1ecfa27c2e44825c874 content=9dd733fc66add2673cf0368aa5293a5d625debb7e9a4d2f2609d122b9d5e8d71
+// @forge-generated generator=0.1.0-alpha.40 input=e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46 content=21027c37d534a7f4b16365463246b770619323b2700a31921a34fc90a5d5f364
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.39",
-  "inputHash": "f8919744f953e216381deb3344bfadd99210164d5b86a1ecfa27c2e44825c874",
+  "generatorVersion": "0.1.0-alpha.40",
+  "inputHash": "e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1875,7 +1875,7 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "probable",
+      "confidence": "confirmed",
       "cost": "standard",
       "covers": {
         "actions": [],
@@ -1884,6 +1884,7 @@ export const testGraph = {
         "liveQueries": [],
         "packages": [
           "react",
+          "tsx",
           "typescript",
           "zod"
         ],
@@ -1895,7 +1896,8 @@ export const testGraph = {
       "file": "tests/integration/add.test.ts",
       "kind": "integration",
       "reasons": [
-        "probable: packages react",
+        "confirmed: packages react",
+        "probable: packages tsx",
         "probable: packages typescript",
         "probable: packages zod"
       ]
@@ -3921,6 +3923,7 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "react",
           "tsx"
         ],
         "policies": [],
@@ -3931,6 +3934,7 @@ export const testGraph = {
       "file": "tests/ui/h32-ui.test.ts",
       "kind": "unknown",
       "reasons": [
+        "probable: packages react",
         "probable: packages tsx"
       ]
     },

@@ -167,6 +167,59 @@ function metadataPathFor(markdownPath: string): string {
     : `${dirname(markdownPath)}/.well-known/oauth-protected-resource`;
 }
 
+function parseEnvText(text: string): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
+    if (!match) continue;
+    values[match[1]!] = (match[2] ?? "").trim().replace(/^["']|["']$/g, "");
+  }
+  return values;
+}
+
+function readRuntimeEnv(workspaceRoot: string): Record<string, string> {
+  const read = (path: string) => {
+    const absolute = join(workspaceRoot, path);
+    return existsSync(absolute) ? parseEnvText(readFileSync(absolute, "utf8")) : {};
+  };
+  return {
+    ...read(".env"),
+    ...read(".env.local"),
+    ...Object.fromEntries(
+      Object.entries(process.env)
+        .filter(([key]) => key.startsWith("FORGE_") || key.startsWith("WORKOS_") || key.startsWith("VITE_WORKOS_"))
+        .filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    ),
+  };
+}
+
+function valuePresent(env: Record<string, string>, name: string): boolean {
+  return typeof env[name] === "string" && env[name]!.trim().length > 0;
+}
+
+function authEnvDiagnostics(workspaceRoot: string): AuthMdCommandResult["diagnostics"] {
+  const env = readRuntimeEnv(workspaceRoot);
+  const mode = env.FORGE_AUTH_MODE;
+  if (mode !== "oidc" && mode !== "jwt") {
+    return [];
+  }
+  const diagnostics: AuthMdCommandResult["diagnostics"] = [];
+  if (!valuePresent(env, "FORGE_AUTH_ISSUER")) {
+    diagnostics.push({
+      code: "FORGE_AUTHMD_AUTH_ENV_MISSING",
+      message: "FORGE_AUTH_MODE uses production auth, but FORGE_AUTH_ISSUER is missing; for hosted WorkOS use https://api.workos.com",
+    });
+  }
+  if (!valuePresent(env, "FORGE_AUTH_JWKS_URI")) {
+    const clientId = env.WORKOS_CLIENT_ID || env.VITE_WORKOS_CLIENT_ID || "<WORKOS_CLIENT_ID>";
+    diagnostics.push({
+      code: "FORGE_AUTHMD_AUTH_ENV_MISSING",
+      message: `FORGE_AUTH_MODE uses production auth, but FORGE_AUTH_JWKS_URI is missing; for hosted WorkOS use https://api.workos.com/sso/jwks/${clientId}`,
+    });
+  }
+  return diagnostics;
+}
+
 function renderAuthMd(workspaceRoot: string): AuthMdCommandResult & { content: string; metadataContent: string } {
   const contract = readGeneratedJson<AgentContractLike>(
     workspaceRoot,
@@ -340,6 +393,15 @@ export function runAuthMdCommand(options: AuthMdCommandOptions): AuthMdCommandRe
   }
 
   if (options.subcommand === "check") {
+    const envDiagnostics = authEnvDiagnostics(options.workspaceRoot);
+    if (envDiagnostics.length > 0) {
+      return {
+        ...result,
+        ok: false,
+        diagnostics: envDiagnostics,
+        exitCode: 1,
+      };
+    }
     return {
       ...result,
       ok: !changed,

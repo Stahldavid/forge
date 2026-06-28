@@ -37,6 +37,7 @@ function formatHelp(): string {
     "  forge workos doctor --json  Check WorkOS AuthKit/FGA files, claims, seed, webhook, and tenant guards",
     "  forge workos doctor --yes --json  Run local checks, then delegate to npx --yes workos@latest doctor",
     "  forge workos seed --file workos-seed.yml --dry-run --json  Validate WorkOS seed without hosted changes",
+    "  forge workos setup --real --file workos-seed.yml --json  Apply redirect/CORS/homepage config and seed WorkOS without dashboard",
     "  forge deploy plan --target docker --json  Explain production deploy gates and commands",
     "  forge deploy check --production --json  Gate auth, DB, metadata, generated artifacts, and liveQuery readiness",
     "  forge deploy render docker  Write Docker production deploy files under deploy/",

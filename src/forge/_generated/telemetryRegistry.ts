@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.39 input=f8919744f953e216381deb3344bfadd99210164d5b86a1ecfa27c2e44825c874 content=69bba22646a28c5761ba5939d835f23eda14307925eacb94f6be8737adc2f20a
+// @forge-generated generator=0.1.0-alpha.40 input=e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46 content=88765e617f6aafc5d3d8fa313f13850d1f6f0190765dd22802463308fd016aa2
 export const telemetryRegistry = {
   "analyzerVersion": "1.0.0",
   "diagnostics": [],
@@ -64,7 +64,7 @@ export const telemetryRegistry = {
       "name": "forge.policy.denied"
     }
   ],
-  "generatorVersion": "0.1.0-alpha.39",
-  "inputHash": "2f0562e9c31e0d5152d3e79398de53a99944dc70de0957b909e684458275594e",
+  "generatorVersion": "0.1.0-alpha.40",
+  "inputHash": "7644ae4e0e28ec770953e3550bbd5655b408d6c156cf60a8fd4ba6f3056607b8",
   "schemaVersion": "1.0.0"
 } as const;

@@ -198,6 +198,7 @@ async function createFieldTestApp(options: FieldTestCommandOptions): Promise<Fie
             `${options.packageManager} run forge -- authmd check --json`,
             `${options.packageManager} run forge -- workos doctor --json`,
             `${options.packageManager} run forge -- workos seed --file workos-seed.yml --dry-run --json`,
+            `${options.packageManager} run forge -- workos setup --file workos-seed.yml --json`,
           ]
         : []),
       `${options.packageManager} run forge -- dev --once --json`,

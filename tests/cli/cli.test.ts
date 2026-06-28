@@ -531,6 +531,36 @@ describe("Forge CLI", () => {
       expect(check.exitCode).toBe(0);
       expect(check.changed).toBe(false);
 
+      writeFileSync(join(workspace, ".env.local"), "FORGE_AUTH_MODE=oidc\nWORKOS_CLIENT_ID=client_test\n", "utf8");
+      const missingAuthEnv = runAuthMdCommand({
+        subcommand: "check",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(missingAuthEnv.exitCode).toBe(1);
+      expect(missingAuthEnv.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+        "FORGE_AUTHMD_AUTH_ENV_MISSING",
+      );
+      expect(JSON.stringify(missingAuthEnv.diagnostics)).toContain("https://api.workos.com/sso/jwks/client_test");
+
+      writeFileSync(
+        join(workspace, ".env.local"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test",
+          "WORKOS_CLIENT_ID=client_test",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const completeAuthEnv = runAuthMdCommand({
+        subcommand: "check",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(completeAuthEnv.exitCode).toBe(0);
+
       writeFileSync(join(workspace, "public", "auth.md"), "# stale\n", "utf8");
       const stale = runAuthMdCommand({
         subcommand: "check",
@@ -570,7 +600,19 @@ describe("Forge CLI", () => {
         }),
         "utf8",
       );
-      writeFileSync(join(workspace, ".env.example"), "WORKOS_API_KEY=\n", "utf8");
+      writeFileSync(
+        join(workspace, ".env.example"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=",
+          "VITE_WORKOS_CLIENT_ID=",
+          "VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback",
+          "WORKOS_API_KEY=",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
       writeFileSync(join(workspace, "src/policies.workos.ts"), "export {};\n", "utf8");
       const seedYaml = [
           "permissions:",
@@ -591,6 +633,17 @@ describe("Forge CLI", () => {
           "    domains: ['acme.test']",
           "  - name: 'Globex'",
           "    domains: ['globex.test']",
+          "config:",
+          "  redirect_uris:",
+          "    - 'http://localhost:5173'",
+          "    - 'http://localhost:5173/callback'",
+          "  cors_origins:",
+          "    - 'http://localhost:5173'",
+          "  homepage_url: 'http://localhost:5173'",
+          "  webhook_endpoints:",
+          "    - url: 'http://localhost:3765/webhooks/workos'",
+          "      events:",
+          "        - 'authentication.succeeded'",
           "",
         ].join("\n");
       writeFileSync(
@@ -646,6 +699,9 @@ describe("Forge CLI", () => {
         expect(parsedInstall.command.subcommand).toBe("install");
         expect(parsedInstall.command.yes).toBe(true);
       }
+      const parsedSetup = parseCli(["workos", "setup", "--real", "--file", "workos-seed.yml", "--json"]);
+      expect(parsedSetup.errors).toEqual([]);
+      expect(parsedSetup.command).toMatchObject({ kind: "workos", subcommand: "setup", real: true });
 
       const parsed = parseCli(["workos", "doctor", "--json"]);
       expect(parsed.errors).toEqual([]);
@@ -685,6 +741,7 @@ describe("Forge CLI", () => {
       expect(doctor.checks.map((check) => check.name)).toContain("seed-organizations");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-roles-permissions");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-resource-types");
+      expect(doctor.checks.map((check) => check.name)).toContain("seed-auth-config");
       const delegatedDoctor = runWorkOSCommand({
         subcommand: "doctor",
         workspaceRoot: workspace,
@@ -722,6 +779,7 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(seedDryRun.data)).toContain('"dryRun":true');
       expect(JSON.stringify(seedDryRun.data)).toContain("forge workos seed --file workos-seed.yml --json");
 
+      const seedCommands: string[][] = [];
       const seed = runWorkOSCommand({
         subcommand: "seed",
         workspaceRoot: workspace,
@@ -730,7 +788,7 @@ describe("Forge CLI", () => {
         dryRun: false,
         commandRunner: (command, args, options) => {
           expect(command).toBe("npx");
-          expect(args).toEqual(["--yes", "workos@latest", "seed", "--file", "workos-seed.yml"]);
+          seedCommands.push(args);
           expect(options.cwd).toBe(workspace);
           return { status: 0, stdout: "workos seed ok\n", stderr: "" };
         },
@@ -738,6 +796,11 @@ describe("Forge CLI", () => {
       expect(seed.exitCode).toBe(0);
       expect(seed.applied).toBe(true);
       expect(seed.stdout).toBe("workos seed ok\n");
+      expect(seedCommands).toContainEqual(["--yes", "workos@latest", "config", "redirect", "add", "http://localhost:5173"]);
+      expect(seedCommands).toContainEqual(["--yes", "workos@latest", "config", "cors", "add", "http://localhost:5173"]);
+      expect(seedCommands).toContainEqual(["--yes", "workos@latest", "config", "homepage-url", "set", "http://localhost:5173"]);
+      expect(seedCommands).toContainEqual(["--yes", "workos@latest", "seed", "--file", "workos-seed.yml"]);
+      expect(JSON.stringify(seed.data)).toContain("WorkOS hosted webhook endpoints require HTTPS");
 
       const duplicateSeed = runWorkOSCommand({
         subcommand: "seed",
@@ -745,11 +808,13 @@ describe("Forge CLI", () => {
         json: true,
         yes: false,
         dryRun: false,
-        commandRunner: () => ({
-          status: 1,
-          stdout: "",
-          stderr: "Permission slug already in use: invitations:create\n",
-        }),
+        commandRunner: (_command, args) => args.includes("seed")
+          ? {
+              status: 1,
+              stdout: "",
+              stderr: "Permission slug already in use: invitations:create\n",
+            }
+          : { status: 0, stdout: "", stderr: "" },
       });
       expect(duplicateSeed.exitCode).toBe(0);
       expect(duplicateSeed.ok).toBe(true);
@@ -769,6 +834,9 @@ describe("Forge CLI", () => {
         dryRun: false,
         commandRunner: (command, args) => {
           expect(command).toBe("npx");
+          if (!args.includes("seed")) {
+            return { status: 0, stdout: "", stderr: "" };
+          }
           const seedFileArg = args[4]!;
           expect(seedFileArg).not.toBe("workos-seed.yml");
           expect(readFileSync(seedFileArg, "utf8").startsWith("// @forge-generated")).toBe(false);
@@ -835,7 +903,19 @@ describe("Forge CLI", () => {
         JSON.stringify({ auth: { requiresTenant: true } }),
         "utf8",
       );
-      writeFileSync(join(workspace, ".env.example"), "WORKOS_API_KEY=\n", "utf8");
+      writeFileSync(
+        join(workspace, ".env.example"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=",
+          "VITE_WORKOS_CLIENT_ID=",
+          "VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback",
+          "WORKOS_API_KEY=",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
       writeFileSync(
         join(workspace, "src/policies.workos.ts"),
         'import { canPermission } from "forge/policy"; export const policies = { "vendors.read": canPermission("vendors:read"), "access.approve": canPermission("access:approve") };\n',
@@ -855,6 +935,13 @@ describe("Forge CLI", () => {
         "organizations:",
         "  - name: 'Acme Corp'",
         "    domains: ['acme.test']",
+        "config:",
+        "  redirect_uris:",
+        "    - 'http://localhost:5173'",
+        "    - 'http://localhost:5173/callback'",
+        "  cors_origins:",
+        "    - 'http://localhost:5173'",
+        "  homepage_url: 'http://localhost:5173'",
         "",
       ].join("\n");
       writeFileSync(join(workspace, "workos-seed.yml"), seedYaml, "utf8");

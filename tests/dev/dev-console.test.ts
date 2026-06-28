@@ -321,7 +321,9 @@ describe("H33 forge dev console", () => {
             port: occupied.port,
           },
         });
-        expect(payload.busy?.suggestedCommands?.[0]).toContain("forge dev --port 0");
+        expect(payload.busy?.suggestedCommands).toContain("forge dev status --json");
+        expect(payload.busy?.suggestedCommands).toContain("forge dev stop --json");
+        expect(payload.busy?.suggestedCommands?.some((command) => command.includes("forge dev --port 0"))).toBe(true);
         expect(payload.busy?.suggestedCommands).toContain("forge doctor windows --json");
       } finally {
         await occupied.close();
@@ -359,8 +361,12 @@ describe("H33 forge dev console", () => {
           busy?: { suggestedCommands?: string[] };
         };
 
-        expect(payload.nextActions?.[0]).toContain("node bin/forge.mjs dev --port 0");
-        expect(payload.busy?.suggestedCommands?.[0]).toContain("node bin/forge.mjs dev --port 0");
+        expect(payload.nextActions).toContain("node bin/forge.mjs dev status --json");
+        expect(payload.nextActions).toContain("node bin/forge.mjs dev stop --json");
+        expect(payload.nextActions?.some((command) => command.includes("node bin/forge.mjs dev --port 0"))).toBe(true);
+        expect(payload.busy?.suggestedCommands).toContain("node bin/forge.mjs dev status --json");
+        expect(payload.busy?.suggestedCommands).toContain("node bin/forge.mjs dev stop --json");
+        expect(payload.busy?.suggestedCommands?.some((command) => command.includes("node bin/forge.mjs dev --port 0"))).toBe(true);
         expect(payload.busy?.suggestedCommands).toContain("node bin/forge.mjs doctor windows --json");
       } finally {
         await occupied.close();

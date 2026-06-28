@@ -117,6 +117,25 @@ function looksLikeAuthFlow(text: string): boolean {
   return /sign\s*in|signin|login|logout|authkit|organization|tenant|session|workos|clerk|auth0/i.test(text);
 }
 
+function hasWorkOSIntegration(workspaceRoot: string): boolean {
+  return nodeFileSystem.exists(join(workspaceRoot, `${GENERATED}/integrations/workos/authkit.ts`)) ||
+    nodeFileSystem.exists(join(workspaceRoot, `${GENERATED}/integrations/workos/auth-routes.ts`));
+}
+
+function webPackageHasAuthKit(workspaceRoot: string): boolean {
+  const path = join(workspaceRoot, "web/package.json");
+  if (!nodeFileSystem.exists(path)) return false;
+  try {
+    const packageJson = JSON.parse(nodeFileSystem.readText(path) ?? "{}") as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    return Boolean(packageJson.dependencies?.["@workos-inc/authkit-react"] ?? packageJson.devDependencies?.["@workos-inc/authkit-react"]);
+  } catch {
+    return false;
+  }
+}
+
 function hasMainLandmark(text: string): boolean {
   return /<main[\s>]|role=["']main["']|<header[\s>]|<nav[\s>]/i.test(text);
 }
@@ -775,6 +794,10 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
   const diagnostics: Diagnostic[] = [];
   const webSources = listWebSourceFiles(options.workspaceRoot, manifest.webRoot);
   const webText = webSources.map((source) => source.text).join("\n");
+  const appShellText = webSources
+    .filter((source) => !source.path.endsWith("/lib/workos-auth.tsx"))
+    .map((source) => source.text)
+    .join("\n");
   const scenarioRoutes = new Set(scenarios.map((scenario) => scenario.route));
   const scenarioNames = scenarios.map((scenario) => scenario.name);
   const selectorSet = new Set(manifest.selectors);
@@ -833,6 +856,18 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
       "warning",
       "FORGE_UI_AUTH_FLOW_MISSING",
       "Tenant-scoped or production-auth app has no obvious sign-in/session/organization UI; local devAuth is not a production auth flow.",
+    ));
+  }
+  if (
+    hasWorkOSIntegration(options.workspaceRoot) &&
+    manifest.webRoot &&
+    webSources.length > 0 &&
+    (!webPackageHasAuthKit(options.workspaceRoot) || !/AuthKitProvider/.test(appShellText) || !/getAccessToken/.test(appShellText))
+  ) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_WORKOS_AUTHKIT_MISSING",
+      "WorkOS integration is present, but the web app does not appear to mount AuthKitProvider and pass getAccessToken into ForgeProvider.",
     ));
   }
 

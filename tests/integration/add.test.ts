@@ -715,6 +715,89 @@ describe("forge add integration", () => {
     }
   });
 
+  test("adds WorkOS AuthKit React bridge when a web workspace exists", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-web");
+    try {
+      mkdirSync(join(workspace, "web", "src", "lib"), { recursive: true });
+      writeFileSync(
+        join(workspace, "web", "package.json"),
+        JSON.stringify(
+          {
+            name: "forge-web",
+            private: true,
+            type: "module",
+            dependencies: {
+              react: "^19.0.0",
+            },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "lib", "forge.ts"),
+        "export const forgeUrl = 'http://127.0.0.1:3765';\nexport function ForgeProvider(props: { children: unknown }) { return props.children; }\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "main.tsx"),
+        [
+          'import { StrictMode } from "react";',
+          'import { createRoot } from "react-dom/client";',
+          'import { App } from "./App";',
+          'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+          'import "./styles.css";',
+          "",
+          'createRoot(document.getElementById("root")!).render(',
+          "  <StrictMode>",
+          "    <ForgeProvider url={forgeUrl} devAuth>",
+          "      <App />",
+          "    </ForgeProvider>",
+          "  </StrictMode>,",
+          ");",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const addCalls: Array<{ spec: string; cwd: string }> = [];
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFixturePmAdapter((spec, cwd) => addCalls.push({ spec, cwd })),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(addCalls).toContainEqual({ spec: "@workos-inc/node", cwd: workspace });
+      expect(addCalls).toContainEqual({ spec: "@workos-inc/authkit-react", cwd: join(workspace, "web") });
+      expect(result.changed).toContain("web/package.json");
+      expect(result.changed).toContain("web/src/lib/workos-auth.tsx");
+      expect(result.changed).toContain("web/src/main.tsx");
+
+      const webPkg = JSON.parse(readFileSync(join(workspace, "web", "package.json"), "utf8")) as {
+        dependencies?: Record<string, string>;
+      };
+      expect(webPkg.dependencies?.["@workos-inc/authkit-react"]).toBe("^1.0.0");
+      const bridge = readFileSync(join(workspace, "web/src/lib/workos-auth.tsx"), "utf8");
+      expect(bridge).toContain("AuthKitProvider");
+      expect(bridge).toContain("getAccessToken");
+      expect(bridge).toContain("ForgeProvider");
+      expect(bridge).toContain("url={forgeUrl}");
+      const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
+      expect(main).toContain('import { ForgeWorkOSAuthProvider } from "./lib/workos-auth";');
+      expect(main).toContain("<ForgeWorkOSAuthProvider>");
+      expect(main).not.toContain("devAuth");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("generated workos adapter typechecks against the WorkOS v10 factory API", async () => {
     const workspace = scaffoldAddWorkspace("add-workos-typecheck");
     try {

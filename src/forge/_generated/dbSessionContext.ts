@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.39 input=f8919744f953e216381deb3344bfadd99210164d5b86a1ecfa27c2e44825c874 content=e54bf648fe6662c29d0d9c42922a496c64c84a75baf369274e75ff48da670d2a
+// @forge-generated generator=0.1.0-alpha.40 input=e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46 content=e54bf648fe6662c29d0d9c42922a496c64c84a75baf369274e75ff48da670d2a
 export const dbSessionContext = {
   "diagnostics": [],
   "method": "set_config",

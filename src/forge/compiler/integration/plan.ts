@@ -97,6 +97,7 @@ function shouldEmitAdapter(
 function buildGeneratedPaths(
   recipe: IntegrationRecipe,
   compatible: RuntimeContext[],
+  workspaceRoot: string,
 ): string[] {
   const paths: string[] = [];
 
@@ -120,6 +121,9 @@ function buildGeneratedPaths(
   }
 
   for (const rootFile of recipe.rootFiles ?? []) {
+    if (rootFile.startsWith("web/") && !nodeFileSystem.exists(join(workspaceRoot, "web", "package.json"))) {
+      continue;
+    }
     paths.push(rootFile);
   }
 
@@ -243,6 +247,9 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
   }
 
   for (const rootFile of recipe.rootFiles ?? []) {
+    if (rootFile.startsWith("web/") && !nodeFileSystem.exists(join(ctx.workspaceRoot, "web", "package.json"))) {
+      continue;
+    }
     const content = renderRootFile(rootFile, templateCtx);
     files.push({
       path: rootFile,
@@ -282,7 +289,7 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
   const matrix = buildRuntimeMatrix(allClassified);
   files.push(...buildGuardArtifactEmitFiles(matrix, appGraph.moduleGraph));
 
-  const generatedFiles = buildGeneratedPaths(recipe, compatible);
+  const generatedFiles = buildGeneratedPaths(recipe, compatible, ctx.workspaceRoot);
   const lockEntry = buildLockEntry(recipe, classified, generatedFiles);
   const lock = mergeLockPackages(input.existingLock, lockEntry, ctx);
 

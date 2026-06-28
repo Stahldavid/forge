@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 
-export type WorkOSSubcommand = "install" | "doctor" | "seed";
+export type WorkOSSubcommand = "install" | "doctor" | "seed" | "setup";
 
 export interface WorkOSCommandOptions {
   subcommand: WorkOSSubcommand;
@@ -14,6 +14,7 @@ export interface WorkOSCommandOptions {
   file?: string;
   yes: boolean;
   dryRun: boolean;
+  real?: boolean;
   commandRunner?: WorkOSCommandRunner;
 }
 
@@ -25,7 +26,7 @@ export interface WorkOSCheck {
 
 export interface WorkOSCommandResult {
   ok: boolean;
-  kind: "workos-install" | "workos-doctor" | "workos-seed";
+  kind: "workos-install" | "workos-doctor" | "workos-seed" | "workos-setup";
   checks: WorkOSCheck[];
   command?: string[];
   applied?: boolean;
@@ -114,6 +115,10 @@ export interface WorkOSSeedSummary {
   resourceTypes: string[];
   organizations: string[];
   domains: string[];
+  redirectUris: string[];
+  corsOrigins: string[];
+  homepageUrl?: string;
+  webhookEndpoints: Array<{ url: string; events: string[] }>;
   diagnostics: string[];
 }
 
@@ -139,8 +144,14 @@ export function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEE
   const resourceTypes = new Set<string>();
   const organizations = new Set<string>();
   const domains = new Set<string>();
+  const redirectUris = new Set<string>();
+  const corsOrigins = new Set<string>();
+  let homepageUrl: string | undefined;
+  const webhookEndpoints: Array<{ url: string; events: string[] }> = [];
   const diagnostics: string[] = [];
   let section = "";
+  let configKey = "";
+  let currentWebhook: { url: string; events: string[] } | undefined;
 
   if (!raw.trim()) {
     return {
@@ -152,6 +163,9 @@ export function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEE
       resourceTypes: [],
       organizations: [],
       domains: [],
+      redirectUris: [],
+      corsOrigins: [],
+      webhookEndpoints: [],
       diagnostics: [`${seedPath} is missing or empty`],
     };
   }
@@ -160,7 +174,45 @@ export function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEE
     const rootSection = /^([a-zA-Z_][\w-]*):\s*$/.exec(line);
     if (rootSection) {
       section = rootSection[1]!;
+      configKey = "";
+      currentWebhook = undefined;
       continue;
+    }
+
+    if (section === "config") {
+      const configEntry = /^\s{2}([a-zA-Z_][\w-]*):\s*(.*)$/.exec(line);
+      if (configEntry) {
+        configKey = configEntry[1]!;
+        const rest = configEntry[2] ?? "";
+        if (configKey === "redirect_uris") {
+          for (const value of quotedValues(rest)) redirectUris.add(value);
+        } else if (configKey === "cors_origins") {
+          for (const value of quotedValues(rest)) corsOrigins.add(value);
+        } else if (configKey === "homepage_url") {
+          homepageUrl = quotedValues(rest)[0] ?? (rest.trim().replace(/^["']|["']$/g, "") || homepageUrl);
+        } else if (configKey === "webhook_endpoints") {
+          currentWebhook = undefined;
+        }
+      }
+      const bulletValue = /^\s*-\s*["']?([^"'\]\s]+)["']?\s*$/.exec(line)?.[1];
+      if (bulletValue && configKey === "redirect_uris") {
+        redirectUris.add(bulletValue);
+      } else if (bulletValue && configKey === "cors_origins") {
+        corsOrigins.add(bulletValue);
+      } else if (bulletValue && configKey === "webhook_events" && currentWebhook) {
+        currentWebhook.events.push(bulletValue);
+      }
+      const webhookUrl = /^\s*-\s*url:\s*["']?([^"']+)["']?\s*$/.exec(line)?.[1] ??
+        /^\s{4}url:\s*["']?([^"']+)["']?\s*$/.exec(line)?.[1];
+      if (webhookUrl) {
+        currentWebhook = { url: webhookUrl.trim(), events: [] };
+        webhookEndpoints.push(currentWebhook);
+        configKey = "webhook_endpoints";
+      }
+      if (/^\s{4}events:\s*/.test(line) && currentWebhook) {
+        configKey = "webhook_events";
+        for (const value of quotedValues(line)) currentWebhook.events.push(value);
+      }
     }
 
     const slug = parseSlug(line);
@@ -205,8 +257,46 @@ export function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEE
     resourceTypes: uniqueSorted(resourceTypes),
     organizations: uniqueSorted(organizations),
     domains: uniqueSorted(domains),
+    redirectUris: uniqueSorted(redirectUris),
+    corsOrigins: uniqueSorted(corsOrigins),
+    ...(homepageUrl ? { homepageUrl } : {}),
+    webhookEndpoints: webhookEndpoints.map((endpoint) => ({
+      url: endpoint.url,
+      events: uniqueSorted(endpoint.events),
+    })),
     diagnostics,
   };
+}
+
+function parseEnvText(text: string): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const line of text.split(/\r?\n/)) {
+    const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
+    if (!match) continue;
+    const raw = match[2] ?? "";
+    values[match[1]!] = raw.trim().replace(/^["']|["']$/g, "");
+  }
+  return values;
+}
+
+function readRealEnv(workspaceRoot: string): Record<string, string> {
+  return {
+    ...parseEnvText(readRawText(workspaceRoot, ".env")),
+    ...parseEnvText(readRawText(workspaceRoot, ".env.local")),
+    ...Object.fromEntries(
+      Object.entries(process.env)
+        .filter(([key]) => key.startsWith("FORGE_") || key.startsWith("WORKOS_") || key.startsWith("VITE_WORKOS_"))
+        .filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    ),
+  };
+}
+
+function hasValue(env: Record<string, string>, name: string): boolean {
+  return typeof env[name] === "string" && env[name]!.trim().length > 0;
+}
+
+function workosJwksUri(clientId: string | undefined): string {
+  return clientId ? `https://api.workos.com/sso/jwks/${clientId}` : "https://api.workos.com/sso/jwks/<WORKOS_CLIENT_ID>";
 }
 
 export function collectPolicyPermissions(workspaceRoot: string): string[] {
@@ -287,11 +377,26 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     ...(packageJson?.dependencies ?? {}),
     ...(packageJson?.devDependencies ?? {}),
   };
+  const webPackageJson = readJson(workspaceRoot, "web/package.json") as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  } | null;
+  const webDeps = {
+    ...(webPackageJson?.dependencies ?? {}),
+    ...(webPackageJson?.devDependencies ?? {}),
+  };
+  const hasWeb = webPackageJson !== null;
   const seed = parseSeedFile(workspaceRoot);
   const activePermissions = collectPolicyPermissions(workspaceRoot);
   const expectedResourceTypes = collectExpectedResourceTypes(workspaceRoot);
   const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
   const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
+  const realEnv = readRealEnv(workspaceRoot);
+  const authMode = realEnv.FORGE_AUTH_MODE;
+  const productionAuthEnabled = authMode === "oidc" || authMode === "jwt";
+  const issuerConfigured = hasValue(realEnv, "FORGE_AUTH_ISSUER");
+  const jwksConfigured = hasValue(realEnv, "FORGE_AUTH_JWKS_URI");
+  const clientId = realEnv.WORKOS_CLIENT_ID || realEnv.VITE_WORKOS_CLIENT_ID;
   const authRoutes = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/auth-routes.ts`);
   const fga = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/fga.ts`);
   const resourceMap = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/resource-map.ts`);
@@ -299,6 +404,11 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
   const policies = readText(workspaceRoot, "src/policies.workos.ts");
   const session = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/session.ts`);
   const webhook = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/webhook.ts`);
+  const generatedFrontendAuthBridge = readText(workspaceRoot, "web/src/lib/workos-auth.tsx");
+  const frontendAppShell = [
+    readText(workspaceRoot, "web/src/main.tsx"),
+    readText(workspaceRoot, "web/src/App.tsx"),
+  ].join("\n");
 
   return [
     {
@@ -318,8 +428,53 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     },
     {
       name: "env-example",
-      ok: exists(workspaceRoot, ".env.example"),
-      detail: ".env.example exists",
+      ok: exists(workspaceRoot, ".env.example") &&
+        includesAll(readRawText(workspaceRoot, ".env.example"), [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=",
+          "VITE_WORKOS_CLIENT_ID=",
+          "VITE_WORKOS_REDIRECT_URI=",
+        ]),
+      detail: ".env.example exists with Forge OIDC and browser AuthKit variables",
+    },
+    {
+      name: "production-auth-readiness",
+      ok: !productionAuthEnabled || (issuerConfigured && jwksConfigured),
+      detail: !productionAuthEnabled
+        ? "production OIDC/JWT env not enabled in .env/.env.local"
+        : issuerConfigured && jwksConfigured
+          ? "FORGE_AUTH_MODE uses production auth and issuer/JWKS are configured"
+          : `FORGE_AUTH_MODE=${authMode} requires FORGE_AUTH_ISSUER=https://api.workos.com and FORGE_AUTH_JWKS_URI=${workosJwksUri(clientId)}`,
+    },
+    {
+      name: "browser-authkit-env",
+      ok: !hasWeb || (hasValue(realEnv, "VITE_WORKOS_CLIENT_ID") || readRawText(workspaceRoot, ".env.example").includes("VITE_WORKOS_CLIENT_ID=")) &&
+        (hasValue(realEnv, "VITE_WORKOS_REDIRECT_URI") || readRawText(workspaceRoot, ".env.example").includes("VITE_WORKOS_REDIRECT_URI=")),
+      detail: hasWeb
+        ? "web workspace has VITE_WORKOS_CLIENT_ID and VITE_WORKOS_REDIRECT_URI guidance for AuthKit React"
+        : "no web workspace detected",
+    },
+    {
+      name: "browser-authkit-package",
+      ok: !hasWeb || "@workos-inc/authkit-react" in webDeps,
+      detail: hasWeb
+        ? "@workos-inc/authkit-react is present in web/package.json"
+        : "no web workspace detected",
+    },
+    {
+      name: "browser-authkit-bridge",
+      ok: !hasWeb || includesAll(generatedFrontendAuthBridge, ["AuthKitProvider", "getAccessToken", "ForgeProvider"]),
+      detail: hasWeb
+        ? "generated web/src/lib/workos-auth.tsx bridge provides AuthKitProvider and ForgeProvider token wiring"
+        : "no web workspace detected",
+    },
+    {
+      name: "browser-authkit-provider",
+      ok: !hasWeb || includesAll(frontendAppShell, ["AuthKitProvider", "getAccessToken", "ForgeProvider"]),
+      detail: hasWeb
+        ? "web app shell mounts AuthKitProvider and forwards getAccessToken to ForgeProvider"
+        : "no web workspace detected",
     },
     {
       name: "seed-file",
@@ -350,6 +505,13 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
       detail: missingSeedResources.length === 0
         ? `seed resource_types cover app graph: ${expectedResourceTypes.length > 0 ? expectedResourceTypes.join(", ") : seed.resourceTypes.join(", ")}`
         : `seed missing resource_type(s) for app graph: ${missingSeedResources.join(", ")}`,
+    },
+    {
+      name: "seed-auth-config",
+      ok: seed.redirectUris.length > 0 && seed.corsOrigins.length > 0 && Boolean(seed.homepageUrl),
+      detail: seed.redirectUris.length > 0 && seed.corsOrigins.length > 0 && Boolean(seed.homepageUrl)
+        ? `seed config contains ${seed.redirectUris.length} redirect URI(s), ${seed.corsOrigins.length} CORS origin(s), and homepage URL`
+        : "seed config should include redirect_uris, cors_origins, and homepage_url for no-dashboard setup",
     },
     {
       name: "authkit-routes",
@@ -432,6 +594,7 @@ function seedData(input: {
   dryRun?: boolean;
   seedFileSanitized?: boolean;
   seedAlreadyApplied?: boolean;
+  configActions?: WorkOSConfigActionResult[];
   nextCommand?: string;
 }): Record<string, unknown> {
   return {
@@ -442,8 +605,93 @@ function seedData(input: {
     dryRun: input.dryRun ?? false,
     seedFileSanitized: input.seedFileSanitized ?? false,
     seedAlreadyApplied: input.seedAlreadyApplied ?? false,
+    configActions: input.configActions ?? [],
     ...(input.nextCommand ? { nextCommand: input.nextCommand } : {}),
   };
+}
+
+export interface WorkOSConfigActionResult {
+  name: string;
+  command?: string[];
+  ok: boolean;
+  skipped: boolean;
+  reason?: string;
+  stdout?: string;
+  stderr?: string;
+  status?: number | null;
+}
+
+function configActionsForSeed(seed: WorkOSSeedSummary): Array<{ name: string; command: string[]; skipReason?: string }> {
+  const actions: Array<{ name: string; command: string[]; skipReason?: string }> = [];
+  for (const uri of seed.redirectUris) {
+    actions.push({
+      name: "redirect-uri",
+      command: ["npx", "--yes", "workos@latest", "config", "redirect", "add", uri],
+    });
+  }
+  for (const origin of seed.corsOrigins) {
+    actions.push({
+      name: "cors-origin",
+      command: ["npx", "--yes", "workos@latest", "config", "cors", "add", origin],
+    });
+  }
+  if (seed.homepageUrl) {
+    actions.push({
+      name: "homepage-url",
+      command: ["npx", "--yes", "workos@latest", "config", "homepage-url", "set", seed.homepageUrl],
+    });
+  }
+  for (const endpoint of seed.webhookEndpoints) {
+    const events = endpoint.events.length > 0 ? endpoint.events.join(",") : "user.created,organization_membership.updated";
+    actions.push({
+      name: "webhook",
+      command: ["npx", "--yes", "workos@latest", "webhook", "create", "--url", endpoint.url, "--events", events],
+      skipReason: endpoint.url.startsWith("https://")
+        ? undefined
+        : "WorkOS hosted webhook endpoints require HTTPS; use a tunnel or production URL for this endpoint.",
+    });
+  }
+  return actions;
+}
+
+function runWorkOSConfigActions(
+  seed: WorkOSSeedSummary,
+  options: WorkOSCommandOptions,
+  dryRun: boolean,
+): WorkOSConfigActionResult[] {
+  return configActionsForSeed(seed).map((action) => {
+    if (action.skipReason) {
+      return {
+        name: action.name,
+        command: action.command,
+        ok: true,
+        skipped: true,
+        reason: action.skipReason,
+      };
+    }
+    if (dryRun) {
+      return {
+        name: action.name,
+        command: action.command,
+        ok: true,
+        skipped: true,
+        reason: "dry-run",
+      };
+    }
+    const child = runExternalCommand(action.command, options);
+    return {
+      name: action.name,
+      command: action.command,
+      ok: child.status === 0 || isWorkOSSeedAlreadyApplied(child.stdout, child.stderr),
+      skipped: false,
+      stdout: child.stdout,
+      stderr: child.stderr,
+      status: child.status,
+      ...(child.status !== 0 && isWorkOSSeedAlreadyApplied(child.stdout, child.stderr)
+        ? { reason: "already-applied" }
+        : {}),
+    };
+  });
 }
 
 export function runWorkOSDoctorCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
@@ -553,6 +801,13 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         ? `seed covers app resource type(s): ${expectedResourceTypes.join(", ") || "none required"}`
         : `seed missing resource type(s): ${missingSeedResources.join(", ")}`,
     },
+    {
+      name: "seed-hosted-config",
+      ok: seed.redirectUris.length > 0 && seed.corsOrigins.length > 0 && Boolean(seed.homepageUrl),
+      detail: seed.redirectUris.length > 0 && seed.corsOrigins.length > 0 && Boolean(seed.homepageUrl)
+        ? `seed includes hosted config: ${seed.redirectUris.length} redirect URI(s), ${seed.corsOrigins.length} CORS origin(s), homepage ${seed.homepageUrl}`
+        : "seed should include config.redirect_uris, config.cors_origins, and config.homepage_url",
+    },
   ];
   const command = ["npx", "--yes", "workos@latest", "seed", "--file", file];
   if (!checks.every((check) => check.ok)) {
@@ -567,6 +822,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     };
   }
   if (options.dryRun) {
+    const configActions = runWorkOSConfigActions(seed, options, true);
     return {
       ok: true,
       kind: "workos-seed",
@@ -579,6 +835,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         expectedResourceTypes,
         unusedSeedPermissions,
         dryRun: true,
+        configActions,
         nextCommand: `forge workos seed --file ${file} --json`,
       }),
       exitCode: 0,
@@ -594,6 +851,26 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     preparedSeed.file,
   ];
   try {
+    const configActions = runWorkOSConfigActions(seed, options, false);
+    const configOk = configActions.every((action) => action.ok);
+    if (!configOk) {
+      return {
+        ok: false,
+        kind: "workos-seed",
+        checks,
+        command: configActions.find((action) => !action.ok)?.command ?? delegatedCommand,
+        applied: false,
+        data: seedData({
+          seed,
+          activePermissions,
+          expectedResourceTypes,
+          unusedSeedPermissions,
+          seedFileSanitized: preparedSeed.sanitized,
+          configActions,
+        }),
+        exitCode: 1,
+      };
+    }
     const child = runExternalCommand(delegatedCommand, options);
     const seedAlreadyApplied =
       child.status !== 0 && isWorkOSSeedAlreadyApplied(child.stdout, child.stderr);
@@ -610,6 +887,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         unusedSeedPermissions,
         seedFileSanitized: preparedSeed.sanitized,
         seedAlreadyApplied,
+        configActions,
       }),
       stdout: child.stdout,
       stderr: child.stderr,
@@ -620,9 +898,78 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
   }
 }
 
+export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
+  const file = options.file ?? DEFAULT_SEED_FILE;
+  const checks = collectWorkOSChecks(options.workspaceRoot);
+  const localOk = checks.every((check) => check.ok);
+  const seed = parseSeedFile(options.workspaceRoot, file);
+  const setupDryRun = options.dryRun || !options.real;
+  const configActions = runWorkOSConfigActions(seed, options, true);
+  const command = ["npx", "--yes", "workos@latest", "seed", "--file", file];
+  if (!localOk) {
+    return {
+      ok: false,
+      kind: "workos-setup",
+      checks,
+      command,
+      applied: false,
+      data: {
+        dryRun: setupDryRun,
+        real: options.real ?? false,
+        seed,
+        configActions,
+        nextCommand: "forge workos doctor --json",
+      },
+      exitCode: 1,
+    };
+  }
+  if (setupDryRun) {
+    return {
+      ok: true,
+      kind: "workos-setup",
+      checks,
+      command,
+      applied: false,
+      data: {
+        dryRun: true,
+        real: false,
+        seed,
+        configActions,
+        nextCommand: `forge workos setup --real --file ${file} --json`,
+      },
+      exitCode: 0,
+    };
+  }
+  const seedResult = runWorkOSSeedCommand({
+    ...options,
+    subcommand: "seed",
+    dryRun: false,
+    file,
+  });
+  return {
+    ok: seedResult.ok,
+    kind: "workos-setup",
+    checks: seedResult.checks,
+    command: seedResult.command,
+    applied: seedResult.ok,
+    data: {
+      real: true,
+      seed,
+      seedResult: seedResult.data,
+      nextCommand: "forge workos doctor --json",
+    },
+    stdout: seedResult.stdout,
+    stderr: seedResult.stderr,
+    exitCode: seedResult.exitCode,
+  };
+}
+
 export function runWorkOSCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   if (options.subcommand === "install") {
     return runWorkOSInstallCommand(options);
+  }
+  if (options.subcommand === "setup") {
+    return runWorkOSSetupCommand(options);
   }
   return options.subcommand === "doctor"
     ? runWorkOSDoctorCommand(options)
@@ -657,6 +1004,16 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
       lines.push(`seed dry-run only; run ${data.nextCommand ?? "forge workos seed --file workos-seed.yml --json"} to execute the WorkOS CLI command`);
     } else {
       lines.push("seed not applied; inspect stdout/stderr from the WorkOS CLI command");
+    }
+  }
+  if (result.kind === "workos-setup" && !result.applied) {
+    const data = result.data && typeof result.data === "object"
+      ? result.data as { dryRun?: boolean; nextCommand?: string }
+      : {};
+    if (data.dryRun) {
+      lines.push(`setup dry-run only; run ${data.nextCommand ?? "forge workos setup --real --file workos-seed.yml --json"} to apply hosted config`);
+    } else {
+      lines.push("setup not applied; inspect WorkOS checks and seed/config action output");
     }
   }
   return `${lines.join("\n")}\n`;

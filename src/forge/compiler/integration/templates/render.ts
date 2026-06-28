@@ -87,6 +87,7 @@ const ROOT_FILE_RENDERERS: Record<string, Record<string, TemplateRenderer>> = {
   workos: {
     ".env.example": workos.renderWorkosEnvExample,
     "src/policies.workos.ts": workos.renderWorkosPolicies,
+    "web/src/lib/workos-auth.tsx": workos.renderWorkosReactBridge,
     "workos-seed.yml": workos.renderWorkosSeedYaml,
   },
 };

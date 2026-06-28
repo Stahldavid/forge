@@ -155,6 +155,7 @@ export type ForgeCommand =
       file?: string;
       yes: boolean;
       dryRun: boolean;
+      real?: boolean;
       workspaceRoot: string;
     }
   | {
@@ -575,7 +576,7 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
 ];
 const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
-const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed"];
+const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup"];
 const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "check", "render", "verify"];
 const FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = ["create", "run", "report"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
@@ -1422,7 +1423,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "workos": {
       const subcommand = rest[0] as WorkOSSubcommand | undefined;
       if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge workos requires subcommand: install, doctor, or seed");
+        errors.push("forge workos requires subcommand: install, doctor, seed, or setup");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -1433,6 +1434,7 @@ export function parseCli(argv: string[]): ParsedCli {
           file: parseOptionValue(argv, "--file"),
           yes: parseFlag(argv, "--yes"),
           dryRun: parseFlag(argv, "--dry-run"),
+          real: parseFlag(argv, "--real"),
           workspaceRoot,
         },
         workspaceRoot,

@@ -194,6 +194,9 @@ describe("H32 UI / browser test bridge", () => {
       schemaVersion: "0.1.0",
       auth: { modes: ["dev-headers", "jwt"] },
     }));
+    write(root, "src/forge/_generated/integrations/workos/authkit.ts", "export const workosAuthKitEnv = {};\n");
+    write(root, "src/forge/_generated/integrations/workos/auth-routes.ts", "export const workosAuthHttpRoutes = [];\n");
+    write(root, "web/package.json", JSON.stringify({ dependencies: { react: "^19.0.0" } }));
     write(root, "web/app/page.tsx", `
       import { useLiveQuery } from "../src/lib/forge";
 
@@ -225,6 +228,7 @@ describe("H32 UI / browser test bridge", () => {
     expect(codes).toContain("FORGE_UI_LOADING_STATE_MISSING");
     expect(codes).toContain("FORGE_UI_ERROR_STATE_MISSING");
     expect(codes).toContain("FORGE_UI_EMPTY_STATE_MISSING");
+    expect(codes).toContain("FORGE_UI_WORKOS_AUTHKIT_MISSING");
   });
 
   test("repair can diagnose from last UI run", () => {

@@ -1,5 +1,30 @@
 # forgeos
 
+## 0.1.0-alpha.40
+
+### Patch Changes
+
+- Complete the WorkOS/AuthKit production-like app setup loop.
+
+  - Add `forge workos setup --real --file workos-seed.yml --json` as the
+    explicit no-dashboard apply path for WorkOS hosted redirect URI, CORS,
+    homepage, webhook, and seed configuration.
+  - Make `forge workos doctor` validate production OIDC/JWT readiness,
+    browser AuthKit environment variables, the frontend AuthKit package, and
+    actual AuthKit provider mounting in the web app shell.
+  - Generate a Vite React WorkOS bridge that wraps `AuthKitProvider`, forwards
+    `getAccessToken()` into `ForgeProvider`, preserves `forgeUrl`, and handles
+    the `/login` sign-in endpoint flow.
+  - Teach `forge add auth workos` to install `@workos-inc/authkit-react` in a
+    detected `web/` workspace and automatically rewrite the default Forge Vite
+    root from local `devAuth` to `ForgeWorkOSAuthProvider`.
+  - Keep custom web roots safe by leaving them unchanged and emitting actionable
+    doctor/UI-audit guidance when AuthKit still needs to be mounted manually.
+  - Expose production auth readiness in `/health` and make `authmd check` fail
+    when OIDC/JWT mode is enabled without issuer/JWKS configuration.
+  - Improve `forge dev` lifecycle diagnostics and port-busy recovery hints for
+    agent-run app previews.
+
 ## 0.1.0-alpha.39
 
 ### Patch Changes
