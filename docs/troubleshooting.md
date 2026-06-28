@@ -238,6 +238,28 @@ forge agent hooks status --target codex --json
 
 Read the JSON `busy` block for lock path, pid, process-alive signal, lock age, cwd, and command. Wait for the owning command to finish when it is alive. If the process is gone, inspect `.forge/delta/delta.lock` before running repair.
 
+## Local DB mode: memory vs PGlite
+
+**Symptom:** `forge dev` aborts with a PGlite error, or a local smoke should start
+from clean state.
+
+**Fix:**
+
+```bash
+forge doctor runtime --json
+forge doctor pglite --json
+forge dev --db memory --json
+forge db repair --local --adapter pglite --json
+forge dev --db pglite --json
+```
+
+`forge doctor runtime` and `forge doctor pglite` include `dbGuide`. Use
+`memory` for isolated smoke tests, quick reproduction, or when PGlite is active,
+aborted, or suspected corrupt. Use `pglite` when you need persistent local data
+or behavior closer to the real database. If `dbGuide.recommendedForCurrentState`
+is `repair-pglite`, stop live `forge dev` processes first, then run the repair
+command; Forge archives the local store when repair needs to replace it.
+
 ## Studio target preview issues
 
 **Symptom:** Studio opens an iframe of itself, starts duplicate target previews, or reports preview state that does not match the app.
@@ -410,11 +432,12 @@ Commit regenerated artifacts if your project tracks them, or ensure CI runs gene
 When validating the published package:
 
 ```bash
-npm run field:test -- \
+forge field-test run \
   --package-managers npm \
   --templates minimal-web \
   --forge-spec "npm:forgeos@alpha" \
-  --install \
+  --runtime-probes \
+  --auth-probes \
   --json
 ```
 

@@ -1,14 +1,14 @@
 # Self-Host
 
-ForgeOS can emit **deployment artifacts** and run **self-host checks** for running generated apps outside local `forge dev`.
+ForgeOS can emit **deployment artifacts** and run production readiness checks for running generated apps outside local `forge dev`.
 
 This page covers the supported self-host workflow — not a specific cloud vendor.
 
 ## Generate deployment artifacts
 
 ```bash
-forge self-host compose
-forge self-host check --json
+forge deploy plan --target docker --json
+forge deploy render docker
 ```
 
 Typical outputs (paths vary by app):
@@ -16,32 +16,39 @@ Typical outputs (paths vary by app):
 | Artifact | Purpose |
 |----------|---------|
 | `deploy/docker-compose.yml` | Local/production compose stack |
-| `deploy/.env.example` | Required environment variable names |
+| `deploy/.env.production.example` | Required production environment variable names |
 | Generated deploy manifest | Runtime URLs, secrets, health checks |
 
-Review `deploy/.env.example` for secret **names** before deploying. Never commit real secret values.
+The generated Dockerfile and Compose commands use the app's detected package manager (`npm`, `pnpm`, `yarn`, or `bun`) instead of assuming npm. Production checks require the matching lockfile (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, or `bun.lockb`) so Docker builds are reproducible; without a lockfile the Dockerfile falls back to a normal install and `forge deploy check --production` blocks release.
+
+Review `deploy/.env.production.example` for secret **names** before deploying. Copy it to `deploy/.env.production` or provide equivalent values through the environment before running the production gate. `forge deploy check --production` reads `deploy/.env.production` for `DATABASE_URL`, `FORGE_AUTH_MODE`, issuer, audience, JWKS/discovery, and provider secret names. The generated Docker Compose stack also uses `deploy/.env.production` through `env_file` and does not inject a hidden `DATABASE_URL` override into the Forge services. Never commit real secret values.
 
 ## Check before deploy
 
 ```bash
-forge self-host check --json
+forge deploy check --production --json
 ```
 
 Validates:
 
 - Required secrets are declared
-- Auth mode is appropriate for non-dev deployment
-- Database adapter configuration is coherent
-- Generated deploy manifest matches current app graph
+- Auth mode is `jwt` or `oidc`
+- Package-manager lockfile is present
+- Production auth issuer/audience/JWKS settings are present
+- Database readiness is present
+- Public `auth.md` and OAuth protected-resource metadata are generated
+- A field-test report exists with runtime and auth probes
+- Tenant claim mapping is present when required
+- Generated artifacts match the current app graph
 
-Fix issues surfaced by `forge check` and `forge verify --strict` first.
+Fix issues surfaced by `forge check`, `forge verify --smoke`, and `forge field-test run --runtime-probes --auth-probes --json` before public traffic.
 
 ## Production auth
 
 Self-hosted deployments must use **`jwt`** or **`oidc`** — not `dev-headers`.
 
 ```bash
-forge auth check --json
+forge auth check --production --json
 ```
 
 See [Security and Data](security-and-data.md).
@@ -82,9 +89,10 @@ forge telemetry inspect <traceId> --with-release --json
 
 ```bash
 forge do "prepare self-host deployment" --json
-forge self-host compose
-forge self-host check --json
-forge verify --strict
+forge deploy render docker
+forge deploy check --production --json
+forge field-test run --runtime-probes --auth-probes --json
+forge verify --smoke
 ```
 
 Playbook reference: `src/forge/_generated/operationPlaybooks.md` → **Self-host**.

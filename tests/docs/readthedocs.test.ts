@@ -164,7 +164,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/security-and-data.md")).toContain("forge rls mutate-test --json");
     expect(read("docs/authoring.md")).toContain("forge make resource");
     expect(read("docs/testing-and-repair.md")).toContain("forge verify --strict");
-    expect(read("docs/self-host.md")).toContain("forge self-host check");
+    expect(read("docs/self-host.md")).toContain("forge deploy check --production --json");
     expect(read("docs/templates.md")).toContain("b2b-support-web");
     expect(read("docs/field-testing.md")).toContain("npm run field:test");
     expect(read("docs/field-testing.md")).toContain("--runtime-probes");
@@ -246,7 +246,7 @@ describe("ReadTheDocs documentation", () => {
     expect(read("docs/security-standards.md")).toContain("tests/security/tenant-isolation/http-runtime.test.ts");
     expect(read("docs/security-standards.md")).toContain("tests/security/webhooks/webhook-security.test.ts");
     expect(read("docs/security-standards.md")).toContain("NPM_CONFIG_PROVENANCE=true");
-    expect(read("docs/cli-reference.md")).toContain("forge auth prove --json");
+    expect(read("docs/cli-reference.md")).toContain("forge auth prove --prod --token <jwt> --json");
     expect(read("docs/cli-reference.md")).toContain("forge status --json");
     expect(read("docs/cli-reference.md")).toContain("forge handoff --json");
     expect(read("docs/cli-reference.md")).toContain("forge inspect all --full --json");

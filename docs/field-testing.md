@@ -33,11 +33,10 @@ The `create-forgeos-app@alpha` wrapper delegates to `forge new` with defaults:
 Use the repository harness when you want proof that a fresh app can be created, installed, generated, checked, started, and called through the runtime API:
 
 ```bash
-npm run field:test -- \
+forge field-test run \
   --package-managers npm \
   --templates minimal-web \
   --forge-spec "npm:forgeos@alpha" \
-  --install \
   --runtime-probes \
   --write-report field-reports/npm-minimal-web.json \
   --json
@@ -62,11 +61,10 @@ The minimal and Nuxt template probes create a note with `createNote` and confirm
 Add `--auth-probes` when the report should also prove the auth/agent-ready path in the generated app:
 
 ```bash
-npm run field:test -- \
+forge field-test run \
   --package-managers npm \
   --templates minimal-web \
   --forge-spec "npm:forgeos@alpha" \
-  --install \
   --runtime-probes \
   --auth-probes \
   --write-report field-reports/npm-minimal-web-auth.json \
@@ -91,17 +89,16 @@ This mode is still local and non-destructive: WorkOS seeding is dry-run by defau
 Run a dry plan:
 
 ```bash
-npm run field:test -- --dry-run --json
+forge field-test run --dry-run --json
 ```
 
 Run a real minimal npm test against the local workspace:
 
 ```bash
-npm run field:test -- \
+forge field-test run \
   --package-managers npm \
   --templates minimal-web \
   --forge-spec "file:." \
-  --install \
   --runtime-probes \
   --auth-probes \
   --json
@@ -110,14 +107,16 @@ npm run field:test -- \
 Run against the published alpha package:
 
 ```bash
-npm run field:test -- \
+forge field-test run \
   --package-managers npm,pnpm,yarn,bun \
   --templates minimal-web,nuxt-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
-  --install \
   --runtime-probes \
+  --auth-probes \
   --json
 ```
+
+`npm run field:test -- ...` remains available inside the framework repository for CI and legacy scripts. Prefer `forge field-test ...` in docs, release notes, and handoffs because it is the user-facing contract.
 
 ## CI Coverage
 
@@ -139,6 +138,14 @@ Each result includes:
 - HTTP probe steps with status and trace IDs.
 
 A passing runtime probe means the generated app was not merely scaffolded; it accepted real runtime calls through Forge's HTTP boundary.
+
+`forge field-test report --json` also returns `summary.productionEvidence`.
+`productionEvidence.readyForDeployCheck` means the report itself is good enough
+for the field-test portion of `forge deploy check --production`: the report
+passed, runtime probes ran, auth probes ran, and no case failed. It does not
+claim the app is production-ready by itself; `forge deploy check --production`
+still validates production auth mode, database evidence, package-manager
+lockfiles, public auth metadata, WorkOS posture, and tenant claims.
 
 ## Field report contract
 

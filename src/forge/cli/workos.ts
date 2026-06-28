@@ -96,7 +96,7 @@ function quotedValues(text: string): string[] {
   return [...text.matchAll(/["']([^"']+)["']/g)].map((match) => match[1]!).filter(Boolean);
 }
 
-interface WorkOSSeedSummary {
+export interface WorkOSSeedSummary {
   exists: boolean;
   valid: boolean;
   path: string;
@@ -118,7 +118,7 @@ function parseName(line: string): string | null {
   return match?.[1]?.trim() ?? null;
 }
 
-function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEED_FILE): WorkOSSeedSummary {
+export function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEED_FILE): WorkOSSeedSummary {
   const seedPath = exists(workspaceRoot, preferredPath)
     ? preferredPath
     : exists(workspaceRoot, GENERATED_SEED_FILE)
@@ -200,7 +200,7 @@ function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEED_FILE)
   };
 }
 
-function collectPolicyPermissions(workspaceRoot: string): string[] {
+export function collectPolicyPermissions(workspaceRoot: string): string[] {
   const registry = readJson(workspaceRoot, `${GENERATED_DIR}/policyRegistry.json`) as {
     policies?: Array<{ permissions?: string[] }>;
   } | null;
@@ -234,7 +234,7 @@ function singularResourceName(name: string): string {
   return name;
 }
 
-function collectExpectedResourceTypes(workspaceRoot: string): string[] {
+export function collectExpectedResourceTypes(workspaceRoot: string): string[] {
   const dataGraph = readJson(workspaceRoot, `${GENERATED_DIR}/dataGraph.json`) as {
     tables?: Array<{ name?: string; fields?: Array<{ name?: string }> }>;
   } | null;
@@ -257,7 +257,7 @@ function collectExpectedResourceTypes(workspaceRoot: string): string[] {
   return uniqueSorted(resourceTypes);
 }
 
-function missingValues(expected: string[], actual: string[]): string[] {
+export function missingValues(expected: string[], actual: string[]): string[] {
   const actualSet = new Set(actual);
   return expected.filter((value) => !actualSet.has(value));
 }

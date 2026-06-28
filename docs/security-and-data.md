@@ -34,13 +34,22 @@ JWT/OIDC claims map to Forge auth context:
 Check auth configuration:
 
 ```bash
+forge auth status --json
 forge auth check --json
+forge auth check --production --json
+forge auth prove --prod --token <jwt> --json
 forge authmd generate
 forge authmd check --json
 forge inspect auth --json
 ```
 
-Production deployments must not rely on `dev-headers`. Forge emits guardrails when dev auth is enabled in production-like modes.
+Production deployments must not rely on `dev-headers`. `forge auth status --json`
+classifies the current mode as `local-dev`, `production-ready`,
+`production-incomplete`, or `unauthenticated`; local `dev-headers` output lists
+the accepted `x-forge-*` headers and marks them as local-only. Use
+`forge auth check --production --json` as the hard gate before public runtime
+traffic and `forge auth prove --prod --token <jwt> --json` to verify a real
+JWT/OIDC token against issuer, audience, JWKS/discovery, and claim mapping.
 
 `forge authmd generate` writes `public/auth.md`, an agent-readable public authorization summary derived from `agentContract.json`, and `public/.well-known/oauth-protected-resource`, a JSON protected-resource metadata document for automated clients. It lists protected resource metadata, claim mapping, tenant requirements, commands, queries, liveQueries, policies, and agent-tool risk/approval metadata. Use `forge authmd check --json` in CI to catch drift across both files.
 

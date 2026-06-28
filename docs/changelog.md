@@ -6,6 +6,35 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.38
+
+- Added first-class production deployment commands:
+  `forge deploy plan`, `forge deploy render docker`,
+  `forge deploy check --production`, and
+  `forge deploy verify --production`.
+- Generated Docker deployment files now use the app's detected package manager,
+  require the matching lockfile for production checks, read
+  `deploy/.env.production`, and avoid hidden hard-coded `DATABASE_URL`
+  overrides.
+- Added `forge field-test create`, `forge field-test run`, and
+  `forge field-test report`, including runtime/auth probe summaries and
+  `productionEvidence` so field-test reports can feed
+  `forge deploy check --production`.
+- Split `forge release doctor` into npm publish readiness and production deploy
+  readiness, so package publishing is not confused with a production-ready app
+  claim.
+- Made `forge handoff --json` include commit-ready files by default, excluding
+  generated and operational artifacts while reporting how much noise was
+  filtered out.
+- Clarified local auth versus production auth with `forge auth status` posture
+  classifications, local `x-forge-*` header reporting, and production proof
+  next actions.
+- Added `dbGuide` to `forge doctor runtime` and `forge doctor pglite` so agents
+  know when to use `--db memory`, `--db pglite`, stop an active process, or run
+  local PGlite repair.
+- Updated production, self-host, field-test, security, troubleshooting, and CLI
+  docs to reflect the new deploy/auth/database workflow.
+
 ## 0.1.0-alpha.37
 
 - Fixed `forge deps upgrade-plan` for npm alias installs used by ForgeOS apps.

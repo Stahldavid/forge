@@ -58,11 +58,22 @@ describe("forge handoff", () => {
       expect(result.git.changeSummary.changed.byType.other.sample).toContain(".handoff-note.txt");
       expect(result.git.changeSummary.changed.primaryTypes).toContain("source");
       expect(result.summary.untrackedFiles).toBe(5);
+      expect(result.commitReady).toBeDefined();
+      if (!result.commitReady) {
+        throw new Error("expected commit-ready handoff summary");
+      }
+      expect(result.commitReady.files).toContain("bin/handoff-helper.ts");
+      expect(result.commitReady.files).toContain("docs/handoff.md");
+      expect(result.commitReady.files).not.toContain(".codex/hooks.json");
+      expect(result.summary.commitReadyFiles).toBe(result.commitReady.count);
       expect(result.nextAgent.openingBrief).toContain("ForgeOS handoff");
       expect(result.nextAgent.openingBrief).toContain("source");
+      expect(result.nextAgent.openingBrief).toContain("commit-ready file");
       expect(result.nextAgent.recommendedReadFiles).toContain("AGENTS.md");
       expect(result.nextAgent.recommendedCommands).toContain("forge review run --changed --json");
+      expect(result.nextAgent.recommendedCommands).toContain("forge changed --commit-ready --json");
       expect(result.nextAgent.risks).toContain("5 untracked file(s) are not in git history");
+      expect(result.nextAgent.risks).toContain("1 generated or operational file(s) are excluded from the commit-ready view");
       expect(result.diagnosticSummary.total).toBe(result.diagnostics.length);
       expect(result.exitCode).toBe(0);
     } finally {

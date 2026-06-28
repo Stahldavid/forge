@@ -22,15 +22,15 @@ npm run generate
 npm run forge -- check --json
 ```
 
-Or use the field-test harness from the framework repository:
+Or use the official field-test command from the framework repository:
 
 ```bash
-npm run field:test -- \
+forge field-test run \
   --package-managers npm \
   --templates minimal-web,nuxt-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
-  --install \
   --runtime-probes \
+  --auth-probes \
   --write-report field-reports/release-smoke.json \
   --json
 ```
@@ -50,8 +50,11 @@ The package uses the `alpha` dist-tag while the project is in private/public MVP
 `latest` promotion is a separate maintainer decision. Trusted Publishing can publish `forgeos@alpha` through OIDC without an npm token, but moving `latest` requires npm write authentication. Configure `NPM_TOKEN` only when maintainers intentionally want the publish workflow to run `npm dist-tag add forgeos@<version> latest`; otherwise the workflow skips that step and leaves `latest` unchanged.
 
 Use `forge release doctor --json` before publishing when you need the Forge-native
-readiness aggregate. It checks prepared release state, sourcemaps, self-host
-readiness, docs, and the npm package contents via `npm pack --dry-run --json`.
+readiness aggregate. It checks prepared release state, sourcemaps, docs, and the
+npm package contents via `npm pack --dry-run --json` for `readyToPublish`.
+Production deploy readiness is reported separately as `readyForProductionDeploy`
+using `forge deploy check --production`; failures there do not block npm package
+publishing, but they do block claiming the app is production-deploy ready.
 
 ## Trusted Publishing (npm)
 
@@ -109,12 +112,12 @@ npm run release:smoke
 npm run release:evidence
 npm run security:deps
 npm run release:verify-public-alpha
-npm run field:test -- \
+forge field-test run \
   --package-managers npm \
   --templates minimal-web,nuxt-web \
   --forge-spec "npm:forgeos@alpha" \
-  --install \
   --runtime-probes \
+  --auth-probes \
   --write-report field-reports/pre-tag-minimal-web.json \
   --json
 forge verify --strict

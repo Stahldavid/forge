@@ -188,8 +188,11 @@ import {
   formatDoctorJson,
   formatPgliteDoctorHuman,
   formatPgliteDoctorJson,
+  formatRuntimeDoctorHuman,
+  formatRuntimeDoctorJson,
   runPgliteDoctorCommand,
   runDoctorCommand,
+  runRuntimeDoctorCommand,
 } from "./doctor.ts";
 import {
   formatWindowsDoctorHuman,
@@ -210,6 +213,17 @@ import {
   formatWorkOSJson,
   runWorkOSCommand,
 } from "./workos.ts";
+import {
+  formatDeployHuman,
+  formatDeployJson,
+  type DeployCommandResult,
+  runDeployCommand,
+} from "./deploy.ts";
+import {
+  formatFieldTestHuman,
+  formatFieldTestJson,
+  runFieldTestCommand,
+} from "./field-test.ts";
 import {
   formatLastHuman,
   formatLastJson,
@@ -1128,8 +1142,9 @@ interface ReleaseDoctorCheck {
   name: string;
   ok: boolean;
   requiredForPublish: boolean;
+  requiredForProduction?: boolean;
   state?: string;
-  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult | PackagePackCheckResult;
+  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult | DeployCommandResult | PackagePackCheckResult;
 }
 
 interface PackagePackCheckResult {
@@ -1150,10 +1165,13 @@ interface ReleaseDoctorResult {
   schemaVersion: "0.1.0";
   ok: boolean;
   readyToPublish: boolean;
+  readyForProductionDeploy: boolean;
   summary: {
     checks: number;
     failed: string[];
     notPrepared: string[];
+    publishBlockers: string[];
+    productionBlockers: string[];
   };
   checks: ReleaseDoctorCheck[];
   nextActions: string[];
@@ -1269,6 +1287,13 @@ export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { k
     workspaceRoot: command.workspaceRoot,
     json: command.json,
   });
+  const deployProduction = await runDeployCommand({
+    subcommand: "check",
+    workspaceRoot: command.workspaceRoot,
+    json: command.json,
+    target: "docker",
+    production: true,
+  });
   const packagePack = runPackagePackDryRun(command.workspaceRoot);
   const checks: ReleaseDoctorCheck[] = [
     {
@@ -1292,6 +1317,13 @@ export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { k
       result: selfHost,
     },
     {
+      name: "deploy-production",
+      ok: deployProduction.ok,
+      requiredForPublish: false,
+      requiredForProduction: true,
+      result: deployProduction,
+    },
+    {
       name: "docs",
       ok: docs.ok,
       requiredForPublish: true,
@@ -1308,19 +1340,32 @@ export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { k
   const notPrepared = checks
     .filter((check) => check.state === "missing-prepared-release" || check.state === "not-prepared")
     .map((check) => check.name);
-  const readyToPublish = failed.length === 0 && notPrepared.length === 0;
+  const publishBlockers = checks
+    .filter((check) => check.requiredForPublish && !check.ok)
+    .map((check) => check.name);
+  const productionBlockers = checks
+    .filter((check) => check.requiredForProduction && !check.ok)
+    .map((check) => check.name);
+  const notPreparedPublishBlockers = checks
+    .filter((check) => check.requiredForPublish && (check.state === "missing-prepared-release" || check.state === "not-prepared"))
+    .map((check) => check.name);
+  const readyToPublish = publishBlockers.length === 0 && notPreparedPublishBlockers.length === 0;
+  const readyForProductionDeploy = productionBlockers.length === 0;
   return {
     schemaVersion: "0.1.0",
-    ok: failed.length === 0,
+    ok: readyToPublish,
     readyToPublish,
+    readyForProductionDeploy,
     summary: {
       checks: checks.length,
       failed,
       notPrepared,
+      publishBlockers,
+      productionBlockers,
     },
     checks,
     nextActions: uniqueNextActions(checks.flatMap((check) => check.result.nextActions ?? [])),
-    exitCode: failed.length === 0 ? 0 : 1,
+    exitCode: readyToPublish ? 0 : 1,
   };
 }
 
@@ -1850,6 +1895,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         process.stdout.write(command.json ? formatPgliteDoctorJson(result) : formatPgliteDoctorHuman(result));
         return result.exitCode;
       }
+      if (command.target === "runtime") {
+        const result = await runRuntimeDoctorCommand({ workspaceRoot: command.workspaceRoot });
+        process.stdout.write(command.json ? formatRuntimeDoctorJson(result) : formatRuntimeDoctorHuman(result));
+        return result.exitCode;
+      }
       const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });
       if (command.json) {
         process.stdout.write(formatDoctorJson(result));
@@ -1906,6 +1956,16 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       }
       return result.exitCode;
     }
+    case "deploy": {
+      const result = await runDeployCommand(command);
+      process.stdout.write(command.json ? formatDeployJson(result) : formatDeployHuman(result));
+      return result.exitCode;
+    }
+    case "field-test": {
+      const result = await runFieldTestCommand(command);
+      process.stdout.write(command.json ? formatFieldTestJson(result) : formatFieldTestHuman(result));
+      return result.exitCode;
+    }
     case "rls": {
       const result = await runRlsCommand(command);
       if (command.json) {
@@ -1934,7 +1994,15 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
             [
               `release doctor ${result.ok ? "ok" : "failed"}`,
               `ready to publish: ${result.readyToPublish ? "yes" : "no"}`,
-              ...result.checks.map((check) => `${check.ok ? "ok" : "fail"} ${check.name}${check.state ? ` (${check.state})` : ""}`),
+              `ready for production deploy: ${result.readyForProductionDeploy ? "yes" : "no"}`,
+              ...result.checks.map((check) => {
+                const scope = check.requiredForPublish
+                  ? "publish"
+                  : check.requiredForProduction
+                    ? "production"
+                    : "optional";
+                return `${check.ok ? "ok" : "fail"} ${check.name} [${scope}]${check.state ? ` (${check.state})` : ""}`;
+              }),
               ...(result.nextActions.length > 0 ? ["", "Next:", ...result.nextActions.map((action) => `  ${action}`)] : []),
             ].join("\n").concat("\n"),
           );

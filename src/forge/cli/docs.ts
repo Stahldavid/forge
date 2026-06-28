@@ -47,7 +47,7 @@ const CONTENT_CHECKS: Array<{ file: string; contains: string[] }> = [
   { file: "docs/agent-workflow.md", contains: ["forge do", "forge status --json", "forge handoff --json"] },
   { file: "docs/troubleshooting.md", contains: ["FORGE_DELTA_BUSY", "waiting-for-user-trust", "Studio target preview issues"] },
   { file: "docs/release.md", contains: ["release:verify-public-alpha", "Documentation checklist"] },
-  { file: "docs/self-host.md", contains: ["forge self-host check"] },
+  { file: "docs/self-host.md", contains: ["forge deploy check --production --json"] },
 ];
 
 function read(workspaceRoot: string, relative: string): string | null {

@@ -12,6 +12,12 @@ import { loadSecretRegistry } from "../runtime/secrets/check.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
+import {
+  collectExpectedResourceTypes,
+  collectPolicyPermissions,
+  missingValues,
+  parseSeedFile,
+} from "./workos.ts";
 
 export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove" | "status";
 
@@ -92,14 +98,59 @@ function buildAuthPosture(workspaceRoot: string) {
   const productionMode = config.mode === "jwt" || config.mode === "oidc";
   const errors = configErrors(config);
   const configReady = errors.length === 0;
+  const classification = config.mode === "dev-headers"
+    ? "local-dev"
+    : config.mode === "disabled"
+      ? "unauthenticated"
+      : configReady
+        ? "production-ready"
+        : "production-incomplete";
+  const reason = productionMode
+    ? configReady
+      ? "jwt/oidc production auth configuration is present"
+      : "jwt/oidc production auth is selected but required settings are missing"
+    : config.mode === "disabled"
+      ? "auth is disabled; this is not suitable for public production traffic"
+      : "dev-headers auth is local-only and is not real production authentication";
   return normalizeForgeCliCommandsInValue(workspaceRoot, {
     schemaVersion: "0.1.0",
     mode: config.mode,
+    classification,
     localOnly: config.mode === "dev-headers",
     productionReady: productionMode && configReady,
     requiresTenant: config.requiresTenant,
     bearerHeader: productionMode ? "Authorization: Bearer <token>" : null,
     tenantClaim: config.claims.tenantId ?? "tenant_id",
+    environment: {
+      current: classification,
+      localDevelopment: config.mode === "dev-headers",
+      publicProduction: productionMode && configReady,
+      warning: reason,
+    },
+    localDevHeaders: config.mode === "dev-headers"
+      ? {
+          acceptedHeaders: [
+            "x-forge-user-id",
+            "x-forge-tenant-id",
+            "x-forge-role",
+            "x-forge-roles",
+            "x-forge-permissions",
+          ],
+          scope: "forge dev, tests, and local agent workflows only",
+          neverProduction: true,
+        }
+      : null,
+    productionRequirements: {
+      requiredMode: "jwt or oidc",
+      bearerHeader: "Authorization: Bearer <token>",
+      requiredEnv: [
+        "FORGE_AUTH_MODE",
+        "FORGE_AUTH_ISSUER",
+        "FORGE_AUTH_AUDIENCE",
+        config.mode === "oidc" ? "OIDC discovery at FORGE_AUTH_ISSUER" : "FORGE_AUTH_JWKS_URI",
+      ],
+      proofCommand: "forge auth prove --prod --token <jwt> --json",
+    },
     productionChecklist: [
       { item: "auth mode is jwt or oidc", ok: productionMode },
       { item: "FORGE_AUTH_ISSUER configured", ok: Boolean(config.issuer) },
@@ -109,11 +160,7 @@ function buildAuthPosture(workspaceRoot: string) {
       { item: "permission claim mapped", ok: Boolean(config.claims.permissions) },
       { item: "dev-headers disabled for public runtime", ok: config.mode !== "dev-headers" },
     ],
-    reason: productionMode
-      ? configReady
-        ? "jwt/oidc production auth configuration is present"
-        : "jwt/oidc production auth is selected but required settings are missing"
-      : "dev-headers auth is local-only and is not real production authentication",
+    reason,
     nextActions: productionMode
       ? configReady
         ? ["forge auth prove --prod --token <jwt> --json", "forge serve --json"]
@@ -122,12 +169,26 @@ function buildAuthPosture(workspaceRoot: string) {
   });
 }
 
+function permissionSubsetForRestrictedTenant(permissions: string[]): string[] {
+  const readonly = permissions.filter((permission) =>
+    /(^|[:._-])(read|list|view|inspect|search)($|[:._-])/.test(permission)
+  );
+  if (readonly.length > 0) return readonly;
+  return permissions.slice(0, Math.max(1, Math.floor(permissions.length / 2)));
+}
+
 function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof detectWorkOS>, requiresTenant: boolean) {
   const rootSeedPresent = existsSync(join(workspaceRoot, "workos-seed.yml"));
   const generatedSeedPresent = existsSync(join(workspaceRoot, "src/forge/_generated/integrations/workos/workos-seed.yml"));
   const authMdPresent = existsSync(join(workspaceRoot, "public/auth.md"));
   const metadataPresent = existsSync(join(workspaceRoot, "public/.well-known/oauth-protected-resource"));
-  const permissions = ["onboarding:read", "invitations:create", "tasks:update"];
+  const activePermissions = collectPolicyPermissions(workspaceRoot);
+  const expectedResourceTypes = collectExpectedResourceTypes(workspaceRoot);
+  const seed = parseSeedFile(workspaceRoot);
+  const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
+  const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
+  const acmePermissions = activePermissions;
+  const globexPermissions = permissionSubsetForRestrictedTenant(activePermissions);
   const permissionVocabularyPresent = workos.detected && workos.claimStatus.some((claim) => claim.name === "permissions" && claim.ok);
   const checks = [
     {
@@ -137,13 +198,35 @@ function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof 
     },
     {
       id: "permission-claim",
-      ok: permissionVocabularyPresent,
-      evidence: "Forge permissions claim maps to WorkOS permissions.",
+      ok: activePermissions.length > 0 && permissionVocabularyPresent,
+      evidence: activePermissions.length > 0
+        ? `Forge permissions claim maps to WorkOS permissions: ${activePermissions.join(", ")}.`
+        : "No active policy permissions were found in the generated policy registry.",
     },
     {
       id: "seed-organizations",
       ok: rootSeedPresent || generatedSeedPresent,
-      evidence: rootSeedPresent ? "workos-seed.yml exists at app root." : "generated WorkOS seed exists.",
+      evidence: rootSeedPresent
+        ? "workos-seed.yml exists at app root."
+        : generatedSeedPresent
+          ? "generated WorkOS seed exists."
+          : "no WorkOS seed file found at app root or in generated integrations.",
+    },
+    {
+      id: "seed-permission-coverage",
+      ok: activePermissions.length > 0 && missingSeedPermissions.length === 0,
+      evidence: activePermissions.length === 0
+        ? "No active policy permissions were found in the generated policy registry."
+        : missingSeedPermissions.length === 0
+          ? `seed covers active app permission(s): ${activePermissions.join(", ")}`
+        : `seed missing active app permission(s): ${missingSeedPermissions.join(", ")}`,
+    },
+    {
+      id: "seed-resource-coverage",
+      ok: missingSeedResources.length === 0,
+      evidence: missingSeedResources.length === 0
+        ? `seed covers expected app resource type(s): ${expectedResourceTypes.join(", ") || "none required"}`
+        : `seed missing expected app resource type(s): ${missingSeedResources.join(", ")}`,
     },
     {
       id: "agent-auth-metadata",
@@ -155,14 +238,21 @@ function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof 
     scenario: "multi-tenant",
     ok: checks.every((check) => check.ok),
     claims: {
-      acme: { organization_id: "org_acme", role: "owner", permissions },
-      globex: { organization_id: "org_globex", role: "member", permissions: ["onboarding:read", "tasks:update"] },
+      acme: { organization_id: "org_acme", role: "owner", permissions: acmePermissions },
+      globex: { organization_id: "org_globex", role: "member", permissions: globexPermissions },
+    },
+    appContract: {
+      activePermissions,
+      expectedResourceTypes,
+      seedPath: seed.path,
+      seedPermissions: seed.permissions,
+      seedResourceTypes: seed.resourceTypes,
     },
     invariants: [
       "Acme and Globex must use different organization_id claim values.",
       "Tenant-scoped reads must include the active organization_id.",
       "Tenant-scoped writes must verify the resource tenant before mutation.",
-      "Role-only UI affordances are not sufficient; policies must use permissions/claims.",
+      "Role-only UI affordances are not sufficient; policies must use the app's generated permission vocabulary.",
     ],
     checks,
     nextActions: [
@@ -304,7 +394,31 @@ export async function runAuthCommand(
     };
   }
   if (options.subcommand === "check") {
-    return validateConfig(options.workspaceRoot);
+    const checked = validateConfig(options.workspaceRoot);
+    if (!options.prod) {
+      return checked;
+    }
+    const posture = buildAuthPosture(options.workspaceRoot);
+    const productionReady = posture.productionReady === true;
+    return {
+      ok: checked.ok && productionReady,
+      mode: checked.mode,
+      data: {
+        ...(checked.data && typeof checked.data === "object" ? checked.data as Record<string, unknown> : {}),
+        production: true,
+        authPosture: posture,
+        productionCheck: {
+          ok: productionReady,
+          reason: posture.reason,
+          requiredMode: "jwt or oidc",
+          localOnlyModeRejected: posture.localOnly === true,
+        },
+      },
+      error: productionReady
+        ? checked.error
+        : { code: "FORGE_AUTH_MODE_INVALID", message: "production auth requires FORGE_AUTH_MODE=jwt or oidc; dev-headers is local-only" },
+      exitCode: checked.ok && productionReady ? 0 : 1,
+    };
   }
   if (options.subcommand === "prove") {
     const checked = validateConfig(options.workspaceRoot);
@@ -405,7 +519,51 @@ export function formatAuthJson(result: AuthCommandResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
 }
 
+function authPostureFromResult(result: AuthCommandResult): Record<string, unknown> | null {
+  const data = result.data && typeof result.data === "object" ? result.data as Record<string, unknown> : {};
+  const direct = data.schemaVersion === "0.1.0" && "classification" in data ? data : null;
+  const nested = data.authPosture && typeof data.authPosture === "object"
+    ? data.authPosture as Record<string, unknown>
+    : null;
+  return direct ?? nested;
+}
+
 export function formatAuthHuman(result: AuthCommandResult): string {
+  const posture = authPostureFromResult(result);
+  if (posture) {
+    const classification = typeof posture.classification === "string" ? posture.classification : result.mode;
+    const reason = typeof posture.reason === "string" ? posture.reason : result.error?.message;
+    const nextActions = Array.isArray(posture.nextActions) ? posture.nextActions.filter((item): item is string => typeof item === "string") : [];
+    const lines = [
+      `Auth ${result.mode}: ${result.ok ? "ok" : "failed"} (${classification})`,
+      `Production ready: ${posture.productionReady === true ? "yes" : "no"}`,
+      ...(reason ? [`Reason: ${reason}`] : []),
+    ];
+    const localDevHeaders = posture.localDevHeaders && typeof posture.localDevHeaders === "object"
+      ? posture.localDevHeaders as Record<string, unknown>
+      : null;
+    const acceptedHeaders = Array.isArray(localDevHeaders?.acceptedHeaders)
+      ? localDevHeaders.acceptedHeaders.filter((item): item is string => typeof item === "string")
+      : posture.localOnly === true || result.mode === "dev-headers"
+        ? [
+            "x-forge-user-id",
+            "x-forge-tenant-id",
+            "x-forge-role",
+            "x-forge-roles",
+            "x-forge-permissions",
+          ]
+        : [];
+    if (acceptedHeaders.length > 0) {
+      lines.push("Local dev headers:", ...acceptedHeaders.map((header) => `  ${header}`));
+    }
+    if (!result.ok && result.error) {
+      lines.push(`${result.error.code}: ${result.error.message}`);
+    }
+    if (nextActions.length > 0) {
+      lines.push("", "Next:", ...nextActions.map((action) => `  ${action}`));
+    }
+    return `${lines.join("\n")}\n`;
+  }
   if (!result.ok) {
     return `Auth ${result.mode}: failed\n${result.error?.code}: ${result.error?.message}\n`;
   }

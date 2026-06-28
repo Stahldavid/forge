@@ -570,7 +570,11 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
   if (options.fieldTest && installed) {
     const steps: Array<{ name: string; command: string; args: string[] }> = [
       { name: "workos", command: options.packageManager, args: ["run", "forge", "--", "add", "auth", "workos", "--json"] },
+      { name: "generate-workos", command: options.packageManager, args: ["run", "forge", "--", "generate"] },
       { name: "authmd", command: options.packageManager, args: ["run", "forge", "--", "authmd", "generate", "--json"] },
+      { name: "authmd-check", command: options.packageManager, args: ["run", "forge", "--", "authmd", "check", "--json"] },
+      { name: "workos-doctor", command: options.packageManager, args: ["run", "forge", "--", "workos", "doctor", "--json"] },
+      { name: "workos-seed", command: options.packageManager, args: ["run", "forge", "--", "workos", "seed", "--file", "workos-seed.yml", "--dry-run", "--json"] },
       { name: "check", command: options.packageManager, args: ["run", "forge", "--", "check", "--json"] },
     ];
     for (const step of steps) {

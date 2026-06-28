@@ -54,7 +54,7 @@ forge do verify --json
 forge do connect-ui --json
 ```
 
-`forge handoff --json` creates a compact work handoff for the next external code agent: dev diagnostic summary, git state, changed-file categories, recent test/UI run status, opening brief, recommended read files, next commands, and risks. The `git.changeSummary` block separates source, tests, docs, generated artifacts, operational files, assets, config, and other paths so large generated diffs do not hide the real edit surface. When diagnostics are numerous, `diagnosticSummary` reports total counts, grouped codes, a small sample, hidden count, and full-diagnostic commands instead of embedding a giant repeated warning list.
+`forge handoff --json` creates a compact work handoff for the next external code agent: dev diagnostic summary, git state, changed-file categories, recent test/UI run status, opening brief, recommended read files, next commands, and risks. The `git.changeSummary` block separates source, tests, docs, generated artifacts, operational files, assets, config, and other paths so large generated diffs do not hide the real edit surface. The default payload includes a `commitReady` block that excludes `src/forge/_generated/**`, `forge.lock`, `.forge/**`, `.codex/**`, and operational artifacts; `summary.commitReadyFiles` gives agents a stable commit surface without requiring a second command. When diagnostics are numerous, `diagnosticSummary` reports total counts, grouped codes, a small sample, hidden count, and full-diagnostic commands instead of embedding a giant repeated warning list.
 
 `forge changed --json` is the dedicated diff-orientation command. It separates human-authored changes from generated artifacts, reports staged/unstaged/untracked buckets, lists risks such as untracked or uncategorized files, and recommends the next verification commands. Large clean authored diffs are reported as `advisories`, not risks, so review tools can warn about volume without implying a broken handoff. Its `diffPlan` gives an authored-first diff command, a generated-only diff command, and a compact reason for collapsing generated artifacts until the source cause is understood.
 
@@ -262,8 +262,10 @@ forge deps upgrade-apply .forge/upgrades/<plan>.json
 ## Security and data
 
 ```bash
+forge auth status --json
 forge auth check --json
-forge auth prove --json
+forge auth check --production --json
+forge auth prove --prod --token <jwt> --json
 forge authmd generate
 forge authmd check --json
 forge workos install --yes --json
@@ -369,18 +371,27 @@ Codex Desktop has an additional trust boundary for newly installed hooks. `forge
 
 `forge agent ingest <source> --watch --file <path>` is explicit and opt-in. It tails JSON or NDJSON hook/export files and records normalized Agent Memory events until interrupted.
 
+`forge doctor runtime --json` and `forge doctor pglite --json` include a
+`dbGuide` block. It tells agents whether the current local DB state is best
+served by `forge dev --db memory --json`, `forge dev --db pglite --json`, stopping
+an active owner process, or running `forge db repair --local --adapter pglite
+--json`. Use memory for clean isolated smokes and PGlite for persistent local
+state.
+
 ## Self-host
 
 ```bash
-forge self-host compose
-forge self-host check --json
+forge deploy plan --target docker --json
+forge deploy render docker
+forge deploy check --production --json
+forge deploy verify --production --url https://app.example.com --json
 ```
 
 ## Release and field testing
 
 ```bash
-npm run field:test -- --dry-run --json
-npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "npm:forgeos@alpha" --install --json
+forge field-test run --dry-run --json
+forge field-test run --package-managers npm --templates minimal-web --forge-spec "npm:forgeos@alpha" --runtime-probes --auth-probes --json
 npm run release:pack
 npm run release:evidence
 npm run release:publish-alpha

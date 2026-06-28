@@ -20,6 +20,8 @@ import type { AuthSubcommand } from "./auth.ts";
 import type { BaselineSubcommand } from "./baseline.ts";
 import type { AuthMdSubcommand } from "./authmd.ts";
 import type { WorkOSSubcommand } from "./workos.ts";
+import type { DeploySubcommand, DeployTarget } from "./deploy.ts";
+import type { FieldTestSubcommand } from "./field-test.ts";
 import type { RlsSubcommand } from "./rls.ts";
 import type { SecuritySubcommand } from "./security.ts";
 import type { DepsSubcommand } from "./deps.ts";
@@ -119,7 +121,7 @@ export type ForgeCommand =
       json: boolean;
       workspaceRoot: string;
     }
-  | { kind: "doctor"; target?: "project" | "windows" | "agent" | "delta" | "pglite"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
+  | { kind: "doctor"; target?: "project" | "windows" | "agent" | "delta" | "pglite" | "runtime"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }
   | { kind: "setup"; target: "windows"; json: boolean; yes: boolean; workspaceRoot: string }
   | {
       kind: "security";
@@ -153,6 +155,34 @@ export type ForgeCommand =
       file?: string;
       yes: boolean;
       dryRun: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "deploy";
+      subcommand: DeploySubcommand;
+      target: DeployTarget;
+      production: boolean;
+      url?: string;
+      json: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "field-test";
+      subcommand: FieldTestSubcommand;
+      name?: string;
+      template: NewTemplateName;
+      templates?: NewTemplateName[];
+      packageManager: NewPackageManager;
+      packageManagers?: NewPackageManager[];
+      forgeSpec?: string;
+      auth?: "none" | "workos";
+      dryRun: boolean;
+      keep: boolean;
+      runtimeProbes: boolean;
+      authProbes: boolean;
+      timeoutMs: number;
+      writeReport?: string;
+      json: boolean;
       workspaceRoot: string;
     }
   | {
@@ -432,6 +462,8 @@ export const TOP_LEVEL_COMMANDS = [
   "auth",
   "authmd",
   "workos",
+  "deploy",
+  "field-test",
   "rls",
   "deps",
   "release",
@@ -544,6 +576,8 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
 const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
 const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed"];
+const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "check", "render", "verify"];
+const FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = ["create", "run", "report"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
 const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test", "mutate-test"];
 const DEPS_SUBCOMMANDS: DepsSubcommand[] = [
@@ -809,6 +843,33 @@ function parseNewPackageManager(value: string | undefined): NewPackageManager {
   return NEW_PACKAGE_MANAGERS.includes(value as NewPackageManager)
     ? (value as NewPackageManager)
     : "bun";
+}
+
+function parseCommaList(value: string | undefined): string[] {
+  return String(value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseTemplateList(value: string | undefined, errors: string[], optionName: string): NewTemplateName[] | undefined {
+  if (!value) return undefined;
+  const values = parseCommaList(value);
+  const unsupported = values.filter((item) => !NEW_TEMPLATES.includes(item as NewTemplateName));
+  if (unsupported.length > 0) {
+    errors.push(`${optionName} contains unsupported template(s): ${unsupported.join(", ")}; supported: ${NEW_TEMPLATES.join(", ")}`);
+  }
+  return values.filter((item) => NEW_TEMPLATES.includes(item as NewTemplateName)) as NewTemplateName[];
+}
+
+function parsePackageManagerList(value: string | undefined, errors: string[], optionName: string): NewPackageManager[] | undefined {
+  if (!value) return undefined;
+  const values = parseCommaList(value);
+  const unsupported = values.filter((item) => !NEW_PACKAGE_MANAGERS.includes(item as NewPackageManager));
+  if (unsupported.length > 0) {
+    errors.push(`${optionName} contains unsupported package manager(s): ${unsupported.join(", ")}; supported: ${NEW_PACKAGE_MANAGERS.join(", ")}`);
+  }
+  return values.filter((item) => NEW_PACKAGE_MANAGERS.includes(item as NewPackageManager)) as NewPackageManager[];
 }
 
 function parseDoObjective(rest: string[], argv: string[]): string {
@@ -1255,8 +1316,8 @@ export function parseCli(argv: string[]): ParsedCli {
       };
     }
     case "doctor":
-      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent" && rest[0] !== "delta" && rest[0] !== "pglite") {
-        errors.push("forge doctor supports subcommand: windows, agent, delta, or pglite");
+      if (rest[0] && rest[0] !== "windows" && rest[0] !== "agent" && rest[0] !== "delta" && rest[0] !== "pglite" && rest[0] !== "runtime") {
+        errors.push("forge doctor supports subcommand: windows, agent, delta, pglite, or runtime");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -1270,6 +1331,8 @@ export function parseCli(argv: string[]): ParsedCli {
                 ? "delta"
                 : rest[0] === "pglite"
                   ? "pglite"
+                  : rest[0] === "runtime"
+                    ? "runtime"
                   : "project",
           agentTarget: rest[0] === "agent"
             ? (parseOptionValue(argv, "--target") as AgentAdapterTarget | undefined) ?? (rest[1] as AgentAdapterTarget | undefined) ?? "codex"
@@ -1330,7 +1393,7 @@ export function parseCli(argv: string[]): ParsedCli {
           subcommand,
           json: parseFlag(argv, "--json"),
           token: parseOptionValue(argv, "--token"),
-          prod: parseFlag(argv, "--prod"),
+          prod: parseFlag(argv, "--prod") || parseFlag(argv, "--production"),
           scenario: parseOptionValue(argv, "--scenario"),
           workspaceRoot,
         },
@@ -1370,6 +1433,71 @@ export function parseCli(argv: string[]): ParsedCli {
           file: parseOptionValue(argv, "--file"),
           yes: parseFlag(argv, "--yes"),
           dryRun: parseFlag(argv, "--dry-run"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "deploy": {
+      const subcommand = rest[0] as DeploySubcommand | undefined;
+      if (!subcommand || !DEPLOY_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge deploy requires subcommand: plan, check, render, or verify");
+        return { command: null, workspaceRoot, errors };
+      }
+      const targetRaw = parseOptionValue(argv, "--target") ?? (subcommand === "render" ? rest[1] : undefined) ?? "docker";
+      if (targetRaw !== "docker" && targetRaw !== "forge-cloud") {
+        errors.push("forge deploy --target must be docker or forge-cloud");
+      }
+      return {
+        command: {
+          kind: "deploy",
+          subcommand,
+          target: targetRaw as DeployTarget,
+          production: parseFlag(argv, "--production") || parseFlag(argv, "--prod"),
+          url: parseOptionValue(argv, "--url"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "field-test": {
+      const subcommand = rest[0] as FieldTestSubcommand | undefined;
+      if (!subcommand || !FIELD_TEST_SUBCOMMANDS.includes(subcommand)) {
+        errors.push("forge field-test requires subcommand: create, run, or report");
+        return { command: null, workspaceRoot, errors };
+      }
+      const timeoutRaw = parseOptionValue(argv, "--timeout-ms");
+      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 180_000;
+      if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {
+        errors.push("--timeout-ms must be a positive integer");
+      }
+      const authRaw = parseOptionValue(argv, "--auth") ?? "none";
+      if (authRaw !== "none" && authRaw !== "workos") {
+        errors.push("forge field-test --auth must be none or workos");
+      }
+      const templates = parseTemplateList(parseOptionValue(argv, "--templates"), errors, "--templates");
+      const packageManagers = parsePackageManagerList(parseOptionValue(argv, "--package-managers"), errors, "--package-managers");
+      return {
+        command: {
+          kind: "field-test",
+          subcommand,
+          name: subcommand === "create" ? rest[1] : undefined,
+          template: parseNewTemplate(parseOptionValue(argv, "--template") ?? "minimal-web"),
+          templates,
+          packageManager: parseNewPackageManager(parseOptionValue(argv, "--package-manager") ?? "npm"),
+          packageManagers,
+          forgeSpec: parseOptionValue(argv, "--forge-spec"),
+          auth: authRaw as "none" | "workos",
+          dryRun: parseFlag(argv, "--dry-run"),
+          keep: parseFlag(argv, "--keep"),
+          runtimeProbes: parseFlag(argv, "--runtime-probes"),
+          authProbes: parseFlag(argv, "--auth-probes"),
+          timeoutMs: Math.floor(timeoutMs),
+          writeReport: parseOptionValue(argv, "--write-report") ?? parseOptionValue(argv, "--file"),
+          json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -2860,6 +2988,10 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--no-generate",
     "--no-verify",
     "--keep-failed",
+    "--keep",
+    "--runtime-probes",
+    "--auth-probes",
+    "--write-report",
     "--tenant-scoped",
     "--field",
     "--fields",
@@ -2913,6 +3045,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--timeout",
     "--name",
     "--auth-token",
+    "--auth",
     "--update",
     "--allow-high-risk",
     "--to",
@@ -2986,7 +3119,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--prompt",
     "--url",
     "--template",
+    "--templates",
     "--package-manager",
+    "--package-managers",
     "--forge-spec",
     "--local-forge",
     "--install",
@@ -3014,6 +3149,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--allow-dev-auth",
     "--token",
     "--prod",
+    "--production",
     "--scenario",
     "--reason",
     "--no-preserve-user-sections",
@@ -3091,6 +3227,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--name" ||
         arg === "--reason" ||
         arg === "--auth-token" ||
+        arg === "--auth" ||
         arg === "--sandbox-backend" ||
         arg === "--port" ||
         arg === "--host" ||
@@ -3107,6 +3244,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--step" ||
         arg === "--sink" ||
         arg === "--file" ||
+        arg === "--write-report" ||
         arg === "--telemetry" ||
         arg === "--user-id" ||
         arg === "--tenant" ||

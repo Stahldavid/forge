@@ -8,9 +8,10 @@ import { buildCheckJson } from "../../src/forge/cli/output.ts";
 import { classifyChangeType } from "../../src/forge/workspace/change-summary.ts";
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
-import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
+import { runGenerateCommand, runReleaseDoctorCommand } from "../../src/forge/cli/commands.ts";
 import { runAuthMdCommand } from "../../src/forge/cli/authmd.ts";
 import { runAuthCommand } from "../../src/forge/cli/auth.ts";
+import { runPgliteDoctorCommand, runRuntimeDoctorCommand } from "../../src/forge/cli/doctor.ts";
 import { runWorkOSCommand } from "../../src/forge/cli/workos.ts";
 import { runTestCommand } from "../../src/forge/impact/index.ts";
 import {
@@ -881,7 +882,56 @@ describe("Forge CLI", () => {
         }),
         "utf8",
       );
-      writeFileSync(join(workspace, "workos-seed.yml"), "organizations:\n  - name: Acme Corp\n", "utf8");
+      writeFileSync(
+        join(workspace, "src/forge/_generated/policyRegistry.json"),
+        JSON.stringify({
+          policies: [
+            { name: "vendors:read", permissions: ["vendors:read"] },
+            { name: "access:approve", permissions: ["access:approve"] },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/dataGraph.json"),
+        JSON.stringify({
+          tables: [
+            { name: "organizations", fields: [{ name: "id" }] },
+            { name: "vendors", fields: [{ name: "tenantId" }] },
+            { name: "accessRequests", fields: [{ name: "tenantId" }] },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/agentContract.json"),
+        JSON.stringify({ auth: { requiresTenant: true } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "workos-seed.yml"),
+        [
+          "permissions:",
+          "  - slug: vendors:read",
+          "  - slug: access:approve",
+          "roles:",
+          "  - slug: owner",
+          "    permissions:",
+          "      - vendors:read",
+          "      - access:approve",
+          "  - slug: auditor",
+          "    permissions:",
+          "      - vendors:read",
+          "resource_types:",
+          "  - slug: organization",
+          "  - slug: vendor",
+          "  - slug: accessRequest",
+          "organizations:",
+          "  - name: Acme Corp",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
       writeFileSync(join(workspace, "public/auth.md"), "# auth.md\n", "utf8");
       writeFileSync(join(workspace, "public/.well-known/oauth-protected-resource"), "{}\n", "utf8");
 
@@ -901,6 +951,9 @@ describe("Forge CLI", () => {
         scenario: "multi-tenant",
         multiTenantProof: { ok: true },
       });
+      expect(JSON.stringify(result.data)).toContain("vendors:read");
+      expect(JSON.stringify(result.data)).toContain("access:approve");
+      expect(JSON.stringify(result.data)).not.toContain("onboarding:read");
       expect(JSON.stringify(result.data)).toContain("node bin/forge.mjs workos doctor --json");
       expect(JSON.stringify(result.data)).not.toContain("\"forge workos doctor --json\"");
 
@@ -1817,6 +1870,31 @@ describe("Forge CLI", () => {
     }
   });
 
+  test("release doctor separates npm publish blockers from production deploy blockers", async () => {
+    const workspace = scaffoldGenerateWorkspace("release-doctor-deploy-production");
+    try {
+      const parsed = parseCli(["release", "doctor", "--json"]);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.command?.kind).toBe("release");
+      if (parsed.command?.kind !== "release") {
+        throw new Error("expected release command");
+      }
+
+      const result = await runReleaseDoctorCommand({
+        ...parsed.command,
+        workspaceRoot: workspace,
+      });
+      const deploy = result.checks.find((check) => check.name === "deploy-production");
+      expect(deploy).toBeDefined();
+      expect(deploy?.requiredForPublish).toBe(false);
+      expect(deploy?.requiredForProduction).toBe(true);
+      expect(result.summary.productionBlockers).toContain("deploy-production");
+      expect(result.summary.publishBlockers).not.toContain("deploy-production");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("parseCli accepts agent prepare, hook smoke, and db doctor", () => {
     const prepare = parseCli(["agent", "prepare", "--target", "codex", "--json"]);
     expect(prepare.errors).toEqual([]);
@@ -1872,6 +1950,14 @@ describe("Forge CLI", () => {
     expect(doctorDelta.command).toMatchObject({
       kind: "doctor",
       target: "delta",
+      json: true,
+    });
+
+    const doctorRuntime = parseCli(["doctor", "runtime", "--json"]);
+    expect(doctorRuntime.errors).toEqual([]);
+    expect(doctorRuntime.command).toMatchObject({
+      kind: "doctor",
+      target: "runtime",
       json: true,
     });
 
@@ -1960,6 +2046,24 @@ describe("Forge CLI", () => {
     expect(audit.command?.kind).toBe("ui");
     if (audit.command?.kind === "ui") {
       expect(audit.command.options.subcommand).toBe("audit");
+    }
+  });
+
+  test("auth check --production rejects local dev headers", async () => {
+    const workspace = scaffoldGenerateWorkspace("auth-check-production");
+    try {
+      const result = await runAuthCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        json: true,
+        prod: true,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.exitCode).toBe(1);
+      expect(result.error?.code).toBe("FORGE_AUTH_MODE_INVALID");
+      expect(JSON.stringify(result.data)).toContain("dev-headers");
+    } finally {
+      cleanupWorkspace(workspace);
     }
   });
 
@@ -2283,6 +2387,65 @@ describe("Forge CLI", () => {
       expect(repair.command.db).toBe("pglite");
       expect(repair.command.local).toBe(true);
       expect(repair.command.json).toBe(true);
+    }
+  });
+
+  test("runtime doctor reports generated and local DB posture", async () => {
+    const workspace = scaffoldGenerateWorkspace("runtime-doctor");
+    try {
+      await runGenerateCommand({
+        workspaceRoot: workspace,
+        check: false,
+        dryRun: false,
+        json: true,
+        concurrency: 2,
+      });
+      const result = await runRuntimeDoctorCommand({ workspaceRoot: workspace });
+      expect(result.ok).toBe(true);
+      expect(result.checks.map((check) => check.name)).toContain("generated");
+      expect(result.checks.map((check) => check.name)).toContain("pglite-store");
+      expect(result.dbGuide.recommendedForCurrentState).toBe("pglite");
+      expect(result.dbGuide.memory.command).toBe("forge dev --db memory --json");
+      expect(result.dbGuide.memory.useWhen).toContain("you need a clean isolated smoke test");
+      expect(result.dbGuide.pglite.command).toBe("forge dev --db pglite --json");
+      expect(result.nextActions).toContain("forge dev --once --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("pglite doctor explains when to use memory versus pglite", async () => {
+    const workspace = scaffoldGenerateWorkspace("pglite-doctor-db-guide");
+    try {
+      const result = await runPgliteDoctorCommand({ workspaceRoot: workspace });
+      expect(result.ok).toBe(true);
+      expect(result.dbGuide.recommendedForCurrentState).toBe("pglite");
+      expect(result.dbGuide.memory.command).toBe("forge dev --db memory --json");
+      expect(result.dbGuide.pglite.command).toBe("forge dev --db pglite --json");
+      expect(result.dbGuide.pglite.useWhen).toContain("doctor pglite reports the store is missing or healthy");
+      expect(result.dbGuide.repair).toBeUndefined();
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("runtime doctor does not suggest pglite repair for generated-only drift", async () => {
+    const workspace = scaffoldGenerateWorkspace("runtime-doctor-generated-only");
+    try {
+      await runGenerateCommand({
+        workspaceRoot: workspace,
+        check: false,
+        dryRun: false,
+        json: true,
+        concurrency: 2,
+      });
+      writeFileSync(join(workspace, "src", "forge", "_generated", "appGraph.json"), "{\"stale\":true}\n", "utf8");
+      const result = await runRuntimeDoctorCommand({ workspaceRoot: workspace });
+      expect(result.ok).toBe(false);
+      expect(result.nextActions).toContain("forge generate");
+      expect(result.nextActions).not.toContain("forge db repair --local --adapter pglite --json");
+    } finally {
+      cleanupWorkspace(workspace);
     }
   });
 

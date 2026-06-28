@@ -27,6 +27,7 @@ export interface HandoffCommandResult {
     generatedChangedFiles: number;
     frontendReady: boolean;
     changedFiles: number;
+    commitReadyFiles: number;
     stagedFiles: number;
     unstagedFiles: number;
     untrackedFiles: number;
@@ -157,10 +158,14 @@ function buildOpeningBrief(input: {
   dev: DevConsoleCycle;
   git: HandoffCommandResult["git"];
   recentRuns: HandoffCommandResult["recentRuns"];
+  commitReady?: HandoffCommandResult["commitReady"];
 }): string {
   const agent = input.dev.summary.agentContext;
   const changedByType = summarizeChangeTypes(input.git.changeSummary.changed);
   const changedFiles = Math.max(agent.changedFiles, input.git.changed.count);
+  const commitReadyNote = input.commitReady && input.commitReady.count !== changedFiles
+    ? `; ${input.commitReady.count} commit-ready file(s) after excluding generated/operational artifacts`
+    : "";
   const tests = input.recentRuns.test
     ? input.recentRuns.test.ok
       ? "last test run passed"
@@ -171,7 +176,7 @@ function buildOpeningBrief(input: {
     : "no blocking issues";
   return [
     `ForgeOS handoff: ${input.dev.ok ? "dev diagnostics are clean" : "dev diagnostics need attention"}.`,
-    `${changedFiles} changed file(s)${changedByType ? `: ${changedByType}` : ""}; ${input.git.staged.count} staged, ${input.git.untracked.count} untracked.`,
+    `${changedFiles} changed file(s)${changedByType ? `: ${changedByType}` : ""}${commitReadyNote}; ${input.git.staged.count} staged, ${input.git.untracked.count} untracked.`,
     `${tests}; ${blockers}.`,
     `Next command: ${input.dev.summary.primaryAction?.command ?? input.dev.nextActions[0]?.command ?? "forge dev"}.`,
   ].join(" ");
@@ -211,9 +216,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
     includeImpact: true,
   });
   const git = buildWorkspaceGitSummary(workspaceRoot);
-  const commitReady = options.commitReady
-    ? runChangedCommand(workspaceRoot, { commitReady: true }).data.commitReady as { count: number; files: string[] } | undefined
-    : undefined;
+  const commitReady = runChangedCommand(workspaceRoot, { commitReady: true }).data.commitReady as { count: number; files: string[] } | undefined;
   const recentRuns = summarizeRecentRuns(workspaceRoot);
   const agent = dev.summary.agentContext;
   const risks = [
@@ -224,6 +227,9 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
         ? ["git status is unavailable; using filesystem inventory as untracked-file analysis"]
         : []),
     ...(git.untracked.count > 0 && git.source !== "forge-baseline" ? [`${git.untracked.count} untracked file(s) are not in git history`] : []),
+    ...(commitReady && git.changed.count > commitReady.count
+      ? [`${git.changed.count - commitReady.count} generated or operational file(s) are excluded from the commit-ready view`]
+      : []),
     ...(recentRuns.test && !recentRuns.test.ok ? ["last test run failed"] : []),
     ...(recentRuns.ui && !recentRuns.ui.ok ? ["last UI run failed"] : []),
   ];
@@ -231,6 +237,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
     ...agent.recommendedCommands,
     ...forgeCliCommandsForWorkspace(workspaceRoot, [
       ...(git.changed.count > 0 ? ["forge review run --changed --json"] : []),
+      ...(git.changed.count > 0 ? ["forge changed --commit-ready --json"] : []),
       "forge handoff --json",
     ]),
   ];
@@ -252,6 +259,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
       generatedChangedFiles: agent.generatedChangedFiles,
       frontendReady: agent.frontendReady,
       changedFiles,
+      commitReadyFiles: commitReady?.count ?? changedFiles,
       stagedFiles: git.staged.count,
       unstagedFiles: git.unstaged.count,
       untrackedFiles: git.untracked.count,
@@ -273,7 +281,7 @@ export async function runHandoffCommand(options: HandoffCommandOptions): Promise
     git,
     recentRuns,
     nextAgent: {
-      openingBrief: buildOpeningBrief({ dev, git, recentRuns }),
+      openingBrief: buildOpeningBrief({ dev, git, recentRuns, commitReady }),
       recommendedReadFiles: agent.recommendedReadFiles,
       recommendedCommands: [...new Set(nextActions)].slice(0, 10),
       risks,

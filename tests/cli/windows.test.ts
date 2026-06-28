@@ -67,7 +67,7 @@ describe("Windows CLI diagnostics", () => {
     const parsed = parseCli(["doctor", "mac"]);
 
     expect(parsed.command).toBeNull();
-    expect(parsed.errors).toContain("forge doctor supports subcommand: windows, agent, delta, or pglite");
+    expect(parsed.errors).toContain("forge doctor supports subcommand: windows, agent, delta, pglite, or runtime");
   });
 
   test("doctor windows detects suspicious Kiro Bun shims while resolving real Bun", async () => {

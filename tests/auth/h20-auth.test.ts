@@ -4,7 +4,7 @@ import { evaluateCommandAuth } from "../../src/forge/runtime/auth/evaluate.ts";
 import { mapClaimsToAuthContext } from "../../src/forge/runtime/auth/claims.ts";
 import { loadAuthConfigFromEnv } from "../../src/forge/runtime/auth/config.ts";
 import { verifyJwtToken } from "../../src/forge/runtime/auth/verifier.ts";
-import { runAuthCommand } from "../../src/forge/cli/auth.ts";
+import { formatAuthHuman, runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runServeCommand } from "../../src/forge/cli/serve.ts";
 import { runGenerateCommand } from "../../src/forge/cli/commands.ts";
@@ -306,9 +306,22 @@ describe("H20 auth resource server", () => {
       expect(result.ok).toBe(true);
       expect(result.data).toMatchObject({
         mode: "dev-headers",
+        classification: "local-dev",
         localOnly: true,
         productionReady: false,
+        localDevHeaders: {
+          acceptedHeaders: expect.arrayContaining(["x-forge-user-id", "x-forge-permissions"]),
+          neverProduction: true,
+        },
+        productionRequirements: {
+          requiredMode: "jwt or oidc",
+          proofCommand: "forge auth prove --prod --token <jwt> --json",
+        },
       });
+      const human = formatAuthHuman(result);
+      expect(human).toContain("Auth dev-headers: ok (local-dev)");
+      expect(human).toContain("Production ready: no");
+      expect(human).toContain("x-forge-permissions");
     } finally {
       cleanupWorkspace(workspace);
     }

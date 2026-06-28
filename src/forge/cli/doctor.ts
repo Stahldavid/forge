@@ -30,6 +30,41 @@ export interface PgliteDoctorResult {
   ok: boolean;
   inspection: PgliteStoreInspection;
   checks: DoctorCheck[];
+  dbGuide: LocalDbModeGuide;
+  nextActions: string[];
+  exitCode: 0 | 1;
+}
+
+export interface LocalDbModeGuide {
+  recommendedForCurrentState: "pglite" | "memory" | "stop-active-process" | "repair-pglite";
+  memory: {
+    command: string;
+    useWhen: string[];
+    tradeoff: string;
+  };
+  pglite: {
+    command: string;
+    useWhen: string[];
+    tradeoff: string;
+  };
+  repair?: {
+    command: string;
+    safeWhen: string;
+    preservesDataByArchiving: boolean;
+  };
+}
+
+export interface RuntimeDoctorResult {
+  ok: boolean;
+  checks: DoctorCheck[];
+  dev: {
+    pidFile: string;
+    logFile: string;
+    running: boolean;
+    pid?: number;
+  };
+  pglite: PgliteStoreInspection;
+  dbGuide: LocalDbModeGuide;
   nextActions: string[];
   exitCode: 0 | 1;
 }
@@ -104,6 +139,50 @@ function frontendDevAuthChecks(
       severity: "warning" as const,
       message: `${provider.file} devAuth tenantId '${provider.devAuthTenantId}' is not UUID-like, but tenant tables use uuid tenant ids`,
     }));
+}
+
+function buildLocalDbModeGuide(workspaceRoot: string, pglite: PgliteStoreInspection): LocalDbModeGuide {
+  const memoryCommand = "forge dev --db memory --json";
+  const pgliteCommand = "forge dev --db pglite --json";
+  const repairCommand = "forge db repair --local --adapter pglite --json";
+  const recommendedForCurrentState: LocalDbModeGuide["recommendedForCurrentState"] =
+    pglite.state === "active"
+      ? "stop-active-process"
+      : pglite.state === "aborted" || pglite.state === "unhealthy"
+        ? "repair-pglite"
+        : pglite.openable
+          ? "pglite"
+          : "memory";
+  return normalizeForgeCliCommandsInValue(workspaceRoot, {
+    recommendedForCurrentState,
+    memory: {
+      command: memoryCommand,
+      useWhen: [
+        "you need a clean isolated smoke test",
+        "PGlite is active, aborted, or suspected corrupt",
+        "you do not need local data to persist after the process exits",
+      ],
+      tradeoff: "Fast and isolated, but data disappears when the dev process exits.",
+    },
+    pglite: {
+      command: pgliteCommand,
+      useWhen: [
+        "you want local data to persist between dev runs",
+        "you are reproducing real database behavior more closely than memory",
+        "doctor pglite reports the store is missing or healthy",
+      ],
+      tradeoff: "Persists local state, but a stale/corrupt .forge/pglite store can require repair.",
+    },
+    ...(pglite.state === "aborted" || pglite.state === "unhealthy"
+      ? {
+          repair: {
+            command: repairCommand,
+            safeWhen: "PGlite is not owned by a live forge dev process and doctor reports aborted/unhealthy.",
+            preservesDataByArchiving: true,
+          },
+        }
+      : {}),
+  }) as LocalDbModeGuide;
 }
 
 export async function runDoctorCommand(options: {
@@ -242,12 +321,113 @@ export async function runPgliteDoctorCommand(options: {
   }
 
   const exitOk = checks.every((check) => check.ok || check.severity === "warning");
+  const dbGuide = buildLocalDbModeGuide(options.workspaceRoot, inspection);
   return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
     ok: exitOk,
     inspection,
     checks,
+    dbGuide,
     nextActions: inspection.nextActions,
     exitCode: exitOk ? 0 : 1,
+  });
+}
+
+function isProcessRunning(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error instanceof Error && "code" in error && error.code === "EPERM";
+  }
+}
+
+function readPid(path: string): number | undefined {
+  const text = nodeFileSystem.readText(path);
+  if (text === null) return undefined;
+  const pid = Number(text.trim());
+  return Number.isInteger(pid) && pid > 0 ? pid : undefined;
+}
+
+export async function runRuntimeDoctorCommand(options: {
+  workspaceRoot: string;
+}): Promise<RuntimeDoctorResult> {
+  const checks: DoctorCheck[] = [];
+  const generated = await runGenerate({
+    workspaceRoot: options.workspaceRoot,
+    check: true,
+    dryRun: false,
+    json: false,
+    concurrency: 4,
+  });
+  checks.push({
+    name: "generated",
+    ok: generated.exitCode === 0,
+    severity: "error",
+    message: generated.exitCode === 0 ? "generated artifacts are fresh" : "generated artifacts are stale; run forge generate",
+  });
+
+  const devDir = join(options.workspaceRoot, ".forge", "dev");
+  const pidFile = join(devDir, "dev.pid");
+  const logFile = join(devDir, "dev.log");
+  const pid = readPid(pidFile);
+  const running = pid !== undefined && isProcessRunning(pid);
+  checks.push({
+    name: "dev-lifecycle",
+    ok: true,
+    severity: "warning",
+    message: running
+      ? `detached forge dev is running with pid ${pid}`
+      : "no detached forge dev server is running",
+  });
+
+  const pglite = await inspectPgliteStore(join(options.workspaceRoot, DEFAULT_PGLITE_DIR));
+  const pgliteOk = pglite.state === "missing" || pglite.state === "healthy" || pglite.state === "active";
+  checks.push({
+    name: "pglite-store",
+    ok: pgliteOk,
+    severity: pglite.state === "active" ? "warning" : "error",
+    message: pglite.error ?? `PGlite store is ${pglite.state}`,
+  });
+  checks.push({
+    name: "pglite-openable",
+    ok: pglite.openable || pglite.state === "active",
+    severity: pglite.state === "active" ? "warning" : "error",
+    message: pglite.openable
+      ? "PGlite store is openable"
+      : pglite.state === "active"
+        ? "PGlite store is owned by a live process"
+        : "PGlite store cannot be opened",
+  });
+
+  const ok = checks.every((check) => check.ok || check.severity === "warning");
+  const dbGuide = buildLocalDbModeGuide(options.workspaceRoot, pglite);
+  const nextActions = ok
+    ? ["forge dev --once --json", "forge dev status --json"]
+    : [
+        ...(generated.exitCode === 0 ? [] : ["forge generate"]),
+        ...(pglite.state === "active"
+          ? ["stop the running forge dev process that owns .forge/pglite", "forge doctor pglite --json"]
+          : []),
+        ...(pglite.state === "aborted" || pglite.state === "unhealthy"
+          ? ["forge doctor pglite --json", "forge db repair --local --adapter pglite --json", "forge dev --db memory --json"]
+          : []),
+        ...(!pglite.openable && pglite.state !== "active" && pglite.state !== "aborted" && pglite.state !== "unhealthy"
+          ? ["forge doctor pglite --json", "forge dev --db memory --json"]
+          : []),
+      ];
+  return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
+    ok,
+    checks,
+    dev: {
+      pidFile,
+      logFile,
+      running,
+      ...(pid !== undefined ? { pid } : {}),
+    },
+    pglite,
+    dbGuide,
+    nextActions: [...new Set(nextActions)],
+    exitCode: ok ? 0 : 1,
   });
 }
 
@@ -279,6 +459,42 @@ export function formatPgliteDoctorHuman(result: PgliteDoctorResult): string {
   lines.push("");
   lines.push(`Store: ${result.inspection.dataDir}`);
   lines.push(`State: ${result.inspection.state}`);
+  lines.push(`Recommended DB mode: ${result.dbGuide.recommendedForCurrentState}`);
+  lines.push(`Memory: ${result.dbGuide.memory.command} - ${result.dbGuide.memory.tradeoff}`);
+  lines.push(`PGlite: ${result.dbGuide.pglite.command} - ${result.dbGuide.pglite.tradeoff}`);
+  if (result.dbGuide.repair) {
+    lines.push(`Repair: ${result.dbGuide.repair.command}`);
+  }
+  if (result.nextActions.length > 0) {
+    lines.push("");
+    lines.push("Next actions:");
+    for (const action of result.nextActions) {
+      lines.push(`  ${action}`);
+    }
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+export function formatRuntimeDoctorJson(result: RuntimeDoctorResult): string {
+  return `${JSON.stringify(result, null, 2)}\n`;
+}
+
+export function formatRuntimeDoctorHuman(result: RuntimeDoctorResult): string {
+  const lines = ["Forge Runtime Doctor", ""];
+  for (const check of result.checks) {
+    const marker = check.ok ? "OK" : check.severity === "warning" ? "WARN" : "FAIL";
+    lines.push(`${marker} ${check.name}${check.message ? ` - ${check.message}` : ""}`);
+  }
+  lines.push("");
+  lines.push(`Dev pid file: ${result.dev.pidFile}`);
+  lines.push(`Dev log file: ${result.dev.logFile}`);
+  lines.push(`PGlite state: ${result.pglite.state}`);
+  lines.push(`Recommended DB mode: ${result.dbGuide.recommendedForCurrentState}`);
+  lines.push(`Memory: ${result.dbGuide.memory.command} - ${result.dbGuide.memory.tradeoff}`);
+  lines.push(`PGlite: ${result.dbGuide.pglite.command} - ${result.dbGuide.pglite.tradeoff}`);
+  if (result.dbGuide.repair) {
+    lines.push(`Repair: ${result.dbGuide.repair.command}`);
+  }
   if (result.nextActions.length > 0) {
     lines.push("");
     lines.push("Next actions:");

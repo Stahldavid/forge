@@ -29,7 +29,7 @@ Prefer **[Agent Workflow (`forge do`)](agent-workflow.md)** when you know the go
 
 When generated artifacts dominate the worktree, use `forge changed --authored --json` or the `diffPlan.authoredDiffCommand` first. Template apps may ignore generated artifacts in git; framework checkouts keep them available as derived evidence and should review authored changes before generated output. See [Generated Artifacts](generated-artifacts.md).
 
-Use `forge handoff --json` when switching between external code agents. It runs the compact dev diagnostic loop, summarizes git state, groups changed files by type (`source`, `tests`, `docs`, `generated`, `operational`, and related buckets), includes recent test/UI run status, and returns an `openingBrief`, high-value files to read, next commands, and handoff risks. `diagnosticSummary` keeps noisy failures readable by grouping diagnostics by severity/code, returning a small sample, and listing commands for the full diagnostic payload.
+Use `forge handoff --json` when switching between external code agents. It runs the compact dev diagnostic loop, summarizes git state, groups changed files by type (`source`, `tests`, `docs`, `generated`, `operational`, and related buckets), includes recent test/UI run status, and returns an `openingBrief`, high-value files to read, next commands, and handoff risks. The default payload also includes `commitReady`, the same authored-file view as `forge changed --commit-ready --json`, so generated and operational noise does not hide the files that should go into a commit. `diagnosticSummary` keeps noisy failures readable by grouping diagnostics by severity/code, returning a small sample, and listing commands for the full diagnostic payload.
 
 ## Create an App
 
@@ -243,7 +243,7 @@ block plus `summary.changedSample`, `summary.hiddenChanged`, and
 | `forge verify --strict` | Strict app-level verification: app TestGraph in bounded parallel/isolated chunks + lint |
 | `forge verify framework` | Maintainer-only ForgeOS framework verification; runs the ForgeOS internal TestGraph |
 | `forge verify --changed` | Checks/tests for current diff only |
-| `forge release doctor --json` | Release readiness aggregate, including `npm pack --dry-run --json` package validation |
+| `forge release doctor --json` | Release readiness aggregate, including `npm pack --dry-run --json` package validation and a separate `readyForProductionDeploy` signal from `forge deploy check --production` |
 
 ```bash
 forge verify --standard --script-timeout-ms 120000 --json
@@ -302,7 +302,10 @@ See [Package Intelligence](package-intelligence.md) and [forge add — Dependenc
 ## Security and data
 
 ```bash
+forge auth status --json
 forge auth check --json
+forge auth check --production --json
+forge auth prove --prod --token <jwt> --json
 forge authmd generate
 forge authmd check --json
 forge workos install --yes --json
