@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.39
+
+### Patch Changes
+
+- Harden real WorkOS seed setup for production-like field tests.
+
+  - Emit valid YAML for generated `workos-seed.yml` files by skipping the
+    JavaScript-style deterministic header on YAML artifacts.
+  - Make `forge workos seed --dry-run` the validation-only path and let
+    `forge workos seed --file workos-seed.yml --json` delegate to the
+    authenticated WorkOS CLI.
+  - Treat known WorkOS duplicate-resource seed responses such as permission
+    slugs already in use as an already-applied seed instead of a hard failure.
+  - Ignore `.workos-seed-state.json` in newly scaffolded apps.
+
 ## 0.1.0-alpha.37
 
 ### Patch Changes

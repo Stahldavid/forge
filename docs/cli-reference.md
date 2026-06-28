@@ -271,6 +271,7 @@ forge authmd check --json
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
+forge workos seed --file workos-seed.yml --dry-run --json
 forge workos seed --file workos-seed.yml --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json

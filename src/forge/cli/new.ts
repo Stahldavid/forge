@@ -69,6 +69,7 @@ const REQUIRED_GITIGNORE_PATHS = [
   ".forge/impact/",
   ".forge/agent-adapters/",
   ".forge/studio/",
+  ".workos-seed-state.json",
 ] as const;
 
 const DEFAULT_FORGE_PACKAGE_SPEC = "npm:forgeos@alpha";

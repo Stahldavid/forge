@@ -457,22 +457,29 @@ describe("forge add integration", () => {
       expect(readFileSync(join(workspace, "src/forge/_generated/packages/workos.server.ts"), "utf8")).toContain(
         'clientId: secrets.get("WORKOS_CLIENT_ID")',
       );
-      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
+      const rootSeed = readFileSync(join(workspace, "workos-seed.yml"), "utf8");
+      const generatedSeed = readFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/workos-seed.yml"),
+        "utf8",
+      );
+      expect(rootSeed.startsWith("// @forge-generated")).toBe(false);
+      expect(generatedSeed.startsWith("// @forge-generated")).toBe(false);
+      expect(rootSeed).toContain(
         "permissions:",
       );
-      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
+      expect(rootSeed).toContain(
         "organizations:",
       );
-      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
+      expect(rootSeed).toContain(
         "Acme Corp",
       );
-      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
+      expect(rootSeed).toContain(
         "Globex",
       );
-      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
+      expect(rootSeed).toContain(
         "webhook_endpoints:",
       );
-      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).toContain(
+      expect(rootSeed).toContain(
         "resource_types:",
       );
       expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8")).toContain(
@@ -525,7 +532,10 @@ describe("forge add integration", () => {
       expect(json.nextActions as string[]).toContain("forge workos install --yes --json");
       expect(json.nextActions as string[]).toContain("forge workos doctor --yes --json");
       expect(json.nextActions as string[]).toContain(
-        "forge workos seed --file workos-seed.yml --yes --json",
+        "forge workos seed --file workos-seed.yml --dry-run --json",
+      );
+      expect(json.nextActions as string[]).toContain(
+        "forge workos seed --file workos-seed.yml --json",
       );
 
       const matrix = JSON.parse(

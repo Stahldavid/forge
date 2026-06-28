@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
@@ -82,6 +83,14 @@ function readText(root: string, path: string): string {
     return "";
   }
   return stripDeterministicHeader(readFileSync(absolute, "utf8"));
+}
+
+function readRawText(root: string, path: string): string {
+  const absolute = join(root, path);
+  if (!existsSync(absolute)) {
+    return "";
+  }
+  return readFileSync(absolute, "utf8");
 }
 
 function includesAll(haystack: string, needles: string[]): boolean {
@@ -389,6 +398,54 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
   ];
 }
 
+function prepareSeedFileForWorkOSCli(
+  workspaceRoot: string,
+  file: string,
+): { file: string; sanitized: boolean; cleanup: () => void } {
+  const raw = readRawText(workspaceRoot, file);
+  const stripped = stripDeterministicHeader(raw);
+  if (!raw || raw === stripped) {
+    return { file, sanitized: false, cleanup: () => undefined };
+  }
+
+  const tempDir = mkdtempSync(join(tmpdir(), "forge-workos-seed-"));
+  const preparedFile = join(tempDir, basename(file));
+  writeFileSync(preparedFile, stripped, "utf8");
+  return {
+    file: preparedFile,
+    sanitized: true,
+    cleanup: () => rmSync(tempDir, { recursive: true, force: true }),
+  };
+}
+
+function isWorkOSSeedAlreadyApplied(stdout: string, stderr: string): boolean {
+  const output = `${stdout}\n${stderr}`;
+  return /(?:permission|role|resource type|organization|slug|domain)[^\n]*(?:already in use|already exists|exists already)|already in use/i
+    .test(output);
+}
+
+function seedData(input: {
+  seed: WorkOSSeedSummary;
+  activePermissions: string[];
+  expectedResourceTypes: string[];
+  unusedSeedPermissions: string[];
+  dryRun?: boolean;
+  seedFileSanitized?: boolean;
+  seedAlreadyApplied?: boolean;
+  nextCommand?: string;
+}): Record<string, unknown> {
+  return {
+    seed: input.seed,
+    activePermissions: input.activePermissions,
+    expectedResourceTypes: input.expectedResourceTypes,
+    unusedSeedPermissions: input.unusedSeedPermissions,
+    dryRun: input.dryRun ?? false,
+    seedFileSanitized: input.seedFileSanitized ?? false,
+    seedAlreadyApplied: input.seedAlreadyApplied ?? false,
+    ...(input.nextCommand ? { nextCommand: input.nextCommand } : {}),
+  };
+}
+
 export function runWorkOSDoctorCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   const checks = collectWorkOSChecks(options.workspaceRoot);
   const ok = checks.every((check) => check.ok);
@@ -505,33 +562,62 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
       checks,
       command,
       applied: false,
-      data: { seed, activePermissions, expectedResourceTypes, unusedSeedPermissions },
+      data: seedData({ seed, activePermissions, expectedResourceTypes, unusedSeedPermissions }),
       exitCode: 1,
     };
   }
-  if (!options.yes || options.dryRun) {
+  if (options.dryRun) {
     return {
       ok: true,
       kind: "workos-seed",
       checks,
       command,
       applied: false,
-      data: { seed, activePermissions, expectedResourceTypes, unusedSeedPermissions },
+      data: seedData({
+        seed,
+        activePermissions,
+        expectedResourceTypes,
+        unusedSeedPermissions,
+        dryRun: true,
+        nextCommand: `forge workos seed --file ${file} --json`,
+      }),
       exitCode: 0,
     };
   }
-  const child = runExternalCommand(command, options);
-  return {
-    ok: child.status === 0,
-    kind: "workos-seed",
-    checks,
-    command,
-    applied: child.status === 0,
-    data: { seed, activePermissions, expectedResourceTypes, unusedSeedPermissions },
-    stdout: child.stdout,
-    stderr: child.stderr,
-    exitCode: child.status === 0 ? 0 : 1,
-  };
+  const preparedSeed = prepareSeedFileForWorkOSCli(options.workspaceRoot, seed.path);
+  const delegatedCommand = [
+    "npx",
+    "--yes",
+    "workos@latest",
+    "seed",
+    "--file",
+    preparedSeed.file,
+  ];
+  try {
+    const child = runExternalCommand(delegatedCommand, options);
+    const seedAlreadyApplied =
+      child.status !== 0 && isWorkOSSeedAlreadyApplied(child.stdout, child.stderr);
+    return {
+      ok: child.status === 0 || seedAlreadyApplied,
+      kind: "workos-seed",
+      checks,
+      command: delegatedCommand,
+      applied: child.status === 0,
+      data: seedData({
+        seed,
+        activePermissions,
+        expectedResourceTypes,
+        unusedSeedPermissions,
+        seedFileSanitized: preparedSeed.sanitized,
+        seedAlreadyApplied,
+      }),
+      stdout: child.stdout,
+      stderr: child.stderr,
+      exitCode: child.status === 0 || seedAlreadyApplied ? 0 : 1,
+    };
+  } finally {
+    preparedSeed.cleanup();
+  }
 }
 
 export function runWorkOSCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
@@ -562,7 +648,16 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
     lines.push("external WorkOS doctor not run; pass --yes to execute the WorkOS CLI command");
   }
   if (result.kind === "workos-seed" && !result.applied) {
-    lines.push("seed not applied; pass --yes to execute the WorkOS CLI command");
+    const data = result.data && typeof result.data === "object"
+      ? result.data as { dryRun?: boolean; seedAlreadyApplied?: boolean; nextCommand?: string }
+      : {};
+    if (data.seedAlreadyApplied) {
+      lines.push("seed already appears applied; WorkOS reported existing resources");
+    } else if (data.dryRun) {
+      lines.push(`seed dry-run only; run ${data.nextCommand ?? "forge workos seed --file workos-seed.yml --json"} to execute the WorkOS CLI command`);
+    } else {
+      lines.push("seed not applied; inspect stdout/stderr from the WorkOS CLI command");
+    }
   }
   return `${lines.join("\n")}\n`;
 }

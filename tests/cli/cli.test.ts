@@ -702,16 +702,16 @@ describe("Forge CLI", () => {
       expect(delegatedDoctor.applied).toBe(true);
       expect(delegatedDoctor.stdout).toBe("workos doctor ok\n");
 
-      const seed = runWorkOSCommand({
+      const seedDryRun = runWorkOSCommand({
         subcommand: "seed",
         workspaceRoot: workspace,
         json: true,
         yes: false,
-        dryRun: false,
+        dryRun: true,
       });
-      expect(seed.exitCode).toBe(0);
-      expect(seed.applied).toBe(false);
-      expect(seed.command).toEqual([
+      expect(seedDryRun.exitCode).toBe(0);
+      expect(seedDryRun.applied).toBe(false);
+      expect(seedDryRun.command).toEqual([
         "npx",
         "--yes",
         "workos@latest",
@@ -719,6 +719,66 @@ describe("Forge CLI", () => {
         "--file",
         "workos-seed.yml",
       ]);
+      expect(JSON.stringify(seedDryRun.data)).toContain('"dryRun":true');
+      expect(JSON.stringify(seedDryRun.data)).toContain("forge workos seed --file workos-seed.yml --json");
+
+      const seed = runWorkOSCommand({
+        subcommand: "seed",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        commandRunner: (command, args, options) => {
+          expect(command).toBe("npx");
+          expect(args).toEqual(["--yes", "workos@latest", "seed", "--file", "workos-seed.yml"]);
+          expect(options.cwd).toBe(workspace);
+          return { status: 0, stdout: "workos seed ok\n", stderr: "" };
+        },
+      });
+      expect(seed.exitCode).toBe(0);
+      expect(seed.applied).toBe(true);
+      expect(seed.stdout).toBe("workos seed ok\n");
+
+      const duplicateSeed = runWorkOSCommand({
+        subcommand: "seed",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        commandRunner: () => ({
+          status: 1,
+          stdout: "",
+          stderr: "Permission slug already in use: invitations:create\n",
+        }),
+      });
+      expect(duplicateSeed.exitCode).toBe(0);
+      expect(duplicateSeed.ok).toBe(true);
+      expect(duplicateSeed.applied).toBe(false);
+      expect(JSON.stringify(duplicateSeed.data)).toContain('"seedAlreadyApplied":true');
+
+      writeFileSync(
+        join(workspace, "workos-seed.yml"),
+        "// @forge-generated generator=0.1.0-alpha.0 input=abc content=def\n" + seedYaml,
+        "utf8",
+      );
+      const legacyHeaderSeed = runWorkOSCommand({
+        subcommand: "seed",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        commandRunner: (command, args) => {
+          expect(command).toBe("npx");
+          const seedFileArg = args[4]!;
+          expect(seedFileArg).not.toBe("workos-seed.yml");
+          expect(readFileSync(seedFileArg, "utf8").startsWith("// @forge-generated")).toBe(false);
+          expect(readFileSync(seedFileArg, "utf8")).toContain("permissions:");
+          return { status: 0, stdout: "legacy seed ok\n", stderr: "" };
+        },
+      });
+      expect(legacyHeaderSeed.exitCode).toBe(0);
+      expect(legacyHeaderSeed.applied).toBe(true);
+      expect(JSON.stringify(legacyHeaderSeed.data)).toContain('"seedFileSanitized":true');
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

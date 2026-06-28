@@ -159,13 +159,13 @@ forge add auth workos
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
+forge workos seed --file workos-seed.yml --dry-run --json
 forge workos seed --file workos-seed.yml --json
-forge workos seed --file workos-seed.yml --yes --json
 forge auth check --json
 forge auth prove --json
 ```
 
-The Forge recipe registers package/runtime/secrets evidence, emits WorkOS claim mapping into generated auth artifacts, writes production env names, provides a WorkOS-derived Forge policy template using `canPermission(...)`, generates AuthKit session/login/callback/logout helpers, and generates a resource bridge from Forge app concepts to WorkOS FGA resource refs. The bridge can sync Forge resource graphs into WorkOS resources and then perform cached resource-level `authorization.check` calls with telemetry from server/action/workflow/endpoint contexts. `forge workos install --yes`, `forge workos doctor --yes`, and `forge workos seed --yes` delegate to the authenticated WorkOS CLI after local contract checks pass.
+The Forge recipe registers package/runtime/secrets evidence, emits WorkOS claim mapping into generated auth artifacts, writes production env names, provides a WorkOS-derived Forge policy template using `canPermission(...)`, generates AuthKit session/login/callback/logout helpers, and generates a resource bridge from Forge app concepts to WorkOS FGA resource refs. The bridge can sync Forge resource graphs into WorkOS resources and then perform cached resource-level `authorization.check` calls with telemetry from server/action/workflow/endpoint contexts. `forge workos install --yes`, `forge workos doctor --yes`, and `forge workos seed --file workos-seed.yml --json` delegate to the authenticated WorkOS CLI after local contract checks pass. Use `forge workos seed --file workos-seed.yml --dry-run --json` for validation-only checks; rerunning the real seed treats known WorkOS duplicate-resource responses as an already-applied seed.
 
 ### ai
 

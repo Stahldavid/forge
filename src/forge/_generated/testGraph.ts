@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.37 input=3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86 content=b5cc0db29e9dde75cd55935fad9ae28e246b8a0bbb961143529d343662c69ef2
+// @forge-generated generator=0.1.0-alpha.39 input=f8919744f953e216381deb3344bfadd99210164d5b86a1ecfa27c2e44825c874 content=9dd733fc66add2673cf0368aa5293a5d625debb7e9a4d2f2609d122b9d5e8d71
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.37",
-  "inputHash": "3c5b62bbf7ebf4e3965eda693951a98a2455bbf63bd241c83c730a8f4b260b86",
+  "generatorVersion": "0.1.0-alpha.39",
+  "inputHash": "f8919744f953e216381deb3344bfadd99210164d5b86a1ecfa27c2e44825c874",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -721,6 +721,46 @@ export const testGraph = {
       "reasons": [
         "probable: packages react"
       ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "docker",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/deploy.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages postgres"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/field-test.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "weak",

@@ -6,6 +6,14 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.39
+
+- Hardened real WorkOS seed setup: generated `workos-seed.yml` files no longer
+  use `// @forge-generated` headers, `forge workos seed --dry-run` is the
+  validation-only path, real seed runs handle known duplicate-resource WorkOS
+  responses as already-applied state, and scaffolded apps ignore
+  `.workos-seed-state.json` by default.
+
 ## 0.1.0-alpha.38
 
 - Added first-class production deployment commands:

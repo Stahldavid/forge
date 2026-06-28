@@ -127,6 +127,7 @@ describe("minimal-web template", () => {
       expect(read(project, ".gitignore")).toContain(".forge/upgrades/");
       expect(read(project, ".gitignore")).toContain(".forge/agent-adapters/");
       expect(read(project, ".gitignore")).toContain(".forge/studio/");
+      expect(read(project, ".gitignore")).toContain(".workos-seed-state.json");
       expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@alpha"');
       expect(read(project, "package.json")).not.toContain('"forge": "latest"');
       expect(read(project, "package.json")).toContain('"verify": "forge verify --smoke"');

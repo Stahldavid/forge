@@ -41,11 +41,23 @@ export interface IntegrationPlanInput {
   existingLock: ForgeLock | null;
 }
 
+function headerForGeneratedPath(path: string): EmitFile["header"] {
+  return path.endsWith(".yml") || path.endsWith(".yaml") ? "none" : undefined;
+}
+
+function headerForRootFile(path: string): EmitFile["header"] {
+  if (path.endsWith(".env.example") || path.endsWith(".yml") || path.endsWith(".yaml")) {
+    return "none";
+  }
+  return "deterministic";
+}
+
 function makeEmitFile(path: string, content: string): EmitFile {
   return {
     path,
     content,
     contentHash: hashStable(content),
+    header: headerForGeneratedPath(path),
   };
 }
 
@@ -236,7 +248,7 @@ export function buildIntegrationEmitPlan(input: IntegrationPlanInput): EmitPlan 
       path: rootFile,
       content,
       contentHash: hashStable(content),
-      header: rootFile.endsWith(".env.example") ? "none" : "deterministic",
+      header: headerForRootFile(rootFile),
     });
   }
 
