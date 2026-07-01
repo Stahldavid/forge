@@ -6,6 +6,17 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.46
+
+- `forge deps upgrade-apply` and `forge deps upgrade-rollback` now accept the
+  `planDir` returned by `forge deps upgrade-plan`, resolving it to the nested
+  `plan.json` automatically.
+- Invalid upgrade plan directories now return a precise
+  `FORGE_DEPS_TARGET_NOT_FOUND` diagnostic with suggested commands instead of a
+  generic JSON parse failure.
+- Added regression coverage for plan-directory apply behavior and missing
+  `plan.json` diagnostics.
+
 ## 0.1.0-alpha.45
 
 - `forge workos setup/prove --real` now passes the top-level unknown-option

@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.46
+
+### Patch Changes
+
+- Smooth the package upgrade apply path used by real ForgeOS apps.
+
+  - `forge deps upgrade-apply` and `forge deps upgrade-rollback` now accept the
+    `planDir` returned by `forge deps upgrade-plan`, automatically resolving it
+    to `plan.json`.
+  - Passing a directory without `plan.json` now returns a targeted
+    `FORGE_DEPS_TARGET_NOT_FOUND` diagnostic with the exact suggested command
+    instead of falling through to a generic JSON parse failure.
+  - Add regression coverage for applying upgrade plans through the returned
+    directory path and for invalid plan directories.
+
 ## 0.1.0-alpha.45
 
 ### Patch Changes

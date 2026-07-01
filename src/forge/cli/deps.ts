@@ -73,15 +73,55 @@ function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null
   return JSON.parse(raw) as T;
 }
 
-function planPathFor(workspaceRoot: string, planIdOrPath: string): string {
-  if (nodeFileSystem.exists(planIdOrPath)) {
-    return planIdOrPath;
+function resolvePlanPathFor(
+  workspaceRoot: string,
+  planIdOrPath: string,
+): { ok: true; path: string } | { ok: false; diagnostics: Diagnostic[] } {
+  const candidates = [
+    planIdOrPath,
+    join(workspaceRoot, planIdOrPath),
+    join(workspaceRoot, ".forge", "upgrades", planIdOrPath, "plan.json"),
+  ];
+
+  for (const candidate of candidates) {
+    if (!nodeFileSystem.exists(candidate)) {
+      continue;
+    }
+    if (!nodeFileSystem.isDirectory(candidate)) {
+      return { ok: true, path: candidate };
+    }
+    const nestedPlan = join(candidate, "plan.json");
+    if (nodeFileSystem.exists(nestedPlan) && !nodeFileSystem.isDirectory(nestedPlan)) {
+      return { ok: true, path: nestedPlan };
+    }
+    return {
+      ok: false,
+      diagnostics: [{
+        severity: "error",
+        code: "FORGE_DEPS_TARGET_NOT_FOUND",
+        message: `upgrade plan directory '${planIdOrPath}' does not contain plan.json`,
+        fixHint: "Pass the plan.json file returned by forge deps upgrade-plan, or rerun upgrade-plan.",
+        suggestedCommands: [
+          `forge deps upgrade-apply ${nestedPlan} --json`,
+          "forge deps upgrade-plan <package> --to latest --json",
+        ],
+      }],
+    };
   }
-  const direct = join(workspaceRoot, planIdOrPath);
-  if (nodeFileSystem.exists(direct)) {
-    return direct;
-  }
-  return join(workspaceRoot, ".forge", "upgrades", planIdOrPath, "plan.json");
+
+  return {
+    ok: false,
+    diagnostics: [{
+      severity: "error",
+      code: "FORGE_DEPS_TARGET_NOT_FOUND",
+      message: `upgrade plan '${planIdOrPath}' was not found`,
+      fixHint: "Use the planDir or plan.json path returned by forge deps upgrade-plan.",
+      suggestedCommands: [
+        `forge deps upgrade-apply .forge/upgrades/${planIdOrPath}/plan.json --json`,
+        "forge deps upgrade-plan <package> --to latest --json",
+      ],
+    }],
+  };
 }
 
 function findPackage(workspaceRoot: string, packageName: string): {
@@ -395,9 +435,17 @@ export async function runDepsCommand(options: DepsCommandOptions): Promise<DepsC
     if (!options.planPath) {
       return missingPlan();
     }
+    const resolvedPlan = resolvePlanPathFor(options.workspaceRoot, options.planPath);
+    if (!resolvedPlan.ok) {
+      return {
+        ok: false,
+        diagnostics: resolvedPlan.diagnostics,
+        exitCode: 1,
+      };
+    }
     const applied = await applyUpgradePlan({
       workspaceRoot: options.workspaceRoot,
-      planPath: planPathFor(options.workspaceRoot, options.planPath),
+      planPath: resolvedPlan.path,
       yes: options.yes,
       allowScripts: options.allowScripts,
       skipTests: options.skipTests,
@@ -409,6 +457,7 @@ export async function runDepsCommand(options: DepsCommandOptions): Promise<DepsC
         applied: applied.applied,
         rolledBack: applied.rolledBack,
         reinstallCommand: applied.plan?.rollback.reinstallCommand,
+        planPath: resolvedPlan.path,
       },
       diagnostics: applied.diagnostics,
       exitCode: applied.exitCode,
@@ -419,15 +468,24 @@ export async function runDepsCommand(options: DepsCommandOptions): Promise<DepsC
     if (!options.planPath) {
       return missingPlan();
     }
+    const resolvedPlan = resolvePlanPathFor(options.workspaceRoot, options.planPath);
+    if (!resolvedPlan.ok) {
+      return {
+        ok: false,
+        diagnostics: resolvedPlan.diagnostics,
+        exitCode: 1,
+      };
+    }
     const rolledBack = rollbackUpgradePlan({
       workspaceRoot: options.workspaceRoot,
-      planPath: planPathFor(options.workspaceRoot, options.planPath),
+      planPath: resolvedPlan.path,
     });
     return {
       ok: rolledBack.ok,
       data: {
         rolledBack: rolledBack.rolledBack,
         reinstallCommand: rolledBack.plan?.rollback.reinstallCommand,
+        planPath: resolvedPlan.path,
       },
       diagnostics: rolledBack.diagnostics,
       exitCode: rolledBack.exitCode,

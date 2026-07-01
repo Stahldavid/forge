@@ -453,6 +453,67 @@ describe("H22 package upgrade planner", () => {
     }
   }, 30_000);
 
+  test("upgrade-apply accepts the planDir returned by upgrade-plan", async () => {
+    const workspace = await scaffoldDepsWorkspace("h22-apply-plan-dir");
+    try {
+      const planned = await createUpgradePlan({
+        workspaceRoot: workspace,
+        packageName: "zod",
+        target: { kind: "semver-bump", bump: "patch" },
+        registryDir: REGISTRY,
+      });
+      expect(planned.planDir).toBeTruthy();
+
+      const applied = await runDepsCommand({
+        subcommand: "upgrade-apply",
+        planPath: planned.planDir,
+        json: true,
+        yes: true,
+        allowScripts: false,
+        skipTests: true,
+        dryRun: true,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+
+      expect(applied.exitCode).toBe(0);
+      expect(applied.data).toMatchObject({
+        applied: false,
+        rolledBack: false,
+        planPath: join(planned.planDir!, "plan.json"),
+      });
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
+  test("upgrade-apply reports a clear error for a directory without plan.json", async () => {
+    const workspace = await scaffoldDepsWorkspace("h22-apply-plan-dir-missing");
+    try {
+      const emptyPlanDir = join(workspace, ".forge", "upgrades", "empty-plan");
+      mkdirSync(emptyPlanDir, { recursive: true });
+
+      const applied = await runDepsCommand({
+        subcommand: "upgrade-apply",
+        planPath: emptyPlanDir,
+        json: true,
+        yes: true,
+        allowScripts: false,
+        skipTests: true,
+        dryRun: true,
+        changed: false,
+        workspaceRoot: workspace,
+      });
+
+      expect(applied.exitCode).toBe(1);
+      expect(applied.diagnostics[0]?.code).toBe("FORGE_DEPS_TARGET_NOT_FOUND");
+      expect(applied.diagnostics[0]?.message).toContain("does not contain plan.json");
+      expect(applied.diagnostics[0]?.suggestedCommands?.[0]).toContain("plan.json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  }, 30_000);
+
   test("generated package upgrade registry is emitted", async () => {
     const workspace = await scaffoldDepsWorkspace("h22-registry");
     try {
