@@ -154,6 +154,7 @@ describe("vendor-access template", () => {
       expect(JSON.stringify(ui.data)).toContain('"kind":"selectOption"');
       expect(ui.warnings.map((warning) => warning.code)).not.toContain("FORGE_UI_NETWORK_ERROR_TOO_GENERIC");
       expect(ui.warnings.map((warning) => warning.code)).not.toContain("FORGE_UI_SEED_ACTION_MISSING");
+      expect(ui.warnings.map((warning) => warning.code)).not.toContain("FORGE_UI_AUTO_SEED_RECOVERY_MISSING");
       expect(ui.warnings.map((warning) => warning.code)).not.toContain("FORGE_UI_PRODUCT_COPY_TOO_META");
       expect(ui.warnings.map((warning) => warning.code)).not.toContain("FORGE_UI_AUTH_COPY_TOO_DEMO");
       expect(ui.warnings.map((warning) => warning.code)).not.toContain("FORGE_UI_FAKE_AUTH_FORM");

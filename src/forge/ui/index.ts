@@ -420,8 +420,11 @@ function hasSeedExperience(text: string): boolean {
 }
 
 function hasAutomaticSeedRecovery(text: string): boolean {
-  return /useEffect\s*\([\s\S]{0,3000}\b(runSeed|seed[A-Za-z0-9_]*\.run|seedWorkspace\.run|seedVendorAccessDemo\.run)\b/i.test(text) &&
-    /\b(length\s*===\s*0|No\s+\w+|empty|tenantSeedState|workspace\s+is\s+empty|first[-\s]?run)\b/i.test(text);
+  const effectBlocks = text.match(/useEffect\s*\([\s\S]{0,5000}?\n\s*\}\s*,\s*\[/gi) ?? [];
+  return effectBlocks.some((block) =>
+    /\b(runSeed[A-Za-z0-9_]*|seed[A-Za-z0-9_]*\.run|seedWorkspace\.run|seedVendorAccessDemo\.run)\b/.test(block) &&
+    /\b(length\s*===\s*0|No\s+\w+|empty|tenantSeedState|workspace\s+is\s+empty|first[-\s]?run)\b/i.test(block),
+  );
 }
 
 function findFormWithoutLabel(text: string): boolean {

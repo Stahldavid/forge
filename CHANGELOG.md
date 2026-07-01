@@ -1,5 +1,19 @@
 # forgeos
 
+## 0.1.0-alpha.44
+
+### Patch Changes
+
+- Remove a false positive from UI ergonomics checks for generated apps that
+  auto-seed through a helper inside `useEffect`.
+
+  - `forge inspect ui --ergonomics` now recognizes `runSeed...` helper calls
+    inside bounded `useEffect` blocks as automatic first-run seed recovery.
+  - The `vendor-access` template regression now asserts that connected
+    auto-seed scenarios do not emit `FORGE_UI_AUTO_SEED_RECOVERY_MISSING`,
+    keeping `forge field-test run --realistic` aligned with deploy-readiness
+    expectations.
+
 ## 0.1.0-alpha.43
 
 ### Patch Changes

@@ -6,6 +6,16 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.44
+
+- `forge inspect ui --ergonomics` now treats helper-based seed recovery inside
+  `useEffect` as valid automatic first-run recovery, fixing a false
+  `FORGE_UI_AUTO_SEED_RECOVERY_MISSING` warning in the `vendor-access`
+  template.
+- Added template regression coverage so `vendor-access` keeps its seed
+  controls, auto-seed UI scenario, and zero-warning ergonomics evidence in sync
+  with `forge field-test run --realistic`.
+
 ## 0.1.0-alpha.43
 
 - Included `scripts/field-test-forgeos.mjs` in the published npm package so
