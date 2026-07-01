@@ -117,6 +117,7 @@ describe("minimal-web template", () => {
       const project = join(workspace, "notes-app");
       expect(existsSync(join(project, "web", "index.html"))).toBe(true);
       expect(existsSync(join(project, "web", "package.json"))).toBe(true);
+      expect(existsSync(join(project, "web", "vite.config.ts"))).toBe(true);
       expect(existsSync(join(project, "web", "src", "lib", "forge.ts"))).toBe(true);
       expect(read(project, ".gitignore")).toContain("src/forge/_generated/");
       expect(read(project, ".gitignore")).toContain("forge.lock");
@@ -138,8 +139,15 @@ describe("minimal-web template", () => {
       expect(read(project, "src/queries/listNotes.ts")).toContain("listNotes");
       expect(read(project, "src/queries/liveNotes.ts")).toContain("liveNotes");
       expect(read(project, "web/src/main.tsx")).toContain("devAuth");
+      expect(read(project, "web/src/lib/forge.ts")).toContain("useSameOrigin");
+      expect(read(project, "web/vite.config.ts")).toContain("/commands");
+      expect(read(project, "web/vite.config.ts")).toContain("/live");
+      expect(read(project, "web/vite.config.ts")).toContain("/session");
       expect(read(project, "web/src/App.tsx")).toContain("useCommand");
       expect(read(project, "web/src/App.tsx")).toContain("useLiveQuery");
+      expect(read(project, "web/src/App.tsx")).toContain("<nav");
+      expect(read(project, "web/src/App.tsx")).toContain("Personal workspace");
+      expect(read(project, "web/src/App.tsx")).not.toContain("ForgeOS minimal-web");
       expect(read(project, "web/src/App.tsx")).not.toContain("/commands/createNote");
 
       const generated = await runGenerateCommand({
@@ -177,6 +185,12 @@ describe("minimal-web template", () => {
       });
       expect(JSON.stringify(frontend.data)).toContain("createNote");
       expect(JSON.stringify(frontend.data)).toContain("liveNotes");
+
+      const ui = await runInspectCommand("ui", project, { ergonomics: true });
+      const warningCodes = ui.warnings.map((warning) => warning.code);
+      expect(ui.exitCode).toBe(0);
+      expect(warningCodes).not.toContain("FORGE_UI_WORKFLOW_NAV_MISSING");
+      expect(warningCodes).not.toContain("FORGE_UI_AUTH_FLOW_MISSING");
     } finally {
       cleanupWorkspace(workspace);
     }

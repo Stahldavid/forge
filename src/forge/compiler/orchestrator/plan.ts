@@ -578,7 +578,9 @@ export function plan(input: PlanInput): EmitPlan {
   const uiArtifacts = buildUiGeneratedArtifacts({
     appGraph: input.appGraph,
     apiSurface,
+    frontendGraph,
     sources: input.ctx.sources,
+    workspaceRoot: input.ctx.workspaceRoot,
   });
   const integrationArtifactFiles = input.classified.flatMap(buildIntegrationArtifactFiles);
   const supportArtifactsMs = performance.now() - checkpoint;

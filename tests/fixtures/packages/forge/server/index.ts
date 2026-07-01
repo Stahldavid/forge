@@ -52,18 +52,49 @@ export type ForgeAction<T> = (() => T | Promise<T>) & {
   __forge: ForgeActionMeta;
 };
 
+export type ForgeInputSchema<TOutput = unknown> =
+  | { parse(input: unknown, ...args: any[]): TOutput }
+  | { _output: TOutput }
+  | { _type: TOutput };
+
+export type InferForgeInput<TSchema> =
+  TSchema extends { parse(input: unknown, ...args: any[]): infer TOutput }
+    ? TOutput
+    : TSchema extends { _output: infer TOutput }
+      ? TOutput
+      : TSchema extends { _type: infer TOutput }
+        ? TOutput
+        : unknown;
+
+type ForgeInputShape<TSchema> =
+  | { input: TSchema; inputSchema?: never }
+  | { inputSchema: TSchema; input?: never };
+
 export interface ForgeCommandConfig<TArgs = unknown, TResult = unknown> {
   auth?: AuthRequirement;
+  input?: unknown;
+  inputSchema?: unknown;
   handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 }
 
 export interface ForgeActionConfig<TArgs = unknown, TResult = unknown> {
   event?: string;
   auth?: AuthRequirement;
+  input?: unknown;
+  inputSchema?: unknown;
   idempotencyKey?: (event: unknown) => string;
   handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 }
 
+export function command<TResult = unknown>(
+  fnOrConfig: () => TResult | Promise<TResult>,
+): ForgeCommand<TResult>;
+export function command<TSchema extends ForgeInputSchema, TResult = unknown>(
+  fnOrConfig: ForgeCommandConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeCommandConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema> & { __forge: ForgeCommandMeta };
+export function command<TArgs = unknown, TResult = unknown>(
+  fnOrConfig: ForgeCommandConfig<TArgs, TResult>,
+): ForgeCommandConfig<TArgs, TResult> & { __forge: ForgeCommandMeta };
 export function command<TArgs = unknown, TResult = unknown>(
   fnOrConfig:
     | (() => TResult | Promise<TResult>)
@@ -84,6 +115,15 @@ export function command<TArgs = unknown, TResult = unknown>(
   };
 }
 
+export function action<TResult = unknown>(
+  fnOrConfig: () => TResult | Promise<TResult>,
+): ForgeAction<TResult>;
+export function action<TSchema extends ForgeInputSchema, TResult = unknown>(
+  fnOrConfig: ForgeActionConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeActionConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema> & { __forge: ForgeActionMeta };
+export function action<TArgs = unknown, TResult = unknown>(
+  fnOrConfig: ForgeActionConfig<TArgs, TResult>,
+): ForgeActionConfig<TArgs, TResult> & { __forge: ForgeActionMeta };
 export function action<TArgs = unknown, TResult = unknown>(
   fnOrConfig:
     | (() => TResult | Promise<TResult>)
@@ -221,6 +261,8 @@ export interface ForgeLiveQueryMeta {
 
 export interface ForgeQueryConfig<TArgs = unknown, TResult = unknown> {
   auth?: AuthRequirement;
+  input?: unknown;
+  inputSchema?: unknown;
   handler: (
     ctx: Pick<ForgeContext, "db" | "telemetry" | "auth">,
     args: TArgs,
@@ -235,6 +277,15 @@ export type ForgeLiveQuery<TResult = unknown> = (() => TResult | Promise<TResult
   __forge: ForgeLiveQueryMeta;
 };
 
+export function query<TResult = unknown>(
+  fnOrConfig: () => TResult | Promise<TResult>,
+): ForgeQuery<TResult>;
+export function query<TSchema extends ForgeInputSchema, TResult = unknown>(
+  fnOrConfig: ForgeQueryConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeQueryConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema> & { __forge: ForgeQueryMeta };
+export function query<TArgs = unknown, TResult = unknown>(
+  fnOrConfig: ForgeQueryConfig<TArgs, TResult>,
+): ForgeQueryConfig<TArgs, TResult> & { __forge: ForgeQueryMeta };
 export function query<TArgs = unknown, TResult = unknown>(
   fnOrConfig:
     | (() => TResult | Promise<TResult>)
@@ -255,6 +306,15 @@ export function query<TArgs = unknown, TResult = unknown>(
   };
 }
 
+export function liveQuery<TResult = unknown>(
+  fnOrConfig: () => TResult | Promise<TResult>,
+): ForgeLiveQuery<TResult>;
+export function liveQuery<TSchema extends ForgeInputSchema, TResult = unknown>(
+  fnOrConfig: ForgeQueryConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeQueryConfig<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema> & { __forge: ForgeLiveQueryMeta };
+export function liveQuery<TArgs = unknown, TResult = unknown>(
+  fnOrConfig: ForgeQueryConfig<TArgs, TResult>,
+): ForgeQueryConfig<TArgs, TResult> & { __forge: ForgeLiveQueryMeta };
 export function liveQuery<TArgs = unknown, TResult = unknown>(
   fnOrConfig:
     | (() => TResult | Promise<TResult>)

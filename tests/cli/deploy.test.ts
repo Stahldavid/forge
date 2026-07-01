@@ -30,6 +30,14 @@ describe("forge deploy", () => {
       target: "docker",
     });
 
+    const packaged = parseCli(["deploy", "package", "--target", "docker", "--json"]);
+    expect(packaged.errors).toEqual([]);
+    expect(packaged.command).toMatchObject({
+      kind: "deploy",
+      subcommand: "package",
+      target: "docker",
+    });
+
     const verify = parseCli(["deploy", "verify", "--url", "https://app.example.test", "--json"]);
     expect(verify.errors).toEqual([]);
     expect(verify.command).toMatchObject({
@@ -53,6 +61,7 @@ describe("forge deploy", () => {
       expect(result.plan?.gates).toContain("auth mode is jwt or oidc");
       expect(result.nextActions).toContain("forge deploy check --production --json");
       expect(result.nextActions).toContain("forge deploy verify --production --url https://app.example.com --json");
+      expect(result.nextActions).toContain("forge deploy package --target docker");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -85,6 +94,7 @@ describe("forge deploy", () => {
       expect(env).toContain("DATABASE_URL=");
       const readme = readFileSync(join(workspace, "deploy", "README.production.md"), "utf8");
       expect(readme).toContain("forge deploy check --production --json");
+      expect(readme).toContain("forge deploy package --target docker");
       expect(readme).toContain("reads this file as deploy evidence");
       expect(readme).toContain("does not inject a hidden `DATABASE_URL` override");
       expect(readme).toContain("A template file alone is not enough");
@@ -290,7 +300,7 @@ describe("forge deploy", () => {
       expect(result.checks.find((check) => check.name === "oauth-protected-resource")?.severity).toBe("error");
       expect(result.checks.find((check) => check.name === "field-test-report")?.severity).toBe("error");
       expect(result.nextActions).toContain("forge authmd generate --json");
-      expect(result.nextActions).toContain("forge field-test run --runtime-probes --auth-probes --json");
+      expect(result.nextActions).toContain("forge field-test run --realistic --json");
       expect(result.exitCode).toBe(1);
     } finally {
       cleanupWorkspace(workspace);
@@ -308,12 +318,33 @@ describe("forge deploy", () => {
           ok: true,
           runtimeProbes: true,
           authProbes: true,
+          uiProbes: true,
           results: [
             {
               ok: true,
               template: "minimal-web",
               packageManager: "npm",
-              runtime: { steps: [{ ok: true }, { ok: true }] },
+              steps: [
+                { ok: true, command: "npm run forge -- add auth workos --json" },
+                { ok: true, command: "npm run forge -- authmd generate --json" },
+                { ok: true, command: "npm run forge -- authmd check --json" },
+                { ok: true, command: "npm run forge -- workos doctor --json" },
+                { ok: true, command: "npm run forge -- workos seed --file workos-seed.yml --dry-run --json" },
+                { ok: true, command: "npm run forge -- workos prove --file workos-seed.yml --json" },
+              { ok: true, command: "npm run forge -- auth prove --scenario multi-tenant --json" },
+              ],
+              uiErgonomics: { ok: true, warnings: 0, errors: 0, diagnosticCodes: [] },
+              runtime: {
+                steps: [
+                  { ok: true, command: "GET /health" },
+                  { ok: true, command: "GET /entries" },
+                  { ok: true, command: "GET http://127.0.0.1:5173/" },
+                  { ok: true, command: "HEAD http://127.0.0.1:3765/auth.md" },
+                  { ok: true, command: "GET http://127.0.0.1:3765/auth.md" },
+                  { ok: true, command: "HEAD http://127.0.0.1:3765/.well-known/oauth-protected-resource" },
+                  { ok: true, command: "GET http://127.0.0.1:3765/.well-known/oauth-protected-resource" },
+                ],
+              },
             },
           ],
         }),
@@ -332,7 +363,128 @@ describe("forge deploy", () => {
         severity: "error",
       });
       expect(JSON.stringify(fieldReport?.details)).toContain(".forge/field-test-report.json");
-      expect(JSON.stringify(fieldReport?.details)).toContain('"runtimeProbeSteps":2');
+      expect(JSON.stringify(fieldReport?.details)).toContain('"runtimeProbeSteps":7');
+      expect(JSON.stringify(fieldReport?.details)).toContain('"authSetupProbeSteps":7');
+      expect(JSON.stringify(fieldReport?.details)).toContain('"authMetadataProbeSteps":4');
+      expect(JSON.stringify(fieldReport?.details)).toContain('"uiProbeSteps":1');
+      expect(JSON.stringify(fieldReport?.details)).toContain('"uiErgonomics":true');
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("production check warns when field-test UI ergonomics has warnings", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-field-report-ui-warnings");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, ".forge"), { recursive: true });
+      writeFileSync(
+        join(workspace, ".forge", "field-test-report.json"),
+        JSON.stringify({
+          ok: true,
+          runtimeProbes: true,
+          authProbes: true,
+          uiProbes: true,
+          results: [
+            {
+              ok: true,
+              template: "minimal-web",
+              packageManager: "npm",
+              uiErgonomics: {
+                ok: true,
+                warnings: 2,
+                errors: 0,
+                diagnosticCodes: ["FORGE_UI_PRIMARY_ACTION_MISSING", "FORGE_UI_WORKFLOW_NAV_MISSING"],
+              },
+              steps: [
+                { ok: true, command: "npm run forge -- add auth workos --json" },
+                { ok: true, command: "npm run forge -- authmd generate --json" },
+                { ok: true, command: "npm run forge -- authmd check --json" },
+                { ok: true, command: "npm run forge -- workos doctor --json" },
+                { ok: true, command: "npm run forge -- workos seed --file workos-seed.yml --dry-run --json" },
+                { ok: true, command: "npm run forge -- workos prove --file workos-seed.yml --json" },
+              { ok: true, command: "npm run forge -- auth prove --scenario multi-tenant --json" },
+              ],
+              runtime: {
+                steps: [
+                  { ok: true, command: "GET /health" },
+                  { ok: true, command: "GET /entries" },
+                  { ok: true, command: "GET http://127.0.0.1:5173/" },
+                  { ok: true, command: "HEAD http://127.0.0.1:3765/auth.md" },
+                  { ok: true, command: "GET http://127.0.0.1:3765/auth.md" },
+                  { ok: true, command: "HEAD http://127.0.0.1:3765/.well-known/oauth-protected-resource" },
+                  { ok: true, command: "GET http://127.0.0.1:3765/.well-known/oauth-protected-resource" },
+                ],
+              },
+            },
+          ],
+        }),
+        "utf8",
+      );
+
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+
+      const fieldReport = result.checks.find((check) => check.name === "field-test-report");
+      const uiErgonomics = result.checks.find((check) => check.name === "field-test-ui-ergonomics");
+      expect(fieldReport?.ok).toBe(true);
+      expect(uiErgonomics).toMatchObject({
+        ok: false,
+        severity: "warning",
+        command: "forge inspect ui --ergonomics --json",
+      });
+      expect(uiErgonomics?.message).toContain("2 warning");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("production check blocks field-test reports without UI probes", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-field-report-no-ui");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, ".forge"), { recursive: true });
+      writeFileSync(
+        join(workspace, ".forge", "field-test-report.json"),
+        JSON.stringify({
+          ok: true,
+          runtimeProbes: true,
+          authProbes: true,
+          results: [
+            {
+              ok: true,
+              template: "minimal-web",
+              packageManager: "npm",
+              runtime: { steps: [{ ok: true, command: "GET /health" }, { ok: true, command: "GET /entries" }] },
+            },
+          ],
+        }),
+        "utf8",
+      );
+
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+
+      const fieldReport = result.checks.find((check) => check.name === "field-test-report");
+      expect(fieldReport).toMatchObject({
+        ok: false,
+        severity: "error",
+        command: "forge field-test run --realistic --json",
+      });
+      expect(fieldReport?.message).toContain("missing deploy evidence");
+      expect(fieldReport?.message).toContain("ui probes");
+      expect(fieldReport?.message).toContain("auth setup probes");
+      expect(fieldReport?.message).toContain("auth metadata endpoint probes");
     } finally {
       cleanupWorkspace(workspace);
     }

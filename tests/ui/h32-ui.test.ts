@@ -161,6 +161,42 @@ describe("H32 UI / browser test bridge", () => {
     expect(result.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_PLAYWRIGHT_MISSING");
   });
 
+  test("ui doctor suggests npm Playwright setup for npm workspaces", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "package.json", JSON.stringify({ scripts: { dev: "vite" }, devDependencies: {} }));
+    write(root, "package-lock.json", "{}\n");
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "doctor",
+    });
+    const missing = result.diagnostics.find((diag) => diag.code === "FORGE_UI_PLAYWRIGHT_MISSING");
+
+    expect(result.ok).toBe(false);
+    expect(missing?.suggestedCommands).toContain("npm install -D @playwright/test");
+    expect(missing?.suggestedCommands).toContain("npx playwright install");
+  });
+
+  test("ui doctor uses web package manager when frontend has its own package root", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "web/package.json", JSON.stringify({ devDependencies: { "@playwright/test": "^1.0.0" } }));
+    write(root, "web/pnpm-lock.yaml", "lockfileVersion: '9.0'\n");
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "doctor",
+    });
+    const missing = result.diagnostics.find((diag) => diag.code === "FORGE_UI_PLAYWRIGHT_MISSING");
+
+    expect(result.ok).toBe(false);
+    expect(missing?.message).toContain("web");
+    expect(missing?.suggestedCommands).toContain("cd web");
+    expect(missing?.suggestedCommands).toContain("pnpm install");
+    expect(missing?.suggestedCommands).toContain("pnpm exec playwright install");
+  });
+
   test("ui audit validates generated routes and policy-denied coverage without browser", async () => {
     const root = workspace();
     writeGenerated(root);
@@ -229,6 +265,415 @@ describe("H32 UI / browser test bridge", () => {
     expect(codes).toContain("FORGE_UI_ERROR_STATE_MISSING");
     expect(codes).toContain("FORGE_UI_EMPTY_STATE_MISSING");
     expect(codes).toContain("FORGE_UI_WORKOS_AUTHKIT_MISSING");
+  });
+
+  test("ui audit requires WorkOS browser session claims and route proxy", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/integrations/workos/authkit.ts", "export const workosAuthKitEnv = {};\n");
+    write(root, "src/forge/_generated/integrations/workos/auth-routes.ts", "export const workosAuthHttpRoutes = [];\n");
+    write(root, "web/package.json", JSON.stringify({
+      dependencies: {
+        "@workos-inc/authkit-react": "^1.0.0",
+        react: "^19.0.0",
+      },
+    }));
+    write(root, "web/app/page.tsx", `
+      import { AuthKitProvider, useAuth } from "@workos-inc/authkit-react";
+      import { ForgeProvider } from "../src/lib/forge";
+
+      function Shell() {
+        const { getAccessToken } = useAuth();
+        return (
+          <ForgeProvider getToken={getAccessToken}>
+            <main>
+              <nav><a href="#requests">Requests</a></nav>
+              <section id="requests">
+                <h1>Vendor access</h1>
+                <button type="button">Request access</button>
+                <p>Signed in organization</p>
+              </section>
+            </main>
+          </ForgeProvider>
+        );
+      }
+
+      export default function Page() {
+        return <AuthKitProvider clientId="client_test"><Shell /></AuthKitProvider>;
+      }
+    `);
+
+    const missingSession = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    const missingCodes = missingSession.diagnostics.map((diag) => diag.code);
+
+    expect(missingSession.ok).toBe(true);
+    expect(missingCodes).not.toContain("FORGE_UI_WORKOS_AUTHKIT_MISSING");
+    expect(missingCodes).toContain("FORGE_UI_WORKOS_SESSION_MISSING");
+
+    write(root, "web/src/lib/workos-auth.tsx", `
+      export function useForgeWorkOSSession() {
+        return fetch("/session")
+          .then((response) => response.json())
+          .then((session) => ({
+            claims: session.claims,
+            organizationId: session.claims.organization_id,
+            role: session.claims.role,
+            permissions: session.claims.permissions,
+          }));
+      }
+    `);
+    write(root, "web/vite.config.ts", `
+      export default {
+        server: {
+          proxy: {
+            "/login": "http://127.0.0.1:3765",
+            "/callback": "http://127.0.0.1:3765",
+            "/logout": "http://127.0.0.1:3765",
+            "/session": "http://127.0.0.1:3765",
+          },
+        },
+      };
+    `);
+
+    const wiredSession = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    const wiredCodes = wiredSession.diagnostics.map((diag) => diag.code);
+
+    expect(wiredSession.ok).toBe(true);
+    expect(wiredCodes).not.toContain("FORGE_UI_WORKOS_SESSION_MISSING");
+  });
+
+  test("ui audit requires a visible WorkOS sign-in or sign-out path", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/integrations/workos/authkit.ts", "export const workosAuthKitEnv = {};\n");
+    write(root, "src/forge/_generated/integrations/workos/auth-routes.ts", "export const workosAuthHttpRoutes = [];\n");
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        return (
+          <main>
+            <nav><a href="#queue">Queue</a></nav>
+            <section id="queue">
+              <h1>Vendor access</h1>
+              <p>Organization session is active.</p>
+              <button type="button">Sign in</button>
+              <button type="button">Sign out</button>
+              <button type="button">Create request</button>
+            </section>
+          </main>
+        );
+      }
+    `);
+
+    const hiddenAuth = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(hiddenAuth.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_WORKOS_AUTH_FLOW_MISSING");
+
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        return (
+          <main>
+            <nav><a href="#queue">Queue</a></nav>
+            <section id="queue">
+              <h1>Vendor access</h1>
+              <a href="/login">Continue with WorkOS</a>
+              <button type="button">Sign out</button>
+              <button type="button">Create request</button>
+            </section>
+          </main>
+        );
+      }
+    `);
+
+    const visibleAuth = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(visibleAuth.diagnostics.map((diag) => diag.code)).not.toContain("FORGE_UI_WORKOS_AUTH_FLOW_MISSING");
+  });
+
+  test("ui audit does not treat supported auth modes as active production auth", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/agentContract.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      auth: { modes: ["dev-headers", "jwt", "oidc", "disabled"] },
+    }));
+    write(root, "src/forge/_generated/authConfig.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      defaultMode: "dev-headers",
+      modes: ["dev-headers", "jwt", "oidc", "disabled"],
+    }));
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        return <main><section><button type="button">Create ticket</button></section></main>;
+      }
+    `);
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    const codes = result.diagnostics.map((diag) => diag.code);
+
+    expect(result.ok).toBe(true);
+    expect(codes).not.toContain("FORGE_UI_AUTH_FLOW_MISSING");
+  });
+
+  test("ui audit warns about demo auth copy and fake password login", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/dataGraph.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      generatorVersion: "0.0.0",
+      analyzerVersion: "test",
+      inputHash: "hash",
+      tables: [{
+        table: "projects",
+        fields: [{ name: "id", type: "text" }, { name: "tenantId", type: "text" }],
+      }],
+      diagnostics: [],
+    }));
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        return (
+          <main>
+            <h1>Sign in</h1>
+            <p>Demo login for tenants</p>
+            <form>
+              <label>Email <input name="email" /></label>
+              <label>Password <input name="password" type="password" placeholder="forge-demo" /></label>
+              <button type="button">Sign in</button>
+            </form>
+          </main>
+        );
+      }
+    `);
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    const codes = result.diagnostics.map((diag) => diag.code);
+
+    expect(result.ok).toBe(true);
+    expect(codes).toContain("FORGE_UI_AUTH_COPY_TOO_DEMO");
+    expect(codes).toContain("FORGE_UI_FAKE_AUTH_FORM");
+  });
+
+  test("ui audit keeps operational diagnostics out of the primary product surface", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        const claims = { organization_id: "org_acme", permissions: ["vendors:read"] };
+        return (
+          <main>
+            <nav><a href="#requests">Requests</a></nav>
+            <section id="requests">
+              <h1>Vendor access</h1>
+              <button type="button">Request access</button>
+              <pre>{JSON.stringify(claims)}</pre>
+              <p>WORKOS_API_KEY and workos-seed.yml are required before testing policy proof.</p>
+            </section>
+          </main>
+        );
+      }
+    `);
+
+    const exposed = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(exposed.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_DEV_DIAGNOSTICS_EXPOSED");
+
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        const claims = { organization_id: "org_acme", permissions: ["vendors:read"] };
+        return (
+          <main>
+            <nav><a href="#requests">Requests</a></nav>
+            <section id="requests">
+              <h1>Vendor access</h1>
+              <button type="button">Request access</button>
+            </section>
+            <details>
+              <summary>Developer diagnostics</summary>
+              <pre>{JSON.stringify(claims)}</pre>
+              <p>WORKOS_API_KEY and workos-seed.yml are required before testing policy proof.</p>
+            </details>
+          </main>
+        );
+      }
+    `);
+
+    const collapsed = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(collapsed.diagnostics.map((diag) => diag.code)).not.toContain("FORGE_UI_DEV_DIAGNOSTICS_EXPOSED");
+  });
+
+  test("ui audit requires visible seed recovery instead of seed command names", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/uiTestManifest.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      generatorVersion: "0.0.0",
+      framework: "next",
+      webRoot: "web",
+      defaultBaseUrl: "http://127.0.0.1:3000",
+      runtimeUrl: "http://127.0.0.1:3765",
+      selectors: ["[data-forge-testid='vendor-list']"],
+      routes: [{
+        path: "/",
+        name: "home",
+        uses: {
+          commands: ["seedVendorAccessDemo"],
+          queries: [],
+          liveQueries: ["liveVendors"],
+          components: ["Page"],
+        },
+      }],
+      scenarios: ["home-loads"],
+    }));
+    write(root, "src/forge/_generated/uiScenarios.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      scenarios: [{
+        name: "home-loads",
+        description: "home loads",
+        route: "/",
+        cost: "browser",
+        steps: [{ kind: "goto", path: "/" }],
+        requires: {
+          commands: ["seedVendorAccessDemo"],
+          queries: [],
+          liveQueries: ["liveVendors"],
+          policies: [],
+          components: ["Page"],
+          workflows: [],
+        },
+      }],
+    }));
+    write(root, "web/app/page.tsx", `
+      import { useCommand, useLiveQuery } from "../src/lib/forge";
+
+      export default function Page() {
+        const seedVendorAccessDemo = useCommand("seedVendorAccessDemo");
+        const vendors = useLiveQuery("liveVendors", {});
+        return (
+          <main>
+            <nav><a href="#vendors">Vendors</a></nav>
+            <section id="vendors" data-forge-testid="vendor-list">
+              <h1>Vendor access</h1>
+              <button type="button">Create request</button>
+              <p>{vendors.error ? "Error loading vendors" : vendors.loading ? "Loading vendors..." : "No vendors yet"}</p>
+              <p>{String(seedVendorAccessDemo.loading)}</p>
+            </section>
+          </main>
+        );
+      }
+    `);
+
+    const missingSeedExperience = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(missingSeedExperience.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_SEED_ACTION_MISSING");
+    expect(missingSeedExperience.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_AUTO_SEED_RECOVERY_MISSING");
+
+    write(root, "web/app/page.tsx", `
+      import { useCommand, useLiveQuery } from "../src/lib/forge";
+
+      export default function Page() {
+        const seedVendorAccessDemo = useCommand("seedVendorAccessDemo");
+        const vendors = useLiveQuery("liveVendors", {});
+        return (
+          <main>
+            <nav><a href="#vendors">Vendors</a></nav>
+            <section id="vendors" data-forge-testid="vendor-list">
+              <h1>Vendor access</h1>
+              <button data-forge-testid="seed-status" type="button">Load tenant data</button>
+              <button type="button">Create request</button>
+              <p>{vendors.error ? "Error loading vendors" : vendors.loading ? "Loading vendors..." : "No vendors yet"}</p>
+              <p>{seedVendorAccessDemo.loading ? "Preparing tenant data" : "Tenant data ready"}</p>
+            </section>
+          </main>
+        );
+      }
+    `);
+
+    const visibleSeedExperience = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(visibleSeedExperience.diagnostics.map((diag) => diag.code)).not.toContain("FORGE_UI_SEED_ACTION_MISSING");
+    expect(visibleSeedExperience.diagnostics.map((diag) => diag.code)).toContain("FORGE_UI_AUTO_SEED_RECOVERY_MISSING");
+
+    write(root, "web/app/page.tsx", `
+      import { useEffect } from "react";
+      import { useCommand, useLiveQuery } from "../src/lib/forge";
+
+      export default function Page() {
+        const seedVendorAccessDemo = useCommand("seedVendorAccessDemo");
+        const vendors = useLiveQuery("liveVendors", {});
+        useEffect(() => {
+          if (!vendors.loading && !vendors.error && vendors.data?.length === 0) {
+            void seedVendorAccessDemo.run({});
+          }
+        }, [vendors.loading, vendors.error, vendors.data?.length]);
+        return (
+          <main>
+            <nav><a href="#vendors">Vendors</a></nav>
+            <section id="vendors" data-forge-testid="vendor-list">
+              <h1>Vendor access</h1>
+              <button data-forge-testid="seed-status" type="button">Load tenant data</button>
+              <button type="button">Create request</button>
+              <p>{vendors.error ? "Error loading vendors" : vendors.loading ? "Loading vendors..." : "No vendors yet"}</p>
+              <p>{seedVendorAccessDemo.loading ? "Preparing tenant data" : "Tenant data ready"}</p>
+            </section>
+          </main>
+        );
+      }
+    `);
+
+    const autoSeedExperience = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    expect(autoSeedExperience.diagnostics.map((diag) => diag.code)).not.toContain("FORGE_UI_SEED_ACTION_MISSING");
+    expect(autoSeedExperience.diagnostics.map((diag) => diag.code)).not.toContain("FORGE_UI_AUTO_SEED_RECOVERY_MISSING");
+  });
+
+  test("ui audit reports auth flow warning for explicit production auth mode", async () => {
+    const root = workspace();
+    writeGenerated(root);
+    write(root, "src/forge/_generated/authConfig.json", JSON.stringify({
+      schemaVersion: "0.1.0",
+      defaultMode: "oidc",
+      modes: ["dev-headers", "jwt", "oidc", "disabled"],
+    }));
+    write(root, "web/app/page.tsx", `
+      export default function Page() {
+        return <main><section><button type="button">Create ticket</button></section></main>;
+      }
+    `);
+
+    const result = await runUiCommand({
+      ...options(root),
+      subcommand: "audit",
+    });
+    const codes = result.diagnostics.map((diag) => diag.code);
+
+    expect(result.ok).toBe(true);
+    expect(codes).toContain("FORGE_UI_AUTH_FLOW_MISSING");
   });
 
   test("repair can diagnose from last UI run", () => {

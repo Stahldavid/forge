@@ -100,6 +100,67 @@ describe("React hooks", () => {
     expect(seenAuth).toEqual(seenConfig?.auth);
   });
 
+  test("ForgeProvider devAuth accepts WorkOS-like roles, permissions, organization, membership, claims, and custom headers", async () => {
+    let seenConfig: ForgeReactClientConfig | undefined;
+    const bindings = createForgeReactBindings((config) => {
+      seenConfig = config;
+      return createMockClient();
+    });
+    let seenAuth: unknown;
+
+    function Harness() {
+      seenAuth = bindings.useAuth();
+      return null;
+    }
+
+    await act(async () => {
+      create(
+        React.createElement(
+          bindings.ForgeProvider,
+          {
+            url: "http://127.0.0.1:3765",
+            devAuth: {
+              userId: "user_acme_owner",
+              organizationId: "org_acme",
+              organizationMembershipId: "om_acme_owner",
+              role: "owner",
+              roles: ["owner", "security"],
+              permissions: ["vendors:read", "access:approve"],
+              claims: {
+                email: "owner@acme.test",
+                organization_id: "org_acme",
+                organization_membership_id: "om_acme_owner",
+              },
+              headers: {
+                "x-custom-auth": "custom",
+              },
+            },
+          },
+          React.createElement(Harness),
+        ),
+      );
+    });
+
+    expect(seenConfig?.auth).toEqual({
+      userId: "user_acme_owner",
+      tenantId: "org_acme",
+      organizationId: "org_acme",
+      organizationMembershipId: "om_acme_owner",
+      role: "owner",
+      roles: ["owner", "security"],
+      permissions: ["vendors:read", "access:approve"],
+      claims: {
+        email: "owner@acme.test",
+        organization_id: "org_acme",
+        organization_membership_id: "om_acme_owner",
+      },
+      headers: {
+        "x-custom-auth": "custom",
+      },
+    });
+    expect(seenAuth).toEqual(seenConfig?.auth);
+  });
+
   test("useForgeClient fails clearly outside ForgeProvider", () => {
     const bindings = createForgeReactBindings(() => createMockClient());
     let caught: unknown;

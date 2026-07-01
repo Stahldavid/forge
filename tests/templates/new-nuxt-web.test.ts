@@ -74,6 +74,8 @@ describe("nuxt-web template", () => {
       expect(read(project, "web/composables/useNotes.ts")).toContain("api.commands.createNote");
       expect(read(project, "web/composables/useNotes.ts")).toContain("useForgeLiveQuery");
       expect(read(project, "web/composables/useNotes.ts")).toContain("api.liveQueries.liveNotes");
+      expect(read(project, "web/app.vue")).toContain("Workspace notes");
+      expect(read(project, "web/app.vue")).not.toContain("ForgeOS nuxt-web");
       expect(read(project, ".gitignore")).toContain(".forge/delta/");
       expect(read(project, ".gitignore")).toContain(".forge/studio/");
 

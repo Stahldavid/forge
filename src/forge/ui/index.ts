@@ -1,5 +1,6 @@
 import { nodeFileSystem } from "../compiler/fs/index.ts";
 import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { GENERATOR_VERSION } from "../compiler/emitter/constants.ts";
@@ -9,6 +10,7 @@ import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 import type { ApiSurface } from "../compiler/api-surface/build.ts";
 import type { AppGraph, SourceFile } from "../compiler/types/app-graph.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
+import type { FrontendGraph } from "../compiler/types/frontend-graph.ts";
 import type {
   UiCommandOptions,
   UiCommandResult,
@@ -85,6 +87,80 @@ function listWebSourceFiles(workspaceRoot: string, webRoot: string): Array<{ pat
     .filter((source) => source.text.trim().length > 0);
 }
 
+function listWebImplementationFiles(workspaceRoot: string, webRoot: string): Array<{ path: string; text: string }> {
+  if (!webRoot) return [];
+  const absoluteWebRoot = join(workspaceRoot, normalize(webRoot));
+  if (!nodeFileSystem.exists(absoluteWebRoot)) return [];
+  return walkFiles(absoluteWebRoot)
+    .filter((file) => /\.(ts|tsx|js|jsx|mjs|mts|vue|svelte|html)$/.test(file))
+    .filter((file) => !/\.d\.ts$/.test(file))
+    .map((file) => {
+      const path = `${normalize(webRoot)}/${file}`;
+      return { path, text: readText(workspaceRoot, path) };
+    })
+    .filter((source) => source.text.trim().length > 0);
+}
+
+function viteUsesSameOriginProxy(workspaceRoot: string, webRoot: string): boolean {
+  const root = normalize(webRoot);
+  const configText =
+    readText(workspaceRoot, `${root}/vite.config.ts`) ||
+    readText(workspaceRoot, `${root}/vite.config.js`) ||
+    readText(workspaceRoot, `${root}/vite.config.mts`) ||
+    readText(workspaceRoot, `${root}/vite.config.mjs`);
+  return /server\s*:\s*\{[\s\S]*proxy\s*:/.test(configText) &&
+    /["'`]\/commands["'`]/.test(configText) &&
+    /["'`]\/live["'`]/.test(configText);
+}
+
+function webConfigProxiesWorkOSSession(workspaceRoot: string, webRoot: string): boolean {
+  const root = normalize(webRoot);
+  const configText = [
+    `${root}/vite.config.ts`,
+    `${root}/vite.config.js`,
+    `${root}/vite.config.mts`,
+    `${root}/vite.config.mjs`,
+    `${root}/next.config.ts`,
+    `${root}/next.config.js`,
+    `${root}/next.config.mjs`,
+  ].map((path) => readText(workspaceRoot, path)).join("\n");
+  if (!configText.trim()) {
+    return false;
+  }
+  return ["/login", "/callback", "/logout", "/session"].every((route) =>
+    new RegExp(`["'\`]${route.replace("/", "\\/")}["'\`]`).test(configText) ||
+    new RegExp(`source\\s*:\\s*["'\`]${route.replace("/", "\\/")}["'\`]`).test(configText)
+  );
+}
+
+function webUsesWorkOSSessionClaims(text: string): boolean {
+  if (/\buseForgeWorkOSSession\b/.test(text)) {
+    return true;
+  }
+  return /["'`]\/session["'`]/.test(text) &&
+    /\b(claims|organizationId|organization_id|organizationMembershipId|role|roles|permissions)\b/.test(text);
+}
+
+function viteBridgeUsesLocalAbsoluteUrl(workspaceRoot: string, webRoot: string): string | null {
+  const root = normalize(webRoot);
+  const candidates = [
+    `${root}/src/lib/forge.ts`,
+    `${root}/src/lib/forge.tsx`,
+    `${root}/lib/forge.ts`,
+    `${root}/lib/forge.tsx`,
+  ];
+  for (const candidate of candidates) {
+    const text = readText(workspaceRoot, candidate);
+    if (!text) {
+      continue;
+    }
+    if (/export\s+const\s+forgeUrl[\s\S]*127\.0\.0\.1:3765/.test(text) && !/useSameOrigin/.test(text)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 function readOptionalGeneratedJson(workspaceRoot: string, name: string): unknown {
   try {
     return readJson<unknown>(workspaceRoot, `${GENERATED}/${name}`, null);
@@ -107,14 +183,49 @@ function hasTenantScopedData(workspaceRoot: string): boolean {
   );
 }
 
+function isProductionAuthModeValue(value: unknown): boolean {
+  return value === "jwt" || value === "oidc";
+}
+
+function hasExplicitProductionAuthShape(value: unknown): boolean {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  for (const key of ["mode", "defaultMode", "activeMode", "authMode", "productionMode", "authProvider"]) {
+    if (isProductionAuthModeValue(record[key])) {
+      return true;
+    }
+  }
+  if (record.production === true || isProductionAuthModeValue(record.production)) {
+    return true;
+  }
+  if (record.production && typeof record.production === "object") {
+    return hasExplicitProductionAuthShape(record.production);
+  }
+  return false;
+}
+
 function hasProductionAuthMode(workspaceRoot: string): boolean {
-  const agentContract = readOptionalGeneratedJson(workspaceRoot, "agentContract.json") as { auth?: { modes?: string[]; production?: unknown } } | null;
-  const modes = agentContract?.auth?.modes ?? [];
-  return modes.includes("jwt") || modes.includes("oidc") || Boolean(agentContract?.auth?.production);
+  const agentContract = readOptionalGeneratedJson(workspaceRoot, "agentContract.json") as { auth?: unknown } | null;
+  const authConfig = readOptionalGeneratedJson(workspaceRoot, "authConfig.json");
+  const authRegistry = readOptionalGeneratedJson(workspaceRoot, "authRegistry.json");
+  return hasExplicitProductionAuthShape(agentContract?.auth) ||
+    hasExplicitProductionAuthShape(authConfig) ||
+    hasExplicitProductionAuthShape(authRegistry) ||
+    hasWorkOSIntegration(workspaceRoot);
 }
 
 function looksLikeAuthFlow(text: string): boolean {
   return /sign\s*in|signin|login|logout|authkit|organization|tenant|session|workos|clerk|auth0/i.test(text);
+}
+
+function hasVisibleWorkOSAuthControl(text: string): boolean {
+  return /<(a|button)\b[^>]*(href|data-forge-testid)=["'][^"']*(\/login|\/logout)[^"']*["']/i.test(text) ||
+    /<(button|a)\b[\s\S]*?\b((sign\s*in|log\s*in|continue)\s+(with\s+)?(workos|authkit)|(workos|authkit)\s+(sign\s*in|login)|sign\s*out)\b[\s\S]*?<\/(button|a)>/i.test(text) &&
+      /\b(workos|authkit|auth\.signIn|auth\.signOut|signIn\s*\(|signOut\s*\()/.test(text) ||
+    /\b(auth|workosAuth)\.(signIn|signOut)\s*\(/.test(text) ||
+    /\buseWorkOSAuth\b[\s\S]{0,500}\b(signIn|signOut)\s*\(/.test(text);
 }
 
 function hasWorkOSIntegration(workspaceRoot: string): boolean {
@@ -136,6 +247,114 @@ function webPackageHasAuthKit(workspaceRoot: string): boolean {
   }
 }
 
+type UiPackageManager = "bun" | "npm" | "pnpm" | "yarn";
+
+interface UiPackageContext {
+  packageRoot: string;
+  packageRootLabel: string;
+  packageManager: UiPackageManager;
+  hasPackageJson: boolean;
+  hasPlaywrightDependency: boolean;
+  playwrightInstalled: boolean;
+  installCommands: string[];
+  installDependencyCommand: string;
+  installBrowsersCommand: string;
+}
+
+function readPackageJson(workspaceRoot: string, relative: string): {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+} | null {
+  const absolute = join(workspaceRoot, relative);
+  if (!nodeFileSystem.exists(absolute)) return null;
+  try {
+    return JSON.parse(nodeFileSystem.readText(absolute) ?? "{}") as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+  } catch {
+    return null;
+  }
+}
+
+function detectPackageManager(workspaceRoot: string, packageRootLabel: string): UiPackageManager {
+  const roots = [packageRootLabel, ""].filter((root, index, array) => array.indexOf(root) === index);
+  for (const root of roots) {
+    const prefix = root ? `${root}/` : "";
+    if (nodeFileSystem.exists(join(workspaceRoot, `${prefix}pnpm-lock.yaml`))) return "pnpm";
+    if (nodeFileSystem.exists(join(workspaceRoot, `${prefix}bun.lock`)) || nodeFileSystem.exists(join(workspaceRoot, `${prefix}bun.lockb`))) return "bun";
+    if (nodeFileSystem.exists(join(workspaceRoot, `${prefix}yarn.lock`))) return "yarn";
+    if (nodeFileSystem.exists(join(workspaceRoot, `${prefix}package-lock.json`))) return "npm";
+  }
+  return "npm";
+}
+
+function playwrightInstallCommands(packageManager: UiPackageManager): {
+  installDependencyCommand: string;
+  installBrowsersCommand: string;
+} {
+  if (packageManager === "pnpm") {
+    return {
+      installDependencyCommand: "pnpm add -D @playwright/test",
+      installBrowsersCommand: "pnpm exec playwright install",
+    };
+  }
+  if (packageManager === "bun") {
+    return {
+      installDependencyCommand: "bun add -d @playwright/test",
+      installBrowsersCommand: "bunx playwright install",
+    };
+  }
+  if (packageManager === "yarn") {
+    return {
+      installDependencyCommand: "yarn add -D @playwright/test",
+      installBrowsersCommand: "yarn playwright install",
+    };
+  }
+  return {
+    installDependencyCommand: "npm install -D @playwright/test",
+    installBrowsersCommand: "npx playwright install",
+  };
+}
+
+function hasPlaywrightDependency(packageJson: ReturnType<typeof readPackageJson>): boolean {
+  return Boolean(
+    packageJson?.dependencies?.playwright ||
+    packageJson?.devDependencies?.playwright ||
+    packageJson?.dependencies?.["@playwright/test"] ||
+    packageJson?.devDependencies?.["@playwright/test"],
+  );
+}
+
+function uiPackageContext(workspaceRoot: string, manifest: UiTestManifest): UiPackageContext {
+  const webPackage = manifest.webRoot ? readPackageJson(workspaceRoot, `${normalize(manifest.webRoot)}/package.json`) : null;
+  const rootPackage = readPackageJson(workspaceRoot, "package.json");
+  const packageRootLabel = webPackage && manifest.webRoot ? normalize(manifest.webRoot) : "";
+  const packageRoot = join(workspaceRoot, packageRootLabel);
+  const packageJson = webPackage ?? rootPackage;
+  const packageManager = detectPackageManager(workspaceRoot, packageRootLabel);
+  const commands = playwrightInstallCommands(packageManager);
+  const installedRoots = [
+    packageRootLabel,
+    "",
+  ].filter((root, index, array) => array.indexOf(root) === index);
+  const playwrightInstalled = installedRoots.some((root) => {
+    const prefix = root ? `${root}/` : "";
+    return nodeFileSystem.exists(join(workspaceRoot, `${prefix}node_modules/playwright`)) ||
+      nodeFileSystem.exists(join(workspaceRoot, `${prefix}node_modules/@playwright/test`));
+  });
+  return {
+    packageRoot,
+    packageRootLabel: packageRootLabel || ".",
+    packageManager,
+    hasPackageJson: Boolean(packageJson),
+    hasPlaywrightDependency: hasPlaywrightDependency(packageJson),
+    playwrightInstalled,
+    installCommands: [commands.installDependencyCommand, commands.installBrowsersCommand],
+    ...commands,
+  };
+}
+
 function hasMainLandmark(text: string): boolean {
   return /<main[\s>]|role=["']main["']|<header[\s>]|<nav[\s>]/i.test(text);
 }
@@ -146,6 +365,63 @@ function hasRuntimeDataHook(text: string): boolean {
 
 function hasStateText(text: string, pattern: RegExp): boolean {
   return pattern.test(text);
+}
+
+function hasProductDemoCopy(text: string): boolean {
+  return /production-shaped\s+ForgeOS|ForgeOS\s+app\s+with|ForgeOS\s+[^<>{}\n]{0,48}\bdemo\b|powered\s+by\s+ForgeOS|demonstrat(?:e|ing)\s+ForgeOS|agent-readable\s+demo|WorkOS-style\s+permissions/i.test(text);
+}
+
+function stripCollapsibleDetails(text: string): string {
+  return text.replace(/<details\b[\s\S]*?<\/details>/gi, "");
+}
+
+function hasDemoAuthCopy(text: string): boolean {
+  return /\bdemo\s+(login|account|user|identity|password|credentials?)\b/i.test(text) ||
+    /\b(login|sign\s*in)\s+as\s+demo\b/i.test(text);
+}
+
+function hasLocalIdentityControl(text: string): boolean {
+  return /data-forge-testid=["'][^"']*(persona|dev-auth|local-identity|login-persona)[^"']*["']/i.test(text) ||
+    /\b(persona|devAuth|dev\s+auth|local\s+identity|local\s+account|workspace\s+account)\b/i.test(text) ||
+    /\bx-forge-(role|permissions|tenant-id|user-id)\b/i.test(text);
+}
+
+function hasLocalAuthBoundaryCopy(text: string): boolean {
+  return /\b(local|development|dev|test)\s+(mode|identity|account|auth|session|sign[-\s]?in|login)\b/i.test(text) ||
+    /\b(use|switch|select)\s+(a\s+)?(local|dev|development|test)\s+(identity|account|persona)\b/i.test(text) ||
+    /\bnot\s+(production|real)\s+auth\b/i.test(text) ||
+    /\bproduction\s+auth\s+(uses|requires|is)\s+(WorkOS|AuthKit|OIDC|JWT)\b/i.test(text);
+}
+
+function hasFakeCredentialAuthForm(text: string): boolean {
+  if (!/<input\b[^>]*type=["']?password["']?/i.test(text)) {
+    return false;
+  }
+  return /\b(forge-demo|demo\s+password|test\s+password|fake\s+password|any\s+password|password\s+is\s+ignored)\b/i.test(text) ||
+    /\b(local|demo|fake|mock)\s+(login|auth|credentials?)\b/i.test(text);
+}
+
+function hasExposedDevDiagnostics(text: string): boolean {
+  return /\b(WORKOS_[A-Z0-9_]+|FORGE_AUTH_[A-Z0-9_]+|x-forge-[a-z0-9-]+|workos-seed\.ya?ml|agentContract|capability\s+map|policy\s+proof|debug\s+claims|raw\s+claims)\b/i.test(text) ||
+    /JSON\.stringify\s*\(\s*(session|claims|permissions|persona|devAuth)\b/i.test(text) ||
+    /<pre\b[\s\S]{0,240}\b(claims|permissions|devAuth|workos|seedCommand|agentContract)\b/i.test(text);
+}
+
+function hasNetworkRecoveryHint(text: string): boolean {
+  if (!/Failed to fetch|not reachable|cannot reach|network error/i.test(text)) return true;
+  return /\/health|npm run dev|vite\.config|proxy|CORS|127\.0\.0\.1|localhost/i.test(text);
+}
+
+function hasSeedExperience(text: string): boolean {
+  return /data-forge-testid=["'][^"']*(seed|reset)[^"']*["']/i.test(text) ||
+    /\b(load|refresh|reset|prepare|preparing|rebuild|restore)\s+(tenant|workspace|demo|sample)?\s*(data|workspace|tenant)\b/i.test(text) ||
+    /\btenant\s+data\s+(ready|loading|prepared)\b/i.test(text) ||
+    /\b(seed\s+status|auto-seed|auto-seeds|empty\s+workspace\s+recovery)\b/i.test(text);
+}
+
+function hasAutomaticSeedRecovery(text: string): boolean {
+  return /useEffect\s*\([\s\S]{0,3000}\b(runSeed|seed[A-Za-z0-9_]*\.run|seedWorkspace\.run|seedVendorAccessDemo\.run)\b/i.test(text) &&
+    /\b(length\s*===\s*0|No\s+\w+|empty|tenantSeedState|workspace\s+is\s+empty|first[-\s]?run)\b/i.test(text);
 }
 
 function findFormWithoutLabel(text: string): boolean {
@@ -169,6 +445,20 @@ function findUnnamedButton(text: string): boolean {
     const inner = button.replace(/<button\b[^>]*>/i, "").replace(/<\/button>/i, "").replace(/<[^>]+>/g, "").trim();
     return inner.length === 0;
   });
+}
+
+function hasPrimaryWorkflowAction(text: string): boolean {
+  return /<(form|button)\b/i.test(text) &&
+    /\b(useCommand|useForgeCommand|onSubmit|onClick|type=["']submit["']|data-forge-testid=["'][^"']*(create|add|approve|request|invite|seed|save|update|submit))/i.test(text);
+}
+
+function hasPermissionFeedback(text: string): boolean {
+  return /\b(can[A-Z]\w*|permissions\.includes|FORGE_POLICY_DENIED|policy-denied|permission|forbidden|denied|disabled=|aria-disabled)\b/i.test(text);
+}
+
+function hasWorkflowNavigation(text: string): boolean {
+  return /<nav[\s>]|aria-label=["'][^"']*(section|navigation|workspace|nav)|href=["']#/i.test(text) ||
+    ((text.match(/<section\b/gi) ?? []).length >= 2 && /<header[\s>]/i.test(text));
 }
 
 function routeName(path: string): string {
@@ -314,6 +604,88 @@ function buildDefaultScenarios(api: ApiSurface, appGraph: AppGraph, routes: UiRo
     });
   }
 
+  const hasVendorAccessFlow =
+    commands.some((name) => /^(approveAccessRequest|createAccessRequest|seedVendorAccessDemo|addEvidence)$/i.test(name)) ||
+    liveQueries.some((name) => /vendorAccess/i.test(name));
+  if (hasVendorAccessFlow) {
+    scenarios.push({
+      name: "vendor-access-local-login",
+      description: "Sign in with a local development identity and verify the vendor workspace shell renders.",
+      route: "/",
+      cost: "browser",
+      steps: [
+        { kind: "goto", path: "/" },
+        { kind: "expectVisible", selector: "[data-forge-testid='login-submit']", timeoutMs: 5000 },
+        { kind: "click", selector: "[data-forge-testid='login-submit']" },
+        { kind: "expectVisible", selector: "[data-forge-testid='vendor-list']", timeoutMs: 10000 },
+        { kind: "expectVisible", selector: "[data-forge-testid='approval-queue']", timeoutMs: 10000 },
+      ],
+      requires: {
+        ...emptyRequires(),
+        commands: commands.filter((name) => /seedVendorAccessDemo/i.test(name)),
+        liveQueries: liveQueries.filter((name) => /vendorAccess/i.test(name)),
+        components: ["App"],
+      },
+    });
+    scenarios.push({
+      name: "vendor-access-autoseed-data-visible",
+      description: "Verify the first-run workspace recovers seeded vendor data after local sign-in.",
+      route: "/",
+      cost: "browser",
+      steps: [
+        { kind: "goto", path: "/" },
+        { kind: "click", selector: "[data-forge-testid='login-submit']" },
+        { kind: "expectVisible", selector: "[data-forge-testid='vendor-list']", timeoutMs: 10000 },
+        { kind: "expectText", selector: "[data-forge-testid='vendor-list']", text: "Atlas Identity", timeoutMs: 10000 },
+        { kind: "expectText", selector: "[data-forge-testid='approval-queue']", text: "SCIM production tenant", timeoutMs: 10000 },
+      ],
+      requires: {
+        ...emptyRequires(),
+        commands: commands.filter((name) => /seedVendorAccessDemo/i.test(name)),
+        liveQueries: liveQueries.filter((name) => /vendorAccess/i.test(name)),
+        components: ["App"],
+      },
+    });
+    scenarios.push({
+      name: "vendor-access-requester-denied-visible",
+      description: "Select a requester persona and verify approval denial feedback is visible.",
+      route: "/",
+      cost: "browser",
+      steps: [
+        { kind: "goto", path: "/" },
+        { kind: "selectOption", selector: "[data-forge-testid='login-persona']", value: "acme-requester" },
+        { kind: "click", selector: "[data-forge-testid='login-submit']" },
+        { kind: "expectVisible", selector: "[data-forge-testid='policy-denied-approval']", timeoutMs: 10000 },
+      ],
+      requires: {
+        ...emptyRequires(),
+        commands: commands.filter((name) => /approveAccessRequest/i.test(name)),
+        liveQueries: liveQueries.filter((name) => /vendorAccess/i.test(name)),
+        policies: policies.filter((name) => /access:approve|approve/i.test(name)),
+        components: ["App"],
+      },
+    });
+    scenarios.push({
+      name: "vendor-access-seed-control-visible",
+      description: "Verify the developer seed control is available after local sign-in.",
+      route: "/",
+      cost: "browser",
+      steps: [
+        { kind: "goto", path: "/" },
+        { kind: "click", selector: "[data-forge-testid='login-submit']" },
+        { kind: "click", selector: "[data-forge-testid='dev-diagnostics-toggle']" },
+        { kind: "expectVisible", selector: "[data-forge-testid='seed-demo']", timeoutMs: 10000 },
+        { kind: "expectVisible", selector: "[data-forge-testid='reset-demo']", timeoutMs: 10000 },
+      ],
+      requires: {
+        ...emptyRequires(),
+        commands: commands.filter((name) => /seedVendorAccessDemo/i.test(name)),
+        liveQueries: liveQueries.filter((name) => /vendorAccess/i.test(name)),
+        components: ["App"],
+      },
+    });
+  }
+
   if (workflows.some((name) => /triage|ai/i.test(name))) {
     scenarios.push({
       name: "ai-triage-mock-visible",
@@ -342,15 +714,51 @@ function buildDefaultScenarios(api: ApiSurface, appGraph: AppGraph, routes: UiRo
 export function buildUiGeneratedArtifacts(input: {
   appGraph: AppGraph;
   apiSurface: ApiSurface;
+  frontendGraph?: FrontendGraph;
   sources: SourceFile[];
+  workspaceRoot?: string;
 }): UiGeneratedArtifacts {
-  const routes = defaultRoutes(input.apiSurface, input.sources);
+  const frontendRoutes = (input.frontendGraph?.routes ?? []).map((route): UiRoute => ({
+    path: route.path,
+    name: route.path === "/" ? "home" : route.path.replace(/^\/+/, "").replace(/[^a-zA-Z0-9]+/g, "-") || "route",
+    uses: {
+      commands: route.usesCommands,
+      queries: route.usesQueries,
+      liveQueries: route.usesLiveQueries,
+      components: route.components,
+    },
+  }));
+  const routes = frontendRoutes.length > 0 ? frontendRoutes : defaultRoutes(input.apiSurface, input.sources);
   const scenarios = buildDefaultScenarios(input.apiSurface, input.appGraph, routes);
+  const webRoot = input.frontendGraph?.root ??
+    (input.sources.some((source) => source.path.startsWith("web/")) ||
+      (input.workspaceRoot ? nodeFileSystem.exists(join(input.workspaceRoot, "web")) : false)
+      ? "web"
+      : "");
+  const frameworkFromFrontend =
+    input.frontendGraph?.framework && input.frontendGraph.framework !== "none"
+      ? input.frontendGraph.framework
+      : undefined;
+  const framework = frameworkFromFrontend === "next" ||
+    frameworkFromFrontend === "nuxt" ||
+    frameworkFromFrontend === "static" ||
+    frameworkFromFrontend === "vite"
+    ? frameworkFromFrontend
+    : input.sources.some((source) => source.path.startsWith("web/app/"))
+    ? "next"
+    : input.sources.some((source) =>
+        source.path === "web/vite.config.ts" ||
+        source.path === "web/vite.config.js" ||
+        source.path === "web/src/main.tsx" ||
+        source.path === "web/src/main.jsx"
+      )
+      ? "vite"
+      : "unknown";
   const manifest: UiTestManifest = {
     schemaVersion: "0.1.0",
     generatorVersion: GENERATOR_VERSION,
-    framework: input.sources.some((source) => source.path.startsWith("web/app/")) ? "next" : "unknown",
-    webRoot: input.sources.some((source) => source.path.startsWith("web/")) ? "web" : "",
+    framework,
+    webRoot,
     defaultBaseUrl: "http://127.0.0.1:3000",
     runtimeUrl: "http://127.0.0.1:3765",
     routes,
@@ -444,7 +852,7 @@ function loadUiScenarios(workspaceRoot: string): UiScenario[] {
   }).scenarios;
 }
 
-function scenarioFailure(name: string, route: string, message: string): UiScenarioResult {
+function scenarioFailure(name: string, route: string, message: string, suggestedCommands?: string[]): UiScenarioResult {
   return {
     name,
     ok: false,
@@ -454,7 +862,7 @@ function scenarioFailure(name: string, route: string, message: string): UiScenar
     failure: {
       kind: "playwright-missing",
       message,
-      suggestedCommands: [
+      suggestedCommands: suggestedCommands ?? [
         "bun add -d @playwright/test",
         "bunx playwright install",
         "forge ui doctor --json",
@@ -490,8 +898,19 @@ function makeRunId(input: unknown): string {
 }
 
 function emptyReport(options: UiCommandOptions, scenarios: UiScenario[], diagnostics: Diagnostic[], started: number): UiRunReport {
+  const context = uiPackageContext(options.workspaceRoot, loadUiManifest(options.workspaceRoot));
+  const setupCommands = [
+    `cd ${context.packageRootLabel}`,
+    ...context.installCommands,
+    "forge ui doctor --json",
+  ];
   const results = scenarios.map((scenario) =>
-    scenarioFailure(scenario.name, scenario.route, "Playwright is not installed; run forge ui doctor for setup details."),
+    scenarioFailure(
+      scenario.name,
+      scenario.route,
+      `Playwright is not available from ${context.packageRootLabel}; run forge ui doctor for setup details.`,
+      setupCommands,
+    ),
   );
   const failed = results.length;
   const report: UiRunReport = {
@@ -530,9 +949,26 @@ function emptyReport(options: UiCommandOptions, scenarios: UiScenario[], diagnos
   return report;
 }
 
-async function importPlaywright(): Promise<unknown | null> {
+async function importPlaywright(workspaceRoot: string, manifest: UiTestManifest): Promise<unknown | null> {
   try {
     const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<unknown>;
+    const context = uiPackageContext(workspaceRoot, manifest);
+    const localCandidates = [
+      join(context.packageRoot, "node_modules", "playwright", "index.js"),
+      join(workspaceRoot, "node_modules", "playwright", "index.js"),
+      join(context.packageRoot, "node_modules", "@playwright", "test", "index.js"),
+      join(workspaceRoot, "node_modules", "@playwright", "test", "index.js"),
+    ];
+    for (const candidate of localCandidates) {
+      if (!nodeFileSystem.exists(candidate)) {
+        continue;
+      }
+      try {
+        return await dynamicImport(pathToFileURL(candidate).href);
+      } catch {
+        // Try the next local package shape before falling back to normal resolution.
+      }
+    }
     return await dynamicImport("playwright");
   } catch {
     return null;
@@ -540,9 +976,21 @@ async function importPlaywright(): Promise<unknown | null> {
 }
 
 async function runWithPlaywright(options: UiCommandOptions, scenarios: UiScenario[], started: number): Promise<UiRunReport> {
-  const playwright = await importPlaywright() as Record<string, { launch: (options: { headless: boolean }) => Promise<unknown> }> | null;
+  const manifest = loadUiManifest(options.workspaceRoot);
+  const context = uiPackageContext(options.workspaceRoot, manifest);
+  const playwright = await importPlaywright(options.workspaceRoot, manifest) as Record<string, { launch: (options: { headless: boolean }) => Promise<unknown> }> | null;
   if (!playwright || !playwright[options.browser]) {
-    const diag = diagnostic("error", "FORGE_UI_PLAYWRIGHT_MISSING", "Playwright is not installed. Add @playwright/test/playwright and install browsers.");
+    const diag = createDiagnostic({
+      severity: "error",
+      code: "FORGE_UI_PLAYWRIGHT_MISSING",
+      message: `Playwright is not available from ${context.packageRootLabel}; install @playwright/test and browser binaries before running UI scenarios.`,
+      fixHint: `Run '${context.installDependencyCommand}' and '${context.installBrowsersCommand}' from ${context.packageRootLabel}.`,
+      suggestedCommands: [
+        `cd ${context.packageRootLabel}`,
+        ...context.installCommands,
+        "forge ui doctor --json",
+      ],
+    });
     return emptyReport(options, scenarios, [diag], started);
   }
 
@@ -554,6 +1002,7 @@ async function runWithPlaywright(options: UiCommandOptions, scenarios: UiScenari
       goto: (url: string, options?: { timeout?: number }) => Promise<unknown>;
       click: (selector: string, options?: { timeout?: number }) => Promise<unknown>;
       fill: (selector: string, value: string, options?: { timeout?: number }) => Promise<unknown>;
+      selectOption: (selector: string, value: string, options?: { timeout?: number }) => Promise<unknown>;
       waitForSelector: (selector: string, options?: { timeout?: number; state?: string }) => Promise<unknown>;
       textContent: (selector: string, options?: { timeout?: number }) => Promise<string | null>;
       screenshot: (options: { path: string; fullPage?: boolean }) => Promise<unknown>;
@@ -610,6 +1059,7 @@ async function executeStep(page: {
   goto: (url: string, options?: { timeout?: number }) => Promise<unknown>;
   click: (selector: string, options?: { timeout?: number }) => Promise<unknown>;
   fill: (selector: string, value: string, options?: { timeout?: number }) => Promise<unknown>;
+  selectOption: (selector: string, value: string, options?: { timeout?: number }) => Promise<unknown>;
   waitForSelector: (selector: string, options?: { timeout?: number; state?: string }) => Promise<unknown>;
   textContent: (selector: string, options?: { timeout?: number }) => Promise<string | null>;
   screenshot: (options: { path: string; fullPage?: boolean }) => Promise<unknown>;
@@ -624,6 +1074,10 @@ async function executeStep(page: {
   }
   if (step.kind === "fill") {
     await page.fill(step.selector, step.value, { timeout: options.timeoutMs });
+    return;
+  }
+  if (step.kind === "selectOption") {
+    await page.selectOption(step.selector, step.value, { timeout: options.timeoutMs });
     return;
   }
   if (step.kind === "expectVisible") {
@@ -793,13 +1247,19 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
   const scenarios = loadUiScenarios(options.workspaceRoot);
   const diagnostics: Diagnostic[] = [];
   const webSources = listWebSourceFiles(options.workspaceRoot, manifest.webRoot);
+  const webImplementationSources = listWebImplementationFiles(options.workspaceRoot, manifest.webRoot);
   const webText = webSources.map((source) => source.text).join("\n");
+  const webImplementationText = webImplementationSources.map((source) => source.text).join("\n");
   const appShellText = webSources
     .filter((source) => !source.path.endsWith("/lib/workos-auth.tsx"))
     .map((source) => source.text)
     .join("\n");
   const scenarioRoutes = new Set(scenarios.map((scenario) => scenario.route));
   const scenarioNames = scenarios.map((scenario) => scenario.name);
+  const runtimeCommandNames = uniqueSorted([
+    ...manifest.routes.flatMap((route) => route.uses.commands),
+    ...scenarios.flatMap((scenario) => scenario.requires.commands),
+  ]);
   const selectorSet = new Set(manifest.selectors);
 
   if (manifest.routes.length === 0) {
@@ -820,7 +1280,11 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
   const hasPolicySensitiveRuntime = scenarios.some((scenario) =>
     scenario.requires.policies.length > 0 || scenario.requires.commands.length > 0
   );
-  if (hasPolicySensitiveRuntime && !scenarioNames.some((name) => name.includes("policy-denied"))) {
+  if (
+    hasPolicySensitiveRuntime &&
+    !scenarioNames.some((name) => name.includes("policy-denied")) &&
+    !/data-forge-testid=["'][^"']*policy-denied/i.test(webText)
+  ) {
     diagnostics.push(diagnostic("warning", "FORGE_UI_POLICY_ERROR_MISSING", "Policy-sensitive UI flows should include a visible policy-denied scenario."));
   }
   if (manifest.routes.length > 0 && !manifest.selectors.some((selector) => selector.includes("data-forge-testid"))) {
@@ -829,8 +1293,87 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
   if (manifest.webRoot && manifest.routes.length > 0 && webSources.length === 0) {
     diagnostics.push(diagnostic("warning", "FORGE_UI_SOURCE_MISSING", `No frontend source files were found under '${manifest.webRoot}' for static UX audit.`));
   }
+  if (manifest.framework === "vite" && manifest.webRoot) {
+    const absoluteBridge = viteBridgeUsesLocalAbsoluteUrl(options.workspaceRoot, manifest.webRoot);
+    if (absoluteBridge && !viteUsesSameOriginProxy(options.workspaceRoot, manifest.webRoot)) {
+      diagnostics.push(createDiagnostic({
+        severity: "warning",
+        code: "FORGE_UI_LOCAL_API_FORWARDING_RISK",
+        message: "Vite frontend bridge points at http://127.0.0.1:3765 without a same-origin proxy; forwarded browsers can fail with 'Failed to fetch'.",
+        file: absoluteBridge,
+        fixHint: "Use a same-origin Forge bridge in dev and add a Vite proxy for /commands, /queries, /live, /health, /auth.md, and /.well-known.",
+        suggestedCommands: ["forge make ui --framework vite --dry-run --json", "forge inspect ui --ergonomics --json"],
+      }));
+    }
+  }
   if (webSources.length > 0 && !webSources.some((source) => hasMainLandmark(source.text))) {
     diagnostics.push(diagnostic("warning", "FORGE_UI_LANDMARK_MISSING", "Frontend source does not appear to include a main/header/nav landmark; add semantic landmarks for scanning and accessibility."));
+  }
+  if (hasProductDemoCopy(stripCollapsibleDetails(appShellText))) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_PRODUCT_COPY_TOO_META",
+      "The primary product UI appears to explain ForgeOS or the demo instead of presenting the user workflow; move framework details into a collapsible dev panel or docs.",
+    ));
+  }
+  const primaryShellText = stripCollapsibleDetails(appShellText);
+  if (hasDemoAuthCopy(primaryShellText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_AUTH_COPY_TOO_DEMO",
+      "The primary auth UI uses demo-login language; label local identities as local/dev mode and reserve demo details for a collapsible diagnostics panel.",
+    ));
+  }
+  if (hasFakeCredentialAuthForm(primaryShellText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_FAKE_AUTH_FORM",
+      "The UI appears to show a password-style login without a real auth provider; use AuthKit/OIDC/JWT for production auth or a clearly labeled local identity selector for dev.",
+    ));
+  }
+  if (hasExposedDevDiagnostics(primaryShellText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_DEV_DIAGNOSTICS_EXPOSED",
+      "Operational Forge/WorkOS diagnostics appear in the primary product surface; move env, seed, claims, capability, and policy-proof details into a collapsible developer panel.",
+    ));
+  }
+  if (runtimeCommandNames.length > 0 && webSources.length > 0 && !hasPrimaryWorkflowAction(webText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_PRIMARY_ACTION_MISSING",
+      "Runtime commands exist but the UI has no obvious primary action; expose the main create/update/approve/request flow as a real form or button.",
+    ));
+  }
+  if (manifest.routes.length > 0 && webSources.length > 0 && !hasWorkflowNavigation(webText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_WORKFLOW_NAV_MISSING",
+      "The UI has routes but no obvious workflow navigation or section anchors; add nav/section structure so users can scan repeated workflows.",
+    ));
+  }
+  if (!hasNetworkRecoveryHint(webText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_NETWORK_ERROR_TOO_GENERIC",
+      "Frontend handles a network/runtime fetch error but does not tell the user how to recover; mention /health, npm run dev, the Vite proxy, CORS, or the runtime URL.",
+    ));
+  }
+  const seedCommandNames = runtimeCommandNames.filter((name) => /seed/i.test(name));
+  const hasDemoSeedCommand = seedCommandNames.some((name) => /demo|sample|fixture|vendorAccess/i.test(name));
+  if (seedCommandNames.length > 0 && !hasSeedExperience(webText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_SEED_ACTION_MISSING",
+      "A seed command exists but the UI has no visible seed/reset/status experience; first-run apps should not look empty or broken.",
+    ));
+  }
+  if (hasDemoSeedCommand && webSources.length > 0 && !hasAutomaticSeedRecovery(webImplementationText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_AUTO_SEED_RECOVERY_MISSING",
+      "A demo/sample seed command exists, but the UI does not appear to auto-recover an empty first-run workspace; seed automatically on empty data or make npm run dev use forge dev --seed.",
+    ));
   }
   for (const source of webSources) {
     if (findFormWithoutLabel(source.text)) {
@@ -858,16 +1401,65 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
       "Tenant-scoped or production-auth app has no obvious sign-in/session/organization UI; local devAuth is not a production auth flow.",
     ));
   }
+  if (hasPolicySensitiveRuntime && webSources.length > 0 && !hasPermissionFeedback(webText)) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_PERMISSION_FEEDBACK_MISSING",
+      "Policy-sensitive UI has no obvious permission-aware disabled state, denial copy, or forbidden-state feedback.",
+    ));
+  }
   if (
     hasWorkOSIntegration(options.workspaceRoot) &&
     manifest.webRoot &&
     webSources.length > 0 &&
-    (!webPackageHasAuthKit(options.workspaceRoot) || !/AuthKitProvider/.test(appShellText) || !/getAccessToken/.test(appShellText))
+    !hasVisibleWorkOSAuthControl(primaryShellText)
+  ) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_WORKOS_AUTH_FLOW_MISSING",
+      "WorkOS integration is present, but the primary UI has no visible WorkOS/AuthKit sign-in/sign-out or /login-/logout-linked control; expose the AuthKit entry and exit path instead of relying on hidden session state.",
+    ));
+  }
+  if (
+    (hasWorkOSIntegration(options.workspaceRoot) || hasProductionAuthMode(options.workspaceRoot)) &&
+    manifest.webRoot &&
+    webSources.length > 0 &&
+    hasLocalIdentityControl(primaryShellText) &&
+    !hasLocalAuthBoundaryCopy(primaryShellText)
+  ) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_LOCAL_AUTH_BOUNDARY_MISSING",
+      "The primary UI exposes local persona/dev-auth controls while production auth is configured; label them as local/dev mode or hide them behind a developer panel so users do not mistake them for real auth.",
+    ));
+  }
+  if (
+    hasWorkOSIntegration(options.workspaceRoot) &&
+    manifest.webRoot &&
+    webSources.length > 0 &&
+    (!webPackageHasAuthKit(options.workspaceRoot) ||
+      (!/AuthKitProvider/.test(appShellText) && !/ForgeWorkOSAuthProvider/.test(appShellText)) ||
+      (!/getToken/.test(webImplementationText) && !/getAccessToken/.test(webImplementationText)))
   ) {
     diagnostics.push(diagnostic(
       "warning",
       "FORGE_UI_WORKOS_AUTHKIT_MISSING",
-      "WorkOS integration is present, but the web app does not appear to mount AuthKitProvider and pass getAccessToken into ForgeProvider.",
+      "WorkOS integration is present, but the web app does not appear to mount AuthKitProvider or pass a WorkOS token provider into ForgeProvider.",
+    ));
+  }
+  if (
+    hasWorkOSIntegration(options.workspaceRoot) &&
+    manifest.webRoot &&
+    webSources.length > 0 &&
+    webPackageHasAuthKit(options.workspaceRoot) &&
+    (/AuthKitProvider/.test(appShellText) || /ForgeWorkOSAuthProvider/.test(appShellText)) &&
+    (/getToken/.test(webImplementationText) || /getAccessToken/.test(webImplementationText)) &&
+    (!webUsesWorkOSSessionClaims(webImplementationText) || !webConfigProxiesWorkOSSession(options.workspaceRoot, manifest.webRoot))
+  ) {
+    diagnostics.push(diagnostic(
+      "warning",
+      "FORGE_UI_WORKOS_SESSION_MISSING",
+      "WorkOS integration is present, but the frontend does not appear to expose normalized /session claims or proxy the AuthKit session routes; add useForgeWorkOSSession and proxy /login, /callback, /logout, and /session.",
     ));
   }
 
@@ -883,20 +1475,46 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
 function runUiDoctor(options: UiCommandOptions): UiCommandResult {
   const manifest = loadUiManifest(options.workspaceRoot);
   const diagnostics: Diagnostic[] = [];
-  const checks = [
-    nodeFileSystem.exists(join(options.workspaceRoot, "node_modules/playwright")) ||
-      nodeFileSystem.exists(join(options.workspaceRoot, "node_modules/@playwright/test")),
-    manifest.routes.length > 0,
-    manifest.scenarios.length > 0,
-  ];
-  if (!checks[0]) {
-    diagnostics.push(diagnostic("error", "FORGE_UI_PLAYWRIGHT_MISSING", "Playwright is not installed; run bun add -d @playwright/test && bunx playwright install."));
+  const packageContext = uiPackageContext(options.workspaceRoot, manifest);
+  if (!packageContext.hasPackageJson) {
+    diagnostics.push(createDiagnostic({
+      severity: "warning",
+      code: "FORGE_UI_PACKAGE_ROOT_MISSING",
+      message: `No package.json found for UI package root ${packageContext.packageRootLabel}; UI smoke setup cannot infer install commands precisely.`,
+      fixHint: "Run from the app root or add a web/package.json before installing Playwright.",
+      suggestedCommands: ["forge inspect frontend --json", "forge ui doctor --json"],
+    }));
   }
-  if (!checks[1]) {
+  if (!packageContext.playwrightInstalled) {
+    diagnostics.push(createDiagnostic({
+      severity: "error",
+      code: "FORGE_UI_PLAYWRIGHT_MISSING",
+      message: packageContext.hasPlaywrightDependency
+        ? `Playwright is declared but node_modules is missing under ${packageContext.packageRootLabel}; install dependencies and browser binaries before running UI scenarios.`
+        : `Playwright is not installed for UI package root ${packageContext.packageRootLabel}.`,
+      fixHint: packageContext.hasPlaywrightDependency
+        ? `Run your package install, then '${packageContext.installBrowsersCommand}'.`
+        : `Run '${packageContext.installDependencyCommand}' and '${packageContext.installBrowsersCommand}'.`,
+      suggestedCommands: packageContext.hasPlaywrightDependency
+        ? [
+            `cd ${packageContext.packageRootLabel}`,
+            packageContext.packageManager === "npm" ? "npm install" : `${packageContext.packageManager} install`,
+            packageContext.installBrowsersCommand,
+          ]
+        : [
+            `cd ${packageContext.packageRootLabel}`,
+            ...packageContext.installCommands,
+          ],
+    }));
+  }
+  if (manifest.routes.length === 0) {
     diagnostics.push(diagnostic("warning", "FORGE_UI_ROUTE_FAILED", "No UI routes are present in uiTestManifest."));
   }
-  if (!checks[2]) {
+  if (manifest.scenarios.length === 0) {
     diagnostics.push(diagnostic("warning", "FORGE_UI_TESTID_MISSING", "No UI scenarios are present in uiScenarios."));
+  }
+  if (manifest.routes.length > 0 && manifest.selectors.length === 0) {
+    diagnostics.push(diagnostic("warning", "FORGE_UI_TESTID_MISSING", "No stable selectors are present in uiTestManifest; browser failures will be harder to repair."));
   }
   return {
     ok: diagnostics.every((item) => item.severity !== "error"),

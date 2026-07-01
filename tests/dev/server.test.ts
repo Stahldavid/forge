@@ -109,6 +109,8 @@ describe("dev server", () => {
               "x-forge-user-id",
               "x-forge-organization-id",
               "x-forge-organization-membership-id",
+              "x-forge-role",
+              "x-forge-roles",
               "x-forge-permissions",
               "x-forge-claims",
             ].join(", "),
@@ -119,6 +121,8 @@ describe("dev server", () => {
         expect(preflight.status).toBe(204);
         expect(allowed).toContain("x-forge-organization-id");
         expect(allowed).toContain("x-forge-organization-membership-id");
+        expect(allowed).toContain("x-forge-role");
+        expect(allowed).toContain("x-forge-roles");
         expect(allowed).toContain("x-forge-permissions");
         expect(allowed).toContain("x-forge-claims");
       } finally {

@@ -22,6 +22,7 @@ import type { AuthMdSubcommand } from "./authmd.ts";
 import type { WorkOSSubcommand } from "./workos.ts";
 import type { DeploySubcommand, DeployTarget } from "./deploy.ts";
 import type { FieldTestSubcommand } from "./field-test.ts";
+import type { SeedSubcommand } from "./seed.ts";
 import type { RlsSubcommand } from "./rls.ts";
 import type { SecuritySubcommand } from "./security.ts";
 import type { DepsSubcommand } from "./deps.ts";
@@ -181,8 +182,24 @@ export type ForgeCommand =
       keep: boolean;
       runtimeProbes: boolean;
       authProbes: boolean;
+      uiProbes: boolean;
+      realistic: boolean;
       timeoutMs: number;
       writeReport?: string;
+      json: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "seed";
+      subcommand: SeedSubcommand;
+      command?: string;
+      args: unknown;
+      url?: string;
+      userId?: string;
+      tenantId?: string;
+      role?: string;
+      permissions?: string[];
+      allTenants?: boolean;
       json: boolean;
       workspaceRoot: string;
     }
@@ -320,6 +337,9 @@ export type ForgeCommand =
       envFile?: string;
       skipStartupConsole: boolean;
       detach: boolean;
+      seed: boolean;
+      seedCommand?: string;
+      seedAllTenants?: boolean;
       lifecycle?: "status" | "stop";
       workspaceRoot: string;
     }
@@ -465,6 +485,7 @@ export const TOP_LEVEL_COMMANDS = [
   "workos",
   "deploy",
   "field-test",
+  "seed",
   "rls",
   "deps",
   "release",
@@ -557,7 +578,7 @@ export const INSPECT_TARGETS: InspectTarget[] = [
   "map",
 ];
 
-const NEW_TEMPLATES: NewTemplateName[] = ["agent-workroom", "b2b-support-web", "minimal-web", "nuxt-web"];
+const NEW_TEMPLATES: NewTemplateName[] = ["agent-workroom", "b2b-support-web", "minimal-web", "nuxt-web", "vendor-access"];
 const NEW_PACKAGE_MANAGERS: NewPackageManager[] = ["bun", "npm", "pnpm", "yarn"];
 const SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = ["compose", "env", "check", "clean"];
 const AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [
@@ -576,8 +597,8 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
 ];
 const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
-const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup"];
-const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "check", "render", "verify"];
+const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup", "prove"];
+const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "check", "render", "package", "verify"];
 const FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = ["create", "run", "report"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
 const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test", "mutate-test"];
@@ -1423,7 +1444,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "workos": {
       const subcommand = rest[0] as WorkOSSubcommand | undefined;
       if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge workos requires subcommand: install, doctor, seed, or setup");
+        errors.push("forge workos requires subcommand: install, doctor, seed, setup, or prove");
         return { command: null, workspaceRoot, errors };
       }
       return {
@@ -1444,10 +1465,10 @@ export function parseCli(argv: string[]): ParsedCli {
     case "deploy": {
       const subcommand = rest[0] as DeploySubcommand | undefined;
       if (!subcommand || !DEPLOY_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge deploy requires subcommand: plan, check, render, or verify");
+        errors.push("forge deploy requires subcommand: plan, check, render, package, or verify");
         return { command: null, workspaceRoot, errors };
       }
-      const targetRaw = parseOptionValue(argv, "--target") ?? (subcommand === "render" ? rest[1] : undefined) ?? "docker";
+      const targetRaw = parseOptionValue(argv, "--target") ?? (subcommand === "render" || subcommand === "package" ? rest[1] : undefined) ?? "docker";
       if (targetRaw !== "docker" && targetRaw !== "forge-cloud") {
         errors.push("forge deploy --target must be docker or forge-cloud");
       }
@@ -1476,7 +1497,8 @@ export function parseCli(argv: string[]): ParsedCli {
       if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {
         errors.push("--timeout-ms must be a positive integer");
       }
-      const authRaw = parseOptionValue(argv, "--auth") ?? "none";
+      const realistic = parseFlag(argv, "--realistic");
+      const authRaw = parseOptionValue(argv, "--auth") ?? (realistic ? "workos" : "none");
       if (authRaw !== "none" && authRaw !== "workos") {
         errors.push("forge field-test --auth must be none or workos");
       }
@@ -1487,7 +1509,7 @@ export function parseCli(argv: string[]): ParsedCli {
           kind: "field-test",
           subcommand,
           name: subcommand === "create" ? rest[1] : undefined,
-          template: parseNewTemplate(parseOptionValue(argv, "--template") ?? "minimal-web"),
+          template: parseNewTemplate(parseOptionValue(argv, "--template") ?? (realistic || authRaw === "workos" ? "vendor-access" : "minimal-web")),
           templates,
           packageManager: parseNewPackageManager(parseOptionValue(argv, "--package-manager") ?? "npm"),
           packageManagers,
@@ -1495,10 +1517,49 @@ export function parseCli(argv: string[]): ParsedCli {
           auth: authRaw as "none" | "workos",
           dryRun: parseFlag(argv, "--dry-run"),
           keep: parseFlag(argv, "--keep"),
-          runtimeProbes: parseFlag(argv, "--runtime-probes"),
-          authProbes: parseFlag(argv, "--auth-probes"),
+          runtimeProbes: parseFlag(argv, "--runtime-probes") || realistic,
+          authProbes: parseFlag(argv, "--auth-probes") || realistic,
+          uiProbes: parseFlag(argv, "--ui-probes") || realistic,
+          realistic,
           timeoutMs: Math.floor(timeoutMs),
           writeReport: parseOptionValue(argv, "--write-report") ?? parseOptionValue(argv, "--file"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "seed": {
+      const subcommandRaw = (rest[0] ?? "status") as SeedSubcommand;
+      if (!["status", "dev", "reset"].includes(subcommandRaw)) {
+        errors.push("forge seed requires subcommand: status, dev, or reset");
+      }
+      const argsRaw = parseOptionValue(argv, "--args");
+      let args: unknown = {};
+      if (argsRaw !== undefined) {
+        try {
+          args = JSON.parse(argsRaw);
+        } catch {
+          errors.push("--args must be valid JSON");
+        }
+      }
+      const permissionsRaw = parseOptionValue(argv, "--permissions");
+      return {
+        command: {
+          kind: "seed",
+          subcommand: subcommandRaw,
+          command: parseOptionValue(argv, "--command"),
+          args,
+          url: parseOptionValue(argv, "--url"),
+          userId: parseOptionValue(argv, "--user-id"),
+          tenantId: parseOptionValue(argv, "--tenant-id") ?? parseOptionValue(argv, "--tenant"),
+          role: parseOptionValue(argv, "--role"),
+          permissions: permissionsRaw
+            ?.split(",")
+            .map((permission) => permission.trim())
+            .filter(Boolean),
+          allTenants: parseFlag(argv, "--all-tenants"),
           json: parseFlag(argv, "--json"),
           workspaceRoot,
         },
@@ -2618,12 +2679,22 @@ export function parseCli(argv: string[]): ParsedCli {
       }
       const webPortRaw = parseOptionValue(argv, "--web-port");
       const webPort = webPortRaw !== undefined ? Number(webPortRaw) : undefined;
-      if (webPortRaw !== undefined && (!Number.isFinite(webPort) || webPort! < 1)) {
-        errors.push("--web-port must be a positive integer");
+      if (webPortRaw !== undefined && (!Number.isFinite(webPort) || webPort! < 0)) {
+        errors.push("--web-port must be a non-negative integer");
       }
       const aiMode = parseOptionValue(argv, "--ai");
       const mockAi =
         parseFlag(argv, "--mock-ai") || aiMode === "mock" || process.env.FORGE_MOCK_AI === "1";
+      const seed = parseFlag(argv, "--seed");
+      if (seed && parseFlag(argv, "--once")) {
+        errors.push("forge dev --seed cannot be combined with --once; use forge dev --seed or forge seed dev");
+      }
+      if (seed && parseFlag(argv, "--web-only")) {
+        errors.push("forge dev --seed cannot be combined with --web-only because seeding requires the API runtime");
+      }
+      if (parseFlag(argv, "--all-tenants") && !seed) {
+        errors.push("forge dev --all-tenants requires --seed; use forge dev --seed --all-tenants");
+      }
       return {
         command: {
           kind: "dev",
@@ -2649,6 +2720,9 @@ export function parseCli(argv: string[]): ParsedCli {
           envFile: parseOptionValue(argv, "--env-file"),
           skipStartupConsole: parseFlag(argv, "--skip-startup-console"),
           detach: parseFlag(argv, "--detach"),
+          seed,
+          seedCommand: parseOptionValue(argv, "--seed-command"),
+          seedAllTenants: parseFlag(argv, "--all-tenants"),
           lifecycle,
           workspaceRoot,
         },
@@ -2993,6 +3067,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--keep",
     "--runtime-probes",
     "--auth-probes",
+    "--ui-probes",
+    "--realistic",
     "--write-report",
     "--tenant-scoped",
     "--field",
@@ -3013,6 +3089,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--current",
     "--trigger",
     "--component",
+    "--command",
     "--framework",
     "--package",
     "--action",
@@ -3105,6 +3182,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--tenant",
     "--other-tenant",
     "--role",
+    "--permissions",
     "--strict-policies",
     "--strict",
     "--strict-secrets",
@@ -3133,6 +3211,9 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--field-test",
     "--commit-ready",
     "--detach",
+    "--seed",
+    "--seed-command",
+    "--all-tenants",
     "--ergonomics",
     "--with-web",
     "--no-web",
@@ -3192,6 +3273,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--proof" ||
         arg === "--trigger" ||
         arg === "--component" ||
+        arg === "--command" ||
         arg === "--package" ||
         arg === "--action" ||
         arg === "--since" ||
@@ -3253,6 +3335,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--other-tenant" ||
         arg === "--tenant-id" ||
         arg === "--role" ||
+        arg === "--permissions" ||
         arg === "--strict-policies" ||
         arg === "--env-file" ||
         arg === "--ai" ||

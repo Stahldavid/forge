@@ -258,6 +258,7 @@ function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof 
     nextActions: [
       "forge workos doctor --json",
       "forge workos seed --file workos-seed.yml --dry-run --json",
+      "forge workos prove --file workos-seed.yml --json",
       "run an HTTP E2E with Acme and Globex tokens before production",
     ],
   });

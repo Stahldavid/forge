@@ -530,6 +530,7 @@ See [AI — Tools And Agents](ai.md#tools-and-agents).
 | `FORGE_GUARD_VIOLATION` | Import guards | Move code to action; extract-action |
 | `FORGE_UNKNOWN_ALIAS` | forge add | Use supported alias |
 | `FORGE_ADD_INSTALL_FAILED` | forge add | Fix npm install |
+| `FORGE_ADD_PACKAGE_ALREADY_DECLARED` | forge add | Informational; package exists, generation continues |
 | `FORGE_LOCK_INTEGRITY` | generate/add | Regenerate; fix lock conflicts |
 | `FORGE_REFACTOR_PATCH_UNSAFE` | codemod | Adjust source shape; dry-run again |
 | `FORGE_REFACTOR_TARGET_NOT_FOUND` | codemod | Check names/paths |

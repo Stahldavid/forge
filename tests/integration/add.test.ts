@@ -15,6 +15,7 @@ import {
   cleanupWorkspace,
   createFailingPmAdapter,
   createFixturePmAdapter,
+  seedInstalledPackage,
   scaffoldAddWorkspace,
 } from "./helpers.ts";
 
@@ -537,6 +538,7 @@ describe("forge add integration", () => {
       expect(json.nextActions as string[]).toContain(
         "forge workos seed --file workos-seed.yml --json",
       );
+      expect(json.nextActions as string[]).toContain("forge workos prove --file workos-seed.yml --json");
 
       const matrix = JSON.parse(
         stripDeterministicHeader(
@@ -787,12 +789,311 @@ describe("forge add integration", () => {
       const bridge = readFileSync(join(workspace, "web/src/lib/workos-auth.tsx"), "utf8");
       expect(bridge).toContain("AuthKitProvider");
       expect(bridge).toContain("getAccessToken");
+      expect(bridge).toContain("useForgeWorkOSSession");
+      expect(bridge).toContain("fetch('/session'");
       expect(bridge).toContain("ForgeProvider");
       expect(bridge).toContain("url={forgeUrl}");
       const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
       expect(main).toContain('import { ForgeWorkOSAuthProvider } from "./lib/workos-auth";');
       expect(main).toContain("<ForgeWorkOSAuthProvider>");
       expect(main).not.toContain("devAuth");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("adds WorkOS AuthKit provider around the vendor-access custom root", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-vendor-access-web");
+    try {
+      mkdirSync(join(workspace, "web", "src", "lib"), { recursive: true });
+      writeFileSync(
+        join(workspace, "web", "package.json"),
+        JSON.stringify({ name: "forge-vendor-web", private: true, type: "module", dependencies: { react: "^19.0.0" } }, null, 2),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "lib", "forge.ts"),
+        "export const forgeUrl = ''; export function ForgeProvider(props: { children: unknown }) { return props.children; }\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "main.tsx"),
+        [
+          'import { FormEvent, StrictMode, type ReactNode, useState } from "react";',
+          'import { createRoot } from "react-dom/client";',
+          'import { App, type LocalPersona } from "./App";',
+          'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+          "",
+          "const personas: LocalPersona[] = [];",
+          "function Root() {",
+          "  const [signedInPersonaId, setSignedInPersonaId] = useState<string | null>(null);",
+          "  const signedInPersona = { email: 'riley@acme.example', organizationId: 'org_acme', role: 'owner', permissions: [] } as LocalPersona;",
+          "  if (!signedInPersonaId) return <main>Sign in</main>;",
+          "  return (",
+          "    <LocalForgeProvider persona={signedInPersona}>",
+          "      <App",
+          "        persona={signedInPersona}",
+          "        personas={personas}",
+          "        onPersonaChange={() => undefined}",
+          "        onSignOut={() => setSignedInPersonaId(null)}",
+          "      />",
+          "    </LocalForgeProvider>",
+          "  );",
+          "}",
+          "function LocalForgeProvider({ persona, children }: { persona: LocalPersona; children: ReactNode }) {",
+          "  return <ForgeProvider url={forgeUrl} devAuth={{ userId: persona.email }}>{children}</ForgeProvider>;",
+          "}",
+          'createRoot(document.getElementById("root")!).render(<StrictMode><Root /></StrictMode>);',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFixturePmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.changed).toContain("web/src/main.tsx");
+      const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
+      expect(main).toContain('import { ForgeWorkOSAuthProvider, hasWorkOSBrowserConfig, useForgeWorkOSSession, useWorkOSAuth } from "./lib/workos-auth";');
+      expect(main).toContain("const app = (");
+      expect(main).toContain("<ForgeWorkOSAuthProvider>{app}</ForgeWorkOSAuthProvider>");
+      expect(main).toContain("<LocalForgeProvider persona={signedInPersona}>{app}</LocalForgeProvider>");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("adds WorkOS AuthKit root before vendor-access local identity login", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-vendor-access-login");
+    try {
+      mkdirSync(join(workspace, "web", "src", "lib"), { recursive: true });
+      writeFileSync(
+        join(workspace, "web", "package.json"),
+        JSON.stringify({ name: "forge-vendor-web", private: true, type: "module", dependencies: { react: "^19.0.0" } }, null, 2),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "lib", "forge.ts"),
+        "export const forgeUrl = ''; export function ForgeProvider(props: { children: unknown }) { return props.children; }\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "main.tsx"),
+        [
+          'import { StrictMode, type ReactNode, useMemo, useState } from "react";',
+          'import { createRoot } from "react-dom/client";',
+          'import { App, type LocalPersona } from "./App";',
+          'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+          "",
+          "const personas: LocalPersona[] = [];",
+          "function Root() {",
+          "  const [personaId, setPersonaId] = useState('acme-owner');",
+          "  const [signedInPersonaId, setSignedInPersonaId] = useState<string | null>(null);",
+          "  const signedInPersona = signedInPersonaId ? { email: 'riley@acme.example', organizationId: 'org_acme', role: 'owner', permissions: [] } as LocalPersona : null;",
+          "  if (!signedInPersona) {",
+          "    return <LoginScreen personas={personas} selectedPersonaId={personaId} onPersonaChange={setPersonaId} onSignIn={() => setSignedInPersonaId(personaId)} />;",
+          "  }",
+          "  return (",
+          "    <LocalForgeProvider persona={signedInPersona}>",
+          "      <App persona={signedInPersona} personas={personas} onPersonaChange={() => undefined} onSignOut={() => setSignedInPersonaId(null)} />",
+          "    </LocalForgeProvider>",
+          "  );",
+          "}",
+          "function LoginScreen(_props: { personas: LocalPersona[]; selectedPersonaId: string; onPersonaChange: (personaId: string) => void; onSignIn: () => void }) {",
+          "  const _permissions = useMemo(() => [], []);",
+          "  return <main><button type=\"button\" onClick={_props.onSignIn}>Continue with local identity</button></main>;",
+          "}",
+          "function LocalForgeProvider({ persona, children }: { persona: LocalPersona; children: ReactNode }) {",
+          "  return <ForgeProvider url={forgeUrl} devAuth={{ userId: persona.email }}>{children}</ForgeProvider>;",
+          "}",
+          'createRoot(document.getElementById("root")!).render(<StrictMode><Root /></StrictMode>);',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFixturePmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.changed).toContain("web/src/main.tsx");
+      const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
+      expect(main).toContain('import { ForgeWorkOSAuthProvider, hasWorkOSBrowserConfig, useForgeWorkOSSession, useWorkOSAuth } from "./lib/workos-auth";');
+      expect(main).toContain("if (hasWorkOSBrowserConfig())");
+      expect(main).toContain("function WorkOSVendorAccessRoot()");
+      expect(main).toContain("Sign in with WorkOS");
+      expect(main).toContain("const workosSession = useForgeWorkOSSession();");
+      expect(main).toContain("const claims = workosSession.session?.claims;");
+      expect(main).toContain("Organization, role, and permissions come from your signed-in workspace session");
+      expect(main).toContain("const persona: LocalPersona");
+      expect(main).not.toContain("const persona: DemoPersona");
+      expect(main.indexOf("if (hasWorkOSBrowserConfig())")).toBeLessThan(main.indexOf("if (!signedInPersona)"));
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("continues WorkOS recipe generation when packages are already declared", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-predeclared");
+    try {
+      const rootPkg = JSON.parse(readFileSync(join(workspace, "package.json"), "utf8")) as {
+        dependencies?: Record<string, string>;
+      };
+      rootPkg.dependencies = {
+        ...rootPkg.dependencies,
+        "@workos-inc/node": "^10.7.0",
+      };
+      writeFileSync(join(workspace, "package.json"), `${JSON.stringify(rootPkg, null, 2)}\n`, "utf8");
+
+      mkdirSync(join(workspace, "web", "src", "lib"), { recursive: true });
+      writeFileSync(
+        join(workspace, "web", "package.json"),
+        JSON.stringify(
+          {
+            name: "forge-workos-web",
+            private: true,
+            type: "module",
+            dependencies: {
+              react: "^19.0.0",
+              "@workos-inc/authkit-react": "^1.0.0",
+            },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "lib", "forge.ts"),
+        "export const forgeUrl = ''; export function ForgeProvider(props: { children: unknown; url?: string; devAuth?: boolean }) { return props.children; }\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "main.tsx"),
+        [
+          'import { createRoot } from "react-dom/client";',
+          'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+          "function App() { return <main>App</main>; }",
+          'createRoot(document.getElementById("root")!).render(<ForgeProvider url={forgeUrl} devAuth><App /></ForgeProvider>);',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFailingPmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.errors).toEqual([]);
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_ADD_PACKAGE_ALREADY_DECLARED");
+      expect(result.changed).toContain("web/src/lib/workos-auth.tsx");
+      expect(result.changed).toContain("web/src/main.tsx");
+      expect(result.changed).not.toContain("package.json");
+      expect(result.changed).not.toContain("web/package.json");
+      expect(readFileSync(join(workspace, "web", "src", "main.tsx"), "utf8")).toContain(
+        "<ForgeWorkOSAuthProvider>",
+      );
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("continues WorkOS recipe generation when AuthKit is already installed but not declared", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-authkit-installed");
+    try {
+      const rootPkg = JSON.parse(readFileSync(join(workspace, "package.json"), "utf8")) as {
+        dependencies?: Record<string, string>;
+      };
+      rootPkg.dependencies = {
+        ...rootPkg.dependencies,
+        "@workos-inc/node": "^10.7.0",
+      };
+      writeFileSync(join(workspace, "package.json"), `${JSON.stringify(rootPkg, null, 2)}\n`, "utf8");
+
+      mkdirSync(join(workspace, "web", "src", "lib"), { recursive: true });
+      writeFileSync(
+        join(workspace, "web", "package.json"),
+        JSON.stringify(
+          {
+            name: "forge-workos-web",
+            private: true,
+            type: "module",
+            dependencies: {
+              react: "^19.0.0",
+            },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      seedInstalledPackage(join(workspace, "web"), "@workos-inc/authkit-react", "1.2.3");
+      writeFileSync(
+        join(workspace, "web", "src", "lib", "forge.ts"),
+        "export const forgeUrl = ''; export function ForgeProvider(props: { children: unknown; url?: string; devAuth?: boolean }) { return props.children; }\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web", "src", "main.tsx"),
+        [
+          'import { createRoot } from "react-dom/client";',
+          'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+          "function App() { return <main>App</main>; }",
+          'createRoot(document.getElementById("root")!).render(<ForgeProvider url={forgeUrl} devAuth><App /></ForgeProvider>);',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        mode: "integration",
+        pmAdapter: createFailingPmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.errors).toEqual([]);
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_ADD_PACKAGE_ALREADY_INSTALLED");
+      expect(result.changed).toContain("web/package.json");
+      expect(result.changed).toContain("web/src/lib/workos-auth.tsx");
+      expect(result.changed).toContain("web/src/main.tsx");
+      const webPkg = JSON.parse(readFileSync(join(workspace, "web", "package.json"), "utf8")) as {
+        dependencies?: Record<string, string>;
+      };
+      expect(webPkg.dependencies?.["@workos-inc/authkit-react"]).toBe("^1.2.3");
+      expect(readFileSync(join(workspace, "web", "src", "main.tsx"), "utf8")).toContain(
+        "<ForgeWorkOSAuthProvider>",
+      );
     } finally {
       cleanupWorkspace(workspace);
     }

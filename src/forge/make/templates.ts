@@ -512,8 +512,14 @@ export default function ${pascal}AiPage() {
 }
 
 export function renderWebBridge(): string {
-  return `export const forgeUrl =
-  import.meta.env.VITE_FORGE_URL ?? "http://127.0.0.1:3765";
+  return `const configuredForgeUrl = import.meta.env.VITE_FORGE_URL as string | undefined;
+const useSameOrigin =
+  typeof window !== "undefined" &&
+  (!configuredForgeUrl ||
+    configuredForgeUrl.includes("127.0.0.1") ||
+    configuredForgeUrl.includes("localhost"));
+
+export const forgeUrl = useSameOrigin ? "" : (configuredForgeUrl ?? "");
 
 export { api } from "../../../src/forge/_generated/api";
 export { createForgeClient, ForgeError } from "../../../src/forge/_generated/client";
@@ -521,6 +527,7 @@ export {
   ForgeProvider,
   useAuth,
   useCommand,
+  useCommandResult,
   useForgeClient,
   useLiveQuery,
   useQuery,
@@ -529,8 +536,14 @@ export {
 }
 
 export function renderWebRootBridge(): string {
-  return `export const forgeUrl =
-  process.env.NEXT_PUBLIC_FORGE_URL ?? "http://127.0.0.1:3765";
+  return `const configuredForgeUrl = process.env.NEXT_PUBLIC_FORGE_URL;
+const useSameOrigin =
+  typeof window !== "undefined" &&
+  (!configuredForgeUrl ||
+    configuredForgeUrl.includes("127.0.0.1") ||
+    configuredForgeUrl.includes("localhost"));
+
+export const forgeUrl = useSameOrigin ? "" : (configuredForgeUrl ?? "");
 
 export { api } from "../../src/forge/_generated/api";
 export { createForgeClient, ForgeError } from "../../src/forge/_generated/client";
@@ -538,6 +551,7 @@ export {
   ForgeProvider,
   useAuth,
   useCommand,
+  useCommandResult,
   useForgeClient,
   useLiveQuery,
   useQuery,
@@ -559,6 +573,46 @@ createRoot(document.getElementById("root")!).render(
     </ForgeProvider>
   </StrictMode>,
 );
+`;
+}
+
+export function renderViteConfig(): string {
+  return `import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+const forgeApiUrl = process.env.VITE_FORGE_URL ?? "http://127.0.0.1:3765";
+
+const forgeProxyPaths = [
+  "/.well-known",
+  "/ai",
+  "/auth.md",
+  "/callback",
+  "/commands",
+  "/entries",
+  "/external",
+  "/health",
+  "/live",
+  "/login",
+  "/logout",
+  "/session",
+  "/queries",
+  "/webhooks",
+];
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: Object.fromEntries(
+      forgeProxyPaths.map((path) => [
+        path,
+        {
+          target: forgeApiUrl,
+          changeOrigin: true,
+        },
+      ]),
+    ),
+  },
+});
 `;
 }
 

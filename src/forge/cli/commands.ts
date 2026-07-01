@@ -225,6 +225,11 @@ import {
   runFieldTestCommand,
 } from "./field-test.ts";
 import {
+  formatSeedHuman,
+  formatSeedJson,
+  runSeedCommand,
+} from "./seed.ts";
+import {
   formatLastHuman,
   formatLastJson,
   runLastCommand,
@@ -1966,6 +1971,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       process.stdout.write(command.json ? formatFieldTestJson(result) : formatFieldTestHuman(result));
       return result.exitCode;
     }
+    case "seed": {
+      const result = await runSeedCommand(command);
+      process.stdout.write(command.json ? formatSeedJson(result) : formatSeedHuman(result));
+      return result.exitCode;
+    }
     case "rls": {
       const result = await runRlsCommand(command);
       if (command.json) {
@@ -2525,6 +2535,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         envFile: command.envFile,
         skipStartupConsole: command.skipStartupConsole,
         detach: command.detach,
+        seed: command.seed,
+        seedCommand: command.seedCommand,
+        seedAllTenants: command.seedAllTenants,
         lifecycle: command.lifecycle,
       });
       return result.exitCode;

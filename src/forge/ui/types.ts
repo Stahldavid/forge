@@ -45,6 +45,7 @@ export type UiScenarioStep =
   | { kind: "goto"; path: string }
   | { kind: "click"; selector: string }
   | { kind: "fill"; selector: string; value: string }
+  | { kind: "selectOption"; selector: string; value: string }
   | { kind: "expectText"; selector: string; text: string; timeoutMs?: number }
   | { kind: "expectVisible"; selector: string; timeoutMs?: number }
   | { kind: "expectNotVisible"; selector: string; timeoutMs?: number }
@@ -84,7 +85,7 @@ export interface UiRoute {
 export interface UiTestManifest {
   schemaVersion: "0.1.0";
   generatorVersion: string;
-  framework: "next" | "react" | "unknown";
+  framework: "next" | "nuxt" | "react" | "static" | "vite" | "unknown";
   webRoot: string;
   defaultBaseUrl: string;
   runtimeUrl: string;

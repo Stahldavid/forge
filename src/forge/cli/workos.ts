@@ -2,10 +2,11 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 
-export type WorkOSSubcommand = "install" | "doctor" | "seed" | "setup";
+export type WorkOSSubcommand = "install" | "doctor" | "seed" | "setup" | "prove";
 
 export interface WorkOSCommandOptions {
   subcommand: WorkOSSubcommand;
@@ -26,7 +27,7 @@ export interface WorkOSCheck {
 
 export interface WorkOSCommandResult {
   ok: boolean;
-  kind: "workos-install" | "workos-doctor" | "workos-seed" | "workos-setup";
+  kind: "workos-install" | "workos-doctor" | "workos-seed" | "workos-setup" | "workos-prove";
   checks: WorkOSCheck[];
   command?: string[];
   applied?: boolean;
@@ -48,6 +49,7 @@ export type WorkOSCommandRunner = (
 
 const DEFAULT_SEED_FILE = "workos-seed.yml";
 const GENERATED_SEED_FILE = `${GENERATED_DIR}/integrations/workos/workos-seed.yml`;
+const WORKOS_SEED_STATE_FILE = ".workos-seed-state.json";
 
 function runExternalCommand(
   command: string[],
@@ -98,6 +100,22 @@ function includesAll(haystack: string, needles: string[]): boolean {
   return needles.every((needle) => haystack.includes(needle));
 }
 
+function webAuthSessionProxyConfigured(workspaceRoot: string): boolean {
+  const configText = [
+    "web/vite.config.ts",
+    "web/vite.config.mts",
+    "web/vite.config.js",
+    "web/vite.config.mjs",
+    "web/next.config.ts",
+    "web/next.config.mjs",
+    "web/next.config.js",
+  ].map((path) => readText(workspaceRoot, path)).join("\n");
+  if (!configText.trim()) {
+    return false;
+  }
+  return includesAll(configText, ["/login", "/callback", "/logout", "/session"]);
+}
+
 function uniqueSorted(values: Iterable<string>): string[] {
   return [...new Set([...values].filter(Boolean))].sort();
 }
@@ -119,6 +137,18 @@ export interface WorkOSSeedSummary {
   corsOrigins: string[];
   homepageUrl?: string;
   webhookEndpoints: Array<{ url: string; events: string[] }>;
+  diagnostics: string[];
+}
+
+export interface WorkOSSeedStateSummary {
+  exists: boolean;
+  valid: boolean;
+  path: string;
+  matchesSeedHash: boolean | null;
+  seedHash?: string;
+  currentSeedHash?: string;
+  appliedAt?: string;
+  alreadyApplied?: boolean;
   diagnostics: string[];
 }
 
@@ -361,7 +391,41 @@ export function missingValues(expected: string[], actual: string[]): string[] {
   return expected.filter((value) => !actualSet.has(value));
 }
 
-function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
+export interface WorkOSDoctorData {
+  seed: WorkOSSeedSummary;
+  seedState: WorkOSSeedStateSummary;
+  activePermissions: string[];
+  expectedResourceTypes: string[];
+  missingSeedPermissions: string[];
+  missingSeedResources: string[];
+  unusedSeedPermissions: string[];
+}
+
+function collectWorkOSDoctorData(
+  workspaceRoot: string,
+  preferredSeedPath = DEFAULT_SEED_FILE,
+): WorkOSDoctorData {
+  const seed = parseSeedFile(workspaceRoot, preferredSeedPath);
+  const seedState = readWorkOSSeedState(workspaceRoot, seed);
+  const activePermissions = collectPolicyPermissions(workspaceRoot);
+  const expectedResourceTypes = collectExpectedResourceTypes(workspaceRoot);
+  const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
+  const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
+  const unusedSeedPermissions = activePermissions.length === 0
+    ? []
+    : seed.permissions.filter((permission) => !activePermissions.includes(permission));
+  return {
+    seed,
+    seedState,
+    activePermissions,
+    expectedResourceTypes,
+    missingSeedPermissions,
+    missingSeedResources,
+    unusedSeedPermissions,
+  };
+}
+
+function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_SEED_FILE): WorkOSCheck[] {
   const packageJson = readJson(workspaceRoot, "package.json") as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -386,11 +450,15 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     ...(webPackageJson?.devDependencies ?? {}),
   };
   const hasWeb = webPackageJson !== null;
-  const seed = parseSeedFile(workspaceRoot);
-  const activePermissions = collectPolicyPermissions(workspaceRoot);
-  const expectedResourceTypes = collectExpectedResourceTypes(workspaceRoot);
-  const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
-  const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
+  const {
+    seed,
+    seedState,
+    activePermissions,
+    expectedResourceTypes,
+    missingSeedPermissions,
+    missingSeedResources,
+    unusedSeedPermissions,
+  } = collectWorkOSDoctorData(workspaceRoot, preferredSeedPath);
   const realEnv = readRealEnv(workspaceRoot);
   const authMode = realEnv.FORGE_AUTH_MODE;
   const productionAuthEnabled = authMode === "oidc" || authMode === "jwt";
@@ -409,6 +477,15 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     readText(workspaceRoot, "web/src/main.tsx"),
     readText(workspaceRoot, "web/src/App.tsx"),
   ].join("\n");
+  const appShellUsesWorkOSProvider =
+    frontendAppShell.includes("ForgeWorkOSAuthProvider") ||
+    frontendAppShell.includes("AuthKitProvider");
+  const authBridgeProvidesToken =
+    generatedFrontendAuthBridge.includes("getToken") ||
+    generatedFrontendAuthBridge.includes("getAccessToken");
+  const authBridgeProvidesSessionClaims =
+    includesAll(generatedFrontendAuthBridge, ["useForgeWorkOSSession", "/session", "claims"]);
+  const authSessionProxyConfigured = webAuthSessionProxyConfigured(workspaceRoot);
 
   return [
     {
@@ -464,16 +541,27 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
     },
     {
       name: "browser-authkit-bridge",
-      ok: !hasWeb || includesAll(generatedFrontendAuthBridge, ["AuthKitProvider", "getAccessToken", "ForgeProvider"]),
+      ok: !hasWeb || includesAll(generatedFrontendAuthBridge, ["AuthKitProvider", "ForgeProvider"]) &&
+        authBridgeProvidesToken &&
+        authBridgeProvidesSessionClaims,
       detail: hasWeb
-        ? "generated web/src/lib/workos-auth.tsx bridge provides AuthKitProvider and ForgeProvider token wiring"
+        ? "generated web/src/lib/workos-auth.tsx bridge provides AuthKitProvider, ForgeProvider token wiring, and normalized /session claims"
+        : "no web workspace detected",
+    },
+    {
+      name: "browser-authkit-session-proxy",
+      ok: !hasWeb || authSessionProxyConfigured,
+      detail: hasWeb
+        ? authSessionProxyConfigured
+          ? "web dev config proxies /login, /callback, /logout, and /session to the Forge API runtime"
+          : "web dev config should proxy /session with /login, /callback, and /logout so AuthKit UI can read Forge-normalized claims"
         : "no web workspace detected",
     },
     {
       name: "browser-authkit-provider",
-      ok: !hasWeb || includesAll(frontendAppShell, ["AuthKitProvider", "getAccessToken", "ForgeProvider"]),
+      ok: !hasWeb || appShellUsesWorkOSProvider,
       detail: hasWeb
-        ? "web app shell mounts AuthKitProvider and forwards getAccessToken to ForgeProvider"
+        ? "web app shell mounts ForgeWorkOSAuthProvider or AuthKitProvider"
         : "no web workspace detected",
     },
     {
@@ -499,6 +587,15 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
         : `seed missing active policy permission(s): ${missingSeedPermissions.join(", ")}`,
     },
     {
+      name: "seed-unused-permissions",
+      ok: true,
+      detail: activePermissions.length === 0
+        ? "no active policy permissions were discovered; unused seed permission check skipped"
+        : unusedSeedPermissions.length === 0
+          ? "seed permissions are all referenced by active policies"
+          : `seed includes permission(s) not referenced by active policies: ${unusedSeedPermissions.join(", ")}`,
+    },
+    {
       name: "seed-resource-types",
       ok: seed.resourceTypes.length > 0 &&
         (expectedResourceTypes.length === 0 || missingSeedResources.length === 0),
@@ -512,6 +609,17 @@ function collectWorkOSChecks(workspaceRoot: string): WorkOSCheck[] {
       detail: seed.redirectUris.length > 0 && seed.corsOrigins.length > 0 && Boolean(seed.homepageUrl)
         ? `seed config contains ${seed.redirectUris.length} redirect URI(s), ${seed.corsOrigins.length} CORS origin(s), and homepage URL`
         : "seed config should include redirect_uris, cors_origins, and homepage_url for no-dashboard setup",
+    },
+    {
+      name: "seed-state",
+      ok: true,
+      detail: !seedState.exists
+        ? `${WORKOS_SEED_STATE_FILE} not found; hosted WorkOS seed has not been proven locally yet`
+        : seedState.matchesSeedHash
+          ? `${WORKOS_SEED_STATE_FILE} matches ${seed.path}${seedState.alreadyApplied ? " and records an already-applied hosted seed" : ""}`
+          : seedState.valid
+            ? `${WORKOS_SEED_STATE_FILE} exists but does not match current ${seed.path}; rerun forge workos seed --file ${seed.path} --json after reviewing seed changes`
+            : `${WORKOS_SEED_STATE_FILE} exists but is invalid: ${seedState.diagnostics.join("; ")}`,
     },
     {
       name: "authkit-routes",
@@ -591,9 +699,11 @@ function seedData(input: {
   activePermissions: string[];
   expectedResourceTypes: string[];
   unusedSeedPermissions: string[];
+  seedState?: WorkOSSeedStateSummary;
   dryRun?: boolean;
   seedFileSanitized?: boolean;
   seedAlreadyApplied?: boolean;
+  seedStateFile?: string;
   configActions?: WorkOSConfigActionResult[];
   nextCommand?: string;
 }): Record<string, unknown> {
@@ -602,12 +712,98 @@ function seedData(input: {
     activePermissions: input.activePermissions,
     expectedResourceTypes: input.expectedResourceTypes,
     unusedSeedPermissions: input.unusedSeedPermissions,
+    ...(input.seedState ? { seedState: input.seedState } : {}),
     dryRun: input.dryRun ?? false,
     seedFileSanitized: input.seedFileSanitized ?? false,
     seedAlreadyApplied: input.seedAlreadyApplied ?? false,
+    ...(input.seedStateFile ? { seedStateFile: input.seedStateFile } : {}),
     configActions: input.configActions ?? [],
     ...(input.nextCommand ? { nextCommand: input.nextCommand } : {}),
   };
+}
+
+function hashSeedFile(workspaceRoot: string, path: string): string {
+  return createHash("sha256")
+    .update(readText(workspaceRoot, path))
+    .digest("hex");
+}
+
+function readWorkOSSeedState(workspaceRoot: string, seed: WorkOSSeedSummary): WorkOSSeedStateSummary {
+  const path = WORKOS_SEED_STATE_FILE;
+  const absolute = join(workspaceRoot, path);
+  if (!existsSync(absolute)) {
+    return {
+      exists: false,
+      valid: false,
+      path,
+      matchesSeedHash: null,
+      diagnostics: [`${path} is missing; run forge workos seed --file ${seed.path} --json after dry-run validation`],
+    };
+  }
+  try {
+    const parsed = JSON.parse(readFileSync(absolute, "utf8")) as {
+      seedHash?: unknown;
+      appliedAt?: unknown;
+      alreadyApplied?: unknown;
+    };
+    const diagnostics: string[] = [];
+    const seedHash = typeof parsed.seedHash === "string" ? parsed.seedHash : undefined;
+    const currentSeedHash = seed.exists ? hashSeedFile(workspaceRoot, seed.path) : undefined;
+    if (!seedHash) diagnostics.push("seed state is missing seedHash");
+    if (typeof parsed.appliedAt !== "string") diagnostics.push("seed state is missing appliedAt");
+    if (typeof parsed.alreadyApplied !== "boolean") diagnostics.push("seed state is missing alreadyApplied");
+    return {
+      exists: true,
+      valid: diagnostics.length === 0,
+      path,
+      matchesSeedHash: seedHash && currentSeedHash ? seedHash === currentSeedHash : null,
+      ...(seedHash ? { seedHash } : {}),
+      ...(currentSeedHash ? { currentSeedHash } : {}),
+      ...(typeof parsed.appliedAt === "string" ? { appliedAt: parsed.appliedAt } : {}),
+      ...(typeof parsed.alreadyApplied === "boolean" ? { alreadyApplied: parsed.alreadyApplied } : {}),
+      diagnostics,
+    };
+  } catch (error) {
+    return {
+      exists: true,
+      valid: false,
+      path,
+      matchesSeedHash: null,
+      diagnostics: [`failed to parse ${path}: ${error instanceof Error ? error.message : String(error)}`],
+    };
+  }
+}
+
+function writeWorkOSSeedState(input: {
+  workspaceRoot: string;
+  seed: WorkOSSeedSummary;
+  command: string[];
+  alreadyApplied: boolean;
+  status: number | null;
+}): string {
+  const payload = {
+    schemaVersion: "0.1.0",
+    provider: "workos",
+    kind: "seed-state",
+    seedFile: input.seed.path,
+    seedHash: hashSeedFile(input.workspaceRoot, input.seed.path),
+    appliedAt: new Date().toISOString(),
+    alreadyApplied: input.alreadyApplied,
+    exitStatus: input.status,
+    command: input.command,
+    permissions: input.seed.permissions,
+    roles: input.seed.roles,
+    resourceTypes: input.seed.resourceTypes,
+    organizations: input.seed.organizations,
+    redirectUris: input.seed.redirectUris,
+    corsOrigins: input.seed.corsOrigins,
+  };
+  writeFileSync(
+    join(input.workspaceRoot, WORKOS_SEED_STATE_FILE),
+    `${JSON.stringify(payload, null, 2)}\n`,
+    "utf8",
+  );
+  return WORKOS_SEED_STATE_FILE;
 }
 
 export interface WorkOSConfigActionResult {
@@ -695,7 +891,9 @@ function runWorkOSConfigActions(
 }
 
 export function runWorkOSDoctorCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
-  const checks = collectWorkOSChecks(options.workspaceRoot);
+  const seedFile = options.file ?? DEFAULT_SEED_FILE;
+  const checks = collectWorkOSChecks(options.workspaceRoot, seedFile);
+  const data = collectWorkOSDoctorData(options.workspaceRoot, seedFile);
   const ok = checks.every((check) => check.ok);
   const command = ["npx", "--yes", "workos@latest", "doctor"];
   if (!ok) {
@@ -705,6 +903,7 @@ export function runWorkOSDoctorCommand(options: WorkOSCommandOptions): WorkOSCom
       checks,
       command,
       applied: false,
+      data,
       exitCode: 1,
     };
   }
@@ -715,6 +914,7 @@ export function runWorkOSDoctorCommand(options: WorkOSCommandOptions): WorkOSCom
       checks,
       command,
       applied: false,
+      data,
       exitCode: 0,
     };
   }
@@ -725,6 +925,7 @@ export function runWorkOSDoctorCommand(options: WorkOSCommandOptions): WorkOSCom
     checks,
     command,
     applied: child.status === 0,
+    data,
     stdout: child.stdout,
     stderr: child.stderr,
     exitCode: child.status === 0 ? 0 : 1,
@@ -771,6 +972,7 @@ export function runWorkOSInstallCommand(options: WorkOSCommandOptions): WorkOSCo
 export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   const file = options.file ?? DEFAULT_SEED_FILE;
   const seed = parseSeedFile(options.workspaceRoot, file);
+  const seedState = readWorkOSSeedState(options.workspaceRoot, seed);
   const activePermissions = collectPolicyPermissions(options.workspaceRoot);
   const expectedResourceTypes = collectExpectedResourceTypes(options.workspaceRoot);
   const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
@@ -795,6 +997,15 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         : `seed missing active permission(s): ${missingSeedPermissions.join(", ")}`,
     },
     {
+      name: "seed-unused-permissions",
+      ok: true,
+      detail: activePermissions.length === 0
+        ? "no active policy permissions were discovered; unused seed permission check skipped"
+        : unusedSeedPermissions.length === 0
+          ? "seed permissions are all referenced by active policies"
+          : `seed includes permission(s) not referenced by active policies: ${unusedSeedPermissions.join(", ")}`,
+    },
+    {
       name: "seed-resource-coverage",
       ok: missingSeedResources.length === 0,
       detail: missingSeedResources.length === 0
@@ -817,7 +1028,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
       checks,
       command,
       applied: false,
-      data: seedData({ seed, activePermissions, expectedResourceTypes, unusedSeedPermissions }),
+      data: seedData({ seed, activePermissions, expectedResourceTypes, unusedSeedPermissions, seedState }),
       exitCode: 1,
     };
   }
@@ -834,6 +1045,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         activePermissions,
         expectedResourceTypes,
         unusedSeedPermissions,
+        seedState,
         dryRun: true,
         configActions,
         nextCommand: `forge workos seed --file ${file} --json`,
@@ -865,6 +1077,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
           activePermissions,
           expectedResourceTypes,
           unusedSeedPermissions,
+          seedState,
           seedFileSanitized: preparedSeed.sanitized,
           configActions,
         }),
@@ -874,6 +1087,18 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     const child = runExternalCommand(delegatedCommand, options);
     const seedAlreadyApplied =
       child.status !== 0 && isWorkOSSeedAlreadyApplied(child.stdout, child.stderr);
+    const seedStateFile = child.status === 0 || seedAlreadyApplied
+      ? writeWorkOSSeedState({
+        workspaceRoot: options.workspaceRoot,
+        seed,
+        command: delegatedCommand,
+        alreadyApplied: seedAlreadyApplied,
+        status: child.status,
+      })
+      : undefined;
+    const latestSeedState = seedStateFile
+      ? readWorkOSSeedState(options.workspaceRoot, seed)
+      : seedState;
     return {
       ok: child.status === 0 || seedAlreadyApplied,
       kind: "workos-seed",
@@ -885,8 +1110,10 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         activePermissions,
         expectedResourceTypes,
         unusedSeedPermissions,
+        seedState: latestSeedState,
         seedFileSanitized: preparedSeed.sanitized,
         seedAlreadyApplied,
+        seedStateFile,
         configActions,
       }),
       stdout: child.stdout,
@@ -903,6 +1130,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
   const checks = collectWorkOSChecks(options.workspaceRoot);
   const localOk = checks.every((check) => check.ok);
   const seed = parseSeedFile(options.workspaceRoot, file);
+  const seedState = readWorkOSSeedState(options.workspaceRoot, seed);
   const setupDryRun = options.dryRun || !options.real;
   const configActions = runWorkOSConfigActions(seed, options, true);
   const command = ["npx", "--yes", "workos@latest", "seed", "--file", file];
@@ -917,6 +1145,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
         dryRun: setupDryRun,
         real: options.real ?? false,
         seed,
+        seedState,
         configActions,
         nextCommand: "forge workos doctor --json",
       },
@@ -934,6 +1163,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
         dryRun: true,
         real: false,
         seed,
+        seedState,
         configActions,
         nextCommand: `forge workos setup --real --file ${file} --json`,
       },
@@ -946,6 +1176,9 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
     dryRun: false,
     file,
   });
+  const seedResultData = seedResult.data && typeof seedResult.data === "object"
+    ? seedResult.data as { seedState?: WorkOSSeedStateSummary }
+    : {};
   return {
     ok: seedResult.ok,
     kind: "workos-setup",
@@ -955,6 +1188,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
     data: {
       real: true,
       seed,
+      seedState: seedResultData.seedState ?? readWorkOSSeedState(options.workspaceRoot, seed),
       seedResult: seedResult.data,
       nextCommand: "forge workos doctor --json",
     },
@@ -964,12 +1198,81 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
   };
 }
 
+export function runWorkOSProveCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
+  const file = options.file ?? DEFAULT_SEED_FILE;
+  const doctor = runWorkOSDoctorCommand({
+    ...options,
+    subcommand: "doctor",
+    yes: false,
+    dryRun: true,
+    file,
+  });
+  const seed = runWorkOSSeedCommand({
+    ...options,
+    subcommand: "seed",
+    dryRun: true,
+    file,
+  });
+  const setup = runWorkOSSetupCommand({
+    ...options,
+    subcommand: "setup",
+    dryRun: !options.real,
+    real: options.real ?? false,
+    file,
+  });
+  const checks: WorkOSCheck[] = [
+    ...doctor.checks.map((check) => ({ ...check, name: `doctor:${check.name}` })),
+    {
+      name: "seed:dry-run",
+      ok: seed.ok,
+      detail: seed.ok
+        ? `${file} is valid, app-aware, and ready for hosted application`
+        : `${file} failed seed validation before hosted application`,
+    },
+    {
+      name: options.real ? "setup:real" : "setup:dry-run",
+      ok: setup.ok,
+      detail: options.real
+        ? setup.ok
+          ? "WorkOS hosted setup and seed were applied or already present"
+          : "WorkOS hosted setup failed; inspect setup.seedResult/configActions"
+        : setup.ok
+          ? "No-dashboard WorkOS setup plan is complete; pass --real to apply hosted changes"
+          : "No-dashboard WorkOS setup plan is incomplete",
+    },
+  ];
+  const ok = checks.every((check) => check.ok);
+  return {
+    ok,
+    kind: "workos-prove",
+    checks,
+    command: setup.command ?? seed.command ?? doctor.command,
+    applied: Boolean(options.real && setup.ok && setup.applied),
+    data: {
+      real: options.real ?? false,
+      file,
+      doctor: doctor.data,
+      seed: seed.data,
+      setup: setup.data,
+      nextCommand: options.real
+        ? "forge workos doctor --json"
+        : `forge workos prove --real --file ${file} --json`,
+    },
+    stdout: setup.stdout ?? seed.stdout ?? doctor.stdout,
+    stderr: setup.stderr ?? seed.stderr ?? doctor.stderr,
+    exitCode: ok ? 0 : 1,
+  };
+}
+
 export function runWorkOSCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   if (options.subcommand === "install") {
     return runWorkOSInstallCommand(options);
   }
   if (options.subcommand === "setup") {
     return runWorkOSSetupCommand(options);
+  }
+  if (options.subcommand === "prove") {
+    return runWorkOSProveCommand(options);
   }
   return options.subcommand === "doctor"
     ? runWorkOSDoctorCommand(options)
@@ -996,14 +1299,21 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
   }
   if (result.kind === "workos-seed" && !result.applied) {
     const data = result.data && typeof result.data === "object"
-      ? result.data as { dryRun?: boolean; seedAlreadyApplied?: boolean; nextCommand?: string }
+      ? result.data as { dryRun?: boolean; seedAlreadyApplied?: boolean; seedStateFile?: string; nextCommand?: string }
       : {};
     if (data.seedAlreadyApplied) {
-      lines.push("seed already appears applied; WorkOS reported existing resources");
+      lines.push(`seed already appears applied; WorkOS reported existing resources${data.seedStateFile ? ` and Forge wrote ${data.seedStateFile}` : ""}`);
     } else if (data.dryRun) {
       lines.push(`seed dry-run only; run ${data.nextCommand ?? "forge workos seed --file workos-seed.yml --json"} to execute the WorkOS CLI command`);
     } else {
       lines.push("seed not applied; inspect stdout/stderr from the WorkOS CLI command");
+    }
+  } else if (result.kind === "workos-seed" && result.applied) {
+    const data = result.data && typeof result.data === "object"
+      ? result.data as { seedStateFile?: string }
+      : {};
+    if (data.seedStateFile) {
+      lines.push(`seed applied; Forge wrote ${data.seedStateFile}`);
     }
   }
   if (result.kind === "workos-setup" && !result.applied) {
@@ -1014,6 +1324,29 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
       lines.push(`setup dry-run only; run ${data.nextCommand ?? "forge workos setup --real --file workos-seed.yml --json"} to apply hosted config`);
     } else {
       lines.push("setup not applied; inspect WorkOS checks and seed/config action output");
+    }
+  } else if (result.kind === "workos-setup" && result.applied) {
+    const data = result.data && typeof result.data === "object"
+      ? result.data as { seedState?: { path?: string; matchesSeedHash?: boolean | null } }
+      : {};
+    if (data.seedState?.path) {
+      lines.push(
+        data.seedState.matchesSeedHash === true
+          ? `setup applied; ${data.seedState.path} matches the current seed`
+          : `setup applied; inspect ${data.seedState.path} because it does not prove the current seed`,
+      );
+    }
+  }
+  if (result.kind === "workos-prove") {
+    const data = result.data && typeof result.data === "object"
+      ? result.data as { real?: boolean; nextCommand?: string }
+      : {};
+    if (result.ok && data.real) {
+      lines.push("WorkOS real proof passed; hosted setup and seed evidence are recorded.");
+    } else if (result.ok) {
+      lines.push(`WorkOS proof dry-run passed; run ${data.nextCommand ?? "forge workos prove --real --file workos-seed.yml --json"} to apply hosted setup.`);
+    } else {
+      lines.push("WorkOS proof failed; inspect doctor, seed, and setup details.");
     }
   }
   return `${lines.join("\n")}\n`;

@@ -20,7 +20,18 @@ type GeneratedClientModule = {
   };
 };
 
-const AUTH_HEADER_NAMES = ["x-forge-user-id", "x-forge-tenant-id", "x-forge-role"];
+const AUTH_HEADER_NAMES = [
+  "authorization",
+  "x-forge-user-id",
+  "x-forge-tenant-id",
+  "x-forge-organization-id",
+  "x-forge-organization-membership-id",
+  "x-forge-role",
+  "x-forge-roles",
+  "x-forge-permissions",
+  "x-forge-claims",
+  "x-custom-auth",
+];
 
 let root = "";
 let tenantA = "";
@@ -72,6 +83,61 @@ describe("client auth headers", () => {
       expect(seenHeaders["x-forge-user-id"]).toBe("u1");
       expect(seenHeaders["x-forge-tenant-id"]).toBe(tenantA);
       expect(seenHeaders["x-forge-role"]).toBe("member");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test.serial("sends WorkOS-like organization, role, permission, claim, token, and custom auth headers", async () => {
+    const originalFetch = globalThis.fetch;
+    let seenHeaders: Record<string, string> = {};
+
+    globalThis.fetch = (async (_input, init) => {
+      seenHeaders = captureAuthHeaders(init);
+      return Response.json({ ok: true, result: [], traceId: "trace-query" });
+    }) as typeof fetch;
+
+    try {
+      const client = generated.createForgeClient({
+        url: "http://127.0.0.1:3765",
+        auth: {
+          userId: "user_acme_owner",
+          organizationId: "org_acme",
+          organizationMembershipId: "om_acme_owner",
+          role: "owner",
+          roles: ["owner", "security"],
+          permissions: ["vendors:read", "access:approve"],
+          claims: {
+            email: "owner@acme.test",
+            organization_id: "org_acme",
+            organization_membership_id: "om_acme_owner",
+          },
+          token: "token-test",
+          headers: {
+            "x-custom-auth": "custom",
+          },
+        },
+      });
+
+      await client.query(generated.api.queries.listTickets, {});
+
+      expect(seenHeaders.authorization).toBe("Bearer token-test");
+      expect(seenHeaders["x-forge-user-id"]).toBe("user_acme_owner");
+      expect(seenHeaders["x-forge-tenant-id"]).toBe("org_acme");
+      expect(seenHeaders["x-forge-organization-id"]).toBe("org_acme");
+      expect(seenHeaders["x-forge-organization-membership-id"]).toBe("om_acme_owner");
+      expect(seenHeaders["x-forge-role"]).toBe("owner");
+      expect(JSON.parse(seenHeaders["x-forge-roles"] ?? "[]")).toEqual(["owner", "security"]);
+      expect(JSON.parse(seenHeaders["x-forge-permissions"] ?? "[]")).toEqual([
+        "vendors:read",
+        "access:approve",
+      ]);
+      expect(JSON.parse(seenHeaders["x-forge-claims"] ?? "{}")).toMatchObject({
+        email: "owner@acme.test",
+        organization_id: "org_acme",
+        organization_membership_id: "om_acme_owner",
+      });
+      expect(seenHeaders["x-custom-auth"]).toBe("custom");
     } finally {
       globalThis.fetch = originalFetch;
     }

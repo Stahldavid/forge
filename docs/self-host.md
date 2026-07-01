@@ -8,7 +8,7 @@ This page covers the supported self-host workflow — not a specific cloud vendo
 
 ```bash
 forge deploy plan --target docker --json
-forge deploy render docker
+forge deploy package --target docker
 ```
 
 Typical outputs (paths vary by app):
@@ -37,11 +37,11 @@ Validates:
 - Production auth issuer/audience/JWKS settings are present
 - Database readiness is present
 - Public `auth.md` and OAuth protected-resource metadata are generated
-- A field-test report exists with runtime and auth probes
+- A field-test report exists with runtime, auth, and UI probes
 - Tenant claim mapping is present when required
 - Generated artifacts match the current app graph
 
-Fix issues surfaced by `forge check`, `forge verify --smoke`, and `forge field-test run --runtime-probes --auth-probes --json` before public traffic.
+Fix issues surfaced by `forge check`, `forge verify --smoke`, and `forge field-test run --realistic --json` before public traffic.
 
 ## Production auth
 
@@ -89,9 +89,9 @@ forge telemetry inspect <traceId> --with-release --json
 
 ```bash
 forge do "prepare self-host deployment" --json
-forge deploy render docker
+forge deploy package --target docker
 forge deploy check --production --json
-forge field-test run --runtime-probes --auth-probes --json
+forge field-test run --realistic --json
 forge verify --smoke
 ```
 

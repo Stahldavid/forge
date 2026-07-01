@@ -37,12 +37,18 @@ export function App() {
 
   return (
     <main className="shell">
-      <section className="header">
-        <p className="eyebrow">ForgeOS minimal-web</p>
-        <h1>Notes</h1>
-      </section>
+      <header className="header">
+        <div>
+          <p className="eyebrow">Personal workspace</p>
+          <h1>Notes</h1>
+        </div>
+        <nav aria-label="Workspace sections">
+          <a href="#compose">Compose</a>
+          <a href="#notes">Live notes</a>
+        </nav>
+      </header>
 
-      <form className="composer" onSubmit={submit}>
+      <form id="compose" className="composer" onSubmit={submit}>
         <label>
           <span>Title</span>
           <input
@@ -65,7 +71,7 @@ export function App() {
         {createNote.error ? <p className="error">{createNote.error.message}</p> : null}
       </form>
 
-      <section className="notes">
+      <section id="notes" className="notes">
         <div className="section-heading">
           <h2>Live notes</h2>
           <span>{notes.data?.length ?? 0}</span>

@@ -73,6 +73,7 @@ export async function runRunCommand(
   const run = await runEntry(options.workspaceRoot, options.name!, {
     json: options.json,
     mock: options.mock,
+    args: options.args,
     userId: options.userId,
     tenantId: options.tenantId,
     role: options.role,

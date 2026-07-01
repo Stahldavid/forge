@@ -42,6 +42,38 @@ forge dev
 
 Open the **web URL** for the user-facing app. The **API URL** is the Forge JSON runtime used by hooks, commands, queries, liveQueries, and AI endpoints.
 
+When you are running multiple apps or an automated field test, let ForgeOS pick
+both ports:
+
+```bash
+forge dev --port 0 --web-port 0
+```
+
+The dev output reports the concrete API and web URLs selected for that run.
+
+For templates or apps with demo/bootstrap data, start with seed enabled:
+
+```bash
+forge dev --seed
+```
+
+`forge dev --seed` discovers generated seed commands, starts the API runtime,
+runs the selected seed command through local dev-auth headers, and reports
+`summary.seed` in JSON startup output, including `summary.seed.readiness` when a
+seed command is available. Use `forge seed status --json` to inspect available
+seed commands or `--seed-command <name>` when an app exposes more than one.
+For multi-tenant field apps, add `--all-tenants` so startup runs the selected
+seed command for every discovered local tenant/persona profile and reports
+per-tenant seed evidence in `summary.seed.tenantRuns`.
+`forge seed status --json` also reports `readiness.emptyWorkspaceRecovery`; use
+those commands when the UI starts with an empty workspace.
+It also reports `readiness.autoSeedMode`, plus
+`readiness.autoSeedAllTenantsOnDev`, when `npm run dev` already uses
+`forge dev --seed --all-tenants`.
+When multiple local tenants exist but the dev script only seeds the default
+tenant, `forge seed status` warns with `FORGE_SEED_DEV_PARTIAL_TENANTS` and
+suggests `forge dev --seed --all-tenants` as the first recovery command.
+
 If the API root returns `unknown route`, that is not a failed app. Inspect:
 
 ```bash

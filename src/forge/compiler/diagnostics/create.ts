@@ -89,6 +89,13 @@ function defaultGuidanceForCode(code: string): DiagnosticGuidance | null {
       docs: ["AGENTS.md"],
     };
   }
+  if (code === "FORGE_DB_INVALID_ID_FIELD") {
+    return {
+      fixHint: "Do not declare `id: \"text\"` in defineTable. Remove the id field so Forge generates a UUID primary key, or declare `id: \"uuid\"` when you need to provide ids explicitly.",
+      suggestedCommands: ["forge check --json", "forge inspect schema --json"],
+      docs: ["AGENTS.md"],
+    };
+  }
   if (code.startsWith("FORGE_UI_")) {
     return {
       fixHint: "Inspect the last UI run and use the UI report as repair input.",

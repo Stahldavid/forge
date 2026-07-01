@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { access, mkdtemp, rm } from "node:fs/promises";
-import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +15,7 @@ function parseArgs(argv) {
     json: false,
     keep: false,
     runtimeProbes: false,
+    uiProbes: false,
     timeoutMs: 180000,
     templates: ["minimal-web"],
     packageManagers: ["npm"],
@@ -32,6 +32,7 @@ function parseArgs(argv) {
     else if (arg === "--json") args.json = true;
     else if (arg === "--keep") args.keep = true;
     else if (arg === "--runtime-probes") args.runtimeProbes = true;
+    else if (arg === "--ui-probes") args.uiProbes = true;
     else if (arg === "--timeout-ms") args.timeoutMs = Number(argv[++index]);
     else if (arg === "--templates") args.templates = splitList(argv[++index]);
     else if (arg === "--package-managers") args.packageManagers = splitList(argv[++index]);
@@ -86,16 +87,112 @@ function compactStep(step) {
   };
 }
 
+function parseJsonObjectFromOutput(output) {
+  const text = String(output ?? "").trim();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) return null;
+    try {
+      return JSON.parse(text.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+function parseJsonObjectsFromOutput(output) {
+  return String(output ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("{") && line.endsWith("}"))
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+}
+
+async function waitForDevStartup(readOutput, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  let lastOutput = "";
+  while (Date.now() < deadline) {
+    const output = readOutput();
+    lastOutput = output;
+    const summaries = parseJsonObjectsFromOutput(output);
+    const startup = summaries.find((item) => item?.ok === true && item?.api?.url);
+    if (startup) {
+      return startup;
+    }
+    await sleep(250);
+  }
+  throw new Error(`Forge dev did not emit startup JSON with api.url before timeout. Output: ${compactText(lastOutput, 1200)}`);
+}
+
+function summarizeUiErgonomics(step) {
+  const payload = parseJsonObjectFromOutput(step.stdout);
+  const data = payload && typeof payload === "object" && payload.data && typeof payload.data === "object"
+    ? payload.data
+    : {};
+  const diagnostics = Array.isArray(data.diagnostics)
+    ? data.diagnostics
+    : Array.isArray(payload?.diagnostics)
+      ? payload.diagnostics
+      : [];
+  const scenarios = Array.isArray(data.scenarios)
+    ? data.scenarios
+    : Array.isArray(payload?.scenarios)
+      ? payload.scenarios
+      : [];
+  const manifestSelectors = Array.isArray(data.manifest?.selectors)
+    ? data.manifest.selectors
+    : Array.isArray(payload?.manifest?.selectors)
+      ? payload.manifest.selectors
+      : [];
+  const warnings = Array.isArray(payload?.warnings)
+    ? payload.warnings
+    : diagnostics.filter((item) => item?.severity === "warning");
+  const errors = Array.isArray(payload?.errors)
+    ? payload.errors
+    : diagnostics.filter((item) => item?.severity === "error");
+  return {
+    command: step.command,
+    ok: step.ok && errors.length === 0,
+    exitCode: step.exitCode,
+    warnings: warnings.length,
+    errors: errors.length,
+    diagnosticCodes: diagnostics
+      .map((item) => item?.code)
+      .filter(Boolean)
+      .slice(0, 20),
+    scenarioNames: scenarios
+      .map((item) => item?.name)
+      .filter(Boolean)
+      .slice(0, 50),
+    selectors: manifestSelectors.filter(Boolean).slice(0, 50),
+  };
+}
+
 function packageScriptArgs(pm, script, extraArgs = []) {
   if (pm === "npm") return ["run", script, ...(extraArgs.length > 0 ? ["--", ...extraArgs] : [])];
   return ["run", script, ...extraArgs];
 }
 
 async function commandExists(command) {
-  const probe = process.platform === "win32" ? "where" : "command";
-  const args = process.platform === "win32" ? [command] : ["-v", command];
+  const probe = process.platform === "win32" ? "where" : "sh";
+  const args = process.platform === "win32" ? [command] : ["-c", `command -v ${shellQuote(command)}`];
   const result = await runCommand(probe, args, { timeoutMs: 10000, allowFailure: true });
   return result.exitCode === 0;
+}
+
+function shellQuote(value) {
+  return `'${String(value).replace(/'/g, "'\\''")}'`;
 }
 
 async function runCommand(command, args, options = {}) {
@@ -190,12 +287,19 @@ function sleep(ms) {
   return new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 }
 
-function authHeaders() {
+const VENDOR_ACCESS_TENANTS = {
+  acme: "11111111-1111-4111-8111-111111111111",
+  globex: "22222222-2222-4222-8222-222222222222",
+};
+
+function authHeaders(overrides = {}) {
+  const permissions = overrides.permissions ?? [];
   return {
     "content-type": "application/json",
-    "x-forge-role": "owner",
-    "x-forge-tenant-id": "00000000-0000-0000-0000-000000000001",
-    "x-forge-user-id": "field-test-user",
+    "x-forge-role": overrides.role ?? "owner",
+    "x-forge-tenant-id": overrides.tenantId ?? "00000000-0000-0000-0000-000000000001",
+    "x-forge-user-id": overrides.userId ?? "field-test-user",
+    ...(permissions.length > 0 ? { "x-forge-permissions": JSON.stringify(permissions) } : {}),
   };
 }
 
@@ -225,6 +329,22 @@ async function fetchProbe(url, options = {}) {
   };
 }
 
+function httpStep({ command, result, startedAt, ok }) {
+  return {
+    command,
+    durationMs: Date.now() - startedAt,
+    exitCode: ok ? 0 : 1,
+    ok,
+    status: result.status,
+    traceId: result.body?.traceId,
+  };
+}
+
+function resultRows(result, key) {
+  const value = result.body?.result?.[key];
+  return Array.isArray(value) ? value : [];
+}
+
 async function waitForHealth(url, timeoutMs) {
   const startedAt = Date.now();
   let lastError = "not started";
@@ -243,16 +363,50 @@ async function waitForHealth(url, timeoutMs) {
   throw new Error(`Dev server did not become healthy at ${url}: ${lastError}`);
 }
 
-async function getFreePort() {
-  return new Promise((resolvePort, rejectPort) => {
-    const server = createServer();
-    server.once("error", rejectPort);
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      const port = typeof address === "object" && address ? address.port : 0;
-      server.close(() => resolvePort(port));
-    });
-  });
+async function waitForWeb(url, timeoutMs) {
+  const startedAt = Date.now();
+  let lastError = "not started";
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const result = await fetchProbe(url);
+      const failureCopy = visibleWebFailureCopy(result.body);
+      if (result.ok && /<html|<div\s+id=["']root["']|__nuxt|_next/i.test(result.body)) {
+        if (failureCopy) {
+          lastError = failureCopy;
+          await sleep(500);
+          continue;
+        }
+        return result;
+      }
+      lastError = `HTTP ${result.status}`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+    await sleep(500);
+  }
+  throw new Error(`Web server did not become reachable at ${url}: ${lastError}`);
+}
+
+function visibleWebFailureCopy(body) {
+  const text = String(body ?? "");
+  if (/Failed to fetch/i.test(text)) {
+    return "web UI rendered 'Failed to fetch'";
+  }
+  if (/No organization seeded|No organisation seeded/i.test(text)) {
+    return "web UI rendered an unseeded-organization state";
+  }
+  if (/FORGE_DEV_SERVER_ERROR|FORGE_POLICY_DENIED/i.test(text)) {
+    return "web UI rendered a raw Forge runtime error";
+  }
+  return "";
+}
+
+function seedCommandsFromEntries(entriesBody) {
+  const entries = Array.isArray(entriesBody?.entries) ? entriesBody.entries : [];
+  return entries
+    .filter((entry) => entry?.kind === "command" && /(^|[._-])seed|seed[A-Z_.-]?/i.test(String(entry.name ?? "")))
+    .map((entry) => String(entry.name))
+    .sort();
 }
 
 async function stopProcessTree(child) {
@@ -278,11 +432,22 @@ async function stopProcessTree(child) {
   child.kill("SIGTERM");
 }
 
-async function runRuntimeProbes({ appDir, authProbes, packageManager, template, timeoutMs }) {
+function expectedWebText(template) {
+  if (template === "vendor-access") return /Vendor Access/i;
+  if (template === "b2b-support-web") return /support|ticket|b2b/i;
+  return /Forge|Note|Nuxt|Vite|root/i;
+}
+
+async function runRuntimeProbes({ appDir, authProbes, packageManager, template, timeoutMs, uiProbes }) {
   const pm = commandName(packageManager);
-  const port = await getFreePort();
-  const serverUrl = `http://127.0.0.1:${port}`;
-  const scriptArgs = packageScriptArgs(packageManager, "forge", ["dev", "--api-only", "--port", String(port), "--json"]);
+  const scriptArgs = packageScriptArgs(packageManager, "forge", [
+    "dev",
+    ...(uiProbes ? ["--web-port", "0"] : ["--api-only"]),
+    "--port",
+    "0",
+    "--json",
+    "--skip-startup-console",
+  ]);
   const startedAt = Date.now();
   const spawnTarget = windowsBatchTarget(pm, scriptArgs);
   const child = spawn(spawnTarget.command, spawnTarget.args, {
@@ -312,6 +477,23 @@ async function runRuntimeProbes({ appDir, authProbes, packageManager, template, 
       throw new Error(`Could not start forge dev: ${childError.message}`);
     }
 
+    const startup = await waitForDevStartup(() => stdout, Math.min(timeoutMs, 120000));
+    const serverUrl = String(startup.api.url);
+    const webUrl = uiProbes && startup.web?.url ? String(startup.web.url) : undefined;
+    if (uiProbes && !webUrl) {
+      throw new Error(`Forge dev startup JSON did not include web.url while --ui-probes was enabled: ${compactText(JSON.stringify(startup), 1200)}`);
+    }
+    steps.push({
+      command: "forge dev startup",
+      durationMs: Date.now() - startedAt,
+      exitCode: 0,
+      ok: true,
+      stdout: JSON.stringify({
+        api: startup.api,
+        web: startup.web ?? null,
+      }),
+    });
+
     const health = await waitForHealth(serverUrl, Math.min(timeoutMs, 120000));
     steps.push({
       command: `GET ${serverUrl}/health`,
@@ -321,6 +503,19 @@ async function runRuntimeProbes({ appDir, authProbes, packageManager, template, 
       status: health.status,
     });
 
+    if (uiProbes && webUrl) {
+      const webStartedAt = Date.now();
+      const web = await waitForWeb(webUrl, Math.min(timeoutMs, 120000));
+      const expected = expectedWebText(template);
+      steps.push({
+        command: `GET ${webUrl}/`,
+        durationMs: Date.now() - webStartedAt,
+        exitCode: web.ok && expected.test(web.body) ? 0 : 1,
+        ok: web.ok && expected.test(web.body),
+        status: web.status,
+      });
+    }
+
     const entries = await fetchJson(`${serverUrl}/entries`);
     steps.push({
       command: `GET ${serverUrl}/entries`,
@@ -329,6 +524,26 @@ async function runRuntimeProbes({ appDir, authProbes, packageManager, template, 
       ok: entries.ok && entries.body?.ok === true,
       status: entries.status,
     });
+
+    const seedCommands = seedCommandsFromEntries(entries.body);
+    if (seedCommands.length > 0) {
+      const seedCommand = seedCommands[0];
+      for (const [label, args] of [
+        ["seed-status", ["seed", "status", "--json"]],
+        ["seed-dev", ["seed", "dev", "--command", seedCommand, "--url", serverUrl, "--json"]],
+        ["seed-reset", ["seed", "reset", "--command", seedCommand, "--url", serverUrl, "--json"]],
+      ]) {
+        const result = await runCommand(
+          pm,
+          packageScriptArgs(packageManager, "forge", args),
+          { cwd: appDir, timeoutMs, allowFailure: true },
+        );
+        steps.push({
+          ...result,
+          command: `${label}: ${result.command}`,
+        });
+      }
+    }
 
     if (authProbes) {
       for (const [method, path] of [
@@ -346,6 +561,158 @@ async function runRuntimeProbes({ appDir, authProbes, packageManager, template, 
           status: probe.status,
         });
       }
+    }
+
+    if (template === "vendor-access") {
+      const ownerPermissions = [
+        "demo:seed",
+        "vendors:read",
+        "vendors:manage",
+        "access:request",
+        "access:approve",
+        "evidence:manage",
+        "audit:read",
+      ];
+      const requesterPermissions = ["vendors:read", "access:request", "audit:read"];
+      const acmeOwner = authHeaders({
+        tenantId: VENDOR_ACCESS_TENANTS.acme,
+        userId: "riley@acme.example",
+        role: "owner",
+        permissions: ownerPermissions,
+      });
+      const globexOwner = authHeaders({
+        tenantId: VENDOR_ACCESS_TENANTS.globex,
+        userId: "nina@globex.example",
+        role: "security",
+        permissions: ownerPermissions,
+      });
+      const acmeRequester = authHeaders({
+        tenantId: VENDOR_ACCESS_TENANTS.acme,
+        userId: "maya@acme.example",
+        role: "requester",
+        permissions: requesterPermissions,
+      });
+
+      const seedAllTenants = await runCommand(
+        pm,
+        packageScriptArgs(packageManager, "forge", [
+          "seed",
+          "dev",
+          "--command",
+          "seedVendorAccessDemo",
+          "--url",
+          serverUrl,
+          "--all-tenants",
+          "--json",
+        ]),
+        { cwd: appDir, timeoutMs, allowFailure: true },
+      );
+      steps.push({
+        ...seedAllTenants,
+        command: `vendor-access-seed-all-tenants: ${seedAllTenants.command}`,
+      });
+
+      const acmeDashboard = await fetchJson(`${serverUrl}/queries/listVendorAccessDashboard`, {
+        body: JSON.stringify({ args: {} }),
+        headers: acmeOwner,
+        method: "POST",
+      });
+      const acmeVendors = resultRows(acmeDashboard, "vendors");
+      const acmeRequests = resultRows(acmeDashboard, "accessRequests");
+      const acmeOrganizations = resultRows(acmeDashboard, "organizations");
+      steps.push(httpStep({
+        command: `vendor-access-query-acme: POST ${serverUrl}/queries/listVendorAccessDashboard`,
+        result: acmeDashboard,
+        startedAt,
+        ok:
+          acmeDashboard.ok &&
+          acmeOrganizations.length === 1 &&
+          acmeOrganizations.some((organization) => organization.id === VENDOR_ACCESS_TENANTS.acme && organization.name === "Acme Corp") &&
+          !acmeOrganizations.some((organization) => organization.id === VENDOR_ACCESS_TENANTS.globex || organization.name === "Globex Security") &&
+          acmeVendors.some((vendor) => vendor.name === "Atlas Identity") &&
+          !acmeVendors.some((vendor) => vendor.name === "Mercury Cloud"),
+      }));
+
+      const globexDashboard = await fetchJson(`${serverUrl}/queries/listVendorAccessDashboard`, {
+        body: JSON.stringify({ args: {} }),
+        headers: globexOwner,
+        method: "POST",
+      });
+      const globexVendors = resultRows(globexDashboard, "vendors");
+      const globexRequests = resultRows(globexDashboard, "accessRequests");
+      const globexOrganizations = resultRows(globexDashboard, "organizations");
+      steps.push(httpStep({
+        command: `vendor-access-query-globex: POST ${serverUrl}/queries/listVendorAccessDashboard`,
+        result: globexDashboard,
+        startedAt,
+        ok:
+          globexDashboard.ok &&
+          globexOrganizations.length === 1 &&
+          globexOrganizations.some((organization) => organization.id === VENDOR_ACCESS_TENANTS.globex && organization.name === "Globex Security") &&
+          !globexOrganizations.some((organization) => organization.id === VENDOR_ACCESS_TENANTS.acme || organization.name === "Acme Corp") &&
+          globexVendors.some((vendor) => vendor.name === "Mercury Cloud") &&
+          !globexVendors.some((vendor) => vendor.name === "Atlas Identity"),
+      }));
+
+      const acmePending = acmeRequests.find((request) => request.status === "Pending");
+      const globexPending = globexRequests.find((request) => request.status === "Pending");
+      const ownerApprove = await fetchJson(`${serverUrl}/commands/approveAccessRequest`, {
+        body: JSON.stringify({
+          args: {
+            requestId: acmePending?.id ?? "missing-request",
+            reviewerEmail: "riley@acme.example",
+            decision: "Approved",
+          },
+        }),
+        headers: acmeOwner,
+        method: "POST",
+      });
+      steps.push(httpStep({
+        command: `vendor-access-owner-approve: POST ${serverUrl}/commands/approveAccessRequest`,
+        result: ownerApprove,
+        startedAt,
+        ok: ownerApprove.ok && ownerApprove.body?.ok === true,
+      }));
+
+      const requesterDenied = await fetchJson(`${serverUrl}/commands/approveAccessRequest`, {
+        body: JSON.stringify({
+          args: {
+            requestId: acmePending?.id ?? "missing-request",
+            reviewerEmail: "maya@acme.example",
+            decision: "Rejected",
+          },
+        }),
+        headers: acmeRequester,
+        method: "POST",
+      });
+      steps.push(httpStep({
+        command: `vendor-access-requester-approve-denied: POST ${serverUrl}/commands/approveAccessRequest`,
+        result: requesterDenied,
+        startedAt,
+        ok:
+          requesterDenied.status === 403 &&
+          /FORGE_POLICY_DENIED|access:approve|denied/i.test(JSON.stringify(requesterDenied.body)),
+      }));
+
+      const crossTenantDenied = await fetchJson(`${serverUrl}/commands/approveAccessRequest`, {
+        body: JSON.stringify({
+          args: {
+            requestId: globexPending?.id ?? "missing-request",
+            reviewerEmail: "riley@acme.example",
+            decision: "Approved",
+          },
+        }),
+        headers: acmeOwner,
+        method: "POST",
+      });
+      steps.push(httpStep({
+        command: `vendor-access-cross-tenant-approve-denied: POST ${serverUrl}/commands/approveAccessRequest`,
+        result: crossTenantDenied,
+        startedAt,
+        ok:
+          !crossTenantDenied.ok &&
+          /not found|current tenant|FORGE_TENANT|tenant/i.test(JSON.stringify(crossTenantDenied.body)),
+      }));
     }
 
     if (template === "minimal-web" || template === "nuxt-web") {
@@ -411,6 +778,7 @@ async function runRuntimeProbes({ appDir, authProbes, packageManager, template, 
     return {
       ok: steps.every((step) => step.ok),
       serverUrl,
+      webUrl,
       steps: steps.map(compactStep),
       stderr: compactText(stderr),
       stdout: compactText(stdout),
@@ -437,10 +805,11 @@ function windowsBatchTarget(command, args) {
   };
 }
 
-async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManager, runtimeProbes, template, timeoutMs }) {
+async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManager, runtimeProbes, template, timeoutMs, uiProbes }) {
   const appName = `${template}-${packageManager}-field`.replace(/[^a-zA-Z0-9_-]/g, "-");
   const appDir = join(appRoot, appName);
   const steps = [];
+  let uiErgonomics;
   const forgeArgs = [
     join(repoRoot, "bin", "forge.mjs"),
     "new",
@@ -466,6 +835,7 @@ async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManag
           timeoutMs,
         }),
       );
+      steps.push(await runCommand(pm, packageScriptArgs(packageManager, "generate"), { cwd: appDir, timeoutMs }));
       steps.push(
         await runCommand(pm, packageScriptArgs(packageManager, "forge", ["authmd", "generate", "--json"]), {
           cwd: appDir,
@@ -492,6 +862,13 @@ async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManag
         ),
       );
       steps.push(
+        await runCommand(
+          pm,
+          packageScriptArgs(packageManager, "forge", ["workos", "prove", "--file", "workos-seed.yml", "--json"]),
+          { cwd: appDir, timeoutMs },
+        ),
+      );
+      steps.push(
         await runCommand(pm, packageScriptArgs(packageManager, "forge", ["auth", "prove", "--scenario", "multi-tenant", "--json"]), {
           cwd: appDir,
           timeoutMs,
@@ -511,9 +888,18 @@ async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManag
         { cwd: appDir, timeoutMs },
       ),
     );
+    if (uiProbes) {
+      const ergonomics = await runCommand(
+        pm,
+        packageScriptArgs(packageManager, "forge", ["inspect", "ui", "--ergonomics", "--json"]),
+        { cwd: appDir, timeoutMs, allowFailure: true },
+      );
+      steps.push(ergonomics);
+      uiErgonomics = summarizeUiErgonomics(ergonomics);
+    }
 
     if (runtimeProbes) {
-      const runtime = await runRuntimeProbes({ appDir, authProbes, packageManager, template, timeoutMs });
+      const runtime = await runRuntimeProbes({ appDir, authProbes, packageManager, template, timeoutMs, uiProbes });
       steps.push(...runtime.steps);
       return {
         appDir,
@@ -522,6 +908,7 @@ async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManag
         runtime,
         steps: steps.map(compactStep),
         template,
+        uiErgonomics,
       };
     }
   }
@@ -532,6 +919,7 @@ async function fieldCase({ appRoot, authProbes, forgeSpec, install, packageManag
     packageManager,
     steps: steps.map(compactStep),
     template,
+    uiErgonomics,
   };
 }
 
@@ -549,6 +937,7 @@ async function main() {
       install: args.install,
       ok: true,
       runtimeProbes: args.runtimeProbes,
+      uiProbes: args.uiProbes,
       timeoutMs: args.timeoutMs,
     };
     console.log(args.json ? JSON.stringify(plan, null, 2) : `Planned ${cases.length} ForgeOS field test case(s).`);
@@ -572,6 +961,7 @@ async function main() {
           install: args.install,
           packageManager: testCase.packageManager,
           runtimeProbes: args.runtimeProbes,
+          uiProbes: args.uiProbes,
           template: testCase.template,
           timeoutMs: args.timeoutMs,
         }),
@@ -579,7 +969,7 @@ async function main() {
     }
   } finally {
     if (!args.keep) {
-      await rm(appRoot, { force: true, recursive: true });
+      await rm(appRoot, { force: true, maxRetries: 8, recursive: true, retryDelay: 250 });
     } else {
       await access(appRoot).catch(() => undefined);
     }
@@ -593,6 +983,7 @@ async function main() {
     ok: results.every((result) => result.ok),
     results,
     runtimeProbes: args.runtimeProbes,
+    uiProbes: args.uiProbes,
   };
   if (args.writeReport) {
     const { mkdir, writeFile } = await import("node:fs/promises");

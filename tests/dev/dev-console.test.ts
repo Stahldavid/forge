@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
-import { buildDevWatchGenerateFailureEvent, buildDevWatchReloadEvent, devStartupConsoleUrlOptions, ensureGeneratedForDev, generatedEvidenceFromCycle, resolveAvailableWebPort, runDevCommand } from "../../src/forge/cli/dev.ts";
+import { buildDevWatchGenerateFailureEvent, buildDevWatchReloadEvent, buildStartupSummary, devStartupConsoleUrlOptions, ensureGeneratedForDev, formatStartupHuman, generatedEvidenceFromCycle, resolveAvailableWebPort, runDevCommand } from "../../src/forge/cli/dev.ts";
 import {
   formatDevConsoleJson,
   runDevConsoleCycle,
@@ -35,6 +35,25 @@ async function listenOnRandomPort(): Promise<{ port: number; close: () => Promis
       server.close((error) => error ? reject(error) : resolve());
     }),
   };
+}
+
+async function isTestPortAvailable(port: number): Promise<boolean> {
+  const server = createServer();
+  return new Promise<boolean>((resolve) => {
+    const cleanup = () => {
+      server.removeAllListeners();
+    };
+    server.once("error", () => {
+      cleanup();
+      resolve(false);
+    });
+    server.listen(port, "127.0.0.1", () => {
+      server.close(() => {
+        cleanup();
+        resolve(true);
+      });
+    });
+  });
 }
 
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; output: string }> {
@@ -101,6 +120,13 @@ describe("H33 forge dev console", () => {
       webPort: 5173,
     });
 
+    const dynamic = parseCli(["dev", "--web-port", "0"]);
+    expect(dynamic.errors).toEqual([]);
+    expect(dynamic.command).toMatchObject({
+      kind: "dev",
+      webPort: 0,
+    });
+
     const webOnly = parseCli(["dev", "--web-only", "--open"]);
     expect(webOnly.errors).toEqual([]);
     expect(webOnly.command).toMatchObject({
@@ -108,6 +134,281 @@ describe("H33 forge dev console", () => {
       webOnly: true,
       open: true,
     });
+  });
+
+  test("startup summary carries seed readiness for forge dev --seed", () => {
+    const workspace = tempWorkspace("dev-startup-seed-readiness");
+    try {
+      mkdirSync(join(workspace, "bin"), { recursive: true });
+      writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+      const summary = buildStartupSummary({
+        workspaceRoot: workspace,
+        watch: false,
+        seedRequested: true,
+        handle: {
+          host: "127.0.0.1",
+          port: 3765,
+          url: "http://127.0.0.1:3765",
+          routes: [],
+          state: {
+            adapter: null,
+            db: { kind: "memory", connected: true },
+          },
+          outboxWorker: null,
+          reload: async () => ({
+            ok: true,
+            reason: "test",
+            migrated: false,
+            routes: 0,
+            runtimeEntries: 0,
+            worker: "stopped",
+            diagnostics: [],
+          }),
+          stop: () => {},
+        },
+        seed: {
+          schemaVersion: "0.1.0",
+          ok: true,
+          subcommand: "dev",
+          url: "http://127.0.0.1:3765",
+          selectedCommand: "seedVendorAccessDemo",
+          commands: [{
+            name: "seedVendorAccessDemo",
+            file: "src/commands/seedVendorAccessDemo.ts",
+            selected: true,
+          }],
+          readiness: {
+            ready: true,
+            reason: "seed-command-ready",
+            autoSeedOnDev: true,
+            autoSeedAllTenantsOnDev: true,
+            autoSeedMode: "all-tenants",
+            selectedCommand: "seedVendorAccessDemo",
+            defaultAuth: {
+              userId: "forge-seed",
+              tenantId: "11111111-1111-4111-8111-111111111111",
+              role: "owner",
+              permissions: ["demo:seed"],
+            },
+            localTenants: [
+              {
+                tenantId: "11111111-1111-4111-8111-111111111111",
+                organizationName: "Acme Corp",
+                userId: "riley@acme.example",
+                role: "owner",
+                permissions: ["demo:seed", "vendors:read"],
+                seedCommand: "forge seed dev --command seedVendorAccessDemo --tenant-id 11111111-1111-4111-8111-111111111111 --json",
+                resetCommand: "forge seed reset --command seedVendorAccessDemo --tenant-id 11111111-1111-4111-8111-111111111111 --json",
+              },
+              {
+                tenantId: "22222222-2222-4222-8222-222222222222",
+                organizationName: "Globex Security",
+                userId: "nina@globex.example",
+                role: "security",
+                permissions: ["demo:seed", "vendors:read"],
+                seedCommand: "forge seed dev --command seedVendorAccessDemo --tenant-id 22222222-2222-4222-8222-222222222222 --json",
+                resetCommand: "forge seed reset --command seedVendorAccessDemo --tenant-id 22222222-2222-4222-8222-222222222222 --json",
+              },
+            ],
+            emptyWorkspaceRecovery: [
+              "npm run dev",
+              "forge seed dev --command seedVendorAccessDemo --all-tenants --json",
+              "forge seed reset --command seedVendorAccessDemo --all-tenants --json",
+              "forge seed dev --command seedVendorAccessDemo --json",
+              "forge seed reset --command seedVendorAccessDemo --json",
+            ],
+          },
+          tenantRuns: [
+            {
+              tenantId: "11111111-1111-4111-8111-111111111111",
+              organizationName: "Acme Corp",
+              ok: true,
+              response: { status: 200, ok: true, body: { ok: true } },
+              diagnostics: [],
+            },
+            {
+              tenantId: "22222222-2222-4222-8222-222222222222",
+              organizationName: "Globex Security",
+              ok: true,
+              response: { status: 200, ok: true, body: { ok: true } },
+              diagnostics: [],
+            },
+          ],
+          request: {
+            endpoint: "http://127.0.0.1:3765/commands/seedVendorAccessDemo",
+            args: {},
+            auth: {
+              userId: "forge-seed",
+              tenantId: "11111111-1111-4111-8111-111111111111",
+              role: "owner",
+              permissions: ["demo:seed"],
+            },
+          },
+          response: { status: 200, ok: true, body: { ok: true } },
+          diagnostics: [],
+          nextActions: ["refresh the app UI", "forge inspect ui --ergonomics --json"],
+          exitCode: 0,
+        },
+      });
+
+      expect(summary.seed).toMatchObject({
+        requested: true,
+        available: true,
+        selectedCommand: "seedVendorAccessDemo",
+        ran: true,
+        ok: true,
+          responseStatus: 200,
+          tenantRuns: [
+            {
+              tenantId: "11111111-1111-4111-8111-111111111111",
+              organizationName: "Acme Corp",
+              ok: true,
+              responseStatus: 200,
+            },
+            {
+              tenantId: "22222222-2222-4222-8222-222222222222",
+              organizationName: "Globex Security",
+              ok: true,
+              responseStatus: 200,
+            },
+          ],
+          readiness: {
+            ready: true,
+            autoSeedOnDev: true,
+            autoSeedAllTenantsOnDev: true,
+            autoSeedMode: "all-tenants",
+            selectedCommand: "seedVendorAccessDemo",
+            emptyWorkspaceRecovery: [
+              "npm run dev",
+              "node bin/forge.mjs seed dev --command seedVendorAccessDemo --all-tenants --json",
+              "node bin/forge.mjs seed reset --command seedVendorAccessDemo --all-tenants --json",
+              "node bin/forge.mjs seed dev --command seedVendorAccessDemo --json",
+              "node bin/forge.mjs seed reset --command seedVendorAccessDemo --json",
+            ],
+        },
+      });
+      expect(summary.next.changed).toBe("node bin/forge.mjs changed --json");
+      expect(summary.warnings.map((warning) => warning.code)).toContain("FORGE_DEV_MEMORY_DB_FIDELITY");
+      const human = formatStartupHuman(summary);
+      expect(human).toContain("Seed recovery:");
+      expect(human).toContain("Seed readiness: ready (npm run dev auto-seeds all local tenants)");
+      expect(human).toContain("Seed tenants: 2/2 ok");
+      expect(human).toContain("ok Acme Corp (11111111-1111-4111-8111-111111111111) HTTP 200");
+      expect(human).toContain("ok Globex Security (22222222-2222-4222-8222-222222222222) HTTP 200");
+      expect(human).toContain("node bin/forge.mjs seed dev --command seedVendorAccessDemo --all-tenants --json");
+      expect(human).toContain("node bin/forge.mjs seed dev --command seedVendorAccessDemo --json");
+      expect(human).toContain("node bin/forge.mjs seed reset --command seedVendorAccessDemo --json");
+      expect(human).toContain("node bin/forge.mjs changed --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("startup summary surfaces seed warnings even when seeding succeeds", () => {
+    const workspace = tempWorkspace("dev-startup-seed-warning");
+    try {
+      const summary = buildStartupSummary({
+        workspaceRoot: workspace,
+        watch: false,
+        seedRequested: true,
+        handle: {
+          host: "127.0.0.1",
+          port: 3765,
+          url: "http://127.0.0.1:3765",
+          routes: [],
+          state: {
+            adapter: null,
+            db: { kind: "pglite", connected: true },
+          },
+          outboxWorker: null,
+          reload: async () => ({
+            ok: true,
+            reason: "test",
+            migrated: false,
+            routes: 0,
+            runtimeEntries: 0,
+            worker: "stopped",
+            diagnostics: [],
+          }),
+          stop: () => {},
+        },
+        seed: {
+          schemaVersion: "0.1.0",
+          ok: true,
+          subcommand: "dev",
+          url: "http://127.0.0.1:3765",
+          selectedCommand: "seedVendorAccessDemo",
+          commands: [{
+            name: "seedVendorAccessDemo",
+            file: "src/commands/seedVendorAccessDemo.ts",
+            selected: true,
+          }],
+          readiness: {
+            ready: true,
+            reason: "seed-command-ready",
+            autoSeedOnDev: true,
+            autoSeedAllTenantsOnDev: false,
+            autoSeedMode: "default-tenant",
+            selectedCommand: "seedVendorAccessDemo",
+            defaultAuth: {
+              userId: "forge-seed",
+              tenantId: "tenant-acme",
+              role: "owner",
+              permissions: ["demo:seed"],
+            },
+            localTenants: [
+              {
+                tenantId: "tenant-acme",
+                organizationName: "Acme Corp",
+                permissions: ["demo:seed"],
+                seedCommand: "forge seed dev --command seedVendorAccessDemo --tenant-id tenant-acme --json",
+                resetCommand: "forge seed reset --command seedVendorAccessDemo --tenant-id tenant-acme --json",
+              },
+              {
+                tenantId: "tenant-globex",
+                organizationName: "Globex Security",
+                permissions: ["demo:seed"],
+                seedCommand: "forge seed dev --command seedVendorAccessDemo --tenant-id tenant-globex --json",
+                resetCommand: "forge seed reset --command seedVendorAccessDemo --tenant-id tenant-globex --json",
+              },
+            ],
+            emptyWorkspaceRecovery: [
+              "forge dev --seed --all-tenants",
+              "forge seed dev --command seedVendorAccessDemo --all-tenants --json",
+              "forge seed reset --command seedVendorAccessDemo --all-tenants --json",
+            ],
+          },
+          request: {
+            endpoint: "http://127.0.0.1:3765/commands/seedVendorAccessDemo",
+            args: {},
+            auth: {
+              userId: "forge-seed",
+              tenantId: "tenant-acme",
+              role: "owner",
+              permissions: ["demo:seed"],
+            },
+          },
+          response: { status: 200, ok: true, body: { ok: true } },
+          diagnostics: [{
+            severity: "warning",
+            code: "FORGE_SEED_DEV_PARTIAL_TENANTS",
+            message: "`npm run dev` auto-seeds only the default tenant, but multiple local tenant/persona profiles were discovered.",
+            suggestedCommands: ["forge dev --seed --all-tenants", "forge seed status --json"],
+          }],
+          nextActions: ["refresh the app UI", "forge inspect ui --ergonomics --json"],
+          exitCode: 0,
+        },
+      });
+
+      expect(summary.warnings).toContainEqual({
+        code: "FORGE_SEED_DEV_PARTIAL_TENANTS",
+        message: "`npm run dev` auto-seeds only the default tenant, but multiple local tenant/persona profiles were discovered.",
+        nextAction: "forge dev --seed --all-tenants",
+      });
+      expect(formatStartupHuman(summary)).toContain("Warning FORGE_SEED_DEV_PARTIAL_TENANTS");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
   });
 
   test(
@@ -393,6 +694,18 @@ describe("H33 forge dev console", () => {
     } finally {
       await occupied.close();
     }
+  });
+
+  test("forge dev resolves --web-port 0 to a concrete ephemeral web port", async () => {
+    const selected = await resolveAvailableWebPort({
+      host: "127.0.0.1",
+      preferredPort: 0,
+    });
+
+    expect(selected.requestedPort).toBe(0);
+    expect(selected.autoPortSelected).toBe(true);
+    expect(selected.port).toBeGreaterThan(0);
+    expect(await isTestPortAvailable(selected.port)).toBe(true);
   });
 
   test("forge dev startup diagnostics omit fake API URLs for dynamic ports", () => {

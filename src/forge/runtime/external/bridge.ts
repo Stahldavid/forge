@@ -159,6 +159,20 @@ function authHeaders(auth: AuthContext | undefined, traceId: string): Record<str
     if (auth.role) headers["x-forge-role"] = auth.role;
     if (auth.roles) headers["x-forge-roles"] = JSON.stringify(auth.roles);
     if (auth.permissions) headers["x-forge-permissions"] = JSON.stringify(auth.permissions);
+    if (auth.claims) {
+      headers["x-forge-claims"] = JSON.stringify(auth.claims);
+      const organizationId = auth.claims.organization_id;
+      const organizationMembershipId = auth.claims.organization_membership_id;
+      if (typeof organizationId === "string" && organizationId.length > 0) {
+        headers["x-forge-organization-id"] = organizationId;
+      }
+      if (
+        typeof organizationMembershipId === "string" &&
+        organizationMembershipId.length > 0
+      ) {
+        headers["x-forge-organization-membership-id"] = organizationMembershipId;
+      }
+    }
   }
   if (auth?.kind === "system" && auth.tenantId) {
     headers["x-forge-tenant-id"] = auth.tenantId;

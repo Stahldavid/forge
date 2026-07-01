@@ -114,6 +114,10 @@ describe("b2b-support-web template", () => {
       expect(read(project, "web/components/TraceDetails.tsx")).toContain("traceId");
       expect(read(project, "web/app/providers.tsx")).toContain("../lib/forge");
       expect(read(project, "web/lib/forge.ts")).toContain("useCommand");
+      expect(read(project, "web/next.config.ts")).toContain("session");
+      expect(read(project, "web/app/page.tsx")).toContain("Customer support console");
+      expect(read(project, "web/app/page.tsx")).not.toContain("ForgeOS B2B Support Demo");
+      expect(read(project, "web/app/page.tsx")).not.toContain("powered by ForgeOS");
     } finally {
       cleanupWorkspace(workspace);
     }

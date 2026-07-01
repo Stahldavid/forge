@@ -13,7 +13,7 @@ import { runAuthCommand } from "./auth.ts";
 import { runAuthMdCommand } from "./authmd.ts";
 import { runWorkOSCommand } from "./workos.ts";
 
-export type DeploySubcommand = "plan" | "check" | "render" | "verify";
+export type DeploySubcommand = "plan" | "check" | "render" | "package" | "verify";
 export type DeployTarget = "docker" | "forge-cloud";
 
 export interface DeployCommandOptions {
@@ -119,25 +119,104 @@ function fieldTestReportCandidates(workspaceRoot: string): Array<{ path: string;
   });
 }
 
+const FIELD_TEST_PRODUCTION_COMMAND = "forge field-test run --realistic --json";
+
 function summarizeFieldTestReport(data: Record<string, unknown>) {
   const results = Array.isArray(data.results) ? data.results as Array<Record<string, unknown>> : [];
   const failed = results.filter((result) => result.ok === false && result.skipped !== true);
   const skipped = results.filter((result) => result.skipped === true);
+  const executed = results.filter((result) => result.skipped !== true);
+  const topLevelSteps = results.flatMap((result) =>
+    Array.isArray(result.steps) ? result.steps as Array<Record<string, unknown>> : [],
+  );
   const runtimeSteps = results.flatMap((result) => {
     const runtime = result.runtime && typeof result.runtime === "object"
       ? result.runtime as Record<string, unknown>
       : {};
     return Array.isArray(runtime.steps) ? runtime.steps as Array<Record<string, unknown>> : [];
   });
+  const commandOf = (step: unknown): string =>
+    step && typeof step === "object" && typeof (step as { command?: unknown }).command === "string"
+      ? (step as { command: string }).command
+      : "";
+  const okStep = (step: unknown): boolean =>
+    Boolean(step && typeof step === "object" && (step as { ok?: unknown }).ok === true);
+  const hasOkRuntimeCommand = (pattern: RegExp): boolean =>
+    runtimeSteps.some((step) => okStep(step) && pattern.test(commandOf(step)));
+  const hasOkTopLevelCommand = (pattern: RegExp): boolean =>
+    topLevelSteps.some((step) => okStep(step) && pattern.test(commandOf(step)));
+  const authSetupProbeSteps = topLevelSteps.filter((step) =>
+    /forge\s+(?:--\s+)?(add\s+auth\s+workos|authmd\s+generate|authmd\s+check|workos\s+doctor|workos\s+seed|workos\s+prove|auth\s+prove)/.test(commandOf(step)),
+  );
+  const authMetadataProbeSteps = runtimeSteps.filter((step) =>
+    /^(HEAD|GET)\s+https?:\/\/[^/]+\/(auth\.md|\.well-known\/oauth-protected-resource)\b/i.test(commandOf(step)),
+  );
+  const uiErgonomicsResults = results
+    .map((result) => result.uiErgonomics)
+    .filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object"));
+  const uiErgonomicsWarnings = uiErgonomicsResults.reduce((total, result) =>
+    total + (typeof result.warnings === "number" ? result.warnings : 0), 0);
+  const uiErgonomicsErrors = uiErgonomicsResults.reduce((total, result) =>
+    total + (typeof result.errors === "number" ? result.errors : 0), 0);
+  const runtimeProbes = data.runtimeProbes === true;
+  const authProbes = data.authProbes === true;
+  const uiProbes = data.uiProbes === true;
+  const uiProbeSteps = runtimeSteps.filter((step) =>
+    /^GET\s+https?:\/\/[^/]+\/$/i.test(commandOf(step)),
+  );
+  const uiErgonomics = uiProbes !== true || (executed.length > 0 && uiErgonomicsResults.length === executed.length);
+  const runtimeHealthEvidence = !runtimeProbes || hasOkRuntimeCommand(/\bGET\s+.*\/health\b/i);
+  const runtimeEntriesEvidence = !runtimeProbes || hasOkRuntimeCommand(/\bGET\s+.*\/entries\b/i);
+  const authSetupEvidence = !authProbes || [
+    /forge\s+(?:--\s+)?add\s+auth\s+workos\b/,
+    /forge\s+(?:--\s+)?authmd\s+generate\b/,
+    /forge\s+(?:--\s+)?authmd\s+check\b/,
+    /forge\s+(?:--\s+)?workos\s+doctor\b/,
+    /forge\s+(?:--\s+)?workos\s+seed\b/,
+    /forge\s+(?:--\s+)?workos\s+prove\b/,
+    /forge\s+(?:--\s+)?auth\s+prove\b/,
+  ].every((pattern) => hasOkTopLevelCommand(pattern));
+  const authMetadataEvidence = !authProbes || [
+    /^HEAD\s+.*\/auth\.md\b/i,
+    /^GET\s+.*\/auth\.md\b/i,
+    /^HEAD\s+.*\/\.well-known\/oauth-protected-resource\b/i,
+    /^GET\s+.*\/\.well-known\/oauth-protected-resource\b/i,
+  ].every((pattern) => hasOkRuntimeCommand(pattern));
+  const uiProbeEvidence = !uiProbes || uiProbeSteps.some((step) => okStep(step));
+  const productionEvidenceMissing = [
+    ...(data.ok !== true ? ["passing field-test report"] : []),
+    ...(!runtimeProbes ? ["runtime probes"] : []),
+    ...(!authProbes ? ["auth probes"] : []),
+    ...(!uiProbes ? ["ui probes"] : []),
+    ...(!runtimeHealthEvidence ? ["runtime health probe"] : []),
+    ...(!runtimeEntriesEvidence ? ["runtime entries probe"] : []),
+    ...(!authSetupEvidence ? ["auth setup probes"] : []),
+    ...(!authMetadataEvidence ? ["auth metadata endpoint probes"] : []),
+    ...(!uiProbeEvidence ? ["web UI probe"] : []),
+    ...(!uiErgonomics ? ["UI ergonomics audit"] : []),
+    ...(uiErgonomicsErrors > 0 ? ["zero UI ergonomics errors"] : []),
+    ...(failed.length > 0 ? ["zero failed cases"] : []),
+  ];
   return {
     ok: data.ok === true,
     cases: results.length,
     passed: results.filter((result) => result.ok === true && result.skipped !== true).length,
     failed: failed.length,
     skipped: skipped.length,
-    runtimeProbes: data.runtimeProbes === true,
-    authProbes: data.authProbes === true,
+    runtimeProbes,
+    authProbes,
+    uiProbes,
+    uiErgonomics,
+    uiErgonomicsWarnings,
+    uiErgonomicsErrors,
     runtimeProbeSteps: runtimeSteps.length,
+    authSetupProbeSteps: authSetupProbeSteps.length,
+    authMetadataProbeSteps: authMetadataProbeSteps.length,
+    uiProbeSteps: uiProbeSteps.length,
+    productionEvidence: {
+      readyForDeployCheck: productionEvidenceMissing.length === 0,
+      missing: productionEvidenceMissing,
+    },
   };
 }
 
@@ -431,13 +510,13 @@ function databaseReadyCommand(options: DeployCommandOptions): string {
   if (hasRenderedProductionEnvExample(options.workspaceRoot)) {
     return "cp deploy/.env.production.example deploy/.env.production";
   }
-  return "forge deploy render docker";
+  return "forge deploy package --target docker";
 }
 
 function renderProductionReadme(): string {
   return `# ForgeOS Production Deploy
 
-This directory is generated by \`forge deploy render docker\`.
+This directory is generated by \`forge deploy package --target docker\`.
 
 ## 1. Prepare production env
 
@@ -463,7 +542,7 @@ forge generate --check --json
 forge check --json
 forge authmd generate --json
 forge auth prove --scenario multi-tenant --json
-forge field-test run --runtime-probes --auth-probes --json
+forge field-test run --realistic --json
 forge deploy check --production --json
 \`\`\`
 
@@ -492,15 +571,15 @@ function buildPlan(options: DeployCommandOptions): DeployCommandResult {
         "forge deploy check --production --json",
         "forge auth check --production --json",
         "forge authmd check --json",
-        "forge field-test run --runtime-probes --auth-probes --json",
+        FIELD_TEST_PRODUCTION_COMMAND,
         "forge field-test report --json",
         "forge deploy verify --production --url https://<your-forge-cloud-app> --json",
       ]
     : [
-        "forge deploy render docker",
+        "forge deploy package --target docker",
         "cp deploy/.env.production.example deploy/.env.production",
         "forge deploy check --production --json",
-        "forge field-test run --runtime-probes --auth-probes --json",
+        FIELD_TEST_PRODUCTION_COMMAND,
         "docker compose -f deploy/docker-compose.yml up --build",
         "forge deploy verify --production --url https://app.example.com --json",
       ];
@@ -524,7 +603,7 @@ function buildPlan(options: DeployCommandOptions): DeployCommandResult {
         "production database env evidence is present",
         "required secret names are present",
         "auth.md and protected-resource metadata are published",
-        "field-test report exists with runtime/auth probes",
+        "field-test report exists with runtime/auth/UI probes",
         "runtime /health responds",
         "tenant and policy proof is run before public traffic",
       ],
@@ -693,20 +772,32 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
   const fieldReports = fieldTestReportCandidates(options.workspaceRoot);
   const latestFieldReport = fieldReports[0];
   const fieldSummary = latestFieldReport ? summarizeFieldTestReport(latestFieldReport.data) : null;
+  const fieldReportComplete = Boolean(fieldSummary?.productionEvidence.readyForDeployCheck);
+  const fieldReportMissing = fieldSummary?.productionEvidence.missing ?? [];
   checks.push({
     name: "field-test-report",
-    ok: Boolean(fieldSummary?.ok && fieldSummary.runtimeProbes && fieldSummary.authProbes),
+    ok: fieldReportComplete,
     severity: options.production ? "error" : "warning",
     message: fieldSummary?.ok
-      ? fieldSummary.runtimeProbes && fieldSummary.authProbes
-        ? `field-test report ${latestFieldReport?.path} passed with runtime and auth probes`
-        : `field-test report ${latestFieldReport?.path} passed but is missing runtime/auth probes`
+      ? fieldReportComplete
+        ? `field-test report ${latestFieldReport?.path} passed with concrete runtime, auth, metadata, UI, and ergonomics evidence`
+        : `field-test report ${latestFieldReport?.path} passed but is missing deploy evidence: ${fieldReportMissing.join(", ")}`
       : latestFieldReport
         ? `field-test report ${latestFieldReport.path} did not pass`
-        : "no field-test report found; run forge field-test run --runtime-probes --auth-probes --json",
-    command: "forge field-test run --runtime-probes --auth-probes --json",
+      : `no field-test report found; run ${FIELD_TEST_PRODUCTION_COMMAND}`,
+    command: FIELD_TEST_PRODUCTION_COMMAND,
     details: latestFieldReport ? { path: latestFieldReport.path, summary: fieldSummary } : undefined,
   });
+  if (fieldSummary?.uiErgonomicsWarnings) {
+    checks.push({
+      name: "field-test-ui-ergonomics",
+      ok: false,
+      severity: "warning",
+      message: `field-test UI ergonomics audit reported ${fieldSummary.uiErgonomicsWarnings} warning(s); fix the product surface before treating the app as polished`,
+      command: "forge inspect ui --ergonomics --json",
+      details: { path: latestFieldReport?.path, summary: fieldSummary },
+    });
+  }
   checks.push({
     name: "frontend-build-script",
     ok: !readGeneratedJson<FrontendGraph>(options.workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`)?.present || hasScript(options.workspaceRoot, "build") || hasScript(join(options.workspaceRoot, "web"), "build"),
@@ -759,7 +850,7 @@ function renderDocker(options: DeployCommandOptions): DeployCommandResult {
     schemaVersion: "0.1.0",
     ok: true,
     kind: "deploy",
-    action: "render",
+    action: options.subcommand,
     target: options.target,
     production: options.production,
     checks: [],
@@ -866,7 +957,7 @@ async function verifyUrl(options: DeployCommandOptions): Promise<DeployCommandRe
 export async function runDeployCommand(options: DeployCommandOptions): Promise<DeployCommandResult> {
   if (options.subcommand === "plan") return buildPlan(options);
   if (options.subcommand === "check") return buildChecks(options);
-  if (options.subcommand === "render") return renderDocker(options);
+  if (options.subcommand === "render" || options.subcommand === "package") return renderDocker(options);
   return verifyUrl(options);
 }
 

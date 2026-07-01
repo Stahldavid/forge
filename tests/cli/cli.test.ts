@@ -12,7 +12,7 @@ import { runGenerateCommand, runReleaseDoctorCommand } from "../../src/forge/cli
 import { runAuthMdCommand } from "../../src/forge/cli/authmd.ts";
 import { runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { runPgliteDoctorCommand, runRuntimeDoctorCommand } from "../../src/forge/cli/doctor.ts";
-import { runWorkOSCommand } from "../../src/forge/cli/workos.ts";
+import { formatWorkOSHuman, runWorkOSCommand } from "../../src/forge/cli/workos.ts";
 import { runTestCommand } from "../../src/forge/impact/index.ts";
 import {
   probeStudioPreview,
@@ -209,6 +209,8 @@ describe("Forge CLI", () => {
 
   test("parseCli accepts dev lifecycle, authz proof, and UI ergonomics inspection", () => {
     expect(hasUnknownOption(["dev", "--detach", "--json"])).toBeNull();
+    expect(hasUnknownOption(["dev", "--seed", "--seed-command", "seedVendorAccessDemo", "--json"])).toBeNull();
+    expect(hasUnknownOption(["seed", "dev", "--all-tenants", "--json"])).toBeNull();
     expect(hasUnknownOption(["inspect", "ui", "--ergonomics", "--json"])).toBeNull();
     expect(hasUnknownOption(["test", "authz", "--tenant", "acme", "--other-tenant", "globex", "--json"])).toBeNull();
 
@@ -219,6 +221,25 @@ describe("Forge CLI", () => {
     const devDetach = parseCli(["dev", "--detach", "--db", "memory", "--port", "0", "--json"]);
     expect(devDetach.errors).toEqual([]);
     expect(devDetach.command).toMatchObject({ kind: "dev", detach: true, db: "memory", port: 0 });
+
+    const devSeed = parseCli(["dev", "--seed", "--seed-command", "seedVendorAccessDemo", "--all-tenants", "--json"]);
+    expect(devSeed.errors).toEqual([]);
+    expect(devSeed.command).toMatchObject({
+      kind: "dev",
+      seed: true,
+      seedCommand: "seedVendorAccessDemo",
+      seedAllTenants: true,
+      json: true,
+    });
+
+    const devAllTenantsWithoutSeed = parseCli(["dev", "--all-tenants"]);
+    expect(devAllTenantsWithoutSeed.errors).toContain("forge dev --all-tenants requires --seed; use forge dev --seed --all-tenants");
+
+    const devSeedOnce = parseCli(["dev", "--once", "--seed"]);
+    expect(devSeedOnce.errors).toContain("forge dev --seed cannot be combined with --once; use forge dev --seed or forge seed dev");
+
+    const devSeedWebOnly = parseCli(["dev", "--web-only", "--seed"]);
+    expect(devSeedWebOnly.errors).toContain("forge dev --seed cannot be combined with --web-only because seeding requires the API runtime");
 
     const authz = parseCli(["test", "authz", "--tenant", "acme", "--other-tenant", "globex", "--json"]);
     expect(authz.errors).toEqual([]);
@@ -244,7 +265,12 @@ describe("Forge CLI", () => {
       const code = await main(["dev", "--help"]);
       expect(code).toBe(0);
       expect(output).toContain("forge dev --db memory --port 3777 --web-port 5174");
+      expect(output).toContain("forge dev --db memory --port 0 --web-port 0");
+      expect(output).toContain("forge dev --seed --db pglite");
+      expect(output).toContain("forge dev --seed --all-tenants --db pglite");
+      expect(output).toContain("--all-tenants");
       expect(output).toContain("forge dev --detach --db memory --port 0 --json");
+      expect(output).toContain("--web-port <port>                 Web dev server port; use 0 for an ephemeral port");
       expect(output).not.toContain("Start with one of these:");
     } finally {
       process.stdout.write = originalWrite;
@@ -579,9 +605,15 @@ describe("Forge CLI", () => {
     try {
       mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
       mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      mkdirSync(join(workspace, "web/src/lib"), { recursive: true });
       writeFileSync(
         join(workspace, "package.json"),
         JSON.stringify({ dependencies: { "@workos-inc/node": "^7.0.0" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/authkit-react": "^1.0.0" } }),
         "utf8",
       );
       writeFileSync(
@@ -614,6 +646,42 @@ describe("Forge CLI", () => {
         "utf8",
       );
       writeFileSync(join(workspace, "src/policies.workos.ts"), "export {};\n", "utf8");
+      writeFileSync(
+        join(workspace, "web/src/lib/workos-auth.tsx"),
+        [
+          "export function AuthKitProvider() {}",
+          "export function ForgeProvider() {}",
+          "export function ForgeWorkOSAuthProvider() {",
+          "  const getAccessToken = () => undefined;",
+          "  return getAccessToken;",
+          "}",
+          "export function useForgeWorkOSSession() {",
+          "  return fetch('/session', { credentials: 'include' }).then((response) => response.json()).then((session) => session.claims);",
+          "}",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/src/main.tsx"),
+        "import { ForgeWorkOSAuthProvider } from './lib/workos-auth'; export const root = ForgeWorkOSAuthProvider;\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/vite.config.ts"),
+        [
+          "const forgeProxyPaths = [",
+          "  '/login',",
+          "  '/callback',",
+          "  '/logout',",
+          "  '/session',",
+          "];",
+          "export default forgeProxyPaths;",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const webViteConfigWithSessionProxy = readFileSync(join(workspace, "web/vite.config.ts"), "utf8");
       const seedYaml = [
           "permissions:",
           "  - slug: 'onboarding:read'",
@@ -702,6 +770,9 @@ describe("Forge CLI", () => {
       const parsedSetup = parseCli(["workos", "setup", "--real", "--file", "workos-seed.yml", "--json"]);
       expect(parsedSetup.errors).toEqual([]);
       expect(parsedSetup.command).toMatchObject({ kind: "workos", subcommand: "setup", real: true });
+      const parsedProve = parseCli(["workos", "prove", "--file", "workos-seed.yml", "--json"]);
+      expect(parsedProve.errors).toEqual([]);
+      expect(parsedProve.command).toMatchObject({ kind: "workos", subcommand: "prove", file: "workos-seed.yml" });
 
       const parsed = parseCli(["workos", "doctor", "--json"]);
       expect(parsed.errors).toEqual([]);
@@ -738,10 +809,30 @@ describe("Forge CLI", () => {
       expect(doctor.checks.map((check) => check.name)).toContain("webhook-http-handler");
       expect(doctor.checks.map((check) => check.name)).toContain("authkit-routes");
       expect(doctor.checks.map((check) => check.name)).toContain("authkit-session");
+      expect(doctor.checks.map((check) => check.name)).toContain("browser-authkit-bridge");
+      expect(doctor.checks.map((check) => check.name)).toContain("browser-authkit-session-proxy");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-organizations");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-roles-permissions");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-resource-types");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-auth-config");
+
+      writeFileSync(
+        join(workspace, "web/vite.config.ts"),
+        "export default ['/login', '/callback', '/logout'];\n",
+        "utf8",
+      );
+      const missingSessionProxyDoctor = runWorkOSCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+      });
+      expect(missingSessionProxyDoctor.exitCode).toBe(1);
+      expect(JSON.stringify(missingSessionProxyDoctor.checks)).toContain("browser-authkit-session-proxy");
+      expect(JSON.stringify(missingSessionProxyDoctor.checks)).toContain("web dev config should proxy /session");
+      writeFileSync(join(workspace, "web/vite.config.ts"), webViteConfigWithSessionProxy, "utf8");
+
       const delegatedDoctor = runWorkOSCommand({
         subcommand: "doctor",
         workspaceRoot: workspace,
@@ -758,6 +849,10 @@ describe("Forge CLI", () => {
       expect(delegatedDoctor.exitCode).toBe(0);
       expect(delegatedDoctor.applied).toBe(true);
       expect(delegatedDoctor.stdout).toBe("workos doctor ok\n");
+      expect(JSON.stringify(delegatedDoctor.data)).toContain('"activePermissions"');
+      expect(JSON.stringify(delegatedDoctor.data)).toContain('"onboarding:read"');
+      expect(JSON.stringify(delegatedDoctor.data)).toContain('"seedState"');
+      expect(JSON.stringify(delegatedDoctor.data)).toContain('"matchesSeedHash":null');
 
       const seedDryRun = runWorkOSCommand({
         subcommand: "seed",
@@ -777,6 +872,8 @@ describe("Forge CLI", () => {
         "workos-seed.yml",
       ]);
       expect(JSON.stringify(seedDryRun.data)).toContain('"dryRun":true');
+      expect(JSON.stringify(seedDryRun.data)).toContain('"exists":false');
+      expect(JSON.stringify(seedDryRun.data)).toContain('"matchesSeedHash":null');
       expect(JSON.stringify(seedDryRun.data)).toContain("forge workos seed --file workos-seed.yml --json");
 
       const seedCommands: string[][] = [];
@@ -801,6 +898,18 @@ describe("Forge CLI", () => {
       expect(seedCommands).toContainEqual(["--yes", "workos@latest", "config", "homepage-url", "set", "http://localhost:5173"]);
       expect(seedCommands).toContainEqual(["--yes", "workos@latest", "seed", "--file", "workos-seed.yml"]);
       expect(JSON.stringify(seed.data)).toContain("WorkOS hosted webhook endpoints require HTTPS");
+      expect(JSON.stringify(seed.data)).toContain('"seedStateFile":".workos-seed-state.json"');
+      expect(JSON.stringify(seed.data)).toContain('"matchesSeedHash":true');
+      const seedState = JSON.parse(readFileSync(join(workspace, ".workos-seed-state.json"), "utf8")) as {
+        alreadyApplied: boolean;
+        seedFile: string;
+        seedHash: string;
+        permissions: string[];
+      };
+      expect(seedState.alreadyApplied).toBe(false);
+      expect(seedState.seedFile).toBe("workos-seed.yml");
+      expect(seedState.seedHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(seedState.permissions).toContain("onboarding:read");
 
       const duplicateSeed = runWorkOSCommand({
         subcommand: "seed",
@@ -820,6 +929,67 @@ describe("Forge CLI", () => {
       expect(duplicateSeed.ok).toBe(true);
       expect(duplicateSeed.applied).toBe(false);
       expect(JSON.stringify(duplicateSeed.data)).toContain('"seedAlreadyApplied":true');
+      expect(JSON.stringify(duplicateSeed.data)).toContain('"seedStateFile":".workos-seed-state.json"');
+      expect(JSON.stringify(duplicateSeed.data)).toContain('"alreadyApplied":true');
+      const duplicateSeedState = JSON.parse(readFileSync(join(workspace, ".workos-seed-state.json"), "utf8")) as {
+        alreadyApplied: boolean;
+        exitStatus: number;
+      };
+      expect(duplicateSeedState.alreadyApplied).toBe(true);
+      expect(duplicateSeedState.exitStatus).toBe(1);
+
+      const doctorAfterSeed = runWorkOSCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+      });
+      const seedStateCheck = doctorAfterSeed.checks.find((check) => check.name === "seed-state");
+      expect(seedStateCheck?.ok).toBe(true);
+      expect(seedStateCheck?.detail).toContain(".workos-seed-state.json matches workos-seed.yml");
+      expect(JSON.stringify(doctorAfterSeed.data)).toContain('"matchesSeedHash":true');
+      expect(JSON.stringify(doctorAfterSeed.data)).toContain('"unusedSeedPermissions"');
+
+      writeFileSync(join(workspace, "workos-seed.yml"), `${seedYaml}\n# changed after hosted seed\n`, "utf8");
+      const driftedSeedDryRun = runWorkOSCommand({
+        subcommand: "seed",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: true,
+      });
+      expect(driftedSeedDryRun.exitCode).toBe(0);
+      expect(JSON.stringify(driftedSeedDryRun.data)).toContain('"matchesSeedHash":false');
+
+      const setupDryRun = runWorkOSCommand({
+        subcommand: "setup",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: true,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(setupDryRun.exitCode).toBe(0);
+      expect(JSON.stringify(setupDryRun.data)).toContain('"seedState"');
+      expect(JSON.stringify(setupDryRun.data)).toContain('"matchesSeedHash":false');
+
+      const proveDryRun = runWorkOSCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: true,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(proveDryRun.exitCode).toBe(0);
+      expect(proveDryRun.applied).toBe(false);
+      expect(proveDryRun.checks.map((check) => check.name)).toContain("seed:dry-run");
+      expect(proveDryRun.checks.map((check) => check.name)).toContain("setup:dry-run");
+      expect(JSON.stringify(proveDryRun.data)).toContain("forge workos prove --real --file workos-seed.yml --json");
+      expect(formatWorkOSHuman(proveDryRun)).toContain("WorkOS proof dry-run passed");
 
       writeFileSync(
         join(workspace, "workos-seed.yml"),
@@ -847,6 +1017,25 @@ describe("Forge CLI", () => {
       expect(legacyHeaderSeed.exitCode).toBe(0);
       expect(legacyHeaderSeed.applied).toBe(true);
       expect(JSON.stringify(legacyHeaderSeed.data)).toContain('"seedFileSanitized":true');
+
+      const setupReal = runWorkOSCommand({
+        subcommand: "setup",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (_command, args) => args.includes("seed")
+          ? { status: 0, stdout: "setup seed ok\n", stderr: "" }
+          : { status: 0, stdout: "", stderr: "" },
+      });
+      expect(setupReal.exitCode).toBe(0);
+      expect(setupReal.applied).toBe(true);
+      expect(JSON.stringify(setupReal.data)).toContain('"seedState"');
+      expect(JSON.stringify(setupReal.data)).toContain('"matchesSeedHash":true');
+      expect(JSON.stringify(setupReal.data)).toContain('"seedStateFile":".workos-seed-state.json"');
+      expect(formatWorkOSHuman(setupReal)).toContain("setup applied; .workos-seed-state.json matches the current seed");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
@@ -925,6 +1114,7 @@ describe("Forge CLI", () => {
         "permissions:",
         "  - slug: 'vendors:read'",
         "  - slug: 'access:approve'",
+        "  - slug: 'legacy:unused'",
         "resource_types:",
         "  - slug: 'organization'",
         "  - slug: 'vendor'",
@@ -995,8 +1185,15 @@ describe("Forge CLI", () => {
       expect(doctor.exitCode).toBe(0);
       expect(seed.exitCode).toBe(0);
       expect(JSON.stringify(doctor.checks)).toContain("vendors:read");
+      expect(JSON.stringify(doctor.checks)).toContain("seed-unused-permissions");
+      expect(JSON.stringify(doctor.checks)).toContain("legacy:unused");
       expect(JSON.stringify(doctor.checks)).not.toContain("onboarding:read");
+      expect(JSON.stringify(doctor.data)).toContain('"vendors:read"');
+      expect(JSON.stringify(doctor.data)).toContain('"accessRequest"');
+      expect(JSON.stringify(doctor.data)).toContain('"legacy:unused"');
+      expect(JSON.stringify(doctor.data)).not.toContain("onboarding:read");
       expect(JSON.stringify(seed.data)).toContain("accessRequest");
+      expect(JSON.stringify(seed.data)).toContain("legacy:unused");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
@@ -2498,7 +2695,7 @@ describe("Forge CLI", () => {
   });
 
   test("parseCli accepts dev with port and watch flags", () => {
-    const parsed = parseCli(["dev", "--port", "4000", "--watch", "--mock", "--db", "memory", "--skip-startup-console"]);
+    const parsed = parseCli(["dev", "--port", "4000", "--watch", "--mock", "--db", "memory", "--skip-startup-console", "--seed"]);
     expect(parsed.errors).toEqual([]);
     expect(parsed.command?.kind).toBe("dev");
     if (parsed.command?.kind === "dev") {
@@ -2507,6 +2704,7 @@ describe("Forge CLI", () => {
       expect(parsed.command.mock).toBe(true);
       expect(parsed.command.db).toBe("memory");
       expect(parsed.command.skipStartupConsole).toBe(true);
+      expect(parsed.command.seed).toBe(true);
     }
   });
 

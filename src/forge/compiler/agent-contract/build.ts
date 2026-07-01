@@ -337,6 +337,47 @@ function addDbAliasesForText(
   }
 }
 
+function dbHelperOpsForText(text: string): Map<string, Set<string>> {
+  const helpers = new Map<string, Set<string>>();
+  const patterns = [
+    /\b(?:async\s+)?function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*(?:<[^>{}]*>)?\s*\(\s*([A-Za-z_$][A-Za-z0-9_$]*)[\s\S]*?\)\s*(?::[^{]+)?\{/g,
+    /\b(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*(?:async\s*)?(?:<[^>{}]*>\s*)?\(\s*([A-Za-z_$][A-Za-z0-9_$]*)[\s\S]*?\)\s*(?::[^=]+)?=>\s*\{/g,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const name = match[1] ?? "";
+      const tableParam = match[2] ?? "";
+      const start = match.index === undefined ? -1 : match.index + match[0].length;
+      if (!name || !tableParam || start < 0) {
+        continue;
+      }
+      let depth = 1;
+      let end = start;
+      for (; end < text.length; end++) {
+        const char = text[end];
+        if (char === "{") depth += 1;
+        if (char === "}") depth -= 1;
+        if (depth === 0) break;
+      }
+      const body = text.slice(start, end);
+      const ops = helpers.get(name) ?? new Set<string>();
+      const opPattern = new RegExp(`\\b${escapeRegExp(tableParam)}\\s*\\.\\s*([A-Za-z_$][A-Za-z0-9_$]*)`, "g");
+      for (const opMatch of body.matchAll(opPattern)) {
+        const op = opMatch[1] ?? "";
+        if (DB_READ_OPS.has(op) || DB_WRITE_OPS.has(op)) {
+          ops.add(op);
+        }
+      }
+      if (ops.size > 0) {
+        helpers.set(name, ops);
+      }
+    }
+  }
+
+  return helpers;
+}
+
 function dbTablesForText(
   text: string,
   tableLookup: Map<string, string>,
@@ -367,6 +408,23 @@ function dbTablesForText(
       const op = match[1] ?? "";
       if (ops.has(op)) {
         tables.push(table);
+      }
+    }
+  }
+  const helperOps = dbHelperOpsForText(text);
+  for (const [helperName, helperTableOps] of helperOps) {
+    if (![...helperTableOps].some((op) => ops.has(op))) {
+      continue;
+    }
+    const helperCallPattern = new RegExp(
+      `\\b${escapeRegExp(helperName)}\\s*\\(\\s*ctx\\.db(?:\\.([A-Za-z_$][A-Za-z0-9_$]*)|\\[\\s*["'\`]([^"'\`]+)["'\`]\\s*\\])`,
+      "g",
+    );
+    for (const match of text.matchAll(helperCallPattern)) {
+      const table = match[1] ?? match[2] ?? "";
+      const canonicalTable = tableLookup.get(table);
+      if (canonicalTable) {
+        tables.push(canonicalTable);
       }
     }
   }

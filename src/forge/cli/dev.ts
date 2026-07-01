@@ -34,6 +34,7 @@ import { FORGE_PGLITE_STORE_ABORTED } from "../compiler/diagnostics/codes.ts";
 import { isPgliteAbortMessage } from "../runtime/db/pglite-adapter.ts";
 import { forgeCliCommandForWorkspace, forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { writeLastRunRecord } from "./last-run.ts";
+import { runSeedCommand, type SeedCommandResult } from "./seed.ts";
 
 export interface DevCommandOptions {
   workspaceRoot: string;
@@ -58,6 +59,9 @@ export interface DevCommandOptions {
   allowDevAuth?: boolean;
   skipStartupConsole?: boolean;
   detach?: boolean;
+  seed?: boolean;
+  seedCommand?: string;
+  seedAllTenants?: boolean;
   lifecycle?: "status" | "stop";
 }
 
@@ -75,7 +79,7 @@ export interface DevGenerateResult {
   exitCode: 0 | 1;
 }
 
-interface DevStartupGeneratedEvidence {
+export interface DevStartupGeneratedEvidence {
   ok: boolean;
   state: "fresh" | "regenerated" | "stale-risk";
   changedFiles: number;
@@ -86,7 +90,7 @@ interface DevStartupGeneratedEvidence {
   checkCommand: string;
 }
 
-interface WebDevServerHandle {
+export interface WebDevServerHandle {
   url: string;
   port: number;
   requestedPort?: number;
@@ -95,7 +99,7 @@ interface WebDevServerHandle {
   stop: () => void;
 }
 
-interface DevStartupSummary {
+export interface DevStartupSummary {
   schemaVersion: "0.1.0";
   ok: true;
   mode: "dev";
@@ -155,11 +159,31 @@ interface DevStartupSummary {
     checkCommand: string;
     message: string;
   };
+  seed: {
+    requested: boolean;
+    available: boolean;
+    commands: string[];
+    selectedCommand?: string;
+    readiness?: SeedCommandResult["readiness"];
+    ran: boolean;
+    ok?: boolean;
+    responseStatus?: number;
+    tenantRuns?: Array<{
+      tenantId: string;
+      label?: string;
+      organizationName?: string;
+      ok: boolean;
+      responseStatus?: number;
+    }>;
+    error?: string;
+    nextActions: string[];
+  };
   next: {
     browserUrl: string;
     apiIndex: string;
     inspect: string;
     verify: string;
+    changed: string;
   };
   pid: number;
 }
@@ -283,6 +307,9 @@ function buildDetachedDevArgs(options: DevCommandOptions): string[] {
   if (options.webPort !== undefined) args.push("--web-port", String(options.webPort));
   if (options.telemetry.length > 0) args.push("--telemetry", options.telemetry.join(","));
   if (options.envFile) args.push("--env-file", options.envFile);
+  if (options.seed) args.push("--seed");
+  if (options.seedCommand) args.push("--seed-command", options.seedCommand);
+  if (options.seedAllTenants) args.push("--all-tenants");
   return args;
 }
 
@@ -486,6 +513,27 @@ async function isPortAvailable(host: string, port: number): Promise<boolean> {
   });
 }
 
+async function reserveEphemeralPort(host: string): Promise<number> {
+  const server = createNetServer();
+  return new Promise<number>((resolve, reject) => {
+    const cleanup = () => {
+      server.removeAllListeners();
+    };
+    server.once("error", (error) => {
+      cleanup();
+      reject(error);
+    });
+    server.listen(0, host, () => {
+      const address = server.address();
+      const port = typeof address === "object" && address !== null ? address.port : 0;
+      server.close(() => {
+        cleanup();
+        resolve(port);
+      });
+    });
+  });
+}
+
 function classifyDevStartFailure(input: {
   rawMessage: string;
   host: string;
@@ -602,7 +650,11 @@ export async function resolveAvailableWebPort(input: {
   const attempts = input.maxAttempts ?? 20;
   const start = Math.max(0, Math.floor(input.preferredPort));
   if (start === 0) {
-    return { port: 0, autoPortSelected: false };
+    return {
+      port: await reserveEphemeralPort(input.host),
+      requestedPort: 0,
+      autoPortSelected: true,
+    };
   }
 
   for (let offset = 0; offset < attempts; offset += 1) {
@@ -787,12 +839,27 @@ function startWebDevServer(input: {
   };
 }
 
-function buildStartupSummary(input: {
+function seedReadinessForWorkspace(
+  workspaceRoot: string,
+  readiness: SeedCommandResult["readiness"],
+): SeedCommandResult["readiness"] {
+  return {
+    ...readiness,
+    emptyWorkspaceRecovery: forgeCliCommandsForWorkspace(
+      workspaceRoot,
+      readiness.emptyWorkspaceRecovery,
+    ),
+  };
+}
+
+export function buildStartupSummary(input: {
   workspaceRoot: string;
   handle: DevServerHandle;
   web?: WebDevServerHandle | null;
   watch: boolean;
   generated?: DevStartupGeneratedEvidence;
+  seed?: SeedCommandResult;
+  seedRequested?: boolean;
 }): DevStartupSummary {
   const frontend = readGeneratedJson<FrontendGraph>(
     input.workspaceRoot,
@@ -819,6 +886,22 @@ function buildStartupSummary(input: {
         },
       ]
     : [];
+  if (input.seed && input.seed.subcommand !== "status" && input.seed.ok === false) {
+    warnings.push({
+      code: input.seed.diagnostics[0]?.code ?? "FORGE_SEED_FAILED",
+      message: input.seed.diagnostics[0]?.message ?? "Seed command failed.",
+      nextAction: forgeCliCommandForWorkspace(input.workspaceRoot, "forge seed status --json"),
+    });
+  }
+  for (const diagnostic of input.seed?.diagnostics.filter((item) => item.severity === "warning") ?? []) {
+    warnings.push({
+      code: diagnostic.code,
+      message: diagnostic.message,
+      nextAction: diagnostic.suggestedCommands?.[0]
+        ? forgeCliCommandForWorkspace(input.workspaceRoot, diagnostic.suggestedCommands[0])
+        : forgeCliCommandForWorkspace(input.workspaceRoot, "forge seed status --json"),
+    });
+  }
   const preview = previewSummaryFor({
     workspaceRoot: input.workspaceRoot,
     host: input.handle.host,
@@ -884,11 +967,34 @@ function buildStartupSummary(input: {
       checkCommand: input.generated?.checkCommand ?? forgeCliCommandForWorkspace(input.workspaceRoot, "forge generate --check --json"),
       message: input.generated?.message ?? (buildInfoRaw ? "generated artifacts are loaded" : "generated build info is missing"),
     },
+    seed: {
+      requested: input.seedRequested === true,
+      available: (input.seed?.commands.length ?? 0) > 0,
+      commands: input.seed?.commands.map((command) => command.name) ?? [],
+      ...(input.seed?.selectedCommand ? { selectedCommand: input.seed.selectedCommand } : {}),
+      ...(input.seed?.readiness ? { readiness: seedReadinessForWorkspace(input.workspaceRoot, input.seed.readiness) } : {}),
+      ran: input.seedRequested === true && input.seed?.subcommand !== "status",
+      ...(input.seed && input.seed.subcommand !== "status" ? { ok: input.seed.ok } : {}),
+      ...(input.seed?.response ? { responseStatus: input.seed.response.status } : {}),
+      ...(input.seed?.tenantRuns ? {
+        tenantRuns: input.seed.tenantRuns.map((run) => ({
+          tenantId: run.tenantId,
+          ...(run.label ? { label: run.label } : {}),
+          ...(run.organizationName ? { organizationName: run.organizationName } : {}),
+          ok: run.ok,
+          ...(run.response ? { responseStatus: run.response.status } : {}),
+        })),
+      } : {}),
+      ...(!input.seed?.ok && input.seed?.diagnostics[0]?.message ? { error: input.seed.diagnostics[0].message } : {}),
+      nextActions: input.seed?.nextActions.map((action) => forgeCliCommandForWorkspace(input.workspaceRoot, action)) ??
+        [forgeCliCommandForWorkspace(input.workspaceRoot, "forge seed status --json")],
+    },
     next: {
       browserUrl,
       apiIndex: input.handle.url,
       inspect: forgeCliCommandForWorkspace(input.workspaceRoot, "forge inspect summary --json"),
       verify: forgeCliCommandForWorkspace(input.workspaceRoot, "forge dev --once --json"),
+      changed: forgeCliCommandForWorkspace(input.workspaceRoot, "forge changed --json"),
     },
     pid: process.pid,
   };
@@ -898,7 +1004,7 @@ function printStartupJson(summary: DevStartupSummary): void {
   process.stdout.write(`${JSON.stringify(summary)}\n`);
 }
 
-function printStartupHuman(summary: DevStartupSummary): void {
+export function formatStartupHuman(summary: DevStartupSummary): string {
   const lines = ["Forge Dev", ""];
   lines.push("API runtime");
   lines.push(`  URL: ${summary.api.url}`);
@@ -909,6 +1015,39 @@ function printStartupHuman(summary: DevStartupSummary): void {
   lines.push(`  Generated: ${summary.generated.state}${summary.generated.changedFiles > 0 ? ` (${summary.generated.changedFiles} changed)` : ""}${summary.generated.runtimeStaleRisk ? " (stale risk)" : ""}`);
   lines.push(`  Generated note: ${summary.generated.message}`);
   lines.push(`  Generated check: ${summary.generated.checkCommand}`);
+  if (summary.seed.available || summary.seed.requested) {
+    lines.push(`  Seed: ${summary.seed.available ? summary.seed.commands.join(", ") : "none detected"}`);
+    if (summary.seed.readiness) {
+      const autoSeedNote = summary.seed.readiness.autoSeedMode !== "none"
+        ? summary.seed.readiness.autoSeedMode === "all-tenants"
+          ? " (npm run dev auto-seeds all local tenants)"
+          : " (npm run dev auto-seeds)"
+        : "";
+      lines.push(`  Seed readiness: ${summary.seed.readiness.ready ? "ready" : summary.seed.readiness.reason}${autoSeedNote}`);
+      if (summary.seed.readiness.emptyWorkspaceRecovery.length > 0) {
+        lines.push("  Seed recovery:");
+        for (const action of summary.seed.readiness.emptyWorkspaceRecovery) {
+          lines.push(`    - ${action}`);
+        }
+      }
+    }
+    if (summary.seed.requested) {
+      lines.push(`  Seed run: ${summary.seed.ok ? "ok" : "failed"}${summary.seed.selectedCommand ? ` (${summary.seed.selectedCommand})` : ""}${summary.seed.responseStatus ? ` HTTP ${summary.seed.responseStatus}` : ""}`);
+      if (summary.seed.tenantRuns && summary.seed.tenantRuns.length > 0) {
+        const okCount = summary.seed.tenantRuns.filter((run) => run.ok).length;
+        lines.push(`  Seed tenants: ${okCount}/${summary.seed.tenantRuns.length} ok`);
+        for (const run of summary.seed.tenantRuns) {
+          const label = run.organizationName ?? run.label ?? run.tenantId;
+          lines.push(`    - ${run.ok ? "ok" : "failed"} ${label} (${run.tenantId})${run.responseStatus ? ` HTTP ${run.responseStatus}` : ""}`);
+        }
+      }
+      if (summary.seed.error) {
+        lines.push(`  Seed error: ${summary.seed.error}`);
+      }
+    } else if (summary.seed.available) {
+      lines.push(`  Seed next: ${summary.seed.nextActions[0] ?? "forge seed dev --json"}`);
+    }
+  }
   for (const warning of summary.warnings) {
     lines.push(`  Warning ${warning.code}: ${warning.message}`);
     if (warning.nextAction) {
@@ -920,8 +1059,9 @@ function printStartupHuman(summary: DevStartupSummary): void {
   lines.push("Web app");
   if (summary.web) {
     lines.push(`  URL: ${summary.web.url}`);
-    if (summary.web.autoPortSelected && summary.web.requestedPort) {
-      lines.push(`  Requested port: ${summary.web.requestedPort} (busy; selected ${summary.web.port})`);
+    if (summary.web.autoPortSelected && summary.web.requestedPort !== undefined) {
+      const reason = summary.web.requestedPort === 0 ? "ephemeral" : "busy";
+      lines.push(`  Requested port: ${summary.web.requestedPort} (${reason}; selected ${summary.web.port})`);
     }
     lines.push(`  Framework: ${summary.web.framework}`);
     lines.push(`  API env: ${summary.web.apiUrlEnv ?? "unknown"}=${summary.api.url}`);
@@ -948,7 +1088,7 @@ function printStartupHuman(summary: DevStartupSummary): void {
   lines.push("Agent checks");
   lines.push(`  ${summary.next.verify}`);
   lines.push(`  ${summary.next.inspect}`);
-  lines.push("  forge changed --json");
+  lines.push(`  ${summary.next.changed}`);
   lines.push("");
 
   lines.push("Preview");
@@ -959,7 +1099,11 @@ function printStartupHuman(summary: DevStartupSummary): void {
   lines.push(`  Note: ${summary.preview.note}`);
   lines.push("");
 
-  process.stdout.write(`${lines.join("\n")}\n`);
+  return `${lines.join("\n")}\n`;
+}
+
+function printStartupHuman(summary: DevStartupSummary): void {
+  process.stdout.write(formatStartupHuman(summary));
 }
 
 function openBrowser(url: string): void {
@@ -1311,12 +1455,34 @@ export async function runDevCommand(
         json: options.json,
       });
 
+  const seedStatus = await runSeedCommand({
+    subcommand: "status",
+    command: options.seedCommand,
+    args: {},
+    url: handle.url,
+    json: true,
+    workspaceRoot,
+  });
+  const seedResult = options.seed
+    ? await runSeedCommand({
+        subcommand: "dev",
+        command: options.seedCommand ?? seedStatus.selectedCommand,
+        args: {},
+        url: handle.url,
+        allTenants: options.seedAllTenants,
+        json: true,
+        workspaceRoot,
+      })
+    : seedStatus;
+
   const startupSummary = buildStartupSummary({
     workspaceRoot,
     handle,
     web: webHandle,
     watch: options.watch,
     generated: startupGenerated,
+    seed: seedResult,
+    seedRequested: options.seed,
   });
   if (options.json) {
     printStartupJson(startupSummary);

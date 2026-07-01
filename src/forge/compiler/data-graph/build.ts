@@ -1,4 +1,5 @@
 import { createDiagnostic } from "../diagnostics/create.ts";
+import { FORGE_DB_INVALID_ID_FIELD } from "../diagnostics/codes.ts";
 import { hashStable } from "../primitives/hash.ts";
 import { canonicalJson } from "../primitives/serialize.ts";
 import type { AppGraph } from "../types/app-graph.ts";
@@ -64,6 +65,32 @@ function detectDuplicateTableNames(tables: DataTable[]): DataGraph["diagnostics"
   });
 }
 
+function detectInvalidIdFields(tables: DataTable[]): DataGraph["diagnostics"] {
+  const diagnostics: DataGraph["diagnostics"] = [];
+  for (const table of tables) {
+    const idField = table.fields.find((field) => field.name === "id");
+    if (!idField || idField.type.trim().replace(/\?$/, "").toLowerCase() !== "text") {
+      continue;
+    }
+    diagnostics.push(
+      createDiagnostic({
+        severity: "error",
+        code: FORGE_DB_INVALID_ID_FIELD,
+        message: `table '${table.name}' declares id as 'text'; Forge requires id to be omitted or declared as 'uuid' so the database primary key and runtime id semantics stay aligned`,
+        file: table.file,
+      }),
+    );
+  }
+  return diagnostics.sort((a, b) => {
+    const fileA = a.file ?? "";
+    const fileB = b.file ?? "";
+    if (fileA !== fileB) {
+      return fileA < fileB ? -1 : 1;
+    }
+    return a.message < b.message ? -1 : a.message > b.message ? 1 : 0;
+  });
+}
+
 export function buildDataGraph(appGraph: AppGraph): DataGraph {
   const tables: DataTable[] = [];
   const diagnostics: DataGraph["diagnostics"] = [];
@@ -114,6 +141,7 @@ export function buildDataGraph(appGraph: AppGraph): DataGraph {
   }
 
   const dupDiagnostics = detectDuplicateTableNames(tables);
+  const idDiagnostics = detectInvalidIdFields(tables);
 
   return {
     schemaVersion: DATA_GRAPH_SCHEMA_VERSION,
@@ -126,6 +154,6 @@ export function buildDataGraph(appGraph: AppGraph): DataGraph {
       }),
     ),
     tables: stableSortTables(tables),
-    diagnostics: [...diagnostics, ...dupDiagnostics],
+    diagnostics: [...diagnostics, ...dupDiagnostics, ...idDiagnostics],
   };
 }

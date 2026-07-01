@@ -118,6 +118,8 @@ export function buildGenerateJson(
       ? {
           kind: "generated-drift",
           message: `${result.changed.length} generated artifact(s) would change; run forge generate before handoff or verification.`,
+          concurrencyNote:
+            "Do not run forge generate, forge generate --check, forge dev --once, or forge verify concurrently in the same workspace. If a generate command was active or just started, wait for it to finish and rerun the check once.",
           changedGroups: summarizeGeneratedArtifacts(result.changed),
           sampleChanged: changed.sample,
           hiddenChanged: changed.hidden,
@@ -127,6 +129,12 @@ export function buildGenerateJson(
           checkCommand: options.workspaceRoot
             ? forgeCliCommandsForWorkspace(options.workspaceRoot, ["forge generate --check --json"])[0]
             : "forge generate --check --json",
+          sequentialCommands: options.workspaceRoot
+            ? forgeCliCommandsForWorkspace(options.workspaceRoot, [
+                "forge generate --json",
+                "forge generate --check --json",
+              ])
+            : ["forge generate --json", "forge generate --check --json"],
         }
       : null;
   return {
@@ -234,6 +242,7 @@ export function buildAddJson(
                 "forge workos doctor --yes --json",
                 "forge workos seed --file workos-seed.yml --dry-run --json",
                 "forge workos seed --file workos-seed.yml --json",
+                "forge workos prove --file workos-seed.yml --json",
                 "forge auth check --json",
                 "forge auth prove --json",
               ]

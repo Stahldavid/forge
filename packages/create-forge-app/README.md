@@ -26,6 +26,7 @@ npm create forgeos-app@alpha . -- --template minimal-web
 npm create forgeos-app@alpha nuxt-notes -- --template nuxt-web
 npm create forgeos-app@alpha workroom -- --template agent-workroom
 npm create forgeos-app@alpha support-app -- --template b2b-support-web
+npm create forgeos-app@alpha vendor-access -- --template vendor-access
 npm create forgeos-app@alpha notes-app -- --template minimal-web --git
 npm create forgeos-app@alpha notes-app -- --template minimal-web --no-install --no-git
 ```

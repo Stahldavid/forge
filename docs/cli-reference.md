@@ -83,10 +83,19 @@ Studio reserves `http://127.0.0.1:5173` and `http://127.0.0.1:3765` for the obse
 ```bash
 forge dev
 forge dev --once --json
+forge dev --seed
+forge dev --seed --all-tenants
+forge dev --port 0 --web-port 0
 forge dev --mock-ai
 ```
 
 `forge dev` regenerates Forge artifacts before startup and, with watch enabled, regenerates and reloads the runtime after source changes so `_generated` does not stay stale during the agent loop. Startup JSON, `forge dev --once --json`, and human output expose `summary.generated.state`, changed artifact counts, sample generated paths, and the exact generate/check commands so agents do not have to infer freshness from file timestamps.
+
+Use `--port 0 --web-port 0` when running multiple ForgeOS apps or field tests
+side by side. ForgeOS resolves both to concrete free ports before startup and
+reports the selected API and web URLs in the dev output.
+
+Use `forge dev --seed` for templates or apps with demo/bootstrap commands. ForgeOS discovers commands such as `seedDemoData` or `seedVendorAccessDemo`, starts the API runtime, posts the seed command through the same local dev-auth headers as `forge seed dev`, and reports `summary.seed` plus `summary.seed.readiness` in startup JSON. Use `--seed-command <name>` when an app exposes more than one seed command. Use `--all-tenants` with `--seed` when a multi-tenant app exposes local tenant/persona profiles and you want startup to seed every tenant before opening the UI.
 
 `forge dev --once --json` is the compact agent/CI entrypoint. Read `summary.agentContext` for safe-to-edit state, whether generated artifacts are fresh after the cycle, whether the cycle regenerated files (`generatedChangedFiles`), changed-file counts, `changeSummary` buckets, `diffPlan` review commands, blocking issues, recommended read files, recommended commands, and deeper `--full` commands.
 
@@ -319,6 +328,7 @@ forge review run --changed --json
 
 ```bash
 forge ui audit --json
+forge inspect ui --ergonomics --json
 forge ui smoke --json
 forge ui scenario <name> --json
 forge ui route <path> --json
@@ -328,10 +338,19 @@ forge ui doctor --json
 `forge ui audit --json` is a cheap no-browser gate. It validates route/scenario
 coverage and stable `data-forge-testid` selectors, then scans frontend source
 for UX readiness signals: semantic landmarks, accessible form labels, named
-buttons, loading/error/empty states for Forge data hooks, and an obvious
-sign-in/session/organization flow when generated metadata shows tenant-scoped
-data or production auth modes. These are warnings by default so smoke checks
-stay fast, but they give agents concrete UI fixes before browser testing.
+buttons, loading/error/empty states for Forge data hooks, obvious primary
+workflow actions, workflow navigation, permission-aware disabled or denial
+feedback, and an obvious sign-in/session/organization flow when generated
+metadata shows tenant-scoped data or production auth modes. It also warns when
+the primary product surface explains ForgeOS or the demo instead of presenting
+the app workflow; keep framework details in a collapsible dev panel or docs.
+These are warnings by default so smoke checks stay fast, but they give agents
+concrete UI fixes before browser testing.
+
+`forge field-test run --realistic --json`
+includes the same `inspect ui --ergonomics` evidence in the field-test report,
+so production checks can distinguish "web server responds" from "the generated
+app exposes a usable primary workflow."
 
 ## LiveQuery
 
@@ -379,11 +398,43 @@ an active owner process, or running `forge db repair --local --adapter pglite
 --json`. Use memory for clean isolated smokes and PGlite for persistent local
 state.
 
+## Dev seed
+
+```bash
+forge seed status --json
+forge seed dev --json
+forge seed reset --json
+forge seed dev --all-tenants --json
+forge seed dev --command seedVendorAccessDemo --tenant-id 11111111-1111-4111-8111-111111111111 --permissions demo:seed --json
+forge dev --seed --seed-command seedVendorAccessDemo --all-tenants
+```
+
+`forge seed status` reads the generated runtime graph and lists commands whose
+names look like seed commands. `forge seed dev` posts to the local Forge runtime
+at `http://127.0.0.1:3765` by default, so start `forge dev` first or pass
+`--url`. `forge seed reset` sends the same request with `args.reset=true`; the
+seed command must implement reset semantics if data should be deleted.
+
+The JSON output includes a `readiness` block with the selected seed command,
+default dev-auth headers, whether `npm run dev` already auto-seeds through
+`forge dev --seed`, whether it auto-seeds every discovered local tenant through
+`autoSeedAllTenantsOnDev`, the normalized `autoSeedMode`
+(`none`, `default-tenant`, or `all-tenants`), and `emptyWorkspaceRecovery`
+commands for fixing an app that opened with no demo/bootstrap data.
+When frontend local personas expose tenant ids, the same block includes
+`localTenants` plus per-tenant seed/reset commands; `forge seed dev
+--all-tenants` and `forge dev --seed --all-tenants` execute those tenant
+profiles in sequence and return per-tenant run evidence.
+If multiple local tenants are discovered but `npm run dev` only calls
+`forge dev --seed`, `forge seed status` emits
+`FORGE_SEED_DEV_PARTIAL_TENANTS` and puts `forge dev --seed --all-tenants`
+first in empty-workspace recovery.
+
 ## Self-host
 
 ```bash
 forge deploy plan --target docker --json
-forge deploy render docker
+forge deploy package --target docker
 forge deploy check --production --json
 forge deploy verify --production --url https://app.example.com --json
 ```
@@ -392,7 +443,7 @@ forge deploy verify --production --url https://app.example.com --json
 
 ```bash
 forge field-test run --dry-run --json
-forge field-test run --package-managers npm --templates minimal-web --forge-spec "npm:forgeos@alpha" --runtime-probes --auth-probes --json
+forge field-test run --realistic --package-managers npm --templates vendor-access --forge-spec "npm:forgeos@alpha" --json
 npm run release:pack
 npm run release:evidence
 npm run release:publish-alpha

@@ -1,5 +1,36 @@
 # forgeos
 
+## 0.1.0-alpha.42
+
+### Patch Changes
+
+- Make the ForgeOS production-like golden path explicit and verifiable.
+
+  - Add `forge field-test run --realistic` as the compact app validation path
+    for runtime, auth, and UI probes, defaulting to the WorkOS-backed
+    `vendor-access` flow when no template/auth override is provided.
+  - Add `forge deploy package --target docker` as the user-facing production
+    packaging command while keeping `forge deploy render docker` compatible.
+  - Add `forge workos prove --file workos-seed.yml --json` as a no-dashboard
+    aggregate proof for WorkOS/AuthKit/FGA/seed readiness, with `--real`
+    applying hosted setup through the existing WorkOS CLI integration.
+  - Promote `vendor-access` into a production-shaped field-test template with
+    deterministic all-tenant seeding, local identity profiles, WorkOS-style
+    permissions, auth metadata, UI scenarios, multi-tenant domain probes, and
+    deploy-readiness evidence.
+  - Tighten `forge field-test report` and `forge deploy check --production` so
+    they require concrete runtime, auth setup, auth metadata, UI, UI
+    ergonomics, seed readiness, and tenant-isolation evidence before reporting
+    deploy readiness.
+  - Improve UI ergonomics and browser probe diagnostics for local-vs-production
+    auth boundaries, seeded first-run state, policy denials, raw runtime errors,
+    and product surfaces that expose framework/demo internals too prominently.
+  - Add `forge seed status/dev/reset`, all-tenant seed startup support through
+    `forge dev --seed --all-tenants`, and seed readiness evidence in dev and
+    field-test summaries.
+  - Update templates, docs, and tests around the new `create app -> add auth ->
+    field-test -> deploy` path.
+
 ## 0.1.0-alpha.41
 
 ### Patch Changes
@@ -193,8 +224,6 @@
   - Keep `forge make resource` global by default unless a tenants table exists or `--tenant-scoped` is explicit.
   - Expand capability-map table detection for aliased `ctx.db` usage.
   - Wait through short-lived DeltaDB writer locks before reporting `FORGE_DELTA_BUSY`.
-
-## Unreleased
 
 ## 0.1.0-alpha.25
 

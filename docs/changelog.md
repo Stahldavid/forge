@@ -6,6 +6,217 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.42
+
+- Added the golden-path CLI alias `forge field-test run --realistic`, which
+  enables runtime, auth, and UI probes together and defaults to the
+  WorkOS-backed `vendor-access` path when no template/auth override is
+  provided.
+- Added `forge deploy package --target docker` as the user-facing production
+  packaging command while keeping `forge deploy render docker` compatible; the
+  generated production README and deploy plan now point at `package`.
+- Added `forge workos prove --file workos-seed.yml --json` as an aggregate
+  no-dashboard proof for WorkOS/AuthKit/FGA/seed readiness, with `--real`
+  applying hosted setup through the existing WorkOS CLI integration.
+- `forge field-test report` now requires zero UI ergonomics warnings before
+  marking a UI-probed report ready for deploy checks, so product-surface
+  problems like demo copy, raw fetch errors, or exposed dev diagnostics cannot
+  pass as production-ready evidence.
+- `forge inspect ui --ergonomics` now warns when a production-auth/WorkOS app
+  exposes local persona or dev-auth controls without explicitly separating
+  them as local development mode, reducing confusion between mock identity and
+  real AuthKit/OIDC auth.
+- UI scenarios now support a `selectOption` step and the `vendor-access`
+  template generates browser scenarios for local sign-in, requester approval
+  denial, first-run seeded vendor data, and seed/reset controls, so field tests
+  can cover role-specific product flows instead of only loading `/`.
+- `forge field-test report` now treats those `vendor-access` UI scenarios as
+  deploy-readiness evidence, requiring local sign-in, seeded-data,
+  requester-denied, and seed-control scenario names whenever UI probes run for
+  the template.
+- `forge inspect ui --ergonomics` now warns with
+  `FORGE_UI_AUTO_SEED_RECOVERY_MISSING` when demo/sample seed commands exist
+  but the frontend does not appear to auto-recover an empty first-run
+  workspace, catching apps that open on an unseeded or broken-looking state.
+- `forge ui doctor` and UI scenario runs now resolve Playwright from the app or
+  `web/` package root, infer npm/pnpm/bun/yarn setup commands from lockfiles,
+  and distinguish missing installs from missing Playwright dependencies instead
+  of always suggesting Bun commands.
+- `forge field-test report` now treats `vendor-access` seed readiness as
+  deploy-ready only when `seed status` proves `autoSeedMode: "all-tenants"`,
+  catching regressions where domain probes pass but `npm run dev` would still
+  warm only the default tenant.
+- `forge seed dev --all-tenants` and `forge seed reset --all-tenants` now
+  preserve successful per-tenant warnings in the aggregate `diagnostics`
+  payload, deduplicating repeated warning codes/messages while keeping full
+  per-tenant diagnostics under `tenantRuns`.
+- `forge seed status` now warns with `FORGE_SEED_DEV_PARTIAL_TENANTS` when an
+  app exposes multiple local tenant/persona profiles but `npm run dev` only
+  uses `forge dev --seed` without `--all-tenants`, and it promotes
+  `forge dev --seed --all-tenants` as the first empty-workspace recovery.
+- `forge dev --seed` startup summaries now surface seed warnings even when the
+  seed command itself succeeds, so partial multi-tenant seeding is visible in
+  the first dev-server payload and human terminal output.
+- `forge seed status --json`, `forge dev --seed --json`, and field-test
+  reports now expose `autoSeedMode` (`none`, `default-tenant`, or
+  `all-tenants`) alongside the compatibility booleans `autoSeedOnDev` and
+  `autoSeedAllTenantsOnDev`, making it obvious when `npm run dev` warms every
+  discovered local tenant/persona instead of only the default tenant.
+- The `vendor-access` starter now runs `forge dev --seed --all-tenants` from
+  `npm run dev`, so Acme and Globex local workspaces are warmed up by default
+  instead of leaving secondary tenant views empty until manual seeding.
+- Human `forge dev --seed --all-tenants` startup output now lists per-tenant
+  seed results with labels and HTTP status, matching the structured startup
+  JSON evidence without requiring agents to rerun with `--json`.
+- `forge inspect ui --ergonomics` now warns when a WorkOS/AuthKit frontend is
+  mounted but does not expose normalized `/session` claims or proxy the AuthKit
+  login/callback/logout/session routes, catching half-wired production auth
+  flows before browser testing.
+- `forge inspect ui --ergonomics` now warns when Forge/WorkOS operational
+  diagnostics such as env names, seed files, claims dumps, capability maps, or
+  policy proofs appear in the primary product surface instead of a collapsible
+  developer panel.
+- `forge inspect ui --ergonomics` now requires WorkOS-authenticated apps to
+  expose a visible WorkOS/AuthKit sign-in/sign-out path, `/login`/`/logout`
+  link, or AuthKit signIn/signOut call, so local-persona buttons or
+  organization/session copy alone no longer count as a real WorkOS auth flow.
+- `forge workos seed --file ... --json` now writes a local
+  `.workos-seed-state.json` after successful hosted seed application or known
+  duplicate-resource/idempotent WorkOS responses, giving agents a stable,
+  secret-free proof that the seed was applied or already present.
+- `forge workos doctor --json` and `forge workos seed --dry-run --json` now
+  read `.workos-seed-state.json`, report whether it matches the current
+  `workos-seed.yml`, and surface seed drift before an agent reapplies hosted
+  WorkOS changes.
+- `forge workos setup --json` now surfaces the same seed-state summary at the
+  top level for dry-runs and real no-dashboard setup runs, so agents can see
+  hosted seed drift without digging through nested seed payloads.
+- Human `forge workos setup --real` output now reports whether
+  `.workos-seed-state.json` matches the current seed after hosted setup,
+  keeping text-mode CLI handoffs aligned with JSON evidence.
+- `forge workos doctor --json` now includes structured WorkOS coverage data
+  (`seed`, `seedState`, active policy permissions, expected resource types, and
+  missing/unused seed coverage) so agents can verify auth setup without parsing
+  human check text.
+- `forge seed status --json` now reports seed readiness, including the selected
+  seed command, default local dev-auth headers, whether `npm run dev` already
+  auto-seeds through `forge dev --seed`, and exact recovery commands for empty
+  workspaces.
+- `forge seed status --json` now discovers local frontend tenant/persona
+  profiles and emits per-tenant `forge seed dev`/`forge seed reset` commands,
+  making multi-tenant field apps easier to warm up and test without guessing
+  Acme/Globex headers.
+- `forge seed dev --all-tenants` and `forge seed reset --all-tenants` now run
+  the selected seed command against every discovered local tenant/persona,
+  returning per-tenant request/response evidence for multi-tenant field tests.
+- The `vendor-access` field-test runtime probe now uses
+  `forge seed dev --all-tenants` and accepts that single bulk-seed proof as the
+  deploy-readiness seed evidence, while still accepting older Acme/Globex
+  per-tenant report artifacts.
+- `forge dev --seed --all-tenants` now forwards the discovered local
+  tenant/persona set into startup seeding and includes per-tenant seed run
+  evidence in the dev startup JSON summary.
+- Generated-drift JSON now includes a concurrency note and normalized
+  sequential `generate`/`generate --check` commands, so agents do not mistake a
+  parallel `forge generate`/`forge generate --check` race for a persistent
+  generator defect.
+- `forge dev --seed` startup output now includes the same seed readiness block
+  in `summary.seed.readiness`, so Studio and coding agents can diagnose empty
+  workspaces from the first dev-server payload.
+- `forge seed` now normalizes recovery and diagnostic commands for the current
+  workspace, so framework checkouts show `node bin/forge.mjs ...` while
+  generated apps continue to show `forge ...`.
+- `forge seed status` now recognizes auto-seeded dev scripts whether they call
+  `forge dev --seed`, `npm run forge -- dev --seed`, or the local
+  `bin/forge.mjs dev --seed` entrypoint.
+- Human `forge seed` output now prints an `empty workspace recovery` section
+  with the same workspace-normalized commands exposed in JSON readiness.
+- `forge field-test report` now treats `vendor-access` seed readiness as
+  deploy-check evidence, so reports must prove the app exposes deterministic
+  empty-workspace recovery commands before they are marked deploy-ready.
+- Cleaned the `vendor-access` starter's local identity naming so the app uses
+  `LocalPersona`/workspace seed terminology instead of demo-auth terminology in
+  its authored frontend code and audit seed copy.
+- `forge add auth workos` now treats already-declared WorkOS packages as an
+  idempotent no-op for package installation, emits
+  `FORGE_ADD_PACKAGE_ALREADY_DECLARED`, and continues adapter/AuthKit generation
+  instead of surfacing a misleading install failure.
+- `forge add auth workos` now generates a browser session helper and rewrites
+  the `vendor-access` WorkOS shell to read normalized `/session` claims for
+  organization, role, and permissions. Vite/Next templates now proxy `/session`
+  alongside `/login`, `/callback`, and `/logout`.
+- `forge workos doctor` now verifies the generated browser AuthKit bridge
+  exposes `useForgeWorkOSSession` and that web dev config proxies `/session`
+  with the AuthKit login/logout/callback routes, catching half-wired WorkOS
+  apps before browser testing.
+- `forge workos doctor` and `forge workos seed` now report unused seed
+  permissions against the app's active policy permissions, making generic or
+  stale seed files visible without blocking intentionally broader seeds.
+- `forge check` now fails fast on `defineTable(..., { id: "text" })` with
+  `FORGE_DB_INVALID_ID_FIELD`, before the app reaches confusing SQL/runtime
+  primary-key behavior. Omit `id` for generated UUID ids or use `id: "uuid"`.
+- Field-test runtime probes now start `forge dev` with `--port 0` and
+  `--web-port 0`, then read the concrete API/web URLs from startup JSON instead
+  of pre-reserving ports in the harness.
+- Hardened `forge inspect ui --ergonomics` so generated apps with runtime
+  commands/policies warn when they lack an obvious primary workflow action,
+  workflow navigation, permission feedback, or when ForgeOS/demo copy appears
+  in the main product surface instead of a collapsible dev panel.
+- Tightened seed UX auditing so command names such as `seedVendorAccessDemo`
+  no longer count as a visible first-run recovery path; apps with seed commands
+  now need an actual seed/reset/status control or tenant-data recovery copy.
+- Expanded UI ergonomics checks to catch `powered by ForgeOS` and
+  `ForgeOS ... demo` copy on the product surface, and cleaned starter template
+  first screens so generated apps open as useful products rather than framework
+  advertisements.
+- Reduced UI auth-flow false positives: apps that merely support `jwt`/`oidc`
+  modes no longer look production-authenticated unless they set an active
+  production auth mode, use tenant-scoped data, or include a WorkOS integration.
+- Updated the `minimal-web` starter with real workflow navigation and section
+  anchors so new apps no longer start with a UI ergonomics navigation warning.
+- Made the `vendor-access` starter run `forge dev --seed` by default, with
+  `dev:no-seed` available for empty-state debugging.
+- Fixed the `vendor-access` README quickstart so it tells users to run the
+  auto-seeded `npm run dev` script instead of appending a duplicate `--seed`
+  flag.
+- Tightened the `vendor-access` dashboard queries so the root organization
+  record is loaded by the active tenant id instead of listing every demo
+  organization in the workspace.
+- Strengthened the `vendor-access` field-test probes to fail when the
+  dashboard payload leaks the other tenant's root organization record, not just
+  the other tenant's vendors.
+- Made the `vendor-access` starter retry automatic demo seeding after transient
+  frontend/API failures instead of marking a tenant as seeded before the seed
+  command succeeds.
+- Hardened `forge field-test report` production evidence so
+  `readyForDeployCheck` requires concrete runtime health/entries probes, auth
+  setup commands, auth metadata endpoint probes, a web UI probe, and UI
+  ergonomics evidence instead of trusting enabled probe flags alone.
+- Aligned `forge deploy check --production` with the stricter field-test
+  evidence contract, including explicit missing-evidence messages for runtime,
+  auth setup, auth metadata, UI, and ergonomics probes.
+- Improved `forge add auth workos` for the `vendor-access` starter so real
+  WorkOS browser config bypasses the local identity selector and renders an
+  AuthKit-backed app shell, while retaining explicit local identity mode when
+  WorkOS env vars are absent.
+- Simplified the `vendor-access` local login surface to a persona picker plus
+  local-mode continue action instead of a fake email/password form, making the
+  boundary between dev-header simulation and real WorkOS/AuthKit login clearer.
+- Tightened UI ergonomics around auth demos: `forge inspect ui --ergonomics`
+  now warns on demo-login language and fake password-style auth forms in the
+  primary app shell, and the `vendor-access` template labels local identity and
+  workspace seed controls without fake credential copy.
+- Field-test reports created with `--ui-probes` now include UI ergonomics audit
+  evidence, and `forge deploy check --production` requires that evidence while
+  surfacing UX warnings separately from runtime/auth failures.
+- Field-test UI probes now reject obvious broken first-screen HTML such as
+  `Failed to fetch`, `No organization seeded`, and raw Forge runtime errors
+  instead of treating any reachable Vite/Next/Nuxt shell as product evidence.
+- `forge field-test report` now requires the `vendor-access` app's concrete
+  multi-tenant domain probes before marking field-test evidence deploy-ready:
+  seed Acme/Globex, query both tenants, allow owner approval, deny requester
+  approval, and deny cross-tenant approval.
+
 ## 0.1.0-alpha.41
 
 - Fixed package install detection for npm workspace apps that hoist frontend

@@ -66,12 +66,12 @@ Before using ForgeOS in a serious production environment, start with the deploy 
 
 ```bash
 forge deploy plan --target docker --json
-forge deploy render docker
+forge deploy package --target docker
 forge deploy check --production --json
 forge deploy verify --production --url https://app.example.com --json
 ```
 
-`forge deploy check --production` is the compact gate for production posture. It fails on stale generated artifacts, missing package-manager lockfiles, local-only auth, missing production auth settings, missing database readiness, missing public agent auth metadata, missing field-test evidence with runtime/auth probes, and missing tenant claim mapping. It reads production values from the current environment and from `deploy/.env.production`, so the rendered Docker path can be checked without exporting every variable into the shell. For tenant-scoped or WorkOS-backed apps, it also runs the local multi-tenant auth proof that checks claim mapping, seed coverage, permission vocabulary, and auth metadata. For database readiness, `deploy/.env.production.example` is only a template; the check requires `DATABASE_URL` in the current environment or inside `deploy/.env.production`. It also reports frontend build posture and liveQuery production reminders.
+`forge deploy check --production` is the compact gate for production posture. It fails on stale generated artifacts, missing package-manager lockfiles, local-only auth, missing production auth settings, missing database readiness, missing public agent auth metadata, missing field-test evidence with runtime/auth/UI probes, and missing tenant claim mapping. It reads production values from the current environment and from `deploy/.env.production`, so the rendered Docker path can be checked without exporting every variable into the shell. For tenant-scoped or WorkOS-backed apps, it also runs the local multi-tenant auth proof that checks claim mapping, seed coverage, permission vocabulary, and auth metadata. For database readiness, `deploy/.env.production.example` is only a template; the check requires `DATABASE_URL` in the current environment or inside `deploy/.env.production`. It also reports frontend build posture and liveQuery production reminders.
 
 `forge deploy verify --production --url` probes the deployed runtime externally. It checks `GET /health` plus `HEAD` and `GET` for `/auth.md` and `/.well-known/oauth-protected-resource`, validates auth metadata content-types, and requires the OAuth protected-resource metadata body to be valid JSON so the production story is visible to both humans and agents and to tools that probe metadata with `HEAD`.
 
@@ -154,18 +154,17 @@ Use:
 
 ```bash
 forge field-test run \
+  --realistic \
   --package-managers npm,pnpm,yarn,bun \
   --templates minimal-web,nuxt-web,b2b-support-web \
   --forge-spec "npm:forgeos@alpha" \
-  --runtime-probes \
-  --auth-probes \
   --json
 forge field-test report --json
 ```
 
-By default, `forge field-test run` writes `.forge/field-test-report.json`. `forge deploy check --production` treats a missing or incomplete report as a production-blocking failure. Use `--write-report <path>` when collecting release evidence outside the local operational directory. `forge field-test report --json` exposes `summary.productionEvidence.readyForDeployCheck`; it should be `true` before you expect the field-test portion of `forge deploy check --production` to pass.
+By default, `forge field-test run` writes `.forge/field-test-report.json`. `forge deploy check --production` treats a missing or incomplete report as a production-blocking failure. Use `--write-report <path>` when collecting release evidence outside the local operational directory. `forge field-test report --json` exposes `summary.productionEvidence.readyForDeployCheck`; it should be `true` before you expect the field-test portion of `forge deploy check --production` to pass. The deploy check reads the same concrete evidence and reports the missing probe categories directly. For `vendor-access`, that evidence includes seed readiness plus the multi-tenant domain probes: seed Acme and Globex, query both tenants, approve as an allowed role, deny a requester approval, and deny cross-tenant approval.
 
-A report should show successful scaffold, install, generate, WorkOS/auth metadata checks when `--auth-probes` is enabled, `forge dev --once`, `forge verify --smoke`, `GET /health`, `GET /entries`, `HEAD` and `GET` probes for `/auth.md` and `/.well-known/oauth-protected-resource`, one command invocation, and one query invocation.
+A report should show successful scaffold, install, generate, WorkOS/auth setup commands (`forge add auth workos`, `forge authmd generate`, `forge authmd check`, `forge workos doctor`, `forge workos seed --dry-run`, `forge workos prove`, and `forge auth prove --scenario multi-tenant`) when `--auth-probes` is enabled, `forge dev --once`, `forge verify --smoke`, `GET /health`, `GET /entries`, `GET /` plus `forge inspect ui --ergonomics --json` evidence for the generated web entrypoint when `--ui-probes` is enabled, `HEAD` and `GET` probes for `/auth.md` and `/.well-known/oauth-protected-resource`, one command invocation, and one query invocation.
 
 ## Related pages
 

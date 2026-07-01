@@ -86,8 +86,11 @@ describe("Forge CLI generation and inspection", () => {
         kind: "generated-drift",
         repairCommand: "forge generate",
         checkCommand: "forge generate --check --json",
+        sequentialCommands: ["forge generate --json", "forge generate --check --json"],
       });
       expect(JSON.stringify(json.drift)).toContain("generated artifact");
+      expect(JSON.stringify(json.drift)).toContain("Do not run forge generate");
+      expect(JSON.stringify(json.drift)).toContain("concurrently in the same workspace");
       expect(json.summary).toMatchObject({
         changed: expect.any(Number),
         hiddenChanged: expect.any(Number),
@@ -104,6 +107,10 @@ describe("Forge CLI generation and inspection", () => {
       expect(localJson.drift).toMatchObject({
         repairCommand: "node bin/forge.mjs generate",
         checkCommand: "node bin/forge.mjs generate --check --json",
+        sequentialCommands: [
+          "node bin/forge.mjs generate --json",
+          "node bin/forge.mjs generate --check --json",
+        ],
       });
       expect(localJson.nextActions as string[]).toEqual([
         "node bin/forge.mjs generate --json",
@@ -154,6 +161,83 @@ describe("Forge CLI generation and inspection", () => {
     }
   });
 
+  test("check rejects text id fields before SQL/runtime drift", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-check-text-id-field");
+    try {
+      writeFileSync(
+        join(workspace, "src/forge/schema.ts"),
+        'import { defineTable } from "forge/schema";\nexport const vendors = defineTable("vendors", { id: "text", name: "text" });\n',
+        "utf8",
+      );
+
+      const result = await runCheckCommand(workspace);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: "FORGE_DB_INVALID_ID_FIELD",
+          file: "src/forge/schema.ts",
+        }),
+      );
+      expect(result.errors[0]?.fixHint).toContain('id: "text"');
+      expect(result.errors[0]?.suggestedCommands).toContain("forge inspect schema --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("capability map tracks db tables passed through helper functions", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-capability-helper-db");
+    try {
+      writeFileSync(
+        join(workspace, "src/forge/schema.ts"),
+        [
+          'import { defineTable } from "forge/schema";',
+          'export const vendors = defineTable("vendors", { id: "string", name: "text" });',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/commands.ts"),
+        [
+          'import { command } from "forge/server";',
+          "",
+          "async function upsertById(table, value) {",
+          "  const existing = await table.get(value.id);",
+          "  if (existing) return table.update(value.id, value);",
+          "  return table.insert(value);",
+          "}",
+          "",
+          "export const seedVendor = command({",
+          "  handler: async (ctx) => upsertById(ctx.db.vendors, { id: 'v1', name: 'Atlas Identity' }),",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const generated = await runGenerateCommand(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+      const capabilities = await runInspectCommand("capabilities", workspace);
+      expect(capabilities.exitCode).toBe(0);
+      const data = capabilities.data as {
+        entries?: Array<{
+          runtime?: {
+            name?: string;
+            tablesRead?: string[];
+            tablesWritten?: string[];
+          };
+        }>;
+      };
+      const seedVendor = data.entries?.find((entry) => entry.runtime?.name === "seedVendor");
+      expect(seedVendor?.runtime?.tablesRead).toContain("vendors");
+      expect(seedVendor?.runtime?.tablesWritten).toContain("vendors");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("inspect ui ergonomics exposes static UX diagnostics", async () => {
     const workspace = mkdtempSync(join(tmpdir(), "forge-ui-ergonomics-"));
     try {
@@ -164,7 +248,7 @@ describe("Forge CLI generation and inspection", () => {
         JSON.stringify({
           schemaVersion: "0.1.0",
           generatorVersion: "test",
-          framework: "react",
+          framework: "vite",
           webRoot: "web",
           defaultBaseUrl: "http://127.0.0.1:5173",
           runtimeUrl: "http://127.0.0.1:3765",
@@ -172,7 +256,7 @@ describe("Forge CLI generation and inspection", () => {
             {
               path: "/",
               name: "home",
-              uses: { commands: ["createVendor"], queries: [], liveQueries: ["liveVendors"], components: ["App"] },
+              uses: { commands: ["createVendor", "seedVendor"], queries: [], liveQueries: ["liveVendors"], components: ["App"] },
             },
           ],
           scenarios: ["home-loads"],
@@ -192,7 +276,7 @@ describe("Forge CLI generation and inspection", () => {
               cost: "browser",
               steps: [{ kind: "goto", path: "/" }],
               requires: {
-                commands: ["createVendor"],
+                commands: ["createVendor", "seedVendor"],
                 queries: [],
                 liveQueries: ["liveVendors"],
                 policies: ["vendors:read"],
@@ -205,8 +289,29 @@ describe("Forge CLI generation and inspection", () => {
         "utf8",
       );
       writeFileSync(
+        join(workspace, "src/forge/_generated/dataGraph.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          tables: [
+            {
+              name: "vendors",
+              tenantScoped: true,
+              tenantField: "tenantId",
+              fields: [{ name: "tenantId", type: "ref:organizations" }],
+            },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
         join(workspace, "web/src/App.tsx"),
-        'import { useLiveQuery } from "./lib/forge";\nexport function App() { useLiveQuery("liveVendors", {}); return <section><button></button></section>; }\n',
+        'import { useLiveQuery } from "./lib/forge";\nexport function App() { useLiveQuery("liveVendors", {}); return <section><h1>ForgeOS Vendor Demo</h1><p>Minimal full-stack app powered by ForgeOS.</p><p>Failed to fetch</p><button></button></section>; }\n',
+        "utf8",
+      );
+      mkdirSync(join(workspace, "web/src/lib"), { recursive: true });
+      writeFileSync(
+        join(workspace, "web/src/lib/forge.ts"),
+        'export const forgeUrl = import.meta.env.VITE_FORGE_URL ?? "http://127.0.0.1:3765";\n',
         "utf8",
       );
 
@@ -216,6 +321,179 @@ describe("Forge CLI generation and inspection", () => {
       expect(JSON.stringify(result.data)).toContain("ergonomics");
       expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_BUTTON_NAME_MISSING");
       expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_EMPTY_STATE_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_LOCAL_API_FORWARDING_RISK");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_NETWORK_ERROR_TOO_GENERIC");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_SEED_ACTION_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_AUTH_FLOW_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_PRIMARY_ACTION_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_WORKFLOW_NAV_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_PERMISSION_FEEDBACK_MISSING");
+      expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_UI_PRODUCT_COPY_TOO_META");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("inspect ui ergonomics allows ForgeOS details inside a collapsible dev panel", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-ui-dev-panel-"));
+    try {
+      mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      mkdirSync(join(workspace, "web/src"), { recursive: true });
+      writeFileSync(
+        join(workspace, "src/forge/_generated/uiTestManifest.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          generatorVersion: "test",
+          framework: "vite",
+          webRoot: "web",
+          defaultBaseUrl: "http://127.0.0.1:5173",
+          runtimeUrl: "http://127.0.0.1:3765",
+          routes: [
+            {
+              path: "/",
+              name: "home",
+              uses: { commands: ["approveVendor"], queries: [], liveQueries: ["liveVendors"], components: ["App"] },
+            },
+          ],
+          scenarios: ["home-loads"],
+          selectors: ["data-forge-testid=\"approve-vendor\""],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/uiScenarios.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          scenarios: [
+            {
+              name: "policy-denied-visible",
+              description: "policy denial is visible",
+              route: "/",
+              cost: "browser",
+              steps: [{ kind: "goto", path: "/" }],
+              requires: {
+                commands: ["approveVendor"],
+                queries: [],
+                liveQueries: ["liveVendors"],
+                policies: ["vendors:approve"],
+                components: ["App"],
+                workflows: [],
+              },
+            },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/dataGraph.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          tables: [
+            {
+              name: "vendors",
+              tenantScoped: true,
+              tenantField: "tenantId",
+              fields: [{ name: "tenantId", type: "ref:organizations" }],
+            },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/src/App.tsx"),
+        [
+          'import { useCommand, useLiveQuery } from "./lib/forge";',
+          "export function App() {",
+          '  const vendors = useLiveQuery("liveVendors", {});',
+          '  const approve = useCommand("approveVendor");',
+          '  const canApprove = true;',
+          "  if (vendors.loading) return <main>Loading vendors...</main>;",
+          "  if (vendors.error) return <main>Failed to fetch. Check /health and npm run dev.</main>;",
+          "  return <main><header><h1>Vendor approvals</h1></header><nav aria-label=\"Workspace sections\"><a href=\"#queue\">Queue</a></nav><section id=\"queue\"><form onSubmit={(event) => { event.preventDefault(); void approve.run({}); }}><button data-forge-testid=\"approve-vendor\" disabled={!canApprove} type=\"submit\">Approve access</button></form><p>No vendors need attention.</p><p data-forge-testid=\"policy-denied\">Permission denied actions stay visible here.</p></section><details><summary>Local test details</summary><p>ForgeOS app with WorkOS-style permissions.</p></details></main>;",
+          "}",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const result = await runInspectCommand("ui", workspace, { ergonomics: true });
+      const warningCodes = result.warnings.map((warning) => warning.code);
+
+      expect(result.exitCode).toBe(0);
+      expect(warningCodes).not.toContain("FORGE_UI_PRODUCT_COPY_TOO_META");
+      expect(warningCodes).not.toContain("FORGE_UI_PRIMARY_ACTION_MISSING");
+      expect(warningCodes).not.toContain("FORGE_UI_WORKFLOW_NAV_MISSING");
+      expect(warningCodes).not.toContain("FORGE_UI_PERMISSION_FEEDBACK_MISSING");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("inspect ui ergonomics warns when local auth controls are not separated from production auth", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-ui-auth-boundary-"));
+    try {
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
+      mkdirSync(join(workspace, "web/src"), { recursive: true });
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "export {};\n", "utf8");
+      writeFileSync(
+        join(workspace, "src/forge/_generated/uiTestManifest.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          generatorVersion: "test",
+          framework: "vite",
+          webRoot: "web",
+          defaultBaseUrl: "http://127.0.0.1:5173",
+          runtimeUrl: "http://127.0.0.1:3765",
+          routes: [
+            {
+              path: "/",
+              name: "home",
+              uses: { commands: [], queries: [], liveQueries: ["liveVendors"], components: ["App"] },
+            },
+          ],
+          scenarios: ["home-loads"],
+          selectors: ["data-forge-testid=\"login-persona\""],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/uiScenarios.json"),
+        JSON.stringify({
+          schemaVersion: "0.1.0",
+          scenarios: [
+            {
+              name: "home-loads",
+              description: "home loads",
+              route: "/",
+              cost: "browser",
+              steps: [{ kind: "goto", path: "/" }],
+              requires: {
+                commands: [],
+                queries: [],
+                liveQueries: ["liveVendors"],
+                policies: [],
+                components: ["App"],
+                workflows: [],
+              },
+            },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/src/App.tsx"),
+        [
+          "export function App() {",
+          "  return <main><header><h1>Vendor Access</h1></header><label><span>Workspace account</span><select data-forge-testid=\"login-persona\"><option>Acme owner</option></select></label><button type=\"button\">Sign in</button></main>;",
+          "}",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const result = await runInspectCommand("ui", workspace, { ergonomics: true });
+      const warningCodes = result.warnings.map((warning) => warning.code);
+
+      expect(result.exitCode).toBe(0);
+      expect(warningCodes).toContain("FORGE_UI_LOCAL_AUTH_BOUNDARY_MISSING");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

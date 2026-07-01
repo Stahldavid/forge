@@ -89,17 +89,45 @@ describe("external runtime bridge", () => {
         const { createForgeClient, api } = await import(`${root}/src/forge/_generated/client.ts`);
         const client = createForgeClient({
           url: handle.url,
-          auth: { userId: "u1", tenantId: tenantA, role: "admin" },
+          auth: {
+            userId: "u1",
+            tenantId: tenantA,
+            role: "admin",
+            roles: ["admin", "security"],
+            permissions: ["billing.manage", "vendors:read"],
+            claims: {
+              organization_id: tenantA,
+              organization_membership_id: "om_external_admin",
+            },
+          },
         });
 
         const commandResult = await client.externalCommand(api.external.commands["billing.createInvoice"], {
           title: "Invoice",
-        }) as { created: boolean; title: string; tenantHeader: string; authKind: string };
+        }) as {
+          created: boolean;
+          title: string;
+          tenantHeader: string;
+          organizationHeader: string;
+          organizationMembershipHeader: string;
+          rolesHeader: string;
+          permissionsHeader: string;
+          claimsHeader: string;
+          authKind: string;
+        };
         expect(commandResult).toMatchObject({
           created: true,
           title: "Invoice",
           tenantHeader: tenantA,
+          organizationHeader: tenantA,
+          organizationMembershipHeader: "om_external_admin",
           authKind: "user",
+        });
+        expect(JSON.parse(commandResult.rolesHeader)).toEqual(["admin", "security"]);
+        expect(JSON.parse(commandResult.permissionsHeader)).toEqual(["billing.manage", "vendors:read"]);
+        expect(JSON.parse(commandResult.claimsHeader)).toMatchObject({
+          organization_id: tenantA,
+          organization_membership_id: "om_external_admin",
         });
 
         const queryResult = await client.externalQuery("billing.listInvoices", {}) as Array<{ id: string; tenant: string }>;

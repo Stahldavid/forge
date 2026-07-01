@@ -4,7 +4,7 @@ export type ForgeAuthRule =
   | { kind: "permissions"; permissions: string[] }
   | { kind: "public" };
 
-export type ForgeDefinition<T extends Record<string, unknown>> = T;
+export type ForgeDefinition<T> = T;
 
 export type ForgeRecord = Record<string, any>;
 
@@ -64,23 +64,49 @@ export interface ForgeContext {
   };
 }
 
+export type ForgeInputSchema<TOutput = unknown> =
+  | { parse(input: unknown, ...args: any[]): TOutput }
+  | { _output: TOutput }
+  | { _type: TOutput };
+
+export type InferForgeInput<TSchema> =
+  TSchema extends { parse(input: unknown, ...args: any[]): infer TOutput }
+    ? TOutput
+    : TSchema extends { _output: infer TOutput }
+      ? TOutput
+      : TSchema extends { _type: infer TOutput }
+        ? TOutput
+        : unknown;
+
+type ForgeInputShape<TSchema> =
+  | { input: TSchema; inputSchema?: never }
+  | { inputSchema: TSchema; input?: never };
+
 export type ForgeCommandDefinition<TArgs = unknown, TResult = unknown> = Record<string, unknown> & {
   auth?: ForgeAuthRule;
+  input?: unknown;
+  inputSchema?: unknown;
   handler: (ctx: ForgeContext, args: TArgs) => TResult | Promise<TResult>;
 };
 
 export type ForgeQueryDefinition<TArgs = unknown, TResult = unknown> = Record<string, unknown> & {
   auth?: ForgeAuthRule;
+  input?: unknown;
+  inputSchema?: unknown;
   handler: (ctx: ForgeContext, args?: TArgs) => TResult | Promise<TResult>;
 };
 
 export type ForgeLiveQueryDefinition<TArgs = unknown, TResult = unknown> = Record<string, unknown> & {
   auth?: ForgeAuthRule;
+  input?: unknown;
+  inputSchema?: unknown;
   handler: (ctx: ForgeContext, args?: TArgs) => TResult | Promise<TResult>;
 };
 
 export type ForgeActionDefinition<TEvent = unknown, TResult = unknown> = Record<string, unknown> & {
   event?: string;
+  input?: unknown;
+  inputSchema?: unknown;
   handler: (ctx: ForgeContext, event: TEvent) => TResult | Promise<TResult>;
 };
 
@@ -143,23 +169,47 @@ export function public_(): ForgeAuthRule {
   return { kind: "public" };
 }
 
-export function command<
-  TArgs = unknown,
-  TResult = unknown,
-  T extends ForgeCommandDefinition<TArgs, TResult> = ForgeCommandDefinition<TArgs, TResult>,
->(definition: T): ForgeDefinition<T> {
+export function command<T extends (...args: never[]) => unknown>(definition: T): ForgeDefinition<T>;
+export function command<TSchema extends ForgeInputSchema, TResult = unknown>(
+  definition: ForgeCommandDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeDefinition<ForgeCommandDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>>;
+export function command<TArgs = unknown, TResult = unknown>(
+  definition: ForgeCommandDefinition<TArgs, TResult>,
+): ForgeDefinition<ForgeCommandDefinition<TArgs, TResult>>;
+export function command<T>(definition: T): ForgeDefinition<T> {
   return definition;
 }
 
-export function query<T extends ForgeQueryDefinition>(definition: T): ForgeDefinition<T> {
+export function query<T extends (...args: never[]) => unknown>(definition: T): ForgeDefinition<T>;
+export function query<TSchema extends ForgeInputSchema, TResult = unknown>(
+  definition: ForgeQueryDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeDefinition<ForgeQueryDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>>;
+export function query<TArgs = unknown, TResult = unknown>(
+  definition: ForgeQueryDefinition<TArgs, TResult>,
+): ForgeDefinition<ForgeQueryDefinition<TArgs, TResult>>;
+export function query<T>(definition: T): ForgeDefinition<T> {
   return definition;
 }
 
-export function liveQuery<T extends ForgeLiveQueryDefinition>(definition: T): ForgeDefinition<T> {
+export function liveQuery<T extends (...args: never[]) => unknown>(definition: T): ForgeDefinition<T>;
+export function liveQuery<TSchema extends ForgeInputSchema, TResult = unknown>(
+  definition: ForgeLiveQueryDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeDefinition<ForgeLiveQueryDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>>;
+export function liveQuery<TArgs = unknown, TResult = unknown>(
+  definition: ForgeLiveQueryDefinition<TArgs, TResult>,
+): ForgeDefinition<ForgeLiveQueryDefinition<TArgs, TResult>>;
+export function liveQuery<T>(definition: T): ForgeDefinition<T> {
   return definition;
 }
 
-export function action<T extends ForgeActionDefinition>(definition: T): ForgeDefinition<T> {
+export function action<T extends (...args: never[]) => unknown>(definition: T): ForgeDefinition<T>;
+export function action<TSchema extends ForgeInputSchema, TResult = unknown>(
+  definition: ForgeActionDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>,
+): ForgeDefinition<ForgeActionDefinition<InferForgeInput<TSchema>, TResult> & ForgeInputShape<TSchema>>;
+export function action<TEvent = unknown, TResult = unknown>(
+  definition: ForgeActionDefinition<TEvent, TResult>,
+): ForgeDefinition<ForgeActionDefinition<TEvent, TResult>>;
+export function action<T>(definition: T): ForgeDefinition<T> {
   return definition;
 }
 

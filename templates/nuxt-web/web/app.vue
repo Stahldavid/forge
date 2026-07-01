@@ -6,7 +6,7 @@ import NoteComposer from "./components/NoteComposer.vue";
 <template>
   <main class="shell">
     <section class="header">
-      <p class="eyebrow">ForgeOS nuxt-web</p>
+      <p class="eyebrow">Workspace notes</p>
       <h1>Notes</h1>
     </section>
 

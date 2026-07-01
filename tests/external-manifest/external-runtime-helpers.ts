@@ -62,6 +62,11 @@ export async function startExternalHttpService(): Promise<{
           created: true,
           title: body.args?.title,
           tenantHeader: request.headers["x-forge-tenant-id"],
+          organizationHeader: request.headers["x-forge-organization-id"],
+          organizationMembershipHeader: request.headers["x-forge-organization-membership-id"],
+          rolesHeader: request.headers["x-forge-roles"],
+          permissionsHeader: request.headers["x-forge-permissions"],
+          claimsHeader: request.headers["x-forge-claims"],
           authKind: body.auth?.kind,
         },
       }));

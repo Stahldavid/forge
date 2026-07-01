@@ -135,6 +135,7 @@ forge make resource notes --fields title:text,status:enum=open+done --with-ui --
 ```bash
 forge dev --once --json
 forge inspect capabilities --json
+forge inspect ui --ergonomics --json
 forge ui smoke --json
 forge verify --standard
 ```

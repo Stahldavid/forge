@@ -34,6 +34,7 @@ import {
   renderSchemaTable,
   renderUpdateCommand,
   renderViteApp,
+  renderViteConfig,
   renderViteIndex,
   renderViteMain,
   renderVitePackage,
@@ -831,6 +832,7 @@ function addFrontendFiles(plan: MakePlan, workspaceRoot: string, intent: MakeInt
     plan.filesToCreate.push(
       createFile(workspaceRoot, "web/package.json", "Add Vite React web package", renderVitePackage(intent.name)),
       createFile(workspaceRoot, "web/tsconfig.json", "Add web TypeScript config", renderViteTsconfig()),
+      createFile(workspaceRoot, "web/vite.config.ts", "Add Vite Forge API proxy", renderViteConfig()),
       createFile(workspaceRoot, "web/index.html", "Add web HTML entry", renderViteIndex("ForgeOS App")),
       createFile(workspaceRoot, "web/src/lib/forge.ts", "Add Forge client bridge", renderWebBridge()),
       createFile(workspaceRoot, "web/src/main.tsx", "Add React entrypoint", renderViteMain()),

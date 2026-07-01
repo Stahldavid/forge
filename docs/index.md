@@ -105,7 +105,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Compiler/runtime architecture | [Architecture](architecture.md) |
 | Generated artifact policy | [Generated Artifacts](generated-artifacts.md) |
 | Template file trees | [Examples](examples.md) |
-| Templates (`minimal-web`, `nuxt-web`, `agent-workroom`, `b2b-support-web`) | [Templates](templates.md) |
+| Templates (`minimal-web`, `nuxt-web`, `agent-workroom`, `b2b-support-web`, `vendor-access`) | [Templates](templates.md) |
 | Agent intent router (`forge do`) | [Agent Workflow](agent-workflow.md) |
 | Safe-change loop for coding agents | [AI Coding with ForgeOS](ai-coding-with-forgeos.md) |
 | Three short proof demos | [Agent-Native Demos](demos.md) |

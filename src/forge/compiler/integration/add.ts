@@ -123,6 +123,133 @@ function packageJsonRelativeFor(workspace?: string): string {
   return workspace ? `${workspace.replace(/\\/g, "/")}/package.json` : "package.json";
 }
 
+function readPackageJsonDependencies(packageJsonPath: string): Record<string, string> {
+  if (!nodeFileSystem.exists(packageJsonPath)) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      peerDependencies?: Record<string, string>;
+      optionalDependencies?: Record<string, string>;
+    };
+    return {
+      ...(parsed.dependencies ?? {}),
+      ...(parsed.devDependencies ?? {}),
+      ...(parsed.peerDependencies ?? {}),
+      ...(parsed.optionalDependencies ?? {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
+function packageJsonDeclares(packageJsonPath: string, packageName: string): boolean {
+  return Object.prototype.hasOwnProperty.call(readPackageJsonDependencies(packageJsonPath), packageName);
+}
+
+function packageInstallEvidence(installRoot: string, packageName: string): {
+  installPath: string;
+  version: string;
+} | null {
+  const installPath = join(installRoot, "node_modules", ...packageName.split("/"));
+  const packageJsonPath = join(installPath, "package.json");
+  if (!nodeFileSystem.exists(packageJsonPath)) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as {
+      version?: unknown;
+    };
+    return {
+      installPath,
+      version: typeof parsed.version === "string" && parsed.version.length > 0 ? parsed.version : "0.0.0",
+    };
+  } catch {
+    return {
+      installPath,
+      version: "0.0.0",
+    };
+  }
+}
+
+function dependencyRangeFromInstalledVersion(version: string): string {
+  if (/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(version)) {
+    return `^${version}`;
+  }
+  return version && version !== "0.0.0" ? version : "*";
+}
+
+function ensurePackageJsonDependency(packageJsonPath: string, packageName: string, version: string): boolean {
+  if (!nodeFileSystem.exists(packageJsonPath) || packageJsonDeclares(packageJsonPath, packageName)) {
+    return false;
+  }
+  const parsed = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? "{}") as {
+    dependencies?: Record<string, string>;
+  };
+  parsed.dependencies = {
+    ...(parsed.dependencies ?? {}),
+    [packageName]: dependencyRangeFromInstalledVersion(version),
+  };
+  parsed.dependencies = Object.fromEntries(
+    Object.entries(parsed.dependencies).sort(([left], [right]) => left.localeCompare(right)),
+  );
+  nodeFileSystem.writeText(packageJsonPath, `${JSON.stringify(parsed, null, 2)}\n`);
+  return true;
+}
+
+async function addPackageOrContinueIfInstalled(input: {
+  pm: PackageManagerAdapter;
+  packageName: string;
+  workspaceRoot: string;
+  installRoot: string;
+  packageJsonPath: string;
+  ignoreScripts: boolean;
+  warnings: Diagnostic[];
+  doctorCommand: string;
+  allowInstalledFallback: boolean;
+}): Promise<void> {
+  if (packageJsonDeclares(input.packageJsonPath, input.packageName)) {
+    input.warnings.push(
+      createDiagnostic({
+        severity: "warning",
+        code: "FORGE_ADD_PACKAGE_ALREADY_DECLARED",
+        message: `${input.packageName} is already declared in ${relative(input.workspaceRoot, input.packageJsonPath).replace(/\\/g, "/")}; skipped package-manager install and continued recipe generation.`,
+        fixHint: `Run your package manager install if node_modules is missing, then rerun ${input.doctorCommand}.`,
+        suggestedCommands: [input.doctorCommand],
+      }),
+    );
+    return;
+  }
+
+  try {
+    await input.pm.add(input.packageName, {
+      cwd: input.installRoot,
+      ignoreScripts: input.ignoreScripts,
+    });
+    return;
+  } catch (error) {
+    if (!input.allowInstalledFallback) {
+      throw error;
+    }
+    const evidence = packageInstallEvidence(input.installRoot, input.packageName);
+    if (!evidence) {
+      throw error;
+    }
+    const declared = ensurePackageJsonDependency(input.packageJsonPath, input.packageName, evidence.version);
+    input.warnings.push(
+      createDiagnostic({
+        severity: "warning",
+        code: "FORGE_ADD_PACKAGE_ALREADY_INSTALLED",
+        message: `package-manager install for ${input.packageName} failed, but the package is already installed at ${relative(input.workspaceRoot, evidence.installPath).replace(/\\/g, "/")}; ${declared ? "recorded it in package.json and continued" : "continued recipe generation"}.`,
+        fixHint: `Rerun ${input.doctorCommand}; if node_modules was restored from cache, this is expected.`,
+        suggestedCommands: [input.doctorCommand],
+      }),
+    );
+  }
+}
+
 type PackageAddScope = "root" | "frontend" | "backend" | "workspace";
 
 interface NormalizedPackageRequest {
@@ -405,6 +532,162 @@ function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string
   }
   if (current.includes("ForgeWorkOSAuthProvider")) {
     return { changed: [], warnings: [] };
+  }
+
+  const canRewriteVendorAccessRoot =
+    current.includes('import { ForgeProvider, forgeUrl } from "./lib/forge";') &&
+    current.includes("function LocalForgeProvider") &&
+    (
+      current.includes("<LocalForgeProvider persona={persona}>{app}</LocalForgeProvider>") ||
+      current.includes("<LocalForgeProvider persona={signedInPersona}>")
+    );
+
+  if (canRewriteVendorAccessRoot) {
+    const personaType = current.includes("LocalPersona") ? "LocalPersona" : "DemoPersona";
+    const withWorkOSImport = current.replace(
+      'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+      [
+        'import { ForgeProvider, forgeUrl } from "./lib/forge";',
+        'import { ForgeWorkOSAuthProvider, hasWorkOSBrowserConfig, useForgeWorkOSSession, useWorkOSAuth } from "./lib/workos-auth";',
+      ].join("\n"),
+    );
+    if (withWorkOSImport.includes("function LoginScreen(") && !withWorkOSImport.includes("function WorkOSVendorAccessRoot()")) {
+      const withWorkOSEntry = withWorkOSImport.replace(
+        "function Root() {\n",
+        [
+          "function Root() {",
+          "  if (hasWorkOSBrowserConfig()) {",
+          "    return (",
+          "      <ForgeWorkOSAuthProvider>",
+          "        <WorkOSVendorAccessRoot />",
+          "      </ForgeWorkOSAuthProvider>",
+          "    );",
+          "  }",
+          "",
+        ].join("\n"),
+      );
+      const workOSRoot = [
+        "function WorkOSVendorAccessRoot() {",
+        "  const auth = useWorkOSAuth();",
+        "  const workosSession = useForgeWorkOSSession();",
+        "",
+        "  if (auth.isLoading || (auth.user && workosSession.loading)) {",
+        "    return (",
+        "      <main className=\"login-shell\">",
+        "        <section className=\"login-panel\">",
+        "          <p className=\"eyebrow\">Secure workspace</p>",
+        "          <h1>Checking your session</h1>",
+        "        </section>",
+        "      </main>",
+        "    );",
+        "  }",
+        "",
+        "  if (auth.user && workosSession.error) {",
+        "    return (",
+        "      <main className=\"login-shell\">",
+        "        <section className=\"login-panel\">",
+        "          <p className=\"eyebrow\">Identity provider</p>",
+        "          <h1>Session unavailable</h1>",
+        "          <p className=\"notice error\">{workosSession.error.message}</p>",
+        "          <div className=\"login-form\">",
+        "            <button type=\"button\" onClick={() => void workosSession.refresh()}>Retry session</button>",
+        "            <button className=\"secondary\" type=\"button\" onClick={() => auth.signOut({ returnTo: window.location.origin })}>Sign out</button>",
+        "          </div>",
+        "        </section>",
+        "      </main>",
+        "    );",
+        "  }",
+        "",
+        "  if (!auth.user) {",
+        "    return (",
+        "      <main className=\"login-shell\">",
+        "        <section className=\"login-panel\">",
+        "          <div className=\"brand login-brand\">",
+        "            <span className=\"brand-mark\">VA</span>",
+        "            <div>",
+        "              <strong>Vendor Access</strong>",
+        "              <span>Risk operations</span>",
+        "            </div>",
+        "          </div>",
+        "          <p className=\"eyebrow\">WorkOS AuthKit</p>",
+        "          <h1>Sign in to review vendor access</h1>",
+        "          <div className=\"login-form\">",
+        "            <button type=\"button\" onClick={() => void auth.signIn()}>Sign in with WorkOS</button>",
+        "            <button className=\"secondary\" type=\"button\" onClick={() => void auth.signUp()}>Create account</button>",
+        "          </div>",
+        "        </section>",
+        "        <aside className=\"login-context\">",
+        "          <span>Identity provider</span>",
+        "          <strong>AuthKit session required</strong>",
+        "          <p>Organization, role, and permissions come from your signed-in workspace session.</p>",
+        "        </aside>",
+        "      </main>",
+        "    );",
+        "  }",
+        "",
+        "  const claims = workosSession.session?.claims;",
+        "  const email = workosSession.session?.user?.email ?? auth.user.email ?? claims?.email ?? \"workos-user@example.com\";",
+        "  const organizationId = claims?.organization_id ?? \"workos-organization\";",
+        "  const role = claims?.role ?? claims?.roles?.[0] ?? \"member\";",
+        "  const permissions = claims?.permissions ?? [];",
+        `  const persona: ${personaType} = {`,
+        "    id: `workos:${organizationId}:${email}`,",
+        "    label: email,",
+        "    email,",
+        "    organizationId,",
+        "    organizationName: organizationId,",
+        "    role,",
+        "    permissions,",
+        "  };",
+        "",
+        "  return (",
+        "    <App",
+        "      persona={persona}",
+        "      personas={[persona]}",
+        "      onPersonaChange={() => undefined}",
+        "      onSignOut={() => auth.signOut({ returnTo: window.location.origin })}",
+        "    />",
+        "  );",
+        "}",
+        "",
+      ].join("\n");
+      const next = withWorkOSEntry.replace("function LoginScreen(", `${workOSRoot}function LoginScreen(`);
+      if (next !== current) {
+        nodeFileSystem.writeText(mainPath, next);
+        return { changed: [mainRel], warnings: [] };
+      }
+    }
+    let next = withWorkOSImport.replace(
+      "<LocalForgeProvider persona={persona}>{app}</LocalForgeProvider>",
+      [
+        "hasWorkOSBrowserConfig() ? (",
+        "      <ForgeWorkOSAuthProvider>{app}</ForgeWorkOSAuthProvider>",
+        "    ) : (",
+        "      <LocalForgeProvider persona={persona}>{app}</LocalForgeProvider>",
+        "    )",
+      ].join("\n    "),
+    );
+    if (next === withWorkOSImport) {
+      const rootReturn = /  return \(\n    <LocalForgeProvider persona=\{signedInPersona\}>\n([\s\S]*?)    <\/LocalForgeProvider>\n  \);/m;
+      next = withWorkOSImport.replace(rootReturn, (_match, appBody: string) => {
+        const app = String(appBody).replace(/^      /gm, "    ");
+        return [
+          "  const app = (",
+          app.trimEnd(),
+          "  );",
+          "",
+          "  return hasWorkOSBrowserConfig() ? (",
+          "    <ForgeWorkOSAuthProvider>{app}</ForgeWorkOSAuthProvider>",
+          "  ) : (",
+          "    <LocalForgeProvider persona={signedInPersona}>{app}</LocalForgeProvider>",
+          "  );",
+        ].join("\n");
+      });
+    }
+    if (next !== current) {
+      nodeFileSystem.writeText(mainPath, next);
+      return { changed: [mainRel], warnings: [] };
+    }
   }
 
   const canRewriteDefaultViteRoot =
@@ -739,16 +1022,33 @@ export async function forgeAdd(
       pm,
       frontendWorkspace ? [packageJsonRelativeFor(frontendWorkspace)] : [],
     );
+    const preinstalledWarnings: Diagnostic[] = [];
     for (const pkg of recipe.packages) {
-      await pm.add(pkg.packageName, {
-        cwd: options.workspaceRoot,
+      const rootPackageJson = join(options.workspaceRoot, "package.json");
+      await addPackageOrContinueIfInstalled({
+        pm,
+        packageName: pkg.packageName,
+        workspaceRoot: options.workspaceRoot,
+        installRoot: options.workspaceRoot,
+        packageJsonPath: rootPackageJson,
         ignoreScripts: !options.allowScripts,
+        warnings: preinstalledWarnings,
+        doctorCommand: "forge check --json",
+        allowInstalledFallback: normalized === "workos",
       });
     }
     if (frontendWorkspace) {
-      await pm.add("@workos-inc/authkit-react", {
-        cwd: join(options.workspaceRoot, frontendWorkspace),
+      const frontendPackageJson = join(options.workspaceRoot, frontendWorkspace, "package.json");
+      await addPackageOrContinueIfInstalled({
+        pm,
+        packageName: "@workos-inc/authkit-react",
+        workspaceRoot: options.workspaceRoot,
+        installRoot: join(options.workspaceRoot, frontendWorkspace),
+        packageJsonPath: frontendPackageJson,
         ignoreScripts: !options.allowScripts,
+        warnings: preinstalledWarnings,
+        doctorCommand: "forge workos doctor --json",
+        allowInstalledFallback: true,
       });
     }
 
@@ -785,7 +1085,7 @@ export async function forgeAdd(
       ? connectWorkOSReactRoot(options.workspaceRoot, frontendWorkspace)
       : { changed: [] as string[], warnings: [] as Diagnostic[] };
 
-    const warningsCombined = [...warnings, ...emitResult.warnings, ...workosWeb.warnings];
+    const warningsCombined = [...preinstalledWarnings, ...warnings, ...emitResult.warnings, ...workosWeb.warnings];
     const errors = [...analyzeErrors, ...emitResult.errors];
 
     if (errors.length > 0) {

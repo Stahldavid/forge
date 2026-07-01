@@ -43,8 +43,18 @@ forge new my-app \
 | `minimal-web` | Forge backend + Vite React `web/` | Basic CRUD patterns, `ForgeProvider`, client bridge | Learning Forge, prototypes |
 | `nuxt-web` | Forge backend + Nuxt Vue `web/` | Notes command/liveQuery, client/server Nuxt plugins, `useNotes`, Vue composables, Nitro runtime-config route | Vue/Nuxt apps |
 | `agent-workroom` | Forge backend + Vite React observer UI | App preview, terminal-like external-agent signals, generated state, diff focus, check runs, handoff evidence, liveQuery | Demonstrating ForgeOS as an agent-native development environment |
+| `vendor-access` | Forge backend + Vite React `web/` | Vendor access approvals, permission-first policies, local WorkOS-like personas, automatic demo seed, liveQuery, WorkOS-ready auth bridge | Field-testing production-shaped multi-tenant auth/workflow apps |
 | Nuxt UI shell via `forge make ui --framework nuxt` | Forge backend + Nuxt Vue `web/` | Nuxt plugin, Vue composables, runtime config bridge | Vue/Nuxt apps |
 | `b2b-support-web` | Forge + Next-style `web/` | Tickets, policies, Stripe hooks, AI triage workflow, liveQuery | Full-stack showcase, B2B support apps |
+
+Templates with seed commands can be prepared from the CLI while `forge dev` is
+running, or automatically seeded during startup:
+
+```bash
+forge dev --seed
+forge seed status --json
+forge seed dev --json
+```
 
 List templates from the CLI:
 

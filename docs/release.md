@@ -27,10 +27,11 @@ Or use the official field-test command from the framework repository:
 ```bash
 forge field-test run \
   --package-managers npm \
-  --templates minimal-web,nuxt-web,b2b-support-web \
+  --templates minimal-web,nuxt-web,b2b-support-web,vendor-access \
   --forge-spec "npm:forgeos@alpha" \
   --runtime-probes \
   --auth-probes \
+  --ui-probes \
   --write-report field-reports/release-smoke.json \
   --json
 ```
@@ -118,6 +119,7 @@ forge field-test run \
   --forge-spec "npm:forgeos@alpha" \
   --runtime-probes \
   --auth-probes \
+  --ui-probes \
   --write-report field-reports/pre-tag-minimal-web.json \
   --json
 forge verify --strict
