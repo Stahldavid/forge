@@ -213,6 +213,7 @@ describe("Forge CLI", () => {
     expect(hasUnknownOption(["seed", "dev", "--all-tenants", "--json"])).toBeNull();
     expect(hasUnknownOption(["inspect", "ui", "--ergonomics", "--json"])).toBeNull();
     expect(hasUnknownOption(["test", "authz", "--tenant", "acme", "--other-tenant", "globex", "--json"])).toBeNull();
+    expect(hasUnknownOption(["workos", "prove", "--real", "--file", "workos-seed.yml", "--json"])).toBeNull();
 
     const devStatus = parseCli(["dev", "status", "--json"]);
     expect(devStatus.errors).toEqual([]);
@@ -928,7 +929,10 @@ describe("Forge CLI", () => {
       expect(duplicateSeed.exitCode).toBe(0);
       expect(duplicateSeed.ok).toBe(true);
       expect(duplicateSeed.applied).toBe(false);
+      expect(duplicateSeed.stderr).toBeUndefined();
       expect(JSON.stringify(duplicateSeed.data)).toContain('"seedAlreadyApplied":true');
+      expect(JSON.stringify(duplicateSeed.data)).toContain('"seedAlreadyAppliedReason":"workos-cli-existing-resource"');
+      expect(JSON.stringify(duplicateSeed.data)).toContain('"stderrSuppressed":true');
       expect(JSON.stringify(duplicateSeed.data)).toContain('"seedStateFile":".workos-seed-state.json"');
       expect(JSON.stringify(duplicateSeed.data)).toContain('"alreadyApplied":true');
       const duplicateSeedState = JSON.parse(readFileSync(join(workspace, ".workos-seed-state.json"), "utf8")) as {

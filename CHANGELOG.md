@@ -1,5 +1,28 @@
 # forgeos
 
+## 0.1.0-alpha.45
+
+### Patch Changes
+
+- Smooth the WorkOS, field-test, and deploy-readiness DX discovered during real
+  app field testing.
+
+  - Accept `--real` through the top-level unknown-option guard so documented
+    commands like `forge workos setup --real --file workos-seed.yml --json` and
+    `forge workos prove --real --file workos-seed.yml --json` run instead of
+    being rejected before parsing.
+  - Treat known WorkOS CLI duplicate-resource seed responses as explicit clean
+    idempotency: Forge now records `seedAlreadyAppliedReason`, suppresses the
+    scary duplicate stderr from the successful JSON result, and writes seed
+    state with the already-applied status.
+  - Run `forge field-test run` through an async harness process and emit
+    periodic stderr heartbeats so long realistic probes no longer look frozen
+    while preserving machine-readable JSON output.
+  - Add a `deploy-env-sources` check to `forge deploy check --production` that
+    reports which env sources were inspected, which keys were present, and which
+    production keys are still missing without printing secret values; `.env` and
+    `.env.local` are shown as local guidance, not production deploy evidence.
+
 ## 0.1.0-alpha.44
 
 ### Patch Changes

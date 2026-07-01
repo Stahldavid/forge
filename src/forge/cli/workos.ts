@@ -703,7 +703,9 @@ function seedData(input: {
   dryRun?: boolean;
   seedFileSanitized?: boolean;
   seedAlreadyApplied?: boolean;
+  seedAlreadyAppliedReason?: string;
   seedStateFile?: string;
+  workosCli?: Record<string, unknown>;
   configActions?: WorkOSConfigActionResult[];
   nextCommand?: string;
 }): Record<string, unknown> {
@@ -716,7 +718,9 @@ function seedData(input: {
     dryRun: input.dryRun ?? false,
     seedFileSanitized: input.seedFileSanitized ?? false,
     seedAlreadyApplied: input.seedAlreadyApplied ?? false,
+    ...(input.seedAlreadyAppliedReason ? { seedAlreadyAppliedReason: input.seedAlreadyAppliedReason } : {}),
     ...(input.seedStateFile ? { seedStateFile: input.seedStateFile } : {}),
+    ...(input.workosCli ? { workosCli: input.workosCli } : {}),
     configActions: input.configActions ?? [],
     ...(input.nextCommand ? { nextCommand: input.nextCommand } : {}),
   };
@@ -1087,6 +1091,9 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     const child = runExternalCommand(delegatedCommand, options);
     const seedAlreadyApplied =
       child.status !== 0 && isWorkOSSeedAlreadyApplied(child.stdout, child.stderr);
+    const seedAlreadyAppliedReason = seedAlreadyApplied
+      ? "workos-cli-existing-resource"
+      : undefined;
     const seedStateFile = child.status === 0 || seedAlreadyApplied
       ? writeWorkOSSeedState({
         workspaceRoot: options.workspaceRoot,
@@ -1113,11 +1120,17 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
         seedState: latestSeedState,
         seedFileSanitized: preparedSeed.sanitized,
         seedAlreadyApplied,
+        seedAlreadyAppliedReason,
         seedStateFile,
+        workosCli: {
+          status: child.status,
+          idempotentConflict: seedAlreadyApplied,
+          stderrSuppressed: seedAlreadyApplied && Boolean(child.stderr.trim()),
+        },
         configActions,
       }),
       stdout: child.stdout,
-      stderr: child.stderr,
+      stderr: seedAlreadyApplied ? undefined : child.stderr,
       exitCode: child.status === 0 || seedAlreadyApplied ? 0 : 1,
     };
   } finally {

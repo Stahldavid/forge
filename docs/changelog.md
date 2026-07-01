@@ -6,6 +6,21 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.45
+
+- `forge workos setup/prove --real` now passes the top-level unknown-option
+  guard, matching the documented no-dashboard WorkOS apply flow.
+- `forge workos seed --file workos-seed.yml --json` now treats known WorkOS
+  duplicate-resource responses as explicit idempotency, suppressing duplicate
+  stderr in successful JSON output while recording `seedAlreadyAppliedReason`
+  and seed state.
+- `forge field-test run` now uses an async harness process with periodic
+  progress heartbeats on stderr so realistic probes do not appear stuck.
+- `forge deploy check --production` now reports sanitized env-source evidence,
+  including which production keys were found or missing, while keeping `.env`
+  and `.env.local` clearly marked as local guidance rather than production
+  deploy evidence.
+
 ## 0.1.0-alpha.44
 
 - `forge inspect ui --ergonomics` now treats helper-based seed recovery inside

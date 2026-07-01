@@ -120,6 +120,23 @@ function fieldTestReportCandidates(workspaceRoot: string): Array<{ path: string;
 }
 
 const FIELD_TEST_PRODUCTION_COMMAND = "forge field-test run --realistic --json";
+const DEPLOY_ENV_FILE = "deploy/.env.production";
+const LOCAL_ENV_FILES = [".env", ".env.local"];
+const DEPLOY_ENV_KEYS = [
+  "DATABASE_URL",
+  "FORGE_AUTH_MODE",
+  "FORGE_AUTH_ISSUER",
+  "FORGE_AUTH_AUDIENCE",
+  "FORGE_AUTH_JWKS_URI",
+  "FORGE_AUTH_DISCOVERY_URL",
+  "WORKOS_API_KEY",
+  "WORKOS_CLIENT_ID",
+  "WORKOS_COOKIE_PASSWORD",
+  "WORKOS_REDIRECT_URI",
+  "WORKOS_POST_LOGIN_REDIRECT_URI",
+  "WORKOS_POST_LOGOUT_REDIRECT_URI",
+  "WORKOS_WEBHOOK_SECRET",
+];
 
 function summarizeFieldTestReport(data: Record<string, unknown>) {
   const results = Array.isArray(data.results) ? data.results as Array<Record<string, unknown>> : [];
@@ -428,7 +445,7 @@ function renderEnvExample(workspaceRoot: string): string {
 }
 
 function hasProductionEnvFile(workspaceRoot: string): boolean {
-  return nodeFileSystem.exists(join(workspaceRoot, "deploy/.env.production"));
+  return nodeFileSystem.exists(join(workspaceRoot, DEPLOY_ENV_FILE));
 }
 
 function parseEnvValue(value: string): string {
@@ -442,8 +459,8 @@ function parseEnvValue(value: string): string {
   return trimmed;
 }
 
-function readDeployEnvFile(workspaceRoot: string): Record<string, string> {
-  const absolute = join(workspaceRoot, "deploy/.env.production");
+function readEnvFile(workspaceRoot: string, relative: string): Record<string, string> {
+  const absolute = join(workspaceRoot, relative);
   if (!nodeFileSystem.exists(absolute)) return {};
   const text = nodeFileSystem.readText(absolute) ?? "";
   const values: Record<string, string> = {};
@@ -455,6 +472,63 @@ function readDeployEnvFile(workspaceRoot: string): Record<string, string> {
     values[match[1]!] = parseEnvValue(match[2] ?? "");
   }
   return values;
+}
+
+function readDeployEnvFile(workspaceRoot: string): Record<string, string> {
+  return readEnvFile(workspaceRoot, DEPLOY_ENV_FILE);
+}
+
+function envKeys(values: Record<string, string>): string[] {
+  return DEPLOY_ENV_KEYS.filter((key) => Boolean(values[key])).sort();
+}
+
+function processDeployEnv(): Record<string, string> {
+  return Object.fromEntries(
+    DEPLOY_ENV_KEYS
+      .filter((key) => Boolean(process.env[key]))
+      .map((key) => [key, process.env[key]!]),
+  );
+}
+
+function deployEnvSources(workspaceRoot: string): Record<string, unknown> {
+  const processEnv = processDeployEnv();
+  const deployEnv = readDeployEnvFile(workspaceRoot);
+  const localSources = LOCAL_ENV_FILES.map((path) => {
+    const values = readEnvFile(workspaceRoot, path);
+    return {
+      path,
+      present: nodeFileSystem.exists(join(workspaceRoot, path)),
+      role: "local-guidance",
+      readForProduction: false,
+      keys: envKeys(values),
+    };
+  });
+  const productionEvidence = {
+    ...deployEnv,
+    ...processEnv,
+  };
+  return {
+    readOrder: ["process.env", DEPLOY_ENV_FILE],
+    note: `${DEPLOY_ENV_FILE} and current process env are production deploy evidence; .env/.env.local are reported only as local guidance and are not used to pass production gates.`,
+    sources: [
+      {
+        path: "process.env",
+        present: envKeys(processEnv).length > 0,
+        role: "production-evidence",
+        readForProduction: true,
+        keys: envKeys(processEnv),
+      },
+      {
+        path: DEPLOY_ENV_FILE,
+        present: hasProductionEnvFile(workspaceRoot),
+        role: "production-evidence",
+        readForProduction: true,
+        keys: envKeys(deployEnv),
+      },
+      ...localSources,
+    ],
+    missingProductionKeys: DEPLOY_ENV_KEYS.filter((key) => !productionEvidence[key]),
+  };
 }
 
 function deployEnvValue(workspaceRoot: string, name: string): string | undefined {
@@ -494,15 +568,15 @@ function databaseReady(options: DeployCommandOptions): boolean {
 
 function databaseReadyMessage(options: DeployCommandOptions): string {
   if (process.env.DATABASE_URL) return "DATABASE_URL is set in the current environment";
-  if (readDeployEnvFile(options.workspaceRoot).DATABASE_URL) return "DATABASE_URL is set in deploy/.env.production";
-  if (hasProductionEnvFile(options.workspaceRoot)) return "deploy/.env.production is present but does not set DATABASE_URL";
+  if (readDeployEnvFile(options.workspaceRoot).DATABASE_URL) return `DATABASE_URL is set in ${DEPLOY_ENV_FILE}`;
+  if (hasProductionEnvFile(options.workspaceRoot)) return `${DEPLOY_ENV_FILE} is present but does not set DATABASE_URL`;
   if (hasRenderedProductionEnvExample(options.workspaceRoot)) {
     return options.production
-      ? "deploy/.env.production.example is only a template; copy it to deploy/.env.production with DATABASE_URL or set DATABASE_URL"
+      ? `deploy/.env.production.example is only a template; copy it to ${DEPLOY_ENV_FILE} with DATABASE_URL or set DATABASE_URL`
       : "deploy/.env.production.example is present";
   }
   return options.production
-    ? "production deploy requires DATABASE_URL or deploy/.env.production"
+    ? `production deploy requires DATABASE_URL or ${DEPLOY_ENV_FILE}`
     : "deploy readiness requires DATABASE_URL or rendered deploy/.env.production.example";
 }
 
@@ -649,6 +723,13 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
       expected: getLockfileCandidates(packageManager),
       found: lockfiles,
     },
+  });
+  checks.push({
+    name: "deploy-env-sources",
+    ok: true,
+    severity: "warning",
+    message: `${DEPLOY_ENV_FILE} and process.env are production deploy evidence; .env/.env.local are local guidance only`,
+    details: deployEnvSources(options.workspaceRoot),
   });
 
   const auth = await withDeployEnv(options.workspaceRoot, async () => loadAuthConfigFromEnv(options.workspaceRoot));

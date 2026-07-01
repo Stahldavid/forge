@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -400,7 +400,56 @@ async function createFieldTestApp(options: FieldTestCommandOptions): Promise<Fie
   });
 }
 
-function runHarness(options: FieldTestCommandOptions): FieldTestCommandResult {
+function shouldEmitProgress(): boolean {
+  return process.env.FORGE_FIELD_TEST_PROGRESS !== "0";
+}
+
+function runHarnessProcess(
+  options: FieldTestCommandOptions,
+  args: string[],
+): Promise<{ status: number | null; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const emitProgress = shouldEmitProgress();
+    const child = spawn(process.execPath, args, {
+      cwd: options.workspaceRoot,
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    const heartbeat = emitProgress
+      ? setInterval(() => {
+          const elapsed = Math.round((Date.now() - startedAt) / 1000);
+          process.stderr.write(`[forge] field-test still running after ${elapsed}s; timeout=${options.timeoutMs}ms\n`);
+        }, 30_000)
+      : undefined;
+    const finish = (status: number | null, extraStderr = "") => {
+      if (settled) return;
+      settled = true;
+      if (heartbeat) clearInterval(heartbeat);
+      if (extraStderr) stderr += extraStderr;
+      resolve({ status, stdout, stderr });
+    };
+    child.on("error", (error) => {
+      finish(1, `${error.message}\n`);
+    });
+    child.on("close", (status) => {
+      finish(status);
+    });
+  });
+}
+
+async function runHarness(options: FieldTestCommandOptions): Promise<FieldTestCommandResult> {
   const script = scriptPath(options.workspaceRoot);
   if (!script) {
     return {
@@ -433,11 +482,7 @@ function runHarness(options: FieldTestCommandOptions): FieldTestCommandResult {
   if (options.forgeSpec) args.push("--forge-spec", options.forgeSpec);
   if (reportPath) args.push("--write-report", reportPath);
   if (options.json) args.push("--json");
-  const result = spawnSync(process.execPath, args, {
-    cwd: options.workspaceRoot,
-    encoding: "utf8",
-    windowsHide: true,
-  });
+  const result = await runHarnessProcess(options, args);
   const reportAbsolute = reportPath ? resolveReportPath(options.workspaceRoot, reportPath) : null;
   const reportData = reportAbsolute && existsSync(reportAbsolute)
     ? JSON.parse(readFileSync(reportAbsolute, "utf8")) as unknown

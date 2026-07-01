@@ -3069,6 +3069,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--auth-probes",
     "--ui-probes",
     "--realistic",
+    "--real",
     "--write-report",
     "--tenant-scoped",
     "--field",

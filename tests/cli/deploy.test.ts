@@ -269,6 +269,73 @@ describe("forge deploy", () => {
     }
   });
 
+  test("production check reports env sources without treating .env.local as deploy evidence", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-env-sources");
+    const saved = {
+      DATABASE_URL: process.env.DATABASE_URL,
+      FORGE_AUTH_MODE: process.env.FORGE_AUTH_MODE,
+      FORGE_AUTH_ISSUER: process.env.FORGE_AUTH_ISSUER,
+      FORGE_AUTH_AUDIENCE: process.env.FORGE_AUTH_AUDIENCE,
+      FORGE_AUTH_JWKS_URI: process.env.FORGE_AUTH_JWKS_URI,
+    };
+    try {
+      delete process.env.DATABASE_URL;
+      delete process.env.FORGE_AUTH_MODE;
+      delete process.env.FORGE_AUTH_ISSUER;
+      delete process.env.FORGE_AUTH_AUDIENCE;
+      delete process.env.FORGE_AUTH_JWKS_URI;
+      await runGenerate(defaultGenerateOptions(workspace));
+      await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "render",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      writeFileSync(
+        join(workspace, ".env.local"),
+        [
+          "DATABASE_URL=postgres://local-only",
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://local-only.example.test",
+          "FORGE_AUTH_AUDIENCE=local-forge-api",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      const sourceCheck = result.checks.find((check) => check.name === "deploy-env-sources");
+      expect(sourceCheck).toMatchObject({
+        ok: true,
+        message: "deploy/.env.production and process.env are production deploy evidence; .env/.env.local are local guidance only",
+      });
+      expect(JSON.stringify(sourceCheck?.details)).toContain('"path":".env.local"');
+      expect(JSON.stringify(sourceCheck?.details)).toContain('"readForProduction":false');
+      expect(JSON.stringify(sourceCheck?.details)).toContain('"FORGE_AUTH_MODE"');
+      expect(result.checks.find((check) => check.name === "production-auth-mode")).toMatchObject({
+        ok: false,
+      });
+      expect(result.checks.find((check) => check.name === "database-url")).toMatchObject({
+        ok: false,
+      });
+    } finally {
+      for (const [name, value] of Object.entries(saved)) {
+        if (value === undefined) {
+          delete process.env[name];
+        } else {
+          process.env[name] = value;
+        }
+      }
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("check aggregates generated, auth, and auth.md readiness", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-deploy-check");
     try {
