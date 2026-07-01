@@ -1,5 +1,20 @@
 # forgeos
 
+## 0.1.0-alpha.43
+
+### Patch Changes
+
+- Fix `forge field-test run` in apps that use the published `forgeos` package.
+
+  - Include `scripts/field-test-forgeos.mjs` in the npm package so generated
+    apps can run the field-test harness without having a local ForgeOS checkout.
+  - Resolve the harness from either the app workspace or the installed package,
+    which keeps framework checkouts and installed-package app workflows working
+    with the same command.
+  - Improve the missing-harness diagnostic by reporting the searched paths and
+    suggesting an upgrade when the installed package does not include the
+    packaged harness.
+
 ## 0.1.0-alpha.42
 
 ### Patch Changes

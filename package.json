@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.42",
+  "version": "0.1.0-alpha.43",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "license": "MIT",
@@ -10,6 +10,7 @@
     "!adapters/**/*.class",
     "!adapters/**/*.jar",
     "bin/",
+    "scripts/field-test-forgeos.mjs",
     "docs/cair-protocol.md",
     "docs/forge-protocol.md",
     "examples/go-billing/",

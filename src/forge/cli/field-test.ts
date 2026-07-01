@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { runNewCommand, type NewPackageManager, type NewTemplateName } from "./new.ts";
 import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
 
@@ -42,8 +43,14 @@ export interface FieldTestCommandResult {
   exitCode: 0 | 1;
 }
 
-function scriptPath(workspaceRoot: string): string {
-  return join(workspaceRoot, "scripts", "field-test-forgeos.mjs");
+function scriptCandidates(workspaceRoot: string): string[] {
+  const localScript = join(workspaceRoot, "scripts", "field-test-forgeos.mjs");
+  const packageScript = join(dirname(fileURLToPath(import.meta.url)), "../../../scripts/field-test-forgeos.mjs");
+  return Array.from(new Set([localScript, packageScript]));
+}
+
+function scriptPath(workspaceRoot: string): string | null {
+  return scriptCandidates(workspaceRoot).find((candidate) => existsSync(candidate)) ?? null;
 }
 
 function compact(text: string, limit = 12000): string {
@@ -395,14 +402,14 @@ async function createFieldTestApp(options: FieldTestCommandOptions): Promise<Fie
 
 function runHarness(options: FieldTestCommandOptions): FieldTestCommandResult {
   const script = scriptPath(options.workspaceRoot);
-  if (!existsSync(script)) {
+  if (!script) {
     return {
       schemaVersion: "0.1.0",
       ok: false,
       kind: "field-test",
       action: "run",
-      data: { error: "field-test harness script not found", script },
-      nextActions: ["run from the ForgeOS framework checkout or use npm run field:test"],
+      data: { error: "field-test harness script not found", searched: scriptCandidates(options.workspaceRoot) },
+      nextActions: ["upgrade forgeos to a version that includes scripts/field-test-forgeos.mjs", "run from the ForgeOS framework checkout with npm run field:test"],
       exitCode: 1,
     };
   }

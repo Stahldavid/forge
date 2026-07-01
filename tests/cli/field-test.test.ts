@@ -145,6 +145,32 @@ describe("forge field-test", () => {
     }
   });
 
+  test("field-test run finds the packaged harness outside the app workspace", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-field-test-packaged-harness");
+    try {
+      const result = await runFieldTestCommand({
+        workspaceRoot: workspace,
+        subcommand: "run",
+        template: "minimal-web",
+        packageManager: "npm",
+        dryRun: true,
+        keep: false,
+        runtimeProbes: false,
+        authProbes: false,
+        uiProbes: false,
+        realistic: false,
+        timeoutMs: 180_000,
+        json: true,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.command?.[1]).toContain("scripts/field-test-forgeos.mjs");
+      expect(JSON.stringify(result.data)).toContain("\"minimal-web\"");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
   test("field-test report reads a machine-readable report", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-field-test-report");
     try {

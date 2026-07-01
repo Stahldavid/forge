@@ -6,6 +6,17 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.43
+
+- Included `scripts/field-test-forgeos.mjs` in the published npm package so
+  `forge field-test run` works from generated apps installed from
+  `forgeos@alpha`, not only from the ForgeOS framework checkout.
+- `forge field-test run` now resolves the harness from the current workspace
+  first and then from the installed ForgeOS package, with a clearer diagnostic
+  listing searched paths when neither location exists.
+- Added regression coverage for running the field-test command from an app
+  workspace that does not contain a local `scripts/field-test-forgeos.mjs`.
+
 ## 0.1.0-alpha.42
 
 - Added the golden-path CLI alias `forge field-test run --realistic`, which
