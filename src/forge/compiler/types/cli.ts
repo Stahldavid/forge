@@ -63,6 +63,7 @@ export interface AddOptions extends CliCommonOptions {
   runtimeInspect: boolean;
   sandboxBackend: SandboxBackend;
   allowScripts: boolean;
+  withFga?: boolean;
   mode?: "auto" | "integration" | "package";
   installWorkspace?: string;
   packageTarget?: "frontend" | "backend";

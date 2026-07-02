@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.54",
+  "version": "0.1.0-alpha.55",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "license": "MIT",

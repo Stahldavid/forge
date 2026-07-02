@@ -6,6 +6,19 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.55
+
+- `forge add auth workos` now defaults to AuthKit/RBAC, permission claims,
+  Forge policies, tenant claim mapping, seed, webhooks, and frontend bridge
+  without generating WorkOS FGA resource helpers.
+- `forge add auth workos --with-fga` enables the optional WorkOS FGA resource
+  graph helpers and `resource_types` seed metadata for apps that need
+  resource-level authorization.
+- WorkOS doctor/seed/deploy checks now treat FGA as optional unless the app has
+  FGA artifacts or FGA state, so normal WorkOS apps are gated by AuthKit, RBAC,
+  hosted seed evidence, policies, and tenant proof instead of mandatory FGA
+  proof.
+
 ## 0.1.0-alpha.54
 
 - WorkOS FGA setup writes now produce a paired machine-readable

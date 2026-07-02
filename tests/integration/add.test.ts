@@ -401,7 +401,7 @@ describe("forge add integration", () => {
     }
   });
 
-  test("adds workos auth adapter with AuthKit and FGA artifacts", async () => {
+  test("adds workos auth adapter with AuthKit, RBAC seed, and tenant claims by default", async () => {
     const workspace = scaffoldAddWorkspace("add-workos");
     try {
       const result = await forgeAdd("workos", {
@@ -433,9 +433,7 @@ describe("forge add integration", () => {
         "src/forge/_generated/packages/workos.server.ts",
         "src/forge/_generated/integrations/workos/auth-routes.ts",
         "src/forge/_generated/integrations/workos/authkit.ts",
-        "src/forge/_generated/integrations/workos/fga.ts",
         "src/forge/_generated/integrations/workos/http-handler.ts",
-        "src/forge/_generated/integrations/workos/resource-map.ts",
         "src/forge/_generated/integrations/workos/seed.ts",
         "src/forge/_generated/integrations/workos/session.ts",
         "src/forge/_generated/integrations/workos/webhook.ts",
@@ -481,9 +479,9 @@ describe("forge add integration", () => {
       expect(rootSeed).toContain(
         "webhook_endpoints:",
       );
-      expect(rootSeed).toContain(
-        "resource_types:",
-      );
+      expect(rootSeed).not.toContain("resource_types:");
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/workos/fga.ts"))).toBe(false);
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"))).toBe(false);
       expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8")).toContain(
         "handleWorkOSAuthRequest",
       );
@@ -508,13 +506,6 @@ describe("forge add integration", () => {
       expect(readFileSync(join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"), "utf8")).toContain(
         "/webhooks/workos",
       );
-      const resourceMapSource = readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8");
-      expect(resourceMapSource).toContain("canWorkOS");
-      expect(resourceMapSource).toContain("assertWorkOSResourceTenant");
-      expect(resourceMapSource).toContain("FORGE_WORKOS_CROSS_TENANT_RESOURCE");
-      for (const kind of ["organization", "project", "team", "taskGroup", "task"]) {
-        expect(resourceMapSource).toContain(`"${kind}"`);
-      }
       expect(readFileSync(join(workspace, ".env.example"), "utf8")).toContain("FORGE_AUTH_MODE=oidc");
       expect(readFileSync(join(workspace, ".env.example"), "utf8")).toContain("WORKOS_WEBHOOK_SECRET=");
       expect(readFileSync(join(workspace, "src/policies.workos.ts"), "utf8")).toContain(
@@ -606,6 +597,59 @@ describe("forge add integration", () => {
         expect(acmeAuth.permissions).toContain("invitations:create");
         expect(globexAuth.permissions).not.toContain("invitations:create");
       }
+      const checked = await runGenerateCommand({
+        ...defaultGenerateOptions(workspace),
+        check: true,
+      });
+      expect(checked.exitCode).toBe(0);
+      const authProof = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+      });
+      expect(authProof.exitCode).toBe(0);
+      expect(authProof.data).toMatchObject({
+        kind: "auth-proof",
+        workos: {
+          detected: true,
+          requiredSecretsRegistered: true,
+          webhookSecretRegistered: true,
+        },
+      });
+      expect(JSON.stringify(authProof.data)).toContain("INV-WORKOS-001");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("adds optional WorkOS FGA artifacts with --with-fga", async () => {
+    const workspace = scaffoldAddWorkspace("add-workos-with-fga");
+    try {
+      const result = await forgeAdd("workos", {
+        workspaceRoot: workspace,
+        json: true,
+        dryRun: false,
+        runtimeInspect: false,
+        sandboxBackend: "none",
+        allowScripts: false,
+        withFga: true,
+        mode: "integration",
+        pmAdapter: createFixturePmAdapter(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/workos/fga.ts"))).toBe(true);
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"))).toBe(true);
+      const rootSeed = readFileSync(join(workspace, "workos-seed.yml"), "utf8");
+      expect(rootSeed).toContain("resource_types:");
+      const resourceMapSource = readFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), "utf8");
+      expect(resourceMapSource).toContain("canWorkOS");
+      expect(resourceMapSource).toContain("assertWorkOSResourceTenant");
+      expect(resourceMapSource).toContain("FORGE_WORKOS_CROSS_TENANT_RESOURCE");
+      for (const kind of ["organization", "project", "team", "taskGroup", "task"]) {
+        expect(resourceMapSource).toContain(`"${kind}"`);
+      }
+
       const resourceMap = await import(
         pathToFileURL(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts")).href
       ) as {
@@ -693,26 +737,6 @@ describe("forge add integration", () => {
           expect.objectContaining({ organizationMembershipId: "om_globex_member", authorized: false, reason: "cross_tenant" }),
         ]),
       );
-      const checked = await runGenerateCommand({
-        ...defaultGenerateOptions(workspace),
-        check: true,
-      });
-      expect(checked.exitCode).toBe(0);
-      const authProof = await runAuthCommand({
-        subcommand: "prove",
-        workspaceRoot: workspace,
-        json: true,
-      });
-      expect(authProof.exitCode).toBe(0);
-      expect(authProof.data).toMatchObject({
-        kind: "auth-proof",
-        workos: {
-          detected: true,
-          requiredSecretsRegistered: true,
-          webhookSecretRegistered: true,
-        },
-      });
-      expect(JSON.stringify(authProof.data)).toContain("INV-WORKOS-001");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -727,7 +751,13 @@ describe("forge add integration", () => {
       compatible: ["server"],
       incompatible: [],
       secrets: [],
-      recipe: { alias: "workos", packageName: "@workos-inc/node", category: "auth", contexts: ["server"] },
+      recipe: {
+        alias: "workos",
+        packageName: "@workos-inc/node",
+        category: "auth",
+        contexts: ["server"],
+        integrations: ["workos/fga.ts", "workos/resource-map.ts"],
+      },
       appGraph: {
         schemaVersion: "0.1.0",
         generatorVersion: "0.1.0",

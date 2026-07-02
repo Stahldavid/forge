@@ -487,12 +487,13 @@ describe("Forge CLI", () => {
       expect(backend.command.options.packageTarget).toBe("backend");
     }
 
-    const workos = parseCli(["add", "auth", "workos", "--json"]);
+    const workos = parseCli(["add", "auth", "workos", "--with-fga", "--json"]);
     expect(workos.errors).toEqual([]);
     expect(workos.command?.kind).toBe("add");
     if (workos.command?.kind === "add") {
       expect(workos.command.alias).toBe("workos");
       expect(workos.command.options.mode).toBe("integration");
+      expect(workos.command.options.withFga).toBe(true);
       expect(workos.command.options.json).toBe(true);
     }
   });

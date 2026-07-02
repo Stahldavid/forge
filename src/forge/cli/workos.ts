@@ -85,6 +85,12 @@ function exists(root: string, path: string): boolean {
   return existsSync(join(root, path));
 }
 
+function hasWorkOSFgaArtifacts(root: string): boolean {
+  return exists(root, `${GENERATED_DIR}/integrations/workos/fga.ts`) ||
+    exists(root, `${GENERATED_DIR}/integrations/workos/resource-map.ts`) ||
+    exists(root, WORKOS_FGA_STATE_FILE);
+}
+
 function readJson(root: string, path: string): unknown | null {
   const absolute = join(root, path);
   if (!existsSync(absolute)) {
@@ -288,7 +294,6 @@ export function parseSeedFile(workspaceRoot: string, preferredPath = DEFAULT_SEE
 
   if (permissions.size === 0) diagnostics.push("no permission slugs found");
   if (roles.size === 0) diagnostics.push("no role slugs found");
-  if (resourceTypes.size === 0) diagnostics.push("no resource_types slugs found");
   if (organizations.size === 0) diagnostics.push("no organizations found");
 
   return {
@@ -1742,6 +1747,7 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
   const authRoutes = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/auth-routes.ts`);
   const fga = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/fga.ts`);
   const resourceMap = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/resource-map.ts`);
+  const fgaEnabled = hasWorkOSFgaArtifacts(workspaceRoot);
   const httpHandler = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/http-handler.ts`);
   const policies = readText(workspaceRoot, "src/policies.workos.ts");
   const session = readText(workspaceRoot, `${GENERATED_DIR}/integrations/workos/session.ts`);
@@ -1842,7 +1848,7 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
       name: "seed-file",
       ok: seed.exists,
       detail: seed.exists
-        ? `${seed.path} exists with ${seed.permissions.length} permission(s), ${seed.roles.length} role(s), ${seed.resourceTypes.length} resource type(s)`
+        ? `${seed.path} exists with ${seed.permissions.length} permission(s), ${seed.roles.length} role(s), ${seed.resourceTypes.length} optional FGA resource type(s)`
         : `${DEFAULT_SEED_FILE} or ${GENERATED_SEED_FILE} is required`,
     },
     {
@@ -1871,11 +1877,13 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
     },
     {
       name: "seed-resource-types",
-      ok: seed.resourceTypes.length > 0 &&
-        (expectedResourceTypes.length === 0 || missingSeedResources.length === 0),
-      detail: missingSeedResources.length === 0
-        ? `seed resource_types cover app graph: ${expectedResourceTypes.length > 0 ? expectedResourceTypes.join(", ") : seed.resourceTypes.join(", ")}`
-        : `seed missing resource_type(s) for app graph: ${missingSeedResources.join(", ")}`,
+      ok: !fgaEnabled || (seed.resourceTypes.length > 0 &&
+        (expectedResourceTypes.length === 0 || missingSeedResources.length === 0)),
+      detail: !fgaEnabled
+        ? "FGA is not enabled; resource_types are optional for AuthKit/RBAC apps"
+        : missingSeedResources.length === 0
+          ? `seed resource_types cover app graph: ${expectedResourceTypes.length > 0 ? expectedResourceTypes.join(", ") : seed.resourceTypes.join(", ")}`
+          : `seed missing resource_type(s) for app graph: ${missingSeedResources.join(", ")}`,
     },
     {
       name: "seed-auth-config",
@@ -1897,21 +1905,25 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
     },
     {
       name: "fga-plan",
-      ok: fgaManifest.diagnostics.length === 0,
-      detail: fgaManifest.diagnostics.length === 0
-        ? `FGA plan covers ${fgaManifest.resourceTypes.length} resource type(s), ${fgaManifest.resources.length} resource(s), and ${fgaManifest.proofScenarios.length} proof scenario(s)`
-        : `FGA plan has gap(s): ${fgaManifest.diagnostics.join("; ")}`,
+      ok: !fgaEnabled || fgaManifest.diagnostics.length === 0,
+      detail: !fgaEnabled
+        ? "FGA is not enabled; run forge add auth workos --with-fga for resource-level WorkOS Authorization"
+        : fgaManifest.diagnostics.length === 0
+          ? `FGA plan covers ${fgaManifest.resourceTypes.length} resource type(s), ${fgaManifest.resources.length} resource(s), and ${fgaManifest.proofScenarios.length} proof scenario(s)`
+          : `FGA plan has gap(s): ${fgaManifest.diagnostics.join("; ")}`,
     },
     {
       name: "fga-state",
       ok: true,
-      detail: !fgaState.exists
-        ? `${WORKOS_FGA_STATE_FILE} not found; run forge workos fga sync --json before production deploy`
-        : fgaState.matchesManifestHash
-          ? `${WORKOS_FGA_STATE_FILE} matches current FGA manifest${fgaState.mode === "real" ? " in real mode" : ""}`
-          : fgaState.valid
-            ? `${WORKOS_FGA_STATE_FILE} exists but does not match current FGA manifest; rerun forge workos fga sync --json`
-            : `${WORKOS_FGA_STATE_FILE} exists but is invalid: ${fgaState.diagnostics.join("; ")}`,
+      detail: !fgaEnabled
+        ? "FGA is not enabled; no FGA state file is required"
+        : !fgaState.exists
+          ? `${WORKOS_FGA_STATE_FILE} not found; run forge workos fga sync --json before production deploy`
+          : fgaState.matchesManifestHash
+            ? `${WORKOS_FGA_STATE_FILE} matches current FGA manifest${fgaState.mode === "real" ? " in real mode" : ""}`
+            : fgaState.valid
+              ? `${WORKOS_FGA_STATE_FILE} exists but does not match current FGA manifest; rerun forge workos fga sync --json`
+              : `${WORKOS_FGA_STATE_FILE} exists but is invalid: ${fgaState.diagnostics.join("; ")}`,
     },
     {
       name: "authkit-routes",
@@ -1935,7 +1947,7 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
     },
     {
       name: "fga-bridge",
-      ok: includesAll(resourceMap, [
+      ok: !fgaEnabled || (includesAll(resourceMap, [
         "canWorkOS",
         "assertWorkOSResourceTenant",
         "FORGE_WORKOS_CROSS_TENANT_RESOURCE",
@@ -1945,8 +1957,10 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
         "permissionSlug",
         "resourceExternalId",
       ]) &&
-        includesAll(fga, ["forgeWorkOSResourceTypes"]),
-      detail: "WorkOS FGA resource-map bridge exists with sync, cache, telemetry, official check shape, and cross-tenant guard",
+        includesAll(fga, ["forgeWorkOSResourceTypes"])),
+      detail: fgaEnabled
+        ? "WorkOS FGA resource-map bridge exists with sync, cache, telemetry, official check shape, and cross-tenant guard"
+        : "FGA bridge is optional and not enabled for this WorkOS AuthKit/RBAC app",
     },
     {
       name: "policies",
@@ -2276,6 +2290,7 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
   const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
   const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
   const unusedSeedPermissions = seed.permissions.filter((permission) => !activePermissions.includes(permission));
+  const fgaEnabled = hasWorkOSFgaArtifacts(options.workspaceRoot);
   const checks = [
     {
       name: "seed-file",
@@ -2285,7 +2300,9 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     {
       name: "seed-yaml-shape",
       ok: seed.valid,
-      detail: seed.valid ? "seed contains permissions, roles, resource_types, and organizations" : seed.diagnostics.join("; "),
+      detail: seed.valid
+        ? `seed contains permissions, roles, organizations${seed.resourceTypes.length > 0 ? ", and optional FGA resource_types" : ""}`
+        : seed.diagnostics.join("; "),
     },
     {
       name: "seed-policy-coverage",
@@ -2305,10 +2322,12 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
     },
     {
       name: "seed-resource-coverage",
-      ok: missingSeedResources.length === 0,
-      detail: missingSeedResources.length === 0
-        ? `seed covers app resource type(s): ${expectedResourceTypes.join(", ") || "none required"}`
-        : `seed missing resource type(s): ${missingSeedResources.join(", ")}`,
+      ok: !fgaEnabled || missingSeedResources.length === 0,
+      detail: !fgaEnabled
+        ? "FGA is not enabled; seed resource type coverage is not required"
+        : missingSeedResources.length === 0
+          ? `seed covers app resource type(s): ${expectedResourceTypes.join(", ") || "none required"}`
+          : `seed missing resource type(s): ${missingSeedResources.join(", ")}`,
     },
     {
       name: "seed-hosted-config",

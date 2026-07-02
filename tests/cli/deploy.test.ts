@@ -442,7 +442,103 @@ describe("forge deploy", () => {
     }
   });
 
-  test("production check requires WorkOS hosted seed evidence when WorkOS is present", async () => {
+  test("production check does not require WorkOS FGA proof unless FGA artifacts are enabled", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-workos-authkit-rbac");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
+      writeFileSync(
+        join(workspace, "package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/node": "^7.0.0" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/authRegistry.json"),
+        JSON.stringify({ claims: { userId: "sub", tenantId: "organization_id" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/secretRegistry.json"),
+        JSON.stringify({
+          secrets: [
+            { envVar: "WORKOS_API_KEY" },
+            { envVar: "WORKOS_CLIENT_ID" },
+            { envVar: "WORKOS_COOKIE_PASSWORD" },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/policyRegistry.json"),
+        JSON.stringify({ policies: [{ name: "vendors.read", permissions: ["vendors:read"] }] }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/agentContract.json"),
+        JSON.stringify({ auth: { requiresTenant: true } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, ".env.example"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=",
+          "VITE_WORKOS_CLIENT_ID=",
+          "VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback",
+          "WORKOS_API_KEY=",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/policies.workos.ts"),
+        'import { canPermission } from "forge/policy"; export const policies = { "vendors.read": canPermission("vendors:read") };\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "workos-seed.yml"),
+        [
+          "permissions:",
+          "  - slug: 'vendors:read'",
+          "roles:",
+          "  - slug: 'owner'",
+          "organizations:",
+          "  - name: 'Acme Corp'",
+          "config:",
+          "  redirect_uris:",
+          "    - 'http://localhost:5173/callback'",
+          "  cors_origins:",
+          "    - 'http://localhost:5173'",
+          "  homepage_url: 'http://localhost:5173'",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"), 'export const config = { provider: "workos" }; export function verifyWorkOSWebhook() {} export function handleWorkOSWebhook() {}\n', "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), 'export const workosAuthHttpRoutes = ["/login", "/callback", "/logout", "/session"]; export function handleWorkOSAuthRequest() {}\n', "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/session.ts"), "export function encodeWorkOSSession() {} export function decodeWorkOSSession() {} export function workOSSessionToClaims() {}\n", "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"), 'export const workosWebhookHttpRoute = { path: "/webhooks/workos" }; export function handleWorkOSWebhookRequest() {}\n', "utf8");
+
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(result.checks.some((check) => check.name === "workos-fga-proof")).toBe(false);
+      expect(result.checks.find((check) => check.name === "workos-fga-optional")).toMatchObject({
+        ok: true,
+        severity: "warning",
+      });
+      expect(result.nextActions).not.toContain("forge workos fga prove --real --file workos-seed.yml --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("production check requires WorkOS hosted seed and FGA evidence when FGA artifacts are present", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-deploy-workos-hosted-seed");
     try {
       await runGenerate(defaultGenerateOptions(workspace));

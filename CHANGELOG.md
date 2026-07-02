@@ -1,5 +1,23 @@
 # forgeos
 
+## 0.1.0-alpha.55
+
+### Patch Changes
+
+- Make WorkOS FGA opt-in instead of part of the default auth adapter path.
+
+  - `forge add auth workos` now generates the AuthKit/RBAC/permission-claims
+    adapter, seed, policies, tenant claim mapping, webhook helpers, and React
+    bridge without WorkOS FGA resource helpers by default.
+  - `forge add auth workos --with-fga` keeps generating the optional WorkOS
+    Authorization/FGA resource graph helpers, `resource_types` seed metadata,
+    cache/telemetry helpers, and cross-tenant resource guard.
+  - `forge workos doctor` and `forge workos seed` now treat `resource_types`
+    and FGA state as optional unless the app has opted into FGA artifacts.
+  - `forge deploy check --production` no longer blocks ordinary WorkOS apps on
+    `workos-fga-proof`; it still requires FGA sync/proof when FGA helpers or
+    FGA state are present.
+
 ## 0.1.0-alpha.54
 
 ### Patch Changes

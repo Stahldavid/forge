@@ -125,6 +125,13 @@ function rolePermissions(permissions: string[]): Record<string, string[]> {
   };
 }
 
+function workosFgaEnabled(input: IntegrationTemplateInput): boolean {
+  return Boolean(
+    input.recipe.integrations?.includes("workos/fga.ts") ||
+      input.recipe.integrations?.includes("workos/resource-map.ts"),
+  );
+}
+
 export function renderWorkosServerAdapter(_input: IntegrationTemplateInput): string {
   return [
     "/** Forge generated WorkOS server adapter — action/workflow/endpoint/server contexts only. */",
@@ -1059,7 +1066,18 @@ export function renderWorkosSeed(_input: IntegrationTemplateInput): string {
 export function renderWorkosSeedYaml(input: IntegrationTemplateInput): string {
   const permissions = permissionsFromApp(input);
   const roles = rolePermissions(permissions);
-  const resourceTypes = resourceTypesFromApp(input);
+  const resourceTypes = workosFgaEnabled(input) ? resourceTypesFromApp(input) : [];
+  const resourceTypeSection = resourceTypes.length > 0
+    ? [
+        "",
+        "resource_types:",
+        ...resourceTypes.flatMap((resource) => [
+          `  - slug: '${resource.slug}'`,
+          `    name: '${resource.name}'`,
+          ...(resource.parent ? [`    parent: '${resource.parent}'`] : []),
+        ]),
+      ]
+    : [];
   return [
     "# Forge generated WorkOS seed file.",
     "# Review names, domains, redirect URIs, and origins before applying to a real WorkOS environment.",
@@ -1068,13 +1086,7 @@ export function renderWorkosSeedYaml(input: IntegrationTemplateInput): string {
       `  - name: '${toTitle(permission)}'`,
       `    slug: '${permission}'`,
     ]),
-    "",
-    "resource_types:",
-    ...resourceTypes.flatMap((resource) => [
-      `  - slug: '${resource.slug}'`,
-      `    name: '${resource.name}'`,
-      ...(resource.parent ? [`    parent: '${resource.parent}'`] : []),
-    ]),
+    ...resourceTypeSection,
     "",
     "roles:",
     ...Object.entries(roles).flatMap(([role, rolePermissions]) => [
@@ -1210,6 +1222,34 @@ export function renderWorkosTestkit(input: IntegrationTemplateInput): string {
 }
 
 export function renderWorkosDoc(input: IntegrationTemplateInput): string {
+  const fgaEnabled = workosFgaEnabled(input);
+  const fgaCommandLines = fgaEnabled
+    ? [
+        "forge workos fga plan --file workos-seed.yml --write --json",
+        "forge workos fga sync --file workos-seed.yml --json",
+        "forge workos fga prove --file workos-seed.yml --json",
+      ]
+    : [
+        "# Optional when resource-level WorkOS Authorization is required:",
+        "forge add auth workos --with-fga",
+      ];
+  const fgaSection = fgaEnabled
+    ? [
+        "## FGA strategy",
+        "",
+        "Use JWT permissions for organization-wide checks. Use the WorkOS Authorization API for resource-level checks such as project, workspace, or task access. Keep those API calls in actions, workflows, endpoints, or server code; commands and queries should consume validated auth/policy context rather than importing the WorkOS SDK.",
+        "",
+        "Use `syncWorkOSResourceGraph(...)` after app resources are created or renamed to mirror the Forge resource graph into WorkOS FGA resources. Use `canWorkOS(...)` with `ForgeWorkOSFgaDecisionCache` for resource-level checks; it calls WorkOS `authorization.check` with `organizationMembershipId`, `permissionSlug`, `resourceTypeSlug`, and `resourceExternalId`, emits optional telemetry, and denies by default on provider errors unless `fallback: \"throw\"` is set.",
+        "",
+        "Use `assertWorkOSResourceTenant(...)` before resource-level FGA checks whenever the resource came from user input or an external id. This keeps Acme resources from being checked under Globex membership context.",
+      ]
+    : [
+        "## Authorization strategy",
+        "",
+        "The default WorkOS recipe uses AuthKit, organization claims, roles, permissions, Forge policies, and tenant isolation. That is enough for most SaaS apps.",
+        "",
+        "FGA is optional. Add it only when your app needs resource-level authorization beyond organization roles and permission claims, for example per-project, per-document, or inherited resource access.",
+      ];
   return [
     "# WorkOS integration",
     "",
@@ -1222,7 +1262,8 @@ export function renderWorkosDoc(input: IntegrationTemplateInput): string {
     "- Installs `@workos-inc/node` for server/action/workflow/endpoint code.",
     "- Installs `@workos-inc/authkit-react` and generates a Vite React bridge when a `web/package.json` workspace exists.",
     "- Registers WorkOS secret names without storing values.",
-    "- Generates an AuthKit/FGA checklist and a `workos-seed.yml` for roles, permissions, organizations, redirect URIs, and CORS origins.",
+    "- Generates an AuthKit/RBAC checklist and a `workos-seed.yml` for roles, permissions, organizations, redirect URIs, and CORS origins.",
+    ...(fgaEnabled ? ["- Generates optional WorkOS FGA resource graph helpers and resource type seed metadata."] : []),
     "- Generates framework-agnostic AuthKit route/session helpers for `/login`, `/callback`, `/logout`, and `/session`.",
     "- Generates a framework-agnostic `Request -> Response` webhook handler for `POST /webhooks/workos`.",
     "- Marks WorkOS SDK imports as forbidden from commands, queries, liveQueries, client, shared, and edge code.",
@@ -1238,6 +1279,7 @@ export function renderWorkosDoc(input: IntegrationTemplateInput): string {
     "forge workos seed --file workos-seed.yml --json",
     "forge workos prove --file workos-seed.yml --json",
     "forge workos setup --real --file workos-seed.yml --json",
+    ...fgaCommandLines,
     "forge auth check --json",
     "forge auth prove --json",
     "forge check --json",
@@ -1270,13 +1312,7 @@ export function renderWorkosDoc(input: IntegrationTemplateInput): string {
     "",
     "Mount `handleWorkOSAuthRequest(request, { workos, config, resolveOrganization })` for `/login`, `/callback`, `/logout`, and `/session`. The callback exchanges the AuthKit authorization code, signs an HttpOnly session cookie, and exposes Forge-normalized claims through `/session`.",
     "",
-    "## FGA strategy",
-    "",
-    "Use JWT permissions for organization-wide checks. Use the WorkOS Authorization API for resource-level checks such as project, workspace, or task access. Keep those API calls in actions, workflows, endpoints, or server code; commands and queries should consume validated auth/policy context rather than importing the WorkOS SDK.",
-    "",
-    "Use `syncWorkOSResourceGraph(...)` after app resources are created or renamed to mirror the Forge resource graph into WorkOS FGA resources. Use `canWorkOS(...)` with `ForgeWorkOSFgaDecisionCache` for resource-level checks; it calls WorkOS `authorization.check` with `organizationMembershipId`, `permissionSlug`, `resourceTypeSlug`, and `resourceExternalId`, emits optional telemetry, and denies by default on provider errors unless `fallback: \"throw\"` is set.",
-    "",
-    "Use `assertWorkOSResourceTenant(...)` before resource-level FGA checks whenever the resource came from user input or an external id. This keeps Acme resources from being checked under Globex membership context.",
+    ...fgaSection,
     "",
     "## Webhook route",
     "",

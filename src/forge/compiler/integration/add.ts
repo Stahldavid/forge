@@ -3,6 +3,7 @@ import { nodeFileSystem } from "../fs/index.ts";
 import type { AddOptions } from "../types/cli.ts";
 import type { Diagnostic } from "../types/diagnostic.ts";
 import type { Dependency } from "../types/package-graph.ts";
+import type { IntegrationRecipe } from "../types/integration.ts";
 import type { ClassifiedPackage } from "../classifier/runtime-matrix.ts";
 import { buildAppGraph } from "../app-graph/build.ts";
 import { classify } from "../classifier/classify.ts";
@@ -79,7 +80,7 @@ export interface ForgeAddResult {
   failureKind?: string;
 }
 
-function recipeResultMetadata(recipe: NonNullable<ReturnType<typeof resolveRecipe>>): Pick<
+function recipeResultMetadata(recipe: IntegrationRecipe): Pick<
   ForgeAddResult,
   "recipeVersion" | "recipePackages" | "requiredSecrets" | "optionalSecrets"
 > {
@@ -88,6 +89,24 @@ function recipeResultMetadata(recipe: NonNullable<ReturnType<typeof resolveRecip
     recipePackages: recipe.packages.map((pkg) => pkg.packageName),
     requiredSecrets: recipe.secrets.filter((secret) => secret.required !== false).map((secret) => secret.envVar),
     optionalSecrets: recipe.secrets.filter((secret) => secret.required === false).map((secret) => secret.envVar),
+  };
+}
+
+const WORKOS_FGA_INTEGRATION_FILES = new Set([
+  "workos/fga.ts",
+  "workos/resource-map.ts",
+]);
+
+function applyWorkOSRecipeProfile(
+  recipe: NonNullable<ReturnType<typeof resolveRecipe>>,
+  options: Pick<ForgeAddOptions, "withFga">,
+): IntegrationRecipe {
+  if (recipe.alias !== "workos" || options.withFga) {
+    return recipe;
+  }
+  return {
+    ...recipe,
+    integrations: recipe.integrations?.filter((file) => !WORKOS_FGA_INTEGRATION_FILES.has(file)),
   };
 }
 
@@ -726,7 +745,7 @@ function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string
 }
 
 async function analyzeRecipePackages(
-  recipe: NonNullable<ReturnType<typeof resolveRecipe>>,
+  recipe: IntegrationRecipe,
   ctx: ReturnType<typeof discover>,
   installRoot: string,
   options: ForgeAddOptions,
@@ -783,7 +802,7 @@ async function analyzeRecipePackages(
 
 async function buildAddPlan(
   alias: string,
-  recipe: NonNullable<ReturnType<typeof resolveRecipe>>,
+  recipe: IntegrationRecipe,
   ctx: ReturnType<typeof discover>,
   installRoot: string,
   options: ForgeAddOptions,
@@ -945,6 +964,8 @@ export async function forgeAdd(
     });
   }
 
+  const effectiveRecipe = applyWorkOSRecipeProfile(recipe, effectiveOptions);
+
   const pm =
     options.pmAdapter ??
     detectAndCreatePackageManagerAdapter(options.workspaceRoot);
@@ -955,7 +976,7 @@ export async function forgeAdd(
 
     try {
       const dryRun = await pm.dryRunAddWithPath(
-        recipe.packages.map((pkg) => pkg.packageName).join(" "),
+        effectiveRecipe.packages.map((pkg) => pkg.packageName).join(" "),
         {
           cwd: options.workspaceRoot,
           ignoreScripts: !options.allowScripts,
@@ -966,7 +987,7 @@ export async function forgeAdd(
       const fallback = dryRunRecipeFallbackMessage(normalized);
       const { emitPlan, warnings, errors } = await buildAddPlan(
         normalized,
-        recipe,
+        effectiveRecipe,
         ctx,
         installRoot,
         effectiveOptions,
@@ -982,7 +1003,7 @@ export async function forgeAdd(
       return finalizeAddResult({
         alias: normalized,
         mode: "integration",
-        ...recipeResultMetadata(recipe),
+        ...recipeResultMetadata(effectiveRecipe),
         changed: [...emitPlan.files.map((file) => file.path), "forge.lock"],
         unchanged: [],
         warnings,
@@ -994,7 +1015,7 @@ export async function forgeAdd(
 
     const { emitPlan, warnings, errors } = await buildAddPlan(
       normalized,
-      recipe,
+      effectiveRecipe,
       ctx,
       installRoot,
       effectiveOptions,
@@ -1003,7 +1024,7 @@ export async function forgeAdd(
     return finalizeAddResult({
       alias: normalized,
       mode: "integration",
-      ...recipeResultMetadata(recipe),
+      ...recipeResultMetadata(effectiveRecipe),
       changed: [...emitPlan.files.map((file) => file.path), "forge.lock"],
       unchanged: [],
       warnings,
@@ -1023,7 +1044,7 @@ export async function forgeAdd(
       frontendWorkspace ? [packageJsonRelativeFor(frontendWorkspace)] : [],
     );
     const preinstalledWarnings: Diagnostic[] = [];
-    for (const pkg of recipe.packages) {
+    for (const pkg of effectiveRecipe.packages) {
       const rootPackageJson = join(options.workspaceRoot, "package.json");
       await addPackageOrContinueIfInstalled({
         pm,
@@ -1055,7 +1076,7 @@ export async function forgeAdd(
     const ctx = discover({ workspaceRoot: options.workspaceRoot });
     const { emitPlan, warnings, errors: analyzeErrors } = await buildAddPlan(
       normalized,
-      recipe,
+      effectiveRecipe,
       ctx,
       options.workspaceRoot,
       options,
@@ -1066,7 +1087,7 @@ export async function forgeAdd(
       return finalizeAddResult({
         alias: normalized,
         mode: "integration",
-        ...recipeResultMetadata(recipe),
+        ...recipeResultMetadata(effectiveRecipe),
         changed: [],
         unchanged: [],
         warnings,
@@ -1093,7 +1114,7 @@ export async function forgeAdd(
       return finalizeAddResult({
         alias: normalized,
         mode: "integration",
-        ...recipeResultMetadata(recipe),
+        ...recipeResultMetadata(effectiveRecipe),
         changed: [],
         unchanged: [],
         warnings: warningsCombined,
@@ -1112,7 +1133,7 @@ export async function forgeAdd(
       return finalizeAddResult({
         alias: normalized,
         mode: "integration",
-        ...recipeResultMetadata(recipe),
+        ...recipeResultMetadata(effectiveRecipe),
         changed: [],
         unchanged: [],
         warnings: warningsCombined,
@@ -1148,7 +1169,7 @@ export async function forgeAdd(
     return finalizeAddResult({
       alias: normalized,
       mode: "integration",
-      ...recipeResultMetadata(recipe),
+      ...recipeResultMetadata(effectiveRecipe),
       changed: [
         ...changedPackageManagerFiles(options.workspaceRoot, packageManagerBefore),
         ...emitResult.changed,
@@ -1178,7 +1199,7 @@ export async function forgeAdd(
     return finalizeAddResult({
       alias: normalized,
       mode: "integration",
-      ...recipeResultMetadata(recipe),
+      ...recipeResultMetadata(effectiveRecipe),
       changed: [],
       unchanged: [],
       warnings: [],

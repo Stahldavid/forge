@@ -101,6 +101,12 @@ function hasWorkOSIntegration(workspaceRoot: string): boolean {
     nodeFileSystem.exists(join(workspaceRoot, "src/policies.workos.ts"));
 }
 
+function hasWorkOSFgaIntegration(workspaceRoot: string): boolean {
+  return nodeFileSystem.exists(join(workspaceRoot, `${GENERATED_DIR}/integrations/workos/fga.ts`)) ||
+    nodeFileSystem.exists(join(workspaceRoot, `${GENERATED_DIR}/integrations/workos/resource-map.ts`)) ||
+    nodeFileSystem.exists(join(workspaceRoot, ".workos-fga-state.json"));
+}
+
 function readJsonFile<T>(workspaceRoot: string, relative: string): T | null {
   const absolute = join(workspaceRoot, relative);
   if (!nodeFileSystem.exists(absolute)) return null;
@@ -821,6 +827,7 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
     },
   });
   if (hasWorkOSIntegration(options.workspaceRoot)) {
+    const workosFgaEnabled = hasWorkOSFgaIntegration(options.workspaceRoot);
     const workosDoctor = await withDeployEnv(options.workspaceRoot, async () =>
       runWorkOSCommand({
         subcommand: "doctor",
@@ -835,7 +842,7 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
       ok: workosDoctor.exitCode === 0,
       severity: options.production ? "error" : "warning",
       message: workosDoctor.exitCode === 0
-        ? "WorkOS adapter files, seed, claims, policies, and FGA bridge are app-aware"
+        ? `WorkOS adapter files, seed, claims, policies, and tenant guards are app-aware${workosFgaEnabled ? " with FGA enabled" : ""}`
         : "WorkOS adapter is incomplete for this app; run forge workos doctor --json",
       command: "forge workos doctor --json",
       details: workosDoctor.checks,
@@ -855,27 +862,37 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
       command: "forge workos prove --real --file workos-seed.yml --json",
       details: seedState,
     });
-    const workosFgaDoctor = await withDeployEnv(options.workspaceRoot, async () =>
-      runWorkOSCommand({
-        subcommand: "fga",
-        fgaAction: "doctor",
-        workspaceRoot: options.workspaceRoot,
-        json: true,
-        yes: false,
-        dryRun: true,
-        real: options.production,
-      })
-    );
-    checks.push({
-      name: "workos-fga-proof",
-      ok: !options.production || workosFgaDoctor.exitCode === 0,
-      severity: options.production ? "error" : "warning",
-      message: workosFgaDoctor.exitCode === 0
-        ? "WorkOS FGA resource graph state matches the current app contract and seed"
-        : "WorkOS production deploy requires FGA graph sync/proof evidence matching the current app",
-      command: "forge workos fga prove --real --file workos-seed.yml --json",
-      details: workosFgaDoctor.data,
-    });
+    if (workosFgaEnabled) {
+      const workosFgaDoctor = await withDeployEnv(options.workspaceRoot, async () =>
+        runWorkOSCommand({
+          subcommand: "fga",
+          fgaAction: "doctor",
+          workspaceRoot: options.workspaceRoot,
+          json: true,
+          yes: false,
+          dryRun: true,
+          real: options.production,
+        })
+      );
+      checks.push({
+        name: "workos-fga-proof",
+        ok: !options.production || workosFgaDoctor.exitCode === 0,
+        severity: options.production ? "error" : "warning",
+        message: workosFgaDoctor.exitCode === 0
+          ? "WorkOS FGA resource graph state matches the current app contract and seed"
+          : "WorkOS production deploy requires FGA graph sync/proof evidence matching the current app because FGA helpers are enabled",
+        command: "forge workos fga prove --real --file workos-seed.yml --json",
+        details: workosFgaDoctor.data,
+      });
+    } else {
+      checks.push({
+        name: "workos-fga-optional",
+        ok: true,
+        severity: "warning",
+        message: "WorkOS FGA is not enabled; production deploy is gated by AuthKit, RBAC permission claims, Forge policies, tenant proof, and hosted seed evidence",
+        command: "forge add auth workos --with-fga",
+      });
+    }
   }
   const tenantProofRequired = auth.requiresTenant || hasWorkOSIntegration(options.workspaceRoot);
   const tenantProof = tenantProofRequired
