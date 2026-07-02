@@ -1,5 +1,21 @@
 # forgeos
 
+## 0.1.0-alpha.52
+
+### Patch Changes
+
+- Make WorkOS FGA real-rollout failures produce a concrete operator artifact.
+
+  - Generated WorkOS FGA setup guides now include an explicit automation
+    boundary explaining that ForgeOS derives the graph, syncs resources, and
+    proves Authorization API checks, but does not invent unsupported WorkOS
+    resource-type creation commands.
+  - `forge workos fga sync --real --write --json` now remains useful when the
+    WorkOS Authorization API reports missing resource types: the JSON includes
+    `setupGuidePath` and the written guide lists the resource types, parents,
+    permissions, roles, example external IDs, membership env, and rerun
+    commands needed to finish the hosted setup.
+
 ## 0.1.0-alpha.51
 
 ### Patch Changes

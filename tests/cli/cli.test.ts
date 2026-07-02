@@ -1226,6 +1226,7 @@ describe("Forge CLI", () => {
         yes: false,
         dryRun: false,
         real: true,
+        write: true,
         file: "workos-seed.yml",
         commandRunner: (command, args, options) => {
           expect(options.env?.WORKOS_MODE).toBe("agent");
@@ -1260,8 +1261,12 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(fgaRealMissingResourceTypes.checks)).toContain("missing FGA resource type(s): project");
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"missingResourceTypes":["project"]');
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"requiredMembershipEnv"');
+      expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"setupGuidePath":".forge/workos-fga-setup.md"');
+      expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("## Automation Boundary");
+      expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("ForgeOS does not invent WorkOS CLI/API calls for resource type creation.");
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain("configure missing WorkOS FGA resource type(s): project");
       expect(formatWorkOSHuman(fgaRealMissingResourceTypes)).toContain("configure missing WorkOS FGA resource type(s): project");
+      expect(formatWorkOSHuman(fgaRealMissingResourceTypes)).toContain("FGA setup guide: .forge/workos-fga-setup.md");
 
       const fgaRealSync = runWorkOSCommand({
         subcommand: "fga",

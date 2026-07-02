@@ -6,6 +6,16 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.52
+
+- Generated WorkOS FGA setup guides now include an explicit automation boundary
+  describing what ForgeOS can automate versus the hosted WorkOS resource-type
+  configuration that must exist before real resource sync.
+- `forge workos fga sync --real --write --json` now provides a concrete
+  `setupGuidePath` even when real sync fails because hosted WorkOS resource
+  types are missing, so agents have a deterministic artifact for the remaining
+  setup and rerun commands.
+
 ## 0.1.0-alpha.51
 
 - `forge workos fga doctor --real --json` now reports a structured readiness

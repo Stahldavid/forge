@@ -1149,6 +1149,13 @@ function workOSFgaSetupGuide(manifest: WorkOSFgaManifest, hostedSetup: WorkOSFga
     "ForgeOS derived this resource graph from the app contract, policies, and workos-seed.yml.",
     "WorkOS resource type configuration is hosted WorkOS configuration. ForgeOS uses the WorkOS CLI/API or SDK to sync resources and prove authorization checks after those resource types exist.",
     "",
+    "## Automation Boundary",
+    "",
+    "- ForgeOS can derive the FGA graph, generate this setup guide, sync WorkOS FGA resources, and run Authorization API access checks.",
+    "- ForgeOS does not invent WorkOS CLI/API calls for resource type creation. The current public WorkOS automation surface supports resources and checks after resource types exist.",
+    "- Configure each non-organization resource type below in hosted WorkOS, then rerun the real sync/proof commands.",
+    "- The `organization` node is treated as the WorkOS tenant root and is not created as an authorization resource.",
+    "",
     "## Resource Types",
     "",
     ...resourceTypes.flatMap((resourceType) => [
