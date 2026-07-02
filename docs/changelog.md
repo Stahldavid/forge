@@ -6,6 +6,24 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.48
+
+- Added the production-shaped WorkOS FGA flow:
+  `forge workos fga plan`, `sync`, `prove`, and `doctor` now derive an FGA
+  manifest from the app contract, policies, data graph, and `workos-seed.yml`.
+- `forge workos fga sync --real` and `forge workos fga prove --real` can use
+  the authenticated WorkOS CLI/API path when `WORKOS_API_KEY` is not available,
+  so agents can continue the no-dashboard flow after `workos auth login`.
+- FGA setup output now separates hosted WorkOS resource-type configuration from
+  ForgeOS-automated resource sync and authorization checks, and reports missing
+  resource types with exact next actions.
+- `forge deploy check --production` now requires matching WorkOS FGA real
+  sync/proof evidence for WorkOS-backed apps and points operators at
+  `forge workos fga plan --write`, `sync --real`, and `prove --real`.
+- WorkOS seed generation now keeps inferred parent resource relationships such
+  as `access_request -> vendor`, with regression coverage for the generated
+  seed, parser, deploy checks, and FGA plan output.
+
 ## 0.1.0-alpha.47
 
 - `forge workos setup --real` and `forge workos prove --real` now validate the

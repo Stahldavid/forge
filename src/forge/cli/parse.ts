@@ -19,7 +19,7 @@ import type { AgentContractSubcommand } from "./agent-contract.ts";
 import type { AuthSubcommand } from "./auth.ts";
 import type { BaselineSubcommand } from "./baseline.ts";
 import type { AuthMdSubcommand } from "./authmd.ts";
-import type { WorkOSSubcommand } from "./workos.ts";
+import type { WorkOSFgaAction, WorkOSSubcommand } from "./workos.ts";
 import type { DeploySubcommand, DeployTarget } from "./deploy.ts";
 import type { FieldTestSubcommand } from "./field-test.ts";
 import type { SeedSubcommand } from "./seed.ts";
@@ -152,11 +152,14 @@ export type ForgeCommand =
   | {
       kind: "workos";
       subcommand: WorkOSSubcommand;
+      fgaAction?: WorkOSFgaAction;
       json: boolean;
       file?: string;
       yes: boolean;
       dryRun: boolean;
       real?: boolean;
+      write?: boolean;
+      writePath?: string;
       workspaceRoot: string;
     }
   | {
@@ -597,7 +600,8 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
 ];
 const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
-const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup", "prove"];
+const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup", "prove", "fga"];
+const WORKOS_FGA_ACTIONS: WorkOSFgaAction[] = ["plan", "sync", "prove", "doctor"];
 const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "check", "render", "package", "verify"];
 const FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = ["create", "run", "report"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
@@ -759,6 +763,11 @@ function parseOptionValue(args: string[], flag: string): string | undefined {
     return undefined;
   }
   return args[index + 1];
+}
+
+function parseOptionalOptionValue(args: string[], flag: string): string | undefined {
+  const value = parseOptionValue(args, flag);
+  return value && !value.startsWith("--") ? value : undefined;
 }
 
 function parseOptionValues(args: string[], flag: string): string[] {
@@ -1444,18 +1453,27 @@ export function parseCli(argv: string[]): ParsedCli {
     case "workos": {
       const subcommand = rest[0] as WorkOSSubcommand | undefined;
       if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge workos requires subcommand: install, doctor, seed, setup, or prove");
+        errors.push("forge workos requires subcommand: install, doctor, seed, setup, prove, or fga");
         return { command: null, workspaceRoot, errors };
       }
+      const fgaAction = subcommand === "fga" ? rest[1] as WorkOSFgaAction | undefined : undefined;
+      if (subcommand === "fga" && (!fgaAction || !WORKOS_FGA_ACTIONS.includes(fgaAction))) {
+        errors.push("forge workos fga requires action: plan, sync, prove, or doctor");
+        return { command: null, workspaceRoot, errors };
+      }
+      const workOSWritePath = parseOptionalOptionValue(argv, "--write");
       return {
         command: {
           kind: "workos",
           subcommand,
+          ...(fgaAction ? { fgaAction } : {}),
           json: parseFlag(argv, "--json"),
           file: parseOptionValue(argv, "--file"),
           yes: parseFlag(argv, "--yes"),
           dryRun: parseFlag(argv, "--dry-run"),
           real: parseFlag(argv, "--real"),
+          write: parseFlag(argv, "--write"),
+          ...(workOSWritePath ? { writePath: workOSWritePath } : {}),
           workspaceRoot,
         },
         workspaceRoot,

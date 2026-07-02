@@ -50,6 +50,10 @@ function singularResourceName(name: string): string {
   return name;
 }
 
+function idFieldForResource(slug: string): string {
+  return `${slug.charAt(0).toLowerCase()}${slug.slice(1)}Id`;
+}
+
 function permissionsFromApp(input: IntegrationTemplateInput): string[] {
   const permissions = new Set<string>();
   for (const symbol of input.appGraph?.symbols ?? []) {
@@ -82,6 +86,24 @@ function resourceTypesFromApp(input: IntegrationTemplateInput): Array<{ slug: st
     }
     const slug = singularResourceName(table.name);
     resourceTypes.set(slug, { slug, name: toTitle(slug), parent: "organization" });
+  }
+  for (const table of tenantTables) {
+    const slug = singularResourceName(table.name);
+    const current = resourceTypes.get(slug);
+    if (!current || slug === "organization") {
+      continue;
+    }
+    const parent = [...resourceTypes.keys()]
+      .filter((candidate) => candidate !== slug && candidate !== "organization")
+      .find((candidate) =>
+        table.fields.some((field) =>
+          field.name === idFieldForResource(candidate) ||
+          field.name === `${candidate}_id`
+        )
+      );
+    if (parent) {
+      resourceTypes.set(slug, { ...current, parent });
+    }
   }
   return [...resourceTypes.values()].sort((a, b) => a.slug.localeCompare(b.slug));
 }

@@ -8,6 +8,7 @@ import { buildAddJson, writeHumanAdd } from "../../src/forge/cli/output.ts";
 import { runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { loadExistingForgeLock } from "../../src/forge/compiler/integration/plan.ts";
 import { parseAdapterContext } from "../../src/forge/compiler/integration/render.ts";
+import { renderWorkosSeedYaml } from "../../src/forge/compiler/integration/templates/workos.ts";
 import { stripDeterministicHeader } from "../../src/forge/compiler/primitives/header.ts";
 import { mapClaimsToAuthContext } from "../../src/forge/runtime/auth/claims.ts";
 import { defaultGenerateOptions } from "../orchestrator/helpers.ts";
@@ -715,6 +716,65 @@ describe("forge add integration", () => {
     } finally {
       cleanupWorkspace(workspace);
     }
+  });
+
+  test("workos seed generation preserves inferred FGA parent resources", () => {
+    const seed = renderWorkosSeedYaml({
+      alias: "workos",
+      packageName: "@workos-inc/node",
+      packageNames: ["@workos-inc/node"],
+      context: "server",
+      compatible: ["server"],
+      incompatible: [],
+      secrets: [],
+      recipe: { alias: "workos", packageName: "@workos-inc/node", category: "auth", contexts: ["server"] },
+      appGraph: {
+        schemaVersion: "0.1.0",
+        generatorVersion: "0.1.0",
+        analyzerVersion: "test",
+        inputHash: "test",
+        symbols: [
+          {
+            id: "table:vendors",
+            kind: "schema.table",
+            name: "vendors",
+            qualifiedName: "vendors",
+            file: "src/forge/schema.ts",
+            span: { start: 0, end: 0 },
+            meta: {
+              sourceSlice: 'export const vendors = defineTable("vendors", { tenantId: "text", name: "text" });',
+            },
+          },
+          {
+            id: "table:accessRequests",
+            kind: "schema.table",
+            name: "accessRequests",
+            qualifiedName: "accessRequests",
+            file: "src/forge/schema.ts",
+            span: { start: 0, end: 0 },
+            meta: {
+              sourceSlice: 'export const accessRequests = defineTable("accessRequests", { tenantId: "text", vendorId: "text", status: "text" });',
+            },
+          },
+          {
+            id: "policy:access",
+            kind: "permissions",
+            name: "access.approve",
+            qualifiedName: "access.approve",
+            file: "src/policies.ts",
+            span: { start: 0, end: 0 },
+            meta: { sourceSlice: 'canPermission("access:approve")' },
+          },
+        ],
+        edges: [],
+        diagnostics: [],
+      },
+    } as unknown as Parameters<typeof renderWorkosSeedYaml>[0]);
+
+    expect(seed).toContain("  - slug: 'accessRequest'");
+    expect(seed).toContain("    parent: 'vendor'");
+    expect(seed).toContain("  - slug: 'vendor'");
+    expect(seed).toContain("    parent: 'organization'");
   });
 
   test("adds WorkOS AuthKit React bridge when a web workspace exists", async () => {

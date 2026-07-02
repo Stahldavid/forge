@@ -853,6 +853,25 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
       command: "forge workos prove --real --file workos-seed.yml --json",
       details: seedState,
     });
+    const workosFgaDoctor = runWorkOSCommand({
+      subcommand: "fga",
+      fgaAction: "doctor",
+      workspaceRoot: options.workspaceRoot,
+      json: true,
+      yes: false,
+      dryRun: true,
+      real: options.production,
+    });
+    checks.push({
+      name: "workos-fga-proof",
+      ok: !options.production || workosFgaDoctor.exitCode === 0,
+      severity: options.production ? "error" : "warning",
+      message: workosFgaDoctor.exitCode === 0
+        ? "WorkOS FGA resource graph state matches the current app contract and seed"
+        : "WorkOS production deploy requires FGA graph sync/proof evidence matching the current app",
+      command: "forge workos fga prove --real --file workos-seed.yml --json",
+      details: workosFgaDoctor.data,
+    });
   }
   const tenantProofRequired = auth.requiresTenant || hasWorkOSIntegration(options.workspaceRoot);
   const tenantProof = tenantProofRequired
@@ -928,6 +947,9 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
   });
 
   const errorFree = checks.every((check) => check.ok || check.severity === "warning");
+  const failureActions = unique(checks.flatMap((check) =>
+    !check.ok && check.command ? expandDeployFailureCommand(check.command) : []
+  ));
   return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
     schemaVersion: "0.1.0",
     ok: errorFree,
@@ -938,9 +960,20 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
     checks,
     nextActions: errorFree
       ? ["forge deploy verify --production --url https://app.example.com --json"]
-      : unique(checks.flatMap((check) => !check.ok && check.command ? [check.command] : [])),
+      : failureActions,
     exitCode: errorFree ? 0 : 1,
   });
+}
+
+function expandDeployFailureCommand(command: string): string[] {
+  if (command.includes("forge workos fga prove")) {
+    return [
+      "forge workos fga plan --file workos-seed.yml --write --json",
+      "forge workos fga sync --real --file workos-seed.yml --json",
+      command,
+    ];
+  }
+  return [command];
 }
 
 function renderDocker(options: DeployCommandOptions): DeployCommandResult {

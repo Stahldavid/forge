@@ -1,5 +1,28 @@
 # forgeos
 
+## 0.1.0-alpha.48
+
+### Patch Changes
+
+- Complete the WorkOS FGA bridge path for production-shaped apps.
+
+  - `forge workos fga plan/sync/prove` now models the derived app resource
+    graph, hosted WorkOS resource-type setup, required membership evidence, and
+    proof scenarios as a first-class FGA manifest.
+  - `forge workos fga sync --real` and `forge workos fga prove --real` can run
+    through the authenticated WorkOS CLI/API path when `WORKOS_API_KEY` is not
+    present, preserving the no-dashboard agent flow while still using real
+    WorkOS Authorization API calls.
+  - FGA setup guidance now distinguishes what ForgeOS can automate
+    (permissions/roles through seed, resources, checks, deploy evidence) from
+    hosted WorkOS resource-type configuration, with precise remediation when
+    resource types are missing.
+  - `forge deploy check --production` now points WorkOS apps at the full FGA
+    sequence: plan, real sync, real proof, and final deploy check.
+  - WorkOS seed generation now preserves inferred FGA parent resources such as
+    `access_request -> vendor`, and regression coverage guards the generated
+    seed, CLI parser, deploy gates, and FGA setup output.
+
 ## 0.1.0-alpha.47
 
 ### Patch Changes

@@ -774,6 +774,27 @@ describe("Forge CLI", () => {
       const parsedProve = parseCli(["workos", "prove", "--file", "workos-seed.yml", "--json"]);
       expect(parsedProve.errors).toEqual([]);
       expect(parsedProve.command).toMatchObject({ kind: "workos", subcommand: "prove", file: "workos-seed.yml" });
+      const parsedFga = parseCli(["workos", "fga", "sync", "--file", "workos-seed.yml", "--json"]);
+      expect(parsedFga.errors).toEqual([]);
+      expect(parsedFga.command).toMatchObject({ kind: "workos", subcommand: "fga", fgaAction: "sync", file: "workos-seed.yml" });
+      const parsedFgaWrite = parseCli(["workos", "fga", "plan", "--write", ".forge/custom-fga.md", "--json"]);
+      expect(parsedFgaWrite.errors).toEqual([]);
+      expect(parsedFgaWrite.command).toMatchObject({
+        kind: "workos",
+        subcommand: "fga",
+        fgaAction: "plan",
+        write: true,
+        writePath: ".forge/custom-fga.md",
+      });
+      const parsedFgaWriteDefault = parseCli(["workos", "fga", "plan", "--write", "--json"]);
+      expect(parsedFgaWriteDefault.errors).toEqual([]);
+      expect(parsedFgaWriteDefault.command).toMatchObject({
+        kind: "workos",
+        subcommand: "fga",
+        fgaAction: "plan",
+        write: true,
+      });
+      expect(parsedFgaWriteDefault.command).not.toHaveProperty("writePath");
 
       const parsed = parseCli(["workos", "doctor", "--json"]);
       expect(parsed.errors).toEqual([]);
@@ -816,6 +837,8 @@ describe("Forge CLI", () => {
       expect(doctor.checks.map((check) => check.name)).toContain("seed-roles-permissions");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-resource-types");
       expect(doctor.checks.map((check) => check.name)).toContain("seed-auth-config");
+      expect(doctor.checks.map((check) => check.name)).toContain("fga-plan");
+      expect(doctor.checks.map((check) => check.name)).toContain("fga-state");
 
       writeFileSync(
         join(workspace, "web/vite.config.ts"),
@@ -995,6 +1018,100 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(proveDryRun.data)).toContain("forge workos prove --real --file workos-seed.yml --json");
       expect(formatWorkOSHuman(proveDryRun)).toContain("WorkOS proof dry-run passed");
 
+      const fgaPlan = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "plan",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(fgaPlan.exitCode).toBe(0);
+      expect(fgaPlan.applied).toBe(false);
+      expect(JSON.stringify(fgaPlan.data)).toContain('"kind":"fga-manifest"');
+      expect(JSON.stringify(fgaPlan.data)).toContain('"cross-tenant-read-denied"');
+      expect(JSON.stringify(fgaPlan.data)).toContain('"cliSupport":"resources-and-checks"');
+      expect(JSON.stringify(fgaPlan.data)).toContain('"resourceTypeSetup"');
+      expect(JSON.stringify(fgaPlan.data)).toContain('"hostedAction":"configure-resource-type"');
+      expect(JSON.stringify(fgaPlan.data)).toContain('"permissions"');
+      expect(JSON.stringify(fgaPlan.data)).toContain('"roles"');
+      expect(JSON.stringify(fgaPlan.data)).toContain("# WorkOS FGA Setup");
+      expect(formatWorkOSHuman(fgaPlan)).toContain("WorkOS FGA plan passed");
+
+      const fgaPlanWrite = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "plan",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+        write: true,
+      });
+      expect(fgaPlanWrite.exitCode).toBe(0);
+      expect(JSON.stringify(fgaPlanWrite.data)).toContain('"setupGuidePath":".forge/workos-fga-setup.md"');
+      expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("# WorkOS FGA Setup");
+      expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("### project");
+      expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("## Permission And Role Coverage");
+      expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("forge workos fga plan --file workos-seed.yml --write --json");
+
+      const fgaPlanWriteCustom = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "plan",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+        write: true,
+        writePath: ".forge/custom-fga.md",
+      });
+      expect(fgaPlanWriteCustom.exitCode).toBe(0);
+      expect(JSON.stringify(fgaPlanWriteCustom.data)).toContain('"setupGuidePath":".forge/custom-fga.md"');
+      expect(readFileSync(join(workspace, ".forge/custom-fga.md"), "utf8")).toContain("WORKOS_FGA_MEMBERSHIP_ACME_CORP");
+
+      const fgaSync = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "sync",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(fgaSync.exitCode).toBe(0);
+      expect(fgaSync.applied).toBe(true);
+      expect(JSON.stringify(fgaSync.data)).toContain('"stateFile":".workos-fga-state.json"');
+      const fgaState = JSON.parse(readFileSync(join(workspace, ".workos-fga-state.json"), "utf8")) as {
+        mode: string;
+        manifestHash: string;
+        resources: Array<{ externalId: string; type: string }>;
+      };
+      expect(fgaState.mode).toBe("local");
+      expect(fgaState.manifestHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(fgaState.resources.some((resource) => resource.type === "organization")).toBe(true);
+
+      const fgaProve = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(fgaProve.exitCode).toBe(0);
+      expect(fgaProve.applied).toBe(true);
+      expect(fgaProve.checks.map((check) => check.name)).toContain("fga-cross-tenant-proof");
+      expect(JSON.stringify(fgaProve.data)).toContain('"provedAt"');
+      expect(formatWorkOSHuman(fgaProve)).toContain("WorkOS FGA proof passed locally");
+
       const proveRealMissingEnv = runWorkOSCommand({
         subcommand: "prove",
         workspaceRoot: workspace,
@@ -1068,6 +1185,258 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(setupReal.data)).toContain('"matchesSeedHash":true');
       expect(JSON.stringify(setupReal.data)).toContain('"seedStateFile":".workos-seed-state.json"');
       expect(formatWorkOSHuman(setupReal)).toContain("setup applied; .workos-seed-state.json matches the current seed");
+
+      const fgaRealMissingResourceTypes = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "sync",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (command, args, options) => {
+          expect(options.env?.WORKOS_MODE).toBe("agent");
+          if (command === "node" && args.includes("--input-type=module")) {
+            return {
+              status: 1,
+              stdout: JSON.stringify({
+                ok: false,
+                action: "sync",
+                resources: [],
+                checks: [],
+                skipped: [],
+                errors: [
+                  {
+                    operation: "resource.create",
+                    externalId: "project:acme-corp:demo",
+                    resourceTypeSlug: "project",
+                    status: 404,
+                    message: "AuthorizationResourceType not found: 'project'.",
+                  },
+                ],
+              }),
+              stderr: "",
+            };
+          }
+          return { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      expect(fgaRealMissingResourceTypes.exitCode).toBe(1);
+      expect(fgaRealMissingResourceTypes.applied).toBe(false);
+      expect(fgaRealMissingResourceTypes.command).toEqual(["node", "--input-type=module", "-e", "<forge-workos-fga-sdk>"]);
+      expect(JSON.stringify(fgaRealMissingResourceTypes.checks)).toContain("missing FGA resource type(s): project");
+      expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"missingResourceTypes":["project"]');
+      expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"requiredMembershipEnv"');
+      expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain("configure missing WorkOS FGA resource type(s): project");
+      expect(formatWorkOSHuman(fgaRealMissingResourceTypes)).toContain("configure missing WorkOS FGA resource type(s): project");
+
+      const fgaRealSync = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "sync",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (command, args, options) => {
+          expect(options.env?.WORKOS_MODE).toBe("agent");
+          if (command === "node" && args.includes("--input-type=module")) {
+            expect(options.env?.FORGE_WORKOS_FGA_PAYLOAD).toContain('"action":"sync"');
+            return {
+              status: 0,
+              stdout: JSON.stringify({ ok: true, action: "sync", resources: [{ externalId: "project:acme:demo", status: "existing" }], checks: [], skipped: [], errors: [] }),
+              stderr: "",
+            };
+          }
+          return { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      expect(fgaRealSync.exitCode).toBe(0);
+      expect(fgaRealSync.applied).toBe(true);
+      expect(JSON.stringify(fgaRealSync.data)).toContain('"sdkOk":true');
+      expect(JSON.stringify(fgaRealSync.data)).toContain('"mode":"real"');
+
+      const fgaRealProveMissingMemberships = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (command, args, options) => {
+          expect(options.env?.WORKOS_MODE).toBe("agent");
+          if (command === "node" && args.includes("--input-type=module")) {
+            return {
+              status: 1,
+              stdout: JSON.stringify({
+                ok: false,
+                action: "prove",
+                resources: [],
+                checks: [],
+                skipped: [],
+                errors: [
+                  {
+                    operation: "authorization.check",
+                    scenario: "allowed-same-tenant",
+                    organization: "Acme Corp",
+                    message: "missing organizationMembershipId for WorkOS FGA proof scenario",
+                    env: ["WORKOS_FGA_MEMBERSHIPS_JSON", "WORKOS_FGA_MEMBERSHIP_ACME_CORP"],
+                  },
+                ],
+              }),
+              stderr: "",
+            };
+          }
+          return { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      expect(fgaRealProveMissingMemberships.exitCode).toBe(1);
+      expect(fgaRealProveMissingMemberships.applied).toBe(false);
+      expect(JSON.stringify(fgaRealProveMissingMemberships.checks)).toContain("organizationMembershipId values per organization");
+      expect(JSON.stringify(fgaRealProveMissingMemberships.data)).toContain("WORKOS_FGA_MEMBERSHIPS_JSON");
+
+      writeFileSync(
+        join(workspace, ".env.local"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_AUDIENCE=client_test",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test",
+          "WORKOS_API_KEY=sk_test_example",
+          "WORKOS_CLIENT_ID=client_test",
+          "WORKOS_COOKIE_PASSWORD=abcdefghijklmnopqrstuvwxyz123456",
+          'WORKOS_FGA_MEMBERSHIPS_JSON={"Acme Corp":"om_acme","Globex":"om_globex"}',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const fgaRealProve = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (command, args, options) => {
+          expect(options.env?.WORKOS_MODE).toBe("agent");
+          if (command === "node" && args.includes("--input-type=module")) {
+            expect(options.env?.FORGE_WORKOS_FGA_PAYLOAD).toContain('"action":"prove"');
+            expect(options.env?.WORKOS_FGA_MEMBERSHIPS_JSON).toContain("om_acme");
+            return {
+              status: 0,
+              stdout: JSON.stringify({
+                ok: true,
+                action: "prove",
+                resources: [],
+                checks: [
+                  { name: "allowed-same-tenant", organization: "Acme Corp", authorized: true, ok: true },
+                  { name: "cross-tenant-read-denied", organization: "Globex", authorized: false, ok: true },
+                ],
+                skipped: [],
+                errors: [],
+              }),
+              stderr: "",
+            };
+          }
+          return { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      expect(fgaRealProve.exitCode).toBe(0);
+      expect(fgaRealProve.applied).toBe(true);
+      expect(JSON.stringify(fgaRealProve.checks)).toContain("fga-real-sdk-proof");
+      const fgaRealState = JSON.parse(readFileSync(join(workspace, ".workos-fga-state.json"), "utf8")) as {
+        mode: string;
+        sdkOk: boolean;
+        provedAt?: string;
+      };
+      expect(fgaRealState.mode).toBe("real");
+      expect(fgaRealState.sdkOk).toBe(true);
+      expect(fgaRealState.provedAt).toBeTruthy();
+
+      writeFileSync(
+        join(workspace, ".env.local"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_AUDIENCE=client_test",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test",
+          "WORKOS_CLIENT_ID=client_test",
+          "WORKOS_COOKIE_PASSWORD=abcdefghijklmnopqrstuvwxyz123456",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const setupRealWithCliAuth = runWorkOSCommand({
+        subcommand: "setup",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (command, args, options) => {
+          expect(command).toBe("npx");
+          expect(options.env?.WORKOS_MODE).toBe("agent");
+          if (args.includes("auth") && args.includes("status")) {
+            return {
+              status: 0,
+              stdout: JSON.stringify({
+                authenticated: true,
+                email: "agent@example.com",
+                tokenExpired: true,
+                hasRefreshToken: true,
+                activeEnvironment: { name: "staging", type: "sandbox" },
+              }),
+              stderr: "",
+            };
+          }
+          return args.includes("seed")
+            ? { status: 0, stdout: "cli-auth seed ok\n", stderr: "" }
+            : { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      expect(setupRealWithCliAuth.exitCode).toBe(0);
+      expect(setupRealWithCliAuth.applied).toBe(true);
+      expect(JSON.stringify(setupRealWithCliAuth.checks)).toContain("real-env-workos_api_key-or-cli-auth");
+      expect(JSON.stringify(setupRealWithCliAuth.checks)).toContain("WorkOS CLI authentication is available");
+      expect(JSON.stringify(setupRealWithCliAuth.data)).toContain('"method":"cli"');
+      expect(JSON.stringify(setupRealWithCliAuth.data)).toContain('"email":"agent@example.com"');
+
+      const setupRealNeedsCliLogin = runWorkOSCommand({
+        subcommand: "setup",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+        commandRunner: (_command, args, options) => {
+          expect(options.env?.WORKOS_MODE).toBe("agent");
+          if (args.includes("auth") && args.includes("status")) {
+            return { status: 0, stdout: JSON.stringify({ authenticated: false }), stderr: "" };
+          }
+          if (args.includes("auth") && args.includes("login")) {
+            return {
+              status: 1,
+              stdout: "Open https://workos.com/device and enter code ABCD-1234\n",
+              stderr: "",
+            };
+          }
+          return { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      expect(setupRealNeedsCliLogin.exitCode).toBe(1);
+      expect(setupRealNeedsCliLogin.applied).toBe(false);
+      expect(JSON.stringify(setupRealNeedsCliLogin.checks)).toContain("workos-cli-auth");
+      expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("https://workos.com/device");
+      expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("ABCD-1234");
+      expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("rerun forge workos prove --real --file workos-seed.yml --json");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

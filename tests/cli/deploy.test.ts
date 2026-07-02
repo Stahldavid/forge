@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runDeployCommand } from "../../src/forge/cli/deploy.ts";
+import { collectWorkOSFgaManifest } from "../../src/forge/cli/workos.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -538,6 +539,14 @@ describe("forge deploy", () => {
         severity: "error",
         command: "forge workos prove --real --file workos-seed.yml --json",
       });
+      expect(missingState.checks.find((check) => check.name === "workos-fga-proof")).toMatchObject({
+        ok: false,
+        severity: "error",
+        command: "forge workos fga prove --real --file workos-seed.yml --json",
+      });
+      expect(missingState.nextActions).toContain("forge workos fga plan --file workos-seed.yml --write --json");
+      expect(missingState.nextActions).toContain("forge workos fga sync --real --file workos-seed.yml --json");
+      expect(missingState.nextActions).toContain("forge workos fga prove --real --file workos-seed.yml --json");
 
       writeFileSync(
         join(workspace, ".workos-seed-state.json"),
@@ -561,6 +570,45 @@ describe("forge deploy", () => {
         json: true,
       });
       expect(withState.checks.find((check) => check.name === "workos-hosted-seed")).toMatchObject({
+        ok: true,
+        severity: "error",
+      });
+      expect(withState.checks.find((check) => check.name === "workos-fga-proof")).toMatchObject({
+        ok: false,
+        severity: "error",
+      });
+      expect(withState.nextActions).toContain("forge workos fga plan --file workos-seed.yml --write --json");
+      expect(withState.nextActions).toContain("forge workos fga sync --real --file workos-seed.yml --json");
+
+      const fgaManifest = collectWorkOSFgaManifest(workspace, "workos-seed.yml");
+      writeFileSync(
+        join(workspace, ".workos-fga-state.json"),
+        `${JSON.stringify({
+          schemaVersion: "0.1.0",
+          provider: "workos",
+          kind: "fga-state",
+          mode: "real",
+          seedFile: "workos-seed.yml",
+          seedHash: fgaManifest.seedHash,
+          manifestHash: fgaManifest.manifestHash,
+          syncedAt: "2026-07-02T00:00:00.000Z",
+          provedAt: "2026-07-02T00:00:00.000Z",
+          sdkOk: true,
+          resourceTypes: fgaManifest.resourceTypes,
+          resources: fgaManifest.resources,
+          proofScenarios: fgaManifest.proofScenarios,
+        }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const withFgaState = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(withFgaState.checks.find((check) => check.name === "workos-fga-proof")).toMatchObject({
         ok: true,
         severity: "error",
       });
