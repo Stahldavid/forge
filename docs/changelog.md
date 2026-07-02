@@ -6,6 +6,17 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.49
+
+- `forge release doctor --json` now reports npm `alpha` and `latest` dist-tag
+  versions for public packages, including exact remediation when `latest`
+  points at an older alpha.
+- The dist-tag check is advisory and non-publish-blocking, keeping alpha
+  release validation usable while making stale `latest` state explicit.
+- GitHub Actions latest-promotion notices now include the local
+  `npm dist-tag add <package>@<version> latest` fallback and `NPM_TOKEN`
+  configuration hint when promotion is skipped.
+
 ## 0.1.0-alpha.48
 
 - Added the production-shaped WorkOS FGA flow:

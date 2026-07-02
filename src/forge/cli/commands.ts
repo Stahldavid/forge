@@ -6,6 +6,8 @@ import { classify } from "../compiler/classifier/classify.ts";
 import { buildRuntimeMatrix } from "../compiler/classifier/runtime-matrix.ts";
 import {
   FORGE_DB_EMPTY_TIMESTAMP_LITERAL,
+  FORGE_RELEASE_NPM_DIST_TAG_CHECK_FAILED,
+  FORGE_RELEASE_NPM_DIST_TAG_STALE,
   FORGE_RELEASE_PACKAGE_PACK_FAILED,
 } from "../compiler/diagnostics/codes.ts";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -1149,7 +1151,7 @@ interface ReleaseDoctorCheck {
   requiredForPublish: boolean;
   requiredForProduction?: boolean;
   state?: string;
-  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult | DeployCommandResult | PackagePackCheckResult;
+  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult | DeployCommandResult | PackagePackCheckResult | NpmDistTagCheckResult;
 }
 
 interface PackagePackCheckResult {
@@ -1159,6 +1161,24 @@ interface PackagePackCheckResult {
     dryRun: true;
     tarball: string | null;
     fileCount: number;
+  };
+  diagnostics: ReturnType<typeof createDiagnostic>[];
+  nextActions?: string[];
+  failureKind?: string;
+  exitCode: 0 | 1;
+}
+
+interface NpmDistTagCheckResult {
+  ok: boolean;
+  data: {
+    command: string;
+    packageName: string | null;
+    packageVersion: string | null;
+    alphaVersion: string | null;
+    latestVersion: string | null;
+    alphaMatches: boolean;
+    latestMatches: boolean;
+    source: "npm-view" | "env-fixture" | "skipped";
   };
   diagnostics: ReturnType<typeof createDiagnostic>[];
   nextActions?: string[];
@@ -1263,6 +1283,156 @@ function runPackagePackDryRun(workspaceRoot: string): PackagePackCheckResult {
   }
 }
 
+function parseNpmDistTagsJson(raw: string): Record<string, string> | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const tags: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === "string") {
+        tags[key] = value;
+      }
+    }
+    return tags;
+  } catch {
+    return null;
+  }
+}
+
+function runNpmDistTagCheck(workspaceRoot: string): NpmDistTagCheckResult {
+  const pkg = readPackageJson(workspaceRoot) as {
+    name?: unknown;
+    version?: unknown;
+    private?: unknown;
+  };
+  const packageName = typeof pkg.name === "string" ? pkg.name : null;
+  const packageVersion = typeof pkg.version === "string" ? pkg.version : null;
+  const command = packageName ? `npm view ${packageName} dist-tags --json` : "npm view <package> dist-tags --json";
+  const baseData = {
+    command,
+    packageName,
+    packageVersion,
+    alphaVersion: null,
+    latestVersion: null,
+    alphaMatches: false,
+    latestMatches: false,
+    source: "skipped" as const,
+  };
+
+  if (pkg.private === true) {
+    return {
+      ok: true,
+      data: baseData,
+      diagnostics: [],
+      exitCode: 0,
+    };
+  }
+  if (!packageName || !packageVersion) {
+    return {
+      ok: false,
+      data: baseData,
+      diagnostics: [
+        createDiagnostic({
+          severity: "warning",
+          code: FORGE_RELEASE_NPM_DIST_TAG_CHECK_FAILED,
+          message: "release doctor could not check npm dist-tags because package.json is missing name or version",
+          fixHint: "Set package.json name and version before publishing, then rerun forge release doctor.",
+          suggestedCommands: ["node bin/forge.mjs release doctor --json"],
+        }),
+      ],
+      nextActions: ["node bin/forge.mjs release doctor --json"],
+      failureKind: "npm-dist-tags-package-metadata-missing",
+      exitCode: 1,
+    };
+  }
+
+  const fixture = process.env.FORGE_RELEASE_NPM_DIST_TAGS_JSON;
+  const source = fixture ? "env-fixture" as const : "npm-view" as const;
+  const stdout = fixture ?? spawnSync("npm", ["view", packageName, "dist-tags", "--json"], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    timeout: 10_000,
+    windowsHide: true,
+  }).stdout;
+  const tags = parseNpmDistTagsJson(stdout || "");
+  if (!tags) {
+    return {
+      ok: false,
+      data: { ...baseData, source },
+      diagnostics: [
+        createDiagnostic({
+          severity: "warning",
+          code: FORGE_RELEASE_NPM_DIST_TAG_CHECK_FAILED,
+          message: `release doctor could not read npm dist-tags for ${packageName}`,
+          fixHint: `Run ${command}. If the package has not been published yet, publish it with the alpha tag first.`,
+          suggestedCommands: [command, "npm run release:publish-alpha"],
+        }),
+      ],
+      nextActions: [command, "npm run release:publish-alpha"],
+      failureKind: "npm-dist-tags-unavailable",
+      exitCode: 1,
+    };
+  }
+
+  const alphaVersion = tags.alpha ?? null;
+  const latestVersion = tags.latest ?? null;
+  const alphaMatches = alphaVersion === packageVersion;
+  const latestMatches = latestVersion === packageVersion;
+  const data = {
+    command,
+    packageName,
+    packageVersion,
+    alphaVersion,
+    latestVersion,
+    alphaMatches,
+    latestMatches,
+    source,
+  };
+  if (alphaMatches && latestMatches) {
+    return {
+      ok: true,
+      data,
+      diagnostics: [],
+      exitCode: 0,
+    };
+  }
+
+  const nextActions: string[] = [];
+  const diagnostics: ReturnType<typeof createDiagnostic>[] = [];
+  if (!alphaMatches) {
+    nextActions.push("npm run release:publish-alpha");
+    diagnostics.push(createDiagnostic({
+      severity: "warning",
+      code: FORGE_RELEASE_NPM_DIST_TAG_STALE,
+      message: `${packageName}@alpha points to ${alphaVersion ?? "none"}, not local version ${packageVersion}`,
+      fixHint: "Publish the current package with the alpha tag before asking users to install forgeos@alpha.",
+      suggestedCommands: ["npm run release:publish-alpha", command],
+    }));
+  }
+  if (!latestMatches) {
+    const promote = `npm dist-tag add ${packageName}@${packageVersion} latest`;
+    nextActions.push(promote);
+    nextActions.push("configure NPM_TOKEN in GitHub Actions secrets, or run npm login locally before promoting latest");
+    diagnostics.push(createDiagnostic({
+      severity: "warning",
+      code: FORGE_RELEASE_NPM_DIST_TAG_STALE,
+      message: `${packageName}@latest points to ${latestVersion ?? "none"}, not local version ${packageVersion}`,
+      fixHint: `Promote latest after the alpha package is verified: ${promote}`,
+      suggestedCommands: [promote, command],
+    }));
+  }
+  return {
+    ok: false,
+    data,
+    diagnostics,
+    nextActions,
+    failureKind: !alphaMatches ? "npm-alpha-dist-tag-stale" : "npm-latest-dist-tag-stale",
+    exitCode: 1,
+  };
+}
+
 export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: "release" }>): Promise<ReleaseDoctorResult> {
   const release = await runReleaseCommand({
     ...command,
@@ -1300,6 +1470,7 @@ export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { k
     production: true,
   });
   const packagePack = runPackagePackDryRun(command.workspaceRoot);
+  const npmDistTags = runNpmDistTagCheck(command.workspaceRoot);
   const checks: ReleaseDoctorCheck[] = [
     {
       name: "release-prepared",
@@ -1339,6 +1510,13 @@ export async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { k
       ok: packagePack.ok,
       requiredForPublish: true,
       result: packagePack,
+    },
+    {
+      name: "npm-dist-tags",
+      ok: npmDistTags.ok,
+      requiredForPublish: false,
+      state: npmDistTags.failureKind ?? (npmDistTags.data.source === "skipped" ? "skipped" : "current"),
+      result: npmDistTags,
     },
   ];
   const failed = checks.filter((check) => !check.ok).map((check) => check.name);

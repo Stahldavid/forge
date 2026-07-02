@@ -2635,7 +2635,63 @@ describe("Forge CLI", () => {
       expect(deploy?.requiredForProduction).toBe(true);
       expect(result.summary.productionBlockers).toContain("deploy-production");
       expect(result.summary.publishBlockers).not.toContain("deploy-production");
+      const npmDistTags = result.checks.find((check) => check.name === "npm-dist-tags");
+      expect(npmDistTags).toBeDefined();
+      expect(npmDistTags?.ok).toBe(true);
+      expect(npmDistTags?.requiredForPublish).toBe(false);
     } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("release doctor reports stale latest npm dist-tag without blocking publish", async () => {
+    const workspace = scaffoldGenerateWorkspace("release-doctor-npm-dist-tags");
+    const previousTags = process.env.FORGE_RELEASE_NPM_DIST_TAGS_JSON;
+    try {
+      writeFileSync(
+        join(workspace, "package.json"),
+        JSON.stringify(
+          {
+            name: "forgeos",
+            version: "0.1.0-alpha.48",
+            type: "module",
+            dependencies: {
+              zod: "^3.24.0",
+            },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      process.env.FORGE_RELEASE_NPM_DIST_TAGS_JSON = JSON.stringify({
+        alpha: "0.1.0-alpha.48",
+        latest: "0.1.0-alpha.33",
+      });
+      const parsed = parseCli(["release", "doctor", "--json"]);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.command?.kind).toBe("release");
+      if (parsed.command?.kind !== "release") {
+        throw new Error("expected release command");
+      }
+
+      const result = await runReleaseDoctorCommand({
+        ...parsed.command,
+        workspaceRoot: workspace,
+      });
+      const npmDistTags = result.checks.find((check) => check.name === "npm-dist-tags");
+      expect(npmDistTags).toBeDefined();
+      expect(npmDistTags?.ok).toBe(false);
+      expect(npmDistTags?.requiredForPublish).toBe(false);
+      expect(result.summary.publishBlockers).not.toContain("npm-dist-tags");
+      expect(result.nextActions).toContain("npm dist-tag add forgeos@0.1.0-alpha.48 latest");
+      expect(JSON.stringify(npmDistTags?.result)).toContain("0.1.0-alpha.33");
+    } finally {
+      if (previousTags === undefined) {
+        delete process.env.FORGE_RELEASE_NPM_DIST_TAGS_JSON;
+      } else {
+        process.env.FORGE_RELEASE_NPM_DIST_TAGS_JSON = previousTags;
+      }
       cleanupWorkspace(workspace);
     }
   });

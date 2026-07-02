@@ -99,7 +99,7 @@ describe("npm publish workflow", () => {
     expect(forgeosPublishBlock).not.toContain("NPM_TOKEN");
     expect(forgeosPublishBlock).not.toContain("NODE_AUTH_TOKEN");
     expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
-    expect(workflow).toContain("NPM_TOKEN is not configured; skipping latest dist-tag promotion.");
+    expect(workflow).toContain("NPM_TOKEN is not configured; skipping latest dist-tag promotion. Run npm dist-tag add ${PACKAGE_NAME}@${PACKAGE_VERSION} latest after npm login, or configure NPM_TOKEN in GitHub Actions secrets.");
     expect(workflow).toContain("npm dist-tag add \"forgeos@$(node -p \"require('./package.json').version\")\" latest");
     expect(existsSync(join(process.cwd(), "LICENSE"))).toBe(true);
     expect(readFileSync(join(process.cwd(), "SECURITY.md"), "utf8")).toContain(

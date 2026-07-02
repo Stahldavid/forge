@@ -1,5 +1,22 @@
 # forgeos
 
+## 0.1.0-alpha.49
+
+### Patch Changes
+
+- Improve release doctor visibility for npm dist-tag drift.
+
+  - `forge release doctor --json` now checks the published npm `alpha` and
+    `latest` dist-tags for public packages, reports the currently published
+    tag versions, and suggests the exact `npm dist-tag add` remediation when
+    `latest` still points at an older alpha.
+  - The npm dist-tag check is advisory rather than publish-blocking, so a
+    prepared alpha release can still ship while clearly reporting that the
+    consumer-facing `latest` tag needs promotion.
+  - GitHub Actions latest-promotion notices now include the local remediation
+    command and the `NPM_TOKEN` configuration hint when latest promotion is
+    skipped.
+
 ## 0.1.0-alpha.48
 
 ### Patch Changes
