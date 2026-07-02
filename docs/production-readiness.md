@@ -66,14 +66,45 @@ Before using ForgeOS in a serious production environment, start with the deploy 
 
 ```bash
 forge deploy plan --target docker --json
-forge deploy package --target docker
+forge deploy init --target docker
+cp deploy/.env.production.example deploy/.env.production
+forge env doctor --target production --json
+forge field-test run --realistic --json
+forge deploy readiness --production --json
 forge deploy check --production --json
+forge deploy package --target docker
 forge deploy verify --production --url https://app.example.com --json
 ```
 
-`forge deploy check --production` is the compact gate for production posture. It fails on stale generated artifacts, missing package-manager lockfiles, local-only auth, missing production auth settings, missing database readiness, missing public agent auth metadata, missing field-test evidence with runtime/auth/UI probes, and missing tenant claim mapping. It reads production values from the current environment and from `deploy/.env.production`, so the rendered Docker path can be checked without exporting every variable into the shell. For tenant-scoped or WorkOS-backed apps, it also runs the local multi-tenant auth proof that checks claim mapping, seed coverage, permission vocabulary, and auth metadata. WorkOS-backed apps must also have hosted seed evidence from `forge workos prove --real --file workos-seed.yml --json`; the resulting `.workos-seed-state.json` must match the current `workos-seed.yml`. For database readiness, `deploy/.env.production.example` is only a template; the check requires `DATABASE_URL` in the current environment or inside `deploy/.env.production`. It also reports frontend build posture and liveQuery production reminders.
+`forge deploy readiness --production --json` is the compact "can I publish?"
+answer. It returns a readiness score, grouped blockers, warnings, and a single
+next command. `forge deploy check --production` is the stricter evidence gate
+behind that answer. It fails on stale generated artifacts, missing
+package-manager lockfiles, local-only auth, missing production auth settings,
+missing database readiness, missing public agent auth metadata, missing
+field-test evidence with runtime/auth/UI probes, and missing tenant claim
+mapping. It reads production values from the current environment and from
+`deploy/.env.production`, so the rendered Docker path can be checked without
+exporting every variable into the shell. For tenant-scoped or WorkOS-backed
+apps, it also runs the local multi-tenant auth proof that checks claim mapping,
+seed coverage, permission vocabulary, and auth metadata. WorkOS-backed apps must
+also have hosted setup/seed evidence from `forge workos setup --real --file
+workos-seed.yml --json` and `forge workos prove --real --file
+workos-seed.yml --json`; the resulting `.workos-seed-state.json` must match the
+current `workos-seed.yml`. WorkOS FGA is optional and only required when the app
+enables `forge add auth workos --with-fga`. For database readiness,
+`deploy/.env.production.example` is only a template; the check requires
+`DATABASE_URL` in the current environment or inside `deploy/.env.production`. It
+also reports frontend build posture and liveQuery production reminders.
 
-`forge deploy verify --production --url` probes the deployed runtime externally. It checks `GET /health` plus `HEAD` and `GET` for `/auth.md` and `/.well-known/oauth-protected-resource`, validates auth metadata content-types, and requires the OAuth protected-resource metadata body to be valid JSON so the production story is visible to both humans and agents and to tools that probe metadata with `HEAD`.
+`forge deploy verify --production --url` probes the deployed runtime externally.
+It checks `GET /health` plus `HEAD` and `GET` for `/auth.md` and
+`/.well-known/oauth-protected-resource`, validates auth metadata content-types,
+and requires the OAuth protected-resource metadata body to be valid JSON so the
+production story is visible to both humans and agents and to tools that probe
+metadata with `HEAD`. It also attempts optional operational probes for `/ready`,
+`/live/status`, `/outbox/status`, and `/webhooks/workos`; those optional probes
+warn without blocking when the app does not expose them.
 
 For lower-level review, also run:
 

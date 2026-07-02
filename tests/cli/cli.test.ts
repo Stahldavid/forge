@@ -9,6 +9,7 @@ import { classifyChangeType } from "../../src/forge/workspace/change-summary.ts"
 import { main } from "../../src/forge/cli/main.ts";
 import { resolveBunExecutable } from "../../src/forge/cli/bun-exec.ts";
 import { runGenerateCommand, runReleaseDoctorCommand } from "../../src/forge/cli/commands.ts";
+import { runEnvCommand } from "../../src/forge/cli/secrets.ts";
 import { runAuthMdCommand } from "../../src/forge/cli/authmd.ts";
 import { runAuthCommand } from "../../src/forge/cli/auth.ts";
 import { runPgliteDoctorCommand, runRuntimeDoctorCommand } from "../../src/forge/cli/doctor.ts";
@@ -204,6 +205,95 @@ describe("Forge CLI", () => {
     if (baseline.command?.kind === "baseline") {
       expect(baseline.command.subcommand).toBe("create");
       expect(baseline.command.reason).toBe("initial-scaffold");
+    }
+  });
+
+  test("parseCli accepts env doctor targets", () => {
+    const parsed = parseCli(["env", "doctor", "--target", "production", "--json"]);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.command).toMatchObject({
+      kind: "env",
+      subcommand: "doctor",
+      target: "production",
+      json: true,
+    });
+  });
+
+  test("env doctor distinguishes production evidence from local env", async () => {
+    const workspace = scaffoldGenerateWorkspace("env-doctor-production");
+    try {
+      writeFileSync(join(workspace, ".env.local"), "DATABASE_URL=postgres://local\nFORGE_AUTH_MODE=dev-headers\n", "utf8");
+      const blocked = await runEnvCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        target: "production",
+      });
+      expect(blocked.exitCode).toBe(1);
+      expect(JSON.stringify(blocked.data)).toContain("deploy/.env.production not found");
+      expect(JSON.stringify(blocked.data)).toContain("DATABASE_URL missing");
+
+      mkdirSync(join(workspace, "deploy"), { recursive: true });
+      writeFileSync(
+        join(workspace, "deploy", ".env.production"),
+        [
+          "DATABASE_URL=postgres://prod",
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://issuer.example.test",
+          "FORGE_AUTH_AUDIENCE=forge-api",
+          "FORGE_AUTH_JWKS_URI=https://issuer.example.test/.well-known/jwks.json",
+          "WORKOS_API_KEY=sk_test_example",
+          "WORKOS_CLIENT_ID=client_test",
+          "WORKOS_COOKIE_PASSWORD=super-secret-cookie-password",
+          "WORKOS_REDIRECT_URI=https://app.example.test/callback",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const ready = await runEnvCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        target: "production",
+      });
+      expect(ready.exitCode).toBe(0);
+      expect(JSON.stringify(ready.data)).toContain('"authMode":"oidc"');
+      expect(JSON.stringify(ready.data)).toContain('"database":"postgres"');
+      expect(JSON.stringify(ready.data)).toContain('"provider":"workos"');
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("env doctor detects WorkOS app artifacts even before provider env is filled", async () => {
+    const workspace = scaffoldGenerateWorkspace("env-doctor-workos-artifacts");
+    try {
+      writeFileSync(join(workspace, "workos-seed.yml"), "permissions: []\nroles: []\norganizations: []\n", "utf8");
+      mkdirSync(join(workspace, "deploy"), { recursive: true });
+      writeFileSync(
+        join(workspace, "deploy", ".env.production"),
+        [
+          "DATABASE_URL=postgres://prod",
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_AUDIENCE=forge-api",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const result = await runEnvCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        target: "production",
+      });
+      expect(result.exitCode).toBe(1);
+      expect(JSON.stringify(result.data)).toContain('"provider":"workos"');
+      expect(JSON.stringify(result.data)).toContain("WORKOS_CLIENT_ID missing");
+      expect(JSON.stringify(result.data)).toContain("WORKOS_API_KEY missing");
+    } finally {
+      cleanupWorkspace(workspace);
     }
   });
 

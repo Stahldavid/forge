@@ -13,7 +13,7 @@ import { runAuthCommand } from "./auth.ts";
 import { runAuthMdCommand } from "./authmd.ts";
 import { runWorkOSCommand } from "./workos.ts";
 
-export type DeploySubcommand = "plan" | "check" | "render" | "package" | "verify";
+export type DeploySubcommand = "plan" | "init" | "check" | "readiness" | "render" | "package" | "verify";
 export type DeployTarget = "docker" | "forge-cloud";
 
 export interface DeployCommandOptions {
@@ -42,6 +42,8 @@ export interface DeployCommandResult {
   target: DeployTarget;
   production: boolean;
   checks: DeployCheck[];
+  blocking?: string[];
+  warnings?: string[];
   files?: string[];
   plan?: {
     summary: string;
@@ -50,6 +52,7 @@ export interface DeployCommandResult {
     notes: string[];
   };
   probes?: Array<{ method: string; url: string; ok: boolean; status?: number; contentType?: string; error?: string; jsonValid?: boolean }>;
+  readiness?: DeployReadinessSummary;
   nextActions: string[];
   exitCode: 0 | 1;
 }
@@ -57,6 +60,27 @@ export interface DeployCommandResult {
 interface DeployProbeExpectation {
   contentTypeIncludes?: string;
   json?: boolean;
+  required?: boolean;
+}
+
+export interface DeployReadinessSummary {
+  score: number;
+  status: "ready" | "blocked" | "warning";
+  blocking: string[];
+  warnings: string[];
+  stages: Array<{
+    name: string;
+    ok: boolean;
+    score: number;
+    checks: string[];
+    blocking: string[];
+    warnings: string[];
+  }>;
+  answers: {
+    canPublish: boolean;
+    ifNotWhatIsMissing: string[];
+    nextCommand: string | null;
+  };
 }
 
 function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {
@@ -91,6 +115,74 @@ function requiredSecretNames(workspaceRoot: string): string[] {
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];
+}
+
+function deployStageForCheck(name: string): string {
+  if (["generated", "package-lockfile", "frontend-build-script"].includes(name)) return "build";
+  if (["database-url"].includes(name)) return "database";
+  if (name.startsWith("auth-") || ["production-auth-mode", "auth-issuer", "auth-audience", "auth-jwks", "tenant-claim"].includes(name)) return "auth";
+  if (name.startsWith("workos")) return "workos";
+  if (name.startsWith("auth-md") || name === "oauth-protected-resource") return "auth metadata";
+  if (name.startsWith("field-test")) return "field test";
+  if (name === "live-production") return "live/runtime";
+  if (name === "deploy-env-sources") return "environment";
+  return "production";
+}
+
+function summarizeDeployReadiness(checks: DeployCheck[], nextActions: string[]): DeployReadinessSummary {
+  const blocking = checks
+    .filter((check) => !check.ok && check.severity === "error")
+    .map((check) => `${check.name}: ${check.message}`);
+  const warnings = checks
+    .filter((check) => !check.ok && check.severity === "warning")
+    .map((check) => `${check.name}: ${check.message}`);
+  const stageNames = [
+    "build",
+    "environment",
+    "database",
+    "auth",
+    "workos",
+    "auth metadata",
+    "field test",
+    "live/runtime",
+    "production",
+  ];
+  const stages = stageNames
+    .map((stage) => {
+      const stageChecks = checks.filter((check) => deployStageForCheck(check.name) === stage);
+      const stageBlocking = stageChecks
+        .filter((check) => !check.ok && check.severity === "error")
+        .map((check) => `${check.name}: ${check.message}`);
+      const stageWarnings = stageChecks
+        .filter((check) => !check.ok && check.severity === "warning")
+        .map((check) => `${check.name}: ${check.message}`);
+      const passed = stageChecks.filter((check) => check.ok || check.severity === "warning").length;
+      const score = stageChecks.length === 0 ? 100 : Math.round((passed / stageChecks.length) * 100);
+      return {
+        name: stage,
+        ok: stageBlocking.length === 0,
+        score,
+        checks: stageChecks.map((check) => check.name),
+        blocking: stageBlocking,
+        warnings: stageWarnings,
+      };
+    })
+    .filter((stage) => stage.checks.length > 0);
+  const passed = checks.filter((check) => check.ok || check.severity === "warning").length;
+  const score = checks.length === 0 ? 100 : Math.round((passed / checks.length) * 100);
+  const canPublish = blocking.length === 0;
+  return {
+    score,
+    status: blocking.length > 0 ? "blocked" : warnings.length > 0 ? "warning" : "ready",
+    blocking,
+    warnings,
+    stages,
+    answers: {
+      canPublish,
+      ifNotWhatIsMissing: blocking,
+      nextCommand: canPublish ? "forge deploy verify --production --url https://app.example.com --json" : nextActions[0] ?? null,
+    },
+  };
 }
 
 function hasWorkOSIntegration(workspaceRoot: string): boolean {
@@ -596,7 +688,7 @@ function databaseReadyCommand(options: DeployCommandOptions): string {
 function renderProductionReadme(): string {
   return `# ForgeOS Production Deploy
 
-This directory is generated by \`forge deploy package --target docker\`.
+This directory is generated by \`forge deploy init --target docker\` or \`forge deploy package --target docker\`.
 
 ## 1. Prepare production env
 
@@ -619,13 +711,17 @@ For WorkOS-backed apps, local dry-runs are not enough for production deploy
 readiness. Run:
 
 \`\`\`bash
+forge workos setup --real --file workos-seed.yml --json
 forge workos prove --real --file workos-seed.yml --json
 \`\`\`
 
-This applies or confirms hosted WorkOS config/seed through the WorkOS CLI and
-writes \`.workos-seed-state.json\`. \`forge deploy check --production\` requires
-that state to match the current \`workos-seed.yml\` before treating WorkOS
-posture as production evidence.
+This applies or confirms hosted redirect/CORS/webhook config and seed data
+through the WorkOS CLI and writes \`.workos-seed-state.json\`. \`forge deploy
+check --production\` requires that state to match the current \`workos-seed.yml\`
+before treating WorkOS posture as production evidence. WorkOS FGA is optional:
+most apps can ship with AuthKit, RBAC permission claims, Forge policies, and
+tenant isolation; use \`forge add auth workos --with-fga\` only when the app needs
+resource-level authorization outside normal role/permission checks.
 
 ## 2. Prove the app before traffic
 
@@ -633,9 +729,12 @@ posture as production evidence.
 forge generate --check --json
 forge check --json
 forge authmd generate --json
+forge env doctor --target production --json
 forge auth prove --scenario multi-tenant --json
+forge workos setup --real --file workos-seed.yml --json
 forge workos prove --real --file workos-seed.yml --json
 forge field-test run --realistic --json
+forge deploy readiness --production --json
 forge deploy check --production --json
 \`\`\`
 
@@ -654,7 +753,7 @@ forge auth prove --prod --token <jwt> --json
 forge deploy verify --production --url https://app.example.com --json
 \`\`\`
 
-\`forge auth prove --prod\` verifies a real JWT/OIDC token against the configured issuer/audience/JWKS. \`forge deploy verify --production\` probes \`GET /health\`, \`HEAD /auth.md\`, \`GET /auth.md\`, \`HEAD /.well-known/oauth-protected-resource\`, and \`GET /.well-known/oauth-protected-resource\`; it also validates auth metadata content-types and requires the OAuth protected-resource metadata body to be valid JSON.
+\`forge auth prove --prod\` verifies a real JWT/OIDC token against the configured issuer/audience/JWKS. \`forge deploy verify --production\` probes required endpoints \`GET /health\`, \`HEAD /auth.md\`, \`GET /auth.md\`, \`HEAD /.well-known/oauth-protected-resource\`, and \`GET /.well-known/oauth-protected-resource\`; it also validates auth metadata content-types and requires the OAuth protected-resource metadata body to be valid JSON. Optional probes check \`GET /ready\`, \`GET /live/status\`, \`GET /outbox/status\`, and \`HEAD /webhooks/workos\` when the app exposes those operational endpoints.
 `;
 }
 
@@ -669,10 +768,17 @@ function buildPlan(options: DeployCommandOptions): DeployCommandResult {
         "forge deploy verify --production --url https://<your-forge-cloud-app> --json",
       ]
     : [
-        "forge deploy package --target docker",
+        "forge deploy init --target docker",
         "cp deploy/.env.production.example deploy/.env.production",
-        "forge deploy check --production --json",
+        "forge authmd generate --json",
+        "forge env doctor --target production --json",
+        "forge auth prove --scenario multi-tenant --json",
+        "forge workos setup --real --file workos-seed.yml --json",
+        "forge workos prove --real --file workos-seed.yml --json",
         FIELD_TEST_PRODUCTION_COMMAND,
+        "forge deploy readiness --production --json",
+        "forge deploy check --production --json",
+        "forge deploy package --target docker",
         "docker compose -f deploy/docker-compose.yml up --build",
         "forge deploy verify --production --url https://app.example.com --json",
       ];
@@ -699,10 +805,12 @@ function buildPlan(options: DeployCommandOptions): DeployCommandResult {
         "field-test report exists with runtime/auth/UI probes",
         "runtime /health responds",
         "tenant and policy proof is run before public traffic",
+        "readiness score has no blocking items",
       ],
       notes: [
         "dev-headers auth is local-only and must not be enabled for public runtime.",
         "Use forge workos doctor/seed when WorkOS is configured.",
+        "WorkOS FGA is optional; ordinary WorkOS apps can be production-ready with AuthKit/RBAC permission claims, Forge policies, and tenant isolation.",
         "Use forge test authz or HTTP probes to prove cross-tenant denial.",
       ],
     },
@@ -971,6 +1079,10 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
   const failureActions = unique(checks.flatMap((check) =>
     !check.ok && check.command ? expandDeployFailureCommand(check.command) : []
   ));
+  const nextActions = errorFree
+    ? ["forge deploy verify --production --url https://app.example.com --json"]
+    : failureActions;
+  const readiness = summarizeDeployReadiness(checks, nextActions);
   return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
     schemaVersion: "0.1.0",
     ok: errorFree,
@@ -979,9 +1091,10 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
     target: options.target,
     production: options.production,
     checks,
-    nextActions: errorFree
-      ? ["forge deploy verify --production --url https://app.example.com --json"]
-      : failureActions,
+    blocking: readiness.blocking,
+    warnings: readiness.warnings,
+    readiness,
+    nextActions,
     exitCode: errorFree ? 0 : 1,
   });
 }
@@ -1020,6 +1133,7 @@ function renderDocker(options: DeployCommandOptions): DeployCommandResult {
     files: files.map(([file]) => file),
     nextActions: [
       "cp deploy/.env.production.example deploy/.env.production",
+      "forge deploy readiness --production --json",
       "forge deploy check --production --json",
       "docker compose -f deploy/docker-compose.yml up --build",
     ],
@@ -1087,22 +1201,32 @@ async function verifyUrl(options: DeployCommandOptions): Promise<DeployCommandRe
       exitCode: 1,
     };
   }
-  const probes = await Promise.all([
-    probe("GET", `${base}/health`),
-    probe("HEAD", `${base}/auth.md`, { contentTypeIncludes: "text/markdown" }),
-    probe("GET", `${base}/auth.md`, { contentTypeIncludes: "text/markdown" }),
-    probe("HEAD", `${base}/.well-known/oauth-protected-resource`, { contentTypeIncludes: "application/json" }),
-    probe("GET", `${base}/.well-known/oauth-protected-resource`, { contentTypeIncludes: "application/json", json: true }),
-  ]);
+  const probeSpecs: Array<{ method: "GET" | "HEAD"; path: string; expectation?: DeployProbeExpectation }> = [
+    { method: "GET", path: "/health", expectation: { required: true } },
+    { method: "HEAD", path: "/auth.md", expectation: { contentTypeIncludes: "text/markdown", required: true } },
+    { method: "GET", path: "/auth.md", expectation: { contentTypeIncludes: "text/markdown", required: true } },
+    { method: "HEAD", path: "/.well-known/oauth-protected-resource", expectation: { contentTypeIncludes: "application/json", required: true } },
+    { method: "GET", path: "/.well-known/oauth-protected-resource", expectation: { contentTypeIncludes: "application/json", json: true, required: true } },
+    { method: "GET", path: "/ready", expectation: { contentTypeIncludes: "application/json" } },
+    { method: "GET", path: "/live/status", expectation: { contentTypeIncludes: "application/json" } },
+    { method: "GET", path: "/outbox/status", expectation: { contentTypeIncludes: "application/json" } },
+    { method: "HEAD", path: "/webhooks/workos" },
+  ];
+  const probes = await Promise.all(probeSpecs.map((item) =>
+    probe(item.method, `${base}${item.path}`, item.expectation ?? {})
+  ));
   const checks = probes.map((item): DeployCheck => ({
     name: `${item.method} ${item.url.replace(base, "") || "/"}`,
     ok: item.ok,
-    severity: item.url.endsWith("/health") || options.production ? "error" : "warning",
+    severity: probeSpecs.find((spec) => `${base}${spec.path}` === item.url && spec.method === item.method)?.expectation?.required || item.url.endsWith("/health")
+      ? "error"
+      : "warning",
     message: item.ok
       ? `HTTP ${item.status}${item.contentType ? ` ${item.contentType}` : ""}`
       : item.error ?? `HTTP ${item.status ?? "failed"}`,
   }));
   const ok = checks.every((check) => check.ok || check.severity === "warning");
+  const readiness = summarizeDeployReadiness(checks, ok ? [] : ["check runtime logs", "forge deploy check --production --json"]);
   return {
     schemaVersion: "0.1.0",
     ok,
@@ -1111,16 +1235,33 @@ async function verifyUrl(options: DeployCommandOptions): Promise<DeployCommandRe
     target: options.target,
     production: options.production,
     checks,
+    blocking: readiness.blocking,
+    warnings: readiness.warnings,
     probes,
-    nextActions: ok ? ["forge handoff --json"] : ["check runtime logs", "forge deploy check --production --json"],
+    readiness,
+    nextActions: ok
+      ? [
+          "forge auth prove --prod --token <jwt> --json",
+          "forge auth prove --scenario multi-tenant --json",
+          "forge handoff --json",
+        ]
+      : ["check runtime logs", "forge deploy check --production --json"],
     exitCode: ok ? 0 : 1,
   };
 }
 
 export async function runDeployCommand(options: DeployCommandOptions): Promise<DeployCommandResult> {
   if (options.subcommand === "plan") return buildPlan(options);
+  if (options.subcommand === "readiness") {
+    const result = await buildChecks({ ...options, subcommand: "check", production: true });
+    return {
+      ...result,
+      action: "readiness",
+      nextActions: result.readiness?.answers.nextCommand ? [result.readiness.answers.nextCommand] : result.nextActions,
+    };
+  }
   if (options.subcommand === "check") return buildChecks(options);
-  if (options.subcommand === "render" || options.subcommand === "package") return renderDocker(options);
+  if (options.subcommand === "init" || options.subcommand === "render" || options.subcommand === "package") return renderDocker(options);
   return verifyUrl(options);
 }
 
@@ -1132,7 +1273,13 @@ export function formatDeployHuman(result: DeployCommandResult): string {
   const lines = [
     `deploy ${result.action} ${result.ok ? "ok" : "failed"}`,
     `target: ${result.target}`,
+    ...(result.readiness ? [
+      `readiness: ${result.readiness.status} (${result.readiness.score}/100)`,
+      `can publish: ${result.readiness.answers.canPublish ? "yes" : "no"}`,
+    ] : []),
     ...result.checks.map((check) => `${check.ok ? "ok" : check.severity === "warning" ? "warn" : "fail"} ${check.name}: ${check.message}`),
+    ...(result.blocking?.length ? ["", "Blocking:", ...result.blocking.map((item) => `  ${item}`)] : []),
+    ...(result.warnings?.length ? ["", "Warnings:", ...result.warnings.map((item) => `  ${item}`)] : []),
     ...(result.files?.length ? ["", "Files:", ...result.files.map((file) => `  ${file}`)] : []),
     ...(result.plan ? ["", result.plan.summary, "", "Commands:", ...result.plan.commands.map((command) => `  ${command}`)] : []),
     ...(result.nextActions.length ? ["", "Next:", ...result.nextActions.map((action) => `  ${action}`)] : []),

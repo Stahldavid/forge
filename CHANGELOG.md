@@ -1,5 +1,30 @@
 # forgeos
 
+## 0.1.0-alpha.56
+
+### Patch Changes
+
+- Add the production deploy golden path as an explicit CLI workflow.
+
+  - `forge deploy init --target docker` now acts as the canonical Docker
+    production bootstrap command for runtime files, `deploy/.env.production`
+    guidance, and production handoff docs.
+  - `forge deploy readiness --production --json` now summarizes whether an app
+    can publish, grouped blockers/warnings, readiness score, and the next
+    command an agent should run.
+  - `forge env doctor --target local|staging|production --json` now reports the
+    effective auth mode, database posture, provider detection, missing env
+    names, and safe source metadata without printing secret values.
+  - `forge deploy check --production --json` now includes blocking/warning
+    summaries and the readiness object used by the deploy gate.
+  - `forge deploy verify --production --url ... --json` now validates required
+    public auth metadata and probes optional runtime endpoints such as
+    `/ready`, `/live/status`, `/outbox/status`, and `/webhooks/workos`.
+  - Production docs now present the canonical flow:
+    `deploy init -> env doctor -> auth/auth.md/WorkOS proof -> field-test ->
+    readiness -> check -> package -> verify`, while keeping WorkOS FGA
+    explicitly optional unless the app opts into FGA artifacts.
+
 ## 0.1.0-alpha.55
 
 ### Patch Changes

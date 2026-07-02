@@ -434,10 +434,19 @@ first in empty-workspace recovery.
 
 ```bash
 forge deploy plan --target docker --json
-forge deploy package --target docker
+forge deploy init --target docker
+forge env doctor --target production --json
+forge field-test run --realistic --json
+forge deploy readiness --production --json
 forge deploy check --production --json
+forge deploy package --target docker
 forge deploy verify --production --url https://app.example.com --json
 ```
+
+`forge deploy readiness --production --json` is the compact publish gate for
+agents. It groups blockers by build, environment, database, auth, WorkOS, auth
+metadata, field-test evidence, and runtime posture, then answers whether the app
+can publish and which command should run next.
 
 ## Release and field testing
 

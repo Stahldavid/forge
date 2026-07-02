@@ -316,6 +316,7 @@ forge workos seed --file workos-seed.yml --json
 forge policy simulate tickets.create --role member --json
 forge secrets list --json
 forge env check --json
+forge env doctor --target production --json
 forge db diff --json
 forge db migrate --db pglite
 forge rls check --json

@@ -14,6 +14,15 @@ import { run as runGenerate } from "../../src/forge/compiler/orchestrator/run.ts
 
 describe("forge deploy", () => {
   test("parseCli accepts production deploy commands", () => {
+    const init = parseCli(["deploy", "init", "--target", "docker", "--json"]);
+    expect(init.errors).toEqual([]);
+    expect(init.command).toMatchObject({
+      kind: "deploy",
+      subcommand: "init",
+      target: "docker",
+      json: true,
+    });
+
     const check = parseCli(["deploy", "check", "--production", "--target", "docker", "--json"]);
     expect(check.errors).toEqual([]);
     expect(check.command).toMatchObject({
@@ -40,6 +49,14 @@ describe("forge deploy", () => {
       target: "docker",
     });
 
+    const readiness = parseCli(["deploy", "readiness", "--production", "--json"]);
+    expect(readiness.errors).toEqual([]);
+    expect(readiness.command).toMatchObject({
+      kind: "deploy",
+      subcommand: "readiness",
+      production: true,
+    });
+
     const verify = parseCli(["deploy", "verify", "--url", "https://app.example.test", "--json"]);
     expect(verify.errors).toEqual([]);
     expect(verify.command).toMatchObject({
@@ -61,9 +78,17 @@ describe("forge deploy", () => {
       });
       expect(result.ok).toBe(true);
       expect(result.plan?.gates).toContain("auth mode is jwt or oidc");
+      expect(result.plan?.gates).toContain("readiness score has no blocking items");
+      expect(result.nextActions).toContain("forge deploy init --target docker");
+      expect(result.nextActions).toContain("forge authmd generate --json");
+      expect(result.nextActions).toContain("forge auth prove --scenario multi-tenant --json");
+      expect(result.nextActions).toContain("forge workos setup --real --file workos-seed.yml --json");
+      expect(result.nextActions).toContain("forge workos prove --real --file workos-seed.yml --json");
+      expect(result.nextActions).toContain("forge field-test run --realistic --json");
+      expect(result.nextActions).toContain("forge deploy readiness --production --json");
       expect(result.nextActions).toContain("forge deploy check --production --json");
-      expect(result.nextActions).toContain("forge deploy verify --production --url https://app.example.com --json");
       expect(result.nextActions).toContain("forge deploy package --target docker");
+      expect(result.nextActions).toContain("forge deploy verify --production --url https://app.example.com --json");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -101,8 +126,30 @@ describe("forge deploy", () => {
       expect(readme).toContain("does not inject a hidden `DATABASE_URL` override");
       expect(readme).toContain("A template file alone is not enough");
       expect(readme).toContain("forge auth prove --scenario multi-tenant --json");
+      expect(readme).toContain("forge workos setup --real --file workos-seed.yml --json");
       expect(readme).toContain("forge auth prove --prod --token <jwt> --json");
       expect(readme).toContain("forge deploy verify --production --url https://app.example.com --json");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("init aliases Docker production file generation and points to readiness", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-init");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "init",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.action).toBe("init");
+      expect(result.files).toContain("deploy/README.production.md");
+      expect(result.nextActions).toContain("forge deploy readiness --production --json");
+      expect(readFileSync(join(workspace, "deploy", "README.production.md"), "utf8")).toContain("forge env doctor --target production --json");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -207,6 +254,29 @@ describe("forge deploy", () => {
       } else {
         process.env.DATABASE_URL = originalDatabaseUrl;
       }
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("readiness summarizes production blockers and next command", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-readiness");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "readiness",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(result.action).toBe("readiness");
+      expect(result.ok).toBe(false);
+      expect(result.readiness?.status).toBe("blocked");
+      expect(result.readiness?.answers.canPublish).toBe(false);
+      expect(result.readiness?.blocking.join("\n")).toContain("database-url");
+      expect(result.blocking?.join("\n")).toContain("production-auth-mode");
+      expect(result.nextActions.length).toBeGreaterThan(0);
+    } finally {
       cleanupWorkspace(workspace);
     }
   });
@@ -872,8 +942,12 @@ describe("forge deploy", () => {
         "GET /auth.md",
         "HEAD /.well-known/oauth-protected-resource",
         "GET /.well-known/oauth-protected-resource",
+        "GET /ready",
+        "GET /live/status",
+        "GET /outbox/status",
+        "HEAD /webhooks/workos",
       ]);
-      expect(calls.length).toBe(5);
+      expect(calls.length).toBe(9);
       expect(result.probes?.find((probe) => probe.url.endsWith("oauth-protected-resource") && probe.method === "GET")).toMatchObject({
         ok: true,
         jsonValid: true,

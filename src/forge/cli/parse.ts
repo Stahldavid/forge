@@ -418,6 +418,7 @@ export type ForgeCommand =
       subcommand: EnvSubcommand;
       json: boolean;
       redacted: boolean;
+      target?: "local" | "staging" | "production";
       workspaceRoot: string;
     }
   | {
@@ -602,7 +603,7 @@ const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
 const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup", "prove", "fga"];
 const WORKOS_FGA_ACTIONS: WorkOSFgaAction[] = ["plan", "sync", "prove", "doctor"];
-const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "check", "render", "package", "verify"];
+const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "init", "check", "readiness", "render", "package", "verify"];
 const FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = ["create", "run", "report"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
 const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test", "mutate-test"];
@@ -1484,10 +1485,10 @@ export function parseCli(argv: string[]): ParsedCli {
     case "deploy": {
       const subcommand = rest[0] as DeploySubcommand | undefined;
       if (!subcommand || !DEPLOY_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge deploy requires subcommand: plan, check, render, package, or verify");
+        errors.push("forge deploy requires subcommand: plan, init, check, readiness, render, package, or verify");
         return { command: null, workspaceRoot, errors };
       }
-      const targetRaw = parseOptionValue(argv, "--target") ?? (subcommand === "render" || subcommand === "package" ? rest[1] : undefined) ?? "docker";
+      const targetRaw = parseOptionValue(argv, "--target") ?? (subcommand === "init" || subcommand === "render" || subcommand === "package" ? rest[1] : undefined) ?? "docker";
       if (targetRaw !== "docker" && targetRaw !== "forge-cloud") {
         errors.push("forge deploy --target must be docker or forge-cloud");
       }
@@ -2974,9 +2975,13 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "env": {
       const subcommand = rest[0] as EnvSubcommand | undefined;
-      if (!subcommand || !["list", "check", "print"].includes(subcommand)) {
-        errors.push("forge env requires subcommand: list, check, or print");
+      if (!subcommand || !["list", "check", "print", "doctor"].includes(subcommand)) {
+        errors.push("forge env requires subcommand: list, check, print, or doctor");
         return { command: null, workspaceRoot, errors };
+      }
+      const targetRaw = parseOptionValue(argv, "--target") ?? "local";
+      if (!["local", "staging", "production"].includes(targetRaw)) {
+        errors.push("forge env --target must be local, staging, or production");
       }
 
       return {
@@ -2985,6 +2990,7 @@ export function parseCli(argv: string[]): ParsedCli {
           subcommand,
           json: parseFlag(argv, "--json"),
           redacted: parseFlag(argv, "--redacted"),
+          target: targetRaw as "local" | "staging" | "production",
           workspaceRoot,
         },
         workspaceRoot,

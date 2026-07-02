@@ -2863,6 +2863,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         workspaceRoot: command.workspaceRoot,
         json: command.json,
         redacted: command.redacted,
+        target: command.target,
       });
 
       if (command.json) {

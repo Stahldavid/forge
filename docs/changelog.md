@@ -6,6 +6,22 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.56
+
+- Added `forge deploy init --target docker` as the canonical production Docker
+  bootstrap command.
+- Added `forge deploy readiness --production --json` to answer whether an app
+  can publish, what blocks production, and which command should run next.
+- Added `forge env doctor --target local|staging|production --json` for safe,
+  target-specific env source reporting without exposing secret values.
+- `forge deploy check --production --json` now includes grouped
+  blockers/warnings and a readiness summary for agent handoffs.
+- `forge deploy verify --production --url ... --json` now validates required
+  public auth metadata and optional operational endpoints.
+- Production docs now describe the canonical flow from deploy init through
+  field-test, readiness, package, and verify, with WorkOS FGA kept optional
+  unless the app opts into FGA artifacts.
+
 ## 0.1.0-alpha.55
 
 - `forge add auth workos` now defaults to AuthKit/RBAC, permission claims,

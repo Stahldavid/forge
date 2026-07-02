@@ -219,13 +219,141 @@ export function formatSecretsJson(result: SecretsCommandResult): string {
   return `${JSON.stringify(result, null, 2)}\n`;
 }
 
-export type EnvSubcommand = "list" | "check" | "print";
+export type EnvSubcommand = "list" | "check" | "print" | "doctor";
+export type EnvDoctorTarget = "local" | "staging" | "production";
 
 export interface EnvCommandOptions {
   subcommand: EnvSubcommand;
   workspaceRoot: string;
   json: boolean;
   redacted?: boolean;
+  target?: EnvDoctorTarget;
+}
+
+const ENV_DOCTOR_KEYS = [
+  "DATABASE_URL",
+  "FORGE_AUTH_MODE",
+  "FORGE_AUTH_ISSUER",
+  "FORGE_AUTH_AUDIENCE",
+  "FORGE_AUTH_JWKS_URI",
+  "FORGE_AUTH_DISCOVERY_URL",
+  "WORKOS_API_KEY",
+  "WORKOS_CLIENT_ID",
+  "WORKOS_COOKIE_PASSWORD",
+  "WORKOS_REDIRECT_URI",
+  "WORKOS_POST_LOGIN_REDIRECT_URI",
+  "WORKOS_POST_LOGOUT_REDIRECT_URI",
+  "WORKOS_WEBHOOK_SECRET",
+] as const;
+
+function parseEnvFile(workspaceRoot: string, relative: string): Record<string, string> {
+  const path = join(workspaceRoot, relative);
+  if (!nodeFileSystem.exists(path)) return {};
+  const values: Record<string, string> = {};
+  for (const rawLine of (nodeFileSystem.readText(path) ?? "").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq <= 0) continue;
+    const rawValue = line.slice(eq + 1).trim();
+    values[line.slice(0, eq).trim()] = rawValue.replace(/^["']|["']$/g, "");
+  }
+  return values;
+}
+
+function envDoctorFiles(target: EnvDoctorTarget): string[] {
+  if (target === "production") return ["deploy/.env.production"];
+  if (target === "staging") return ["deploy/.env.staging", ".env.staging"];
+  return [".env", ".env.local"];
+}
+
+function hasWorkOSAppArtifacts(workspaceRoot: string): boolean {
+  return nodeFileSystem.exists(join(workspaceRoot, "workos-seed.yml")) ||
+    nodeFileSystem.exists(join(workspaceRoot, "src/policies.workos.ts")) ||
+    nodeFileSystem.exists(join(workspaceRoot, "src/forge/_generated/integrations/workos/auth-routes.ts"));
+}
+
+function envDoctor(options: EnvCommandOptions): SecretsCommandResult {
+  const target = options.target ?? "local";
+  const files = envDoctorFiles(target).map((path) => {
+    const values = parseEnvFile(options.workspaceRoot, path);
+    return {
+      path,
+      present: nodeFileSystem.exists(join(options.workspaceRoot, path)),
+      keys: Object.keys(values).filter((key) => ENV_DOCTOR_KEYS.includes(key as (typeof ENV_DOCTOR_KEYS)[number])).sort(),
+      values,
+    };
+  });
+  const processValues = Object.fromEntries(
+    ENV_DOCTOR_KEYS.filter((key) => Boolean(process.env[key])).map((key) => [key, process.env[key]!]),
+  );
+  const effective = {
+    ...Object.assign({}, ...files.map((file) => file.values)),
+    ...processValues,
+  } as Record<string, string>;
+  const required = target === "production"
+    ? ["DATABASE_URL", "FORGE_AUTH_MODE", "FORGE_AUTH_ISSUER", "FORGE_AUTH_AUDIENCE"]
+    : ["FORGE_AUTH_MODE"];
+  const missing = required.filter((key) => !effective[key]);
+  const authMode = effective.FORGE_AUTH_MODE ?? "dev-headers";
+  const productionAuth = authMode === "jwt" || authMode === "oidc";
+  const database = effective.DATABASE_URL
+    ? "postgres"
+    : target === "production"
+      ? "missing"
+      : "local-dev";
+  const workosDetected = hasWorkOSAppArtifacts(options.workspaceRoot) ||
+    Boolean(effective.WORKOS_CLIENT_ID || effective.WORKOS_API_KEY);
+  const provider = workosDetected ? "workos" : "none";
+  const hasJwtSource = Boolean(effective.FORGE_AUTH_JWKS_URI || effective.FORGE_AUTH_DISCOVERY_URL);
+  const blockers = [
+    ...missing.filter((key) => key !== "DATABASE_URL").map((key) => `${key} missing`),
+    ...(target === "production" && !productionAuth ? [`FORGE_AUTH_MODE=${authMode} is not production auth`] : []),
+    ...(target === "production" && database === "missing" ? ["DATABASE_URL missing"] : []),
+    ...(target === "production" && productionAuth && !hasJwtSource
+      ? ["FORGE_AUTH_JWKS_URI or FORGE_AUTH_DISCOVERY_URL missing"]
+      : []),
+    ...(target === "production" && workosDetected && !effective.WORKOS_CLIENT_ID ? ["WORKOS_CLIENT_ID missing"] : []),
+    ...(target === "production" && workosDetected && !effective.WORKOS_API_KEY ? ["WORKOS_API_KEY missing"] : []),
+  ];
+  const warnings = [
+    ...(target === "production" && files.every((file) => !file.present)
+      ? ["deploy/.env.production not found; process.env alone may be fine in CI but is easy for agents to miss"]
+      : []),
+    ...(workosDetected && !effective.WORKOS_COOKIE_PASSWORD ? ["WORKOS_COOKIE_PASSWORD missing"] : []),
+    ...(workosDetected && !effective.WORKOS_REDIRECT_URI ? ["WORKOS_REDIRECT_URI missing"] : []),
+  ];
+  return {
+    exitCode: blockers.length === 0 ? 0 : 1,
+    data: {
+      schemaVersion: "0.1.0",
+      kind: "env-doctor",
+      ok: blockers.length === 0,
+      target,
+      authMode,
+      productionAuth,
+      database,
+      provider,
+      sources: [
+        {
+          path: "process.env",
+          present: Object.keys(processValues).length > 0,
+          keys: Object.keys(processValues).sort(),
+          values: undefined,
+        },
+        ...files.map(({ path, present, keys }) => ({ path, present, keys })),
+      ],
+      present: ENV_DOCTOR_KEYS.filter((key) => Boolean(effective[key])).sort(),
+      missing,
+      blockers,
+      warnings,
+      nextActions: blockers.length === 0
+        ? ["forge deploy readiness --production --json"]
+        : target === "production"
+          ? ["cp deploy/.env.production.example deploy/.env.production", "forge env doctor --target production --json"]
+          : ["forge env doctor --target local --json"],
+    },
+  };
 }
 
 export async function runEnvCommand(options: EnvCommandOptions): Promise<SecretsCommandResult> {
@@ -233,6 +361,8 @@ export async function runEnvCommand(options: EnvCommandOptions): Promise<Secrets
   const schema = loadEnvSchema(options.workspaceRoot);
 
   switch (options.subcommand) {
+    case "doctor":
+      return envDoctor(options);
     case "list":
       if (!schema) {
         return {
