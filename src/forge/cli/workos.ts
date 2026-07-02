@@ -2621,7 +2621,9 @@ function collectWorkOSFgaChecks(input: {
       name: "fga-proof-state",
       ok: !input.requireProof || Boolean(input.state.provedAt),
       detail: input.state.provedAt
-        ? `${WORKOS_FGA_STATE_FILE} records real proof at ${input.state.provedAt}`
+        ? input.state.mode === "real"
+          ? `${WORKOS_FGA_STATE_FILE} records real proof at ${input.state.provedAt}`
+          : `${WORKOS_FGA_STATE_FILE} records local proof at ${input.state.provedAt}`
         : input.requireProof
           ? `${WORKOS_FGA_STATE_FILE} must be produced by forge workos fga prove --real --json`
           : `${WORKOS_FGA_STATE_FILE} proof timestamp not required for this command`,

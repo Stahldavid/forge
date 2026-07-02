@@ -1,5 +1,17 @@
 # forgeos
 
+## 0.1.0-alpha.53
+
+### Patch Changes
+
+- Keep WorkOS FGA proof messaging honest across local and real modes.
+
+  - `forge workos fga doctor --json` now reports local proof timestamps as
+    local proof instead of using real-production wording when the state file was
+    produced by local FGA proof commands.
+  - This prevents local/mock FGA evidence from being mistaken for hosted WorkOS
+    Authorization API proof during production-readiness handoff.
+
 ## 0.1.0-alpha.52
 
 ### Patch Changes

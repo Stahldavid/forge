@@ -6,6 +6,12 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.53
+
+- `forge workos fga doctor --json` now distinguishes local FGA proof timestamps
+  from real WorkOS Authorization API proof timestamps, avoiding production
+  readiness confusion in agent handoffs.
+
 ## 0.1.0-alpha.52
 
 - Generated WorkOS FGA setup guides now include an explicit automation boundary

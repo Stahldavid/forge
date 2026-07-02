@@ -1127,6 +1127,21 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(fgaProve.data)).toContain('"provedAt"');
       expect(formatWorkOSHuman(fgaProve)).toContain("WorkOS FGA proof passed locally");
 
+      const fgaDoctorAfterLocalProve = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(fgaDoctorAfterLocalProve.exitCode).toBe(0);
+      const proofState = fgaDoctorAfterLocalProve.checks.find((check) => check.name === "fga-proof-state");
+      expect(proofState?.detail).toContain("records local proof");
+      expect(proofState?.detail).not.toContain("records real proof");
+
       const proveRealMissingEnv = runWorkOSCommand({
         subcommand: "prove",
         workspaceRoot: workspace,
