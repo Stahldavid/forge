@@ -1436,7 +1436,10 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(setupRealNeedsCliLogin.checks)).toContain("workos-cli-auth");
       expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("https://workos.com/device");
       expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("ABCD-1234");
-      expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("rerun forge workos prove --real --file workos-seed.yml --json");
+      expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("WORKOS_MODE=agent npx --yes workos@latest auth login --json");
+      expect(JSON.stringify(setupRealNeedsCliLogin.data)).toContain("rerun forge workos setup --real --file workos-seed.yml --json");
+      expect(formatWorkOSHuman(setupRealNeedsCliLogin)).toContain("login: WORKOS_MODE=agent npx --yes workos@latest auth login --json");
+      expect(formatWorkOSHuman(setupRealNeedsCliLogin)).toContain("rerun: forge workos setup --real --file workos-seed.yml --json");
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }

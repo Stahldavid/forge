@@ -6,6 +6,16 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.50
+
+- WorkOS hosted setup now includes explicit
+  `WORKOS_MODE=agent npx --yes workos@latest auth login --json` guidance when
+  CLI OAuth/device-code login is required.
+- `forge workos setup --real` now tells the operator to rerun the same setup
+  command after login instead of pointing generically at `prove --real`.
+- Human WorkOS output now includes the login command, device URL/code, and exact
+  Forge rerun command for no-dashboard agent continuation.
+
 ## 0.1.0-alpha.49
 
 - `forge release doctor --json` now reports npm `alpha` and `latest` dist-tag

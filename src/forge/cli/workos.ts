@@ -347,7 +347,10 @@ export interface WorkOSCliAuthSummary {
   method: "api-key" | "cli";
   skippedReason?: string;
   statusCommand: string[];
+  statusShellCommand?: string;
   loginCommand?: string[];
+  loginShellCommand?: string;
+  rerunCommand?: string;
   loginAttempted: boolean;
   authenticated?: boolean;
   email?: string;
@@ -414,9 +417,21 @@ function workOSCliAuthCheck(auth: WorkOSCliAuthSummary): WorkOSCheck {
   };
 }
 
+function workOSCliAuthShellCommand(command: string[]): string {
+  return `WORKOS_MODE=agent ${command.join(" ")}`;
+}
+
+function workOSHostedRerunCommand(options: WorkOSCommandOptions): string {
+  const file = options.file ?? DEFAULT_SEED_FILE;
+  const subcommand = options.subcommand === "setup" ? "setup" : "prove";
+  return `forge workos ${subcommand} --real --file ${file} --json`;
+}
+
 function ensureWorkOSCliAuthForHosted(options: WorkOSCommandOptions): WorkOSCliAuthSummary {
   const env = readRealEnv(options.workspaceRoot);
   const statusCommand = ["npx", "--yes", "workos@latest", "auth", "status", "--json"];
+  const statusShellCommand = workOSCliAuthShellCommand(statusCommand);
+  const rerunCommand = workOSHostedRerunCommand(options);
   if (hasValue(env, "WORKOS_API_KEY")) {
     return {
       required: false,
@@ -424,6 +439,7 @@ function ensureWorkOSCliAuthForHosted(options: WorkOSCommandOptions): WorkOSCliA
       method: "api-key",
       skippedReason: "WORKOS_API_KEY is present; WorkOS CLI browser login is optional for hosted setup",
       statusCommand,
+      statusShellCommand,
       loginAttempted: false,
       detail: "WORKOS_API_KEY is present; hosted WorkOS setup can use API key authentication",
       nextActions: [],
@@ -444,6 +460,7 @@ function ensureWorkOSCliAuthForHosted(options: WorkOSCommandOptions): WorkOSCliA
       ok: true,
       method: "cli",
       statusCommand,
+      statusShellCommand,
       loginAttempted: false,
       authenticated,
       ...(email ? { email } : {}),
@@ -460,6 +477,7 @@ function ensureWorkOSCliAuthForHosted(options: WorkOSCommandOptions): WorkOSCliA
   }
 
   const loginCommand = ["npx", "--yes", "workos@latest", "auth", "login", "--json"];
+  const loginShellCommand = workOSCliAuthShellCommand(loginCommand);
   const login = runExternalCommand(loginCommand, options);
   const instructions = extractWorkOSLoginInstructions(login.stdout, login.stderr);
   if (login.status === 0) {
@@ -468,7 +486,9 @@ function ensureWorkOSCliAuthForHosted(options: WorkOSCommandOptions): WorkOSCliA
       ok: true,
       method: "cli",
       statusCommand,
+      statusShellCommand,
       loginCommand,
+      loginShellCommand,
       loginAttempted: true,
       authenticated: true,
       status: status.status,
@@ -480,15 +500,19 @@ function ensureWorkOSCliAuthForHosted(options: WorkOSCommandOptions): WorkOSCliA
   }
 
   const nextActions = [
+    loginShellCommand,
     "complete the WorkOS CLI OAuth/device-code login shown in loginInstructions",
-    "rerun forge workos prove --real --file workos-seed.yml --json",
+    `rerun ${rerunCommand}`,
   ];
   return {
     required: true,
     ok: false,
     method: "cli",
     statusCommand,
+    statusShellCommand,
     loginCommand,
+    loginShellCommand,
+    rerunCommand,
     loginAttempted: true,
     authenticated,
     ...(email ? { email } : {}),
@@ -2839,11 +2863,17 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
       lines.push(`WorkOS CLI authenticated${cliAuth.email ? ` as ${cliAuth.email}` : ""}; hosted setup can proceed without opening the dashboard.`);
     } else if (!cliAuth.ok && cliAuth.loginInstructions) {
       lines.push("WorkOS CLI login required before hosted setup can proceed.");
+      if (cliAuth.loginShellCommand) {
+        lines.push(`login: ${cliAuth.loginShellCommand}`);
+      }
       if (cliAuth.loginInstructions.url) {
         lines.push(`open: ${cliAuth.loginInstructions.url}`);
       }
       if (cliAuth.loginInstructions.code) {
         lines.push(`code: ${cliAuth.loginInstructions.code}`);
+      }
+      if (cliAuth.rerunCommand) {
+        lines.push(`rerun: ${cliAuth.rerunCommand}`);
       }
     } else if (cliAuth.method === "api-key") {
       lines.push("WorkOS hosted setup will use WORKOS_API_KEY; CLI browser login is optional.");

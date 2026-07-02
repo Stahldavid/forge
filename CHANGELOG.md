@@ -1,5 +1,19 @@
 # forgeos
 
+## 0.1.0-alpha.50
+
+### Patch Changes
+
+- Tighten the no-dashboard WorkOS real setup/proof handoff.
+
+  - WorkOS hosted setup now records explicit `WORKOS_MODE=agent npx --yes
+    workos@latest auth login --json` shell guidance when CLI login is required.
+  - Failed `forge workos setup --real` login attempts now tell the operator to
+    rerun the same setup command after completing OAuth/device-code login,
+    instead of pointing generically at `prove --real`.
+  - Human output now includes the login command, device URL/code when present,
+    and the exact Forge rerun command for agent-friendly continuation.
+
 ## 0.1.0-alpha.49
 
 ### Patch Changes
