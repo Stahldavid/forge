@@ -1,5 +1,21 @@
 # forgeos
 
+## 0.1.0-alpha.54
+
+### Patch Changes
+
+- Add a machine-readable WorkOS FGA hosted setup artifact.
+
+  - `forge workos fga plan --write --json` and real sync failures that write
+    `.forge/workos-fga-setup.md` now also write
+    `.forge/workos-fga-setup.json`.
+  - The JSON artifact includes the derived resource types, hosted setup
+    boundary, rerun commands, docs, unsupported automation notes, and paired
+    Markdown/JSON paths so agents and CI can consume the FGA handoff without
+    parsing Markdown.
+  - Human output now prints both the Markdown guide and JSON setup artifact
+    paths when they are written.
+
 ## 0.1.0-alpha.53
 
 ### Patch Changes

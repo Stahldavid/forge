@@ -6,6 +6,14 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.54
+
+- WorkOS FGA setup writes now produce a paired machine-readable
+  `.forge/workos-fga-setup.json` artifact alongside the Markdown guide.
+- The JSON artifact includes derived resource types, hosted setup boundary,
+  rerun commands, docs, unsupported automation notes, and paired artifact paths
+  for agents and CI.
+
 ## 0.1.0-alpha.53
 
 - `forge workos fga doctor --json` now distinguishes local FGA proof timestamps

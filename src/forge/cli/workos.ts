@@ -57,6 +57,7 @@ const GENERATED_SEED_FILE = `${GENERATED_DIR}/integrations/workos/workos-seed.ym
 const WORKOS_SEED_STATE_FILE = ".workos-seed-state.json";
 const WORKOS_FGA_STATE_FILE = ".workos-fga-state.json";
 const WORKOS_FGA_SETUP_GUIDE_FILE = ".forge/workos-fga-setup.md";
+const WORKOS_FGA_SETUP_PLAN_FILE = ".forge/workos-fga-setup.json";
 
 function runExternalCommand(
   command: string[],
@@ -714,7 +715,16 @@ export interface WorkOSFgaResourceTypeSetup {
 }
 
 export interface WorkOSFgaSetupGuide {
+  schemaVersion: "0.1.0";
+  kind: "workos-fga-setup";
   resourceTypes: WorkOSFgaResourceTypeSetup[];
+  hostedSetup: WorkOSFgaHostedSetup;
+  commands: {
+    plan: string;
+    syncReal: string;
+    proveReal: string;
+    deployCheck: string;
+  };
   markdown: string;
   docs: string[];
   unsupportedAutomation: string[];
@@ -1196,7 +1206,16 @@ function workOSFgaSetupGuide(manifest: WorkOSFgaManifest, hostedSetup: WorkOSFga
     "",
   ].join("\n");
   return {
+    schemaVersion: "0.1.0",
+    kind: "workos-fga-setup",
     resourceTypes,
+    hostedSetup,
+    commands: {
+      plan: "forge workos fga plan --file workos-seed.yml --write --json",
+      syncReal: "forge workos fga sync --real --file workos-seed.yml --json",
+      proveReal: "forge workos fga prove --real --file workos-seed.yml --json",
+      deployCheck: "forge deploy check --production --json",
+    },
     markdown,
     docs: hostedSetup.docs,
     unsupportedAutomation: [
@@ -1214,16 +1233,34 @@ function resolveWorkOSFgaSetupGuidePath(options: WorkOSCommandOptions): string |
   return candidate && candidate !== "true" && !candidate.startsWith("--") ? candidate : WORKOS_FGA_SETUP_GUIDE_FILE;
 }
 
+function workOSFgaSetupPlanPath(markdownPath: string): string {
+  if (markdownPath === WORKOS_FGA_SETUP_GUIDE_FILE) {
+    return WORKOS_FGA_SETUP_PLAN_FILE;
+  }
+  return markdownPath.endsWith(".md")
+    ? `${markdownPath.slice(0, -3)}.json`
+    : `${markdownPath}.json`;
+}
+
 function writeWorkOSFgaSetupGuide(
   workspaceRoot: string,
   guide: WorkOSFgaSetupGuide,
   preferredPath = WORKOS_FGA_SETUP_GUIDE_FILE,
-): string {
+): { markdownPath: string; jsonPath: string } {
   const relativePath = preferredPath.startsWith("/") ? preferredPath.slice(1) : preferredPath;
   const absolutePath = join(workspaceRoot, relativePath);
   mkdirSync(dirname(absolutePath), { recursive: true });
   writeFileSync(absolutePath, guide.markdown, "utf8");
-  return relativePath;
+  const jsonPath = workOSFgaSetupPlanPath(relativePath);
+  const absoluteJsonPath = join(workspaceRoot, jsonPath);
+  mkdirSync(dirname(absoluteJsonPath), { recursive: true });
+  const { markdown: _markdown, ...jsonGuide } = guide;
+  writeFileSync(absoluteJsonPath, `${JSON.stringify({
+    ...jsonGuide,
+    markdownPath: relativePath,
+    jsonPath,
+  }, null, 2)}\n`, "utf8");
+  return { markdownPath: relativePath, jsonPath };
 }
 
 function fgaData(input: {
@@ -1240,6 +1277,7 @@ function fgaData(input: {
   nextCommand?: string;
   nextActions?: string[];
   setupGuidePath?: string;
+  setupGuideJsonPath?: string;
 }): Record<string, unknown> {
   const hostedSetup = workOSFgaHostedSetup(input.manifest, input.workosSdk);
   const setupGuide = workOSFgaSetupGuide(input.manifest, hostedSetup);
@@ -1259,6 +1297,7 @@ function fgaData(input: {
     ...(input.workosSdk ? { workosSdk: input.workosSdk } : {}),
     ...(input.stateFile ? { stateFile: input.stateFile } : {}),
     ...(input.setupGuidePath ? { setupGuidePath: input.setupGuidePath } : {}),
+    ...(input.setupGuideJsonPath ? { setupGuideJsonPath: input.setupGuideJsonPath } : {}),
     nextCommand: input.nextCommand,
     nextActions: input.nextActions ?? hostedSetup.nextActions,
     notes: [
@@ -2764,9 +2803,12 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
   const manifest = collectWorkOSFgaManifest(options.workspaceRoot, file);
   const initialHostedSetup = workOSFgaHostedSetup(manifest);
   const setupGuidePath = resolveWorkOSFgaSetupGuidePath(options);
-  const writtenSetupGuidePath = setupGuidePath
+  const writtenSetupGuide = setupGuidePath
     ? writeWorkOSFgaSetupGuide(options.workspaceRoot, workOSFgaSetupGuide(manifest, initialHostedSetup), setupGuidePath)
     : undefined;
+  const writtenSetupGuideData = writtenSetupGuide
+    ? { setupGuidePath: writtenSetupGuide.markdownPath, setupGuideJsonPath: writtenSetupGuide.jsonPath }
+    : {};
   let state = readWorkOSFgaState(options.workspaceRoot, manifest);
   const command = ["forge", "workos", "fga", action, "--file", file];
   const real = options.real ?? false;
@@ -2798,7 +2840,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
         state,
         seedState,
         real,
-        ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+        ...writtenSetupGuideData,
         nextCommand: `forge workos fga sync --file ${file} --json`,
       }),
       exitCode: ok ? 0 : 1,
@@ -2835,7 +2877,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
           seedState,
           real,
           ...(cliAuth ? { cliAuth } : {}),
-          ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+          ...writtenSetupGuideData,
           nextCommand: real ? `forge workos fga sync --real --file ${file} --json` : `forge workos fga plan --file ${file} --json`,
         }),
         exitCode: 1,
@@ -2856,7 +2898,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
           seedState,
           real,
           ...(cliAuth ? { cliAuth } : {}),
-          ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+          ...writtenSetupGuideData,
           nextCommand: real ? `forge workos fga sync --real --file ${file} --json` : `forge workos fga sync --file ${file} --json`,
         }),
         exitCode: 0,
@@ -2886,7 +2928,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
           real,
           ...(cliAuth ? { cliAuth } : {}),
           workosSdk: sdk.data,
-          ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+          ...writtenSetupGuideData,
           nextCommand: `forge workos fga sync --real --file ${file} --json`,
           nextActions: workOSFgaHostedSetup(manifest, sdk.data).nextActions,
         }),
@@ -2919,7 +2961,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
         ...(cliAuth ? { cliAuth } : {}),
         ...(sdk ? { workosSdk: sdk.data } : {}),
         stateFile,
-        ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+        ...writtenSetupGuideData,
         nextCommand: real ? `forge workos fga prove --real --file ${file} --json` : `forge workos fga prove --file ${file} --json`,
       }),
       exitCode: 0,
@@ -2992,7 +3034,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
         ...(cliAuth ? { cliAuth } : {}),
         ...(sdk ? { workosSdk: sdk.data } : {}),
         ...(stateFile ? { stateFile } : {}),
-        ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+        ...writtenSetupGuideData,
         nextCommand: ok ? "forge deploy check --production --json" : `forge workos fga sync${real ? " --real" : ""} --file ${file} --json`,
       }),
       stdout: sdk?.stdout,
@@ -3032,7 +3074,7 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
       seedState,
       readiness,
       real,
-      ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
+      ...writtenSetupGuideData,
       nextCommand: readiness.nextCommand,
       nextActions: readiness.nextActions,
     }),
@@ -3159,10 +3201,13 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
   }
   if (result.kind === "workos-fga") {
     const data = result.data && typeof result.data === "object"
-      ? result.data as { action?: string; real?: boolean; nextCommand?: string; stateFile?: string; setupGuidePath?: string; nextActions?: string[] }
+      ? result.data as { action?: string; real?: boolean; nextCommand?: string; stateFile?: string; setupGuidePath?: string; setupGuideJsonPath?: string; nextActions?: string[] }
       : {};
     if (data.setupGuidePath) {
       lines.push(`FGA setup guide: ${data.setupGuidePath}`);
+    }
+    if (data.setupGuideJsonPath) {
+      lines.push(`FGA setup JSON: ${data.setupGuideJsonPath}`);
     }
     if (result.ok && data.action === "plan") {
       lines.push(`WorkOS FGA plan passed; run ${data.nextCommand ?? "forge workos fga sync --json"}.`);

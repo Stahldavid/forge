@@ -1068,10 +1068,25 @@ describe("Forge CLI", () => {
       });
       expect(fgaPlanWrite.exitCode).toBe(0);
       expect(JSON.stringify(fgaPlanWrite.data)).toContain('"setupGuidePath":".forge/workos-fga-setup.md"');
+      expect(JSON.stringify(fgaPlanWrite.data)).toContain('"setupGuideJsonPath":".forge/workos-fga-setup.json"');
       expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("# WorkOS FGA Setup");
       expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("### project");
       expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("## Permission And Role Coverage");
       expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("forge workos fga plan --file workos-seed.yml --write --json");
+      const fgaSetupJson = JSON.parse(readFileSync(join(workspace, ".forge/workos-fga-setup.json"), "utf8")) as {
+        kind: string;
+        markdownPath: string;
+        jsonPath: string;
+        resourceTypes: Array<{ slug: string }>;
+        hostedSetup: { resourceTypeAutomation: string };
+        commands: { syncReal: string };
+      };
+      expect(fgaSetupJson.kind).toBe("workos-fga-setup");
+      expect(fgaSetupJson.markdownPath).toBe(".forge/workos-fga-setup.md");
+      expect(fgaSetupJson.jsonPath).toBe(".forge/workos-fga-setup.json");
+      expect(fgaSetupJson.resourceTypes.some((resourceType) => resourceType.slug === "project")).toBe(true);
+      expect(fgaSetupJson.hostedSetup.resourceTypeAutomation).toBe("not-supported-by-workos-api");
+      expect(fgaSetupJson.commands.syncReal).toBe("forge workos fga sync --real --file workos-seed.yml --json");
 
       const fgaPlanWriteCustom = runWorkOSCommand({
         subcommand: "fga",
@@ -1087,7 +1102,13 @@ describe("Forge CLI", () => {
       });
       expect(fgaPlanWriteCustom.exitCode).toBe(0);
       expect(JSON.stringify(fgaPlanWriteCustom.data)).toContain('"setupGuidePath":".forge/custom-fga.md"');
+      expect(JSON.stringify(fgaPlanWriteCustom.data)).toContain('"setupGuideJsonPath":".forge/custom-fga.json"');
       expect(readFileSync(join(workspace, ".forge/custom-fga.md"), "utf8")).toContain("WORKOS_FGA_MEMBERSHIP_ACME_CORP");
+      expect(JSON.parse(readFileSync(join(workspace, ".forge/custom-fga.json"), "utf8"))).toMatchObject({
+        kind: "workos-fga-setup",
+        markdownPath: ".forge/custom-fga.md",
+        jsonPath: ".forge/custom-fga.json",
+      });
 
       const fgaSync = runWorkOSCommand({
         subcommand: "fga",
@@ -1277,11 +1298,18 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"missingResourceTypes":["project"]');
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"requiredMembershipEnv"');
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"setupGuidePath":".forge/workos-fga-setup.md"');
+      expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain('"setupGuideJsonPath":".forge/workos-fga-setup.json"');
       expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("## Automation Boundary");
       expect(readFileSync(join(workspace, ".forge/workos-fga-setup.md"), "utf8")).toContain("ForgeOS does not invent WorkOS CLI/API calls for resource type creation.");
+      expect(JSON.parse(readFileSync(join(workspace, ".forge/workos-fga-setup.json"), "utf8"))).toMatchObject({
+        kind: "workos-fga-setup",
+        markdownPath: ".forge/workos-fga-setup.md",
+        jsonPath: ".forge/workos-fga-setup.json",
+      });
       expect(JSON.stringify(fgaRealMissingResourceTypes.data)).toContain("configure missing WorkOS FGA resource type(s): project");
       expect(formatWorkOSHuman(fgaRealMissingResourceTypes)).toContain("configure missing WorkOS FGA resource type(s): project");
       expect(formatWorkOSHuman(fgaRealMissingResourceTypes)).toContain("FGA setup guide: .forge/workos-fga-setup.md");
+      expect(formatWorkOSHuman(fgaRealMissingResourceTypes)).toContain("FGA setup JSON: .forge/workos-fga-setup.json");
 
       const fgaRealSync = runWorkOSCommand({
         subcommand: "fga",
