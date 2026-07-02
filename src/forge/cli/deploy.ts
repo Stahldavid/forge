@@ -609,6 +609,18 @@ Required production posture:
 - issuer, audience, and JWKS/discovery settings match the auth provider
 - any provider secrets listed in the example are set in the deployment secret store
 
+For WorkOS-backed apps, local dry-runs are not enough for production deploy
+readiness. Run:
+
+\`\`\`bash
+forge workos prove --real --file workos-seed.yml --json
+\`\`\`
+
+This applies or confirms hosted WorkOS config/seed through the WorkOS CLI and
+writes \`.workos-seed-state.json\`. \`forge deploy check --production\` requires
+that state to match the current \`workos-seed.yml\` before treating WorkOS
+posture as production evidence.
+
 ## 2. Prove the app before traffic
 
 \`\`\`bash
@@ -616,6 +628,7 @@ forge generate --check --json
 forge check --json
 forge authmd generate --json
 forge auth prove --scenario multi-tenant --json
+forge workos prove --real --file workos-seed.yml --json
 forge field-test run --realistic --json
 forge deploy check --production --json
 \`\`\`
@@ -824,6 +837,21 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
         : "WorkOS adapter is incomplete for this app; run forge workos doctor --json",
       command: "forge workos doctor --json",
       details: workosDoctor.checks,
+    });
+    const workosData = workosDoctor.data && typeof workosDoctor.data === "object"
+      ? workosDoctor.data as { seedState?: { exists?: boolean; valid?: boolean; matchesSeedHash?: boolean | null; alreadyApplied?: boolean } }
+      : {};
+    const seedState = workosData.seedState;
+    const hostedSeedOk = Boolean(seedState?.exists && seedState.valid && seedState.matchesSeedHash === true);
+    checks.push({
+      name: "workos-hosted-seed",
+      ok: !options.production || hostedSeedOk,
+      severity: options.production ? "error" : "warning",
+      message: hostedSeedOk
+        ? `WorkOS hosted seed state matches workos-seed.yml${seedState?.alreadyApplied ? " and records idempotent existing resources" : ""}`
+        : "WorkOS production deploy requires hosted seed evidence matching workos-seed.yml",
+      command: "forge workos prove --real --file workos-seed.yml --json",
+      details: seedState,
     });
   }
   const tenantProofRequired = auth.requiresTenant || hasWorkOSIntegration(options.workspaceRoot);

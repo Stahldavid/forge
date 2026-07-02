@@ -180,7 +180,8 @@ passed, runtime probes ran, auth probes ran, UI probes ran, UI ergonomics audit
 evidence was captured, and no case failed. It does not
 claim the app is production-ready by itself; `forge deploy check --production`
 still validates production auth mode, database evidence, package-manager
-lockfiles, public auth metadata, WorkOS posture, and tenant claims.
+lockfiles, public auth metadata, WorkOS posture, hosted WorkOS seed evidence
+for WorkOS-backed apps, and tenant claims.
 
 The report command checks concrete probe evidence, not just enabled flags. A
 deploy-check-ready report must include successful runtime health and `/entries`

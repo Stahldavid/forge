@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseCli } from "../../src/forge/cli/parse.ts";
@@ -435,6 +436,134 @@ describe("forge deploy", () => {
       expect(JSON.stringify(fieldReport?.details)).toContain('"authMetadataProbeSteps":4');
       expect(JSON.stringify(fieldReport?.details)).toContain('"uiProbeSteps":1');
       expect(JSON.stringify(fieldReport?.details)).toContain('"uiErgonomics":true');
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("production check requires WorkOS hosted seed evidence when WorkOS is present", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-workos-hosted-seed");
+    try {
+      await runGenerate(defaultGenerateOptions(workspace));
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
+      writeFileSync(
+        join(workspace, "package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/node": "^7.0.0" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/authRegistry.json"),
+        JSON.stringify({ claims: { userId: "sub", tenantId: "organization_id" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/secretRegistry.json"),
+        JSON.stringify({
+          secrets: [
+            { envVar: "WORKOS_API_KEY" },
+            { envVar: "WORKOS_CLIENT_ID" },
+            { envVar: "WORKOS_COOKIE_PASSWORD" },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/policyRegistry.json"),
+        JSON.stringify({ policies: [{ name: "vendors.read", permissions: ["vendors:read"] }] }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/dataGraph.json"),
+        JSON.stringify({ tables: [{ name: "vendors", fields: [{ name: "tenantId" }] }] }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/agentContract.json"),
+        JSON.stringify({ auth: { requiresTenant: true } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, ".env.example"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=",
+          "VITE_WORKOS_CLIENT_ID=",
+          "VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback",
+          "WORKOS_API_KEY=",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/policies.workos.ts"),
+        'import { canPermission } from "forge/policy"; export const policies = { "vendors.read": canPermission("vendors:read") };\n',
+        "utf8",
+      );
+      const seedYaml = [
+        "permissions:",
+        "  - slug: 'vendors:read'",
+        "resource_types:",
+        "  - slug: 'organization'",
+        "  - slug: 'vendor'",
+        "roles:",
+        "  - slug: 'owner'",
+        "organizations:",
+        "  - name: 'Acme Corp'",
+        "config:",
+        "  redirect_uris:",
+        "    - 'http://localhost:5173/callback'",
+        "  cors_origins:",
+        "    - 'http://localhost:5173'",
+        "  homepage_url: 'http://localhost:5173'",
+        "",
+      ].join("\n");
+      writeFileSync(join(workspace, "workos-seed.yml"), seedYaml, "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"), 'export const config = { provider: "workos" }; export function verifyWorkOSWebhook() {} export function handleWorkOSWebhook() {}\n', "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), 'export const workosAuthHttpRoutes = ["/login", "/callback", "/logout", "/session"]; export function handleWorkOSAuthRequest() {}\n', "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/session.ts"), "export function encodeWorkOSSession() {} export function decodeWorkOSSession() {} export function workOSSessionToClaims() {}\n", "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"), 'export const workosWebhookHttpRoute = { path: "/webhooks/workos" }; export function handleWorkOSWebhookRequest() {}\n', "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"), 'export class ForgeWorkOSFgaDecisionCache {} export function canWorkOS() { return { permissionSlug: "x", resourceExternalId: "y" }; } export function syncWorkOSResourceGraph() {} export function workOSResourceRecords() {} export function assertWorkOSResourceTenant() { throw new Error("FORGE_WORKOS_CROSS_TENANT_RESOURCE"); }\n', "utf8");
+      writeFileSync(join(workspace, "src/forge/_generated/integrations/workos/fga.ts"), 'export const forgeWorkOSResourceTypes = [{ slug: "organization" }, { slug: "vendor" }];\n', "utf8");
+
+      const missingState = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(missingState.checks.find((check) => check.name === "workos-hosted-seed")).toMatchObject({
+        ok: false,
+        severity: "error",
+        command: "forge workos prove --real --file workos-seed.yml --json",
+      });
+
+      writeFileSync(
+        join(workspace, ".workos-seed-state.json"),
+        `${JSON.stringify({
+          schemaVersion: "0.1.0",
+          provider: "workos",
+          kind: "seed-state",
+          seedFile: "workos-seed.yml",
+          seedHash: createHash("sha256").update(seedYaml).digest("hex"),
+          appliedAt: "2026-07-02T00:00:00.000Z",
+          alreadyApplied: true,
+        }, null, 2)}\n`,
+        "utf8",
+      );
+
+      const withState = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(withState.checks.find((check) => check.name === "workos-hosted-seed")).toMatchObject({
+        ok: true,
+        severity: "error",
+      });
     } finally {
       cleanupWorkspace(workspace);
     }

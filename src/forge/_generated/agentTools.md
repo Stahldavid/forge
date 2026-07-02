@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.40 input=e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46 content=0e1a5df20243e64c3535e1601214f8306f67a4b56ddd47b71be1a1c5a09cb3a0
+// @forge-generated generator=0.1.0-alpha.47 input=bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1 content=0e1a5df20243e64c3535e1601214f8306f67a4b56ddd47b71be1a1c5a09cb3a0
 # Agent Tools
 
 Project: forgeos

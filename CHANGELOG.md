@@ -1,5 +1,23 @@
 # forgeos
 
+## 0.1.0-alpha.47
+
+### Patch Changes
+
+- Tighten the WorkOS real-auth proof and production deploy readiness gates.
+
+  - `forge workos setup --real` and `forge workos prove --real` now validate
+    the real OIDC/JWT and WorkOS environment before attempting hosted setup,
+    with specific failed checks such as `setup:real-env-forge_auth_audience`
+    instead of a generic setup failure.
+  - `forge deploy check --production` now requires WorkOS-backed apps to carry
+    hosted seed evidence in `.workos-seed-state.json` that matches the current
+    `workos-seed.yml`, pointing operators at `forge workos prove --real` when
+    hosted seed state is missing or stale.
+  - Update production, self-hosting, and field-test documentation so local mock
+    field-test evidence, hosted WorkOS seed evidence, and deploy env evidence
+    have clear boundaries.
+
 ## 0.1.0-alpha.46
 
 ### Patch Changes

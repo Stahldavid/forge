@@ -329,6 +329,34 @@ function workosJwksUri(clientId: string | undefined): string {
   return clientId ? `https://api.workos.com/sso/jwks/${clientId}` : "https://api.workos.com/sso/jwks/<WORKOS_CLIENT_ID>";
 }
 
+function collectWorkOSRealEnvChecks(workspaceRoot: string): WorkOSCheck[] {
+  const env = readRealEnv(workspaceRoot);
+  const authMode = env.FORGE_AUTH_MODE;
+  const clientId = env.WORKOS_CLIENT_ID || env.VITE_WORKOS_CLIENT_ID;
+  const required = [
+    ["WORKOS_API_KEY", "WorkOS API key is required to apply hosted seed/config"],
+    ["WORKOS_CLIENT_ID", "WorkOS client ID is required for AuthKit and JWKS discovery"],
+    ["WORKOS_COOKIE_PASSWORD", "cookie password is required for AuthKit session signing"],
+    ["FORGE_AUTH_ISSUER", "Forge OIDC issuer must be https://api.workos.com"],
+    ["FORGE_AUTH_AUDIENCE", "Forge OIDC audience must match the WorkOS client/application audience"],
+    ["FORGE_AUTH_JWKS_URI", `Forge JWKS URI must be configured, usually ${workosJwksUri(clientId)}`],
+  ] as const;
+  return [
+    {
+      name: "real-env-auth-mode",
+      ok: authMode === "oidc" || authMode === "jwt",
+      detail: authMode === "oidc" || authMode === "jwt"
+        ? `FORGE_AUTH_MODE=${authMode} is production-capable`
+        : "FORGE_AUTH_MODE must be oidc or jwt before running hosted WorkOS proof",
+    },
+    ...required.map(([name, detail]) => ({
+      name: `real-env-${name.toLowerCase()}`,
+      ok: hasValue(env, name),
+      detail: hasValue(env, name) ? `${name} is present` : `${name} is missing: ${detail}`,
+    })),
+  ];
+}
+
 export function collectPolicyPermissions(workspaceRoot: string): string[] {
   const registry = readJson(workspaceRoot, `${GENERATED_DIR}/policyRegistry.json`) as {
     policies?: Array<{ permissions?: string[] }>;
@@ -1141,7 +1169,9 @@ export function runWorkOSSeedCommand(options: WorkOSCommandOptions): WorkOSComma
 export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   const file = options.file ?? DEFAULT_SEED_FILE;
   const checks = collectWorkOSChecks(options.workspaceRoot);
-  const localOk = checks.every((check) => check.ok);
+  const realEnvChecks = options.real ? collectWorkOSRealEnvChecks(options.workspaceRoot) : [];
+  const allChecks = [...checks, ...realEnvChecks];
+  const localOk = allChecks.every((check) => check.ok);
   const seed = parseSeedFile(options.workspaceRoot, file);
   const seedState = readWorkOSSeedState(options.workspaceRoot, seed);
   const setupDryRun = options.dryRun || !options.real;
@@ -1151,7 +1181,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
     return {
       ok: false,
       kind: "workos-setup",
-      checks,
+      checks: allChecks,
       command,
       applied: false,
       data: {
@@ -1195,7 +1225,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
   return {
     ok: seedResult.ok,
     kind: "workos-setup",
-    checks: seedResult.checks,
+    checks: [...seedResult.checks, ...realEnvChecks],
     command: seedResult.command,
     applied: seedResult.ok,
     data: {
@@ -1233,6 +1263,9 @@ export function runWorkOSProveCommand(options: WorkOSCommandOptions): WorkOSComm
     real: options.real ?? false,
     file,
   });
+  const setupBlockingChecks = setup.checks
+    .filter((check) => !check.ok)
+    .map((check) => ({ ...check, name: `setup:${check.name}` }));
   const checks: WorkOSCheck[] = [
     ...doctor.checks.map((check) => ({ ...check, name: `doctor:${check.name}` })),
     {
@@ -1242,6 +1275,7 @@ export function runWorkOSProveCommand(options: WorkOSCommandOptions): WorkOSComm
         ? `${file} is valid, app-aware, and ready for hosted application`
         : `${file} failed seed validation before hosted application`,
     },
+    ...setupBlockingChecks,
     {
       name: options.real ? "setup:real" : "setup:dry-run",
       ok: setup.ok,

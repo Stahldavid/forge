@@ -6,6 +6,19 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.47
+
+- `forge workos setup --real` and `forge workos prove --real` now validate the
+  real OIDC/JWT and WorkOS environment before hosted setup, surfacing exact
+  failed checks like `setup:real-env-forge_auth_audience`.
+- `forge deploy check --production` now requires WorkOS-backed apps to include
+  hosted seed evidence in `.workos-seed-state.json` matching the current
+  `workos-seed.yml`, with a direct `forge workos prove --real --file
+  workos-seed.yml --json` remediation.
+- Clarified production, self-host, and field-test docs so local mock evidence,
+  hosted WorkOS seed evidence, and production deploy env evidence are treated
+  as separate gates.
+
 ## 0.1.0-alpha.46
 
 - `forge deps upgrade-apply` and `forge deps upgrade-rollback` now accept the

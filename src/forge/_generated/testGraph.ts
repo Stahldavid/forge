@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.40 input=e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46 content=21027c37d534a7f4b16365463246b770619323b2700a31921a34fc90a5d5f364
+// @forge-generated generator=0.1.0-alpha.47 input=bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1 content=e54d670fbe0174cfaedeba429867ec669e32ec83cf971075da446002ba1f75b7
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.40",
-  "inputHash": "e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46",
+  "generatorVersion": "0.1.0-alpha.47",
+  "inputHash": "bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -645,7 +645,6 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "react",
           "tsx"
         ],
         "policies": [],
@@ -656,7 +655,6 @@ export const testGraph = {
       "file": "tests/cli/cli-generation.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages react",
         "probable: packages tsx"
       ]
     },
@@ -709,7 +707,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "react"
+          "react",
+          "tsx"
         ],
         "policies": [],
         "queries": [],
@@ -719,7 +718,8 @@ export const testGraph = {
       "file": "tests/cli/cli.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages react"
+        "probable: packages react",
+        "probable: packages tsx"
       ]
     },
     {
@@ -837,6 +837,28 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/cli/node-compat.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/seed.test.ts",
       "kind": "unknown",
       "reasons": [
         "probable: packages tsx"
@@ -2253,6 +2275,7 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "react",
           "zod"
         ],
         "policies": [],
@@ -2263,6 +2286,7 @@ export const testGraph = {
       "file": "tests/package-manager/adapter.test.ts",
       "kind": "unknown",
       "reasons": [
+        "probable: packages react",
         "probable: packages zod"
       ]
     },
@@ -3923,6 +3947,52 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/templates/new-vendor-access.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript",
+          "zod"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/types/server-definition-types.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript",
+        "probable: packages zod"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
           "react",
           "tsx"
         ],
@@ -3934,7 +4004,7 @@ export const testGraph = {
       "file": "tests/ui/h32-ui.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages react",
+        "confirmed: packages react",
         "probable: packages tsx"
       ]
     },

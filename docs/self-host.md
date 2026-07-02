@@ -23,6 +23,20 @@ The generated Dockerfile and Compose commands use the app's detected package man
 
 Review `deploy/.env.production.example` for secret **names** before deploying. Copy it to `deploy/.env.production` or provide equivalent values through the environment before running the production gate. `forge deploy check --production` reads `deploy/.env.production` for `DATABASE_URL`, `FORGE_AUTH_MODE`, issuer, audience, JWKS/discovery, and provider secret names. The generated Docker Compose stack also uses `deploy/.env.production` through `env_file` and does not inject a hidden `DATABASE_URL` override into the Forge services. Never commit real secret values.
 
+For WorkOS-backed apps, run the hosted proof before treating the app as
+production-deploy ready:
+
+```bash
+forge workos prove --real --file workos-seed.yml --json
+```
+
+The dry-run proof validates the local app contract and seed shape. The `--real`
+proof applies or confirms hosted WorkOS redirect/CORS/homepage config and seed
+resources through the WorkOS CLI, then writes `.workos-seed-state.json`.
+`forge deploy check --production` requires that state file to match the current
+`workos-seed.yml`; otherwise it reports `workos-hosted-seed` as a production
+blocking check.
+
 ## Check before deploy
 
 ```bash
@@ -37,6 +51,8 @@ Validates:
 - Production auth issuer/audience/JWKS settings are present
 - Database readiness is present
 - Public `auth.md` and OAuth protected-resource metadata are generated
+- WorkOS hosted seed evidence is present and matches `workos-seed.yml` when the
+  app uses WorkOS
 - A field-test report exists with runtime, auth, and UI probes
 - Tenant claim mapping is present when required
 - Generated artifacts match the current app graph

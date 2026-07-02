@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.40 input=e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46 content=cc09e4d4acb71803bb6aae835eba75d08a12d96236dc8cedf289ed1ced2e30db
+// @forge-generated generator=0.1.0-alpha.47 input=bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1 content=9a8a2968597e6687e2356be48193b81f8630e978b70b82f5b692e952e33d6772
 export const buildInfo = {
-  "generatedHash": "e7e1c05d24f59dda0a9ffa9173a1bc3b6972f9ad1617c90975da4cd24651ab46",
+  "generatedHash": "bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1",
   "gitSha": "unknown",
   "packageName": "forgeos",
-  "packageVersion": "0.1.0-alpha.40",
-  "releaseId": "forgeos@0.1.0-alpha.40+unknown",
+  "packageVersion": "0.1.0-alpha.47",
+  "releaseId": "forgeos@0.1.0-alpha.47+unknown",
   "schemaVersion": "0.1.0"
 } as const;

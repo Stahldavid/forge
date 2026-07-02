@@ -995,6 +995,20 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(proveDryRun.data)).toContain("forge workos prove --real --file workos-seed.yml --json");
       expect(formatWorkOSHuman(proveDryRun)).toContain("WorkOS proof dry-run passed");
 
+      const proveRealMissingEnv = runWorkOSCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+      });
+      expect(proveRealMissingEnv.exitCode).toBe(1);
+      expect(proveRealMissingEnv.applied).toBe(false);
+      expect(JSON.stringify(proveRealMissingEnv.checks)).toContain("setup:real-env-forge_auth_audience");
+      expect(JSON.stringify(proveRealMissingEnv.checks)).toContain("FORGE_AUTH_AUDIENCE");
+
       writeFileSync(
         join(workspace, "workos-seed.yml"),
         "// @forge-generated generator=0.1.0-alpha.0 input=abc content=def\n" + seedYaml,
@@ -1022,6 +1036,20 @@ describe("Forge CLI", () => {
       expect(legacyHeaderSeed.applied).toBe(true);
       expect(JSON.stringify(legacyHeaderSeed.data)).toContain('"seedFileSanitized":true');
 
+      writeFileSync(
+        join(workspace, ".env.local"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_AUDIENCE=client_test",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test",
+          "WORKOS_API_KEY=sk_test_example",
+          "WORKOS_CLIENT_ID=client_test",
+          "WORKOS_COOKIE_PASSWORD=abcdefghijklmnopqrstuvwxyz123456",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
       const setupReal = runWorkOSCommand({
         subcommand: "setup",
         workspaceRoot: workspace,
