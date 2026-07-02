@@ -677,12 +677,21 @@ export interface WorkOSFgaStateSummary {
   diagnostics: string[];
 }
 
+export interface WorkOSFgaMembershipEnvSummary {
+  requiredEnv: string[];
+  presentEnv: string[];
+  missingEnv: string[];
+  jsonEnvPresent: boolean;
+  complete: boolean;
+}
+
 export interface WorkOSFgaHostedSetup {
   requiredResourceTypes: string[];
   rootResourceType: "organization";
   missingResourceTypes: string[];
   requiredMembershipEnv: string[];
   managedBy: "hosted-workos";
+  resourceTypeAutomation: "not-supported-by-workos-api" | "not-needed";
   cliSupport: "resources-and-checks";
   sdkSupport: "resources-and-checks";
   docs: string[];
@@ -708,6 +717,19 @@ export interface WorkOSFgaSetupGuide {
   markdown: string;
   docs: string[];
   unsupportedAutomation: string[];
+}
+
+export interface WorkOSFgaReadiness {
+  real: boolean;
+  planReady: boolean;
+  seedReady: boolean;
+  resourceTypesConfigured: boolean;
+  membershipEnvReady: boolean;
+  synced: boolean;
+  proved: boolean;
+  productionReady: boolean;
+  nextCommand: string;
+  nextActions: string[];
 }
 
 function slugifyExternalIdPart(value: string): string {
@@ -951,6 +973,24 @@ function fgaMembershipEnvKey(organization: string): string {
   return `WORKOS_FGA_MEMBERSHIP_${suffix}`;
 }
 
+function workOSFgaMembershipEnvSummary(
+  workspaceRoot: string,
+  organizations: string[],
+): WorkOSFgaMembershipEnvSummary {
+  const env = readRealEnv(workspaceRoot);
+  const requiredEnv = organizations.map(fgaMembershipEnvKey);
+  const jsonEnvPresent = hasValue(env, "WORKOS_FGA_MEMBERSHIPS_JSON") || hasValue(env, "WORKOS_FGA_TEST_MEMBERSHIPS");
+  const presentEnv = requiredEnv.filter((name) => hasValue(env, name));
+  const missingEnv = jsonEnvPresent ? [] : requiredEnv.filter((name) => !presentEnv.includes(name));
+  return {
+    requiredEnv,
+    presentEnv,
+    missingEnv,
+    jsonEnvPresent,
+    complete: jsonEnvPresent || missingEnv.length === 0,
+  };
+}
+
 function extractMissingWorkOSFgaResourceTypes(data: unknown, manifest?: WorkOSFgaManifest): string[] {
   const missing = new Set<string>();
   const add = (value: unknown) => {
@@ -999,6 +1039,7 @@ function workOSFgaHostedSetup(manifest: WorkOSFgaManifest, sdkData?: unknown): W
     missingResourceTypes,
     requiredMembershipEnv,
     managedBy: "hosted-workos",
+    resourceTypeAutomation: requiredResourceTypes.length > 0 ? "not-supported-by-workos-api" : "not-needed",
     cliSupport: "resources-and-checks",
     sdkSupport: "resources-and-checks",
     docs: [
@@ -1179,11 +1220,14 @@ function writeWorkOSFgaSetupGuide(
 
 function fgaData(input: {
   action: WorkOSFgaAction;
+  workspaceRoot: string;
   manifest: WorkOSFgaManifest;
   state: WorkOSFgaStateSummary;
+  seedState?: WorkOSSeedStateSummary;
   real?: boolean;
   cliAuth?: WorkOSCliAuthSummary;
   workosSdk?: unknown;
+  readiness?: WorkOSFgaReadiness;
   stateFile?: string;
   nextCommand?: string;
   nextActions?: string[];
@@ -1191,12 +1235,16 @@ function fgaData(input: {
 }): Record<string, unknown> {
   const hostedSetup = workOSFgaHostedSetup(input.manifest, input.workosSdk);
   const setupGuide = workOSFgaSetupGuide(input.manifest, hostedSetup);
+  const membershipEnv = workOSFgaMembershipEnvSummary(input.workspaceRoot, input.manifest.organizations);
   return {
     action: input.action,
     real: input.real ?? false,
     manifest: input.manifest,
     state: input.state,
+    ...(input.seedState ? { seedState: input.seedState } : {}),
+    ...(input.readiness ? { readiness: input.readiness } : {}),
     hostedSetup,
+    membershipEnv,
     resourceTypeSetup: setupGuide.resourceTypes,
     setupGuide,
     ...(input.cliAuth ? { cliAuth: input.cliAuth } : {}),
@@ -2573,6 +2621,133 @@ function collectWorkOSFgaChecks(input: {
   ];
 }
 
+function workOSFgaReadiness(input: {
+  workspaceRoot: string;
+  file: string;
+  manifest: WorkOSFgaManifest;
+  state: WorkOSFgaStateSummary;
+  seedState: WorkOSSeedStateSummary;
+  real: boolean;
+}): WorkOSFgaReadiness {
+  const membershipEnv = workOSFgaMembershipEnvSummary(input.workspaceRoot, input.manifest.organizations);
+  const planReady = input.manifest.diagnostics.length === 0 &&
+    input.manifest.resourceTypes.includes("organization") &&
+    input.manifest.proofScenarios.some((scenario) => scenario.expected === "allow") &&
+    input.manifest.proofScenarios.some((scenario) => scenario.expected === "deny");
+  const seedReady = !input.real || Boolean(input.seedState.exists && input.seedState.valid && input.seedState.matchesSeedHash === true);
+  const synced = Boolean(input.state.exists && input.state.valid && input.state.matchesManifestHash === true);
+  const resourceTypesConfigured = !input.real || Boolean(synced && input.state.mode === "real" && input.state.sdkOk === true);
+  const membershipEnvReady = !input.real || membershipEnv.complete;
+  const proved = !input.real
+    ? Boolean(input.state.provedAt)
+    : Boolean(synced && input.state.mode === "real" && input.state.sdkOk === true && input.state.provedAt);
+  const productionReady = Boolean(planReady && seedReady && resourceTypesConfigured && membershipEnvReady && proved);
+  let nextCommand = `forge workos fga plan --file ${input.file} --write --json`;
+  if (planReady && input.real && !seedReady) {
+    nextCommand = `forge workos prove --real --file ${input.file} --json`;
+  } else if (planReady && input.real && !resourceTypesConfigured) {
+    nextCommand = `forge workos fga sync --real --file ${input.file} --write --json`;
+  } else if (planReady && input.real && !membershipEnvReady) {
+    nextCommand = `forge workos fga prove --real --file ${input.file} --json`;
+  } else if (planReady && input.real && !proved) {
+    nextCommand = `forge workos fga prove --real --file ${input.file} --json`;
+  } else if (planReady && !input.real && !synced) {
+    nextCommand = `forge workos fga sync --file ${input.file} --json`;
+  } else if (planReady && !input.real && !proved) {
+    nextCommand = `forge workos fga prove --file ${input.file} --json`;
+  } else if (productionReady || (planReady && !input.real)) {
+    nextCommand = "forge deploy check --production --json";
+  }
+  const nextActions = [
+    ...(planReady ? [] : [`repair FGA manifest gaps, then run forge workos fga plan --file ${input.file} --write --json`]),
+    ...(input.real && !seedReady ? [`apply/prove hosted WorkOS seed: forge workos prove --real --file ${input.file} --json`] : []),
+    ...(input.real && !resourceTypesConfigured
+      ? [
+          "configure hosted WorkOS FGA resource types listed in resourceTypeSetup",
+          `sync real WorkOS FGA resources: forge workos fga sync --real --file ${input.file} --write --json`,
+        ]
+      : []),
+    ...(input.real && !membershipEnvReady
+      ? [`set WORKOS_FGA_MEMBERSHIPS_JSON or ${membershipEnv.missingEnv.join(", ") || "WORKOS_FGA_MEMBERSHIP_<ORG>"} before real access checks`]
+      : []),
+    ...(input.real && membershipEnvReady && resourceTypesConfigured && !proved
+      ? [`prove real WorkOS FGA access checks: forge workos fga prove --real --file ${input.file} --json`]
+      : []),
+    ...(productionReady ? ["rerun forge deploy check --production --json"] : []),
+    ...(!input.real && planReady && !synced ? [`run forge workos fga sync --file ${input.file} --json`] : []),
+    ...(!input.real && planReady && synced && !proved ? [`run forge workos fga prove --file ${input.file} --json`] : []),
+  ];
+  return {
+    real: input.real,
+    planReady,
+    seedReady,
+    resourceTypesConfigured,
+    membershipEnvReady,
+    synced,
+    proved,
+    productionReady,
+    nextCommand,
+    nextActions,
+  };
+}
+
+function collectWorkOSFgaDoctorChecks(input: {
+  workspaceRoot: string;
+  file: string;
+  manifest: WorkOSFgaManifest;
+  state: WorkOSFgaStateSummary;
+  seedState: WorkOSSeedStateSummary;
+  real: boolean;
+}): WorkOSCheck[] {
+  const readiness = workOSFgaReadiness(input);
+  const membershipEnv = workOSFgaMembershipEnvSummary(input.workspaceRoot, input.manifest.organizations);
+  return [
+    ...collectWorkOSFgaChecks({
+      manifest: input.manifest,
+      state: input.state,
+      requireState: input.real,
+      requireRealState: input.real,
+      requireProof: input.real,
+    }),
+    {
+      name: "fga-seed-state",
+      ok: !input.real || readiness.seedReady,
+      detail: !input.real
+        ? "hosted seed evidence is only required for --real doctor"
+        : readiness.seedReady
+          ? `${WORKOS_SEED_STATE_FILE} matches ${input.file}`
+          : `real FGA proof requires hosted seed evidence matching ${input.file}; run forge workos prove --real --file ${input.file} --json`,
+    },
+    {
+      name: "fga-hosted-resource-types",
+      ok: !input.real || readiness.resourceTypesConfigured,
+      detail: !input.real
+        ? "hosted WorkOS resource type existence is only verified by --real sync/prove"
+        : readiness.resourceTypesConfigured
+          ? `${WORKOS_FGA_STATE_FILE} records successful real Authorization API resource sync`
+          : "real FGA requires hosted WorkOS resource types for every non-organization resource; run forge workos fga plan --write and configure any listed resource types before sync",
+    },
+    {
+      name: "fga-membership-env",
+      ok: !input.real || readiness.membershipEnvReady,
+      detail: !input.real
+        ? "organizationMembershipId env is only required for real WorkOS access checks"
+        : readiness.membershipEnvReady
+          ? `membership env is present${membershipEnv.jsonEnvPresent ? " through WORKOS_FGA_MEMBERSHIPS_JSON" : ` through ${membershipEnv.presentEnv.join(", ")}`}`
+          : `missing organizationMembershipId env for real checks: WORKOS_FGA_MEMBERSHIPS_JSON or ${membershipEnv.missingEnv.join(", ")}`,
+    },
+    {
+      name: "fga-production-readiness",
+      ok: !input.real || readiness.productionReady,
+      detail: !input.real
+        ? "run forge workos fga doctor --real --json for production FGA gates"
+        : readiness.productionReady
+          ? "real WorkOS FGA seed, resource sync, membership env, and proof are current"
+          : `real WorkOS FGA is not production-ready; next command: ${readiness.nextCommand}`,
+    },
+  ];
+}
+
 export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
   const action = options.fgaAction ?? "doctor";
   const file = options.file ?? DEFAULT_SEED_FILE;
@@ -2608,8 +2783,10 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
       applied: false,
       data: fgaData({
         action,
+        workspaceRoot: options.workspaceRoot,
         manifest,
         state,
+        seedState,
         real,
         ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
         nextCommand: `forge workos fga sync --file ${file} --json`,
@@ -2642,8 +2819,10 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
         applied: false,
         data: fgaData({
           action,
+          workspaceRoot: options.workspaceRoot,
           manifest,
           state,
+          seedState,
           real,
           ...(cliAuth ? { cliAuth } : {}),
           ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
@@ -2661,8 +2840,10 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
         applied: false,
         data: fgaData({
           action,
+          workspaceRoot: options.workspaceRoot,
           manifest,
           state,
+          seedState,
           real,
           ...(cliAuth ? { cliAuth } : {}),
           ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
@@ -2688,8 +2869,10 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
         applied: false,
         data: fgaData({
           action,
+          workspaceRoot: options.workspaceRoot,
           manifest,
           state,
+          seedState,
           real,
           ...(cliAuth ? { cliAuth } : {}),
           workosSdk: sdk.data,
@@ -2718,8 +2901,10 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
       applied: true,
       data: fgaData({
         action,
+        workspaceRoot: options.workspaceRoot,
         manifest,
         state,
+        seedState,
         real,
         ...(cliAuth ? { cliAuth } : {}),
         ...(sdk ? { workosSdk: sdk.data } : {}),
@@ -2789,8 +2974,10 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
       applied: Boolean(ok && !options.dryRun),
       data: fgaData({
         action,
+        workspaceRoot: options.workspaceRoot,
         manifest,
         state,
+        seedState,
         real,
         ...(cliAuth ? { cliAuth } : {}),
         ...(sdk ? { workosSdk: sdk.data } : {}),
@@ -2804,20 +2991,40 @@ export function runWorkOSFgaCommand(options: WorkOSCommandOptions): WorkOSComman
     };
   }
 
-  const ok = checks.every((check) => check.ok);
+  const doctorChecks = collectWorkOSFgaDoctorChecks({
+    workspaceRoot: options.workspaceRoot,
+    file,
+    manifest,
+    state,
+    seedState,
+    real,
+  });
+  const readiness = workOSFgaReadiness({
+    workspaceRoot: options.workspaceRoot,
+    file,
+    manifest,
+    state,
+    seedState,
+    real,
+  });
+  const ok = doctorChecks.every((check) => check.ok);
   return {
     ok,
     kind: "workos-fga",
-    checks,
+    checks: doctorChecks,
     command,
     applied: false,
     data: fgaData({
       action,
+      workspaceRoot: options.workspaceRoot,
       manifest,
       state,
+      seedState,
+      readiness,
       real,
       ...(writtenSetupGuidePath ? { setupGuidePath: writtenSetupGuidePath } : {}),
-      nextCommand: state.exists ? `forge workos fga prove --file ${file} --json` : `forge workos fga sync --file ${file} --json`,
+      nextCommand: readiness.nextCommand,
+      nextActions: readiness.nextActions,
     }),
     exitCode: ok ? 0 : 1,
   };
@@ -2953,6 +3160,8 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
       lines.push(`WorkOS FGA sync recorded${data.stateFile ? ` in ${data.stateFile}` : ""}; run ${data.nextCommand ?? "forge workos fga prove --json"}.`);
     } else if (result.ok && data.action === "prove") {
       lines.push(`WorkOS FGA proof passed${data.real ? " for real-mode state" : " locally"}; production deploy gates can inspect the FGA state.`);
+    } else if (result.ok && data.action === "doctor") {
+      lines.push(`WorkOS FGA doctor passed${data.real ? " for real production gates" : " for local planning"}; run ${data.nextCommand ?? "forge workos fga sync --json"} if you need the next proof step.`);
     } else if (!result.ok) {
       lines.push("WorkOS FGA check failed; inspect manifest diagnostics, seed coverage, and FGA state.");
       for (const action of data.nextActions ?? []) {

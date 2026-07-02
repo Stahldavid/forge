@@ -1040,6 +1040,21 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(fgaPlan.data)).toContain("# WorkOS FGA Setup");
       expect(formatWorkOSHuman(fgaPlan)).toContain("WorkOS FGA plan passed");
 
+      const fgaDoctor = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: false,
+        file: "workos-seed.yml",
+      });
+      expect(fgaDoctor.exitCode).toBe(0);
+      expect(JSON.stringify(fgaDoctor.data)).toContain('"planReady":true');
+      expect(JSON.stringify(fgaDoctor.data)).toContain('"membershipEnv"');
+      expect(formatWorkOSHuman(fgaDoctor)).toContain("WorkOS FGA doctor passed for local planning");
+
       const fgaPlanWrite = runWorkOSCommand({
         subcommand: "fga",
         fgaAction: "plan",
@@ -1185,6 +1200,23 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(setupReal.data)).toContain('"matchesSeedHash":true');
       expect(JSON.stringify(setupReal.data)).toContain('"seedStateFile":".workos-seed-state.json"');
       expect(formatWorkOSHuman(setupReal)).toContain("setup applied; .workos-seed-state.json matches the current seed");
+
+      const fgaDoctorRealNeedsSync = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+      });
+      expect(fgaDoctorRealNeedsSync.exitCode).toBe(1);
+      expect(JSON.stringify(fgaDoctorRealNeedsSync.data)).toContain('"seedReady":true');
+      expect(JSON.stringify(fgaDoctorRealNeedsSync.data)).toContain('"resourceTypesConfigured":false');
+      expect(JSON.stringify(fgaDoctorRealNeedsSync.data)).toContain('"membershipEnvReady":false');
+      expect(JSON.stringify(fgaDoctorRealNeedsSync.data)).toContain("forge workos fga sync --real --file workos-seed.yml --write --json");
+      expect(formatWorkOSHuman(fgaDoctorRealNeedsSync)).toContain("WorkOS FGA check failed");
 
       const fgaRealMissingResourceTypes = runWorkOSCommand({
         subcommand: "fga",
@@ -1358,6 +1390,21 @@ describe("Forge CLI", () => {
       expect(fgaRealState.mode).toBe("real");
       expect(fgaRealState.sdkOk).toBe(true);
       expect(fgaRealState.provedAt).toBeTruthy();
+
+      const fgaDoctorRealReady = runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        real: true,
+        file: "workos-seed.yml",
+      });
+      expect(fgaDoctorRealReady.exitCode).toBe(0);
+      expect(JSON.stringify(fgaDoctorRealReady.data)).toContain('"productionReady":true');
+      expect(JSON.stringify(fgaDoctorRealReady.checks)).toContain("fga-production-readiness");
+      expect(formatWorkOSHuman(fgaDoctorRealReady)).toContain("WorkOS FGA doctor passed for real production gates");
 
       writeFileSync(
         join(workspace, ".env.local"),

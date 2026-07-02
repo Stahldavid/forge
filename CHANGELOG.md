@@ -1,5 +1,23 @@
 # forgeos
 
+## 0.1.0-alpha.51
+
+### Patch Changes
+
+- Make the WorkOS FGA production doctor explicit enough for real P2 rollout.
+
+  - `forge workos fga doctor --real --json` now reports structured readiness
+    for the full hosted path: FGA plan, hosted seed evidence, hosted resource
+    type/resource sync, `organizationMembershipId` env, real proof state, and
+    production readiness.
+  - FGA JSON output now includes `membershipEnv`, `seedState`, and `readiness`
+    metadata so agents can choose the next command without scraping human text.
+  - Hosted FGA setup data now states that WorkOS resource type creation is not
+    automated by the WorkOS API/CLI path, while resource sync and authorization
+    checks remain ForgeOS-driven after those resource types exist.
+  - Human output now distinguishes local FGA planning success from real
+    production-gate readiness.
+
 ## 0.1.0-alpha.50
 
 ### Patch Changes

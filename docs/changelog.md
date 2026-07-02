@@ -6,6 +6,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.51
+
+- `forge workos fga doctor --real --json` now reports a structured readiness
+  object for the full hosted FGA path: app-derived plan, hosted seed state,
+  real resource sync, membership env for WorkOS access checks, proof state, and
+  production readiness.
+- FGA command JSON now includes `membershipEnv`, `seedState`, and `readiness`
+  metadata so agents can continue the no-dashboard WorkOS flow deterministically.
+- Hosted FGA setup output now explicitly states that WorkOS resource type
+  creation is hosted WorkOS configuration, while ForgeOS can still sync
+  resources and run Authorization API checks after those types exist.
+- Human FGA output now separates local planning success from real production
+  gate readiness.
+
 ## 0.1.0-alpha.50
 
 - WorkOS hosted setup now includes explicit
