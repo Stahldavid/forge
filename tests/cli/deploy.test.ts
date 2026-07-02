@@ -600,6 +600,15 @@ describe("forge deploy", () => {
         }, null, 2)}\n`,
         "utf8",
       );
+      mkdirSync(join(workspace, "deploy"), { recursive: true });
+      writeFileSync(
+        join(workspace, "deploy/.env.production"),
+        [
+          'WORKOS_FGA_MEMBERSHIPS_JSON={"Acme Corp":"om_acme"}',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
 
       const withFgaState = await runDeployCommand({
         workspaceRoot: workspace,

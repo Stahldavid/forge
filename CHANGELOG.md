@@ -15,6 +15,9 @@
   - Hosted FGA setup data now states that WorkOS resource type creation is not
     automated by the WorkOS API/CLI path, while resource sync and authorization
     checks remain ForgeOS-driven after those resource types exist.
+  - WorkOS real checks now read `deploy/.env.production` as an explicit deploy
+    evidence source, and `forge deploy check --production` runs WorkOS/FGA
+    doctors with those values in scope.
   - Human output now distinguishes local FGA planning success from real
     production-gate readiness.
 

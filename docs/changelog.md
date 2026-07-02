@@ -17,6 +17,9 @@ The canonical source file in the repository is `CHANGELOG.md`.
 - Hosted FGA setup output now explicitly states that WorkOS resource type
   creation is hosted WorkOS configuration, while ForgeOS can still sync
   resources and run Authorization API checks after those types exist.
+- WorkOS real checks now read `deploy/.env.production` as deploy evidence, and
+  `forge deploy check --production` runs WorkOS/FGA doctors with those values
+  in scope.
 - Human FGA output now separates local planning success from real production
   gate readiness.
 

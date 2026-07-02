@@ -821,13 +821,15 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
     },
   });
   if (hasWorkOSIntegration(options.workspaceRoot)) {
-    const workosDoctor = runWorkOSCommand({
-      subcommand: "doctor",
-      workspaceRoot: options.workspaceRoot,
-      json: true,
-      yes: false,
-      dryRun: true,
-    });
+    const workosDoctor = await withDeployEnv(options.workspaceRoot, async () =>
+      runWorkOSCommand({
+        subcommand: "doctor",
+        workspaceRoot: options.workspaceRoot,
+        json: true,
+        yes: false,
+        dryRun: true,
+      })
+    );
     checks.push({
       name: "workos-doctor",
       ok: workosDoctor.exitCode === 0,
@@ -853,15 +855,17 @@ async function buildChecks(options: DeployCommandOptions): Promise<DeployCommand
       command: "forge workos prove --real --file workos-seed.yml --json",
       details: seedState,
     });
-    const workosFgaDoctor = runWorkOSCommand({
-      subcommand: "fga",
-      fgaAction: "doctor",
-      workspaceRoot: options.workspaceRoot,
-      json: true,
-      yes: false,
-      dryRun: true,
-      real: options.production,
-    });
+    const workosFgaDoctor = await withDeployEnv(options.workspaceRoot, async () =>
+      runWorkOSCommand({
+        subcommand: "fga",
+        fgaAction: "doctor",
+        workspaceRoot: options.workspaceRoot,
+        json: true,
+        yes: false,
+        dryRun: true,
+        real: options.production,
+      })
+    );
     checks.push({
       name: "workos-fga-proof",
       ok: !options.production || workosFgaDoctor.exitCode === 0,

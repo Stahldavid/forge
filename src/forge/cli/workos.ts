@@ -324,6 +324,7 @@ function parseEnvText(text: string): Record<string, string> {
 function readRealEnv(workspaceRoot: string): Record<string, string> {
   return {
     ...parseEnvText(readRawText(workspaceRoot, ".env")),
+    ...parseEnvText(readRawText(workspaceRoot, "deploy/.env.production")),
     ...parseEnvText(readRawText(workspaceRoot, ".env.local")),
     ...Object.fromEntries(
       Object.entries(process.env)
