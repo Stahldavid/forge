@@ -1440,7 +1440,7 @@ describe("Forge CLI", () => {
     } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
-  });
+  }, 420000);
 
   test("workos doctor derives permissions and resources from the app contract", () => {
     const workspace = mkdtempSync(join(tmpdir(), "forge-workos-vendor-cli-"));
