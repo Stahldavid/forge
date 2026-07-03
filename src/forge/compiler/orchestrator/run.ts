@@ -16,6 +16,7 @@ import { buildRuntimeMatrix } from "../classifier/runtime-matrix.ts";
 import { emit } from "../emitter/emit.ts";
 import { PackageGraphCompiler } from "../package-graph/compiler.ts";
 import { resolveByPackageName } from "../recipes/registry.ts";
+import { applyWorkspaceRecipeProfile } from "../recipes/profiles.ts";
 import { checkImportGuards } from "./guards.ts";
 import {
   saveManifest,
@@ -45,9 +46,10 @@ import { verifyLockIntegrity } from "./verify.ts";
 
 function classifyPackages(
   packageGraph: Awaited<ReturnType<PackageGraphCompiler["build"]>>["graph"],
+  workspaceRoot: string,
 ): ClassifiedPackage[] {
   return packageGraph.packages.map((api) => {
-    const recipe = resolveByPackageName(api.name) ?? undefined;
+    const recipe = applyWorkspaceRecipeProfile(resolveByPackageName(api.name), workspaceRoot);
     return {
       api,
       classification: classify(api, recipe),
@@ -171,7 +173,7 @@ async function runUnlocked(options: GenerateOptions): Promise<GenerateResult> {
   if (profileEnabled) {
     resetSignalProfile();
   }
-  const classified = classifyPackages(pkgResult.graph);
+  const classified = classifyPackages(pkgResult.graph, options.workspaceRoot);
   const classifierSignals = profileEnabled ? getSignalProfile() : undefined;
   if (profileEnabled) {
     clearSignalProfile();

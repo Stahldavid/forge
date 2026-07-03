@@ -573,6 +573,62 @@ function collectWorkOSRealEnvChecks(workspaceRoot: string, cliAuth?: WorkOSCliAu
   ];
 }
 
+function renderMergedDotEnv(current: string | null, values: Record<string, string>): string {
+  const lines = (current ?? "").split(/\r?\n/);
+  const seen = new Set<string>();
+  const next = lines.map((line) => {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/);
+    if (!match || !(match[1]! in values)) {
+      return line;
+    }
+    seen.add(match[1]!);
+    return `${match[1]}=${values[match[1]!]}`;
+  });
+  for (const [key, value] of Object.entries(values)) {
+    if (!seen.has(key)) {
+      next.push(`${key}=${value}`);
+    }
+  }
+  return `${next.filter((line, index, all) => line.length > 0 || index < all.length - 1).join("\n").trimEnd()}\n`;
+}
+
+function syncWorkOSPublicWebEnv(workspaceRoot: string, write: boolean): { ok: boolean; changed: string[]; path?: string; skipped?: string } {
+  const frontendWorkspace = findWorkOSFrontendWorkspace(workspaceRoot);
+  if (!frontendWorkspace) {
+    return { ok: true, changed: [], skipped: "no web workspace detected" };
+  }
+  const env = readRealEnv(workspaceRoot);
+  const clientId = env.VITE_WORKOS_CLIENT_ID || env.WORKOS_CLIENT_ID || "";
+  const redirectUri = env.VITE_WORKOS_REDIRECT_URI || env.WORKOS_REDIRECT_URI || "http://localhost:5173/callback";
+  const values: Record<string, string> = {
+    VITE_FORGE_URL: env.VITE_FORGE_URL || "http://localhost:3765",
+    VITE_WORKOS_CLIENT_ID: clientId,
+    VITE_WORKOS_REDIRECT_URI: redirectUri,
+  };
+  const relPath = join(frontendWorkspace, ".env.local");
+  const path = join(workspaceRoot, relPath);
+  const current = readRawText(workspaceRoot, relPath);
+  const next = renderMergedDotEnv(current, values);
+  if (current === next) {
+    return { ok: true, changed: [], path: relPath };
+  }
+  if (write) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, next, "utf8");
+  }
+  return { ok: true, changed: [relPath], path: relPath };
+}
+
+function findWorkOSFrontendWorkspace(workspaceRoot: string): string | undefined {
+  for (const candidate of ["web", "frontend", "client", "apps/web", "packages/web"]) {
+    if (existsSync(join(workspaceRoot, candidate, "package.json"))) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+
 export function collectPolicyPermissions(workspaceRoot: string): string[] {
   const registry = readJson(workspaceRoot, `${GENERATED_DIR}/policyRegistry.json`) as {
     policies?: Array<{ permissions?: string[] }>;
@@ -1757,12 +1813,10 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
     readText(workspaceRoot, "web/src/main.tsx"),
     readText(workspaceRoot, "web/src/App.tsx"),
   ].join("\n");
-  const appShellUsesWorkOSProvider =
-    frontendAppShell.includes("ForgeWorkOSAuthProvider") ||
-    frontendAppShell.includes("AuthKitProvider");
-  const authBridgeProvidesToken =
-    generatedFrontendAuthBridge.includes("getToken") ||
-    generatedFrontendAuthBridge.includes("getAccessToken");
+  const appShellUsesWorkOSProvider = frontendAppShell.includes("ForgeWorkOSAuthProvider");
+  const authBridgeUsesBackendRoutes =
+    generatedFrontendAuthBridge.includes("workOSApiUrl") &&
+    ["/login", "/logout", "/session"].every((route) => generatedFrontendAuthBridge.includes(route));
   const authBridgeProvidesSessionClaims =
     includesAll(generatedFrontendAuthBridge, ["useForgeWorkOSSession", "/session", "claims"]);
   const authSessionProxyConfigured = webAuthSessionProxyConfigured(workspaceRoot);
@@ -1809,7 +1863,7 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
       ok: !hasWeb || (hasValue(realEnv, "VITE_WORKOS_CLIENT_ID") || readRawText(workspaceRoot, ".env.example").includes("VITE_WORKOS_CLIENT_ID=")) &&
         (hasValue(realEnv, "VITE_WORKOS_REDIRECT_URI") || readRawText(workspaceRoot, ".env.example").includes("VITE_WORKOS_REDIRECT_URI=")),
       detail: hasWeb
-        ? "web workspace has VITE_WORKOS_CLIENT_ID and VITE_WORKOS_REDIRECT_URI guidance for AuthKit React"
+        ? "web workspace has browser WorkOS client ID and redirect URI guidance for backend-owned AuthKit routes"
         : "no web workspace detected",
     },
     {
@@ -1821,11 +1875,11 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
     },
     {
       name: "browser-authkit-bridge",
-      ok: !hasWeb || includesAll(generatedFrontendAuthBridge, ["AuthKitProvider", "ForgeProvider"]) &&
-        authBridgeProvidesToken &&
+      ok: !hasWeb || generatedFrontendAuthBridge.includes("ForgeProvider") &&
+        authBridgeUsesBackendRoutes &&
         authBridgeProvidesSessionClaims,
       detail: hasWeb
-        ? "generated web/src/lib/workos-auth.tsx bridge provides AuthKitProvider, ForgeProvider token wiring, and normalized /session claims"
+        ? "generated web/src/lib/workos-auth.tsx bridge uses backend-owned AuthKit routes, ForgeProvider, and normalized /session claims"
         : "no web workspace detected",
     },
     {
@@ -1841,7 +1895,7 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
       name: "browser-authkit-provider",
       ok: !hasWeb || appShellUsesWorkOSProvider,
       detail: hasWeb
-        ? "web app shell mounts ForgeWorkOSAuthProvider or AuthKitProvider"
+        ? "web app shell mounts ForgeWorkOSAuthProvider"
         : "no web workspace detected",
     },
     {
@@ -2486,6 +2540,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
   const seed = parseSeedFile(options.workspaceRoot, file);
   const seedState = readWorkOSSeedState(options.workspaceRoot, seed);
   const setupDryRun = options.dryRun || !options.real;
+  const publicEnvSync = syncWorkOSPublicWebEnv(options.workspaceRoot, localOk && !setupDryRun);
   const configActions = runWorkOSConfigActions(seed, options, true);
   const command = ["npx", "--yes", "workos@latest", "seed", "--file", file];
   if (!localOk) {
@@ -2500,6 +2555,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
         real: options.real ?? false,
         seed,
         seedState,
+        publicEnvSync,
         ...(cliAuth ? { cliAuth } : {}),
         configActions,
         nextCommand: cliAuth && !cliAuth.ok
@@ -2521,6 +2577,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
         real: false,
         seed,
         seedState,
+        publicEnvSync,
         ...(cliAuth ? { cliAuth } : {}),
         configActions,
         nextCommand: `forge workos setup --real --file ${file} --json`,
@@ -2546,6 +2603,7 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
     data: {
       real: true,
       seed,
+      publicEnvSync,
       ...(cliAuth ? { cliAuth } : {}),
       seedState: seedResultData.seedState ?? readWorkOSSeedState(options.workspaceRoot, seed),
       seedResult: seedResult.data,

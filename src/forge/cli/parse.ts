@@ -336,6 +336,7 @@ export type ForgeCommand =
       webOnly: boolean;
       open: boolean;
       webPort?: number;
+      publicApiUrl?: string;
       telemetry: string[];
       envFile?: string;
       skipStartupConsole: boolean;
@@ -2733,6 +2734,7 @@ export function parseCli(argv: string[]): ParsedCli {
           webOnly: parseFlag(argv, "--web-only"),
           open: parseFlag(argv, "--open"),
           webPort,
+          publicApiUrl: parseOptionValue(argv, "--public-api-url"),
           telemetry: (parseOptionValue(argv, "--telemetry") ?? "local")
             .split(",")
             .map((value) => value.trim())
@@ -3250,6 +3252,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--postgres-version",
     "--runtime-port",
     "--web-port",
+    "--public-api-url",
     "--preview-port",
     "--preview-url",
     "--studio-url",
@@ -3377,6 +3380,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--postgres-version" ||
         arg === "--runtime-port" ||
         arg === "--web-port" ||
+        arg === "--public-api-url" ||
         arg === "--preview-port" ||
         arg === "--preview-url" ||
         arg === "--studio-url" ||

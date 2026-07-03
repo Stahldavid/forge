@@ -1,5 +1,16 @@
 # forgeos
 
+## 0.1.0-alpha.57
+
+### Patch Changes
+
+- Fix the WorkOS AuthKit local and tunneled development flow.
+
+  - Add `response_type=code` to Forge-owned WorkOS authorization URLs and avoid sending a default `organization_id` during login so AuthKit can present normal sign-in and organization selection.
+  - Resolve WorkOS organization and membership claims during callback when AuthKit returns only the user/token, then expose Forge-normalized session claims through `/session`.
+  - Add `forge dev --public-api-url` for browser-facing API URLs behind tunnels and update the WorkOS React bridge to use backend-owned `/login`, `/session`, and `/logout` routes through same-origin/proxy-aware URL resolution.
+  - Sync public WorkOS browser env into `web/.env.local` during `forge add auth workos` and `forge workos setup --real`, and update WorkOS doctor/UI audit checks for the backend-owned AuthKit session flow.
+
 ## 0.1.0-alpha.56
 
 ### Patch Changes
@@ -22,7 +33,7 @@
     `/ready`, `/live/status`, `/outbox/status`, and `/webhooks/workos`.
   - Production docs now present the canonical flow:
     `deploy init -> env doctor -> auth/auth.md/WorkOS proof -> field-test ->
-    readiness -> check -> package -> verify`, while keeping WorkOS FGA
+readiness -> check -> package -> verify`, while keeping WorkOS FGA
     explicitly optional unless the app opts into FGA artifacts.
 
 ## 0.1.0-alpha.55
@@ -115,7 +126,7 @@
 - Tighten the no-dashboard WorkOS real setup/proof handoff.
 
   - WorkOS hosted setup now records explicit `WORKOS_MODE=agent npx --yes
-    workos@latest auth login --json` shell guidance when CLI login is required.
+workos@latest auth login --json` shell guidance when CLI login is required.
   - Failed `forge workos setup --real` login attempts now tell the operator to
     rerun the same setup command after completing OAuth/device-code login,
     instead of pointing generically at `prove --real`.
@@ -276,7 +287,7 @@
     `forge dev --seed --all-tenants`, and seed readiness evidence in dev and
     field-test summaries.
   - Update templates, docs, and tests around the new `create app -> add auth ->
-    field-test -> deploy` path.
+field-test -> deploy` path.
 
 ## 0.1.0-alpha.41
 

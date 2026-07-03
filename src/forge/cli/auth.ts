@@ -180,11 +180,16 @@ function permissionSubsetForRestrictedTenant(permissions: string[]): string[] {
 function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof detectWorkOS>, requiresTenant: boolean) {
   const rootSeedPresent = existsSync(join(workspaceRoot, "workos-seed.yml"));
   const generatedSeedPresent = existsSync(join(workspaceRoot, "src/forge/_generated/integrations/workos/workos-seed.yml"));
+  const fgaArtifactsPresent =
+    existsSync(join(workspaceRoot, "src/forge/_generated/integrations/workos/fga.ts")) ||
+    existsSync(join(workspaceRoot, "src/forge/_generated/integrations/workos/resource-map.ts")) ||
+    existsSync(join(workspaceRoot, ".workos-fga-state.json"));
   const authMdPresent = existsSync(join(workspaceRoot, "public/auth.md"));
   const metadataPresent = existsSync(join(workspaceRoot, "public/.well-known/oauth-protected-resource"));
   const activePermissions = collectPolicyPermissions(workspaceRoot);
   const expectedResourceTypes = collectExpectedResourceTypes(workspaceRoot);
   const seed = parseSeedFile(workspaceRoot);
+  const fgaEnabled = fgaArtifactsPresent || seed.resourceTypes.length > 0;
   const missingSeedPermissions = missingValues(activePermissions, seed.permissions);
   const missingSeedResources = missingValues(expectedResourceTypes, seed.resourceTypes);
   const acmePermissions = activePermissions;
@@ -223,8 +228,10 @@ function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof 
     },
     {
       id: "seed-resource-coverage",
-      ok: missingSeedResources.length === 0,
-      evidence: missingSeedResources.length === 0
+      ok: !fgaEnabled || missingSeedResources.length === 0,
+      evidence: !fgaEnabled
+        ? "FGA is not enabled; seed resource type coverage is not required for AuthKit/RBAC tenant isolation."
+        : missingSeedResources.length === 0
         ? `seed covers expected app resource type(s): ${expectedResourceTypes.join(", ") || "none required"}`
         : `seed missing expected app resource type(s): ${missingSeedResources.join(", ")}`,
     },
@@ -244,6 +251,7 @@ function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof 
     appContract: {
       activePermissions,
       expectedResourceTypes,
+      fgaEnabled,
       seedPath: seed.path,
       seedPermissions: seed.permissions,
       seedResourceTypes: seed.resourceTypes,

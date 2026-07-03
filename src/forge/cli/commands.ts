@@ -2709,6 +2709,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
         webOnly: command.webOnly,
         open: command.open,
         webPort: command.webPort,
+        publicApiUrl: command.publicApiUrl,
         telemetry: command.telemetry,
         envFile: command.envFile,
         skipStartupConsole: command.skipStartupConsole,

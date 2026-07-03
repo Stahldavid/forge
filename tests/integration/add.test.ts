@@ -545,6 +545,9 @@ describe("forge add integration", () => {
 
       const generated = await runGenerateCommand(defaultGenerateOptions(workspace));
       expect(generated.exitCode).toBe(0);
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/workos/fga.ts"))).toBe(false);
+      expect(existsSync(join(workspace, "src/forge/_generated/integrations/workos/resource-map.ts"))).toBe(false);
+      expect(readFileSync(join(workspace, "workos-seed.yml"), "utf8")).not.toContain("resource_types:");
       const authRegistry = JSON.parse(
         stripDeterministicHeader(
           readFileSync(join(workspace, "src/forge/_generated/authRegistry.json"), "utf8"),
@@ -869,6 +872,7 @@ describe("forge add integration", () => {
       expect(addCalls).toContainEqual({ spec: "@workos-inc/node", cwd: workspace });
       expect(addCalls).toContainEqual({ spec: "@workos-inc/authkit-react", cwd: join(workspace, "web") });
       expect(result.changed).toContain("web/package.json");
+      expect(result.changed).toContain("web/.env.local");
       expect(result.changed).toContain("web/src/lib/workos-auth.tsx");
       expect(result.changed).toContain("web/src/main.tsx");
 
@@ -877,12 +881,18 @@ describe("forge add integration", () => {
       };
       expect(webPkg.dependencies?.["@workos-inc/authkit-react"]).toBe("^1.0.0");
       const bridge = readFileSync(join(workspace, "web/src/lib/workos-auth.tsx"), "utf8");
-      expect(bridge).toContain("AuthKitProvider");
-      expect(bridge).toContain("getAccessToken");
+      expect(bridge).not.toContain("AuthKitProvider");
+      expect(bridge).toContain("function workOSApiUrl(path: string): URL");
+      expect(bridge).toContain("workOSApiUrl('/login')");
+      expect(bridge).toContain("workOSApiUrl('/logout')");
       expect(bridge).toContain("useForgeWorkOSSession");
-      expect(bridge).toContain("fetch('/session'");
+      expect(bridge).toContain("workOSApiUrl('/session')");
       expect(bridge).toContain("ForgeProvider");
       expect(bridge).toContain("url={forgeUrl}");
+      const webEnv = readFileSync(join(workspace, "web/.env.local"), "utf8");
+      expect(webEnv).toContain("VITE_FORGE_URL=http://localhost:3765");
+      expect(webEnv).toContain("VITE_WORKOS_CLIENT_ID=");
+      expect(webEnv).toContain("VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback");
       const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
       expect(main).toContain('import { ForgeWorkOSAuthProvider } from "./lib/workos-auth";');
       expect(main).toContain("<ForgeWorkOSAuthProvider>");
@@ -952,6 +962,7 @@ describe("forge add integration", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.changed).toContain("web/src/main.tsx");
+      expect(result.changed).toContain("web/.env.local");
       const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
       expect(main).toContain('import { ForgeWorkOSAuthProvider, hasWorkOSBrowserConfig, useForgeWorkOSSession, useWorkOSAuth } from "./lib/workos-auth";');
       expect(main).toContain("const app = (");
@@ -1103,6 +1114,7 @@ describe("forge add integration", () => {
       expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_ADD_PACKAGE_ALREADY_DECLARED");
       expect(result.changed).toContain("web/src/lib/workos-auth.tsx");
       expect(result.changed).toContain("web/src/main.tsx");
+      expect(result.changed).toContain("web/.env.local");
       expect(result.changed).not.toContain("package.json");
       expect(result.changed).not.toContain("web/package.json");
       expect(readFileSync(join(workspace, "web", "src", "main.tsx"), "utf8")).toContain(
@@ -1175,6 +1187,7 @@ describe("forge add integration", () => {
       expect(result.errors).toEqual([]);
       expect(result.warnings.map((warning) => warning.code)).toContain("FORGE_ADD_PACKAGE_ALREADY_INSTALLED");
       expect(result.changed).toContain("web/package.json");
+      expect(result.changed).toContain("web/.env.local");
       expect(result.changed).toContain("web/src/lib/workos-auth.tsx");
       expect(result.changed).toContain("web/src/main.tsx");
       const webPkg = JSON.parse(readFileSync(join(workspace, "web", "package.json"), "utf8")) as {

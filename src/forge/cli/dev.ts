@@ -53,6 +53,7 @@ export interface DevCommandOptions {
   webOnly?: boolean;
   open?: boolean;
   webPort?: number;
+  publicApiUrl?: string;
   telemetry: string[];
   envFile?: string;
   mode?: "dev" | "serve";
@@ -305,6 +306,7 @@ function buildDetachedDevArgs(options: DevCommandOptions): string[] {
   if (options.webOnly) args.push("--web-only");
   if (options.open) args.push("--open");
   if (options.webPort !== undefined) args.push("--web-port", String(options.webPort));
+  if (options.publicApiUrl) args.push("--public-api-url", options.publicApiUrl);
   if (options.telemetry.length > 0) args.push("--telemetry", options.telemetry.join(","));
   if (options.envFile) args.push("--env-file", options.envFile);
   if (options.seed) args.push("--seed");
@@ -1343,13 +1345,14 @@ export async function runDevCommand(
 
   if (options.webOnly) {
     const apiUrl = `http://${host}:${port}`;
+    const publicApiUrl = options.publicApiUrl ?? apiUrl;
     const webHandle = startWebDevServer({
       workspaceRoot,
       host,
       port: webPort,
       requestedPort: webPortSelection.requestedPort,
       autoPortSelected: webPortSelection.autoPortSelected,
-      apiUrl,
+      apiUrl: publicApiUrl,
       json: options.json,
     });
     if (!webHandle) {
@@ -1451,7 +1454,7 @@ export async function runDevCommand(
         port: webPort,
         requestedPort: webPortSelection.requestedPort,
         autoPortSelected: webPortSelection.autoPortSelected,
-        apiUrl: handle.url,
+        apiUrl: options.publicApiUrl ?? handle.url,
         json: options.json,
       });
 

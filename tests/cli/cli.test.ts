@@ -313,6 +313,14 @@ describe("Forge CLI", () => {
     expect(devDetach.errors).toEqual([]);
     expect(devDetach.command).toMatchObject({ kind: "dev", detach: true, db: "memory", port: 0 });
 
+    const devPublicApiUrl = parseCli(["dev", "--public-api-url", "http://localhost:3765", "--web-port", "5173"]);
+    expect(devPublicApiUrl.errors).toEqual([]);
+    expect(devPublicApiUrl.command).toMatchObject({
+      kind: "dev",
+      publicApiUrl: "http://localhost:3765",
+      webPort: 5173,
+    });
+
     const devSeed = parseCli(["dev", "--seed", "--seed-command", "seedVendorAccessDemo", "--all-tenants", "--json"]);
     expect(devSeed.errors).toEqual([]);
     expect(devSeed.command).toMatchObject({
@@ -359,9 +367,11 @@ describe("Forge CLI", () => {
       expect(output).toContain("forge dev --db memory --port 0 --web-port 0");
       expect(output).toContain("forge dev --seed --db pglite");
       expect(output).toContain("forge dev --seed --all-tenants --db pglite");
+      expect(output).toContain("forge dev --public-api-url http://localhost:3765");
       expect(output).toContain("--all-tenants");
       expect(output).toContain("forge dev --detach --db memory --port 0 --json");
       expect(output).toContain("--web-port <port>                 Web dev server port; use 0 for an ephemeral port");
+      expect(output).toContain("--public-api-url <url>");
       expect(output).not.toContain("Start with one of these:");
     } finally {
       process.stdout.write = originalWrite;
@@ -741,15 +751,15 @@ describe("Forge CLI", () => {
       writeFileSync(
         join(workspace, "web/src/lib/workos-auth.tsx"),
         [
-          "export function AuthKitProvider() {}",
           "export function ForgeProvider() {}",
+          "function workOSApiUrl(path: string) { return path; }",
           "export function ForgeWorkOSAuthProvider() {",
-          "  const getAccessToken = () => undefined;",
-          "  return getAccessToken;",
+          "  return ForgeProvider;",
           "}",
           "export function useForgeWorkOSSession() {",
-          "  return fetch('/session', { credentials: 'include' }).then((response) => response.json()).then((session) => session.claims);",
+          "  return fetch(workOSApiUrl('/session'), { credentials: 'include' }).then((response) => response.json()).then((session) => session.claims);",
           "}",
+          "export function useWorkOSAuth() { return { signIn: () => workOSApiUrl('/login'), signOut: () => workOSApiUrl('/logout') }; }",
           "",
         ].join("\n"),
         "utf8",

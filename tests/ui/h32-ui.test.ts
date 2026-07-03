@@ -279,13 +279,11 @@ describe("H32 UI / browser test bridge", () => {
       },
     }));
     write(root, "web/app/page.tsx", `
-      import { AuthKitProvider, useAuth } from "@workos-inc/authkit-react";
-      import { ForgeProvider } from "../src/lib/forge";
+      import { ForgeWorkOSAuthProvider } from "../src/lib/workos-auth";
 
       function Shell() {
-        const { getAccessToken } = useAuth();
         return (
-          <ForgeProvider getToken={getAccessToken}>
+          <ForgeWorkOSAuthProvider>
             <main>
               <nav><a href="#requests">Requests</a></nav>
               <section id="requests">
@@ -294,12 +292,12 @@ describe("H32 UI / browser test bridge", () => {
                 <p>Signed in organization</p>
               </section>
             </main>
-          </ForgeProvider>
+          </ForgeWorkOSAuthProvider>
         );
       }
 
       export default function Page() {
-        return <AuthKitProvider clientId="client_test"><Shell /></AuthKitProvider>;
+        return <Shell />;
       }
     `);
 
@@ -314,6 +312,9 @@ describe("H32 UI / browser test bridge", () => {
     expect(missingCodes).toContain("FORGE_UI_WORKOS_SESSION_MISSING");
 
     write(root, "web/src/lib/workos-auth.tsx", `
+      export function ForgeWorkOSAuthProvider(props) {
+        return props.children;
+      }
       export function useForgeWorkOSSession() {
         return fetch("/session")
           .then((response) => response.json())

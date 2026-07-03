@@ -31,6 +31,7 @@ import {
   resolveByPackageName,
   resolveRecipe,
 } from "../recipes/registry.ts";
+import { applyWorkOSRecipeProfile } from "../recipes/profiles.ts";
 import { discover } from "../orchestrator/discover.ts";
 import {
   loadManifest,
@@ -89,24 +90,6 @@ function recipeResultMetadata(recipe: IntegrationRecipe): Pick<
     recipePackages: recipe.packages.map((pkg) => pkg.packageName),
     requiredSecrets: recipe.secrets.filter((secret) => secret.required !== false).map((secret) => secret.envVar),
     optionalSecrets: recipe.secrets.filter((secret) => secret.required === false).map((secret) => secret.envVar),
-  };
-}
-
-const WORKOS_FGA_INTEGRATION_FILES = new Set([
-  "workos/fga.ts",
-  "workos/resource-map.ts",
-]);
-
-function applyWorkOSRecipeProfile(
-  recipe: NonNullable<ReturnType<typeof resolveRecipe>>,
-  options: Pick<ForgeAddOptions, "withFga">,
-): IntegrationRecipe {
-  if (recipe.alias !== "workos" || options.withFga) {
-    return recipe;
-  }
-  return {
-    ...recipe,
-    integrations: recipe.integrations?.filter((file) => !WORKOS_FGA_INTEGRATION_FILES.has(file)),
   };
 }
 
@@ -528,6 +511,60 @@ function workosFrontendWorkspace(workspaceRoot: string): string | undefined {
   return findFrontendWorkspace(workspaceRoot);
 }
 
+function parseDotEnv(text: string | null): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const line of (text ?? "").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match) continue;
+    result[match[1]!] = match[2]!.replace(/^["']|["']$/g, "");
+  }
+  return result;
+}
+
+function renderMergedDotEnv(current: string | null, values: Record<string, string>): string {
+  const lines = (current ?? "").split(/\r?\n/);
+  const seen = new Set<string>();
+  const next = lines.map((line) => {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/);
+    if (!match || !(match[1]! in values)) {
+      return line;
+    }
+    seen.add(match[1]!);
+    return `${match[1]}=${values[match[1]!]}`;
+  });
+  for (const [key, value] of Object.entries(values)) {
+    if (!seen.has(key)) {
+      next.push(`${key}=${value}`);
+    }
+  }
+  return `${next.filter((line, index, all) => line.length > 0 || index < all.length - 1).join("\n").trimEnd()}\n`;
+}
+
+function syncWorkOSPublicWebEnv(workspaceRoot: string, frontendWorkspace: string): { changed: string[] } {
+  const rootLocal = parseDotEnv(nodeFileSystem.readText(join(workspaceRoot, ".env.local")));
+  const rootExample = parseDotEnv(nodeFileSystem.readText(join(workspaceRoot, ".env.example")));
+  const source = { ...rootExample, ...rootLocal };
+  const clientId = source.VITE_WORKOS_CLIENT_ID || source.WORKOS_CLIENT_ID || "";
+  const redirectUri = source.VITE_WORKOS_REDIRECT_URI || source.WORKOS_REDIRECT_URI || "http://localhost:5173/callback";
+  const values: Record<string, string> = {
+    VITE_FORGE_URL: source.VITE_FORGE_URL || "http://localhost:3765",
+    VITE_WORKOS_CLIENT_ID: clientId,
+    VITE_WORKOS_REDIRECT_URI: redirectUri,
+  };
+  const envRel = `${frontendWorkspace}/.env.local`;
+  const envPath = join(workspaceRoot, envRel);
+  const current = nodeFileSystem.readText(envPath);
+  const next = renderMergedDotEnv(current, values);
+  if (current === next) {
+    return { changed: [] };
+  }
+  nodeFileSystem.mkdirp(join(workspaceRoot, frontendWorkspace));
+  nodeFileSystem.writeText(envPath, next);
+  return { changed: [envRel] };
+}
+
 function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string): {
   changed: string[];
   warnings: Diagnostic[];
@@ -610,7 +647,7 @@ function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string
         "          <p className=\"notice error\">{workosSession.error.message}</p>",
         "          <div className=\"login-form\">",
         "            <button type=\"button\" onClick={() => void workosSession.refresh()}>Retry session</button>",
-        "            <button className=\"secondary\" type=\"button\" onClick={() => auth.signOut({ returnTo: window.location.origin })}>Sign out</button>",
+        "            <button className=\"secondary\" type=\"button\" onClick={() => auth.signOut()}>Sign out</button>",
         "          </div>",
         "        </section>",
         "      </main>",
@@ -631,8 +668,8 @@ function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string
         "          <p className=\"eyebrow\">WorkOS AuthKit</p>",
         "          <h1>Sign in to review vendor access</h1>",
         "          <div className=\"login-form\">",
-        "            <button type=\"button\" onClick={() => void auth.signIn()}>Sign in with WorkOS</button>",
-        "            <button className=\"secondary\" type=\"button\" onClick={() => void auth.signUp()}>Create account</button>",
+        "            <button type=\"button\" onClick={() => auth.signIn()}>Sign in with WorkOS</button>",
+        "            <button className=\"secondary\" type=\"button\" onClick={() => auth.signUp()}>Create account</button>",
         "          </div>",
         "        </section>",
         "        <aside className=\"login-context\">",
@@ -664,7 +701,7 @@ function connectWorkOSReactRoot(workspaceRoot: string, frontendWorkspace: string
         "      persona={persona}",
         "      personas={[persona]}",
         "      onPersonaChange={() => undefined}",
-        "      onSignOut={() => auth.signOut({ returnTo: window.location.origin })}",
+        "      onSignOut={() => auth.signOut()}",
         "    />",
         "  );",
         "}",
@@ -1103,7 +1140,11 @@ export async function forgeAdd(
     });
 
     const workosWeb = normalized === "workos" && frontendWorkspace
-      ? connectWorkOSReactRoot(options.workspaceRoot, frontendWorkspace)
+      ? (() => {
+          const root = connectWorkOSReactRoot(options.workspaceRoot, frontendWorkspace);
+          const env = syncWorkOSPublicWebEnv(options.workspaceRoot, frontendWorkspace);
+          return { changed: [...root.changed, ...env.changed], warnings: root.warnings };
+        })()
       : { changed: [] as string[], warnings: [] as Diagnostic[] };
 
     const warningsCombined = [...preinstalledWarnings, ...warnings, ...emitResult.warnings, ...workosWeb.warnings];

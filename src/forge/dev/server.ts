@@ -24,6 +24,8 @@ import {
 import { authenticateHeaders } from "../runtime/auth/authenticate.ts";
 import { loadAuthConfigFromEnv } from "../runtime/auth/config.ts";
 import { ForgeAuthError } from "../runtime/auth/errors.ts";
+import { resolveAuthFromHeaders } from "../runtime/auth/resolve.ts";
+import type { AuthContext } from "../runtime/auth/types.ts";
 import type { TableMapEntry } from "../compiler/data-graph/sql/serialize.ts";
 import type { SqlPlan } from "../compiler/data-graph/sql/types.ts";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
@@ -506,6 +508,61 @@ function workOSDevSessionClaims(session: WorkOSDevSession): Record<string, unkno
   };
 }
 
+function authFromWorkOSDevSessionCookie(
+  request: Request,
+  envStore: ReturnType<typeof getRuntimeEnvStore>,
+): AuthContext | null {
+  const cookiePassword = envStore.resolve("WORKOS_COOKIE_PASSWORD");
+  if (!cookiePassword) {
+    return null;
+  }
+  const session = decodeWorkOSDevSession(
+    readRequestCookie(request, workOSDevCookieName(envStore)),
+    cookiePassword,
+  );
+  if (!session) {
+    return null;
+  }
+  const claims = workOSDevSessionClaims(session);
+  return resolveAuthFromHeaders({
+    userId: typeof claims.sub === "string" ? claims.sub : undefined,
+    tenantId: typeof claims.organization_id === "string" ? claims.organization_id : undefined,
+    organizationId: typeof claims.organization_id === "string" ? claims.organization_id : undefined,
+    organizationMembershipId:
+      typeof claims.organization_membership_id === "string" ? claims.organization_membership_id : undefined,
+    role: typeof claims.role === "string" ? claims.role : undefined,
+    roles: Array.isArray(claims.roles) ? claims.roles.filter((role): role is string => typeof role === "string") : [],
+    permissions: Array.isArray(claims.permissions)
+      ? claims.permissions.filter((permission): permission is string => typeof permission === "string")
+      : [],
+    claims,
+  });
+}
+
+async function authenticateDevRequest(
+  request: Request,
+  authConfig: ReturnType<typeof loadAuthConfigFromEnv>,
+  envStore: ReturnType<typeof getRuntimeEnvStore>,
+): Promise<AuthContext> {
+  if (authConfig.mode === "dev-headers") {
+    const headerAuth = await authenticateHeaders(request.headers, authConfig);
+    if (headerAuth.kind !== "anonymous") {
+      return headerAuth;
+    }
+    return authFromWorkOSDevSessionCookie(request, envStore) ?? headerAuth;
+  }
+
+  try {
+    return await authenticateHeaders(request.headers, authConfig);
+  } catch (error) {
+    const cookieAuth = authFromWorkOSDevSessionCookie(request, envStore);
+    if (cookieAuth) {
+      return cookieAuth;
+    }
+    throw error;
+  }
+}
+
 function createWorkOSDevSessionCookie(
   envStore: ReturnType<typeof getRuntimeEnvStore>,
   session: WorkOSDevSession,
@@ -539,15 +596,62 @@ function workOSConfigDiagnostics(envStore: ReturnType<typeof getRuntimeEnvStore>
     );
 }
 
-function workOSAuthorizationUrl(envStore: ReturnType<typeof getRuntimeEnvStore>, state: string): string {
+function workOSAuthorizationUrl(
+  envStore: ReturnType<typeof getRuntimeEnvStore>,
+  state: string,
+  organizationId?: string,
+): string {
   const url = new URL("https://api.workos.com/user_management/authorize");
+  url.searchParams.set("response_type", "code");
   url.searchParams.set("provider", "authkit");
   url.searchParams.set("client_id", envStore.resolve("WORKOS_CLIENT_ID") ?? "");
   url.searchParams.set("redirect_uri", envStore.resolve("WORKOS_REDIRECT_URI") ?? "");
+  const effectiveOrganizationId = normalizeOptionalId(organizationId);
+  if (effectiveOrganizationId) {
+    url.searchParams.set("organization_id", effectiveOrganizationId);
+  }
   if (state) {
     url.searchParams.set("state", state);
   }
   return url.toString();
+}
+
+function normalizeOptionalId(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed === "undefined" || trimmed === "null") return undefined;
+  return trimmed;
+}
+
+function uniqueStrings(values: Iterable<unknown>): string[] {
+  return [...new Set([...values].filter((value): value is string => typeof value === "string" && value.length > 0))];
+}
+
+function permissionsFromPolicyRegistry(workspaceRoot: string): string[] {
+  const registryPath = join(workspaceRoot, `${GENERATED_DIR}/policyRegistry.json`);
+  if (!existsSync(registryPath)) return [];
+  try {
+    const registry = readGeneratedJson<{
+      policies?: Array<{ permissions?: unknown[] }>;
+    }>(workspaceRoot, `${GENERATED_DIR}/policyRegistry.json`);
+    return uniqueStrings(((registry?.policies ?? [])).flatMap((policy) => policy.permissions ?? []));
+  } catch {
+    return [];
+  }
+}
+
+function deriveDevPermissionsForRole(workspaceRoot: string, role: string | undefined): string[] {
+  const permissions = permissionsFromPolicyRegistry(workspaceRoot);
+  if (permissions.length === 0) return [];
+  const normalizedRole = role?.toLowerCase();
+  if (normalizedRole && ["owner", "admin", "manager", "security"].includes(normalizedRole)) {
+    return permissions;
+  }
+  if (normalizedRole === "requester") {
+    return permissions.filter((permission) =>
+      /(^|:)read$|read|list|view|audit|request|demo:seed/i.test(permission),
+    );
+  }
+  return permissions.filter((permission) => /(^|:)read$|read|list|view|audit|demo:seed/i.test(permission));
 }
 
 async function authenticateWorkOSCode(workspaceRoot: string, envStore: ReturnType<typeof getRuntimeEnvStore>, code: string) {
@@ -569,14 +673,60 @@ async function authenticateWorkOSCode(workspaceRoot: string, envStore: ReturnTyp
           clientId: envStore.resolve("WORKOS_CLIENT_ID") ?? "",
         })
       : null;
-  const userManagement = (client as { userManagement?: { authenticateWithCode?: (input: { code: string; clientId: string }) => Promise<Record<string, unknown>> } } | null)?.userManagement;
+  const userManagement = (client as {
+    userManagement?: {
+      authenticateWithCode?: (input: { code: string; clientId: string }) => Promise<Record<string, unknown>>;
+      listOrganizationMemberships?: (input: { userId?: string; organizationId?: string }) => Promise<unknown>;
+    };
+  } | null)?.userManagement;
   if (!userManagement?.authenticateWithCode) {
     throw new Error("@workos-inc/node does not expose userManagement.authenticateWithCode");
   }
-  return userManagement.authenticateWithCode({
+  const result = await userManagement.authenticateWithCode({
     code,
     clientId: envStore.resolve("WORKOS_CLIENT_ID") ?? "",
   });
+  const user = (result.user ?? {}) as Record<string, unknown>;
+  const userId = typeof user.id === "string" ? user.id : undefined;
+  const defaultOrganizationId =
+    normalizeOptionalId(envStore.resolve("WORKOS_DEFAULT_ORGANIZATION_ID")) ||
+    normalizeOptionalId(envStore.resolve("WORKOS_ORGANIZATION_ID"));
+  const hasOrganization =
+    typeof result.organizationId === "string" ||
+    (typeof ((result.organization ?? {}) as Record<string, unknown>).id === "string");
+  if (!hasOrganization && userId && defaultOrganizationId && userManagement.listOrganizationMemberships) {
+    const membershipList = await userManagement.listOrganizationMemberships({
+      userId,
+      organizationId: defaultOrganizationId,
+    });
+    const data = (membershipList as { data?: unknown[] }).data;
+    const membership = Array.isArray(data)
+      ? data.find((item) => {
+          const record = item as Record<string, unknown>;
+          return record.status === undefined || record.status === "active";
+        }) as Record<string, unknown> | undefined
+      : undefined;
+    if (membership) {
+      const roleRecord = membership.role as Record<string, unknown> | undefined;
+      const roles = Array.isArray(membership.roles)
+        ? membership.roles
+            .map((role) => (typeof role === "string" ? role : (role as Record<string, unknown>).slug))
+            .filter((role): role is string => typeof role === "string")
+        : [];
+      const role = typeof roleRecord?.slug === "string" ? roleRecord.slug : roles[0];
+      return {
+        ...result,
+        organizationId: defaultOrganizationId,
+        organization: { id: defaultOrganizationId },
+        organizationMembershipId: typeof membership.id === "string" ? membership.id : undefined,
+        organizationMembership: membership,
+        ...(role ? { role } : {}),
+        ...(roles.length > 0 ? { roles } : role ? { roles: [role] } : {}),
+        permissions: deriveDevPermissionsForRole(workspaceRoot, role),
+      };
+    }
+  }
+  return result;
 }
 
 function acceptsHtml(request: Request): boolean {
@@ -1409,8 +1559,10 @@ export async function startDevServer(
             if (diagnostics.length > 0) {
               return jsonResponse({ ok: false, diagnostics }, 503);
             }
-            const returnTo = normalizeLocalRedirect(new URL(request.url).searchParams.get("returnTo"));
-            return redirectResponse(workOSAuthorizationUrl(envStore, returnTo));
+            const url = new URL(request.url);
+            const returnTo = normalizeLocalRedirect(url.searchParams.get("returnTo"));
+            const organizationId = url.searchParams.get("organizationId") ?? url.searchParams.get("organization_id") ?? undefined;
+            return redirectResponse(workOSAuthorizationUrl(envStore, returnTo, organizationId));
           }
 
           if (pathname === "/callback") {
@@ -1733,7 +1885,7 @@ export async function startDevServer(
             }
           }
 
-          const auth = await authenticateHeaders(request.headers, authConfig);
+          const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
           const lastRevision = Number(
             request.headers.get("last-event-id") ??
               url.searchParams.get("lastRevision") ??
@@ -1857,7 +2009,7 @@ export async function startDevServer(
               400,
             );
           }
-          const auth = await authenticateHeaders(request.headers, authConfig);
+          const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
           const envStore = getRuntimeEnvStore(workspaceRoot);
           const secretRegistry = loadSecretRegistry(workspaceRoot);
           const bundle = createRuntimeSecretsBundle({
@@ -1977,7 +2129,7 @@ export async function startDevServer(
           }
 
           const purpose = body.purpose ?? "dev_agent_chat";
-          const auth = await authenticateHeaders(request.headers, authConfig);
+          const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
           const envStore = getRuntimeEnvStore(workspaceRoot);
           const secretRegistry = loadSecretRegistry(workspaceRoot);
           const bundle = createRuntimeSecretsBundle({
@@ -2392,7 +2544,7 @@ export async function startDevServer(
           const externalInvoke = parseExternalInvoke(pathname);
           if (externalInvoke) {
             const args = await parseRequestArgs(request);
-            const auth = await authenticateHeaders(request.headers, authConfig);
+            const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
             const result = await runExternalEntry(
               workspaceRoot,
               {
@@ -2460,7 +2612,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
-            const auth = await authenticateHeaders(request.headers, authConfig);
+            const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
 
             const result = await runQuery(
               workspaceRoot,
@@ -2533,7 +2685,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
-            const auth = await authenticateHeaders(request.headers, authConfig);
+            const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
 
             await prepareRuntimeEnvironment(workspaceRoot, {
               mock: options.mock,

@@ -6,6 +6,22 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.57
+
+- Fixed the WorkOS/AuthKit login path used by local and tunneled development:
+  Forge-owned authorization URLs now include `response_type=code` and no longer
+  send a default `organization_id` unless explicitly requested.
+- The WorkOS callback now resolves organization and membership claims when
+  AuthKit returns only the user/token, then exposes Forge-normalized session
+  claims through `/session`.
+- Added `forge dev --public-api-url` so browser-facing API URLs can be injected
+  cleanly for SSH tunnels, Docker Desktop, and remote dev hosts.
+- The generated WorkOS React bridge now uses backend-owned `/login`, `/session`,
+  and `/logout` routes through same-origin/proxy-aware URL resolution.
+- `forge add auth workos`, `forge workos setup --real`, `workos doctor`, and
+  `inspect ui --ergonomics` now understand the backend-owned AuthKit session
+  flow and sync public browser env into `web/.env.local`.
+
 ## 0.1.0-alpha.56
 
 - Added `forge deploy init --target docker` as the canonical production Docker

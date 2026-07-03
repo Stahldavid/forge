@@ -233,20 +233,6 @@ function hasWorkOSIntegration(workspaceRoot: string): boolean {
     nodeFileSystem.exists(join(workspaceRoot, `${GENERATED}/integrations/workos/auth-routes.ts`));
 }
 
-function webPackageHasAuthKit(workspaceRoot: string): boolean {
-  const path = join(workspaceRoot, "web/package.json");
-  if (!nodeFileSystem.exists(path)) return false;
-  try {
-    const packageJson = JSON.parse(nodeFileSystem.readText(path) ?? "{}") as {
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
-    };
-    return Boolean(packageJson.dependencies?.["@workos-inc/authkit-react"] ?? packageJson.devDependencies?.["@workos-inc/authkit-react"]);
-  } catch {
-    return false;
-  }
-}
-
 type UiPackageManager = "bun" | "npm" | "pnpm" | "yarn";
 
 interface UiPackageContext {
@@ -1440,23 +1426,19 @@ function runUiAudit(options: UiCommandOptions): UiCommandResult {
     hasWorkOSIntegration(options.workspaceRoot) &&
     manifest.webRoot &&
     webSources.length > 0 &&
-    (!webPackageHasAuthKit(options.workspaceRoot) ||
-      (!/AuthKitProvider/.test(appShellText) && !/ForgeWorkOSAuthProvider/.test(appShellText)) ||
-      (!/getToken/.test(webImplementationText) && !/getAccessToken/.test(webImplementationText)))
+    !/ForgeWorkOSAuthProvider/.test(appShellText)
   ) {
     diagnostics.push(diagnostic(
       "warning",
       "FORGE_UI_WORKOS_AUTHKIT_MISSING",
-      "WorkOS integration is present, but the web app does not appear to mount AuthKitProvider or pass a WorkOS token provider into ForgeProvider.",
+      "WorkOS integration is present, but the web app does not appear to mount ForgeWorkOSAuthProvider.",
     ));
   }
   if (
     hasWorkOSIntegration(options.workspaceRoot) &&
     manifest.webRoot &&
     webSources.length > 0 &&
-    webPackageHasAuthKit(options.workspaceRoot) &&
-    (/AuthKitProvider/.test(appShellText) || /ForgeWorkOSAuthProvider/.test(appShellText)) &&
-    (/getToken/.test(webImplementationText) || /getAccessToken/.test(webImplementationText)) &&
+    /ForgeWorkOSAuthProvider/.test(appShellText) &&
     (!webUsesWorkOSSessionClaims(webImplementationText) || !webConfigProxiesWorkOSSession(options.workspaceRoot, manifest.webRoot))
   ) {
     diagnostics.push(diagnostic(

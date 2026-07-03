@@ -261,8 +261,19 @@ describe("dev server", () => {
 
         const login = await fetch(`${handle.url}/login?returnTo=/app`, { redirect: "manual" });
         expect(login.status).toBe(302);
-        expect(login.headers.get("location")).toContain("provider=authkit");
-        expect(login.headers.get("location")).toContain("client_test");
+        const loginLocation = login.headers.get("location") ?? "";
+        const loginUrl = new URL(loginLocation);
+        expect(loginUrl.origin + loginUrl.pathname).toBe("https://api.workos.com/user_management/authorize");
+        expect(loginUrl.searchParams.get("response_type")).toBe("code");
+        expect(loginUrl.searchParams.get("provider")).toBe("authkit");
+        expect(loginUrl.searchParams.get("client_id")).toBe("client_test");
+        expect(loginUrl.searchParams.get("redirect_uri")).toBe("http://127.0.0.1:5173/callback");
+        expect(loginUrl.searchParams.get("state")).toBe("/app");
+        expect(loginUrl.searchParams.has("organization_id")).toBe(false);
+
+        const orgLogin = await fetch(`${handle.url}/login?returnTo=/app&organizationId=org_explicit`, { redirect: "manual" });
+        const orgLoginUrl = new URL(orgLogin.headers.get("location") ?? "");
+        expect(orgLoginUrl.searchParams.get("organization_id")).toBe("org_explicit");
 
         const callback = await fetch(`${handle.url}/callback?code=code_test&state=/app`, { redirect: "manual" });
         expect(callback.status).toBe(302);
@@ -286,6 +297,92 @@ describe("dev server", () => {
         expect(logout.status).toBe(302);
         expect(logout.headers.get("location")).toBe("/signed-out");
         expect(logout.headers.get("set-cookie")).toContain("Max-Age=0");
+      } finally {
+        handle.stop();
+      }
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("resolves WorkOS organization membership during callback when AuthKit omits organization claims", async () => {
+    const workspace = scaffoldGenerateWorkspace("dev-server-workos-authkit-membership", {
+      packageFixtures: ["forge", "zod", "@workos-inc/node"],
+    });
+    try {
+      const generated = await run(defaultGenerateOptions(workspace));
+      expect(generated.exitCode).toBe(0);
+
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"),
+        'export const workosAuthHttpRoutes = [{ method: "GET", path: "/login" }] as const;\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/policyRegistry.json"),
+        JSON.stringify({
+          policies: [
+            { name: "vendors.read", permissions: ["vendors:read"] },
+            { name: "access.approve", permissions: ["access:approve"] },
+          ],
+        }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "node_modules/@workos-inc/node/index.js"),
+        [
+          "export function createWorkOS() {",
+          "  return {",
+          "    userManagement: {",
+          "      async authenticateWithCode() {",
+          "        return { user: { id: 'user_2', email: 'security@globex.test' }, accessToken: 'token' };",
+          "      },",
+          "      async listOrganizationMemberships(input) {",
+          "        return { data: [{ id: 'om_globex_security', status: 'active', role: { slug: 'security' }, organizationId: input.organizationId }] };",
+          "      },",
+          "    },",
+          "  };",
+          "}",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, ".env.local"),
+        [
+          "WORKOS_API_KEY=sk_test",
+          "WORKOS_CLIENT_ID=client_test",
+          "WORKOS_COOKIE_PASSWORD=session_secret",
+          "WORKOS_REDIRECT_URI=http://127.0.0.1:5173/callback",
+          "WORKOS_DEFAULT_ORGANIZATION_ID=org_globex",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+
+      const handle = await startDevServer({
+        workspaceRoot: workspace,
+        host: "127.0.0.1",
+        port: 0,
+        mock: false,
+        json: false,
+        db: "none",
+      });
+
+      try {
+        const callback = await fetch(`${handle.url}/callback?code=code_test`, { redirect: "manual" });
+        expect(callback.status).toBe(302);
+        const cookie = callback.headers.get("set-cookie") ?? "";
+        const session = await fetch(`${handle.url}/session`, { headers: { cookie } });
+        expect(session.status).toBe(200);
+        const body = (await session.json()) as {
+          session: { claims: { organization_id?: string; organization_membership_id?: string; role?: string; permissions?: string[] } };
+        };
+        expect(body.session.claims.organization_id).toBe("org_globex");
+        expect(body.session.claims.organization_membership_id).toBe("om_globex_security");
+        expect(body.session.claims.role).toBe("security");
+        expect(body.session.claims.permissions).toEqual(expect.arrayContaining(["vendors:read", "access:approve"]));
       } finally {
         handle.stop();
       }
