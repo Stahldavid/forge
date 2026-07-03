@@ -1,5 +1,19 @@
 # forgeos
 
+## 0.1.0-alpha.58
+
+### Patch Changes
+
+- Fix TypeScript output for generated WorkOS AuthKit route helpers.
+
+  - The generated callback helper now reads provider-specific organization,
+    membership, role, roles, and permissions fields through a narrowed raw
+    result record instead of accessing fields that are not declared on the
+    WorkOS SDK `AuthenticationResponse` type.
+  - This keeps WorkOS/AuthKit app typechecks passing while preserving callback
+    claim enrichment for organization selection, role mapping, permissions, and
+    Forge-normalized session claims.
+
 ## 0.1.0-alpha.57
 
 ### Patch Changes

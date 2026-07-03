@@ -893,6 +893,10 @@ describe("forge add integration", () => {
       expect(webEnv).toContain("VITE_FORGE_URL=http://localhost:3765");
       expect(webEnv).toContain("VITE_WORKOS_CLIENT_ID=");
       expect(webEnv).toContain("VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback");
+      const authRoutes = readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8");
+      expect(authRoutes).toContain("const rawResult = result as unknown as Record<string, unknown>;");
+      expect(authRoutes).toContain("Array.isArray(rawResult.roles)");
+      expect(authRoutes).toContain("Array.isArray(rawResult.permissions)");
       const main = readFileSync(join(workspace, "web/src/main.tsx"), "utf8");
       expect(main).toContain('import { ForgeWorkOSAuthProvider } from "./lib/workos-auth";');
       expect(main).toContain("<ForgeWorkOSAuthProvider>");

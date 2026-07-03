@@ -6,6 +6,16 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.58
+
+- Fixed generated WorkOS AuthKit route helper TypeScript output by reading
+  provider-specific organization, membership, role, roles, and permissions
+  fields through a narrowed raw result record instead of undeclared SDK response
+  properties.
+- WorkOS/AuthKit apps can keep callback claim enrichment for organization
+  selection and Forge-normalized session claims without failing `tsc --noEmit`
+  on generated files.
+
 ## 0.1.0-alpha.57
 
 - Fixed the WorkOS/AuthKit login path used by local and tunneled development:
