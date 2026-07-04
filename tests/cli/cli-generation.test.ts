@@ -862,6 +862,42 @@ describe("Forge CLI generation and inspection", () => {
     }
   });
 
+  test("changed commit-ready excludes local secrets and WorkOS state", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "cli-changed-commit-ready-secrets-"));
+    try {
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      mkdirSync(join(workspace, "src", "commands"), { recursive: true });
+      mkdirSync(join(workspace, "deploy"), { recursive: true });
+      mkdirSync(join(workspace, "web"), { recursive: true });
+      writeFileSync(join(workspace, "src", "commands", "createVendor.ts"), "export const ok = true;\n", "utf8");
+      writeFileSync(join(workspace, ".env.local"), "WORKOS_API_KEY=sk_test_secret\n", "utf8");
+      writeFileSync(join(workspace, ".env.example"), "WORKOS_API_KEY=\n", "utf8");
+      writeFileSync(join(workspace, "web", ".env.local"), "VITE_WORKOS_CLIENT_ID=client_secret\n", "utf8");
+      writeFileSync(join(workspace, "deploy", ".env.production"), "DATABASE_URL=postgres://secret\n", "utf8");
+      writeFileSync(join(workspace, "deploy", ".env.production.example"), "DATABASE_URL=\n", "utf8");
+      writeFileSync(join(workspace, ".workos-seed-state.json"), "{\"applied\":true}\n", "utf8");
+      writeFileSync(join(workspace, ".workos-fga-state.json"), "{\"synced\":true}\n", "utf8");
+
+      const changed = runChangedCommand(workspace, { commitReady: true });
+      expect(changed.exitCode).toBe(0);
+      const commitReady = changed.data.commitReady as { files: string[]; count: number };
+      expect(commitReady.files).toContain("src/commands/createVendor.ts");
+      expect(commitReady.files).toContain(".env.example");
+      expect(commitReady.files).toContain("deploy/.env.production.example");
+      expect(commitReady.files).not.toContain(".env.local");
+      expect(commitReady.files).not.toContain("web/.env.local");
+      expect(commitReady.files).not.toContain("deploy/.env.production");
+      expect(commitReady.files).not.toContain(".workos-seed-state.json");
+      expect(commitReady.files).not.toContain(".workos-fga-state.json");
+      expect(changed.data.summary).toMatchObject({
+        view: "commit-ready",
+        changedFiles: 3,
+      });
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   test("changed reports large clean diffs as advisory instead of risk", () => {
     const workspace = mkdtempSync(join(tmpdir(), "cli-changed-large-clean-"));
     try {

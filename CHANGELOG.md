@@ -1,5 +1,18 @@
 # forgeos
 
+## 0.1.0-alpha.62
+
+### Patch Changes
+
+- Keep commit-ready change views from exposing local secrets or WorkOS state.
+
+  - Classify real `.env*` files as operational while keeping `.env.example`
+    and `.env.*.example` files commit-ready.
+  - Exclude `.workos-seed-state.json` and `.workos-fga-state.json` from
+    commit-ready summaries.
+  - Add regression coverage so deploy examples stay visible while
+    `deploy/.env.production` remains excluded.
+
 ## 0.1.0-alpha.61
 
 ### Patch Changes

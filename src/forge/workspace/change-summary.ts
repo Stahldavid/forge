@@ -78,6 +78,11 @@ export function classifyChangeType(file: string): ChangeType {
   const normalized = file.replace(/\\/g, "/");
   const lower = normalized.toLowerCase();
   const basename = lower.split("/").pop() ?? lower;
+  const isEnvExample =
+    basename === ".env.example" ||
+    (basename.startsWith(".env.") && basename.endsWith(".example"));
+  const isLocalEnvFile =
+    (basename === ".env" || basename.startsWith(".env.")) && !isEnvExample;
 
   if (
     lower.startsWith("src/forge/_generated/") ||
@@ -89,6 +94,13 @@ export function classifyChangeType(file: string): ChangeType {
   }
   if (lower === ".codex/hooks.json") {
     return "config";
+  }
+  if (
+    isLocalEnvFile ||
+    lower === ".workos-seed-state.json" ||
+    lower === ".workos-fga-state.json"
+  ) {
+    return "operational";
   }
   if (lower.startsWith(".playwright-cli/")) {
     return "operational";
@@ -134,7 +146,7 @@ export function classifyChangeType(file: string): ChangeType {
   }
   if (
     basename === "package.json" ||
-    basename === ".env.example" ||
+    isEnvExample ||
     basename === "bun.lock" ||
     basename === "package-lock.json" ||
     basename === "pnpm-lock.yaml" ||
