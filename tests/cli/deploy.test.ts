@@ -235,6 +235,7 @@ describe("forge deploy", () => {
       });
       expect(databaseWithoutRealEnv?.message).toContain("only a template");
       expect(withoutRealEnv.nextActions).toContain("cp deploy/.env.production.example deploy/.env.production");
+      expect(withoutRealEnv.nextActions[0]).toBe("cp deploy/.env.production.example deploy/.env.production");
 
       writeFileSync(join(workspace, "deploy", ".env.production"), "DATABASE_URL=postgres://example\n", "utf8");
       const withRealEnv = await runDeployCommand({
@@ -307,9 +308,9 @@ describe("forge deploy", () => {
       writeFileSync(
         join(workspace, "deploy", ".env.production"),
         [
-          "DATABASE_URL=postgres://forge:forge@postgres:5432/forge_app",
+          "DATABASE_URL=postgres://forge_prod:strong-password@postgres.internal:5432/forge_app",
           "FORGE_AUTH_MODE=oidc",
-          "FORGE_AUTH_ISSUER=https://issuer.example.test",
+          "FORGE_AUTH_ISSUER=https://auth.acme.internal",
           "FORGE_AUTH_AUDIENCE=forge-api",
           "",
         ].join("\n"),
@@ -329,6 +330,71 @@ describe("forge deploy", () => {
       expect(result.checks.find((check) => check.name === "auth-issuer")).toMatchObject({ ok: true });
       expect(result.checks.find((check) => check.name === "auth-audience")).toMatchObject({ ok: true });
       expect(result.checks.find((check) => check.name === "database-url")).toMatchObject({ ok: true });
+      expect(result.checks.find((check) => check.name === "production-env-values")).toMatchObject({ ok: true });
+    } finally {
+      for (const [name, value] of Object.entries(saved)) {
+        if (value === undefined) {
+          delete process.env[name];
+        } else {
+          process.env[name] = value;
+        }
+      }
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("production check rejects placeholder deploy env values", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-deploy-placeholder-env");
+    const saved = {
+      DATABASE_URL: process.env.DATABASE_URL,
+      FORGE_AUTH_MODE: process.env.FORGE_AUTH_MODE,
+      FORGE_AUTH_ISSUER: process.env.FORGE_AUTH_ISSUER,
+      FORGE_AUTH_AUDIENCE: process.env.FORGE_AUTH_AUDIENCE,
+      FORGE_AUTH_JWKS_URI: process.env.FORGE_AUTH_JWKS_URI,
+      WORKOS_API_KEY: process.env.WORKOS_API_KEY,
+      WORKOS_CLIENT_ID: process.env.WORKOS_CLIENT_ID,
+      WORKOS_COOKIE_PASSWORD: process.env.WORKOS_COOKIE_PASSWORD,
+    };
+    try {
+      for (const name of Object.keys(saved)) delete process.env[name];
+      await runGenerate(defaultGenerateOptions(workspace));
+      await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "render",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      writeFileSync(
+        join(workspace, "deploy", ".env.production"),
+        [
+          "DATABASE_URL=postgres://forge:forge@postgres:5432/forge_app",
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_AUDIENCE=client_test_local",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test_local",
+          "WORKOS_CLIENT_ID=client_test_local",
+          "WORKOS_API_KEY=sk_test_dummy_do_not_use",
+          "WORKOS_COOKIE_PASSWORD=dummy-cookie-password-32-chars-do-not-use",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const result = await runDeployCommand({
+        workspaceRoot: workspace,
+        subcommand: "check",
+        target: "docker",
+        production: true,
+        json: true,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.checks.find((check) => check.name === "production-env-values")).toMatchObject({
+        ok: false,
+        severity: "error",
+      });
+      expect(result.blocking?.join("\n")).toContain("production-env-values");
+      expect(result.nextActions).toContain("edit deploy/.env.production with real production values");
+      expect(JSON.stringify(result.checks.find((check) => check.name === "production-env-values")?.details)).not.toContain("sk_test_dummy");
     } finally {
       for (const [name, value] of Object.entries(saved)) {
         if (value === undefined) {

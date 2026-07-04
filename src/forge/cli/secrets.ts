@@ -8,6 +8,7 @@ import {
 } from "../runtime/secrets/check.ts";
 import { getRuntimeEnvStore, initializeRuntimeEnv } from "../runtime/context/create-context.ts";
 import { redactSecretValue } from "../runtime/secrets/env-loader.ts";
+import { productionPlaceholderEnvProblems } from "./env-placeholders.ts";
 
 export type SecretsSubcommand = "list" | "check" | "print" | "set" | "unset" | "prove";
 
@@ -306,6 +307,9 @@ function envDoctor(options: EnvCommandOptions): SecretsCommandResult {
     Boolean(effective.WORKOS_CLIENT_ID || effective.WORKOS_API_KEY);
   const provider = workosDetected ? "workos" : "none";
   const hasJwtSource = Boolean(effective.FORGE_AUTH_JWKS_URI || effective.FORGE_AUTH_DISCOVERY_URL);
+  const placeholderProblems = target === "production"
+    ? productionPlaceholderEnvProblems(effective, ENV_DOCTOR_KEYS as unknown as string[])
+    : [];
   const blockers = [
     ...missing.filter((key) => key !== "DATABASE_URL").map((key) => `${key} missing`),
     ...(target === "production" && !productionAuth ? [`FORGE_AUTH_MODE=${authMode} is not production auth`] : []),
@@ -315,6 +319,7 @@ function envDoctor(options: EnvCommandOptions): SecretsCommandResult {
       : []),
     ...(target === "production" && workosDetected && !effective.WORKOS_CLIENT_ID ? ["WORKOS_CLIENT_ID missing"] : []),
     ...(target === "production" && workosDetected && !effective.WORKOS_API_KEY ? ["WORKOS_API_KEY missing"] : []),
+    ...placeholderProblems.map((problem) => `${problem.key} uses placeholder value (${problem.reason})`),
   ];
   const warnings = [
     ...(target === "production" && files.every((file) => !file.present)
@@ -345,6 +350,7 @@ function envDoctor(options: EnvCommandOptions): SecretsCommandResult {
       ],
       present: ENV_DOCTOR_KEYS.filter((key) => Boolean(effective[key])).sort(),
       missing,
+      placeholderProblems,
       blockers,
       warnings,
       nextActions: blockers.length === 0

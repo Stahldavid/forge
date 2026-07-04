@@ -4,6 +4,113 @@ This is the recommended alpha hardening path for ForgeOS apps and for the ForgeO
 
 The goal is not to add more features. The goal is to make the path from "open project" to "verified handoff" boring, repeatable, and agent-friendly.
 
+## 0. Canonical App-To-Production Path
+
+For a new production-shaped app, start with the single golden-path command. It
+does not hide the underlying checks; it prints the official ladder and keeps
+the next command obvious for humans and coding agents:
+
+```bash
+forge golden-path plan --auth workos --target docker --real --production --json
+```
+
+To prove the public alpha package, keep the default package source or make it
+explicit:
+
+```bash
+forge golden-path plan --auth workos --target docker --forge-spec npm:forgeos@alpha --real --production --json
+```
+
+Before publishing a release, maintainers can run the same path against this
+checkout:
+
+```bash
+forge golden-path plan --auth workos --target docker --forge-spec file:/home/codex/work/forge --real --production --json
+```
+
+The canonical P0 flow is:
+
+```bash
+forge field-test create vendor-access --auth workos --template vendor-access --package-manager npm --forge-spec npm:forgeos@alpha --install --git --json
+cd vendor-access
+npm run forge -- add auth workos --json
+npm run forge -- authmd generate --json
+npm run forge -- authmd check --json
+npm run forge -- workos doctor --json
+npm run forge -- workos seed --file workos-seed.yml --dry-run --json
+npm run forge -- workos env --client-id client_... --write --json
+npm run forge -- workos setup --real --file workos-seed.yml --json
+npm run forge -- auth prove --provider workos --real --client-id client_... --file workos-seed.yml --json
+npm run forge -- auth prove --scenario multi-tenant --json
+npm run forge -- field-test run --realistic --json
+npm run forge -- field-test report --json
+npm run forge -- deploy init --target docker --json
+cp deploy/.env.production.example deploy/.env.production
+npm run forge -- env doctor --target production --json
+npm run forge -- deploy readiness --production --json
+npm run forge -- deploy check --production --json
+npm run forge -- deploy package --target docker
+npm run forge -- deploy verify --production --url https://app.example.com --json
+```
+
+For an existing app, use:
+
+```bash
+forge golden-path status --real --production --json
+```
+
+When the AuthKit client id is already known, include it so ForgeOS returns exact
+commands instead of placeholders:
+
+```bash
+forge golden-path status --real --production --client-id client_... --json
+```
+
+It reads current WorkOS posture, field-test evidence, and deploy readiness, then
+answers three things:
+
+- can this app publish?
+- if not, what exactly blocks it?
+- what is the next command?
+
+`summary.blockers` starts with the first blocked stage, such as
+`workos-doctor`, `workos-real-seed`, `field-test`, or `deploy`, then includes
+the underlying readiness blockers. This is intentional: coding agents should be
+able to choose the next command without reading every nested check.
+
+With `--real`, WorkOS auth is not considered complete just because local
+adapter files pass `forge workos doctor`. ForgeOS also requires hosted seed
+evidence in `.workos-seed-state.json` that matches the current
+`workos-seed.yml`. Before that proof, ForgeOS checks that `.env.local` has the
+real AuthKit client id, Forge audience, JWKS URI, cookie password, and matching
+web public env. If the env is incomplete, `golden-path status` stops at:
+
+```bash
+forge workos env --client-id client_... --write --json
+```
+
+When WorkOS CLI auth is active but the CLI only reports `hasClientId: true`
+without exposing the value, provide the AuthKit client id explicitly:
+
+```bash
+forge workos env --client-id client_... --write --json
+```
+
+If hosted evidence is missing or stale after env is ready, `golden-path status`
+stops at the `auth` stage and points to:
+
+```bash
+forge auth prove --provider workos --real --file workos-seed.yml --json
+```
+
+`forge auth prove --provider workos --real --client-id client_... --file
+workos-seed.yml --json` is the semantic wrapper for the same hosted WorkOS
+proof. It prepares `.env.local` and `web/.env.local` with the AuthKit client id
+before proving hosted setup, so agents do not need shell-specific env exports or
+dashboard clicks. If `forge workos env --client-id ... --write --json` already
+ran and the env is complete, the shorter `auth prove --provider workos --real
+--file workos-seed.yml --json` form is also valid.
+
 ## 1. Start With Orientation
 
 Run the compact commands before opening broad source trees:

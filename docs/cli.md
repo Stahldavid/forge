@@ -59,6 +59,24 @@ with `web/plugins/forge.client.ts`, `web/plugins/forge.server.ts`,
 
 See [Getting Started](getting-started.md) and [Templates](templates.md).
 
+## Golden Path
+
+Use the golden path when the goal is a production-shaped app rather than a
+single local check:
+
+```bash
+forge golden-path plan --auth workos --target docker --forge-spec npm:forgeos@alpha --real --production --json
+forge golden-path status --real --production --json
+forge golden-path status --real --production --client-id client_... --json
+```
+
+`plan` prints the official create -> WorkOS auth -> field-test -> Docker deploy
+ladder. `status` reads the current app evidence and returns whether the app can
+publish, what blocks it, and the next command. Pass `--client-id` when the
+AuthKit client id is already known to avoid placeholder next actions. It wraps `workos doctor`,
+`field-test report`, and `deploy readiness` instead of replacing those lower
+level checks.
+
 ## Agent workflow (`forge do`)
 
 ```bash
@@ -306,11 +324,13 @@ forge auth status --json
 forge auth check --json
 forge auth check --production --json
 forge auth prove --prod --token <jwt> --json
+forge auth prove --provider workos --real --client-id client_... --file workos-seed.yml --json
 forge authmd generate
 forge authmd check --json
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
+forge workos env --client-id client_... --write --json
 forge workos seed --file workos-seed.yml --dry-run --json
 forge workos seed --file workos-seed.yml --json
 forge policy simulate tickets.create --role member --json

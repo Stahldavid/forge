@@ -127,6 +127,7 @@ describe("forge field-test", () => {
         auth: "workos",
         template: "minimal-web",
         packageManager: "npm",
+        forgeSpec: "npm:forgeos@alpha",
         dryRun: true,
         keep: false,
         runtimeProbes: false,
@@ -138,7 +139,9 @@ describe("forge field-test", () => {
       });
       expect(result.ok).toBe(true);
       expect(JSON.stringify(result.data)).toContain("forge new vendor-access");
+      expect(JSON.stringify(result.data)).toContain("--forge-spec npm:forgeos@alpha");
       expect(result.nextActions[0]).toContain("forge field-test create vendor-access");
+      expect(result.nextActions[0]).toContain("--forge-spec npm:forgeos@alpha");
       expect(result.nextActions[0]).toContain("--install --git");
     } finally {
       cleanupWorkspace(workspace);

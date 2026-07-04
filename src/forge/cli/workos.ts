@@ -2,11 +2,11 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { GENERATED_DIR } from "../compiler/emitter/constants.ts";
 import { stripDeterministicHeader } from "../compiler/primitives/header.ts";
 
-export type WorkOSSubcommand = "install" | "doctor" | "seed" | "setup" | "prove" | "fga";
+export type WorkOSSubcommand = "install" | "doctor" | "seed" | "setup" | "prove" | "env" | "fga";
 export type WorkOSFgaAction = "plan" | "sync" | "prove" | "doctor";
 
 export interface WorkOSCommandOptions {
@@ -20,6 +20,8 @@ export interface WorkOSCommandOptions {
   real?: boolean;
   write?: boolean;
   writePath?: string;
+  clientId?: string;
+  skipCliEnv?: boolean;
   commandRunner?: WorkOSCommandRunner;
 }
 
@@ -31,7 +33,7 @@ export interface WorkOSCheck {
 
 export interface WorkOSCommandResult {
   ok: boolean;
-  kind: "workos-install" | "workos-doctor" | "workos-seed" | "workos-setup" | "workos-prove" | "workos-fga";
+  kind: "workos-install" | "workos-doctor" | "workos-seed" | "workos-setup" | "workos-prove" | "workos-env" | "workos-fga";
   checks: WorkOSCheck[];
   command?: string[];
   applied?: boolean;
@@ -592,19 +594,21 @@ function renderMergedDotEnv(current: string | null, values: Record<string, strin
   return `${next.filter((line, index, all) => line.length > 0 || index < all.length - 1).join("\n").trimEnd()}\n`;
 }
 
-function syncWorkOSPublicWebEnv(workspaceRoot: string, write: boolean): { ok: boolean; changed: string[]; path?: string; skipped?: string } {
+function syncWorkOSPublicWebEnv(workspaceRoot: string, write: boolean, explicitClientId?: string): { ok: boolean; changed: string[]; path?: string; skipped?: string } {
   const frontendWorkspace = findWorkOSFrontendWorkspace(workspaceRoot);
   if (!frontendWorkspace) {
     return { ok: true, changed: [], skipped: "no web workspace detected" };
   }
   const env = readRealEnv(workspaceRoot);
-  const clientId = env.VITE_WORKOS_CLIENT_ID || env.WORKOS_CLIENT_ID || "";
+  const clientId = explicitClientId || env.VITE_WORKOS_CLIENT_ID || env.WORKOS_CLIENT_ID || "";
   const redirectUri = env.VITE_WORKOS_REDIRECT_URI || env.WORKOS_REDIRECT_URI || "http://localhost:5173/callback";
   const values: Record<string, string> = {
     VITE_FORGE_URL: env.VITE_FORGE_URL || "http://localhost:3765",
-    VITE_WORKOS_CLIENT_ID: clientId,
     VITE_WORKOS_REDIRECT_URI: redirectUri,
   };
+  if (clientId) {
+    values.VITE_WORKOS_CLIENT_ID = clientId;
+  }
   const relPath = join(frontendWorkspace, ".env.local");
   const path = join(workspaceRoot, relPath);
   const current = readRawText(workspaceRoot, relPath);
@@ -617,6 +621,159 @@ function syncWorkOSPublicWebEnv(workspaceRoot: string, write: boolean): { ok: bo
     writeFileSync(path, next, "utf8");
   }
   return { ok: true, changed: [relPath], path: relPath };
+}
+
+function workOSDefaultCallback(seed: WorkOSSeedSummary): string {
+  return seed.redirectUris.find((uri) => uri.includes("/callback")) ??
+    seed.redirectUris[0] ??
+    "http://localhost:5173/callback";
+}
+
+function workOSDefaultHome(seed: WorkOSSeedSummary): string {
+  return seed.homepageUrl ?? seed.corsOrigins[0] ?? "http://localhost:5173";
+}
+
+function generatedCookiePassword(): string {
+  return randomBytes(32).toString("hex");
+}
+
+function readWorkOSCliEnvSummary(options: WorkOSCommandOptions): unknown {
+  if (options.skipCliEnv) {
+    return { ok: true, skipped: true, message: "WorkOS CLI env list skipped for local status check" };
+  }
+  const child = runExternalCommand(["npx", "--yes", "workos@latest", "env", "list", "--json"], options);
+  const parsed = parseJsonObject(child.stdout);
+  return parsed ?? {
+    ok: false,
+    status: child.status,
+    message: child.stderr.trim() || child.stdout.trim() || "failed to read WorkOS CLI env list",
+  };
+}
+
+function envValueStatus(env: Record<string, string>, key: string): "present" | "missing" {
+  return hasValue(env, key) ? "present" : "missing";
+}
+
+function workOSEnvNextCommand(clientId?: string): string {
+  return clientId
+    ? `forge workos env --client-id ${clientId} --write --json`
+    : "forge workos env --client-id client_... --write --json";
+}
+
+function runWorkOSEnvCommand(options: WorkOSCommandOptions): WorkOSCommandResult {
+  const file = options.file ?? DEFAULT_SEED_FILE;
+  const seed = parseSeedFile(options.workspaceRoot, file);
+  const env = readRealEnv(options.workspaceRoot);
+  const clientId = options.clientId || env.WORKOS_CLIENT_ID || env.VITE_WORKOS_CLIENT_ID || "";
+  const callback = env.WORKOS_REDIRECT_URI || env.VITE_WORKOS_REDIRECT_URI || workOSDefaultCallback(seed);
+  const home = env.WORKOS_POST_LOGIN_REDIRECT_URI || env.WORKOS_POST_LOGOUT_REDIRECT_URI || workOSDefaultHome(seed);
+  const rootValues: Record<string, string> = {
+    FORGE_AUTH_MODE: env.FORGE_AUTH_MODE || "oidc",
+    FORGE_AUTH_ISSUER: env.FORGE_AUTH_ISSUER || "https://api.workos.com",
+    WORKOS_REDIRECT_URI: callback,
+    WORKOS_POST_LOGIN_REDIRECT_URI: home,
+    WORKOS_POST_LOGOUT_REDIRECT_URI: home,
+    WORKOS_COOKIE_PASSWORD: env.WORKOS_COOKIE_PASSWORD || generatedCookiePassword(),
+  };
+  if (clientId) {
+    rootValues.WORKOS_CLIENT_ID = clientId;
+    rootValues.FORGE_AUTH_AUDIENCE = env.FORGE_AUTH_AUDIENCE || clientId;
+    rootValues.FORGE_AUTH_JWKS_URI = env.FORGE_AUTH_JWKS_URI || workosJwksUri(clientId);
+  }
+
+  const rootEnvPath = ".env.local";
+  const current = readRawText(options.workspaceRoot, rootEnvPath);
+  const next = renderMergedDotEnv(current, rootValues);
+  const changed = current !== next ? [rootEnvPath] : [];
+  if (options.write && current !== next) {
+    writeFileSync(join(options.workspaceRoot, rootEnvPath), next, "utf8");
+  }
+  const publicEnvSync = syncWorkOSPublicWebEnv(options.workspaceRoot, Boolean(options.write), clientId);
+  const missing = [
+    ...(!clientId ? ["WORKOS_CLIENT_ID"] : []),
+    ...(!clientId ? ["FORGE_AUTH_AUDIENCE"] : []),
+    ...(!clientId ? ["FORGE_AUTH_JWKS_URI"] : []),
+  ];
+  const cliEnv = readWorkOSCliEnvSummary(options);
+  const checks: WorkOSCheck[] = [
+    {
+      name: "env-file",
+      ok: options.write ? exists(options.workspaceRoot, rootEnvPath) : true,
+      detail: options.write ? `${rootEnvPath} has been written or was already current` : `${rootEnvPath} plan is ready; pass --write to apply`,
+    },
+    {
+      name: "env-auth-mode",
+      ok: rootValues.FORGE_AUTH_MODE === "oidc" || rootValues.FORGE_AUTH_MODE === "jwt",
+      detail: `FORGE_AUTH_MODE=${rootValues.FORGE_AUTH_MODE}`,
+    },
+    {
+      name: "env-workos-client-id",
+      ok: Boolean(clientId),
+      detail: clientId
+        ? "WORKOS_CLIENT_ID is present and will drive audience/JWKS values"
+        : "WORKOS_CLIENT_ID is missing; WorkOS CLI may report hasClientId but does not expose the value to ForgeOS",
+    },
+    {
+      name: "env-cookie-password",
+      ok: hasValue(rootValues, "WORKOS_COOKIE_PASSWORD"),
+      detail: env.WORKOS_COOKIE_PASSWORD ? "WORKOS_COOKIE_PASSWORD is already present" : "WORKOS_COOKIE_PASSWORD will be generated on write",
+    },
+    {
+      name: "env-forge-issuer",
+      ok: rootValues.FORGE_AUTH_ISSUER === "https://api.workos.com",
+      detail: `FORGE_AUTH_ISSUER=${rootValues.FORGE_AUTH_ISSUER}`,
+    },
+    {
+      name: "env-forge-audience",
+      ok: !missing.includes("FORGE_AUTH_AUDIENCE"),
+      detail: missing.includes("FORGE_AUTH_AUDIENCE")
+        ? "FORGE_AUTH_AUDIENCE needs WORKOS_CLIENT_ID"
+        : "FORGE_AUTH_AUDIENCE will match WORKOS_CLIENT_ID unless already set",
+    },
+    {
+      name: "env-forge-jwks-uri",
+      ok: !missing.includes("FORGE_AUTH_JWKS_URI"),
+      detail: missing.includes("FORGE_AUTH_JWKS_URI")
+        ? "FORGE_AUTH_JWKS_URI needs WORKOS_CLIENT_ID"
+        : `FORGE_AUTH_JWKS_URI=${rootValues.FORGE_AUTH_JWKS_URI}`,
+    },
+  ];
+  const ok = checks.every((check) => check.ok);
+  return {
+    ok,
+    kind: "workos-env",
+    checks,
+    applied: options.write,
+    data: {
+      file,
+      write: options.write,
+      envFile: rootEnvPath,
+      changed: [...changed, ...publicEnvSync.changed],
+      publicEnvSync,
+      values: Object.fromEntries(Object.keys(rootValues).map((key) => [
+        key,
+        key.includes("PASSWORD") || key.includes("API_KEY") ? "<redacted>" : rootValues[key],
+      ])),
+      requiredStillMissing: missing,
+      status: {
+        WORKOS_CLIENT_ID: clientId ? "present" : envValueStatus(env, "WORKOS_CLIENT_ID"),
+        WORKOS_COOKIE_PASSWORD: env.WORKOS_COOKIE_PASSWORD ? "present" : "generated-on-write",
+        FORGE_AUTH_MODE: rootValues.FORGE_AUTH_MODE,
+        FORGE_AUTH_AUDIENCE: missing.includes("FORGE_AUTH_AUDIENCE") ? "missing" : "present",
+        FORGE_AUTH_JWKS_URI: missing.includes("FORGE_AUTH_JWKS_URI") ? "missing" : "present",
+      },
+      workosCliEnv: cliEnv,
+      nextCommand: ok
+        ? `forge auth prove --provider workos --real --file ${file} --json`
+        : workOSEnvNextCommand(),
+      nextActions: [
+        ...(options.write ? [] : [clientId ? workOSEnvNextCommand(clientId) : workOSEnvNextCommand()]),
+        ...(!clientId ? ["pass the AuthKit client id with forge workos env --client-id client_... --write --json"] : []),
+        ...(ok ? [`forge auth prove --provider workos --real --file ${file} --json`] : []),
+      ],
+    },
+    exitCode: ok ? 0 : 1,
+  };
 }
 
 function findWorkOSFrontendWorkspace(workspaceRoot: string): string | undefined {
@@ -2547,6 +2704,11 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
     allChecks.push(workOSCliAuthCheck(cliAuth));
   }
   const localOk = allChecks.every((check) => check.ok);
+  const realEnvMissing = realEnvChecks.some((check) => !check.ok);
+  const envCommand = hasValue(readRealEnv(options.workspaceRoot), "WORKOS_CLIENT_ID") ||
+    hasValue(readRealEnv(options.workspaceRoot), "VITE_WORKOS_CLIENT_ID")
+    ? "forge workos env --write --json"
+    : workOSEnvNextCommand();
   const seed = parseSeedFile(options.workspaceRoot, file);
   const seedState = readWorkOSSeedState(options.workspaceRoot, seed);
   const setupDryRun = options.dryRun || !options.real;
@@ -2568,9 +2730,16 @@ export function runWorkOSSetupCommand(options: WorkOSCommandOptions): WorkOSComm
         publicEnvSync,
         ...(cliAuth ? { cliAuth } : {}),
         configActions,
-        nextCommand: cliAuth && !cliAuth.ok
+        nextCommand: realEnvMissing
+          ? envCommand
+          : cliAuth && !cliAuth.ok
           ? `forge workos setup --real --file ${file} --json`
           : "forge workos doctor --json",
+        nextActions: [
+          ...(realEnvMissing ? [envCommand] : []),
+          ...(realEnvMissing ? ["pass the AuthKit client id with forge workos env --client-id client_... --write --json if ForgeOS cannot infer it"] : []),
+          ...(cliAuth && !cliAuth.ok ? cliAuth.nextActions : []),
+        ],
       },
       exitCode: 1,
     };
@@ -2673,6 +2842,7 @@ export function runWorkOSProveCommand(options: WorkOSCommandOptions): WorkOSComm
     },
   ];
   const ok = checks.every((check) => check.ok);
+  const setupData = setup.data && typeof setup.data === "object" ? setup.data as { nextCommand?: string; nextActions?: string[] } : {};
   return {
     ok,
     kind: "workos-prove",
@@ -2685,9 +2855,12 @@ export function runWorkOSProveCommand(options: WorkOSCommandOptions): WorkOSComm
       doctor: doctor.data,
       seed: seed.data,
       setup: setup.data,
-      nextCommand: options.real
-        ? "forge workos doctor --json"
-        : `forge workos prove --real --file ${file} --json`,
+      nextCommand: !ok && setupData.nextCommand
+        ? setupData.nextCommand
+        : options.real
+          ? "forge workos doctor --json"
+          : `forge workos prove --real --file ${file} --json`,
+      nextActions: setupData.nextActions ?? [],
     },
     stdout: setup.stdout ?? seed.stdout ?? doctor.stdout,
     stderr: setup.stderr ?? seed.stderr ?? doctor.stderr,
@@ -3182,6 +3355,9 @@ export function runWorkOSCommand(options: WorkOSCommandOptions): WorkOSCommandRe
   if (options.subcommand === "prove") {
     return runWorkOSProveCommand(options);
   }
+  if (options.subcommand === "env") {
+    return runWorkOSEnvCommand(options);
+  }
   return options.subcommand === "doctor"
     ? runWorkOSDoctorCommand(options)
     : runWorkOSSeedCommand(options);
@@ -3284,6 +3460,24 @@ export function formatWorkOSHuman(result: WorkOSCommandResult): string {
       lines.push(`WorkOS proof dry-run passed; run ${data.nextCommand ?? "forge workos prove --real --file workos-seed.yml --json"} to apply hosted setup.`);
     } else {
       lines.push("WorkOS proof failed; inspect doctor, seed, and setup details.");
+    }
+  }
+  if (result.kind === "workos-env") {
+    const data = result.data && typeof result.data === "object"
+      ? result.data as { write?: boolean; envFile?: string; changed?: string[]; requiredStillMissing?: string[]; nextActions?: string[] }
+      : {};
+    if (result.ok && data.write) {
+      lines.push(`WorkOS env written${data.envFile ? ` to ${data.envFile}` : ""}.`);
+    } else if (result.ok) {
+      lines.push("WorkOS env plan is complete; pass --write to apply it.");
+    } else {
+      lines.push(`WorkOS env still needs: ${(data.requiredStillMissing ?? []).join(", ") || "required values"}.`);
+    }
+    for (const path of data.changed ?? []) {
+      lines.push(`changed: ${path}`);
+    }
+    for (const action of data.nextActions ?? []) {
+      lines.push(`  - ${action}`);
     }
   }
   if (result.kind === "workos-fga") {

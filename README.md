@@ -75,6 +75,53 @@ npm run dev -- --open
 Template apps ignore `src/forge/_generated/`, `forge.lock`, and operational `.forge/**` work dirs by default so a freshly created app does not flood git or the editor with generated files. Run `forge generate` after checkout or before verification to recreate the agent contract, client SDK, frontend graph, capability map, and runtime manifests.
 Templates also include workspace editor excludes for generated/runtime directories so source files stay visually prominent.
 
+## Production-Shaped Golden Path
+
+For a real multi-tenant app with WorkOS/AuthKit, start with the golden-path
+planner instead of piecing together commands from docs:
+
+```bash
+forge golden-path plan --auth workos --target docker --real --production --json
+```
+
+The canonical path is:
+
+```bash
+forge field-test create vendor-access --auth workos --template vendor-access --package-manager npm --install --git --json
+cd vendor-access
+npm run forge -- workos env --client-id client_... --write --json
+npm run forge -- workos setup --real --file workos-seed.yml --json
+npm run forge -- auth prove --provider workos --real --client-id client_... --file workos-seed.yml --json
+npm run forge -- field-test run --realistic --json
+npm run forge -- deploy readiness --production --json
+npm run forge -- deploy package --target docker
+```
+
+For an existing app, ask ForgeOS for the current blocking stage:
+
+```bash
+forge golden-path status --real --production --json
+```
+
+It reports whether the app can publish, which stage blocks publication, and the
+next command to run. WorkOS FGA is optional; ordinary B2B apps can ship with
+AuthKit, RBAC permission claims, Forge policies, and tenant isolation.
+
+If the AuthKit client id is already known, pass it to the status command so the
+next action is copy/paste exact instead of using `client_...` placeholders:
+
+```bash
+forge golden-path status --real --production --client-id client_... --json
+```
+
+When the WorkOS CLI can confirm a client id exists but cannot expose the value,
+`golden-path status` asks for `forge workos env --client-id client_... --write
+--json`; ForgeOS then writes the OIDC/JWKS and web public env values without
+dashboard clicks or shell-specific env syntax. The higher-level
+`forge auth prove --provider workos --real --client-id client_... --file
+workos-seed.yml --json` wrapper performs the same env preparation before it
+proves hosted WorkOS setup.
+
 For release or external smoke testing, choose the Forge package source explicitly:
 
 ```bash

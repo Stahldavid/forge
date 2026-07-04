@@ -159,6 +159,7 @@ Use `forge dev` for the local loop and `forge dev --once --json` when an agent n
 | Topic | Page |
 |-------|------|
 | Self-host compose and checks | [Self-Host](self-host.md) |
+| WorkOS real field report | [WorkOS Real Vendor Access](field-reports/workos-real-vendor-access.md) |
 | Production-like operations and diagnostics | [Operations](operations.md) |
 | npm release and publishing | [Release](release.md) |
 | Version history | [Changelog](changelog.md) |

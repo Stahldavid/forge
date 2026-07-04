@@ -22,6 +22,7 @@ import type { AuthMdSubcommand } from "./authmd.ts";
 import type { WorkOSFgaAction, WorkOSSubcommand } from "./workos.ts";
 import type { DeploySubcommand, DeployTarget } from "./deploy.ts";
 import type { FieldTestSubcommand } from "./field-test.ts";
+import type { GoldenPathSubcommand } from "./golden-path.ts";
 import type { SeedSubcommand } from "./seed.ts";
 import type { RlsSubcommand } from "./rls.ts";
 import type { SecuritySubcommand } from "./security.ts";
@@ -140,6 +141,10 @@ export type ForgeCommand =
       token?: string;
       prod?: boolean;
       scenario?: string;
+      provider?: "workos";
+      real?: boolean;
+      file?: string;
+      clientId?: string;
       workspaceRoot: string;
     }
   | {
@@ -160,6 +165,7 @@ export type ForgeCommand =
       real?: boolean;
       write?: boolean;
       writePath?: string;
+      clientId?: string;
       workspaceRoot: string;
     }
   | {
@@ -167,6 +173,22 @@ export type ForgeCommand =
       subcommand: DeploySubcommand;
       target: DeployTarget;
       production: boolean;
+      url?: string;
+      json: boolean;
+      workspaceRoot: string;
+    }
+  | {
+      kind: "golden-path";
+      subcommand: GoldenPathSubcommand;
+      name: string;
+      template: NewTemplateName;
+      packageManager: NewPackageManager;
+      forgeSpec?: string;
+      auth: "none" | "workos";
+      target: DeployTarget;
+      production: boolean;
+      real: boolean;
+      clientId?: string;
       url?: string;
       json: boolean;
       workspaceRoot: string;
@@ -489,6 +511,7 @@ export const TOP_LEVEL_COMMANDS = [
   "authmd",
   "workos",
   "deploy",
+  "golden-path",
   "field-test",
   "seed",
   "rls",
@@ -602,9 +625,10 @@ const AUTH_SUBCOMMANDS: AuthSubcommand[] = [
 ];
 const BASELINE_SUBCOMMANDS: BaselineSubcommand[] = ["create", "status"];
 const AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = ["generate", "check"];
-const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup", "prove", "fga"];
+const WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = ["install", "doctor", "seed", "setup", "prove", "env", "fga"];
 const WORKOS_FGA_ACTIONS: WorkOSFgaAction[] = ["plan", "sync", "prove", "doctor"];
 const DEPLOY_SUBCOMMANDS: DeploySubcommand[] = ["plan", "init", "check", "readiness", "render", "package", "verify"];
+const GOLDEN_PATH_SUBCOMMANDS: GoldenPathSubcommand[] = ["plan", "status"];
 const FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = ["create", "run", "report"];
 const SECURITY_SUBCOMMANDS: SecuritySubcommand[] = ["prove"];
 const RLS_SUBCOMMANDS: RlsSubcommand[] = ["generate", "check", "apply", "test", "mutate-test"];
@@ -1421,6 +1445,12 @@ export function parseCli(argv: string[]): ParsedCli {
         errors.push("forge auth requires subcommand: check, config, decode, test-token, jwks, prove, or status");
         return { command: null, workspaceRoot, errors };
       }
+      const providerValue = parseOptionValue(argv, "--provider");
+      if (providerValue && providerValue !== "workos") {
+        errors.push("forge auth --provider supports: workos");
+        return { command: null, workspaceRoot, errors };
+      }
+      const provider = providerValue === "workos" ? "workos" : undefined;
       return {
         command: {
           kind: "auth",
@@ -1429,6 +1459,10 @@ export function parseCli(argv: string[]): ParsedCli {
           token: parseOptionValue(argv, "--token"),
           prod: parseFlag(argv, "--prod") || parseFlag(argv, "--production"),
           scenario: parseOptionValue(argv, "--scenario"),
+          provider,
+          real: parseFlag(argv, "--real"),
+          file: parseOptionValue(argv, "--file"),
+          clientId: parseOptionValue(argv, "--client-id") ?? parseOptionValue(argv, "--workos-client-id"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1456,7 +1490,7 @@ export function parseCli(argv: string[]): ParsedCli {
     case "workos": {
       const subcommand = rest[0] as WorkOSSubcommand | undefined;
       if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {
-        errors.push("forge workos requires subcommand: install, doctor, seed, setup, prove, or fga");
+        errors.push("forge workos requires subcommand: install, doctor, seed, setup, prove, env, or fga");
         return { command: null, workspaceRoot, errors };
       }
       const fgaAction = subcommand === "fga" ? rest[1] as WorkOSFgaAction | undefined : undefined;
@@ -1477,6 +1511,7 @@ export function parseCli(argv: string[]): ParsedCli {
           real: parseFlag(argv, "--real"),
           write: parseFlag(argv, "--write"),
           ...(workOSWritePath ? { writePath: workOSWritePath } : {}),
+          clientId: parseOptionValue(argv, "--client-id") ?? parseOptionValue(argv, "--workos-client-id"),
           workspaceRoot,
         },
         workspaceRoot,
@@ -1499,6 +1534,44 @@ export function parseCli(argv: string[]): ParsedCli {
           subcommand,
           target: targetRaw as DeployTarget,
           production: parseFlag(argv, "--production") || parseFlag(argv, "--prod"),
+          url: parseOptionValue(argv, "--url"),
+          json: parseFlag(argv, "--json"),
+          workspaceRoot,
+        },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "golden-path": {
+      const maybeSubcommand = rest[0];
+      if (maybeSubcommand && !maybeSubcommand.startsWith("--") && !GOLDEN_PATH_SUBCOMMANDS.includes(maybeSubcommand as GoldenPathSubcommand)) {
+        errors.push("forge golden-path requires subcommand: plan or status");
+        return { command: null, workspaceRoot, errors };
+      }
+      const subcommand = (maybeSubcommand && GOLDEN_PATH_SUBCOMMANDS.includes(maybeSubcommand as GoldenPathSubcommand)
+        ? maybeSubcommand
+        : "plan") as GoldenPathSubcommand;
+      const authRaw = parseOptionValue(argv, "--auth") ?? "workos";
+      if (authRaw !== "none" && authRaw !== "workos") {
+        errors.push("forge golden-path --auth must be none or workos");
+      }
+      const targetRaw = parseOptionValue(argv, "--target") ?? "docker";
+      if (targetRaw !== "docker" && targetRaw !== "forge-cloud") {
+        errors.push("forge golden-path --target must be docker or forge-cloud");
+      }
+      return {
+        command: {
+          kind: "golden-path",
+          subcommand,
+          name: parseOptionValue(argv, "--name") ?? "vendor-access",
+          template: parseNewTemplate(parseOptionValue(argv, "--template") ?? "vendor-access"),
+          packageManager: parseNewPackageManager(parseOptionValue(argv, "--package-manager") ?? "npm"),
+          forgeSpec: parseOptionValue(argv, "--forge-spec"),
+          auth: authRaw as "none" | "workos",
+          target: targetRaw as DeployTarget,
+          production: parseFlag(argv, "--production") || parseFlag(argv, "--prod") || subcommand === "status",
+          real: parseFlag(argv, "--real"),
+          clientId: parseOptionValue(argv, "--client-id") ?? parseOptionValue(argv, "--workos-client-id"),
           url: parseOptionValue(argv, "--url"),
           json: parseFlag(argv, "--json"),
           workspaceRoot,
@@ -3209,6 +3282,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--user-id",
     "--tenant-id",
     "--tenant",
+    "--client-id",
+    "--workos-client-id",
     "--other-tenant",
     "--role",
     "--permissions",

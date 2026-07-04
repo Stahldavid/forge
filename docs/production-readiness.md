@@ -65,6 +65,7 @@ ForgeOS should not yet be used without extra review for:
 Before using ForgeOS in a serious production environment, start with the deploy readiness gate:
 
 ```bash
+forge golden-path plan --auth workos --target docker --real --production --json
 forge deploy plan --target docker --json
 forge deploy init --target docker
 cp deploy/.env.production.example deploy/.env.production
@@ -75,6 +76,12 @@ forge deploy check --production --json
 forge deploy package --target docker
 forge deploy verify --production --url https://app.example.com --json
 ```
+
+For an existing app, `forge golden-path status --real --production --json`
+wraps the high-level evidence into one answer: publishable or blocked, exact
+blockers, and the next command to run. It does not replace
+`forge deploy check --production`; it makes the create -> auth -> field-test ->
+deploy sequence discoverable from one entrypoint.
 
 `forge deploy readiness --production --json` is the compact "can I publish?"
 answer. It returns a readiness score, grouped blockers, warnings, and a single
@@ -95,7 +102,11 @@ current `workos-seed.yml`. WorkOS FGA is optional and only required when the app
 enables `forge add auth workos --with-fga`. For database readiness,
 `deploy/.env.production.example` is only a template; the check requires
 `DATABASE_URL` in the current environment or inside `deploy/.env.production`. It
-also reports frontend build posture and liveQuery production reminders.
+also rejects known placeholder and dummy values in production env evidence, so
+copying the example file or setting values like `client_test_local`,
+`sk_test_dummy_do_not_use`, or generated local database URLs cannot accidentally
+turn deploy readiness green. It also reports frontend build posture and
+liveQuery production reminders.
 
 `forge deploy verify --production --url` probes the deployed runtime externally.
 It checks `GET /health` plus `HEAD` and `GET` for `/auth.md` and

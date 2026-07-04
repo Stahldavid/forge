@@ -4,11 +4,12 @@ import {
   FORGE_AUTH_INVALID_AUDIENCE,
   FORGE_AUTH_JWKS_FAILED,
 } from "../compiler/diagnostics/codes.ts";
-import { loadAuthConfigFromEnv, type AuthClaimsMapping } from "../runtime/auth/config.ts";
+import { AUTH_ENV, loadAuthConfigFromEnv, type AuthClaimsMapping } from "../runtime/auth/config.ts";
 import { mapClaimsToAuthContext } from "../runtime/auth/claims.ts";
 import { ForgeAuthError } from "../runtime/auth/errors.ts";
 import { verifyJwtToken } from "../runtime/auth/verifier.ts";
 import { loadSecretRegistry } from "../runtime/secrets/check.ts";
+import { loadEnvFiles } from "../runtime/secrets/env-loader.ts";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
@@ -17,6 +18,9 @@ import {
   collectPolicyPermissions,
   missingValues,
   parseSeedFile,
+  runWorkOSCommand,
+  type WorkOSCommandResult,
+  type WorkOSCommandRunner,
 } from "./workos.ts";
 
 export type AuthSubcommand = "check" | "config" | "decode" | "test-token" | "jwks" | "prove" | "status";
@@ -28,6 +32,11 @@ export interface AuthCommandOptions {
   token?: string;
   prod?: boolean;
   scenario?: string;
+  provider?: "workos";
+  real?: boolean;
+  file?: string;
+  clientId?: string;
+  commandRunner?: WorkOSCommandRunner;
 }
 
 export interface AuthCommandResult {
@@ -36,6 +45,42 @@ export interface AuthCommandResult {
   data?: unknown;
   error?: { code: string; message: string };
   exitCode: 0 | 1;
+}
+
+const AUTH_CLI_ENV_KEYS = Object.values(AUTH_ENV);
+
+function withCliAuthEnv<T>(workspaceRoot: string, fn: () => T): T {
+  const { store } = loadEnvFiles({ workspaceRoot });
+  const previous = AUTH_CLI_ENV_KEYS.map((key) => ({
+    key,
+    had: Object.prototype.hasOwnProperty.call(process.env, key),
+    value: process.env[key],
+  }));
+
+  for (const key of AUTH_CLI_ENV_KEYS) {
+    if (process.env[key] === undefined) {
+      const value = store.resolve(key);
+      if (value !== undefined) {
+        process.env[key] = value;
+      }
+    }
+  }
+
+  try {
+    return fn();
+  } finally {
+    for (const entry of previous) {
+      if (entry.had) {
+        process.env[entry.key] = entry.value;
+      } else {
+        delete process.env[entry.key];
+      }
+    }
+  }
+}
+
+function loadAuthConfigForCli(workspaceRoot: string) {
+  return withCliAuthEnv(workspaceRoot, () => loadAuthConfigFromEnv(workspaceRoot));
 }
 
 function detectWorkOS(workspaceRoot: string, claims: AuthClaimsMapping) {
@@ -94,7 +139,7 @@ function configErrors(config: ReturnType<typeof loadAuthConfigFromEnv>): { code:
 }
 
 function buildAuthPosture(workspaceRoot: string) {
-  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const config = loadAuthConfigForCli(workspaceRoot);
   const productionMode = config.mode === "jwt" || config.mode === "oidc";
   const errors = configErrors(config);
   const configReady = errors.length === 0;
@@ -272,8 +317,41 @@ function buildMultiTenantProof(workspaceRoot: string, workos: ReturnType<typeof 
   });
 }
 
+function runProviderProof(options: AuthCommandOptions): WorkOSCommandResult | null {
+  if (options.provider !== "workos") return null;
+  const file = options.file ?? "workos-seed.yml";
+  if (options.real && options.clientId) {
+    const env = runWorkOSCommand({
+      subcommand: "env",
+      workspaceRoot: options.workspaceRoot,
+      json: true,
+      file,
+      yes: false,
+      dryRun: false,
+      real: true,
+      write: true,
+      clientId: options.clientId,
+      commandRunner: options.commandRunner,
+    });
+    if (!env.ok) {
+      return env;
+    }
+  }
+  return runWorkOSCommand({
+    subcommand: "prove",
+    workspaceRoot: options.workspaceRoot,
+    json: true,
+    file,
+    yes: false,
+    dryRun: !options.real,
+    real: options.real ?? false,
+    clientId: options.clientId,
+    commandRunner: options.commandRunner,
+  });
+}
+
 function validateConfig(workspaceRoot: string): AuthCommandResult {
-  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const config = loadAuthConfigForCli(workspaceRoot);
   const errors = configErrors(config);
   const workos = detectWorkOS(workspaceRoot, config.claims);
 
@@ -298,7 +376,7 @@ function validateConfig(workspaceRoot: string): AuthCommandResult {
 }
 
 function publicConfig(workspaceRoot: string): AuthCommandResult {
-  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const config = loadAuthConfigForCli(workspaceRoot);
   const workos = detectWorkOS(workspaceRoot, config.claims);
   return {
     ok: true,
@@ -319,7 +397,7 @@ function publicConfig(workspaceRoot: string): AuthCommandResult {
 }
 
 function decodeToken(workspaceRoot: string, token: string | undefined): AuthCommandResult {
-  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const config = loadAuthConfigForCli(workspaceRoot);
   if (!token) {
     return {
       ok: false,
@@ -354,7 +432,7 @@ async function testToken(
   workspaceRoot: string,
   token: string | undefined,
 ): Promise<AuthCommandResult> {
-  const config = loadAuthConfigFromEnv(workspaceRoot);
+  const config = loadAuthConfigForCli(workspaceRoot);
   if (!token) {
     return {
       ok: false,
@@ -430,8 +508,9 @@ export async function runAuthCommand(
     };
   }
   if (options.subcommand === "prove") {
+    const providerProof = runProviderProof(options);
     const checked = validateConfig(options.workspaceRoot);
-    const config = loadAuthConfigFromEnv(options.workspaceRoot);
+    const config = loadAuthConfigForCli(options.workspaceRoot);
     const workos = detectWorkOS(options.workspaceRoot, config.claims);
     const productionMode = config.mode === "jwt" || config.mode === "oidc";
     const workosClaimsOk = workos.claimStatus.every((claim) => claim.ok);
@@ -444,7 +523,9 @@ export async function runAuthCommand(
         : options.prod && tokenProof && !tokenProof.ok
           ? tokenProof.error
           : undefined;
-    const proofOk = checked.ok && (!options.prod || (productionMode && tokenProof?.ok === true));
+    const proofOk = checked.ok &&
+      (!options.prod || (productionMode && tokenProof?.ok === true)) &&
+      (!providerProof || providerProof.ok);
     const multiTenantProof = options.scenario === "multi-tenant"
       ? buildMultiTenantProof(options.workspaceRoot, workos, config.requiresTenant)
       : null;
@@ -460,8 +541,11 @@ export async function runAuthCommand(
         productionReady: productionMode && checked.ok,
         prod: options.prod === true,
         scenario: options.scenario ?? null,
+        provider: options.provider ?? null,
+        real: options.real === true,
         authPosture: posture,
         ...(tokenProof ? { tokenProof: tokenProof.ok ? tokenProof.data : tokenProof.error } : {}),
+        ...(providerProof ? { providerProof } : {}),
         ...(multiTenantProof ? { multiTenantProof } : {}),
         invariants: [
           {
@@ -495,9 +579,19 @@ export async function runAuthCommand(
           },
         ],
         workos,
+        nextActions: [
+          ...(providerProof && !providerProof.ok
+            ? providerProof.data && typeof providerProof.data === "object" && "nextCommand" in providerProof.data
+              ? [String((providerProof.data as { nextCommand?: unknown }).nextCommand)]
+              : ["forge workos prove --real --file workos-seed.yml --json"]
+            : []),
+          ...(options.provider === "workos" && providerProof?.ok
+            ? ["forge auth prove --scenario multi-tenant --json", "forge deploy readiness --production --json"]
+            : []),
+        ],
         checkedAt: "deterministic",
       },
-      error: prodError ?? checked.error,
+      error: prodError ?? (!providerProof || providerProof.ok ? checked.error : { code: "FORGE_AUTH_PROVIDER_PROOF_FAILED", message: "WorkOS provider proof failed" }),
       exitCode: proofOk && scenarioOk ? 0 : 1,
     };
   }
@@ -511,7 +605,7 @@ export async function runAuthCommand(
     return testToken(options.workspaceRoot, options.token);
   }
 
-  const config = loadAuthConfigFromEnv(options.workspaceRoot);
+  const config = loadAuthConfigForCli(options.workspaceRoot);
   return {
     ok: true,
     mode: config.mode,
@@ -540,9 +634,12 @@ function authPostureFromResult(result: AuthCommandResult): Record<string, unknow
 export function formatAuthHuman(result: AuthCommandResult): string {
   const posture = authPostureFromResult(result);
   if (posture) {
+    const data = result.data && typeof result.data === "object" ? result.data as Record<string, unknown> : {};
     const classification = typeof posture.classification === "string" ? posture.classification : result.mode;
     const reason = typeof posture.reason === "string" ? posture.reason : result.error?.message;
-    const nextActions = Array.isArray(posture.nextActions) ? posture.nextActions.filter((item): item is string => typeof item === "string") : [];
+    const postureNextActions = Array.isArray(posture.nextActions) ? posture.nextActions.filter((item): item is string => typeof item === "string") : [];
+    const proofNextActions = Array.isArray(data.nextActions) ? data.nextActions.filter((item): item is string => typeof item === "string") : [];
+    const nextActions = Array.from(new Set([...proofNextActions, ...postureNextActions]));
     const lines = [
       `Auth ${result.mode}: ${result.ok ? "ok" : "failed"} (${classification})`,
       `Production ready: ${posture.productionReady === true ? "yes" : "no"}`,

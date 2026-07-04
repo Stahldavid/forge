@@ -4,7 +4,63 @@ Release history for the `forgeos` npm package.
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
-## Unreleased
+## 0.1.0-alpha.61
+
+- Added `forge golden-path plan/status` as the canonical
+  create -> WorkOS auth -> field-test -> Docker deploy production path for
+  agents and users.
+- `forge golden-path plan/status` now accepts `--forge-spec`, so maintainers can
+  run the same P0 path against `npm:forgeos@alpha`, a packed tarball, or a local
+  checkout before publishing.
+- `forge golden-path status --real --production --json` now wraps WorkOS
+  posture, field-test evidence, and deploy readiness into one answer with the
+  current stage, blockers, and next command.
+- `forge golden-path plan/status` now accepts `--client-id client_...`, so
+  agents that already know the AuthKit client id get exact WorkOS env/proof
+  commands instead of placeholder next actions.
+- `forge golden-path status` now includes the first blocking stage in
+  `summary.blockers` (for example `workos-real-seed` or `workos-doctor`) before
+  lower-level deploy readiness blockers, so agents do not have to infer the
+  real next action.
+- Added `forge auth prove --provider workos --real --client-id client_...
+  --file workos-seed.yml --json` as the provider-aware auth proof wrapper
+  around hosted WorkOS setup, seed evidence, public AuthKit env preparation, and
+  CLI login instructions.
+- `forge auth prove --provider workos --real --client-id ...` now reads the
+  `.env.local` values it just prepared, so a successful real WorkOS proof reports
+  `mode: "oidc"`/`productionReady: true` instead of falling back to local
+  `dev-headers` in the same process.
+- Added `forge workos env --client-id client_... --write --json` to prepare `.env.local` and
+  `web/.env.local` for real WorkOS/AuthKit proof, including audience/JWKS values
+  when `WORKOS_CLIENT_ID` is supplied and an explicit next action when the CLI
+  reports a client id exists but cannot expose the value.
+- `forge golden-path plan/status --real` now includes the WorkOS env preparation
+  gate before hosted setup/seed proof, so agents fix missing client/JWKS envs
+  before retrying AuthKit login or deploy readiness.
+- In `--real` mode, `forge golden-path status` now treats missing or stale
+  `.workos-seed-state.json` evidence as an auth-stage blocker and points agents
+  to `forge auth prove --provider workos --real --file workos-seed.yml --json`
+  after env is ready, or the `--client-id client_...` form when agents need the
+  proof command to prepare WorkOS env in the same step.
+- `forge golden-path status` now returns compact field-test/deploy summaries
+  instead of embedding full command stdout, keeping the JSON safe for agents to
+  parse after realistic field-test runs.
+- `forge deploy plan` and generated Docker production README output now point
+  back to `forge golden-path status --real --production --json` as the first
+  app-to-production triage command.
+- `forge deploy readiness/check` now prioritizes the deploy env action that
+  actually unblocks production, such as copying
+  `deploy/.env.production.example` to `deploy/.env.production` before rerunning
+  auth diagnostics.
+- `forge env doctor --target production` and `forge deploy check --production`
+  now reject known placeholder/dummy production env values without printing the
+  secret value, preventing copied examples like `client_test_local` or
+  `sk_test_dummy_do_not_use` from being treated as deploy-ready evidence.
+- Docs now surface the WorkOS real + Docker deploy golden path from the CLI,
+  golden-path, field-testing, production-readiness pages, and README.
+- Added a redacted WorkOS real vendor-access field report documenting hosted
+  setup, idempotent seed, AuthKit session bridge, tenant normalization,
+  policy denial, field-test evidence, and production deploy blockers.
 
 ## 0.1.0-alpha.60
 

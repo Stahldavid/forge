@@ -92,6 +92,8 @@ nav:
   - Testing & Repair: testing-and-repair.md
   - Troubleshooting: troubleshooting.md
   - Field Testing: field-testing.md
+  - Field Reports:
+      - WorkOS Real Vendor Access: field-reports/workos-real-vendor-access.md
   - Production Readiness: production-readiness.md
   - Threat Model: threat-model.md
   - Security Assurance: security-assurance.md

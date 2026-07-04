@@ -227,6 +227,11 @@ import {
   runFieldTestCommand,
 } from "./field-test.ts";
 import {
+  formatGoldenPathHuman,
+  formatGoldenPathJson,
+  runGoldenPathCommand,
+} from "./golden-path.ts";
+import {
   formatSeedHuman,
   formatSeedJson,
   runSeedCommand,
@@ -2142,6 +2147,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "deploy": {
       const result = await runDeployCommand(command);
       process.stdout.write(command.json ? formatDeployJson(result) : formatDeployHuman(result));
+      return result.exitCode;
+    }
+    case "golden-path": {
+      const result = await runGoldenPathCommand(command);
+      process.stdout.write(command.json ? formatGoldenPathJson(result) : formatGoldenPathHuman(result));
       return result.exitCode;
     }
     case "field-test": {

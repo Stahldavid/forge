@@ -239,13 +239,13 @@ describe("Forge CLI", () => {
         [
           "DATABASE_URL=postgres://prod",
           "FORGE_AUTH_MODE=oidc",
-          "FORGE_AUTH_ISSUER=https://issuer.example.test",
+          "FORGE_AUTH_ISSUER=https://auth.acme.internal",
           "FORGE_AUTH_AUDIENCE=forge-api",
-          "FORGE_AUTH_JWKS_URI=https://issuer.example.test/.well-known/jwks.json",
-          "WORKOS_API_KEY=sk_test_example",
+          "FORGE_AUTH_JWKS_URI=https://auth.acme.internal/.well-known/jwks.json",
+          "WORKOS_API_KEY=sk_test_realish_not_secret",
           "WORKOS_CLIENT_ID=client_test",
           "WORKOS_COOKIE_PASSWORD=super-secret-cookie-password",
-          "WORKOS_REDIRECT_URI=https://app.example.test/callback",
+          "WORKOS_REDIRECT_URI=https://app.acme.internal/callback",
           "",
         ].join("\n"),
         "utf8",
@@ -260,6 +260,42 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(ready.data)).toContain('"authMode":"oidc"');
       expect(JSON.stringify(ready.data)).toContain('"database":"postgres"');
       expect(JSON.stringify(ready.data)).toContain('"provider":"workos"');
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("env doctor rejects placeholder production values", async () => {
+    const workspace = scaffoldGenerateWorkspace("env-doctor-placeholder-production");
+    try {
+      mkdirSync(join(workspace, "deploy"), { recursive: true });
+      writeFileSync(
+        join(workspace, "deploy", ".env.production"),
+        [
+          "DATABASE_URL=postgres://forge:forge@postgres:5432/forge_app",
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_AUDIENCE=client_test_local",
+          "FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_test_local",
+          "WORKOS_API_KEY=sk_test_dummy_do_not_use",
+          "WORKOS_CLIENT_ID=client_test_local",
+          "WORKOS_COOKIE_PASSWORD=dummy-cookie-password-32-chars-do-not-use",
+          "WORKOS_REDIRECT_URI=https://app.example.test/callback",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      const result = await runEnvCommand({
+        subcommand: "doctor",
+        workspaceRoot: workspace,
+        json: true,
+        target: "production",
+      });
+      expect(result.exitCode).toBe(1);
+      expect(JSON.stringify(result.data)).toContain("DATABASE_URL uses placeholder value");
+      expect(JSON.stringify(result.data)).toContain("WORKOS_API_KEY uses placeholder value");
+      expect(JSON.stringify(result.data)).toContain("WORKOS_CLIENT_ID uses placeholder value");
+      expect(JSON.stringify(result.data)).not.toContain("sk_test_dummy_do_not_use");
     } finally {
       cleanupWorkspace(workspace);
     }
@@ -705,6 +741,15 @@ describe("Forge CLI", () => {
   test("workos doctor and seed validate local adapter artifacts", () => {
     const workspace = mkdtempSync(join(tmpdir(), "forge-workos-cli-"));
     try {
+      const parsedEnv = parseCli(["workos", "env", "--client-id", "client_test", "--write", "--json"]);
+      expect(parsedEnv.errors).toEqual([]);
+      expect(parsedEnv.command).toMatchObject({
+        kind: "workos",
+        subcommand: "env",
+        clientId: "client_test",
+        write: true,
+      });
+
       mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
       mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
       mkdirSync(join(workspace, "web/src/lib"), { recursive: true });
@@ -1284,6 +1329,58 @@ describe("Forge CLI", () => {
       expect(proveRealMissingEnv.applied).toBe(false);
       expect(JSON.stringify(proveRealMissingEnv.checks)).toContain("setup:real-env-forge_auth_audience");
       expect(JSON.stringify(proveRealMissingEnv.checks)).toContain("FORGE_AUTH_AUDIENCE");
+      expect(JSON.stringify(proveRealMissingEnv.data)).toContain("forge workos env --client-id client_... --write --json");
+
+      const envPlanMissingClient = runWorkOSCommand({
+        subcommand: "env",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        write: false,
+        file: "workos-seed.yml",
+        commandRunner: (_command, args) => args.includes("env") && args.includes("list")
+          ? { status: 0, stdout: JSON.stringify({ data: [{ name: "staging", active: true, hasApiKey: true, hasClientId: true }] }), stderr: "" }
+          : { status: 0, stdout: "", stderr: "" },
+      });
+      expect(envPlanMissingClient.exitCode).toBe(1);
+      expect(JSON.stringify(envPlanMissingClient.data)).toContain("WORKOS_CLIENT_ID");
+      expect(JSON.stringify(envPlanMissingClient.data)).toContain("hasClientId");
+      expect(JSON.stringify(envPlanMissingClient.data)).toContain("--client-id client_...");
+
+      const envWriteMissingClient = runWorkOSCommand({
+        subcommand: "env",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        write: true,
+        file: "workos-seed.yml",
+        commandRunner: (_command, args) => args.includes("env") && args.includes("list")
+          ? { status: 0, stdout: JSON.stringify({ data: [{ name: "staging", active: true, hasApiKey: true, hasClientId: true }] }), stderr: "" }
+          : { status: 0, stdout: "", stderr: "" },
+      });
+      expect(envWriteMissingClient.exitCode).toBe(1);
+      expect(readFileSync(join(workspace, ".env.local"), "utf8")).toContain("FORGE_AUTH_MODE=oidc");
+      expect(readFileSync(join(workspace, ".env.local"), "utf8")).toContain("WORKOS_COOKIE_PASSWORD=");
+
+      const envWriteWithClientFlag = runWorkOSCommand({
+        subcommand: "env",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        write: true,
+        clientId: "client_flag",
+        file: "workos-seed.yml",
+        commandRunner: (_command, args) => args.includes("env") && args.includes("list")
+          ? { status: 0, stdout: JSON.stringify({ data: [{ name: "staging", active: true, hasApiKey: true, hasClientId: true }] }), stderr: "" }
+          : { status: 0, stdout: "", stderr: "" },
+      });
+      expect(envWriteWithClientFlag.exitCode).toBe(0);
+      expect(readFileSync(join(workspace, ".env.local"), "utf8")).toContain("WORKOS_CLIENT_ID=client_flag");
+      expect(readFileSync(join(workspace, ".env.local"), "utf8")).toContain("FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_flag");
+      expect(readFileSync(join(workspace, "web/.env.local"), "utf8")).toContain("VITE_WORKOS_CLIENT_ID=client_flag");
 
       writeFileSync(
         join(workspace, "workos-seed.yml"),
@@ -1326,6 +1423,22 @@ describe("Forge CLI", () => {
         ].join("\n"),
         "utf8",
       );
+      const envWriteWithClient = runWorkOSCommand({
+        subcommand: "env",
+        workspaceRoot: workspace,
+        json: true,
+        yes: false,
+        dryRun: false,
+        write: true,
+        file: "workos-seed.yml",
+        commandRunner: (_command, args) => args.includes("env") && args.includes("list")
+          ? { status: 0, stdout: JSON.stringify({ data: [{ name: "staging", active: true, hasApiKey: true, hasClientId: true }] }), stderr: "" }
+          : { status: 0, stdout: "", stderr: "" },
+      });
+      expect(envWriteWithClient.exitCode).toBe(0);
+      expect(JSON.stringify(envWriteWithClient.data)).toContain("FORGE_AUTH_JWKS_URI");
+      expect(readFileSync(join(workspace, "web/.env.local"), "utf8")).toContain("VITE_WORKOS_CLIENT_ID=client_test");
+
       const setupReal = runWorkOSCommand({
         subcommand: "setup",
         workspaceRoot: workspace,
@@ -1811,15 +1924,54 @@ describe("Forge CLI", () => {
     try {
       mkdirSync(join(workspace, "bin"), { recursive: true });
       writeFileSync(join(workspace, "bin", "forge.mjs"), "", "utf8");
+      writeFileSync(
+        join(workspace, "package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/node": "^7.0.0" } }),
+        "utf8",
+      );
       mkdirSync(join(workspace, "src/forge/_generated"), { recursive: true });
+      mkdirSync(join(workspace, "src/forge/_generated/integrations/workos"), { recursive: true });
       mkdirSync(join(workspace, "public/.well-known"), { recursive: true });
+      mkdirSync(join(workspace, "web/src/lib"), { recursive: true });
       writeFileSync(
         join(workspace, "src/forge/_generated/authRegistry.json"),
         JSON.stringify({
           defaultMode: "dev-headers",
           requiresTenant: true,
-          claims: { userId: "sub", tenantId: "organization_id", permissions: "permissions" },
+          claims: {
+            userId: "sub",
+            email: "email",
+            tenantId: "organization_id",
+            role: "role",
+            roles: "roles",
+            permissions: "permissions",
+          },
         }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/package.json"),
+        JSON.stringify({ dependencies: { "@workos-inc/authkit-react": "^1.0.0", react: "^19.0.0" } }),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "web/src/lib/workos-auth.tsx"),
+        [
+          "import { ForgeProvider } from './forge';",
+          "export const workOSApiUrl = '/';",
+          "export function useForgeWorkOSSession() { return { claims: { permissions: [] } }; }",
+          "export function forgeTenantIdForWorkOSOrganization() { return 'org'; }",
+          "export function workOSSessionToForgeAuth() { return { organizationId: forgeTenantIdForWorkOSOrganization(), permissions: claims.permissions }; }",
+          "const workOSAuthProvider = {};",
+          "export function ForgeWorkOSAuthProvider() { return <ForgeProvider auth={workOSAuthProvider} />; }",
+          "export const routes = ['/login', '/logout', '/session'];",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(join(workspace, "web/src/App.tsx"), "export function App() { return <ForgeWorkOSAuthProvider />; }\n", "utf8");
+      writeFileSync(
+        join(workspace, "web/vite.config.ts"),
+        "export default { server: { proxy: { '/login': {}, '/callback': {}, '/logout': {}, '/session': {} } } };\n",
         "utf8",
       );
       writeFileSync(
@@ -1860,6 +2012,51 @@ describe("Forge CLI", () => {
         "utf8",
       );
       writeFileSync(
+        join(workspace, ".env.example"),
+        [
+          "FORGE_AUTH_MODE=oidc",
+          "FORGE_AUTH_ISSUER=https://api.workos.com",
+          "FORGE_AUTH_JWKS_URI=",
+          "VITE_WORKOS_CLIENT_ID=",
+          "VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback",
+          "WORKOS_API_KEY=",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/policies.workos.ts"),
+        [
+          'import { canPermission } from "forge/policy";',
+          'export const policies = {',
+          '  "vendors:read": canPermission("vendors:read"),',
+          '  "access:approve": canPermission("access:approve"),',
+          '};',
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"),
+        'export const workosAuthHttpRoutes = ["/login", "/callback", "/logout", "/session"]; export function handleWorkOSAuthRequest() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/session.ts"),
+        "export function encodeWorkOSSession() {} export function decodeWorkOSSession() {} export function workOSSessionToClaims() {}\n",
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/webhook.ts"),
+        'export const config = { provider: "workos" }; export function verifyWorkOSWebhook() {} export function handleWorkOSWebhook() {}\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(workspace, "src/forge/_generated/integrations/workos/http-handler.ts"),
+        'export const workosWebhookHttpRoute = { path: "/webhooks/workos" }; export function handleWorkOSWebhookRequest() {}\n',
+        "utf8",
+      );
+      writeFileSync(
         join(workspace, "workos-seed.yml"),
         [
           "permissions:",
@@ -1879,6 +2076,12 @@ describe("Forge CLI", () => {
           "  - slug: accessRequest",
           "organizations:",
           "  - name: Acme Corp",
+          "config:",
+          "  redirect_uris:",
+          "    - http://localhost:5173/callback",
+          "  cors_origins:",
+          "    - http://localhost:5173",
+          "  homepage_url: http://localhost:5173",
           "",
         ].join("\n"),
         "utf8",
@@ -1889,6 +2092,28 @@ describe("Forge CLI", () => {
       const parsed = parseCli(["auth", "prove", "--scenario", "multi-tenant", "--json"]);
       expect(parsed.errors).toEqual([]);
       expect(parsed.command).toMatchObject({ kind: "auth", subcommand: "prove", scenario: "multi-tenant" });
+
+      const parsedProvider = parseCli([
+        "auth",
+        "prove",
+        "--provider",
+        "workos",
+        "--real",
+        "--client-id",
+        "client_auth",
+        "--file",
+        "workos-seed.yml",
+        "--json",
+      ]);
+      expect(parsedProvider.errors).toEqual([]);
+      expect(parsedProvider.command).toMatchObject({
+        kind: "auth",
+        subcommand: "prove",
+        provider: "workos",
+        real: true,
+        clientId: "client_auth",
+        file: "workos-seed.yml",
+      });
 
       const result = await runAuthCommand({
         subcommand: "prove",
@@ -1907,6 +2132,69 @@ describe("Forge CLI", () => {
       expect(JSON.stringify(result.data)).not.toContain("onboarding:read");
       expect(JSON.stringify(result.data)).toContain("node bin/forge.mjs workos doctor --json");
       expect(JSON.stringify(result.data)).not.toContain("\"forge workos doctor --json\"");
+
+      const providerResult = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        provider: "workos",
+        file: "workos-seed.yml",
+      });
+      expect(providerResult.exitCode).toBe(0);
+      expect(providerResult.data).toMatchObject({
+        kind: "auth-proof",
+        provider: "workos",
+        real: false,
+        providerProof: { kind: "workos-prove", ok: true },
+      });
+      expect(JSON.stringify(providerResult.data)).toContain("forge workos prove --real --file workos-seed.yml --json");
+
+      const providerRealWithClient = await runAuthCommand({
+        subcommand: "prove",
+        workspaceRoot: workspace,
+        json: true,
+        provider: "workos",
+        real: true,
+        clientId: "client_auth",
+        file: "workos-seed.yml",
+        commandRunner: (_command, args) => {
+          if (args.includes("auth") && args.includes("status")) {
+            return {
+              status: 0,
+              stdout: JSON.stringify({
+                authenticated: true,
+                tokenExpired: false,
+                hasRefreshToken: true,
+                email: "agent@example.com",
+              }),
+              stderr: "",
+            };
+          }
+          if (args.includes("env") && args.includes("list")) {
+            return {
+              status: 0,
+              stdout: JSON.stringify({ data: [{ name: "staging", active: true, hasApiKey: true, hasClientId: true }] }),
+              stderr: "",
+            };
+          }
+          if (args.includes("seed")) {
+            return { status: 0, stdout: "seed ok\n", stderr: "" };
+          }
+          return { status: 0, stdout: "{}", stderr: "" };
+        },
+      });
+      expect(providerRealWithClient.exitCode).toBe(0);
+      expect(providerRealWithClient.data).toMatchObject({
+        kind: "auth-proof",
+        provider: "workos",
+        real: true,
+        mode: "oidc",
+        productionReady: true,
+        providerProof: { kind: "workos-prove", ok: true },
+      });
+      expect(readFileSync(join(workspace, ".env.local"), "utf8")).toContain("WORKOS_CLIENT_ID=client_auth");
+      expect(readFileSync(join(workspace, ".env.local"), "utf8")).toContain("FORGE_AUTH_JWKS_URI=https://api.workos.com/sso/jwks/client_auth");
+      expect(readFileSync(join(workspace, "web/.env.local"), "utf8")).toContain("VITE_WORKOS_CLIENT_ID=client_auth");
 
       const check = await runAuthCommand({
         subcommand: "check",

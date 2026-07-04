@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.47 input=bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1 content=e54d670fbe0174cfaedeba429867ec669e32ec83cf971075da446002ba1f75b7
+// @forge-generated generator=0.1.0-alpha.61 input=3e83e39b92f8a1e2337d18ed7565f99b151980139cd5104f0b7f462eedfed3b9 content=02e39fa7439c3aff8f080438a019a28fa2432d9e2af8a3536abcf90f78b9e169
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.47",
-  "inputHash": "bebb010a880143584f74a6be9a4ef8e76d626cc1fd3f32b688b9a669679791c1",
+  "generatorVersion": "0.1.0-alpha.61",
+  "inputHash": "3e83e39b92f8a1e2337d18ed7565f99b151980139cd5104f0b7f462eedfed3b9",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -700,15 +700,17 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "fast",
+      "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
         "packages": [
+          "postgres",
           "react",
-          "tsx"
+          "tsx",
+          "zod"
         ],
         "policies": [],
         "queries": [],
@@ -718,8 +720,10 @@ export const testGraph = {
       "file": "tests/cli/cli.test.ts",
       "kind": "unknown",
       "reasons": [
+        "probable: packages postgres",
         "probable: packages react",
-        "probable: packages tsx"
+        "probable: packages tsx",
+        "probable: packages zod"
       ]
     },
     {
@@ -761,6 +765,32 @@ export const testGraph = {
       "file": "tests/cli/field-test.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "docker",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres",
+          "react",
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/cli/golden-path.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages postgres",
+        "probable: packages react",
+        "probable: packages tsx"
+      ]
     },
     {
       "confidence": "weak",

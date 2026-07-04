@@ -1,5 +1,21 @@
 # forgeos
 
+## 0.1.0-alpha.61
+
+### Patch Changes
+
+- Harden the WorkOS golden path and production deploy gate.
+
+  - Add the ForgeOS golden path status/plan flow for the official
+    `create -> auth -> field-test -> deploy` path.
+  - Add WorkOS real-auth proof helpers and env synchronization for app and web
+    workspaces, including backend-owned AuthKit session bridge guidance.
+  - Block production readiness when `deploy/.env.production` still contains
+    placeholder or dummy values, preventing local/demo WorkOS and database
+    settings from being mistaken for publishable production evidence.
+  - Expand field-test, deploy, env doctor, WorkOS, and golden-path regression
+    coverage, plus docs for the production-shaped WorkOS vendor-access flow.
+
 ## 0.1.0-alpha.60
 
 ### Patch Changes

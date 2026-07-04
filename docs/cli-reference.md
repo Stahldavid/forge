@@ -32,6 +32,41 @@ forge new nuxt-notes --template nuxt-web --package-manager npm --forge-spec "npm
 forge new workroom --template agent-workroom --package-manager npm --no-install --no-git
 ```
 
+## Golden path
+
+```bash
+forge golden-path plan --auth workos --target docker --real --production --json
+forge golden-path plan --auth workos --target docker --forge-spec npm:forgeos@alpha --real --production --json
+forge golden-path status --real --production --json
+forge golden-path status --real --production --client-id client_... --json
+```
+
+`forge golden-path plan` prints the canonical create -> auth -> field-test ->
+deploy command ladder. `forge golden-path status` reads current evidence and
+reports the first blocking command. Pass `--client-id` when the AuthKit client id
+is already known, so WorkOS env/proof commands use exact values instead of
+`client_...` placeholders. It reports:
+
+- `summary.canPublish`;
+- `summary.currentStage`;
+- `summary.blockers`;
+- `summary.nextCommand`;
+- per-stage evidence for create, auth, field-test, and deploy.
+
+Pass `--forge-spec` when the app should be created against a specific ForgeOS
+package source, such as `npm:forgeos@alpha`, a packed tarball, or a local
+checkout.
+
+It is intentionally an orchestration/readiness surface. The actual evidence
+still comes from the underlying commands:
+
+```bash
+forge workos doctor --json
+forge workos env --client-id client_... --write --json
+forge field-test report --json
+forge deploy readiness --production --json
+```
+
 ## Intent router
 
 ```bash
@@ -275,11 +310,13 @@ forge auth status --json
 forge auth check --json
 forge auth check --production --json
 forge auth prove --prod --token <jwt> --json
+forge auth prove --provider workos --real --client-id client_... --file workos-seed.yml --json
 forge authmd generate
 forge authmd check --json
 forge workos install --yes --json
 forge workos doctor --json
 forge workos doctor --yes --json
+forge workos env --client-id client_... --write --json
 forge workos seed --file workos-seed.yml --dry-run --json
 forge workos seed --file workos-seed.yml --json
 forge policy simulate tickets.create --role member --json

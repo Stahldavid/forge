@@ -317,6 +317,7 @@ async function createFieldTestApp(options: FieldTestCommandOptions): Promise<Fie
     };
   }
   if (options.dryRun) {
+    const forgeSpecFlag = options.forgeSpec ? ` --forge-spec ${options.forgeSpec}` : "";
     return normalizeForgeCliCommandsInValue(options.workspaceRoot, {
       schemaVersion: "0.1.0",
       ok: true,
@@ -328,11 +329,12 @@ async function createFieldTestApp(options: FieldTestCommandOptions): Promise<Fie
         template: options.template,
         packageManager: options.packageManager,
         auth: options.auth,
+        forgeSpec: options.forgeSpec,
         install: true,
         git: true,
-        command: `forge new ${options.name} --template ${options.template} --package-manager ${options.packageManager} --field-test --install`,
+        command: `forge new ${options.name} --template ${options.template} --package-manager ${options.packageManager}${forgeSpecFlag} --field-test --install`,
         goldenPath: [
-          `forge field-test create ${options.name} --auth ${options.auth ?? "none"} --template ${options.template} --package-manager ${options.packageManager} --install --git --json`,
+          `forge field-test create ${options.name} --auth ${options.auth ?? "none"} --template ${options.template} --package-manager ${options.packageManager}${forgeSpecFlag} --install --git --json`,
           `cd ${options.name}`,
           "forge field-test run --realistic --json",
           "forge field-test report --json",
@@ -341,7 +343,7 @@ async function createFieldTestApp(options: FieldTestCommandOptions): Promise<Fie
         ],
       },
       nextActions: [
-        `forge field-test create ${options.name} --auth ${options.auth ?? "none"} --template ${options.template} --package-manager ${options.packageManager} --install --git --json`,
+        `forge field-test create ${options.name} --auth ${options.auth ?? "none"} --template ${options.template} --package-manager ${options.packageManager}${forgeSpecFlag} --install --git --json`,
       ],
       exitCode: 0,
     });

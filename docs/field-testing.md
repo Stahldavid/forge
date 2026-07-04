@@ -13,6 +13,7 @@ It is different from unit tests:
 Validate the same path external users take:
 
 ```bash
+forge golden-path plan --auth workos --target docker --real --production --json
 forge field-test create vendor-access --auth workos --install --git --json
 cd vendor-access
 npm run forge -- field-test run --realistic --json
@@ -20,6 +21,11 @@ npm run forge -- field-test report --json
 npm run forge -- deploy plan --target docker --json
 npm run forge -- deploy check --production --json
 ```
+
+`forge golden-path plan` is the canonical command ladder for the whole P0
+journey: create app, add/prove WorkOS, run field-test, initialize Docker deploy,
+check production readiness, package, and verify. `forge field-test ...` remains
+the evidence-producing step inside that larger path.
 
 The `create-forgeos-app@alpha` wrapper delegates to `forge new` with defaults:
 
@@ -218,6 +224,13 @@ For public alpha promotion, prefer a small set of high-signal reports over a bro
 - one failure report that documents the diagnostic and fix.
 
 Field reports should complement agent evals. Field tests prove that generated apps run outside the repository; evals prove that agents can change those apps safely.
+
+## Published reports
+
+- [WorkOS Real Vendor Access](field-reports/workos-real-vendor-access.md)
+  documents the real AuthKit/RBAC vendor-access path with hosted WorkOS setup,
+  idempotent seed behavior, auth metadata, session bridge, tenant normalization,
+  policy denial, field-test evidence, and deploy readiness blockers.
 
 ## Related pages
 
