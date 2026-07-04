@@ -889,10 +889,17 @@ describe("forge add integration", () => {
       expect(bridge).toContain("workOSApiUrl('/session')");
       expect(bridge).toContain("ForgeProvider");
       expect(bridge).toContain("url={forgeUrl}");
+      expect(bridge).toContain("workOSSessionToForgeAuth");
+      expect(bridge).toContain("forgeTenantIdForWorkOSOrganization");
+      expect(bridge).toContain("const workOSAuthProvider = async ()");
+      expect(bridge).toContain("auth={workOSAuthProvider}");
+      expect(bridge).toContain("organizationId: forgeTenantId");
+      expect(bridge).toContain("permissions: claims.permissions");
       const webEnv = readFileSync(join(workspace, "web/.env.local"), "utf8");
       expect(webEnv).toContain("VITE_FORGE_URL=http://localhost:3765");
       expect(webEnv).toContain("VITE_WORKOS_CLIENT_ID=");
       expect(webEnv).toContain("VITE_WORKOS_REDIRECT_URI=http://localhost:5173/callback");
+      expect(webEnv).toContain("VITE_FORGE_WORKOS_TENANT_ID_FALLBACK=");
       const authRoutes = readFileSync(join(workspace, "src/forge/_generated/integrations/workos/auth-routes.ts"), "utf8");
       expect(authRoutes).toContain("const rawResult = result as unknown as Record<string, unknown>;");
       expect(authRoutes).toContain("Array.isArray(rawResult.roles)");

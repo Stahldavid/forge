@@ -508,8 +508,85 @@ function workOSDevSessionClaims(session: WorkOSDevSession): Record<string, unkno
   };
 }
 
+function parseWorkOSTenantMap(value: string | undefined): Record<string, string> {
+  if (!value) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(parsed as Record<string, unknown>)
+        .filter((entry): entry is [string, string] =>
+          typeof entry[0] === "string" &&
+          typeof entry[1] === "string" &&
+          entry[0].length > 0 &&
+          entry[1].length > 0
+        ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function mapWorkOSTenantId(
+  envStore: ReturnType<typeof getRuntimeEnvStore>,
+  organizationId: unknown,
+): string | undefined {
+  if (typeof organizationId !== "string" || organizationId.length === 0) {
+    return undefined;
+  }
+  const tenantMap = {
+    ...parseWorkOSTenantMap(envStore.resolve("FORGE_WORKOS_TENANT_MAP")),
+    ...parseWorkOSTenantMap(envStore.resolve("VITE_FORGE_WORKOS_TENANT_MAP")),
+  };
+  if (tenantMap[organizationId]) {
+    return tenantMap[organizationId];
+  }
+  const fallback =
+    normalizeOptionalId(envStore.resolve("FORGE_WORKOS_TENANT_ID_FALLBACK")) ??
+    normalizeOptionalId(envStore.resolve("VITE_FORGE_WORKOS_TENANT_ID_FALLBACK"));
+  if (organizationId.startsWith("org_") && fallback) {
+    return fallback;
+  }
+  return organizationId;
+}
+
+function mapWorkOSClaimsTenant(
+  envStore: ReturnType<typeof getRuntimeEnvStore>,
+  claims: Record<string, unknown>,
+): Record<string, unknown> {
+  const rawOrganizationId = claims.organization_id;
+  const mappedTenantId = mapWorkOSTenantId(envStore, rawOrganizationId);
+  if (!mappedTenantId || mappedTenantId === rawOrganizationId) {
+    return claims;
+  }
+  return {
+    ...claims,
+    workos_organization_id: rawOrganizationId,
+    organization_id: mappedTenantId,
+    tenant_id: mappedTenantId,
+  };
+}
+
+function enrichWorkOSDevSession(workspaceRoot: string, session: WorkOSDevSession): WorkOSDevSession {
+  const role = session.role ?? session.roles?.[0];
+  const permissions = session.permissions && session.permissions.length > 0
+    ? session.permissions
+    : deriveDevPermissionsForRole(workspaceRoot, role);
+  return {
+    ...session,
+    ...(role && !session.role ? { role } : {}),
+    ...(role && (!session.roles || session.roles.length === 0) ? { roles: [role] } : {}),
+    ...(permissions.length > 0 ? { permissions } : {}),
+  };
+}
+
 function authFromWorkOSDevSessionCookie(
   request: Request,
+  workspaceRoot: string,
   envStore: ReturnType<typeof getRuntimeEnvStore>,
 ): AuthContext | null {
   const cookiePassword = envStore.resolve("WORKOS_COOKIE_PASSWORD");
@@ -523,7 +600,10 @@ function authFromWorkOSDevSessionCookie(
   if (!session) {
     return null;
   }
-  const claims = workOSDevSessionClaims(session);
+  const claims = mapWorkOSClaimsTenant(
+    envStore,
+    workOSDevSessionClaims(enrichWorkOSDevSession(workspaceRoot, session)),
+  );
   return resolveAuthFromHeaders({
     userId: typeof claims.sub === "string" ? claims.sub : undefined,
     tenantId: typeof claims.organization_id === "string" ? claims.organization_id : undefined,
@@ -541,6 +621,7 @@ function authFromWorkOSDevSessionCookie(
 
 async function authenticateDevRequest(
   request: Request,
+  workspaceRoot: string,
   authConfig: ReturnType<typeof loadAuthConfigFromEnv>,
   envStore: ReturnType<typeof getRuntimeEnvStore>,
 ): Promise<AuthContext> {
@@ -549,13 +630,13 @@ async function authenticateDevRequest(
     if (headerAuth.kind !== "anonymous") {
       return headerAuth;
     }
-    return authFromWorkOSDevSessionCookie(request, envStore) ?? headerAuth;
+    return authFromWorkOSDevSessionCookie(request, workspaceRoot, envStore) ?? headerAuth;
   }
 
   try {
     return await authenticateHeaders(request.headers, authConfig);
   } catch (error) {
-    const cookieAuth = authFromWorkOSDevSessionCookie(request, envStore);
+    const cookieAuth = authFromWorkOSDevSessionCookie(request, workspaceRoot, envStore);
     if (cookieAuth) {
       return cookieAuth;
     }
@@ -1585,6 +1666,20 @@ export async function startDevServer(
               const membership = (result.organizationMembership ?? {}) as Record<string, unknown>;
               const accessToken = typeof result.accessToken === "string" ? result.accessToken : "";
               const refreshToken = typeof result.refreshToken === "string" ? result.refreshToken : undefined;
+              const roles = Array.isArray(result.roles)
+                ? result.roles.filter((role): role is string => typeof role === "string")
+                : [];
+              const role =
+                typeof result.role === "string"
+                  ? result.role
+                  : typeof (membership.role as Record<string, unknown> | undefined)?.slug === "string"
+                    ? String((membership.role as Record<string, unknown>).slug)
+                    : roles[0];
+              const permissions = Array.isArray(result.permissions)
+                ? result.permissions.filter((permission): permission is string => typeof permission === "string")
+                : [];
+              const effectivePermissions =
+                permissions.length > 0 ? permissions : deriveDevPermissionsForRole(workspaceRoot, role);
               const session: WorkOSDevSession = {
                 user,
                 accessToken,
@@ -1599,17 +1694,9 @@ export async function startDevServer(
                   : typeof membership.id === "string"
                     ? { organizationMembershipId: membership.id }
                     : {}),
-                ...(typeof result.role === "string" ? { role: result.role } : {}),
-                ...(Array.isArray(result.roles)
-                  ? { roles: result.roles.filter((role): role is string => typeof role === "string") }
-                  : {}),
-                ...(Array.isArray(result.permissions)
-                  ? {
-                      permissions: result.permissions.filter(
-                        (permission): permission is string => typeof permission === "string",
-                      ),
-                    }
-                  : {}),
+                ...(role ? { role } : {}),
+                ...(roles.length > 0 ? { roles } : role ? { roles: [role] } : {}),
+                ...(effectivePermissions.length > 0 ? { permissions: effectivePermissions } : {}),
                 issuedAt: Math.floor(Date.now() / 1000),
               };
               return redirectResponse(
@@ -1660,7 +1747,16 @@ export async function startDevServer(
               cookiePassword,
             );
             return session
-              ? jsonResponse({ ok: true, session: { user: session.user, claims: workOSDevSessionClaims(session) } })
+              ? jsonResponse({
+                  ok: true,
+                  session: {
+                    user: session.user,
+                    claims: mapWorkOSClaimsTenant(
+                      envStore,
+                      workOSDevSessionClaims(enrichWorkOSDevSession(workspaceRoot, session)),
+                    ),
+                  },
+                })
               : jsonResponse({ ok: false, session: null }, 401);
           }
         }
@@ -1885,7 +1981,7 @@ export async function startDevServer(
             }
           }
 
-          const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
+          const auth = await authenticateDevRequest(request, workspaceRoot, authConfig, getRuntimeEnvStore(workspaceRoot));
           const lastRevision = Number(
             request.headers.get("last-event-id") ??
               url.searchParams.get("lastRevision") ??
@@ -2009,7 +2105,7 @@ export async function startDevServer(
               400,
             );
           }
-          const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
+          const auth = await authenticateDevRequest(request, workspaceRoot, authConfig, getRuntimeEnvStore(workspaceRoot));
           const envStore = getRuntimeEnvStore(workspaceRoot);
           const secretRegistry = loadSecretRegistry(workspaceRoot);
           const bundle = createRuntimeSecretsBundle({
@@ -2129,7 +2225,7 @@ export async function startDevServer(
           }
 
           const purpose = body.purpose ?? "dev_agent_chat";
-          const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
+          const auth = await authenticateDevRequest(request, workspaceRoot, authConfig, getRuntimeEnvStore(workspaceRoot));
           const envStore = getRuntimeEnvStore(workspaceRoot);
           const secretRegistry = loadSecretRegistry(workspaceRoot);
           const bundle = createRuntimeSecretsBundle({
@@ -2544,7 +2640,7 @@ export async function startDevServer(
           const externalInvoke = parseExternalInvoke(pathname);
           if (externalInvoke) {
             const args = await parseRequestArgs(request);
-            const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
+            const auth = await authenticateDevRequest(request, workspaceRoot, authConfig, getRuntimeEnvStore(workspaceRoot));
             const result = await runExternalEntry(
               workspaceRoot,
               {
@@ -2612,7 +2708,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
-            const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
+            const auth = await authenticateDevRequest(request, workspaceRoot, authConfig, getRuntimeEnvStore(workspaceRoot));
 
             const result = await runQuery(
               workspaceRoot,
@@ -2685,7 +2781,7 @@ export async function startDevServer(
             }
 
             const args = await parseRequestArgs(request);
-            const auth = await authenticateDevRequest(request, authConfig, getRuntimeEnvStore(workspaceRoot));
+            const auth = await authenticateDevRequest(request, workspaceRoot, authConfig, getRuntimeEnvStore(workspaceRoot));
 
             await prepareRuntimeEnvironment(workspaceRoot, {
               mock: options.mock,

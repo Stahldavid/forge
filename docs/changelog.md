@@ -6,6 +6,20 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
+## 0.1.0-alpha.59
+
+- Fixed the real WorkOS/AuthKit session bridge so generated React apps pass
+  normalized `/session` claims into `ForgeProvider` auth for commands, queries,
+  and liveQueries.
+- Added optional WorkOS organization-to-Forge tenant mapping env support for
+  apps that use internal UUID tenant ids while WorkOS emits hosted `org_...`
+  organization ids.
+- WorkOS dev sessions now derive permissions from active Forge policies when
+  AuthKit returns a role without permission claims, then normalize WorkOS
+  organization ids before cookie-backed runtime calls touch tenant-scoped data.
+- `forge workos doctor` now validates that generated browser bridges pass
+  WorkOS claims into Forge auth instead of only exposing a UI session.
+
 ## 0.1.0-alpha.58
 
 - Fixed generated WorkOS AuthKit route helper TypeScript output by reading

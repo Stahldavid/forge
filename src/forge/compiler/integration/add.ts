@@ -552,6 +552,8 @@ function syncWorkOSPublicWebEnv(workspaceRoot: string, frontendWorkspace: string
     VITE_FORGE_URL: source.VITE_FORGE_URL || "http://localhost:3765",
     VITE_WORKOS_CLIENT_ID: clientId,
     VITE_WORKOS_REDIRECT_URI: redirectUri,
+    VITE_FORGE_WORKOS_TENANT_MAP: source.VITE_FORGE_WORKOS_TENANT_MAP || "",
+    VITE_FORGE_WORKOS_TENANT_ID_FALLBACK: source.VITE_FORGE_WORKOS_TENANT_ID_FALLBACK || "",
   };
   const envRel = `${frontendWorkspace}/.env.local`;
   const envPath = join(workspaceRoot, envRel);

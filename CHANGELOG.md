@@ -1,5 +1,23 @@
 # forgeos
 
+## 0.1.0-alpha.59
+
+### Patch Changes
+
+- Fix the real WorkOS/AuthKit session bridge for Forge runtime calls.
+
+  - Generated WorkOS React bridges now pass normalized `/session` claims into
+    `ForgeProvider` auth so commands, queries, and liveQueries receive user,
+    role, permissions, membership, and tenant headers.
+  - WorkOS browser env sync now includes optional tenant mapping variables for
+    apps that use internal UUID tenants while WorkOS emits hosted `org_...`
+    organization ids.
+  - WorkOS dev sessions now derive permissions from active Forge policies when
+    AuthKit returns a role without permission claims, and normalize WorkOS
+    organization ids before cookie-backed runtime calls touch tenant-scoped data.
+  - `forge workos doctor` now validates that generated browser bridges pass
+    WorkOS claims into Forge auth instead of only exposing a UI session.
+
 ## 0.1.0-alpha.58
 
 ### Patch Changes

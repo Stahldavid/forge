@@ -1819,6 +1819,15 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
     ["/login", "/logout", "/session"].every((route) => generatedFrontendAuthBridge.includes(route));
   const authBridgeProvidesSessionClaims =
     includesAll(generatedFrontendAuthBridge, ["useForgeWorkOSSession", "/session", "claims"]);
+  const authBridgePassesClaimsToForge =
+    includesAll(generatedFrontendAuthBridge, [
+      "workOSSessionToForgeAuth",
+      "forgeTenantIdForWorkOSOrganization",
+      "workOSAuthProvider",
+      "auth={workOSAuthProvider}",
+      "permissions: claims.permissions",
+      "organizationId: forgeTenantId",
+    ]);
   const authSessionProxyConfigured = webAuthSessionProxyConfigured(workspaceRoot);
 
   return [
@@ -1877,9 +1886,10 @@ function collectWorkOSChecks(workspaceRoot: string, preferredSeedPath = DEFAULT_
       name: "browser-authkit-bridge",
       ok: !hasWeb || generatedFrontendAuthBridge.includes("ForgeProvider") &&
         authBridgeUsesBackendRoutes &&
-        authBridgeProvidesSessionClaims,
+        authBridgeProvidesSessionClaims &&
+        authBridgePassesClaimsToForge,
       detail: hasWeb
-        ? "generated web/src/lib/workos-auth.tsx bridge uses backend-owned AuthKit routes, ForgeProvider, and normalized /session claims"
+        ? "generated web/src/lib/workos-auth.tsx bridge uses backend-owned AuthKit routes and passes normalized WorkOS claims into ForgeProvider auth"
         : "no web workspace detected",
     },
     {
