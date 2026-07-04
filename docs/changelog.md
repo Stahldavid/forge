@@ -6,7 +6,7 @@ The canonical source file in the repository is `CHANGELOG.md`.
 
 ## Unreleased
 
-## 0.1.0-alpha.59
+## 0.1.0-alpha.60
 
 - Fixed the real WorkOS/AuthKit session bridge so generated React apps pass
   normalized `/session` claims into `ForgeProvider` auth for commands, queries,

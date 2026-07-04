@@ -1,6 +1,6 @@
 # forgeos
 
-## 0.1.0-alpha.59
+## 0.1.0-alpha.60
 
 ### Patch Changes
 
