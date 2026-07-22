@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.61 input=3e83e39b92f8a1e2337d18ed7565f99b151980139cd5104f0b7f462eedfed3b9 content=02e39fa7439c3aff8f080438a019a28fa2432d9e2af8a3536abcf90f78b9e169
+// @forge-generated generator=0.1.0-alpha.63 input=43623ccc7209d544f8745a8d03de2c1703d186ea75709a2ca79af821a88f2818 content=3cc3e0ff8c42a4b7dfa01fcad64d5f28e0bd7faa6ada238bf2613a9f15168190
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.61",
-  "inputHash": "3e83e39b92f8a1e2337d18ed7565f99b151980139cd5104f0b7f462eedfed3b9",
+  "generatorVersion": "0.1.0-alpha.63",
+  "inputHash": "43623ccc7209d544f8745a8d03de2c1703d186ea75709a2ca79af821a88f2818",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -638,13 +638,14 @@ export const testGraph = {
     },
     {
       "confidence": "probable",
-      "cost": "fast",
+      "cost": "docker",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
         "packages": [
+          "postgres",
           "tsx"
         ],
         "policies": [],
@@ -655,6 +656,7 @@ export const testGraph = {
       "file": "tests/cli/cli-generation.test.ts",
       "kind": "unknown",
       "reasons": [
+        "probable: packages postgres",
         "probable: packages tsx"
       ]
     },

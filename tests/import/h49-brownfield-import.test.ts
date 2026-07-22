@@ -109,6 +109,60 @@ function makeWorkspace(): string {
   return root;
 }
 
+function makeSpringWorkspace(): string {
+  const root = mkdtempSync(join(tmpdir(), "forge-h49-spring-import-"));
+  writeFileSync(
+    join(root, "pom.xml"),
+    `
+      <project>
+        <groupId>com.example</groupId>
+        <artifactId>spring-brownfield</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+          </dependency>
+          <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+          </dependency>
+        </dependencies>
+      </project>
+    `,
+    "utf8",
+  );
+  const controllerDir = join(root, "src", "main", "java", "com", "example", "orders");
+  mkdirSync(controllerDir, { recursive: true });
+  writeFileSync(
+    join(controllerDir, "OrderController.java"),
+    `
+      package com.example.orders;
+
+      @RestController
+      @RequestMapping("/api/orders")
+      public class OrderController {
+        @GetMapping("/{id}")
+        public Order findById(@PathVariable String id) {
+          String region = System.getenv("AWS_REGION");
+          return service.findById(id, region);
+        }
+
+        @PostMapping
+        public Order create(@RequestBody CreateOrder input) {
+          return repository.save(input.toOrder());
+        }
+
+        @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
+        public void remove(@PathVariable String id) {
+          repository.deleteById(id);
+        }
+      }
+    `,
+    "utf8",
+  );
+  return root;
+}
+
 describe("H49 brownfield import analyze", () => {
   test("writes import artifacts and keeps imported entries hidden from agents", () => {
     const root = makeWorkspace();
@@ -196,6 +250,35 @@ describe("H49 brownfield import analyze", () => {
       expect(result.exitCode).toBe(0);
       expect(result.wroteArtifacts).toBe(false);
       expect(existsSync(join(root, BROWNFIELD_IMPORT_ARTIFACTS.inventory))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("discovers Java Spring Boot controllers, methods, dependencies, and environment usage", () => {
+    const root = makeSpringWorkspace();
+    try {
+      const result = runBrownfieldImportCommand({
+        subcommand: "analyze",
+        json: true,
+        dryRun: true,
+        workspaceRoot: root,
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.inventory?.packageName).toBe("spring-brownfield");
+      expect(result.inventory?.dependencies.frameworks).toContain("spring-boot");
+      expect(result.inventory?.dependencies.dataPackages).toContain("org.springframework.boot:spring-boot-starter-data-jpa");
+      expect(result.inventory?.sourceFiles).toContain("src/main/java/com/example/orders/OrderController.java");
+      expect(result.inventory?.env.processEnv).toContain("AWS_REGION");
+      expect(result.routes).toEqual(expect.arrayContaining([
+        expect.objectContaining({ method: "GET", path: "/api/orders/:id", source: "spring", handler: "findById" }),
+        expect.objectContaining({ method: "POST", path: "/api/orders", source: "spring", handler: "create" }),
+        expect.objectContaining({ method: "DELETE", path: "/api/orders/:id", source: "spring", handler: "remove" }),
+      ]));
+      expect(result.candidateEntries.find((entry) => entry.method === "GET")?.kind).toBe("query");
+      expect(result.candidateEntries.find((entry) => entry.method === "POST")?.risks).toContain("writes-state");
+      expect(result.candidateEntries.find((entry) => entry.method === "DELETE")?.risks).toContain("destructive");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

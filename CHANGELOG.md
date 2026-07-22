@@ -1,5 +1,26 @@
 # forgeos
 
+## 0.1.0-alpha.63
+
+### Patch Changes
+
+- Make generated freshness and Java/Spring brownfield analysis trustworthy.
+
+  - `forge status` now executes deterministic generation verification, so a
+    clean Git worktree can no longer hide committed generated drift that
+    `forge handoff` would reject.
+  - Report compact generation evidence in status output, including freshness,
+    changed artifact counts, samples, and diagnostic codes.
+  - Extend `forge import analyze` to inventory Maven dependencies, recognize
+    Spring Boot, scan Java source, discover Spring MVC controller mappings, and
+    detect `System.getenv(...)` usage.
+  - Keep Spring-derived command/query candidates static, review-required, and
+    hidden from agents under the existing brownfield safety model.
+  - Pin a modern Maven compiler plugin for the Java adapter and Spring starter,
+    so their declared Java 17 release compiles on the supported JDK 21 toolchain.
+  - Make example fixture seeding replace package directories cleanly, avoiding
+    cross-identity timestamp/ownership failures in shared development workspaces.
+
 ## 0.1.0-alpha.62
 
 ### Patch Changes
