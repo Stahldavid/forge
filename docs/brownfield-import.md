@@ -1,6 +1,6 @@
 # Brownfield Import
 
-`forge import analyze` turns an existing TypeScript or JavaScript app into a reviewed migration map.
+`forge import analyze` turns an existing TypeScript/JavaScript or Java/Spring app into a reviewed migration map.
 
 It performs a static scan only. It does not edit source code, execute handlers, create runtime entries, or expose imported operations to agents.
 
@@ -28,11 +28,11 @@ The analyzer writes:
 
 | Surface | Examples |
 |---------|----------|
-| Frameworks | `next`, `react`, `vue`, `nuxt`, `express`, `nest` |
-| Routes | Next.js App Router, Next.js Pages API, Express-style routes, Nest controllers |
+| Frameworks | `next`, `react`, `vue`, `nuxt`, `express`, `nest`, `spring-boot` |
+| Routes | Next.js App Router, Next.js Pages API, Express-style routes, Nest controllers, Spring MVC controllers |
 | Frontend calls | `fetch("/api/...")`, `axios.post("/api/...")` |
-| Environment | `process.env.NAME`, `.env.example`, `.env.sample` |
-| Data packages | Prisma, Drizzle, TypeORM, Mongoose, Sequelize, Knex |
+| Environment | `process.env.NAME`, `System.getenv("NAME")`, `.env.example`, `.env.sample` |
+| Data packages | Prisma, Drizzle, TypeORM, Mongoose, Sequelize, Knex, Spring Data, Hibernate, MyBatis |
 | External packages | Stripe, Resend, SendGrid, Twilio, OpenAI, Anthropic, AWS S3 |
 
 ## Safety Defaults

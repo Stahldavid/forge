@@ -223,7 +223,7 @@ forge import inspect --target candidate-entries --json
 forge inspect imported --json
 ```
 
-`forge import analyze` scans an existing TypeScript/JavaScript app without changing source code. It writes `.forge/import/inventory.json`, `routes.json`, `frontendCalls.json`, `candidateEntries.json`, `riskReport.json`, `migrationPlan.md`, and `importedAgentContract.json`.
+`forge import analyze` scans an existing TypeScript/JavaScript or Java/Spring app without changing source code. It writes `.forge/import/inventory.json`, `routes.json`, `frontendCalls.json`, `candidateEntries.json`, `riskReport.json`, `migrationPlan.md`, and `importedAgentContract.json`.
 
 All imported entries start with `origin: imported`, `assurance: static-scan`, `reviewStatus: needs-review`, and `visibleToAgent: false`. Command-like, destructive, external, or unknown entries keep `needsApproval: true` until a human review turns them into native Forge commands, queries, actions, or workflows.
 

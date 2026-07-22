@@ -16,7 +16,7 @@ import type {
 } from "./types.ts";
 
 const IMPORT_DIR = ".forge/import";
-const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".java"]);
 const IGNORED_DIRS = new Set([
   ".git",
   ".forge",
@@ -130,8 +130,10 @@ function buildDependencyInventory(workspaceRoot: string): {
   dependencies: ImportedDependencyInventory;
 } {
   const pkg = readPackageJson(workspaceRoot);
-  const dependencies = objectKeys(pkg.dependencies);
+  const npmDependencies = objectKeys(pkg.dependencies);
   const devDependencies = objectKeys(pkg.devDependencies);
+  const pom = readMavenInventory(workspaceRoot);
+  const dependencies = [...new Set([...npmDependencies, ...pom.dependencies])].sort();
   const all = [...dependencies, ...devDependencies];
   const scripts = objectKeys(pkg.scripts);
   const frameworks = [
@@ -143,9 +145,11 @@ function buildDependencyInventory(workspaceRoot: string): {
     hasAny(all, ["@nestjs/core"]) ? "nest" : null,
     hasAny(all, ["fastify"]) ? "fastify" : null,
     hasAny(all, ["hono"]) ? "hono" : null,
+    pom.frameworks.includes("spring-boot") ? "spring-boot" : null,
   ].filter((value): value is string => value !== null);
   const dataPackages = all.filter((name) =>
-    ["@prisma/client", "prisma", "drizzle-orm", "typeorm", "mongoose", "sequelize", "knex"].includes(name),
+    ["@prisma/client", "prisma", "drizzle-orm", "typeorm", "mongoose", "sequelize", "knex"].includes(name) ||
+    /(?:spring-boot-starter-data-|hibernate-core|mybatis)/u.test(name),
   );
   const externalPackages = all.filter((name) =>
     [
@@ -163,7 +167,7 @@ function buildDependencyInventory(workspaceRoot: string): {
     ].includes(name),
   );
   return {
-    packageName: typeof pkg.name === "string" ? pkg.name : undefined,
+    packageName: typeof pkg.name === "string" ? pkg.name : pom.packageName,
     dependencies: {
       dependencies,
       devDependencies,
@@ -172,6 +176,34 @@ function buildDependencyInventory(workspaceRoot: string): {
       dataPackages,
       externalPackages,
     },
+  };
+}
+
+function readMavenInventory(workspaceRoot: string): {
+  packageName?: string;
+  dependencies: string[];
+  frameworks: string[];
+} {
+  const pomPath = join(workspaceRoot, "pom.xml");
+  if (!existsSync(pomPath)) {
+    return { dependencies: [], frameworks: [] };
+  }
+  const text = readFileSync(pomPath, "utf8");
+  const dependencies: string[] = [];
+  for (const match of text.matchAll(/<dependency\b[^>]*>([\s\S]*?)<\/dependency>/gu)) {
+    const block = match[1] ?? "";
+    const groupId = block.match(/<groupId>\s*([^<]+?)\s*<\/groupId>/u)?.[1]?.trim();
+    const artifactId = block.match(/<artifactId>\s*([^<]+?)\s*<\/artifactId>/u)?.[1]?.trim();
+    if (artifactId) {
+      dependencies.push(groupId ? `${groupId}:${artifactId}` : artifactId);
+    }
+  }
+  const projectWithoutParent = text.replace(/<parent\b[^>]*>[\s\S]*?<\/parent>/u, "");
+  const packageName = projectWithoutParent.match(/<artifactId>\s*([^<]+?)\s*<\/artifactId>/u)?.[1]?.trim();
+  return {
+    ...(packageName ? { packageName } : {}),
+    dependencies: [...new Set(dependencies)].sort(),
+    frameworks: /\b(?:org\.springframework\.boot|spring-boot)[\w.:-]*/u.test(text) ? ["spring-boot"] : [],
   };
 }
 
@@ -185,7 +217,7 @@ function stableId(prefix: string, parts: string[]): string {
 }
 
 function stripExtension(segment: string): string {
-  return segment.replace(/\.(ts|tsx|js|jsx|mjs|cjs)$/u, "");
+  return segment.replace(/\.(ts|tsx|js|jsx|mjs|cjs|java)$/u, "");
 }
 
 function normalizeRouteSegment(segment: string): string | null {
@@ -219,7 +251,56 @@ function routePathFromFile(relativePath: string, marker: string): string {
 }
 
 function joinRoutePath(base: string, child: string): string {
-  return `/${[base, child].map((part) => part.replace(/^\/|\/$/gu, "")).filter(Boolean).join("/")}`.replace(/\/+/gu, "/");
+  return `/${[base, child].map((part) => part.replace(/^\/|\/$/gu, "")).filter(Boolean).join("/")}`
+    .replace(/\/+/gu, "/")
+    .replace(/\{([^}/]+)\}/gu, ":$1");
+}
+
+function springMappingPath(argumentsText: string): string {
+  return argumentsText.match(/(?:path|value)\s*=\s*["']([^"']*)["']/u)?.[1] ??
+    argumentsText.match(/["']([^"']*)["']/u)?.[1] ??
+    "";
+}
+
+function springHandlerName(text: string): string | undefined {
+  return text.match(/(?:public|protected|private)?\s*(?:static\s+)?(?:[\w.$<>?,\[\]]+\s+)+(\w+)\s*\(/u)?.[1];
+}
+
+function detectSpringRoutes(file: SourceFile, routes: ImportedRoute[]): void {
+  if (extname(file.relativePath) !== ".java" || !/@(?:RestController|Controller)\b/u.test(file.text)) {
+    return;
+  }
+  const classIndex = file.text.search(/\bclass\s+\w+/u);
+  if (classIndex < 0) {
+    return;
+  }
+  const classAnnotations = file.text.slice(0, classIndex);
+  const classMapping = [...classAnnotations.matchAll(/@RequestMapping\s*(?:\(([^)]*)\))?/gu)].at(-1);
+  const basePath = springMappingPath(classMapping?.[1] ?? "");
+  const methodMappings = /@(GetMapping|PostMapping|PutMapping|PatchMapping|DeleteMapping|RequestMapping)\s*(?:\(([^)]*)\))?/gu;
+  methodMappings.lastIndex = classIndex;
+  for (const match of file.text.matchAll(methodMappings)) {
+    const annotation = match[1] ?? "RequestMapping";
+    const argumentsText = match[2] ?? "";
+    const handler = springHandlerName(file.text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 500));
+    if (!handler) {
+      continue;
+    }
+    const methods = annotation === "RequestMapping"
+      ? [...argumentsText.matchAll(/RequestMethod\.(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/gu)].map((item) => item[1] ?? "ANY")
+      : [annotation.replace(/Mapping$/u, "").toUpperCase()];
+    for (const method of methods.length > 0 ? methods : ["ANY"]) {
+      addRoute(
+        routes,
+        method,
+        joinRoutePath(basePath, springMappingPath(argumentsText)),
+        file.relativePath,
+        "spring",
+        0.86,
+        handler,
+      );
+    }
+  }
 }
 
 function pathIncludesRouteMarker(relativePath: string, marker: string): boolean {
@@ -251,6 +332,7 @@ function detectRoutes(files: SourceFile[]): ImportedRoute[] {
   const routes: ImportedRoute[] = [];
   const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
   for (const file of files) {
+    const isJava = extname(file.relativePath) === ".java";
     if (pathIncludesRouteMarker(file.relativePath, "/app/api/") && basename(file.relativePath).startsWith("route.")) {
       const path = routePathFromFile(file.relativePath, "/app/");
       for (const method of methods) {
@@ -265,12 +347,14 @@ function detectRoutes(files: SourceFile[]): ImportedRoute[] {
       addRoute(routes, "ANY", path, file.relativePath, "next-pages-api", 0.78, "default");
     }
 
-    const expressRoute = /\b(?:app|router)\s*\.\s*(get|post|put|patch|delete|all)\s*\(\s*["'`]([^"'`]+)["'`]/giu;
-    for (const match of file.text.matchAll(expressRoute)) {
-      addRoute(routes, match[1] ?? "all", match[2] ?? "/", file.relativePath, "express", 0.84);
+    if (!isJava) {
+      const expressRoute = /\b(?:app|router)\s*\.\s*(get|post|put|patch|delete|all)\s*\(\s*["'`]([^"'`]+)["'`]/giu;
+      for (const match of file.text.matchAll(expressRoute)) {
+        addRoute(routes, match[1] ?? "all", match[2] ?? "/", file.relativePath, "express", 0.84);
+      }
     }
 
-    const controller = file.text.match(/@Controller\s*\(\s*["'`]([^"'`]*)["'`]\s*\)/u);
+    const controller = !isJava ? file.text.match(/@Controller\s*\(\s*["'`]([^"'`]*)["'`]\s*\)/u) : null;
     if (controller) {
       const nestRoute = /@(Get|Post|Put|Patch|Delete|All)\s*\(\s*(?:["'`]([^"'`]*)["'`])?\s*\)/giu;
       for (const match of file.text.matchAll(nestRoute)) {
@@ -284,6 +368,7 @@ function detectRoutes(files: SourceFile[]): ImportedRoute[] {
         );
       }
     }
+    detectSpringRoutes(file, routes);
   }
   const seen = new Set<string>();
   return routes
@@ -346,6 +431,9 @@ function collectEnv(workspaceRoot: string, files: SourceFile[]): ImportedInvento
     for (const match of file.text.matchAll(/\bprocess\.env\.([A-Z0-9_]+)/gu)) {
       names.add(match[1] ?? "");
     }
+    for (const match of file.text.matchAll(/\bSystem\.getenv\(\s*["']([A-Z0-9_]+)["']\s*\)/gu)) {
+      names.add(match[1] ?? "");
+    }
   }
   const envFiles = [".env", ".env.local", ".env.example", ".env.sample"]
     .filter((name) => existsSync(join(workspaceRoot, name)))
@@ -396,6 +484,13 @@ function scopedSourceTextForRoute(route: ImportedRoute, text: string): string | 
       text,
       new RegExp(`@${escapeRegExp(method)}\\s*\\(`, "u"),
       /@(Get|Post|Put|Patch|Delete|All)\s*\(/gu,
+    );
+  }
+  if (route.source === "spring" && route.handler) {
+    return sliceUntilNextMatch(
+      text,
+      new RegExp(`@(?:GetMapping|PostMapping|PutMapping|PatchMapping|DeleteMapping|RequestMapping)[\\s\\S]{0,500}?\\b${escapeRegExp(route.handler)}\\s*\\(`, "u"),
+      /@(GetMapping|PostMapping|PutMapping|PatchMapping|DeleteMapping|RequestMapping)\b/gu,
     );
   }
   return null;
@@ -451,7 +546,7 @@ function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCan
   if (tenant) {
     risks.add("tenant-sensitive");
   }
-  if (/\bprocess\.env\./u.test(text)) {
+  if (/\bprocess\.env\.|\bSystem\.getenv\s*\(/u.test(text)) {
     risks.add("secret-sensitive");
   }
   if (methodUnknown) {

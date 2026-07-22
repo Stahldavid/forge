@@ -655,16 +655,16 @@ describe("Forge CLI generation and inspection", () => {
       mkdirSync(join(workspace, "docs"), { recursive: true });
       writeFileSync(join(workspace, "bin", "status-helper.ts"), "export const ok = true;\n", "utf8");
       writeFileSync(join(workspace, "docs", "status.md"), "# Status\n", "utf8");
-      const status = runStatusCommand(workspace);
+      const status = await runStatusCommand(workspace);
       expect(status.exitCode).toBe(0);
       expect(status.data).toMatchObject({
         schemaVersion: "0.1.0",
         ok: true,
         generated: {
-          state: "check-needed",
+          state: "ready",
           ready: true,
           driftClean: true,
-          freshness: "unverified",
+          freshness: "verified",
           authoredGeneratedInputs: 1,
           missingArtifacts: 0,
           tableDrift: 0,
@@ -680,7 +680,7 @@ describe("Forge CLI generation and inspection", () => {
           useful: false,
         },
         summary: {
-          generated: "check-needed",
+          generated: "ready",
           frontendPresent: false,
           routes: 0,
         },
@@ -706,7 +706,7 @@ describe("Forge CLI generation and inspection", () => {
       expect(git.changed.byType.docs.sample).toContain("docs/status.md");
       expect(git.changed.primaryTypes).toContain("source");
       expect(Number((status.data.summary as Record<string, unknown>).missingDefaultAgentFiles)).toBeGreaterThan(0);
-      expect((status.data.nextActions as string[])[0]).toBe("forge generate --check --json");
+      expect((status.data.nextActions as string[])[0]).toBe("forge handoff --json");
       expect(status.data.nextActions as string[]).toContain("forge changed --json");
       expect((status.data.generated as { nextActions: string[] }).nextActions).toContain("forge generate --check --json");
       const human = formatStatusHuman(status);
@@ -1078,7 +1078,7 @@ describe("Forge CLI generation and inspection", () => {
       const project = join(workspace, "notes-app");
       await runGenerateCommand(defaultGenerateOptions(project));
 
-      const status = runStatusCommand(project);
+      const status = await runStatusCommand(project);
       expect(status.exitCode).toBe(0);
       expect(status.data).toMatchObject({
         studio: {
@@ -1105,7 +1105,7 @@ describe("Forge CLI generation and inspection", () => {
       mkdirSync(join(workspace, "bin"), { recursive: true });
       writeFileSync(join(workspace, "bin", "forge.mjs"), "#!/usr/bin/env node\n", "utf8");
 
-      const status = runStatusCommand(workspace);
+      const status = await runStatusCommand(workspace);
       const nextActions = status.data.nextActions as string[];
       const generated = status.data.generated as { nextActions: string[]; checkCommand: string };
       const studio = status.data.studio as { openCommand: string; startTargetAppCommand: string };
@@ -1122,7 +1122,7 @@ describe("Forge CLI generation and inspection", () => {
     }
   });
 
-  test("status explains generated git dirtiness separately from generator freshness", async () => {
+  test("status reports stale generated git dirtiness from deterministic verification", async () => {
     const workspace = scaffoldGenerateWorkspace("cli-status-generated-dirty");
     try {
       await runGenerateCommand(defaultGenerateOptions(workspace));
@@ -1133,18 +1133,52 @@ describe("Forge CLI generation and inspection", () => {
       spawnSync("git", ["commit", "-m", "initial"], { cwd: workspace, windowsHide: true });
       writeFileSync(join(workspace, "forge.lock"), "changed generated lock\n", "utf8");
 
-      const status = runStatusCommand(workspace);
-      expect(status.exitCode).toBe(0);
+      const status = await runStatusCommand(workspace);
+      expect(status.exitCode).toBe(1);
       expect(status.data.generated).toMatchObject({
-        state: "ready",
-        driftClean: true,
-        freshness: "verified-or-unchanged",
+        state: "drift",
+        driftClean: false,
+        freshness: "stale",
+        verification: {
+          checked: true,
+          fresh: false,
+          changedFiles: expect.any(Number),
+        },
         git: {
           authoredFiles: 0,
           generatedFiles: 1,
         },
       });
-      expect(JSON.stringify(status.data.generated)).toContain("generate --check can be clean");
+      expect(JSON.stringify(status.data.generated)).toContain("deterministic generation verification found stale artifacts");
+    } finally {
+      cleanupWorkspace(workspace);
+    }
+  });
+
+  test("status rejects committed generated drift even when git is clean", async () => {
+    const workspace = scaffoldGenerateWorkspace("cli-status-clean-generated-drift");
+    try {
+      await runGenerateCommand(defaultGenerateOptions(workspace));
+      spawnSync("git", ["init"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.email", "forge@example.com"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["config", "user.name", "Forge Test"], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["commit", "-m", "initial"], { cwd: workspace, windowsHide: true });
+      writeFileSync(join(workspace, "src", "forge", "_generated", "appGraph.json"), "{\"stale\":true}\n", "utf8");
+      spawnSync("git", ["add", "."], { cwd: workspace, windowsHide: true });
+      spawnSync("git", ["commit", "-m", "commit stale generated output"], { cwd: workspace, windowsHide: true });
+
+      const status = await runStatusCommand(workspace);
+      expect(status.exitCode).toBe(1);
+      expect(status.data.generated).toMatchObject({
+        state: "drift",
+        driftClean: false,
+        freshness: "stale",
+        verification: {
+          checked: true,
+          changedFiles: expect.any(Number),
+        },
+      });
     } finally {
       cleanupWorkspace(workspace);
     }

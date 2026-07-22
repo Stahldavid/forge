@@ -22,7 +22,7 @@ ForgeOS has grown through milestones H1-H49. This page groups those milestones i
 | DeltaDB and timeline | Local operation memory, inferred sessions, semantic timeline, explain | `forge delta`, `forge session`, `forge timeline`, `forge explain` | [Forge DeltaDB](forge-deltadb.md) |
 | Agent memory bridge | Redacted external agent event ingestion and MCP context | `forge agent memory`, `forge agent ingest`, `forge mcp serve` | [Agent Memory](agent-memory.md) |
 | External runtimes | Executable manifest-backed Go, Java, and Spring Boot services | `forge manifest`, `forge run`, `forge query` | [Forge Protocol](forge-protocol.md) |
-| Brownfield import | Static inventory for existing TypeScript/JavaScript apps | `forge import analyze`, `forge inspect imported` | [Brownfield Import](brownfield-import.md) |
+| Brownfield import | Static inventory for TypeScript/JavaScript and Java/Spring apps | `forge import analyze`, `forge inspect imported` | [Brownfield Import](brownfield-import.md) |
 | Operations | Self-host, release, Windows, Node path | `forge doctor`, `forge self-host`, `forge verify` | [Operations](operations.md) |
 
 ## How the pieces fit

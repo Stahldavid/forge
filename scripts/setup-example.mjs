@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,7 +18,9 @@ for (const entry of readdirSync(fixturePackages, { withFileTypes: true })) {
   if (!entry.isDirectory()) {
     continue;
   }
-  cpSync(join(fixturePackages, entry.name), join(nodeModules, entry.name), {
+  const destination = join(nodeModules, entry.name);
+  rmSync(destination, { recursive: true, force: true });
+  cpSync(join(fixturePackages, entry.name), destination, {
     recursive: true,
     force: true,
   });

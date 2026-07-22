@@ -4,6 +4,20 @@ Release history for the `forgeos` npm package.
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## 0.1.0-alpha.63
+
+- `forge status` now verifies generated output deterministically instead of
+  inferring freshness from Git state, preventing committed stale artifacts from
+  appearing ready while `forge handoff` rejects them.
+- Brownfield import now understands Java/Spring Boot projects: Maven dependency
+  inventory, Spring MVC mappings, Java handler scoping, path variables, and
+  `System.getenv(...)` usage.
+- Imported Spring operations retain the same conservative review and agent
+  visibility defaults as TypeScript/JavaScript candidates.
+- Java adapter builds now pin a release-aware Maven compiler plugin, and example
+  fixture setup safely replaces generated package directories in shared
+  workspaces.
+
 ## 0.1.0-alpha.61
 
 - Added `forge golden-path plan/status` as the canonical

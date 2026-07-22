@@ -732,11 +732,18 @@ export interface StatusCommandResult {
   exitCode: 0 | 1;
 }
 
-export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
+export async function runStatusCommand(workspaceRoot: string): Promise<StatusCommandResult> {
   const summary = buildInspectSummary(workspaceRoot);
   const drift = buildDriftInspect(workspaceRoot);
   const handoff = buildHandoffInspect(workspaceRoot);
   const gitSummary = buildWorkspaceGitSummary(workspaceRoot);
+  const generatedVerification = await runGenerateCommand({
+    workspaceRoot,
+    check: true,
+    dryRun: false,
+    json: true,
+    concurrency: 4,
+  });
   const git = {
     available: gitSummary.available,
     ...(gitSummary.error ? { error: gitSummary.error } : {}),
@@ -751,7 +758,8 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
   const missingArtifacts = Number(summaryBlock.missingArtifacts ?? 0);
   const tableDrift = Number(driftSummary.tableDrift ?? 0);
   const generatedReady = missingArtifacts === 0;
-  const driftClean = driftSummary.ok === true;
+  const generatedFresh = generatedVerification.exitCode === 0;
+  const driftClean = driftSummary.ok === true && generatedFresh;
   const ok = driftClean && generatedReady;
   const handoffDefaultReady = handoffSummary.defaultReady === true;
   const changed = gitSummary.changeSummary.changed;
@@ -761,24 +769,19 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
     changed.byType.source.count +
     changed.byType.config.count +
     changed.byType.operational.count;
-  const generatedNeedsCheck = generatedReady && driftClean && generatedGitFiles === 0 && authoredGeneratedInputs > 0;
   const generatedState = !generatedReady
     ? "missing-artifacts"
-    : generatedNeedsCheck
-      ? "check-needed"
     : driftClean
       ? "ready"
       : "drift";
   const generatedNextActionsRaw = generatedState === "ready"
     ? ["forge dev", "forge dev --once --json", "forge generate --check --json"]
-    : generatedState === "check-needed"
-      ? ["forge generate --check --json", "forge handoff --json", "forge dev --once --json"]
     : ["forge generate", "forge check --json", "forge inspect drift --json"];
   const generatedNextActions = forgeCliCommandsForWorkspace(workspaceRoot, generatedNextActionsRaw);
-  const generatedGitExplanation = generatedGitFiles === 0
-    ? generatedNeedsCheck
-      ? "git status has no generated artifact changes, but authored source/config changes mean freshness is unverified until forge generate --check runs"
-      : "git status has no generated artifact changes"
+  const generatedGitExplanation = !generatedFresh
+    ? "deterministic generation verification found stale artifacts; git cleanliness does not prove generated freshness"
+    : generatedGitFiles === 0
+    ? "git status has no generated artifact changes and deterministic generation verification passed"
     : authoredGitFiles === 0
       ? "forge generate --check can be clean while git shows generated artifacts changed: generated files match current workspace inputs but differ from HEAD"
       : "git status includes generated artifacts alongside authored changes; review authored inputs first";
@@ -832,10 +835,18 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
         state: generatedState,
         ready: generatedReady,
         driftClean,
-        freshness: generatedNeedsCheck ? "unverified" : generatedState === "ready" ? "verified-or-unchanged" : "attention",
+        freshness: generatedState === "ready" ? "verified" : generatedFresh ? "attention" : "stale",
         authoredGeneratedInputs,
         missingArtifacts,
         tableDrift,
+        verification: {
+          checked: true,
+          fresh: generatedFresh,
+          changedFiles: generatedVerification.changed.length,
+          sampleChanged: generatedVerification.changed.slice(0, 8),
+          hiddenChanged: Math.max(0, generatedVerification.changed.length - 8),
+          diagnosticCodes: [...new Set(generatedVerification.errors.map((diagnostic) => diagnostic.code))],
+        },
         safeDevCommand,
         checkCommand: generatedCheckCommand,
         repairCommand: generatedRepairCommand,
@@ -883,7 +894,6 @@ export function runStatusCommand(workspaceRoot: string): StatusCommandResult {
         workspaceRoot,
         ok
           ? [
-            ...(generatedState === "check-needed" ? ["forge generate --check --json"] : []),
             "forge handoff --json",
             "forge changed --json",
             "forge dev",
@@ -2469,7 +2479,7 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "status": {
-      const result = runStatusCommand(command.workspaceRoot);
+      const result = await runStatusCommand(command.workspaceRoot);
       if (command.json) {
         process.stdout.write(formatJsonResult(result.data));
       } else {

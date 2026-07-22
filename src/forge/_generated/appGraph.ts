@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.61 input=3e83e39b92f8a1e2337d18ed7565f99b151980139cd5104f0b7f462eedfed3b9 content=ee3d7b6991f190515bc2b550035ca3742d174174ec4a57ad24475bc4e5f0d696
+// @forge-generated generator=0.1.0-alpha.63 input=43623ccc7209d544f8745a8d03de2c1703d186ea75709a2ca79af821a88f2818 content=bf0f3f6ec7fc478800b6fdeb3dde5ead21b81bacad3045015b8210b5065acb96
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:d3aa0aa192e40daf3238188e08883862cb2a0b88338152af6b6819b2f71b7464",
   "edges": [
@@ -366,6 +366,11 @@ export const appGraph = {
       "from": "02fd3dc03e7b356018c2fdd3f07f7d5bae10780d6a0bbe96c93deb10ebe4d59c",
       "kind": "registers",
       "to": "2894340435807c72a34b54bc91625515df169613966652a06eb73f7ca7bcb4b1"
+    },
+    {
+      "from": "031a8a12547cc24d588b6b84e026bad3f17c8bf825d4eb9f4785da1f82fbe8db",
+      "kind": "registers",
+      "to": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61"
     },
     {
       "from": "033ac1ef886c05104d0c721015c652c8cfd27d048804efaa453449942cb4fa73",
@@ -16108,6 +16113,11 @@ export const appGraph = {
       "to": "115f6350b8d08b89462914d54fabf09e559d6d653a5db3177292027f4ebb5a14"
     },
     {
+      "from": "799feb1b0d6987cfa0deaaee9637d8d63cc136cdef8ff3d482a21bc8cafec0c6",
+      "kind": "registers",
+      "to": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61"
+    },
+    {
       "from": "79b4295c842831671abf1e03faf0ff2cbb875216cec3d941fb7d575a8872412f",
       "kind": "registers",
       "to": "a5983ff8f456fcd09eaef99f232a706bb2eb520949271c6d10535735b0cfe50f"
@@ -26323,6 +26333,11 @@ export const appGraph = {
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
     },
     {
+      "from": "c3fcd2b308469abb2442d9f9f7684942908a8e0a85448e1f37fdc6de18b7c1c3",
+      "kind": "registers",
+      "to": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61"
+    },
+    {
       "from": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661",
       "kind": "imports",
       "to": "61ecc97466750465fa1571fba5a6400881d869c65f5fb0783e5bd8942976ccbd"
@@ -27681,6 +27696,11 @@ export const appGraph = {
       "from": "cd81f3b62c313fdae156542154458550a33790407c8ebe627a802850b6eacbce",
       "kind": "registers",
       "to": "cf94900f42206704a70752a1c9f21210dcdb4939ff28aa6229cb38b5bcdd5d5f"
+    },
+    {
+      "from": "cd9171eb19ef1ef1f03effbdca2549625887675014874b1e3ca804a8f1d4b3ff",
+      "kind": "registers",
+      "to": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61"
     },
     {
       "from": "cd9fd9a9e1f871ab075c75e14ae53731637f38b84683b7e334bc57041de0c52e",
@@ -34468,8 +34488,8 @@ export const appGraph = {
       "to": "88bcc46f811fc6737a95053e829ef9684e374c1df1209c7219ffe75ef94a4441"
     }
   ],
-  "generatorVersion": "0.1.0-alpha.61",
-  "inputHash": "566e49da4d1f0c5d3f2be1be559fe9e1ad7ff7817cc89daeff5a89f2403c3744",
+  "generatorVersion": "0.1.0-alpha.63",
+  "inputHash": "22b8cac9cd92e6a2d4eed35c7b4d59b387e04f6e49210500c14826d65f1a82b4",
   "moduleGraph": {
     "nodes": [
       {
@@ -53308,14 +53328,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "BROWNFIELD_IMPORT_ARTIFACTS: BrownfieldImportArtifacts = {\n  inventory: `${IMPORT_DIR}/inventory.json`,\n  routes: `${IMPORT_DIR}/routes.json`,\n  frontendCalls: `${IMPORT_DIR}/frontendCalls.json`,\n  candidateEntries: `${IMPORT_DIR}/candidateEntries.json`,\n  riskReport: `${IMPORT_DIR}/riskReport.json`,\n  migrationPlan: `${IMPORT_DIR}/migrationPlan.md`,\n  importedAgentContract: `${IMPORT_DIR}/importedAgentContract.json`,\n}"
       },
       "name": "BROWNFIELD_IMPORT_ARTIFACTS",
       "qualifiedName": "BROWNFIELD_IMPORT_ARTIFACTS",
       "span": {
-        "end": 1378,
-        "start": 955
+        "end": 1387,
+        "start": 964
       }
     },
     {
@@ -53359,7 +53379,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "CHANGE_TYPES: ChangeType[] = [\n  \"source\",\n  \"tests\",\n  \"docs\",\n  \"generated\",\n  \"operational\",\n  \"assets\",\n  \"config\",\n  \"other\",\n]"
       },
       "name": "CHANGE_TYPES",
@@ -53410,7 +53430,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "2c329ecad7d018cc87f5c70438975f6e80dd1023dbb6977b5b11a8e684989e06",
+        "fileContentHash": "1787acbe6f0eba24b83e29167d7e5eb75bdf197c1807b8e23df96fdc5544eef2",
         "sourceSlice": "CLI_VERSION = FORGEOS_VERSION"
       },
       "name": "CLI_VERSION",
@@ -54883,14 +54903,14 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "e2c4352079652b7afa48230c8ed6de4a92608b3a1d14853d47b21b01595f5a02",
+      "contentHash": "7e2e106f989951751c6c926f0eaad1ec2ac91ed508e474b66782075698988ea5",
       "file": "src/forge/version.ts",
       "id": "64157f7bae0f32d8fe0f1e6365f94378c94659999b35bf77e524fb1879ef395e",
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "2c329ecad7d018cc87f5c70438975f6e80dd1023dbb6977b5b11a8e684989e06",
-        "sourceSlice": "FORGEOS_VERSION = \"0.1.0-alpha.61\""
+        "fileContentHash": "1787acbe6f0eba24b83e29167d7e5eb75bdf197c1807b8e23df96fdc5544eef2",
+        "sourceSlice": "FORGEOS_VERSION = \"0.1.0-alpha.63\""
       },
       "name": "FORGEOS_VERSION",
       "qualifiedName": "FORGEOS_VERSION",
@@ -59700,7 +59720,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "2c329ecad7d018cc87f5c70438975f6e80dd1023dbb6977b5b11a8e684989e06",
+        "fileContentHash": "1787acbe6f0eba24b83e29167d7e5eb75bdf197c1807b8e23df96fdc5544eef2",
         "sourceSlice": "GENERATOR_VERSION = FORGEOS_VERSION"
       },
       "name": "GENERATOR_VERSION",
@@ -59785,14 +59805,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "IGNORED_DIRS = new Set([\n  \".git\",\n  \".forge\",\n  \".next\",\n  \".nuxt\",\n  \".output\",\n  \"__tests__\",\n  \"_generated\",\n  \"coverage\",\n  \"dist\",\n  \"build\",\n  \"node_modules\",\n  \"out\",\n  \"target\",\n  \"test\",\n  \"tests\",\n])"
       },
       "name": "IGNORED_DIRS",
       "qualifiedName": "IGNORED_DIRS",
       "span": {
-        "end": 846,
-        "start": 636
+        "end": 855,
+        "start": 645
       }
     },
     {
@@ -59802,7 +59822,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "IMPORT_DIR = \".forge/import\""
       },
       "name": "IMPORT_DIR",
@@ -60686,14 +60706,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "PREFERRED_SOURCE_ROOTS = [\"src\", \"app\", \"pages\", \"server\", \"web\", \"apps\", \"packages\"]"
       },
       "name": "PREFERRED_SOURCE_ROOTS",
       "qualifiedName": "PREFERRED_SOURCE_ROOTS",
       "span": {
-        "end": 939,
-        "start": 854
+        "end": 948,
+        "start": 863
       }
     },
     {
@@ -61785,19 +61805,19 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "c4e3ee25ffbcd1994ea2565346b72c1888a7a86122e7dca37a07ebf2d725bc22",
+      "contentHash": "65400ef44c3c25671c36b139a52e69178807baae3a080d138e72527a3a0666cc",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "dac8bb75b3e0bbdd3ade11ed342fe0acb9d48f6a89aeb19522ab45565ba73d59",
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "SOURCE_EXTENSIONS = new Set([\".ts\", \".tsx\", \".js\", \".jsx\", \".mjs\", \".cjs\"])"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "SOURCE_EXTENSIONS = new Set([\".ts\", \".tsx\", \".js\", \".jsx\", \".mjs\", \".cjs\", \".java\"])"
       },
       "name": "SOURCE_EXTENSIONS",
       "qualifiedName": "SOURCE_EXTENSIONS",
       "span": {
-        "end": 628,
+        "end": 637,
         "start": 553
       }
     },
@@ -64256,14 +64276,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function addRoute(\n  routes: ImportedRoute[],\n  method: string,\n  path: string,\n  file: string,\n  source: ImportedRouteSource,\n  confidence: number,\n  handler?: string,\n): void {\n  routes.push({\n    id: stableId(\"route\", [method.toUpperCase(), path, file, source, handler ?? \"\"]),\n    method: method.toUpperCase(),\n    path,\n    file,\n    source,\n    handler,\n    confidence,\n  });\n}"
       },
       "name": "addRoute",
       "qualifiedName": "addRoute",
       "span": {
-        "end": 7486,
-        "start": 7103
+        "end": 10930,
+        "start": 10547
       }
     },
     {
@@ -64647,14 +64667,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function analyze(workspaceRoot: string, dryRun: boolean): BrownfieldImportResult {\n  const files = collectSourceFiles(workspaceRoot);\n  const inventory = buildInventory(workspaceRoot, files);\n  const routes = detectRoutes(files);\n  const frontendCalls = detectFrontendCalls(files, routes);\n  const candidateEntries = buildCandidates(routes, files);\n  const riskReport = buildRiskReport(routes, frontendCalls, candidateEntries, files);\n  const migrationPlan = buildMigrationPlan(inventory, routes, frontendCalls, candidateEntries, riskReport);\n  const importedAgentContract = buildImportedAgentContract(inventory, routes, frontendCalls, candidateEntries, riskReport);\n  if (!dryRun) {\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.inventory, inventory);\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.routes, routes);\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.frontendCalls, frontendCalls);\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.candidateEntries, candidateEntries);\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.riskReport, riskReport);\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.migrationPlan, migrationPlan);\n    writeArtifact(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.importedAgentContract, importedAgentContract);\n  }\n  return {\n    schemaVersion: \"0.1.0\",\n    feature: \"H49\",\n    subcommand: \"analyze\",\n    workspaceRoot,\n    wroteArtifacts: !dryRun,\n    artifacts: BROWNFIELD_IMPORT_ARTIFACTS,\n    inventory,\n    routes,\n    frontendCalls,\n    candidateEntries,\n    riskReport,\n    migrationPlan,\n    exitCode: 0,\n  };\n}"
       },
       "name": "analyze",
       "qualifiedName": "analyze",
       "span": {
-        "end": 25309,
-        "start": 23679
+        "end": 29421,
+        "start": 27791
       }
     },
     {
@@ -65378,14 +65398,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function artifactPath(workspaceRoot: string, relativePath: string): string {\n  return join(workspaceRoot, ...relativePath.split(\"/\"));\n}"
       },
       "name": "artifactPath",
       "qualifiedName": "artifactPath",
       "span": {
-        "end": 1693,
-        "start": 1557
+        "end": 1702,
+        "start": 1566
       }
     },
     {
@@ -66670,14 +66690,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function buildCandidates(routes: ImportedRoute[], files: SourceFile[]): ImportedCandidateEntry[] {\n  const usedNames = new Map<string, number>();\n  return routes.map((route) => {\n    const text = sourceTextForRoute(route, files);\n    const classification = classifyCandidate(route, text);\n    const baseName = nameForCandidate(route, classification.kind);\n    const count = usedNames.get(baseName) ?? 0;\n    usedNames.set(baseName, count + 1);\n    const name = count === 0 ? baseName : `${baseName}${count + 1}`;\n    return {\n      id: stableId(\"entry\", [route.id, name]),\n      name,\n      kind: classification.kind,\n      method: route.method,\n      path: route.path,\n      routeId: route.id,\n      file: route.file,\n      origin: \"imported\",\n      assurance: \"static-scan\",\n      reviewStatus: \"needs-review\",\n      visibleToAgent: false,\n      needsApproval: classification.needsApproval,\n      confidence: classification.confidence,\n      risks: classification.risks,\n      evidence: classification.evidence,\n    };\n  });\n}"
       },
       "name": "buildCandidates",
       "qualifiedName": "buildCandidates",
       "span": {
-        "end": 17817,
-        "start": 16789
+        "end": 21929,
+        "start": 20901
       }
     },
     {
@@ -66970,20 +66990,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "17f5a89bca1c0c7940ea89e27e948efdc82f372fdbf75b72ecd00201686537cd",
+      "contentHash": "eacf708323b68f913e09b5292e23b769870bc6479ffbb9386e801d54ae0263e1",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "d34e674c4c7674d17c39c713816b2593482189bc08fa4a4c64121a020a83cd98",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function buildDependencyInventory(workspaceRoot: string): {\n  packageName?: string;\n  dependencies: ImportedDependencyInventory;\n} {\n  const pkg = readPackageJson(workspaceRoot);\n  const dependencies = objectKeys(pkg.dependencies);\n  const devDependencies = objectKeys(pkg.devDependencies);\n  const all = [...dependencies, ...devDependencies];\n  const scripts = objectKeys(pkg.scripts);\n  const frameworks = [\n    hasAny(all, [\"next\"]) ? \"next\" : null,\n    hasAny(all, [\"react\"]) ? \"react\" : null,\n    hasAny(all, [\"vue\", \"nuxt\"]) ? \"vue\" : null,\n    hasAny(all, [\"nuxt\"]) ? \"nuxt\" : null,\n    hasAny(all, [\"express\"]) ? \"express\" : null,\n    hasAny(all, [\"@nestjs/core\"]) ? \"nest\" : null,\n    hasAny(all, [\"fastify\"]) ? \"fastify\" : null,\n    hasAny(all, [\"hono\"]) ? \"hono\" : null,\n  ].filter((value): value is string => value !== null);\n  const dataPackages = all.filter((name) =>\n    [\"@prisma/client\", \"prisma\", \"drizzle-orm\", \"typeorm\", \"mongoose\", \"sequelize\", \"knex\"].includes(name),\n  );\n  const externalPackages = all.filter((name) =>\n    [\n      \"stripe\",\n      \"resend\",\n      \"nodemailer\",\n      \"openai\",\n      \"@ai-sdk/openai\",\n      \"@ai-sdk/anthropic\",\n      \"aws-sdk\",\n      \"@aws-sdk/client-s3\",\n      \"sendgrid\",\n      \"@sendgrid/mail\",\n      \"twilio\",\n    ].includes(name),\n  );\n  return {\n    packageName: typeof pkg.name === \"string\" ? pkg.name : undefined,\n    dependencies: {\n      dependencies,\n      devDependencies,\n      scripts,\n      frameworks: Array.from(new Set(frameworks)).sort(),\n      dataPackages,\n      externalPackages,\n    },\n  };\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function buildDependencyInventory(workspaceRoot: string): {\n  packageName?: string;\n  dependencies: ImportedDependencyInventory;\n} {\n  const pkg = readPackageJson(workspaceRoot);\n  const npmDependencies = objectKeys(pkg.dependencies);\n  const devDependencies = objectKeys(pkg.devDependencies);\n  const pom = readMavenInventory(workspaceRoot);\n  const dependencies = [...new Set([...npmDependencies, ...pom.dependencies])].sort();\n  const all = [...dependencies, ...devDependencies];\n  const scripts = objectKeys(pkg.scripts);\n  const frameworks = [\n    hasAny(all, [\"next\"]) ? \"next\" : null,\n    hasAny(all, [\"react\"]) ? \"react\" : null,\n    hasAny(all, [\"vue\", \"nuxt\"]) ? \"vue\" : null,\n    hasAny(all, [\"nuxt\"]) ? \"nuxt\" : null,\n    hasAny(all, [\"express\"]) ? \"express\" : null,\n    hasAny(all, [\"@nestjs/core\"]) ? \"nest\" : null,\n    hasAny(all, [\"fastify\"]) ? \"fastify\" : null,\n    hasAny(all, [\"hono\"]) ? \"hono\" : null,\n    pom.frameworks.includes(\"spring-boot\") ? \"spring-boot\" : null,\n  ].filter((value): value is string => value !== null);\n  const dataPackages = all.filter((name) =>\n    [\"@prisma/client\", \"prisma\", \"drizzle-orm\", \"typeorm\", \"mongoose\", \"sequelize\", \"knex\"].includes(name) ||\n    /(?:spring-boot-starter-data-|hibernate-core|mybatis)/u.test(name),\n  );\n  const externalPackages = all.filter((name) =>\n    [\n      \"stripe\",\n      \"resend\",\n      \"nodemailer\",\n      \"openai\",\n      \"@ai-sdk/openai\",\n      \"@ai-sdk/anthropic\",\n      \"aws-sdk\",\n      \"@aws-sdk/client-s3\",\n      \"sendgrid\",\n      \"@sendgrid/mail\",\n      \"twilio\",\n    ].includes(name),\n  );\n  return {\n    packageName: typeof pkg.name === \"string\" ? pkg.name : pom.packageName,\n    dependencies: {\n      dependencies,\n      devDependencies,\n      scripts,\n      frameworks: Array.from(new Set(frameworks)).sort(),\n      dataPackages,\n      externalPackages,\n    },\n  };\n}"
       },
       "name": "buildDependencyInventory",
       "qualifiedName": "buildDependencyInventory",
       "span": {
-        "end": 5328,
-        "start": 3756
+        "end": 5623,
+        "start": 3765
       }
     },
     {
@@ -67078,14 +67098,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function buildDiffPlanFromChangeSummary(summary: CategorizedFileSummary): DiffPlan {\n  const generatedFiles = summary.byType.generated.count;\n  const authoredFiles = Math.max(0, summary.total.count - generatedFiles);\n  return {\n    first: \"authored\",\n    then: \"generated\",\n    generatedCollapsedByDefault: generatedFiles > 0,\n    generatedFiles,\n    authoredFiles,\n    authoredDiffCommand: 'git diff -- . \":(exclude)src/forge/_generated/**\" \":(exclude)forge.lock\"',\n    generatedDiffCommand: 'git diff -- src/forge/_generated forge.lock AGENTS.md \":(glob)**/AGENTS.md\" .forge/agent/context.json',\n    fullDiffCommand: \"git diff\",\n    summary: generatedFiles > 0\n      ? `${authoredFiles} authored file(s) first; ${generatedFiles} generated artifact(s) are derived and should be reviewed after the source cause.`\n      : `${authoredFiles} authored file(s); no generated artifacts changed.`,\n  };\n}"
       },
       "name": "buildDiffPlanFromChangeSummary",
       "qualifiedName": "buildDiffPlanFromChangeSummary",
       "span": {
-        "end": 7206,
-        "start": 6309
+        "end": 7566,
+        "start": 6669
       }
     },
     {
@@ -67112,7 +67132,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function buildDriftInspect(workspaceRoot: string): Record<string, unknown> {\n  const schema = buildSchemaInspect(workspaceRoot);\n  const artifacts = readGeneratedArtifactStatus(workspaceRoot);\n  const missingArtifacts = artifacts.filter((artifact) => !artifact.present);\n  const tableDrift = ((schema.data.tables as Array<{ name: string; missingRuntimeFields: string[] }> | undefined) ?? [])\n    .filter((table) => table.missingRuntimeFields.length > 0)\n    .map((table) => ({\n      table: table.name,\n      missingRuntimeFields: table.missingRuntimeFields,\n      suggestedCommand: \"forge generate && forge check --json\",\n    }));\n  const staleAgentContext = hasPath(workspaceRoot, \".forge/agent/context.json\")\n    ? \"run forge agent check --target codex --json or forge agent export --target codex\"\n    : null;\n\n  return {\n    schemaVersion: \"0.1.0\",\n    summary: {\n      ok: missingArtifacts.length === 0 && tableDrift.length === 0,\n      missingArtifacts: missingArtifacts.length,\n      tableDrift: tableDrift.length,\n      agentContextPresent: hasPath(workspaceRoot, \".forge/agent/context.json\"),\n    },\n    missingArtifacts,\n    tableDrift,\n    agentContext: staleAgentContext,\n    nextActions: [\n      ...(missingArtifacts.length > 0 || tableDrift.length > 0 ? [\"forge generate\", \"forge check --json\"] : []),\n      \"forge agent check --target codex --json\",\n    ],\n  };\n}"
       },
       "name": "buildDriftInspect",
@@ -67282,7 +67302,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function buildFrameworkInspect(workspaceRoot: string): Record<string, unknown> {\n  const pkg = readPackageJson(workspaceRoot);\n  const scripts = pkg.scripts && typeof pkg.scripts === \"object\"\n    ? Object.keys(pkg.scripts as Record<string, string>).sort()\n    : [];\n  const dependencies = pkg.dependencies && typeof pkg.dependencies === \"object\"\n    ? Object.keys(pkg.dependencies as Record<string, string>).sort()\n    : [];\n  const devDependencies = pkg.devDependencies && typeof pkg.devDependencies === \"object\"\n    ? Object.keys(pkg.devDependencies as Record<string, string>).sort()\n    : [];\n  const templates = sortedDirectoryNames(workspaceRoot, \"templates\").map((name) => ({\n    name,\n    hasWeb: hasPath(workspaceRoot, `templates/${name}/web`),\n    hasAgentsMd: hasPath(workspaceRoot, `templates/${name}/AGENTS.md`),\n    packageJson: `templates/${name}/package.json`,\n  }));\n  const examples = sortedDirectoryNames(workspaceRoot, \"examples\").map((name) => ({\n    name,\n    sourceOnly: !hasPath(workspaceRoot, `examples/${name}/src/forge/_generated`) &&\n      !hasPath(workspaceRoot, `examples/${name}/forge.lock`),\n    hasWeb: hasPath(workspaceRoot, `examples/${name}/web`),\n    hasAgentsMd: hasPath(workspaceRoot, `examples/${name}/AGENTS.md`),\n  }));\n\n  return {\n    schemaVersion: \"0.1.0\",\n    project: {\n      name: typeof pkg.name === \"string\" ? pkg.name : \"unknown\",\n      version: typeof pkg.version === \"string\" ? pkg.version : \"unknown\",\n      private: pkg.private === true,\n      type: \"forgeos-framework\",\n    },\n    packageManager: pkg.packageManager ?? \"bun\",\n    scripts,\n    dependencies,\n    devDependencies,\n    cli: {\n      topLevelCommands: [...TOP_LEVEL_COMMANDS],\n      inspectTargets: [...INSPECT_TARGETS],\n      preferredEntryPoints: [\n        \"forge status --json\",\n        \"forge changed --json\",\n        \"forge agent onboard --target codex --json\",\n        \"forge do <objective> --json\",\n        \"forge dev --once --json\",\n        \"forge inspect all --brief --json\",\n        \"forge inspect all --json\",\n        \"forge agent print-context --json\",\n        \"forge inspect framework --json\",\n        \"forge verify --strict\",\n      ],\n    },\n    modules: sortedDirectoryNames(workspaceRoot, \"src/forge\").map((name) => ({\n      name,\n      path: `src/forge/${name}`,\n    })),\n    templates,\n    examples,\n    tests: sortedDirectoryNames(workspaceRoot, \"tests\").map((name) => ({\n      name,\n      path: `tests/${name}`,\n    })),\n    generated: {\n      directory: GENERATED_DIR,\n      rootArtifacts: [\"AGENTS.md\", \"forge.lock\"],\n      sourceOnlyExamples: examples\n        .filter((example) => example.sourceOnly)\n        .map((example) => example.name),\n    },\n    documentation: {\n      readme: hasPath(workspaceRoot, \"README.md\"),\n      agents: hasPath(workspaceRoot, \"AGENTS.md\"),\n      ci: hasPath(workspaceRoot, \".github/workflows/ci.yml\"),\n    },\n  };\n}"
       },
       "name": "buildFrameworkInspect",
@@ -67469,7 +67489,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function buildHandoffInspect(workspaceRoot: string): Record<string, unknown> {\n  const manifest = readGeneratedJson<{\n    targets?: Array<{\n      name?: string;\n      files?: string[];\n      default?: boolean;\n      optional?: boolean;\n      formatVersion?: string;\n      adapterVersion?: string;\n    }>;\n  }>(workspaceRoot, `${GENERATED_DIR}/agentAdapterManifest.json`);\n  const targets = (manifest?.targets ?? []).map((target) => {\n    const files = target.files ?? [];\n    const missingFiles = files.filter((file) => !hasPath(workspaceRoot, file));\n    return {\n      name: target.name,\n      default: target.default === true,\n      optional: target.optional === true,\n      formatVersion: target.formatVersion,\n      adapterVersion: target.adapterVersion,\n      files,\n      filesPresent: files.length - missingFiles.length,\n      missingFiles,\n      exportCommand: target.name ? `forge agent export --target ${target.name}` : null,\n      checkCommand: target.name ? `forge agent check --target ${target.name} --json` : null,\n      prepareCommand: target.name ? `forge agent prepare --target ${target.name} --json` : null,\n    };\n  });\n  const missingRequiredFiles = targets.reduce(\n    (count, target) => count + (target.optional ? 0 : target.missingFiles.length),\n    0,\n  );\n  const missingOptionalFiles = targets.reduce(\n    (count, target) => count + (target.optional ? target.missingFiles.length : 0),\n    0,\n  );\n  const defaultTarget = targets.find((target) => target.default);\n  const defaultTargetMissingFiles = defaultTarget?.missingFiles.length ?? missingRequiredFiles;\n\n  return {\n    schemaVersion: \"0.1.0\",\n    summary: {\n      targets: targets.length,\n      defaultTarget: defaultTarget?.name ?? \"generic\",\n      missingFiles: missingRequiredFiles + missingOptionalFiles,\n      missingDefaultFiles: defaultTargetMissingFiles,\n      missingRequiredFiles,\n      missingOptionalFiles,\n      defaultReady: defaultTargetMissingFiles === 0,\n      requiredReady: missingRequiredFiles === 0,\n    },\n    targets,\n    commands: [\n      \"forge agent list-targets --json\",\n      \"forge agent prepare --target codex --json\",\n      \"forge agent hooks smoke --target codex --json\",\n      \"forge agent ingest codex --event PostToolUse --json\",\n    ],\n  };\n}"
       },
       "name": "buildHandoffInspect",
@@ -67537,14 +67557,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function buildImportedAgentContract(\n  inventory: ImportedInventory,\n  routes: ImportedRoute[],\n  frontendCalls: ImportedFrontendCall[],\n  candidates: ImportedCandidateEntry[],\n  riskReport: ImportedRiskReport,\n): Record<string, unknown> {\n  return {\n    schemaVersion: \"0.1.0\",\n    origin: \"imported\",\n    assurance: \"static-scan\",\n    reviewStatus: \"needs-review\",\n    visibleToAgent: false,\n    generatedAt: inventory.generatedAt,\n    summary: riskReport.summary,\n    frameworks: inventory.dependencies.frameworks,\n    routes,\n    frontendCalls,\n    entries: candidates,\n    findings: riskReport.findings,\n  };\n}"
       },
       "name": "buildImportedAgentContract",
       "qualifiedName": "buildImportedAgentContract",
       "span": {
-        "end": 23330,
-        "start": 22715
+        "end": 27442,
+        "start": 26827
       }
     },
     {
@@ -67571,7 +67591,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function buildInspectBrief(workspaceRoot: string): Record<string, unknown> {\n  const summary = buildInspectSummary(workspaceRoot);\n  const framework = buildFrameworkInspect(workspaceRoot);\n  const cli = framework.cli as { preferredEntryPoints?: string[]; inspectTargets?: string[] } | undefined;\n  const artifacts = readGeneratedArtifactStatus(workspaceRoot);\n  const missingArtifacts = artifacts.filter((artifact) => !artifact.present);\n  return {\n    schemaVersion: \"0.1.0\",\n    brief: true,\n    payload: {\n      mode: \"brief\",\n      purpose: \"orientation\",\n      includes: [\"summary\", \"entrypoints\", \"refs\", \"artifact counts\"],\n      omitted: [\"schema table details\", \"framework module lists\", \"generated registries\"],\n      fullCommand: \"forge inspect all --full --json\",\n      compactCommand: \"forge inspect all --json\",\n    },\n    summary: summary.summary,\n    entrypoints: {\n      preferred: cli?.preferredEntryPoints ?? [],\n      inspect: [\n        \"forge inspect summary --json\",\n        \"forge inspect schema --json\",\n        \"forge inspect handoff --json\",\n        \"forge inspect all --json\",\n        \"forge inspect all --full --json\",\n      ],\n    },\n    refs: [\n      \"AGENTS.md\",\n      `${GENERATED_DIR}/agentContract.json`,\n      `${GENERATED_DIR}/appMap.md`,\n      `${GENERATED_DIR}/runtimeRules.md`,\n      `${GENERATED_DIR}/operationPlaybooks.md`,\n      `${GENERATED_DIR}/frontendGraph.json`,\n    ],\n    artifacts: {\n      total: artifacts.length,\n      present: artifacts.length - missingArtifacts.length,\n      missing: missingArtifacts,\n    },\n    nextActions: [\n      \"forge status --json\",\n      \"forge changed --json\",\n      \"forge agent onboard --target codex --json\",\n      \"forge dev --once --json\",\n      \"forge inspect all --json\",\n    ],\n  };\n}"
       },
       "name": "buildInspectBrief",
@@ -67605,7 +67625,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function buildInspectSummary(workspaceRoot: string): Record<string, unknown> {\n  const framework = buildFrameworkInspect(workspaceRoot);\n  const dataGraph = readGeneratedJson<DataGraph>(workspaceRoot, `${GENERATED_DIR}/dataGraph.json`);\n  const frontend = readGeneratedJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`);\n  const agentAdapters = readGeneratedJson<{ targets?: Array<{ name?: string; files?: string[]; default?: boolean; optional?: boolean }> }>(\n    workspaceRoot,\n    `${GENERATED_DIR}/agentAdapterManifest.json`,\n  );\n  const artifacts = readGeneratedArtifactStatus(workspaceRoot);\n  const missingArtifacts = artifacts.filter((artifact) => !artifact.present);\n\n  return {\n    schemaVersion: \"0.1.0\",\n    summary: {\n      project: (framework.project as Record<string, unknown> | undefined)?.name ?? \"unknown\",\n      tables: dataGraph?.tables.length ?? 0,\n      frontendPresent: frontend?.present === true,\n      routes: frontend?.routes.length ?? 0,\n      agentTargets: agentAdapters?.targets?.map((target) => target.name).filter(Boolean) ?? [],\n      missingArtifacts: missingArtifacts.length,\n    },\n    artifacts,\n    nextActions: [\n      \"forge inspect schema --json\",\n      \"forge inspect handoff --json\",\n      \"forge inspect drift --json\",\n      \"forge check --json\",\n    ],\n  };\n}"
       },
       "name": "buildInspectSummary",
@@ -67690,14 +67710,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function buildInventory(workspaceRoot: string, files: SourceFile[]): ImportedInventory {\n  const dependencyInventory = buildDependencyInventory(workspaceRoot);\n  return {\n    schemaVersion: \"0.1.0\",\n    origin: \"imported\",\n    assurance: \"static-scan\",\n    workspaceRoot,\n    generatedAt: new Date().toISOString(),\n    packageName: dependencyInventory.packageName,\n    dependencies: dependencyInventory.dependencies,\n    filesScanned: files.length,\n    sourceFiles: files.map((file) => file.relativePath),\n    env: collectEnv(workspaceRoot, files),\n  };\n}"
       },
       "name": "buildInventory",
       "qualifiedName": "buildInventory",
       "span": {
-        "end": 20730,
-        "start": 20175
+        "end": 24842,
+        "start": 24287
       }
     },
     {
@@ -67860,14 +67880,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function buildMigrationPlan(\n  inventory: ImportedInventory,\n  routes: ImportedRoute[],\n  frontendCalls: ImportedFrontendCall[],\n  candidates: ImportedCandidateEntry[],\n  riskReport: ImportedRiskReport,\n): string {\n  const lines = [\n    \"# Brownfield Import Migration Plan\",\n    \"\",\n    \"This plan was produced by `forge import analyze` from static evidence only. Imported entries are hidden from agents until reviewed.\",\n    \"\",\n    \"## Summary\",\n    \"\",\n    `- Package: ${inventory.packageName ?? \"unknown\"}`,\n    `- Files scanned: ${inventory.filesScanned}`,\n    `- Routes detected: ${routes.length}`,\n    `- Frontend calls detected: ${frontendCalls.length}`,\n    `- Candidate entries: ${candidates.length}`,\n    `- Hidden from agents: ${riskReport.summary.hiddenFromAgents}`,\n    `- Entries requiring approval: ${riskReport.summary.needsApproval}`,\n    \"\",\n    \"## Review Order\",\n    \"\",\n    \"1. Review destructive and external-side-effect candidates first.\",\n    \"2. Confirm auth and tenant boundaries before exposing any imported entry.\",\n    \"3. Convert read-only GET candidates into Forge queries only after validating schema ownership.\",\n    \"4. Convert mutating candidates into Forge commands/actions with `ctx.emit` or durable workflows for side effects.\",\n    \"5. Replace frontend raw API calls with generated Forge client bindings after each reviewed migration.\",\n    \"\",\n    \"## Candidate Entries\",\n    \"\",\n    ...candidates.map((candidate) =>\n      `- \\`${candidate.name}\\` (${candidate.kind}, ${candidate.method} ${candidate.path}) - confidence ${candidate.confidence.toFixed(2)}, risks: ${candidate.risks.join(\", \") || \"none\"}`,\n    ),\n    \"\",\n    \"## Findings\",\n    \"\",\n    ...(riskReport.findings.length === 0\n      ? [\"- No high-signal risk findings beyond conservative imported defaults.\"]\n      : riskReport.findings.map((finding) => `- ${finding.severity.toUpperCase()} ${finding.code}: ${finding.message}`)),\n    \"\",\n  ];\n  return `${lines.join(\"\\n\")}\\n`;\n}"
       },
       "name": "buildMigrationPlan",
       "qualifiedName": "buildMigrationPlan",
       "span": {
-        "end": 22713,
-        "start": 20732
+        "end": 26825,
+        "start": 24844
       }
     },
     {
@@ -68506,14 +68526,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function buildRiskReport(\n  routes: ImportedRoute[],\n  frontendCalls: ImportedFrontendCall[],\n  candidates: ImportedCandidateEntry[],\n  files: SourceFile[],\n): ImportedRiskReport {\n  const findings: ImportedRiskFinding[] = [];\n  for (const candidate of candidates) {\n    if (candidate.visibleToAgent) {\n      findings.push({\n        code: \"FORGE_IMPORT_VISIBLE\",\n        severity: \"error\",\n        file: candidate.file,\n        routeId: candidate.routeId,\n        message: \"Imported entries must stay hidden from agents until a human approves them.\",\n      });\n    }\n    if (candidate.risks.includes(\"auth-unknown\") && candidate.kind === \"command\") {\n      findings.push({\n        code: \"FORGE_IMPORT_AUTH_UNKNOWN\",\n        severity: \"warning\",\n        file: candidate.file,\n        routeId: candidate.routeId,\n        message: `${candidate.name} looks command-like but static scan did not find an obvious auth guard.`,\n      });\n    }\n    if (candidate.risks.includes(\"destructive\")) {\n      findings.push({\n        code: \"FORGE_IMPORT_DESTRUCTIVE\",\n        severity: \"warning\",\n        file: candidate.file,\n        routeId: candidate.routeId,\n        message: `${candidate.name} is destructive and must keep needsApproval=true.`,\n      });\n    }\n    const text = sourceTextForRoute({ ...candidate, id: candidate.routeId, source: \"unknown\", confidence: 0 }, files);\n    if (/\\b(req\\.body|body|input)\\.tenantId\\b/u.test(text) || /\\b(req\\.body|body|input)\\.tenant_id\\b/u.test(text)) {\n      findings.push({\n        code: \"FORGE_IMPORT_TENANT_SPOOFABLE\",\n        severity: \"warning\",\n        file: candidate.file,\n        routeId: candidate.routeId,\n        message: `${candidate.name} appears to accept tenant identity from input; review tenant isolation before migration.`,\n      });\n    }\n  }\n  return {\n    schemaVersion: \"0.1.0\",\n    summary: {\n      routeCount: routes.length,\n      frontendCallCount: frontendCalls.length,\n      candidateCount: candidates.length,\n      commandCount: candidates.filter((candidate) => candidate.kind === \"command\").length,\n      queryCount: candidates.filter((candidate) => candidate.kind === \"query\").length,\n      hiddenFromAgents: candidates.filter((candidate) => !candidate.visibleToAgent).length,\n      needsApproval: candidates.filter((candidate) => candidate.needsApproval).length,\n    },\n    findings,\n  };\n}"
       },
       "name": "buildRiskReport",
       "qualifiedName": "buildRiskReport",
       "span": {
-        "end": 20173,
-        "start": 17819
+        "end": 24285,
+        "start": 21931
       }
     },
     {
@@ -68676,7 +68696,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function buildSchemaInspect(workspaceRoot: string): { data: Record<string, unknown>; errors: ReturnType<typeof createDiagnostic>[] } {\n  const dataGraph = readGeneratedJson<DataGraph>(workspaceRoot, `${GENERATED_DIR}/dataGraph.json`);\n  const sqlPlan = readGeneratedJson<SqlPlan>(workspaceRoot, `${GENERATED_DIR}/sqlPlan.json`);\n  const db = readGeneratedJson<{ tableMap?: Record<string, TableMapEntry> }>(workspaceRoot, `${GENERATED_DIR}/db.json`);\n  const errors: ReturnType<typeof createDiagnostic>[] = [];\n\n  if (!dataGraph) {\n    errors.push(createDiagnostic({\n      severity: \"error\",\n      code: \"FORGE_INSPECT_MISSING\",\n      message: `missing generated artifact: ${GENERATED_DIR}/dataGraph.json; run forge generate first`,\n      file: `${GENERATED_DIR}/dataGraph.json`,\n    }));\n  }\n  if (!sqlPlan) {\n    errors.push(createDiagnostic({\n      severity: \"error\",\n      code: \"FORGE_INSPECT_MISSING\",\n      message: `missing generated artifact: ${GENERATED_DIR}/sqlPlan.json; run forge generate first`,\n      file: `${GENERATED_DIR}/sqlPlan.json`,\n    }));\n  }\n  if (!db?.tableMap) {\n    errors.push(createDiagnostic({\n      severity: \"error\",\n      code: \"FORGE_INSPECT_MISSING\",\n      message: `missing generated artifact: ${GENERATED_DIR}/db.json; run forge generate first`,\n      file: `${GENERATED_DIR}/db.json`,\n    }));\n  }\n\n  const sqlByAccessName = new Map(\n    (sqlPlan?.tables ?? [])\n      .filter((table) => table.kind === \"create_table\")\n      .map((table) => [table.accessName ?? table.table ?? \"\", table]),\n  );\n  const tableMap = db?.tableMap ?? {};\n  const dataGraphDiagnostics = dataGraph?.diagnostics ?? [];\n  const sqlPlanDiagnostics = sqlPlan?.diagnostics ?? [];\n  const tables = (dataGraph?.tables ?? []).map((table) => {\n    const sql = sqlByAccessName.get(table.name);\n    const runtime = sql?.table ? tableMap[sql.table] ?? tableMap[table.name] : tableMap[table.name];\n    const sourceFields = table.fields.map((field) => field.name).sort();\n    const sqlColumns = (sql?.columns ?? []).map((column) => ({\n      name: column.name,\n      fieldName: column.fieldName,\n      sqlType: column.sqlType,\n      primaryKey: column.primaryKey === true,\n    }));\n    const runtimeFields = (runtime?.columns ?? []).map((column) => column.fieldName ?? column.name).sort();\n    const missingRuntimeFields = sourceFields.filter((field) => !runtimeFields.includes(field));\n\n    return {\n      name: table.name,\n      file: table.file,\n      sourceFields,\n      sqlTable: sql?.table ?? null,\n      sqlColumns,\n      runtimeAccessors: Object.entries(tableMap)\n        .filter(([, entry]) => entry.tableName === (sql?.table ?? table.name))\n        .map(([name]) => name)\n        .sort(),\n      missingRuntimeFields,\n    };\n  });\n\n  return {\n    data: {\n      schemaVersion: \"0.1.0\",\n      summary: {\n        tables: tables.length,\n        missingRuntimeFields: tables.reduce(\n          (count, table) => count + (table.missingRuntimeFields as string[]).length,\n          0,\n        ),\n        diagnostics: dataGraphDiagnostics.length + sqlPlanDiagnostics.length + errors.length,\n      },\n      tables,\n      diagnostics: [\n        ...dataGraphDiagnostics,\n        ...sqlPlanDiagnostics,\n        ...errors,\n      ],\n    },\n    errors,\n  };\n}"
       },
       "name": "buildSchemaInspect",
@@ -69628,14 +69648,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function categorizeFiles(\n  files: string[],\n  sampleSize = 8,\n  classify: ChangeClassifier = classifyChangeType,\n): CategorizedFileSummary {\n  const sorted = [...files].sort();\n  const groups = Object.fromEntries(\n    CHANGE_TYPES.map((type) => [type, [] as string[]]),\n  ) as Record<ChangeType, string[]>;\n  for (const file of sorted) {\n    groups[classify(file)].push(file);\n  }\n  const byType = Object.fromEntries(\n    CHANGE_TYPES.map((type) => [type, compactFiles(groups[type], sampleSize)]),\n  ) as Record<ChangeType, FileListSummary>;\n  const primaryTypes = CHANGE_TYPES\n    .filter((type) => byType[type].count > 0)\n    .sort((left, right) => byType[right].count - byType[left].count);\n  return {\n    total: compactFiles(sorted, sampleSize),\n    byType,\n    primaryTypes,\n  };\n}"
       },
       "name": "categorizeFiles",
       "qualifiedName": "categorizeFiles",
       "span": {
-        "end": 5063,
-        "start": 4276
+        "end": 5423,
+        "start": 4636
       }
     },
     {
@@ -69832,14 +69852,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function checkEmptyTimestampLiterals(\n  appGraph: Awaited<ReturnType<typeof buildAppGraphForSession>>,\n  dataGraph: DataGraph,\n): ReturnType<typeof createDiagnostic>[] {\n  const fields = timestampFieldNames(dataGraph);\n  if (fields.size === 0) {\n    return [];\n  }\n  const diagnostics: ReturnType<typeof createDiagnostic>[] = [];\n  const runtimeKinds = new Set([\"command\", \"query\", \"liveQuery\", \"action\", \"workflow\"]);\n  for (const symbol of appGraph.symbols) {\n    if (!runtimeKinds.has(symbol.kind)) {\n      continue;\n    }\n    const sourceSlice = typeof symbol.meta.sourceSlice === \"string\" ? symbol.meta.sourceSlice : \"\";\n    if (!sourceSlice) {\n      continue;\n    }\n    for (const field of fields) {\n      const escaped = field.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n      const pattern = new RegExp(`\\\\b${escaped}\\\\s*:\\\\s*([\"']{2})`);\n      const emptyTemplatePattern = new RegExp(`\\\\b${escaped}\\\\s*:\\\\s*\\`\\``);\n      if (!pattern.test(sourceSlice) && !emptyTemplatePattern.test(sourceSlice)) {\n        continue;\n      }\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"error\",\n          code: FORGE_DB_EMPTY_TIMESTAMP_LITERAL,\n          message:\n            `Forge timestamp field '${field}' is assigned an empty string in ${symbol.kind} '${symbol.name}'.`,\n          file: symbol.file,\n          span: symbol.span,\n        }),\n      );\n    }\n  }\n  return diagnostics;\n}"
       },
       "name": "checkEmptyTimestampLiterals",
       "qualifiedName": "checkEmptyTimestampLiterals",
       "span": {
-        "end": 38585,
-        "start": 37183
+        "end": 38841,
+        "start": 37439
       }
     },
     {
@@ -70132,36 +70152,36 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "d74b1798ec0f4a3e47807b0470c21a16ad370d299b46adab19db9c63cd1e0717",
+      "contentHash": "79086aaece7f9e9c434cf82a31e55ead4f3d5846fec7953179a8639f06dbb889",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "9aca1922cf10f0b9b00ca67c30010f093db7e35f462a185e1a48a8e94c296fac",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCandidateEntry, \"kind\" | \"confidence\" | \"risks\" | \"evidence\" | \"needsApproval\"> {\n  const method = route.method.toUpperCase();\n  const lowerPath = route.path.toLowerCase();\n  const lowerText = text.toLowerCase();\n  const risks = new Set<string>();\n  const evidence: string[] = [`${route.source} ${method} ${route.path}`];\n  const isQuery = method === \"GET\" || method === \"HEAD\";\n  const isDestructive = method === \"DELETE\" || /(delete|remove|destroy|cancel|refund|void|purge)/u.test(lowerPath);\n  const writes = /(\\.create\\(|\\.update\\(|\\.delete\\(|\\.upsert\\(|\\.insert\\(|\\.save\\(|\\.destroy\\(|\\.remove\\()/u.test(lowerText);\n  const external = /(stripe|resend|sendgrid|twilio|nodemailer|openai|anthropic|https?:\\/\\/|\\.send\\()/u.test(lowerText);\n  const auth = /(auth|session|currentuser|getserversession|clerk|nextauth|requireuser|requireauth)/u.test(lowerText);\n  const tenant = /(tenantid|tenant_id|organizationid|orgid|accountid)/u.test(lowerText);\n  const methodUnknown = method === \"ANY\" || method === \"ALL\";\n  const ambiguousPostQuery = method === \"POST\" &&\n    /(?:^|\\/)(search|query|filter|lookup|graphql)(?:$|\\/)/u.test(lowerPath) &&\n    !writes &&\n    !isDestructive &&\n    !external;\n  if ((!isQuery && !ambiguousPostQuery) || writes) {\n    risks.add(\"writes-state\");\n  }\n  if (ambiguousPostQuery) {\n    risks.add(\"ambiguous-post-query\");\n  }\n  if (isDestructive) {\n    risks.add(\"destructive\");\n  }\n  if (external) {\n    risks.add(\"external-side-effect\");\n  }\n  if (!auth) {\n    risks.add(\"auth-unknown\");\n  }\n  if (tenant) {\n    risks.add(\"tenant-sensitive\");\n  }\n  if (/\\bprocess\\.env\\./u.test(text)) {\n    risks.add(\"secret-sensitive\");\n  }\n  if (methodUnknown) {\n    risks.add(\"method-unknown\");\n  }\n  const commandLike = !isQuery || writes || isDestructive || external;\n  if (ambiguousPostQuery) {\n    return {\n      kind: \"command-candidate\",\n      confidence: 0.55,\n      risks: Array.from(risks).sort(),\n      evidence,\n      needsApproval: true,\n    };\n  }\n  return {\n    kind: commandLike ? \"command\" : \"query\",\n    confidence: commandLike ? (isDestructive ? 0.9 : 0.78) : 0.86,\n    risks: Array.from(risks).sort(),\n    evidence,\n    needsApproval: commandLike || external || isDestructive || methodUnknown,\n  };\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function classifyCandidate(route: ImportedRoute, text: string): Pick<ImportedCandidateEntry, \"kind\" | \"confidence\" | \"risks\" | \"evidence\" | \"needsApproval\"> {\n  const method = route.method.toUpperCase();\n  const lowerPath = route.path.toLowerCase();\n  const lowerText = text.toLowerCase();\n  const risks = new Set<string>();\n  const evidence: string[] = [`${route.source} ${method} ${route.path}`];\n  const isQuery = method === \"GET\" || method === \"HEAD\";\n  const isDestructive = method === \"DELETE\" || /(delete|remove|destroy|cancel|refund|void|purge)/u.test(lowerPath);\n  const writes = /(\\.create\\(|\\.update\\(|\\.delete\\(|\\.upsert\\(|\\.insert\\(|\\.save\\(|\\.destroy\\(|\\.remove\\()/u.test(lowerText);\n  const external = /(stripe|resend|sendgrid|twilio|nodemailer|openai|anthropic|https?:\\/\\/|\\.send\\()/u.test(lowerText);\n  const auth = /(auth|session|currentuser|getserversession|clerk|nextauth|requireuser|requireauth)/u.test(lowerText);\n  const tenant = /(tenantid|tenant_id|organizationid|orgid|accountid)/u.test(lowerText);\n  const methodUnknown = method === \"ANY\" || method === \"ALL\";\n  const ambiguousPostQuery = method === \"POST\" &&\n    /(?:^|\\/)(search|query|filter|lookup|graphql)(?:$|\\/)/u.test(lowerPath) &&\n    !writes &&\n    !isDestructive &&\n    !external;\n  if ((!isQuery && !ambiguousPostQuery) || writes) {\n    risks.add(\"writes-state\");\n  }\n  if (ambiguousPostQuery) {\n    risks.add(\"ambiguous-post-query\");\n  }\n  if (isDestructive) {\n    risks.add(\"destructive\");\n  }\n  if (external) {\n    risks.add(\"external-side-effect\");\n  }\n  if (!auth) {\n    risks.add(\"auth-unknown\");\n  }\n  if (tenant) {\n    risks.add(\"tenant-sensitive\");\n  }\n  if (/\\bprocess\\.env\\.|\\bSystem\\.getenv\\s*\\(/u.test(text)) {\n    risks.add(\"secret-sensitive\");\n  }\n  if (methodUnknown) {\n    risks.add(\"method-unknown\");\n  }\n  const commandLike = !isQuery || writes || isDestructive || external;\n  if (ambiguousPostQuery) {\n    return {\n      kind: \"command-candidate\",\n      confidence: 0.55,\n      risks: Array.from(risks).sort(),\n      evidence,\n      needsApproval: true,\n    };\n  }\n  return {\n    kind: commandLike ? \"command\" : \"query\",\n    confidence: commandLike ? (isDestructive ? 0.9 : 0.78) : 0.86,\n    risks: Array.from(risks).sort(),\n    evidence,\n    needsApproval: commandLike || external || isDestructive || methodUnknown,\n  };\n}"
       },
       "name": "classifyCandidate",
       "qualifiedName": "classifyCandidate",
       "span": {
-        "end": 16107,
-        "start": 13798
+        "end": 20219,
+        "start": 17888
       }
     },
     {
-      "contentHash": "d6779b4a3afca0a01fe850be54210f2b4d5b4fab3fc3ef62674fe918f93aca90",
+      "contentHash": "d7f41f07a95d2ae569b7d44cff154586e0a16096992c642527e0fae06adda196",
       "file": "src/forge/workspace/change-summary.ts",
       "id": "fed50afc1970bfeb7cf4f2f674aa3d8ee98078f716e9f506b6833d318b093022",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
-        "sourceSlice": "function classifyChangeType(file: string): ChangeType {\n  const normalized = file.replace(/\\\\/g, \"/\");\n  const lower = normalized.toLowerCase();\n  const basename = lower.split(\"/\").pop() ?? lower;\n\n  if (\n    lower.startsWith(\"src/forge/_generated/\") ||\n    lower === \".forge/agent/context.json\" ||\n    lower === \"forge.lock\" ||\n    lower.endsWith(\"/forge.lock\")\n  ) {\n    return \"generated\";\n  }\n  if (lower === \".codex/hooks.json\") {\n    return \"config\";\n  }\n  if (lower.startsWith(\".playwright-cli/\")) {\n    return \"operational\";\n  }\n  if (\n    lower.startsWith(\".forge/\") ||\n    lower.startsWith(\".codex/\") ||\n    lower.startsWith(\".claude/\") ||\n    lower.startsWith(\".cursor/\") ||\n    lower.startsWith(\".vscode/\") ||\n    lower.endsWith(\".log\") ||\n    lower.endsWith(\".pid\")\n  ) {\n    return \"operational\";\n  }\n  if (\n    lower === \"readme.md\" ||\n    lower === \"agents.md\" ||\n    lower === \"claude.md\" ||\n    lower.startsWith(\"docs/\") ||\n    lower.endsWith(\".md\") ||\n    lower.endsWith(\".mdx\")\n  ) {\n    return \"docs\";\n  }\n  if (\n    lower.startsWith(\"tests/\") ||\n    lower.startsWith(\"test/\") ||\n    lower.includes(\"/__tests__/\") ||\n    /\\.test\\.[cm]?[jt]sx?$/.test(lower) ||\n    /\\.spec\\.[cm]?[jt]sx?$/.test(lower)\n  ) {\n    return \"tests\";\n  }\n  if (\n    lower.startsWith(\"marketing/\") ||\n    lower.startsWith(\"public/\") ||\n    lower.startsWith(\"assets/\") ||\n    lower.startsWith(\"static/\") ||\n    /\\.(png|jpe?g|gif|webp|svg|mp4|webm|mov|ico|pdf)$/i.test(lower)\n  ) {\n    return \"assets\";\n  }\n  if (\n    basename === \"package.json\" ||\n    basename === \".env.example\" ||\n    basename === \"bun.lock\" ||\n    basename === \"package-lock.json\" ||\n    basename === \"pnpm-lock.yaml\" ||\n    basename === \"yarn.lock\" ||\n    basename.startsWith(\"tsconfig\") ||\n    basename.startsWith(\"vite.config\") ||\n    basename.startsWith(\"next.config\") ||\n    basename.startsWith(\"nuxt.config\") ||\n    basename.startsWith(\"eslint.config\") ||\n    basename === \"mkdocs.yml\" ||\n    basename === \"mkdocs.yaml\" ||\n    basename.startsWith(\"biome\") ||\n    basename.startsWith(\"vitest.config\")\n  ) {\n    return \"config\";\n  }\n  if (\n    lower.startsWith(\"src/\") ||\n    lower.startsWith(\"web/\") ||\n    lower.startsWith(\"templates/\") ||\n    lower.startsWith(\"examples/\") ||\n    /^packages\\/[^/]+\\/(bin|src)\\//.test(lower) ||\n    lower.startsWith(\"bin/\") ||\n    lower.startsWith(\"scripts/\")\n  ) {\n    return \"source\";\n  }\n  return \"other\";\n}"
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
+        "sourceSlice": "function classifyChangeType(file: string): ChangeType {\n  const normalized = file.replace(/\\\\/g, \"/\");\n  const lower = normalized.toLowerCase();\n  const basename = lower.split(\"/\").pop() ?? lower;\n  const isEnvExample =\n    basename === \".env.example\" ||\n    (basename.startsWith(\".env.\") && basename.endsWith(\".example\"));\n  const isLocalEnvFile =\n    (basename === \".env\" || basename.startsWith(\".env.\")) && !isEnvExample;\n\n  if (\n    lower.startsWith(\"src/forge/_generated/\") ||\n    lower === \".forge/agent/context.json\" ||\n    lower === \"forge.lock\" ||\n    lower.endsWith(\"/forge.lock\")\n  ) {\n    return \"generated\";\n  }\n  if (lower === \".codex/hooks.json\") {\n    return \"config\";\n  }\n  if (\n    isLocalEnvFile ||\n    lower === \".workos-seed-state.json\" ||\n    lower === \".workos-fga-state.json\"\n  ) {\n    return \"operational\";\n  }\n  if (lower.startsWith(\".playwright-cli/\")) {\n    return \"operational\";\n  }\n  if (\n    lower.startsWith(\".forge/\") ||\n    lower.startsWith(\".codex/\") ||\n    lower.startsWith(\".claude/\") ||\n    lower.startsWith(\".cursor/\") ||\n    lower.startsWith(\".vscode/\") ||\n    lower.endsWith(\".log\") ||\n    lower.endsWith(\".pid\")\n  ) {\n    return \"operational\";\n  }\n  if (\n    lower === \"readme.md\" ||\n    lower === \"agents.md\" ||\n    lower === \"claude.md\" ||\n    lower.startsWith(\"docs/\") ||\n    lower.endsWith(\".md\") ||\n    lower.endsWith(\".mdx\")\n  ) {\n    return \"docs\";\n  }\n  if (\n    lower.startsWith(\"tests/\") ||\n    lower.startsWith(\"test/\") ||\n    lower.includes(\"/__tests__/\") ||\n    /\\.test\\.[cm]?[jt]sx?$/.test(lower) ||\n    /\\.spec\\.[cm]?[jt]sx?$/.test(lower)\n  ) {\n    return \"tests\";\n  }\n  if (\n    lower.startsWith(\"marketing/\") ||\n    lower.startsWith(\"public/\") ||\n    lower.startsWith(\"assets/\") ||\n    lower.startsWith(\"static/\") ||\n    /\\.(png|jpe?g|gif|webp|svg|mp4|webm|mov|ico|pdf)$/i.test(lower)\n  ) {\n    return \"assets\";\n  }\n  if (\n    basename === \"package.json\" ||\n    isEnvExample ||\n    basename === \"bun.lock\" ||\n    basename === \"package-lock.json\" ||\n    basename === \"pnpm-lock.yaml\" ||\n    basename === \"yarn.lock\" ||\n    basename.startsWith(\"tsconfig\") ||\n    basename.startsWith(\"vite.config\") ||\n    basename.startsWith(\"next.config\") ||\n    basename.startsWith(\"nuxt.config\") ||\n    basename.startsWith(\"eslint.config\") ||\n    basename === \"mkdocs.yml\" ||\n    basename === \"mkdocs.yaml\" ||\n    basename.startsWith(\"biome\") ||\n    basename.startsWith(\"vitest.config\")\n  ) {\n    return \"config\";\n  }\n  if (\n    lower.startsWith(\"src/\") ||\n    lower.startsWith(\"web/\") ||\n    lower.startsWith(\"templates/\") ||\n    lower.startsWith(\"examples/\") ||\n    /^packages\\/[^/]+\\/(bin|src)\\//.test(lower) ||\n    lower.startsWith(\"bin/\") ||\n    lower.startsWith(\"scripts/\")\n  ) {\n    return \"source\";\n  }\n  return \"other\";\n}"
       },
       "name": "classifyChangeType",
       "qualifiedName": "classifyChangeType",
       "span": {
-        "end": 4267,
+        "end": 4627,
         "start": 1854
       }
     },
@@ -70761,20 +70781,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "466322e98cf37dcbf6bb8b39a2d07ca0996c36d52025ccfff89a88f190518e69",
+      "contentHash": "01ddd9c680c98fbc8363473380cc1650c9fdf65d193012e71b03d33c5fff7fa4",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "50f46279e3dfe1c7e45fe46fc1cdd167c1f9a557c53ef35f14fdd0fb56c10795",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function collectEnv(workspaceRoot: string, files: SourceFile[]): ImportedInventory[\"env\"] {\n  const names = new Set<string>();\n  for (const file of files) {\n    for (const match of file.text.matchAll(/\\bprocess\\.env\\.([A-Z0-9_]+)/gu)) {\n      names.add(match[1] ?? \"\");\n    }\n  }\n  const envFiles = [\".env\", \".env.local\", \".env.example\", \".env.sample\"]\n    .filter((name) => existsSync(join(workspaceRoot, name)))\n    .sort();\n  for (const envFile of envFiles) {\n    const raw = readFileSync(join(workspaceRoot, envFile), \"utf8\");\n    for (const line of raw.split(/\\r?\\n/u)) {\n      const match = line.match(/^\\s*([A-Z0-9_]+)\\s*=/u);\n      if (match) {\n        names.add(match[1] ?? \"\");\n      }\n    }\n  }\n  return {\n    processEnv: Array.from(names).filter(Boolean).sort(),\n    envFiles,\n  };\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function collectEnv(workspaceRoot: string, files: SourceFile[]): ImportedInventory[\"env\"] {\n  const names = new Set<string>();\n  for (const file of files) {\n    for (const match of file.text.matchAll(/\\bprocess\\.env\\.([A-Z0-9_]+)/gu)) {\n      names.add(match[1] ?? \"\");\n    }\n    for (const match of file.text.matchAll(/\\bSystem\\.getenv\\(\\s*[\"']([A-Z0-9_]+)[\"']\\s*\\)/gu)) {\n      names.add(match[1] ?? \"\");\n    }\n  }\n  const envFiles = [\".env\", \".env.local\", \".env.example\", \".env.sample\"]\n    .filter((name) => existsSync(join(workspaceRoot, name)))\n    .sort();\n  for (const envFile of envFiles) {\n    const raw = readFileSync(join(workspaceRoot, envFile), \"utf8\");\n    for (const line of raw.split(/\\r?\\n/u)) {\n      const match = line.match(/^\\s*([A-Z0-9_]+)\\s*=/u);\n      if (match) {\n        names.add(match[1] ?? \"\");\n      }\n    }\n  }\n  return {\n    processEnv: Array.from(names).filter(Boolean).sort(),\n    envFiles,\n  };\n}"
       },
       "name": "collectEnv",
       "qualifiedName": "collectEnv",
       "span": {
-        "end": 12026,
-        "start": 11231
+        "end": 15754,
+        "start": 14822
       }
     },
     {
@@ -70988,14 +71008,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function collectSourceFiles(workspaceRoot: string): SourceFile[] {\n  const files: SourceFile[] = [];\n  const visit = (absoluteDir: string): void => {\n    for (const entry of readdirSync(absoluteDir, { withFileTypes: true })) {\n      const absolutePath = join(absoluteDir, entry.name);\n      const relativePath = normalizePath(relative(workspaceRoot, absolutePath));\n      if (entry.isDirectory()) {\n        if (\n          !entry.name.startsWith(\".\") &&\n          !IGNORED_DIRS.has(entry.name) &&\n          !relativePath.includes(\"/src/forge/_generated\")\n        ) {\n          visit(absolutePath);\n        }\n        continue;\n      }\n      if (!entry.isFile() || !SOURCE_EXTENSIONS.has(extname(entry.name))) {\n        continue;\n      }\n      if (statSync(absolutePath).size > 1_000_000) {\n        continue;\n      }\n      files.push({\n        absolutePath,\n        relativePath,\n        text: readFileSync(absolutePath, \"utf8\"),\n      });\n    }\n  };\n  const preferredRoots = PREFERRED_SOURCE_ROOTS\n    .map((name) => join(workspaceRoot, name))\n    .filter((absolutePath) => existsSync(absolutePath) && statSync(absolutePath).isDirectory());\n  const roots = preferredRoots.length > 0 ? preferredRoots : [workspaceRoot];\n  for (const root of roots) {\n    visit(root);\n  }\n  return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath));\n}"
       },
       "name": "collectSourceFiles",
       "qualifiedName": "collectSourceFiles",
       "span": {
-        "end": 3617,
-        "start": 2257
+        "end": 3626,
+        "start": 2266
       }
     },
     {
@@ -71396,7 +71416,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function compactFiles(files: string[], sampleSize = 12): FileListSummary {\n  return {\n    count: files.length,\n    sample: files.slice(0, sampleSize),\n    hidden: Math.max(0, files.length - sampleSize),\n  };\n}"
       },
       "name": "compactFiles",
@@ -74575,14 +74595,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function detectFrontendCalls(files: SourceFile[], routes: ImportedRoute[]): ImportedFrontendCall[] {\n  const calls: ImportedFrontendCall[] = [];\n  const addCall = (file: string, client: \"fetch\" | \"axios\", method: string, url: string): void => {\n    const route = routes.find((candidate) => candidate.path === url || url.startsWith(`${candidate.path}/`));\n    calls.push({\n      id: stableId(\"call\", [file, client, method, url]),\n      file,\n      client,\n      method: method.toUpperCase(),\n      url,\n      routeId: route?.id,\n      confidence: route ? 0.78 : 0.55,\n    });\n  };\n  for (const file of files) {\n    if (\n      pathIncludesRouteMarker(file.relativePath, \"/app/api/\") ||\n      pathIncludesRouteMarker(file.relativePath, \"/pages/api/\")\n    ) {\n      continue;\n    }\n    const fetchCall = /\\bfetch\\s*\\(\\s*[\"'`]([^\"'`]+)[\"'`]\\s*(?:,\\s*\\{(?<options>[\\s\\S]{0,300}?)\\})?/giu;\n    for (const match of file.text.matchAll(fetchCall)) {\n      const url = match[1] ?? \"\";\n      if (!url.startsWith(\"/api/\") && !url.startsWith(\"http\")) {\n        continue;\n      }\n      const options = match.groups?.options ?? \"\";\n      const method = options.match(/method\\s*:\\s*[\"'`]([A-Z]+)[\"'`]/iu)?.[1] ?? \"GET\";\n      addCall(file.relativePath, \"fetch\", method, url);\n    }\n    const axiosMethodCall = /\\baxios\\.(get|post|put|patch|delete)\\s*\\(\\s*[\"'`]([^\"'`]+)[\"'`]/giu;\n    for (const match of file.text.matchAll(axiosMethodCall)) {\n      const url = match[2] ?? \"\";\n      if (url.startsWith(\"/api/\") || url.startsWith(\"http\")) {\n        addCall(file.relativePath, \"axios\", match[1] ?? \"GET\", url);\n      }\n    }\n  }\n  return calls.sort((left, right) => `${left.file}:${left.url}`.localeCompare(`${right.file}:${right.url}`));\n}"
       },
       "name": "detectFrontendCalls",
       "qualifiedName": "detectFrontendCalls",
       "span": {
-        "end": 11229,
-        "start": 9508
+        "end": 14820,
+        "start": 13099
       }
     },
     {
@@ -74739,20 +74759,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "73e8d10937f5919567d797dde015648d71a6e02d91806d8e1dc6088279810e2d",
+      "contentHash": "df4de9902a703e94ef2d8dc37e1bebc4755f145afb1c9edeea8017befe719969",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "3020a390b78f5fee2ccfef1db1dfdf7b84ef05dd9947e7841286ba4658b5238c",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function detectRoutes(files: SourceFile[]): ImportedRoute[] {\n  const routes: ImportedRoute[] = [];\n  const methods = [\"GET\", \"POST\", \"PUT\", \"PATCH\", \"DELETE\", \"HEAD\", \"OPTIONS\"];\n  for (const file of files) {\n    if (pathIncludesRouteMarker(file.relativePath, \"/app/api/\") && basename(file.relativePath).startsWith(\"route.\")) {\n      const path = routePathFromFile(file.relativePath, \"/app/\");\n      for (const method of methods) {\n        if (new RegExp(`export\\\\s+(?:async\\\\s+)?function\\\\s+${method}\\\\b`, \"u\").test(file.text)) {\n          addRoute(routes, method, path, file.relativePath, \"next-app-router\", 0.92, method);\n        }\n      }\n    }\n\n    if (pathIncludesRouteMarker(file.relativePath, \"/pages/api/\")) {\n      const path = routePathFromFile(file.relativePath, \"/pages/\");\n      addRoute(routes, \"ANY\", path, file.relativePath, \"next-pages-api\", 0.78, \"default\");\n    }\n\n    const expressRoute = /\\b(?:app|router)\\s*\\.\\s*(get|post|put|patch|delete|all)\\s*\\(\\s*[\"'`]([^\"'`]+)[\"'`]/giu;\n    for (const match of file.text.matchAll(expressRoute)) {\n      addRoute(routes, match[1] ?? \"all\", match[2] ?? \"/\", file.relativePath, \"express\", 0.84);\n    }\n\n    const controller = file.text.match(/@Controller\\s*\\(\\s*[\"'`]([^\"'`]*)[\"'`]\\s*\\)/u);\n    if (controller) {\n      const nestRoute = /@(Get|Post|Put|Patch|Delete|All)\\s*\\(\\s*(?:[\"'`]([^\"'`]*)[\"'`])?\\s*\\)/giu;\n      for (const match of file.text.matchAll(nestRoute)) {\n        addRoute(\n          routes,\n          match[1] ?? \"All\",\n          joinRoutePath(controller[1] ?? \"\", match[2] ?? \"\"),\n          file.relativePath,\n          \"nest\",\n          0.78,\n        );\n      }\n    }\n  }\n  const seen = new Set<string>();\n  return routes\n    .filter((route) => {\n      const key = `${route.method}:${route.path}:${route.file}:${route.source}`;\n      if (seen.has(key)) {\n        return false;\n      }\n      seen.add(key);\n      return true;\n    })\n    .sort((left, right) => `${left.path}:${left.method}`.localeCompare(`${right.path}:${right.method}`));\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function detectRoutes(files: SourceFile[]): ImportedRoute[] {\n  const routes: ImportedRoute[] = [];\n  const methods = [\"GET\", \"POST\", \"PUT\", \"PATCH\", \"DELETE\", \"HEAD\", \"OPTIONS\"];\n  for (const file of files) {\n    const isJava = extname(file.relativePath) === \".java\";\n    if (pathIncludesRouteMarker(file.relativePath, \"/app/api/\") && basename(file.relativePath).startsWith(\"route.\")) {\n      const path = routePathFromFile(file.relativePath, \"/app/\");\n      for (const method of methods) {\n        if (new RegExp(`export\\\\s+(?:async\\\\s+)?function\\\\s+${method}\\\\b`, \"u\").test(file.text)) {\n          addRoute(routes, method, path, file.relativePath, \"next-app-router\", 0.92, method);\n        }\n      }\n    }\n\n    if (pathIncludesRouteMarker(file.relativePath, \"/pages/api/\")) {\n      const path = routePathFromFile(file.relativePath, \"/pages/\");\n      addRoute(routes, \"ANY\", path, file.relativePath, \"next-pages-api\", 0.78, \"default\");\n    }\n\n    if (!isJava) {\n      const expressRoute = /\\b(?:app|router)\\s*\\.\\s*(get|post|put|patch|delete|all)\\s*\\(\\s*[\"'`]([^\"'`]+)[\"'`]/giu;\n      for (const match of file.text.matchAll(expressRoute)) {\n        addRoute(routes, match[1] ?? \"all\", match[2] ?? \"/\", file.relativePath, \"express\", 0.84);\n      }\n    }\n\n    const controller = !isJava ? file.text.match(/@Controller\\s*\\(\\s*[\"'`]([^\"'`]*)[\"'`]\\s*\\)/u) : null;\n    if (controller) {\n      const nestRoute = /@(Get|Post|Put|Patch|Delete|All)\\s*\\(\\s*(?:[\"'`]([^\"'`]*)[\"'`])?\\s*\\)/giu;\n      for (const match of file.text.matchAll(nestRoute)) {\n        addRoute(\n          routes,\n          match[1] ?? \"All\",\n          joinRoutePath(controller[1] ?? \"\", match[2] ?? \"\"),\n          file.relativePath,\n          \"nest\",\n          0.78,\n        );\n      }\n    }\n    detectSpringRoutes(file, routes);\n  }\n  const seen = new Set<string>();\n  return routes\n    .filter((route) => {\n      const key = `${route.method}:${route.path}:${route.file}:${route.source}`;\n      if (seen.has(key)) {\n        return false;\n      }\n      seen.add(key);\n      return true;\n    })\n    .sort((left, right) => `${left.path}:${left.method}`.localeCompare(`${right.path}:${right.method}`));\n}"
       },
       "name": "detectRoutes",
       "qualifiedName": "detectRoutes",
       "span": {
-        "end": 9506,
-        "start": 7488
+        "end": 13097,
+        "start": 10932
       }
     },
     {
@@ -74787,6 +74807,23 @@ export const appGraph = {
       "span": {
         "end": 1380,
         "start": 315
+      }
+    },
+    {
+      "contentHash": "eb203feb69a6e84e3c328247d15a01885ea13ef996deccb5910ac398e343b5ec",
+      "file": "src/forge/brownfield-import/index.ts",
+      "id": "c3fcd2b308469abb2442d9f9f7684942908a8e0a85448e1f37fdc6de18b7c1c3",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function detectSpringRoutes(file: SourceFile, routes: ImportedRoute[]): void {\n  if (extname(file.relativePath) !== \".java\" || !/@(?:RestController|Controller)\\b/u.test(file.text)) {\n    return;\n  }\n  const classIndex = file.text.search(/\\bclass\\s+\\w+/u);\n  if (classIndex < 0) {\n    return;\n  }\n  const classAnnotations = file.text.slice(0, classIndex);\n  const classMapping = [...classAnnotations.matchAll(/@RequestMapping\\s*(?:\\(([^)]*)\\))?/gu)].at(-1);\n  const basePath = springMappingPath(classMapping?.[1] ?? \"\");\n  const methodMappings = /@(GetMapping|PostMapping|PutMapping|PatchMapping|DeleteMapping|RequestMapping)\\s*(?:\\(([^)]*)\\))?/gu;\n  methodMappings.lastIndex = classIndex;\n  for (const match of file.text.matchAll(methodMappings)) {\n    const annotation = match[1] ?? \"RequestMapping\";\n    const argumentsText = match[2] ?? \"\";\n    const handler = springHandlerName(file.text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 500));\n    if (!handler) {\n      continue;\n    }\n    const methods = annotation === \"RequestMapping\"\n      ? [...argumentsText.matchAll(/RequestMethod\\.(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/gu)].map((item) => item[1] ?? \"ANY\")\n      : [annotation.replace(/Mapping$/u, \"\").toUpperCase()];\n    for (const method of methods.length > 0 ? methods : [\"ANY\"]) {\n      addRoute(\n        routes,\n        method,\n        joinRoutePath(basePath, springMappingPath(argumentsText)),\n        file.relativePath,\n        \"spring\",\n        0.86,\n        handler,\n      );\n    }\n  }\n}"
+      },
+      "name": "detectSpringRoutes",
+      "qualifiedName": "detectSpringRoutes",
+      "span": {
+        "end": 10335,
+        "start": 8791
       }
     },
     {
@@ -76343,14 +76380,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function escapeRegExp(value: string): string {\n  return value.replace(/[.*+?^${}()|[\\]\\\\]/gu, \"\\\\$&\");\n}"
       },
       "name": "escapeRegExp",
       "qualifiedName": "escapeRegExp",
       "span": {
-        "end": 13796,
-        "start": 13692
+        "end": 17886,
+        "start": 17782
       }
     },
     {
@@ -76796,20 +76833,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "7cb22f3b9cfb213a20ba2980c511feb9cb34df84961157c6fc5df5c1f07eb309",
+      "contentHash": "80047d2314c148bb66020b4a6380297af75d2146d082124c91f2f1c7c6f6a64c",
       "file": "src/forge/cli/commands.ts",
       "id": "844f74a5c2bf1b725418ca261aebb4e94824f08814167fb11e61e83042e59e90",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
-        "sourceSlice": "async function executeCommand(command: ForgeCommand): Promise<number> {\n  switch (command.kind) {\n    case \"version\": {\n      if (command.json) {\n        process.stdout.write(`${JSON.stringify({\n          version: CLI_VERSION,\n          cliVersion: CLI_VERSION,\n          forgeosVersion: FORGEOS_VERSION,\n        }, null, 2)}\\n`);\n      } else {\n        process.stdout.write(`${CLI_VERSION}\\n`);\n      }\n      return 0;\n    }\n    case \"last\": {\n      const result = runLastCommand({ workspaceRoot: command.workspaceRoot });\n      process.stdout.write(command.json ? formatLastJson(result) : formatLastHuman(result));\n      return result.exitCode;\n    }\n    case \"baseline\": {\n      const result = runBaselineCommand(command);\n      process.stdout.write(command.json ? formatBaselineJson(result) : formatBaselineHuman(result));\n      return result.exitCode;\n    }\n    case \"new\": {\n      const result = await runNewCommand({\n        name: command.name,\n        template: command.template,\n        packageManager: command.packageManager,\n        install: command.install,\n        git: command.git,\n        fieldTest: command.fieldTest,\n        forgePackageSpec: command.forgePackageSpec,\n        localForge: command.localForge,\n        workspaceRoot: command.workspaceRoot,\n      });\n      process.stdout.write(command.json ? formatNewJson(result) : formatNewHuman(result));\n      return result.exitCode;\n    }\n    case \"build\": {\n      const result = await runBuildCommand({\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n      });\n      if (command.json) {\n        process.stdout.write(`${JSON.stringify(result)}\\n`);\n      } else {\n        process.stdout.write(formatBuildHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"serve\":\n      return runServeCommand(command);\n    case \"worker\": {\n      const result = await runWorkerCommand(command);\n      return result.exitCode;\n    }\n    case \"self-host\": {\n      const result = await runSelfHostCommand(command);\n      if (command.json) {\n        process.stdout.write(`${JSON.stringify(result)}\\n`);\n      } else {\n        process.stdout.write(formatSelfHostHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"docs\": {\n      const result = runDocsCheckCommand(command);\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result));\n      } else {\n        process.stdout.write(formatDocsCheckHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"agent-contract\": {\n      if (command.subcommand === \"print\") {\n        const result = runAgentContractPrint(command.workspaceRoot);\n        if (command.json) {\n          process.stdout.write(`${JSON.stringify(result.data, null, 2)}\\n`);\n        } else {\n          process.stdout.write(formatAgentContractHuman(command.subcommand, result));\n        }\n        return result.exitCode;\n      }\n\n      const result = await runGenerateCommand({\n        workspaceRoot: command.workspaceRoot,\n        check: command.subcommand === \"check\",\n        dryRun: false,\n        json: command.json,\n        concurrency: 4,\n      });\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildGenerateJson(result, { workspaceRoot: command.workspaceRoot })));\n      } else {\n        process.stdout.write(formatAgentContractHuman(command.subcommand, result));\n        writeHumanGenerate(result);\n      }\n      return result.exitCode;\n    }\n    case \"doctor\": {\n      if (command.target === \"agent\") {\n        const result = await runAgentCommand({\n          subcommand: \"doctor\",\n          workspaceRoot: command.workspaceRoot,\n          json: command.json,\n          target: command.agentTarget ?? \"codex\",\n          dryRun: false,\n          force: false,\n          preserveUserSections: true,\n          skills: true,\n          rules: true,\n        });\n        if (command.json) {\n          process.stdout.write(formatAgentJson(result));\n        } else {\n          process.stdout.write(formatAgentHuman(result));\n        }\n        return result.exitCode;\n      }\n      if (command.target === \"windows\") {\n        const result = await runWindowsDoctorCommand({ workspaceRoot: command.workspaceRoot });\n        if (command.json) {\n          process.stdout.write(formatWindowsDoctorJson(result));\n        } else {\n          process.stdout.write(formatWindowsDoctorHuman(result));\n        }\n        return result.exitCode;\n      }\n      if (command.target === \"delta\") {\n        const result = await runDeltaDoctor(command.workspaceRoot);\n        process.stdout.write(command.json ? formatDeltaDoctorJson(result) : formatDeltaDoctorHuman(result));\n        return result.exitCode;\n      }\n      if (command.target === \"pglite\") {\n        const result = await runPgliteDoctorCommand({ workspaceRoot: command.workspaceRoot });\n        process.stdout.write(command.json ? formatPgliteDoctorJson(result) : formatPgliteDoctorHuman(result));\n        return result.exitCode;\n      }\n      if (command.target === \"runtime\") {\n        const result = await runRuntimeDoctorCommand({ workspaceRoot: command.workspaceRoot });\n        process.stdout.write(command.json ? formatRuntimeDoctorJson(result) : formatRuntimeDoctorHuman(result));\n        return result.exitCode;\n      }\n      const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });\n      if (command.json) {\n        process.stdout.write(formatDoctorJson(result));\n      } else {\n        process.stdout.write(formatDoctorHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"setup\": {\n      const result = await runWindowsSetupCommand({\n        workspaceRoot: command.workspaceRoot,\n        yes: command.yes,\n      });\n      if (command.json) {\n        process.stdout.write(formatWindowsSetupJson(result));\n      } else {\n        process.stdout.write(formatWindowsSetupHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"security\": {\n      const result = await runSecurityCommand(command);\n      if (command.json) {\n        process.stdout.write(formatSecurityJson(result));\n      } else {\n        process.stdout.write(formatSecurityHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"auth\": {\n      const result = await runAuthCommand(command);\n      if (command.json) {\n        process.stdout.write(formatAuthJson(result));\n      } else {\n        process.stdout.write(formatAuthHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"authmd\": {\n      const result = runAuthMdCommand(command);\n      if (command.json) {\n        process.stdout.write(formatAuthMdJson(result));\n      } else {\n        process.stdout.write(formatAuthMdHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"workos\": {\n      const result = runWorkOSCommand(command);\n      if (command.json) {\n        process.stdout.write(formatWorkOSJson(result));\n      } else {\n        process.stdout.write(formatWorkOSHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"deploy\": {\n      const result = await runDeployCommand(command);\n      process.stdout.write(command.json ? formatDeployJson(result) : formatDeployHuman(result));\n      return result.exitCode;\n    }\n    case \"golden-path\": {\n      const result = await runGoldenPathCommand(command);\n      process.stdout.write(command.json ? formatGoldenPathJson(result) : formatGoldenPathHuman(result));\n      return result.exitCode;\n    }\n    case \"field-test\": {\n      const result = await runFieldTestCommand(command);\n      process.stdout.write(command.json ? formatFieldTestJson(result) : formatFieldTestHuman(result));\n      return result.exitCode;\n    }\n    case \"seed\": {\n      const result = await runSeedCommand(command);\n      process.stdout.write(command.json ? formatSeedJson(result) : formatSeedHuman(result));\n      return result.exitCode;\n    }\n    case \"rls\": {\n      const result = await runRlsCommand(command);\n      if (command.json) {\n        process.stdout.write(formatRlsJson(result));\n      } else {\n        process.stdout.write(formatRlsHuman(command.subcommand, result));\n      }\n      return result.exitCode;\n    }\n    case \"deps\": {\n      const result = await runDepsCommand(command);\n      if (command.json) {\n        process.stdout.write(formatDepsJson(result));\n      } else {\n        process.stdout.write(formatDepsHuman(command.subcommand, result));\n      }\n      return result.exitCode;\n    }\n    case \"release\": {\n      if (command.action === \"doctor\") {\n        const result = await runReleaseDoctorCommand(command);\n        if (command.json) {\n          process.stdout.write(formatJsonResult(result));\n        } else {\n          process.stdout.write(\n            [\n              `release doctor ${result.ok ? \"ok\" : \"failed\"}`,\n              `ready to publish: ${result.readyToPublish ? \"yes\" : \"no\"}`,\n              `ready for production deploy: ${result.readyForProductionDeploy ? \"yes\" : \"no\"}`,\n              ...result.checks.map((check) => {\n                const scope = check.requiredForPublish\n                  ? \"publish\"\n                  : check.requiredForProduction\n                    ? \"production\"\n                    : \"optional\";\n                return `${check.ok ? \"ok\" : \"fail\"} ${check.name} [${scope}]${check.state ? ` (${check.state})` : \"\"}`;\n              }),\n              ...(result.nextActions.length > 0 ? [\"\", \"Next:\", ...result.nextActions.map((action) => `  ${action}`)] : []),\n            ].join(\"\\n\").concat(\"\\n\"),\n          );\n        }\n        return result.exitCode;\n      }\n      const result = await runReleaseCommand({\n        ...command,\n        provider: command.provider as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n        target: command.target as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n      });\n      if (command.json) {\n        process.stdout.write(formatReleaseJson(result));\n      } else {\n        process.stdout.write(formatReleaseHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"make\": {\n      const result = await runMakeCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatMakeJson(result));\n      } else {\n        process.stdout.write(formatMakeHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"feature\": {\n      const result = await runFeatureCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatFeatureJson(result));\n      } else {\n        process.stdout.write(formatFeatureHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"refactor\": {\n      const result = await runRefactorCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatRefactorJson(result));\n      } else {\n        process.stdout.write(formatRefactorHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"impact\": {\n      const result = runImpactCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatImpactJson(result));\n      } else {\n        process.stdout.write(formatImpactHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"test\": {\n      const result = await runTestCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatImpactJson(result));\n      } else {\n        process.stdout.write(formatImpactHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"repair\": {\n      const result = await runRepairCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatRepairJson(result));\n      } else {\n        process.stdout.write(formatRepairHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"do\": {\n      const result = runForgeDoCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatForgeDoJson(result));\n      } else {\n        process.stdout.write(formatForgeDoHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"bench\": {\n      const result = await runCompilerBenchCommand(command.options);\n      process.stdout.write(\n        command.options.json\n          ? formatCompilerBenchJson(result)\n          : formatCompilerBenchHuman(result),\n      );\n      return result.exitCode;\n    }\n    case \"cair\": {\n      const result = runCairCommand(command.options);\n      process.stdout.write(\n        command.options.json || command.options.format === \"json\"\n          ? formatCairJson(result)\n          : formatCairHuman(result),\n      );\n      return result.exitCode;\n    }\n    case \"delta\": {\n      if (command.subcommand === \"compact\") {\n        const result = await runDeltaCompact({\n          workspaceRoot: command.workspaceRoot,\n          dryRun: command.dryRun,\n        });\n        process.stdout.write(command.json ? formatDeltaCompactJson(result) : formatDeltaCompactHuman(result));\n        return result.exitCode;\n      }\n      if (command.subcommand === \"prune\") {\n        const result = await runDeltaPrune({\n          workspaceRoot: command.workspaceRoot,\n          olderThan: command.olderThan,\n          dryRun: command.dryRun,\n          yes: command.yes,\n        });\n        process.stdout.write(command.json ? formatDeltaPruneJson(result) : formatDeltaPruneHuman(result));\n        return result.exitCode;\n      }\n      if (command.subcommand === \"export\") {\n        const result = await runDeltaExport({\n          workspaceRoot: command.workspaceRoot,\n          redacted: command.redacted,\n          output: command.output,\n          limit: command.limit,\n        });\n        process.stdout.write(command.json ? formatDeltaExportJson(result) : formatDeltaExportHuman(result));\n        return result.exitCode;\n      }\n      if (command.subcommand === \"repair\") {\n        const result = await runDeltaRepair({\n          workspaceRoot: command.workspaceRoot,\n          dryRun: command.dryRun,\n          yes: command.yes,\n        });\n        process.stdout.write(command.json ? formatDeltaRepairJson(result) : formatDeltaRepairHuman(result));\n        return result.exitCode;\n      }\n      const result = await runDeltaStatus(command.workspaceRoot, { verbose: command.verbose });\n      process.stdout.write(command.json ? formatDeltaStatusJson(result) : formatDeltaStatusHuman(result));\n      return result.exitCode;\n    }\n    case \"session\": {\n      const result = await runDeltaSessionCommand({\n        workspaceRoot: command.workspaceRoot,\n        subcommand: command.subcommand,\n        sessionId: command.sessionId,\n        sourceSessionId: command.sourceSessionId,\n        operationId: command.operationId,\n        title: command.title,\n        limit: command.limit,\n      });\n      process.stdout.write(command.json ? formatDeltaSessionJson(result) : formatDeltaSessionHuman(result));\n      return result.exitCode;\n    }\n    case \"timeline\": {\n      const result = await runDeltaTimeline({\n        workspaceRoot: command.workspaceRoot,\n        target: command.target,\n        kind: command.kindFilter,\n        session: command.sessionId,\n        limit: command.limit,\n        rebuild: command.rebuild,\n        causal: command.causal,\n        staleProofs: command.staleProofs,\n      });\n      process.stdout.write(command.json ? formatDeltaTimelineJson(result) : formatDeltaTimelineHuman(result));\n      return result.exitCode;\n    }\n    case \"explain\": {\n      const result = await runDeltaExplain({\n        workspaceRoot: command.workspaceRoot,\n        thing: command.thing,\n      });\n      process.stdout.write(command.json ? formatDeltaExplainJson(result) : formatDeltaExplainHuman(result));\n      return result.exitCode;\n    }\n    case \"agent\": {\n      const heartbeat = command.options.subcommand === \"onboard\"\n        ? startCommandHeartbeat({\n            label: `agent onboard ${command.options.target ?? \"codex\"}`,\n            initialPhase: \"prepare-hooks-memory-and-dev-snapshot\",\n          })\n        : null;\n      try {\n        const result = await runAgentCommand(command.options);\n        if (command.options.json) {\n          process.stdout.write(formatAgentJson(result));\n        } else {\n          process.stdout.write(formatAgentHuman(result));\n        }\n        return result.exitCode;\n      } finally {\n        heartbeat?.stop();\n      }\n    }\n    case \"mcp\": {\n      return runMcpServe(command.workspaceRoot);\n    }\n    case \"review\": {\n      const result = runReviewCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatReviewJson(result, { full: command.options.full }));\n      } else if (command.options.md && result.report) {\n        process.stdout.write(renderReviewMarkdown(result.report));\n      } else if (command.options.sarif && result.report && !command.options.write) {\n        process.stdout.write(renderSarif(result.report));\n      } else {\n        process.stdout.write(formatReviewHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"ui\": {\n      const result =\n        command.options.subcommand === \"list\"\n          ? runUiListCommand(command.options.workspaceRoot)\n          : await runUiCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatUiJson(result));\n      } else {\n        process.stdout.write(formatUiHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"generate\": {\n      const result = await runGenerateCommand({\n        workspaceRoot: command.workspaceRoot,\n        check: command.check,\n        dryRun: command.dryRun,\n        json: command.json,\n        concurrency: command.concurrency,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildGenerateJson(result, { workspaceRoot: command.workspaceRoot })));\n      } else {\n        writeHumanGenerate(result);\n      }\n\n      return result.exitCode;\n    }\n    case \"add\": {\n      const result = await runAddCommand(command.alias, command.options);\n      if (command.options.json) {\n        process.stdout.write(formatJsonResult(buildAddJson(result, { workspaceRoot: command.options.workspaceRoot })));\n      } else {\n        writeHumanAdd(result);\n      }\n      return result.exitCode;\n    }\n    case \"manifest\": {\n      const result = runManifestCommand(command);\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result));\n      } else {\n        process.stdout.write(formatManifestHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"import\": {\n      const result = runBrownfieldImportCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatJsonResult(formatBrownfieldImportJson(result)));\n      } else {\n        process.stdout.write(formatBrownfieldImportHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"status\": {\n      const result = runStatusCommand(command.workspaceRoot);\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result.data));\n      } else {\n        process.stdout.write(formatStatusHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"changed\": {\n      const result = runChangedCommand(command.workspaceRoot, {\n        authoredOnly: command.authoredOnly,\n        reviewOnly: command.reviewOnly,\n        commitReady: command.commitReady,\n      });\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result.data));\n      } else {\n        process.stdout.write(formatChangedHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"diff\": {\n      const changed = runChangedCommand(command.workspaceRoot);\n      const diffPlan = changed.data.diffPlan as { authoredDiffCommand: string; generatedDiffCommand: string; fullDiffCommand: string };\n      const commandText = command.target === \"generated\"\n        ? diffPlan.generatedDiffCommand\n        : command.target === \"full\"\n          ? diffPlan.fullDiffCommand\n          : diffPlan.authoredDiffCommand;\n      if (command.json) {\n        process.stdout.write(formatJsonResult({\n          schemaVersion: \"0.1.0\",\n          ok: changed.ok,\n          target: command.target,\n          command: commandText,\n          exitCode: changed.exitCode,\n        }));\n        return changed.exitCode;\n      }\n      const result = spawnSync(commandText, {\n        cwd: command.workspaceRoot,\n        shell: true,\n        stdio: \"inherit\",\n        windowsHide: true,\n      });\n      return result.status === 0 ? 0 : 1;\n    }\n    case \"handoff\": {\n      const result = await runHandoffCommand(command);\n      process.stdout.write(command.json ? formatHandoffJson(result) : formatHandoffHuman(result));\n      return result.exitCode;\n    }\n    case \"studio\": {\n      if (command.subcommand === \"bridge\" && !command.once && !command.dryRun) {\n        return runStudioBridgeLoop(command, (result) => {\n          process.stdout.write(command.json ? formatStudioBridgeEventJson(result) : formatStudioBridgeHuman(result));\n        });\n      }\n      if (command.subcommand === \"watch\" && !command.once && !command.dryRun) {\n        return runStudioWatchLoop(command, (result) => {\n          process.stdout.write(command.json ? formatStudioWatchJson(result) : formatStudioWatchHuman(result));\n        });\n      }\n      const result = command.subcommand === \"snapshot\"\n        ? await runStudioSnapshotCommand(command)\n        : command.subcommand === \"watch\"\n          ? await runStudioWatchCommand(command)\n          : command.subcommand === \"bridge\"\n            ? await runStudioBridgeCommand(command)\n            : command.subcommand === \"codex-server\"\n              ? await runStudioCodexServerCommand(command)\n              : command.subcommand === \"doctor\"\n                ? await runStudioDoctorCommand(command)\n                : command.subcommand === \"open\"\n                  ? await runStudioOpenCommand(command)\n                  : await runStudioAttachCommand(command);\n      process.stdout.write(\n        command.json\n          ? command.subcommand === \"snapshot\"\n            ? formatStudioSnapshotJson(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)\n            : command.subcommand === \"watch\"\n              ? formatStudioWatchJson(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)\n              : command.subcommand === \"bridge\"\n                ? formatStudioBridgeJson(result as Awaited<ReturnType<typeof runStudioBridgeCommand>>)\n                : command.subcommand === \"codex-server\"\n                  ? formatStudioCodexServerJson(result as Awaited<ReturnType<typeof runStudioCodexServerCommand>>)\n                  : command.subcommand === \"doctor\"\n                    ? formatStudioDoctorJson(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)\n                    : command.subcommand === \"open\"\n                      ? formatStudioOpenJson(result as Awaited<ReturnType<typeof runStudioOpenCommand>>)\n                      : formatStudioAttachJson(result as Awaited<ReturnType<typeof runStudioAttachCommand>>)\n          : command.subcommand === \"snapshot\"\n            ? formatStudioSnapshotHuman(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)\n            : command.subcommand === \"watch\"\n              ? formatStudioWatchHuman(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)\n              : command.subcommand === \"bridge\"\n                ? formatStudioBridgeHuman(result as Awaited<ReturnType<typeof runStudioBridgeCommand>>)\n                : command.subcommand === \"codex-server\"\n                  ? formatStudioCodexServerHuman(result as Awaited<ReturnType<typeof runStudioCodexServerCommand>>)\n                  : command.subcommand === \"doctor\"\n                    ? formatStudioDoctorHuman(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)\n                    : command.subcommand === \"open\"\n                      ? formatStudioOpenHuman(result as Awaited<ReturnType<typeof runStudioOpenCommand>>)\n                      : formatStudioAttachHuman(result as Awaited<ReturnType<typeof runStudioAttachCommand>>),\n      );\n      return result.exitCode;\n    }\n    case \"inspect\": {\n      const result = await runInspectCommand(\n        command.target,\n        command.workspaceRoot,\n        { full: command.full, brief: command.brief, ergonomics: command.ergonomics },\n      );\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildInspectJson(result)));\n      } else if (typeof result.data === \"string\") {\n        process.stdout.write(result.data);\n      } else {\n        writeHumanInspect(result);\n      }\n      return result.exitCode;\n    }\n    case \"check\": {\n      const checkWorkspaceRoot = process.cwd();\n      const result = await runCheckCommand(checkWorkspaceRoot, {\n        strictSecrets: command.strictSecrets,\n      });\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildCheckJson(result, { workspaceRoot: checkWorkspaceRoot })));\n      } else {\n        writeHumanGenerate(result);\n      }\n      return result.exitCode;\n    }\n    case \"verify\": {\n      const result = await runVerifyCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatJsonResult(buildVerifyJson(result)));\n      } else {\n        writeHumanVerify(result);\n      }\n      return result.exitCode;\n    }\n    case \"run\": {\n      initializeRuntimeEnv(\n        command.workspaceRoot,\n        command.envFile ? [command.envFile] : undefined,\n      );\n\n      if (command.queryMode && command.name) {\n        const external = resolveExternalQualifiedName(command.workspaceRoot, command.name, \"query\");\n        if (external) {\n          const run = await runExternalEntry(command.workspaceRoot, {\n            kind: \"query\",\n            serviceName: external.serviceName,\n            entryName: external.entryName,\n            args: command.args,\n            auth: resolveAuthFromCli({\n              userId: command.userId,\n              tenantId: command.tenantId,\n              role: command.role,\n            }),\n          });\n          const payload = { run };\n          if (command.json) {\n            process.stdout.write(`${JSON.stringify(payload, null, 2)}\\n`);\n          } else {\n            process.stdout.write(\n              run.ok\n                ? `${JSON.stringify(run.result, null, 2)}\\n`\n                : `${run.diagnostics.map((diagnostic) => `error ${diagnostic.code}: ${diagnostic.message}`).join(\"\\n\")}\\n`,\n            );\n          }\n          return run.exitCode;\n        }\n\n        const tableMap = readGeneratedJson<{ tableMap: Record<string, import(\"../compiler/data-graph/sql/serialize.ts\").TableMapEntry> }>(\n          command.workspaceRoot,\n          `${GENERATED_DIR}/db.json`,\n        )?.tableMap;\n\n        const run = await runQuery(\n          command.workspaceRoot,\n          command.name,\n          {\n            args: command.args,\n            auth: resolveAuthFromCli({\n              userId: command.userId,\n              tenantId: command.tenantId,\n              role: command.role,\n            }),\n          },\n          {\n            adapter: getActiveDbAdapter(),\n            tableMap,\n          },\n        );\n\n        if (command.json) {\n          process.stdout.write(`${JSON.stringify({ run }, null, 2)}\\n`);\n        } else {\n          process.stdout.write(formatQueryResultHuman(run));\n        }\n        return run.exitCode;\n      }\n\n      const result = await runRunCommand({\n        name: command.name,\n        list: command.list,\n        json: command.json,\n        mock: command.mock,\n        userId: command.userId,\n        tenantId: command.tenantId,\n        role: command.role,\n        args: command.args,\n        workspaceRoot: command.workspaceRoot,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatRunJson(result));\n      } else if (result.list) {\n        process.stdout.write(formatRunListHuman(result.list));\n      } else if (result.run) {\n        process.stdout.write(formatRunResultHuman(result.run));\n      }\n\n      return result.exitCode;\n    }\n    case \"dev\": {\n      initializeRuntimeEnv(\n        command.workspaceRoot,\n        command.envFile ? [command.envFile] : undefined,\n      );\n      const result = await runDevCommand({\n        workspaceRoot: command.workspaceRoot,\n        host: command.host,\n        port: command.port,\n        mock: command.mock,\n        mockAi: command.mockAi,\n        once: command.once,\n        watch: command.watch,\n        json: command.json,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        worker: command.worker,\n        withWeb: command.withWeb,\n        apiOnly: command.apiOnly,\n        webOnly: command.webOnly,\n        open: command.open,\n        webPort: command.webPort,\n        publicApiUrl: command.publicApiUrl,\n        telemetry: command.telemetry,\n        envFile: command.envFile,\n        skipStartupConsole: command.skipStartupConsole,\n        detach: command.detach,\n        seed: command.seed,\n        seedCommand: command.seedCommand,\n        seedAllTenants: command.seedAllTenants,\n        lifecycle: command.lifecycle,\n      });\n      return result.exitCode;\n    }\n    case \"db\": {\n      if (command.subcommand === \"rls-check\") {\n        const result = await runRlsCommand({\n          subcommand: \"check\",\n          workspaceRoot: command.workspaceRoot,\n          db: command.db,\n          databaseUrl: command.databaseUrl,\n          json: command.json,\n        });\n        if (command.json) {\n          process.stdout.write(formatRlsJson(result));\n        } else {\n          process.stdout.write(formatRlsHuman(\"check\", result));\n        }\n        return result.exitCode;\n      }\n\n      const result = await runDbCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        local: command.local,\n        json: command.json,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatDbJson(result));\n      } else {\n        process.stdout.write(formatDbHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"outbox\": {\n      const result = await runOutboxCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        json: command.json,\n        once: command.once,\n        watch: command.watch,\n        limit: command.limit,\n        deliveryId: command.deliveryId,\n        mock: command.mock,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatOutboxJson(result));\n      } else {\n        process.stdout.write(formatOutboxHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"workflow\": {\n      const result = await runWorkflowCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        json: command.json,\n        once: command.once,\n        watch: command.watch,\n        limit: command.limit,\n        workflowName: command.workflowName,\n        runId: command.runId,\n        stepName: command.stepName,\n        input: command.input,\n        mock: command.mock,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatWorkflowJson(result));\n      } else {\n        process.stdout.write(formatWorkflowHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"telemetry\": {\n      const result = await runTelemetryCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        json: command.json,\n        traceId: command.traceId,\n        sink: command.sink,\n        file: command.file,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatTelemetryJson(result));\n      } else {\n        process.stdout.write(formatTelemetryHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"policy\": {\n      const result = await runPolicyCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        policy: command.policy,\n        role: command.role,\n        strictPolicies: command.strictPolicies,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatPolicyJson(result));\n      } else {\n        process.stdout.write(formatPolicyHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"secrets\": {\n      const result = await runSecretsCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        redacted: command.redacted,\n        name: command.name,\n        value: command.value,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatSecretsJson(result));\n      } else {\n        process.stdout.write(formatSecretsHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"env\": {\n      const result = await runEnvCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        redacted: command.redacted,\n        target: command.target,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatEnvJson(result));\n      } else {\n        process.stdout.write(formatEnvHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"query\": {\n      const result = await runQueryCommand({\n        subcommand: command.subcommand,\n        name: command.name,\n        args: command.args,\n        json: command.json,\n        userId: command.userId,\n        tenantId: command.tenantId,\n        role: command.role,\n        workspaceRoot: command.workspaceRoot,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatQueryJson(result));\n      } else if (result.list) {\n        process.stdout.write(formatQueryListHuman(result.list));\n      } else if (result.run) {\n        process.stdout.write(formatQueryResultHuman(result.run));\n      }\n\n      return result.exitCode;\n    }\n    case \"live\": {\n      return runLiveCommand({\n        subcommand: command.subcommand,\n        name: command.name,\n        args: command.args,\n        json: command.json,\n        userId: command.userId,\n        tenantId: command.tenantId,\n        role: command.role,\n        url: command.url,\n      });\n    }\n    case \"ai\": {\n      const result = await runAiCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        provider: command.provider,\n        model: command.model,\n        prompt: command.prompt,\n        mock: command.mock,\n        modelLevel: command.modelLevel,\n        live: command.live,\n        traceId: command.traceId,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatAiJson(result));\n      } else {\n        process.stdout.write(formatAiHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    default:\n      return 1;\n  }\n}"
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
+        "sourceSlice": "async function executeCommand(command: ForgeCommand): Promise<number> {\n  switch (command.kind) {\n    case \"version\": {\n      if (command.json) {\n        process.stdout.write(`${JSON.stringify({\n          version: CLI_VERSION,\n          cliVersion: CLI_VERSION,\n          forgeosVersion: FORGEOS_VERSION,\n        }, null, 2)}\\n`);\n      } else {\n        process.stdout.write(`${CLI_VERSION}\\n`);\n      }\n      return 0;\n    }\n    case \"last\": {\n      const result = runLastCommand({ workspaceRoot: command.workspaceRoot });\n      process.stdout.write(command.json ? formatLastJson(result) : formatLastHuman(result));\n      return result.exitCode;\n    }\n    case \"baseline\": {\n      const result = runBaselineCommand(command);\n      process.stdout.write(command.json ? formatBaselineJson(result) : formatBaselineHuman(result));\n      return result.exitCode;\n    }\n    case \"new\": {\n      const result = await runNewCommand({\n        name: command.name,\n        template: command.template,\n        packageManager: command.packageManager,\n        install: command.install,\n        git: command.git,\n        fieldTest: command.fieldTest,\n        forgePackageSpec: command.forgePackageSpec,\n        localForge: command.localForge,\n        workspaceRoot: command.workspaceRoot,\n      });\n      process.stdout.write(command.json ? formatNewJson(result) : formatNewHuman(result));\n      return result.exitCode;\n    }\n    case \"build\": {\n      const result = await runBuildCommand({\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n      });\n      if (command.json) {\n        process.stdout.write(`${JSON.stringify(result)}\\n`);\n      } else {\n        process.stdout.write(formatBuildHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"serve\":\n      return runServeCommand(command);\n    case \"worker\": {\n      const result = await runWorkerCommand(command);\n      return result.exitCode;\n    }\n    case \"self-host\": {\n      const result = await runSelfHostCommand(command);\n      if (command.json) {\n        process.stdout.write(`${JSON.stringify(result)}\\n`);\n      } else {\n        process.stdout.write(formatSelfHostHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"docs\": {\n      const result = runDocsCheckCommand(command);\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result));\n      } else {\n        process.stdout.write(formatDocsCheckHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"agent-contract\": {\n      if (command.subcommand === \"print\") {\n        const result = runAgentContractPrint(command.workspaceRoot);\n        if (command.json) {\n          process.stdout.write(`${JSON.stringify(result.data, null, 2)}\\n`);\n        } else {\n          process.stdout.write(formatAgentContractHuman(command.subcommand, result));\n        }\n        return result.exitCode;\n      }\n\n      const result = await runGenerateCommand({\n        workspaceRoot: command.workspaceRoot,\n        check: command.subcommand === \"check\",\n        dryRun: false,\n        json: command.json,\n        concurrency: 4,\n      });\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildGenerateJson(result, { workspaceRoot: command.workspaceRoot })));\n      } else {\n        process.stdout.write(formatAgentContractHuman(command.subcommand, result));\n        writeHumanGenerate(result);\n      }\n      return result.exitCode;\n    }\n    case \"doctor\": {\n      if (command.target === \"agent\") {\n        const result = await runAgentCommand({\n          subcommand: \"doctor\",\n          workspaceRoot: command.workspaceRoot,\n          json: command.json,\n          target: command.agentTarget ?? \"codex\",\n          dryRun: false,\n          force: false,\n          preserveUserSections: true,\n          skills: true,\n          rules: true,\n        });\n        if (command.json) {\n          process.stdout.write(formatAgentJson(result));\n        } else {\n          process.stdout.write(formatAgentHuman(result));\n        }\n        return result.exitCode;\n      }\n      if (command.target === \"windows\") {\n        const result = await runWindowsDoctorCommand({ workspaceRoot: command.workspaceRoot });\n        if (command.json) {\n          process.stdout.write(formatWindowsDoctorJson(result));\n        } else {\n          process.stdout.write(formatWindowsDoctorHuman(result));\n        }\n        return result.exitCode;\n      }\n      if (command.target === \"delta\") {\n        const result = await runDeltaDoctor(command.workspaceRoot);\n        process.stdout.write(command.json ? formatDeltaDoctorJson(result) : formatDeltaDoctorHuman(result));\n        return result.exitCode;\n      }\n      if (command.target === \"pglite\") {\n        const result = await runPgliteDoctorCommand({ workspaceRoot: command.workspaceRoot });\n        process.stdout.write(command.json ? formatPgliteDoctorJson(result) : formatPgliteDoctorHuman(result));\n        return result.exitCode;\n      }\n      if (command.target === \"runtime\") {\n        const result = await runRuntimeDoctorCommand({ workspaceRoot: command.workspaceRoot });\n        process.stdout.write(command.json ? formatRuntimeDoctorJson(result) : formatRuntimeDoctorHuman(result));\n        return result.exitCode;\n      }\n      const result = await runDoctorCommand({ workspaceRoot: command.workspaceRoot });\n      if (command.json) {\n        process.stdout.write(formatDoctorJson(result));\n      } else {\n        process.stdout.write(formatDoctorHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"setup\": {\n      const result = await runWindowsSetupCommand({\n        workspaceRoot: command.workspaceRoot,\n        yes: command.yes,\n      });\n      if (command.json) {\n        process.stdout.write(formatWindowsSetupJson(result));\n      } else {\n        process.stdout.write(formatWindowsSetupHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"security\": {\n      const result = await runSecurityCommand(command);\n      if (command.json) {\n        process.stdout.write(formatSecurityJson(result));\n      } else {\n        process.stdout.write(formatSecurityHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"auth\": {\n      const result = await runAuthCommand(command);\n      if (command.json) {\n        process.stdout.write(formatAuthJson(result));\n      } else {\n        process.stdout.write(formatAuthHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"authmd\": {\n      const result = runAuthMdCommand(command);\n      if (command.json) {\n        process.stdout.write(formatAuthMdJson(result));\n      } else {\n        process.stdout.write(formatAuthMdHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"workos\": {\n      const result = runWorkOSCommand(command);\n      if (command.json) {\n        process.stdout.write(formatWorkOSJson(result));\n      } else {\n        process.stdout.write(formatWorkOSHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"deploy\": {\n      const result = await runDeployCommand(command);\n      process.stdout.write(command.json ? formatDeployJson(result) : formatDeployHuman(result));\n      return result.exitCode;\n    }\n    case \"golden-path\": {\n      const result = await runGoldenPathCommand(command);\n      process.stdout.write(command.json ? formatGoldenPathJson(result) : formatGoldenPathHuman(result));\n      return result.exitCode;\n    }\n    case \"field-test\": {\n      const result = await runFieldTestCommand(command);\n      process.stdout.write(command.json ? formatFieldTestJson(result) : formatFieldTestHuman(result));\n      return result.exitCode;\n    }\n    case \"seed\": {\n      const result = await runSeedCommand(command);\n      process.stdout.write(command.json ? formatSeedJson(result) : formatSeedHuman(result));\n      return result.exitCode;\n    }\n    case \"rls\": {\n      const result = await runRlsCommand(command);\n      if (command.json) {\n        process.stdout.write(formatRlsJson(result));\n      } else {\n        process.stdout.write(formatRlsHuman(command.subcommand, result));\n      }\n      return result.exitCode;\n    }\n    case \"deps\": {\n      const result = await runDepsCommand(command);\n      if (command.json) {\n        process.stdout.write(formatDepsJson(result));\n      } else {\n        process.stdout.write(formatDepsHuman(command.subcommand, result));\n      }\n      return result.exitCode;\n    }\n    case \"release\": {\n      if (command.action === \"doctor\") {\n        const result = await runReleaseDoctorCommand(command);\n        if (command.json) {\n          process.stdout.write(formatJsonResult(result));\n        } else {\n          process.stdout.write(\n            [\n              `release doctor ${result.ok ? \"ok\" : \"failed\"}`,\n              `ready to publish: ${result.readyToPublish ? \"yes\" : \"no\"}`,\n              `ready for production deploy: ${result.readyForProductionDeploy ? \"yes\" : \"no\"}`,\n              ...result.checks.map((check) => {\n                const scope = check.requiredForPublish\n                  ? \"publish\"\n                  : check.requiredForProduction\n                    ? \"production\"\n                    : \"optional\";\n                return `${check.ok ? \"ok\" : \"fail\"} ${check.name} [${scope}]${check.state ? ` (${check.state})` : \"\"}`;\n              }),\n              ...(result.nextActions.length > 0 ? [\"\", \"Next:\", ...result.nextActions.map((action) => `  ${action}`)] : []),\n            ].join(\"\\n\").concat(\"\\n\"),\n          );\n        }\n        return result.exitCode;\n      }\n      const result = await runReleaseCommand({\n        ...command,\n        provider: command.provider as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n        target: command.target as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n      });\n      if (command.json) {\n        process.stdout.write(formatReleaseJson(result));\n      } else {\n        process.stdout.write(formatReleaseHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"make\": {\n      const result = await runMakeCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatMakeJson(result));\n      } else {\n        process.stdout.write(formatMakeHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"feature\": {\n      const result = await runFeatureCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatFeatureJson(result));\n      } else {\n        process.stdout.write(formatFeatureHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"refactor\": {\n      const result = await runRefactorCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatRefactorJson(result));\n      } else {\n        process.stdout.write(formatRefactorHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"impact\": {\n      const result = runImpactCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatImpactJson(result));\n      } else {\n        process.stdout.write(formatImpactHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"test\": {\n      const result = await runTestCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatImpactJson(result));\n      } else {\n        process.stdout.write(formatImpactHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"repair\": {\n      const result = await runRepairCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatRepairJson(result));\n      } else {\n        process.stdout.write(formatRepairHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"do\": {\n      const result = runForgeDoCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatForgeDoJson(result));\n      } else {\n        process.stdout.write(formatForgeDoHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"bench\": {\n      const result = await runCompilerBenchCommand(command.options);\n      process.stdout.write(\n        command.options.json\n          ? formatCompilerBenchJson(result)\n          : formatCompilerBenchHuman(result),\n      );\n      return result.exitCode;\n    }\n    case \"cair\": {\n      const result = runCairCommand(command.options);\n      process.stdout.write(\n        command.options.json || command.options.format === \"json\"\n          ? formatCairJson(result)\n          : formatCairHuman(result),\n      );\n      return result.exitCode;\n    }\n    case \"delta\": {\n      if (command.subcommand === \"compact\") {\n        const result = await runDeltaCompact({\n          workspaceRoot: command.workspaceRoot,\n          dryRun: command.dryRun,\n        });\n        process.stdout.write(command.json ? formatDeltaCompactJson(result) : formatDeltaCompactHuman(result));\n        return result.exitCode;\n      }\n      if (command.subcommand === \"prune\") {\n        const result = await runDeltaPrune({\n          workspaceRoot: command.workspaceRoot,\n          olderThan: command.olderThan,\n          dryRun: command.dryRun,\n          yes: command.yes,\n        });\n        process.stdout.write(command.json ? formatDeltaPruneJson(result) : formatDeltaPruneHuman(result));\n        return result.exitCode;\n      }\n      if (command.subcommand === \"export\") {\n        const result = await runDeltaExport({\n          workspaceRoot: command.workspaceRoot,\n          redacted: command.redacted,\n          output: command.output,\n          limit: command.limit,\n        });\n        process.stdout.write(command.json ? formatDeltaExportJson(result) : formatDeltaExportHuman(result));\n        return result.exitCode;\n      }\n      if (command.subcommand === \"repair\") {\n        const result = await runDeltaRepair({\n          workspaceRoot: command.workspaceRoot,\n          dryRun: command.dryRun,\n          yes: command.yes,\n        });\n        process.stdout.write(command.json ? formatDeltaRepairJson(result) : formatDeltaRepairHuman(result));\n        return result.exitCode;\n      }\n      const result = await runDeltaStatus(command.workspaceRoot, { verbose: command.verbose });\n      process.stdout.write(command.json ? formatDeltaStatusJson(result) : formatDeltaStatusHuman(result));\n      return result.exitCode;\n    }\n    case \"session\": {\n      const result = await runDeltaSessionCommand({\n        workspaceRoot: command.workspaceRoot,\n        subcommand: command.subcommand,\n        sessionId: command.sessionId,\n        sourceSessionId: command.sourceSessionId,\n        operationId: command.operationId,\n        title: command.title,\n        limit: command.limit,\n      });\n      process.stdout.write(command.json ? formatDeltaSessionJson(result) : formatDeltaSessionHuman(result));\n      return result.exitCode;\n    }\n    case \"timeline\": {\n      const result = await runDeltaTimeline({\n        workspaceRoot: command.workspaceRoot,\n        target: command.target,\n        kind: command.kindFilter,\n        session: command.sessionId,\n        limit: command.limit,\n        rebuild: command.rebuild,\n        causal: command.causal,\n        staleProofs: command.staleProofs,\n      });\n      process.stdout.write(command.json ? formatDeltaTimelineJson(result) : formatDeltaTimelineHuman(result));\n      return result.exitCode;\n    }\n    case \"explain\": {\n      const result = await runDeltaExplain({\n        workspaceRoot: command.workspaceRoot,\n        thing: command.thing,\n      });\n      process.stdout.write(command.json ? formatDeltaExplainJson(result) : formatDeltaExplainHuman(result));\n      return result.exitCode;\n    }\n    case \"agent\": {\n      const heartbeat = command.options.subcommand === \"onboard\"\n        ? startCommandHeartbeat({\n            label: `agent onboard ${command.options.target ?? \"codex\"}`,\n            initialPhase: \"prepare-hooks-memory-and-dev-snapshot\",\n          })\n        : null;\n      try {\n        const result = await runAgentCommand(command.options);\n        if (command.options.json) {\n          process.stdout.write(formatAgentJson(result));\n        } else {\n          process.stdout.write(formatAgentHuman(result));\n        }\n        return result.exitCode;\n      } finally {\n        heartbeat?.stop();\n      }\n    }\n    case \"mcp\": {\n      return runMcpServe(command.workspaceRoot);\n    }\n    case \"review\": {\n      const result = runReviewCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatReviewJson(result, { full: command.options.full }));\n      } else if (command.options.md && result.report) {\n        process.stdout.write(renderReviewMarkdown(result.report));\n      } else if (command.options.sarif && result.report && !command.options.write) {\n        process.stdout.write(renderSarif(result.report));\n      } else {\n        process.stdout.write(formatReviewHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"ui\": {\n      const result =\n        command.options.subcommand === \"list\"\n          ? runUiListCommand(command.options.workspaceRoot)\n          : await runUiCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatUiJson(result));\n      } else {\n        process.stdout.write(formatUiHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"generate\": {\n      const result = await runGenerateCommand({\n        workspaceRoot: command.workspaceRoot,\n        check: command.check,\n        dryRun: command.dryRun,\n        json: command.json,\n        concurrency: command.concurrency,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildGenerateJson(result, { workspaceRoot: command.workspaceRoot })));\n      } else {\n        writeHumanGenerate(result);\n      }\n\n      return result.exitCode;\n    }\n    case \"add\": {\n      const result = await runAddCommand(command.alias, command.options);\n      if (command.options.json) {\n        process.stdout.write(formatJsonResult(buildAddJson(result, { workspaceRoot: command.options.workspaceRoot })));\n      } else {\n        writeHumanAdd(result);\n      }\n      return result.exitCode;\n    }\n    case \"manifest\": {\n      const result = runManifestCommand(command);\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result));\n      } else {\n        process.stdout.write(formatManifestHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"import\": {\n      const result = runBrownfieldImportCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatJsonResult(formatBrownfieldImportJson(result)));\n      } else {\n        process.stdout.write(formatBrownfieldImportHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"status\": {\n      const result = await runStatusCommand(command.workspaceRoot);\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result.data));\n      } else {\n        process.stdout.write(formatStatusHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"changed\": {\n      const result = runChangedCommand(command.workspaceRoot, {\n        authoredOnly: command.authoredOnly,\n        reviewOnly: command.reviewOnly,\n        commitReady: command.commitReady,\n      });\n      if (command.json) {\n        process.stdout.write(formatJsonResult(result.data));\n      } else {\n        process.stdout.write(formatChangedHuman(result));\n      }\n      return result.exitCode;\n    }\n    case \"diff\": {\n      const changed = runChangedCommand(command.workspaceRoot);\n      const diffPlan = changed.data.diffPlan as { authoredDiffCommand: string; generatedDiffCommand: string; fullDiffCommand: string };\n      const commandText = command.target === \"generated\"\n        ? diffPlan.generatedDiffCommand\n        : command.target === \"full\"\n          ? diffPlan.fullDiffCommand\n          : diffPlan.authoredDiffCommand;\n      if (command.json) {\n        process.stdout.write(formatJsonResult({\n          schemaVersion: \"0.1.0\",\n          ok: changed.ok,\n          target: command.target,\n          command: commandText,\n          exitCode: changed.exitCode,\n        }));\n        return changed.exitCode;\n      }\n      const result = spawnSync(commandText, {\n        cwd: command.workspaceRoot,\n        shell: true,\n        stdio: \"inherit\",\n        windowsHide: true,\n      });\n      return result.status === 0 ? 0 : 1;\n    }\n    case \"handoff\": {\n      const result = await runHandoffCommand(command);\n      process.stdout.write(command.json ? formatHandoffJson(result) : formatHandoffHuman(result));\n      return result.exitCode;\n    }\n    case \"studio\": {\n      if (command.subcommand === \"bridge\" && !command.once && !command.dryRun) {\n        return runStudioBridgeLoop(command, (result) => {\n          process.stdout.write(command.json ? formatStudioBridgeEventJson(result) : formatStudioBridgeHuman(result));\n        });\n      }\n      if (command.subcommand === \"watch\" && !command.once && !command.dryRun) {\n        return runStudioWatchLoop(command, (result) => {\n          process.stdout.write(command.json ? formatStudioWatchJson(result) : formatStudioWatchHuman(result));\n        });\n      }\n      const result = command.subcommand === \"snapshot\"\n        ? await runStudioSnapshotCommand(command)\n        : command.subcommand === \"watch\"\n          ? await runStudioWatchCommand(command)\n          : command.subcommand === \"bridge\"\n            ? await runStudioBridgeCommand(command)\n            : command.subcommand === \"codex-server\"\n              ? await runStudioCodexServerCommand(command)\n              : command.subcommand === \"doctor\"\n                ? await runStudioDoctorCommand(command)\n                : command.subcommand === \"open\"\n                  ? await runStudioOpenCommand(command)\n                  : await runStudioAttachCommand(command);\n      process.stdout.write(\n        command.json\n          ? command.subcommand === \"snapshot\"\n            ? formatStudioSnapshotJson(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)\n            : command.subcommand === \"watch\"\n              ? formatStudioWatchJson(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)\n              : command.subcommand === \"bridge\"\n                ? formatStudioBridgeJson(result as Awaited<ReturnType<typeof runStudioBridgeCommand>>)\n                : command.subcommand === \"codex-server\"\n                  ? formatStudioCodexServerJson(result as Awaited<ReturnType<typeof runStudioCodexServerCommand>>)\n                  : command.subcommand === \"doctor\"\n                    ? formatStudioDoctorJson(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)\n                    : command.subcommand === \"open\"\n                      ? formatStudioOpenJson(result as Awaited<ReturnType<typeof runStudioOpenCommand>>)\n                      : formatStudioAttachJson(result as Awaited<ReturnType<typeof runStudioAttachCommand>>)\n          : command.subcommand === \"snapshot\"\n            ? formatStudioSnapshotHuman(result as Awaited<ReturnType<typeof runStudioSnapshotCommand>>)\n            : command.subcommand === \"watch\"\n              ? formatStudioWatchHuman(result as Awaited<ReturnType<typeof runStudioWatchCommand>>)\n              : command.subcommand === \"bridge\"\n                ? formatStudioBridgeHuman(result as Awaited<ReturnType<typeof runStudioBridgeCommand>>)\n                : command.subcommand === \"codex-server\"\n                  ? formatStudioCodexServerHuman(result as Awaited<ReturnType<typeof runStudioCodexServerCommand>>)\n                  : command.subcommand === \"doctor\"\n                    ? formatStudioDoctorHuman(result as Awaited<ReturnType<typeof runStudioDoctorCommand>>)\n                    : command.subcommand === \"open\"\n                      ? formatStudioOpenHuman(result as Awaited<ReturnType<typeof runStudioOpenCommand>>)\n                      : formatStudioAttachHuman(result as Awaited<ReturnType<typeof runStudioAttachCommand>>),\n      );\n      return result.exitCode;\n    }\n    case \"inspect\": {\n      const result = await runInspectCommand(\n        command.target,\n        command.workspaceRoot,\n        { full: command.full, brief: command.brief, ergonomics: command.ergonomics },\n      );\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildInspectJson(result)));\n      } else if (typeof result.data === \"string\") {\n        process.stdout.write(result.data);\n      } else {\n        writeHumanInspect(result);\n      }\n      return result.exitCode;\n    }\n    case \"check\": {\n      const checkWorkspaceRoot = process.cwd();\n      const result = await runCheckCommand(checkWorkspaceRoot, {\n        strictSecrets: command.strictSecrets,\n      });\n      if (command.json) {\n        process.stdout.write(formatJsonResult(buildCheckJson(result, { workspaceRoot: checkWorkspaceRoot })));\n      } else {\n        writeHumanGenerate(result);\n      }\n      return result.exitCode;\n    }\n    case \"verify\": {\n      const result = await runVerifyCommand(command.options);\n      if (command.options.json) {\n        process.stdout.write(formatJsonResult(buildVerifyJson(result)));\n      } else {\n        writeHumanVerify(result);\n      }\n      return result.exitCode;\n    }\n    case \"run\": {\n      initializeRuntimeEnv(\n        command.workspaceRoot,\n        command.envFile ? [command.envFile] : undefined,\n      );\n\n      if (command.queryMode && command.name) {\n        const external = resolveExternalQualifiedName(command.workspaceRoot, command.name, \"query\");\n        if (external) {\n          const run = await runExternalEntry(command.workspaceRoot, {\n            kind: \"query\",\n            serviceName: external.serviceName,\n            entryName: external.entryName,\n            args: command.args,\n            auth: resolveAuthFromCli({\n              userId: command.userId,\n              tenantId: command.tenantId,\n              role: command.role,\n            }),\n          });\n          const payload = { run };\n          if (command.json) {\n            process.stdout.write(`${JSON.stringify(payload, null, 2)}\\n`);\n          } else {\n            process.stdout.write(\n              run.ok\n                ? `${JSON.stringify(run.result, null, 2)}\\n`\n                : `${run.diagnostics.map((diagnostic) => `error ${diagnostic.code}: ${diagnostic.message}`).join(\"\\n\")}\\n`,\n            );\n          }\n          return run.exitCode;\n        }\n\n        const tableMap = readGeneratedJson<{ tableMap: Record<string, import(\"../compiler/data-graph/sql/serialize.ts\").TableMapEntry> }>(\n          command.workspaceRoot,\n          `${GENERATED_DIR}/db.json`,\n        )?.tableMap;\n\n        const run = await runQuery(\n          command.workspaceRoot,\n          command.name,\n          {\n            args: command.args,\n            auth: resolveAuthFromCli({\n              userId: command.userId,\n              tenantId: command.tenantId,\n              role: command.role,\n            }),\n          },\n          {\n            adapter: getActiveDbAdapter(),\n            tableMap,\n          },\n        );\n\n        if (command.json) {\n          process.stdout.write(`${JSON.stringify({ run }, null, 2)}\\n`);\n        } else {\n          process.stdout.write(formatQueryResultHuman(run));\n        }\n        return run.exitCode;\n      }\n\n      const result = await runRunCommand({\n        name: command.name,\n        list: command.list,\n        json: command.json,\n        mock: command.mock,\n        userId: command.userId,\n        tenantId: command.tenantId,\n        role: command.role,\n        args: command.args,\n        workspaceRoot: command.workspaceRoot,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatRunJson(result));\n      } else if (result.list) {\n        process.stdout.write(formatRunListHuman(result.list));\n      } else if (result.run) {\n        process.stdout.write(formatRunResultHuman(result.run));\n      }\n\n      return result.exitCode;\n    }\n    case \"dev\": {\n      initializeRuntimeEnv(\n        command.workspaceRoot,\n        command.envFile ? [command.envFile] : undefined,\n      );\n      const result = await runDevCommand({\n        workspaceRoot: command.workspaceRoot,\n        host: command.host,\n        port: command.port,\n        mock: command.mock,\n        mockAi: command.mockAi,\n        once: command.once,\n        watch: command.watch,\n        json: command.json,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        worker: command.worker,\n        withWeb: command.withWeb,\n        apiOnly: command.apiOnly,\n        webOnly: command.webOnly,\n        open: command.open,\n        webPort: command.webPort,\n        publicApiUrl: command.publicApiUrl,\n        telemetry: command.telemetry,\n        envFile: command.envFile,\n        skipStartupConsole: command.skipStartupConsole,\n        detach: command.detach,\n        seed: command.seed,\n        seedCommand: command.seedCommand,\n        seedAllTenants: command.seedAllTenants,\n        lifecycle: command.lifecycle,\n      });\n      return result.exitCode;\n    }\n    case \"db\": {\n      if (command.subcommand === \"rls-check\") {\n        const result = await runRlsCommand({\n          subcommand: \"check\",\n          workspaceRoot: command.workspaceRoot,\n          db: command.db,\n          databaseUrl: command.databaseUrl,\n          json: command.json,\n        });\n        if (command.json) {\n          process.stdout.write(formatRlsJson(result));\n        } else {\n          process.stdout.write(formatRlsHuman(\"check\", result));\n        }\n        return result.exitCode;\n      }\n\n      const result = await runDbCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        local: command.local,\n        json: command.json,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatDbJson(result));\n      } else {\n        process.stdout.write(formatDbHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"outbox\": {\n      const result = await runOutboxCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        json: command.json,\n        once: command.once,\n        watch: command.watch,\n        limit: command.limit,\n        deliveryId: command.deliveryId,\n        mock: command.mock,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatOutboxJson(result));\n      } else {\n        process.stdout.write(formatOutboxHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"workflow\": {\n      const result = await runWorkflowCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        json: command.json,\n        once: command.once,\n        watch: command.watch,\n        limit: command.limit,\n        workflowName: command.workflowName,\n        runId: command.runId,\n        stepName: command.stepName,\n        input: command.input,\n        mock: command.mock,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatWorkflowJson(result));\n      } else {\n        process.stdout.write(formatWorkflowHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"telemetry\": {\n      const result = await runTelemetryCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n        json: command.json,\n        traceId: command.traceId,\n        sink: command.sink,\n        file: command.file,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatTelemetryJson(result));\n      } else {\n        process.stdout.write(formatTelemetryHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"policy\": {\n      const result = await runPolicyCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        policy: command.policy,\n        role: command.role,\n        strictPolicies: command.strictPolicies,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatPolicyJson(result));\n      } else {\n        process.stdout.write(formatPolicyHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"secrets\": {\n      const result = await runSecretsCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        redacted: command.redacted,\n        name: command.name,\n        value: command.value,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatSecretsJson(result));\n      } else {\n        process.stdout.write(formatSecretsHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"env\": {\n      const result = await runEnvCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        redacted: command.redacted,\n        target: command.target,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatEnvJson(result));\n      } else {\n        process.stdout.write(formatEnvHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    case \"query\": {\n      const result = await runQueryCommand({\n        subcommand: command.subcommand,\n        name: command.name,\n        args: command.args,\n        json: command.json,\n        userId: command.userId,\n        tenantId: command.tenantId,\n        role: command.role,\n        workspaceRoot: command.workspaceRoot,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatQueryJson(result));\n      } else if (result.list) {\n        process.stdout.write(formatQueryListHuman(result.list));\n      } else if (result.run) {\n        process.stdout.write(formatQueryResultHuman(result.run));\n      }\n\n      return result.exitCode;\n    }\n    case \"live\": {\n      return runLiveCommand({\n        subcommand: command.subcommand,\n        name: command.name,\n        args: command.args,\n        json: command.json,\n        userId: command.userId,\n        tenantId: command.tenantId,\n        role: command.role,\n        url: command.url,\n      });\n    }\n    case \"ai\": {\n      const result = await runAiCommand({\n        subcommand: command.subcommand,\n        workspaceRoot: command.workspaceRoot,\n        json: command.json,\n        provider: command.provider,\n        model: command.model,\n        prompt: command.prompt,\n        mock: command.mock,\n        modelLevel: command.modelLevel,\n        live: command.live,\n        traceId: command.traceId,\n        db: command.db,\n        databaseUrl: command.databaseUrl,\n      });\n\n      if (command.json) {\n        process.stdout.write(formatAiJson(result));\n      } else {\n        process.stdout.write(formatAiHuman(command.subcommand, result));\n      }\n\n      return result.exitCode;\n    }\n    default:\n      return 1;\n  }\n}"
       },
       "name": "executeCommand",
       "qualifiedName": "executeCommand",
       "span": {
-        "end": 102017,
-        "start": 66782
+        "end": 102279,
+        "start": 67038
       }
     },
     {
@@ -77856,14 +77893,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function filterCategorizedSummary(\n  summary: CategorizedFileSummary,\n  includeTypes: ChangeType[],\n  sampleSize = 8,\n): CategorizedFileSummary {\n  const include = new Set(includeTypes);\n  const byType = Object.fromEntries(\n    CHANGE_TYPES.map((type) => {\n      const current = summary.byType[type];\n      return [\n        type,\n        include.has(type) ? current : { count: 0, sample: [], hidden: 0 },\n      ];\n    }),\n  ) as Record<ChangeType, FileListSummary>;\n  const totalCount = includeTypes.reduce((count, type) => count + summary.byType[type].count, 0);\n  const totalSample = includeTypes\n    .flatMap((type) => summary.byType[type].sample)\n    .sort()\n    .slice(0, sampleSize);\n  const primaryTypes = CHANGE_TYPES\n    .filter((type) => byType[type].count > 0)\n    .sort((left, right) => byType[right].count - byType[left].count);\n  return {\n    total: {\n      count: totalCount,\n      sample: totalSample,\n      hidden: Math.max(0, totalCount - totalSample.length),\n    },\n    byType,\n    primaryTypes,\n  };\n}"
       },
       "name": "filterCategorizedSummary",
       "qualifiedName": "filterCategorizedSummary",
       "span": {
-        "end": 6093,
-        "start": 5072
+        "end": 6453,
+        "start": 5432
       }
     },
     {
@@ -77890,7 +77927,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function filterVolatileForgeState(files: string[]): string[] {\n  return files.filter((file) => !isVolatileForgeState(file));\n}"
       },
       "name": "filterVolatileForgeState",
@@ -79216,14 +79253,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function formatBrownfieldImportHuman(result: BrownfieldImportResult): string {\n  if (result.exitCode !== 0 && !result.inventory) {\n    return \"No brownfield import artifacts found. Run `forge import analyze` first.\\n\";\n  }\n  const summary = result.riskReport?.summary;\n  return [\n    `forge import ${result.subcommand}`,\n    `artifacts: ${result.wroteArtifacts ? \"written\" : \"read\"} at ${IMPORT_DIR}`,\n    `files scanned: ${result.inventory?.filesScanned ?? 0}`,\n    `routes: ${summary?.routeCount ?? result.routes.length}`,\n    `frontend calls: ${summary?.frontendCallCount ?? result.frontendCalls.length}`,\n    `candidate entries: ${summary?.candidateCount ?? result.candidateEntries.length}`,\n    `hidden from agents: ${summary?.hiddenFromAgents ?? result.candidateEntries.filter((entry) => !entry.visibleToAgent).length}`,\n    `needs approval: ${summary?.needsApproval ?? result.candidateEntries.filter((entry) => entry.needsApproval).length}`,\n    \"\",\n  ].join(\"\\n\");\n}"
       },
       "name": "formatBrownfieldImportHuman",
       "qualifiedName": "formatBrownfieldImportHuman",
       "span": {
-        "end": 29084,
-        "start": 28110
+        "end": 33196,
+        "start": 32222
       }
     },
     {
@@ -79233,14 +79270,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function formatBrownfieldImportJson(result: BrownfieldImportResult): Record<string, unknown> {\n  return {\n    schemaVersion: result.schemaVersion,\n    feature: result.feature,\n    subcommand: result.subcommand,\n    workspaceRoot: result.workspaceRoot,\n    wroteArtifacts: result.wroteArtifacts,\n    artifacts: result.artifacts,\n    inventory: result.inventory,\n    routes: result.routes,\n    frontendCalls: result.frontendCalls,\n    candidateEntries: result.candidateEntries,\n    riskReport: result.riskReport,\n    migrationPlan: result.migrationPlan,\n    exitCode: result.exitCode,\n    failureKind: result.failureKind ?? null,\n  };\n}"
       },
       "name": "formatBrownfieldImportJson",
       "qualifiedName": "formatBrownfieldImportJson",
       "span": {
-        "end": 28101,
-        "start": 27467
+        "end": 32213,
+        "start": 31579
       }
     },
     {
@@ -80338,14 +80375,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function formatManifestHuman(result: {\n  subcommand: \"validate\" | \"import\";\n  path: string;\n  imported?: boolean;\n  serviceCount?: number;\n  diagnostics: import(\"../compiler/types/diagnostic.ts\").Diagnostic[];\n  exitCode: number;\n}): string {\n  const errors = result.diagnostics.filter((diagnostic) => diagnostic.severity === \"error\");\n  const warnings = result.diagnostics.filter((diagnostic) => diagnostic.severity === \"warning\");\n  const lines = [\n    `manifest: ${result.subcommand}`,\n    `path: ${result.path}`,\n    result.subcommand === \"import\" ? `imported: ${result.imported ? \"yes\" : \"no\"}` : null,\n    result.serviceCount !== undefined ? `external services: ${result.serviceCount}` : null,\n    `errors: ${errors.length}`,\n    `warnings: ${warnings.length}`,\n  ].filter((line): line is string => line !== null);\n  for (const diagnostic of result.diagnostics) {\n    lines.push(`${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`);\n  }\n  return `${lines.join(\"\\n\")}\\n`;\n}"
       },
       "name": "formatManifestHuman",
       "qualifiedName": "formatManifestHuman",
       "span": {
-        "end": 54710,
-        "start": 53717
+        "end": 54966,
+        "start": 53973
       }
     },
     {
@@ -80950,14 +80987,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function formatStatusHuman(result: StatusCommandResult): string {\n  const summary = result.data.summary as Record<string, unknown>;\n  const generated = result.data.generated as\n    | {\n      state?: string;\n      missingArtifacts?: number;\n      tableDrift?: number;\n      safeDevCommand?: string;\n      checkCommand?: string;\n      repairCommand?: string;\n    }\n    | undefined;\n  const git = result.data.git as\n    | {\n      available?: boolean;\n      changed?: CategorizedFileSummary;\n    }\n    | undefined;\n  const studio = result.data.studio as\n    | {\n      attachCommand?: string;\n      openCommand?: string;\n      doctorCommand?: string;\n      bridgeCommand?: string;\n      targetPreviewUrl?: string;\n      startTargetAppCommand?: string;\n      useful?: boolean;\n    }\n    | undefined;\n  const lines = [\n    `Forge status: ${result.ok ? \"ready\" : \"needs attention\"}`,\n    `Project: ${summary.project ?? \"unknown\"}`,\n    `Generated: ${summary.generated}`,\n    ...(generated\n      ? [\n          `Generated detail: missing artifacts ${generated.missingArtifacts ?? 0}, table drift ${generated.tableDrift ?? 0}`,\n          `Generated check: ${generated.checkCommand ?? \"forge generate --check --json\"}`,\n          `Generated repair: ${generated.repairCommand ?? \"forge generate\"}`,\n          `Generated dev: ${generated.safeDevCommand ?? \"forge dev\"}`,\n        ]\n      : []),\n    `Drift: ${summary.drift}`,\n    `Frontend: ${summary.frontendPresent ? `${summary.routes ?? 0} routes` : \"none\"}`,\n    ...(studio\n      ? [\n          `Studio open: ${studio.openCommand ?? \"forge studio open . --preview-port 5174 --target codex --json\"}`,\n          `Studio attach: ${studio.attachCommand ?? \"forge studio attach . --preview-port 5174 --target codex --json\"}`,\n          `Studio bridge: ${studio.bridgeCommand ?? \"forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json\"}`,\n          `Studio doctor: ${studio.doctorCommand ?? \"forge studio doctor . --preview-port 5174 --target codex --json\"}`,\n          `Studio preview: ${studio.targetPreviewUrl ?? \"http://127.0.0.1:5174\"}`,\n          `Studio start: ${studio.startTargetAppCommand ?? \"forge dev --port 3766 --web-port 5174\"}`,\n        ]\n      : []),\n    ...(git?.available && git.changed\n      ? [`Changed: ${git.changed.total.count}${git.changed.total.count > 0 ? ` (${git.changed.primaryTypes.slice(0, 5).join(\", \")})` : \"\"}`]\n      : []),\n    `Agent default missing files: ${summary.missingDefaultAgentFiles ?? 0}`,\n    `Agent required missing files: ${summary.missingRequiredAgentFiles ?? summary.missingAgentFiles ?? 0}`,\n    `Agent optional missing files: ${summary.missingOptionalAgentFiles ?? 0}`,\n    \"\",\n    \"Next:\",\n    ...((result.data.nextActions as string[] | undefined) ?? []).map((command) => `  ${command}`),\n  ];\n  return `${lines.join(\"\\n\")}\\n`;\n}"
       },
       "name": "formatStatusHuman",
       "qualifiedName": "formatStatusHuman",
       "span": {
-        "end": 35032,
-        "start": 32172
+        "end": 35288,
+        "start": 32428
       }
     },
     {
@@ -82463,14 +82500,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function hasAny(names: string[], candidates: string[]): boolean {\n  return candidates.some((candidate) => names.includes(candidate));\n}"
       },
       "name": "hasAny",
       "qualifiedName": "hasAny",
       "span": {
-        "end": 3754,
-        "start": 3619
+        "end": 3763,
+        "start": 3628
       }
     },
     {
@@ -82820,7 +82857,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function hasPath(workspaceRoot: string, relative: string): boolean {\n  return nodeFileSystem.exists(join(workspaceRoot, relative));\n}"
       },
       "name": "hasPath",
@@ -84826,14 +84863,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function inspectBrownfieldImport(workspaceRoot: string): BrownfieldImportResult {\n  const inventory = readJson<ImportedInventory>(artifactPath(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.inventory));\n  const routes = readJson<ImportedRoute[]>(artifactPath(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.routes)) ?? [];\n  const frontendCalls =\n    readJson<ImportedFrontendCall[]>(artifactPath(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.frontendCalls)) ?? [];\n  const candidateEntries =\n    readJson<ImportedCandidateEntry[]>(artifactPath(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.candidateEntries)) ?? [];\n  const riskReport = readJson<ImportedRiskReport>(artifactPath(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.riskReport));\n  const migrationPlanPath = artifactPath(workspaceRoot, BROWNFIELD_IMPORT_ARTIFACTS.migrationPlan);\n  const migrationPlan = existsSync(migrationPlanPath) ? readFileSync(migrationPlanPath, \"utf8\") : null;\n  const missing = !inventory || !riskReport;\n  return {\n    schemaVersion: \"0.1.0\",\n    feature: \"H49\",\n    subcommand: \"inspect\",\n    workspaceRoot,\n    wroteArtifacts: false,\n    artifacts: BROWNFIELD_IMPORT_ARTIFACTS,\n    inventory,\n    routes,\n    frontendCalls,\n    candidateEntries,\n    riskReport,\n    migrationPlan,\n    exitCode: missing ? 1 : 0,\n    failureKind: missing ? \"missing_import_artifacts\" : undefined,\n  };\n}"
       },
       "name": "inspectBrownfieldImport",
       "qualifiedName": "inspectBrownfieldImport",
       "span": {
-        "end": 26672,
-        "start": 25318
+        "end": 30784,
+        "start": 29430
       }
     },
     {
@@ -86594,7 +86631,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function isVolatileForgeState(file: string): boolean {\n  const lower = file.replace(/\\\\/g, \"/\").replace(/^\\.\\//, \"\").toLowerCase();\n  return (\n    lower.startsWith(\".forge/locks/\") ||\n    lower.startsWith(\".forge/pglite/\") ||\n    lower.startsWith(\".forge/pglite.backups/\") ||\n    lower === \".forge/baseline.json\" ||\n    lower.startsWith(\".forge/runtime-cache/\") ||\n    lower.startsWith(\".forge/test-runs/\") ||\n    lower.startsWith(\".forge/ui-runs/\") ||\n    lower.startsWith(\".forge/local/\") ||\n    lower.endsWith(\"/postmaster.pid\") ||\n    lower.endsWith(\"/.s.pgsql.5432.lock\") ||\n    lower.endsWith(\"/.s.pgsql.5432.lock.out\")\n  );\n}"
       },
       "name": "isVolatileForgeState",
@@ -86656,20 +86693,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "1bf351b8aa9774d553481ec30e5586f44c1b4a9bfd5067675cb1eab87f4879cb",
+      "contentHash": "9dff252fd55aeb0ea91301cff4e14d6cbed6840387df4b90777944aa48e1e94b",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "6101fd778426fccb542dea66a67c4a4959dc262ec8433bfb54afe21318c1ee12",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function joinRoutePath(base: string, child: string): string {\n  return `/${[base, child].map((part) => part.replace(/^\\/|\\/$/gu, \"\")).filter(Boolean).join(\"/\")}`.replace(/\\/+/gu, \"/\");\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function joinRoutePath(base: string, child: string): string {\n  return `/${[base, child].map((part) => part.replace(/^\\/|\\/$/gu, \"\")).filter(Boolean).join(\"/\")}`\n    .replace(/\\/+/gu, \"/\")\n    .replace(/\\{([^}/]+)\\}/gu, \":$1\");\n}"
       },
       "name": "joinRoutePath",
       "qualifiedName": "joinRoutePath",
       "span": {
-        "end": 6891,
-        "start": 6705
+        "end": 8410,
+        "start": 8181
       }
     },
     {
@@ -88294,14 +88331,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function loadRuntimeMatrixForCheck(\n  workspaceRoot: string,\n): Promise<RuntimeMatrix> {\n  const fromDisk = readGeneratedJson<RuntimeMatrix>(\n    workspaceRoot,\n    `${GENERATED_DIR}/runtimeMatrix.json`,\n  );\n  if (fromDisk) {\n    return fromDisk;\n  }\n\n  const ctx = discoverForSession(getCompileSession(workspaceRoot));\n  const compiler = new PackageGraphCompiler();\n  const classified = await Promise.all(\n    ctx.dependencies.map(async (dep) => {\n      const recipe = resolveByPackageName(dep.name) ?? undefined;\n      const api = await compiler.analyze(dep, {\n        runtimeInspect: false,\n        resolutionMode: \"nodenext\",\n        cacheDir: ctx.cacheDir,\n        recipeVersion: recipe?.recipeVersion,\n      });\n      return {\n        api,\n        classification: classify(api, recipe),\n        recipe,\n      };\n    }),\n  );\n\n  return buildRuntimeMatrix(classified);\n}"
       },
       "name": "loadRuntimeMatrixForCheck",
       "qualifiedName": "loadRuntimeMatrixForCheck",
       "span": {
-        "end": 36732,
-        "start": 35851
+        "end": 36988,
+        "start": 36107
       }
     },
     {
@@ -89773,14 +89810,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function nameForCandidate(route: ImportedRoute, kind: ImportedEntryKind): string {\n  const nouns = route.path\n    .replace(/^\\/api\\//u, \"\")\n    .replace(/:\\w+\\*?/gu, \"byId\")\n    .split(\"/\")\n    .filter(Boolean)\n    .map((segment) => segment.replace(/[^a-zA-Z0-9]/gu, \"\"))\n    .filter(Boolean);\n  const base = nouns.length > 0 ? nouns.join(\".\") : \"imported.route\";\n  const method = route.method.toUpperCase();\n  const action =\n    kind === \"query\" ? \"read\" :\n    kind === \"command-candidate\" ? \"candidate\" :\n    method === \"POST\" ? \"create\" :\n    method === \"PUT\" || method === \"PATCH\" ? \"update\" :\n    method === \"DELETE\" ? \"delete\" :\n    \"call\";\n  return `${base}.${action}`;\n}"
       },
       "name": "nameForCandidate",
       "qualifiedName": "nameForCandidate",
       "span": {
-        "end": 16787,
-        "start": 16109
+        "end": 20899,
+        "start": 20221
       }
     },
     {
@@ -90419,14 +90456,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function normalizePath(path: string): string {\n  return path.split(sep).join(\"/\");\n}"
       },
       "name": "normalizePath",
       "qualifiedName": "normalizePath",
       "span": {
-        "end": 1555,
-        "start": 1471
+        "end": 1564,
+        "start": 1480
       }
     },
     {
@@ -90572,14 +90609,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function normalizeRouteSegment(segment: string): string | null {\n  const clean = stripExtension(segment);\n  if (clean === \"index\" || clean === \"route\" || clean === \"page\") {\n    return null;\n  }\n  if (clean.startsWith(\"(\") && clean.endsWith(\")\")) {\n    return null;\n  }\n  const catchAll = clean.match(/^\\[\\.\\.\\.(.+)\\]$/u);\n  if (catchAll) {\n    return `:${catchAll[1]}*`;\n  }\n  const dynamic = clean.match(/^\\[(.+)\\]$/u);\n  if (dynamic) {\n    return `:${dynamic[1]}`;\n  }\n  return clean;\n}"
       },
       "name": "normalizeRouteSegment",
       "qualifiedName": "normalizeRouteSegment",
       "span": {
-        "end": 6188,
-        "start": 5699
+        "end": 7664,
+        "start": 7175
       }
     },
     {
@@ -90623,14 +90660,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function normalizeSchemaType(type: string): string {\n  return type.trim().replace(/\\?$/, \"\").toLowerCase();\n}"
       },
       "name": "normalizeSchemaType",
       "qualifiedName": "normalizeSchemaType",
       "span": {
-        "end": 36843,
-        "start": 36734
+        "end": 37099,
+        "start": 36990
       }
     },
     {
@@ -91014,14 +91051,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function objectKeys(value: unknown): string[] {\n  if (!value || typeof value !== \"object\" || Array.isArray(value)) {\n    return [];\n  }\n  return Object.keys(value as Record<string, unknown>).sort();\n}"
       },
       "name": "objectKeys",
       "qualifiedName": "objectKeys",
       "span": {
-        "end": 2255,
-        "start": 2055
+        "end": 2264,
+        "start": 2064
       }
     },
     {
@@ -92986,14 +93023,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function parseNpmDistTagsJson(raw: string): Record<string, string> | null {\n  try {\n    const parsed = JSON.parse(raw) as unknown;\n    if (parsed === null || typeof parsed !== \"object\" || Array.isArray(parsed)) {\n      return null;\n    }\n    const tags: Record<string, string> = {};\n    for (const [key, value] of Object.entries(parsed)) {\n      if (typeof value === \"string\") {\n        tags[key] = value;\n      }\n    }\n    return tags;\n  } catch {\n    return null;\n  }\n}"
       },
       "name": "parseNpmDistTagsJson",
       "qualifiedName": "parseNpmDistTagsJson",
       "span": {
-        "end": 45354,
-        "start": 44883
+        "end": 45610,
+        "start": 45139
       }
     },
     {
@@ -94040,14 +94077,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function pathIncludesRouteMarker(relativePath: string, marker: string): boolean {\n  const normalized = relativePath.startsWith(\"/\") ? relativePath : `/${relativePath}`;\n  return normalized.includes(marker);\n}"
       },
       "name": "pathIncludesRouteMarker",
       "qualifiedName": "pathIncludesRouteMarker",
       "span": {
-        "end": 7101,
-        "start": 6893
+        "end": 10545,
+        "start": 10337
       }
     },
     {
@@ -96301,7 +96338,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function readGeneratedArtifactStatus(workspaceRoot: string): Array<{ name: string; path: string; present: boolean }> {\n  const artifacts = [\n    [\"app\", `${GENERATED_DIR}/appGraph.json`],\n    [\"data\", `${GENERATED_DIR}/dataGraph.json`],\n    [\"sql\", `${GENERATED_DIR}/sqlPlan.json`],\n    [\"db\", `${GENERATED_DIR}/db.json`],\n    [\"runtime\", `${GENERATED_DIR}/runtimeGraph.json`],\n    [\"frontend\", `${GENERATED_DIR}/frontendGraph.json`],\n    [\"client\", `${GENERATED_DIR}/clientManifest.json`],\n    [\"agent-contract\", `${GENERATED_DIR}/agentContract.json`],\n    [\"agent-adapters\", `${GENERATED_DIR}/agentAdapterManifest.json`],\n    [\"capability-map\", `${GENERATED_DIR}/capabilityMap.json`],\n    [\"test-graph\", `${GENERATED_DIR}/testGraph.json`],\n    [\"agents-md\", \"AGENTS.md\"],\n    [\"forge-lock\", \"forge.lock\"],\n  ] as const;\n\n  return artifacts.map(([name, path]) => ({\n    name,\n    path,\n    present: hasPath(workspaceRoot, path),\n  }));\n}"
       },
       "name": "readGeneratedArtifactStatus",
@@ -96352,7 +96389,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function readGeneratedJson<T>(workspaceRoot: string, relative: string): T | null {\n  const absolute = join(workspaceRoot, relative);\n  if (!nodeFileSystem.exists(absolute)) {\n    return null;\n  }\n  const raw = stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? \"\"));\n  return JSON.parse(raw) as T;\n}"
       },
       "name": "readGeneratedJson",
@@ -96726,7 +96763,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function readGeneratedText(workspaceRoot: string, relative: string): string | null {\n  const absolute = join(workspaceRoot, relative);\n  if (!nodeFileSystem.exists(absolute)) {\n    return null;\n  }\n  return stripDeterministicHeader((nodeFileSystem.readText(absolute) ?? \"\"));\n}"
       },
       "name": "readGeneratedText",
@@ -96913,14 +96950,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function readJson<T>(path: string): T | null {\n  if (!existsSync(path)) {\n    return null;\n  }\n  try {\n    return JSON.parse(readFileSync(path, \"utf8\")) as T;\n  } catch {\n    return null;\n  }\n}"
       },
       "name": "readJson",
       "qualifiedName": "readJson",
       "span": {
-        "end": 1888,
-        "start": 1695
+        "end": 1897,
+        "start": 1704
       }
     },
     {
@@ -97213,6 +97250,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "e8bf56b39ed1562e938fc60b8e6fa7151c56a97074a23b3408218cb7ff1d1242",
+      "file": "src/forge/brownfield-import/index.ts",
+      "id": "031a8a12547cc24d588b6b84e026bad3f17c8bf825d4eb9f4785da1f82fbe8db",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function readMavenInventory(workspaceRoot: string): {\n  packageName?: string;\n  dependencies: string[];\n  frameworks: string[];\n} {\n  const pomPath = join(workspaceRoot, \"pom.xml\");\n  if (!existsSync(pomPath)) {\n    return { dependencies: [], frameworks: [] };\n  }\n  const text = readFileSync(pomPath, \"utf8\");\n  const dependencies: string[] = [];\n  for (const match of text.matchAll(/<dependency\\b[^>]*>([\\s\\S]*?)<\\/dependency>/gu)) {\n    const block = match[1] ?? \"\";\n    const groupId = block.match(/<groupId>\\s*([^<]+?)\\s*<\\/groupId>/u)?.[1]?.trim();\n    const artifactId = block.match(/<artifactId>\\s*([^<]+?)\\s*<\\/artifactId>/u)?.[1]?.trim();\n    if (artifactId) {\n      dependencies.push(groupId ? `${groupId}:${artifactId}` : artifactId);\n    }\n  }\n  const projectWithoutParent = text.replace(/<parent\\b[^>]*>[\\s\\S]*?<\\/parent>/u, \"\");\n  const packageName = projectWithoutParent.match(/<artifactId>\\s*([^<]+?)\\s*<\\/artifactId>/u)?.[1]?.trim();\n  return {\n    ...(packageName ? { packageName } : {}),\n    dependencies: [...new Set(dependencies)].sort(),\n    frameworks: /\\b(?:org\\.springframework\\.boot|spring-boot)[\\w.:-]*/u.test(text) ? [\"spring-boot\"] : [],\n  };\n}"
+      },
+      "name": "readMavenInventory",
+      "qualifiedName": "readMavenInventory",
+      "span": {
+        "end": 6799,
+        "start": 5625
+      }
+    },
+    {
       "contentHash": "c6ce40a3aa4059ba6d8c4555d07b6effd0eb9ec48b64d58a686bda6f6ad9b078",
       "file": "src/forge/cli/verify.ts",
       "id": "49b5a498fdd13dd169a0442f805216efa67f4e56c9120712dc40eda42dd14b68",
@@ -97321,14 +97375,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function readPackageJson(workspaceRoot: string): Record<string, unknown> {\n  return readJson<Record<string, unknown>>(join(workspaceRoot, \"package.json\")) ?? {};\n}"
       },
       "name": "readPackageJson",
       "qualifiedName": "readPackageJson",
       "span": {
-        "end": 2053,
-        "start": 1890
+        "end": 2062,
+        "start": 1899
       }
     },
     {
@@ -97338,7 +97392,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function readPackageJson(workspaceRoot: string): Record<string, unknown> {\n  try {\n    return JSON.parse(nodeFileSystem.readText(join(workspaceRoot, \"package.json\")) ?? \"{}\") as Record<string, unknown>;\n  } catch {\n    return {};\n  }\n}"
       },
       "name": "readPackageJson",
@@ -103866,14 +103920,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function routePathFromFile(relativePath: string, marker: string): string {\n  const normalized = relativePath.startsWith(\"/\") ? relativePath : `/${relativePath}`;\n  const markerIndex = normalized.indexOf(marker);\n  const afterMarker = markerIndex >= 0 ? normalized.slice(markerIndex + marker.length) : normalized;\n  const segments = afterMarker\n    .split(\"/\")\n    .map(normalizeRouteSegment)\n    .filter((segment): segment is string => Boolean(segment));\n  return `/${segments.join(\"/\")}`.replace(/\\/+/gu, \"/\");\n}"
       },
       "name": "routePathFromFile",
       "qualifiedName": "routePathFromFile",
       "span": {
-        "end": 6703,
-        "start": 6190
+        "end": 8179,
+        "start": 7666
       }
     },
     {
@@ -104087,14 +104141,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function runAddCommand(\n  alias: string,\n  options: Extract<ForgeCommand, { kind: \"add\" }>[\"options\"],\n): Promise<ForgeAddResult> {\n  const result = await forgeAdd(alias, options);\n  return attachFailureKind(result);\n}"
       },
       "name": "runAddCommand",
       "qualifiedName": "runAddCommand",
       "span": {
-        "end": 35849,
-        "start": 35625
+        "end": 36105,
+        "start": 35881
       }
     },
     {
@@ -104444,14 +104498,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function runBrownfieldImportCommand(options: BrownfieldImportCommandOptions): BrownfieldImportResult {\n  if (options.subcommand === \"analyze\") {\n    return analyze(options.workspaceRoot, options.dryRun);\n  }\n  const result = inspectBrownfieldImport(options.workspaceRoot);\n  if (options.entry) {\n    result.candidateEntries = result.candidateEntries.filter((entry) => entry.id === options.entry || entry.name === options.entry);\n  }\n  if (options.target === \"routes\") {\n    result.frontendCalls = [];\n    result.candidateEntries = [];\n  } else if (options.target === \"frontend-calls\") {\n    result.routes = [];\n    result.candidateEntries = [];\n  } else if (options.target === \"candidate-entries\") {\n    result.routes = [];\n    result.frontendCalls = [];\n  }\n  return result;\n}"
       },
       "name": "runBrownfieldImportCommand",
       "qualifiedName": "runBrownfieldImportCommand",
       "span": {
-        "end": 27458,
-        "start": 26681
+        "end": 31570,
+        "start": 30793
       }
     },
     {
@@ -104563,14 +104617,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function runCheckCommand(\n  workspaceRoot: string,\n  options?: { strictSecrets?: boolean },\n): Promise<GenerateResult> {\n  const session = getCompileSession(workspaceRoot);\n  const appGraph = await buildAppGraphForSession(session);\n  const dataGraph = buildDataGraph(appGraph);\n  const sqlPlan = buildSqlPlan(dataGraph);\n\n  const matrix = await loadRuntimeMatrixForCheck(workspaceRoot);\n  const guardDiagnostics = checkImportGuards(appGraph.moduleGraph, matrix);\n  const secretRegistry = loadSecretRegistry(workspaceRoot);\n  const processEnvDiagnostics = checkDirectProcessEnvUsage(\n    workspaceRoot,\n    secretRegistry,\n    options?.strictSecrets ?? false,\n  );\n  const aiDiagnostics = checkAiUsageInApp(appGraph);\n  const queryDiagnostics = checkQueryUsageInApp(appGraph);\n  const frontendDiagnostics =\n    readGeneratedJson<FrontendGraph>(workspaceRoot, `${GENERATED_DIR}/frontendGraph.json`)\n      ?.diagnostics ?? [];\n  const capabilityDiagnostics =\n    readGeneratedJson<{ diagnostics?: import(\"../compiler/types/diagnostic.ts\").Diagnostic[] }>(\n      workspaceRoot,\n      `${GENERATED_DIR}/capabilityMap.json`,\n    )?.diagnostics ?? [];\n  const externalDiagnostics = buildExternalServiceGraph(workspaceRoot).diagnostics;\n  const timestampLiteralDiagnostics = checkEmptyTimestampLiterals(appGraph, dataGraph);\n\n  const allDiagnostics = [\n    ...appGraph.diagnostics,\n    ...dataGraph.diagnostics,\n    ...sqlPlan.diagnostics,\n    ...guardDiagnostics,\n    ...processEnvDiagnostics,\n    ...aiDiagnostics,\n    ...queryDiagnostics,\n    ...timestampLiteralDiagnostics,\n    ...frontendDiagnostics,\n    ...capabilityDiagnostics,\n    ...externalDiagnostics,\n  ];\n  const errors = allDiagnostics.filter(\n    (diagnostic) => diagnostic.severity === \"error\",\n  );\n  const warnings = allDiagnostics.filter(\n    (diagnostic) => diagnostic.severity === \"warning\",\n  );\n\n  return attachFailureKind({\n    changed: [],\n    unchanged: [],\n    warnings,\n    errors,\n    exitCode: errors.length > 0 ? 1 : 0,\n    failureKind: errors.length > 0 ? \"guard_violation\" : undefined,\n  });\n}"
       },
       "name": "runCheckCommand",
       "qualifiedName": "runCheckCommand",
       "span": {
-        "end": 40669,
-        "start": 38594
+        "end": 40925,
+        "start": 38850
       }
     },
     {
@@ -105396,14 +105450,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function runGenerateCommand(\n  options: GenerateOptions,\n): Promise<GenerateResult> {\n  const result = await withWorkspaceCwd(options.workspaceRoot, () => run(options));\n  return attachFailureKind(result);\n}"
       },
       "name": "runGenerateCommand",
       "qualifiedName": "runGenerateCommand",
       "span": {
-        "end": 35254,
-        "start": 35041
+        "end": 35510,
+        "start": 35297
       }
     },
     {
@@ -105583,14 +105637,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function runInspectCommand(\n  target: InspectTarget,\n  workspaceRoot: string,\n  options: { full?: boolean; brief?: boolean; ergonomics?: boolean } = {},\n): Promise<InspectResult> {\n  const dataPaths: Partial<Record<InspectTarget, string>> = {\n    app: `${GENERATED_DIR}/appGraph.json`,\n    packages: `${GENERATED_DIR}/packageGraph.json`,\n    capabilities: `${GENERATED_DIR}/capabilityMap.json`,\n    \"runtime-matrix\": `${GENERATED_DIR}/runtimeMatrix.json`,\n    data: `${GENERATED_DIR}/dataGraph.json`,\n    runtime: `${GENERATED_DIR}/runtimeGraph.json`,\n    dev: `${GENERATED_DIR}/devManifest.json`,\n    subscriptions: `${GENERATED_DIR}/actionSubscriptions.json`,\n    workflows: `${GENERATED_DIR}/workflowRegistry.json`,\n    telemetry: `${GENERATED_DIR}/telemetryRegistry.json`,\n    policies: `${GENERATED_DIR}/policyRegistry.json`,\n    secrets: `${GENERATED_DIR}/secretRegistry.json`,\n    env: `${GENERATED_DIR}/envSchema.json`,\n    ai: `${GENERATED_DIR}/aiRegistry.json`,\n    queries: `${GENERATED_DIR}/queryRegistry.json`,\n    api: `${GENERATED_DIR}/api.json`,\n    external: `${GENERATED_DIR}/externalServices.json`,\n    client: `${GENERATED_DIR}/clientManifest.json`,\n    frontend: `${GENERATED_DIR}/frontendGraph.json`,\n    auth: `${GENERATED_DIR}/authRegistry.json`,\n    rls: `${GENERATED_DIR}/rlsPolicies.json`,\n    \"db-security\": `${GENERATED_DIR}/dbSecurityManifest.json`,\n    release: `${GENERATED_DIR}/releaseManifest.json`,\n    artifacts: `${GENERATED_DIR}/artifactManifest.json`,\n    sourcemaps: `${GENERATED_DIR}/sourceMapManifest.json`,\n    \"live-production\": `${GENERATED_DIR}/liveProductionManifest.json`,\n    \"live-protocol\": `${GENERATED_DIR}/liveProtocol.json`,\n    \"live-transport\": `${GENERATED_DIR}/liveTransportConfig.json`,\n    make: `${GENERATED_DIR}/makeRegistry.json`,\n    \"test-graph\": `${GENERATED_DIR}/testGraph.json`,\n    \"test-plans\": `${GENERATED_DIR}/testPlanRegistry.json`,\n    \"agent-contract\": `${GENERATED_DIR}/agentContract.json`,\n    \"agent-tools\": `${GENERATED_DIR}/agentTools.json`,\n    \"agent-adapters\": `${GENERATED_DIR}/agentAdapterManifest.json`,\n    \"capability-map\": `${GENERATED_DIR}/capabilityMap.json`,\n    ui: `${GENERATED_DIR}/uiTestManifest.json`,\n    \"ui-scenarios\": `${GENERATED_DIR}/uiScenarios.json`,\n    \"ui-routes\": `${GENERATED_DIR}/uiRoutes.json`,\n    rules: `${GENERATED_DIR}/runtimeRules.md`,\n    map: `${GENERATED_DIR}/appMap.md`,\n  };\n\n  if (target === \"framework\") {\n    return {\n      target,\n      data: buildFrameworkInspect(workspaceRoot),\n      warnings: [],\n      errors: [],\n      exitCode: 0,\n    };\n  }\n\n  if (target === \"summary\") {\n    return {\n      target,\n      data: buildInspectSummary(workspaceRoot),\n      warnings: [],\n      errors: [],\n      exitCode: 0,\n    };\n  }\n\n  if (target === \"schema\") {\n    const result = buildSchemaInspect(workspaceRoot);\n    return {\n      target,\n      data: result.data,\n      warnings: [],\n      errors: result.errors,\n      exitCode: result.errors.length > 0 ? 1 : 0,\n      failureKind: result.errors.length > 0 ? \"missing_artifact\" : undefined,\n    };\n  }\n\n  if (target === \"drift\") {\n    return {\n      target,\n      data: buildDriftInspect(workspaceRoot),\n      warnings: [],\n      errors: [],\n      exitCode: 0,\n    };\n  }\n\n  if (target === \"handoff\") {\n    return {\n      target,\n      data: buildHandoffInspect(workspaceRoot),\n      warnings: [],\n      errors: [],\n      exitCode: 0,\n    };\n  }\n\n  if (target === \"ui\" && options.ergonomics) {\n    const result = await runUiCommand({\n      subcommand: \"audit\",\n      workspaceRoot,\n      json: true,\n      headed: false,\n      browser: \"chromium\",\n      trace: \"off\",\n      screenshot: \"off\",\n      video: \"off\",\n      baseUrl: \"http://127.0.0.1:3000\",\n      runtimeUrl: \"http://127.0.0.1:3765\",\n      reuseServers: false,\n      startServers: false,\n      all: true,\n      changed: false,\n      ci: false,\n      timeoutMs: 30_000,\n    });\n    return {\n      target,\n      data: {\n        schemaVersion: \"0.1.0\",\n        mode: \"ergonomics\",\n        ok: result.ok,\n        manifest: result.manifest,\n        scenarios: result.scenarios ?? [],\n        diagnostics: result.diagnostics,\n        nextActions: [\n          \"forge ui audit --json\",\n          \"forge inspect frontend --json\",\n          \"forge inspect capabilities --json\",\n        ],\n      },\n      warnings: result.diagnostics.filter((diagnostic) => diagnostic.severity === \"warning\"),\n      errors: result.diagnostics.filter((diagnostic) => diagnostic.severity === \"error\"),\n      exitCode: result.exitCode,\n      failureKind: result.exitCode === 0 ? undefined : \"ui_ergonomics\",\n    };\n  }\n\n  if (target === \"imported\") {\n    const result = inspectBrownfieldImport(workspaceRoot);\n    return {\n      target,\n      data: formatBrownfieldImportJson(result),\n      warnings: [],\n      errors: [],\n      exitCode: result.exitCode,\n      failureKind: result.failureKind,\n    };\n  }\n\n  if (target === \"all\") {\n    if (options.brief) {\n      const brief = buildInspectBrief(workspaceRoot);\n      return {\n        target,\n        data: brief,\n        warnings: [],\n        errors: [],\n        exitCode: 0,\n      };\n    }\n    if (!options.full) {\n      const summary = buildInspectSummary(workspaceRoot);\n      const schema = buildSchemaInspect(workspaceRoot);\n      const drift = buildDriftInspect(workspaceRoot);\n      const handoff = buildHandoffInspect(workspaceRoot);\n      const framework = buildFrameworkInspect(workspaceRoot);\n      const errors = [\n        ...schema.errors,\n      ];\n      return {\n        target,\n        data: {\n          schemaVersion: \"0.1.0\",\n          compact: true,\n          payload: {\n            mode: \"compact\",\n            purpose: \"agent diagnostic bundle\",\n            includes: [\"summary\", \"schema\", \"drift\", \"handoff\", \"framework\"],\n            omitted: [\"large generated registries\", \"module graph\", \"full runtime graph payloads\"],\n            fullCommand: \"forge inspect all --full --json\",\n            briefCommand: \"forge inspect all --brief --json\",\n          },\n          summary: summary.summary,\n          inspections: {\n            summary,\n            schema: schema.data,\n            drift,\n            handoff,\n            framework,\n          },\n          nextActions: [\n            \"forge inspect summary --json\",\n            \"forge inspect schema --json\",\n            \"forge inspect handoff --json\",\n            \"forge inspect all --full --json\",\n          ],\n        },\n        warnings: [],\n        errors,\n        exitCode: errors.length > 0 ? 1 : 0,\n        failureKind: errors.length > 0 ? \"missing_artifact\" : undefined,\n      };\n    }\n    const aggregatePaths: Array<[string, string]> = [\n      [\"app\", `${GENERATED_DIR}/appGraph.json`],\n      [\"data\", `${GENERATED_DIR}/dataGraph.json`],\n      [\"packages\", `${GENERATED_DIR}/packageGraph.json`],\n      [\"runtimeMatrix\", `${GENERATED_DIR}/runtimeMatrix.json`],\n      [\"runtime\", `${GENERATED_DIR}/runtimeGraph.json`],\n      [\"policies\", `${GENERATED_DIR}/policyRegistry.json`],\n      [\"secrets\", `${GENERATED_DIR}/secretRegistry.json`],\n      [\"workflows\", `${GENERATED_DIR}/workflowRegistry.json`],\n      [\"telemetry\", `${GENERATED_DIR}/telemetryRegistry.json`],\n      [\"ai\", `${GENERATED_DIR}/aiRegistry.json`],\n      [\"externalServices\", `${GENERATED_DIR}/externalServices.json`],\n      [\"client\", `${GENERATED_DIR}/clientManifest.json`],\n      [\"frontend\", `${GENERATED_DIR}/frontendGraph.json`],\n      [\"auth\", `${GENERATED_DIR}/authRegistry.json`],\n      [\"rls\", `${GENERATED_DIR}/rlsPolicies.json`],\n      [\"dbSecurity\", `${GENERATED_DIR}/dbSecurityManifest.json`],\n      [\"release\", `${GENERATED_DIR}/releaseManifest.json`],\n      [\"artifacts\", `${GENERATED_DIR}/artifactManifest.json`],\n      [\"sourceMaps\", `${GENERATED_DIR}/sourceMapManifest.json`],\n      [\"liveProduction\", `${GENERATED_DIR}/liveProductionManifest.json`],\n      [\"liveProtocol\", `${GENERATED_DIR}/liveProtocol.json`],\n      [\"liveTransport\", `${GENERATED_DIR}/liveTransportConfig.json`],\n      [\"make\", `${GENERATED_DIR}/makeRegistry.json`],\n      [\"testGraph\", `${GENERATED_DIR}/testGraph.json`],\n      [\"testPlanRegistry\", `${GENERATED_DIR}/testPlanRegistry.json`],\n      [\"agentContract\", `${GENERATED_DIR}/agentContract.json`],\n      [\"agentTools\", `${GENERATED_DIR}/agentTools.json`],\n      [\"agentAdapters\", `${GENERATED_DIR}/agentAdapterManifest.json`],\n      [\"capabilityMap\", `${GENERATED_DIR}/capabilityMap.json`],\n      [\"ui\", `${GENERATED_DIR}/uiTestManifest.json`],\n      [\"uiScenarios\", `${GENERATED_DIR}/uiScenarios.json`],\n      [\"uiRoutes\", `${GENERATED_DIR}/uiRoutes.json`],\n    ];\n    const data: Record<string, unknown> = {};\n    const errors = [];\n    data.summary = buildInspectSummary(workspaceRoot).summary;\n    for (const [key, relative] of aggregatePaths) {\n      const value = readGeneratedJson<unknown>(workspaceRoot, relative);\n      if (value === null) {\n        errors.push(\n          createDiagnostic({\n            severity: \"error\",\n            code: \"FORGE_INSPECT_MISSING\",\n            message: `missing generated artifact: ${relative}; run forge generate first`,\n            file: relative,\n          }),\n        );\n      } else {\n        data[key] = value;\n      }\n    }\n    data.framework = buildFrameworkInspect(workspaceRoot);\n    data.diagnostics = errors;\n    data.compact = false;\n    data.payload = {\n      mode: \"full\",\n      purpose: \"complete generated machine contract\",\n      includes: aggregatePaths.map(([key]) => key),\n      compactCommand: \"forge inspect all --json\",\n      briefCommand: \"forge inspect all --brief --json\",\n    };\n    data.nextActions = errors.length > 0\n      ? [\"forge status --json\", \"forge generate\", \"forge check --json\"]\n      : [\"forge inspect all --json\", \"forge check --json\"];\n    return {\n      target,\n      data,\n      warnings: [],\n      errors,\n      exitCode: errors.length > 0 ? 1 : 0,\n      failureKind: errors.length > 0 ? \"missing_artifact\" : undefined,\n    };\n  }\n\n  const relative = dataPaths[target];\n  if (!relative) {\n    return {\n      target,\n      data: null,\n      warnings: [],\n      errors: [\n        createDiagnostic({\n          severity: \"error\",\n          code: \"FORGE_INSPECT_MISSING\",\n          message: `unsupported inspect target: ${target}`,\n        }),\n      ],\n      exitCode: 1,\n      failureKind: \"missing_artifact\",\n    };\n  }\n  const data =\n    target === \"rules\" || target === \"map\"\n      ? readGeneratedText(workspaceRoot, relative)\n      : readGeneratedJson<unknown>(workspaceRoot, relative);\n\n  if (data === null) {\n    return {\n      target,\n      data: null,\n      warnings: [],\n      errors: [\n        createDiagnostic({\n          severity: \"error\",\n          code: \"FORGE_INSPECT_MISSING\",\n          message: `missing generated artifact: ${relative}; run forge generate first`,\n          file: relative,\n        }),\n      ],\n      exitCode: 1,\n      failureKind: \"missing_artifact\",\n    };\n  }\n\n  return {\n    target,\n    data,\n    warnings: [],\n    errors: [],\n    exitCode: 0,\n  };\n}"
       },
       "name": "runInspectCommand",
       "qualifiedName": "runInspectCommand",
       "span": {
-        "end": 66773,
-        "start": 55741
+        "end": 67029,
+        "start": 55997
       }
     },
     {
@@ -105719,14 +105773,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function runManifestCommand(command: Extract<ForgeCommand, { kind: \"manifest\" }>): {\n  subcommand: \"validate\" | \"import\";\n  path: string;\n  imported?: boolean;\n  serviceCount?: number;\n  diagnostics: import(\"../compiler/types/diagnostic.ts\").Diagnostic[];\n  exitCode: number;\n} {\n  if (command.subcommand === \"validate\") {\n    const result = readExternalManifestFile(command.path);\n    const hasErrors = result.diagnostics.some((diagnostic) => diagnostic.severity === \"error\");\n    return {\n      subcommand: \"validate\",\n      path: command.path,\n      diagnostics: result.diagnostics,\n      exitCode: hasErrors ? 1 : 0,\n    };\n  }\n\n  const result = importExternalManifest(command.workspaceRoot, command.path);\n  const hasErrors = result.diagnostics.some((diagnostic) => diagnostic.severity === \"error\");\n  return {\n    subcommand: \"import\",\n    path: result.path,\n    imported: result.imported,\n    serviceCount: result.graph.services.length,\n    diagnostics: result.diagnostics,\n    exitCode: hasErrors ? 1 : 0,\n  };\n}"
       },
       "name": "runManifestCommand",
       "qualifiedName": "runManifestCommand",
       "span": {
-        "end": 55732,
-        "start": 54712
+        "end": 55988,
+        "start": 54968
       }
     },
     {
@@ -105804,14 +105858,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function runNpmDistTagCheck(workspaceRoot: string): NpmDistTagCheckResult {\n  const pkg = readPackageJson(workspaceRoot) as {\n    name?: unknown;\n    version?: unknown;\n    private?: unknown;\n  };\n  const packageName = typeof pkg.name === \"string\" ? pkg.name : null;\n  const packageVersion = typeof pkg.version === \"string\" ? pkg.version : null;\n  const command = packageName ? `npm view ${packageName} dist-tags --json` : \"npm view <package> dist-tags --json\";\n  const baseData = {\n    command,\n    packageName,\n    packageVersion,\n    alphaVersion: null,\n    latestVersion: null,\n    alphaMatches: false,\n    latestMatches: false,\n    source: \"skipped\" as const,\n  };\n\n  if (pkg.private === true) {\n    return {\n      ok: true,\n      data: baseData,\n      diagnostics: [],\n      exitCode: 0,\n    };\n  }\n  if (!packageName || !packageVersion) {\n    return {\n      ok: false,\n      data: baseData,\n      diagnostics: [\n        createDiagnostic({\n          severity: \"warning\",\n          code: FORGE_RELEASE_NPM_DIST_TAG_CHECK_FAILED,\n          message: \"release doctor could not check npm dist-tags because package.json is missing name or version\",\n          fixHint: \"Set package.json name and version before publishing, then rerun forge release doctor.\",\n          suggestedCommands: [\"node bin/forge.mjs release doctor --json\"],\n        }),\n      ],\n      nextActions: [\"node bin/forge.mjs release doctor --json\"],\n      failureKind: \"npm-dist-tags-package-metadata-missing\",\n      exitCode: 1,\n    };\n  }\n\n  const fixture = process.env.FORGE_RELEASE_NPM_DIST_TAGS_JSON;\n  const source = fixture ? \"env-fixture\" as const : \"npm-view\" as const;\n  const stdout = fixture ?? spawnSync(\"npm\", [\"view\", packageName, \"dist-tags\", \"--json\"], {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    timeout: 10_000,\n    windowsHide: true,\n  }).stdout;\n  const tags = parseNpmDistTagsJson(stdout || \"\");\n  if (!tags) {\n    return {\n      ok: false,\n      data: { ...baseData, source },\n      diagnostics: [\n        createDiagnostic({\n          severity: \"warning\",\n          code: FORGE_RELEASE_NPM_DIST_TAG_CHECK_FAILED,\n          message: `release doctor could not read npm dist-tags for ${packageName}`,\n          fixHint: `Run ${command}. If the package has not been published yet, publish it with the alpha tag first.`,\n          suggestedCommands: [command, \"npm run release:publish-alpha\"],\n        }),\n      ],\n      nextActions: [command, \"npm run release:publish-alpha\"],\n      failureKind: \"npm-dist-tags-unavailable\",\n      exitCode: 1,\n    };\n  }\n\n  const alphaVersion = tags.alpha ?? null;\n  const latestVersion = tags.latest ?? null;\n  const alphaMatches = alphaVersion === packageVersion;\n  const latestMatches = latestVersion === packageVersion;\n  const data = {\n    command,\n    packageName,\n    packageVersion,\n    alphaVersion,\n    latestVersion,\n    alphaMatches,\n    latestMatches,\n    source,\n  };\n  if (alphaMatches && latestMatches) {\n    return {\n      ok: true,\n      data,\n      diagnostics: [],\n      exitCode: 0,\n    };\n  }\n\n  const nextActions: string[] = [];\n  const diagnostics: ReturnType<typeof createDiagnostic>[] = [];\n  if (!alphaMatches) {\n    nextActions.push(\"npm run release:publish-alpha\");\n    diagnostics.push(createDiagnostic({\n      severity: \"warning\",\n      code: FORGE_RELEASE_NPM_DIST_TAG_STALE,\n      message: `${packageName}@alpha points to ${alphaVersion ?? \"none\"}, not local version ${packageVersion}`,\n      fixHint: \"Publish the current package with the alpha tag before asking users to install forgeos@alpha.\",\n      suggestedCommands: [\"npm run release:publish-alpha\", command],\n    }));\n  }\n  if (!latestMatches) {\n    const promote = `npm dist-tag add ${packageName}@${packageVersion} latest`;\n    nextActions.push(promote);\n    nextActions.push(\"configure NPM_TOKEN in GitHub Actions secrets, or run npm login locally before promoting latest\");\n    diagnostics.push(createDiagnostic({\n      severity: \"warning\",\n      code: FORGE_RELEASE_NPM_DIST_TAG_STALE,\n      message: `${packageName}@latest points to ${latestVersion ?? \"none\"}, not local version ${packageVersion}`,\n      fixHint: `Promote latest after the alpha package is verified: ${promote}`,\n      suggestedCommands: [promote, command],\n    }));\n  }\n  return {\n    ok: false,\n    data,\n    diagnostics,\n    nextActions,\n    failureKind: !alphaMatches ? \"npm-alpha-dist-tag-stale\" : \"npm-latest-dist-tag-stale\",\n    exitCode: 1,\n  };\n}"
       },
       "name": "runNpmDistTagCheck",
       "qualifiedName": "runNpmDistTagCheck",
       "span": {
-        "end": 49804,
-        "start": 45356
+        "end": 50060,
+        "start": 45612
       }
     },
     {
@@ -105872,14 +105926,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function runPackagePackDryRun(workspaceRoot: string): PackagePackCheckResult {\n  const result = spawnSync(\"npm\", [\"pack\", \"--dry-run\", \"--json\"], {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    windowsHide: true,\n  });\n  const command = \"npm pack --dry-run --json\" as const;\n  if (result.status !== 0) {\n    const failureDetail = result.error instanceof Error ? result.error.message : null;\n    return {\n      ok: false,\n      data: { command, dryRun: true, tarball: null, fileCount: 0 },\n      diagnostics: [\n        createDiagnostic({\n          severity: \"error\",\n          code: FORGE_RELEASE_PACKAGE_PACK_FAILED,\n          message: \"npm pack dry-run failed; release package contents could not be validated\",\n          fixHint: (result.stderr || result.stdout || failureDetail || \"Run npm pack --dry-run --json locally for details.\").trim(),\n          suggestedCommands: [\"npm pack --dry-run --json\"],\n        }),\n      ],\n      nextActions: [\"npm pack --dry-run --json\"],\n      failureKind: \"package-pack-failed\",\n      exitCode: 1,\n    };\n  }\n  try {\n    const parsed = JSON.parse(result.stdout || \"[]\") as unknown;\n    const pack = Array.isArray(parsed)\n      ? (parsed[0] as { filename?: unknown; files?: unknown[] } | undefined)\n      : undefined;\n    if (typeof pack?.filename !== \"string\" || !Array.isArray(pack.files)) {\n      return {\n        ok: false,\n        data: { command, dryRun: true, tarball: null, fileCount: 0 },\n        diagnostics: [\n          createDiagnostic({\n            severity: \"error\",\n            code: FORGE_RELEASE_PACKAGE_PACK_FAILED,\n            message: \"npm pack dry-run did not report package contents\",\n            fixHint: \"Run npm pack --dry-run --json locally and confirm it returns a tarball with file entries.\",\n            suggestedCommands: [\"npm pack --dry-run --json\"],\n          }),\n        ],\n        nextActions: [\"npm pack --dry-run --json\"],\n        failureKind: \"package-pack-missing-contents\",\n        exitCode: 1,\n      };\n    }\n    return {\n      ok: true,\n      data: {\n        command,\n        dryRun: true,\n        tarball: pack.filename,\n        fileCount: pack.files.length,\n      },\n      diagnostics: [],\n      exitCode: 0,\n    };\n  } catch (error) {\n    return {\n      ok: false,\n      data: { command, dryRun: true, tarball: null, fileCount: 0 },\n      diagnostics: [\n        createDiagnostic({\n          severity: \"error\",\n          code: FORGE_RELEASE_PACKAGE_PACK_FAILED,\n          message: \"npm pack dry-run returned invalid JSON\",\n          fixHint: error instanceof Error ? error.message : String(error),\n          suggestedCommands: [\"npm pack --dry-run --json\"],\n        }),\n      ],\n      nextActions: [\"npm pack --dry-run --json\"],\n      failureKind: \"package-pack-invalid-json\",\n      exitCode: 1,\n    };\n  }\n}"
       },
       "name": "runPackagePackDryRun",
       "qualifiedName": "runPackagePackDryRun",
       "span": {
-        "end": 44881,
-        "start": 42087
+        "end": 45137,
+        "start": 42343
       }
     },
     {
@@ -106127,14 +106181,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function runReleaseDoctorCommand(command: Extract<ForgeCommand, { kind: \"release\" }>): Promise<ReleaseDoctorResult> {\n  const release = await runReleaseCommand({\n    ...command,\n    action: \"check\",\n    allowMissingLocalRelease: true,\n    provider: command.provider as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n    target: command.target as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n  });\n  const sourcemaps = await runReleaseCommand({\n    ...command,\n    area: \"sourcemaps\",\n    action: \"check\",\n    provider: command.provider as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n    target: command.target as import(\"../compiler/release/types.ts\").ReleaseExportProvider | undefined,\n  });\n  const selfHost = await runSelfHostCommand({\n    subcommand: \"check\",\n    workspaceRoot: command.workspaceRoot,\n    json: command.json,\n    withWeb: true,\n    postgresVersion: \"16\",\n    runtimePort: 3765,\n    webPort: 3000,\n    preparedOnly: true,\n  });\n  const docs = runDocsCheckCommand({\n    workspaceRoot: command.workspaceRoot,\n    json: command.json,\n  });\n  const deployProduction = await runDeployCommand({\n    subcommand: \"check\",\n    workspaceRoot: command.workspaceRoot,\n    json: command.json,\n    target: \"docker\",\n    production: true,\n  });\n  const packagePack = runPackagePackDryRun(command.workspaceRoot);\n  const npmDistTags = runNpmDistTagCheck(command.workspaceRoot);\n  const checks: ReleaseDoctorCheck[] = [\n    {\n      name: \"release-prepared\",\n      ok: release.ok,\n      requiredForPublish: true,\n      state: (release.data as { state?: string } | undefined)?.state,\n      result: release,\n    },\n    {\n      name: \"sourcemaps\",\n      ok: sourcemaps.ok,\n      requiredForPublish: true,\n      result: sourcemaps,\n    },\n    {\n      name: \"self-host\",\n      ok: selfHost.ok,\n      requiredForPublish: false,\n      state: selfHost.state,\n      result: selfHost,\n    },\n    {\n      name: \"deploy-production\",\n      ok: deployProduction.ok,\n      requiredForPublish: false,\n      requiredForProduction: true,\n      result: deployProduction,\n    },\n    {\n      name: \"docs\",\n      ok: docs.ok,\n      requiredForPublish: true,\n      result: docs,\n    },\n    {\n      name: \"npm-pack-dry-run\",\n      ok: packagePack.ok,\n      requiredForPublish: true,\n      result: packagePack,\n    },\n    {\n      name: \"npm-dist-tags\",\n      ok: npmDistTags.ok,\n      requiredForPublish: false,\n      state: npmDistTags.failureKind ?? (npmDistTags.data.source === \"skipped\" ? \"skipped\" : \"current\"),\n      result: npmDistTags,\n    },\n  ];\n  const failed = checks.filter((check) => !check.ok).map((check) => check.name);\n  const notPrepared = checks\n    .filter((check) => check.state === \"missing-prepared-release\" || check.state === \"not-prepared\")\n    .map((check) => check.name);\n  const publishBlockers = checks\n    .filter((check) => check.requiredForPublish && !check.ok)\n    .map((check) => check.name);\n  const productionBlockers = checks\n    .filter((check) => check.requiredForProduction && !check.ok)\n    .map((check) => check.name);\n  const notPreparedPublishBlockers = checks\n    .filter((check) => check.requiredForPublish && (check.state === \"missing-prepared-release\" || check.state === \"not-prepared\"))\n    .map((check) => check.name);\n  const readyToPublish = publishBlockers.length === 0 && notPreparedPublishBlockers.length === 0;\n  const readyForProductionDeploy = productionBlockers.length === 0;\n  return {\n    schemaVersion: \"0.1.0\",\n    ok: readyToPublish,\n    readyToPublish,\n    readyForProductionDeploy,\n    summary: {\n      checks: checks.length,\n      failed,\n      notPrepared,\n      publishBlockers,\n      productionBlockers,\n    },\n    checks,\n    nextActions: uniqueNextActions(checks.flatMap((check) => check.result.nextActions ?? [])),\n    exitCode: readyToPublish ? 0 : 1,\n  };\n}"
       },
       "name": "runReleaseDoctorCommand",
       "qualifiedName": "runReleaseDoctorCommand",
       "span": {
-        "end": 53715,
-        "start": 49813
+        "end": 53971,
+        "start": 50069
       }
     },
     {
@@ -106410,19 +106464,19 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "57ed8c08a929464630c940bbc97e4c889d57de907f8affd33f36d0085ce53897",
+      "contentHash": "0a64938758bdf69a3eb7c8631e0d0d9c685302fcd661354bec56231be0a02be2",
       "file": "src/forge/cli/commands.ts",
       "id": "a3b33911e5ed015850783678dbebe285d84a25b38cbfbb8433e54c64b679690f",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
-        "sourceSlice": "function runStatusCommand(workspaceRoot: string): StatusCommandResult {\n  const summary = buildInspectSummary(workspaceRoot);\n  const drift = buildDriftInspect(workspaceRoot);\n  const handoff = buildHandoffInspect(workspaceRoot);\n  const gitSummary = buildWorkspaceGitSummary(workspaceRoot);\n  const git = {\n    available: gitSummary.available,\n    ...(gitSummary.error ? { error: gitSummary.error } : {}),\n    changed: gitSummary.changeSummary.changed,\n    staged: gitSummary.changeSummary.staged,\n    unstaged: gitSummary.changeSummary.unstaged,\n    untracked: gitSummary.changeSummary.untracked,\n  };\n  const summaryBlock = summary.summary as Record<string, unknown>;\n  const driftSummary = drift.summary as Record<string, unknown>;\n  const handoffSummary = handoff.summary as Record<string, unknown>;\n  const missingArtifacts = Number(summaryBlock.missingArtifacts ?? 0);\n  const tableDrift = Number(driftSummary.tableDrift ?? 0);\n  const generatedReady = missingArtifacts === 0;\n  const driftClean = driftSummary.ok === true;\n  const ok = driftClean && generatedReady;\n  const handoffDefaultReady = handoffSummary.defaultReady === true;\n  const changed = gitSummary.changeSummary.changed;\n  const generatedGitFiles = changed.byType.generated.count;\n  const authoredGitFiles = changed.total.count - generatedGitFiles;\n  const authoredGeneratedInputs =\n    changed.byType.source.count +\n    changed.byType.config.count +\n    changed.byType.operational.count;\n  const generatedNeedsCheck = generatedReady && driftClean && generatedGitFiles === 0 && authoredGeneratedInputs > 0;\n  const generatedState = !generatedReady\n    ? \"missing-artifacts\"\n    : generatedNeedsCheck\n      ? \"check-needed\"\n    : driftClean\n      ? \"ready\"\n      : \"drift\";\n  const generatedNextActionsRaw = generatedState === \"ready\"\n    ? [\"forge dev\", \"forge dev --once --json\", \"forge generate --check --json\"]\n    : generatedState === \"check-needed\"\n      ? [\"forge generate --check --json\", \"forge handoff --json\", \"forge dev --once --json\"]\n    : [\"forge generate\", \"forge check --json\", \"forge inspect drift --json\"];\n  const generatedNextActions = forgeCliCommandsForWorkspace(workspaceRoot, generatedNextActionsRaw);\n  const generatedGitExplanation = generatedGitFiles === 0\n    ? generatedNeedsCheck\n      ? \"git status has no generated artifact changes, but authored source/config changes mean freshness is unverified until forge generate --check runs\"\n      : \"git status has no generated artifact changes\"\n    : authoredGitFiles === 0\n      ? \"forge generate --check can be clean while git shows generated artifacts changed: generated files match current workspace inputs but differ from HEAD\"\n      : \"git status includes generated artifacts alongside authored changes; review authored inputs first\";\n  const [safeDevCommand, generatedCheckCommand, generatedRepairCommand] = forgeCliCommandsForWorkspace(workspaceRoot, [\n    \"forge dev\",\n    \"forge generate --check --json\",\n    \"forge generate\",\n  ]);\n  const frontendPresent = summaryBlock.frontendPresent === true;\n  const [\n    studioOpenCommand,\n    studioAttachCommand,\n    studioSnapshotCommand,\n    studioWatchCommand,\n    studioBridgeCommand,\n    studioDoctorCommand,\n    studioStartTargetAppCommand,\n    studioProbeCommand,\n  ] = forgeCliCommandsForWorkspace(workspaceRoot, [\n    \"forge studio open . --preview-port 5174 --target codex --json\",\n    \"forge studio attach . --preview-port 5174 --target codex --json\",\n    \"forge studio snapshot . --preview-port 5174 --target codex --json\",\n    \"forge studio watch . --preview-port 5174 --target codex --json\",\n    \"forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json\",\n    \"forge studio doctor . --preview-port 5174 --target codex --json\",\n    \"forge dev --port 3766 --web-port 5174\",\n    \"forge dev --once --json\",\n  ]);\n  const studio = {\n    openCommand: studioOpenCommand,\n    attachCommand: studioAttachCommand,\n    snapshotCommand: studioSnapshotCommand,\n    watchCommand: studioWatchCommand,\n    bridgeCommand: studioBridgeCommand,\n    doctorCommand: studioDoctorCommand,\n    targetPreviewUrl: \"http://127.0.0.1:5174\",\n    startTargetAppCommand: studioStartTargetAppCommand,\n    probeCommand: studioProbeCommand,\n    useful: frontendPresent,\n    note: frontendPresent\n      ? \"Attach this app to Forge Studio as an external-agent workroom; Studio should preview the target app on 5174.\"\n      : \"No frontend was detected, but Studio can still attach for hooks, posture, and agent context.\",\n  };\n\n  return {\n    ok,\n    data: {\n      schemaVersion: \"0.1.0\",\n      ok,\n      generated: {\n        state: generatedState,\n        ready: generatedReady,\n        driftClean,\n        freshness: generatedNeedsCheck ? \"unverified\" : generatedState === \"ready\" ? \"verified-or-unchanged\" : \"attention\",\n        authoredGeneratedInputs,\n        missingArtifacts,\n        tableDrift,\n        safeDevCommand,\n        checkCommand: generatedCheckCommand,\n        repairCommand: generatedRepairCommand,\n        git: {\n          changedFiles: changed.total.count,\n          authoredFiles: authoredGitFiles,\n          generatedFiles: generatedGitFiles,\n          explanation: generatedGitExplanation,\n        },\n        nextActions: generatedNextActions,\n      },\n      studio,\n      summary: {\n        project: summaryBlock.project,\n        generated: generatedState,\n        tables: summaryBlock.tables,\n        frontendPresent,\n        routes: summaryBlock.routes,\n        drift: driftClean ? \"clean\" : \"attention\",\n        agentTargets: summaryBlock.agentTargets,\n        missingAgentFiles: handoffSummary.missingRequiredFiles,\n        missingDefaultAgentFiles: handoffSummary.missingDefaultFiles,\n        missingRequiredAgentFiles: handoffSummary.missingRequiredFiles,\n        missingOptionalAgentFiles: handoffSummary.missingOptionalFiles,\n      },\n      checks: {\n        artifacts: {\n          missing: missingArtifacts,\n        },\n        schema: {\n          tableDrift,\n        },\n        handoff: {\n          targets: handoffSummary.targets,\n          missingFiles: handoffSummary.missingFiles,\n          missingDefaultFiles: handoffSummary.missingDefaultFiles,\n          missingRequiredFiles: handoffSummary.missingRequiredFiles,\n          missingOptionalFiles: handoffSummary.missingOptionalFiles,\n          defaultReady: handoffSummary.defaultReady,\n          requiredReady: handoffSummary.requiredReady,\n        },\n      },\n      git,\n      nextActions: forgeCliCommandsForWorkspace(\n        workspaceRoot,\n        ok\n          ? [\n            ...(generatedState === \"check-needed\" ? [\"forge generate --check --json\"] : []),\n            \"forge handoff --json\",\n            \"forge changed --json\",\n            \"forge dev\",\n            ...(frontendPresent ? [studio.openCommand, studio.bridgeCommand, studio.doctorCommand] : []),\n            ...(!handoffDefaultReady ? [\"forge agent prepare --target generic --json\"] : []),\n            \"forge inspect handoff --json\",\n            \"forge verify --changed\",\n          ]\n          : [\n            \"forge generate\",\n            \"forge handoff --json\",\n            \"forge changed --json\",\n            ...(frontendPresent ? [studio.openCommand, studio.bridgeCommand, studio.doctorCommand] : []),\n            \"forge inspect drift --json\",\n            \"forge agent prepare --target codex --json\",\n          ],\n      ),\n    },\n    exitCode: ok ? 0 : 1,\n  };\n}"
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
+        "sourceSlice": "async function runStatusCommand(workspaceRoot: string): Promise<StatusCommandResult> {\n  const summary = buildInspectSummary(workspaceRoot);\n  const drift = buildDriftInspect(workspaceRoot);\n  const handoff = buildHandoffInspect(workspaceRoot);\n  const gitSummary = buildWorkspaceGitSummary(workspaceRoot);\n  const generatedVerification = await runGenerateCommand({\n    workspaceRoot,\n    check: true,\n    dryRun: false,\n    json: true,\n    concurrency: 4,\n  });\n  const git = {\n    available: gitSummary.available,\n    ...(gitSummary.error ? { error: gitSummary.error } : {}),\n    changed: gitSummary.changeSummary.changed,\n    staged: gitSummary.changeSummary.staged,\n    unstaged: gitSummary.changeSummary.unstaged,\n    untracked: gitSummary.changeSummary.untracked,\n  };\n  const summaryBlock = summary.summary as Record<string, unknown>;\n  const driftSummary = drift.summary as Record<string, unknown>;\n  const handoffSummary = handoff.summary as Record<string, unknown>;\n  const missingArtifacts = Number(summaryBlock.missingArtifacts ?? 0);\n  const tableDrift = Number(driftSummary.tableDrift ?? 0);\n  const generatedReady = missingArtifacts === 0;\n  const generatedFresh = generatedVerification.exitCode === 0;\n  const driftClean = driftSummary.ok === true && generatedFresh;\n  const ok = driftClean && generatedReady;\n  const handoffDefaultReady = handoffSummary.defaultReady === true;\n  const changed = gitSummary.changeSummary.changed;\n  const generatedGitFiles = changed.byType.generated.count;\n  const authoredGitFiles = changed.total.count - generatedGitFiles;\n  const authoredGeneratedInputs =\n    changed.byType.source.count +\n    changed.byType.config.count +\n    changed.byType.operational.count;\n  const generatedState = !generatedReady\n    ? \"missing-artifacts\"\n    : driftClean\n      ? \"ready\"\n      : \"drift\";\n  const generatedNextActionsRaw = generatedState === \"ready\"\n    ? [\"forge dev\", \"forge dev --once --json\", \"forge generate --check --json\"]\n    : [\"forge generate\", \"forge check --json\", \"forge inspect drift --json\"];\n  const generatedNextActions = forgeCliCommandsForWorkspace(workspaceRoot, generatedNextActionsRaw);\n  const generatedGitExplanation = !generatedFresh\n    ? \"deterministic generation verification found stale artifacts; git cleanliness does not prove generated freshness\"\n    : generatedGitFiles === 0\n    ? \"git status has no generated artifact changes and deterministic generation verification passed\"\n    : authoredGitFiles === 0\n      ? \"forge generate --check can be clean while git shows generated artifacts changed: generated files match current workspace inputs but differ from HEAD\"\n      : \"git status includes generated artifacts alongside authored changes; review authored inputs first\";\n  const [safeDevCommand, generatedCheckCommand, generatedRepairCommand] = forgeCliCommandsForWorkspace(workspaceRoot, [\n    \"forge dev\",\n    \"forge generate --check --json\",\n    \"forge generate\",\n  ]);\n  const frontendPresent = summaryBlock.frontendPresent === true;\n  const [\n    studioOpenCommand,\n    studioAttachCommand,\n    studioSnapshotCommand,\n    studioWatchCommand,\n    studioBridgeCommand,\n    studioDoctorCommand,\n    studioStartTargetAppCommand,\n    studioProbeCommand,\n  ] = forgeCliCommandsForWorkspace(workspaceRoot, [\n    \"forge studio open . --preview-port 5174 --target codex --json\",\n    \"forge studio attach . --preview-port 5174 --target codex --json\",\n    \"forge studio snapshot . --preview-port 5174 --target codex --json\",\n    \"forge studio watch . --preview-port 5174 --target codex --json\",\n    \"forge studio bridge . --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --json\",\n    \"forge studio doctor . --preview-port 5174 --target codex --json\",\n    \"forge dev --port 3766 --web-port 5174\",\n    \"forge dev --once --json\",\n  ]);\n  const studio = {\n    openCommand: studioOpenCommand,\n    attachCommand: studioAttachCommand,\n    snapshotCommand: studioSnapshotCommand,\n    watchCommand: studioWatchCommand,\n    bridgeCommand: studioBridgeCommand,\n    doctorCommand: studioDoctorCommand,\n    targetPreviewUrl: \"http://127.0.0.1:5174\",\n    startTargetAppCommand: studioStartTargetAppCommand,\n    probeCommand: studioProbeCommand,\n    useful: frontendPresent,\n    note: frontendPresent\n      ? \"Attach this app to Forge Studio as an external-agent workroom; Studio should preview the target app on 5174.\"\n      : \"No frontend was detected, but Studio can still attach for hooks, posture, and agent context.\",\n  };\n\n  return {\n    ok,\n    data: {\n      schemaVersion: \"0.1.0\",\n      ok,\n      generated: {\n        state: generatedState,\n        ready: generatedReady,\n        driftClean,\n        freshness: generatedState === \"ready\" ? \"verified\" : generatedFresh ? \"attention\" : \"stale\",\n        authoredGeneratedInputs,\n        missingArtifacts,\n        tableDrift,\n        verification: {\n          checked: true,\n          fresh: generatedFresh,\n          changedFiles: generatedVerification.changed.length,\n          sampleChanged: generatedVerification.changed.slice(0, 8),\n          hiddenChanged: Math.max(0, generatedVerification.changed.length - 8),\n          diagnosticCodes: [...new Set(generatedVerification.errors.map((diagnostic) => diagnostic.code))],\n        },\n        safeDevCommand,\n        checkCommand: generatedCheckCommand,\n        repairCommand: generatedRepairCommand,\n        git: {\n          changedFiles: changed.total.count,\n          authoredFiles: authoredGitFiles,\n          generatedFiles: generatedGitFiles,\n          explanation: generatedGitExplanation,\n        },\n        nextActions: generatedNextActions,\n      },\n      studio,\n      summary: {\n        project: summaryBlock.project,\n        generated: generatedState,\n        tables: summaryBlock.tables,\n        frontendPresent,\n        routes: summaryBlock.routes,\n        drift: driftClean ? \"clean\" : \"attention\",\n        agentTargets: summaryBlock.agentTargets,\n        missingAgentFiles: handoffSummary.missingRequiredFiles,\n        missingDefaultAgentFiles: handoffSummary.missingDefaultFiles,\n        missingRequiredAgentFiles: handoffSummary.missingRequiredFiles,\n        missingOptionalAgentFiles: handoffSummary.missingOptionalFiles,\n      },\n      checks: {\n        artifacts: {\n          missing: missingArtifacts,\n        },\n        schema: {\n          tableDrift,\n        },\n        handoff: {\n          targets: handoffSummary.targets,\n          missingFiles: handoffSummary.missingFiles,\n          missingDefaultFiles: handoffSummary.missingDefaultFiles,\n          missingRequiredFiles: handoffSummary.missingRequiredFiles,\n          missingOptionalFiles: handoffSummary.missingOptionalFiles,\n          defaultReady: handoffSummary.defaultReady,\n          requiredReady: handoffSummary.requiredReady,\n        },\n      },\n      git,\n      nextActions: forgeCliCommandsForWorkspace(\n        workspaceRoot,\n        ok\n          ? [\n            \"forge handoff --json\",\n            \"forge changed --json\",\n            \"forge dev\",\n            ...(frontendPresent ? [studio.openCommand, studio.bridgeCommand, studio.doctorCommand] : []),\n            ...(!handoffDefaultReady ? [\"forge agent prepare --target generic --json\"] : []),\n            \"forge inspect handoff --json\",\n            \"forge verify --changed\",\n          ]\n          : [\n            \"forge generate\",\n            \"forge handoff --json\",\n            \"forge changed --json\",\n            ...(frontendPresent ? [studio.openCommand, studio.bridgeCommand, studio.doctorCommand] : []),\n            \"forge inspect drift --json\",\n            \"forge agent prepare --target codex --json\",\n          ],\n      ),\n    },\n    exitCode: ok ? 0 : 1,\n  };\n}"
       },
       "name": "runStatusCommand",
       "qualifiedName": "runStatusCommand",
       "span": {
-        "end": 32163,
+        "end": 32419,
         "start": 24717
       }
     },
@@ -107855,20 +107909,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "20fc80fe5e0820fb7963308d6f9b488e2991325c7bf23257fa4981d123023ab8",
+      "contentHash": "bbc18ae3ac4bad07d1817795f2db1f8061e3e6cfabb8a599cb4ecb7f9d73db07",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "ee630d91d02a32243917a7bd7a884de57af52c328bf9a7581421e6da6c8da0c6",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function scopedSourceTextForRoute(route: ImportedRoute, text: string): string | null {\n  if (route.source === \"next-app-router\" && route.handler) {\n    return sliceUntilNextMatch(\n      text,\n      new RegExp(`export\\\\s+(?:async\\\\s+)?function\\\\s+${escapeRegExp(route.handler)}\\\\b`, \"u\"),\n      /export\\s+(?:async\\s+)?function\\s+(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\\b/gu,\n    );\n  }\n  if (route.source === \"express\") {\n    const method = route.method.toLowerCase();\n    const matcher = new RegExp(`\\\\b(?:app|router)\\\\s*\\\\.\\\\s*${escapeRegExp(method)}\\\\s*\\\\(\\\\s*[\"'\\`]${escapeRegExp(route.path)}[\"'\\`]`, \"u\");\n    return sliceUntilNextMatch(\n      text,\n      matcher,\n      /\\b(?:app|router)\\s*\\.\\s*(?:get|post|put|patch|delete|all)\\s*\\(\\s*[\"'`][^\"'`]+[\"'`]/giu,\n    );\n  }\n  if (route.source === \"nest\") {\n    const method = route.method.charAt(0).toUpperCase() + route.method.slice(1).toLowerCase();\n    return sliceUntilNextMatch(\n      text,\n      new RegExp(`@${escapeRegExp(method)}\\\\s*\\\\(`, \"u\"),\n      /@(Get|Post|Put|Patch|Delete|All)\\s*\\(/gu,\n    );\n  }\n  return null;\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function scopedSourceTextForRoute(route: ImportedRoute, text: string): string | null {\n  if (route.source === \"next-app-router\" && route.handler) {\n    return sliceUntilNextMatch(\n      text,\n      new RegExp(`export\\\\s+(?:async\\\\s+)?function\\\\s+${escapeRegExp(route.handler)}\\\\b`, \"u\"),\n      /export\\s+(?:async\\s+)?function\\s+(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\\b/gu,\n    );\n  }\n  if (route.source === \"express\") {\n    const method = route.method.toLowerCase();\n    const matcher = new RegExp(`\\\\b(?:app|router)\\\\s*\\\\.\\\\s*${escapeRegExp(method)}\\\\s*\\\\(\\\\s*[\"'\\`]${escapeRegExp(route.path)}[\"'\\`]`, \"u\");\n    return sliceUntilNextMatch(\n      text,\n      matcher,\n      /\\b(?:app|router)\\s*\\.\\s*(?:get|post|put|patch|delete|all)\\s*\\(\\s*[\"'`][^\"'`]+[\"'`]/giu,\n    );\n  }\n  if (route.source === \"nest\") {\n    const method = route.method.charAt(0).toUpperCase() + route.method.slice(1).toLowerCase();\n    return sliceUntilNextMatch(\n      text,\n      new RegExp(`@${escapeRegExp(method)}\\\\s*\\\\(`, \"u\"),\n      /@(Get|Post|Put|Patch|Delete|All)\\s*\\(/gu,\n    );\n  }\n  if (route.source === \"spring\" && route.handler) {\n    return sliceUntilNextMatch(\n      text,\n      new RegExp(`@(?:GetMapping|PostMapping|PutMapping|PatchMapping|DeleteMapping|RequestMapping)[\\\\s\\\\S]{0,500}?\\\\b${escapeRegExp(route.handler)}\\\\s*\\\\(`, \"u\"),\n      /@(GetMapping|PostMapping|PutMapping|PatchMapping|DeleteMapping|RequestMapping)\\b/gu,\n    );\n  }\n  return null;\n}"
       },
       "name": "scopedSourceTextForRoute",
       "qualifiedName": "scopedSourceTextForRoute",
       "span": {
-        "end": 13369,
-        "start": 12285
+        "end": 17459,
+        "start": 16013
       }
     },
     {
@@ -111737,14 +111791,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function sliceUntilNextMatch(text: string, startPattern: RegExp, nextPattern: RegExp): string | null {\n  const start = text.search(startPattern);\n  if (start < 0) {\n    return null;\n  }\n  nextPattern.lastIndex = start + 1;\n  const next = nextPattern.exec(text);\n  return text.slice(start, next?.index ?? text.length);\n}"
       },
       "name": "sliceUntilNextMatch",
       "qualifiedName": "sliceUntilNextMatch",
       "span": {
-        "end": 13690,
-        "start": 13371
+        "end": 17780,
+        "start": 17461
       }
     },
     {
@@ -112026,7 +112080,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function sortedDirectoryNames(workspaceRoot: string, relative: string): string[] {\n  const absolute = join(workspaceRoot, relative);\n  if (!nodeFileSystem.exists(absolute)) {\n    return [];\n  }\n  return nodeFileSystem\n    .readDir(absolute)\n    .filter((entry) => entry.isDirectory)\n    .map((entry) => entry.name)\n    .sort();\n}"
       },
       "name": "sortedDirectoryNames",
@@ -112213,14 +112267,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function sourceTextForRoute(route: ImportedRoute, files: SourceFile[]): string {\n  const text = files.find((file) => file.relativePath === route.file)?.text ?? \"\";\n  if (!text) {\n    return \"\";\n  }\n  return scopedSourceTextForRoute(route, text) ?? text;\n}"
       },
       "name": "sourceTextForRoute",
       "qualifiedName": "sourceTextForRoute",
       "span": {
-        "end": 12283,
-        "start": 12028
+        "end": 16011,
+        "start": 15756
       }
     },
     {
@@ -112530,6 +112584,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "98f6d3e1f0b0e168ec4bfde559a718083482ab919d5662da987612ae7671c564",
+      "file": "src/forge/brownfield-import/index.ts",
+      "id": "799feb1b0d6987cfa0deaaee9637d8d63cc136cdef8ff3d482a21bc8cafec0c6",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function springHandlerName(text: string): string | undefined {\n  return text.match(/(?:public|protected|private)?\\s*(?:static\\s+)?(?:[\\w.$<>?,\\[\\]]+\\s+)+(\\w+)\\s*\\(/u)?.[1];\n}"
+      },
+      "name": "springHandlerName",
+      "qualifiedName": "springHandlerName",
+      "span": {
+        "end": 8789,
+        "start": 8615
+      }
+    },
+    {
+      "contentHash": "79fd007f93ef2a7105135b86ba5b628dd3b062de725a7634d43c41f93d153a16",
+      "file": "src/forge/brownfield-import/index.ts",
+      "id": "cd9171eb19ef1ef1f03effbdca2549625887675014874b1e3ca804a8f1d4b3ff",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function springMappingPath(argumentsText: string): string {\n  return argumentsText.match(/(?:path|value)\\s*=\\s*[\"']([^\"']*)[\"']/u)?.[1] ??\n    argumentsText.match(/[\"']([^\"']*)[\"']/u)?.[1] ??\n    \"\";\n}"
+      },
+      "name": "springMappingPath",
+      "qualifiedName": "springMappingPath",
+      "span": {
+        "end": 8613,
+        "start": 8412
+      }
+    },
+    {
       "contentHash": "11931753eaa53a1725724cffa5ce83d69332a1c7fce2d3f7ed3b1ace55e920e6",
       "file": "src/forge/cli/rls.ts",
       "id": "52b4e99b2e5248479e9abcf8bb3016381e40cf01026cfbc0bb3d2faf6c18c11c",
@@ -112587,14 +112675,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function stableId(prefix: string, parts: string[]): string {\n  let hash = 2166136261;\n  for (const char of parts.join(\"|\")) {\n    hash ^= char.charCodeAt(0);\n    hash = Math.imul(hash, 16777619);\n  }\n  return `${prefix}_${(hash >>> 0).toString(36)}`;\n}"
       },
       "name": "stableId",
       "qualifiedName": "stableId",
       "span": {
-        "end": 5582,
-        "start": 5330
+        "end": 7053,
+        "start": 6801
       }
     },
     {
@@ -113635,20 +113723,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "8b5e89c3005cff0eadce0c14e31f47da9e8c254a28273e55856e233fc4d89664",
+      "contentHash": "ccb889500080d33abb127d4aa655a1029fbb644ba480b9e40656f3c9047e8f74",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "af1678b15821db5be68b8cb7ecdd9e27656884b607e84cbdb5587e61c3705869",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
-        "sourceSlice": "function stripExtension(segment: string): string {\n  return segment.replace(/\\.(ts|tsx|js|jsx|mjs|cjs)$/u, \"\");\n}"
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
+        "sourceSlice": "function stripExtension(segment: string): string {\n  return segment.replace(/\\.(ts|tsx|js|jsx|mjs|cjs|java)$/u, \"\");\n}"
       },
       "name": "stripExtension",
       "qualifiedName": "stripExtension",
       "span": {
-        "end": 5697,
-        "start": 5584
+        "end": 7173,
+        "start": 7055
       }
     },
     {
@@ -113879,14 +113967,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "function summarizeChangeTypes(summary: CategorizedFileSummary): string {\n  return summary.primaryTypes\n    .slice(0, 5)\n    .map((type) => `${summary.byType[type].count} ${type}`)\n    .join(\", \");\n}"
       },
       "name": "summarizeChangeTypes",
       "qualifiedName": "summarizeChangeTypes",
       "span": {
-        "end": 6300,
-        "start": 6102
+        "end": 6660,
+        "start": 6462
       }
     },
     {
@@ -114848,14 +114936,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "function timestampFieldNames(dataGraph: DataGraph): Set<string> {\n  const fields = new Set<string>();\n  for (const table of dataGraph.tables) {\n    for (const field of table.fields) {\n      if ([\"timestamp\", \"timestamptz\"].includes(normalizeSchemaType(field.type))) {\n        fields.add(field.name);\n      }\n    }\n  }\n  return fields;\n}"
       },
       "name": "timestampFieldNames",
       "qualifiedName": "timestampFieldNames",
       "span": {
-        "end": 37181,
-        "start": 36845
+        "end": 37437,
+        "start": 37101
       }
     },
     {
@@ -116769,14 +116857,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "async function withWorkspaceCwd<T>(workspaceRoot: string, fn: () => Promise<T>): Promise<T> {\n  const previous = process.cwd();\n  const target = resolve(workspaceRoot);\n  if (resolve(previous).toLowerCase() === target.toLowerCase()) {\n    return fn();\n  }\n  process.chdir(target);\n  try {\n    return await fn();\n  } finally {\n    process.chdir(previous);\n  }\n}"
       },
       "name": "withWorkspaceCwd",
       "qualifiedName": "withWorkspaceCwd",
       "span": {
-        "end": 35616,
-        "start": 35256
+        "end": 35872,
+        "start": 35512
       }
     },
     {
@@ -117415,14 +117503,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "function writeArtifact(workspaceRoot: string, relativePath: string, value: unknown): void {\n  const absolute = artifactPath(workspaceRoot, relativePath);\n  mkdirSync(dirname(absolute), { recursive: true });\n  const content = typeof value === \"string\" ? value : `${JSON.stringify(value, null, 2)}\\n`;\n  writeFileSync(absolute, content, \"utf8\");\n}"
       },
       "name": "writeArtifact",
       "qualifiedName": "writeArtifact",
       "span": {
-        "end": 23677,
-        "start": 23332
+        "end": 27789,
+        "start": 27444
       }
     },
     {
@@ -119999,14 +120087,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface BrownfieldImportArtifacts {\n  inventory: string;\n  routes: string;\n  frontendCalls: string;\n  candidateEntries: string;\n  riskReport: string;\n  migrationPlan: string;\n  importedAgentContract: string;\n}"
       },
       "name": "BrownfieldImportArtifacts",
       "qualifiedName": "BrownfieldImportArtifacts",
       "span": {
-        "end": 2544,
-        "start": 2333
+        "end": 2555,
+        "start": 2344
       }
     },
     {
@@ -120016,7 +120104,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface BrownfieldImportCommandOptions {\n  subcommand: BrownfieldImportSubcommand;\n  json: boolean;\n  dryRun: boolean;\n  workspaceRoot: string;\n  entry?: string;\n  target?: string;\n}"
       },
       "name": "BrownfieldImportCommandOptions",
@@ -120033,14 +120121,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface BrownfieldImportResult {\n  schemaVersion: \"0.1.0\";\n  feature: \"H49\";\n  subcommand: BrownfieldImportSubcommand;\n  workspaceRoot: string;\n  wroteArtifacts: boolean;\n  artifacts: BrownfieldImportArtifacts;\n  inventory: ImportedInventory | null;\n  routes: ImportedRoute[];\n  frontendCalls: ImportedFrontendCall[];\n  candidateEntries: ImportedCandidateEntry[];\n  riskReport: ImportedRiskReport | null;\n  migrationPlan: string | null;\n  exitCode: 0 | 1;\n  failureKind?: string;\n}"
       },
       "name": "BrownfieldImportResult",
       "qualifiedName": "BrownfieldImportResult",
       "span": {
-        "end": 3036,
-        "start": 2553
+        "end": 3047,
+        "start": 2564
       }
     },
     {
@@ -125150,14 +125238,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedCandidateEntry {\n  id: string;\n  name: string;\n  kind: ImportedEntryKind;\n  method: string;\n  path: string;\n  routeId: string;\n  file: string;\n  origin: \"imported\";\n  assurance: ImportedAssurance;\n  reviewStatus: ImportedReviewStatus;\n  visibleToAgent: boolean;\n  needsApproval: boolean;\n  confidence: number;\n  risks: string[];\n  evidence: string[];\n}"
       },
       "name": "ImportedCandidateEntry",
       "qualifiedName": "ImportedCandidateEntry",
       "span": {
-        "end": 1858,
-        "start": 1488
+        "end": 1869,
+        "start": 1499
       }
     },
     {
@@ -125167,14 +125255,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedDependencyInventory {\n  dependencies: string[];\n  devDependencies: string[];\n  scripts: string[];\n  frameworks: string[];\n  dataPackages: string[];\n  externalPackages: string[];\n}"
       },
       "name": "ImportedDependencyInventory",
       "qualifiedName": "ImportedDependencyInventory",
       "span": {
-        "end": 779,
-        "start": 582
+        "end": 790,
+        "start": 593
       }
     },
     {
@@ -125184,14 +125272,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedFrontendCall {\n  id: string;\n  file: string;\n  client: \"fetch\" | \"axios\";\n  method: string;\n  url: string;\n  routeId?: string;\n  confidence: number;\n}"
       },
       "name": "ImportedFrontendCall",
       "qualifiedName": "ImportedFrontendCall",
       "span": {
-        "end": 1479,
-        "start": 1311
+        "end": 1490,
+        "start": 1322
       }
     },
     {
@@ -125201,14 +125289,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedInventory {\n  schemaVersion: \"0.1.0\";\n  origin: \"imported\";\n  assurance: ImportedAssurance;\n  workspaceRoot: string;\n  generatedAt: string;\n  packageName?: string;\n  dependencies: ImportedDependencyInventory;\n  filesScanned: number;\n  sourceFiles: string[];\n  env: {\n    processEnv: string[];\n    envFiles: string[];\n  };\n}"
       },
       "name": "ImportedInventory",
       "qualifiedName": "ImportedInventory",
       "span": {
-        "end": 1129,
-        "start": 788
+        "end": 1140,
+        "start": 799
       }
     },
     {
@@ -125218,14 +125306,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedRiskFinding {\n  code: string;\n  severity: \"info\" | \"warning\" | \"error\";\n  file?: string;\n  routeId?: string;\n  message: string;\n}"
       },
       "name": "ImportedRiskFinding",
       "qualifiedName": "ImportedRiskFinding",
       "span": {
-        "end": 2014,
-        "start": 1867
+        "end": 2025,
+        "start": 1878
       }
     },
     {
@@ -125235,14 +125323,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedRiskReport {\n  schemaVersion: \"0.1.0\";\n  summary: {\n    routeCount: number;\n    frontendCallCount: number;\n    candidateCount: number;\n    commandCount: number;\n    queryCount: number;\n    hiddenFromAgents: number;\n    needsApproval: number;\n  };\n  findings: ImportedRiskFinding[];\n}"
       },
       "name": "ImportedRiskReport",
       "qualifiedName": "ImportedRiskReport",
       "span": {
-        "end": 2324,
-        "start": 2023
+        "end": 2335,
+        "start": 2034
       }
     },
     {
@@ -125252,14 +125340,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "interface ImportedRoute {\n  id: string;\n  method: string;\n  path: string;\n  file: string;\n  source: ImportedRouteSource;\n  handler?: string;\n  confidence: number;\n}"
       },
       "name": "ImportedRoute",
       "qualifiedName": "ImportedRoute",
       "span": {
-        "end": 1302,
-        "start": 1138
+        "end": 1313,
+        "start": 1149
       }
     },
     {
@@ -126238,14 +126326,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "interface NpmDistTagCheckResult {\n  ok: boolean;\n  data: {\n    command: string;\n    packageName: string | null;\n    packageVersion: string | null;\n    alphaVersion: string | null;\n    latestVersion: string | null;\n    alphaMatches: boolean;\n    latestMatches: boolean;\n    source: \"npm-view\" | \"env-fixture\" | \"skipped\";\n  };\n  diagnostics: ReturnType<typeof createDiagnostic>[];\n  nextActions?: string[];\n  failureKind?: string;\n  exitCode: 0 | 1;\n}"
       },
       "name": "NpmDistTagCheckResult",
       "qualifiedName": "NpmDistTagCheckResult",
       "span": {
-        "end": 41717,
-        "start": 41267
+        "end": 41973,
+        "start": 41523
       }
     },
     {
@@ -126612,14 +126700,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "interface PackagePackCheckResult {\n  ok: boolean;\n  data: {\n    command: \"npm pack --dry-run --json\";\n    dryRun: true;\n    tarball: string | null;\n    fileCount: number;\n  };\n  diagnostics: ReturnType<typeof createDiagnostic>[];\n  nextActions?: string[];\n  failureKind?: string;\n  exitCode: 0 | 1;\n}"
       },
       "name": "PackagePackCheckResult",
       "qualifiedName": "PackagePackCheckResult",
       "span": {
-        "end": 41265,
-        "start": 40965
+        "end": 41521,
+        "start": 41221
       }
     },
     {
@@ -127751,14 +127839,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "interface ReleaseDoctorCheck {\n  name: string;\n  ok: boolean;\n  requiredForPublish: boolean;\n  requiredForProduction?: boolean;\n  state?: string;\n  result: ReleaseCommandResult | SelfHostCommandResult | DocsCheckResult | DeployCommandResult | PackagePackCheckResult | NpmDistTagCheckResult;\n}"
       },
       "name": "ReleaseDoctorCheck",
       "qualifiedName": "ReleaseDoctorCheck",
       "span": {
-        "end": 40963,
-        "start": 40671
+        "end": 41219,
+        "start": 40927
       }
     },
     {
@@ -127768,14 +127856,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "interface ReleaseDoctorResult {\n  schemaVersion: \"0.1.0\";\n  ok: boolean;\n  readyToPublish: boolean;\n  readyForProductionDeploy: boolean;\n  summary: {\n    checks: number;\n    failed: string[];\n    notPrepared: string[];\n    publishBlockers: string[];\n    productionBlockers: string[];\n  };\n  checks: ReleaseDoctorCheck[];\n  nextActions: string[];\n  exitCode: 0 | 1;\n}"
       },
       "name": "ReleaseDoctorResult",
       "qualifiedName": "ReleaseDoctorResult",
       "span": {
-        "end": 42085,
-        "start": 41719
+        "end": 42341,
+        "start": 41975
       }
     },
     {
@@ -129570,14 +129658,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "6746537a067feff4f89eeee8d1fe2f695ed019f8dd3c080b596936915b6580a4",
+        "fileContentHash": "49714072f69443d1e10665910512e8e4d6685041062fe47e036d6de8be60689a",
         "sourceSlice": "interface SourceFile {\n  relativePath: string;\n  absolutePath: string;\n  text: string;\n}"
       },
       "name": "SourceFile",
       "qualifiedName": "SourceFile",
       "span": {
-        "end": 1469,
-        "start": 1381
+        "end": 1478,
+        "start": 1390
       }
     },
     {
@@ -129774,7 +129862,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03b61020273427b942b5d8e9c6952c62bd2d6c8c2f84fe0bb87cecc35e4b1c5d",
+        "fileContentHash": "6e6d7c00eb23f1c50ac41563ab7ea50f626609f87167a14b98f112dcb3000f79",
         "sourceSlice": "interface StatusCommandResult {\n  ok: boolean;\n  data: Record<string, unknown>;\n  exitCode: 0 | 1;\n}"
       },
       "name": "StatusCommandResult",
@@ -132154,7 +132242,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "type BrownfieldImportSubcommand = \"analyze\" | \"inspect\";"
       },
       "name": "BrownfieldImportSubcommand",
@@ -132273,7 +132361,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "type CategorizedFileSummary = {\n  total: FileListSummary;\n  byType: Record<ChangeType, FileListSummary>;\n  primaryTypes: ChangeType[];\n};"
       },
       "name": "CategorizedFileSummary",
@@ -132290,7 +132378,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "type ChangeClassifier = (file: string) => ChangeType;"
       },
       "name": "ChangeClassifier",
@@ -132307,7 +132395,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "type ChangeType =\n  | \"source\"\n  | \"tests\"\n  | \"docs\"\n  | \"generated\"\n  | \"operational\"\n  | \"assets\"\n  | \"config\"\n  | \"other\";"
       },
       "name": "ChangeType",
@@ -132732,7 +132820,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "type DiffPlan = {\n  first: \"authored\";\n  then: \"generated\";\n  generatedCollapsedByDefault: boolean;\n  generatedFiles: number;\n  authoredFiles: number;\n  authoredDiffCommand: string;\n  generatedDiffCommand: string;\n  fullDiffCommand: string;\n  summary: string;\n};"
       },
       "name": "DiffPlan",
@@ -132953,7 +133041,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "65a6f5be2e34bf8688483285773a9a61cfd6a64ff80cfdaaeaa588fa0d155913",
+        "fileContentHash": "7f2a0d202840d0571083527fb3f214c43b9c36f401f877d672ab9fb8545c78d6",
         "sourceSlice": "type FileListSummary = {\n  count: number;\n  sample: string[];\n  hidden: number;\n};"
       },
       "name": "FileListSummary",
@@ -133956,7 +134044,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "type ImportedAssurance = \"static-scan\";"
       },
       "name": "ImportedAssurance",
@@ -133973,7 +134061,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "type ImportedEntryKind = \"command\" | \"command-candidate\" | \"query\" | \"unknown\";"
       },
       "name": "ImportedEntryKind",
@@ -133990,7 +134078,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
         "sourceSlice": "type ImportedReviewStatus = \"needs-review\" | \"approved\" | \"rejected\";"
       },
       "name": "ImportedReviewStatus",
@@ -134001,19 +134089,19 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "56b7c813ca92498db843acbaf4bdebd7ee3b7870f67e385a206909499e8a64a3",
+      "contentHash": "f48b48b0baa3e8ddaebcafe90320d0c10940db62f6fc2108177cbbb92b860bd6",
       "file": "src/forge/brownfield-import/types.ts",
       "id": "6806ac664e9e1660539093498b48b67a23a13cd728818b3db9bd3e720606a53b",
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "113a82ff9c3360da2e287ed9bfe728b5fa1a7f8e15104b50e9345eacdcaaa642",
-        "sourceSlice": "type ImportedRouteSource = \"next-app-router\" | \"next-pages-api\" | \"express\" | \"nest\" | \"unknown\";"
+        "fileContentHash": "9b2987532d6052ac75d03f265be912203d93e1756d371fa5cb33374e69964367",
+        "sourceSlice": "type ImportedRouteSource = \"next-app-router\" | \"next-pages-api\" | \"express\" | \"nest\" | \"spring\" | \"unknown\";"
       },
       "name": "ImportedRouteSource",
       "qualifiedName": "ImportedRouteSource",
       "span": {
-        "end": 573,
+        "end": 584,
         "start": 476
       }
     },

@@ -309,7 +309,7 @@ Common command groups:
 | `forge release` | Release/source-map bridge and symbolication |
 | `forge agent`, `forge agent-contract` | Agent-facing contract, adapter exports, context, install, ingest, and memory commands |
 | `forge mcp serve` | MCP server for external agents to read Forge context, memory, timeline, and inspect surfaces |
-| `forge import analyze`, `forge import inspect` | Brownfield TypeScript/JavaScript app inventory and reviewed migration planning |
+| `forge import analyze`, `forge import inspect` | Brownfield TypeScript/JavaScript and Java/Spring app inventory with reviewed migration planning |
 | `forge inspect imported --json` | Inspect `.forge/import` analysis artifacts |
 | `forge self-host` | Self-host packaging and checks |
 
