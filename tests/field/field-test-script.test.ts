@@ -52,6 +52,8 @@ describe("field-test script", () => {
     expect(source).toContain('["--web-port", "0"]');
     expect(source).toContain('"--skip-startup-console"');
     expect(source).toContain("waitForDevStartup");
+    expect(source).toContain("process.env.RUNNER_TEMP");
+    expect(source).toContain('mkdtemp(join(tempBase, "forgeos-field-"))');
   });
 
   test("vendor-access probes verify root organization tenant isolation", () => {

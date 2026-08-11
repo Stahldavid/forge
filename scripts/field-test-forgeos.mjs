@@ -944,7 +944,15 @@ async function main() {
     return;
   }
 
-  const appRoot = await mkdtemp(join(tmpdir(), "forgeos-field-"));
+  // GitHub's Windows runner checks the repository out on D: while os.tmpdir()
+  // resolves to C:. Package managers that create workspace links (pnpm/Bun)
+  // cannot reliably link a local file dependency across those drives. The
+  // runner-provided temp directory is on the workspace drive and is also the
+  // preferred bounded scratch location on the other hosted runners.
+  const tempBase = process.env.RUNNER_TEMP && isAbsolute(process.env.RUNNER_TEMP)
+    ? process.env.RUNNER_TEMP
+    : tmpdir();
+  const appRoot = await mkdtemp(join(tempBase, "forgeos-field-"));
   const results = [];
   try {
     for (const testCase of cases) {

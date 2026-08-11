@@ -70,4 +70,26 @@ describe("Node-compatible CLI template scaffolding", () => {
       rmSync(workspace, { recursive: true, force: true });
     }
   }, 30_000);
+
+  test("pnpm scaffolding writes its native workspace manifest", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-node-pnpm-workspace-"));
+    try {
+      const result = await runNodeForge([
+        "new",
+        "pnpm-app",
+        "--template",
+        "minimal-web",
+        "--package-manager",
+        "pnpm",
+        "--no-install",
+        "--no-git",
+      ], { cwd: workspace });
+
+      expect(result.exitCode).toBe(0);
+      expect(readFileSync(join(workspace, "pnpm-app", "pnpm-workspace.yaml"), "utf8"))
+        .toBe('packages:\n  - "web"\n');
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

@@ -287,6 +287,32 @@ function ensureGitignore(targetDir: string): void {
   nodeFileSystem.writeText(gitignorePath, `${sections.join("\n")}\n`);
 }
 
+function ensurePackageManagerWorkspace(targetDir: string, packageManager: NewPackageManager): void {
+  if (packageManager !== "pnpm") return;
+  const workspacePath = join(targetDir, "pnpm-workspace.yaml");
+  if (nodeFileSystem.exists(workspacePath)) return;
+  const packageText = nodeFileSystem.readText(join(targetDir, "package.json"));
+  if (!packageText) return;
+  const packageJson = JSON.parse(packageText) as {
+    workspaces?: string[] | { packages?: string[] };
+  };
+  const workspaces = Array.isArray(packageJson.workspaces)
+    ? packageJson.workspaces
+    : packageJson.workspaces?.packages;
+  if (!workspaces?.length) return;
+  nodeFileSystem.writeText(
+    workspacePath,
+    `packages:\n${workspaces.map((workspace) => `  - ${JSON.stringify(workspace)}`).join("\n")}\n`,
+  );
+}
+
+function installArguments(packageManager: NewPackageManager): string[] {
+  // Yarn enables immutable installs automatically in CI. A newly scaffolded
+  // project cannot already have a lockfile, so the first install must be
+  // explicitly allowed to create it.
+  return packageManager === "yarn" ? ["install", "--no-immutable"] : ["install"];
+}
+
 async function spawnCommand(
   command: string,
   args: string[],
@@ -504,10 +530,15 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     options.packageManager,
     forgePackageSpec(targetDir, options),
   );
+  ensurePackageManagerWorkspace(targetDir, options.packageManager);
 
   let installed = false;
   if (options.install) {
-    const installCode = await spawnCommand(options.packageManager, ["install"], targetDir);
+    const installCode = await spawnCommand(
+      options.packageManager,
+      installArguments(options.packageManager),
+      targetDir,
+    );
     installed = installCode === 0;
     if (!installed) {
       return {
