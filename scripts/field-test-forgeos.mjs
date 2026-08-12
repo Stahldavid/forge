@@ -66,7 +66,10 @@ function normalizeForgeSpec(spec) {
 }
 
 function commandName(command) {
-  return process.platform === "win32" ? `${command}.cmd` : command;
+  // setup-bun installs bun.exe on Windows; npm, pnpm and Yarn expose cmd
+  // shims. Appending .cmd to Bun makes every Windows runtime probe fail
+  // before it reaches the generated project.
+  return process.platform === "win32" && command !== "bun" ? `${command}.cmd` : command;
 }
 
 function commandLine(command, args) {
@@ -944,7 +947,15 @@ async function main() {
     return;
   }
 
-  const appRoot = await mkdtemp(join(tmpdir(), "forgeos-field-"));
+  // GitHub's Windows runner checks the repository out on D: while os.tmpdir()
+  // resolves to C:. Package managers that create workspace links (pnpm/Bun)
+  // cannot reliably link a local file dependency across those drives. The
+  // runner-provided temp directory is on the workspace drive and is also the
+  // preferred bounded scratch location on the other hosted runners.
+  const tempBase = process.env.RUNNER_TEMP && isAbsolute(process.env.RUNNER_TEMP)
+    ? process.env.RUNNER_TEMP
+    : tmpdir();
+  const appRoot = await mkdtemp(join(tempBase, "forgeos-field-"));
   const results = [];
   try {
     for (const testCase of cases) {
