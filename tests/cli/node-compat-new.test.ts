@@ -92,4 +92,32 @@ describe("Node-compatible CLI template scaffolding", () => {
       rmSync(workspace, { recursive: true, force: true });
     }
   }, 30_000);
+
+  test("yarn scaffolding uses node-modules and a native Windows file spec", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-node-yarn-workspace-"));
+    try {
+      const result = await runNodeForge([
+        "new",
+        "yarn-app",
+        "--template",
+        "minimal-web",
+        "--package-manager",
+        "yarn",
+        "--forge-spec",
+        "file:D:\\a\\forge\\forge",
+        "--no-install",
+        "--no-git",
+      ], { cwd: workspace });
+
+      expect(result.exitCode).toBe(0);
+      expect(readFileSync(join(workspace, "yarn-app", ".yarnrc.yml"), "utf8"))
+        .toBe("nodeLinker: node-modules\n");
+      const packageJson = JSON.parse(
+        readFileSync(join(workspace, "yarn-app", "package.json"), "utf8"),
+      ) as { dependencies?: Record<string, string> };
+      expect(packageJson.dependencies?.forge).toBe("file:D:/a/forge/forge");
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

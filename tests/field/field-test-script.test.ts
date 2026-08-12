@@ -54,6 +54,7 @@ describe("field-test script", () => {
     expect(source).toContain("waitForDevStartup");
     expect(source).toContain("process.env.RUNNER_TEMP");
     expect(source).toContain('mkdtemp(join(tempBase, "forgeos-field-"))');
+    expect(source).toContain('command !== "bun"');
   });
 
   test("vendor-access probes verify root organization tenant isolation", () => {

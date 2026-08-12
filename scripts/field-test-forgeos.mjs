@@ -66,7 +66,10 @@ function normalizeForgeSpec(spec) {
 }
 
 function commandName(command) {
-  return process.platform === "win32" ? `${command}.cmd` : command;
+  // setup-bun installs bun.exe on Windows; npm, pnpm and Yarn expose cmd
+  // shims. Appending .cmd to Bun makes every Windows runtime probe fail
+  // before it reaches the generated project.
+  return process.platform === "win32" && command !== "bun" ? `${command}.cmd` : command;
 }
 
 function commandLine(command, args) {

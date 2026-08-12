@@ -149,12 +149,31 @@ function normalizeForgePackageSpec(spec: string): string {
   return `file:${fileTarget.replace(/\\/g, "/")}`;
 }
 
-function forgePackageSpec(targetDir: string, options: Pick<NewCommandOptions, "forgePackageSpec" | "localForge">): string {
+function packageManagerForgeSpec(spec: string, packageManager: NewPackageManager): string {
+  // Yarn's file protocol accepts Windows drive paths, but Yarn 4 currently
+  // mis-resolves file:///D:/... as a UNC-like \\D:\... path. Keep the path
+  // portable for the other managers and use Yarn's native drive form only
+  // when the normalized spec contains a Windows drive.
+  if (packageManager === "yarn") {
+    const windowsFileUrl = spec.match(/^file:\/\/\/([a-z]:\/.*)$/i);
+    if (windowsFileUrl?.[1]) return `file:${windowsFileUrl[1]}`;
+  }
+  return spec;
+}
+
+function forgePackageSpec(
+  targetDir: string,
+  options: Pick<NewCommandOptions, "forgePackageSpec" | "localForge">,
+  packageManager: NewPackageManager,
+): string {
   if (options.forgePackageSpec && !options.localForge) {
-    return normalizeForgePackageSpec(options.forgePackageSpec);
+    return packageManagerForgeSpec(
+      normalizeForgePackageSpec(options.forgePackageSpec),
+      packageManager,
+    );
   }
   if (options.localForge) {
-    return localForgePackageSpec(targetDir);
+    return packageManagerForgeSpec(localForgePackageSpec(targetDir), packageManager);
   }
   return DEFAULT_FORGE_PACKAGE_SPEC;
 }
@@ -288,6 +307,16 @@ function ensureGitignore(targetDir: string): void {
 }
 
 function ensurePackageManagerWorkspace(targetDir: string, packageManager: NewPackageManager): void {
+  if (packageManager === "yarn") {
+    const yarnConfigPath = join(targetDir, ".yarnrc.yml");
+    if (!nodeFileSystem.exists(yarnConfigPath)) {
+      // The Forge CLI loads TypeScript through tsx. Yarn PnP does not yet
+      // support the conditional require() options used by that loader, while
+      // the node-modules linker preserves Yarn's lockfile and workspace model.
+      nodeFileSystem.writeText(yarnConfigPath, "nodeLinker: node-modules\n");
+    }
+    return;
+  }
   if (packageManager !== "pnpm") return;
   const workspacePath = join(targetDir, "pnpm-workspace.yaml");
   if (nodeFileSystem.exists(workspacePath)) return;
@@ -528,7 +557,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
     targetDir,
     appName,
     options.packageManager,
-    forgePackageSpec(targetDir, options),
+    forgePackageSpec(targetDir, options, options.packageManager),
   );
   ensurePackageManagerWorkspace(targetDir, options.packageManager);
 
