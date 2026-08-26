@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runCheckCommand, runGenerateCommand, runInspectCommand } from "../../src/forge/cli/commands.ts";
-import { runNewCommand } from "../../src/forge/cli/new.ts";
+import { installArgsFor, runNewCommand } from "../../src/forge/cli/new.ts";
 import {
   cleanupWorkspace,
   tempWorkspace,
@@ -14,6 +14,12 @@ function read(project: string, relativePath: string): string {
 }
 
 describe("minimal-web template", () => {
+  test("Bun uses copyfile installs on Windows runners without symlink privilege", () => {
+    expect(installArgsFor("bun", "win32")).toEqual(["install", "--backend=copyfile"]);
+    expect(installArgsFor("bun", "linux")).toEqual(["install"]);
+    expect(installArgsFor("yarn", "win32")).toEqual(["install", "--no-immutable"]);
+  });
+
   test("parseCli accepts minimal-web", () => {
     const parsed = parseCli([
       "new",
@@ -258,7 +264,9 @@ describe("minimal-web template", () => {
 
       const project = join(workspace, "notes-app");
       expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@0.1.0-alpha.0"');
-      expect(read(project, "package.json")).toContain('"packageManager": "npm@10.9.0"');
+      expect(read(project, "package.json")).toContain('"packageManager": "npm@11.19.0"');
+      expect(read(project, "package.json")).toContain('"@types/react": "^19.2.17"');
+      expect(read(project, "pnpm-workspace.yaml")).toContain("- web");
     } finally {
       cleanupWorkspace(workspace);
     }

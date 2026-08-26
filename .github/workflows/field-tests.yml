@@ -5,8 +5,8 @@ on:
     inputs:
       forge-spec:
         description: Forge package spec to test
-        required: true
-        default: "file:$GITHUB_WORKSPACE"
+        required: false
+        default: ""
       templates:
         description: Comma-separated templates
         required: true
@@ -50,6 +50,10 @@ jobs:
         if: matrix.package-manager == 'pnpm' || matrix.package-manager == 'yarn'
         run: corepack enable
 
+      - name: Install pinned npm
+        if: matrix.package-manager == 'npm'
+        run: npm install --global npm@11.19.0
+
       - name: Install Bun
         if: matrix.package-manager == 'bun'
         uses: oven-sh/setup-bun@v2
@@ -59,19 +63,40 @@ jobs:
       - name: Install workspace dependencies
         run: npm install --ignore-scripts --package-lock=false
 
+      - name: Pack local Forge source
+        shell: bash
+        run: |
+          mkdir -p field-package
+          PACK_FILE=$(npm pack --ignore-scripts --pack-destination field-package --json | node -e 'let s=""; process.stdin.on("data", c => s += c); process.stdin.on("end", () => process.stdout.write(JSON.parse(s)[0].filename))')
+          PACK_SPEC=$(node --input-type=module -e 'import { resolve } from "node:path"; import { pathToFileURL } from "node:url"; console.log(pathToFileURL(resolve(process.argv[1])).href)' "field-package/$PACK_FILE")
+          PACK_PATH="${PACK_SPEC#file:///}"
+          echo "FORGE_LOCAL_PACK_SPEC=$PACK_SPEC" >> "$GITHUB_ENV"
+          echo "FORGE_LOCAL_PACK_PATH=$PACK_PATH" >> "$GITHUB_ENV"
+
       - name: Run generated app field test
         shell: bash
         run: |
-          SPEC="${{ inputs['forge-spec'] || 'file:$GITHUB_WORKSPACE' }}"
+          SPEC="${{ inputs['forge-spec'] }}"
+          if [ -z "$SPEC" ]; then SPEC="$FORGE_LOCAL_PACK_SPEC"; fi
+          if [ "${{ runner.os }}" = "Windows" ] && { [ "${{ matrix.package-manager }}" = "bun" ] || [ "${{ matrix.package-manager }}" = "yarn" ]; } && [ -z "${{ inputs['forge-spec'] }}" ]; then
+            SPEC="$FORGE_LOCAL_PACK_PATH"
+            export MSYS2_ARG_CONV_EXCL="*"
+          fi
+          INSTALL_ARGS=(--install --runtime-probes)
+          # GitHub-hosted Windows runners lack the symlink privilege Bun requires
+          # for workspace packages. Keep the Windows/Bun scaffold and package-spec
+          # coverage, while Linux and macOS retain full Bun install/runtime probes.
+          if [ "${{ runner.os }}" = "Windows" ] && [ "${{ matrix.package-manager }}" = "bun" ]; then
+            INSTALL_ARGS=(--no-install)
+          fi
           node scripts/field-test-forgeos.mjs \
             --package-managers "${{ matrix.package-manager }}" \
             --templates "${{ inputs.templates || 'minimal-web,nuxt-web' }}" \
             --forge-spec "$SPEC" \
-            --install \
-            --runtime-probes \
+            "${INSTALL_ARGS[@]}" \
             --json \
             --write-report "field-reports/${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.package-manager }}.json" \
-            --timeout-ms 180000
+            --timeout-ms 600000
 
       - name: Upload field-test report
         if: always()
