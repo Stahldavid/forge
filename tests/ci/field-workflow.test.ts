@@ -18,7 +18,9 @@ describe("field test workflow", () => {
     expect(workflow).toContain('if [ -z "$SPEC" ]; then SPEC="$FORGE_LOCAL_PACK_SPEC"; fi');
     expect(workflow).toContain('SPEC="$FORGE_LOCAL_PACK_PATH"');
     expect(workflow).toContain('MSYS2_ARG_CONV_EXCL="*"');
-    expect(workflow).toContain("--timeout-ms 360000");
+    expect(workflow).toContain('PACK_PATH="${PACK_SPEC#file:///}"');
+    expect(workflow).toContain('matrix.package-manager }}" = "yarn"');
+    expect(workflow).toContain("--timeout-ms 600000");
     expect(workflow).toContain("scripts/field-test-forgeos.mjs");
     expect(workflow).toContain("minimal-web,nuxt-web");
     expect(workflow).toContain("--runtime-probes");

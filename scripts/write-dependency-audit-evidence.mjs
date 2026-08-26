@@ -216,7 +216,7 @@ function auditTarget(target, tempRoot, waivers, threshold) {
     "utf8",
   );
 
-  const install = runNpm(["install", "--package-lock-only", "--ignore-scripts", "--audit=false", "--fund=false"], tempProject);
+  const install = runNpm(["install", "--package-lock-only", "--ignore-scripts", "--legacy-peer-deps", "--audit=false", "--fund=false"], tempProject);
   if (install.status !== 0) {
     return {
       name: target.name,

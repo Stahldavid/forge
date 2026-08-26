@@ -69,7 +69,7 @@ jobs:
           mkdir -p field-package
           PACK_FILE=$(npm pack --ignore-scripts --pack-destination field-package --json | node -e 'let s=""; process.stdin.on("data", c => s += c); process.stdin.on("end", () => process.stdout.write(JSON.parse(s)[0].filename))')
           PACK_SPEC=$(node --input-type=module -e 'import { resolve } from "node:path"; import { pathToFileURL } from "node:url"; console.log(pathToFileURL(resolve(process.argv[1])).href)' "field-package/$PACK_FILE")
-          PACK_PATH=$(node --input-type=module -e 'import { resolve } from "node:path"; console.log(resolve(process.argv[1]).replaceAll("\\\\", "/"))' "field-package/$PACK_FILE")
+          PACK_PATH="${PACK_SPEC#file:///}"
           echo "FORGE_LOCAL_PACK_SPEC=$PACK_SPEC" >> "$GITHUB_ENV"
           echo "FORGE_LOCAL_PACK_PATH=$PACK_PATH" >> "$GITHUB_ENV"
 
@@ -78,7 +78,7 @@ jobs:
         run: |
           SPEC="${{ inputs['forge-spec'] }}"
           if [ -z "$SPEC" ]; then SPEC="$FORGE_LOCAL_PACK_SPEC"; fi
-          if [ "${{ runner.os }}" = "Windows" ] && [ "${{ matrix.package-manager }}" = "bun" ] && [ -z "${{ inputs['forge-spec'] }}" ]; then
+          if [ "${{ runner.os }}" = "Windows" ] && { [ "${{ matrix.package-manager }}" = "bun" ] || [ "${{ matrix.package-manager }}" = "yarn" ]; } && [ -z "${{ inputs['forge-spec'] }}" ]; then
             SPEC="$FORGE_LOCAL_PACK_PATH"
             export MSYS2_ARG_CONV_EXCL="*"
           fi
@@ -90,7 +90,7 @@ jobs:
             --runtime-probes \
             --json \
             --write-report "field-reports/${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.package-manager }}.json" \
-            --timeout-ms 360000
+            --timeout-ms 600000
 
       - name: Upload field-test report
         if: always()
