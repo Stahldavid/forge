@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { runCheckCommand, runGenerateCommand, runInspectCommand } from "../../src/forge/cli/commands.ts";
-import { runNewCommand } from "../../src/forge/cli/new.ts";
+import { installArgsFor, runNewCommand } from "../../src/forge/cli/new.ts";
 import {
   cleanupWorkspace,
   tempWorkspace,
@@ -14,6 +14,12 @@ function read(project: string, relativePath: string): string {
 }
 
 describe("minimal-web template", () => {
+  test("Bun uses copyfile installs on Windows runners without symlink privilege", () => {
+    expect(installArgsFor("bun", "win32")).toEqual(["install", "--backend=copyfile"]);
+    expect(installArgsFor("bun", "linux")).toEqual(["install"]);
+    expect(installArgsFor("yarn", "win32")).toEqual(["install", "--no-immutable"]);
+  });
+
   test("parseCli accepts minimal-web", () => {
     const parsed = parseCli([
       "new",

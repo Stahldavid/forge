@@ -46,6 +46,17 @@ export interface NewCommandResult {
   nextSteps: string[];
 }
 
+export function installArgsFor(
+  packageManager: NewPackageManager,
+  platform: NodeJS.Platform = process.platform,
+): string[] {
+  if (packageManager === "yarn") return ["install", "--no-immutable"];
+  if (packageManager === "bun" && platform === "win32") {
+    return ["install", "--backend=copyfile"];
+  }
+  return ["install"];
+}
+
 const REQUIRED_GITIGNORE_PATHS = [
   "src/forge/_generated/",
   "forge.lock",
@@ -507,9 +518,7 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
 
   let installed = false;
   if (options.install) {
-    const installArgs = options.packageManager === "yarn"
-      ? ["install", "--no-immutable"]
-      : ["install"];
+    const installArgs = installArgsFor(options.packageManager);
     const installCode = await spawnCommand(options.packageManager, installArgs, targetDir);
     installed = installCode === 0;
     if (!installed) {
