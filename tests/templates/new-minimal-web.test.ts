@@ -258,7 +258,9 @@ describe("minimal-web template", () => {
 
       const project = join(workspace, "notes-app");
       expect(read(project, "package.json")).toContain('"forge": "npm:forgeos@0.1.0-alpha.0"');
-      expect(read(project, "package.json")).toContain('"packageManager": "npm@10.9.0"');
+      expect(read(project, "package.json")).toContain('"packageManager": "npm@11.19.0"');
+      expect(read(project, "package.json")).toContain('"@types/react": "^19.2.17"');
+      expect(read(project, "pnpm-workspace.yaml")).toContain("- web");
     } finally {
       cleanupWorkspace(workspace);
     }

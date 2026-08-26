@@ -5,8 +5,8 @@ on:
     inputs:
       forge-spec:
         description: Forge package spec to test
-        required: true
-        default: "file:$GITHUB_WORKSPACE"
+        required: false
+        default: ""
       templates:
         description: Comma-separated templates
         required: true
@@ -50,6 +50,10 @@ jobs:
         if: matrix.package-manager == 'pnpm' || matrix.package-manager == 'yarn'
         run: corepack enable
 
+      - name: Install pinned npm
+        if: matrix.package-manager == 'npm'
+        run: npm install --global npm@11.19.0
+
       - name: Install Bun
         if: matrix.package-manager == 'bun'
         uses: oven-sh/setup-bun@v2
@@ -59,10 +63,24 @@ jobs:
       - name: Install workspace dependencies
         run: npm install --ignore-scripts --package-lock=false
 
+      - name: Pack local Forge source
+        shell: bash
+        run: |
+          mkdir -p field-package
+          PACK_FILE=$(npm pack --ignore-scripts --pack-destination field-package --json | node -e 'let s=""; process.stdin.on("data", c => s += c); process.stdin.on("end", () => process.stdout.write(JSON.parse(s)[0].filename))')
+          PACK_SPEC=$(node --input-type=module -e 'import { resolve } from "node:path"; import { pathToFileURL } from "node:url"; console.log(pathToFileURL(resolve(process.argv[1])).href)' "field-package/$PACK_FILE")
+          PACK_PATH=$(node --input-type=module -e 'import { resolve } from "node:path"; console.log(resolve(process.argv[1]).replaceAll("\\\\", "/"))' "field-package/$PACK_FILE")
+          echo "FORGE_LOCAL_PACK_SPEC=$PACK_SPEC" >> "$GITHUB_ENV"
+          echo "FORGE_LOCAL_PACK_PATH=$PACK_PATH" >> "$GITHUB_ENV"
+
       - name: Run generated app field test
         shell: bash
         run: |
-          SPEC="${{ inputs['forge-spec'] || 'file:$GITHUB_WORKSPACE' }}"
+          SPEC="${{ inputs['forge-spec'] }}"
+          if [ -z "$SPEC" ]; then SPEC="$FORGE_LOCAL_PACK_SPEC"; fi
+          if [ "${{ runner.os }}" = "Windows" ] && [ "${{ matrix.package-manager }}" = "bun" ] && [ -z "${{ inputs['forge-spec'] }}" ]; then
+            SPEC="$FORGE_LOCAL_PACK_PATH"
+          fi
           node scripts/field-test-forgeos.mjs \
             --package-managers "${{ matrix.package-manager }}" \
             --templates "${{ inputs.templates || 'minimal-web,nuxt-web' }}" \

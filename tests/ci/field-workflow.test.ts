@@ -13,6 +13,10 @@ describe("field test workflow", () => {
     expect(workflow).toContain("macos-latest");
     expect(workflow).toContain("node-version: [22, 24]");
     expect(workflow).toContain("package-manager: [npm, pnpm, yarn, bun]");
+    expect(workflow).toContain("npm install --global npm@11.19.0");
+    expect(workflow).toContain("npm pack --ignore-scripts --pack-destination field-package --json");
+    expect(workflow).toContain('if [ -z "$SPEC" ]; then SPEC="$FORGE_LOCAL_PACK_SPEC"; fi');
+    expect(workflow).toContain('SPEC="$FORGE_LOCAL_PACK_PATH"');
     expect(workflow).toContain("scripts/field-test-forgeos.mjs");
     expect(workflow).toContain("minimal-web,nuxt-web");
     expect(workflow).toContain("--runtime-probes");

@@ -164,11 +164,11 @@ function packageManagerSpec(packageManager: string): string {
     case "bun":
       return "bun@1.3.14";
     case "npm":
-      return "npm@10.9.0";
+      return "npm@11.19.0";
     case "pnpm":
-      return "pnpm@9.15.4";
+      return "pnpm@10.34.5";
     case "yarn":
-      return "yarn@4.6.0";
+      return "yarn@4.18.0";
     default:
       return packageManager;
   }
@@ -507,7 +507,10 @@ export async function runNewCommand(options: NewCommandOptions): Promise<NewComm
 
   let installed = false;
   if (options.install) {
-    const installCode = await spawnCommand(options.packageManager, ["install"], targetDir);
+    const installArgs = options.packageManager === "yarn"
+      ? ["install", "--no-immutable"]
+      : ["install"];
+    const installCode = await spawnCommand(options.packageManager, installArgs, targetDir);
     installed = installCode === 0;
     if (!installed) {
       return {
