@@ -20,6 +20,9 @@ describe("field test workflow", () => {
     expect(workflow).toContain('MSYS2_ARG_CONV_EXCL="*"');
     expect(workflow).toContain('PACK_PATH="${PACK_SPEC#file:///}"');
     expect(workflow).toContain('matrix.package-manager }}" = "yarn"');
+    expect(workflow).toContain('INSTALL_ARGS=(--install --runtime-probes)');
+    expect(workflow).toContain('INSTALL_ARGS=(--no-install)');
+    expect(workflow).toContain('"${INSTALL_ARGS[@]}"');
     expect(workflow).toContain("--timeout-ms 600000");
     expect(workflow).toContain("scripts/field-test-forgeos.mjs");
     expect(workflow).toContain("minimal-web,nuxt-web");
