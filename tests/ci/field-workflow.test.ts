@@ -16,7 +16,8 @@ describe("field test workflow", () => {
     expect(workflow).toContain("npm install --global npm@11.19.0");
     expect(workflow).toContain("npm pack --ignore-scripts --pack-destination field-package --json");
     expect(workflow).toContain('if [ -z "$SPEC" ]; then SPEC="$FORGE_LOCAL_PACK_SPEC"; fi');
-    expect(workflow).not.toContain("FORGE_LOCAL_PACK_PATH");
+    expect(workflow).toContain('SPEC="$FORGE_LOCAL_PACK_PATH"');
+    expect(workflow).toContain('MSYS2_ARG_CONV_EXCL="*"');
     expect(workflow).toContain("--timeout-ms 360000");
     expect(workflow).toContain("scripts/field-test-forgeos.mjs");
     expect(workflow).toContain("minimal-web,nuxt-web");

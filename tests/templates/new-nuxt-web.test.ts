@@ -66,6 +66,7 @@ describe("nuxt-web template", () => {
       expect(read(project, "package.json")).toContain('"template": "nuxt-web"');
       expect(read(project, "web/package.json")).toContain('"nuxt": "^4.0.0"');
       expect(read(project, "web/package.json")).toContain('"@nuxt/kit": "^4.0.0"');
+      expect(read(project, ".yarnrc.yml")).toContain("nodeLinker: node-modules");
       expect(read(project, "web/package.json")).toContain('"vue-tsc": "^3.3.5"');
       expect(read(project, "web/tsconfig.json")).toContain('"allowImportingTsExtensions": true');
       expect(read(project, "web/nuxt.config.ts")).toContain("NUXT_PUBLIC_FORGE_URL");
