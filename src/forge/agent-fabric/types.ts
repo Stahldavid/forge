@@ -40,6 +40,19 @@ export interface OwnerAuthorization {
   resourceCeilings: Readonly<Record<string, number>>;
 }
 
+export interface OwnerAuthorizationVerification {
+  verifierId: Identifier;
+  authorizationDigest: Digest;
+  evidenceDigest: Digest;
+}
+
+export interface OwnerAuthorizationVerifier {
+  verify(
+    authorization: OwnerAuthorization,
+    authorizationDigest: Digest,
+  ): OwnerAuthorizationVerification;
+}
+
 export interface WorkflowNode {
   nodeId: Identifier;
   kind: "activity" | "verification" | "join";
@@ -304,7 +317,11 @@ export interface AttemptControlState {
 }
 
 export type ControlEvent =
-  | { type: "owner_authorization_registered"; authorization: OwnerAuthorization }
+  | {
+      type: "owner_authorization_registered";
+      authorization: OwnerAuthorization;
+      verification: OwnerAuthorizationVerification;
+    }
   | { type: "owner_authorization_revoked"; authorizationId: Identifier; reason: string }
   | { type: "goal_registered"; goal: GoalContract }
   | { type: "grant_registered"; grant: ExecutionGrant; reservation: ResourceReservation | null }
@@ -351,6 +368,7 @@ export interface ControlState {
   lastEventDigest: Digest | null;
   lastOccurredAt: EpochMilliseconds | null;
   authorizations: Readonly<Record<Identifier, OwnerAuthorization>>;
+  authorizationVerifications: Readonly<Record<Identifier, OwnerAuthorizationVerification>>;
   revokedAuthorizations: Readonly<Record<Identifier, string>>;
   goals: Readonly<Record<Identifier, GoalContract>>;
   grants: Readonly<Record<Identifier, ExecutionGrant>>;
