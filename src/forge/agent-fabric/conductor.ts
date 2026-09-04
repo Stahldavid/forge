@@ -12,6 +12,7 @@ import { replayControlState } from "./reducer.ts";
 import type { ResourceLedger } from "./resource-ledger.ts";
 import type {
   AttemptExecutionPermit,
+  AttemptUncertaintyObservation,
   AuthoritativeOutcomeCommit,
   AuthorityResolution,
   Clock,
@@ -20,11 +21,13 @@ import type {
   DispatchIntent,
   DispatchOffer,
   ExecutionGrant,
-  GoalContract,
   ExecutorStartupReport,
+  GoalContract,
   OwnerAuthorization,
   OwnerAuthorizationVerifier,
   PlanDelta,
+  ResourceDefinition,
+  ResourceReservation,
   RunPlanRevision,
   SchedulingClaim,
   WorkerResultReport,
@@ -45,6 +48,12 @@ export interface IssuePermitInput {
   maximumValidityMs: number;
 }
 
+function sortedDefinitions(definitions: Readonly<Record<string, ResourceDefinition>>): ResourceDefinition[] {
+  return Object.values(definitions)
+    .map((definition) => ({ ...definition }))
+    .sort((left, right) => left.resource.localeCompare(right.resource));
+}
+
 export class ForgeAgentConductor {
   constructor(
     private readonly rootExecutionId: string,
@@ -57,7 +66,12 @@ export class ForgeAgentConductor {
   ) {}
 
   state() {
-    return replayControlState(this.journal.readAll());
+    return replayControlState(this.journal.readAll(), {
+      ownerAuthorizationVerifier: this.ownerAuthorizationVerifier,
+      resourceDefinitions: this.resourceLedger
+        ? sortedDefinitions(this.resourceLedger.snapshot().definitions)
+        : undefined,
+    });
   }
 
   events() {
@@ -71,10 +85,13 @@ export class ForgeAgentConductor {
     assertAuthorizationCurrent(authorization, this.clock.now());
     const authorizationDigest = digestCanonical(authorization, sha256Digest);
     const verification = this.ownerAuthorizationVerifier.verify(authorization, authorizationDigest);
-    if (verification.authorizationDigest !== authorizationDigest) {
+    if (
+      verification.authorizationDigest !== authorizationDigest ||
+      !this.ownerAuthorizationVerifier.verifyRecorded(authorization, verification)
+    ) {
       throw new AgentFabricError(
         "AF_GRANT_REJECTED",
-        "Owner authorization verifier returned evidence for different authorization bytes",
+        "Owner authorization verification is not trusted for these authorization bytes",
       );
     }
     this.append(`owner-authorization:${authorization.authorizationId}`, {
@@ -113,10 +130,7 @@ export class ForgeAgentConductor {
     if (!authorization.goalIds.includes(goal.goalId)) {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Owner authorization does not cover this goal");
     }
-    this.append(`goal:${goal.goalId}`, {
-      type: "goal_registered",
-      goal,
-    });
+    this.append(`goal:${goal.goalId}`, { type: "goal_registered", goal });
   }
 
   /** Registers only a root grant. Derived grants must use deriveAndRegisterGrant(). */
@@ -181,6 +195,7 @@ export class ForgeAgentConductor {
     request: DerivedGrantRequest,
     ledger: ResourceLedger = this.requireResourceLedger(),
   ): AuthorityResolution {
+    this.ensureResourceLedgerInitialized(ledger);
     const state = this.state();
     const parent = state.grants[parentGrantId];
     if (!parent) {
@@ -225,16 +240,42 @@ export class ForgeAgentConductor {
     });
   }
 
+  consumeResourceReservation(
+    reservationId: string,
+    ledger: ResourceLedger = this.requireResourceLedger(),
+  ): ResourceReservation {
+    this.ensureResourceLedgerInitialized(ledger);
+    return ledger.transaction(() => {
+      const reservation = ledger.consume(reservationId);
+      this.append(`resource-reservation-consume:${reservationId}`, {
+        type: "resource_reservation_consumed",
+        reservationId,
+      });
+      return reservation;
+    });
+  }
+
+  releaseResourceReservation(
+    reservationId: string,
+    ledger: ResourceLedger = this.requireResourceLedger(),
+  ): ResourceReservation {
+    this.ensureResourceLedgerInitialized(ledger);
+    return ledger.transaction(() => {
+      const reservation = ledger.release(reservationId);
+      this.append(`resource-reservation-release:${reservationId}`, {
+        type: "resource_reservation_released",
+        reservationId,
+      });
+      return reservation;
+    });
+  }
+
   revokeGrant(grantId: string, reason: string): void {
     const state = this.state();
     if (!state.grants[grantId]) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${grantId}`);
     }
-    this.append(`grant-revocation:${grantId}`, {
-      type: "grant_revoked",
-      grantId,
-      reason,
-    });
+    this.append(`grant-revocation:${grantId}`, { type: "grant_revoked", grantId, reason });
   }
 
   registerPlanDelta(delta: PlanDelta): void {
@@ -245,10 +286,7 @@ export class ForgeAgentConductor {
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== delta.baseRevisionId) {
       throw new AgentFabricError("AF_INVALID_PLAN", "PlanDelta is stale");
     }
-    this.append(`plan-delta:${delta.deltaId}`, {
-      type: "plan_delta_registered",
-      delta,
-    });
+    this.append(`plan-delta:${delta.deltaId}`, { type: "plan_delta_registered", delta });
   }
 
   activatePlan(revision: RunPlanRevision, expectedCurrentRevisionId: string | null): void {
@@ -290,10 +328,7 @@ export class ForgeAgentConductor {
           "Plan revision parent does not match the active revision",
         );
       }
-      if (
-        revision.goalId !== parent.goalId ||
-        revision.programVersionId !== parent.programVersionId
-      ) {
+      if (revision.goalId !== parent.goalId || revision.programVersionId !== parent.programVersionId) {
         throw new AgentFabricError(
           "AF_INVALID_PLAN",
           "Plan revision cannot silently change goal or workflow program",
@@ -394,14 +429,15 @@ export class ForgeAgentConductor {
     if (!intent) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown dispatch intent: ${input.intentId}`);
     }
+    if (state.claimByAttemptId[input.attemptId]) {
+      throw new AgentFabricError("AF_DUPLICATE_ID", `Attempt ID already claimed: ${input.attemptId}`);
+    }
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Cannot claim an intent from a superseded plan");
     }
-    const hasOutcome = Object.values(state.outcomes).some((outcome) => {
-      const attempt = state.attempts[outcome.attemptId];
-      const permit = attempt ? state.permits[attempt.permitId] : undefined;
-      return permit?.intentId === input.intentId;
-    });
+    const hasOutcome = Object.values(state.outcomes).some(
+      (outcome) => outcome.intentId === input.intentId,
+    );
     if (hasOutcome) {
       throw new AgentFabricError(
         "AF_CONFLICT",
@@ -442,7 +478,8 @@ export class ForgeAgentConductor {
     const grant = state.grants[input.grantId];
     if (!claim) throw new AgentFabricError("AF_NOT_FOUND", `Unknown claim: ${input.claimId}`);
     if (!grant) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${input.grantId}`);
-    const intent = state.dispatchIntents[claim.intentId]!;
+    const intent = state.dispatchIntents[claim.intentId];
+    if (!intent) throw new AgentFabricError("AF_NOT_FOUND", `Unknown intent: ${claim.intentId}`);
     const activeClaimId = state.activeClaimByIntent[claim.intentId];
     const now = this.clock.now();
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
@@ -501,10 +538,7 @@ export class ForgeAgentConductor {
     this.assertPermitCurrent(permit);
   }
 
-  acceptStartupReport(
-    permit: AttemptExecutionPermit,
-    report: ExecutorStartupReport,
-  ): void {
+  acceptStartupReport(permit: AttemptExecutionPermit, report: ExecutorStartupReport): void {
     this.assertPermitCurrent(permit);
     const now = this.clock.now();
     if (report.attemptId !== permit.attemptId) {
@@ -529,54 +563,61 @@ export class ForgeAgentConductor {
     });
   }
 
-  recordStartupUnknown(permit: AttemptExecutionPermit, reason: string): void {
+  recordAttemptUncertainty(
+    permit: AttemptExecutionPermit,
+    phase: "startup" | "outcome",
+    reason: string,
+  ): AttemptUncertaintyObservation {
     const state = this.state();
     const recorded = state.permits[permit.permitId];
     if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
     }
-    this.append(`attempt-start-unknown:${permit.attemptId}`, {
-      type: "attempt_start_unknown",
+    const observedAt = this.clock.now();
+    const observation: AttemptUncertaintyObservation = {
+      observationId: `uncertainty:${permit.attemptId}:${phase}:${observedAt}:${sha256Digest(reason).slice(7, 19)}`,
       attemptId: permit.attemptId,
       permitId: permit.permitId,
+      phase,
       reason,
-      observedAt: this.clock.now(),
+      observedAt,
+    };
+    this.append(`attempt-uncertainty:${observation.observationId}`, {
+      type: "attempt_uncertainty_observed",
+      observation,
     });
-  }
-
-  private assertPermitCurrent(permit: AttemptExecutionPermit): void {
-    const state = this.state();
-    const recorded = state.permits[permit.permitId];
-    if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
-      throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
-    }
-    const now = this.clock.now();
-    if (now < permit.notBefore || now >= permit.expiresAt) {
-      throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is outside its validity window");
-    }
-    const claim = state.claims[permit.claimId];
-    const activeClaimId = state.activeClaimByIntent[permit.intentId];
-    if (
-      !claim ||
-      activeClaimId !== claim.claimId ||
-      claim.fencingToken !== permit.fencingToken ||
-      claim.workerId !== permit.workerId ||
-      claim.leaseExpiresAt <= now
-    ) {
-      throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit is fenced by a newer claim");
-    }
-    assertGrantLineageCurrent(state, permit.grantId, now);
-    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
-      throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit references a superseded plan revision");
-    }
+    return observation;
   }
 
   commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {
     const state = this.state();
     const attempt = state.attempts[report.attemptId];
     if (!attempt) {
-      throw new AgentFabricError("AF_NOT_FOUND", `Unknown attempt: ${report.attemptId}`);
+      throw new AgentFabricError("AF_NOT_FOUND", `Unknown started attempt: ${report.attemptId}`);
     }
+    const permit = state.permits[attempt.permitId];
+    if (!permit) {
+      throw new AgentFabricError("AF_NOT_FOUND", `Unknown permit: ${attempt.permitId}`);
+    }
+    const claim = state.claims[permit.claimId];
+    const intent = state.dispatchIntents[permit.intentId];
+    if (!claim || !intent) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Outcome has incomplete execution lineage");
+    }
+    if (
+      report.permitId !== permit.permitId ||
+      report.intentId !== permit.intentId ||
+      report.planRevisionId !== permit.planRevisionId ||
+      report.effectiveRunSpecDigest !== permit.effectiveRunSpecDigest ||
+      report.fencingToken !== permit.fencingToken ||
+      state.claimByAttemptId[report.attemptId] !== claim.claimId
+    ) {
+      throw new AgentFabricError(
+        "AF_CONFLICT",
+        "Worker result report does not match its recorded attempt/permit lineage",
+      );
+    }
+
     const reportDigest = digestCanonical(report, sha256Digest);
     const existing = state.outcomes[report.attemptId];
     if (existing) {
@@ -586,11 +627,7 @@ export class ForgeAgentConductor {
         `Attempt ${report.attemptId} already has a different authoritative outcome`,
       );
     }
-    if (attempt.startupStatus !== "started" || attempt.startedAt === null) {
-      throw new AgentFabricError("AF_INVALID_STATE", "Unknown startup cannot commit a successful outcome");
-    }
-    const permit = state.permits[attempt.permitId]!;
-    const claim = state.claims[permit.claimId]!;
+
     const now = this.clock.now();
     if (report.reportedAt < attempt.startedAt || report.reportedAt > now) {
       throw new AgentFabricError("AF_INVALID_STATE", "Worker result report has an invalid timestamp");
@@ -613,6 +650,11 @@ export class ForgeAgentConductor {
     const outcome: AuthoritativeOutcomeCommit = {
       outcomeId: `outcome:${report.attemptId}`,
       attemptId: report.attemptId,
+      permitId: permit.permitId,
+      intentId: permit.intentId,
+      planRevisionId: permit.planRevisionId,
+      effectiveRunSpecDigest: permit.effectiveRunSpecDigest,
+      fencingToken: permit.fencingToken,
       status: report.status,
       resultDigest: report.resultDigest,
       reportId: report.reportId,
@@ -628,29 +670,51 @@ export class ForgeAgentConductor {
     return outcome;
   }
 
-  commitUnknownOutcome(attemptId: string): AuthoritativeOutcomeCommit {
+  private assertPermitCurrent(permit: AttemptExecutionPermit): void {
     const state = this.state();
-    if (!state.attempts[attemptId]) {
-      throw new AgentFabricError("AF_NOT_FOUND", `Unknown attempt: ${attemptId}`);
+    const recorded = state.permits[permit.permitId];
+    if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
+      throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
     }
-    const existing = state.outcomes[attemptId];
-    if (existing) return existing;
-    const outcome: AuthoritativeOutcomeCommit = {
-      outcomeId: `outcome:${attemptId}`,
-      attemptId,
-      status: "unknown",
-      resultDigest: null,
-      reportId: null,
-      reportDigest: null,
-      evidenceDigests: [],
-      reportedAt: null,
-      committedAt: this.clock.now(),
-    };
-    this.append(`attempt-outcome:${attemptId}`, {
-      type: "attempt_outcome_committed",
-      outcome,
-    });
-    return outcome;
+    const now = this.clock.now();
+    if (now < permit.notBefore || now >= permit.expiresAt) {
+      throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is outside its validity window");
+    }
+    const claim = state.claims[permit.claimId];
+    const activeClaimId = state.activeClaimByIntent[permit.intentId];
+    if (
+      !claim ||
+      state.claimByAttemptId[permit.attemptId] !== claim.claimId ||
+      activeClaimId !== claim.claimId ||
+      claim.fencingToken !== permit.fencingToken ||
+      claim.workerId !== permit.workerId ||
+      claim.leaseExpiresAt <= now
+    ) {
+      throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit is fenced by a newer claim");
+    }
+    assertGrantLineageCurrent(state, permit.grantId, now);
+    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
+      throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit references a superseded plan revision");
+    }
+  }
+
+  private ensureResourceLedgerInitialized(ledger: ResourceLedger): void {
+    const trustedDefinitions = sortedDefinitions(ledger.snapshot().definitions);
+    const state = this.state();
+    const recordedDefinitions = sortedDefinitions(state.resourceDefinitions);
+    if (recordedDefinitions.length === 0) {
+      this.append("resource-ledger:initialize", {
+        type: "resource_ledger_initialized",
+        definitions: trustedDefinitions,
+      });
+      return;
+    }
+    if (stableStringify(recordedDefinitions) !== stableStringify(trustedDefinitions)) {
+      throw new AgentFabricError(
+        "AF_INVALID_STATE",
+        "ResourceLedger definitions differ from the journaled configuration",
+      );
+    }
   }
 
   private requireResourceLedger(): ResourceLedger {
