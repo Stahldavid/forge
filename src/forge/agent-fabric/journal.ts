@@ -1,6 +1,7 @@
-import { stableStringify } from "./canonical.ts";
+import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
-import type { ControlEventEnvelope, Identifier, UncommittedControlEvent } from "./types.ts";
+import type { ControlEventEnvelope, Digest, Identifier, UncommittedControlEvent } from "./types.ts";
+import { validateControlEventEnvelope, validateUncommittedControlEvent } from "./validation.ts";
 
 export interface AppendControlEventInput {
   expectedSequence: number;
@@ -12,20 +13,34 @@ export interface ControlJournal {
   readAll(): readonly ControlEventEnvelope[];
 }
 
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child);
+  }
+  return value;
+}
+
+function eventDigestInput(envelope: Omit<ControlEventEnvelope, "eventDigest">): unknown {
+  return envelope;
+}
+
 export class MemoryControlJournal implements ControlJournal {
   private readonly events: ControlEventEnvelope[] = [];
   private readonly byEventId = new Map<Identifier, ControlEventEnvelope>();
   private readonly byIdempotencyKey = new Map<Identifier, ControlEventEnvelope>();
 
   append(input: AppendControlEventInput): ControlEventEnvelope {
+    validateUncommittedControlEvent(input.event);
+    const incoming = structuredClone(input.event);
     const semanticFingerprint = stableStringify({
-      eventId: input.event.eventId,
-      rootExecutionId: input.event.rootExecutionId,
-      payload: input.event.payload,
+      eventId: incoming.eventId,
+      rootExecutionId: incoming.rootExecutionId,
+      payload: incoming.payload,
     });
 
-    const existingByIdempotency = input.event.idempotencyKey
-      ? this.byIdempotencyKey.get(input.event.idempotencyKey)
+    const existingByIdempotency = incoming.idempotencyKey
+      ? this.byIdempotencyKey.get(incoming.idempotencyKey)
       : undefined;
     if (existingByIdempotency) {
       const existingFingerprint = stableStringify({
@@ -36,13 +51,13 @@ export class MemoryControlJournal implements ControlJournal {
       if (semanticFingerprint !== existingFingerprint) {
         throw new AgentFabricError(
           "AF_CONFLICT",
-          `Idempotency key ${input.event.idempotencyKey} was reused with different content`,
+          `Idempotency key ${incoming.idempotencyKey} was reused with different content`,
         );
       }
-      return existingByIdempotency;
+      return structuredClone(existingByIdempotency);
     }
 
-    const existingById = this.byEventId.get(input.event.eventId);
+    const existingById = this.byEventId.get(incoming.eventId);
     if (existingById) {
       const existingFingerprint = stableStringify({
         eventId: existingById.eventId,
@@ -52,10 +67,10 @@ export class MemoryControlJournal implements ControlJournal {
       if (semanticFingerprint !== existingFingerprint) {
         throw new AgentFabricError(
           "AF_DUPLICATE_ID",
-          `Event ID ${input.event.eventId} was reused with different content`,
+          `Event ID ${incoming.eventId} was reused with different content`,
         );
       }
-      return existingById;
+      return structuredClone(existingById);
     }
 
     if (input.expectedSequence !== this.events.length) {
@@ -67,20 +82,40 @@ export class MemoryControlJournal implements ControlJournal {
     }
 
     const predecessor = this.events[this.events.length - 1];
-    const envelope: ControlEventEnvelope = {
-      ...input.event,
+    if (predecessor && incoming.occurredAt < predecessor.occurredAt) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        "Control journal timestamps must be monotonic",
+        { occurredAt: incoming.occurredAt, predecessorOccurredAt: predecessor.occurredAt },
+      );
+    }
+
+    const withoutDigest: Omit<ControlEventEnvelope, "eventDigest"> = {
+      ...incoming,
       sequence: this.events.length + 1,
       predecessorEventId: predecessor?.eventId ?? null,
+      predecessorEventDigest: predecessor?.eventDigest ?? null,
     };
-    this.events.push(envelope);
-    this.byEventId.set(envelope.eventId, envelope);
-    if (envelope.idempotencyKey) {
-      this.byIdempotencyKey.set(envelope.idempotencyKey, envelope);
-    }
-    return envelope;
+    const envelope: ControlEventEnvelope = {
+      ...withoutDigest,
+      eventDigest: digestCanonical(eventDigestInput(withoutDigest), sha256Digest),
+    };
+    validateControlEventEnvelope(envelope);
+
+    const stored = deepFreeze(structuredClone(envelope));
+    this.events.push(stored);
+    this.byEventId.set(stored.eventId, stored);
+    if (stored.idempotencyKey) this.byIdempotencyKey.set(stored.idempotencyKey, stored);
+    return structuredClone(stored);
   }
 
   readAll(): readonly ControlEventEnvelope[] {
     return this.events.map((event) => structuredClone(event));
   }
+}
+
+export function computeControlEventDigest(
+  envelope: Omit<ControlEventEnvelope, "eventDigest">,
+): Digest {
+  return digestCanonical(eventDigestInput(envelope), sha256Digest);
 }
