@@ -78,7 +78,6 @@ function digests(value: unknown, label: string): readonly string[] {
 function recordOfPositiveNumbers(value: unknown, label: string): void {
   const record = object(value, label);
   for (const [key, amount] of Object.entries(record)) {
-    if (!key) fail(`${label} contains an empty resource name`);
     const parsed = number(amount, `${label}.${key}`);
     if (parsed <= 0) fail(`${label}.${key} must be > 0`);
   }
