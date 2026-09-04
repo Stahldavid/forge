@@ -127,6 +127,13 @@ export function reduceControlEvent(
         `Dispatch intent references a non-current plan revision ${intent.planRevisionId}`,
       );
     }
+    const revision = state.planRevisions[intent.planRevisionId];
+    if (!revision?.nodes.some((node) => node.nodeId === intent.taskNodeId)) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Dispatch intent references missing plan node ${intent.taskNodeId}`,
+      );
+    }
     if (state.dispatchIntents[intent.intentId]) {
       throw new AgentFabricError(
         "AF_INVALID_EVENT",
@@ -145,6 +152,17 @@ export function reduceControlEvent(
       throw new AgentFabricError(
         "AF_INVALID_EVENT",
         `Claim references unknown intent ${claim.intentId}`,
+      );
+    }
+    const hasOutcome = Object.values(state.outcomes).some((outcome) => {
+      const attempt = state.attempts[outcome.attemptId];
+      const permit = attempt ? state.permits[attempt.permitId] : undefined;
+      return permit?.intentId === claim.intentId;
+    });
+    if (hasOutcome) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Claim ${claim.claimId} targets an intent with an existing outcome`,
       );
     }
     if (state.claims[claim.claimId]) {
@@ -193,6 +211,24 @@ export function reduceControlEvent(
       throw new AgentFabricError("AF_INVALID_EVENT", "Permit does not match its claim or intent");
     }
     if (
+      grant.subjectId !== permit.workerId ||
+      !grant.capabilities.includes(intent.requiredCapability) ||
+      !grant.effectClasses.includes(intent.effectClass) ||
+      !intent.sourceIds.every((sourceId) => grant.sourceIds.includes(sourceId)) ||
+      !grant.targetIds.includes(intent.targetId) ||
+      permit.notBefore < event.occurredAt ||
+      permit.expiresAt > claim.leaseExpiresAt ||
+      permit.expiresAt > grant.expiresAt
+    ) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Permit exceeds its grant, claim, or intent");
+    }
+    const priorPermitsForGrant = Object.values(state.permits).filter(
+      (recordedPermit) => recordedPermit.grantId === grant.grantId,
+    ).length;
+    if (priorPermitsForGrant >= grant.maximumAttempts) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Grant attempt limit is exhausted");
+    }
+    if (
       event.occurredAt < grant.notBefore ||
       event.occurredAt >= grant.expiresAt ||
       state.revokedGrants[grant.grantId]
@@ -202,7 +238,7 @@ export function reduceControlEvent(
     return { ...next, permits: { ...state.permits, [permit.permitId]: permit } };
   }
 
-  if (payload.type === "attempt_started") {
+  if (payload.type === "attempt_started" || payload.type === "attempt_start_unknown") {
     const permit = state.permits[payload.permitId];
     if (!permit) {
       throw new AgentFabricError(
@@ -210,18 +246,37 @@ export function reduceControlEvent(
         `Attempt references unknown permit ${payload.permitId}`,
       );
     }
+    if (payload.attemptId !== permit.attemptId) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Attempt does not match its permit");
+    }
     if (state.attempts[payload.attemptId]) {
       throw new AgentFabricError(
         "AF_INVALID_EVENT",
         `Attempt already exists: ${payload.attemptId}`,
       );
     }
+
+    if (payload.type === "attempt_start_unknown") {
+      return {
+        ...next,
+        attempts: {
+          ...state.attempts,
+          [payload.attemptId]: {
+            permitId: payload.permitId,
+            startupStatus: "unknown",
+            startedAt: null,
+            startupReportId: null,
+            startupUnknownReason: payload.reason,
+          },
+        },
+      };
+    }
+
     const claim = state.claims[permit.claimId];
     const grant = state.grants[permit.grantId];
     if (
       !claim ||
       !grant ||
-      payload.attemptId !== permit.attemptId ||
       state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
       claim.leaseExpiresAt <= event.occurredAt ||
       event.occurredAt < permit.notBefore ||
@@ -237,7 +292,13 @@ export function reduceControlEvent(
       ...next,
       attempts: {
         ...state.attempts,
-        [payload.attemptId]: { permitId: payload.permitId, startedAt: payload.startedAt },
+        [payload.attemptId]: {
+          permitId: payload.permitId,
+          startupStatus: "started",
+          startedAt: payload.startedAt,
+          startupReportId: payload.startupReportId,
+          startupUnknownReason: null,
+        },
       },
     };
   }
@@ -254,6 +315,18 @@ export function reduceControlEvent(
     throw new AgentFabricError(
       "AF_INVALID_EVENT",
       `Outcome already exists for attempt ${outcome.attemptId}`,
+    );
+  }
+  if (outcome.status === "unknown") {
+    return {
+      ...next,
+      outcomes: { ...state.outcomes, [outcome.attemptId]: outcome },
+    };
+  }
+  if (attempt.startupStatus !== "started") {
+    throw new AgentFabricError(
+      "AF_INVALID_EVENT",
+      "A non-unknown outcome requires a confirmed startup",
     );
   }
   const permit = state.permits[attempt.permitId];
