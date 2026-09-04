@@ -51,6 +51,11 @@ export interface OwnerAuthorizationVerifier {
     authorization: OwnerAuthorization,
     authorizationDigest: Digest,
   ): OwnerAuthorizationVerification;
+  /** Deterministic/offline verification used when reconstructing authority from a journal. */
+  verifyRecorded(
+    authorization: OwnerAuthorization,
+    verification: OwnerAuthorizationVerification,
+  ): boolean;
 }
 
 export interface WorkflowNode {
@@ -250,6 +255,11 @@ export interface AttemptExecutionPermit {
 export interface WorkerResultReport {
   reportId: Identifier;
   attemptId: Identifier;
+  permitId: Identifier;
+  intentId: Identifier;
+  planRevisionId: Identifier;
+  effectiveRunSpecDigest: Digest;
+  fencingToken: number;
   status: "succeeded" | "failed";
   resultDigest: Digest;
   evidenceDigests: readonly Digest[];
@@ -259,13 +269,27 @@ export interface WorkerResultReport {
 export interface AuthoritativeOutcomeCommit {
   outcomeId: Identifier;
   attemptId: Identifier;
-  status: "succeeded" | "failed" | "unknown";
-  resultDigest: Digest | null;
-  reportId: Identifier | null;
-  reportDigest: Digest | null;
+  permitId: Identifier;
+  intentId: Identifier;
+  planRevisionId: Identifier;
+  effectiveRunSpecDigest: Digest;
+  fencingToken: number;
+  status: "succeeded" | "failed";
+  resultDigest: Digest;
+  reportId: Identifier;
+  reportDigest: Digest;
   evidenceDigests: readonly Digest[];
-  reportedAt: EpochMilliseconds | null;
+  reportedAt: EpochMilliseconds;
   committedAt: EpochMilliseconds;
+}
+
+export interface AttemptUncertaintyObservation {
+  observationId: Identifier;
+  attemptId: Identifier;
+  permitId: Identifier;
+  phase: "startup" | "outcome";
+  reason: string;
+  observedAt: EpochMilliseconds;
 }
 
 export interface AdapterManifest {
@@ -310,10 +334,9 @@ export interface AgentAdapter {
 
 export interface AttemptControlState {
   permitId: Identifier;
-  startupStatus: "started" | "unknown";
-  startedAt: EpochMilliseconds | null;
-  startupReportId: Identifier | null;
-  startupUnknownReason: string | null;
+  startupStatus: "started";
+  startedAt: EpochMilliseconds;
+  startupReportId: Identifier;
 }
 
 export type ControlEvent =
@@ -323,6 +346,9 @@ export type ControlEvent =
       verification: OwnerAuthorizationVerification;
     }
   | { type: "owner_authorization_revoked"; authorizationId: Identifier; reason: string }
+  | { type: "resource_ledger_initialized"; definitions: readonly ResourceDefinition[] }
+  | { type: "resource_reservation_consumed"; reservationId: Identifier }
+  | { type: "resource_reservation_released"; reservationId: Identifier }
   | { type: "goal_registered"; goal: GoalContract }
   | { type: "grant_registered"; grant: ExecutionGrant; reservation: ResourceReservation | null }
   | { type: "grant_revoked"; grantId: Identifier; reason: string }
@@ -338,13 +364,7 @@ export type ControlEvent =
       startupReportId: Identifier;
       startedAt: EpochMilliseconds;
     }
-  | {
-      type: "attempt_start_unknown";
-      attemptId: Identifier;
-      permitId: Identifier;
-      reason: string;
-      observedAt: EpochMilliseconds;
-    }
+  | { type: "attempt_uncertainty_observed"; observation: AttemptUncertaintyObservation }
   | { type: "attempt_outcome_committed"; outcome: AuthoritativeOutcomeCommit };
 
 export interface UncommittedControlEvent {
@@ -370,19 +390,31 @@ export interface ControlState {
   authorizations: Readonly<Record<Identifier, OwnerAuthorization>>;
   authorizationVerifications: Readonly<Record<Identifier, OwnerAuthorizationVerification>>;
   revokedAuthorizations: Readonly<Record<Identifier, string>>;
+  resourceDefinitions: Readonly<Record<string, ResourceDefinition>>;
+  resourceReserved: Readonly<Record<string, number>>;
+  resourceConsumed: Readonly<Record<string, number>>;
+  resourceOwnerReserved: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;
+  resourceOwnerConsumed: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;
+  resourceReservations: Readonly<Record<Identifier, ResourceReservation>>;
   goals: Readonly<Record<Identifier, GoalContract>>;
   grants: Readonly<Record<Identifier, ExecutionGrant>>;
   revokedGrants: Readonly<Record<Identifier, string>>;
-  resourceReservations: Readonly<Record<Identifier, ResourceReservation>>;
   planDeltas: Readonly<Record<Identifier, PlanDelta>>;
   planRevisions: Readonly<Record<Identifier, RunPlanRevision>>;
   activePlanRevisionByExecution: Readonly<Record<Identifier, Identifier>>;
   dispatchIntents: Readonly<Record<Identifier, DispatchIntent>>;
   claims: Readonly<Record<Identifier, SchedulingClaim>>;
   activeClaimByIntent: Readonly<Record<Identifier, Identifier>>;
+  claimByAttemptId: Readonly<Record<Identifier, Identifier>>;
   permits: Readonly<Record<Identifier, AttemptExecutionPermit>>;
   attempts: Readonly<Record<Identifier, AttemptControlState>>;
+  uncertaintyObservations: Readonly<Record<Identifier, AttemptUncertaintyObservation>>;
   outcomes: Readonly<Record<Identifier, AuthoritativeOutcomeCommit>>;
+}
+
+export interface ReplayTrustContext {
+  ownerAuthorizationVerifier: OwnerAuthorizationVerifier;
+  resourceDefinitions?: readonly ResourceDefinition[];
 }
 
 export interface Clock {
