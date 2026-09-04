@@ -1,9 +1,18 @@
 import { describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import {
+  AgentFabricError,
+  ForgeAgentConductor,
+  MemoryControlJournal,
   ResourceLedger,
   deriveExecutionGrant,
+  type Digest,
   type ExecutionGrant,
 } from "../../src/forge/agent-fabric/index.ts";
+
+function digest(value: string): Digest {
+  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
+}
 
 function parentGrant(): ExecutionGrant {
   return {
@@ -73,5 +82,49 @@ describe("Agent Fabric resource accounting", () => {
 
     expect(duplicate).toEqual(first);
     expect(ledger.snapshot().reserved).toEqual({ modelCalls: 3, workers: 1 });
+  });
+
+  test("rejects forged or cumulatively oversized derived grants at journal admission", () => {
+    const conductor = new ForgeAgentConductor(
+      "run:authority",
+      new MemoryControlJournal(),
+      { now: () => 0 },
+      digest,
+    );
+    const parent = parentGrant();
+    conductor.registerGrant(parent);
+    conductor.registerGrant({
+      ...parent,
+      grantId: "grant:child:one",
+      subjectId: "worker:one",
+      parentGrantId: parent.grantId,
+      maximumAttempts: 1,
+      delegationDepthRemaining: 1,
+      resourceCeilings: { modelCalls: 3 },
+      reservationId: "reservation:child:one",
+    });
+
+    expect(() => conductor.registerGrant({
+      ...parent,
+      grantId: "grant:child:two",
+      subjectId: "worker:two",
+      parentGrantId: parent.grantId,
+      maximumAttempts: 1,
+      delegationDepthRemaining: 1,
+      resourceCeilings: { modelCalls: 2 },
+      reservationId: "reservation:child:two",
+    })).toThrow(AgentFabricError);
+
+    expect(() => conductor.registerGrant({
+      ...parent,
+      grantId: "grant:child:forged",
+      rootAuthorizationId: "auth:attacker",
+      subjectId: "worker:forged",
+      parentGrantId: parent.grantId,
+      maximumAttempts: 1,
+      delegationDepthRemaining: 1,
+      resourceCeilings: { modelCalls: 1 },
+      reservationId: "reservation:child:forged",
+    })).toThrow(AgentFabricError);
   });
 });
