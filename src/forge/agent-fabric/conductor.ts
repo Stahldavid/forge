@@ -12,8 +12,8 @@ import type {
   DispatchIntent,
   DispatchOffer,
   ExecutionGrant,
-  ExecutorStartupReport,
   GoalContract,
+  ExecutorStartupReport,
   RunPlanRevision,
   SchedulingClaim,
   WorkerResultReport,
@@ -119,7 +119,23 @@ export class ForgeAgentConductor {
       );
     }
     const revision = state.planRevisions[intent.planRevisionId];
-    if (!revision?.nodes.some((node) => node.nodeId === intent.taskNodeId)) {
+    const goal = revision ? state.goals[revision.goalId] : undefined;
+    if (!goal) {
+      throw new AgentFabricError("AF_INVALID_PLAN", "Dispatch intent has no active GoalContract");
+    }
+    if (
+      !goal.allowedEffectClasses.includes(intent.effectClass) ||
+      goal.prohibitedEffectClasses.includes(intent.effectClass)
+    ) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "GoalContract prohibits the intent effect class");
+    }
+    if (
+      !goal.sourceBoundary.allowExpansion &&
+      !intent.sourceIds.every((sourceId) => goal.sourceBoundary.sourceIds.includes(sourceId))
+    ) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "Intent expands the GoalContract source boundary");
+    }
+    if (!revision.nodes.some((node) => node.nodeId === intent.taskNodeId)) {
       throw new AgentFabricError(
         "AF_INVALID_PLAN",
         `Dispatch intent references missing plan node ${intent.taskNodeId}`,
@@ -154,6 +170,17 @@ export class ForgeAgentConductor {
     const intent = state.dispatchIntents[input.intentId];
     if (!intent) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown dispatch intent: ${input.intentId}`);
+    }
+    const hasOutcome = Object.values(state.outcomes).some((outcome) => {
+      const attempt = state.attempts[outcome.attemptId];
+      const permit = attempt ? state.permits[attempt.permitId] : undefined;
+      return permit?.intentId === input.intentId;
+    });
+    if (hasOutcome) {
+      throw new AgentFabricError(
+        "AF_CONFLICT",
+        `Dispatch intent ${input.intentId} already has an outcome`,
+      );
     }
     const currentClaimId = state.activeClaimByIntent[input.intentId];
     const currentClaim = currentClaimId ? state.claims[currentClaimId] : undefined;
@@ -239,6 +266,10 @@ export class ForgeAgentConductor {
       permit,
     });
     return permit;
+  }
+
+  authorizeAttemptDispatch(permit: AttemptExecutionPermit): void {
+    this.assertPermitCurrent(permit);
   }
 
   acceptStartupReport(
