@@ -86,6 +86,16 @@ function reservationMatchesGrant(reservation: ResourceReservation, grant: Execut
   return stableStringify(requestCeilings) === stableStringify(grant.resourceCeilings);
 }
 
+function issuedAttemptsForGrant(state: ControlState, grantId: string): number {
+  return Object.values(state.permits).filter((permit) => permit.grantId === grantId).length;
+}
+
+function delegatedAttemptBudget(state: ControlState, grantId: string): number {
+  return Object.values(state.grants)
+    .filter((candidate) => candidate.parentGrantId === grantId)
+    .reduce((total, candidate) => total + candidate.maximumAttempts, 0);
+}
+
 export function reduceControlEvent(
   state: ControlState,
   event: ControlEventEnvelope,
@@ -198,6 +208,17 @@ export function reduceControlEvent(
           `Reservation already exists: ${payload.reservation.reservationId}`,
         );
       }
+      if (
+        issuedAttemptsForGrant(state, parent.grantId) +
+          delegatedAttemptBudget(state, parent.grantId) +
+          grant.maximumAttempts >
+        parent.maximumAttempts
+      ) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Derived grants exceed parent attempt budget ${parent.grantId}`,
+        );
+      }
       for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
         const allocated = Object.values(state.grants)
           .filter((candidate) => candidate.parentGrantId === parent.grantId)
@@ -238,6 +259,33 @@ export function reduceControlEvent(
       state.revokedAuthorizations[authorization.authorizationId],
     );
     assertRootGrantAuthorized(authorization, grant);
+
+    const siblingRoots = Object.values(state.grants).filter(
+      (candidate) => candidate.parentGrantId === null &&
+        candidate.rootAuthorizationId === authorization.authorizationId,
+    );
+    const allocatedRootAttempts = siblingRoots.reduce(
+      (total, candidate) => total + candidate.maximumAttempts,
+      0,
+    );
+    if (allocatedRootAttempts + grant.maximumAttempts > authorization.maximumAttempts) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        "Root grants exceed the owner authorization attempt budget",
+      );
+    }
+    for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
+      const allocated = siblingRoots.reduce(
+        (total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0),
+        0,
+      );
+      if (allocated + amount > (authorization.resourceCeilings[resource] ?? -1)) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Root grants exceed owner authorization resource ${resource}`,
+        );
+      }
+    }
     return { ...next, grants: { ...state.grants, [grant.grantId]: grant } };
   }
 
@@ -391,11 +439,15 @@ export function reduceControlEvent(
 
   if (payload.type === "scheduling_claim_committed") {
     const claim = payload.claim;
-    if (!state.dispatchIntents[claim.intentId]) {
+    const intent = state.dispatchIntents[claim.intentId];
+    if (!intent) {
       throw new AgentFabricError(
         "AF_INVALID_EVENT",
         `Claim references unknown intent ${claim.intentId}`,
       );
+    }
+    if (state.activePlanRevisionByExecution[event.rootExecutionId] !== intent.planRevisionId) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Claim targets a superseded plan revision");
     }
     if (claim.committedAt !== event.occurredAt || claim.leaseExpiresAt <= claim.committedAt) {
       throw new AgentFabricError("AF_INVALID_EVENT", "Claim timestamps are inconsistent");
@@ -470,11 +522,9 @@ export function reduceControlEvent(
       throw new AgentFabricError("AF_INVALID_EVENT", "Permit exceeds its grant, claim, or intent");
     }
     assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);
-    const priorPermitsForGrant = Object.values(state.permits).filter(
-      (recordedPermit) => recordedPermit.grantId === grant.grantId,
-    ).length;
-    if (priorPermitsForGrant >= grant.maximumAttempts) {
-      throw new AgentFabricError("AF_INVALID_EVENT", "Grant attempt limit is exhausted");
+    const priorPermitsForGrant = issuedAttemptsForGrant(state, grant.grantId);
+    if (priorPermitsForGrant + delegatedAttemptBudget(state, grant.grantId) >= grant.maximumAttempts) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Grant attempt budget is exhausted");
     }
     return { ...next, permits: { ...state.permits, [permit.permitId]: permit } };
   }
@@ -602,6 +652,8 @@ export function reduceControlEvent(
     !permit ||
     !claim ||
     !grant ||
+    event.occurredAt < permit.notBefore ||
+    event.occurredAt >= permit.expiresAt ||
     state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
     claim.fencingToken !== permit.fencingToken ||
     claim.leaseExpiresAt <= event.occurredAt ||
