@@ -14,7 +14,7 @@ export interface ExecuteP0aActivityInput {
 }
 
 export type P0aActivityExecutionResult =
-  | { status: "succeeded" | "failed"; outcome: AuthoritativeOutcomeCommit }
+  | AuthoritativeOutcomeCommit
   | { status: "unknown"; observation: AttemptUncertaintyObservation };
 
 function describeUnknown(error: unknown): string {
@@ -76,6 +76,5 @@ export async function executeP0aActivity(
       ),
     };
   }
-  const committed = input.conductor.commitOutcome(outcome.report as WorkerResultReport);
-  return { status: committed.status, outcome: committed };
+  return input.conductor.commitOutcome(outcome.report as WorkerResultReport);
 }
