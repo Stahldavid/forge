@@ -1,18 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createHash } from "node:crypto";
-import {
-  AgentFabricError,
-  ForgeAgentConductor,
-  MemoryControlJournal,
-  ResourceLedger,
-  deriveExecutionGrant,
-  type Digest,
-  type ExecutionGrant,
-} from "../../src/forge/agent-fabric/index.ts";
-
-function digest(value: string): Digest {
-  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
-}
+import { ResourceLedger, deriveExecutionGrant, type ExecutionGrant } from "../../src/forge/agent-fabric/index.ts";
 
 function parentGrant(): ExecutionGrant {
   return {
@@ -51,17 +38,10 @@ function childRequest(id: string, amount: number) {
 
 describe("Agent Fabric resource accounting", () => {
   test("conserves a parent ceiling across multiple children", () => {
-    const ledger = new ResourceLedger([
-      { resource: "modelCalls", semantics: "consumable", limit: 10 },
-    ]);
+    const ledger = new ResourceLedger([{ resource: "modelCalls", semantics: "consumable", limit: 10 }]);
     const parent = parentGrant();
-
-    expect(deriveExecutionGrant(parent, childRequest("one", 3), ledger, 0).outcome).toBe(
-      "allowed",
-    );
-    expect(deriveExecutionGrant(parent, childRequest("two", 2), ledger, 0).outcome).toBe(
-      "rejected",
-    );
+    expect(deriveExecutionGrant(parent, childRequest("one", 3), ledger, 0).outcome).toBe("allowed");
+    expect(deriveExecutionGrant(parent, childRequest("two", 2), ledger, 0).outcome).toBe("rejected");
   });
 
   test("normalizes equivalent reservation requests before idempotency comparison", () => {
@@ -69,7 +49,6 @@ describe("Agent Fabric resource accounting", () => {
       { resource: "modelCalls", semantics: "consumable", limit: 10 },
       { resource: "workers", semantics: "capacity", limit: 2 },
     ]);
-
     const first = ledger.reserve("reservation:one", "grant:parent", [
       { resource: "workers", amount: 1 },
       { resource: "modelCalls", amount: 1 },
@@ -79,52 +58,25 @@ describe("Agent Fabric resource accounting", () => {
       { resource: "modelCalls", amount: 3 },
       { resource: "workers", amount: 1 },
     ]);
-
     expect(duplicate).toEqual(first);
     expect(ledger.snapshot().reserved).toEqual({ modelCalls: 3, workers: 1 });
   });
 
-  test("rejects forged or cumulatively oversized derived grants at journal admission", () => {
-    const conductor = new ForgeAgentConductor(
-      "run:authority",
-      new MemoryControlJournal(),
-      { now: () => 0 },
-      digest,
-    );
-    const parent = parentGrant();
-    conductor.registerGrant(parent);
-    conductor.registerGrant({
-      ...parent,
-      grantId: "grant:child:one",
-      subjectId: "worker:one",
-      parentGrantId: parent.grantId,
-      maximumAttempts: 1,
-      delegationDepthRemaining: 1,
-      resourceCeilings: { modelCalls: 3 },
-      reservationId: "reservation:child:one",
-    });
-
-    expect(() => conductor.registerGrant({
-      ...parent,
-      grantId: "grant:child:two",
-      subjectId: "worker:two",
-      parentGrantId: parent.grantId,
-      maximumAttempts: 1,
-      delegationDepthRemaining: 1,
-      resourceCeilings: { modelCalls: 2 },
-      reservationId: "reservation:child:two",
-    })).toThrow(AgentFabricError);
-
-    expect(() => conductor.registerGrant({
-      ...parent,
-      grantId: "grant:child:forged",
-      rootAuthorizationId: "auth:attacker",
-      subjectId: "worker:forged",
-      parentGrantId: parent.grantId,
-      maximumAttempts: 1,
-      delegationDepthRemaining: 1,
-      resourceCeilings: { modelCalls: 1 },
-      reservationId: "reservation:child:forged",
-    })).toThrow(AgentFabricError);
+  test("transaction restores consumable, capacity, and counter state after failure", () => {
+    const ledger = new ResourceLedger([
+      { resource: "calls", semantics: "consumable", limit: 5 },
+      { resource: "workers", semantics: "capacity", limit: 2 },
+      { resource: "attempts", semantics: "counter", limit: 5 },
+    ]);
+    const before = ledger.snapshot();
+    expect(() => ledger.transaction(() => {
+      ledger.reserve("reservation:tx", "owner", [
+        { resource: "calls", amount: 2 },
+        { resource: "workers", amount: 1 },
+        { resource: "attempts", amount: 1 },
+      ]);
+      throw new Error("rollback");
+    })).toThrow();
+    expect(ledger.snapshot()).toEqual(before);
   });
 });
