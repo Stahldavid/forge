@@ -4,10 +4,10 @@ import {
   assertGrantLineageCurrent,
   assertRootGrantAuthorized,
 } from "./authority.ts";
-import { sha256Digest, stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import { computeControlEventDigest } from "./journal.ts";
-import { computeRunPlanContentDigest } from "./planning.ts";
+import { applyPlanDelta, computeRunPlanContentDigest } from "./planning.ts";
+import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import type {
   ControlEventEnvelope,
   ControlState,
@@ -23,6 +23,7 @@ export function createEmptyControlState(): ControlState {
     lastEventDigest: null,
     lastOccurredAt: null,
     authorizations: {},
+    authorizationVerifications: {},
     revokedAuthorizations: {},
     goals: {},
     grants: {},
@@ -76,7 +77,9 @@ function reservationMatchesGrant(reservation: ResourceReservation, grant: Execut
     reservation.reservationId !== grant.reservationId ||
     reservation.ownerId !== grant.parentGrantId ||
     reservation.status === "released"
-  ) return false;
+  ) {
+    return false;
+  }
   const requestCeilings = Object.fromEntries(
     reservation.requests.map((request) => [request.resource, request.amount]),
   );
@@ -95,12 +98,16 @@ export function reduceControlEvent(
     lastEventDigest: event.eventDigest,
     lastOccurredAt: event.occurredAt,
   };
+
   const payload = event.payload;
 
   if (payload.type === "owner_authorization_registered") {
     const authorization = payload.authorization;
     if (state.authorizations[authorization.authorizationId]) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Owner authorization already exists: ${authorization.authorizationId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Owner authorization already exists: ${authorization.authorizationId}`,
+      );
     }
     if (authorization.rootExecutionId !== event.rootExecutionId) {
       throw new AgentFabricError("AF_INVALID_EVENT", "Owner authorization is in the wrong root execution");
@@ -108,26 +115,46 @@ export function reduceControlEvent(
     if (authorization.expiresAt <= authorization.notBefore) {
       throw new AgentFabricError("AF_INVALID_EVENT", "Owner authorization has an invalid time window");
     }
+    const expectedAuthorizationDigest = digestCanonical(authorization, sha256Digest);
+    if (payload.verification.authorizationDigest !== expectedAuthorizationDigest) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Owner authorization verification is not content-bound");
+    }
     return {
       ...next,
-      authorizations: { ...state.authorizations, [authorization.authorizationId]: authorization },
+      authorizations: {
+        ...state.authorizations,
+        [authorization.authorizationId]: authorization,
+      },
+      authorizationVerifications: {
+        ...state.authorizationVerifications,
+        [authorization.authorizationId]: payload.verification,
+      },
     };
   }
 
   if (payload.type === "owner_authorization_revoked") {
     if (!state.authorizations[payload.authorizationId]) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Unknown owner authorization: ${payload.authorizationId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Unknown owner authorization: ${payload.authorizationId}`,
+      );
     }
     return {
       ...next,
-      revokedAuthorizations: { ...state.revokedAuthorizations, [payload.authorizationId]: payload.reason },
+      revokedAuthorizations: {
+        ...state.revokedAuthorizations,
+        [payload.authorizationId]: payload.reason,
+      },
     };
   }
 
   if (payload.type === "goal_registered") {
     const authorization = state.authorizations[payload.goal.authorityInvocationId];
     if (!authorization) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Goal ${payload.goal.goalId} has no registered owner authorization`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Goal ${payload.goal.goalId} has no registered owner authorization`,
+      );
     }
     assertAuthorizationCurrent(
       authorization,
@@ -148,25 +175,38 @@ export function reduceControlEvent(
     if (state.grants[grant.grantId]) {
       throw new AgentFabricError("AF_INVALID_EVENT", `Grant already exists: ${grant.grantId}`);
     }
+
     if (grant.parentGrantId) {
       const parent = state.grants[grant.parentGrantId];
       if (!parent) {
-        throw new AgentFabricError("AF_INVALID_EVENT", `Derived grant references unknown parent ${grant.parentGrantId}`);
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Derived grant references unknown parent ${grant.parentGrantId}`,
+        );
       }
       assertGrantLineageCurrent(state, parent.grantId, event.occurredAt);
       assertGrantAttenuated(parent, grant);
       if (!payload.reservation || !reservationMatchesGrant(payload.reservation, grant)) {
-        throw new AgentFabricError("AF_INVALID_EVENT", `Derived grant ${grant.grantId} is missing its matching reservation`);
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Derived grant ${grant.grantId} is missing its matching reservation`,
+        );
       }
       if (state.resourceReservations[payload.reservation.reservationId]) {
-        throw new AgentFabricError("AF_INVALID_EVENT", `Reservation already exists: ${payload.reservation.reservationId}`);
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Reservation already exists: ${payload.reservation.reservationId}`,
+        );
       }
       for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
         const allocated = Object.values(state.grants)
           .filter((candidate) => candidate.parentGrantId === parent.grantId)
           .reduce((total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0), 0);
         if (allocated + amount > (parent.resourceCeilings[resource] ?? -1)) {
-          throw new AgentFabricError("AF_INVALID_EVENT", `Derived grants exceed parent resource ${resource}`);
+          throw new AgentFabricError(
+            "AF_INVALID_EVENT",
+            `Derived grants exceed parent resource ${resource}`,
+          );
         }
       }
       return {
@@ -184,7 +224,10 @@ export function reduceControlEvent(
     }
     const authorization = state.authorizations[grant.rootAuthorizationId];
     if (!authorization) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Root grant ${grant.grantId} has no registered owner authorization`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Root grant ${grant.grantId} has no registered owner authorization`,
+      );
     }
     if (authorization.rootExecutionId !== event.rootExecutionId) {
       throw new AgentFabricError("AF_INVALID_EVENT", "Root grant authorization is in the wrong execution");
@@ -232,7 +275,10 @@ export function reduceControlEvent(
       throw new AgentFabricError("AF_INVALID_EVENT", `Unknown goal: ${revision.goalId}`);
     }
     if (state.planRevisions[revision.revisionId]) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Plan revision already exists: ${revision.revisionId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Plan revision already exists: ${revision.revisionId}`,
+      );
     }
     const expectedDigest = computeRunPlanContentDigest(
       revision.programVersionId,
@@ -242,9 +288,13 @@ export function reduceControlEvent(
     if (revision.contentDigest !== expectedDigest) {
       throw new AgentFabricError("AF_INVALID_EVENT", "Plan revision content digest does not match");
     }
+
     const currentId = state.activePlanRevisionByExecution[revision.rootExecutionId] ?? null;
     if (revision.parentRevisionId !== currentId) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Plan revision ${revision.revisionId} does not extend the active revision`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Plan revision ${revision.revisionId} does not extend the active revision`,
+      );
     }
     if (currentId === null) {
       if (revision.revisionNumber !== 1 || revision.sourcePlanDeltaId !== null) {
@@ -252,8 +302,14 @@ export function reduceControlEvent(
       }
     } else {
       const parent = state.planRevisions[currentId]!;
-      if (revision.goalId !== parent.goalId || revision.programVersionId !== parent.programVersionId) {
-        throw new AgentFabricError("AF_INVALID_EVENT", "Plan revision cannot silently change goal or workflow program");
+      if (
+        revision.goalId !== parent.goalId ||
+        revision.programVersionId !== parent.programVersionId
+      ) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          "Plan revision cannot silently change goal or workflow program",
+        );
       }
       if (revision.revisionNumber !== parent.revisionNumber + 1 || !revision.sourcePlanDeltaId) {
         throw new AgentFabricError("AF_INVALID_EVENT", "Plan revision has invalid revision lineage");
@@ -265,7 +321,17 @@ export function reduceControlEvent(
         delta.baseRevisionId !== parent.revisionId ||
         delta.nextRevisionId !== revision.revisionId
       ) {
-        throw new AgentFabricError("AF_INVALID_EVENT", "Plan revision is not backed by its registered PlanDelta");
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          "Plan revision is not backed by its registered PlanDelta",
+        );
+      }
+      const derived = applyPlanDelta(parent, delta, sha256Digest);
+      if (stableStringify(derived) !== stableStringify(revision)) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          "Plan revision content does not match its registered PlanDelta",
+        );
       }
     }
     return {
@@ -287,11 +353,16 @@ export function reduceControlEvent(
       throw new AgentFabricError("AF_INVALID_EVENT", "Dispatch intent cannot be created in the future");
     }
     if (state.activePlanRevisionByExecution[intent.rootExecutionId] !== intent.planRevisionId) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Dispatch intent references a non-current plan revision ${intent.planRevisionId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Dispatch intent references a non-current plan revision ${intent.planRevisionId}`,
+      );
     }
     const revision = state.planRevisions[intent.planRevisionId];
     const goal = revision ? state.goals[revision.goalId] : undefined;
-    if (!goal) throw new AgentFabricError("AF_INVALID_EVENT", "Dispatch intent has no active GoalContract");
+    if (!goal) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Dispatch intent has no active GoalContract");
+    }
     if (
       !goal.allowedEffectClasses.includes(intent.effectClass) ||
       goal.prohibitedEffectClasses.includes(intent.effectClass) ||
@@ -301,18 +372,30 @@ export function reduceControlEvent(
       throw new AgentFabricError("AF_INVALID_EVENT", "Dispatch intent violates its GoalContract");
     }
     if (!revision.nodes.some((node) => node.nodeId === intent.taskNodeId)) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Dispatch intent references missing plan node ${intent.taskNodeId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Dispatch intent references missing plan node ${intent.taskNodeId}`,
+      );
     }
     if (state.dispatchIntents[intent.intentId]) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Dispatch intent already exists: ${intent.intentId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Dispatch intent already exists: ${intent.intentId}`,
+      );
     }
-    return { ...next, dispatchIntents: { ...state.dispatchIntents, [intent.intentId]: intent } };
+    return {
+      ...next,
+      dispatchIntents: { ...state.dispatchIntents, [intent.intentId]: intent },
+    };
   }
 
   if (payload.type === "scheduling_claim_committed") {
     const claim = payload.claim;
     if (!state.dispatchIntents[claim.intentId]) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Claim references unknown intent ${claim.intentId}`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Claim references unknown intent ${claim.intentId}`,
+      );
     }
     if (claim.committedAt !== event.occurredAt || claim.leaseExpiresAt <= claim.committedAt) {
       throw new AgentFabricError("AF_INVALID_EVENT", "Claim timestamps are inconsistent");
@@ -322,15 +405,28 @@ export function reduceControlEvent(
       const permit = attempt ? state.permits[attempt.permitId] : undefined;
       return permit?.intentId === claim.intentId;
     });
-    if (hasOutcome) throw new AgentFabricError("AF_INVALID_EVENT", `Claim ${claim.claimId} targets an intent with an existing outcome`);
-    if (state.claims[claim.claimId]) throw new AgentFabricError("AF_INVALID_EVENT", `Claim already exists: ${claim.claimId}`);
+    if (hasOutcome) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Claim ${claim.claimId} targets an intent with an existing outcome`,
+      );
+    }
+    if (state.claims[claim.claimId]) {
+      throw new AgentFabricError("AF_INVALID_EVENT", `Claim already exists: ${claim.claimId}`);
+    }
     const currentClaimId = state.activeClaimByIntent[claim.intentId];
     const currentClaim = currentClaimId ? state.claims[currentClaimId] : undefined;
     if (currentClaim && currentClaim.leaseExpiresAt > event.occurredAt) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Claim ${claim.claimId} overlaps a current lease`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Claim ${claim.claimId} overlaps a current lease`,
+      );
     }
     if (claim.fencingToken !== (currentClaim?.fencingToken ?? 0) + 1) {
-      throw new AgentFabricError("AF_INVALID_EVENT", `Claim ${claim.claimId} has an invalid fencing token`);
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Claim ${claim.claimId} has an invalid fencing token`,
+      );
     }
     return {
       ...next,
@@ -344,8 +440,12 @@ export function reduceControlEvent(
     const claim = state.claims[permit.claimId];
     const grant = state.grants[permit.grantId];
     const intent = state.dispatchIntents[permit.intentId];
-    if (!claim || !grant || !intent) throw new AgentFabricError("AF_INVALID_EVENT", "Permit references missing authority state");
-    if (state.permits[permit.permitId]) throw new AgentFabricError("AF_INVALID_EVENT", `Permit already exists: ${permit.permitId}`);
+    if (!claim || !grant || !intent) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Permit references missing authority state");
+    }
+    if (state.permits[permit.permitId]) {
+      throw new AgentFabricError("AF_INVALID_EVENT", `Permit already exists: ${permit.permitId}`);
+    }
     if (
       state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
       permit.attemptId !== claim.attemptId ||
@@ -353,7 +453,9 @@ export function reduceControlEvent(
       permit.fencingToken !== claim.fencingToken ||
       permit.planRevisionId !== intent.planRevisionId ||
       permit.effectiveRunSpecDigest !== intent.effectiveRunSpecDigest
-    ) throw new AgentFabricError("AF_INVALID_EVENT", "Permit does not match its claim or intent");
+    ) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Permit does not match its claim or intent");
+    }
     if (
       grant.subjectId !== permit.workerId ||
       !grant.capabilities.includes(intent.requiredCapability) ||
@@ -364,7 +466,9 @@ export function reduceControlEvent(
       event.occurredAt >= permit.expiresAt ||
       permit.expiresAt > claim.leaseExpiresAt ||
       permit.expiresAt > grant.expiresAt
-    ) throw new AgentFabricError("AF_INVALID_EVENT", "Permit exceeds its grant, claim, or intent");
+    ) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Permit exceeds its grant, claim, or intent");
+    }
     assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);
     const priorPermitsForGrant = Object.values(state.permits).filter(
       (recordedPermit) => recordedPermit.grantId === grant.grantId,
@@ -377,9 +481,21 @@ export function reduceControlEvent(
 
   if (payload.type === "attempt_started" || payload.type === "attempt_start_unknown") {
     const permit = state.permits[payload.permitId];
-    if (!permit) throw new AgentFabricError("AF_INVALID_EVENT", `Attempt references unknown permit ${payload.permitId}`);
-    if (payload.attemptId !== permit.attemptId) throw new AgentFabricError("AF_INVALID_EVENT", "Attempt does not match its permit");
-    if (state.attempts[payload.attemptId]) throw new AgentFabricError("AF_INVALID_EVENT", `Attempt already exists: ${payload.attemptId}`);
+    if (!permit) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Attempt references unknown permit ${payload.permitId}`,
+      );
+    }
+    if (payload.attemptId !== permit.attemptId) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Attempt does not match its permit");
+    }
+    if (state.attempts[payload.attemptId]) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Attempt already exists: ${payload.attemptId}`,
+      );
+    }
 
     if (payload.type === "attempt_start_unknown") {
       if (payload.observedAt !== event.occurredAt) {
@@ -403,7 +519,8 @@ export function reduceControlEvent(
     const claim = state.claims[permit.claimId];
     const grant = state.grants[permit.grantId];
     if (
-      !claim || !grant ||
+      !claim ||
+      !grant ||
       payload.startedAt < permit.notBefore ||
       payload.startedAt > event.occurredAt ||
       payload.startedAt >= permit.expiresAt ||
@@ -412,7 +529,9 @@ export function reduceControlEvent(
       event.occurredAt < permit.notBefore ||
       event.occurredAt >= permit.expiresAt ||
       state.activePlanRevisionByExecution[event.rootExecutionId] !== permit.planRevisionId
-    ) throw new AgentFabricError("AF_INVALID_EVENT", "Attempt started without current authority");
+    ) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Attempt started without current authority");
+    }
     assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);
     return {
       ...next,
@@ -431,35 +550,70 @@ export function reduceControlEvent(
 
   const outcome = payload.outcome;
   const attempt = state.attempts[outcome.attemptId];
-  if (!attempt) throw new AgentFabricError("AF_INVALID_EVENT", `Outcome references unknown attempt ${outcome.attemptId}`);
-  if (state.outcomes[outcome.attemptId]) throw new AgentFabricError("AF_INVALID_EVENT", `Outcome already exists for attempt ${outcome.attemptId}`);
-  if (outcome.committedAt !== event.occurredAt) throw new AgentFabricError("AF_INVALID_EVENT", "Outcome commit time must match its event time");
+  if (!attempt) {
+    throw new AgentFabricError(
+      "AF_INVALID_EVENT",
+      `Outcome references unknown attempt ${outcome.attemptId}`,
+    );
+  }
+  if (state.outcomes[outcome.attemptId]) {
+    throw new AgentFabricError(
+      "AF_INVALID_EVENT",
+      `Outcome already exists for attempt ${outcome.attemptId}`,
+    );
+  }
+  if (outcome.committedAt !== event.occurredAt) {
+    throw new AgentFabricError("AF_INVALID_EVENT", "Outcome commit time must match its event time");
+  }
   if (outcome.status === "unknown") {
     if (
-      outcome.resultDigest !== null || outcome.reportId !== null || outcome.reportDigest !== null ||
-      outcome.reportedAt !== null || outcome.evidenceDigests.length !== 0
-    ) throw new AgentFabricError("AF_INVALID_EVENT", "Unknown outcome cannot claim a result report");
-    return { ...next, outcomes: { ...state.outcomes, [outcome.attemptId]: outcome } };
+      outcome.resultDigest !== null ||
+      outcome.reportId !== null ||
+      outcome.reportDigest !== null ||
+      outcome.reportedAt !== null ||
+      outcome.evidenceDigests.length !== 0
+    ) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Unknown outcome cannot claim a result report");
+    }
+    return {
+      ...next,
+      outcomes: { ...state.outcomes, [outcome.attemptId]: outcome },
+    };
   }
   if (attempt.startupStatus !== "started" || attempt.startedAt === null) {
-    throw new AgentFabricError("AF_INVALID_EVENT", "A non-unknown outcome requires a confirmed startup");
+    throw new AgentFabricError(
+      "AF_INVALID_EVENT",
+      "A non-unknown outcome requires a confirmed startup",
+    );
   }
   if (
-    outcome.reportId === null || outcome.reportDigest === null || outcome.reportedAt === null ||
-    outcome.reportedAt < attempt.startedAt || outcome.reportedAt > event.occurredAt
-  ) throw new AgentFabricError("AF_INVALID_EVENT", "Outcome result provenance is incomplete or inconsistent");
+    outcome.reportId === null ||
+    outcome.reportDigest === null ||
+    outcome.reportedAt === null ||
+    outcome.reportedAt < attempt.startedAt ||
+    outcome.reportedAt > event.occurredAt
+  ) {
+    throw new AgentFabricError("AF_INVALID_EVENT", "Outcome result provenance is incomplete or inconsistent");
+  }
   const permit = state.permits[attempt.permitId];
   const claim = permit ? state.claims[permit.claimId] : undefined;
   const grant = permit ? state.grants[permit.grantId] : undefined;
   if (
-    !permit || !claim || !grant ||
+    !permit ||
+    !claim ||
+    !grant ||
     state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
     claim.fencingToken !== permit.fencingToken ||
     claim.leaseExpiresAt <= event.occurredAt ||
     state.activePlanRevisionByExecution[event.rootExecutionId] !== permit.planRevisionId
-  ) throw new AgentFabricError("AF_INVALID_EVENT", "Outcome committed without current authority");
+  ) {
+    throw new AgentFabricError("AF_INVALID_EVENT", "Outcome committed without current authority");
+  }
   assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);
-  return { ...next, outcomes: { ...state.outcomes, [outcome.attemptId]: outcome } };
+  return {
+    ...next,
+    outcomes: { ...state.outcomes, [outcome.attemptId]: outcome },
+  };
 }
 
 export function replayControlState(events: readonly ControlEventEnvelope[]): ControlState {
