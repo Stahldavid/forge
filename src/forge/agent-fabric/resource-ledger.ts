@@ -18,10 +18,19 @@ function assertAmount(amount: number, resource: string): void {
   }
 }
 
+function bucket(
+  records: Record<Identifier, Record<string, number>>,
+  ownerId: Identifier,
+): Record<string, number> {
+  return records[ownerId] ?? (records[ownerId] = {});
+}
+
 export class ResourceLedger {
   private readonly definitions: Record<string, ResourceDefinition>;
   private readonly reserved: Record<string, number> = {};
   private readonly consumed: Record<string, number> = {};
+  private readonly ownerReserved: Record<Identifier, Record<string, number>> = {};
+  private readonly ownerConsumed: Record<Identifier, Record<string, number>> = {};
   private readonly reservations: Record<Identifier, ResourceReservation> = {};
 
   constructor(definitions: readonly ResourceDefinition[]) {
@@ -49,6 +58,7 @@ export class ResourceLedger {
     reservationId: Identifier,
     ownerId: Identifier,
     requests: readonly ResourceReservationRequest[],
+    ownerCeilings?: Readonly<Record<string, number>>,
   ): ResourceReservation {
     const aggregated: Record<string, number> = {};
     for (const request of requests) {
@@ -79,6 +89,8 @@ export class ResourceLedger {
       return existing;
     }
 
+    const ownerReserved = bucket(this.ownerReserved, ownerId);
+    const ownerConsumed = bucket(this.ownerConsumed, ownerId);
     for (const [resource, amount] of Object.entries(aggregated)) {
       const definition = this.definitions[resource]!;
       const reserved = this.reserved[resource] ?? 0;
@@ -89,9 +101,30 @@ export class ResourceLedger {
       if (projected > definition.limit) {
         throw new AgentFabricError(
           "AF_RESOURCE_EXHAUSTED",
-          `Resource ${resource} would exceed its limit`,
+          `Resource ${resource} would exceed its global limit`,
           { amount, consumed, limit: definition.limit, reserved, resource },
         );
+      }
+
+      if (ownerCeilings) {
+        const ceiling = ownerCeilings[resource];
+        if (ceiling === undefined) {
+          throw new AgentFabricError(
+            "AF_RESOURCE_EXHAUSTED",
+            `Owner ${ownerId} has no ceiling for resource ${resource}`,
+            { ownerId, resource },
+          );
+        }
+        const ownerProjected = definition.semantics === "counter"
+          ? (ownerConsumed[resource] ?? 0) + amount
+          : (ownerReserved[resource] ?? 0) + (ownerConsumed[resource] ?? 0) + amount;
+        if (ownerProjected > ceiling) {
+          throw new AgentFabricError(
+            "AF_RESOURCE_EXHAUSTED",
+            `Resource ${resource} would exceed the ceiling for ${ownerId}`,
+            { amount, ceiling, ownerId, projected: ownerProjected, resource },
+          );
+        }
       }
     }
 
@@ -99,8 +132,10 @@ export class ResourceLedger {
       const definition = this.definitions[request.resource]!;
       if (definition.semantics === "counter") {
         this.consumed[request.resource] = (this.consumed[request.resource] ?? 0) + request.amount;
+        ownerConsumed[request.resource] = (ownerConsumed[request.resource] ?? 0) + request.amount;
       } else {
         this.reserved[request.resource] = (this.reserved[request.resource] ?? 0) + request.amount;
+        ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) + request.amount;
       }
     }
 
@@ -122,6 +157,8 @@ export class ResourceLedger {
       return reservation;
     }
 
+    const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);
+    const ownerConsumed = bucket(this.ownerConsumed, reservation.ownerId);
     for (const request of reservation.requests) {
       const definition = this.definitions[request.resource]!;
       if (definition.semantics === "capacity") {
@@ -130,6 +167,8 @@ export class ResourceLedger {
       if (definition.semantics === "consumable") {
         this.reserved[request.resource] -= request.amount;
         this.consumed[request.resource] += request.amount;
+        ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) - request.amount;
+        ownerConsumed[request.resource] = (ownerConsumed[request.resource] ?? 0) + request.amount;
       }
     }
 
@@ -144,11 +183,13 @@ export class ResourceLedger {
       return reservation;
     }
 
+    const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);
     if (reservation.status === "active") {
       for (const request of reservation.requests) {
         const definition = this.definitions[request.resource]!;
         if (definition.semantics !== "counter") {
           this.reserved[request.resource] -= request.amount;
+          ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) - request.amount;
         }
       }
     } else {
@@ -156,6 +197,7 @@ export class ResourceLedger {
         const definition = this.definitions[request.resource]!;
         if (definition.semantics === "capacity") {
           this.reserved[request.resource] -= request.amount;
+          ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) - request.amount;
         }
       }
     }
@@ -170,6 +212,8 @@ export class ResourceLedger {
       definitions: structuredClone(this.definitions),
       reserved: { ...this.reserved },
       consumed: { ...this.consumed },
+      ownerReserved: structuredClone(this.ownerReserved),
+      ownerConsumed: structuredClone(this.ownerConsumed),
       reservations: structuredClone(this.reservations),
     };
   }
