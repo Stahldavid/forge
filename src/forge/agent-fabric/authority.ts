@@ -231,7 +231,11 @@ export function assertGrantCurrent(
 export function assertGrantLineageCurrent(
   state: Pick<
     ControlState,
-    "authorizations" | "revokedAuthorizations" | "grants" | "revokedGrants"
+    | "authorizations"
+    | "revokedAuthorizations"
+    | "grants"
+    | "revokedGrants"
+    | "resourceReservations"
   >,
   grantId: string,
   now: number,
@@ -246,6 +250,22 @@ export function assertGrantLineageCurrent(
     }
     seen.add(current.grantId);
     assertGrantCurrent(current, now, state.revokedGrants[current.grantId]);
+
+    if (current.parentGrantId) {
+      if (!current.reservationId) {
+        throw new AgentFabricError(
+          "AF_GRANT_REJECTED",
+          `Derived grant ${current.grantId} has no resource reservation`,
+        );
+      }
+      const reservation = state.resourceReservations[current.reservationId];
+      if (!reservation || reservation.status === "released") {
+        throw new AgentFabricError(
+          "AF_GRANT_REJECTED",
+          `Derived grant ${current.grantId} has no current resource reservation`,
+        );
+      }
+    }
 
     if (!current.parentGrantId) {
       const authorization = state.authorizations[current.rootAuthorizationId];
