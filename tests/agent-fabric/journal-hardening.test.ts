@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { AgentFabricError, MemoryControlJournal, replayControlState } from "../../src/forge/agent-fabric/index.ts";
 
-function validGoalEvent() {
+function validGoalEvent(): Parameters<MemoryControlJournal["append"]>[0] {
   return {
     expectedSequence: 0,
     event: {
@@ -26,6 +26,11 @@ function validGoalEvent() {
           maximumDelegationDepth: 0,
           resourceCeilings: { calls: 1 },
         },
+        verification: {
+          verifierId: "test-owner-verifier/v1",
+          authorizationDigest: "sha256:df13e6adfdc5cff0f88c2dc7f9912a44a17305a2b30ef0c9aed46784b06547d6",
+          evidenceDigest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        },
       },
     },
   };
@@ -37,6 +42,7 @@ describe("MemoryControlJournal hardening", () => {
     const input = validGoalEvent();
     const appended = journal.append(input);
     input.event.eventId = "event:mutated";
+    if (input.event.payload.type !== "owner_authorization_registered") throw new Error("unexpected event");
     input.event.payload.authorization.principalId = "attacker";
     appended.eventId = "event:return-mutated";
     if (appended.payload.type === "owner_authorization_registered") {
