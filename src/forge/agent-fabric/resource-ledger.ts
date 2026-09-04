@@ -59,6 +59,19 @@ export class ResourceLedger {
     }
   }
 
+  static fromSnapshot(snapshot: ResourceLedgerSnapshot): ResourceLedger {
+    const ledger = new ResourceLedger(Object.values(snapshot.definitions));
+    const freshDefinitions = ledger.snapshot().definitions;
+    if (stableStringify(freshDefinitions) !== stableStringify(snapshot.definitions)) {
+      throw new AgentFabricError(
+        "AF_INVALID_STATE",
+        "ResourceLedger snapshot definitions are not canonical",
+      );
+    }
+    ledger.restore(snapshot);
+    return ledger;
+  }
+
   transaction<T>(operation: () => T): T {
     const before = this.snapshot();
     try {
