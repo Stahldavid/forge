@@ -1,5 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { AgentFabricError, MemoryControlJournal, replayControlState } from "../../src/forge/agent-fabric/index.ts";
+import {
+  AgentFabricError,
+  MemoryControlJournal,
+  replayControlState,
+  type OwnerAuthorizationVerifier,
+} from "../../src/forge/agent-fabric/index.ts";
+
+const EVIDENCE = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as const;
+
+function verifier(): OwnerAuthorizationVerifier {
+  return {
+    verify(authorization, authorizationDigest) {
+      return {
+        verifierId: "test-owner-verifier/v1",
+        authorizationDigest,
+        evidenceDigest: EVIDENCE,
+      };
+    },
+    verifyRecorded(_authorization, verification) {
+      return verification.verifierId === "test-owner-verifier/v1" &&
+        verification.evidenceDigest === EVIDENCE;
+    },
+  };
+}
 
 function validGoalEvent(): Parameters<MemoryControlJournal["append"]>[0] {
   return {
@@ -29,7 +52,7 @@ function validGoalEvent(): Parameters<MemoryControlJournal["append"]>[0] {
         verification: {
           verifierId: "test-owner-verifier/v1",
           authorizationDigest: "sha256:df13e6adfdc5cff0f88c2dc7f9912a44a17305a2b30ef0c9aed46784b06547d6",
-          evidenceDigest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          evidenceDigest: EVIDENCE,
         },
       },
     },
@@ -52,7 +75,16 @@ describe("MemoryControlJournal hardening", () => {
     expect(stored?.eventId).toBe("event:authorization");
     if (stored?.payload.type !== "owner_authorization_registered") throw new Error("unexpected event");
     expect(stored.payload.authorization.principalId).toBe("owner:1");
-    expect(() => replayControlState(journal.readAll())).not.toThrow();
+    expect(() => replayControlState(journal.readAll(), { ownerAuthorizationVerifier: verifier() })).not.toThrow();
+  });
+
+  test("replay rejects structurally valid authorization evidence from an untrusted verifier", () => {
+    const journal = new MemoryControlJournal();
+    const input = validGoalEvent();
+    if (input.event.payload.type !== "owner_authorization_registered") throw new Error("unexpected event");
+    input.event.payload.verification.verifierId = "attacker/verifier";
+    journal.append(input);
+    expect(() => replayControlState(journal.readAll(), { ownerAuthorizationVerifier: verifier() })).toThrow(AgentFabricError);
   });
 
   test("rejects runtime payloads with unknown fields", () => {
