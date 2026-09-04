@@ -27,8 +27,7 @@ The first vertical implements a deterministic control kernel with:
 - exact binding between a permit's grant/root authorization and the `GoalContract.authorityInvocationId` of its active plan;
 - child grants with monotonic attenuation and transitive revocation;
 - resource reservation plus child-grant registration as one in-memory transactional operation;
-- a Conductor-pinned canonical `ResourceLedger`; callers cannot swap in a fresh ledger with matching definitions after construction;
-- live ledger/journal synchronization checks before resource transitions;
+- a Conductor-owned internal `ResourceLedger`, seeded from constructor definitions and hydrated from authoritative replay on resume;
 - replay-side reconstruction of consumable, capacity, and counter accounting from trusted resource definitions and journaled reservation transitions;
 - globally unique attempt identities, one claim lineage per attempt, and at most one execution permit per attempt;
 - durable dispatch intent, non-authoritative offers, atomic claims, leases, fencing, and attempt-bound permits;
@@ -119,7 +118,7 @@ The report digest covers those fields as well as status, result digest, evidence
 
 P0a uses `ResourceLedger.transaction()` to make reservation and child-grant journal registration atomic within the in-memory reference implementation. If journal registration fails, the ledger snapshot is restored, including consumable, capacity, and counter state.
 
-The public Conductor pins the `ResourceLedger` supplied at construction. A different ledger object cannot be supplied later to derive grants, consume reservations, or release reservations, even if it has identical definitions. Before each resource transition, the live ledger projection must match the authoritative replay projection; out-of-band ledger mutations fail closed instead of being journaled as if they were valid.
+The public Conductor does **not** retain caller-owned mutable ledger state as authority. When resource definitions are supplied at construction, it clones those definitions into a Conductor-owned internal ledger. On resume from an existing journal, the internal ledger is hydrated from the authoritative replay projection before new resource transitions are allowed. An empty constructor seed therefore cannot erase prior usage, and later out-of-band mutations of the caller's seed cannot change authority state. A conflicting non-empty seed fails closed.
 
 The replay path does not accept a reservation merely because its shape matches a child grant. Resource definitions and limits are supplied through the replay trust context; reservation transitions are reapplied to reconstructed global/owner accounting. Duplicate resources, unknown resources, invalid transitions, or aggregate global overcommit fail closed.
 
@@ -162,11 +161,14 @@ The public `replayControlState()` adds hardened protocol checks over the determi
 - grant ancestry, reservation currentness and revocation;
 - resource accounting against trust-bound definitions;
 - global attempt/resource budgets;
+- stream-unique event/idempotency/result identities;
 - globally unique attempt identity;
 - at most one permit per attempt;
 - exact plan-delta lineage;
 - claims, permits, startup and authoritative outcome bindings;
 - canonical `WorkerResultReport` digest consistency.
+
+Malformed replay input is normalized to `AgentFabricError(AF_INVALID_EVENT)` rather than leaking implementation-level exceptions such as `TypeError`.
 
 The event hash chain is an **integrity mechanism, not a signature or proof of storage origin**. P0a assumes the journal prefix supplied for authoritative replay comes from the trusted journal/storage boundary. The reducer determines whether that prefix is semantically admissible; production durable storage/authentication of journal bytes is intentionally deferred to the persistence slice.
 
@@ -174,7 +176,9 @@ This distinction is important: arbitrary attacker-created bytes do not become au
 
 ## Canonicalization scope
 
-P0a currently uses `forge-canonical-json/v0.1`, a deterministic TypeScript/JavaScript reference profile with SHA-256. It is **not** claimed to be the final cross-language canonicalization standard. A future protocol revision must adopt a cross-language profile (for example RFC 8785/JCS or an equivalently specified profile) with shared test vectors before Java/Python/Rust implementations are expected to produce identical digests.
+P0a currently uses `forge-canonical-json/v0.1`, a deterministic TypeScript/JavaScript reference profile with SHA-256. Canonicalization is defined over the JSON data model, not arbitrary JavaScript object behavior: objects must be plain or null-prototype data objects with own enumerable data properties, arrays must be dense and cannot carry extra/symbol properties, accessors are rejected, and an own property named `__proto__` is preserved as ordinary data and therefore participates in the canonical bytes and digest. This prevents different admitted in-memory values from collapsing to the same canonical representation through JavaScript prototype semantics.
+
+The profile is **not** claimed to be the final cross-language canonicalization standard. A future protocol revision must adopt a cross-language profile (for example RFC 8785/JCS or an equivalently specified profile) with shared test vectors before Java/Python/Rust implementations are expected to produce identical digests.
 
 ## Public API
 
