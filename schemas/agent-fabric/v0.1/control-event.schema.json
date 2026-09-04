@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:forgeos:agent-fabric:control-event:v0.1",
+  "title": "Forge Agent Fabric P0a Control Event",
+  "type": "object",
+  "required": [
+    "eventId",
+    "rootExecutionId",
+    "occurredAt",
+    "sequence",
+    "predecessorEventId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string", "minLength": 1 },
+    "rootExecutionId": { "type": "string", "minLength": 1 },
+    "occurredAt": { "type": "number" },
+    "idempotencyKey": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "predecessorEventId": { "type": ["string", "null"] },
+    "payload": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": [
+            "goal_registered",
+            "grant_registered",
+            "grant_revoked",
+            "plan_revision_activated",
+            "dispatch_intent_committed",
+            "scheduling_claim_committed",
+            "attempt_execution_permit_issued",
+            "attempt_started",
+            "attempt_outcome_committed"
+          ]
+        }
+      },
+      "unevaluatedProperties": true
+    }
+  },
+  "unevaluatedProperties": false
+}
