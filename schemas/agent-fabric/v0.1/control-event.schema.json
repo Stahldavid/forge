@@ -32,6 +32,7 @@
             "scheduling_claim_committed",
             "attempt_execution_permit_issued",
             "attempt_started",
+            "attempt_start_unknown",
             "attempt_outcome_committed"
           ]
         }
