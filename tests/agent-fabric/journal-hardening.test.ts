@@ -10,7 +10,7 @@ const EVIDENCE = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 function verifier(): OwnerAuthorizationVerifier {
   return {
-    verify(authorization, authorizationDigest) {
+    verify(_authorization, authorizationDigest) {
       return {
         verifierId: "test-owner-verifier/v1",
         authorizationDigest,
