@@ -24,7 +24,7 @@ function normalize(value: unknown, seen: Set<object>): unknown {
   }
 
   if (typeof value === "bigint") {
-    throw new new AgentFabricError(
+    throw new AgentFabricError(
       "AF_CANONICALIZATION_FAILED",
       "BigInt values must be encoded as strings before canonicalization",
     );
