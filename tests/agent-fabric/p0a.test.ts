@@ -172,7 +172,12 @@ describe("Forge Agent Fabric P0a", () => {
       grantId: grantA.grantId,
       maximumValidityMs: 100,
     });
-    conductor.startAttempt(permitA);
+    conductor.acceptStartupReport(permitA, {
+      startupReportId: "startup:a",
+      attemptId: permitA.attemptId,
+      observedSpecDigest: permitA.effectiveRunSpecDigest,
+      startedAt: clock.now(),
+    });
 
     clock.advance(101);
     const claimB = conductor.claimDispatch({
@@ -224,7 +229,12 @@ describe("Forge Agent Fabric P0a", () => {
       maximumValidityMs: 10,
     });
     clock.advance(10);
-    expect(() => conductor.startAttempt(permit)).toThrow(AgentFabricError);
+    expect(() => conductor.acceptStartupReport(permit, {
+      startupReportId: "startup:expiry",
+      attemptId: permit.attemptId,
+      observedSpecDigest: permit.effectiveRunSpecDigest,
+      startedAt: clock.now(),
+    })).toThrow(AgentFabricError);
   });
 
   test("commits identical duplicate outcomes idempotently and rejects conflicts", () => {
@@ -257,7 +267,12 @@ describe("Forge Agent Fabric P0a", () => {
       grantId: grant.grantId,
       maximumValidityMs: 1_000,
     });
-    conductor.startAttempt(permit);
+    conductor.acceptStartupReport(permit, {
+      startupReportId: "startup:duplicate",
+      attemptId: permit.attemptId,
+      observedSpecDigest: permit.effectiveRunSpecDigest,
+      startedAt: clock.now(),
+    });
     const report = {
       reportId: "report:duplicate",
       attemptId: "attempt:duplicate",
@@ -321,6 +336,73 @@ describe("Forge Agent Fabric P0a", () => {
       resourceRequests: [{ resource: "workers", amount: 1 }],
     }, ledger, clock.now());
     expect(second.outcome).toBe("rejected");
+  });
+
+  test("records an unknown startup without claiming that the executor started", async () => {
+    const clock = new ManualClock(45_000);
+    const { conductor, revision } = preparedConductor(clock);
+    const grant = rootGrant(clock);
+    conductor.registerGrant(grant);
+    const missingSpec = digest("spec:missing-fixture");
+    conductor.commitDispatchIntent({
+      intentId: "intent:unknown-start",
+      rootExecutionId: "run:1",
+      planRevisionId: revision.revisionId,
+      taskNodeId: "analyze",
+      effectiveRunSpecDigest: missingSpec,
+      sourceIds: ["source:forge"],
+      targetId: "target:artifact-store",
+      requiredCapability: "architecture.read",
+      effectClass: "read",
+      createdAt: clock.now(),
+    });
+    const claim = conductor.claimDispatch({
+      claimId: "claim:unknown-start",
+      intentId: "intent:unknown-start",
+      workerId: "worker:a",
+      attemptId: "attempt:unknown-start",
+      leaseDurationMs: 1_000,
+    });
+    const permit = conductor.issuePermit({
+      permitId: "permit:unknown-start",
+      claimId: claim.claimId,
+      grantId: grant.grantId,
+      maximumValidityMs: 1_000,
+    });
+    const adapter = new DeterministicTestAdapter([], () => clock.now());
+    const outcome = await executeP0aActivity({ conductor, adapter, permit });
+    expect(outcome.status).toBe("unknown");
+    expect(conductor.state().attempts[permit.attemptId]?.startupStatus).toBe("unknown");
+  });
+
+  test("rejects split resource requests that exceed a parent ceiling in aggregate", () => {
+    const clock = new ManualClock(47_000);
+    const ledger = new ResourceLedger([
+      { resource: "modelCalls", semantics: "consumable", limit: 10 },
+    ]);
+    const parent = {
+      ...rootGrant(clock, "conductor"),
+      delegationDepthRemaining: 2,
+      resourceCeilings: { modelCalls: 4 },
+    };
+    const resolution = deriveExecutionGrant(parent, {
+      grantId: "grant:split-ceiling",
+      subjectId: "worker:split",
+      capabilities: ["architecture.read"],
+      sourceIds: ["source:forge"],
+      targetIds: ["target:artifact-store"],
+      effectClasses: ["read"],
+      notBefore: clock.now(),
+      expiresAt: clock.now() + 1_000,
+      maximumAttempts: 1,
+      delegationDepthRemaining: 1,
+      reservationId: "reservation:split",
+      resourceRequests: [
+        { resource: "modelCalls", amount: 3 },
+        { resource: "modelCalls", amount: 3 },
+      ],
+    }, ledger, clock.now());
+    expect(resolution.outcome).toBe("rejected");
   });
 
   test("canonicalizes object keys and rejects non-finite values", () => {
