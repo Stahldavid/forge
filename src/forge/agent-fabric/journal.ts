@@ -25,6 +25,15 @@ function eventDigestInput(envelope: Omit<ControlEventEnvelope, "eventDigest">): 
   return envelope;
 }
 
+function semanticFingerprint(event: UncommittedControlEvent): string {
+  return stableStringify({
+    eventId: event.eventId,
+    rootExecutionId: event.rootExecutionId,
+    idempotencyKey: event.idempotencyKey ?? null,
+    payload: event.payload,
+  });
+}
+
 export class MemoryControlJournal implements ControlJournal {
   private readonly events: ControlEventEnvelope[] = [];
   private readonly byEventId = new Map<Identifier, ControlEventEnvelope>();
@@ -33,22 +42,13 @@ export class MemoryControlJournal implements ControlJournal {
   append(input: AppendControlEventInput): ControlEventEnvelope {
     validateUncommittedControlEvent(input.event);
     const incoming = structuredClone(input.event);
-    const semanticFingerprint = stableStringify({
-      eventId: incoming.eventId,
-      rootExecutionId: incoming.rootExecutionId,
-      payload: incoming.payload,
-    });
+    const incomingFingerprint = semanticFingerprint(incoming);
 
     const existingByIdempotency = incoming.idempotencyKey
       ? this.byIdempotencyKey.get(incoming.idempotencyKey)
       : undefined;
     if (existingByIdempotency) {
-      const existingFingerprint = stableStringify({
-        eventId: existingByIdempotency.eventId,
-        rootExecutionId: existingByIdempotency.rootExecutionId,
-        payload: existingByIdempotency.payload,
-      });
-      if (semanticFingerprint !== existingFingerprint) {
+      if (incomingFingerprint !== semanticFingerprint(existingByIdempotency)) {
         throw new AgentFabricError(
           "AF_CONFLICT",
           `Idempotency key ${incoming.idempotencyKey} was reused with different content`,
@@ -59,12 +59,7 @@ export class MemoryControlJournal implements ControlJournal {
 
     const existingById = this.byEventId.get(incoming.eventId);
     if (existingById) {
-      const existingFingerprint = stableStringify({
-        eventId: existingById.eventId,
-        rootExecutionId: existingById.rootExecutionId,
-        payload: existingById.payload,
-      });
-      if (semanticFingerprint !== existingFingerprint) {
+      if (incomingFingerprint !== semanticFingerprint(existingById)) {
         throw new AgentFabricError(
           "AF_DUPLICATE_ID",
           `Event ID ${incoming.eventId} was reused with different content`,
