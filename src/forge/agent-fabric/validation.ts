@@ -66,8 +66,8 @@ function recordOfPositiveNumbers(value: unknown, label: string): void {
   const record = object(value, label);
   for (const [key, amount] of Object.entries(record)) {
     if (!key) fail(`${label} contains an empty resource name`);
-    const numeric = number(amount, `${label}.${key}`);
-    if (numeric <= 0) fail(`${label}.${key} must be > 0`);
+    number(amount, `${label}.${key}`, { min: Number.MIN_VALUE });
+    if ((amount as number) <= 0) fail(`${label}.${key} must be > 0`);
   }
 }
 
@@ -121,6 +121,14 @@ function ownerAuthorization(value: unknown, label: string): void {
   number(authorization.maximumAttempts, `${label}.maximumAttempts`, { integer: true, min: 1 });
   number(authorization.maximumDelegationDepth, `${label}.maximumDelegationDepth`, { integer: true, min: 0 });
   recordOfPositiveNumbers(authorization.resourceCeilings, `${label}.resourceCeilings`);
+}
+
+function ownerAuthorizationVerification(value: unknown, label: string): void {
+  const verification = object(value, label);
+  keys(verification, ["verifierId", "authorizationDigest", "evidenceDigest"], [], label);
+  string(verification.verifierId, `${label}.verifierId`);
+  digest(verification.authorizationDigest, `${label}.authorizationDigest`);
+  digest(verification.evidenceDigest, `${label}.evidenceDigest`);
 }
 
 function goal(value: unknown, label: string): void {
@@ -320,8 +328,9 @@ function payload(value: unknown, label: string): void {
   const type = string(payloadValue.type, `${label}.type`);
   switch (type) {
     case "owner_authorization_registered":
-      keys(payloadValue, ["type", "authorization"], [], label);
+      keys(payloadValue, ["type", "authorization", "verification"], [], label);
       ownerAuthorization(payloadValue.authorization, `${label}.authorization`);
+      ownerAuthorizationVerification(payloadValue.verification, `${label}.verification`);
       return;
     case "owner_authorization_revoked":
       keys(payloadValue, ["type", "authorizationId", "reason"], [], label);
