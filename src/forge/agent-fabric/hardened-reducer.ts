@@ -190,9 +190,21 @@ export function replayControlState(
   events: readonly ControlEventEnvelope[],
   trust: ReplayTrustContext,
 ): ControlState {
-  assertSingleRootExecution(events);
-  assertStreamIdentityAndTemporalInvariants(events);
-  const state = replayLegacyControlState(events, trust);
-  assertReplayOnlyInvariants(events, state);
-  return state;
+  try {
+    assertSingleRootExecution(events);
+    assertStreamIdentityAndTemporalInvariants(events);
+    const state = replayLegacyControlState(events, trust);
+    assertReplayOnlyInvariants(events, state);
+    return state;
+  } catch (error) {
+    if (error instanceof AgentFabricError) throw error;
+    throw new AgentFabricError(
+      "AF_INVALID_EVENT",
+      "Malformed control stream could not be replayed",
+      {
+        causeName: error instanceof Error ? error.name : typeof error,
+        causeMessage: error instanceof Error ? error.message : String(error),
+      },
+    );
+  }
 }
