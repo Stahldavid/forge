@@ -4,7 +4,7 @@ import {
   assertRootGrantAuthorized,
   deriveExecutionGrant,
 } from "./authority.ts";
-import { digestCanonical, stableStringify } from "./canonical.ts";
+import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import type { ControlJournal } from "./journal.ts";
 import { applyPlanDelta, computeRunPlanContentDigest, validateWorkflowNodes } from "./planning.ts";
@@ -50,7 +50,8 @@ export class ForgeAgentConductor {
     private readonly rootExecutionId: string,
     private readonly journal: ControlJournal,
     private readonly clock: Clock,
-    private readonly digest: DigestFunction,
+    // Retained for the draft P0a constructor shape. Normative P0a digests are fixed to SHA-256.
+    _digest: DigestFunction,
     private readonly ownerAuthorizationVerifier: OwnerAuthorizationVerifier,
     private readonly resourceLedger?: ResourceLedger,
   ) {}
@@ -68,7 +69,7 @@ export class ForgeAgentConductor {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Owner authorization belongs to another execution");
     }
     assertAuthorizationCurrent(authorization, this.clock.now());
-    const authorizationDigest = digestCanonical(authorization, this.digest);
+    const authorizationDigest = digestCanonical(authorization, sha256Digest);
     const verification = this.ownerAuthorizationVerifier.verify(authorization, authorizationDigest);
     if (verification.authorizationDigest !== authorizationDigest) {
       throw new AgentFabricError(
@@ -140,6 +141,34 @@ export class ForgeAgentConductor {
       state.revokedAuthorizations[authorization.authorizationId],
     );
     assertRootGrantAuthorized(authorization, grant);
+
+    const siblingRoots = Object.values(state.grants).filter(
+      (candidate) => candidate.parentGrantId === null &&
+        candidate.rootAuthorizationId === authorization.authorizationId,
+    );
+    const allocatedAttempts = siblingRoots.reduce(
+      (total, candidate) => total + candidate.maximumAttempts,
+      0,
+    );
+    if (allocatedAttempts + grant.maximumAttempts > authorization.maximumAttempts) {
+      throw new AgentFabricError(
+        "AF_RESOURCE_EXHAUSTED",
+        "Root grants exceed the owner authorization attempt budget",
+      );
+    }
+    for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
+      const allocated = siblingRoots.reduce(
+        (total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0),
+        0,
+      );
+      if (allocated + amount > (authorization.resourceCeilings[resource] ?? -1)) {
+        throw new AgentFabricError(
+          "AF_RESOURCE_EXHAUSTED",
+          `Root grants exceed owner authorization resource ${resource}`,
+        );
+      }
+    }
+
     this.append(`grant:${grant.grantId}`, {
       type: "grant_registered",
       grant,
@@ -159,6 +188,23 @@ export class ForgeAgentConductor {
     }
     const now = this.clock.now();
     assertGrantLineageCurrent(state, parent.grantId, now);
+
+    const parentIssuedAttempts = Object.values(state.permits).filter(
+      (permit) => permit.grantId === parent.grantId,
+    ).length;
+    const delegatedAttemptBudget = Object.values(state.grants)
+      .filter((candidate) => candidate.parentGrantId === parent.grantId)
+      .reduce((total, candidate) => total + candidate.maximumAttempts, 0);
+    if (
+      parentIssuedAttempts + delegatedAttemptBudget + request.maximumAttempts >
+      parent.maximumAttempts
+    ) {
+      return {
+        outcome: "rejected",
+        reasonCodes: ["attempt_budget_exhausted"],
+        limitations: [],
+      };
+    }
 
     return ledger.transaction(() => {
       const resolution = deriveExecutionGrant(parent, request, ledger, now);
@@ -222,7 +268,7 @@ export class ForgeAgentConductor {
     const expectedDigest = computeRunPlanContentDigest(
       revision.programVersionId,
       revision.nodes,
-      this.digest,
+      sha256Digest,
     );
     if (revision.contentDigest !== expectedDigest) {
       throw new AgentFabricError("AF_INVALID_PLAN", "Plan revision content digest does not match");
@@ -268,7 +314,7 @@ export class ForgeAgentConductor {
           "Plan revision is not backed by its registered PlanDelta",
         );
       }
-      const derived = applyPlanDelta(parent, delta, this.digest);
+      const derived = applyPlanDelta(parent, delta, sha256Digest);
       if (stableStringify(derived) !== stableStringify(revision)) {
         throw new AgentFabricError(
           "AF_INVALID_PLAN",
@@ -348,6 +394,9 @@ export class ForgeAgentConductor {
     if (!intent) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown dispatch intent: ${input.intentId}`);
     }
+    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
+      throw new AgentFabricError("AF_STALE_ATTEMPT", "Cannot claim an intent from a superseded plan");
+    }
     const hasOutcome = Object.values(state.outcomes).some((outcome) => {
       const attempt = state.attempts[outcome.attemptId];
       const permit = attempt ? state.permits[attempt.permitId] : undefined;
@@ -421,8 +470,11 @@ export class ForgeAgentConductor {
     const issuedAttempts = Object.values(state.permits).filter(
       (permit) => permit.grantId === grant.grantId,
     ).length;
-    if (issuedAttempts >= grant.maximumAttempts) {
-      throw new AgentFabricError("AF_GRANT_REJECTED", "Grant attempt limit is exhausted");
+    const delegatedAttemptBudget = Object.values(state.grants)
+      .filter((candidate) => candidate.parentGrantId === grant.grantId)
+      .reduce((total, candidate) => total + candidate.maximumAttempts, 0);
+    if (issuedAttempts + delegatedAttemptBudget >= grant.maximumAttempts) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "Grant attempt budget is exhausted");
     }
     const expiresAt = Math.min(claim.leaseExpiresAt, grant.expiresAt, now + input.maximumValidityMs);
     const permit: AttemptExecutionPermit = {
@@ -480,7 +532,7 @@ export class ForgeAgentConductor {
   recordStartupUnknown(permit: AttemptExecutionPermit, reason: string): void {
     const state = this.state();
     const recorded = state.permits[permit.permitId];
-    if (!recorded || this.digest(stableStringify(recorded)) !== this.digest(stableStringify(permit))) {
+    if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
     }
     this.append(`attempt-start-unknown:${permit.attemptId}`, {
@@ -495,7 +547,7 @@ export class ForgeAgentConductor {
   private assertPermitCurrent(permit: AttemptExecutionPermit): void {
     const state = this.state();
     const recorded = state.permits[permit.permitId];
-    if (!recorded || this.digest(stableStringify(recorded)) !== this.digest(stableStringify(permit))) {
+    if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
     }
     const now = this.clock.now();
@@ -525,7 +577,7 @@ export class ForgeAgentConductor {
     if (!attempt) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown attempt: ${report.attemptId}`);
     }
-    const reportDigest = digestCanonical(report, this.digest);
+    const reportDigest = digestCanonical(report, sha256Digest);
     const existing = state.outcomes[report.attemptId];
     if (existing) {
       if (existing.status === report.status && existing.reportDigest === reportDigest) return existing;
@@ -542,6 +594,9 @@ export class ForgeAgentConductor {
     const now = this.clock.now();
     if (report.reportedAt < attempt.startedAt || report.reportedAt > now) {
       throw new AgentFabricError("AF_INVALID_STATE", "Worker result report has an invalid timestamp");
+    }
+    if (now < permit.notBefore || now >= permit.expiresAt) {
+      throw new AgentFabricError("AF_STALE_ATTEMPT", "Expired permit cannot commit an outcome");
     }
     if (
       state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
