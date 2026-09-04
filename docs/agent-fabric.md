@@ -27,7 +27,7 @@ The first vertical implements a deterministic control kernel with:
 - child grants with monotonic attenuation and transitive revocation;
 - resource reservation plus child-grant registration as one in-memory transactional operation;
 - replay-side reconstruction of consumable, capacity, and counter accounting from trusted resource definitions and journaled reservation transitions;
-- globally unique attempt identities and one claim lineage per attempt;
+- globally unique attempt identities, one claim lineage per attempt, and at most one execution permit per attempt;
 - durable dispatch intent, non-authoritative offers, atomic claims, leases, fencing, and attempt-bound permits;
 - deterministic adapter protocol behavior;
 - worker result reports bound to permit, intent, plan revision, `EffectiveRunSpec`, and fencing generation;
@@ -67,7 +67,7 @@ The concrete production identity provider, signature/trust-root mechanism, and c
 
 ## Attempt identity and result binding
 
-`attemptId` is a stream-global identity, not merely a caller convenience. A second claim may not reuse an existing attempt ID, even for another intent.
+`attemptId` is a stream-global identity, not merely a caller convenience. A second claim may not reuse an existing attempt ID, even for another intent, and an attempt may receive only one execution permit.
 
 A `WorkerResultReport` is explicitly bound to:
 
@@ -78,7 +78,7 @@ A `WorkerResultReport` is explicitly bound to:
 - `effectiveRunSpecDigest`;
 - `fencingToken`.
 
-The report digest covers those fields as well as status, result digest, evidence digests and report time. `commitOutcome()` compares the report against the persisted permit/claim/intent lineage before it can become authoritative.
+The report digest covers those fields as well as status, result digest, evidence digests and report time. `commitOutcome()` runtime-validates the report and compares it against the persisted permit/claim/intent lineage before it can become authoritative.
 
 ## Resource atomicity and replay
 
@@ -118,7 +118,7 @@ Only a currently authorized control path may commit a terminal P0a outcome, and 
 
 - the digest chain and event shape;
 - trusted owner-authorization evidence;
-- grant ancestry and revocation;
+- grant ancestry, reservation currentness and revocation;
 - resource accounting against trust-bound definitions;
 - global attempt/resource budgets;
 - globally unique attempt identity;
