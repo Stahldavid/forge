@@ -22,13 +22,14 @@ The first vertical implements a deterministic control kernel with:
 
 - explicit `OwnerAuthorization`, `GoalContract`, `RunPlanRevision`, `PlanDelta`, `AgentSpec`, `HarnessSpec`, `ExecutionProfile`, and `EffectiveRunSpec` contracts;
 - an immutable-by-copy control journal with sequence, predecessor, digest chain, and deterministic reducer;
-- root grants bound to an explicit owner authorization;
+- owner authorization ingress through an injected verifier, with content-bound verification evidence recorded in the journal;
+- root grants bound to an explicit verified owner authorization;
 - child grants with monotonic attenuation and transitive revocation;
 - resource reservation plus child-grant registration as one in-memory transactional operation;
 - durable dispatch intent, non-authoritative offers, atomic claims, leases, fencing, and attempt-bound permits;
 - deterministic adapter protocol behavior;
 - authoritative outcome commit that preserves result-report provenance and rejects stale or revoked ancestry;
-- plan revisions that preserve `GoalContract` and workflow program identity and are backed by a registered `PlanDelta`;
+- plan revisions that preserve `GoalContract` and workflow program identity and are exactly derivable from a registered `PlanDelta`;
 - runtime event validation and a closed JSON Schema envelope/payload model;
 - crash/replay reconstruction without re-running a planner.
 
@@ -36,10 +37,11 @@ P0a intentionally does not implement external effects, persistent memory, model 
 
 ## Authority model
 
-A workflow may choose how to work, but it may not create authority. Root grants must be derived from a registered `OwnerAuthorization`; child grants must be strict subsets of their parent and remain invalid if any ancestor or root authorization is revoked or expired.
+A workflow may choose how to work, but it may not create authority. The reference Conductor requires an `OwnerAuthorizationVerifier` before it can admit an `OwnerAuthorization`. The verification result is content-bound to the authorization digest. Root grants must then remain within that authorization; child grants must be strict subsets of their parent and remain invalid if any ancestor or root authorization is revoked or expired.
 
 ```text
 authenticated owner authorization
+  -> trusted ingress verification
   -> root execution grant
   -> derived child grant + resource reservation
   -> dispatch intent
@@ -50,6 +52,8 @@ authenticated owner authorization
   -> worker result report
   -> conditional authoritative outcome commit
 ```
+
+The concrete production identity provider, signature/trust-root mechanism, and credential lifecycle are deliberately outside P0a; the kernel only requires that a trusted verifier supply content-bound admission evidence rather than allowing a root grant to self-authorize.
 
 ## Resource atomicity
 
@@ -67,7 +71,7 @@ This is an in-memory protocol proof. A later persistence slice must implement th
 - event digest;
 - monotonic authoritative timestamp.
 
-`replayControlState()` revalidates the digest chain, authority ancestry, plan lineage, timestamps, and authority-sensitive transitions. It reconstructs control state without invoking an LLM or planner.
+`replayControlState()` revalidates the digest chain, authority ancestry, authorization content binding, exact plan-delta lineage, timestamps, and authority-sensitive transitions. It reconstructs control state without invoking an LLM or planner.
 
 ## Canonicalization scope
 
