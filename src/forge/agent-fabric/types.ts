@@ -23,6 +23,23 @@ export interface GoalContract {
   };
 }
 
+export interface OwnerAuthorization {
+  authorizationId: Identifier;
+  principalId: Identifier;
+  rootExecutionId: Identifier;
+  goalIds: readonly Identifier[];
+  subjectIds: readonly Identifier[];
+  capabilities: readonly string[];
+  sourceIds: readonly Identifier[];
+  targetIds: readonly Identifier[];
+  effectClasses: readonly EffectClass[];
+  notBefore: EpochMilliseconds;
+  expiresAt: EpochMilliseconds;
+  maximumAttempts: number;
+  maximumDelegationDepth: number;
+  resourceCeilings: Readonly<Record<string, number>>;
+}
+
 export interface WorkflowNode {
   nodeId: Identifier;
   kind: "activity" | "verification" | "join";
@@ -231,6 +248,10 @@ export interface AuthoritativeOutcomeCommit {
   attemptId: Identifier;
   status: "succeeded" | "failed" | "unknown";
   resultDigest: Digest | null;
+  reportId: Identifier | null;
+  reportDigest: Digest | null;
+  evidenceDigests: readonly Digest[];
+  reportedAt: EpochMilliseconds | null;
   committedAt: EpochMilliseconds;
 }
 
@@ -283,9 +304,12 @@ export interface AttemptControlState {
 }
 
 export type ControlEvent =
+  | { type: "owner_authorization_registered"; authorization: OwnerAuthorization }
+  | { type: "owner_authorization_revoked"; authorizationId: Identifier; reason: string }
   | { type: "goal_registered"; goal: GoalContract }
-  | { type: "grant_registered"; grant: ExecutionGrant }
+  | { type: "grant_registered"; grant: ExecutionGrant; reservation: ResourceReservation | null }
   | { type: "grant_revoked"; grantId: Identifier; reason: string }
+  | { type: "plan_delta_registered"; delta: PlanDelta }
   | { type: "plan_revision_activated"; revision: RunPlanRevision }
   | { type: "dispatch_intent_committed"; intent: DispatchIntent }
   | { type: "scheduling_claim_committed"; claim: SchedulingClaim }
@@ -317,14 +341,22 @@ export interface UncommittedControlEvent {
 export interface ControlEventEnvelope extends UncommittedControlEvent {
   sequence: number;
   predecessorEventId: Identifier | null;
+  predecessorEventDigest: Digest | null;
+  eventDigest: Digest;
 }
 
 export interface ControlState {
   lastSequence: number;
   lastEventId: Identifier | null;
+  lastEventDigest: Digest | null;
+  lastOccurredAt: EpochMilliseconds | null;
+  authorizations: Readonly<Record<Identifier, OwnerAuthorization>>;
+  revokedAuthorizations: Readonly<Record<Identifier, string>>;
   goals: Readonly<Record<Identifier, GoalContract>>;
   grants: Readonly<Record<Identifier, ExecutionGrant>>;
   revokedGrants: Readonly<Record<Identifier, string>>;
+  resourceReservations: Readonly<Record<Identifier, ResourceReservation>>;
+  planDeltas: Readonly<Record<Identifier, PlanDelta>>;
   planRevisions: Readonly<Record<Identifier, RunPlanRevision>>;
   activePlanRevisionByExecution: Readonly<Record<Identifier, Identifier>>;
   dispatchIntents: Readonly<Record<Identifier, DispatchIntent>>;
