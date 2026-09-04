@@ -1,4 +1,4 @@
-import { ForgeAgentConductor } from "./conductor.ts";
+import { ForgeAgentConductor } from "./hardened-conductor.ts";
 import type {
   AgentAdapter,
   AttemptExecutionPermit,
@@ -21,6 +21,18 @@ function describeUnknown(error: unknown): string {
   return error instanceof Error ? `${error.name}: ${error.message}` : "adapter_operation_threw";
 }
 
+function recordUncertainty(
+  conductor: ForgeAgentConductor,
+  permit: AttemptExecutionPermit,
+  phase: "startup" | "outcome",
+  reason: string,
+): P0aActivityExecutionResult {
+  return {
+    status: "unknown",
+    observation: conductor.recordAttemptUncertainty(permit, phase, reason),
+  };
+}
+
 export async function executeP0aActivity(
   input: ExecuteP0aActivityInput,
 ): Promise<P0aActivityExecutionResult> {
@@ -30,51 +42,63 @@ export async function executeP0aActivity(
   try {
     startup = await input.adapter.startAttempt(input.permit);
   } catch (error) {
-    return {
-      status: "unknown",
-      observation: input.conductor.recordAttemptUncertainty(
-        input.permit,
-        "startup",
-        describeUnknown(error),
-      ),
-    };
+    return recordUncertainty(
+      input.conductor,
+      input.permit,
+      "startup",
+      describeUnknown(error),
+    );
   }
 
   if (startup.status === "unknown") {
-    return {
-      status: "unknown",
-      observation: input.conductor.recordAttemptUncertainty(
-        input.permit,
-        "startup",
-        startup.reason,
-      ),
-    };
+    return recordUncertainty(
+      input.conductor,
+      input.permit,
+      "startup",
+      startup.reason,
+    );
   }
 
-  input.conductor.acceptStartupReport(input.permit, startup.report);
+  try {
+    input.conductor.acceptStartupReport(input.permit, startup.report);
+  } catch (error) {
+    return recordUncertainty(
+      input.conductor,
+      input.permit,
+      "startup",
+      `startup_report_rejected:${describeUnknown(error)}`,
+    );
+  }
 
   let outcome;
   try {
     outcome = await input.adapter.collectOutcome(input.permit.attemptId);
   } catch (error) {
-    return {
-      status: "unknown",
-      observation: input.conductor.recordAttemptUncertainty(
-        input.permit,
-        "outcome",
-        describeUnknown(error),
-      ),
-    };
+    return recordUncertainty(
+      input.conductor,
+      input.permit,
+      "outcome",
+      describeUnknown(error),
+    );
   }
+
   if (outcome.status === "unknown") {
-    return {
-      status: "unknown",
-      observation: input.conductor.recordAttemptUncertainty(
-        input.permit,
-        "outcome",
-        outcome.reason,
-      ),
-    };
+    return recordUncertainty(
+      input.conductor,
+      input.permit,
+      "outcome",
+      outcome.reason,
+    );
   }
-  return input.conductor.commitOutcome(outcome.report as WorkerResultReport);
+
+  try {
+    return input.conductor.commitOutcome(outcome.report as WorkerResultReport);
+  } catch (error) {
+    return recordUncertainty(
+      input.conductor,
+      input.permit,
+      "outcome",
+      `outcome_report_rejected:${describeUnknown(error)}`,
+    );
+  }
 }
