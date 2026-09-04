@@ -50,19 +50,6 @@ export class ResourceLedger {
     ownerId: Identifier,
     requests: readonly ResourceReservationRequest[],
   ): ResourceReservation {
-    const existing = this.reservations[reservationId];
-    if (existing) {
-      const requested = stableStringify({ ownerId, requests });
-      const recorded = stableStringify({ ownerId: existing.ownerId, requests: existing.requests });
-      if (requested !== recorded) {
-        throw new AgentFabricError(
-          "AF_CONFLICT",
-          `Reservation ${reservationId} was reused with a different request`,
-        );
-      }
-      return existing;
-    }
-
     const aggregated: Record<string, number> = {};
     for (const request of requests) {
       assertAmount(request.amount, request.resource);
@@ -73,6 +60,23 @@ export class ResourceLedger {
         );
       }
       aggregated[request.resource] = (aggregated[request.resource] ?? 0) + request.amount;
+    }
+
+    const normalizedRequests = Object.entries(aggregated)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([resource, amount]) => ({ resource, amount }));
+
+    const existing = this.reservations[reservationId];
+    if (existing) {
+      const requested = stableStringify({ ownerId, requests: normalizedRequests });
+      const recorded = stableStringify({ ownerId: existing.ownerId, requests: existing.requests });
+      if (requested !== recorded) {
+        throw new AgentFabricError(
+          "AF_CONFLICT",
+          `Reservation ${reservationId} was reused with a different request`,
+        );
+      }
+      return existing;
     }
 
     for (const [resource, amount] of Object.entries(aggregated)) {
@@ -90,10 +94,6 @@ export class ResourceLedger {
         );
       }
     }
-
-    const normalizedRequests = Object.entries(aggregated)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([resource, amount]) => ({ resource, amount }));
 
     for (const request of normalizedRequests) {
       const definition = this.definitions[request.resource]!;
