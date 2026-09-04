@@ -75,8 +75,9 @@ export function deriveExecutionGrant(
   try {
     reservedRequests = ledger.reserve(
       request.reservationId,
-      request.grantId,
+      parent.grantId,
       aggregatedResourceRequests,
+      parent.resourceCeilings,
     ).requests;
   } catch (error) {
     if (error instanceof AgentFabricError) {
