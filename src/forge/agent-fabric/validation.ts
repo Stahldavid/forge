@@ -147,13 +147,7 @@ function resourceDefinition(value: unknown, label: string): void {
 
 function resourceDefinitions(value: unknown, label: string): void {
   if (!Array.isArray(value)) fail(`${label} must be an array`);
-  const seen = new Set<string>();
-  value.forEach((item, index) => {
-    resourceDefinition(item, `${label}[${index}]`);
-    const name = (item as Record<string, unknown>).resource as string;
-    if (seen.has(name)) fail(`${label} repeats resource ${name}`);
-    seen.add(name);
-  });
+  value.forEach((item, index) => resourceDefinition(item, `${label}[${index}]`));
 }
 
 function goal(value: unknown, label: string): void {
@@ -215,13 +209,10 @@ function reservation(value: unknown, label: string): void {
   string(reservationValue.reservationId, `${label}.reservationId`);
   string(reservationValue.ownerId, `${label}.ownerId`);
   if (!Array.isArray(reservationValue.requests)) fail(`${label}.requests must be an array`);
-  const seen = new Set<string>();
   reservationValue.requests.forEach((item, index) => {
     const request = object(item, `${label}.requests[${index}]`);
     keys(request, ["resource", "amount"], [], `${label}.requests[${index}]`);
-    const resource = string(request.resource, `${label}.requests[${index}].resource`);
-    if (seen.has(resource)) fail(`${label}.requests repeats resource ${resource}`);
-    seen.add(resource);
+    string(request.resource, `${label}.requests[${index}].resource`);
     const amount = number(request.amount, `${label}.requests[${index}].amount`);
     if (amount <= 0) fail(`${label}.requests[${index}].amount must be > 0`);
   });
