@@ -39,6 +39,14 @@ function string(value: unknown, label: string): string {
   return value;
 }
 
+function textStrings(value: unknown, label: string): readonly string[] {
+  if (!Array.isArray(value)) fail(`${label} must be an array`);
+  return value.map((item, index) => {
+    if (typeof item !== "string") fail(`${label}[${index}] must be a string`);
+    return item;
+  });
+}
+
 function digest(value: unknown, label: string): string {
   const result = string(value, label);
   if (!DIGEST.test(result)) fail(`${label} must be a sha256 digest`);
@@ -164,9 +172,9 @@ function goal(value: unknown, label: string): void {
   string(goalValue.goalId, `${label}.goalId`);
   number(goalValue.revision, `${label}.revision`, { integer: true, min: 1 });
   string(goalValue.authorityInvocationId, `${label}.authorityInvocationId`);
-  strings(goalValue.objectives, `${label}.objectives`);
-  strings(goalValue.nonObjectives, `${label}.nonObjectives`);
-  strings(goalValue.acceptanceCriteria, `${label}.acceptanceCriteria`);
+  textStrings(goalValue.objectives, `${label}.objectives`);
+  textStrings(goalValue.nonObjectives, `${label}.nonObjectives`);
+  textStrings(goalValue.acceptanceCriteria, `${label}.acceptanceCriteria`);
   effectClasses(goalValue.allowedEffectClasses, `${label}.allowedEffectClasses`);
   effectClasses(goalValue.prohibitedEffectClasses, `${label}.prohibitedEffectClasses`);
   const boundary = object(goalValue.sourceBoundary, `${label}.sourceBoundary`);
