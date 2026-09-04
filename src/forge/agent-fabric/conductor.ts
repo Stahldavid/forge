@@ -12,6 +12,7 @@ import type {
   DispatchIntent,
   DispatchOffer,
   ExecutionGrant,
+  ExecutorStartupReport,
   GoalContract,
   RunPlanRevision,
   SchedulingClaim,
@@ -191,6 +192,9 @@ export class ForgeAgentConductor {
     const intent = state.dispatchIntents[claim.intentId]!;
     const activeClaimId = state.activeClaimByIntent[claim.intentId];
     const now = this.clock.now();
+    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
+      throw new AgentFabricError("AF_STALE_ATTEMPT", "Intent references a superseded plan revision");
+    }
     if (activeClaimId !== claim.claimId || claim.leaseExpiresAt <= now) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Claim is no longer current");
     }
@@ -209,6 +213,12 @@ export class ForgeAgentConductor {
     }
     if (grant.subjectId !== claim.workerId) {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Grant is bound to another worker");
+    }
+    const issuedAttempts = Object.values(state.permits).filter(
+      (permit) => permit.grantId === grant.grantId,
+    ).length;
+    if (issuedAttempts >= grant.maximumAttempts) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "Grant attempt limit is exhausted");
     }
     const expiresAt = Math.min(claim.leaseExpiresAt, grant.expiresAt, now + input.maximumValidityMs);
     const permit: AttemptExecutionPermit = {
@@ -231,7 +241,42 @@ export class ForgeAgentConductor {
     return permit;
   }
 
-  startAttempt(permit: AttemptExecutionPermit): void {
+  acceptStartupReport(
+    permit: AttemptExecutionPermit,
+    report: ExecutorStartupReport,
+  ): void {
+    this.assertPermitCurrent(permit);
+    if (report.attemptId !== permit.attemptId) {
+      throw new AgentFabricError("AF_PERMIT_REJECTED", "Startup report is bound to another attempt");
+    }
+    if (report.observedSpecDigest !== permit.effectiveRunSpecDigest) {
+      throw new AgentFabricError("AF_PERMIT_REJECTED", "Adapter started a different EffectiveRunSpec");
+    }
+    this.append(`attempt-start:${permit.attemptId}`, {
+      type: "attempt_started",
+      attemptId: permit.attemptId,
+      permitId: permit.permitId,
+      startupReportId: report.startupReportId,
+      startedAt: report.startedAt,
+    });
+  }
+
+  recordStartupUnknown(permit: AttemptExecutionPermit, reason: string): void {
+    const state = this.state();
+    const recorded = state.permits[permit.permitId];
+    if (!recorded || this.digest(stableStringify(recorded)) !== this.digest(stableStringify(permit))) {
+      throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
+    }
+    this.append(`attempt-start-unknown:${permit.attemptId}`, {
+      type: "attempt_start_unknown",
+      attemptId: permit.attemptId,
+      permitId: permit.permitId,
+      reason,
+      observedAt: this.clock.now(),
+    });
+  }
+
+  private assertPermitCurrent(permit: AttemptExecutionPermit): void {
     const state = this.state();
     const recorded = state.permits[permit.permitId];
     if (!recorded || this.digest(stableStringify(recorded)) !== this.digest(stableStringify(permit))) {
@@ -258,12 +303,6 @@ export class ForgeAgentConductor {
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit references a superseded plan revision");
     }
-    this.append(`attempt-start:${permit.attemptId}`, {
-      type: "attempt_started",
-      attemptId: permit.attemptId,
-      permitId: permit.permitId,
-      startedAt: now,
-    });
   }
 
   commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {
@@ -281,6 +320,9 @@ export class ForgeAgentConductor {
         "AF_CONFLICT",
         `Attempt ${report.attemptId} already has a different authoritative outcome`,
       );
+    }
+    if (attempt.startupStatus !== "started") {
+      throw new AgentFabricError("AF_INVALID_STATE", "Unknown startup cannot commit a successful outcome");
     }
     const permit = state.permits[attempt.permitId]!;
     const claim = state.claims[permit.claimId]!;
