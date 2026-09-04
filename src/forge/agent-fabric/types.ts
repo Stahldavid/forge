@@ -272,6 +272,14 @@ export interface AgentAdapter {
   observeTermination(attemptId: Identifier): Promise<"terminated" | "running" | "unknown">;
 }
 
+export interface AttemptControlState {
+  permitId: Identifier;
+  startupStatus: "started" | "unknown";
+  startedAt: EpochMilliseconds | null;
+  startupReportId: Identifier | null;
+  startupUnknownReason: string | null;
+}
+
 export type ControlEvent =
   | { type: "goal_registered"; goal: GoalContract }
   | { type: "grant_registered"; grant: ExecutionGrant }
@@ -280,7 +288,20 @@ export type ControlEvent =
   | { type: "dispatch_intent_committed"; intent: DispatchIntent }
   | { type: "scheduling_claim_committed"; claim: SchedulingClaim }
   | { type: "attempt_execution_permit_issued"; permit: AttemptExecutionPermit }
-  | { type: "attempt_started"; attemptId: Identifier; permitId: Identifier; startedAt: EpochMilliseconds }
+  | {
+      type: "attempt_started";
+      attemptId: Identifier;
+      permitId: Identifier;
+      startupReportId: Identifier;
+      startedAt: EpochMilliseconds;
+    }
+  | {
+      type: "attempt_start_unknown";
+      attemptId: Identifier;
+      permitId: Identifier;
+      reason: string;
+      observedAt: EpochMilliseconds;
+    }
   | { type: "attempt_outcome_committed"; outcome: AuthoritativeOutcomeCommit };
 
 export interface UncommittedControlEvent {
@@ -308,7 +329,7 @@ export interface ControlState {
   claims: Readonly<Record<Identifier, SchedulingClaim>>;
   activeClaimByIntent: Readonly<Record<Identifier, Identifier>>;
   permits: Readonly<Record<Identifier, AttemptExecutionPermit>>;
-  attempts: Readonly<Record<Identifier, { permitId: Identifier; startedAt: EpochMilliseconds }>>;
+  attempts: Readonly<Record<Identifier, AttemptControlState>>;
   outcomes: Readonly<Record<Identifier, AuthoritativeOutcomeCommit>>;
 }
 
