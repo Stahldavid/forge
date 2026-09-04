@@ -2,9 +2,11 @@ import { AgentFabricError } from "./errors.ts";
 import { ResourceLedger } from "./resource-ledger.ts";
 import type {
   AuthorityResolution,
+  ControlState,
   DerivedGrantRequest,
   EffectClass,
   ExecutionGrant,
+  OwnerAuthorization,
 } from "./types.ts";
 
 function isSubset<T>(child: readonly T[], parent: readonly T[]): boolean {
@@ -14,6 +16,59 @@ function isSubset<T>(child: readonly T[], parent: readonly T[]): boolean {
 
 function reject(...reasonCodes: string[]): AuthorityResolution {
   return { outcome: "rejected", reasonCodes, limitations: [] };
+}
+
+export function rootGrantAuthorizationViolations(
+  authorization: OwnerAuthorization,
+  grant: ExecutionGrant,
+): readonly string[] {
+  const violations: string[] = [];
+  if (grant.parentGrantId !== null) violations.push("root_grant_has_parent");
+  if (grant.rootAuthorizationId !== authorization.authorizationId) {
+    violations.push("root_authorization_mismatch");
+  }
+  if (authorization.rootExecutionId.length === 0) violations.push("authorization_missing_execution");
+  if (!authorization.subjectIds.includes(grant.subjectId)) violations.push("subject_not_authorized");
+  if (!isSubset(grant.capabilities, authorization.capabilities)) violations.push("capability_scope_expanded");
+  if (!isSubset(grant.sourceIds, authorization.sourceIds)) violations.push("source_scope_expanded");
+  if (!isSubset(grant.targetIds, authorization.targetIds)) violations.push("target_scope_expanded");
+  if (!isSubset<EffectClass>(grant.effectClasses, authorization.effectClasses)) {
+    violations.push("effect_scope_expanded");
+  }
+  if (grant.notBefore < authorization.notBefore || grant.expiresAt > authorization.expiresAt) {
+    violations.push("time_scope_expanded");
+  }
+  if (grant.expiresAt <= grant.notBefore) violations.push("invalid_time_window");
+  if (grant.maximumAttempts <= 0 || grant.maximumAttempts > authorization.maximumAttempts) {
+    violations.push("attempt_limit_expanded");
+  }
+  if (
+    grant.delegationDepthRemaining < 0 ||
+    grant.delegationDepthRemaining > authorization.maximumDelegationDepth
+  ) {
+    violations.push("delegation_depth_expanded");
+  }
+  for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
+    const ceiling = authorization.resourceCeilings[resource];
+    if (!Number.isFinite(amount) || amount <= 0 || ceiling === undefined || amount > ceiling) {
+      violations.push(`resource_ceiling_expanded:${resource}`);
+    }
+  }
+  return violations;
+}
+
+export function assertRootGrantAuthorized(
+  authorization: OwnerAuthorization,
+  grant: ExecutionGrant,
+): void {
+  const violations = rootGrantAuthorizationViolations(authorization, grant);
+  if (violations.length > 0) {
+    throw new AgentFabricError(
+      "AF_GRANT_REJECTED",
+      `Root grant ${grant.grantId} exceeds authorization ${authorization.authorizationId}`,
+      { violations },
+    );
+  }
 }
 
 export function grantAttenuationViolations(
@@ -85,6 +140,7 @@ export function deriveExecutionGrant(
       return totals;
     }, {}),
   ).map(([resource, amount]) => ({ resource, amount }));
+
   const candidate: ExecutionGrant = {
     grantId: request.grantId,
     rootAuthorizationId: parent.rootAuthorizationId,
@@ -106,32 +162,50 @@ export function deriveExecutionGrant(
   const violations = grantAttenuationViolations(parent, candidate);
   if (violations.length > 0) return reject(...violations);
 
-  let reservedRequests = request.resourceRequests;
   try {
-    reservedRequests = ledger.reserve(
+    const reserved = ledger.reserve(
       request.reservationId,
       parent.grantId,
       aggregatedResourceRequests,
       parent.resourceCeilings,
-    ).requests;
+    );
+    return {
+      outcome: "allowed",
+      reasonCodes: [],
+      limitations: [],
+      grant: {
+        ...candidate,
+        resourceCeilings: Object.fromEntries(
+          reserved.requests.map((item) => [item.resource, item.amount]),
+        ),
+      },
+    };
   } catch (error) {
     if (error instanceof AgentFabricError) {
       return reject(error.code.toLowerCase());
     }
     return { outcome: "unknown", reasonCodes: ["resource_reservation_unknown"], limitations: [] };
   }
+}
 
-  return {
-    outcome: "allowed",
-    reasonCodes: [],
-    limitations: [],
-    grant: {
-      ...candidate,
-      resourceCeilings: Object.fromEntries(
-        reservedRequests.map((item) => [item.resource, item.amount]),
-      ),
-    },
-  };
+export function assertAuthorizationCurrent(
+  authorization: OwnerAuthorization,
+  now: number,
+  revokedReason?: string,
+): void {
+  if (revokedReason) {
+    throw new AgentFabricError(
+      "AF_GRANT_REJECTED",
+      `Owner authorization ${authorization.authorizationId} is revoked`,
+      { revokedReason },
+    );
+  }
+  if (now < authorization.notBefore || now >= authorization.expiresAt) {
+    throw new AgentFabricError(
+      "AF_GRANT_REJECTED",
+      `Owner authorization ${authorization.authorizationId} is outside its validity window`,
+    );
+  }
 }
 
 export function assertGrantCurrent(
@@ -151,5 +225,53 @@ export function assertGrantCurrent(
       "AF_GRANT_REJECTED",
       `Grant ${grant.grantId} is outside its validity window`,
     );
+  }
+}
+
+export function assertGrantLineageCurrent(
+  state: Pick<
+    ControlState,
+    "authorizations" | "revokedAuthorizations" | "grants" | "revokedGrants"
+  >,
+  grantId: string,
+  now: number,
+): void {
+  const seen = new Set<string>();
+  let current = state.grants[grantId];
+  if (!current) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${grantId}`);
+
+  while (true) {
+    if (seen.has(current.grantId)) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "Grant ancestry contains a cycle");
+    }
+    seen.add(current.grantId);
+    assertGrantCurrent(current, now, state.revokedGrants[current.grantId]);
+
+    if (!current.parentGrantId) {
+      const authorization = state.authorizations[current.rootAuthorizationId];
+      if (!authorization) {
+        throw new AgentFabricError(
+          "AF_GRANT_REJECTED",
+          `Root grant ${current.grantId} has no registered owner authorization`,
+        );
+      }
+      assertAuthorizationCurrent(
+        authorization,
+        now,
+        state.revokedAuthorizations[authorization.authorizationId],
+      );
+      assertRootGrantAuthorized(authorization, current);
+      return;
+    }
+
+    const parent = state.grants[current.parentGrantId];
+    if (!parent) {
+      throw new AgentFabricError(
+        "AF_GRANT_REJECTED",
+        `Grant ${current.grantId} references missing parent ${current.parentGrantId}`,
+      );
+    }
+    assertGrantAttenuated(parent, current);
+    current = parent;
   }
 }
