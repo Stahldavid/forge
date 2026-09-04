@@ -10,6 +10,9 @@ import type { ControlJournal } from "./journal.ts";
 import { applyPlanDelta, computeRunPlanContentDigest, validateWorkflowNodes } from "./planning.ts";
 import { replayControlState } from "./reducer.ts";
 import type { ResourceLedger } from "./resource-ledger.ts";
+import {
+  validateWorkerResultReport,
+} from "./validation.ts";
 import type {
   AttemptExecutionPermit,
   AttemptUncertaintyObservation,
@@ -480,6 +483,9 @@ export class ForgeAgentConductor {
     if (!grant) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${input.grantId}`);
     const intent = state.dispatchIntents[claim.intentId];
     if (!intent) throw new AgentFabricError("AF_NOT_FOUND", `Unknown intent: ${claim.intentId}`);
+    if (Object.values(state.permits).some((permit) => permit.attemptId === claim.attemptId)) {
+      throw new AgentFabricError("AF_CONFLICT", `Attempt ${claim.attemptId} already has a permit`);
+    }
     const activeClaimId = state.activeClaimByIntent[claim.intentId];
     const now = this.clock.now();
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
@@ -590,6 +596,7 @@ export class ForgeAgentConductor {
   }
 
   commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {
+    validateWorkerResultReport(report);
     const state = this.state();
     const attempt = state.attempts[report.attemptId];
     if (!attempt) {
