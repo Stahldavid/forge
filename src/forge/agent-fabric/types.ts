@@ -128,6 +128,8 @@ export interface ResourceLedgerSnapshot {
   definitions: Readonly<Record<string, ResourceDefinition>>;
   reserved: Readonly<Record<string, number>>;
   consumed: Readonly<Record<string, number>>;
+  ownerReserved: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;
+  ownerConsumed: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;
   reservations: Readonly<Record<Identifier, ResourceReservation>>;
 }
 
