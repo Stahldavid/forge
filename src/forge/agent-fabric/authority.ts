@@ -56,7 +56,15 @@ export function deriveExecutionGrant(
     return reject("delegation_depth_not_attenuated");
   }
 
-  for (const resourceRequest of request.resourceRequests) {
+  const aggregatedResourceRequests = Object.entries(
+    request.resourceRequests.reduce<Record<string, number>>((totals, resourceRequest) => {
+      totals[resourceRequest.resource] =
+        (totals[resourceRequest.resource] ?? 0) + resourceRequest.amount;
+      return totals;
+    }, {}),
+  ).map(([resource, amount]) => ({ resource, amount }));
+
+  for (const resourceRequest of aggregatedResourceRequests) {
     const ceiling = parent.resourceCeilings[resourceRequest.resource];
     if (ceiling === undefined || resourceRequest.amount > ceiling) {
       return reject("resource_ceiling_expanded");
@@ -68,7 +76,7 @@ export function deriveExecutionGrant(
     reservedRequests = ledger.reserve(
       request.reservationId,
       request.grantId,
-      request.resourceRequests,
+      aggregatedResourceRequests,
     ).requests;
   } catch (error) {
     if (error instanceof AgentFabricError) {
