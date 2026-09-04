@@ -7,7 +7,7 @@ import {
 import { digestCanonical, stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import type { ControlJournal } from "./journal.ts";
-import { computeRunPlanContentDigest, validateWorkflowNodes } from "./planning.ts";
+import { applyPlanDelta, computeRunPlanContentDigest, validateWorkflowNodes } from "./planning.ts";
 import { replayControlState } from "./reducer.ts";
 import type { ResourceLedger } from "./resource-ledger.ts";
 import type {
@@ -23,6 +23,7 @@ import type {
   GoalContract,
   ExecutorStartupReport,
   OwnerAuthorization,
+  OwnerAuthorizationVerifier,
   PlanDelta,
   RunPlanRevision,
   SchedulingClaim,
@@ -50,6 +51,7 @@ export class ForgeAgentConductor {
     private readonly journal: ControlJournal,
     private readonly clock: Clock,
     private readonly digest: DigestFunction,
+    private readonly ownerAuthorizationVerifier: OwnerAuthorizationVerifier,
     private readonly resourceLedger?: ResourceLedger,
   ) {}
 
@@ -66,9 +68,18 @@ export class ForgeAgentConductor {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Owner authorization belongs to another execution");
     }
     assertAuthorizationCurrent(authorization, this.clock.now());
+    const authorizationDigest = digestCanonical(authorization, this.digest);
+    const verification = this.ownerAuthorizationVerifier.verify(authorization, authorizationDigest);
+    if (verification.authorizationDigest !== authorizationDigest) {
+      throw new AgentFabricError(
+        "AF_GRANT_REJECTED",
+        "Owner authorization verifier returned evidence for different authorization bytes",
+      );
+    }
     this.append(`owner-authorization:${authorization.authorizationId}`, {
       type: "owner_authorization_registered",
       authorization,
+      verification,
     });
   }
 
@@ -255,6 +266,13 @@ export class ForgeAgentConductor {
         throw new AgentFabricError(
           "AF_INVALID_PLAN",
           "Plan revision is not backed by its registered PlanDelta",
+        );
+      }
+      const derived = applyPlanDelta(parent, delta, this.digest);
+      if (stableStringify(derived) !== stableStringify(revision)) {
+        throw new AgentFabricError(
+          "AF_INVALID_PLAN",
+          "Plan revision content does not match its registered PlanDelta",
         );
       }
     }
