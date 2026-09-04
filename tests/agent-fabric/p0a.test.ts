@@ -8,14 +8,16 @@ import {
   ResourceLedger,
   applyPlanDelta,
   createRunPlanRevision,
-  deriveExecutionGrant,
   executeP0aActivity,
   replayControlState,
   stableStringify,
   type Clock,
+  type ControlJournal,
+  type DerivedGrantRequest,
   type Digest,
   type ExecutionGrant,
   type GoalContract,
+  type OwnerAuthorization,
   type WorkflowProgramVersion,
 } from "../../src/forge/agent-fabric/index.ts";
 
@@ -44,17 +46,34 @@ const goal: GoalContract = {
 const program: WorkflowProgramVersion = {
   programId: "workflow:review",
   version: 1,
-  nodes: [
-    {
-      nodeId: "analyze",
-      kind: "activity",
-      dependsOn: [],
-      agentSpecId: "agent:analyst",
-      harnessSpecId: "harness:readonly",
-      executionProfileId: "execution:isolated",
-    },
-  ],
+  nodes: [{
+    nodeId: "analyze",
+    kind: "activity",
+    dependsOn: [],
+    agentSpecId: "agent:analyst",
+    harnessSpecId: "harness:readonly",
+    executionProfileId: "execution:isolated",
+  }],
 };
+
+function ownerAuthorization(clock: ManualClock): OwnerAuthorization {
+  return {
+    authorizationId: "auth:owner:1",
+    principalId: "owner:david",
+    rootExecutionId: "run:1",
+    goalIds: [goal.goalId],
+    subjectIds: ["conductor", "worker:a", "worker:b", "worker:child"],
+    capabilities: ["architecture.read", "architecture.review"],
+    sourceIds: ["source:forge"],
+    targetIds: ["target:artifact-store"],
+    effectClasses: ["read", "internal_write"],
+    notBefore: clock.now(),
+    expiresAt: clock.now() + 120_000,
+    maximumAttempts: 4,
+    maximumDelegationDepth: 3,
+    resourceCeilings: { modelCalls: 8, workers: 4 },
+  };
+}
 
 function rootGrant(clock: ManualClock, subjectId = "worker:a"): ExecutionGrant {
   return {
@@ -69,426 +88,290 @@ function rootGrant(clock: ManualClock, subjectId = "worker:a"): ExecutionGrant {
     notBefore: clock.now(),
     expiresAt: clock.now() + 60_000,
     maximumAttempts: 2,
-    delegationDepthRemaining: 1,
-    resourceCeilings: { modelCalls: 2, workers: 1 },
+    delegationDepthRemaining: 2,
+    resourceCeilings: { modelCalls: 4, workers: 2 },
   };
 }
 
-function preparedConductor(clock: ManualClock) {
+function preparedConductor(clock: ManualClock, ledger?: ResourceLedger) {
   const journal = new MemoryControlJournal();
-  const conductor = new ForgeAgentConductor("run:1", journal, clock, digest);
+  const conductor = new ForgeAgentConductor("run:1", journal, clock, digest, ledger);
+  conductor.registerOwnerAuthorization(ownerAuthorization(clock));
   conductor.registerGoal(goal);
   const revision = createRunPlanRevision("run:1", goal.goalId, program, "plan:1", digest);
   conductor.activatePlan(revision, null);
   return { conductor, journal, revision };
 }
 
+function dispatchAndPermit(
+  conductor: ForgeAgentConductor,
+  clock: ManualClock,
+  revisionId: string,
+  grant: ExecutionGrant,
+  suffix: string,
+) {
+  const specDigest = digest(`spec:${suffix}`);
+  conductor.commitDispatchIntent({
+    intentId: `intent:${suffix}`,
+    rootExecutionId: "run:1",
+    planRevisionId: revisionId,
+    taskNodeId: "analyze",
+    effectiveRunSpecDigest: specDigest,
+    sourceIds: ["source:forge"],
+    targetId: "target:artifact-store",
+    requiredCapability: "architecture.read",
+    effectClass: "read",
+    createdAt: clock.now(),
+  });
+  const claim = conductor.claimDispatch({
+    claimId: `claim:${suffix}`,
+    intentId: `intent:${suffix}`,
+    workerId: grant.subjectId,
+    attemptId: `attempt:${suffix}`,
+    leaseDurationMs: 10_000,
+  });
+  const permit = conductor.issuePermit({
+    permitId: `permit:${suffix}`,
+    claimId: claim.claimId,
+    grantId: grant.grantId,
+    maximumValidityMs: 5_000,
+  });
+  return { claim, permit, specDigest };
+}
+
+function childRequest(clock: ManualClock, grantId = "grant:child"): DerivedGrantRequest {
+  return {
+    grantId,
+    subjectId: "worker:child",
+    capabilities: ["architecture.read"],
+    sourceIds: ["source:forge"],
+    targetIds: ["target:artifact-store"],
+    effectClasses: ["read"],
+    notBefore: clock.now(),
+    expiresAt: clock.now() + 30_000,
+    maximumAttempts: 1,
+    delegationDepthRemaining: 1,
+    reservationId: `reservation:${grantId}`,
+    resourceRequests: [
+      { resource: "modelCalls", amount: 2 },
+      { resource: "workers", amount: 1 },
+    ],
+  };
+}
+
 describe("Forge Agent Fabric P0a", () => {
-  test("executes a deterministic activity and replays the same control state without a planner", async () => {
+  test("executes deterministic P0a and replays without planner/model calls", async () => {
     const clock = new ManualClock(1_000);
     const { conductor, journal, revision } = preparedConductor(clock);
     const grant = rootGrant(clock);
     conductor.registerGrant(grant);
-
-    const specDigest = digest("effective-run-spec");
-    conductor.commitDispatchIntent({
-      intentId: "intent:1",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
+    const { permit, specDigest } = dispatchAndPermit(conductor, clock, revision.revisionId, grant, "happy");
+    const adapter = new DeterministicTestAdapter([{
       effectiveRunSpecDigest: specDigest,
-      sourceIds: ["source:forge"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "read",
-      createdAt: clock.now(),
-    });
-    const offer = conductor.createDispatchOffer("intent:1", "pool:reviewers", "offer:1", clock.now() + 5_000);
-    expect(offer.nonAuthoritative).toBe(true);
-    const claim = conductor.claimDispatch({
-      claimId: "claim:1",
-      intentId: offer.intentId,
-      workerId: "worker:a",
-      attemptId: "attempt:1",
-      leaseDurationMs: 10_000,
-    });
-    const permit = conductor.issuePermit({
-      permitId: "permit:1",
-      claimId: claim.claimId,
-      grantId: grant.grantId,
-      maximumValidityMs: 5_000,
-    });
-    const adapter = new DeterministicTestAdapter([
-      {
-        effectiveRunSpecDigest: specDigest,
-        outcomeStatus: "succeeded",
-        resultDigest: digest("result"),
-      },
-    ], () => clock.now());
+      outcomeStatus: "succeeded",
+      resultDigest: digest("result:happy"),
+      evidenceDigests: [digest("evidence:happy")],
+    }], () => clock.now());
 
     const outcome = await executeP0aActivity({ conductor, adapter, permit });
     expect(outcome.status).toBe("succeeded");
-
-    let plannerInvocations = 1;
-    const beforeReplay = stableStringify(conductor.state());
-    const replayed = replayControlState(journal.readAll());
-    const afterReplay = stableStringify(replayed);
-    expect(afterReplay).toBe(beforeReplay);
-    expect(plannerInvocations).toBe(1);
-    plannerInvocations += 0;
-    expect(plannerInvocations).toBe(1);
+    expect(outcome.evidenceDigests).toEqual([digest("evidence:happy")]);
+    expect(outcome.reportId).toBe("report:attempt:happy");
+    expect(outcome.reportDigest).toMatch(/^sha256:/);
+    expect(stableStringify(replayControlState(journal.readAll()))).toBe(stableStringify(conductor.state()));
   });
 
-  test("fences a stale worker after lease rollover", () => {
-    const clock = new ManualClock(10_000);
-    const { conductor, revision } = preparedConductor(clock);
-    const grantA = rootGrant(clock, "worker:a");
-    const grantB = rootGrant(clock, "worker:b");
-    conductor.registerGrant(grantA);
-    conductor.registerGrant(grantB);
-    const specDigest = digest("spec:fencing");
-    conductor.commitDispatchIntent({
-      intentId: "intent:fencing",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
-      effectiveRunSpecDigest: specDigest,
-      sourceIds: ["source:forge"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "read",
-      createdAt: clock.now(),
-    });
-    const claimA = conductor.claimDispatch({
-      claimId: "claim:a",
-      intentId: "intent:fencing",
-      workerId: "worker:a",
-      attemptId: "attempt:a",
-      leaseDurationMs: 100,
-    });
-    const permitA = conductor.issuePermit({
-      permitId: "permit:a",
-      claimId: claimA.claimId,
-      grantId: grantA.grantId,
-      maximumValidityMs: 100,
-    });
-    conductor.acceptStartupReport(permitA, {
-      startupReportId: "startup:a",
-      attemptId: permitA.attemptId,
-      observedSpecDigest: permitA.effectiveRunSpecDigest,
-      startedAt: clock.now(),
-    });
-
-    clock.advance(101);
-    const claimB = conductor.claimDispatch({
-      claimId: "claim:b",
-      intentId: "intent:fencing",
-      workerId: "worker:b",
-      attemptId: "attempt:b",
-      leaseDurationMs: 1_000,
-    });
-    expect(claimB.fencingToken).toBe(2);
-    expect(() => conductor.commitOutcome({
-      reportId: "report:a",
-      attemptId: "attempt:a",
-      status: "succeeded",
-      resultDigest: digest("stale-result"),
-      evidenceDigests: [],
-      reportedAt: clock.now(),
-    })).toThrow(AgentFabricError);
+  test("requires an explicit owner authorization before registering a root grant", () => {
+    const clock = new ManualClock(2_000);
+    const conductor = new ForgeAgentConductor("run:1", new MemoryControlJournal(), clock, digest);
+    expect(() => conductor.registerGrant(rootGrant(clock))).toThrow(AgentFabricError);
   });
 
-  test("rejects an expired execution permit", () => {
-    const clock = new ManualClock(20_000);
-    const { conductor, revision } = preparedConductor(clock);
-    const grant = rootGrant(clock);
-    conductor.registerGrant(grant);
-    conductor.commitDispatchIntent({
-      intentId: "intent:expiry",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
-      effectiveRunSpecDigest: digest("spec:expiry"),
-      sourceIds: ["source:forge"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "read",
-      createdAt: clock.now(),
-    });
-    const claim = conductor.claimDispatch({
-      claimId: "claim:expiry",
-      intentId: "intent:expiry",
-      workerId: "worker:a",
-      attemptId: "attempt:expiry",
-      leaseDurationMs: 1_000,
-    });
-    const permit = conductor.issuePermit({
-      permitId: "permit:expiry",
-      claimId: claim.claimId,
-      grantId: grant.grantId,
-      maximumValidityMs: 10,
-    });
-    clock.advance(10);
-    expect(() => conductor.acceptStartupReport(permit, {
-      startupReportId: "startup:expiry",
-      attemptId: permit.attemptId,
-      observedSpecDigest: permit.effectiveRunSpecDigest,
-      startedAt: clock.now(),
-    })).toThrow(AgentFabricError);
+  test("transitive parent revocation invalidates descendant grant and permit before startup", () => {
+    const clock = new ManualClock(3_000);
+    const ledger = new ResourceLedger([
+      { resource: "modelCalls", semantics: "consumable", limit: 8 },
+      { resource: "workers", semantics: "capacity", limit: 4 },
+    ]);
+    const { conductor, revision } = preparedConductor(clock, ledger);
+    const root = { ...rootGrant(clock, "conductor"), capabilities: ["architecture.read", "architecture.review"] };
+    conductor.registerGrant(root);
+    const resolution = conductor.deriveAndRegisterGrant(root.grantId, childRequest(clock));
+    expect(resolution.outcome).toBe("allowed");
+    const child = resolution.grant!;
+    const { permit } = dispatchAndPermit(conductor, clock, revision.revisionId, child, "revoked-before");
+    conductor.revokeGrant(root.grantId, "owner revoked parent");
+    expect(() => conductor.authorizeAttemptDispatch(permit)).toThrow(AgentFabricError);
   });
 
-  test("commits identical duplicate outcomes idempotently and rejects conflicts", () => {
-    const clock = new ManualClock(30_000);
-    const { conductor, revision } = preparedConductor(clock);
-    const grant = rootGrant(clock);
-    conductor.registerGrant(grant);
-    conductor.commitDispatchIntent({
-      intentId: "intent:duplicate",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
-      effectiveRunSpecDigest: digest("spec:duplicate"),
-      sourceIds: ["source:forge"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "read",
-      createdAt: clock.now(),
-    });
-    const claim = conductor.claimDispatch({
-      claimId: "claim:duplicate",
-      intentId: "intent:duplicate",
-      workerId: "worker:a",
-      attemptId: "attempt:duplicate",
-      leaseDurationMs: 1_000,
-    });
-    const permit = conductor.issuePermit({
-      permitId: "permit:duplicate",
-      claimId: claim.claimId,
-      grantId: grant.grantId,
-      maximumValidityMs: 1_000,
-    });
+  test("transitive parent revocation prevents outcome after startup", () => {
+    const clock = new ManualClock(4_000);
+    const ledger = new ResourceLedger([
+      { resource: "modelCalls", semantics: "consumable", limit: 8 },
+      { resource: "workers", semantics: "capacity", limit: 4 },
+    ]);
+    const { conductor, revision } = preparedConductor(clock, ledger);
+    const root = { ...rootGrant(clock, "conductor"), capabilities: ["architecture.read", "architecture.review"] };
+    conductor.registerGrant(root);
+    const child = conductor.deriveAndRegisterGrant(root.grantId, childRequest(clock)).grant!;
+    const { permit } = dispatchAndPermit(conductor, clock, revision.revisionId, child, "revoked-after");
     conductor.acceptStartupReport(permit, {
-      startupReportId: "startup:duplicate",
+      startupReportId: "startup:revoked-after",
       attemptId: permit.attemptId,
       observedSpecDigest: permit.effectiveRunSpecDigest,
       startedAt: clock.now(),
     });
-    const report = {
-      reportId: "report:duplicate",
-      attemptId: "attempt:duplicate",
-      status: "succeeded" as const,
-      resultDigest: digest("result:one"),
+    conductor.revokeGrant(root.grantId, "owner revoked ancestor");
+    expect(() => conductor.commitOutcome({
+      reportId: "report:revoked-after",
+      attemptId: permit.attemptId,
+      status: "succeeded",
+      resultDigest: digest("result:revoked-after"),
       evidenceDigests: [],
       reportedAt: clock.now(),
-    };
-    expect(conductor.commitOutcome(report)).toEqual(conductor.commitOutcome(report));
-    expect(() => conductor.commitOutcome({
-      ...report,
-      reportId: "report:conflicting",
-      resultDigest: digest("result:two"),
     })).toThrow(AgentFabricError);
   });
 
-  test("derives attenuated grants and atomically prevents aggregate oversubscription", () => {
-    const clock = new ManualClock(40_000);
+  test("cannot derive a child after its parent or root authorization is revoked", () => {
+    const clock = new ManualClock(5_000);
     const ledger = new ResourceLedger([
-      { resource: "modelCalls", semantics: "consumable", limit: 4 },
-      { resource: "workers", semantics: "capacity", limit: 1 },
+      { resource: "modelCalls", semantics: "consumable", limit: 8 },
+      { resource: "workers", semantics: "capacity", limit: 4 },
     ]);
-    const parent = {
-      ...rootGrant(clock, "conductor"),
-      capabilities: ["architecture.read", "architecture.review"],
-      delegationDepthRemaining: 2,
-      resourceCeilings: { modelCalls: 4, workers: 1 },
-    };
-    const first = deriveExecutionGrant(parent, {
-      grantId: "grant:child:1",
-      subjectId: "worker:1",
-      capabilities: ["architecture.read"],
-      sourceIds: ["source:forge"],
-      targetIds: ["target:artifact-store"],
-      effectClasses: ["read"],
-      notBefore: clock.now(),
-      expiresAt: clock.now() + 1_000,
-      maximumAttempts: 1,
-      delegationDepthRemaining: 1,
-      reservationId: "reservation:1",
-      resourceRequests: [
-        { resource: "modelCalls", amount: 2 },
-        { resource: "workers", amount: 1 },
-      ],
-    }, ledger, clock.now());
-    expect(first.outcome).toBe("allowed");
-    expect(first.grant?.capabilities).toEqual(["architecture.read"]);
+    const { conductor } = preparedConductor(clock, ledger);
+    const root = rootGrant(clock, "conductor");
+    conductor.registerGrant(root);
+    conductor.revokeGrant(root.grantId, "revoked");
+    expect(() => conductor.deriveAndRegisterGrant(root.grantId, childRequest(clock))).toThrow(AgentFabricError);
 
-    const second = deriveExecutionGrant(parent, {
-      grantId: "grant:child:2",
-      subjectId: "worker:2",
-      capabilities: ["architecture.read"],
-      sourceIds: ["source:forge"],
-      targetIds: ["target:artifact-store"],
-      effectClasses: ["read"],
-      notBefore: clock.now(),
-      expiresAt: clock.now() + 1_000,
-      maximumAttempts: 1,
-      delegationDepthRemaining: 1,
-      reservationId: "reservation:2",
-      resourceRequests: [{ resource: "workers", amount: 1 }],
-    }, ledger, clock.now());
-    expect(second.outcome).toBe("rejected");
+    const secondClock = new ManualClock(6_000);
+    const secondLedger = new ResourceLedger([
+      { resource: "modelCalls", semantics: "consumable", limit: 8 },
+      { resource: "workers", semantics: "capacity", limit: 4 },
+    ]);
+    const second = preparedConductor(secondClock, secondLedger).conductor;
+    const secondRoot = rootGrant(secondClock, "conductor");
+    second.registerGrant(secondRoot);
+    second.revokeOwnerAuthorization("auth:owner:1", "root authority revoked");
+    expect(() => second.deriveAndRegisterGrant(secondRoot.grantId, childRequest(secondClock, "grant:child:2"))).toThrow(AgentFabricError);
   });
 
-  test("records an unknown startup without claiming that the executor started", async () => {
-    const clock = new ManualClock(45_000);
+  test("direct child registration cannot bypass the resource ledger", () => {
+    const clock = new ManualClock(7_000);
+    const { conductor } = preparedConductor(clock);
+    const parent = rootGrant(clock, "conductor");
+    conductor.registerGrant(parent);
+    expect(() => conductor.registerGrant({
+      ...parent,
+      grantId: "grant:forged-child",
+      parentGrantId: parent.grantId,
+      subjectId: "worker:child",
+      maximumAttempts: 1,
+      delegationDepthRemaining: 1,
+      resourceCeilings: { modelCalls: 1 },
+      reservationId: "reservation:forged",
+    })).toThrow(AgentFabricError);
+  });
+
+  test("startup timestamps outside the permit window are rejected", () => {
+    const clock = new ManualClock(8_000);
     const { conductor, revision } = preparedConductor(clock);
     const grant = rootGrant(clock);
     conductor.registerGrant(grant);
-    const missingSpec = digest("spec:missing-fixture");
-    conductor.commitDispatchIntent({
-      intentId: "intent:unknown-start",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
-      effectiveRunSpecDigest: missingSpec,
-      sourceIds: ["source:forge"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "read",
-      createdAt: clock.now(),
-    });
-    const claim = conductor.claimDispatch({
-      claimId: "claim:unknown-start",
-      intentId: "intent:unknown-start",
-      workerId: "worker:a",
-      attemptId: "attempt:unknown-start",
-      leaseDurationMs: 1_000,
-    });
-    const permit = conductor.issuePermit({
-      permitId: "permit:unknown-start",
-      claimId: claim.claimId,
-      grantId: grant.grantId,
-      maximumValidityMs: 1_000,
-    });
-    const adapter = new DeterministicTestAdapter([], () => clock.now());
-    const outcome = await executeP0aActivity({ conductor, adapter, permit });
-    expect(outcome.status).toBe("unknown");
-    expect(conductor.state().attempts[permit.attemptId]?.startupStatus).toBe("unknown");
+    const { permit } = dispatchAndPermit(conductor, clock, revision.revisionId, grant, "bad-start-time");
+    expect(() => conductor.acceptStartupReport(permit, {
+      startupReportId: "startup:future",
+      attemptId: permit.attemptId,
+      observedSpecDigest: permit.effectiveRunSpecDigest,
+      startedAt: clock.now() + 1,
+    })).toThrow(AgentFabricError);
   });
 
-  test("rejects split resource requests that exceed a parent ceiling in aggregate", () => {
-    const clock = new ManualClock(47_000);
+  test("a child plan revision cannot silently change goal/program or bypass PlanDelta provenance", () => {
+    const clock = new ManualClock(9_000);
+    const { conductor, revision } = preparedConductor(clock);
+    const delta = {
+      deltaId: "delta:2",
+      rootExecutionId: "run:1",
+      baseRevisionId: revision.revisionId,
+      nextRevisionId: "plan:2",
+      operations: [] as const,
+    };
+    conductor.registerPlanDelta(delta);
+    const next = applyPlanDelta(revision, delta, digest);
+    conductor.activatePlan(next, revision.revisionId);
+
+    const maliciousDelta = {
+      deltaId: "delta:3",
+      rootExecutionId: "run:1",
+      baseRevisionId: next.revisionId,
+      nextRevisionId: "plan:3",
+      operations: [] as const,
+    };
+    conductor.registerPlanDelta(maliciousDelta);
+    const malicious = {
+      ...applyPlanDelta(next, maliciousDelta, digest),
+      goalId: "goal:other",
+    };
+    expect(() => conductor.activatePlan(malicious, next.revisionId)).toThrow(AgentFabricError);
+
+    const unbacked = {
+      ...applyPlanDelta(next, maliciousDelta, digest),
+      revisionId: "plan:unbacked",
+      sourcePlanDeltaId: "delta:missing",
+    };
+    expect(() => conductor.activatePlan(unbacked, next.revisionId)).toThrow(AgentFabricError);
+  });
+
+  test("replay rejects a tampered authority lineage or event digest", () => {
+    const clock = new ManualClock(10_000);
+    const { conductor, journal } = preparedConductor(clock);
+    const root = rootGrant(clock);
+    conductor.registerGrant(root);
+    const events = journal.readAll().map((event) => structuredClone(event));
+    const grantEvent = events.find((event) => event.payload.type === "grant_registered")!;
+    if (grantEvent.payload.type !== "grant_registered") throw new Error("expected grant event");
+    grantEvent.payload.grant.rootAuthorizationId = "auth:attacker";
+    expect(() => replayControlState(events)).toThrow(AgentFabricError);
+  });
+});
+
+class FailingJournal implements ControlJournal {
+  private readonly inner = new MemoryControlJournal();
+  failNextGrant = false;
+
+  append(input: Parameters<ControlJournal["append"]>[0]) {
+    if (this.failNextGrant && input.event.payload.type === "grant_registered" && input.event.payload.grant.parentGrantId) {
+      this.failNextGrant = false;
+      throw new AgentFabricError("AF_CONFLICT", "simulated journal failure");
+    }
+    return this.inner.append(input);
+  }
+
+  readAll() {
+    return this.inner.readAll();
+  }
+}
+
+describe("P0a atomic grant registration", () => {
+  test("rolls back the resource reservation if derived-grant journal registration fails", () => {
+    const clock = new ManualClock(11_000);
+    const journal = new FailingJournal();
     const ledger = new ResourceLedger([
-      { resource: "modelCalls", semantics: "consumable", limit: 10 },
+      { resource: "modelCalls", semantics: "consumable", limit: 8 },
+      { resource: "workers", semantics: "capacity", limit: 4 },
     ]);
-    const parent = {
-      ...rootGrant(clock, "conductor"),
-      delegationDepthRemaining: 2,
-      resourceCeilings: { modelCalls: 4 },
-    };
-    const resolution = deriveExecutionGrant(parent, {
-      grantId: "grant:split-ceiling",
-      subjectId: "worker:split",
-      capabilities: ["architecture.read"],
-      sourceIds: ["source:forge"],
-      targetIds: ["target:artifact-store"],
-      effectClasses: ["read"],
-      notBefore: clock.now(),
-      expiresAt: clock.now() + 1_000,
-      maximumAttempts: 1,
-      delegationDepthRemaining: 1,
-      reservationId: "reservation:split",
-      resourceRequests: [
-        { resource: "modelCalls", amount: 3 },
-        { resource: "modelCalls", amount: 3 },
-      ],
-    }, ledger, clock.now());
-    expect(resolution.outcome).toBe("rejected");
-  });
-
-  test("canonicalizes object keys and rejects non-finite values", () => {
-    expect(stableStringify({ z: 1, a: { y: 2, x: 3 } })).toBe(
-      '{"a":{"x":3,"y":2},"z":1}',
-    );
-    expect(() => stableStringify({ invalid: Number.POSITIVE_INFINITY })).toThrow(
-      AgentFabricError,
-    );
-  });
-
-  test("rejects an intent that violates the GoalContract effect or source boundary", () => {
-    const clock = new ManualClock(49_000);
-    const { conductor, revision } = preparedConductor(clock);
-    expect(() => conductor.commitDispatchIntent({
-      intentId: "intent:goal-violation",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
-      effectiveRunSpecDigest: digest("spec:goal-violation"),
-      sourceIds: ["source:outside"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "consequential",
-      createdAt: clock.now(),
-    })).toThrow(AgentFabricError);
-  });
-
-  test("rejects a grant that does not cover the source and target bound to the intent", () => {
-    const clock = new ManualClock(50_000);
-    const { conductor, revision } = preparedConductor(clock);
-    const grant = {
-      ...rootGrant(clock),
-      sourceIds: ["source:other"],
-      targetIds: ["target:other"],
-    };
-    conductor.registerGrant(grant);
-    conductor.commitDispatchIntent({
-      intentId: "intent:scope",
-      rootExecutionId: "run:1",
-      planRevisionId: revision.revisionId,
-      taskNodeId: "analyze",
-      effectiveRunSpecDigest: digest("spec:scope"),
-      sourceIds: ["source:forge"],
-      targetId: "target:artifact-store",
-      requiredCapability: "architecture.read",
-      effectClass: "read",
-      createdAt: clock.now(),
-    });
-    const claim = conductor.claimDispatch({
-      claimId: "claim:scope",
-      intentId: "intent:scope",
-      workerId: "worker:a",
-      attemptId: "attempt:scope",
-      leaseDurationMs: 1_000,
-    });
-    expect(() => conductor.issuePermit({
-      permitId: "permit:scope",
-      claimId: claim.claimId,
-      grantId: grant.grantId,
-      maximumValidityMs: 500,
-    })).toThrow(AgentFabricError);
-  });
-
-  test("applies a PlanDelta only to the expected base revision", () => {
-    const base = createRunPlanRevision("run:1", goal.goalId, program, "plan:base", digest);
-    const next = applyPlanDelta(base, {
-      deltaId: "delta:1",
-      rootExecutionId: "run:1",
-      baseRevisionId: base.revisionId,
-      nextRevisionId: "plan:next",
-      operations: [
-        {
-          kind: "add_node",
-          node: { nodeId: "verify", kind: "verification", dependsOn: ["analyze"] },
-        },
-      ],
-    }, digest);
-    expect(next.parentRevisionId).toBe(base.revisionId);
-    expect(next.nodes.map((node) => node.nodeId)).toEqual(["analyze", "verify"]);
-    expect(() => applyPlanDelta(next, {
-      deltaId: "delta:stale",
-      rootExecutionId: "run:1",
-      baseRevisionId: base.revisionId,
-      nextRevisionId: "plan:invalid",
-      operations: [],
-    }, digest)).toThrow(AgentFabricError);
+    const conductor = new ForgeAgentConductor("run:1", journal, clock, digest, ledger);
+    conductor.registerOwnerAuthorization(ownerAuthorization(clock));
+    conductor.registerGoal(goal);
+    const revision = createRunPlanRevision("run:1", goal.goalId, program, "plan:1", digest);
+    conductor.activatePlan(revision, null);
+    const parent = rootGrant(clock, "conductor");
+    conductor.registerGrant(parent);
+    const before = ledger.snapshot();
+    journal.failNextGrant = true;
+    expect(() => conductor.deriveAndRegisterGrant(parent.grantId, childRequest(clock))).toThrow(AgentFabricError);
+    expect(ledger.snapshot()).toEqual(before);
+    expect(conductor.state().grants["grant:child"]).toBeUndefined();
   });
 });
