@@ -25,6 +25,11 @@ function bucket(
   return records[ownerId] ?? (records[ownerId] = {});
 }
 
+function replaceRecord<T>(target: Record<string, T>, source: Readonly<Record<string, T>>): void {
+  for (const key of Object.keys(target)) delete target[key];
+  for (const [key, value] of Object.entries(source)) target[key] = structuredClone(value);
+}
+
 export class ResourceLedger {
   private readonly definitions: Record<string, ResourceDefinition>;
   private readonly reserved: Record<string, number> = {};
@@ -51,6 +56,16 @@ export class ResourceLedger {
       this.definitions[definition.resource] = { ...definition };
       this.reserved[definition.resource] = 0;
       this.consumed[definition.resource] = 0;
+    }
+  }
+
+  transaction<T>(operation: () => T): T {
+    const before = this.snapshot();
+    try {
+      return operation();
+    } catch (error) {
+      this.restore(before);
+      throw error;
     }
   }
 
@@ -86,7 +101,7 @@ export class ResourceLedger {
           `Reservation ${reservationId} was reused with a different request`,
         );
       }
-      return existing;
+      return structuredClone(existing);
     }
 
     const ownerReserved = bucket(this.ownerReserved, ownerId);
@@ -147,23 +162,19 @@ export class ResourceLedger {
         (request) => this.definitions[request.resource]?.semantics !== "counter",
       ) ? "active" : "consumed",
     };
-    this.reservations[reservationId] = reservation;
-    return reservation;
+    this.reservations[reservationId] = structuredClone(reservation);
+    return structuredClone(reservation);
   }
 
   consume(reservationId: Identifier): ResourceReservation {
     const reservation = this.requireReservation(reservationId);
-    if (reservation.status !== "active") {
-      return reservation;
-    }
+    if (reservation.status !== "active") return structuredClone(reservation);
 
     const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);
     const ownerConsumed = bucket(this.ownerConsumed, reservation.ownerId);
     for (const request of reservation.requests) {
       const definition = this.definitions[request.resource]!;
-      if (definition.semantics === "capacity") {
-        continue;
-      }
+      if (definition.semantics === "capacity") continue;
       if (definition.semantics === "consumable") {
         this.reserved[request.resource] -= request.amount;
         this.consumed[request.resource] += request.amount;
@@ -173,15 +184,13 @@ export class ResourceLedger {
     }
 
     const next: ResourceReservation = { ...reservation, status: "consumed" };
-    this.reservations[reservationId] = next;
-    return next;
+    this.reservations[reservationId] = structuredClone(next);
+    return structuredClone(next);
   }
 
   release(reservationId: Identifier): ResourceReservation {
     const reservation = this.requireReservation(reservationId);
-    if (reservation.status === "released") {
-      return reservation;
-    }
+    if (reservation.status === "released") return structuredClone(reservation);
 
     const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);
     if (reservation.status === "active") {
@@ -203,8 +212,8 @@ export class ResourceLedger {
     }
 
     const next: ResourceReservation = { ...reservation, status: "released" };
-    this.reservations[reservationId] = next;
-    return next;
+    this.reservations[reservationId] = structuredClone(next);
+    return structuredClone(next);
   }
 
   snapshot(): ResourceLedgerSnapshot {
@@ -216,6 +225,14 @@ export class ResourceLedger {
       ownerConsumed: structuredClone(this.ownerConsumed),
       reservations: structuredClone(this.reservations),
     };
+  }
+
+  private restore(snapshot: ResourceLedgerSnapshot): void {
+    replaceRecord(this.reserved, snapshot.reserved);
+    replaceRecord(this.consumed, snapshot.consumed);
+    replaceRecord(this.ownerReserved, snapshot.ownerReserved as Readonly<Record<string, Record<string, number>>>);
+    replaceRecord(this.ownerConsumed, snapshot.ownerConsumed as Readonly<Record<string, Record<string, number>>>);
+    replaceRecord(this.reservations, snapshot.reservations);
   }
 
   private requireReservation(reservationId: Identifier): ResourceReservation {
