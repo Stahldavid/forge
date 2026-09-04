@@ -1,5 +1,9 @@
 import { AgentFabricError } from "./errors.ts";
-import type { ControlEventEnvelope, UncommittedControlEvent } from "./types.ts";
+import type {
+  ControlEventEnvelope,
+  UncommittedControlEvent,
+  WorkerResultReport,
+} from "./types.ts";
 
 const EFFECT_CLASSES = new Set([
   "read",
@@ -7,6 +11,7 @@ const EFFECT_CLASSES = new Set([
   "bounded_external_inference",
   "consequential",
 ]);
+const RESOURCE_SEMANTICS = new Set(["consumable", "capacity", "counter"]);
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 
 function fail(message: string): never {
@@ -66,8 +71,8 @@ function recordOfPositiveNumbers(value: unknown, label: string): void {
   const record = object(value, label);
   for (const [key, amount] of Object.entries(record)) {
     if (!key) fail(`${label} contains an empty resource name`);
-    number(amount, `${label}.${key}`, { min: Number.MIN_VALUE });
-    if ((amount as number) <= 0) fail(`${label}.${key} must be > 0`);
+    const parsed = number(amount, `${label}.${key}`);
+    if (parsed <= 0) fail(`${label}.${key} must be > 0`);
   }
 }
 
@@ -131,6 +136,26 @@ function ownerAuthorizationVerification(value: unknown, label: string): void {
   digest(verification.evidenceDigest, `${label}.evidenceDigest`);
 }
 
+function resourceDefinition(value: unknown, label: string): void {
+  const definition = object(value, label);
+  keys(definition, ["resource", "semantics", "limit"], [], label);
+  string(definition.resource, `${label}.resource`);
+  const semantics = string(definition.semantics, `${label}.semantics`);
+  if (!RESOURCE_SEMANTICS.has(semantics)) fail(`${label}.semantics is invalid`);
+  number(definition.limit, `${label}.limit`, { min: 0 });
+}
+
+function resourceDefinitions(value: unknown, label: string): void {
+  if (!Array.isArray(value)) fail(`${label} must be an array`);
+  const seen = new Set<string>();
+  value.forEach((item, index) => {
+    resourceDefinition(item, `${label}[${index}]`);
+    const name = (item as Record<string, unknown>).resource as string;
+    if (seen.has(name)) fail(`${label} repeats resource ${name}`);
+    seen.add(name);
+  });
+}
+
 function goal(value: unknown, label: string): void {
   const goalValue = object(value, label);
   keys(
@@ -190,10 +215,13 @@ function reservation(value: unknown, label: string): void {
   string(reservationValue.reservationId, `${label}.reservationId`);
   string(reservationValue.ownerId, `${label}.ownerId`);
   if (!Array.isArray(reservationValue.requests)) fail(`${label}.requests must be an array`);
+  const seen = new Set<string>();
   reservationValue.requests.forEach((item, index) => {
     const request = object(item, `${label}.requests[${index}]`);
     keys(request, ["resource", "amount"], [], `${label}.requests[${index}]`);
-    string(request.resource, `${label}.requests[${index}].resource`);
+    const resource = string(request.resource, `${label}.requests[${index}].resource`);
+    if (seen.has(resource)) fail(`${label}.requests repeats resource ${resource}`);
+    seen.add(resource);
     const amount = number(request.amount, `${label}.requests[${index}].amount`);
     if (amount <= 0) fail(`${label}.requests[${index}].amount must be > 0`);
   });
@@ -300,26 +328,65 @@ function permit(value: unknown, label: string): void {
   number(permitValue.expiresAt, `${label}.expiresAt`, { min: 0 });
 }
 
+export function validateWorkerResultReport(value: unknown): asserts value is WorkerResultReport {
+  const report = object(value, "report");
+  keys(
+    report,
+    [
+      "reportId", "attemptId", "permitId", "intentId", "planRevisionId",
+      "effectiveRunSpecDigest", "fencingToken", "status", "resultDigest", "evidenceDigests",
+      "reportedAt",
+    ],
+    [],
+    "report",
+  );
+  for (const field of ["reportId", "attemptId", "permitId", "intentId", "planRevisionId"] as const) {
+    string(report[field], `report.${field}`);
+  }
+  digest(report.effectiveRunSpecDigest, "report.effectiveRunSpecDigest");
+  number(report.fencingToken, "report.fencingToken", { integer: true, min: 1 });
+  const status = string(report.status, "report.status");
+  if (!new Set(["succeeded", "failed"]).has(status)) fail("report.status is invalid");
+  digest(report.resultDigest, "report.resultDigest");
+  digests(report.evidenceDigests, "report.evidenceDigests");
+  number(report.reportedAt, "report.reportedAt", { min: 0 });
+}
+
+function uncertainty(value: unknown, label: string): void {
+  const observation = object(value, label);
+  keys(observation, ["observationId", "attemptId", "permitId", "phase", "reason", "observedAt"], [], label);
+  string(observation.observationId, `${label}.observationId`);
+  string(observation.attemptId, `${label}.attemptId`);
+  string(observation.permitId, `${label}.permitId`);
+  const phase = string(observation.phase, `${label}.phase`);
+  if (!new Set(["startup", "outcome"]).has(phase)) fail(`${label}.phase is invalid`);
+  string(observation.reason, `${label}.reason`);
+  number(observation.observedAt, `${label}.observedAt`, { min: 0 });
+}
+
 function outcome(value: unknown, label: string): void {
   const outcomeValue = object(value, label);
   keys(
     outcomeValue,
     [
-      "outcomeId", "attemptId", "status", "resultDigest", "reportId", "reportDigest",
-      "evidenceDigests", "reportedAt", "committedAt",
+      "outcomeId", "attemptId", "permitId", "intentId", "planRevisionId",
+      "effectiveRunSpecDigest", "fencingToken", "status", "resultDigest", "reportId",
+      "reportDigest", "evidenceDigests", "reportedAt", "committedAt",
     ],
     [],
     label,
   );
-  string(outcomeValue.outcomeId, `${label}.outcomeId`);
-  string(outcomeValue.attemptId, `${label}.attemptId`);
+  for (const field of ["outcomeId", "attemptId", "permitId", "intentId", "planRevisionId", "reportId"] as const) {
+    string(outcomeValue[field], `${label}.${field}`);
+  }
+  digest(outcomeValue.effectiveRunSpecDigest, `${label}.effectiveRunSpecDigest`);
+  number(outcomeValue.fencingToken, `${label}.fencingToken`, { integer: true, min: 1 });
   const status = string(outcomeValue.status, `${label}.status`);
-  if (!new Set(["succeeded", "failed", "unknown"]).has(status)) fail(`${label}.status is invalid`);
-  if (outcomeValue.resultDigest !== null) digest(outcomeValue.resultDigest, `${label}.resultDigest`);
-  if (outcomeValue.reportId !== null) string(outcomeValue.reportId, `${label}.reportId`);
-  if (outcomeValue.reportDigest !== null) digest(outcomeValue.reportDigest, `${label}.reportDigest`);
+  if (!new Set(["succeeded", "failed"]).has(status)) fail(`${label}.status is invalid`);
+  digest(outcomeValue.resultDigest, `${label}.resultDigest`);
+  digest(outcomeValue.reportDigest, `${label}.reportDigest`);
   digests(outcomeValue.evidenceDigests, `${label}.evidenceDigests`);
-  if (outcomeValue.reportedAt !== null) number(outcomeValue.reportedAt, `${label}.reportedAt`, { min: 0 });
+  number(outcomeValue.reportedAt, `${label}.reportedAt`, { min: 0 });
   number(outcomeValue.committedAt, `${label}.committedAt`, { min: 0 });
 }
 
@@ -336,6 +403,15 @@ function payload(value: unknown, label: string): void {
       keys(payloadValue, ["type", "authorizationId", "reason"], [], label);
       string(payloadValue.authorizationId, `${label}.authorizationId`);
       string(payloadValue.reason, `${label}.reason`);
+      return;
+    case "resource_ledger_initialized":
+      keys(payloadValue, ["type", "definitions"], [], label);
+      resourceDefinitions(payloadValue.definitions, `${label}.definitions`);
+      return;
+    case "resource_reservation_consumed":
+    case "resource_reservation_released":
+      keys(payloadValue, ["type", "reservationId"], [], label);
+      string(payloadValue.reservationId, `${label}.reservationId`);
       return;
     case "goal_registered":
       keys(payloadValue, ["type", "goal"], [], label);
@@ -378,12 +454,9 @@ function payload(value: unknown, label: string): void {
       string(payloadValue.startupReportId, `${label}.startupReportId`);
       number(payloadValue.startedAt, `${label}.startedAt`, { min: 0 });
       return;
-    case "attempt_start_unknown":
-      keys(payloadValue, ["type", "attemptId", "permitId", "reason", "observedAt"], [], label);
-      string(payloadValue.attemptId, `${label}.attemptId`);
-      string(payloadValue.permitId, `${label}.permitId`);
-      string(payloadValue.reason, `${label}.reason`);
-      number(payloadValue.observedAt, `${label}.observedAt`, { min: 0 });
+    case "attempt_uncertainty_observed":
+      keys(payloadValue, ["type", "observation"], [], label);
+      uncertainty(payloadValue.observation, `${label}.observation`);
       return;
     case "attempt_outcome_committed":
       keys(payloadValue, ["type", "outcome"], [], label);
