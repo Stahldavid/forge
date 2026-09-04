@@ -414,6 +414,23 @@ describe("Forge Agent Fabric P0a", () => {
     );
   });
 
+  test("rejects an intent that violates the GoalContract effect or source boundary", () => {
+    const clock = new ManualClock(49_000);
+    const { conductor, revision } = preparedConductor(clock);
+    expect(() => conductor.commitDispatchIntent({
+      intentId: "intent:goal-violation",
+      rootExecutionId: "run:1",
+      planRevisionId: revision.revisionId,
+      taskNodeId: "analyze",
+      effectiveRunSpecDigest: digest("spec:goal-violation"),
+      sourceIds: ["source:outside"],
+      targetId: "target:artifact-store",
+      requiredCapability: "architecture.read",
+      effectClass: "consequential",
+      createdAt: clock.now(),
+    })).toThrow(AgentFabricError);
+  });
+
   test("rejects a grant that does not cover the source and target bound to the intent", () => {
     const clock = new ManualClock(50_000);
     const { conductor, revision } = preparedConductor(clock);
