@@ -1,4 +1,4 @@
-import { assertGrantCurrent } from "./authority.ts";
+import { assertGrantAttenuated, assertGrantCurrent } from "./authority.ts";
 import { stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import type { ControlJournal } from "./journal.ts";
@@ -58,6 +58,28 @@ export class ForgeAgentConductor {
   }
 
   registerGrant(grant: ExecutionGrant): void {
+    const state = this.state();
+    if (grant.parentGrantId) {
+      const parent = state.grants[grant.parentGrantId];
+      if (!parent) {
+        throw new AgentFabricError(
+          "AF_GRANT_REJECTED",
+          `Derived grant references unknown parent ${grant.parentGrantId}`,
+        );
+      }
+      assertGrantAttenuated(parent, grant);
+      for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
+        const allocated = Object.values(state.grants)
+          .filter((candidate) => candidate.parentGrantId === parent.grantId)
+          .reduce((total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0), 0);
+        if (allocated + amount > (parent.resourceCeilings[resource] ?? -1)) {
+          throw new AgentFabricError(
+            "AF_RESOURCE_EXHAUSTED",
+            `Derived grants exceed parent resource ${resource}`,
+          );
+        }
+      }
+    }
     this.append(`grant:${grant.grantId}`, {
       type: "grant_registered",
       grant,
