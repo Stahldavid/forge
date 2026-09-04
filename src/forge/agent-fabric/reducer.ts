@@ -1,3 +1,4 @@
+import { assertGrantAttenuated } from "./authority.ts";
 import { AgentFabricError } from "./errors.ts";
 import type { ControlEventEnvelope, ControlState } from "./types.ts";
 
@@ -57,11 +58,26 @@ export function reduceControlEvent(
     if (state.grants[payload.grant.grantId]) {
       throw new AgentFabricError("AF_INVALID_EVENT", `Grant already exists: ${payload.grant.grantId}`);
     }
-    if (payload.grant.parentGrantId && !state.grants[payload.grant.parentGrantId]) {
-      throw new AgentFabricError(
-        "AF_INVALID_EVENT",
-        `Derived grant references unknown parent ${payload.grant.parentGrantId}`,
-      );
+    if (payload.grant.parentGrantId) {
+      const parent = state.grants[payload.grant.parentGrantId];
+      if (!parent) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Derived grant references unknown parent ${payload.grant.parentGrantId}`,
+        );
+      }
+      assertGrantAttenuated(parent, payload.grant);
+      for (const [resource, amount] of Object.entries(payload.grant.resourceCeilings)) {
+        const allocated = Object.values(state.grants)
+          .filter((candidate) => candidate.parentGrantId === parent.grantId)
+          .reduce((total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0), 0);
+        if (allocated + amount > (parent.resourceCeilings[resource] ?? -1)) {
+          throw new AgentFabricError(
+            "AF_INVALID_EVENT",
+            `Derived grants exceed parent resource ${resource}`,
+          );
+        }
+      }
     }
     return { ...next, grants: { ...state.grants, [payload.grant.grantId]: payload.grant } };
   }
