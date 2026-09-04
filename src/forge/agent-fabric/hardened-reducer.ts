@@ -22,6 +22,80 @@ function assertSingleRootExecution(events: readonly ControlEventEnvelope[]): voi
   }
 }
 
+function assertStreamIdentityAndTemporalInvariants(
+  events: readonly ControlEventEnvelope[],
+): void {
+  const eventIds = new Set<string>();
+  const idempotencyKeys = new Set<string>();
+  const startupReportIds = new Set<string>();
+  const reportIds = new Set<string>();
+  const outcomeIds = new Set<string>();
+
+  for (const event of events) {
+    if (eventIds.has(event.eventId)) {
+      throw new AgentFabricError("AF_INVALID_EVENT", `Duplicate event ID ${event.eventId}`);
+    }
+    eventIds.add(event.eventId);
+
+    if (event.idempotencyKey !== undefined) {
+      if (idempotencyKeys.has(event.idempotencyKey)) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Duplicate idempotency key ${event.idempotencyKey}`,
+        );
+      }
+      idempotencyKeys.add(event.idempotencyKey);
+    }
+
+    if (event.payload.type === "owner_authorization_registered") {
+      const authorization = event.payload.authorization;
+      if (event.occurredAt < authorization.notBefore || event.occurredAt >= authorization.expiresAt) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Owner authorization ${authorization.authorizationId} was admitted outside its validity window`,
+        );
+      }
+    }
+
+    if (event.payload.type === "attempt_execution_permit_issued") {
+      if (event.payload.permit.notBefore !== event.occurredAt) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Permit ${event.payload.permit.permitId} admission time differs from event time`,
+        );
+      }
+    }
+
+    if (event.payload.type === "attempt_started") {
+      if (startupReportIds.has(event.payload.startupReportId)) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Startup report ID was reused: ${event.payload.startupReportId}`,
+        );
+      }
+      startupReportIds.add(event.payload.startupReportId);
+    }
+
+    if (event.payload.type === "attempt_outcome_committed") {
+      const outcome = event.payload.outcome;
+      if (outcomeIds.has(outcome.outcomeId)) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Outcome ID was reused: ${outcome.outcomeId}`,
+        );
+      }
+      outcomeIds.add(outcome.outcomeId);
+      if (reportIds.has(outcome.reportId)) {
+        throw new AgentFabricError(
+          "AF_INVALID_EVENT",
+          `Worker report ID was reused: ${outcome.reportId}`,
+        );
+      }
+      reportIds.add(outcome.reportId);
+    }
+  }
+}
+
 function assertPermitGoalAuthorityBinding(
   state: ControlState,
   permit: AttemptExecutionPermit,
@@ -117,6 +191,7 @@ export function replayControlState(
   trust: ReplayTrustContext,
 ): ControlState {
   assertSingleRootExecution(events);
+  assertStreamIdentityAndTemporalInvariants(events);
   const state = replayLegacyControlState(events, trust);
   assertReplayOnlyInvariants(events, state);
   return state;
