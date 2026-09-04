@@ -128,7 +128,19 @@ export function reduceControlEvent(
       );
     }
     const revision = state.planRevisions[intent.planRevisionId];
-    if (!revision?.nodes.some((node) => node.nodeId === intent.taskNodeId)) {
+    const goal = revision ? state.goals[revision.goalId] : undefined;
+    if (!goal) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Dispatch intent has no active GoalContract");
+    }
+    if (
+      !goal.allowedEffectClasses.includes(intent.effectClass) ||
+      goal.prohibitedEffectClasses.includes(intent.effectClass) ||
+      (!goal.sourceBoundary.allowExpansion &&
+        !intent.sourceIds.every((sourceId) => goal.sourceBoundary.sourceIds.includes(sourceId)))
+    ) {
+      throw new AgentFabricError("AF_INVALID_EVENT", "Dispatch intent violates its GoalContract");
+    }
+    if (!revision.nodes.some((node) => node.nodeId === intent.taskNodeId)) {
       throw new AgentFabricError(
         "AF_INVALID_EVENT",
         `Dispatch intent references missing plan node ${intent.taskNodeId}`,
