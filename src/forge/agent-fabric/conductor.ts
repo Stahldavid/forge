@@ -1,19 +1,29 @@
-import { assertGrantAttenuated, assertGrantCurrent } from "./authority.ts";
-import { stableStringify } from "./canonical.ts";
+import {
+  assertAuthorizationCurrent,
+  assertGrantLineageCurrent,
+  assertRootGrantAuthorized,
+  deriveExecutionGrant,
+} from "./authority.ts";
+import { digestCanonical, stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import type { ControlJournal } from "./journal.ts";
 import { computeRunPlanContentDigest, validateWorkflowNodes } from "./planning.ts";
 import { replayControlState } from "./reducer.ts";
+import type { ResourceLedger } from "./resource-ledger.ts";
 import type {
   AttemptExecutionPermit,
   AuthoritativeOutcomeCommit,
+  AuthorityResolution,
   Clock,
+  DerivedGrantRequest,
   DigestFunction,
   DispatchIntent,
   DispatchOffer,
   ExecutionGrant,
   GoalContract,
   ExecutorStartupReport,
+  OwnerAuthorization,
+  PlanDelta,
   RunPlanRevision,
   SchedulingClaim,
   WorkerResultReport,
@@ -40,6 +50,7 @@ export class ForgeAgentConductor {
     private readonly journal: ControlJournal,
     private readonly clock: Clock,
     private readonly digest: DigestFunction,
+    private readonly resourceLedger?: ResourceLedger,
   ) {}
 
   state() {
@@ -50,47 +61,136 @@ export class ForgeAgentConductor {
     return this.journal.readAll();
   }
 
+  registerOwnerAuthorization(authorization: OwnerAuthorization): void {
+    if (authorization.rootExecutionId !== this.rootExecutionId) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "Owner authorization belongs to another execution");
+    }
+    assertAuthorizationCurrent(authorization, this.clock.now());
+    this.append(`owner-authorization:${authorization.authorizationId}`, {
+      type: "owner_authorization_registered",
+      authorization,
+    });
+  }
+
+  revokeOwnerAuthorization(authorizationId: string, reason: string): void {
+    const state = this.state();
+    if (!state.authorizations[authorizationId]) {
+      throw new AgentFabricError("AF_NOT_FOUND", `Unknown owner authorization: ${authorizationId}`);
+    }
+    this.append(`owner-authorization-revocation:${authorizationId}`, {
+      type: "owner_authorization_revoked",
+      authorizationId,
+      reason,
+    });
+  }
+
   registerGoal(goal: GoalContract): void {
+    const state = this.state();
+    const authorization = state.authorizations[goal.authorityInvocationId];
+    if (!authorization) {
+      throw new AgentFabricError(
+        "AF_GRANT_REJECTED",
+        `Goal ${goal.goalId} has no registered owner authorization`,
+      );
+    }
+    assertAuthorizationCurrent(
+      authorization,
+      this.clock.now(),
+      state.revokedAuthorizations[authorization.authorizationId],
+    );
+    if (!authorization.goalIds.includes(goal.goalId)) {
+      throw new AgentFabricError("AF_GRANT_REJECTED", "Owner authorization does not cover this goal");
+    }
     this.append(`goal:${goal.goalId}`, {
       type: "goal_registered",
       goal,
     });
   }
 
+  /** Registers only a root grant. Derived grants must use deriveAndRegisterGrant(). */
   registerGrant(grant: ExecutionGrant): void {
-    const state = this.state();
-    if (grant.parentGrantId) {
-      const parent = state.grants[grant.parentGrantId];
-      if (!parent) {
-        throw new AgentFabricError(
-          "AF_GRANT_REJECTED",
-          `Derived grant references unknown parent ${grant.parentGrantId}`,
-        );
-      }
-      assertGrantAttenuated(parent, grant);
-      for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
-        const allocated = Object.values(state.grants)
-          .filter((candidate) => candidate.parentGrantId === parent.grantId)
-          .reduce((total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0), 0);
-        if (allocated + amount > (parent.resourceCeilings[resource] ?? -1)) {
-          throw new AgentFabricError(
-            "AF_RESOURCE_EXHAUSTED",
-            `Derived grants exceed parent resource ${resource}`,
-          );
-        }
-      }
+    if (grant.parentGrantId !== null) {
+      throw new AgentFabricError(
+        "AF_GRANT_REJECTED",
+        "Derived grants must be atomically reserved and registered",
+      );
     }
+    const state = this.state();
+    const authorization = state.authorizations[grant.rootAuthorizationId];
+    if (!authorization) {
+      throw new AgentFabricError(
+        "AF_GRANT_REJECTED",
+        `Root grant ${grant.grantId} has no registered owner authorization`,
+      );
+    }
+    assertAuthorizationCurrent(
+      authorization,
+      this.clock.now(),
+      state.revokedAuthorizations[authorization.authorizationId],
+    );
+    assertRootGrantAuthorized(authorization, grant);
     this.append(`grant:${grant.grantId}`, {
       type: "grant_registered",
       grant,
+      reservation: null,
+    });
+  }
+
+  deriveAndRegisterGrant(
+    parentGrantId: string,
+    request: DerivedGrantRequest,
+    ledger: ResourceLedger = this.requireResourceLedger(),
+  ): AuthorityResolution {
+    const state = this.state();
+    const parent = state.grants[parentGrantId];
+    if (!parent) {
+      throw new AgentFabricError("AF_NOT_FOUND", `Unknown parent grant: ${parentGrantId}`);
+    }
+    const now = this.clock.now();
+    assertGrantLineageCurrent(state, parent.grantId, now);
+
+    return ledger.transaction(() => {
+      const resolution = deriveExecutionGrant(parent, request, ledger, now);
+      if (resolution.outcome !== "allowed" || !resolution.grant) return resolution;
+      const reservation = ledger.snapshot().reservations[request.reservationId];
+      if (!reservation) {
+        throw new AgentFabricError(
+          "AF_RESOURCE_EXHAUSTED",
+          `Reservation ${request.reservationId} was not materialized`,
+        );
+      }
+      this.append(`grant:${resolution.grant.grantId}`, {
+        type: "grant_registered",
+        grant: resolution.grant,
+        reservation,
+      });
+      return resolution;
     });
   }
 
   revokeGrant(grantId: string, reason: string): void {
+    const state = this.state();
+    if (!state.grants[grantId]) {
+      throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${grantId}`);
+    }
     this.append(`grant-revocation:${grantId}`, {
       type: "grant_revoked",
       grantId,
       reason,
+    });
+  }
+
+  registerPlanDelta(delta: PlanDelta): void {
+    const state = this.state();
+    if (delta.rootExecutionId !== this.rootExecutionId) {
+      throw new AgentFabricError("AF_INVALID_PLAN", "PlanDelta belongs to another execution");
+    }
+    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== delta.baseRevisionId) {
+      throw new AgentFabricError("AF_INVALID_PLAN", "PlanDelta is stale");
+    }
+    this.append(`plan-delta:${delta.deltaId}`, {
+      type: "plan_delta_registered",
+      delta,
     });
   }
 
@@ -116,15 +216,49 @@ export class ForgeAgentConductor {
     if (revision.contentDigest !== expectedDigest) {
       throw new AgentFabricError("AF_INVALID_PLAN", "Plan revision content digest does not match");
     }
-    if (
-      expectedCurrentRevisionId !== null &&
-      revision.parentRevisionId !== expectedCurrentRevisionId
-    ) {
-      throw new AgentFabricError(
-        "AF_INVALID_PLAN",
-        "Plan revision parent does not match the active revision",
-      );
+
+    if (expectedCurrentRevisionId === null) {
+      if (
+        revision.parentRevisionId !== null ||
+        revision.sourcePlanDeltaId !== null ||
+        revision.revisionNumber !== 1
+      ) {
+        throw new AgentFabricError("AF_INVALID_PLAN", "Initial plan revision has invalid lineage");
+      }
+    } else {
+      const parent = state.planRevisions[expectedCurrentRevisionId];
+      if (!parent || revision.parentRevisionId !== parent.revisionId) {
+        throw new AgentFabricError(
+          "AF_INVALID_PLAN",
+          "Plan revision parent does not match the active revision",
+        );
+      }
+      if (
+        revision.goalId !== parent.goalId ||
+        revision.programVersionId !== parent.programVersionId
+      ) {
+        throw new AgentFabricError(
+          "AF_INVALID_PLAN",
+          "Plan revision cannot silently change goal or workflow program",
+        );
+      }
+      if (revision.revisionNumber !== parent.revisionNumber + 1 || !revision.sourcePlanDeltaId) {
+        throw new AgentFabricError("AF_INVALID_PLAN", "Plan revision has invalid revision lineage");
+      }
+      const delta = state.planDeltas[revision.sourcePlanDeltaId];
+      if (
+        !delta ||
+        delta.baseRevisionId !== parent.revisionId ||
+        delta.nextRevisionId !== revision.revisionId ||
+        delta.rootExecutionId !== this.rootExecutionId
+      ) {
+        throw new AgentFabricError(
+          "AF_INVALID_PLAN",
+          "Plan revision is not backed by its registered PlanDelta",
+        );
+      }
     }
+
     this.append(`plan-activation:${revision.revisionId}`, {
       type: "plan_revision_activated",
       revision,
@@ -139,6 +273,9 @@ export class ForgeAgentConductor {
         "AF_INVALID_STATE",
         "Dispatch intent is not bound to the active plan revision",
       );
+    }
+    if (intent.createdAt > this.clock.now()) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Dispatch intent cannot be created in the future");
     }
     const revision = state.planRevisions[intent.planRevisionId];
     const goal = revision ? state.goals[revision.goalId] : undefined;
@@ -247,7 +384,7 @@ export class ForgeAgentConductor {
     if (activeClaimId !== claim.claimId || claim.leaseExpiresAt <= now) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Claim is no longer current");
     }
-    assertGrantCurrent(grant, now, state.revokedGrants[grant.grantId]);
+    assertGrantLineageCurrent(state, grant.grantId, now);
     if (!grant.capabilities.includes(intent.requiredCapability)) {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Grant lacks the required capability");
     }
@@ -299,11 +436,19 @@ export class ForgeAgentConductor {
     report: ExecutorStartupReport,
   ): void {
     this.assertPermitCurrent(permit);
+    const now = this.clock.now();
     if (report.attemptId !== permit.attemptId) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Startup report is bound to another attempt");
     }
     if (report.observedSpecDigest !== permit.effectiveRunSpecDigest) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Adapter started a different EffectiveRunSpec");
+    }
+    if (
+      report.startedAt < permit.notBefore ||
+      report.startedAt >= permit.expiresAt ||
+      report.startedAt > now
+    ) {
+      throw new AgentFabricError("AF_PERMIT_REJECTED", "Startup report has an invalid timestamp");
     }
     this.append(`attempt-start:${permit.attemptId}`, {
       type: "attempt_started",
@@ -350,9 +495,7 @@ export class ForgeAgentConductor {
     ) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit is fenced by a newer claim");
     }
-    const grant = state.grants[permit.grantId];
-    if (!grant) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${permit.grantId}`);
-    assertGrantCurrent(grant, now, state.revokedGrants[grant.grantId]);
+    assertGrantLineageCurrent(state, permit.grantId, now);
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit references a superseded plan revision");
     }
@@ -364,22 +507,24 @@ export class ForgeAgentConductor {
     if (!attempt) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown attempt: ${report.attemptId}`);
     }
+    const reportDigest = digestCanonical(report, this.digest);
     const existing = state.outcomes[report.attemptId];
     if (existing) {
-      if (existing.status === report.status && existing.resultDigest === report.resultDigest) {
-        return existing;
-      }
+      if (existing.status === report.status && existing.reportDigest === reportDigest) return existing;
       throw new AgentFabricError(
         "AF_CONFLICT",
         `Attempt ${report.attemptId} already has a different authoritative outcome`,
       );
     }
-    if (attempt.startupStatus !== "started") {
+    if (attempt.startupStatus !== "started" || attempt.startedAt === null) {
       throw new AgentFabricError("AF_INVALID_STATE", "Unknown startup cannot commit a successful outcome");
     }
     const permit = state.permits[attempt.permitId]!;
     const claim = state.claims[permit.claimId]!;
     const now = this.clock.now();
+    if (report.reportedAt < attempt.startedAt || report.reportedAt > now) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Worker result report has an invalid timestamp");
+    }
     if (
       state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
       claim.fencingToken !== permit.fencingToken ||
@@ -390,14 +535,17 @@ export class ForgeAgentConductor {
     if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Superseded plan attempt cannot commit an outcome");
     }
-    const grant = state.grants[permit.grantId]!;
-    assertGrantCurrent(grant, now, state.revokedGrants[grant.grantId]);
+    assertGrantLineageCurrent(state, permit.grantId, now);
 
     const outcome: AuthoritativeOutcomeCommit = {
       outcomeId: `outcome:${report.attemptId}`,
       attemptId: report.attemptId,
       status: report.status,
       resultDigest: report.resultDigest,
+      reportId: report.reportId,
+      reportDigest,
+      evidenceDigests: [...report.evidenceDigests],
+      reportedAt: report.reportedAt,
       committedAt: now,
     };
     this.append(`attempt-outcome:${report.attemptId}`, {
@@ -419,6 +567,10 @@ export class ForgeAgentConductor {
       attemptId,
       status: "unknown",
       resultDigest: null,
+      reportId: null,
+      reportDigest: null,
+      evidenceDigests: [],
+      reportedAt: null,
       committedAt: this.clock.now(),
     };
     this.append(`attempt-outcome:${attemptId}`, {
@@ -426,6 +578,16 @@ export class ForgeAgentConductor {
       outcome,
     });
     return outcome;
+  }
+
+  private requireResourceLedger(): ResourceLedger {
+    if (!this.resourceLedger) {
+      throw new AgentFabricError(
+        "AF_INVALID_STATE",
+        "Derived grant registration requires a ResourceLedger",
+      );
+    }
+    return this.resourceLedger;
   }
 
   private append(
