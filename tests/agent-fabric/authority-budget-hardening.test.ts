@@ -168,7 +168,7 @@ function commitIntentAndPermit(
     grantId: grant.grantId,
     maximumValidityMs,
   });
-  return { permit, specDigest };
+  return { claim, permit, specDigest };
 }
 
 describe("P0a authority budget hardening", () => {
@@ -199,7 +199,6 @@ describe("P0a authority budget hardening", () => {
     const { conductor } = prepared(clock, ledger);
     const parent = rootGrant(clock, "grant:parent", "conductor", 2, 6);
     conductor.registerGrant(parent);
-
     const first = conductor.deriveAndRegisterGrant(parent.grantId, {
       grantId: "grant:child:1",
       subjectId: "worker:child:1",
@@ -215,7 +214,6 @@ describe("P0a authority budget hardening", () => {
       resourceRequests: [{ resource: "modelCalls", amount: 2 }],
     });
     expect(first.outcome).toBe("allowed");
-
     const second = conductor.deriveAndRegisterGrant(parent.grantId, {
       grantId: "grant:child:2",
       subjectId: "worker:child:2",
@@ -266,6 +264,74 @@ describe("P0a authority budget hardening", () => {
       resultDigest: digest("result:permit-expiry"),
       evidenceDigests: [],
       reportedAt: clock.now(),
+    })).toThrow(AgentFabricError);
+  });
+
+  test("only one execution permit can be issued for an attempt", () => {
+    const clock = new ManualClock(5_000);
+    const { conductor, revision } = prepared(clock);
+    const grant = rootGrant(clock, "grant:root:a", "worker:a", 2, 2);
+    conductor.registerGrant(grant);
+    const { claim } = commitIntentAndPermit(conductor, clock, revision.revisionId, grant, "single-permit");
+    expect(() => conductor.issuePermit({
+      permitId: "permit:second",
+      claimId: claim.claimId,
+      grantId: grant.grantId,
+      maximumValidityMs: 1_000,
+    })).toThrow(AgentFabricError);
+  });
+
+  test("releasing a child reservation invalidates the derived grant", () => {
+    const clock = new ManualClock(6_000);
+    const ledger = new ResourceLedger([
+      { resource: "modelCalls", semantics: "consumable", limit: 6 },
+      { resource: "workers", semantics: "capacity", limit: 3 },
+    ]);
+    const { conductor, revision } = prepared(clock, ledger);
+    const parent = rootGrant(clock, "grant:parent", "conductor", 2, 6);
+    conductor.registerGrant(parent);
+    const child = conductor.deriveAndRegisterGrant(parent.grantId, {
+      grantId: "grant:child:1",
+      subjectId: "worker:child:1",
+      capabilities: ["read"],
+      sourceIds: ["source:one"],
+      targetIds: ["target:one"],
+      effectClasses: ["read"],
+      notBefore: clock.now(),
+      expiresAt: clock.now() + 10_000,
+      maximumAttempts: 1,
+      delegationDepthRemaining: 1,
+      reservationId: "reservation:child:1",
+      resourceRequests: [
+        { resource: "modelCalls", amount: 2 },
+        { resource: "workers", amount: 1 },
+      ],
+    }).grant!;
+    conductor.releaseResourceReservation("reservation:child:1");
+    conductor.commitDispatchIntent({
+      intentId: "intent:released",
+      rootExecutionId: "run:budget",
+      planRevisionId: revision.revisionId,
+      taskNodeId: "analyze",
+      effectiveRunSpecDigest: digest("spec:released"),
+      sourceIds: ["source:one"],
+      targetId: "target:one",
+      requiredCapability: "read",
+      effectClass: "read",
+      createdAt: clock.now(),
+    });
+    const claim = conductor.claimDispatch({
+      claimId: "claim:released",
+      intentId: "intent:released",
+      workerId: child.subjectId,
+      attemptId: "attempt:released",
+      leaseDurationMs: 5_000,
+    });
+    expect(() => conductor.issuePermit({
+      permitId: "permit:released",
+      claimId: claim.claimId,
+      grantId: child.grantId,
+      maximumValidityMs: 1_000,
     })).toThrow(AgentFabricError);
   });
 });
