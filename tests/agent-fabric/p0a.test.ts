@@ -18,6 +18,7 @@ import {
   type ExecutionGrant,
   type GoalContract,
   type OwnerAuthorization,
+  type OwnerAuthorizationVerifier,
   type WorkflowProgramVersion,
 } from "../../src/forge/agent-fabric/index.ts";
 
@@ -75,6 +76,21 @@ function ownerAuthorization(clock: ManualClock): OwnerAuthorization {
   };
 }
 
+function ownerVerifier(): OwnerAuthorizationVerifier {
+  return {
+    verify(authorization, authorizationDigest) {
+      if (authorization.principalId !== "owner:david") {
+        throw new AgentFabricError("AF_GRANT_REJECTED", "untrusted owner principal");
+      }
+      return {
+        verifierId: "test-owner-verifier/v1",
+        authorizationDigest,
+        evidenceDigest: digest(`owner-evidence:${authorization.authorizationId}`),
+      };
+    },
+  };
+}
+
 function rootGrant(clock: ManualClock, subjectId = "worker:a"): ExecutionGrant {
   return {
     grantId: `grant:${subjectId}`,
@@ -95,7 +111,7 @@ function rootGrant(clock: ManualClock, subjectId = "worker:a"): ExecutionGrant {
 
 function preparedConductor(clock: ManualClock, ledger?: ResourceLedger) {
   const journal = new MemoryControlJournal();
-  const conductor = new ForgeAgentConductor("run:1", journal, clock, digest, ledger);
+  const conductor = new ForgeAgentConductor("run:1", journal, clock, digest, ownerVerifier(), ledger);
   conductor.registerOwnerAuthorization(ownerAuthorization(clock));
   conductor.registerGoal(goal);
   const revision = createRunPlanRevision("run:1", goal.goalId, program, "plan:1", digest);
@@ -183,7 +199,7 @@ describe("Forge Agent Fabric P0a", () => {
 
   test("requires an explicit owner authorization before registering a root grant", () => {
     const clock = new ManualClock(2_000);
-    const conductor = new ForgeAgentConductor("run:1", new MemoryControlJournal(), clock, digest);
+    const conductor = new ForgeAgentConductor("run:1", new MemoryControlJournal(), clock, digest, ownerVerifier());
     expect(() => conductor.registerGrant(rootGrant(clock))).toThrow(AgentFabricError);
   });
 
@@ -361,7 +377,7 @@ describe("P0a atomic grant registration", () => {
       { resource: "modelCalls", semantics: "consumable", limit: 8 },
       { resource: "workers", semantics: "capacity", limit: 4 },
     ]);
-    const conductor = new ForgeAgentConductor("run:1", journal, clock, digest, ledger);
+    const conductor = new ForgeAgentConductor("run:1", journal, clock, digest, ownerVerifier(), ledger);
     conductor.registerOwnerAuthorization(ownerAuthorization(clock));
     conductor.registerGoal(goal);
     const revision = createRunPlanRevision("run:1", goal.goalId, program, "plan:1", digest);
