@@ -16,6 +16,58 @@ function reject(...reasonCodes: string[]): AuthorityResolution {
   return { outcome: "rejected", reasonCodes, limitations: [] };
 }
 
+export function grantAttenuationViolations(
+  parent: ExecutionGrant,
+  child: ExecutionGrant,
+): readonly string[] {
+  const violations: string[] = [];
+  if (child.parentGrantId !== parent.grantId) violations.push("parent_grant_mismatch");
+  if (child.rootAuthorizationId !== parent.rootAuthorizationId) {
+    violations.push("root_authorization_changed");
+  }
+  if (!child.reservationId) violations.push("derived_grant_missing_reservation");
+  if (!isSubset(child.capabilities, parent.capabilities)) violations.push("capability_scope_expanded");
+  if (!isSubset(child.sourceIds, parent.sourceIds)) violations.push("source_scope_expanded");
+  if (!isSubset(child.targetIds, parent.targetIds)) violations.push("target_scope_expanded");
+  if (!isSubset<EffectClass>(child.effectClasses, parent.effectClasses)) {
+    violations.push("effect_scope_expanded");
+  }
+  if (child.notBefore < parent.notBefore || child.expiresAt > parent.expiresAt) {
+    violations.push("time_scope_expanded");
+  }
+  if (child.expiresAt <= child.notBefore) violations.push("invalid_time_window");
+  if (child.maximumAttempts <= 0 || child.maximumAttempts > parent.maximumAttempts) {
+    violations.push("attempt_limit_expanded");
+  }
+  if (
+    child.delegationDepthRemaining < 0 ||
+    child.delegationDepthRemaining >= parent.delegationDepthRemaining
+  ) {
+    violations.push("delegation_depth_not_attenuated");
+  }
+  for (const [resource, amount] of Object.entries(child.resourceCeilings)) {
+    const ceiling = parent.resourceCeilings[resource];
+    if (!Number.isFinite(amount) || amount <= 0 || ceiling === undefined || amount > ceiling) {
+      violations.push(`resource_ceiling_expanded:${resource}`);
+    }
+  }
+  return violations;
+}
+
+export function assertGrantAttenuated(
+  parent: ExecutionGrant,
+  child: ExecutionGrant,
+): void {
+  const violations = grantAttenuationViolations(parent, child);
+  if (violations.length > 0) {
+    throw new AgentFabricError(
+      "AF_GRANT_REJECTED",
+      `Derived grant ${child.grantId} is not attenuated from ${parent.grantId}`,
+      { violations },
+    );
+  }
+}
+
 export function deriveExecutionGrant(
   parent: ExecutionGrant,
   request: DerivedGrantRequest,
@@ -25,36 +77,6 @@ export function deriveExecutionGrant(
   if (now < parent.notBefore || now >= parent.expiresAt) {
     return reject("parent_grant_not_current");
   }
-  if (parent.delegationDepthRemaining <= 0) {
-    return reject("delegation_depth_exhausted");
-  }
-  if (!isSubset(request.capabilities, parent.capabilities)) {
-    return reject("capability_scope_expanded");
-  }
-  if (!isSubset(request.sourceIds, parent.sourceIds)) {
-    return reject("source_scope_expanded");
-  }
-  if (!isSubset(request.targetIds, parent.targetIds)) {
-    return reject("target_scope_expanded");
-  }
-  if (!isSubset<EffectClass>(request.effectClasses, parent.effectClasses)) {
-    return reject("effect_scope_expanded");
-  }
-  if (request.notBefore < parent.notBefore || request.expiresAt > parent.expiresAt) {
-    return reject("time_scope_expanded");
-  }
-  if (request.expiresAt <= request.notBefore) {
-    return reject("invalid_time_window");
-  }
-  if (request.maximumAttempts > parent.maximumAttempts || request.maximumAttempts <= 0) {
-    return reject("attempt_limit_expanded");
-  }
-  if (
-    request.delegationDepthRemaining < 0 ||
-    request.delegationDepthRemaining >= parent.delegationDepthRemaining
-  ) {
-    return reject("delegation_depth_not_attenuated");
-  }
 
   const aggregatedResourceRequests = Object.entries(
     request.resourceRequests.reduce<Record<string, number>>((totals, resourceRequest) => {
@@ -63,13 +85,26 @@ export function deriveExecutionGrant(
       return totals;
     }, {}),
   ).map(([resource, amount]) => ({ resource, amount }));
-
-  for (const resourceRequest of aggregatedResourceRequests) {
-    const ceiling = parent.resourceCeilings[resourceRequest.resource];
-    if (ceiling === undefined || resourceRequest.amount > ceiling) {
-      return reject("resource_ceiling_expanded");
-    }
-  }
+  const candidate: ExecutionGrant = {
+    grantId: request.grantId,
+    rootAuthorizationId: parent.rootAuthorizationId,
+    subjectId: request.subjectId,
+    parentGrantId: parent.grantId,
+    capabilities: [...request.capabilities],
+    sourceIds: [...request.sourceIds],
+    targetIds: [...request.targetIds],
+    effectClasses: [...request.effectClasses],
+    notBefore: request.notBefore,
+    expiresAt: request.expiresAt,
+    maximumAttempts: request.maximumAttempts,
+    delegationDepthRemaining: request.delegationDepthRemaining,
+    resourceCeilings: Object.fromEntries(
+      aggregatedResourceRequests.map((item) => [item.resource, item.amount]),
+    ),
+    reservationId: request.reservationId,
+  };
+  const violations = grantAttenuationViolations(parent, candidate);
+  if (violations.length > 0) return reject(...violations);
 
   let reservedRequests = request.resourceRequests;
   try {
@@ -86,28 +121,15 @@ export function deriveExecutionGrant(
     return { outcome: "unknown", reasonCodes: ["resource_reservation_unknown"], limitations: [] };
   }
 
-  const resourceCeilings = Object.fromEntries(
-    reservedRequests.map((item) => [item.resource, item.amount]),
-  );
   return {
     outcome: "allowed",
     reasonCodes: [],
     limitations: [],
     grant: {
-      grantId: request.grantId,
-      rootAuthorizationId: parent.rootAuthorizationId,
-      subjectId: request.subjectId,
-      parentGrantId: parent.grantId,
-      capabilities: [...request.capabilities],
-      sourceIds: [...request.sourceIds],
-      targetIds: [...request.targetIds],
-      effectClasses: [...request.effectClasses],
-      notBefore: request.notBefore,
-      expiresAt: request.expiresAt,
-      maximumAttempts: request.maximumAttempts,
-      delegationDepthRemaining: request.delegationDepthRemaining,
-      resourceCeilings,
-      reservationId: request.reservationId,
+      ...candidate,
+      resourceCeilings: Object.fromEntries(
+        reservedRequests.map((item) => [item.resource, item.amount]),
+      ),
     },
   };
 }
