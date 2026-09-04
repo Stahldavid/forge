@@ -81,6 +81,10 @@ function verifier(): OwnerAuthorizationVerifier {
         evidenceDigest: digest(`evidence:${ownerAuthorization.authorizationId}`),
       };
     },
+    verifyRecorded(ownerAuthorization, verification) {
+      return verification.verifierId === "budget-test-verifier/v1" &&
+        verification.evidenceDigest === digest(`evidence:${ownerAuthorization.authorizationId}`);
+    },
   };
 }
 
@@ -253,6 +257,11 @@ describe("P0a authority budget hardening", () => {
     expect(() => conductor.commitOutcome({
       reportId: "report:permit-expiry",
       attemptId: permit.attemptId,
+      permitId: permit.permitId,
+      intentId: permit.intentId,
+      planRevisionId: permit.planRevisionId,
+      effectiveRunSpecDigest: permit.effectiveRunSpecDigest,
+      fencingToken: permit.fencingToken,
       status: "succeeded",
       resultDigest: digest("result:permit-expiry"),
       evidenceDigests: [],
