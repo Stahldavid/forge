@@ -7,7 +7,7 @@ import {
   type ControlJournal,
 } from "./journal.ts";
 import { replayControlState } from "./hardened-reducer.ts";
-import type { ResourceLedger } from "./resource-ledger.ts";
+import { ResourceLedger } from "./resource-ledger.ts";
 import type {
   AttemptExecutionPermit,
   AttemptUncertaintyObservation,
@@ -56,6 +56,47 @@ function sortedDefinitions(
   return Object.values(definitions)
     .map((definition) => ({ ...definition }))
     .sort((left, right) => left.resource.localeCompare(right.resource));
+}
+
+function ledgerProjection(snapshot: ResourceLedgerSnapshot) {
+  return {
+    definitions: snapshot.definitions,
+    reserved: snapshot.reserved,
+    consumed: snapshot.consumed,
+    ownerReserved: snapshot.ownerReserved,
+    ownerConsumed: snapshot.ownerConsumed,
+    reservations: snapshot.reservations,
+  };
+}
+
+function stateLedgerProjection(state: ControlState) {
+  return {
+    definitions: state.resourceDefinitions,
+    reserved: state.resourceReserved,
+    consumed: state.resourceConsumed,
+    ownerReserved: state.resourceOwnerReserved,
+    ownerConsumed: state.resourceOwnerConsumed,
+    reservations: state.resourceReservations,
+  };
+}
+
+function snapshotFromState(state: ControlState): ResourceLedgerSnapshot {
+  return {
+    definitions: structuredClone(state.resourceDefinitions),
+    reserved: structuredClone(state.resourceReserved),
+    consumed: structuredClone(state.resourceConsumed),
+    ownerReserved: structuredClone(state.resourceOwnerReserved),
+    ownerConsumed: structuredClone(state.resourceOwnerConsumed),
+    reservations: structuredClone(state.resourceReservations),
+  };
+}
+
+function snapshotHasUsage(snapshot: ResourceLedgerSnapshot): boolean {
+  return Object.values(snapshot.reserved).some((value) => value !== 0) ||
+    Object.values(snapshot.consumed).some((value) => value !== 0) ||
+    Object.keys(snapshot.ownerReserved).length > 0 ||
+    Object.keys(snapshot.ownerConsumed).length > 0 ||
+    Object.keys(snapshot.reservations).length > 0;
 }
 
 class PinnedClock implements Clock {
@@ -117,8 +158,6 @@ class ReplayValidatingJournal implements ControlJournal {
       eventDigest: computeControlEventDigest(withoutDigest),
     };
 
-    // The authoritative append is permitted only if the same replay semantics
-    // accept the entire candidate prefix. This prevents live/replay divergence.
     replayControlState([...current, candidate], this.trust());
     return this.inner.append(input);
   }
@@ -128,32 +167,13 @@ class ReplayValidatingJournal implements ControlJournal {
   }
 }
 
-function ledgerProjection(snapshot: ResourceLedgerSnapshot) {
-  return {
-    definitions: snapshot.definitions,
-    reserved: snapshot.reserved,
-    consumed: snapshot.consumed,
-    ownerReserved: snapshot.ownerReserved,
-    ownerConsumed: snapshot.ownerConsumed,
-    reservations: snapshot.reservations,
-  };
-}
-
-function stateLedgerProjection(state: ControlState) {
-  return {
-    definitions: state.resourceDefinitions,
-    reserved: state.resourceReserved,
-    consumed: state.resourceConsumed,
-    ownerReserved: state.resourceOwnerReserved,
-    ownerConsumed: state.resourceOwnerConsumed,
-    reservations: state.resourceReservations,
-  };
-}
-
 export class ForgeAgentConductor {
   private readonly pinnedClock: PinnedClock;
   private readonly validatingJournal: ControlJournal;
   private readonly inner: LegacyForgeAgentConductor;
+  private readonly resourceLedger?: ResourceLedger;
+  private readonly sourceLedger?: ResourceLedger;
+  private readonly sourceLedgerBaseline?: ResourceLedgerSnapshot;
 
   constructor(
     private readonly rootExecutionId: string,
@@ -161,9 +181,62 @@ export class ForgeAgentConductor {
     clock: Clock,
     digest: DigestFunction,
     private readonly ownerAuthorizationVerifier: OwnerAuthorizationVerifier,
-    private readonly resourceLedger?: ResourceLedger,
+    resourceLedger?: ResourceLedger,
   ) {
     this.pinnedClock = new PinnedClock(clock);
+    this.sourceLedger = resourceLedger;
+    this.sourceLedgerBaseline = resourceLedger?.snapshot();
+
+    const existing = journal.readAll();
+    if (existing.some((event) => event.rootExecutionId !== rootExecutionId)) {
+      throw new AgentFabricError(
+        "AF_INVALID_EVENT",
+        `Journal contains events outside root execution ${rootExecutionId}`,
+      );
+    }
+
+    if (this.sourceLedgerBaseline) {
+      const trustedDefinitions = sortedDefinitions(this.sourceLedgerBaseline.definitions);
+      if (existing.length === 0) {
+        if (snapshotHasUsage(this.sourceLedgerBaseline)) {
+          throw new AgentFabricError(
+            "AF_INVALID_STATE",
+            "A fresh Conductor requires an unused ResourceLedger seed",
+          );
+        }
+        this.resourceLedger = ResourceLedger.fromSnapshot(this.sourceLedgerBaseline);
+      } else {
+        const replayed = replayControlState(existing, {
+          ownerAuthorizationVerifier,
+          resourceDefinitions: trustedDefinitions,
+        });
+        if (Object.keys(replayed.resourceDefinitions).length === 0) {
+          if (snapshotHasUsage(this.sourceLedgerBaseline)) {
+            throw new AgentFabricError(
+              "AF_INVALID_STATE",
+              "ResourceLedger seed contains usage absent from the journal",
+            );
+          }
+          this.resourceLedger = ResourceLedger.fromSnapshot(this.sourceLedgerBaseline);
+        } else {
+          const replaySnapshot = snapshotFromState(replayed);
+          if (
+            snapshotHasUsage(this.sourceLedgerBaseline) &&
+            stableStringify(ledgerProjection(this.sourceLedgerBaseline)) !==
+              stableStringify(ledgerProjection(replaySnapshot))
+          ) {
+            throw new AgentFabricError(
+              "AF_INVALID_STATE",
+              "ResourceLedger seed conflicts with the authoritative replay projection",
+            );
+          }
+          this.resourceLedger = ResourceLedger.fromSnapshot(replaySnapshot);
+        }
+      }
+    } else if (existing.length > 0) {
+      replayControlState(existing, { ownerAuthorizationVerifier });
+    }
+
     this.validatingJournal = new ReplayValidatingJournal(
       journal,
       rootExecutionId,
@@ -175,17 +248,8 @@ export class ForgeAgentConductor {
       this.pinnedClock,
       digest,
       ownerAuthorizationVerifier,
-      resourceLedger,
+      this.resourceLedger,
     );
-
-    const existing = journal.readAll();
-    if (existing.some((event) => event.rootExecutionId !== rootExecutionId)) {
-      throw new AgentFabricError(
-        "AF_INVALID_EVENT",
-        `Journal contains events outside root execution ${rootExecutionId}`,
-      );
-    }
-    if (existing.length > 0) replayControlState(existing, this.replayTrust());
   }
 
   state(): ControlState {
@@ -375,11 +439,22 @@ export class ForgeAgentConductor {
         "Resource operations require the ResourceLedger supplied to the Conductor constructor",
       );
     }
-    if (candidate && candidate !== this.resourceLedger) {
-      throw new AgentFabricError(
-        "AF_INVALID_STATE",
-        "ResourceLedger substitution is prohibited after Conductor construction",
-      );
+    if (candidate) {
+      if (!this.sourceLedger || candidate !== this.sourceLedger) {
+        throw new AgentFabricError(
+          "AF_INVALID_STATE",
+          "ResourceLedger substitution is prohibited after Conductor construction",
+        );
+      }
+      if (
+        this.sourceLedgerBaseline &&
+        stableStringify(candidate.snapshot()) !== stableStringify(this.sourceLedgerBaseline)
+      ) {
+        throw new AgentFabricError(
+          "AF_INVALID_STATE",
+          "The caller-owned ResourceLedger seed was mutated after Conductor construction",
+        );
+      }
     }
     return this.resourceLedger;
   }
@@ -389,10 +464,7 @@ export class ForgeAgentConductor {
     const state = this.state();
 
     if (Object.keys(state.resourceDefinitions).length === 0) {
-      const hasUsage =
-        Object.values(snapshot.reserved).some((value) => value !== 0) ||
-        Object.values(snapshot.consumed).some((value) => value !== 0) ||
-        Object.keys(snapshot.reservations).length > 0;
+      const hasUsage = snapshotHasUsage(snapshot);
       if (hasUsage) {
         throw new AgentFabricError(
           "AF_INVALID_STATE",
