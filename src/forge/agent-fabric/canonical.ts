@@ -1,5 +1,15 @@
+import { createHash } from "node:crypto";
 import { AgentFabricError } from "./errors.ts";
 import type { Digest, DigestFunction } from "./types.ts";
+
+/**
+ * P0a canonical JSON profile.
+ *
+ * This profile is intentionally explicit and deterministic for the current
+ * TypeScript/JavaScript reference implementation. Cross-language JCS
+ * conformance is a separate protocol profile and is not claimed here.
+ */
+export const P0A_CANONICALIZATION_PROFILE = "forge-canonical-json/v0.1" as const;
 
 function normalize(value: unknown, seen: Set<object>): unknown {
   if (value === null || typeof value === "string" || typeof value === "boolean") {
@@ -65,6 +75,10 @@ function normalize(value: unknown, seen: Set<object>): unknown {
 
 export function stableStringify(value: unknown): string {
   return JSON.stringify(normalize(value, new Set<object>()));
+}
+
+export function sha256Digest(canonicalValue: string): Digest {
+  return `sha256:${createHash("sha256").update(canonicalValue).digest("hex")}`;
 }
 
 export function digestCanonical(
