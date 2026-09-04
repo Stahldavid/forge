@@ -99,9 +99,15 @@ export class DeterministicTestAdapter implements AgentAdapter {
     if (attempt.cancelled) return { status: "unknown", reason: "attempt_cancelled" };
     const fixture = this.fixtures.get(attempt.permit.effectiveRunSpecDigest);
     if (!fixture) return { status: "unknown", reason: "fixture_not_found" };
+    const permit = attempt.permit;
     const report: WorkerResultReport = {
       reportId: `report:${attemptId}`,
       attemptId,
+      permitId: permit.permitId,
+      intentId: permit.intentId,
+      planRevisionId: permit.planRevisionId,
+      effectiveRunSpecDigest: permit.effectiveRunSpecDigest,
+      fencingToken: permit.fencingToken,
       status: fixture.outcomeStatus,
       resultDigest: fixture.resultDigest,
       evidenceDigests: fixture.evidenceDigests ?? [],
