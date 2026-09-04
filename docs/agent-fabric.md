@@ -24,13 +24,17 @@ The first vertical implements a deterministic control kernel with:
 - an immutable-by-copy control journal with sequence, predecessor, digest chain, and deterministic reducer;
 - owner authorization ingress through an injected verifier, with content-bound verification evidence recorded in the journal and revalidated during replay;
 - root grants bound to an explicit verified owner authorization;
+- exact binding between a permit's grant/root authorization and the `GoalContract.authorityInvocationId` of its active plan;
 - child grants with monotonic attenuation and transitive revocation;
 - resource reservation plus child-grant registration as one in-memory transactional operation;
+- a Conductor-pinned canonical `ResourceLedger`; callers cannot swap in a fresh ledger with matching definitions after construction;
+- live ledger/journal synchronization checks before resource transitions;
 - replay-side reconstruction of consumable, capacity, and counter accounting from trusted resource definitions and journaled reservation transitions;
 - globally unique attempt identities, one claim lineage per attempt, and at most one execution permit per attempt;
 - durable dispatch intent, non-authoritative offers, atomic claims, leases, fencing, and attempt-bound permits;
 - deterministic adapter protocol behavior;
 - worker result reports bound to permit, intent, plan revision, `EffectiveRunSpec`, and fencing generation;
+- replay-side recomputation of the canonical `WorkerResultReport` digest from the persisted outcome fields;
 - authoritative `succeeded | failed` outcome commit that preserves result-report provenance and rejects stale or revoked ancestry;
 - late `AttemptUncertaintyObservation` evidence that does **not** become a terminal authoritative outcome and therefore does not by itself block retry;
 - plan revisions that preserve `GoalContract` and workflow program identity and are exactly derivable from a registered `PlanDelta`;
@@ -38,6 +42,24 @@ The first vertical implements a deterministic control kernel with:
 - crash/replay reconstruction without re-running a planner.
 
 P0a intentionally does not implement external effects, persistent memory, model routing, plugin promotion, or production deployment.
+
+## Live transition rule: replay-valid before append
+
+The public P0a `ForgeAgentConductor` wraps the underlying journal with replay prevalidation. Before a new authoritative event is appended, the candidate prefix is reconstructed with the same sequence/predecessor/digest rules and must be accepted by the hardened replay semantics.
+
+```text
+current trusted journal prefix
++ candidate event
+        ↓
+hardened replay validation
+        ↓
+accept → append with journal CAS
+reject → no append
+```
+
+This closes the class of bugs where a public Conductor method returns success but leaves an append-only journal that the same P0a implementation cannot replay.
+
+The Conductor also pins its clock once per synchronous state transition so payload timestamps and the enclosing authoritative event timestamp are derived from the same clock observation when equality is part of the protocol invariant.
 
 ## Authority model
 
@@ -48,6 +70,19 @@ Root grants must remain within that authorization. Child grants must be strict s
 - any ancestor is revoked or expired;
 - the root authorization is revoked or expired;
 - the child reservation is missing or has been released.
+
+A grant is not sufficient merely because its capabilities/sources/targets fit an intent. Before permit issuance and during replay, P0a resolves:
+
+```text
+permit
+→ dispatch intent
+→ active RunPlanRevision
+→ GoalContract
+→ GoalContract.authorityInvocationId
+→ exact OwnerAuthorization
+```
+
+The grant's `rootAuthorizationId` must equal that goal authority invocation, the authorization must include the goal, and authorization/plan/intent must belong to the same root execution.
 
 ```text
 authenticated owner authorization
@@ -67,7 +102,7 @@ The concrete production identity provider, signature/trust-root mechanism, and c
 
 ## Attempt identity and result binding
 
-`attemptId` is a stream-global identity, not merely a caller convenience. A second claim may not reuse an existing attempt ID, even for another intent, and an attempt may receive only one execution permit.
+`attemptId` is a stream-global identity, not merely a caller convenience. A second claim may not reuse an existing attempt ID, even for another intent, and an attempt may receive only one execution permit. Hardened replay independently checks the one-per-attempt permit invariant so a fabricated journal cannot bypass the live Conductor check.
 
 A `WorkerResultReport` is explicitly bound to:
 
@@ -78,11 +113,13 @@ A `WorkerResultReport` is explicitly bound to:
 - `effectiveRunSpecDigest`;
 - `fencingToken`.
 
-The report digest covers those fields as well as status, result digest, evidence digests and report time. `commitOutcome()` runtime-validates the report and compares it against the persisted permit/claim/intent lineage before it can become authoritative.
+The report digest covers those fields as well as status, result digest, evidence digests and report time. `commitOutcome()` runtime-validates the report and compares it against the persisted permit/claim/intent lineage before it can become authoritative. Hardened replay reconstructs the report representation from the persisted outcome fields and recomputes the digest; a journal cannot claim an unrelated `reportDigest` while keeping different report fields.
 
 ## Resource atomicity and replay
 
 P0a uses `ResourceLedger.transaction()` to make reservation and child-grant journal registration atomic within the in-memory reference implementation. If journal registration fails, the ledger snapshot is restored, including consumable, capacity, and counter state.
+
+The public Conductor pins the `ResourceLedger` supplied at construction. A different ledger object cannot be supplied later to derive grants, consume reservations, or release reservations, even if it has identical definitions. Before each resource transition, the live ledger projection must match the authoritative replay projection; out-of-band ledger mutations fail closed instead of being journaled as if they were valid.
 
 The replay path does not accept a reservation merely because its shape matches a child grant. Resource definitions and limits are supplied through the replay trust context; reservation transitions are reapplied to reconstructed global/owner accounting. Duplicate resources, unknown resources, invalid transitions, or aggregate global overcommit fail closed.
 
@@ -102,6 +139,8 @@ AuthoritativeOutcomeCommit
 
 A late worker/adapter observation may say that startup or completion is uncertain even after a lease, permit, plan or grant has become stale. The observation is retained as evidence, but it does not make the intent terminal and cannot by itself block a later scheduling claim.
 
+`executeP0aActivity()` preserves uncertainty not only when an adapter throws or explicitly returns `unknown`, but also when a positive startup/result report arrives too late or otherwise fails authoritative admission. The stale positive report does not regain authority; the control plane stores only a non-terminal uncertainty observation describing the rejected report path.
+
 Only a currently authorized control path may commit a terminal P0a outcome, and P0a terminal outcomes are limited to `succeeded | failed`.
 
 ## Replay model and trust boundary
@@ -114,16 +153,20 @@ Only a currently authorized control path may commit a terminal P0a outcome, and 
 - event digest;
 - monotonic authoritative timestamp.
 
-`replayControlState()` revalidates:
+The public `replayControlState()` adds hardened protocol checks over the deterministic reducer and revalidates:
 
+- a single `rootExecutionId` for the control stream;
 - the digest chain and event shape;
 - trusted owner-authorization evidence;
+- exact GoalContract ↔ grant/root-authorization binding for execution permits;
 - grant ancestry, reservation currentness and revocation;
 - resource accounting against trust-bound definitions;
 - global attempt/resource budgets;
 - globally unique attempt identity;
+- at most one permit per attempt;
 - exact plan-delta lineage;
-- claims, permits, startup and authoritative outcome bindings.
+- claims, permits, startup and authoritative outcome bindings;
+- canonical `WorkerResultReport` digest consistency.
 
 The event hash chain is an **integrity mechanism, not a signature or proof of storage origin**. P0a assumes the journal prefix supplied for authoritative replay comes from the trusted journal/storage boundary. The reducer determines whether that prefix is semantically admissible; production durable storage/authentication of journal bytes is intentionally deferred to the persistence slice.
 
@@ -135,7 +178,7 @@ P0a currently uses `forge-canonical-json/v0.1`, a deterministic TypeScript/JavaS
 
 ## Public API
 
-The experimental API is exported from:
+The experimental package API is exported only through:
 
 ```ts
 import {
@@ -143,5 +186,8 @@ import {
   MemoryControlJournal,
   ResourceLedger,
   DeterministicTestAdapter,
+  replayControlState,
 } from "forgeos/agent-fabric";
 ```
+
+That public entry point exposes the hardened Conductor and hardened replay functions. The lower-level implementation modules remain internal implementation detail of the experimental P0a package surface.
