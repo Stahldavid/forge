@@ -14,8 +14,8 @@ export interface ExecuteP0aActivityInput {
 }
 
 export type P0aActivityExecutionResult =
-  | { status: "committed"; outcome: AuthoritativeOutcomeCommit }
-  | { status: "uncertain"; observation: AttemptUncertaintyObservation };
+  | { status: "succeeded" | "failed"; outcome: AuthoritativeOutcomeCommit }
+  | { status: "unknown"; observation: AttemptUncertaintyObservation };
 
 function describeUnknown(error: unknown): string {
   return error instanceof Error ? `${error.name}: ${error.message}` : "adapter_operation_threw";
@@ -31,7 +31,7 @@ export async function executeP0aActivity(
     startup = await input.adapter.startAttempt(input.permit);
   } catch (error) {
     return {
-      status: "uncertain",
+      status: "unknown",
       observation: input.conductor.recordAttemptUncertainty(
         input.permit,
         "startup",
@@ -42,7 +42,7 @@ export async function executeP0aActivity(
 
   if (startup.status === "unknown") {
     return {
-      status: "uncertain",
+      status: "unknown",
       observation: input.conductor.recordAttemptUncertainty(
         input.permit,
         "startup",
@@ -58,7 +58,7 @@ export async function executeP0aActivity(
     outcome = await input.adapter.collectOutcome(input.permit.attemptId);
   } catch (error) {
     return {
-      status: "uncertain",
+      status: "unknown",
       observation: input.conductor.recordAttemptUncertainty(
         input.permit,
         "outcome",
@@ -68,7 +68,7 @@ export async function executeP0aActivity(
   }
   if (outcome.status === "unknown") {
     return {
-      status: "uncertain",
+      status: "unknown",
       observation: input.conductor.recordAttemptUncertainty(
         input.permit,
         "outcome",
@@ -76,8 +76,6 @@ export async function executeP0aActivity(
       ),
     };
   }
-  return {
-    status: "committed",
-    outcome: input.conductor.commitOutcome(outcome.report as WorkerResultReport),
-  };
+  const committed = input.conductor.commitOutcome(outcome.report as WorkerResultReport);
+  return { status: committed.status, outcome: committed };
 }
