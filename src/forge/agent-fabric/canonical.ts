@@ -36,6 +36,10 @@ function assertJsonObjectShape(value: object): void {
 }
 
 function assertJsonArrayShape(value: readonly unknown[]): void {
+  if (Object.getPrototypeOf(value) !== Array.prototype) {
+    canonicalizationFailure("Canonical arrays must have Array.prototype");
+  }
+
   const ownKeys = Reflect.ownKeys(value);
   const expectedIndexKeys = new Set(Array.from({ length: value.length }, (_, index) => String(index)));
 
@@ -81,7 +85,15 @@ function normalize(value: unknown, seen: Set<object>): unknown {
     if (seen.has(value)) canonicalizationFailure("Canonical values cannot be cyclic");
     assertJsonArrayShape(value);
     seen.add(value);
-    const normalized = value.map((item) => normalize(item, seen));
+    const normalized: unknown[] = [];
+    for (let index = 0; index < value.length; index += 1) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+      if (!descriptor || !("value" in descriptor)) {
+        seen.delete(value);
+        canonicalizationFailure(`Canonical array index ${index} must be an own data property`);
+      }
+      normalized[index] = normalize(descriptor.value, seen);
+    }
     seen.delete(value);
     return normalized;
   }
