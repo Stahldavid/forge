@@ -53,6 +53,37 @@ describe("P0a canonicalization hardening", () => {
     expect(stableStringify([null])).toBe("[null]");
   });
 
+  test("arrays with exotic prototypes fail closed instead of dispatching inherited map", () => {
+    const first = [1];
+    const second = [2];
+    const maliciousPrototype = {
+      map() {
+        return [];
+      },
+    };
+    Object.setPrototypeOf(first, maliciousPrototype);
+    Object.setPrototypeOf(second, maliciousPrototype);
+
+    expect(Array.isArray(first)).toBe(true);
+    expect(Array.isArray(second)).toBe(true);
+    expect(() => stableStringify(first)).toThrow(AgentFabricError);
+    expect(() => stableStringify(second)).toThrow(AgentFabricError);
+  });
+
+  test("arrays with null prototype fail as AgentFabricError rather than TypeError", () => {
+    const value = [1];
+    Object.setPrototypeOf(value, null);
+
+    try {
+      stableStringify(value);
+      throw new Error("expected exotic array prototype to be rejected");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AgentFabricError);
+      expect((error as AgentFabricError).code).toBe("AF_CANONICALIZATION_FAILED");
+      expect(error).not.toBeInstanceOf(TypeError);
+    }
+  });
+
   test("malformed replay input is normalized to AgentFabricError rather than TypeError", () => {
     const malformed: ControlEventEnvelope = {
       eventId: "event:malformed",
