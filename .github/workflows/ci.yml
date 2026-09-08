@@ -8,6 +8,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +32,17 @@ jobs:
         run: bun run typecheck
 
       - name: Unit and integration tests
+        id: unit_integration_tests
+        timeout-minutes: 20
         run: bun test
+
+      - name: Unit/integration failure diagnostics
+        if: ${{ failure() && steps.unit_integration_tests.outcome != 'success' }}
+        shell: bash
+        run: |
+          echo "::group::Process snapshot after unit/integration failure"
+          ps -eo pid,ppid,pgid,stat,etime,comm --forest || true
+          echo "::endgroup::"
 
       - name: Generate committed compiler output
         run: bun run forge generate
