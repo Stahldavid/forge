@@ -117,8 +117,8 @@ export class ResourceLedger {
       return structuredClone(existing);
     }
 
-    const ownerReserved = bucket(this.ownerReserved, ownerId);
-    const ownerConsumed = bucket(this.ownerConsumed, ownerId);
+    const ownerReserved = this.ownerReserved[ownerId] ?? {};
+    const ownerConsumed = this.ownerConsumed[ownerId] ?? {};
     for (const [resource, amount] of Object.entries(aggregated)) {
       const definition = this.definitions[resource]!;
       const reserved = this.reserved[resource] ?? 0;
@@ -156,6 +156,10 @@ export class ResourceLedger {
       }
     }
 
+    // Publish owner buckets only after validation, including for callers that
+    // translate a reservation exception into a rejected AuthorityResolution.
+    this.ownerReserved[ownerId] ??= ownerReserved;
+    this.ownerConsumed[ownerId] ??= ownerConsumed;
     for (const request of normalizedRequests) {
       const definition = this.definitions[request.resource]!;
       if (definition.semantics === "counter") {
