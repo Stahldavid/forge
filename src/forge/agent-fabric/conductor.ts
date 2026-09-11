@@ -1,3 +1,4 @@
+import { getOwn } from "./dictionary.ts";
 import {
   assertAuthorizationCurrent,
   assertGrantLineageCurrent,
@@ -106,7 +107,7 @@ export class ForgeAgentConductor {
 
   revokeOwnerAuthorization(authorizationId: string, reason: string): void {
     const state = this.state();
-    if (!state.authorizations[authorizationId]) {
+    if (!getOwn(state.authorizations, authorizationId)) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown owner authorization: ${authorizationId}`);
     }
     this.append(`owner-authorization-revocation:${authorizationId}`, {
@@ -118,7 +119,7 @@ export class ForgeAgentConductor {
 
   registerGoal(goal: GoalContract): void {
     const state = this.state();
-    const authorization = state.authorizations[goal.authorityInvocationId];
+    const authorization = getOwn(state.authorizations, goal.authorityInvocationId);
     if (!authorization) {
       throw new AgentFabricError(
         "AF_GRANT_REJECTED",
@@ -128,7 +129,7 @@ export class ForgeAgentConductor {
     assertAuthorizationCurrent(
       authorization,
       this.clock.now(),
-      state.revokedAuthorizations[authorization.authorizationId],
+      getOwn(state.revokedAuthorizations, authorization.authorizationId),
     );
     if (!authorization.goalIds.includes(goal.goalId)) {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Owner authorization does not cover this goal");
@@ -145,7 +146,7 @@ export class ForgeAgentConductor {
       );
     }
     const state = this.state();
-    const authorization = state.authorizations[grant.rootAuthorizationId];
+    const authorization = getOwn(state.authorizations, grant.rootAuthorizationId);
     if (!authorization) {
       throw new AgentFabricError(
         "AF_GRANT_REJECTED",
@@ -155,7 +156,7 @@ export class ForgeAgentConductor {
     assertAuthorizationCurrent(
       authorization,
       this.clock.now(),
-      state.revokedAuthorizations[authorization.authorizationId],
+      getOwn(state.revokedAuthorizations, authorization.authorizationId),
     );
     assertRootGrantAuthorized(authorization, grant);
 
@@ -175,10 +176,10 @@ export class ForgeAgentConductor {
     }
     for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
       const allocated = siblingRoots.reduce(
-        (total, candidate) => total + (candidate.resourceCeilings[resource] ?? 0),
+        (total, candidate) => total + (getOwn(candidate.resourceCeilings, resource) ?? 0),
         0,
       );
-      if (allocated + amount > (authorization.resourceCeilings[resource] ?? -1)) {
+      if (allocated + amount > (getOwn(authorization.resourceCeilings, resource) ?? -1)) {
         throw new AgentFabricError(
           "AF_RESOURCE_EXHAUSTED",
           `Root grants exceed owner authorization resource ${resource}`,
@@ -200,7 +201,7 @@ export class ForgeAgentConductor {
   ): AuthorityResolution {
     this.ensureResourceLedgerInitialized(ledger);
     const state = this.state();
-    const parent = state.grants[parentGrantId];
+    const parent = getOwn(state.grants, parentGrantId);
     if (!parent) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown parent grant: ${parentGrantId}`);
     }
@@ -227,7 +228,7 @@ export class ForgeAgentConductor {
     return ledger.transaction(() => {
       const resolution = deriveExecutionGrant(parent, request, ledger, now);
       if (resolution.outcome !== "allowed" || !resolution.grant) return resolution;
-      const reservation = ledger.snapshot().reservations[request.reservationId];
+      const reservation = getOwn(ledger.snapshot().reservations, request.reservationId);
       if (!reservation) {
         throw new AgentFabricError(
           "AF_RESOURCE_EXHAUSTED",
@@ -275,7 +276,7 @@ export class ForgeAgentConductor {
 
   revokeGrant(grantId: string, reason: string): void {
     const state = this.state();
-    if (!state.grants[grantId]) {
+    if (!getOwn(state.grants, grantId)) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${grantId}`);
     }
     this.append(`grant-revocation:${grantId}`, { type: "grant_revoked", grantId, reason });
@@ -286,7 +287,7 @@ export class ForgeAgentConductor {
     if (delta.rootExecutionId !== this.rootExecutionId) {
       throw new AgentFabricError("AF_INVALID_PLAN", "PlanDelta belongs to another execution");
     }
-    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== delta.baseRevisionId) {
+    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== delta.baseRevisionId) {
       throw new AgentFabricError("AF_INVALID_PLAN", "PlanDelta is stale");
     }
     this.append(`plan-delta:${delta.deltaId}`, { type: "plan_delta_registered", delta });
@@ -294,7 +295,7 @@ export class ForgeAgentConductor {
 
   activatePlan(revision: RunPlanRevision, expectedCurrentRevisionId: string | null): void {
     const state = this.state();
-    const current = state.activePlanRevisionByExecution[this.rootExecutionId] ?? null;
+    const current = getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) ?? null;
     if (current !== expectedCurrentRevisionId) {
       throw new AgentFabricError(
         "AF_CONFLICT",
@@ -324,7 +325,7 @@ export class ForgeAgentConductor {
         throw new AgentFabricError("AF_INVALID_PLAN", "Initial plan revision has invalid lineage");
       }
     } else {
-      const parent = state.planRevisions[expectedCurrentRevisionId];
+      const parent = getOwn(state.planRevisions, expectedCurrentRevisionId);
       if (!parent || revision.parentRevisionId !== parent.revisionId) {
         throw new AgentFabricError(
           "AF_INVALID_PLAN",
@@ -340,7 +341,7 @@ export class ForgeAgentConductor {
       if (revision.revisionNumber !== parent.revisionNumber + 1 || !revision.sourcePlanDeltaId) {
         throw new AgentFabricError("AF_INVALID_PLAN", "Plan revision has invalid revision lineage");
       }
-      const delta = state.planDeltas[revision.sourcePlanDeltaId];
+      const delta = getOwn(state.planDeltas, revision.sourcePlanDeltaId);
       if (
         !delta ||
         delta.baseRevisionId !== parent.revisionId ||
@@ -369,7 +370,7 @@ export class ForgeAgentConductor {
 
   commitDispatchIntent(intent: DispatchIntent): void {
     const state = this.state();
-    const activeRevision = state.activePlanRevisionByExecution[this.rootExecutionId];
+    const activeRevision = getOwn(state.activePlanRevisionByExecution, this.rootExecutionId);
     if (intent.rootExecutionId !== this.rootExecutionId || intent.planRevisionId !== activeRevision) {
       throw new AgentFabricError(
         "AF_INVALID_STATE",
@@ -379,9 +380,9 @@ export class ForgeAgentConductor {
     if (intent.createdAt > this.clock.now()) {
       throw new AgentFabricError("AF_INVALID_STATE", "Dispatch intent cannot be created in the future");
     }
-    const revision = state.planRevisions[intent.planRevisionId];
-    const goal = revision ? state.goals[revision.goalId] : undefined;
-    if (!goal) {
+    const revision = getOwn(state.planRevisions, intent.planRevisionId);
+    const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;
+    if (!revision || !goal) {
       throw new AgentFabricError("AF_INVALID_PLAN", "Dispatch intent has no active GoalContract");
     }
     if (
@@ -414,7 +415,7 @@ export class ForgeAgentConductor {
     offerId: string,
     expiresAt: number,
   ): DispatchOffer {
-    if (!this.state().dispatchIntents[intentId]) {
+    if (!getOwn(this.state().dispatchIntents, intentId)) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown dispatch intent: ${intentId}`);
     }
     if (expiresAt <= this.clock.now()) {
@@ -428,14 +429,14 @@ export class ForgeAgentConductor {
       throw new AgentFabricError("AF_INVALID_STATE", "Lease duration must be positive");
     }
     const state = this.state();
-    const intent = state.dispatchIntents[input.intentId];
+    const intent = getOwn(state.dispatchIntents, input.intentId);
     if (!intent) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown dispatch intent: ${input.intentId}`);
     }
-    if (state.claimByAttemptId[input.attemptId]) {
+    if (getOwn(state.claimByAttemptId, input.attemptId)) {
       throw new AgentFabricError("AF_DUPLICATE_ID", `Attempt ID already claimed: ${input.attemptId}`);
     }
-    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
+    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== intent.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Cannot claim an intent from a superseded plan");
     }
     const hasOutcome = Object.values(state.outcomes).some(
@@ -447,8 +448,8 @@ export class ForgeAgentConductor {
         `Dispatch intent ${input.intentId} already has an outcome`,
       );
     }
-    const currentClaimId = state.activeClaimByIntent[input.intentId];
-    const currentClaim = currentClaimId ? state.claims[currentClaimId] : undefined;
+    const currentClaimId = getOwn(state.activeClaimByIntent, input.intentId);
+    const currentClaim = currentClaimId ? getOwn(state.claims, currentClaimId) : undefined;
     const now = this.clock.now();
     if (currentClaim && currentClaim.leaseExpiresAt > now) {
       throw new AgentFabricError(
@@ -477,18 +478,18 @@ export class ForgeAgentConductor {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit validity must be positive");
     }
     const state = this.state();
-    const claim = state.claims[input.claimId];
-    const grant = state.grants[input.grantId];
+    const claim = getOwn(state.claims, input.claimId);
+    const grant = getOwn(state.grants, input.grantId);
     if (!claim) throw new AgentFabricError("AF_NOT_FOUND", `Unknown claim: ${input.claimId}`);
     if (!grant) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${input.grantId}`);
-    const intent = state.dispatchIntents[claim.intentId];
+    const intent = getOwn(state.dispatchIntents, claim.intentId);
     if (!intent) throw new AgentFabricError("AF_NOT_FOUND", `Unknown intent: ${claim.intentId}`);
     if (Object.values(state.permits).some((permit) => permit.attemptId === claim.attemptId)) {
       throw new AgentFabricError("AF_CONFLICT", `Attempt ${claim.attemptId} already has a permit`);
     }
-    const activeClaimId = state.activeClaimByIntent[claim.intentId];
+    const activeClaimId = getOwn(state.activeClaimByIntent, claim.intentId);
     const now = this.clock.now();
-    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== intent.planRevisionId) {
+    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== intent.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Intent references a superseded plan revision");
     }
     if (activeClaimId !== claim.claimId || claim.leaseExpiresAt <= now) {
@@ -575,7 +576,7 @@ export class ForgeAgentConductor {
     reason: string,
   ): AttemptUncertaintyObservation {
     const state = this.state();
-    const recorded = state.permits[permit.permitId];
+    const recorded = getOwn(state.permits, permit.permitId);
     if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
     }
@@ -598,16 +599,16 @@ export class ForgeAgentConductor {
   commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {
     validateWorkerResultReport(report);
     const state = this.state();
-    const attempt = state.attempts[report.attemptId];
+    const attempt = getOwn(state.attempts, report.attemptId);
     if (!attempt) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown started attempt: ${report.attemptId}`);
     }
-    const permit = state.permits[attempt.permitId];
+    const permit = getOwn(state.permits, attempt.permitId);
     if (!permit) {
       throw new AgentFabricError("AF_NOT_FOUND", `Unknown permit: ${attempt.permitId}`);
     }
-    const claim = state.claims[permit.claimId];
-    const intent = state.dispatchIntents[permit.intentId];
+    const claim = getOwn(state.claims, permit.claimId);
+    const intent = getOwn(state.dispatchIntents, permit.intentId);
     if (!claim || !intent) {
       throw new AgentFabricError("AF_INVALID_STATE", "Outcome has incomplete execution lineage");
     }
@@ -617,7 +618,7 @@ export class ForgeAgentConductor {
       report.planRevisionId !== permit.planRevisionId ||
       report.effectiveRunSpecDigest !== permit.effectiveRunSpecDigest ||
       report.fencingToken !== permit.fencingToken ||
-      state.claimByAttemptId[report.attemptId] !== claim.claimId
+      getOwn(state.claimByAttemptId, report.attemptId) !== claim.claimId
     ) {
       throw new AgentFabricError(
         "AF_CONFLICT",
@@ -626,7 +627,7 @@ export class ForgeAgentConductor {
     }
 
     const reportDigest = digestCanonical(report, sha256Digest);
-    const existing = state.outcomes[report.attemptId];
+    const existing = getOwn(state.outcomes, report.attemptId);
     if (existing) {
       if (existing.status === report.status && existing.reportDigest === reportDigest) return existing;
       throw new AgentFabricError(
@@ -643,13 +644,13 @@ export class ForgeAgentConductor {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Expired permit cannot commit an outcome");
     }
     if (
-      state.activeClaimByIntent[permit.intentId] !== claim.claimId ||
+      getOwn(state.activeClaimByIntent, permit.intentId) !== claim.claimId ||
       claim.fencingToken !== permit.fencingToken ||
       claim.leaseExpiresAt <= now
     ) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Stale attempt cannot commit an outcome");
     }
-    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
+    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== permit.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Superseded plan attempt cannot commit an outcome");
     }
     assertGrantLineageCurrent(state, permit.grantId, now);
@@ -679,7 +680,7 @@ export class ForgeAgentConductor {
 
   private assertPermitCurrent(permit: AttemptExecutionPermit): void {
     const state = this.state();
-    const recorded = state.permits[permit.permitId];
+    const recorded = getOwn(state.permits, permit.permitId);
     if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is not the recorded permit");
     }
@@ -687,11 +688,11 @@ export class ForgeAgentConductor {
     if (now < permit.notBefore || now >= permit.expiresAt) {
       throw new AgentFabricError("AF_PERMIT_REJECTED", "Permit is outside its validity window");
     }
-    const claim = state.claims[permit.claimId];
-    const activeClaimId = state.activeClaimByIntent[permit.intentId];
+    const claim = getOwn(state.claims, permit.claimId);
+    const activeClaimId = getOwn(state.activeClaimByIntent, permit.intentId);
     if (
       !claim ||
-      state.claimByAttemptId[permit.attemptId] !== claim.claimId ||
+      getOwn(state.claimByAttemptId, permit.attemptId) !== claim.claimId ||
       activeClaimId !== claim.claimId ||
       claim.fencingToken !== permit.fencingToken ||
       claim.workerId !== permit.workerId ||
@@ -700,7 +701,7 @@ export class ForgeAgentConductor {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit is fenced by a newer claim");
     }
     assertGrantLineageCurrent(state, permit.grantId, now);
-    if (state.activePlanRevisionByExecution[this.rootExecutionId] !== permit.planRevisionId) {
+    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== permit.planRevisionId) {
       throw new AgentFabricError("AF_STALE_ATTEMPT", "Permit references a superseded plan revision");
     }
   }
