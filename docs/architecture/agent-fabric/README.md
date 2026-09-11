@@ -14,8 +14,10 @@ P0a implementation surface.
 | [`S1.1_SCOPE_AND_GATE.md`](./S1.1_SCOPE_AND_GATE.md), [`S1.1_CONFORMANCE_PLAN.md`](./S1.1_CONFORMANCE_PLAN.md) | Adopted planning inputs for the normative kernel; historical planning assessments remain intact. |
 | [`S1.1_NORMATIVE_KERNEL.md`](./S1.1_NORMATIVE_KERNEL.md), [`S1.1_CONFORMANCE_MATRIX.md`](./S1.1_CONFORMANCE_MATRIX.md) | Adopted operation rules, invariant traceability, conformance obligations and clarification register. |
 | [`S1.1_ADOPTION_RECORD.md`](./S1.1_ADOPTION_RECORD.md) | Records the exact reviewed head, evidence and merge that adopted S1.1; explains retained candidate wording in historical artifacts. |
-| [`S1.2_SCOPE_AND_GATE.md`](./S1.2_SCOPE_AND_GATE.md), [`S1.2_DESIGN_PLAN.md`](./S1.2_DESIGN_PLAN.md) | Adopted scope and delivery plan; planning adoption is separate from adoption of the completed design. |
-| [`S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md`](./S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md), [`S1.2_IMPLEMENTATION_TRACEABILITY.md`](./S1.2_IMPLEMENTATION_TRACEABILITY.md), [`S1.2_DESIGN_DECISIONS.md`](./S1.2_DESIGN_DECISIONS.md) | Reference design candidate reevaluated after the separately adopted S12-F01 and S12-F02 repairs; individual operation/invariant mappings and decision/finding history. Independent design review and adoption pending. |
+| [`S1.2_SCOPE_AND_GATE.md`](./S1.2_SCOPE_AND_GATE.md), [`S1.2_DESIGN_PLAN.md`](./S1.2_DESIGN_PLAN.md) | Adopted scope and delivery plan for the reference implementation design. |
+| [`S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md`](./S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md), [`S1.2_IMPLEMENTATION_TRACEABILITY.md`](./S1.2_IMPLEMENTATION_TRACEABILITY.md), [`S1.2_DESIGN_DECISIONS.md`](./S1.2_DESIGN_DECISIONS.md) | Adopted reference implementation design; 24 operation mappings, 35 invariant mappings, 16 event-family mappings and preserved S12-F01/F02 history. |
+| [`S1.2_ADOPTION_RECORD.md`](./S1.2_ADOPTION_RECORD.md) | Records the exact reviewed head, checks, repair-aware evidence and merge that completed S12-D12 and adopted S1.2. |
+| [`S1.3_SCOPE_AND_GATE.md`](./S1.3_SCOPE_AND_GATE.md), [`S1.3_CONFORMANCE_PLAN.md`](./S1.3_CONFORMANCE_PLAN.md) | Proposed S1.3 Proof & Conformance planning package. Defines a limited evidence/reproduction first stage and keeps new tooling/P0b unauthorized pending separate decisions. |
 
 ## Baseline coordinates
 
@@ -41,12 +43,14 @@ branch remaining available.
 | S1.2 scope and gate | [PR #14](https://github.com/Stahldavid/forge/pull/14), `d1e6a1bb605527f242b7a6fb6fa05d6ff3561f92` | Adopted planning input; S12-P06 complete |
 | S12-F01 compatible resource-rejection repair | [PR #15](https://github.com/Stahldavid/forge/pull/15), `d9275f4773c1082a993ffaf7b6a58d15eb139246` | Adopted separately; reviewed head `16157c8bd59feecef6aa31692ba90a0d94f84307` |
 | S12-F02 compatible identifier-dictionary repair | [PR #17](https://github.com/Stahldavid/forge/pull/17), `2ca5ba7d261cf4001aa755581caa4b29de109b35` | FIXED_AND_ADOPTED separately; reviewed head `a832e29a3e8c757249eb8a59b7774d6521b4853e` |
-| S1.2 complete reference design | No adoption event | PR #16 candidate reevaluated against PR #17; new exact-SHA design gates/review pending |
+| S1.2 complete reference design | [PR #16](https://github.com/Stahldavid/forge/pull/16), `d2f426b1577d457bc6609c4d8e88ef7a055a1a23` | `ADOPTED`; S12-D12 complete; reviewed head `a2ac1769ac74fe9f7a87558a27332aa7c2a95114` |
+| S1.3 scope and conformance plan | No adoption event | `PLANNING_PROPOSAL`; S1.3 implementation and P0b remain unauthorized |
 
-The current adopted architecture baseline for the next slice is
-`main@2ca5ba7d261cf4001aa755581caa4b29de109b35`. The P0a executable coordinates above
-retain their historical meaning. Candidate/planning labels in the earlier documents are
-preserved as authored; the adoption events and S1.1 adoption record establish their status.
+The current adopted architecture baseline for planning the next slice is
+`main@d2f426b1577d457bc6609c4d8e88ef7a055a1a23`. The P0a executable coordinates above
+retain their historical meaning. Candidate/planning labels in earlier reviewed files are
+preserved as authored; their adoption merges and adoption records establish subsequent
+status.
 
 After adoption, changes must not silently rewrite history. A material change to a frozen
 architecture decision requires a new superseding decision record that identifies:
@@ -78,8 +82,14 @@ was explicitly implemented, adversarially reviewed, and accepted.
 
 S1.1 supplies the adopted operation-level specification of that same accepted behavior.
 Its adoption does not reverse this precedence or authorize a discrepancy with the frozen
-invariants. A conflict among source, freeze and kernel requires an explicit decision under
-the existing change rule; S1.2 design prose cannot override any of them.
+invariants. S1.2 supplies the adopted source/ownership/sequence mapping of that behavior;
+it cannot override S1.1 or turn an implementation accident into a normative rule. A
+conflict among source, freeze, kernel and adopted design requires explicit classification
+under the existing change rule.
+
+S1.3 evidence, if later adopted, will describe what was observed and how it can be
+reproduced. Evidence metadata, a runner, a formal model or a signature cannot manufacture
+runtime authority or silently change an `OP-*`/`I-*` obligation.
 
 ## Scope boundary
 
@@ -92,13 +102,19 @@ production-ready. It distinguishes three categories:
 - **DEFERRED** — intentionally outside the accepted baseline and requiring a future slice
   and separate acceptance evidence.
 
-S1.2 — Reference Implementation Design is scoped by the adopted planning records above.
-Its objective was proposed in PR #14 and adopted by that merge; it was not recovered from
-an earlier roadmap. The three design artifacts now document the existing implementation
-and preserve the histories of S12-F01 and S12-F02, whose separate compatible repairs
-were adopted in PR #15 and PR #17. PR #16 at `985b389091d67767085c96f16ef6c000c7c4462d`
-received CHANGES_REQUIRED for S12-F02; its old checks cannot approve this new candidate.
-The design maps the post-#17 baseline; historical freezes and acceptance records retain
-their original SHAs and evidence. Neither repair supersedes a frozen invariant.
-The complete design still requires its own exact-SHA review and adoption event. Neither
-planning nor design adoption authorizes runtime changes, S1.3 implementation or P0b.
+S1.2 — Reference Implementation Design is now adopted. Its three design artifacts map the
+accepted implementation and preserve both historical MEDIUM findings, S12-F01 and S12-F02,
+whose compatible repairs were separately adopted before the final design merge. S1.2
+adoption does not authorize any next implementation slice.
+
+The proposed next step is **S1.3 — Proof & Conformance**. The planning records in this
+branch propose an evidence-first, limited first stage: organize existing evidence by the
+24 OP rules, 35 invariants and 16 events; bind observations to exact source/execution SHAs;
+define reproduction rules; and classify gaps. A generic runner, model checking, proof
+signing, cross-language conformance, machine-readable automation and production evidence
+retention are not automatically part of S1.3 and require demonstrated need plus separate
+scope/acceptance before implementation.
+
+Merging an S1.3 planning PR would adopt only its scope/evidence model/gates. Until that
+planning receives exact-SHA checks, independent review and an explicitly authorized merge,
+S1.3 remains unadopted. P0b remains outside the authorized scope.
