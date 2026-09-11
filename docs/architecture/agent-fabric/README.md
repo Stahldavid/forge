@@ -15,7 +15,7 @@ P0a implementation surface.
 | [`S1.1_NORMATIVE_KERNEL.md`](./S1.1_NORMATIVE_KERNEL.md), [`S1.1_CONFORMANCE_MATRIX.md`](./S1.1_CONFORMANCE_MATRIX.md) | Adopted operation rules, invariant traceability, conformance obligations and clarification register. |
 | [`S1.1_ADOPTION_RECORD.md`](./S1.1_ADOPTION_RECORD.md) | Records the exact reviewed head, evidence and merge that adopted S1.1; explains retained candidate wording in historical artifacts. |
 | [`S1.2_SCOPE_AND_GATE.md`](./S1.2_SCOPE_AND_GATE.md), [`S1.2_DESIGN_PLAN.md`](./S1.2_DESIGN_PLAN.md) | Adopted scope and delivery plan; planning adoption is separate from adoption of the completed design. |
-| [`S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md`](./S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md), [`S1.2_IMPLEMENTATION_TRACEABILITY.md`](./S1.2_IMPLEMENTATION_TRACEABILITY.md), [`S1.2_DESIGN_DECISIONS.md`](./S1.2_DESIGN_DECISIONS.md) | Reference design candidate reevaluated after the adopted S12-F01 repair; individual operation/invariant mappings and decision/finding history. Independent design review and adoption pending. |
+| [`S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md`](./S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md), [`S1.2_IMPLEMENTATION_TRACEABILITY.md`](./S1.2_IMPLEMENTATION_TRACEABILITY.md), [`S1.2_DESIGN_DECISIONS.md`](./S1.2_DESIGN_DECISIONS.md) | Reference design candidate reevaluated after the separately adopted S12-F01 and S12-F02 repairs; individual operation/invariant mappings and decision/finding history. Independent design review and adoption pending. |
 
 ## Baseline coordinates
 
@@ -40,10 +40,11 @@ branch remaining available.
 | S1.1 kernel and conformance matrix | [PR #13](https://github.com/Stahldavid/forge/pull/13), `4b796f49c480d782ec7e069f8eb5f7eae841876a` | Adopted; G-14 complete |
 | S1.2 scope and gate | [PR #14](https://github.com/Stahldavid/forge/pull/14), `d1e6a1bb605527f242b7a6fb6fa05d6ff3561f92` | Adopted planning input; S12-P06 complete |
 | S12-F01 compatible resource-rejection repair | [PR #15](https://github.com/Stahldavid/forge/pull/15), `d9275f4773c1082a993ffaf7b6a58d15eb139246` | Adopted separately; reviewed head `16157c8bd59feecef6aa31692ba90a0d94f84307` |
-| S1.2 complete reference design | No adoption event | Candidate reevaluated against PR #15; exact-SHA design gates/review pending |
+| S12-F02 compatible identifier-dictionary repair | [PR #17](https://github.com/Stahldavid/forge/pull/17), `2ca5ba7d261cf4001aa755581caa4b29de109b35` | FIXED_AND_ADOPTED separately; reviewed head `a832e29a3e8c757249eb8a59b7774d6521b4853e` |
+| S1.2 complete reference design | No adoption event | PR #16 candidate reevaluated against PR #17; new exact-SHA design gates/review pending |
 
 The current adopted architecture baseline for the next slice is
-`main@d9275f4773c1082a993ffaf7b6a58d15eb139246`. The P0a executable coordinates above
+`main@2ca5ba7d261cf4001aa755581caa4b29de109b35`. The P0a executable coordinates above
 retain their historical meaning. Candidate/planning labels in the earlier documents are
 preserved as authored; the adoption events and S1.1 adoption record establish their status.
 
@@ -94,8 +95,10 @@ production-ready. It distinguishes three categories:
 S1.2 — Reference Implementation Design is scoped by the adopted planning records above.
 Its objective was proposed in PR #14 and adopted by that merge; it was not recovered from
 an earlier roadmap. The three design artifacts now document the existing implementation
-and preserve the history of S12-F01, whose separate compatible repair was adopted in
-PR #15. The design maps the repaired baseline; historical freezes and acceptance records
-retain their original SHAs and evidence. No frozen invariant is superseded by this repair.
+and preserve the histories of S12-F01 and S12-F02, whose separate compatible repairs
+were adopted in PR #15 and PR #17. PR #16 at `985b389091d67767085c96f16ef6c000c7c4462d`
+received CHANGES_REQUIRED for S12-F02; its old checks cannot approve this new candidate.
+The design maps the post-#17 baseline; historical freezes and acceptance records retain
+their original SHAs and evidence. Neither repair supersedes a frozen invariant.
 The complete design still requires its own exact-SHA review and adoption event. Neither
 planning nor design adoption authorizes runtime changes, S1.3 implementation or P0b.
