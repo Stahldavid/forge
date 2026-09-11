@@ -1,3 +1,4 @@
+import { getOwn, setOwn } from "./dictionary.ts";
 import { AgentFabricError } from "./errors.ts";
 import { ResourceLedger } from "./resource-ledger.ts";
 import type {
@@ -49,7 +50,7 @@ export function rootGrantAuthorizationViolations(
     violations.push("delegation_depth_expanded");
   }
   for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {
-    const ceiling = authorization.resourceCeilings[resource];
+    const ceiling = getOwn(authorization.resourceCeilings, resource);
     if (!Number.isFinite(amount) || amount <= 0 || ceiling === undefined || amount > ceiling) {
       violations.push(`resource_ceiling_expanded:${resource}`);
     }
@@ -101,7 +102,7 @@ export function grantAttenuationViolations(
     violations.push("delegation_depth_not_attenuated");
   }
   for (const [resource, amount] of Object.entries(child.resourceCeilings)) {
-    const ceiling = parent.resourceCeilings[resource];
+    const ceiling = getOwn(parent.resourceCeilings, resource);
     if (!Number.isFinite(amount) || amount <= 0 || ceiling === undefined || amount > ceiling) {
       violations.push(`resource_ceiling_expanded:${resource}`);
     }
@@ -135,8 +136,7 @@ export function deriveExecutionGrant(
 
   const aggregatedResourceRequests = Object.entries(
     request.resourceRequests.reduce<Record<string, number>>((totals, resourceRequest) => {
-      totals[resourceRequest.resource] =
-        (totals[resourceRequest.resource] ?? 0) + resourceRequest.amount;
+      setOwn(totals, resourceRequest.resource, (getOwn(totals, resourceRequest.resource) ?? 0) + resourceRequest.amount);
       return totals;
     }, {}),
   ).map(([resource, amount]) => ({ resource, amount }));
@@ -241,15 +241,16 @@ export function assertGrantLineageCurrent(
   now: number,
 ): void {
   const seen = new Set<string>();
-  let current = state.grants[grantId];
-  if (!current) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${grantId}`);
+  const selected = getOwn(state.grants, grantId);
+  if (!selected) throw new AgentFabricError("AF_NOT_FOUND", `Unknown grant: ${grantId}`);
+  let current: ExecutionGrant = selected;
 
   while (true) {
     if (seen.has(current.grantId)) {
       throw new AgentFabricError("AF_GRANT_REJECTED", "Grant ancestry contains a cycle");
     }
     seen.add(current.grantId);
-    assertGrantCurrent(current, now, state.revokedGrants[current.grantId]);
+    assertGrantCurrent(current, now, getOwn(state.revokedGrants, current.grantId));
 
     if (current.parentGrantId) {
       if (!current.reservationId) {
@@ -258,7 +259,7 @@ export function assertGrantLineageCurrent(
           `Derived grant ${current.grantId} has no resource reservation`,
         );
       }
-      const reservation = state.resourceReservations[current.reservationId];
+      const reservation = getOwn(state.resourceReservations, current.reservationId);
       if (!reservation || reservation.status === "released") {
         throw new AgentFabricError(
           "AF_GRANT_REJECTED",
@@ -268,7 +269,7 @@ export function assertGrantLineageCurrent(
     }
 
     if (!current.parentGrantId) {
-      const authorization = state.authorizations[current.rootAuthorizationId];
+      const authorization = getOwn(state.authorizations, current.rootAuthorizationId);
       if (!authorization) {
         throw new AgentFabricError(
           "AF_GRANT_REJECTED",
@@ -278,13 +279,13 @@ export function assertGrantLineageCurrent(
       assertAuthorizationCurrent(
         authorization,
         now,
-        state.revokedAuthorizations[authorization.authorizationId],
+        getOwn(state.revokedAuthorizations, authorization.authorizationId),
       );
       assertRootGrantAuthorized(authorization, current);
       return;
     }
 
-    const parent = state.grants[current.parentGrantId];
+    const parent: ExecutionGrant | undefined = getOwn(state.grants, current.parentGrantId);
     if (!parent) {
       throw new AgentFabricError(
         "AF_GRANT_REJECTED",

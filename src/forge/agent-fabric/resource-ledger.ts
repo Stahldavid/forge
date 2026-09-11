@@ -1,3 +1,4 @@
+import { getOwn, setOwn } from "./dictionary.ts";
 import { stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import type {
@@ -22,12 +23,12 @@ function bucket(
   records: Record<Identifier, Record<string, number>>,
   ownerId: Identifier,
 ): Record<string, number> {
-  return records[ownerId] ?? (records[ownerId] = {});
+  return getOwn(records, ownerId) ?? setOwn(records, ownerId, {});
 }
 
 function replaceRecord<T>(target: Record<string, T>, source: Readonly<Record<string, T>>): void {
   for (const key of Object.keys(target)) delete target[key];
-  for (const [key, value] of Object.entries(source)) target[key] = structuredClone(value);
+  for (const [key, value] of Object.entries(source)) setOwn(target, key, structuredClone(value));
 }
 
 export class ResourceLedger {
@@ -41,7 +42,7 @@ export class ResourceLedger {
   constructor(definitions: readonly ResourceDefinition[]) {
     this.definitions = {};
     for (const definition of definitions) {
-      if (this.definitions[definition.resource]) {
+      if (getOwn(this.definitions, definition.resource)) {
         throw new AgentFabricError(
           "AF_DUPLICATE_ID",
           `Duplicate resource definition: ${definition.resource}`,
@@ -53,9 +54,9 @@ export class ResourceLedger {
           `Resource limit for ${definition.resource} must be finite and non-negative`,
         );
       }
-      this.definitions[definition.resource] = { ...definition };
-      this.reserved[definition.resource] = 0;
-      this.consumed[definition.resource] = 0;
+      setOwn(this.definitions, definition.resource, { ...definition });
+      setOwn(this.reserved, definition.resource, 0);
+      setOwn(this.consumed, definition.resource, 0);
     }
   }
 
@@ -91,20 +92,20 @@ export class ResourceLedger {
     const aggregated: Record<string, number> = {};
     for (const request of requests) {
       assertAmount(request.amount, request.resource);
-      if (!this.definitions[request.resource]) {
+      if (!getOwn(this.definitions, request.resource)) {
         throw new AgentFabricError(
           "AF_NOT_FOUND",
           `Unknown resource: ${request.resource}`,
         );
       }
-      aggregated[request.resource] = (aggregated[request.resource] ?? 0) + request.amount;
+      setOwn(aggregated, request.resource, (getOwn(aggregated, request.resource) ?? 0) + request.amount);
     }
 
     const normalizedRequests = Object.entries(aggregated)
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([resource, amount]) => ({ resource, amount }));
 
-    const existing = this.reservations[reservationId];
+    const existing = getOwn(this.reservations, reservationId);
     if (existing) {
       const requested = stableStringify({ ownerId, requests: normalizedRequests });
       const recorded = stableStringify({ ownerId: existing.ownerId, requests: existing.requests });
@@ -117,12 +118,12 @@ export class ResourceLedger {
       return structuredClone(existing);
     }
 
-    const ownerReserved = this.ownerReserved[ownerId] ?? {};
-    const ownerConsumed = this.ownerConsumed[ownerId] ?? {};
+    const ownerReserved = getOwn(this.ownerReserved, ownerId) ?? {};
+    const ownerConsumed = getOwn(this.ownerConsumed, ownerId) ?? {};
     for (const [resource, amount] of Object.entries(aggregated)) {
-      const definition = this.definitions[resource]!;
-      const reserved = this.reserved[resource] ?? 0;
-      const consumed = this.consumed[resource] ?? 0;
+      const definition = getOwn(this.definitions, resource)!;
+      const reserved = getOwn(this.reserved, resource) ?? 0;
+      const consumed = getOwn(this.consumed, resource) ?? 0;
       const projected = definition.semantics === "counter"
         ? consumed + amount
         : reserved + consumed + amount;
@@ -135,7 +136,7 @@ export class ResourceLedger {
       }
 
       if (ownerCeilings) {
-        const ceiling = ownerCeilings[resource];
+        const ceiling = getOwn(ownerCeilings, resource);
         if (ceiling === undefined) {
           throw new AgentFabricError(
             "AF_RESOURCE_EXHAUSTED",
@@ -144,8 +145,8 @@ export class ResourceLedger {
           );
         }
         const ownerProjected = definition.semantics === "counter"
-          ? (ownerConsumed[resource] ?? 0) + amount
-          : (ownerReserved[resource] ?? 0) + (ownerConsumed[resource] ?? 0) + amount;
+          ? (getOwn(ownerConsumed, resource) ?? 0) + amount
+          : (getOwn(ownerReserved, resource) ?? 0) + (getOwn(ownerConsumed, resource) ?? 0) + amount;
         if (ownerProjected > ceiling) {
           throw new AgentFabricError(
             "AF_RESOURCE_EXHAUSTED",
@@ -158,16 +159,16 @@ export class ResourceLedger {
 
     // Publish owner buckets only after validation, including for callers that
     // translate a reservation exception into a rejected AuthorityResolution.
-    this.ownerReserved[ownerId] ??= ownerReserved;
-    this.ownerConsumed[ownerId] ??= ownerConsumed;
+    getOwn(this.ownerReserved, ownerId) ?? setOwn(this.ownerReserved, ownerId, ownerReserved);
+    getOwn(this.ownerConsumed, ownerId) ?? setOwn(this.ownerConsumed, ownerId, ownerConsumed);
     for (const request of normalizedRequests) {
-      const definition = this.definitions[request.resource]!;
+      const definition = getOwn(this.definitions, request.resource)!;
       if (definition.semantics === "counter") {
-        this.consumed[request.resource] = (this.consumed[request.resource] ?? 0) + request.amount;
-        ownerConsumed[request.resource] = (ownerConsumed[request.resource] ?? 0) + request.amount;
+        setOwn(this.consumed, request.resource, (getOwn(this.consumed, request.resource) ?? 0) + request.amount);
+        setOwn(ownerConsumed, request.resource, (getOwn(ownerConsumed, request.resource) ?? 0) + request.amount);
       } else {
-        this.reserved[request.resource] = (this.reserved[request.resource] ?? 0) + request.amount;
-        ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) + request.amount;
+        setOwn(this.reserved, request.resource, (getOwn(this.reserved, request.resource) ?? 0) + request.amount);
+        setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) + request.amount);
       }
     }
 
@@ -176,10 +177,10 @@ export class ResourceLedger {
       ownerId,
       requests: normalizedRequests,
       status: normalizedRequests.some(
-        (request) => this.definitions[request.resource]?.semantics !== "counter",
+        (request) => getOwn(this.definitions, request.resource)?.semantics !== "counter",
       ) ? "active" : "consumed",
     };
-    this.reservations[reservationId] = structuredClone(reservation);
+    setOwn(this.reservations, reservationId, structuredClone(reservation));
     return structuredClone(reservation);
   }
 
@@ -190,18 +191,18 @@ export class ResourceLedger {
     const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);
     const ownerConsumed = bucket(this.ownerConsumed, reservation.ownerId);
     for (const request of reservation.requests) {
-      const definition = this.definitions[request.resource]!;
+      const definition = getOwn(this.definitions, request.resource)!;
       if (definition.semantics === "capacity") continue;
       if (definition.semantics === "consumable") {
-        this.reserved[request.resource] -= request.amount;
-        this.consumed[request.resource] += request.amount;
-        ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) - request.amount;
-        ownerConsumed[request.resource] = (ownerConsumed[request.resource] ?? 0) + request.amount;
+        setOwn(this.reserved, request.resource, getOwn(this.reserved, request.resource)! - request.amount);
+        setOwn(this.consumed, request.resource, getOwn(this.consumed, request.resource)! + request.amount);
+        setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) - request.amount);
+        setOwn(ownerConsumed, request.resource, (getOwn(ownerConsumed, request.resource) ?? 0) + request.amount);
       }
     }
 
     const next: ResourceReservation = { ...reservation, status: "consumed" };
-    this.reservations[reservationId] = structuredClone(next);
+    setOwn(this.reservations, reservationId, structuredClone(next));
     return structuredClone(next);
   }
 
@@ -212,24 +213,24 @@ export class ResourceLedger {
     const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);
     if (reservation.status === "active") {
       for (const request of reservation.requests) {
-        const definition = this.definitions[request.resource]!;
+        const definition = getOwn(this.definitions, request.resource)!;
         if (definition.semantics !== "counter") {
-          this.reserved[request.resource] -= request.amount;
-          ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) - request.amount;
+          setOwn(this.reserved, request.resource, getOwn(this.reserved, request.resource)! - request.amount);
+          setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) - request.amount);
         }
       }
     } else {
       for (const request of reservation.requests) {
-        const definition = this.definitions[request.resource]!;
+        const definition = getOwn(this.definitions, request.resource)!;
         if (definition.semantics === "capacity") {
-          this.reserved[request.resource] -= request.amount;
-          ownerReserved[request.resource] = (ownerReserved[request.resource] ?? 0) - request.amount;
+          setOwn(this.reserved, request.resource, getOwn(this.reserved, request.resource)! - request.amount);
+          setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) - request.amount);
         }
       }
     }
 
     const next: ResourceReservation = { ...reservation, status: "released" };
-    this.reservations[reservationId] = structuredClone(next);
+    setOwn(this.reservations, reservationId, structuredClone(next));
     return structuredClone(next);
   }
 
@@ -253,7 +254,7 @@ export class ResourceLedger {
   }
 
   private requireReservation(reservationId: Identifier): ResourceReservation {
-    const reservation = this.reservations[reservationId];
+    const reservation = getOwn(this.reservations, reservationId);
     if (!reservation) {
       throw new AgentFabricError(
         "AF_NOT_FOUND",

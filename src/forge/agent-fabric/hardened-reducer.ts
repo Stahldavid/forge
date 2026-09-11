@@ -1,3 +1,4 @@
+import { getOwn } from "./dictionary.ts";
 import { digestCanonical, sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import { replayControlState as replayLegacyControlState } from "./reducer.ts";
@@ -100,11 +101,11 @@ function assertPermitGoalAuthorityBinding(
   state: ControlState,
   permit: AttemptExecutionPermit,
 ): void {
-  const intent = state.dispatchIntents[permit.intentId];
-  const revision = state.planRevisions[permit.planRevisionId];
-  const grant = state.grants[permit.grantId];
-  const goal = revision ? state.goals[revision.goalId] : undefined;
-  const authorization = grant ? state.authorizations[grant.rootAuthorizationId] : undefined;
+  const intent = getOwn(state.dispatchIntents, permit.intentId);
+  const revision = getOwn(state.planRevisions, permit.planRevisionId);
+  const grant = getOwn(state.grants, permit.grantId);
+  const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;
+  const authorization = grant ? getOwn(state.authorizations, grant.rootAuthorizationId) : undefined;
 
   if (!intent || !revision || !grant || !goal || !authorization) {
     throw new AgentFabricError(
@@ -174,7 +175,7 @@ function assertReplayOnlyInvariants(
           `Outcome ${outcome.outcomeId} report digest does not match its persisted report fields`,
         );
       }
-      const permit = state.permits[outcome.permitId];
+      const permit = getOwn(state.permits, outcome.permitId);
       if (!permit) {
         throw new AgentFabricError(
           "AF_INVALID_EVENT",
