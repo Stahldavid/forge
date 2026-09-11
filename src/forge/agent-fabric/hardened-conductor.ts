@@ -1,3 +1,4 @@
+import { getOwn } from "./dictionary.ts";
 import { ForgeAgentConductor as LegacyForgeAgentConductor } from "./conductor.ts";
 import { stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
@@ -344,7 +345,7 @@ export class ForgeAgentConductor {
   issuePermit(input: IssuePermitInput): AttemptExecutionPermit {
     return this.pinnedClock.run(() => {
       const state = this.state();
-      const claim = state.claims[input.claimId];
+      const claim = getOwn(state.claims, input.claimId);
       if (!claim) {
         throw new AgentFabricError("AF_NOT_FOUND", `Unknown claim: ${input.claimId}`);
       }
@@ -374,7 +375,7 @@ export class ForgeAgentConductor {
   ): AttemptUncertaintyObservation {
     return this.pinnedClock.run(() => {
       const state = this.state();
-      if (phase === "outcome" && !state.attempts[permit.attemptId]) {
+      if (phase === "outcome" && !getOwn(state.attempts, permit.attemptId)) {
         throw new AgentFabricError(
           "AF_INVALID_STATE",
           "Outcome uncertainty requires a confirmed startup",
@@ -387,7 +388,7 @@ export class ForgeAgentConductor {
   commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {
     return this.pinnedClock.run(() => {
       const state = this.state();
-      this.assertGoalAuthorityBinding(state, report.intentId, state.permits[report.permitId]?.grantId);
+      this.assertGoalAuthorityBinding(state, report.intentId, getOwn(state.permits, report.permitId)?.grantId);
       return this.inner.commitOutcome(report);
     });
   }
@@ -406,11 +407,11 @@ export class ForgeAgentConductor {
     intentId: string,
     grantId: string | undefined,
   ): void {
-    const intent = state.dispatchIntents[intentId];
-    const grant = grantId ? state.grants[grantId] : undefined;
-    const revision = intent ? state.planRevisions[intent.planRevisionId] : undefined;
-    const goal = revision ? state.goals[revision.goalId] : undefined;
-    const authorization = grant ? state.authorizations[grant.rootAuthorizationId] : undefined;
+    const intent = getOwn(state.dispatchIntents, intentId);
+    const grant = grantId ? getOwn(state.grants, grantId) : undefined;
+    const revision = intent ? getOwn(state.planRevisions, intent.planRevisionId) : undefined;
+    const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;
+    const authorization = grant ? getOwn(state.authorizations, grant.rootAuthorizationId) : undefined;
 
     if (!intent || !grant || !revision || !goal || !authorization) {
       throw new AgentFabricError(
