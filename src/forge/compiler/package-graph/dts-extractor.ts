@@ -5,8 +5,21 @@ import { stubExportClassification } from "./capabilities-stub.ts";
 import { extractExamples, extractJsDoc } from "./jsdoc.ts";
 import { createResolutionCompilerOptions } from "./resolve.ts";
 import type { ResolutionMode } from "../types/runtime.ts";
+
+function canonicalizeNodeModulesImportPaths(text: string): string {
+  return text.replace(/import\("([^"]+)"/g, (match, importPath: string) => {
+    const normalized = importPath.replace(/\\/g, "/");
+    const marker = "/node_modules/";
+    const markerIndex = normalized.lastIndexOf(marker);
+    if (markerIndex < 0) {
+      return match;
+    }
+    return `import("${normalized.slice(markerIndex + marker.length)}"`;
+  });
+}
+
 export function normalizeSignatureText(text: string): string {
-  return text
+  return canonicalizeNodeModulesImportPaths(text)
     .replace(/\r\n/g, "\n")
     .replace(/\s+/g, " ")
     .trim();
