@@ -94,10 +94,13 @@ async function seedBillingTimeline(store: DeltaStore): Promise<void> {
 }
 
 describe("delta semantic timeline", () => {
+  // These integration cases initialize a real PGlite store and persist projections.
+  // Include that setup and cleanup in the same 30s budget used by Delta store tests.
   test("projects runtime entry history with entities and causal edges", async () => {
     const root = tempWorkspace("semantic-runtime");
+    let store: DeltaStore | undefined;
     try {
-      const store = await DeltaStore.open(root);
+      store = await DeltaStore.open(root);
       await seedBillingTimeline(store);
 
       const timeline = await store.semanticTimeline({ target: "billing.createInvoice" });
@@ -117,14 +120,16 @@ describe("delta semantic timeline", () => {
       expect(timeline.causalEdges.some((edge) => edge.kind === "fixed")).toBe(true);
       expect(timeline.causalEdges.some((edge) => edge.kind === "validated")).toBe(true);
     } finally {
+      await store?.close();
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("queries policy and diagnostic timelines through causal neighbors", async () => {
     const root = tempWorkspace("semantic-diagnostic");
+    let store: DeltaStore | undefined;
     try {
-      const store = await DeltaStore.open(root);
+      store = await DeltaStore.open(root);
       await seedBillingTimeline(store);
 
       const policy = await store.semanticTimeline({ target: "policy:billing.manage" });
@@ -137,14 +142,16 @@ describe("delta semantic timeline", () => {
       expect(diagnostic.events.some((event) => event.kind === "executed")).toBe(true);
       expect(diagnostic.currentState.resolved).toBe(true);
     } finally {
+      await store?.close();
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("marks proof timeline stale after a later policy change", async () => {
     const root = tempWorkspace("semantic-proof-stale");
+    let store: DeltaStore | undefined;
     try {
-      const store = await DeltaStore.open(root);
+      store = await DeltaStore.open(root);
       await seedBillingTimeline(store);
       const sessionId = await store.createSession({ source: "forge-command" });
       await store.appendOperation({
@@ -168,14 +175,16 @@ describe("delta semantic timeline", () => {
       ]);
       expect(result.summary.causalEdges).toBeGreaterThanOrEqual(0);
     } finally {
+      await store?.close();
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("rebuilds deterministic semantic projection content", async () => {
     const root = tempWorkspace("semantic-rebuild");
+    let store: DeltaStore | undefined;
     try {
-      const store = await DeltaStore.open(root);
+      store = await DeltaStore.open(root);
       await seedBillingTimeline(store);
       const before = await store.semanticTimeline({ target: "service:billing" });
       await store.rebuildSemanticTimeline();
@@ -189,14 +198,16 @@ describe("delta semantic timeline", () => {
         before.causalEdges.map((edge) => [edge.id, edge.kind]),
       );
     } finally {
+      await store?.close();
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("summarizes large generated artifact batches in semantic timeline data", async () => {
     const root = tempWorkspace("semantic-large-artifacts");
+    let store: DeltaStore | undefined;
     try {
-      const store = await DeltaStore.open(root);
+      store = await DeltaStore.open(root);
       const sessionId = await store.createSession({ source: "forge-command" });
       await store.appendOperation({
         sessionId,
@@ -221,9 +232,10 @@ describe("delta semantic timeline", () => {
       });
       expect(JSON.stringify(generated?.data)).not.toContain("artifact-179");
     } finally {
+      await store?.close();
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("parses semantic timeline commands", () => {
     const policy = parseCli(["timeline", "policy:billing.manage", "--json", "--for-agent"]).command;
