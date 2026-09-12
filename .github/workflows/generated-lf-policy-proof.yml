@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - ".github/workflows/generated-lf-policy-proof.yml"
+  push:
+    branches:
+      - diagnostic/generated-lf-policy-b7c921d
 
 permissions:
   contents: read
