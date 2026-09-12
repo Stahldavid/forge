@@ -167,7 +167,7 @@ describe("forge field-test", () => {
       });
 
       expect(result.ok).toBe(true);
-      expect(result.command?.[1]).toContain("scripts/field-test-forgeos.mjs");
+      expect(result.command?.[1]?.replaceAll("\\", "/")).toContain("scripts/field-test-forgeos.mjs");
       expect(JSON.stringify(result.data)).toContain("\"minimal-web\"");
     } finally {
       cleanupWorkspace(workspace);
