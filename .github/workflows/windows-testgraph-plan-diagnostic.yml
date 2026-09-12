@@ -1,0 +1,62 @@
+name: Windows TestGraph Plan Diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/windows-testgraph-plan-87a3ee1
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: windows-latest
+    env:
+      SUBJECT_SHA: 87a3ee1a4249968890dc6dc3b2ab9f0cd286e8ea
+    steps:
+      - name: Checkout exact generated refresh head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Capture strict framework TestGraph plan
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/testgraph-plan"
+          node ./bin/forge.mjs verify framework --test-plan --json > "$RUNNER_TEMP/testgraph-plan/plan.json"
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = process.env.RUNNER_TEMP + '/testgraph-plan/plan.json';
+          const raw = fs.readFileSync(path, 'utf8');
+          const data = JSON.parse(raw);
+          const plan = data.testGraphPlan ?? data.data?.testGraphPlan ?? data;
+          const chunks = plan.chunks ?? [];
+          const chunk = chunks.find((item) => item.index === 12 || item.chunk === 12 || item.id === 12) ?? chunks[11];
+          console.log(JSON.stringify({
+            fileCount: plan.fileCount,
+            chunkCount: plan.chunkCount,
+            chunk12: chunk,
+          }, null, 2));
+          NODE
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-testgraph-plan
+          path: ${{ runner.temp }}/testgraph-plan
+          if-no-files-found: error
