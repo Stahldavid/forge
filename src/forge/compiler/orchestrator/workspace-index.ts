@@ -2,7 +2,7 @@ import { join, relative } from "node:path";
 import { nodeFileSystem } from "../fs/index.ts";
 import type { SourceFile } from "../types/app-graph.ts";
 import { GENERATED_DIR } from "../emitter/constants.ts";
-import { hashStable, normalizeHashText } from "../primitives/hash.ts";
+import { hashStable } from "../primitives/hash.ts";
 import { normalizePath } from "../primitives/paths.ts";
 
 export interface SourceFileIndexEntry {
@@ -54,16 +54,15 @@ function resolveSourceContent(
     priorEntry.mtimeMs === stat.mtimeMs &&
     priorEntry.contentHash === priorSource.contentHash
   ) {
-    const text = normalizeHashText(priorSource.text);
     return {
-      text,
-      contentHash: hashStable(text),
+      text: priorSource.text,
+      contentHash: priorSource.contentHash,
       size: stat.size,
       mtimeMs: stat.mtimeMs,
     };
   }
 
-  const text = normalizeHashText(nodeFileSystem.readText(absolutePath) ?? "");
+  const text = nodeFileSystem.readText(absolutePath) ?? "";
   return {
     text,
     contentHash: hashStable(text),
