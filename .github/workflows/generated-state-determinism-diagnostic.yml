@@ -58,6 +58,12 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           test -z "$(git status --porcelain=v1)"
 
+      - name: Capture compiler input components
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-state"
+          bun -e 'import { discover } from "./src/forge/compiler/orchestrator/discover.ts"; import { buildAppGraph } from "./src/forge/compiler/app-graph/build.ts"; const ctx = discover({ workspaceRoot: process.cwd() }); const appGraph = await buildAppGraph({ workspaceRoot: process.cwd(), sources: ctx.sources, tsconfigPath: ctx.tsconfigPath ?? undefined, tsconfigHash: ctx.tsconfigHash }); console.log(JSON.stringify({ sourceFingerprint: ctx.sourceFingerprint, packageJsonHash: ctx.packageJsonHash, lockfileHash: ctx.lockfileHash, tsconfigHash: ctx.tsconfigHash, inputFingerprint: ctx.inputFingerprint, packageManager: ctx.packageManager, dependencyVersions: ctx.dependencies.map(({name, version}) => ({name, version})), sources: ctx.sources.map(({path, contentHash}) => ({path, contentHash})), appGraphInputHash: appGraph.inputHash, appGraphAnalyzerVersion: appGraph.analyzerVersion }, null, 2));' > "$out/discover.json"
+
       - name: Generate
         shell: bash
         run: |
