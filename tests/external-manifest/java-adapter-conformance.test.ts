@@ -64,7 +64,7 @@ function findMavenBinary(): string | undefined {
   const localMaven = resolve(process.cwd(), ".forge", "local", "tools", "apache-maven-3.9.16", "bin", process.platform === "win32" ? "mvn.cmd" : "mvn");
   const candidates = [
     process.env.FORGE_MAVEN,
-    "mvn",
+    process.platform === "win32" ? "mvn.cmd" : "mvn",
     localMaven,
   ].filter((value): value is string => Boolean(value));
 
