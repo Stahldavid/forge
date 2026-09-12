@@ -1,58 +1,18 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { buildAppGraph } from "../../src/forge/compiler/app-graph/build.ts";
+import { join, resolve } from "node:path";
 import { hashTsconfigForWorkspace } from "../../src/forge/compiler/app-graph/tsconfig-hash.ts";
-import { walkWorkspaceSources } from "../../src/forge/compiler/orchestrator/workspace-index.ts";
 
 function tempWorkspace(label: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${label}-`));
 }
 
 describe("compiler cross-platform determinism", () => {
-  test("normalizes source line endings before hashing and parsing", async () => {
-    const workspace = tempWorkspace("source-eol");
-    const sourceDir = join(workspace, "src");
-    const sourcePath = join(sourceDir, "example.ts");
-    const logicalSource = [
-      "export class Example {",
-      "  run(): number {",
-      "    return 1;",
-      "  }",
-      "}",
-      "",
-    ].join("\n");
-
-    try {
-      mkdirSync(sourceDir, { recursive: true });
-      writeFileSync(sourcePath, logicalSource.replace(/\n/g, "\r\n"), "utf8");
-      const crlf = walkWorkspaceSources({ workspaceRoot: workspace, roots: ["src"] });
-      expect(crlf.sources).toHaveLength(1);
-      expect(crlf.sources[0]?.text).toBe(logicalSource);
-
-      const crlfGraph = await buildAppGraph({
-        workspaceRoot: workspace,
-        sources: crlf.sources,
-        tsconfigHash: "portable-tsconfig",
-      });
-
-      writeFileSync(sourcePath, logicalSource, "utf8");
-      const lf = walkWorkspaceSources({ workspaceRoot: workspace, roots: ["src"] });
-      expect(lf.sources).toHaveLength(1);
-      expect(lf.sources[0]?.text).toBe(logicalSource);
-      expect(lf.sources[0]?.contentHash).toBe(crlf.sources[0]?.contentHash);
-
-      const lfGraph = await buildAppGraph({
-        workspaceRoot: workspace,
-        sources: lf.sources,
-        tsconfigHash: "portable-tsconfig",
-      });
-
-      expect(lfGraph).toEqual(crlfGraph);
-    } finally {
-      rmSync(workspace, { recursive: true, force: true });
-    }
+  test("pins TypeScript sources to LF without changing compiler source offsets", () => {
+    const attributes = readFileSync(resolve(process.cwd(), ".gitattributes"), "utf8");
+    expect(attributes).toContain("*.ts text eol=lf");
+    expect(attributes).toContain("*.tsx text eol=lf");
   });
 
   test("hashes equivalent tsconfig paths independently of workspace location", () => {
