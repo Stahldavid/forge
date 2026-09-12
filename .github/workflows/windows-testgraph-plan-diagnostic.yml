@@ -34,27 +34,49 @@ jobs:
         shell: bash
         run: bun install --ignore-scripts
 
-      - name: Capture strict framework TestGraph plan
+      - name: Capture exact scheduler chunk 12
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/testgraph-plan"
-          node ./bin/forge.mjs verify framework --test-plan --json > "$RUNNER_TEMP/testgraph-plan/plan.json"
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const path = process.env.RUNNER_TEMP + '/testgraph-plan/plan.json';
-          const raw = fs.readFileSync(path, 'utf8');
-          const data = JSON.parse(raw);
-          const plan = data.testGraphPlan ?? data.data?.testGraphPlan ?? data;
-          const chunks = plan.chunks ?? [];
-          const chunk = chunks.find((item) => item.index === 12 || item.chunk === 12 || item.id === 12) ?? chunks[11];
-          console.log(JSON.stringify({
-            fileCount: plan.fileCount,
-            chunkCount: plan.chunkCount,
-            chunk12: chunk,
-          }, null, 2));
-          NODE
+          bun -e 'import { buildStrictTestGraphPlan } from "./src/forge/cli/verify.ts"; const plan = buildStrictTestGraphPlan(process.cwd()); const chunk = plan.chunks.find((c) => c.index === 12); console.log(JSON.stringify({ fileCount: plan.fileCount, chunkCount: plan.chunkCount, chunk12: chunk }, null, 2)); await Bun.write(process.env.RUNNER_TEMP + "/testgraph-plan/chunk12.json", JSON.stringify(chunk, null, 2));'
 
-      - name: Upload plan
+      - name: Measure chunk 12 as scheduled group
+        shell: bash
+        run: |
+          node - <<'NODE' > "$RUNNER_TEMP/testgraph-plan/chunk12-files.txt"
+          const fs = require('node:fs');
+          const chunk = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/testgraph-plan/chunk12.json', 'utf8'));
+          process.stdout.write(chunk.files.join('\n') + '\n');
+          NODE
+          mapfile -t files < "$RUNNER_TEMP/testgraph-plan/chunk12-files.txt"
+          start=$(node -e 'console.log(Date.now())')
+          set +e
+          bun test "${files[@]}" --timeout 120000 > "$RUNNER_TEMP/testgraph-plan/chunk12-group.log" 2>&1
+          code=$?
+          set -e
+          end=$(node -e 'console.log(Date.now())')
+          printf 'exit=%s\nduration_ms=%s\n' "$code" "$((end-start))" > "$RUNNER_TEMP/testgraph-plan/chunk12-group.result"
+          cat "$RUNNER_TEMP/testgraph-plan/chunk12-group.result"
+          tail -n 100 "$RUNNER_TEMP/testgraph-plan/chunk12-group.log" || true
+
+      - name: Measure chunk 12 files individually
+        if: always()
+        shell: bash
+        run: |
+          mapfile -t files < "$RUNNER_TEMP/testgraph-plan/chunk12-files.txt"
+          : > "$RUNNER_TEMP/testgraph-plan/individual.tsv"
+          for file in "${files[@]}"; do
+            start=$(node -e 'console.log(Date.now())')
+            set +e
+            bun test "$file" --timeout 120000 > "$RUNNER_TEMP/testgraph-plan/individual.log" 2>&1
+            code=$?
+            set -e
+            end=$(node -e 'console.log(Date.now())')
+            printf '%s\t%s\t%s\n' "$file" "$code" "$((end-start))" | tee -a "$RUNNER_TEMP/testgraph-plan/individual.tsv"
+          done
+
+      - name: Upload plan and timings
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: windows-testgraph-plan
