@@ -20,10 +20,19 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 1
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
 
       - name: Prove exact provenance and tracked adapter LF materialization
         shell: bash
