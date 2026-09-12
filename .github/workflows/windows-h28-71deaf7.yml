@@ -1,0 +1,76 @@
+name: Windows H28 71deaf7 Diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/windows-h28-71deaf7
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: windows-latest
+    env:
+      SUBJECT_SHA: 71deaf777ef989ed95e3d61a333746540bd3e971
+    steps:
+      - name: Checkout exact scheduler repair head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Record exact provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+          printf 'subject=%s\nexecution=%s\ntree=%s\n' "$SUBJECT_SHA" "$(git rev-parse HEAD)" "$(git show -s --format=%T HEAD)"
+
+      - name: Measure H28 with framework budget
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/h28"
+          start=$(node -e 'console.log(Date.now())')
+          set +e
+          bun test tests/impact/h28-impact.test.ts --timeout 120000 > "$RUNNER_TEMP/h28/120k.log" 2>&1
+          code=$?
+          set -e
+          end=$(node -e 'console.log(Date.now())')
+          printf 'exit=%s\nduration_ms=%s\n' "$code" "$((end-start))" | tee "$RUNNER_TEMP/h28/120k.result"
+          cat "$RUNNER_TEMP/h28/120k.log"
+
+      - name: Measure H28 with diagnostic margin
+        shell: bash
+        run: |
+          start=$(node -e 'console.log(Date.now())')
+          set +e
+          bun test tests/impact/h28-impact.test.ts --timeout 300000 > "$RUNNER_TEMP/h28/300k.log" 2>&1
+          code=$?
+          set -e
+          end=$(node -e 'console.log(Date.now())')
+          printf 'exit=%s\nduration_ms=%s\n' "$code" "$((end-start))" | tee "$RUNNER_TEMP/h28/300k.result"
+          cat "$RUNNER_TEMP/h28/300k.log"
+          exit "$code"
+
+      - name: Upload H28 diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-h28-71deaf7
+          path: ${{ runner.temp }}/h28
+          if-no-files-found: error
