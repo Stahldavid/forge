@@ -1,0 +1,171 @@
+name: S1.3 Framework Variance Diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/s13-framework-variance-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: diagnose (${{ matrix.os }}, Node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
+    env:
+      SUBJECT_SHA: de9449648d821086db3d6f214c1a39cd4c659c7e
+    steps:
+      - name: Checkout exact adopted S1.3-A main
+        uses: actions/checkout@v4
+        with:
+          ref: de9449648d821086db3d6f214c1a39cd4c659c7e
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Record exact execution environment
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          New-Item -ItemType Directory -Force -Path $evidence | Out-Null
+          "workflow_definition_sha=${{ github.sha }}" | Set-Content (Join-Path $evidence 'provenance.txt')
+          "subject_sha=$env:SUBJECT_SHA" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "execution_sha=$(git rev-parse HEAD)" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "tree_sha=$(git rev-parse HEAD^{tree})" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "runner_os=$env:RUNNER_OS" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "runner_arch=$env:RUNNER_ARCH" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "node=$(node --version)" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "bun=$(bun --version)" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "npm=$(npm --version)" | Add-Content (Join-Path $evidence 'provenance.txt')
+          git status --porcelain | Set-Content (Join-Path $evidence 'initial-status.txt')
+          if ((git rev-parse HEAD) -ne $env:SUBJECT_SHA) { throw 'exact subject checkout failed' }
+          if ((git status --porcelain)) { throw 'initial worktree is not clean' }
+
+      - name: Install dependencies without scripts
+        run: bun install --ignore-scripts
+
+      - name: Verify post-install state
+        shell: pwsh
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          git status --porcelain | Set-Content (Join-Path $evidence 'post-install-status.txt')
+
+      - name: Pristine generate-check
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge.mjs generate --check *> (Join-Path $evidence 'pristine-generate-check.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'pristine-generate-check.exit')
+          git status --porcelain | Set-Content (Join-Path $evidence 'pristine-after-generate-check-status.txt')
+          exit 0
+
+      - name: Pristine framework verification
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge.mjs verify framework --script-timeout-ms 120000 *> (Join-Path $evidence 'pristine-verify-framework.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'pristine-verify-framework.exit')
+          git status --porcelain | Set-Content (Join-Path $evidence 'pristine-after-verify-status.txt')
+          $runs = Join-Path $PWD '.forge/test-runs'
+          if (Test-Path $runs) { Copy-Item -Recurse -Force $runs (Join-Path $evidence 'pristine-test-runs') }
+          exit 0
+
+      - name: Pristine focused H48 probe
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge-bun.mjs test tests/agent-memory/h48-agent-memory.test.ts --timeout 120000 *> (Join-Path $evidence 'pristine-h48.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'pristine-h48.exit')
+          exit 0
+
+      - name: Pristine focused external HTTP runtime
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge-bun.mjs test tests/external-manifest/external-runtime-node-cli.test.ts --timeout 120000 *> (Join-Path $evidence 'pristine-external-runtime.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'pristine-external-runtime.exit')
+          exit 0
+
+      - name: Restore exact subject before generated-state phase
+        shell: pwsh
+        run: |
+          git reset --hard $env:SUBJECT_SHA
+          git clean -fd
+          if (Test-Path '.forge/test-runs') { Remove-Item -Recurse -Force '.forge/test-runs' }
+          if ((git rev-parse HEAD) -ne $env:SUBJECT_SHA) { throw 'subject restore failed' }
+          if ((git status --porcelain)) { throw 'restored worktree is not clean' }
+
+      - name: Generate workspace
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge.mjs generate *> (Join-Path $evidence 'generated-generate.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'generated-generate.exit')
+          git status --porcelain | Set-Content (Join-Path $evidence 'generated-status.txt')
+          git diff --stat | Set-Content (Join-Path $evidence 'generated-diff-stat.txt')
+          git diff --name-only | Set-Content (Join-Path $evidence 'generated-diff-names.txt')
+          exit 0
+
+      - name: Generated-state framework verification
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge.mjs verify framework --script-timeout-ms 120000 *> (Join-Path $evidence 'generated-verify-framework.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'generated-verify-framework.exit')
+          git status --porcelain | Set-Content (Join-Path $evidence 'generated-after-verify-status.txt')
+          $runs = Join-Path $PWD '.forge/test-runs'
+          if (Test-Path $runs) { Copy-Item -Recurse -Force $runs (Join-Path $evidence 'generated-test-runs') }
+          exit 0
+
+      - name: Generated-state focused H48 probe
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge-bun.mjs test tests/agent-memory/h48-agent-memory.test.ts --timeout 120000 *> (Join-Path $evidence 'generated-h48.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'generated-h48.exit')
+          exit 0
+
+      - name: Generated-state focused external HTTP runtime
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          & node ./bin/forge-bun.mjs test tests/external-manifest/external-runtime-node-cli.test.ts --timeout 120000 *> (Join-Path $evidence 'generated-external-runtime.log')
+          $LASTEXITCODE | Set-Content (Join-Path $evidence 'generated-external-runtime.exit')
+          exit 0
+
+      - name: Summarize captured exits
+        shell: pwsh
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          Get-ChildItem $evidence -Filter '*.exit' | Sort-Object Name | ForEach-Object {
+            "$($_.Name)=$(Get-Content $_.FullName -Raw).Trim()"
+          } | Tee-Object -FilePath (Join-Path $evidence 'exit-summary.txt')
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s13-framework-variance-${{ matrix.os }}-node${{ matrix.node }}
+          path: ${{ runner.temp }}/s13-framework-variance
+          if-no-files-found: error
