@@ -1,3 +1,6 @@
 docs/**/*.md text eol=lf
 *.ts text eol=lf
 *.tsx text eol=lf
+AGENTS.md text eol=lf
+forge.lock text eol=lf
+src/forge/_generated/** text eol=lf
