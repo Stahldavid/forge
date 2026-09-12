@@ -1,0 +1,96 @@
+name: Windows Impact Path Canonicalization Repair Once
+
+on:
+  push:
+    branches:
+      - fix/windows-impact-path-canonicalization
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/windows-impact-path-canonicalization
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Apply narrow path canonicalization repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/forge/impact/index.ts')
+          text = path.read_text(encoding='utf-8')
+
+          import_anchor = 'import { delimiter, dirname, join, relative, resolve } from "node:path";'
+          import_entry = 'import { realpathSync } from "node:fs";'
+          if text.count(import_anchor) != 1:
+              raise SystemExit('unexpected node:path import anchor count')
+          if import_entry not in text:
+              text = text.replace(import_anchor, import_anchor + '\n' + import_entry)
+
+          normalize_anchor = '''function normalize(path: string): string {\n  return path.replace(/\\\\/g, "/").replace(/^\\.\\//, "");\n}\n'''
+          helper = '''\nfunction canonicalFsPath(value: string): string {\n  const absolute = resolve(value);\n  try {\n    return realpathSync.native(absolute);\n  } catch {\n    return absolute;\n  }\n}\n'''
+          if text.count(normalize_anchor) != 1:
+              raise SystemExit('unexpected normalize anchor count')
+          if 'function canonicalFsPath(value: string): string {' not in text:
+              text = text.replace(normalize_anchor, normalize_anchor + helper)
+
+          old_scope = '''  const gitTop = normalize(resolve(root));\n  const workspace = normalize(resolve(workspaceRoot));\n  if (gitTop === workspace) {\n    return files;\n  }\n\n  const prefix = normalize(relative(gitTop, workspace));'''
+          new_scope = '''  const gitTop = canonicalFsPath(root);\n  const workspace = canonicalFsPath(workspaceRoot);\n  if (normalize(gitTop) === normalize(workspace)) {\n    return files;\n  }\n\n  const prefix = normalize(relative(gitTop, workspace));'''
+          if text.count(old_scope) != 1:
+              raise SystemExit('unexpected scopeGitFilesToWorkspace anchor count')
+          text = text.replace(old_scope, new_scope)
+
+          old_head = '  const relativeToGitRoot = normalize(relative(resolve(root), resolve(workspaceRoot, file)));'
+          new_head = '''  const gitTop = canonicalFsPath(root);\n  const workspace = canonicalFsPath(workspaceRoot);\n  const relativeToGitRoot = normalize(relative(gitTop, resolve(workspace, file)));'''
+          if text.count(old_head) != 1:
+              raise SystemExit('unexpected readHeadFile anchor count')
+          text = text.replace(old_head, new_head)
+
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
+          git diff --check
+          git diff -- src/forge/impact/index.ts
+
+      - name: Run Windows H28 regression
+        shell: bash
+        run: bun test tests/impact/h28-impact.test.ts --timeout 120000
+
+      - name: Remove one-shot workflow and commit repair
+        shell: bash
+        run: |
+          rm .github/workflows/windows-impact-path-repair-once.yml
+          mapfile -t changed < <(git diff --name-only)
+          printf '%s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              src/forge/impact/index.ts|.github/workflows/windows-impact-path-repair-once.yml) ;;
+              *) echo "unexpected changed path: $path" >&2; exit 1 ;;
+            esac
+          done
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/forge/impact/index.ts .github/workflows/windows-impact-path-repair-once.yml
+          git commit -m 'fix(impact): canonicalize Windows git paths'
+          git push origin HEAD:fix/windows-impact-path-canonicalization
