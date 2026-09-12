@@ -1,0 +1,30 @@
+name: Windows Chunk12 List Fast
+
+on:
+  push:
+    branches:
+      - diagnostic/windows-chunk12-list-fast
+
+permissions:
+  contents: read
+
+jobs:
+  list:
+    runs-on: windows-latest
+    env:
+      SUBJECT_SHA: 87a3ee1a4249968890dc6dc3b2ab9f0cd286e8ea
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+      - name: Print chunk 12
+        shell: bash
+        run: >-
+          bun -e 'import { buildStrictTestGraphPlan } from "./src/forge/cli/verify.ts"; const plan = buildStrictTestGraphPlan(process.cwd()); console.log(JSON.stringify(plan.chunks.find((c) => c.index === 12), null, 2));'
