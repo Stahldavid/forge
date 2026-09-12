@@ -44,7 +44,7 @@ jobs:
           "workflow_definition_sha=${{ github.sha }}" | Set-Content (Join-Path $evidence 'provenance.txt')
           "subject_sha=$env:SUBJECT_SHA" | Add-Content (Join-Path $evidence 'provenance.txt')
           "execution_sha=$(git rev-parse HEAD)" | Add-Content (Join-Path $evidence 'provenance.txt')
-          "tree_sha=$(git rev-parse HEAD^{tree})" | Add-Content (Join-Path $evidence 'provenance.txt')
+          "tree_sha=$(git show -s --format=%T HEAD)" | Add-Content (Join-Path $evidence 'provenance.txt')
           "runner_os=$env:RUNNER_OS" | Add-Content (Join-Path $evidence 'provenance.txt')
           "runner_arch=$env:RUNNER_ARCH" | Add-Content (Join-Path $evidence 'provenance.txt')
           "node=$(node --version)" | Add-Content (Join-Path $evidence 'provenance.txt')
@@ -106,9 +106,12 @@ jobs:
       - name: Restore exact subject before generated-state phase
         shell: pwsh
         run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 's13-framework-variance'
+          git status --porcelain | Set-Content (Join-Path $evidence 'pre-restore-status.txt')
+          if (Test-Path '.forge/test-runs') { Remove-Item -Recurse -Force '.forge/test-runs' }
           git reset --hard $env:SUBJECT_SHA
           git clean -fd
-          if (Test-Path '.forge/test-runs') { Remove-Item -Recurse -Force '.forge/test-runs' }
+          git status --porcelain | Set-Content (Join-Path $evidence 'restored-status.txt')
           if ((git rev-parse HEAD) -ne $env:SUBJECT_SHA) { throw 'subject restore failed' }
           if ((git status --porcelain)) { throw 'restored worktree is not clean' }
 
