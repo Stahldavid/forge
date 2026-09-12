@@ -702,7 +702,6 @@ const STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: num
 ];
 const STRICT_ISOLATED_TEST_PATTERNS = [
   /^tests\/ai\//,
-  /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/,
   /^tests\/cli\/cli-generation\.test\.ts$/,
   /^tests\/cli\/cli\.test\.ts$/,
   /^tests\/cli\/cli-verify\.test\.ts$/,
@@ -737,7 +736,9 @@ const STRICT_ISOLATED_TEST_PATTERNS = [
   /^tests\/templates\/new-nuxt-web\.test\.ts$/,
   /^tests\/telemetry\/telemetry-dev-server\.test\.ts$/,
 ];
-const STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [];
+const STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [
+  /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/,
+];
 
 interface StrictTestEntry {
   file: string;

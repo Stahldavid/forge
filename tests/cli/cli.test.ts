@@ -3542,7 +3542,7 @@ describe("Forge CLI", () => {
     expect(classifyStrictTestFile("tests/client/client-query.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/cli/cli.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/db/pglite-adapter.test.ts")).toBe("isolated");
-    expect(classifyStrictTestFile("tests/agent-memory/h48-agent-memory.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/agent-memory/h48-agent-memory.test.ts")).toBe("serial");
     expect(classifyStrictTestFile("tests/dev/server.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/external-manifest/external-runtime-bridge.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/external-manifest/external-runtime-cli.test.ts")).toBe("parallel");
