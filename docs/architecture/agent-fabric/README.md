@@ -17,7 +17,8 @@ P0a implementation surface.
 | [`S1.2_SCOPE_AND_GATE.md`](./S1.2_SCOPE_AND_GATE.md), [`S1.2_DESIGN_PLAN.md`](./S1.2_DESIGN_PLAN.md) | Adopted scope and delivery plan for the reference implementation design. |
 | [`S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md`](./S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md), [`S1.2_IMPLEMENTATION_TRACEABILITY.md`](./S1.2_IMPLEMENTATION_TRACEABILITY.md), [`S1.2_DESIGN_DECISIONS.md`](./S1.2_DESIGN_DECISIONS.md) | Adopted reference implementation design; 24 operation mappings, 35 invariant mappings, 16 event-family mappings and preserved S12-F01/F02 history. |
 | [`S1.2_ADOPTION_RECORD.md`](./S1.2_ADOPTION_RECORD.md) | Records the exact reviewed head, checks, repair-aware evidence and merge that completed S12-D12 and adopted S1.2. |
-| [`S1.3_SCOPE_AND_GATE.md`](./S1.3_SCOPE_AND_GATE.md), [`S1.3_CONFORMANCE_PLAN.md`](./S1.3_CONFORMANCE_PLAN.md) | Proposed S1.3 Proof & Conformance planning package. Defines a limited evidence/reproduction first stage and keeps new tooling/P0b unauthorized pending separate decisions. |
+| [`S1.3_SCOPE_AND_GATE.md`](./S1.3_SCOPE_AND_GATE.md), [`S1.3_CONFORMANCE_PLAN.md`](./S1.3_CONFORMANCE_PLAN.md) | Adopted S1.3 Proof & Conformance planning package; S13-P08 complete. It authorizes only the limited S1.3-A evidence/reproduction stage, not new tooling or P0b. |
+| [`S1.3_EVIDENCE_CATALOG.md`](./S1.3_EVIDENCE_CATALOG.md), [`S1.3_CONFORMANCE_MATRIX.md`](./S1.3_CONFORMANCE_MATRIX.md), [`S1.3_REPRODUCTION_PROTOCOL.md`](./S1.3_REPRODUCTION_PROTOCOL.md), [`S1.3_GAP_AND_TOOLING_REGISTER.md`](./S1.3_GAP_AND_TOOLING_REGISTER.md) | S1.3-A Evidence Registry & Reproduction Baseline candidate: stable evidence/gap IDs, 24 OP / 35 I / 16 event cross-index, reproduction rules and tooling-need decisions. Independent review/adoption pending. |
 
 ## Baseline coordinates
 
@@ -44,10 +45,15 @@ branch remaining available.
 | S12-F01 compatible resource-rejection repair | [PR #15](https://github.com/Stahldavid/forge/pull/15), `d9275f4773c1082a993ffaf7b6a58d15eb139246` | Adopted separately; reviewed head `16157c8bd59feecef6aa31692ba90a0d94f84307` |
 | S12-F02 compatible identifier-dictionary repair | [PR #17](https://github.com/Stahldavid/forge/pull/17), `2ca5ba7d261cf4001aa755581caa4b29de109b35` | FIXED_AND_ADOPTED separately; reviewed head `a832e29a3e8c757249eb8a59b7774d6521b4853e` |
 | S1.2 complete reference design | [PR #16](https://github.com/Stahldavid/forge/pull/16), `d2f426b1577d457bc6609c4d8e88ef7a055a1a23` | `ADOPTED`; S12-D12 complete; reviewed head `a2ac1769ac74fe9f7a87558a27332aa7c2a95114` |
-| S1.3 scope and conformance plan | No adoption event | `PLANNING_PROPOSAL`; S1.3 implementation and P0b remain unauthorized |
+| S1.3 scope and conformance plan | [PR #18](https://github.com/Stahldavid/forge/pull/18), `801c2192e64652ade19a642b2f09f8660963c74f` | `ADOPTED`; S13-P08 complete; reviewed head `c694e9091bc1211b27d7e5e934ff4b9905e6ae89` |
+| Delta semantic timeline test timeout/cleanup | [PR #20](https://github.com/Stahldavid/forge/pull/20), `92c470ae2319aed9bde734d4506767677abe5a3c` | Adopted separately; reviewed head `0c8fe25d65ff5619395f3cf1f24635ba99a8e34c`; test-only, no Agent Fabric semantic change |
+| S1.3-A evidence/reproduction baseline | No adoption event | `IMPLEMENTATION_CANDIDATE`; documentary/evidence-only; S13-A12 pending |
 
-The current adopted architecture baseline for planning the next slice is
-`main@d2f426b1577d457bc6609c4d8e88ef7a055a1a23`. The P0a executable coordinates above
+The adopted architecture/evidence-planning baseline remains
+`main@801c2192e64652ade19a642b2f09f8660963c74f`. The current repository/reproduction
+baseline is `main@92c470ae2319aed9bde734d4506767677abe5a3c` after the separate PR #20
+test-only repair; S13-A01 movement is assessed in the evidence catalog section 1.1.
+S1.3-A remains unadopted and requires fresh final-head evidence/review. The P0a coordinates above
 retain their historical meaning. Candidate/planning labels in earlier reviewed files are
 preserved as authored; their adoption merges and adoption records establish subsequent
 status.
@@ -87,9 +93,11 @@ it cannot override S1.1 or turn an implementation accident into a normative rule
 conflict among source, freeze, kernel and adopted design requires explicit classification
 under the existing change rule.
 
-S1.3 evidence, if later adopted, will describe what was observed and how it can be
-reproduced. Evidence metadata, a runner, a formal model or a signature cannot manufacture
-runtime authority or silently change an `OP-*`/`I-*` obligation.
+S1.3 evidence describes what was observed and how it can be reproduced. Evidence metadata,
+a runner, a formal model or a signature cannot manufacture runtime authority or silently
+change an `OP-*`/`I-*` obligation. The S1.3-A candidate may classify gaps and recommend a
+future decision, but it cannot implement a repair/tool or erase a historical failed or
+inconclusive observation.
 
 ## Scope boundary
 
@@ -102,19 +110,18 @@ production-ready. It distinguishes three categories:
 - **DEFERRED** — intentionally outside the accepted baseline and requiring a future slice
   and separate acceptance evidence.
 
-S1.2 — Reference Implementation Design is now adopted. Its three design artifacts map the
-accepted implementation and preserve both historical MEDIUM findings, S12-F01 and S12-F02,
-whose compatible repairs were separately adopted before the final design merge. S1.2
-adoption does not authorize any next implementation slice.
+S1.2 — Reference Implementation Design is adopted. S1.3 planning is also adopted and
+limits its first implementation stage to **S1.3-A — Evidence Registry & Reproduction
+Baseline**.
 
-The proposed next step is **S1.3 — Proof & Conformance**. The planning records in this
-branch propose an evidence-first, limited first stage: organize existing evidence by the
-24 OP rules, 35 invariants and 16 events; bind observations to exact source/execution SHAs;
-define reproduction rules; and classify gaps. A generic runner, model checking, proof
-signing, cross-language conformance, machine-readable automation and production evidence
-retention are not automatically part of S1.3 and require demonstrated need plus separate
-scope/acceptance before implementation.
+The S1.3-A candidate organizes existing evidence with stable IDs, separates historical
+acceptance from current reproduction/source mapping, preserves `PASS`/`FAIL`/`SKIPPED`/
+`NOT_APPLICABLE`/`BLOCKED`/`INCONCLUSIVE`, cross-indexes all 24 OP rules, 35 invariants and
+16 persisted event families, defines exact-SHA reproduction discipline and classifies gaps.
+An evidence gap may remain visibly open; it cannot be hidden by a broad green suite.
 
-Merging an S1.3 planning PR would adopt only its scope/evidence model/gates. Until that
-planning receives exact-SHA checks, independent review and an explicitly authorized merge,
-S1.3 remains unadopted. P0b remains outside the authorized scope.
+A generic conformance runner, formal model checking, proof/evidence signing, cross-language
+or JCS conformance, machine-readable evidence automation, production retention, runtime/
+schema/test/workflow/dependency/timeout changes and P0b are **not** authorized by S1.3-A.
+Any later tooling or repair requires a separate objective, scope, exact-SHA evidence,
+independent review and adoption.
