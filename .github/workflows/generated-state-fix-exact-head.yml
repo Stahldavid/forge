@@ -1,0 +1,86 @@
+name: Generated State Fix Exact Head
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/generated-state-fix-exact-head.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    name: prove (${{ matrix.os }}, Node 22)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SUBJECT_SHA: 2fa789def9b3c29422312221df43f078a4fed507
+    steps:
+      - name: Checkout exact fix head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Prove exact provenance
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/generated-state-fix"
+          out="$RUNNER_TEMP/generated-state-fix"
+          printf 'subject=%s\nexecution=%s\ntree=%s\nos=%s\nnode=%s\nbun=%s\nautocrlf=%s\n' \
+            "$SUBJECT_SHA" \
+            "$(git rev-parse HEAD)" \
+            "$(git show -s --format=%T HEAD)" \
+            "$RUNNER_OS" \
+            "$(node --version)" \
+            "$(bun --version)" \
+            "$(git config --get core.autocrlf || true)" > "$out/provenance.txt"
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+
+      - name: Capture compiler fingerprints
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-state-fix"
+          bun -e 'import { discover } from "./src/forge/compiler/orchestrator/discover.ts"; import { buildAppGraph } from "./src/forge/compiler/app-graph/build.ts"; const ctx = discover({ workspaceRoot: process.cwd() }); const appGraph = await buildAppGraph({ workspaceRoot: process.cwd(), sources: ctx.sources, tsconfigPath: ctx.tsconfigPath ?? undefined, tsconfigHash: ctx.tsconfigHash }); console.log(JSON.stringify({ sourceFingerprint: ctx.sourceFingerprint, packageJsonHash: ctx.packageJsonHash, lockfileHash: ctx.lockfileHash, tsconfigHash: ctx.tsconfigHash, inputFingerprint: ctx.inputFingerprint, packageManager: ctx.packageManager, dependencyVersions: ctx.dependencies.map(({name, version}) => ({name, version})), appGraphInputHash: appGraph.inputHash, appGraphAnalyzerVersion: appGraph.analyzerVersion, symbols: appGraph.symbols.length, edges: appGraph.edges.length }, null, 2));' > "$out/discover.json"
+
+      - name: Run focused determinism regressions
+        shell: bash
+        run: node ./bin/forge-bun.mjs test tests/app-graph/cross-platform-determinism.test.ts --timeout 120000
+
+      - name: Generate and capture patch identity
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-state-fix"
+          node ./bin/forge.mjs generate > "$out/generate.log" 2>&1
+          git diff --name-only > "$out/diff-names.txt"
+          git diff --full-index --binary > "$out/generated.patch"
+          node - <<'NODE' > "$out/patch-sha256.txt"
+          const { createHash } = require('node:crypto');
+          const { readFileSync } = require('node:fs');
+          process.stdout.write(createHash('sha256').update(readFileSync(process.env.RUNNER_TEMP + '/generated-state-fix/generated.patch')).digest('hex') + '\n');
+          NODE
+
+      - name: Upload proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-state-fix-${{ matrix.os }}
+          path: ${{ runner.temp }}/generated-state-fix
+          if-no-files-found: error
