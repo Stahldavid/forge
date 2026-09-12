@@ -1,4 +1,4 @@
-import { delimiter, dirname, join, relative, resolve } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
@@ -133,8 +133,8 @@ function git(args: string[], workspaceRoot: string): { ok: boolean; files: strin
   };
 }
 
-function gitRoot(workspaceRoot: string): string | null {
-  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+function gitWorkspacePrefix(workspaceRoot: string): string | null {
+  const result = spawnSync("git", ["rev-parse", "--show-prefix"], {
     cwd: workspaceRoot,
     encoding: "utf8",
     windowsHide: true,
@@ -142,22 +142,12 @@ function gitRoot(workspaceRoot: string): string | null {
   if (result.status !== 0) {
     return null;
   }
-  return result.stdout.trim() || null;
+  return normalize(result.stdout.trim()).replace(/\/+$/u, "");
 }
 
 function scopeGitFilesToWorkspace(workspaceRoot: string, files: string[]): string[] {
-  const root = gitRoot(workspaceRoot);
-  if (!root) {
-    return files;
-  }
-  const gitTop = normalize(resolve(root));
-  const workspace = normalize(resolve(workspaceRoot));
-  if (gitTop === workspace) {
-    return files;
-  }
-
-  const prefix = normalize(relative(gitTop, workspace));
-  if (!prefix || prefix.startsWith("..") || prefix.includes(":")) {
+  const prefix = gitWorkspacePrefix(workspaceRoot);
+  if (prefix === null || prefix === "") {
     return files;
   }
 
@@ -314,17 +304,24 @@ const PACKAGE_JSON_DEPENDENCY_KEYS = [
 ] as const;
 
 function readHeadFile(workspaceRoot: string, file: string): string | null {
-  const root = gitRoot(workspaceRoot);
-  if (!root) {
+  const prefix = gitWorkspacePrefix(workspaceRoot);
+  if (prefix === null) {
     return null;
   }
 
-  const relativeToGitRoot = normalize(relative(resolve(root), resolve(workspaceRoot, file)));
-  if (!relativeToGitRoot || relativeToGitRoot.startsWith("..") || relativeToGitRoot.includes(":")) {
+  const workspaceFile = normalize(file);
+  if (
+    !workspaceFile ||
+    workspaceFile === ".." ||
+    workspaceFile.startsWith("../") ||
+    workspaceFile.startsWith("/") ||
+    workspaceFile.includes(":")
+  ) {
     return null;
   }
+  const repoFile = prefix ? `${prefix}/${workspaceFile}` : workspaceFile;
 
-  const result = spawnSync("git", ["show", `HEAD:${relativeToGitRoot}`], {
+  const result = spawnSync("git", ["show", `HEAD:${repoFile}`], {
     cwd: workspaceRoot,
     encoding: "utf8",
     windowsHide: true,
