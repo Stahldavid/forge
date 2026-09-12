@@ -1,0 +1,111 @@
+name: Generated State Safe Final Exact Head
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/generated-state-safe-final-exact-head.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    name: prove (${{ matrix.os }}, Node 22)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SUBJECT_SHA: 66838f04b75e33aa14261c9e0b49e9d0986923bd
+    steps:
+      - name: Checkout exact safe final head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Prove exact provenance and LF checkout
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/generated-state-safe-final"
+          out="$RUNNER_TEMP/generated-state-safe-final"
+          printf 'subject=%s\nexecution=%s\ntree=%s\nos=%s\nnode=%s\nbun=%s\nautocrlf=%s\n' \
+            "$SUBJECT_SHA" \
+            "$(git rev-parse HEAD)" \
+            "$(git show -s --format=%T HEAD)" \
+            "$RUNNER_OS" \
+            "$(node --version)" \
+            "$(bun --version)" \
+            "$(git config --get core.autocrlf || true)" > "$out/provenance.txt"
+          git check-attr text eol -- src/forge/compiler/orchestrator/workspace-index.ts > "$out/source-attributes.txt"
+          node - <<'NODE' > "$out/source-eol.txt"
+          const { readFileSync } = require('node:fs');
+          const text = readFileSync('src/forge/compiler/orchestrator/workspace-index.ts', 'utf8');
+          const cr = (text.match(/\r/g) || []).length;
+          process.stdout.write(`cr_count=${cr}\n`);
+          if (cr !== 0) process.exit(1);
+          NODE
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+
+      - name: Capture compiler fingerprints
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-state-safe-final"
+          bun -e 'import { discover } from "./src/forge/compiler/orchestrator/discover.ts"; import { buildAppGraph } from "./src/forge/compiler/app-graph/build.ts"; const ctx = discover({ workspaceRoot: process.cwd() }); const appGraph = await buildAppGraph({ workspaceRoot: process.cwd(), sources: ctx.sources, tsconfigPath: ctx.tsconfigPath ?? undefined, tsconfigHash: ctx.tsconfigHash }); console.log(JSON.stringify({ sourceFingerprint: ctx.sourceFingerprint, packageJsonHash: ctx.packageJsonHash, lockfileHash: ctx.lockfileHash, tsconfigHash: ctx.tsconfigHash, inputFingerprint: ctx.inputFingerprint, dependencyVersions: ctx.dependencies.map(({name, version}) => ({name, version})), appGraphInputHash: appGraph.inputHash, appGraphAnalyzerVersion: appGraph.analyzerVersion, symbols: appGraph.symbols.length, edges: appGraph.edges.length }, null, 2));' > "$out/discover.json"
+
+      - name: Run determinism regressions
+        shell: bash
+        run: |
+          node ./bin/forge-bun.mjs test \
+            tests/app-graph/cross-platform-determinism.test.ts \
+            tests/package-graph/signature-path-determinism.test.ts \
+            --timeout 120000
+
+      - name: Generate and capture content identity
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-state-safe-final"
+          node ./bin/forge.mjs generate > "$out/generate.log" 2>&1
+          git diff --name-only > "$out/diff-names.txt"
+          git diff --full-index --binary > "$out/generated.patch"
+          node - <<'NODE' > "$out/generated-content-manifest.tsv"
+          const { execFileSync } = require('node:child_process');
+          const { createHash } = require('node:crypto');
+          const { readFileSync } = require('node:fs');
+          const names = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' })
+            .split(/\r?\n/).filter(Boolean).sort();
+          for (const path of names) {
+            const normalized = readFileSync(path, 'utf8').replace(/\r\n?/g, '\n');
+            const digest = createHash('sha256').update(normalized).digest('hex');
+            process.stdout.write(`${path}\t${digest}\n`);
+          }
+          NODE
+          node - <<'NODE' > "$out/generated-content-set-sha256.txt"
+          const { createHash } = require('node:crypto');
+          const { readFileSync } = require('node:fs');
+          const path = process.env.RUNNER_TEMP + '/generated-state-safe-final/generated-content-manifest.tsv';
+          process.stdout.write(createHash('sha256').update(readFileSync(path)).digest('hex') + '\n');
+          NODE
+
+      - name: Upload proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-state-safe-final-${{ matrix.os }}
+          path: ${{ runner.temp }}/generated-state-safe-final
+          if-no-files-found: error
