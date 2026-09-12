@@ -1,4 +1,5 @@
 import { delimiter, dirname, join, relative, resolve } from "node:path";
+import { realpathSync } from "node:fs";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { nodeFileSystem } from "../compiler/fs/index.ts";
@@ -51,6 +52,15 @@ function diag(severity: Diagnostic["severity"], code: string, message: string, f
 
 function normalize(path: string): string {
   return path.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+function canonicalFsPath(value: string): string {
+  const absolute = resolve(value);
+  try {
+    return realpathSync.native(absolute);
+  } catch {
+    return absolute;
+  }
 }
 
 function readJson<T>(workspaceRoot: string, relative: string, fallback: T): T {
@@ -150,9 +160,9 @@ function scopeGitFilesToWorkspace(workspaceRoot: string, files: string[]): strin
   if (!root) {
     return files;
   }
-  const gitTop = normalize(resolve(root));
-  const workspace = normalize(resolve(workspaceRoot));
-  if (gitTop === workspace) {
+  const gitTop = canonicalFsPath(root);
+  const workspace = canonicalFsPath(workspaceRoot);
+  if (normalize(gitTop) === normalize(workspace)) {
     return files;
   }
 
@@ -319,7 +329,9 @@ function readHeadFile(workspaceRoot: string, file: string): string | null {
     return null;
   }
 
-  const relativeToGitRoot = normalize(relative(resolve(root), resolve(workspaceRoot, file)));
+  const gitTop = canonicalFsPath(root);
+  const workspace = canonicalFsPath(workspaceRoot);
+  const relativeToGitRoot = normalize(relative(gitTop, resolve(workspace, file)));
   if (!relativeToGitRoot || relativeToGitRoot.startsWith("..") || relativeToGitRoot.includes(":")) {
     return null;
   }
