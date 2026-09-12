@@ -46,10 +46,14 @@ branch remaining available.
 | S12-F02 compatible identifier-dictionary repair | [PR #17](https://github.com/Stahldavid/forge/pull/17), `2ca5ba7d261cf4001aa755581caa4b29de109b35` | FIXED_AND_ADOPTED separately; reviewed head `a832e29a3e8c757249eb8a59b7774d6521b4853e` |
 | S1.2 complete reference design | [PR #16](https://github.com/Stahldavid/forge/pull/16), `d2f426b1577d457bc6609c4d8e88ef7a055a1a23` | `ADOPTED`; S12-D12 complete; reviewed head `a2ac1769ac74fe9f7a87558a27332aa7c2a95114` |
 | S1.3 scope and conformance plan | [PR #18](https://github.com/Stahldavid/forge/pull/18), `801c2192e64652ade19a642b2f09f8660963c74f` | `ADOPTED`; S13-P08 complete; reviewed head `c694e9091bc1211b27d7e5e934ff4b9905e6ae89` |
+| Delta semantic timeline test timeout/cleanup | [PR #20](https://github.com/Stahldavid/forge/pull/20), `92c470ae2319aed9bde734d4506767677abe5a3c` | Adopted separately; reviewed head `0c8fe25d65ff5619395f3cf1f24635ba99a8e34c`; test-only, no Agent Fabric semantic change |
 | S1.3-A evidence/reproduction baseline | No adoption event | `IMPLEMENTATION_CANDIDATE`; documentary/evidence-only; S13-A12 pending |
 
-The current adopted architecture/evidence-planning baseline is
-`main@801c2192e64652ade19a642b2f09f8660963c74f`. The P0a executable coordinates above
+The adopted architecture/evidence-planning baseline remains
+`main@801c2192e64652ade19a642b2f09f8660963c74f`. The current repository/reproduction
+baseline is `main@92c470ae2319aed9bde734d4506767677abe5a3c` after the separate PR #20
+test-only repair; S13-A01 movement is assessed in the evidence catalog section 1.1.
+S1.3-A remains unadopted and requires fresh final-head evidence/review. The P0a coordinates above
 retain their historical meaning. Candidate/planning labels in earlier reviewed files are
 preserved as authored; their adoption merges and adoption records establish subsequent
 status.
