@@ -1,0 +1,57 @@
+name: Agent LF Exact Proof
+
+on:
+  push:
+    branches:
+      - diagnostic/agent-lf-5b07ff5
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    runs-on: windows-latest
+    env:
+      SUBJECT_SHA: 5b07ff58b3013a5264171e30b090317a0fc51b3f
+    steps:
+      - name: Checkout exact LF policy candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prove exact provenance and tracked adapter LF materialization
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+          git check-attr text eol -- .forge/agent/context.json .codex/skills/forge-add-command/SKILL.md .codex/agents/forge-explorer.toml
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('src/forge/_generated/agentAdapterManifest.json', 'utf8'));
+          let checked = 0;
+          for (const target of manifest.targets) {
+            for (const file of target.files) {
+              if (!fs.existsSync(file)) continue;
+              const text = fs.readFileSync(file, 'utf8');
+              const cr = [...text].filter((c) => c === '\r').length;
+              console.log(`${target.name}\t${file}\tcr_count=${cr}`);
+              if (cr !== 0) throw new Error(`${file} contains CR characters`);
+              checked += 1;
+            }
+          }
+          if (checked === 0) throw new Error('no tracked adapter exports were checked');
+          NODE
+
+      - name: Check generic adapter
+        shell: bash
+        run: node ./bin/forge.mjs agent check --target generic --json
+
+      - name: Check codex adapter
+        shell: bash
+        run: node ./bin/forge.mjs agent check --target codex --json
