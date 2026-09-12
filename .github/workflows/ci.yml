@@ -1,9 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:
@@ -11,6 +9,17 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: afa3f108116be2b561a9ef3ec782d7849fecf7f2
+
+      - name: Record exact-head execution provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "afa3f108116be2b561a9ef3ec782d7849fecf7f2"
+          test -z "$(git status --porcelain)"
+          echo "subject_sha=afa3f108116be2b561a9ef3ec782d7849fecf7f2"
+          git log -1 --format='execution_sha=%H%ntree_sha=%T'
+          git status --porcelain
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -83,6 +92,17 @@ jobs:
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: afa3f108116be2b561a9ef3ec782d7849fecf7f2
+
+      - name: Record exact-head execution provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "afa3f108116be2b561a9ef3ec782d7849fecf7f2"
+          test -z "$(git status --porcelain)"
+          echo "subject_sha=afa3f108116be2b561a9ef3ec782d7849fecf7f2"
+          git log -1 --format='execution_sha=%H%ntree_sha=%T'
+          git status --porcelain
 
       - uses: actions/setup-node@v4
         with:
@@ -116,6 +136,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: afa3f108116be2b561a9ef3ec782d7849fecf7f2
+
+      - name: Record exact-head execution provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "afa3f108116be2b561a9ef3ec782d7849fecf7f2"
+          test -z "$(git status --porcelain)"
+          echo "subject_sha=afa3f108116be2b561a9ef3ec782d7849fecf7f2"
+          git log -1 --format='execution_sha=%H%ntree_sha=%T'
+          git status --porcelain
 
       - uses: actions/setup-node@v4
         with:
