@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=43623ccc7209d544f8745a8d03de2c1703d186ea75709a2ca79af821a88f2818 content=03ded05b27347d596c3c70fd975bf0133b3785748b8a2e22ddc89a1d9591b573
+// @forge-generated generator=0.1.0-alpha.63 input=593f2e9e12f4e6d0c8846dbd6c98a5de6b0813032749fe5c8264cf5fb791acb0 content=7cde9bddf5d1555993dbd893b738a87337e43e49c05a8b6f0de9f45d62e3cf6e
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -1376,6 +1376,72 @@ export const agentContract = {
       "runtimeTypeMismatches": [],
       "source": "static",
       "version": "6.0.205"
+    },
+    {
+      "entrypoints": [
+        {
+          "dtsPath": "node_modules/ajv/dist/ajv.d.ts",
+          "exportCount": 43,
+          "exports": [
+            "Ajv",
+            "AnySchema",
+            "AnySchemaObject",
+            "AsyncFormatDefinition",
+            "AsyncSchema",
+            "AsyncValidateFunction",
+            "Code",
+            "CodeGen",
+            "CodeGenOptions",
+            "CodeKeywordDefinition",
+            "CodeOptions",
+            "DefinedError",
+            "ErrorNoParams",
+            "ErrorObject",
+            "ErrorsTextOptions",
+            "Format",
+            "FormatDefinition",
+            "FuncKeywordDefinition",
+            "InstanceOptions",
+            "JSONSchemaType",
+            "JSONType",
+            "KeywordCxt",
+            "KeywordDefinition",
+            "KeywordErrorDefinition",
+            "Logger",
+            "MacroKeywordDefinition",
+            "MissingRefError",
+            "Name",
+            "Options",
+            "Plugin",
+            "Schema",
+            "SchemaCxt",
+            "SchemaObjCxt",
+            "SchemaObject",
+            "SchemaValidateFunction",
+            "ValidateFunction",
+            "ValidationError",
+            "Vocabulary",
+            "_",
+            "default",
+            "nil",
+            "str",
+            "stringify"
+          ],
+          "subpath": "."
+        }
+      ],
+      "package": "ajv",
+      "runtimeCompatibility": {
+        "browser": "unknown",
+        "bun": "compatible",
+        "edge": "unknown",
+        "node": "compatible",
+        "reasons": [],
+        "risks": []
+      },
+      "runtimeTypeMismatches": [],
+      "source": "static",
+      "version": "8.20.0"
     },
     {
       "entrypoints": [
@@ -7478,6 +7544,26 @@ export const agentContract = {
       ],
       "name": "ai",
       "version": "6.0.205"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "ajv",
+      "version": "8.20.0"
     },
     {
       "allowedContexts": [
