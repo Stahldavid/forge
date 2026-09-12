@@ -1,0 +1,59 @@
+name: Windows Framework 71deaf7 Proof
+
+on:
+  push:
+    branches:
+      - diagnostic/windows-framework-71deaf7
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    runs-on: windows-latest
+    env:
+      SUBJECT_SHA: 71deaf777ef989ed95e3d61a333746540bd3e971
+    steps:
+      - name: Checkout exact scheduler repair head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Record exact clean provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+          printf 'subject=%s\nexecution=%s\ntree=%s\n' "$SUBJECT_SHA" "$(git rev-parse HEAD)" "$(git show -s --format=%T HEAD)"
+
+      - name: Materialize candidate-derived generated state
+        shell: bash
+        run: |
+          node ./bin/forge.mjs generate
+          node ./bin/forge.mjs generate --check
+          echo 'generated_worktree_changes:'
+          git status --short
+
+      - name: Prove H48 scheduler classification
+        shell: bash
+        run: |
+          bun -e 'import { buildStrictTestGraphPlan } from "./src/forge/cli/verify.ts"; const f="tests/agent-memory/h48-agent-memory.test.ts"; const p=buildStrictTestGraphPlan(process.cwd()); const c=p.chunks.find(x=>x.files.includes(f)); console.log(JSON.stringify(c,null,2)); if(!c||c.lane!=="isolated"||c.files.length!==1||c.estimatedMs!==105000) process.exit(1);'
+
+      - name: Framework verification with real exit
+        shell: bash
+        run: node ./bin/forge.mjs verify framework --script-timeout-ms 120000
