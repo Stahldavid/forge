@@ -1,0 +1,87 @@
+name: Generated Refresh V2 Exact Proof
+
+on:
+  push:
+    branches:
+      - diagnostic/generated-refresh-v2-87a3ee1
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    name: prove (${{ matrix.os }}, Node 22)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SUBJECT_SHA: 87a3ee1a4249968890dc6dc3b2ab9f0cd286e8ea
+    steps:
+      - name: Checkout exact generated refresh head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Record exact provenance
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/generated-refresh-v2-proof"
+          out="$RUNNER_TEMP/generated-refresh-v2-proof"
+          printf 'subject=%s\nexecution=%s\ntree=%s\nos=%s\nnode=%s\nbun=%s\n' \
+            "$SUBJECT_SHA" \
+            "$(git rev-parse HEAD)" \
+            "$(git show -s --format=%T HEAD)" \
+            "$RUNNER_OS" \
+            "$(node --version)" \
+            "$(bun --version)" > "$out/provenance.txt"
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+
+      - name: Generate check with real exit
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-refresh-v2-proof"
+          set +e
+          node ./bin/forge.mjs generate --check > "$out/generate-check.log" 2>&1
+          code=$?
+          set -e
+          printf '%s\n' "$code" > "$out/generate-check.exit"
+          cat "$out/generate-check.log"
+          test "$code" -eq 0
+
+      - name: Framework verification with real exit
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/generated-refresh-v2-proof"
+          set +e
+          node ./bin/forge.mjs verify framework --script-timeout-ms 120000 > "$out/verify-framework.log" 2>&1
+          code=$?
+          set -e
+          printf '%s\n' "$code" > "$out/verify-framework.exit"
+          cat "$out/verify-framework.log"
+          test "$code" -eq 0
+
+      - name: Upload exact-head proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-refresh-v2-proof-${{ matrix.os }}
+          path: ${{ runner.temp }}/generated-refresh-v2-proof
+          if-no-files-found: error
