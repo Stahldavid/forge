@@ -1,0 +1,59 @@
+name: Generated LF Policy Proof
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/generated-lf-policy-proof.yml"
+  push:
+    branches:
+      - diagnostic/generated-lf-policy-b7c921d
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    name: prove (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SUBJECT_SHA: b7c921dfe75bb0d0da17a8c1db8689322bf9b48c
+    steps:
+      - name: Checkout exact LF-policy head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Prove exact provenance and LF materialization
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+          files=(
+            AGENTS.md
+            forge.lock
+            src/forge/_generated/appGraph.json
+            src/forge/_generated/appMap.md
+            src/forge/_generated/appGraph.ts
+          )
+          git check-attr text eol -- "${files[@]}"
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const files = [
+            'AGENTS.md',
+            'forge.lock',
+            'src/forge/_generated/appGraph.json',
+            'src/forge/_generated/appMap.md',
+            'src/forge/_generated/appGraph.ts',
+          ];
+          for (const file of files) {
+            const text = fs.readFileSync(file, 'utf8');
+            const cr = [...text].filter((c) => c === '\r').length;
+            console.log(`${file}\tcr_count=${cr}`);
+            if (cr !== 0) throw new Error(`${file} contains CR characters`);
+          }
+          NODE

@@ -9,10 +9,13 @@ function tempWorkspace(label: string): string {
 }
 
 describe("compiler cross-platform determinism", () => {
-  test("pins TypeScript sources to LF without changing compiler source offsets", () => {
+  test("pins TypeScript sources and generated state to LF", () => {
     const attributes = readFileSync(resolve(process.cwd(), ".gitattributes"), "utf8");
     expect(attributes).toContain("*.ts text eol=lf");
     expect(attributes).toContain("*.tsx text eol=lf");
+    expect(attributes).toContain("AGENTS.md text eol=lf");
+    expect(attributes).toContain("forge.lock text eol=lf");
+    expect(attributes).toContain("src/forge/_generated/** text eol=lf");
   });
 
   test("hashes equivalent tsconfig paths independently of workspace location", () => {
