@@ -1,0 +1,94 @@
+name: Windows Agent Memory TestGraph Repair Once
+
+on:
+  push:
+    branches:
+      - fix/windows-agent-memory-testgraph-isolation
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/windows-agent-memory-testgraph-isolation
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Apply narrow scheduler repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          verify = Path('src/forge/cli/verify.ts')
+          text = verify.read_text(encoding='utf-8')
+          fallback_anchor = r'  { pattern: /^tests\/cli\/node-compat\.test\.ts$/, estimatedMs: 12_000 },'
+          fallback_entry = r'  { pattern: /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/, estimatedMs: 105_000 },'
+          if text.count(fallback_anchor) != 1:
+              raise SystemExit('unexpected fallback anchor count')
+          if fallback_entry not in text:
+              text = text.replace(fallback_anchor, fallback_entry + '\n' + fallback_anchor)
+
+          isolated_anchor = r'  /^tests\/ai\//,'
+          isolated_entry = r'  /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/,'
+          if text.count(isolated_anchor) != 1:
+              raise SystemExit('unexpected isolated anchor count')
+          if isolated_entry not in text:
+              text = text.replace(isolated_anchor, isolated_anchor + '\n' + isolated_entry)
+          verify.write_text(text, encoding='utf-8', newline='\n')
+
+          test_file = Path('tests/cli/cli.test.ts')
+          tests = test_file.read_text(encoding='utf-8')
+          test_anchor = '    expect(classifyStrictTestFile("tests/db/pglite-adapter.test.ts")).toBe("isolated");'
+          test_entry = '    expect(classifyStrictTestFile("tests/agent-memory/h48-agent-memory.test.ts")).toBe("isolated");'
+          if tests.count(test_anchor) != 1:
+              raise SystemExit('unexpected classification test anchor count')
+          if test_entry not in tests:
+              tests = tests.replace(test_anchor, test_anchor + '\n' + test_entry)
+          test_file.write_text(tests, encoding='utf-8', newline='\n')
+          PY
+
+          git diff --check
+          git diff -- src/forge/cli/verify.ts tests/cli/cli.test.ts
+
+      - name: Run scheduler regression
+        shell: bash
+        run: |
+          bun test tests/cli/cli.test.ts --timeout 120000
+          bun -e 'import { buildStrictTestGraphPlan } from "./src/forge/cli/verify.ts"; const file = "tests/agent-memory/h48-agent-memory.test.ts"; const plan = buildStrictTestGraphPlan(process.cwd()); const chunk = plan.chunks.find((c) => c.files.includes(file)); console.log(JSON.stringify(chunk, null, 2)); if (!chunk || chunk.lane !== "isolated" || chunk.files.length !== 1 || chunk.estimatedMs !== 105000) process.exit(1);'
+
+      - name: Remove one-shot workflow and commit repair
+        shell: bash
+        run: |
+          rm .github/workflows/windows-agent-memory-testgraph-repair-once.yml
+          mapfile -t changed < <(git diff --name-only)
+          printf '%s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              src/forge/cli/verify.ts|tests/cli/cli.test.ts) ;;
+              *) echo "unexpected changed path: $path" >&2; exit 1 ;;
+            esac
+          done
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/forge/cli/verify.ts tests/cli/cli.test.ts .github/workflows/windows-agent-memory-testgraph-repair-once.yml
+          git commit -m 'test(verify): isolate heavy agent-memory TestGraph file'
+          git push origin HEAD:fix/windows-agent-memory-testgraph-isolation
