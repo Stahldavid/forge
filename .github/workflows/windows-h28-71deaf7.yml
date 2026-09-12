@@ -41,36 +41,126 @@ jobs:
           test -z "$(git status --porcelain=v1)"
           printf 'subject=%s\nexecution=%s\ntree=%s\n' "$SUBJECT_SHA" "$(git rev-parse HEAD)" "$(git show -s --format=%T HEAD)"
 
-      - name: Measure H28 with framework budget
+      - name: Reproduce H28 failures
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/h28"
-          start=$(node -e 'console.log(Date.now())')
           set +e
-          bun test tests/impact/h28-impact.test.ts --timeout 120000 > "$RUNNER_TEMP/h28/120k.log" 2>&1
+          bun test tests/impact/h28-impact.test.ts --timeout 120000 > "$RUNNER_TEMP/h28/repro.log" 2>&1
           code=$?
           set -e
-          end=$(node -e 'console.log(Date.now())')
-          printf 'exit=%s\nduration_ms=%s\n' "$code" "$((end-start))" | tee "$RUNNER_TEMP/h28/120k.result"
-          cat "$RUNNER_TEMP/h28/120k.log"
+          printf 'exit=%s\n' "$code" | tee "$RUNNER_TEMP/h28/repro.result"
+          cat "$RUNNER_TEMP/h28/repro.log"
 
-      - name: Measure H28 with diagnostic margin
+      - name: Trace nested workspace scoping and package fingerprint
         shell: bash
         run: |
-          start=$(node -e 'console.log(Date.now())')
-          set +e
-          bun test tests/impact/h28-impact.test.ts --timeout 300000 > "$RUNNER_TEMP/h28/300k.log" 2>&1
-          code=$?
-          set -e
-          end=$(node -e 'console.log(Date.now())')
-          printf 'exit=%s\nduration_ms=%s\n' "$code" "$((end-start))" | tee "$RUNNER_TEMP/h28/300k.result"
-          cat "$RUNNER_TEMP/h28/300k.log"
-          exit "$code"
+          node - <<'NODE' | tee "$RUNNER_TEMP/h28/path-trace.log"
+          const fs = require('node:fs');
+          const os = require('node:os');
+          const path = require('node:path');
+          const cp = require('node:child_process');
+          const crypto = require('node:crypto');
+
+          const normalize = (value) => value.replace(/\\/g, '/').replace(/^\.\//, '');
+          const run = (cwd, args) => cp.spawnSync('git', args, { cwd, encoding: 'utf8', windowsHide: true });
+          const write = (root, file, content) => {
+            const absolute = path.join(root, file);
+            fs.mkdirSync(path.dirname(absolute), { recursive: true });
+            fs.writeFileSync(absolute, content, 'utf8');
+          };
+
+          console.log('tmpdir=' + os.tmpdir());
+
+          const parent = path.join(os.tmpdir(), 'forge-scope-' + crypto.randomUUID());
+          const app = path.join(parent, 'apps', 'notes');
+          fs.mkdirSync(app, { recursive: true });
+          run(parent, ['init']);
+          write(parent, 'README.md', 'parent change');
+          write(app, 'src/commands/createTicket.ts', 'export const createTicket = 1;');
+          run(parent, ['add', 'README.md', 'apps/notes/src/commands/createTicket.ts']);
+          const rootResult = run(app, ['rev-parse', '--show-toplevel']);
+          const rawRoot = rootResult.stdout.trim();
+          const nativeRoot = path.resolve(rawRoot);
+          const nativeWorkspace = path.resolve(app);
+          const normalizedRoot = normalize(nativeRoot);
+          const normalizedWorkspace = normalize(nativeWorkspace);
+          const nativeRelative = path.relative(nativeRoot, nativeWorkspace);
+          const normalizedInputRelative = path.relative(normalizedRoot, normalizedWorkspace);
+          const diff = run(app, ['diff', '--cached', '--name-only']).stdout.split(/\r?\n/).map(normalize).filter(Boolean).sort();
+          const prefix = normalize(normalizedInputRelative);
+          const scoped = (!prefix || prefix.startsWith('..') || prefix.includes(':'))
+            ? diff
+            : diff.filter((file) => file.startsWith(prefix + '/')).map((file) => file.slice(prefix.length + 1)).filter(Boolean).sort();
+          console.log(JSON.stringify({
+            nested: {
+              parent,
+              app,
+              rawRoot,
+              nativeRoot,
+              nativeWorkspace,
+              normalizedRoot,
+              normalizedWorkspace,
+              nativeRelative,
+              normalizedInputRelative,
+              prefix,
+              diff,
+              scoped,
+            }
+          }, null, 2));
+
+          const pkgRoot = path.join(os.tmpdir(), 'forge-pkg-' + crypto.randomUUID());
+          fs.mkdirSync(pkgRoot, { recursive: true });
+          run(pkgRoot, ['init']);
+          run(pkgRoot, ['config', 'user.email', 'forge@example.test']);
+          run(pkgRoot, ['config', 'user.name', 'Forge Test']);
+          const baseline = {
+            name: 'impact-package-json',
+            scripts: { verify: 'bun run forge verify' },
+            dependencies: { zod: '^3.25.0' },
+          };
+          write(pkgRoot, 'package.json', JSON.stringify(baseline, null, 2));
+          run(pkgRoot, ['add', '.']);
+          const commit = run(pkgRoot, ['commit', '-m', 'baseline']);
+          const current = {
+            ...baseline,
+            scripts: { verify: 'node ./bin/forge.mjs verify' },
+          };
+          write(pkgRoot, 'package.json', JSON.stringify(current, null, 2));
+          const pkgGitRootResult = run(pkgRoot, ['rev-parse', '--show-toplevel']);
+          const pkgGitRoot = pkgGitRootResult.stdout.trim();
+          const relativeToGitRoot = normalize(path.relative(path.resolve(pkgGitRoot), path.resolve(pkgRoot, 'package.json')));
+          const show = run(pkgRoot, ['show', `HEAD:${relativeToGitRoot}`]);
+          const previous = show.status === 0 ? show.stdout : null;
+          const keys = ['dependencies','devDependencies','optionalDependencies','peerDependencies','packageManager','overrides','resolutions','engines'];
+          const fp = (raw) => {
+            if (raw == null) return null;
+            const parsed = JSON.parse(raw);
+            const relevant = {};
+            for (const key of keys) if (Object.prototype.hasOwnProperty.call(parsed, key)) relevant[key] = parsed[key];
+            return JSON.stringify(relevant);
+          };
+          console.log(JSON.stringify({
+            packageCase: {
+              pkgRoot,
+              commitStatus: commit.status,
+              commitStdout: commit.stdout,
+              commitStderr: commit.stderr,
+              pkgGitRoot,
+              relativeToGitRoot,
+              showStatus: show.status,
+              showStderr: show.stderr,
+              currentFingerprint: fp(fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8')),
+              previousFingerprint: fp(previous),
+              fingerprintsEqual: fp(fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8')) === fp(previous),
+            }
+          }, null, 2));
+          NODE
 
       - name: Upload H28 diagnostic
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-h28-71deaf7
+          name: windows-h28-71deaf7-trace
           path: ${{ runner.temp }}/h28
           if-no-files-found: error
