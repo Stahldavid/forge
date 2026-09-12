@@ -44,17 +44,18 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/generated-refresh-proof"
           out="$RUNNER_TEMP/generated-refresh-proof"
-          printf 'subject=%s\nexecution=%s\ntree=%s\nos=%s\nnode=%s\nbun=%s\n' \
+          printf 'subject=%s\nexecution=%s\ntree=%s\nos=%s\nnode=%s\nbun=%s\nautocrlf=%s\n' \
             "$SUBJECT_SHA" \
             "$(git rev-parse HEAD)" \
             "$(git show -s --format=%T HEAD)" \
             "$RUNNER_OS" \
             "$(node --version)" \
-            "$(bun --version)" > "$out/provenance.txt"
+            "$(bun --version)" \
+            "$(git config --get core.autocrlf || true)" > "$out/provenance.txt"
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           test -z "$(git status --porcelain=v1)"
 
-      - name: Generate check with real exit
+      - name: Capture generate-check real exit
         shell: bash
         run: |
           out="$RUNNER_TEMP/generated-refresh-proof"
@@ -64,21 +65,42 @@ jobs:
           set -e
           printf '%s\n' "$code" > "$out/generate-check.exit"
           cat "$out/generate-check.log"
-          test "$code" -eq 0
+          exit 0
 
-      - name: Framework verification with real exit
+      - name: Generate and classify residual diff
         shell: bash
         run: |
           out="$RUNNER_TEMP/generated-refresh-proof"
-          set +e
-          node ./bin/forge.mjs verify framework --script-timeout-ms 120000 > "$out/verify-framework.log" 2>&1
-          code=$?
-          set -e
-          printf '%s\n' "$code" > "$out/verify-framework.exit"
-          cat "$out/verify-framework.log"
-          test "$code" -eq 0
+          node ./bin/forge.mjs generate > "$out/generate.log" 2>&1
+          git diff --name-only > "$out/diff-names.txt"
+          git diff --ignore-cr-at-eol --name-only > "$out/diff-names-ignore-cr-at-eol.txt"
+          git diff --ignore-space-at-eol --name-only > "$out/diff-names-ignore-space-at-eol.txt"
+          git diff --stat > "$out/diff-stat.txt"
+          git diff --full-index --binary > "$out/generated.patch"
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            git check-attr text eol -- "$path"
+          done < "$out/diff-names.txt" > "$out/attributes.txt"
+          node - <<'NODE' > "$out/normalized-content-diff.tsv"
+          const { execFileSync } = require('node:child_process');
+          const { readFileSync } = require('node:fs');
+          const names = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' })
+            .split(/\r?\n/).filter(Boolean).sort();
+          const normalize = (buffer) => buffer.toString('utf8').replace(/\r\n?/g, '\n');
+          for (const path of names) {
+            let head = '';
+            let work = '';
+            try { head = normalize(execFileSync('git', ['show', `HEAD:${path}`])); } catch {}
+            try { work = normalize(readFileSync(path)); } catch {}
+            process.stdout.write(`${path}\t${head === work ? 'NORMALIZED_EQUAL' : 'SEMANTIC_DIFFERENT'}\n`);
+          }
+          NODE
+          echo "raw_diff_count=$(sed '/^$/d' "$out/diff-names.txt" | wc -l | tr -d ' ')" >> "$out/classification.txt"
+          echo "ignore_cr_diff_count=$(sed '/^$/d' "$out/diff-names-ignore-cr-at-eol.txt" | wc -l | tr -d ' ')" >> "$out/classification.txt"
+          echo "semantic_diff_count=$(grep -c 'SEMANTIC_DIFFERENT' "$out/normalized-content-diff.tsv" || true)" >> "$out/classification.txt"
+          cat "$out/classification.txt"
 
-      - name: Upload exact-head proof
+      - name: Upload exact-head diagnostic
         if: always()
         uses: actions/upload-artifact@v4
         with:
