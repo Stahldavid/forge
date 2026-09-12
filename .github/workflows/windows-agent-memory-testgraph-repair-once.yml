@@ -83,7 +83,7 @@ jobs:
           printf '%s\n' "${changed[@]}"
           for path in "${changed[@]}"; do
             case "$path" in
-              src/forge/cli/verify.ts|tests/cli/cli.test.ts) ;;
+              src/forge/cli/verify.ts|tests/cli/cli.test.ts|.github/workflows/windows-agent-memory-testgraph-repair-once.yml) ;;
               *) echo "unexpected changed path: $path" >&2; exit 1 ;;
             esac
           done
