@@ -669,6 +669,7 @@ const TEST_COST_RANK: Record<TestCost, number> = {
   browser: 5,
 };
 const STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: number }> = [
+  { pattern: /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/, estimatedMs: 105_000 },
   { pattern: /^tests\/cli\/node-compat\.test\.ts$/, estimatedMs: 12_000 },
   { pattern: /^tests\/cli\/node-compat-dev-server\.test\.ts$/, estimatedMs: 6_000 },
   { pattern: /^tests\/cli\/node-compat-new\.test\.ts$/, estimatedMs: 8_000 },
@@ -701,6 +702,7 @@ const STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: num
 ];
 const STRICT_ISOLATED_TEST_PATTERNS = [
   /^tests\/ai\//,
+  /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/,
   /^tests\/cli\/cli-generation\.test\.ts$/,
   /^tests\/cli\/cli\.test\.ts$/,
   /^tests\/cli\/cli-verify\.test\.ts$/,
