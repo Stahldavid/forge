@@ -20,6 +20,7 @@ P0a implementation surface.
 | [`S1.3_SCOPE_AND_GATE.md`](./S1.3_SCOPE_AND_GATE.md), [`S1.3_CONFORMANCE_PLAN.md`](./S1.3_CONFORMANCE_PLAN.md) | Adopted S1.3 Proof & Conformance planning package; S13-P08 complete. It authorizes only the limited S1.3-A evidence/reproduction stage, not new tooling or P0b. |
 | [`S1.3_EVIDENCE_CATALOG.md`](./S1.3_EVIDENCE_CATALOG.md), [`S1.3_CONFORMANCE_MATRIX.md`](./S1.3_CONFORMANCE_MATRIX.md), [`S1.3_REPRODUCTION_PROTOCOL.md`](./S1.3_REPRODUCTION_PROTOCOL.md), [`S1.3_GAP_AND_TOOLING_REGISTER.md`](./S1.3_GAP_AND_TOOLING_REGISTER.md) | Adopted S1.3-A Evidence Registry & Reproduction Baseline: stable evidence/gap IDs, 24 OP / 35 I / 16 event cross-index, reproduction rules and tooling-need decisions; historical candidate wording is preserved inside the reviewed artifacts. |
 | [`S1.3_A_ADOPTION_RECORD.md`](./S1.3_A_ADOPTION_RECORD.md) | Records the exact reviewed head, exact-SHA gates, preserved FAIL/INCONCLUSIVE observations and merge that completed S13-A12 and adopted S1.3-A. |
+| [`S1.3_FINAL_CLOSURE_RECORD.md`](./S1.3_FINAL_CLOSURE_RECORD.md) | Review-candidate closure supplement that binds the post-S1.3-A gap closures/repairs to the current canonical baseline while preserving GAP-008 and all historical observations; adoption is pending. |
 
 ## Baseline coordinates
 
@@ -49,6 +50,7 @@ branch remaining available.
 | S1.3 scope and conformance plan | [PR #18](https://github.com/Stahldavid/forge/pull/18), `801c2192e64652ade19a642b2f09f8660963c74f` | `ADOPTED`; S13-P08 complete; reviewed head `c694e9091bc1211b27d7e5e934ff4b9905e6ae89` |
 | Delta semantic timeline test timeout/cleanup | [PR #20](https://github.com/Stahldavid/forge/pull/20), `92c470ae2319aed9bde734d4506767677abe5a3c` | Adopted separately; reviewed head `0c8fe25d65ff5619395f3cf1f24635ba99a8e34c`; test-only, no Agent Fabric semantic change |
 | S1.3-A evidence/reproduction baseline | [PR #19](https://github.com/Stahldavid/forge/pull/19), `de9449648d821086db3d6f214c1a39cd4c659c7e` | `ADOPTED`; S13-A12 complete; reviewed head `b48a8fb4d77a1d8f5df7d9d523623a2037966da0` |
+| S1.3 final closure | pending independent review and explicit adoption | `REVIEW_CANDIDATE`; proposed GAP-001/002/009 closure, GAP-008 retained OPEN, GAP-003…007 preserved as deferred applicability |
 
 The adopted S1.3 planning coordinate remains
 `main@801c2192e64652ade19a642b2f09f8660963c74f`. The separately adopted PR #20 moved the
@@ -57,6 +59,10 @@ movement was assessed under S13-A01. S1.3-A was subsequently adopted by PR #19 a
 `main@de9449648d821086db3d6f214c1a39cd4c659c7e`. Candidate/planning labels in the exact
 reviewed source artifacts are preserved as authored; adoption merges and adoption records
 establish their subsequent status.
+
+The proposed S1.3 final closure is a later supplement over the post-S1.3-A repair/evidence
+chain. Until that closure record is independently reviewed and explicitly adopted, it must
+not be read as an already-adopted status change to the historical gap register.
 
 After adoption, changes must not silently rewrite history. A material change to a frozen
 architecture decision requires a new superseding decision record that identifies:
@@ -125,3 +131,7 @@ or JCS conformance, machine-readable evidence automation, production retention, 
 schema/dependency/workflow changes, blanket timeout changes and P0b are **not** authorized
 by S1.3-A adoption. Any later gap closure, tooling proposal or implementation slice requires
 a separate objective, scope, exact-SHA evidence, independent review and adoption.
+
+The proposed final closure does not change that P0b boundary. If adopted, the next Agent
+Fabric program step must still begin with a separate P0b Scope & Gate planning record before
+any P0b runtime implementation is authorized.
