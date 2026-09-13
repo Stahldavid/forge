@@ -66,7 +66,16 @@ function normalizeForgeSpec(spec) {
 }
 
 function commandName(command) {
-  return process.platform === "win32" ? `${command}.cmd` : command;
+  if (process.platform !== "win32") return command;
+  return command === "bun" ? command : `${command}.cmd`;
+}
+
+function fieldScratchRoot() {
+  const runnerTemp = process.env.RUNNER_TEMP;
+  if (process.platform === "win32" && runnerTemp && isAbsolute(runnerTemp)) {
+    return runnerTemp;
+  }
+  return tmpdir();
 }
 
 function commandLine(command, args) {
@@ -944,7 +953,7 @@ async function main() {
     return;
   }
 
-  const appRoot = await mkdtemp(join(tmpdir(), "forgeos-field-"));
+  const appRoot = await mkdtemp(join(fieldScratchRoot(), "forgeos-field-"));
   const results = [];
   try {
     for (const testCase of cases) {
