@@ -1,9 +1,11 @@
 import { appendFileSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { assertPublishChannel } from "./release-channel-guard.mjs";
 
 const packageDir = resolve(process.argv[2] ?? ".");
 const packageJson = JSON.parse(readFileSync(resolve(packageDir, "package.json"), "utf8"));
+assertPublishChannel(packageDir);
 const packageSpec = `${packageJson.name}@${packageJson.version}`;
 const allowFirstPublish =
   process.argv.includes("--allow-first-publish") ||

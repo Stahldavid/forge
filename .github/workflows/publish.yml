@@ -219,6 +219,9 @@ jobs:
           fi
           echo "Version check OK: tag=$TAG_VERSION"
 
+      - name: Enforce release channel
+        run: node scripts/release-channel-guard.mjs publish .
+
       - name: Check npm package version
         id: npm-version
         shell: bash
@@ -294,7 +297,9 @@ jobs:
         if: steps.npm-version.outputs.exists != 'true'
         env:
           NPM_CONFIG_PROVENANCE: "true"
-        run: npm publish --access public --tag alpha
+        run: |
+          PUBLISH_TAG="$(node -p "require('./package.json').publishConfig?.tag ?? 'alpha'")"
+          npm publish --access public --tag "${PUBLISH_TAG}"
 
       - name: Promote ForgeOS latest tag
         if: success()

@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } 
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { assertPublishChannel } from "./release-channel-guard.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const dryRun = process.argv.includes("--dry-run");
@@ -13,6 +14,7 @@ if (!dryRun && !yes) {
 }
 
 const sourcePackageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+const releaseChannel = assertPublishChannel(root).publishTag;
 const stagingRoot = mkdtempSync(join(tmpdir(), "forgeos-publish-"));
 const staging = join(stagingRoot, "package");
 
@@ -51,7 +53,7 @@ try {
     "--access",
     "public",
     "--tag",
-    "alpha",
+    releaseChannel,
     "--provenance=false",
   ];
   if (dryRun) {

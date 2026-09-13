@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { assertPublishChannel, assertVersioningPreMode } from "./release-channel-guard.mjs";
 
 function run(command, args) {
   const executable = process.platform === "win32" ? `${command}.cmd` : command;
@@ -32,5 +33,7 @@ function syncVersionSource() {
   );
 }
 
+assertVersioningPreMode(".");
 run("changeset", ["version"]);
+assertPublishChannel(".");
 syncVersionSource();
