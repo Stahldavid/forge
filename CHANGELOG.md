@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0
+
+### Minor Changes
+
+- [#9](https://github.com/Stahldavid/forge/pull/9) [`ea0e5b6`](https://github.com/Stahldavid/forge/commit/ea0e5b6067e520d40cca23b461ca53d057ef0aca) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add the experimental Forge Agent Fabric P0a protocol kernel with replay-prevalidated authoritative transitions, exact GoalContract/authorization binding, attenuated grants, journal-coupled resource accounting, globally unique attempt identities, fenced attempt-bound permits, non-terminal uncertainty observations, content-bound outcome provenance, deterministic replay, and adversarial conformance tests.
+
 ## 0.1.0-alpha.63
 
 ### Patch Changes
