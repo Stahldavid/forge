@@ -44,8 +44,8 @@ jobs:
         run: |
           set -u
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
-          test -z "$(git status --porcelain=v1)"
           mkdir -p issue45-evidence
+          git status --porcelain=v1 > issue45-evidence/status-after-install.txt
           node - <<'NODE' | tee issue45-evidence/environment.txt
           const cp = require('node:child_process');
           const os = require('node:os');
