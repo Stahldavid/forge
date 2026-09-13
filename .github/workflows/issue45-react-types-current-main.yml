@@ -25,9 +25,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install workspace dependencies
-        run: npm install --ignore-scripts --package-lock=false
-
       - name: Record clean exact provenance
         shell: bash
         run: |
