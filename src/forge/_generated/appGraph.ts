@@ -1,6 +1,6 @@
-// @forge-generated generator=0.1.0-alpha.63 input=43623ccc7209d544f8745a8d03de2c1703d186ea75709a2ca79af821a88f2818 content=bf0f3f6ec7fc478800b6fdeb3dde5ead21b81bacad3045015b8210b5065acb96
+// @forge-generated generator=0.1.0-alpha.63 input=cefae73a286f2c10ee10ee59b0d06dd93a157cd7085a48f2f9e097d8c03c61a3 content=9efa7033a87171011db40c7ae24602d339f0dc97c4713b0ea9bf32f15b8266c1
 export const appGraph = {
-  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:d3aa0aa192e40daf3238188e08883862cb2a0b88338152af6b6819b2f71b7464",
+  "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
     {
       "from": "000682eca2621a7ca64c957907f0726adfece9f235270efed73fa067e09fc27a",
@@ -363,6 +363,11 @@ export const appGraph = {
       "to": "9aa217b3c26c0ca75164c77cc76a90cd68f40351b4ee06522d4ec58167fa208d"
     },
     {
+      "from": "02e3388627f8547938c4ae1000cabbc8ec53b1c28936abda0fd94511d62e4959",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "02fd3dc03e7b356018c2fdd3f07f7d5bae10780d6a0bbe96c93deb10ebe4d59c",
       "kind": "registers",
       "to": "2894340435807c72a34b54bc91625515df169613966652a06eb73f7ca7bcb4b1"
@@ -503,6 +508,11 @@ export const appGraph = {
       "to": "f39db5c6988206ea02c1c227f584f004f11e2e68dde0c396745644c6e780994a"
     },
     {
+      "from": "0485e0a1396d6cb928b9b560bece7549439331c60199427f3d45923e65be68b9",
+      "kind": "registers",
+      "to": "57ba704847e5e4081e160f77938ead0d4fa6bfc93581e813a9aeb54a83a7dbb2"
+    },
+    {
       "from": "04a4d611188b7edc777a4a9423882803f109d184260e85f9574745e0c9bc9386",
       "kind": "registers",
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
@@ -568,6 +578,11 @@ export const appGraph = {
       "to": "aa3387bf1b1f26b91cc1f09b762070b660f23000d0cf00e5869977e337ff3b73"
     },
     {
+      "from": "0515ea48b2670fd758715b5547265931d2243d21771dcc96a205b520105cd390",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "0523ce7fe212960af7ec94d183b9fc340de1689896c366cbc57187cea8ecb7a8",
       "kind": "registers",
       "to": "fd9af2d344a3d4ccb4642394d26963c8cb8dff790295a9ba9d142821d044f73b"
@@ -601,6 +616,11 @@ export const appGraph = {
       "from": "053c0228c0028fdc26318f25c4b769912ea694c1874f5c3057567522c590f679",
       "kind": "registers",
       "to": "301ae107ea53080eeba1f1ec605f49ff61663ae0a0399e51aa50139ed59e8353"
+    },
+    {
+      "from": "053e2514ca61d25aea1ed00f67e9a03035e18ffdbfff4066351782dd1622d0aa",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "054003d90d83bcec53c9c183aeb1cc7f31aa142e257c26ae3f1d0456b6ade08e",
@@ -1348,6 +1368,11 @@ export const appGraph = {
       "to": "218ff0cd398cfcc09a1f44ba9c5b569246817556277f4168cc7f1c4b3e2b5097"
     },
     {
+      "from": "07c66363ea7258ad0a301b399c496fcb82344206680fe2680d257caa44ed90da",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "07ce35eaca181f5cf0ad3a43f5015bc50cab05964fbf4161847e9c6c209da090",
       "kind": "registers",
       "to": "d8bc705e15802b754831789c8618202a0ae4bbfe6831ec70a22c9cf27117ff18"
@@ -1558,6 +1583,11 @@ export const appGraph = {
       "to": "4fd5babac6f3009a9b6a0956db8c0717688bdf12a2ce320f89b27437dea8827d"
     },
     {
+      "from": "093f7fe4eccbc02f29ccd01d3c68f9b9c9dc5ae70956c6df7c4e876643707425",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "094bc90cd68806996c91796cd41d7a1824ecff80b2e88fa02fec70c6fa165de6",
       "kind": "registers",
       "to": "d999850d9a6aceb8a1016891973560d69ffb5e613609c9849bcd7fe1780fda14"
@@ -1663,6 +1693,11 @@ export const appGraph = {
       "to": "7843a0a759b453b6a6775e4ffb2b80e0dafd8b40a6345f90bdf6a95bb6fa048f"
     },
     {
+      "from": "09efdceeff8920eb9ac95a8f44b564a5f765f2e89c5d0c145131843f575539ec",
+      "kind": "registers",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+    },
+    {
       "from": "09f0bf09d9bf1517dbb91c71dd5451748e6518da0a0578994eff24f97f612de8",
       "kind": "registers",
       "to": "9ca7f50ce7dc7dd56c8b443c7dbd27afb84e12328bfe009ad4778dca7efe6cba"
@@ -1711,6 +1746,11 @@ export const appGraph = {
       "from": "0a57d33a6760adfecd22ff906566027d42b8e733bb79f06bcb188eef21c45433",
       "kind": "registers",
       "to": "ba41b66fc5fb60c81f4ed6eeddda3f761f6dc06013112c5b7baa2e7a038c9735"
+    },
+    {
+      "from": "0a5f262bb279a44d1c36910d5d72a5031e88f3d8c879da05b28f90115dd713e3",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "0a6186d1e0562c8bc04a83f0686433bd9775c51eda47fc141e39cc9f39b9f4cd",
@@ -1948,6 +1988,11 @@ export const appGraph = {
       "to": "234a8673cd96f9d2a2a4065c0ae81cf6e1bfcca343d6bf71e2af952569c615d3"
     },
     {
+      "from": "0d17942a261d7f49d4177adf48478fe78cb74cd86702a8f7b463a1b06963c9f8",
+      "kind": "registers",
+      "to": "b5f12207ab3605046396dd9133c3e843e465e5fd71435b971452ab87a3c24e03"
+    },
+    {
       "from": "0d1e646751b63043d69a79115a2354de3b2fa0d3b63a6e64d0daa6c51933a420",
       "kind": "imports",
       "to": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
@@ -2026,6 +2071,11 @@ export const appGraph = {
       "from": "0d969d15ede8c3b4e3ce94a8d0b0dde17df2b5fcd097bc8f55141e6a21dbd55b",
       "kind": "registers",
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
+    },
+    {
+      "from": "0d9741fcf4d95a724b5edb8e1aac63c7ff4b4e86b00a987ff0b641dce1ef28b4",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "0d9c7972cb97416c5baa32bda32ed59ee3b60a2481c5e643d6697b431de55842",
@@ -2181,6 +2231,16 @@ export const appGraph = {
       "from": "0ece561dfc119fff7b68f781a2092617d572293881f6dc9c825f50734c384d3f",
       "kind": "registers",
       "to": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
+    },
+    {
+      "from": "0edb2511fb2eb5759cff9f65d09f9e456ff9102d288889abb25781f324f3f06c",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "0ee15f98f12d117170dcbb899e83a508197c5b904b822d50a12a88acb219a0a7",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
     },
     {
       "from": "0ee78dde8a915e2c441d6ec574276dece7ab66b9dd452be7696327c3a97fa2ed",
@@ -3078,6 +3138,11 @@ export const appGraph = {
       "to": "d2c84914d864b44e495756476be3a8fde2105c1b1a518ea51d67ecb90a391620"
     },
     {
+      "from": "132633ece91b9c861c86ba8a32a428aafa9de651b69c126bfbd2fc3319d8ce5a",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
       "from": "13272e1318f3e4f325a4550e185ed66342a7ca24a06e9c941fa6e4e16c308674",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
@@ -3093,9 +3158,19 @@ export const appGraph = {
       "to": "5ed3065a03acc89852c051e5e79595ef8e0bd0d92d2f708e5b43a3f28303cc6f"
     },
     {
+      "from": "1340e32886e4aefc40f7dedaad4092712d37f361f03eff32ae7dd42cbf8d5e4c",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
       "from": "1349215ddf3632e7f28526c4cd817395c53e2a718b7f3c5b2daeda1a8516b268",
       "kind": "registers",
       "to": "69cf0871cc5c9ff226b0c9c85323172a2a19dc03dba93e7726ab13f6da2da0b7"
+    },
+    {
+      "from": "136581fe710a31fbf46a87e8171ce996f40815eef35aab113aa58440c55f8488",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d",
@@ -3793,6 +3868,21 @@ export const appGraph = {
       "to": "054003d90d83bcec53c9c183aeb1cc7f31aa142e257c26ae3f1d0456b6ade08e"
     },
     {
+      "from": "1740a6497790a612e0f2773f2a35fd84bad42a0dd15790d23c4b80906638a876",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
       "from": "175504bed597c0cbcd557692959d1bb2668f3027f6046e5280f1552e7a89b226",
       "kind": "registers",
       "to": "39fb45c8506e1c614b9fb5008b34bba27cdc873ee6401b350bfc571b74643399"
@@ -3963,6 +4053,11 @@ export const appGraph = {
       "to": "86723e85e1682b141387414f2bb0a6d4ccd339cba41d2a4ef8b9a203c2c05fa7"
     },
     {
+      "from": "1901a0441973b361f943d82972d68d4368803377a482eb725555cedab8663088",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "19339baba49b9b5c0f5f503c41f3b6a3d17549e3c2c5d71c1b3ea0da17055eda",
       "kind": "registers",
       "to": "a7efe22061b9a1725843fc228971a5bd1dfe6089302f2bb148f6d45ed626db4c"
@@ -4011,6 +4106,11 @@ export const appGraph = {
       "from": "19a7ed548f259024a4348e452b3eb9c787aa7dab28a9fc5993ffeeef723ef556",
       "kind": "registers",
       "to": "3fe52c3e22858aa259c5c5107efba290904b11240d7376d60cea1269bf504640"
+    },
+    {
+      "from": "19b7fcdb1519e2ad51473d171d00994ed4ffe2d807806bebf7706a57ede68230",
+      "kind": "registers",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
     },
     {
       "from": "19c123b395ecc663a55ee07f030f2f623d2d3f920dad44251b09c77ff8cdcb7d",
@@ -4388,6 +4488,11 @@ export const appGraph = {
       "to": "e02e7ac8d5eb95293f5a89915e74f69a3a8dcc4801271eb25677b86f392c3715"
     },
     {
+      "from": "1cca6ba3e2d0e80063ac16a87caa7fbc12768912b9da8803f4281b146e01d2b0",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "1cef271f4002eafe6faee3e77e8d8682d8663833e696890e9691ff0c0a90819e",
       "kind": "registers",
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
@@ -4433,6 +4538,11 @@ export const appGraph = {
       "to": "add55c318c3726d9fc313697b16b4efc335e6ff88070d66a89332f126c5c9ed1"
     },
     {
+      "from": "1d7e0309b77ca03fec8794b23ddc8d28d5086e7ed13e10a8b1de316fac292549",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "1d99cb932dfecbb5e126de971a9a9f0f3bd823d71180f1941cc842c7ee03d76d",
       "kind": "registers",
       "to": "cf94900f42206704a70752a1c9f21210dcdb4939ff28aa6229cb38b5bcdd5d5f"
@@ -4466,6 +4576,11 @@ export const appGraph = {
       "from": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957",
       "kind": "imports",
       "to": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+    },
+    {
+      "from": "1de255c1c10b297ec86ee7612f0b59435789e638c480a7b1f205e3af85844f50",
+      "kind": "registers",
+      "to": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
     },
     {
       "from": "1df3a81640f1e43bdf31f98396eab9ab11e47beff94c091770d5488bb5c4e725",
@@ -4738,6 +4853,11 @@ export const appGraph = {
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
     },
     {
+      "from": "20722e10314b6808ef0b53e08fa2c08ad8b5b2ed1e98f67877c83a6966518589",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "2088875e5087191dd50e7864de6b9b6639dcd9c777586c58b0c0b178c301b0b8",
       "kind": "registers",
       "to": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
@@ -4806,6 +4926,11 @@ export const appGraph = {
       "from": "214cbd238f9037f4f0a75699e7259002977e1c9f19c4f2b30f94a90e4028db85",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
+    },
+    {
+      "from": "216ac14eb2f717b29515a89334b5407aa768610222e762918494a418a283ab60",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "216bb5beb07becf409c58a253d3fb147c3ff4328eb90e34f3848a92f4661d966",
@@ -5136,6 +5261,11 @@ export const appGraph = {
       "from": "22a547d1717e5915fa464e3c99816b81ad80f02e0b91a466a1095772a416cdbc",
       "kind": "registers",
       "to": "0c567df3ef8a760414fb62047c9bf5b8a5c8519dbab56ab147685eb3654e5d18"
+    },
+    {
+      "from": "22b9e7e34b56bd9730a93dcb0f5d97daf7c59e4ed36f3bf73c939c8e29e8d7fb",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
     },
     {
       "from": "22bd8e38814040f579f134afd5c53b0c4b721ebb682663345e0a6b47f0da6ccd",
@@ -5593,6 +5723,11 @@ export const appGraph = {
       "to": "cb50c710eedb1e4a33c4c9d0c1b09daa718f697c43602f34c6551744b847e741"
     },
     {
+      "from": "25b89574581ea2f083240dbf18fc61ec4f2fdf313b9ce2f83b983e796fe499cb",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "25bbb41e01784819b14c363c77908df8bf54a82dadc4cfb813bb3be6a5755eb4",
       "kind": "registers",
       "to": "b7bbc2fbd43920596d795ed9b7cdf50b0011aa68a7b03cd1f25a2c883ae52cd5"
@@ -5733,6 +5868,11 @@ export const appGraph = {
       "to": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
     },
     {
+      "from": "2718ca81353e1039b714bdd237e69522ad4fa2ef616f1dfbbad147d80089fdbe",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "27200dee81faaa30e57fd16d36524b63b9b0440bca2131bcfe575779e1180dcf",
       "kind": "registers",
       "to": "fb6d66c51109df7a87de2144aca524ada21d06db8dddc92c319c9fac63629aeb"
@@ -5781,6 +5921,16 @@ export const appGraph = {
       "from": "277f694ecf3253105d951ff76e917ed56a018d0d9ddf591baa25803557a34514",
       "kind": "registers",
       "to": "dc4c4bebfaa6a59ec52c4a212c977d17b9633558c325b58952af0d2155aa1efe"
+    },
+    {
+      "from": "279ecf66f5385039dbaf34537a21c9a4e1eaeb44cb92901fec9b08d70ba28a5c",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
+      "from": "27b4e8182169f8c91683d6a4dd17801cedc72bde63c57fa400beb882d26a70fb",
+      "kind": "registers",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
     },
     {
       "from": "27bb7904a5b88805c4d71d4ac0420cea6dbc79edcc2be2e739f3c2e3ad31a782",
@@ -6058,6 +6208,11 @@ export const appGraph = {
       "to": "80b5888e87df576d69ddd44dcc02fd2f6420eba43a78ecabaa2b8b1fbc62422d"
     },
     {
+      "from": "2963424fe54f1ac90862650db0ddf63ea3a16d555bcc32d356f84d8223f86be6",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "2973f4a14996eb8bd4692967a2d4a8454b5b9a25b401d30a0b23bef1961caac1",
       "kind": "registers",
       "to": "8aa617ed0408a423bf2db84fb2c38c221e140f1b1a06bdfd48162f594b63e4d3"
@@ -6258,6 +6413,11 @@ export const appGraph = {
       "to": "fbebb7206af1da54e928bf39e353545ad3f94c65803e493e6e86a33e8d6fc292"
     },
     {
+      "from": "2b3471771d1db4daf7db343d62a60c89c1103cbca3937bc8a0ed1a33b582ba3e",
+      "kind": "registers",
+      "to": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534"
+    },
+    {
       "from": "2b50f69be69af006ce0dc5213d2e24ba00b7b4445fd2543ae0320540808ba5f6",
       "kind": "registers",
       "to": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
@@ -6331,6 +6491,16 @@ export const appGraph = {
       "from": "2beca938e5f278036b61c68d9aead0d6d7b29a79ef2c513f850b2ec7040d2719",
       "kind": "registers",
       "to": "16c417cb5f8ee4f06f5e944c7704f137f40647d563d23ac5962adc869a766ad2"
+    },
+    {
+      "from": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7",
+      "kind": "imports",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "2c0ba72bdc544146d0cdb1fe68cd7b991b282ba75701c899cad9ba02ab3796c9",
@@ -6453,6 +6623,11 @@ export const appGraph = {
       "to": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb"
     },
     {
+      "from": "2d4b9a170d801addfa7bdeb1b9a93988101d73e4b69ab5d5dd91cb62ffc178c8",
+      "kind": "registers",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
       "from": "2d54c2496c4bd311ad959c9066faeaf55b987ca7b255e0bb1f84b3bb3b5acea5",
       "kind": "registers",
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
@@ -6486,6 +6661,11 @@ export const appGraph = {
       "from": "2d999c5076b3f556c297ba7359305a9573072d6c04e9c74ed996d7ebff9d42e7",
       "kind": "registers",
       "to": "86723e85e1682b141387414f2bb0a6d4ccd339cba41d2a4ef8b9a203c2c05fa7"
+    },
+    {
+      "from": "2da571ee3fc37a041c28d99533ccd8957cb1d6df6c3d894364482f488567a3ee",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "2da7bde2336e561a94a64e1fb374240b5816ece1e5584db62774e1749c0b15b7",
@@ -6966,6 +7146,16 @@ export const appGraph = {
       "from": "309d25de1c590ac99705b0b881616a4850f9117c9b545aff3033a17c06a9d155",
       "kind": "registers",
       "to": "6ddc9ada2afd84b7b89bcddf456bab652285eb4dd86e85ef848302a1ed980f51"
+    },
+    {
+      "from": "30a1e7c021dc6bc69beefe380f67fcbbd2d43abac43d73003f73e4978c7eec1f",
+      "kind": "registers",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+    },
+    {
+      "from": "30a3028b8545dd7ea486cccc6170501cd72c7d6270700356771cc0b8497baba4",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "30af07ada11156442af137851ef343015088af52522029bcdfac67b3c75d6172",
@@ -7668,6 +7858,11 @@ export const appGraph = {
       "to": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61"
     },
     {
+      "from": "361cf2014c64fd2c8f54b8a354964163d2ec12308bfa509ef23157787731c302",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+    },
+    {
       "from": "36211460a41fcdf194ff52018decba421ad46450f83a3645966f75ffd5d0fd98",
       "kind": "registers",
       "to": "8870b306295cb2012b4840f2456ce631438708ed8d657732e3378263093023bc"
@@ -7808,6 +8003,11 @@ export const appGraph = {
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
     },
     {
+      "from": "37b0209ee6fd959cad430da2ea1c4ce2a4ea0eed3b206ea9430d87ab30d134c7",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "37bb14371b4d7ad8ce42bd3c59caa174f51636832d4885ee6d724b953df2e6e8",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
@@ -7893,6 +8093,16 @@ export const appGraph = {
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
     },
     {
+      "from": "38af9d234f597e583dc515c1efb846944bd11ce80834dbbf82e9a47a35971e1f",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "38b0842734ebf7e30445f5bde67c8bf257207e02204994c35d76e8fb3c2bbda1",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "38b1691bde15d7982ef566ec6d6dcd607f2112bcad562757e516f19d1c1e77ae",
       "kind": "registers",
       "to": "b70edec5836d8548c9141e315ed41c279d7b7e4eb56af611bf2c200cca7c6988"
@@ -7921,6 +8131,16 @@ export const appGraph = {
       "from": "38cb0a3f313bfb482e9990e5205300796596b391ff280bc7d0fb86d8b080294c",
       "kind": "registers",
       "to": "35910f7b338a3ca665e7875e9d6ef52aa3048acb2ae276db5f8d13136e842300"
+    },
+    {
+      "from": "38dd3d45d5ba30601bb024df0ed380f730826167ef7ffdf5636f48c3f56bd1b3",
+      "kind": "registers",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+    },
+    {
+      "from": "38ddbeb7766552b8cde996ac7992b777075c2cd53fc704f992d921926bccceb2",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "38e7c2438bf8dbda58313117abd050fbb5f8b0c2acc1d926ea13b609d93c339b",
@@ -8018,6 +8238,11 @@ export const appGraph = {
       "to": "a2f75588634c3b16c91a1b271e2f7d3946deda2370c7681d318c41cdf9f73eeb"
     },
     {
+      "from": "399327763e65e2e515158a2af2dd5a49994933402383174aadcbe422c5371755",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "399874a2eec62fe3ef9af74eb63444232bd449d270fe8e33045ce3b1f9ba4f2c",
       "kind": "registers",
       "to": "28267ec472202be9c321b5c93d3ed082d33354ac7f35d66033337cc8449e7cdd"
@@ -8058,9 +8283,19 @@ export const appGraph = {
       "to": "10089508816590796e512aa663bfa0c9aec767a336e2c166005f0794e74d5a58"
     },
     {
+      "from": "39eef9488d78add283e11e64e0b245dfed4c290994f8a3459fbda43ee14f71cf",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "39f0856f8208e907046117823c02870dd0d7b0fa0aa18c9d82bba3ad32dbc392",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
+    },
+    {
+      "from": "39f2b864c871df24b22f10042b8d3a06102a2bbfbf644703ce394351d352e1b0",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "39f6befc975e5ff4819fd2506fe531556b137ffe3da9b5c841ff7588f2466123",
@@ -8383,6 +8618,11 @@ export const appGraph = {
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
     },
     {
+      "from": "3c943f6e94bb71371f3749ba626be4bcf4dcb297c4c4807c89f8cd615efd2c56",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
       "from": "3c98a6b63eb868e15d673ccfd6a76f7fb888bd98b01a7f96e9014ca4495ef847",
       "kind": "registers",
       "to": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
@@ -8526,6 +8766,11 @@ export const appGraph = {
       "from": "3d7a4e672aafc0147e759c48695debd734b2f7f9dca5572ccbb3b4e3819b8520",
       "kind": "registers",
       "to": "9407fec8b9c84f6130a91124cac0634769fefad665c64c2e3c427fc903c2b7fe"
+    },
+    {
+      "from": "3d7b65177e3c070328c1a21b321722cdbd3e99a62e87fa48fa48ec9987acf3a4",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
     },
     {
       "from": "3d86fa12787b84689eeb32c74c8408c1c72c34147a64771bc9ac2a8b35f6492e",
@@ -8963,6 +9208,11 @@ export const appGraph = {
       "to": "d9059ee2a34c418d3ad7c8bfa6b39a44ab3fa0a33de9e952c062db7e9e4216c7"
     },
     {
+      "from": "4089a15bb89e3df7c31cf7238d93f6e8c7bcca3d914420f013548280342b242a",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+    },
+    {
       "from": "40913268d5ae92af8434b15a5002bedf9e3623a19e161fad3e3e902cef568a88",
       "kind": "registers",
       "to": "9a733f38a5cf18a1ed64ba9830a27bd989c8ff312593ca3825f134b8c5998faf"
@@ -9313,6 +9563,11 @@ export const appGraph = {
       "to": "dbb5096946f6810b80bab7e86cbb70ccc056edb139b00bfe32e747f123b3402e"
     },
     {
+      "from": "43a123a96f2bdd5145fd51666114a03494f120cfbe415871a12c72ad838b27c0",
+      "kind": "registers",
+      "to": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
+    },
+    {
       "from": "43a2a1b0fb0ac8351968ad8d4a0b0e8f9c15e55eb52fa0a2abcf92e073486d22",
       "kind": "registers",
       "to": "11b248da3322ed61ac3e9923e911884824a75eb3192e8db0fccc2b1b1649abc9"
@@ -9481,6 +9736,11 @@ export const appGraph = {
       "from": "446aebc6edc4dfe5e4a6a2d6d42c5c39c4ddc5845bf4bb1fc844c6f83114ed42",
       "kind": "registers",
       "to": "9f2e64063e583a8031186196fbe545689e3eb08e88be8d129f044e4591bf444a"
+    },
+    {
+      "from": "44830bbc5ea41fb591586276528be91d7c5f3e91d53332d2598b41c4eafe1c7c",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "4485900c409b1807e1f6b66cab546341fa15ab158741c50ffea6ad83c8b61f79",
@@ -9766,6 +10026,11 @@ export const appGraph = {
       "from": "4557147ea42b95a35914b6ad0d95571d3fc3c0684a73bad1bef0b3f56ccb5452",
       "kind": "registers",
       "to": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884"
+    },
+    {
+      "from": "4578db143e4e1836af9f186a21fbf2fe35858767c1b45428e783d11889624b37",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "4583e3edbe7e208194548bba66c9b8660d4a533965af9ade6b1fea38b5a4a631",
@@ -10088,6 +10353,16 @@ export const appGraph = {
       "to": "ea59f3190fc14bde6b92c9dd3620c026c28bf7034ddca77c49a4be96596a4ffa"
     },
     {
+      "from": "48942729f9147ea27e39574ce58eff9197d9ce58c8e7666b20f91280e1155d47",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
+      "from": "489dd7e2c8d59a61a5445f746f6a0913c8c2e999f18bb66b55e86f6fef7a0be7",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+    },
+    {
       "from": "489ecc9d00de547003e0b6b30cfa33f09c515ae7e1d67b95b2fe60e7535bf290",
       "kind": "registers",
       "to": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
@@ -10218,6 +10493,11 @@ export const appGraph = {
       "to": "821bf24b2a7e798a78b4d65779e448f46bbcc59252fe07918b15811c62a50a4f"
     },
     {
+      "from": "490cd03046887733e0daac14c5666fe9471d81b111912b204d12c82f3ad2769e",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "490d5420f88223620425e51881ce85a13f86189e48e191459f754dc79168b25a",
       "kind": "registers",
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
@@ -10241,6 +10521,11 @@ export const appGraph = {
       "from": "492931912907d2af1971801179b34e5ffeda942e5734f301725742884e8a8d7a",
       "kind": "registers",
       "to": "9c575b15948278713bbf63047eb4922f5d3b22564f371ad89d090600349bfbcb"
+    },
+    {
+      "from": "4946143b18c8e50122456f31d1341ee5594ea094eee21646a9b7c4f7957a99f0",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
     },
     {
       "from": "495b0e7a38cce3cb9ac14aa6c295f4e1e7e5cdeeee8e26c94b6e4708b9e5e825",
@@ -10381,6 +10666,11 @@ export const appGraph = {
       "from": "4ae9d13bc4381e48f7d2f025f1a048611a8e67bb23917c3a8420b5af9bf337eb",
       "kind": "registers",
       "to": "168dc4312bb26a60561cedac33b55e047bdc3e1f3222d28671343a5e321f9226"
+    },
+    {
+      "from": "4b2e1b870516fae004ac5425c3f3c304adec638c00278bc57b0b7c68466eff4b",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "4b2e7fd0a1523b6b4a0d00931d394098955c342ce863c62551c84498b4fafcd6",
@@ -10693,6 +10983,11 @@ export const appGraph = {
       "to": "a0df7725d624af3b012b18c5456a2b968f57352e24b6896d4ea09d853d95ae6e"
     },
     {
+      "from": "4de05e9fd8f21fb33729d404f79bd6324b86a2610a397ea7c18f02121824eb49",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "4de733767720f52d71af7dbb6c0ac152301e153f26b54455972a045695c4ac51",
       "kind": "registers",
       "to": "0493b60b7868e024a5ea1432ac0ec52d2a2debd336090a2a1911a5e94015b7cf"
@@ -10758,6 +11053,11 @@ export const appGraph = {
       "to": "d999850d9a6aceb8a1016891973560d69ffb5e613609c9849bcd7fe1780fda14"
     },
     {
+      "from": "4e5aa420617a037b9d89b6283494fbb34f0ae644fd6c3480ab4cbd9dcd0e32df",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+    },
+    {
       "from": "4e70f442522302a44be55cccb50faa1883cc39bdeed76d666ea262851b53a519",
       "kind": "registers",
       "to": "099b8363d1e78cb6d3060d5070f5b0768ee6d9a71bf60b26ccb93076688947b7"
@@ -10771,6 +11071,56 @@ export const appGraph = {
       "from": "4e777190e00205bb1dddeba48abe1503499ef376889e3b8088e9099ddda6ef34",
       "kind": "registers",
       "to": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+    },
+    {
+      "from": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+      "kind": "imports",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "4e9ed39997bd258916bb9bf2af1f30d14c05af9265c8d6b0934d7d3770f5a310",
@@ -11133,6 +11483,11 @@ export const appGraph = {
       "to": "45240799a54620834dc227dfd2dd6f09f5fe044eb7977e7b2db801f98bc23093"
     },
     {
+      "from": "515e402b594c044ae8a93662d9503f0810e48545cee2ec04e11b4ac800a697c9",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "51639bcd1177c3781983f358778a3db5f905d5c3af25926c27841f0623387d16",
       "kind": "registers",
       "to": "bc8244299fd6860b904454630b1cf8e88e578948c03d8f8a4e35ffd527072825"
@@ -11226,6 +11581,11 @@ export const appGraph = {
       "from": "520000128da26382f45ce8be90799b1f720faab7ade1769a3be5e56477259f9c",
       "kind": "registers",
       "to": "d999850d9a6aceb8a1016891973560d69ffb5e613609c9849bcd7fe1780fda14"
+    },
+    {
+      "from": "5214fa367dc7c59413f33a692c8edd127285fa827fd8cb7880c368c3e7b74f07",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "52174c1e5a696f444f3bf4f78e0b928194f6b07d55f55120d0deb1df55a2bb9c",
@@ -11348,6 +11708,11 @@ export const appGraph = {
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
     },
     {
+      "from": "5306e60ec128941d2bc515424a1a9bc08cdd6d6b7a5c29c31f488df536c56df6",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+    },
+    {
       "from": "53073041b7ab6b50b887efdf730045cc63fd8e0a94d18aa13ffdb0d695e1a7a2",
       "kind": "registers",
       "to": "7b0a2ef46bcd98265cf662dd411b9e7f3600c923fc87e0fadfc514bcfa8597fb"
@@ -11453,6 +11818,11 @@ export const appGraph = {
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
     },
     {
+      "from": "5407f0529d9d5fecbba2f8d847f28119ddfae631d733499e27fe469d0d5c28b2",
+      "kind": "registers",
+      "to": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
+    },
+    {
       "from": "541657d90de016ae4ed73ddb67007c49fa9b09d8fc54677da796a929f46f9ce8",
       "kind": "registers",
       "to": "b52e5c7e17bd87b70796614cb51e49d36b3a40dc249d51a5cc1a8fb116fd6e60"
@@ -11501,6 +11871,11 @@ export const appGraph = {
       "from": "544a00c7e1b56e60f4f60b53fcfb05fa984b6d3e73a4baf67fda8c4c61dbad5b",
       "kind": "registers",
       "to": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
+    },
+    {
+      "from": "5466c114bdede2d2681a32c1c13e8829bfc99bca4cb01c8d47a4b6102eb6670b",
+      "kind": "registers",
+      "to": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534"
     },
     {
       "from": "546e89aad10f61a454042072dcf82458a765aca475e449c18906258eb0e48651",
@@ -11863,6 +12238,11 @@ export const appGraph = {
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
     },
     {
+      "from": "5765798f6a58b3b1fe45e9d92b579f6b9fc9ff23b15da12ab2e9261630e409a8",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "576a6066f53ab212e88bd8efef587c72f2d3ab1831cab3cd1e9f103330992059",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
@@ -11886,6 +12266,11 @@ export const appGraph = {
       "from": "577e2b111f675de19fc3b5075231df2c454acb8ccc0b371b82787e77cc4fa7c2",
       "kind": "registers",
       "to": "ff3f46f01c461e3cffd8ae00ed2ce9aa0dda58d3c6978891694317156cd529c9"
+    },
+    {
+      "from": "577e48ee73c94df45a46de46e78cd53d81e7e71314213a2487e9e0b8406d07c9",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "578764a6c6da4890935b0562a6fe32e0ec82f8e898db96e89d931fceb25c4752",
@@ -11926,6 +12311,16 @@ export const appGraph = {
       "from": "579e0213cf33600a0275842a2767e3dd666ee2d9562003e5dbffa759cb0246c4",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
+    },
+    {
+      "from": "57ba704847e5e4081e160f77938ead0d4fa6bfc93581e813a9aeb54a83a7dbb2",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "57ba704847e5e4081e160f77938ead0d4fa6bfc93581e813a9aeb54a83a7dbb2",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
     },
     {
       "from": "57bcdbe38a0c6eca4dd6bdb5a3d9e961dc11660e239c9a758a33b5c2db7b13b5",
@@ -12193,6 +12588,11 @@ export const appGraph = {
       "to": "f26fd3c882388a6c64955ae46270336d64bfa202a441ad9c0fe7d5b6ad233380"
     },
     {
+      "from": "59c146612172acf6f40dd9693317b1627298066582d2c3572210c9102a85d605",
+      "kind": "registers",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
+    },
+    {
       "from": "59c4d32fc9ffc8c1af66a6c882beff6cb74529f6b4a7fe028852a769c793f38a",
       "kind": "imports",
       "to": "45240799a54620834dc227dfd2dd6f09f5fe044eb7977e7b2db801f98bc23093"
@@ -12206,6 +12606,11 @@ export const appGraph = {
       "from": "59ddb2b1af9fd1afff142be1b9b52a0bc2f7265876b4d6ad089041348f029a1a",
       "kind": "registers",
       "to": "add55c318c3726d9fc313697b16b4efc335e6ff88070d66a89332f126c5c9ed1"
+    },
+    {
+      "from": "59df87b8bde7f8eaf7155c841c32f76990f0eede4045f46cc01452d63519a1b8",
+      "kind": "registers",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
     },
     {
       "from": "59eb48e29604975c931719cdbc49347952c152c53068af5a527ec6def7163bff",
@@ -12848,6 +13253,11 @@ export const appGraph = {
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
     },
     {
+      "from": "5d99982b7e73ce2ebcee208ea1d74c061c13ef6a6a907c9875fae72fff5a5162",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "5d9b23a7ba7bbeeca8379c698bfc62bab6786e28ac2fa9f4570bee6fa27670e4",
       "kind": "registers",
       "to": "53dacca5ae0057ab3a6193ffb52a54d6982c7386eda556052ca959e8f907779f"
@@ -12991,6 +13401,11 @@ export const appGraph = {
       "from": "5e9d981f522e0031adcf66df0556f10e3ab37eee97292f9a4baf4211e12aa149",
       "kind": "registers",
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
+    },
+    {
+      "from": "5ea8ad0e1d23f58a4888fe86adbdb7a17edead17b70f1636b44151999e038b9e",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "5eabc9b6b0dff7c0d2291a1942e7efa6c567ebb2686c17bba8da6d0d2ecfa118",
@@ -13143,6 +13558,16 @@ export const appGraph = {
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
     },
     {
+      "from": "5feeb4afa8bea361350332cdc830503d261294feeefe95dd717bc1584abf2527",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "5ff82e2670566d7a967ff4ecba9a2048ffdec507f3fc05d3902eba102a9e577c",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "6010037ef7e7536680422398d3dda2a667f43fe9fc4b7c8c9748a3365f6c9bea",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
@@ -13151,6 +13576,11 @@ export const appGraph = {
       "from": "6026329b36156489737a6f73e65a55671419baa169ee4c9bb9a656dc9e2f03f9",
       "kind": "registers",
       "to": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb"
+    },
+    {
+      "from": "602b6f3ed941997d4ea5109df927980b1ba7caddee36e0158c3082a694330de7",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "60415202f8cbf4630b339667c153fe7a37ac17a1d34ed5dcd33d4804ac46a82f",
@@ -13318,6 +13748,11 @@ export const appGraph = {
       "to": "ff161cc50125c41e2c3321037a035bc62c58714648085a19fae5f676991c8fd9"
     },
     {
+      "from": "61ba4dbad9b0e438dbf3dccb323d2c9a5bcf397e07e9002fdce007a7003ffbea",
+      "kind": "registers",
+      "to": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
+    },
+    {
       "from": "61cac4c758dc3b50f6052b5c29f48403cea5a8cd3802bb2241ad6cd88265c0b7",
       "kind": "registers",
       "to": "16bcd669062982bdb20263ad0e7a0b4ea9a993db3a6fb36d11286476de8c33ff"
@@ -13376,6 +13811,11 @@ export const appGraph = {
       "from": "6294f2906286855a523c2813822156f075c76d2796ffe5e081908332f2a5f70f",
       "kind": "registers",
       "to": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884"
+    },
+    {
+      "from": "6298801bfda1d9f567f4f5dd9e40a9ef684d7c3cc54362a9a0944f44eab17c99",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "62a1023bfd6956383b68dd96880fa3c0e86e2a44f1dc88873442498cf96e4da4",
@@ -13663,6 +14103,11 @@ export const appGraph = {
       "to": "39fb45c8506e1c614b9fb5008b34bba27cdc873ee6401b350bfc571b74643399"
     },
     {
+      "from": "6437ccd47f0f98a89e3f4a1a858eb2a116d1afb4710c7fc1647b770863344499",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "64417ac3f08156ff9ab8fb50d06fc02192d8e148678597014bfd5e8faf55f941",
       "kind": "registers",
       "to": "b40eb11ad7781d590ec757257bb76004d78672460b373b5f15d831e69a8996b9"
@@ -13733,6 +14178,11 @@ export const appGraph = {
       "to": "6c7e168781679d72fa2b8715220013d2c08795301ca13a1f501080d7612800dd"
     },
     {
+      "from": "6496e121296ac4358bf3dc3a9516accdbb0f841d2f18093dd43b50263c3db9ed",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "649808b4e7bfbecdd8254d10c97b114a6ca4e2182c41df4c4dcfcee2a3128dce",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
@@ -13791,6 +14241,11 @@ export const appGraph = {
       "from": "6536f0dafad98404712d96126be327f80ab7ea8bf4110b4dcc4d63b1ef852bce",
       "kind": "registers",
       "to": "4775a25c3f2e16f8f2e48e437785f1989d97080af387a4b8f27e6d51ba9e52d1"
+    },
+    {
+      "from": "654a1f07c5320f2caeb59396591d9f7de053b529a82b501f8f4e6a163ed670bb",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "6554c3ed368a8c0dcb37832c2d0304d2093940870d38236f1fd1fc3b7dad6197",
@@ -13958,6 +14413,11 @@ export const appGraph = {
       "to": "bbe52e6349d8633a39ed19483b17f2dcd2c3e86dff6a2c3de3637ab776573d1b"
     },
     {
+      "from": "6695eb092a34d4ea7dfc1dbd29ad2612919ac78d1804b46ec971cd077aacf5e7",
+      "kind": "registers",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+    },
+    {
       "from": "6699cdb689c82b8d0f0365d898cf1a9921dec01bb5fc789ad639c514f6459028",
       "kind": "registers",
       "to": "4ca55b8e5e62702274a9d34a51090f1d89eefa4874617192eb63af1ff1009cd9"
@@ -14001,6 +14461,11 @@ export const appGraph = {
       "from": "671bdfba98de8833e2e00a21b5074a267bdf765ac5da3d1860e46500a744eb5f",
       "kind": "registers",
       "to": "55ee51a86bd3be6d634a4df69d717c57d79b961a05be834148215873e6d67731"
+    },
+    {
+      "from": "6726f52fbb4628457f6183f2e3c8cbfb4096e73401c9ae7af47c03b354d55c6d",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "673a38146b9005d96f88a7e2e605aeccc7bb26add319c511d2e3c9485be19a5e",
@@ -14051,6 +14516,11 @@ export const appGraph = {
       "from": "67a460a376a37833eded64b2d69944a1609bb708a994f1644aa301845aecbce3",
       "kind": "registers",
       "to": "33609d0cddfeec45340c6b07169a9612c5ccab288b86ac2f9db4a1099bf1f84d"
+    },
+    {
+      "from": "67a6ddeff6105ee50678d9b2ca21d699944164369697cc06ebf37300edccee49",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "67b3c6aa2218c3fc5c1736454b28e27e3959ee4b0e96f6f93f67632d182c2a63",
@@ -14168,6 +14638,11 @@ export const appGraph = {
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
     },
     {
+      "from": "68623ee2c39fda365d3b886a7fc7cca3a18f24277ccc0484c394318d1ef7fb8e",
+      "kind": "registers",
+      "to": "b5f12207ab3605046396dd9133c3e843e465e5fd71435b971452ab87a3c24e03"
+    },
+    {
       "from": "686520a461578de11d92a096c60673996158b0209aaab8e72406133cbc906814",
       "kind": "registers",
       "to": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61"
@@ -14211,6 +14686,11 @@ export const appGraph = {
       "from": "689e701db4f2ba277b9eb527aadba784be28c410c0a4f135ef25bd4053f1a20f",
       "kind": "registers",
       "to": "bc8244299fd6860b904454630b1cf8e88e578948c03d8f8a4e35ffd527072825"
+    },
+    {
+      "from": "68a493e7c8452dc0a32fc7825802bdea24b077701fbad1e9f07adb78a0e6f532",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "68b8e58edf610e5740751188eaf971e5e80132339a18ef4219a7c0e24a729f01",
@@ -14276,6 +14756,11 @@ export const appGraph = {
       "from": "69413f211c37332128104a8fa316d27aa121a949c238e628d1db006ad642fe31",
       "kind": "registers",
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
+    },
+    {
+      "from": "6941469f6577fa657c95dbe7e37368999e4a91f33665ead31f9f36028c4c623f",
+      "kind": "registers",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
     },
     {
       "from": "694e14d292d76e24dd0b6051ffc5e5625e2fdd7d725794267a49aaae745caac0",
@@ -14536,6 +15021,11 @@ export const appGraph = {
       "from": "6b798f96cac836ff37f6728652a75819bb25425f65d36a733702acc74dc2b870",
       "kind": "registers",
       "to": "a7efe22061b9a1725843fc228971a5bd1dfe6089302f2bb148f6d45ed626db4c"
+    },
+    {
+      "from": "6b801b2b726779f2e3b414f24015910ff7bda18f7b46f8d46b9e745e5069b448",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "6b89ecf729f3c2006d790e266f8a83b99cba04c0ad709e630df3fb403c5d526b",
@@ -15188,6 +15678,16 @@ export const appGraph = {
       "to": "115f6350b8d08b89462914d54fabf09e559d6d653a5db3177292027f4ebb5a14"
     },
     {
+      "from": "704bbbf06b7b7425866abf89e598c87f56aa0704b8a6e9e58b6e8f73fd56e088",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "7057b8269073ff4e5a4ca931ab371ff8cd8d8d4a95641620ddb0cdef72c5199c",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "705d1f0d91482bdaf131a0b83ef915d0b66d537de021980fd790a9d8a2fb7cf4",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
@@ -15453,6 +15953,11 @@ export const appGraph = {
       "to": "5ed3065a03acc89852c051e5e79595ef8e0bd0d92d2f708e5b43a3f28303cc6f"
     },
     {
+      "from": "7390d88a931d1dc97c3cb2fdc932f5181ad87b3984e5f1234b3a16360b2a5a76",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
       "from": "7393007f646f84bdbf9d77e109f2fd1ff83ae051e11b637b99e0273a4dfef98a",
       "kind": "imports",
       "to": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
@@ -15466,6 +15971,11 @@ export const appGraph = {
       "from": "73986fa260dbca3d1f06c2d659373018924d38f77b9899326378765cee93cffd",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "739aa66e56731c2e9f218f85cca93e30995490d80a62e3ab8807b6f93f8c3680",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "739e3be75b8f9aa9f62569a0e051d932f2630ba02d3409b5debad7c02ba122b2",
@@ -15571,6 +16081,11 @@ export const appGraph = {
       "from": "742623b158b81240a4e82d2bebd32959ebd8218533885097a5cbddb8e28ebe10",
       "kind": "registers",
       "to": "33e05b1de6149c5ceb329322c6a5ff0ea22080251a84967164fda120eb1d2279"
+    },
+    {
+      "from": "743260192fd6076282afb8a59285e280323d27e3fa17050e7a0866a4162b5a75",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "74416058f71da5c8b795a67bd50b4ce86fe2551631711181240d657c05f9f7ac",
@@ -15726,6 +16241,11 @@ export const appGraph = {
       "from": "7589ba10c9de0d51df6d008cada23774e6fb06ad9ce8f7857784cde792fe7868",
       "kind": "registers",
       "to": "a0df7725d624af3b012b18c5456a2b968f57352e24b6896d4ea09d853d95ae6e"
+    },
+    {
+      "from": "759ef9d7c7a344ca24c33f89afecb5f3ce7e5740439052382afab3e19356de91",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "75a121f2627a1b9afd13be1ddc7f67942c07a95745ff29003546056a794d78f4",
@@ -15886,6 +16406,11 @@ export const appGraph = {
       "from": "77abd7cffed0e64df27e7fdc2f209f2701584ff40a64646a028808f96e5e3d4d",
       "kind": "registers",
       "to": "b70edec5836d8548c9141e315ed41c279d7b7e4eb56af611bf2c200cca7c6988"
+    },
+    {
+      "from": "77bf46513bcf33f23887bb11ef7e8604829323a50c172f2fce67c66b919c9f51",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
     },
     {
       "from": "77c0690024eb9f7777890610b4a5493c143e16a91bbf7b552eea4ee2a6bdad1a",
@@ -16131,6 +16656,11 @@ export const appGraph = {
       "from": "79c566ac148ebf3a54fe72ba6be698ac87e6bff35e438cc5712bc92de0d8cbfe",
       "kind": "registers",
       "to": "de50e46cbf64fec4434ded5ce0cf5721586138999900ae0ca5d4c62f3ccc17ad"
+    },
+    {
+      "from": "79e666b79b87daab69fd19f8409ccc7183c259cc8d7e4be5343cc1b9cd0e2490",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
     },
     {
       "from": "79f3440c9840ba126a812dd5934b7e6998fb2db253d1773f23ed5416f5290ddc",
@@ -17023,6 +17553,16 @@ export const appGraph = {
       "to": "070a10abdc72c2b6beba1cc613751bccdfd577bee475fa9e69a8d1c6364101bb"
     },
     {
+      "from": "811e43c6a1c55daf94ac0ec1c516bb5ee34c1dc446fdf9fdff2d2740014165d1",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "8122d54fdf0dc9078945cf3f6fd262ba651ad56ca8a0948cd4ef51d8638286cd",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
       "from": "81256ffa13ca2919d0ca99d01bfa32eccb18259f674849fff7377183c529bb74",
       "kind": "registers",
       "to": "119a5f170ce50375ef50ab0ed0c9c1ca20f1a04490dddba264b22f02a580a455"
@@ -17286,6 +17826,26 @@ export const appGraph = {
       "from": "821e8c9025f516601c465d675b4599df4b133f162a0faf6dba81e048d216e2a0",
       "kind": "registers",
       "to": "8998f57cc363769138e3c4e14b6e83660be8154e3f9ebc9e638b6c89f763c199"
+    },
+    {
+      "from": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037",
+      "kind": "imports",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
+      "from": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
     },
     {
       "from": "824e3a557d719e33768a91e73e0c5e7cc98566ec7757c39e03dd94991fd14177",
@@ -18523,6 +19083,11 @@ export const appGraph = {
       "to": "4c9d04cf670f049c794c0f7165627612bf86b3cd5a93739c4e8b5f55587a1f1c"
     },
     {
+      "from": "89714b9661650a45827b584b40efd5822d9236b113f7551292f23a04d48a10cb",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "89751cf8fea46bf352862988f3e0ea2bb0314b27f5480c3952e42dea5af5170b",
       "kind": "registers",
       "to": "e8a465a58857ea944773e1171752ee0aedba4559de6b2c863e1c4c281bac560d"
@@ -18743,6 +19308,11 @@ export const appGraph = {
       "to": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
     },
     {
+      "from": "8ac7c43934718b7433ef01189ff9c063f975e144376de45f6462cfc9bfca1d4b",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "8adc6b72665356c5c5e42a1b0e92161e4f6c228746f9c513f5154e658a81c7a4",
       "kind": "registers",
       "to": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
@@ -18921,6 +19491,11 @@ export const appGraph = {
       "from": "8ca6e90f186da86a8bda195ddfe0fe93e7a8c5b55840d60bd1765bab8954ea5d",
       "kind": "registers",
       "to": "46da072a08d287342a7253254c90f004d24be2606ccb39a5243468ed21159219"
+    },
+    {
+      "from": "8cb508d7d0af430c7a96f01e9d8a0dda6432213570d3c38b2d7e4bde2413afaa",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "8cb88395c4cb40e4c2aeea31cd2e4a0f340614b489a363de7ec2d46710ea5185",
@@ -19646,6 +20221,11 @@ export const appGraph = {
       "from": "9255d37762fda33db1f1396a73061b3f5f3220d158be2822d671e90ffce2266d",
       "kind": "imports",
       "to": "fe7f54a4b2601f7b6fcf0fec5762261c832f96a6b17853b349ac4e8ff0467ef1"
+    },
+    {
+      "from": "92637364c14d497abc2b28acf7fad7b2dd47f6923af74520a65b112ebf227516",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "927a791d73344f910e045ef74e7d8578efc400a50c5c321b88d70ed82484e950",
@@ -20433,6 +21013,31 @@ export const appGraph = {
       "to": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
     },
     {
+      "from": "9969c7486a76909171e26e2154768fffb917091f898579524112788d8cd465b4",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1",
+      "kind": "imports",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
+      "from": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1",
+      "kind": "imports",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+    },
+    {
       "from": "997fdaebc003b213d683ea60e96e8c4e705f341f110cc652dbc89bd9ae5215f5",
       "kind": "registers",
       "to": "55ee51a86bd3be6d634a4df69d717c57d79b961a05be834148215873e6d67731"
@@ -20471,6 +21076,11 @@ export const appGraph = {
       "from": "99bbe26bcc52172239b0deb423ce0bb8112f97b19386238a8f38a9a52075236e",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
+    },
+    {
+      "from": "99d167176afbb166baf66847d137c97c85263fab331e08c10eb76a06bf5d3c24",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "99eaa814279a6e0133058dc8992231b488216f129fe1b42dfc0b66f92fd21861",
@@ -20793,6 +21403,11 @@ export const appGraph = {
       "to": "5b59aa88002a3954f39f46b9e2c932a6f4e0baef9b6890139f2cdcd21eb94b47"
     },
     {
+      "from": "9b44a7724c1ae31e41cb5b0d8396e86f82385aadf5f49f6dc0a1a40a87274c54",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "9b5fee2373d5f188971c49df1721ebf186c5bc06b74b24de085c03de62a0be26",
       "kind": "registers",
       "to": "d8bc705e15802b754831789c8618202a0ae4bbfe6831ec70a22c9cf27117ff18"
@@ -20998,6 +21613,11 @@ export const appGraph = {
       "to": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
     },
     {
+      "from": "9cebf0ac41eb79e2434991043262efaf19b1f2e319034ff4c79a036de1cb515f",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "9cf6203b137fc2db48781b1329e243b5d9285d2af4685680559cb40cad6190c5",
       "kind": "imports",
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
@@ -21066,6 +21686,11 @@ export const appGraph = {
       "from": "9d18428219f9e9648c430e5822086e6944c34ceb6d66214555afbac80e359125",
       "kind": "registers",
       "to": "89aae10e0c338a9eb43bd1e97a645e7986cb5ca4964a7abeeac8c152db79a47d"
+    },
+    {
+      "from": "9d1fdad720465ff9adbf6e65905990212c40a5efa08397c7edb361a66e780ae4",
+      "kind": "registers",
+      "to": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
     },
     {
       "from": "9d286fdc599db35cf2042e641abef2e55b1cc19b8dd05877484b03f6fe8ea3ec",
@@ -21383,6 +22008,11 @@ export const appGraph = {
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
     },
     {
+      "from": "9faeae700e434d7d6f168b9585d9d970c9bacfb5de8b86e426d3d6a381d8dc09",
+      "kind": "registers",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+    },
+    {
       "from": "9fafd879078a931174adb238df857d3a20eacaaf00f4e6116c7a7c6ecd5e4f20",
       "kind": "registers",
       "to": "6c7e168781679d72fa2b8715220013d2c08795301ca13a1f501080d7612800dd"
@@ -21421,6 +22051,11 @@ export const appGraph = {
       "from": "9fdc693d55b7c7d799d6bc01d70a4d1917f00d8aa8e235a153efa6bba33f75e9",
       "kind": "registers",
       "to": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
+    },
+    {
+      "from": "9fe0633a6877095e51e093463c1721379d64a86c015cf2700c36a9ba8d5bc326",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "9fe80b08486ae5c924cd0fc933782e7fefc558f827b99a0354b7edf17b5947db",
@@ -21561,6 +22196,11 @@ export const appGraph = {
       "from": "a0e7a7584ca9fa7375ea3adfe4c1f3eb2e925050e53e6fd9f08b8213b3e8571a",
       "kind": "registers",
       "to": "86723e85e1682b141387414f2bb0a6d4ccd339cba41d2a4ef8b9a203c2c05fa7"
+    },
+    {
+      "from": "a0eb0362c281f36e219964cc0296ce409ebf6ff6f8b5c0ddcfa6af494a29d983",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "a0fc44877b33383dd67b70bbd7be182335bd5af5e54a8944e8e62cb032793fed",
@@ -21751,6 +22391,11 @@ export const appGraph = {
       "from": "a28ea40ccc281368a7a5dac4118bdf45b6d8b840c6a548b9189c0937d5ce9891",
       "kind": "registers",
       "to": "a7efe22061b9a1725843fc228971a5bd1dfe6089302f2bb148f6d45ed626db4c"
+    },
+    {
+      "from": "a29473b28172caffeae699ebb2f93dfbb7971685665a3a297e38140c707adb91",
+      "kind": "registers",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
     },
     {
       "from": "a2aff93873bb17fdc2b08239c1d811c20400b59421c93ec635c6fc3fdf683374",
@@ -21983,6 +22628,11 @@ export const appGraph = {
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
     },
     {
+      "from": "a492cab2a53035a222897983499a446e38f257c90b83108f255a5199584facf7",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
       "from": "a4969bead58c4a0195c207534ecee48c91e0fcdeeaad61883cffc27c73184981",
       "kind": "registers",
       "to": "5b59aa88002a3954f39f46b9e2c932a6f4e0baef9b6890139f2cdcd21eb94b47"
@@ -22026,6 +22676,11 @@ export const appGraph = {
       "from": "a4cee6f371385f02792c55f2e4100d514e3500a54e8b98ce23fa9236431d4d45",
       "kind": "registers",
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
+    },
+    {
+      "from": "a4dd0c58bad462bf2d51a0b66edf2e46903e6998296099bc13fe75ee9a4c012f",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "a4defd44f11b645f17bb549f9a1c0784d83986bacb32c91590e0d00a504af030",
@@ -22113,9 +22768,19 @@ export const appGraph = {
       "to": "4fd5babac6f3009a9b6a0956db8c0717688bdf12a2ce320f89b27437dea8827d"
     },
     {
+      "from": "a579bc7649dc6be7ad7be87f4c2ddd6f52b0244fcedfe29c76d599bcd42a268f",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+    },
+    {
       "from": "a57d19bde648164c4243b0e34fa657e58027a6360571172e78333f6030bf398c",
       "kind": "registers",
       "to": "9ddcba1dcd9ef2ccf4150bc419995c9713e09017f89710ed3897b0e340fa6c2f"
+    },
+    {
+      "from": "a588bbb5af10e87cc43b3a03f5e7fca5a88231a5efbe800a4800d13860b26b3d",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "a59abee4e0b7bec594ce1b710706d27e0b77820abc7c533db09b7c0f0ca1fa2a",
@@ -22338,6 +23003,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "a67ab53eec9a6697793f89680071b92e742474d3d329ca3d84a29cfdb28c13d3",
+      "kind": "registers",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
       "from": "a67be0bc9663ff367ad49f740904907e58dfbdb33f4987ddbcb49bc92ec9f5d0",
       "kind": "registers",
       "to": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884"
@@ -22376,6 +23046,11 @@ export const appGraph = {
       "from": "a6e8ff1f92c13ab1d2d5ebd8d99ee8ec2d1c1d5d32efb060c28c7589a544d810",
       "kind": "registers",
       "to": "a5e19b453b23188ca45916011457f083c9e4f42bb4552dd3370baa15153ce980"
+    },
+    {
+      "from": "a6fb9b761a8219d00e7424d77add1547cf3d4466bb1b2ac763f1642230899883",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
     },
     {
       "from": "a6fee27b2d545b7478966aa13b3213636fd99c6679e4ecc527c155843c6e8f94",
@@ -23073,6 +23748,11 @@ export const appGraph = {
       "to": "a36f2dd97da72185e095cb806593a49c3221dcc9e2f187ea4efdbfc742167c60"
     },
     {
+      "from": "ab1858b55ee9ecf2c5fca7b45e1cf2d9c0c225d898aa81abdca3378c40284277",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "ab3f31b22003341d362292f2af8fdd0fe67a0810ee7f7ac673167023729efcdf",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
@@ -23303,6 +23983,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "ac9ca64192aac4e413c51ba7f17de8d10738582aee7faa57261cedc2d5e6e14c",
+      "kind": "registers",
+      "to": "57ba704847e5e4081e160f77938ead0d4fa6bfc93581e813a9aeb54a83a7dbb2"
+    },
+    {
       "from": "acb0a5ac7dadea09d2af3679c07576fb4888ae425c33a920161198fdf57625b5",
       "kind": "registers",
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
@@ -23341,6 +24026,11 @@ export const appGraph = {
       "from": "acf92ad9ddf295671858e70ceb15b94822bea19d9f68a8172ad3e1324fb93fcb",
       "kind": "registers",
       "to": "ab4238094289749b6eb5f6942feac1fba8b55f139e5433e8aafbdf9339af49be"
+    },
+    {
+      "from": "ad001e1316d4e2f96cd0bb39c7b341c8cf40b0d807ca1d1e384b630f7601d552",
+      "kind": "registers",
+      "to": "4b98df43b6f2e925f5188c398f7a6b93aaa3b06004918a53a4686555da05b0e8"
     },
     {
       "from": "ad0c307d191bc8296aad9ac9a20b18700568063d96b61d273c76c296d39be5e9",
@@ -23411,6 +24101,11 @@ export const appGraph = {
       "from": "add55c318c3726d9fc313697b16b4efc335e6ff88070d66a89332f126c5c9ed1",
       "kind": "imports",
       "to": "738fe470632b4f5d6d692e57a6d74ba6defdccbee0bd5b3c0fe92b6869c0928e"
+    },
+    {
+      "from": "add6528d86556d1c6b043ef897af628ca47dd939893ef679be24ecf975fa8752",
+      "kind": "registers",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
     },
     {
       "from": "ade91b617db2c5e623ea2728604b197af6fc21b4b6726f1e79b7c636b75882bb",
@@ -23598,6 +24293,11 @@ export const appGraph = {
       "to": "344fde6f2f26dbb6d2c186a772dfeeba184cb04dca44dda0af27dd92825beef4"
     },
     {
+      "from": "af24e793212d1c78e4267d50b621cadbe820bb003c8fa0a41a47e1133f23f3c5",
+      "kind": "registers",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
+    },
+    {
       "from": "af306268d68d5204f2edd8d4c991c97827850d71155743c9cc836f4df8a982fc",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
@@ -23686,6 +24386,11 @@ export const appGraph = {
       "from": "b022b42e54d93012fdc26a49787a3545d7fc43e9ff1e097ba00946001f67cbb5",
       "kind": "registers",
       "to": "39fb45c8506e1c614b9fb5008b34bba27cdc873ee6401b350bfc571b74643399"
+    },
+    {
+      "from": "b024843eb3f3a7d4734f1663669917c4160f9e55fe81d2bdd52a75d1ed3afe7b",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
     },
     {
       "from": "b0466800d03d3e2e196e99e0fd05f2e39b95176c01961d655c51826824af0912",
@@ -24168,6 +24873,11 @@ export const appGraph = {
       "to": "8dc374a57e700d706f2584353e9217fff49f4f1097d92ec070e846bfc969ab11"
     },
     {
+      "from": "b414504cb35a0461ae4718f3bc31ca754f1e55113a7bb1b7aba37d2abb37d61a",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "b416b3daff41d96225c7c6aa743c663532f5bd3807a717ec75730d10b5680180",
       "kind": "registers",
       "to": "921d158b80de4a71fda045728da45f97c750e5ffc7a258cc785c7dd007f02650"
@@ -24248,6 +24958,11 @@ export const appGraph = {
       "to": "aaa0a97dc2b84c51ae2c880c7965f3154cd072191f72c3632f1f604c0f4ac9f7"
     },
     {
+      "from": "b491c442ece18c6e42a72acc814515695a7dddc03d48efa255c0446674e1c8aa",
+      "kind": "registers",
+      "to": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534"
+    },
+    {
       "from": "b49704d946da9aed3d2d926f42f8894d1db017c730bd36c7413c5e454b6ad15d",
       "kind": "registers",
       "to": "28267ec472202be9c321b5c93d3ed082d33354ac7f35d66033337cc8449e7cdd"
@@ -24271,6 +24986,11 @@ export const appGraph = {
       "from": "b4daf046e01d07210e2ec695fc83838c43e8cc76addcf9fd09d801851824c85e",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "b4e0f09c2368617172caf4909b3b4b2a82a45f5e2c725951154a9969a22372d8",
+      "kind": "registers",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
     },
     {
       "from": "b4e5b5f11a6c724e21a1b61931884aa250ac9fd7a30ade2417250a85221c2b12",
@@ -24366,6 +25086,11 @@ export const appGraph = {
       "from": "b541a6f06b1df6c1f41c73c6b7f2bc468eea5aba399a62043811c7cb0f7b9d28",
       "kind": "registers",
       "to": "b5843f30d0693e864f4d0e7f2ce829a940c42546276fbc1bfa28c215b915ecf7"
+    },
+    {
+      "from": "b555bbc4bd51cf7a5583957a24db35084893ee2dbf809e8092672b724b9ffc51",
+      "kind": "registers",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
     },
     {
       "from": "b5568b7d7a8b3130cd9d76e3e6ad835bc0718135c03bed36c1a54e9dcd8bba90",
@@ -24548,6 +25273,11 @@ export const appGraph = {
       "to": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
     },
     {
+      "from": "b5f12207ab3605046396dd9133c3e843e465e5fd71435b971452ab87a3c24e03",
+      "kind": "imports",
+      "to": "bf893446bb757c7cd7f61bee3010411d2f63f0e70b9a572cc09c0f3ee22d72b0"
+    },
+    {
       "from": "b608e2da8f98852c0037d88a52fd2286df8dffa127d94571eb94e33d0df0df5c",
       "kind": "registers",
       "to": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
@@ -24616,6 +25346,11 @@ export const appGraph = {
       "from": "b6c8642bc16d19ca7e089cf1ea0db170a940a22197dfba2f82f90c032d0080ed",
       "kind": "registers",
       "to": "6452e83583bb9411e16ff7d9f89b32f6184f05012f1879f2cd2420ab087f85be"
+    },
+    {
+      "from": "b6d35121931f2c047a68dcfc6b73be3a7ba1e24b5ada9d90f887bc80b495bc1c",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "b6d656fc7dff0fd0d73297a53dfd953d6a0707fb5083c0c36d84ec23ef66a50c",
@@ -25043,6 +25778,31 @@ export const appGraph = {
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
     },
     {
+      "from": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84",
+      "kind": "imports",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
+      "from": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84",
+      "kind": "imports",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "b9fc86a5c2d6638c1c8f1155ed0946df87cb3233dafc619beee4dc5be82b982f",
       "kind": "registers",
       "to": "a798b47fa9c77773220ac7c6c7bb775dd4aa7046dae3ccbb53e55a715f971309"
@@ -25448,6 +26208,11 @@ export const appGraph = {
       "to": "10a9380e57d1dfbc5c0db5d3606c4a097bd83401e9a1735cf4566c7ec5a7d747"
     },
     {
+      "from": "bcb645d589ed6588f2b1ec5d9160872f5c0287b4557bef1f8574852dd1e33444",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "bcb71a0fee9f16fcb73be64d10010f95d028cae9cd22f8acb95ec831838af3da",
       "kind": "registers",
       "to": "22690cfe80ecc89956d8af28f571b2a5b7e235d43e4e112bf9be5027a8ab11c1"
@@ -25728,6 +26493,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "bed49019d34efab2bdf026dbb6ed2a3f96d1f09ebee43d2d2f548a8c0852e968",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
       "from": "bef52a2c380722fd50871ed11c370462e8345157e8a075b7efcce999d5c96e96",
       "kind": "registers",
       "to": "88362b9e8878f518cf2c17413c527b49d97191aa2e080c47db0e3200dfcb68b8"
@@ -25751,6 +26521,11 @@ export const appGraph = {
       "from": "bf1ac1c52b32ba7afbe4bd3c8d929c19f2f257ab86e6312443ec3a7aebda05b2",
       "kind": "registers",
       "to": "cd3eda6cfdb4eba3f62b657c8fcba9ffb47c303cc407ce34db5db49c617aae3f"
+    },
+    {
+      "from": "bf1cb6a17e4061b8cc486d4e677a77731e77c1723c4197695a04f394508defa2",
+      "kind": "registers",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
     },
     {
       "from": "bf358b6120ac5ce1eba92d46c1bde761aa25871599273dd55ccac6cee8480410",
@@ -25921,6 +26696,11 @@ export const appGraph = {
       "from": "c09289c899a18fca4b31d41f6ea8c28d98398e381a3a64cba93fb77624201cfc",
       "kind": "registers",
       "to": "ccc18fa7b6144ef5013548f2182f7209d88b9e4b1486855bd1221a3ebc3885fb"
+    },
+    {
+      "from": "c0c12f80a9590908c6328f5a15f3a141b201ead13a4ce3abdebe6e2c54bbdc90",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
     },
     {
       "from": "c0c6768fb894a4da429b5619bf21680a7b27feddc1ba69d56e437a391765dc55",
@@ -26158,6 +26938,11 @@ export const appGraph = {
       "to": "ea59f3190fc14bde6b92c9dd3620c026c28bf7034ddca77c49a4be96596a4ffa"
     },
     {
+      "from": "c261f3ad0b182d27ee9791979c013305de98c139f64582ecd23f11fc2733aaf5",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "c2866a5902c65bfd90c78fb8e2b19fdf9ff3eb4b4234ea7f7a18b4007893c627",
       "kind": "registers",
       "to": "5194e753dfe17c025a21587e67d0e565e2b724a47cf73042cddaf6dae1663e0b"
@@ -26281,6 +27066,11 @@ export const appGraph = {
       "from": "c36b92e27f5b02d5da9d49436d6806f34348f89bb139c16fb01ff42f914c0383",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "c3a2f2adbfed9fd2e046a4cd89c82f86b5db70b51f42956cc627a046a3b85eba",
+      "kind": "registers",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
     },
     {
       "from": "c3aa0ddd0b6ef5329281edca28efe36da2602af2183429d4ebc4b73889074c51",
@@ -26431,6 +27221,11 @@ export const appGraph = {
       "from": "c4e8361d2b6e6aba4bc5ffc9cdb1deb1d5351d54a557ae574ef88de660ca56b7",
       "kind": "registers",
       "to": "830f97bfc0ceffdb444e0a5521b46fd33df891cc09a6278357e196cde1057222"
+    },
+    {
+      "from": "c4ea23bed8e67a2c23dad50869c7eaf1212e054ef8ab95a40995ac3cef0a3669",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "c4efc8849f672581d021260b07feef9effd28c27ff219e487ddfcf371f5aef3d",
@@ -26633,6 +27428,11 @@ export const appGraph = {
       "to": "6be7cf433a00ae0364b18c5f56cdce4b5873e9de035a824f947c829c2128775a"
     },
     {
+      "from": "c672e1f6f81c6bed45661d371a9a46044b0d177868c09e45db10450ef93b7029",
+      "kind": "registers",
+      "to": "b5f12207ab3605046396dd9133c3e843e465e5fd71435b971452ab87a3c24e03"
+    },
+    {
       "from": "c6b13f88f9a3293983f13f8b5bc048f04f6becd0977a58253a6fb64990eb32f2",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
@@ -26651,11 +27451,6 @@ export const appGraph = {
       "from": "c6dff5291e8faa49350262d9aee44a06f4bd8ba8df818d7a33d1d3f488ef4e58",
       "kind": "registers",
       "to": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
-    },
-    {
-      "from": "c6e24fe116f37ae5056a8e4f4b1176484b2d57e8f40693f376a93d31ea8d3212",
-      "kind": "registers",
-      "to": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
     },
     {
       "from": "c6e71afa52b0127351497acf3ab7d45661e7f5fcd7faef13a4fd31723b85bfb7",
@@ -27338,6 +28133,11 @@ export const appGraph = {
       "to": "c824cbd31b5daa90a46998b34cb9670a8f6a00f198d11210f21d94bb6ebc753f"
     },
     {
+      "from": "caa95642f20c292eb579c87029325dd9a58df047e00c9a6c70fa3a61d984b32a",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
       "from": "cab26a7989ff81bdcce7ee010c45dc7d21d4876e3b47e8ca64027cecfa8a69c6",
       "kind": "registers",
       "to": "a7efe22061b9a1725843fc228971a5bd1dfe6089302f2bb148f6d45ed626db4c"
@@ -27431,6 +28231,11 @@ export const appGraph = {
       "from": "cb623cea6b28f79b367ed0cd397e92de75cf0ddbef3cb63ade0c74c1b6870364",
       "kind": "registers",
       "to": "7393007f646f84bdbf9d77e109f2fd1ff83ae051e11b637b99e0273a4dfef98a"
+    },
+    {
+      "from": "cb62afa8455da2b9c9a7416958012ccc706e6a038cbc45d282748d1118780a65",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "cb6324ef0691c2e1046a2358942b8e5f538505f50c62248ffe936bd7f6250c46",
@@ -27693,6 +28498,11 @@ export const appGraph = {
       "to": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
     },
     {
+      "from": "cd75437a74c9b850b80f9afc32d1f988edab749da8ebd87ee387a0a93dbe0d19",
+      "kind": "registers",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
+    },
+    {
       "from": "cd81f3b62c313fdae156542154458550a33790407c8ebe627a802850b6eacbce",
       "kind": "registers",
       "to": "cf94900f42206704a70752a1c9f21210dcdb4939ff28aa6229cb38b5bcdd5d5f"
@@ -27731,6 +28541,11 @@ export const appGraph = {
       "from": "cdba3bdc841a78b4a85b571125660bb6ec9fd89931274f94f7a59631d306b9f3",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
+    },
+    {
+      "from": "cdc7ec03302beda6351500961f22814e75ac7159a532a1f0d1bd93c1428678ef",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "cdce5021016f3cfd49774ae09b68002cab9572e136b6e505538da06ccf07723e",
@@ -27906,6 +28721,11 @@ export const appGraph = {
       "from": "cf1c5d8970706b07bdc75209e3a8fc5b5fdd2bde84a052d375e4a366e01400f9",
       "kind": "registers",
       "to": "3007907d84b6bf59a7602bca18a8c016da56d59037437137a4d4f563fd574882"
+    },
+    {
+      "from": "cf2a6142bba2fae6a3ee7a78f4bea7f83811776e0cfc4154afc6ae9b8b08f02e",
+      "kind": "registers",
+      "to": "57ba704847e5e4081e160f77938ead0d4fa6bfc93581e813a9aeb54a83a7dbb2"
     },
     {
       "from": "cf2d3b3f39b81f50ffb224cd933193c36da9e933c2c50954e5d0038ba4a22b3d",
@@ -28403,6 +29223,11 @@ export const appGraph = {
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
     },
     {
+      "from": "d38c2d71cf9202c63b4edd76d2022e9a7b12b0cfd8ce498e9e85fb7be85884e8",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "d38d6ab098e1930909d57f600556debacf9c6e0f38462e8f54509e7fa4700735",
       "kind": "registers",
       "to": "e2e1402c6d40396a061488174eb8161b1d4ec65ccac5d12bd9c2c61f74ebd91e"
@@ -28776,6 +29601,11 @@ export const appGraph = {
       "from": "d7694ff02fce3727dba580f91731fdfa8a588057c3a5cbd514bb3ed84b144eae",
       "kind": "registers",
       "to": "f13f944710f2d0506aa6f1e7fd716154e64ed89420f345b8798b1c111d30ce16"
+    },
+    {
+      "from": "d7799e7df09f0f0e6f8c8c0d79f896c1aaa69ad6205b42be42660d17be1d1d81",
+      "kind": "registers",
+      "to": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
     },
     {
       "from": "d781084a264f6ad9bbeaff811d29a5e78a18f7d647d7231e0da10c4b9b26506b",
@@ -29203,6 +30033,11 @@ export const appGraph = {
       "to": "e8a465a58857ea944773e1171752ee0aedba4559de6b2c863e1c4c281bac560d"
     },
     {
+      "from": "d9d9b8dbb8974ca5b4358c98052019179e09fc6830a1ef79f9414244e6c873ec",
+      "kind": "registers",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
       "from": "d9e4fa3fc73bebde6a60b17055ab0581c6ef9c5972a91c976f678cc4334b55e1",
       "kind": "registers",
       "to": "2894340435807c72a34b54bc91625515df169613966652a06eb73f7ca7bcb4b1"
@@ -29281,6 +30116,11 @@ export const appGraph = {
       "from": "da9a8a5051176b3de18ddcb8ec48dc887e2ae63a848f2415aa29ccdd65c18518",
       "kind": "registers",
       "to": "62c8f0e8388a61e07e37c970a6a3e768039704fdfcc2f60e90e9cb7aff5e27a0"
+    },
+    {
+      "from": "daa4be581be0a8a77a334d7b6e516bf7520808a9a06616e2d5132c902fd908ab",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
     },
     {
       "from": "dab53409e0f6ebe2cf6bc2b81f2a52370b6f34c4187a778989b2232a22d93da2",
@@ -29493,6 +30333,11 @@ export const appGraph = {
       "to": "514d6280e0565e17806e6058e3082228654c3b196523045d8583cc4fa169226b"
     },
     {
+      "from": "db5f86bdbcf8100cffd174feeb7a19e7117752397fe9e26b71016e3c5c1e2752",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "db688b8080009f243c96d0a5bdebb6e4194910d45eb9b0e30049f534c26697c8",
       "kind": "registers",
       "to": "4fd5babac6f3009a9b6a0956db8c0717688bdf12a2ce320f89b27437dea8827d"
@@ -29521,6 +30366,11 @@ export const appGraph = {
       "from": "db793191df5a1cbe84893d8ca59484dee66e8a9a8c5a6a416ed8fa0a778cd3b9",
       "kind": "registers",
       "to": "5005116507821eb2cf71ccc1f772048ea53fa90cc5a8958ac316bb57c1db391b"
+    },
+    {
+      "from": "db7a58428d72e31b8260d5a0cdde09b8f00d4a9b94499b16be05d9c24f50077c",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "dbb5096946f6810b80bab7e86cbb70ccc056edb139b00bfe32e747f123b3402e",
@@ -29566,6 +30416,11 @@ export const appGraph = {
       "from": "dc0fcdb4f7332567a7dbecf47e2b3e73ae3e190af88512cb31c66c06094f88a6",
       "kind": "registers",
       "to": "0e2eb5f678947633d6974811f8d1d94734de230312f4e9edbfb7228f4bbbf34b"
+    },
+    {
+      "from": "dc12ecf4176c41c6364af439881511a14f188c06caa1ffeb0976996ce43a2f5a",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "dc31f86e86b1b3b969422ba9cc31d509c341eb82a2d66f66aab089784ac710e1",
@@ -29753,6 +30608,11 @@ export const appGraph = {
       "to": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
     },
     {
+      "from": "dd382466b72c3a52b356bf2115ad7c2f2dec6f0fce06b02fccf5cb8edc5f04a1",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "dd4f9c5438d44ddea0e77deb0d5d07fee4e46a4c5c69dfb14f4c74b796e1ad52",
       "kind": "registers",
       "to": "218ff0cd398cfcc09a1f44ba9c5b569246817556277f4168cc7f1c4b3e2b5097"
@@ -29931,6 +30791,46 @@ export const appGraph = {
       "from": "de5e61b5f60e77344bc3cfaf00f694af463b7c8b7cbfb39fce3c2870c043c816",
       "kind": "registers",
       "to": "5b59aa88002a3954f39f46b9e2c932a6f4e0baef9b6890139f2cdcd21eb94b47"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+    },
+    {
+      "from": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+      "kind": "imports",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "de6f7e4d649b4ccfea108f03774ec960adfb062af38bd8138a30f9951c76b207",
@@ -30203,6 +31103,11 @@ export const appGraph = {
       "to": "0ac817d126bbdf737fb626a1657289cd8fd465b0bf3837b77380a1b68804ea03"
     },
     {
+      "from": "dfb7a603a654004e104acb63d9bc55837dc9065e9e601219d18f3a9b85c10325",
+      "kind": "registers",
+      "to": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534"
+    },
+    {
       "from": "dfb7ebea4dcfb06ec30dbb2749ca568d629c4ee4afc63a360b873af8194e67d0",
       "kind": "registers",
       "to": "53dacca5ae0057ab3a6193ffb52a54d6982c7386eda556052ca959e8f907779f"
@@ -30328,6 +31233,11 @@ export const appGraph = {
       "to": "9dc8dd8db0bb067ca55126fe84e6344905569cdc0b935d27c2408ceeae6e7f61"
     },
     {
+      "from": "e06a060d995ac9e9c3dca8ea74b05863ba54c6b082bc302cab3c65501ccd3946",
+      "kind": "registers",
+      "to": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+    },
+    {
       "from": "e06b2c497d8640f4ab6b483aef2fc3122558ee44825e1f2cd6d891978712e8fb",
       "kind": "registers",
       "to": "ff0e431f9a8d416fa892dd2f7cf3889f11d0c07bbaa198a15167f1c45d70f7a1"
@@ -30431,6 +31341,11 @@ export const appGraph = {
       "from": "e1a4e0824583229097a149d816f25e0965026b3f86dee6d85f981ff8e1d79e11",
       "kind": "registers",
       "to": "218ff0cd398cfcc09a1f44ba9c5b569246817556277f4168cc7f1c4b3e2b5097"
+    },
+    {
+      "from": "e1a9492e2ea1dde4f9873a0a1ae92ddc2178179f83d12c69795f7822ccd736e5",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "e1acba4029f90e36bec8252916aa7168368aabca6a623bec012d5b188ad7e985",
@@ -30591,6 +31506,11 @@ export const appGraph = {
       "from": "e2a400dd31e0ee868e1e0577ae05d8759ae41ca1f07d455152a01d1a0cdf70d6",
       "kind": "registers",
       "to": "7cb2a45a4bed83a4afcaf270fbc7ea65b7eb08c691db98542ee9128a479ecb55"
+    },
+    {
+      "from": "e2b2a081ec8adaf889d9890775a9f83927efbf7eef4afcf1f3c699dab8a006e6",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
     },
     {
       "from": "e2b5fe86657e51cde92192a885d91ba04010d19b37740d593e6eaa7e4637dde3",
@@ -30933,6 +31853,46 @@ export const appGraph = {
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
     },
     {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
+    },
+    {
+      "from": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+      "kind": "imports",
+      "to": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+    },
+    {
       "from": "e37cd65bb18b3e661ddc8efce29bbd162861cbc47346caf1e23f65a82cdc5622",
       "kind": "registers",
       "to": "099b8363d1e78cb6d3060d5070f5b0768ee6d9a71bf60b26ccb93076688947b7"
@@ -31093,6 +32053,11 @@ export const appGraph = {
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
     },
     {
+      "from": "e4e5a500d6dce69b10b0efedae8424f619e5ae32210778dc8317cf17bd1a5943",
+      "kind": "registers",
+      "to": "453392c6e8e12e8e66161a39cd51c23d834b5b074bd743d692ba8f0b908bd7e6"
+    },
+    {
       "from": "e4f62052009a4fcb7cfbee2d2aefab95378ee0ffe8b875d409ebfe433f69c68d",
       "kind": "registers",
       "to": "0f75a14760572ec2259d326ef85691de1948ab92a7798c8ef692498578b9bd03"
@@ -31148,9 +32113,19 @@ export const appGraph = {
       "to": "218ff0cd398cfcc09a1f44ba9c5b569246817556277f4168cc7f1c4b3e2b5097"
     },
     {
+      "from": "e594d4900ee9fd281b0744df0375a25d39b157e55e5c64f950f330d5ce5828c3",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "e5ad4170b5069b59ec38ab79e87eb62e0fe5a82c8b1cca5df0b1c4ab4a5cdb89",
       "kind": "registers",
       "to": "22690cfe80ecc89956d8af28f571b2a5b7e235d43e4e112bf9be5027a8ab11c1"
+    },
+    {
+      "from": "e5b6330d5585b6927d23bc9d43c0276575f2b44128bf7011304b44d8051f282c",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "e5b73805625792156cd02d4ba9c0a27381b5c1b6cea3c23d8fc1f113a2e73d0d",
@@ -31181,6 +32156,11 @@ export const appGraph = {
       "from": "e5d28090bfec31a5da8a12bf38958d2a218ff4bbdf2d5c4bafb732dc8cedf587",
       "kind": "registers",
       "to": "b0cfffb434574f65dd1bd939e788288f5614631c6ee58b05b1632f9b359d78fb"
+    },
+    {
+      "from": "e5d28a748dac648aeead0b34cb0681011b31f7e57ac2536219a98205f645e1e2",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "e5f1787efcfe6cd438fb0ca70c945c1ea609dcb132db88f092b7064dbbcbe80e",
@@ -31763,6 +32743,11 @@ export const appGraph = {
       "to": "792c48b261fe786acf87988aca68eed21fe9de5b5fbac4a069c28fee6baf70dd"
     },
     {
+      "from": "eb314a75f999a9a1523aa0e73a190b46eed6cdea1d75c999ceaa31e72fbcad10",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "eb3afb30fed15e311afb0fd82f85c0aa216b87b76783c71c46fe4f76976b4628",
       "kind": "registers",
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
@@ -31771,6 +32756,11 @@ export const appGraph = {
       "from": "eb45ac097a22d3295350c11acb249de0622d274c87853fd9cab5ab310eba554f",
       "kind": "registers",
       "to": "33e05b1de6149c5ceb329322c6a5ff0ea22080251a84967164fda120eb1d2279"
+    },
+    {
+      "from": "eb5fc45cbcc6cec9cbaaaf7aa405198ab556729dc086f86668bd5bcc95312673",
+      "kind": "registers",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
     },
     {
       "from": "eb690d0c4c109758f3f384c27adefaaf103722932b425e5057bcd6e4c75cdbe6",
@@ -31951,6 +32941,11 @@ export const appGraph = {
       "from": "ed42df6b8d608beb44444020dbd94478842e8429ab0a058515b0bfb418606e96",
       "kind": "registers",
       "to": "f2bf6cec78ae4a1298c22af6d54517b8bd6c0d948c64182d19b6df190ecadab7"
+    },
+    {
+      "from": "ed5d291e2a0775119e9126b0f51e13b8234f87f287d57e7d34f2cdbf7650f5e0",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "ed5e54482e9133f320959bef1b2c54a39ef4a3e50a1af7ebb04e3367c6d81635",
@@ -32363,6 +33358,11 @@ export const appGraph = {
       "to": "5c1315f4f2d5f0c96036567e33a030dc8494418a78ab96d96c5649a7de8d4360"
     },
     {
+      "from": "f00e39ebc5d6f52b4f93a1c6193d53bb42ab97ef822880a7d2ff68ef14e9c2e5",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "f02b94f21fa4a8542e6ed91ce516c83e42b42bdb6a0cf6bab00ed82d35ac8ba7",
       "kind": "registers",
       "to": "801c76ef3b4547a28f28ba022cbdbdbfae36d70991e9f00717e09246a4faaaf0"
@@ -32538,6 +33538,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "f2106cbde47cfbde66b712084deda1ea114b4895d3e5585d21d0072f867d90b5",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "f214e888d0b10c6d0289ba498c833443b32e947ecb19f0ab697927cb252eb3a2",
       "kind": "registers",
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
@@ -32703,6 +33708,11 @@ export const appGraph = {
       "to": "9aa217b3c26c0ca75164c77cc76a90cd68f40351b4ee06522d4ec58167fa208d"
     },
     {
+      "from": "f27fbb881a0a9bcf055a8271352396e0a8dede454819826ec5a63e8d50c67274",
+      "kind": "registers",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
       "from": "f28f72d51bba212a42f0508b6a9e10d300505690efeb321fbc116de0020ba4e8",
       "kind": "registers",
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
@@ -32721,6 +33731,26 @@ export const appGraph = {
       "from": "f2a472c4298965088434b47f554c4f99e2c31597e433f1d40ada139353259b70",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829",
+      "kind": "imports",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
     },
     {
       "from": "f2b57eb071ec2b739d6b239a01d636ea837eb05f43a14a280d72300c9c3f0648",
@@ -33058,6 +34088,11 @@ export const appGraph = {
       "to": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
     },
     {
+      "from": "f49aad4bdd28fe07342e5a30a6e864a13a326bd7609cd275a295fce209a201d4",
+      "kind": "registers",
+      "to": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+    },
+    {
       "from": "f49d93d9e91351bf56f685d0c8ec99591d596fc15c9a66370c277f93bda2edae",
       "kind": "registers",
       "to": "5cdef317a623cde486245204f96e10576fabd8d00dfb54de6f812eb08f729bed"
@@ -33271,6 +34306,11 @@ export const appGraph = {
       "from": "f669441422dc71e2d2b62c9805b52030117cb308fad37a686d04591d6331ec52",
       "kind": "registers",
       "to": "91b5e91b6d56849ac57c9de5b1fc4dbd049ea91359f5d51a62ae520e031408b8"
+    },
+    {
+      "from": "f66de2a031771aebb827e0fc0ddef024eade25e565e128b8b57fd3e7196d8392",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "f66f0e81f4690b9490193a97e31b6c421a62cb3473123d569be245017d76d5b7",
@@ -33513,6 +34553,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "f90247915642be1149b4c1ca53b1c4fcd55ebe71e5c9b3b4d8394c6e426cf36a",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "f905488c69fe06b9826a70cc56c5d9b3415a003ab8658e0137800a978e068f06",
       "kind": "registers",
       "to": "2894340435807c72a34b54bc91625515df169613966652a06eb73f7ca7bcb4b1"
@@ -33603,6 +34648,11 @@ export const appGraph = {
       "to": "e44a53feb5677b92811c3d9a81f1305461679ebdfc812ee09a5df774a912bd75"
     },
     {
+      "from": "f9bf88c92c9738f88452016afd3d1d439be31559fec692fa4ab11c98669c731a",
+      "kind": "registers",
+      "to": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+    },
+    {
       "from": "f9c316192fb913b465e93777a29706412c9b50bc19caac13ab830b8b3f5df7ec",
       "kind": "registers",
       "to": "14c261d3b68bc28bdd9d5c833a0e9a9560883509474d87d06893c69b3aeca17a"
@@ -33651,6 +34701,11 @@ export const appGraph = {
       "from": "fa1e6b6174f813b24b63c0e1a8c0acb15a8b3c5982f2a73208d2f77f5eac13c1",
       "kind": "registers",
       "to": "33609d0cddfeec45340c6b07169a9612c5ccab288b86ac2f9db4a1099bf1f84d"
+    },
+    {
+      "from": "fa2e7d7fcb3d4606b93fe283de0b2799c46f64e94d10764830c11eb66f869fdb",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "fa31eaea2b812f06e3231934e33bbfb9ce67784fa1893ee30e5458f82a088191",
@@ -33828,6 +34883,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "fb90c3258a02224b86db6995cc1b06c8ca288b7fed3220c12a25e6e134fadf17",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "fb998dbffe68a7461c8b540e13736684147ba9e2f34525f96ce8321fa134b3e9",
       "kind": "registers",
       "to": "de98a3ffc5400d39d00f03fd6b8e4df852910341873f2ce1deb2a2c49e757e33"
@@ -33851,6 +34911,11 @@ export const appGraph = {
       "from": "fbac576f9907b25f0170166a90527cc9638106c7df6be7e9b8d5b9ff3e7f0f33",
       "kind": "registers",
       "to": "978f74b0d64bf7096a3b546e66049b84c83bcffe7d616f54e71a84207db7c7cb"
+    },
+    {
+      "from": "fbb0156b5171d7091b54ed61107b33f460a427ad79ffbd4e62aa74318926f984",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "fbb7d8006eb04f6c53fa5aa33b6cd8a8ab1691e77fa05f26a067d3d0e6ea0f6d",
@@ -34203,6 +35268,21 @@ export const appGraph = {
       "to": "45240799a54620834dc227dfd2dd6f09f5fe044eb7977e7b2db801f98bc23093"
     },
     {
+      "from": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
       "from": "fdb84518e849da4275a3e2edb3fe76142c21057983d8a4906e0610f47c2462c8",
       "kind": "registers",
       "to": "c941bb0d49bbd15030980ad0c636793b6174606b7ff7098cc7f8d349f56e8861"
@@ -34256,6 +35336,11 @@ export const appGraph = {
       "from": "fe07cee6ec5ce3df01574ed51eecd1e26751eb72cd83ec086e4ead73818f9be9",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "fe097bc8f7c8817bd52bcbfd9bae9fce2da30429aaabdd6c87f5ab20a8f804e7",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
       "from": "fe3812e548f3f42e099d3ebe4766cc7a9520f55c701ea164a3493a177766207e",
@@ -34366,6 +35451,16 @@ export const appGraph = {
       "from": "ff161cc50125c41e2c3321037a035bc62c58714648085a19fae5f676991c8fd9",
       "kind": "imports",
       "to": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
+    },
+    {
+      "from": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
     },
     {
       "from": "ff25c36d367560f8111f9463d394dc84c26507b97963dbfb757d423ebbcb023b",
@@ -34483,13 +35578,18 @@ export const appGraph = {
       "to": "2894340435807c72a34b54bc91625515df169613966652a06eb73f7ca7bcb4b1"
     },
     {
+      "from": "ffe3d049e8d4ac7a4929186d91f9aadc944723b812b15d3a105ea370bc447f28",
+      "kind": "registers",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
       "from": "fff69e7567839d33efd9cf1c20dc860bb76b71570735db93a394afe4b44b8fcf",
       "kind": "registers",
       "to": "88bcc46f811fc6737a95053e829ef9684e374c1df1209c7219ffe75ef94a4441"
     }
   ],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "22b8cac9cd92e6a2d4eed35c7b4d59b387e04f6e49210500c14826d65f1a82b4",
+  "inputHash": "df8cd7bb126178b526b9228108d34d59e62842953ef13537129ce1c8f10ba9ec",
   "moduleGraph": {
     "nodes": [
       {
@@ -35920,6 +37020,14 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/index.ts",
+        "id": "0e6c227f35a9c0349dafc7f24ee2def26282765ab37b940e348f351bfe5cbbb4",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/runtime/outbox/types.ts",
         "id": "0f75a14760572ec2259d326ef85691de1948ab92a7798c8ef692498578b9bd03",
         "localImports": []
@@ -36160,6 +37268,14 @@ export const appGraph = {
             "toModuleId": "15b8bfb1755f17a50ea912472d8e3ab7c7aeaeb9e087eea71a4b73e4c1f6afbb"
           }
         ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/types.ts",
+        "id": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927",
+        "localImports": []
       },
       {
         "declaredContexts": [],
@@ -37244,6 +38360,29 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/canonical.ts",
+        "id": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a",
+        "localImports": [
+          {
+            "span": {
+              "end": 88,
+              "start": 75
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 146,
+              "start": 134
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/make/naming.ts",
         "id": "17d783fb8a4e8999ac9212a2cd498b3e41bc0c65cdca8a5cab1eb2089305cab1",
         "localImports": []
@@ -38173,6 +39312,29 @@ export const appGraph = {
               "start": 236
             },
             "toModuleId": "d999850d9a6aceb8a1016891973560d69ffb5e613609c9849bcd7fe1780fda14"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/p0a.ts",
+        "id": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7",
+        "localImports": [
+          {
+            "span": {
+              "end": 61,
+              "start": 36
+            },
+            "toModuleId": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+          },
+          {
+            "span": {
+              "end": 223,
+              "start": 211
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
           }
         ]
       },
@@ -40304,6 +41466,85 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/conductor.ts",
+        "id": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534",
+        "localImports": [
+          {
+            "span": {
+              "end": 40,
+              "start": 23
+            },
+            "toModuleId": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+          },
+          {
+            "span": {
+              "end": 186,
+              "start": 170
+            },
+            "toModuleId": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+          },
+          {
+            "span": {
+              "end": 267,
+              "start": 251
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 315,
+              "start": 302
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 367,
+              "start": 353
+            },
+            "toModuleId": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+          },
+          {
+            "span": {
+              "end": 467,
+              "start": 452
+            },
+            "toModuleId": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+          },
+          {
+            "span": {
+              "end": 518,
+              "start": 504
+            },
+            "toModuleId": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+          },
+          {
+            "span": {
+              "end": 578,
+              "start": 556
+            },
+            "toModuleId": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+          },
+          {
+            "span": {
+              "end": 643,
+              "start": 626
+            },
+            "toModuleId": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+          },
+          {
+            "span": {
+              "end": 1104,
+              "start": 1092
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/agent-memory/bridge.ts",
         "id": "4fd5babac6f3009a9b6a0956db8c0717688bdf12a2ce320f89b27437dea8827d",
         "localImports": [
@@ -40431,6 +41672,14 @@ export const appGraph = {
             "toModuleId": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
           }
         ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/dictionary.ts",
+        "id": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697",
+        "localImports": []
       },
       {
         "declaredContexts": [],
@@ -40711,6 +41960,29 @@ export const appGraph = {
               "start": 245
             },
             "toModuleId": "089f5c6e9f6b4f083d69332ccb973c358e39951f904611700cd669cf747f3343"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/adapter.ts",
+        "id": "57ba704847e5e4081e160f77938ead0d4fa6bfc93581e813a9aeb54a83a7dbb2",
+        "localImports": [
+          {
+            "span": {
+              "end": 46,
+              "start": 33
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 242,
+              "start": 230
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
           }
         ]
       },
@@ -42431,6 +43703,14 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/errors.ts",
+        "id": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/app-graph/versions.ts",
         "id": "7812959aea5e0002d9459d6d9b481e7a4bd61a5455b09fa6f640b0bf65ded12a",
         "localImports": []
@@ -43146,6 +44426,43 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/resource-ledger.ts",
+        "id": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037",
+        "localImports": [
+          {
+            "span": {
+              "end": 48,
+              "start": 31
+            },
+            "toModuleId": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+          },
+          {
+            "span": {
+              "end": 98,
+              "start": 82
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 146,
+              "start": 133
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 296,
+              "start": 284
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/cli/rls.ts",
         "id": "830f97bfc0ceffdb444e0a5521b46fd33df891cc09a6278357e196cde1057222",
         "localImports": [
@@ -43275,162 +44592,162 @@ export const appGraph = {
         "localImports": [
           {
             "span": {
-              "end": 226,
-              "start": 201
+              "end": 207,
+              "start": 182
             },
             "toModuleId": "8dc374a57e700d706f2584353e9217fff49f4f1097d92ec070e846bfc969ab11"
           },
           {
             "span": {
-              "end": 296,
-              "start": 261
+              "end": 277,
+              "start": 242
             },
             "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
           },
           {
             "span": {
-              "end": 357,
-              "start": 325
+              "end": 338,
+              "start": 306
             },
             "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
           },
           {
             "span": {
-              "end": 446,
-              "start": 409
+              "end": 427,
+              "start": 390
             },
             "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
           },
           {
             "span": {
-              "end": 523,
-              "start": 489
+              "end": 504,
+              "start": 470
             },
             "toModuleId": "4792854bc77ff90623f63ddf2ec86eb6093131b82f500d1dec6ae8a9d1a4ac9f"
           },
           {
             "span": {
-              "end": 590,
-              "start": 557
+              "end": 571,
+              "start": 538
             },
             "toModuleId": "88581874a95b1c6d0611c3d83dec1c449b796bb2105d0e26de52566c65012ebf"
           },
           {
             "span": {
-              "end": 654,
-              "start": 622
+              "end": 635,
+              "start": 603
             },
             "toModuleId": "8fcf351df7fd4840b382ac3c2f03d09e667469329f60603ff3dc3beb1a9f3a32"
           },
           {
             "span": {
-              "end": 720,
-              "start": 687
+              "end": 701,
+              "start": 668
             },
             "toModuleId": "cca662b6ff3356f4558904c07547587063cb7f56b22dcaaf7371ea29de49f731"
           },
           {
             "span": {
-              "end": 792,
-              "start": 756
+              "end": 773,
+              "start": 737
             },
             "toModuleId": "7e52df7ee09de93c49fb00b88e7bc532ebb19a77344e13b623b022bc6c060fc9"
           },
           {
             "span": {
-              "end": 868,
-              "start": 830
+              "end": 849,
+              "start": 811
             },
             "toModuleId": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
           },
           {
             "span": {
-              "end": 941,
-              "start": 903
+              "end": 922,
+              "start": 884
             },
             "toModuleId": "8ef77ae8936a82c1805fbf2452dc16741a2faf87fafbdcc6cc646be1b5018dc1"
           },
           {
             "span": {
-              "end": 1013,
-              "start": 977
+              "end": 994,
+              "start": 958
             },
             "toModuleId": "477a1f15499f3ccb0cb40d76c7429914eb8d1037916ed73867147f16eb62e0d5"
           },
           {
             "span": {
-              "end": 1087,
-              "start": 1050
+              "end": 1068,
+              "start": 1031
             },
             "toModuleId": "1dd5d83b8ef9e9661e789a9301ce956f027a28753d6a7dc36604b347d6201957"
           },
           {
             "span": {
-              "end": 1170,
-              "start": 1128
+              "end": 1151,
+              "start": 1109
             },
             "toModuleId": "0d9078ce3155b0ceb1844221484f04f9493f86a9a51cc0d02b1f0c1a2eab21e0"
           },
           {
             "span": {
-              "end": 1273,
-              "start": 1233
+              "end": 1254,
+              "start": 1214
             },
             "toModuleId": "ff161cc50125c41e2c3321037a035bc62c58714648085a19fae5f676991c8fd9"
           },
           {
             "span": {
-              "end": 1359,
-              "start": 1316
+              "end": 1340,
+              "start": 1297
             },
             "toModuleId": "41fc9902d9b399116906e18716360f9edaa708af0e3093ccaad59d83466c0fbb"
           },
           {
             "span": {
-              "end": 1435,
-              "start": 1402
+              "end": 1416,
+              "start": 1383
             },
             "toModuleId": "61ecc97466750465fa1571fba5a6400881d869c65f5fb0783e5bd8942976ccbd"
           },
           {
             "span": {
-              "end": 1514,
-              "start": 1477
+              "end": 1495,
+              "start": 1458
             },
             "toModuleId": "e8a465a58857ea944773e1171752ee0aedba4559de6b2c863e1c4c281bac560d"
           },
           {
             "span": {
-              "end": 1588,
-              "start": 1551
+              "end": 1569,
+              "start": 1532
             },
             "toModuleId": "e8a465a58857ea944773e1171752ee0aedba4559de6b2c863e1c4c281bac560d"
           },
           {
             "span": {
-              "end": 1666,
-              "start": 1625
+              "end": 1647,
+              "start": 1606
             },
             "toModuleId": "4c9d04cf670f049c794c0f7165627612bf86b3cd5a93739c4e8b5f55587a1f1c"
           },
           {
             "span": {
-              "end": 1783,
-              "start": 1751
+              "end": 1764,
+              "start": 1732
             },
             "toModuleId": "a5983ff8f456fcd09eaef99f232a706bb2eb520949271c6d10535735b0cfe50f"
           },
           {
             "span": {
-              "end": 1855,
-              "start": 1826
+              "end": 1836,
+              "start": 1807
             },
             "toModuleId": "11b248da3322ed61ac3e9923e911884824a75eb3192e8db0fccc2b1b1649abc9"
           },
           {
             "span": {
-              "end": 2118,
-              "start": 2106
+              "end": 2099,
+              "start": 2087
             },
             "toModuleId": "a36f2dd97da72185e095cb806593a49c3221dcc9e2f187ea4efdbfc742167c60"
           }
@@ -45077,6 +46394,43 @@ export const appGraph = {
               "start": 1375
             },
             "toModuleId": "ab4238094289749b6eb5f6942feac1fba8b55f139e5433e8aafbdf9339af49be"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/authority.ts",
+        "id": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1",
+        "localImports": [
+          {
+            "span": {
+              "end": 48,
+              "start": 31
+            },
+            "toModuleId": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+          },
+          {
+            "span": {
+              "end": 96,
+              "start": 83
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 151,
+              "start": 129
+            },
+            "toModuleId": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+          },
+          {
+            "span": {
+              "end": 303,
+              "start": 291
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
           }
         ]
       },
@@ -47474,8 +48828,8 @@ export const appGraph = {
             "importKind": "static",
             "packageName": "typescript",
             "span": {
-              "end": 27,
-              "start": 15
+              "end": 86,
+              "start": 74
             },
             "specifier": "typescript",
             "subpath": ""
@@ -47487,17 +48841,24 @@ export const appGraph = {
         "localImports": [
           {
             "span": {
-              "end": 87,
-              "start": 59
+              "end": 146,
+              "start": 118
             },
             "toModuleId": "af48ef3571e87ef5e8efd8dd4e84e8f5f5647e65ed4b7817f721b905964f8945"
           },
           {
             "span": {
-              "end": 139,
-              "start": 116
+              "end": 198,
+              "start": 175
             },
             "toModuleId": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
+          },
+          {
+            "span": {
+              "end": 254,
+              "start": 230
+            },
+            "toModuleId": "bf893446bb757c7cd7f61bee3010411d2f63f0e70b9a572cc09c0f3ee22d72b0"
           }
         ]
       },
@@ -47782,6 +49143,50 @@ export const appGraph = {
         "file": "src/forge/delta/schema.ts",
         "id": "b9870feb07c13c635bda1f0f3cea39b13e64c647a5c82654697fb83a65f5b925",
         "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/hardened-reducer.ts",
+        "id": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84",
+        "localImports": [
+          {
+            "span": {
+              "end": 40,
+              "start": 23
+            },
+            "toModuleId": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+          },
+          {
+            "span": {
+              "end": 104,
+              "start": 88
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 152,
+              "start": 139
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 231,
+              "start": 217
+            },
+            "toModuleId": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99"
+          },
+          {
+            "span": {
+              "end": 376,
+              "start": 364
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
       },
       {
         "declaredContexts": [],
@@ -50190,6 +51595,71 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/reducer.ts",
+        "id": "de6c17814dc3424b9ae9475bf5ec888914bf86033bb027d833eeacb922c39a99",
+        "localImports": [
+          {
+            "span": {
+              "end": 48,
+              "start": 31
+            },
+            "toModuleId": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+          },
+          {
+            "span": {
+              "end": 195,
+              "start": 179
+            },
+            "toModuleId": "997fd5ef0407a035bd3b02fdd6620e9393c60acd4850699e0eae85dfcc5e4bb1"
+          },
+          {
+            "span": {
+              "end": 276,
+              "start": 260
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 324,
+              "start": 311
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 382,
+              "start": 368
+            },
+            "toModuleId": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+          },
+          {
+            "span": {
+              "end": 459,
+              "start": 444
+            },
+            "toModuleId": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+          },
+          {
+            "span": {
+              "end": 619,
+              "start": 607
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          },
+          {
+            "span": {
+              "end": 683,
+              "start": 666
+            },
+            "toModuleId": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/app-graph/build.ts",
         "id": "de98a3ffc5400d39d00f03fd6b8e4df852910341873f2ce1deb2a2c49e757e33",
         "localImports": [
@@ -50930,6 +52400,71 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/hardened-conductor.ts",
+        "id": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f",
+        "localImports": [
+          {
+            "span": {
+              "end": 40,
+              "start": 23
+            },
+            "toModuleId": "51295b057ffcb1f691d3e034317d0e0fdf1b5953a95f0c04ec9a041c58859697"
+          },
+          {
+            "span": {
+              "end": 123,
+              "start": 107
+            },
+            "toModuleId": "4e9617a200d5c263db5ac537540b2cfd66d97a5cf375820203ab5d5c9c749534"
+          },
+          {
+            "span": {
+              "end": 173,
+              "start": 157
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 221,
+              "start": 208
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 337,
+              "start": 323
+            },
+            "toModuleId": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829"
+          },
+          {
+            "span": {
+              "end": 397,
+              "start": 374
+            },
+            "toModuleId": "b9b795407f74753b52591ec31de689d21b715946e3a10b599485c286eaff0a84"
+          },
+          {
+            "span": {
+              "end": 452,
+              "start": 430
+            },
+            "toModuleId": "823d66d6f233ff60daeb3ea03119964dd958b22b41408fe979e87140a053e037"
+          },
+          {
+            "span": {
+              "end": 1001,
+              "start": 989
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/cair/index.ts",
         "id": "e3f5820f50654763b58bc10090c70ada98a3c0c2eb0a0f55d297ceeb59936e60",
         "localImports": [
@@ -51559,6 +53094,43 @@ export const appGraph = {
               "start": 1329
             },
             "toModuleId": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/journal.ts",
+        "id": "f2b36f0c97ff4faa40b1c2d1820410df2ae6bde26649b25d80e8d5e69fff5829",
+        "localImports": [
+          {
+            "span": {
+              "end": 79,
+              "start": 63
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 127,
+              "start": 114
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 228,
+              "start": 216
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          },
+          {
+            "span": {
+              "end": 325,
+              "start": 308
+            },
+            "toModuleId": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631"
           }
         ]
       },
@@ -52267,6 +53839,36 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/planning.ts",
+        "id": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba",
+        "localImports": [
+          {
+            "span": {
+              "end": 48,
+              "start": 32
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 96,
+              "start": 83
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 223,
+              "start": 211
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/compiler/types/emit.ts",
         "id": "fdc330e9f569b5fa5fd6d7ad204e850f3c55d44e235ce519ca83d06c8ab220ed",
         "localImports": [
@@ -52352,6 +53954,29 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/validation.ts",
+        "id": "ff16980680e39e89e940f136688cbfa04c06e85d446c0a21e7941c10315d5631",
+        "localImports": [
+          {
+            "span": {
+              "end": 46,
+              "start": 33
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 154,
+              "start": 142
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/cli/secrets.ts",
         "id": "ff3f46f01c461e3cffd8ae00ed2ce9aa0dda58d3c6978891694317156cd529c9",
         "localImports": [
@@ -52403,6 +54028,23 @@ export const appGraph = {
   },
   "schemaVersion": "1.0.0",
   "symbols": [
+    {
+      "contentHash": "1c01346ed8b936ede0ec670f14d91b2476c4d612921070edd062b7b1cdfbd3ba",
+      "file": "src/forge/agent-fabric/errors.ts",
+      "id": "2d4b9a170d801addfa7bdeb1b9a93988101d73e4b69ab5d5dd91cb62ffc178c8",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "b00be6ce7d9e24458c6f6c6c9c58ca3a3fb6ccc823d6bc4b5d2b526bb1a67903",
+        "sourceSlice": "class AgentFabricError extends Error {\n  readonly code: AgentFabricErrorCode;\n  readonly details: Readonly<Record<string, unknown>>;\n\n  constructor(\n    code: AgentFabricErrorCode,\n    message: string,\n    details: Readonly<Record<string, unknown>> = {},\n  ) {\n    super(message);\n    this.name = \"AgentFabricError\";\n    this.code = code;\n    this.details = details;\n  }\n}"
+      },
+      "name": "AgentFabricError",
+      "qualifiedName": "AgentFabricError",
+      "span": {
+        "end": 676,
+        "start": 304
+      }
+    },
     {
       "contentHash": "b2239be388b8059bf276f9dcf61ec9271db166505f2b50f4fa4b85a5143985aa",
       "file": "src/forge/compiler/cache/scheduler.ts",
@@ -52472,20 +54114,71 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "d9317d3faa9fbdde1a7136f765fa76121a55dbc2156340bdad158d82d410511c",
+      "file": "src/forge/agent-fabric/adapter.ts",
+      "id": "ac9ca64192aac4e413c51ba7f17de8d10738582aee7faa57261cedc2d5e6e14c",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "29d77a174299a3336255ebf55af63ad97ebbfb0ef0bd52ecafb635835b2a822a",
+        "sourceSlice": "class DeterministicTestAdapter implements AgentAdapter {\n  private readonly fixtures = new Map<Digest, DeterministicAdapterFixture>();\n  private readonly attempts = new Map<string, AttemptRecord>();\n\n  constructor(\n    fixtures: readonly DeterministicAdapterFixture[],\n    private readonly now: () => number,\n  ) {\n    for (const fixture of fixtures) this.fixtures.set(fixture.effectiveRunSpecDigest, fixture);\n  }\n\n  manifest(): AdapterManifest {\n    return {\n      adapterId: \"forge-agent-fabric/deterministic-test-adapter\",\n      version: \"0.1.0\",\n      capabilities: [\"deterministic_fixture_execution\", \"observation\", \"cancellation\"],\n      supportsCancellation: true,\n      supportsObservation: true,\n    };\n  }\n\n  async startAttempt(permit: AttemptExecutionPermit): Promise<AdapterStartResult> {\n    const existing = this.attempts.get(permit.attemptId);\n    if (existing) {\n      if (existing.permit.permitId !== permit.permitId) {\n        throw new AgentFabricError(\n          \"AF_CONFLICT\",\n          `Attempt ${permit.attemptId} was started with a different permit`,\n        );\n      }\n      return {\n        status: \"started\",\n        report: {\n          startupReportId: `startup:${permit.attemptId}`,\n          attemptId: permit.attemptId,\n          observedSpecDigest: permit.effectiveRunSpecDigest,\n          startedAt: existing.startedAt,\n        },\n      };\n    }\n    if (!this.fixtures.has(permit.effectiveRunSpecDigest)) {\n      return { status: \"unknown\", reason: \"fixture_not_found\" };\n    }\n    const startedAt = this.now();\n    this.attempts.set(permit.attemptId, { permit, startedAt, cancelled: false });\n    return {\n      status: \"started\",\n      report: {\n        startupReportId: `startup:${permit.attemptId}`,\n        attemptId: permit.attemptId,\n        observedSpecDigest: permit.effectiveRunSpecDigest,\n        startedAt,\n      },\n    };\n  }\n\n  async observeAttempt(attemptId: string): Promise<readonly RuntimeObservation[]> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return [];\n    return [\n      {\n        observationId: `observation:${attemptId}:adapter-state`,\n        attemptId,\n        sourceClass: \"adapter_observation\",\n        claim: attempt.cancelled ? \"cancelled\" : \"running_or_completed\",\n        observedAt: this.now(),\n      },\n    ];\n  }\n\n  async collectOutcome(attemptId: string): Promise<AdapterOutcomeResult> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { status: \"unknown\", reason: \"attempt_not_observed\" };\n    if (attempt.cancelled) return { status: \"unknown\", reason: \"attempt_cancelled\" };\n    const fixture = this.fixtures.get(attempt.permit.effectiveRunSpecDigest);\n    if (!fixture) return { status: \"unknown\", reason: \"fixture_not_found\" };\n    const permit = attempt.permit;\n    const report: WorkerResultReport = {\n      reportId: `report:${attemptId}`,\n      attemptId,\n      permitId: permit.permitId,\n      intentId: permit.intentId,\n      planRevisionId: permit.planRevisionId,\n      effectiveRunSpecDigest: permit.effectiveRunSpecDigest,\n      fencingToken: permit.fencingToken,\n      status: fixture.outcomeStatus,\n      resultDigest: fixture.resultDigest,\n      evidenceDigests: fixture.evidenceDigests ?? [],\n      reportedAt: this.now(),\n    };\n    return { status: \"reported\", report };\n  }\n\n  async requestCancellation(attemptId: string): Promise<{ acknowledged: boolean }> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { acknowledged: false };\n    attempt.cancelled = true;\n    return { acknowledged: true };\n  }\n\n  async observeTermination(attemptId: string): Promise<\"terminated\" | \"running\" | \"unknown\"> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return \"unknown\";\n    return attempt.cancelled ? \"terminated\" : \"running\";\n  }\n}"
+      },
+      "name": "DeterministicTestAdapter",
+      "qualifiedName": "DeterministicTestAdapter",
+      "span": {
+        "end": 4365,
+        "start": 546
+      }
+    },
+    {
       "contentHash": "80a29626078d04b5522fb0fecbc6263ffc34438cf8ffaf21046629ea4a3efe4a",
       "file": "src/forge/compiler/package-graph/dts-extractor.ts",
       "id": "0c5c9a150ab174958d12114d9bbfef5656bee4f713746a582ac266d4680a4da9",
       "kind": "code.class",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "ac69f4190327ca7765b09394bef5382e1b89d0d5bfa053b4de97722897cdf96a",
+        "fileContentHash": "90d84614e45f3be513a6cdad66b7774b85822c970e40727f505c4f4025d1284d",
         "sourceSlice": "class DtsSignatureExtractor {\n  private readonly options: ts.CompilerOptions;\n  private rootFiles: string[] = [];\n  private program: ts.Program | null = null;\n  private checker: ts.TypeChecker | null = null;\n\n  constructor(mode: ResolutionMode) {\n    this.options = createResolutionCompilerOptions(mode);\n  }\n\n  registerDtsPath(dtsPath: string): void {\n    if (!this.rootFiles.includes(dtsPath)) {\n      this.rootFiles.push(dtsPath);\n      this.program = null;\n      this.checker = null;\n    }\n  }\n\n  private ensureProgram(): void {\n    if (this.program !== null && this.checker !== null) {\n      return;\n    }\n    this.program = ts.createProgram(this.rootFiles, this.options);\n    this.checker = this.program.getTypeChecker();\n  }\n\n  extract(\n    dtsPath: string,\n    packageName: string,\n    entrypoint: string,\n  ): ExportSignature[] {\n    this.registerDtsPath(dtsPath);\n    this.ensureProgram();\n    const program = this.program!;\n    const checker = this.checker!;\n    const source = program.getSourceFile(dtsPath);\n    if (source == null) {\n      return [];\n    }\n\n    const moduleSymbol = checker.getSymbolAtLocation(source);\n    if (moduleSymbol == null) {\n      return [];\n    }\n\n    const exportsList = checker.getExportsOfModule(moduleSymbol);\n    const results: ExportSignature[] = [];\n\n    for (const sym of exportsList) {\n      const decls = sym.declarations ?? [];\n      if (decls.length === 0) {\n        continue;\n      }\n\n      const type = checker.getTypeOfSymbolAtLocation(sym, decls[0]!);\n      const callSigs = type.getCallSignatures();\n      const printed =\n        callSigs.length > 0\n          ? callSigs.map((sig) =>\n              normalizeSignatureText(checker.signatureToString(sig)),\n            )\n          : [normalizeSignatureText(checker.typeToString(type))];\n\n      const declarationTexts =\n        decls.length > 1\n          ? decls.map((decl) =>\n              normalizeSignatureText(decl.getText(source).replace(/\\s+/g, \" \")),\n            )\n          : undefined;\n\n      const jsdoc = extractJsDoc(sym, checker);\n      const exportName = resolveExportName(sym, decls[0]!);\n\n      results.push({\n        name: exportName,\n        kind: classifyDeclKind(decls[0]!),\n        signature: printed[0]!,\n        overloads: printed.length > 1 ? printed.slice(1) : undefined,\n        declarations: declarationTexts,\n        classification: stubExportClassification(\n          packageName,\n          entrypoint,\n          exportName,\n        ),\n        jsdoc,\n        examples: extractExamples(jsdoc),\n      });\n    }\n\n    return stableSortExports(results);\n  }\n}"
       },
       "name": "DtsSignatureExtractor",
       "qualifiedName": "DtsSignatureExtractor",
       "span": {
-        "end": 4075,
-        "start": 1488
+        "end": 4539,
+        "start": 1952
+      }
+    },
+    {
+      "contentHash": "f4bc4e96661703a0406ba3ae53a1b59f94a843ae29b3314c12abdbcb87ee4527",
+      "file": "src/forge/agent-fabric/conductor.ts",
+      "id": "dfb7a603a654004e104acb63d9bc55837dc9065e9e601219d18f3a9b85c10325",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e9dece6027824172eb15b5e2813be5f3db8fb3ef88910b779c7e1ac915de9cd3",
+        "sourceSlice": "class ForgeAgentConductor {\n  constructor(\n    private readonly rootExecutionId: string,\n    private readonly journal: ControlJournal,\n    private readonly clock: Clock,\n    // Retained for the draft P0a constructor shape. Normative P0a digests are fixed to SHA-256.\n    _digest: DigestFunction,\n    private readonly ownerAuthorizationVerifier: OwnerAuthorizationVerifier,\n    private readonly resourceLedger?: ResourceLedger,\n  ) {}\n\n  state() {\n    return replayControlState(this.journal.readAll(), {\n      ownerAuthorizationVerifier: this.ownerAuthorizationVerifier,\n      resourceDefinitions: this.resourceLedger\n        ? sortedDefinitions(this.resourceLedger.snapshot().definitions)\n        : undefined,\n    });\n  }\n\n  events() {\n    return this.journal.readAll();\n  }\n\n  registerOwnerAuthorization(authorization: OwnerAuthorization): void {\n    if (authorization.rootExecutionId !== this.rootExecutionId) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Owner authorization belongs to another execution\");\n    }\n    assertAuthorizationCurrent(authorization, this.clock.now());\n    const authorizationDigest = digestCanonical(authorization, sha256Digest);\n    const verification = this.ownerAuthorizationVerifier.verify(authorization, authorizationDigest);\n    if (\n      verification.authorizationDigest !== authorizationDigest ||\n      !this.ownerAuthorizationVerifier.verifyRecorded(authorization, verification)\n    ) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        \"Owner authorization verification is not trusted for these authorization bytes\",\n      );\n    }\n    this.append(`owner-authorization:${authorization.authorizationId}`, {\n      type: \"owner_authorization_registered\",\n      authorization,\n      verification,\n    });\n  }\n\n  revokeOwnerAuthorization(authorizationId: string, reason: string): void {\n    const state = this.state();\n    if (!getOwn(state.authorizations, authorizationId)) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown owner authorization: ${authorizationId}`);\n    }\n    this.append(`owner-authorization-revocation:${authorizationId}`, {\n      type: \"owner_authorization_revoked\",\n      authorizationId,\n      reason,\n    });\n  }\n\n  registerGoal(goal: GoalContract): void {\n    const state = this.state();\n    const authorization = getOwn(state.authorizations, goal.authorityInvocationId);\n    if (!authorization) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        `Goal ${goal.goalId} has no registered owner authorization`,\n      );\n    }\n    assertAuthorizationCurrent(\n      authorization,\n      this.clock.now(),\n      getOwn(state.revokedAuthorizations, authorization.authorizationId),\n    );\n    if (!authorization.goalIds.includes(goal.goalId)) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Owner authorization does not cover this goal\");\n    }\n    this.append(`goal:${goal.goalId}`, { type: \"goal_registered\", goal });\n  }\n\n  /** Registers only a root grant. Derived grants must use deriveAndRegisterGrant(). */\n  registerGrant(grant: ExecutionGrant): void {\n    if (grant.parentGrantId !== null) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        \"Derived grants must be atomically reserved and registered\",\n      );\n    }\n    const state = this.state();\n    const authorization = getOwn(state.authorizations, grant.rootAuthorizationId);\n    if (!authorization) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        `Root grant ${grant.grantId} has no registered owner authorization`,\n      );\n    }\n    assertAuthorizationCurrent(\n      authorization,\n      this.clock.now(),\n      getOwn(state.revokedAuthorizations, authorization.authorizationId),\n    );\n    assertRootGrantAuthorized(authorization, grant);\n\n    const siblingRoots = Object.values(state.grants).filter(\n      (candidate) => candidate.parentGrantId === null &&\n        candidate.rootAuthorizationId === authorization.authorizationId,\n    );\n    const allocatedAttempts = siblingRoots.reduce(\n      (total, candidate) => total + candidate.maximumAttempts,\n      0,\n    );\n    if (allocatedAttempts + grant.maximumAttempts > authorization.maximumAttempts) {\n      throw new AgentFabricError(\n        \"AF_RESOURCE_EXHAUSTED\",\n        \"Root grants exceed the owner authorization attempt budget\",\n      );\n    }\n    for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {\n      const allocated = siblingRoots.reduce(\n        (total, candidate) => total + (getOwn(candidate.resourceCeilings, resource) ?? 0),\n        0,\n      );\n      if (allocated + amount > (getOwn(authorization.resourceCeilings, resource) ?? -1)) {\n        throw new AgentFabricError(\n          \"AF_RESOURCE_EXHAUSTED\",\n          `Root grants exceed owner authorization resource ${resource}`,\n        );\n      }\n    }\n\n    this.append(`grant:${grant.grantId}`, {\n      type: \"grant_registered\",\n      grant,\n      reservation: null,\n    });\n  }\n\n  deriveAndRegisterGrant(\n    parentGrantId: string,\n    request: DerivedGrantRequest,\n    ledger: ResourceLedger = this.requireResourceLedger(),\n  ): AuthorityResolution {\n    this.ensureResourceLedgerInitialized(ledger);\n    const state = this.state();\n    const parent = getOwn(state.grants, parentGrantId);\n    if (!parent) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown parent grant: ${parentGrantId}`);\n    }\n    const now = this.clock.now();\n    assertGrantLineageCurrent(state, parent.grantId, now);\n\n    const parentIssuedAttempts = Object.values(state.permits).filter(\n      (permit) => permit.grantId === parent.grantId,\n    ).length;\n    const delegatedAttemptBudget = Object.values(state.grants)\n      .filter((candidate) => candidate.parentGrantId === parent.grantId)\n      .reduce((total, candidate) => total + candidate.maximumAttempts, 0);\n    if (\n      parentIssuedAttempts + delegatedAttemptBudget + request.maximumAttempts >\n      parent.maximumAttempts\n    ) {\n      return {\n        outcome: \"rejected\",\n        reasonCodes: [\"attempt_budget_exhausted\"],\n        limitations: [],\n      };\n    }\n\n    return ledger.transaction(() => {\n      const resolution = deriveExecutionGrant(parent, request, ledger, now);\n      if (resolution.outcome !== \"allowed\" || !resolution.grant) return resolution;\n      const reservation = getOwn(ledger.snapshot().reservations, request.reservationId);\n      if (!reservation) {\n        throw new AgentFabricError(\n          \"AF_RESOURCE_EXHAUSTED\",\n          `Reservation ${request.reservationId} was not materialized`,\n        );\n      }\n      this.append(`grant:${resolution.grant.grantId}`, {\n        type: \"grant_registered\",\n        grant: resolution.grant,\n        reservation,\n      });\n      return resolution;\n    });\n  }\n\n  consumeResourceReservation(\n    reservationId: string,\n    ledger: ResourceLedger = this.requireResourceLedger(),\n  ): ResourceReservation {\n    this.ensureResourceLedgerInitialized(ledger);\n    return ledger.transaction(() => {\n      const reservation = ledger.consume(reservationId);\n      this.append(`resource-reservation-consume:${reservationId}`, {\n        type: \"resource_reservation_consumed\",\n        reservationId,\n      });\n      return reservation;\n    });\n  }\n\n  releaseResourceReservation(\n    reservationId: string,\n    ledger: ResourceLedger = this.requireResourceLedger(),\n  ): ResourceReservation {\n    this.ensureResourceLedgerInitialized(ledger);\n    return ledger.transaction(() => {\n      const reservation = ledger.release(reservationId);\n      this.append(`resource-reservation-release:${reservationId}`, {\n        type: \"resource_reservation_released\",\n        reservationId,\n      });\n      return reservation;\n    });\n  }\n\n  revokeGrant(grantId: string, reason: string): void {\n    const state = this.state();\n    if (!getOwn(state.grants, grantId)) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown grant: ${grantId}`);\n    }\n    this.append(`grant-revocation:${grantId}`, { type: \"grant_revoked\", grantId, reason });\n  }\n\n  registerPlanDelta(delta: PlanDelta): void {\n    const state = this.state();\n    if (delta.rootExecutionId !== this.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", \"PlanDelta belongs to another execution\");\n    }\n    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== delta.baseRevisionId) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", \"PlanDelta is stale\");\n    }\n    this.append(`plan-delta:${delta.deltaId}`, { type: \"plan_delta_registered\", delta });\n  }\n\n  activatePlan(revision: RunPlanRevision, expectedCurrentRevisionId: string | null): void {\n    const state = this.state();\n    const current = getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) ?? null;\n    if (current !== expectedCurrentRevisionId) {\n      throw new AgentFabricError(\n        \"AF_CONFLICT\",\n        \"Plan activation compare-and-swap failed\",\n        { actualRevisionId: current, expectedCurrentRevisionId },\n      );\n    }\n    if (revision.rootExecutionId !== this.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", \"Plan revision belongs to another execution\");\n    }\n    validateWorkflowNodes(revision.nodes);\n    const expectedDigest = computeRunPlanContentDigest(\n      revision.programVersionId,\n      revision.nodes,\n      sha256Digest,\n    );\n    if (revision.contentDigest !== expectedDigest) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", \"Plan revision content digest does not match\");\n    }\n\n    if (expectedCurrentRevisionId === null) {\n      if (\n        revision.parentRevisionId !== null ||\n        revision.sourcePlanDeltaId !== null ||\n        revision.revisionNumber !== 1\n      ) {\n        throw new AgentFabricError(\"AF_INVALID_PLAN\", \"Initial plan revision has invalid lineage\");\n      }\n    } else {\n      const parent = getOwn(state.planRevisions, expectedCurrentRevisionId);\n      if (!parent || revision.parentRevisionId !== parent.revisionId) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          \"Plan revision parent does not match the active revision\",\n        );\n      }\n      if (revision.goalId !== parent.goalId || revision.programVersionId !== parent.programVersionId) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          \"Plan revision cannot silently change goal or workflow program\",\n        );\n      }\n      if (revision.revisionNumber !== parent.revisionNumber + 1 || !revision.sourcePlanDeltaId) {\n        throw new AgentFabricError(\"AF_INVALID_PLAN\", \"Plan revision has invalid revision lineage\");\n      }\n      const delta = getOwn(state.planDeltas, revision.sourcePlanDeltaId);\n      if (\n        !delta ||\n        delta.baseRevisionId !== parent.revisionId ||\n        delta.nextRevisionId !== revision.revisionId ||\n        delta.rootExecutionId !== this.rootExecutionId\n      ) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          \"Plan revision is not backed by its registered PlanDelta\",\n        );\n      }\n      const derived = applyPlanDelta(parent, delta, sha256Digest);\n      if (stableStringify(derived) !== stableStringify(revision)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          \"Plan revision content does not match its registered PlanDelta\",\n        );\n      }\n    }\n\n    this.append(`plan-activation:${revision.revisionId}`, {\n      type: \"plan_revision_activated\",\n      revision,\n    });\n  }\n\n  commitDispatchIntent(intent: DispatchIntent): void {\n    const state = this.state();\n    const activeRevision = getOwn(state.activePlanRevisionByExecution, this.rootExecutionId);\n    if (intent.rootExecutionId !== this.rootExecutionId || intent.planRevisionId !== activeRevision) {\n      throw new AgentFabricError(\n        \"AF_INVALID_STATE\",\n        \"Dispatch intent is not bound to the active plan revision\",\n      );\n    }\n    if (intent.createdAt > this.clock.now()) {\n      throw new AgentFabricError(\"AF_INVALID_STATE\", \"Dispatch intent cannot be created in the future\");\n    }\n    const revision = getOwn(state.planRevisions, intent.planRevisionId);\n    const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;\n    if (!revision || !goal) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", \"Dispatch intent has no active GoalContract\");\n    }\n    if (\n      !goal.allowedEffectClasses.includes(intent.effectClass) ||\n      goal.prohibitedEffectClasses.includes(intent.effectClass)\n    ) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"GoalContract prohibits the intent effect class\");\n    }\n    if (\n      !goal.sourceBoundary.allowExpansion &&\n      !intent.sourceIds.every((sourceId) => goal.sourceBoundary.sourceIds.includes(sourceId))\n    ) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Intent expands the GoalContract source boundary\");\n    }\n    if (!revision.nodes.some((node) => node.nodeId === intent.taskNodeId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_PLAN\",\n        `Dispatch intent references missing plan node ${intent.taskNodeId}`,\n      );\n    }\n    this.append(`dispatch-intent:${intent.intentId}`, {\n      type: \"dispatch_intent_committed\",\n      intent,\n    });\n  }\n\n  createDispatchOffer(\n    intentId: string,\n    audiencePool: string,\n    offerId: string,\n    expiresAt: number,\n  ): DispatchOffer {\n    if (!getOwn(this.state().dispatchIntents, intentId)) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown dispatch intent: ${intentId}`);\n    }\n    if (expiresAt <= this.clock.now()) {\n      throw new AgentFabricError(\"AF_INVALID_STATE\", \"Dispatch offer must expire in the future\");\n    }\n    return { offerId, intentId, audiencePool, expiresAt, nonAuthoritative: true };\n  }\n\n  claimDispatch(input: ClaimDispatchInput): SchedulingClaim {\n    if (input.leaseDurationMs <= 0) {\n      throw new AgentFabricError(\"AF_INVALID_STATE\", \"Lease duration must be positive\");\n    }\n    const state = this.state();\n    const intent = getOwn(state.dispatchIntents, input.intentId);\n    if (!intent) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown dispatch intent: ${input.intentId}`);\n    }\n    if (getOwn(state.claimByAttemptId, input.attemptId)) {\n      throw new AgentFabricError(\"AF_DUPLICATE_ID\", `Attempt ID already claimed: ${input.attemptId}`);\n    }\n    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== intent.planRevisionId) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Cannot claim an intent from a superseded plan\");\n    }\n    const hasOutcome = Object.values(state.outcomes).some(\n      (outcome) => outcome.intentId === input.intentId,\n    );\n    if (hasOutcome) {\n      throw new AgentFabricError(\n        \"AF_CONFLICT\",\n        `Dispatch intent ${input.intentId} already has an outcome`,\n      );\n    }\n    const currentClaimId = getOwn(state.activeClaimByIntent, input.intentId);\n    const currentClaim = currentClaimId ? getOwn(state.claims, currentClaimId) : undefined;\n    const now = this.clock.now();\n    if (currentClaim && currentClaim.leaseExpiresAt > now) {\n      throw new AgentFabricError(\n        \"AF_CONFLICT\",\n        `Dispatch intent ${input.intentId} already has a current claim`,\n      );\n    }\n    const claim: SchedulingClaim = {\n      claimId: input.claimId,\n      intentId: input.intentId,\n      workerId: input.workerId,\n      attemptId: input.attemptId,\n      leaseExpiresAt: now + input.leaseDurationMs,\n      fencingToken: (currentClaim?.fencingToken ?? 0) + 1,\n      committedAt: now,\n    };\n    this.append(`claim:${input.intentId}:${claim.fencingToken}`, {\n      type: \"scheduling_claim_committed\",\n      claim,\n    });\n    return claim;\n  }\n\n  issuePermit(input: IssuePermitInput): AttemptExecutionPermit {\n    if (input.maximumValidityMs <= 0) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Permit validity must be positive\");\n    }\n    const state = this.state();\n    const claim = getOwn(state.claims, input.claimId);\n    const grant = getOwn(state.grants, input.grantId);\n    if (!claim) throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown claim: ${input.claimId}`);\n    if (!grant) throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown grant: ${input.grantId}`);\n    const intent = getOwn(state.dispatchIntents, claim.intentId);\n    if (!intent) throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown intent: ${claim.intentId}`);\n    if (Object.values(state.permits).some((permit) => permit.attemptId === claim.attemptId)) {\n      throw new AgentFabricError(\"AF_CONFLICT\", `Attempt ${claim.attemptId} already has a permit`);\n    }\n    const activeClaimId = getOwn(state.activeClaimByIntent, claim.intentId);\n    const now = this.clock.now();\n    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== intent.planRevisionId) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Intent references a superseded plan revision\");\n    }\n    if (activeClaimId !== claim.claimId || claim.leaseExpiresAt <= now) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Claim is no longer current\");\n    }\n    assertGrantLineageCurrent(state, grant.grantId, now);\n    if (!grant.capabilities.includes(intent.requiredCapability)) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant lacks the required capability\");\n    }\n    if (!intent.sourceIds.every((sourceId) => grant.sourceIds.includes(sourceId))) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant does not cover the intent source scope\");\n    }\n    if (!grant.targetIds.includes(intent.targetId)) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant does not cover the intent target\");\n    }\n    if (!grant.effectClasses.includes(intent.effectClass)) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant lacks the required effect class\");\n    }\n    if (grant.subjectId !== claim.workerId) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant is bound to another worker\");\n    }\n    const issuedAttempts = Object.values(state.permits).filter(\n      (permit) => permit.grantId === grant.grantId,\n    ).length;\n    const delegatedAttemptBudget = Object.values(state.grants)\n      .filter((candidate) => candidate.parentGrantId === grant.grantId)\n      .reduce((total, candidate) => total + candidate.maximumAttempts, 0);\n    if (issuedAttempts + delegatedAttemptBudget >= grant.maximumAttempts) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant attempt budget is exhausted\");\n    }\n    const expiresAt = Math.min(claim.leaseExpiresAt, grant.expiresAt, now + input.maximumValidityMs);\n    const permit: AttemptExecutionPermit = {\n      permitId: input.permitId,\n      intentId: intent.intentId,\n      claimId: claim.claimId,\n      attemptId: claim.attemptId,\n      workerId: claim.workerId,\n      planRevisionId: intent.planRevisionId,\n      effectiveRunSpecDigest: intent.effectiveRunSpecDigest,\n      grantId: grant.grantId,\n      fencingToken: claim.fencingToken,\n      notBefore: now,\n      expiresAt,\n    };\n    this.append(`permit:${permit.permitId}`, {\n      type: \"attempt_execution_permit_issued\",\n      permit,\n    });\n    return permit;\n  }\n\n  authorizeAttemptDispatch(permit: AttemptExecutionPermit): void {\n    this.assertPermitCurrent(permit);\n  }\n\n  acceptStartupReport(permit: AttemptExecutionPermit, report: ExecutorStartupReport): void {\n    this.assertPermitCurrent(permit);\n    const now = this.clock.now();\n    if (report.attemptId !== permit.attemptId) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Startup report is bound to another attempt\");\n    }\n    if (report.observedSpecDigest !== permit.effectiveRunSpecDigest) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Adapter started a different EffectiveRunSpec\");\n    }\n    if (\n      report.startedAt < permit.notBefore ||\n      report.startedAt >= permit.expiresAt ||\n      report.startedAt > now\n    ) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Startup report has an invalid timestamp\");\n    }\n    this.append(`attempt-start:${permit.attemptId}`, {\n      type: \"attempt_started\",\n      attemptId: permit.attemptId,\n      permitId: permit.permitId,\n      startupReportId: report.startupReportId,\n      startedAt: report.startedAt,\n    });\n  }\n\n  recordAttemptUncertainty(\n    permit: AttemptExecutionPermit,\n    phase: \"startup\" | \"outcome\",\n    reason: string,\n  ): AttemptUncertaintyObservation {\n    const state = this.state();\n    const recorded = getOwn(state.permits, permit.permitId);\n    if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Permit is not the recorded permit\");\n    }\n    const observedAt = this.clock.now();\n    const observation: AttemptUncertaintyObservation = {\n      observationId: `uncertainty:${permit.attemptId}:${phase}:${observedAt}:${sha256Digest(reason).slice(7, 19)}`,\n      attemptId: permit.attemptId,\n      permitId: permit.permitId,\n      phase,\n      reason,\n      observedAt,\n    };\n    this.append(`attempt-uncertainty:${observation.observationId}`, {\n      type: \"attempt_uncertainty_observed\",\n      observation,\n    });\n    return observation;\n  }\n\n  commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {\n    validateWorkerResultReport(report);\n    const state = this.state();\n    const attempt = getOwn(state.attempts, report.attemptId);\n    if (!attempt) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown started attempt: ${report.attemptId}`);\n    }\n    const permit = getOwn(state.permits, attempt.permitId);\n    if (!permit) {\n      throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown permit: ${attempt.permitId}`);\n    }\n    const claim = getOwn(state.claims, permit.claimId);\n    const intent = getOwn(state.dispatchIntents, permit.intentId);\n    if (!claim || !intent) {\n      throw new AgentFabricError(\"AF_INVALID_STATE\", \"Outcome has incomplete execution lineage\");\n    }\n    if (\n      report.permitId !== permit.permitId ||\n      report.intentId !== permit.intentId ||\n      report.planRevisionId !== permit.planRevisionId ||\n      report.effectiveRunSpecDigest !== permit.effectiveRunSpecDigest ||\n      report.fencingToken !== permit.fencingToken ||\n      getOwn(state.claimByAttemptId, report.attemptId) !== claim.claimId\n    ) {\n      throw new AgentFabricError(\n        \"AF_CONFLICT\",\n        \"Worker result report does not match its recorded attempt/permit lineage\",\n      );\n    }\n\n    const reportDigest = digestCanonical(report, sha256Digest);\n    const existing = getOwn(state.outcomes, report.attemptId);\n    if (existing) {\n      if (existing.status === report.status && existing.reportDigest === reportDigest) return existing;\n      throw new AgentFabricError(\n        \"AF_CONFLICT\",\n        `Attempt ${report.attemptId} already has a different authoritative outcome`,\n      );\n    }\n\n    const now = this.clock.now();\n    if (report.reportedAt < attempt.startedAt || report.reportedAt > now) {\n      throw new AgentFabricError(\"AF_INVALID_STATE\", \"Worker result report has an invalid timestamp\");\n    }\n    if (now < permit.notBefore || now >= permit.expiresAt) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Expired permit cannot commit an outcome\");\n    }\n    if (\n      getOwn(state.activeClaimByIntent, permit.intentId) !== claim.claimId ||\n      claim.fencingToken !== permit.fencingToken ||\n      claim.leaseExpiresAt <= now\n    ) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Stale attempt cannot commit an outcome\");\n    }\n    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== permit.planRevisionId) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Superseded plan attempt cannot commit an outcome\");\n    }\n    assertGrantLineageCurrent(state, permit.grantId, now);\n\n    const outcome: AuthoritativeOutcomeCommit = {\n      outcomeId: `outcome:${report.attemptId}`,\n      attemptId: report.attemptId,\n      permitId: permit.permitId,\n      intentId: permit.intentId,\n      planRevisionId: permit.planRevisionId,\n      effectiveRunSpecDigest: permit.effectiveRunSpecDigest,\n      fencingToken: permit.fencingToken,\n      status: report.status,\n      resultDigest: report.resultDigest,\n      reportId: report.reportId,\n      reportDigest,\n      evidenceDigests: [...report.evidenceDigests],\n      reportedAt: report.reportedAt,\n      committedAt: now,\n    };\n    this.append(`attempt-outcome:${report.attemptId}`, {\n      type: \"attempt_outcome_committed\",\n      outcome,\n    });\n    return outcome;\n  }\n\n  private assertPermitCurrent(permit: AttemptExecutionPermit): void {\n    const state = this.state();\n    const recorded = getOwn(state.permits, permit.permitId);\n    if (!recorded || stableStringify(recorded) !== stableStringify(permit)) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Permit is not the recorded permit\");\n    }\n    const now = this.clock.now();\n    if (now < permit.notBefore || now >= permit.expiresAt) {\n      throw new AgentFabricError(\"AF_PERMIT_REJECTED\", \"Permit is outside its validity window\");\n    }\n    const claim = getOwn(state.claims, permit.claimId);\n    const activeClaimId = getOwn(state.activeClaimByIntent, permit.intentId);\n    if (\n      !claim ||\n      getOwn(state.claimByAttemptId, permit.attemptId) !== claim.claimId ||\n      activeClaimId !== claim.claimId ||\n      claim.fencingToken !== permit.fencingToken ||\n      claim.workerId !== permit.workerId ||\n      claim.leaseExpiresAt <= now\n    ) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Permit is fenced by a newer claim\");\n    }\n    assertGrantLineageCurrent(state, permit.grantId, now);\n    if (getOwn(state.activePlanRevisionByExecution, this.rootExecutionId) !== permit.planRevisionId) {\n      throw new AgentFabricError(\"AF_STALE_ATTEMPT\", \"Permit references a superseded plan revision\");\n    }\n  }\n\n  private ensureResourceLedgerInitialized(ledger: ResourceLedger): void {\n    const trustedDefinitions = sortedDefinitions(ledger.snapshot().definitions);\n    const state = this.state();\n    const recordedDefinitions = sortedDefinitions(state.resourceDefinitions);\n    if (recordedDefinitions.length === 0) {\n      this.append(\"resource-ledger:initialize\", {\n        type: \"resource_ledger_initialized\",\n        definitions: trustedDefinitions,\n      });\n      return;\n    }\n    if (stableStringify(recordedDefinitions) !== stableStringify(trustedDefinitions)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_STATE\",\n        \"ResourceLedger definitions differ from the journaled configuration\",\n      );\n    }\n  }\n\n  private requireResourceLedger(): ResourceLedger {\n    if (!this.resourceLedger) {\n      throw new AgentFabricError(\n        \"AF_INVALID_STATE\",\n        \"Derived grant registration requires a ResourceLedger\",\n      );\n    }\n    return this.resourceLedger;\n  }\n\n  private append(\n    idempotencyKey: string,\n    payload: Parameters<ControlJournal[\"append\"]>[0][\"event\"][\"payload\"],\n  ): void {\n    const state = this.state();\n    this.journal.append({\n      expectedSequence: state.lastSequence,\n      event: {\n        eventId: `event:${idempotencyKey}`,\n        rootExecutionId: this.rootExecutionId,\n        occurredAt: this.clock.now(),\n        idempotencyKey,\n        payload,\n      },\n    });\n  }\n}"
+      },
+      "name": "ForgeAgentConductor",
+      "qualifiedName": "ForgeAgentConductor",
+      "span": {
+        "end": 28940,
+        "start": 1656
+      }
+    },
+    {
+      "contentHash": "9cee591ba336eab57cfa85a0bb0db1966ae1fe74ced54e55de51c348ea3b5a47",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "a579bc7649dc6be7ad7be87f4c2ddd6f52b0244fcedfe29c76d599bcd42a268f",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "class ForgeAgentConductor {\n  private readonly pinnedClock: PinnedClock;\n  private readonly validatingJournal: ControlJournal;\n  private readonly inner: LegacyForgeAgentConductor;\n  private readonly resourceLedger?: ResourceLedger;\n  private readonly sourceLedger?: ResourceLedger;\n  private readonly sourceLedgerBaseline?: ResourceLedgerSnapshot;\n\n  constructor(\n    private readonly rootExecutionId: string,\n    private readonly journal: ControlJournal,\n    clock: Clock,\n    digest: DigestFunction,\n    private readonly ownerAuthorizationVerifier: OwnerAuthorizationVerifier,\n    resourceLedger?: ResourceLedger,\n  ) {\n    this.pinnedClock = new PinnedClock(clock);\n    this.sourceLedger = resourceLedger;\n    this.sourceLedgerBaseline = resourceLedger?.snapshot();\n\n    const existing = journal.readAll();\n    if (existing.some((event) => event.rootExecutionId !== rootExecutionId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Journal contains events outside root execution ${rootExecutionId}`,\n      );\n    }\n\n    if (this.sourceLedgerBaseline) {\n      const trustedDefinitions = sortedDefinitions(this.sourceLedgerBaseline.definitions);\n      if (existing.length === 0) {\n        if (snapshotHasUsage(this.sourceLedgerBaseline)) {\n          throw new AgentFabricError(\n            \"AF_INVALID_STATE\",\n            \"A fresh Conductor requires an unused ResourceLedger seed\",\n          );\n        }\n        this.resourceLedger = ResourceLedger.fromSnapshot(this.sourceLedgerBaseline);\n      } else {\n        const replayed = replayControlState(existing, {\n          ownerAuthorizationVerifier,\n          resourceDefinitions: trustedDefinitions,\n        });\n        if (Object.keys(replayed.resourceDefinitions).length === 0) {\n          if (snapshotHasUsage(this.sourceLedgerBaseline)) {\n            throw new AgentFabricError(\n              \"AF_INVALID_STATE\",\n              \"ResourceLedger seed contains usage absent from the journal\",\n            );\n          }\n          this.resourceLedger = ResourceLedger.fromSnapshot(this.sourceLedgerBaseline);\n        } else {\n          const replaySnapshot = snapshotFromState(replayed);\n          if (\n            snapshotHasUsage(this.sourceLedgerBaseline) &&\n            stableStringify(ledgerProjection(this.sourceLedgerBaseline)) !==\n              stableStringify(ledgerProjection(replaySnapshot))\n          ) {\n            throw new AgentFabricError(\n              \"AF_INVALID_STATE\",\n              \"ResourceLedger seed conflicts with the authoritative replay projection\",\n            );\n          }\n          this.resourceLedger = ResourceLedger.fromSnapshot(replaySnapshot);\n        }\n      }\n    } else if (existing.length > 0) {\n      replayControlState(existing, { ownerAuthorizationVerifier });\n    }\n\n    this.validatingJournal = new ReplayValidatingJournal(\n      journal,\n      rootExecutionId,\n      () => this.replayTrust(),\n    );\n    this.inner = new LegacyForgeAgentConductor(\n      rootExecutionId,\n      this.validatingJournal,\n      this.pinnedClock,\n      digest,\n      ownerAuthorizationVerifier,\n      this.resourceLedger,\n    );\n  }\n\n  state(): ControlState {\n    return replayControlState(this.journal.readAll(), this.replayTrust());\n  }\n\n  events(): readonly ControlEventEnvelope[] {\n    return this.journal.readAll();\n  }\n\n  registerOwnerAuthorization(authorization: OwnerAuthorization): void {\n    this.pinnedClock.run(() => this.inner.registerOwnerAuthorization(authorization));\n  }\n\n  revokeOwnerAuthorization(authorizationId: string, reason: string): void {\n    this.pinnedClock.run(() => this.inner.revokeOwnerAuthorization(authorizationId, reason));\n  }\n\n  registerGoal(goal: GoalContract): void {\n    this.pinnedClock.run(() => this.inner.registerGoal(goal));\n  }\n\n  registerGrant(grant: ExecutionGrant): void {\n    this.pinnedClock.run(() => this.inner.registerGrant(grant));\n  }\n\n  deriveAndRegisterGrant(\n    parentGrantId: string,\n    request: DerivedGrantRequest,\n    ledger?: ResourceLedger,\n  ): AuthorityResolution {\n    const canonicalLedger = this.requireCanonicalLedger(ledger);\n    this.assertLedgerSynchronized(canonicalLedger);\n    return this.pinnedClock.run(() =>\n      this.inner.deriveAndRegisterGrant(parentGrantId, request, canonicalLedger)\n    );\n  }\n\n  consumeResourceReservation(\n    reservationId: string,\n    ledger?: ResourceLedger,\n  ): ResourceReservation {\n    const canonicalLedger = this.requireCanonicalLedger(ledger);\n    this.assertLedgerSynchronized(canonicalLedger);\n    return this.pinnedClock.run(() =>\n      this.inner.consumeResourceReservation(reservationId, canonicalLedger)\n    );\n  }\n\n  releaseResourceReservation(\n    reservationId: string,\n    ledger?: ResourceLedger,\n  ): ResourceReservation {\n    const canonicalLedger = this.requireCanonicalLedger(ledger);\n    this.assertLedgerSynchronized(canonicalLedger);\n    return this.pinnedClock.run(() =>\n      this.inner.releaseResourceReservation(reservationId, canonicalLedger)\n    );\n  }\n\n  revokeGrant(grantId: string, reason: string): void {\n    this.pinnedClock.run(() => this.inner.revokeGrant(grantId, reason));\n  }\n\n  registerPlanDelta(delta: PlanDelta): void {\n    this.pinnedClock.run(() => this.inner.registerPlanDelta(delta));\n  }\n\n  activatePlan(revision: RunPlanRevision, expectedCurrentRevisionId: string | null): void {\n    this.pinnedClock.run(() => this.inner.activatePlan(revision, expectedCurrentRevisionId));\n  }\n\n  commitDispatchIntent(intent: DispatchIntent): void {\n    this.pinnedClock.run(() => this.inner.commitDispatchIntent(intent));\n  }\n\n  createDispatchOffer(\n    intentId: string,\n    audiencePool: string,\n    offerId: string,\n    expiresAt: number,\n  ): DispatchOffer {\n    return this.pinnedClock.run(() =>\n      this.inner.createDispatchOffer(intentId, audiencePool, offerId, expiresAt)\n    );\n  }\n\n  claimDispatch(input: ClaimDispatchInput): SchedulingClaim {\n    return this.pinnedClock.run(() => this.inner.claimDispatch(input));\n  }\n\n  issuePermit(input: IssuePermitInput): AttemptExecutionPermit {\n    return this.pinnedClock.run(() => {\n      const state = this.state();\n      const claim = getOwn(state.claims, input.claimId);\n      if (!claim) {\n        throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown claim: ${input.claimId}`);\n      }\n      this.assertGoalAuthorityBinding(state, claim.intentId, input.grantId);\n      return this.inner.issuePermit(input);\n    });\n  }\n\n  authorizeAttemptDispatch(permit: AttemptExecutionPermit): void {\n    this.pinnedClock.run(() => {\n      this.assertGoalAuthorityBinding(this.state(), permit.intentId, permit.grantId);\n      this.inner.authorizeAttemptDispatch(permit);\n    });\n  }\n\n  acceptStartupReport(permit: AttemptExecutionPermit, report: ExecutorStartupReport): void {\n    this.pinnedClock.run(() => {\n      this.assertGoalAuthorityBinding(this.state(), permit.intentId, permit.grantId);\n      this.inner.acceptStartupReport(permit, report);\n    });\n  }\n\n  recordAttemptUncertainty(\n    permit: AttemptExecutionPermit,\n    phase: \"startup\" | \"outcome\",\n    reason: string,\n  ): AttemptUncertaintyObservation {\n    return this.pinnedClock.run(() => {\n      const state = this.state();\n      if (phase === \"outcome\" && !getOwn(state.attempts, permit.attemptId)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_STATE\",\n          \"Outcome uncertainty requires a confirmed startup\",\n        );\n      }\n      return this.inner.recordAttemptUncertainty(permit, phase, reason);\n    });\n  }\n\n  commitOutcome(report: WorkerResultReport): AuthoritativeOutcomeCommit {\n    return this.pinnedClock.run(() => {\n      const state = this.state();\n      this.assertGoalAuthorityBinding(state, report.intentId, getOwn(state.permits, report.permitId)?.grantId);\n      return this.inner.commitOutcome(report);\n    });\n  }\n\n  private replayTrust(): ReplayTrustContext {\n    return {\n      ownerAuthorizationVerifier: this.ownerAuthorizationVerifier,\n      resourceDefinitions: this.resourceLedger\n        ? sortedDefinitions(this.resourceLedger.snapshot().definitions)\n        : undefined,\n    };\n  }\n\n  private assertGoalAuthorityBinding(\n    state: ControlState,\n    intentId: string,\n    grantId: string | undefined,\n  ): void {\n    const intent = getOwn(state.dispatchIntents, intentId);\n    const grant = grantId ? getOwn(state.grants, grantId) : undefined;\n    const revision = intent ? getOwn(state.planRevisions, intent.planRevisionId) : undefined;\n    const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;\n    const authorization = grant ? getOwn(state.authorizations, grant.rootAuthorizationId) : undefined;\n\n    if (!intent || !grant || !revision || !goal || !authorization) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        \"Execution authority has incomplete GoalContract lineage\",\n      );\n    }\n    if (\n      intent.rootExecutionId !== this.rootExecutionId ||\n      revision.rootExecutionId !== this.rootExecutionId ||\n      authorization.rootExecutionId !== this.rootExecutionId ||\n      goal.authorityInvocationId !== grant.rootAuthorizationId ||\n      !authorization.goalIds.includes(goal.goalId)\n    ) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        `Grant ${grant.grantId} is not authorized for goal ${goal.goalId}`,\n      );\n    }\n  }\n\n  private requireCanonicalLedger(candidate?: ResourceLedger): ResourceLedger {\n    if (!this.resourceLedger) {\n      throw new AgentFabricError(\n        \"AF_INVALID_STATE\",\n        \"Resource operations require the ResourceLedger supplied to the Conductor constructor\",\n      );\n    }\n    if (candidate) {\n      if (!this.sourceLedger || candidate !== this.sourceLedger) {\n        throw new AgentFabricError(\n          \"AF_INVALID_STATE\",\n          \"ResourceLedger substitution is prohibited after Conductor construction\",\n        );\n      }\n      if (\n        this.sourceLedgerBaseline &&\n        stableStringify(candidate.snapshot()) !== stableStringify(this.sourceLedgerBaseline)\n      ) {\n        throw new AgentFabricError(\n          \"AF_INVALID_STATE\",\n          \"The caller-owned ResourceLedger seed was mutated after Conductor construction\",\n        );\n      }\n    }\n    return this.resourceLedger;\n  }\n\n  private assertLedgerSynchronized(ledger: ResourceLedger): void {\n    const snapshot = ledger.snapshot();\n    const state = this.state();\n\n    if (Object.keys(state.resourceDefinitions).length === 0) {\n      const hasUsage = snapshotHasUsage(snapshot);\n      if (hasUsage) {\n        throw new AgentFabricError(\n          \"AF_INVALID_STATE\",\n          \"ResourceLedger contains usage that is not represented in the journal\",\n        );\n      }\n      return;\n    }\n\n    if (stableStringify(ledgerProjection(snapshot)) !== stableStringify(stateLedgerProjection(state))) {\n      throw new AgentFabricError(\n        \"AF_INVALID_STATE\",\n        \"ResourceLedger state diverges from the authoritative replay projection\",\n      );\n    }\n  }\n}"
+      },
+      "name": "ForgeAgentConductor",
+      "qualifiedName": "ForgeAgentConductor",
+      "span": {
+        "end": 15939,
+        "start": 4978
       }
     },
     {
@@ -52537,6 +54230,23 @@ export const appGraph = {
       "span": {
         "end": 24497,
         "start": 8661
+      }
+    },
+    {
+      "contentHash": "3554c7da5c8b2a81770da066bfceb4854b1947452933c687d4e057b1cbe49201",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "bed49019d34efab2bdf026dbb6ed2a3f96d1f09ebee43d2d2f548a8c0852e968",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "class MemoryControlJournal implements ControlJournal {\n  private readonly events: ControlEventEnvelope[] = [];\n  private readonly byEventId = new Map<Identifier, ControlEventEnvelope>();\n  private readonly byIdempotencyKey = new Map<Identifier, ControlEventEnvelope>();\n\n  append(input: AppendControlEventInput): ControlEventEnvelope {\n    validateUncommittedControlEvent(input.event);\n    const incoming = structuredClone(input.event);\n    const incomingFingerprint = semanticFingerprint(incoming);\n\n    const existingByIdempotency = incoming.idempotencyKey\n      ? this.byIdempotencyKey.get(incoming.idempotencyKey)\n      : undefined;\n    if (existingByIdempotency) {\n      if (incomingFingerprint !== semanticFingerprint(existingByIdempotency)) {\n        throw new AgentFabricError(\n          \"AF_CONFLICT\",\n          `Idempotency key ${incoming.idempotencyKey} was reused with different content`,\n        );\n      }\n      return structuredClone(existingByIdempotency);\n    }\n\n    const existingById = this.byEventId.get(incoming.eventId);\n    if (existingById) {\n      if (incomingFingerprint !== semanticFingerprint(existingById)) {\n        throw new AgentFabricError(\n          \"AF_DUPLICATE_ID\",\n          `Event ID ${incoming.eventId} was reused with different content`,\n        );\n      }\n      return structuredClone(existingById);\n    }\n\n    if (input.expectedSequence !== this.events.length) {\n      throw new AgentFabricError(\n        \"AF_CONFLICT\",\n        \"Control journal compare-and-swap failed\",\n        { actualSequence: this.events.length, expectedSequence: input.expectedSequence },\n      );\n    }\n\n    const predecessor = this.events[this.events.length - 1];\n    if (predecessor && incoming.occurredAt < predecessor.occurredAt) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        \"Control journal timestamps must be monotonic\",\n        { occurredAt: incoming.occurredAt, predecessorOccurredAt: predecessor.occurredAt },\n      );\n    }\n\n    const withoutDigest: Omit<ControlEventEnvelope, \"eventDigest\"> = {\n      ...incoming,\n      sequence: this.events.length + 1,\n      predecessorEventId: predecessor?.eventId ?? null,\n      predecessorEventDigest: predecessor?.eventDigest ?? null,\n    };\n    const envelope: ControlEventEnvelope = {\n      ...withoutDigest,\n      eventDigest: digestCanonical(eventDigestInput(withoutDigest), sha256Digest),\n    };\n    validateControlEventEnvelope(envelope);\n\n    const stored = deepFreeze(structuredClone(envelope));\n    this.events.push(stored);\n    this.byEventId.set(stored.eventId, stored);\n    if (stored.idempotencyKey) this.byIdempotencyKey.set(stored.idempotencyKey, stored);\n    return structuredClone(stored);\n  }\n\n  readAll(): readonly ControlEventEnvelope[] {\n    return this.events.map((event) => structuredClone(event));\n  }\n}"
+      },
+      "name": "MemoryControlJournal",
+      "qualifiedName": "MemoryControlJournal",
+      "span": {
+        "end": 4029,
+        "start": 1209
       }
     },
     {
@@ -52659,6 +54369,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "88f7f856622bc918566aa4f447ea44db7fa593e7ca67355a78343e210063b05b",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "361cf2014c64fd2c8f54b8a354964163d2ec12308bfa509ef23157787731c302",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "class PinnedClock implements Clock {\n  private pinned: number | null = null;\n\n  constructor(private readonly source: Clock) {}\n\n  now(): number {\n    return this.pinned ?? this.source.now();\n  }\n\n  run<T>(operation: () => T): T {\n    if (this.pinned !== null) return operation();\n    this.pinned = this.source.now();\n    try {\n      return operation();\n    } finally {\n      this.pinned = null;\n    }\n  }\n}"
+      },
+      "name": "PinnedClock",
+      "qualifiedName": "PinnedClock",
+      "span": {
+        "end": 3438,
+        "start": 3032
+      }
+    },
+    {
       "contentHash": "b581f3f94e13c034d44e2bd26da28b312811189ff088c6a2f71736077dc3b319",
       "file": "src/forge/runtime/db/postgres-adapter.ts",
       "id": "ed630075641abee5f9f8122fb2401b480ddc21298c67e355911a9d0acd974bda",
@@ -52673,6 +54400,40 @@ export const appGraph = {
       "span": {
         "end": 2643,
         "start": 1820
+      }
+    },
+    {
+      "contentHash": "415bc18bff99ffd91f9a7c165e51751a4dd68dd09fa9f4567313b7e07fc2088d",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "5306e60ec128941d2bc515424a1a9bc08cdd6d6b7a5c29c31f488df536c56df6",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "class ReplayValidatingJournal implements ControlJournal {\n  constructor(\n    private readonly inner: ControlJournal,\n    private readonly rootExecutionId: string,\n    private readonly trust: () => ReplayTrustContext,\n  ) {}\n\n  append(input: AppendControlEventInput): ControlEventEnvelope {\n    const current = this.inner.readAll();\n\n    if (input.event.rootExecutionId !== this.rootExecutionId) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Event ${input.event.eventId} belongs to another root execution`,\n      );\n    }\n\n    const duplicate = current.find(\n      (event) =>\n        event.eventId === input.event.eventId ||\n        (input.event.idempotencyKey !== undefined &&\n          event.idempotencyKey === input.event.idempotencyKey),\n    );\n    if (duplicate || input.expectedSequence !== current.length) {\n      return this.inner.append(input);\n    }\n\n    const predecessor = current.at(-1);\n    const withoutDigest: Omit<ControlEventEnvelope, \"eventDigest\"> = {\n      ...structuredClone(input.event),\n      sequence: current.length + 1,\n      predecessorEventId: predecessor?.eventId ?? null,\n      predecessorEventDigest: predecessor?.eventDigest ?? null,\n    };\n    const candidate: ControlEventEnvelope = {\n      ...withoutDigest,\n      eventDigest: computeControlEventDigest(withoutDigest),\n    };\n\n    replayControlState([...current, candidate], this.trust());\n    return this.inner.append(input);\n  }\n\n  readAll(): readonly ControlEventEnvelope[] {\n    return this.inner.readAll();\n  }\n}"
+      },
+      "name": "ReplayValidatingJournal",
+      "qualifiedName": "ReplayValidatingJournal",
+      "span": {
+        "end": 4969,
+        "start": 3440
+      }
+    },
+    {
+      "contentHash": "b64bdadd2c3e108b861da9ea46575f2ff7a48dc9d3d9363da22d36c24e94435d",
+      "file": "src/forge/agent-fabric/resource-ledger.ts",
+      "id": "add6528d86556d1c6b043ef897af628ca47dd939893ef679be24ecf975fa8752",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "2c8c01d2bb86a94ee183b3ff04643c105ffc9ac7ceaabd661345fb01adac2295",
+        "sourceSlice": "class ResourceLedger {\n  private readonly definitions: Record<string, ResourceDefinition>;\n  private readonly reserved: Record<string, number> = {};\n  private readonly consumed: Record<string, number> = {};\n  private readonly ownerReserved: Record<Identifier, Record<string, number>> = {};\n  private readonly ownerConsumed: Record<Identifier, Record<string, number>> = {};\n  private readonly reservations: Record<Identifier, ResourceReservation> = {};\n\n  constructor(definitions: readonly ResourceDefinition[]) {\n    this.definitions = {};\n    for (const definition of definitions) {\n      if (getOwn(this.definitions, definition.resource)) {\n        throw new AgentFabricError(\n          \"AF_DUPLICATE_ID\",\n          `Duplicate resource definition: ${definition.resource}`,\n        );\n      }\n      if (!Number.isFinite(definition.limit) || definition.limit < 0) {\n        throw new AgentFabricError(\n          \"AF_INVALID_STATE\",\n          `Resource limit for ${definition.resource} must be finite and non-negative`,\n        );\n      }\n      setOwn(this.definitions, definition.resource, { ...definition });\n      setOwn(this.reserved, definition.resource, 0);\n      setOwn(this.consumed, definition.resource, 0);\n    }\n  }\n\n  static fromSnapshot(snapshot: ResourceLedgerSnapshot): ResourceLedger {\n    const ledger = new ResourceLedger(Object.values(snapshot.definitions));\n    const freshDefinitions = ledger.snapshot().definitions;\n    if (stableStringify(freshDefinitions) !== stableStringify(snapshot.definitions)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_STATE\",\n        \"ResourceLedger snapshot definitions are not canonical\",\n      );\n    }\n    ledger.restore(snapshot);\n    return ledger;\n  }\n\n  transaction<T>(operation: () => T): T {\n    const before = this.snapshot();\n    try {\n      return operation();\n    } catch (error) {\n      this.restore(before);\n      throw error;\n    }\n  }\n\n  reserve(\n    reservationId: Identifier,\n    ownerId: Identifier,\n    requests: readonly ResourceReservationRequest[],\n    ownerCeilings?: Readonly<Record<string, number>>,\n  ): ResourceReservation {\n    const aggregated: Record<string, number> = {};\n    for (const request of requests) {\n      assertAmount(request.amount, request.resource);\n      if (!getOwn(this.definitions, request.resource)) {\n        throw new AgentFabricError(\n          \"AF_NOT_FOUND\",\n          `Unknown resource: ${request.resource}`,\n        );\n      }\n      setOwn(aggregated, request.resource, (getOwn(aggregated, request.resource) ?? 0) + request.amount);\n    }\n\n    const normalizedRequests = Object.entries(aggregated)\n      .sort(([left], [right]) => left.localeCompare(right))\n      .map(([resource, amount]) => ({ resource, amount }));\n\n    const existing = getOwn(this.reservations, reservationId);\n    if (existing) {\n      const requested = stableStringify({ ownerId, requests: normalizedRequests });\n      const recorded = stableStringify({ ownerId: existing.ownerId, requests: existing.requests });\n      if (requested !== recorded) {\n        throw new AgentFabricError(\n          \"AF_CONFLICT\",\n          `Reservation ${reservationId} was reused with a different request`,\n        );\n      }\n      return structuredClone(existing);\n    }\n\n    const ownerReserved = getOwn(this.ownerReserved, ownerId) ?? {};\n    const ownerConsumed = getOwn(this.ownerConsumed, ownerId) ?? {};\n    for (const [resource, amount] of Object.entries(aggregated)) {\n      const definition = getOwn(this.definitions, resource)!;\n      const reserved = getOwn(this.reserved, resource) ?? 0;\n      const consumed = getOwn(this.consumed, resource) ?? 0;\n      const projected = definition.semantics === \"counter\"\n        ? consumed + amount\n        : reserved + consumed + amount;\n      if (projected > definition.limit) {\n        throw new AgentFabricError(\n          \"AF_RESOURCE_EXHAUSTED\",\n          `Resource ${resource} would exceed its global limit`,\n          { amount, consumed, limit: definition.limit, reserved, resource },\n        );\n      }\n\n      if (ownerCeilings) {\n        const ceiling = getOwn(ownerCeilings, resource);\n        if (ceiling === undefined) {\n          throw new AgentFabricError(\n            \"AF_RESOURCE_EXHAUSTED\",\n            `Owner ${ownerId} has no ceiling for resource ${resource}`,\n            { ownerId, resource },\n          );\n        }\n        const ownerProjected = definition.semantics === \"counter\"\n          ? (getOwn(ownerConsumed, resource) ?? 0) + amount\n          : (getOwn(ownerReserved, resource) ?? 0) + (getOwn(ownerConsumed, resource) ?? 0) + amount;\n        if (ownerProjected > ceiling) {\n          throw new AgentFabricError(\n            \"AF_RESOURCE_EXHAUSTED\",\n            `Resource ${resource} would exceed the ceiling for ${ownerId}`,\n            { amount, ceiling, ownerId, projected: ownerProjected, resource },\n          );\n        }\n      }\n    }\n\n    // Publish owner buckets only after validation, including for callers that\n    // translate a reservation exception into a rejected AuthorityResolution.\n    getOwn(this.ownerReserved, ownerId) ?? setOwn(this.ownerReserved, ownerId, ownerReserved);\n    getOwn(this.ownerConsumed, ownerId) ?? setOwn(this.ownerConsumed, ownerId, ownerConsumed);\n    for (const request of normalizedRequests) {\n      const definition = getOwn(this.definitions, request.resource)!;\n      if (definition.semantics === \"counter\") {\n        setOwn(this.consumed, request.resource, (getOwn(this.consumed, request.resource) ?? 0) + request.amount);\n        setOwn(ownerConsumed, request.resource, (getOwn(ownerConsumed, request.resource) ?? 0) + request.amount);\n      } else {\n        setOwn(this.reserved, request.resource, (getOwn(this.reserved, request.resource) ?? 0) + request.amount);\n        setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) + request.amount);\n      }\n    }\n\n    const reservation: ResourceReservation = {\n      reservationId,\n      ownerId,\n      requests: normalizedRequests,\n      status: normalizedRequests.some(\n        (request) => getOwn(this.definitions, request.resource)?.semantics !== \"counter\",\n      ) ? \"active\" : \"consumed\",\n    };\n    setOwn(this.reservations, reservationId, structuredClone(reservation));\n    return structuredClone(reservation);\n  }\n\n  consume(reservationId: Identifier): ResourceReservation {\n    const reservation = this.requireReservation(reservationId);\n    if (reservation.status !== \"active\") return structuredClone(reservation);\n\n    const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);\n    const ownerConsumed = bucket(this.ownerConsumed, reservation.ownerId);\n    for (const request of reservation.requests) {\n      const definition = getOwn(this.definitions, request.resource)!;\n      if (definition.semantics === \"capacity\") continue;\n      if (definition.semantics === \"consumable\") {\n        setOwn(this.reserved, request.resource, getOwn(this.reserved, request.resource)! - request.amount);\n        setOwn(this.consumed, request.resource, getOwn(this.consumed, request.resource)! + request.amount);\n        setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) - request.amount);\n        setOwn(ownerConsumed, request.resource, (getOwn(ownerConsumed, request.resource) ?? 0) + request.amount);\n      }\n    }\n\n    const next: ResourceReservation = { ...reservation, status: \"consumed\" };\n    setOwn(this.reservations, reservationId, structuredClone(next));\n    return structuredClone(next);\n  }\n\n  release(reservationId: Identifier): ResourceReservation {\n    const reservation = this.requireReservation(reservationId);\n    if (reservation.status === \"released\") return structuredClone(reservation);\n\n    const ownerReserved = bucket(this.ownerReserved, reservation.ownerId);\n    if (reservation.status === \"active\") {\n      for (const request of reservation.requests) {\n        const definition = getOwn(this.definitions, request.resource)!;\n        if (definition.semantics !== \"counter\") {\n          setOwn(this.reserved, request.resource, getOwn(this.reserved, request.resource)! - request.amount);\n          setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) - request.amount);\n        }\n      }\n    } else {\n      for (const request of reservation.requests) {\n        const definition = getOwn(this.definitions, request.resource)!;\n        if (definition.semantics === \"capacity\") {\n          setOwn(this.reserved, request.resource, getOwn(this.reserved, request.resource)! - request.amount);\n          setOwn(ownerReserved, request.resource, (getOwn(ownerReserved, request.resource) ?? 0) - request.amount);\n        }\n      }\n    }\n\n    const next: ResourceReservation = { ...reservation, status: \"released\" };\n    setOwn(this.reservations, reservationId, structuredClone(next));\n    return structuredClone(next);\n  }\n\n  snapshot(): ResourceLedgerSnapshot {\n    return {\n      definitions: structuredClone(this.definitions),\n      reserved: { ...this.reserved },\n      consumed: { ...this.consumed },\n      ownerReserved: structuredClone(this.ownerReserved),\n      ownerConsumed: structuredClone(this.ownerConsumed),\n      reservations: structuredClone(this.reservations),\n    };\n  }\n\n  private restore(snapshot: ResourceLedgerSnapshot): void {\n    replaceRecord(this.reserved, snapshot.reserved);\n    replaceRecord(this.consumed, snapshot.consumed);\n    replaceRecord(this.ownerReserved, snapshot.ownerReserved as Readonly<Record<string, Record<string, number>>>);\n    replaceRecord(this.ownerConsumed, snapshot.ownerConsumed as Readonly<Record<string, Record<string, number>>>);\n    replaceRecord(this.reservations, snapshot.reservations);\n  }\n\n  private requireReservation(reservationId: Identifier): ResourceReservation {\n    const reservation = getOwn(this.reservations, reservationId);\n    if (!reservation) {\n      throw new AgentFabricError(\n        \"AF_NOT_FOUND\",\n        `Unknown reservation: ${reservationId}`,\n      );\n    }\n    return reservation;\n  }\n}"
+      },
+      "name": "ResourceLedger",
+      "qualifiedName": "ResourceLedger",
+      "span": {
+        "end": 11103,
+        "start": 1055
       }
     },
     {
@@ -53685,14 +55446,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "COST_ORDER: TestCost[] = [\"instant\", \"fast\", \"standard\", \"slow\", \"docker\", \"browser\"]"
       },
       "name": "COST_ORDER",
       "qualifiedName": "COST_ORDER",
       "span": {
-        "end": 2338,
-        "start": 2253
+        "end": 2319,
+        "start": 2234
       }
     },
     {
@@ -53872,14 +55633,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "DEFAULT_FORGE_PACKAGE_SPEC = \"npm:forgeos@alpha\""
       },
       "name": "DEFAULT_FORGE_PACKAGE_SPEC",
       "qualifiedName": "DEFAULT_FORGE_PACKAGE_SPEC",
       "span": {
-        "end": 2083,
-        "start": 2035
+        "end": 2418,
+        "start": 2370
       }
     },
     {
@@ -54093,7 +55854,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "DEFAULT_SCRIPT_TIMEOUT_MS = 30 * 60 * 1000"
       },
       "name": "DEFAULT_SCRIPT_TIMEOUT_MS",
@@ -54195,14 +55956,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "DEFAULT_TEST_COMMAND_TIMEOUT_MS = 30 * 60 * 1000"
       },
       "name": "DEFAULT_TEST_COMMAND_TIMEOUT_MS",
       "qualifiedName": "DEFAULT_TEST_COMMAND_TIMEOUT_MS",
       "span": {
-        "end": 2394,
-        "start": 2346
+        "end": 2375,
+        "start": 2327
       }
     },
     {
@@ -54495,6 +56256,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "1dd79440b2ba552dd5d0312619d116e7cb2a07ba8398e182075aa26707c3d679",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "5765798f6a58b3b1fe45e9d92b579f6b9fc9ff23b15da12ab2e9261630e409a8",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "DIGEST = /^sha256:[0-9a-f]{64}$/"
+      },
+      "name": "DIGEST",
+      "qualifiedName": "DIGEST",
+      "span": {
+        "end": 388,
+        "start": 356
+      }
+    },
+    {
       "contentHash": "b2d7a048a595dbe4c27d7047e7c4c58e5af6d2027dd7985d30308687d32522cb",
       "file": "src/forge/compiler/integration/templates/render.ts",
       "id": "30af07ada11156442af137851ef343015088af52522029bcdfac67b3c75d6172",
@@ -54526,6 +56304,23 @@ export const appGraph = {
       "span": {
         "end": 732,
         "start": 639
+      }
+    },
+    {
+      "contentHash": "dda3024ca738d33e5822a5c76d1dbc20bcb77d55323303a1fcee02e7c0630d77",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "f90247915642be1149b4c1ca53b1c4fcd55ebe71e5c9b3b4d8394c6e426cf36a",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "EFFECT_CLASSES = new Set([\n  \"read\",\n  \"internal_write\",\n  \"bounded_external_inference\",\n  \"consequential\",\n])"
+      },
+      "name": "EFFECT_CLASSES",
+      "qualifiedName": "EFFECT_CLASSES",
+      "span": {
+        "end": 273,
+        "start": 163
       }
     },
     {
@@ -59618,14 +61413,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "GENERATED = \"src/forge/_generated\""
       },
       "name": "GENERATED",
       "qualifiedName": "GENERATED",
       "span": {
-        "end": 2161,
-        "start": 2127
+        "end": 2142,
+        "start": 2108
       }
     },
     {
@@ -60513,6 +62308,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "3db2e8d3b2acf19701b5297d933b456befd883fdb86a011bf5be05ab3ff779bf",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "132633ece91b9c861c86ba8a32a428aafa9de651b69c126bfbd2fc3319d8ce5a",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "P0A_CANONICALIZATION_PROFILE = \"forge-canonical-json/v0.1\" as const"
+      },
+      "name": "P0A_CANONICALIZATION_PROFILE",
+      "qualifiedName": "P0A_CANONICALIZATION_PROFILE",
+      "span": {
+        "end": 488,
+        "start": 421
+      }
+    },
+    {
       "contentHash": "a7acb329c0256d7944fd46e420b3c34aa79ecf46da2388a8c3a4c5f0ac00680c",
       "file": "src/forge/compiler/package-graph/constants.ts",
       "id": "aefc5032f2ec6a9fe3157d733d8e3dc29272780a2e09bf8c361f29fdd5d0d17f",
@@ -60570,14 +62382,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "PACKAGE_JSON_DEPENDENCY_KEYS = [\n  \"dependencies\",\n  \"devDependencies\",\n  \"optionalDependencies\",\n  \"peerDependencies\",\n  \"packageManager\",\n  \"overrides\",\n  \"resolutions\",\n  \"engines\",\n] as const"
       },
       "name": "PACKAGE_JSON_DEPENDENCY_KEYS",
       "qualifiedName": "PACKAGE_JSON_DEPENDENCY_KEYS",
       "span": {
-        "end": 11495,
-        "start": 11300
+        "end": 11251,
+        "start": 11056
       }
     },
     {
@@ -60978,14 +62790,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "03ce95abf946390fe3b72b9bf16c7da3dae644de95b2256c5b958aff51d1ca19",
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
         "sourceSlice": "RELEVANT_COMPILER_OPTIONS: (keyof ts.CompilerOptions)[] = [\n  \"baseUrl\",\n  \"paths\",\n  \"module\",\n  \"moduleResolution\",\n  \"target\",\n  \"jsx\",\n  \"allowJs\",\n  \"resolveJsonModule\",\n  \"esModuleInterop\",\n  \"strict\",\n  \"rootDir\",\n  \"outDir\",\n]"
       },
       "name": "RELEVANT_COMPILER_OPTIONS",
       "qualifiedName": "RELEVANT_COMPILER_OPTIONS",
       "span": {
-        "end": 382,
-        "start": 148
+        "end": 497,
+        "start": 263
       }
     },
     {
@@ -61097,14 +62909,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "REQUIRED_GITIGNORE_PATHS = [\n  \"src/forge/_generated/\",\n  \"forge.lock\",\n  \".codex/\",\n  \".forge/cache/\",\n  \".forge/pglite/\",\n  \".forge/delta/\",\n  \".forge/agent/\",\n  \".forge/agent/*.ndjson\",\n  \".forge/agent/*.history\",\n  \".forge/last-run.json\",\n  \".forge/local/\",\n  \".forge/runtime-cache/\",\n  \".forge/test-cache/\",\n  \".forge/test-runs/\",\n  \".forge/ui-runs/\",\n  \".forge/repairs/\",\n  \".forge/refactors/\",\n  \".forge/upgrades/\",\n  \".forge/reviews/\",\n  \".forge/impact/\",\n  \".forge/agent-adapters/\",\n  \".forge/studio/\",\n  \".workos-seed-state.json\",\n] as const"
       },
       "name": "REQUIRED_GITIGNORE_PATHS",
       "qualifiedName": "REQUIRED_GITIGNORE_PATHS",
       "span": {
-        "end": 2026,
-        "start": 1475
+        "end": 2361,
+        "start": 1810
       }
     },
     {
@@ -61122,6 +62934,23 @@ export const appGraph = {
       "span": {
         "end": 1719,
         "start": 1528
+      }
+    },
+    {
+      "contentHash": "8b0d47b249b0384e343a0ae3ac489b571356631d34aefb806703a714c2bd4a75",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "7057b8269073ff4e5a4ca931ab371ff8cd8d8d4a95641620ddb0cdef72c5199c",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "RESOURCE_SEMANTICS = new Set([\"consumable\", \"capacity\", \"counter\"])"
+      },
+      "name": "RESOURCE_SEMANTICS",
+      "qualifiedName": "RESOURCE_SEMANTICS",
+      "span": {
+        "end": 348,
+        "start": 281
       }
     },
     {
@@ -61930,7 +63759,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS = 4"
       },
       "name": "STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS",
@@ -61947,14 +63776,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "STRICT_ISOLATED_TEST_PATTERNS = [\n  /^tests\\/ai\\//,\n  /^tests\\/cli\\/cli-generation\\.test\\.ts$/,\n  /^tests\\/cli\\/cli\\.test\\.ts$/,\n  /^tests\\/cli\\/cli-verify\\.test\\.ts$/,\n  /^tests\\/cli\\/cli-verify-changed\\.test\\.ts$/,\n  /^tests\\/cli\\/node-compat-dev-server\\.test\\.ts$/,\n  /^tests\\/cli\\/node-compat-new\\.test\\.ts$/,\n  /^tests\\/cli\\/windows\\.test\\.ts$/,\n  /^tests\\/client\\//,\n  /^tests\\/db\\/pglite-adapter\\.test\\.ts$/,\n  /^tests\\/dev\\//,\n  /^tests\\/external-manifest\\/external-manifest\\.test\\.ts$/,\n  /^tests\\/external-manifest\\/go-adapter-conformance\\.test\\.ts$/,\n  /^tests\\/external-manifest\\/java-adapter-conformance\\.test\\.ts$/,\n  /^tests\\/external-manifest\\/external-runtime-bridge\\.test\\.ts$/,\n  /^tests\\/external-manifest\\/external-runtime-node-cli\\.test\\.ts$/,\n  /^tests\\/impact\\/h28-impact\\.test\\.ts$/,\n  /^tests\\/impact\\/h28-impact-runner\\.test\\.ts$/,\n  /^tests\\/impact\\/h28-impact-runner-diagnostics\\.test\\.ts$/,\n  /^tests\\/live\\//,\n  /^tests\\/queries\\/query-dev-server\\.test\\.ts$/,\n  // refactor extract-action/rename tests use ts.createProgram fresh per call\n  // against isolated temp workspaces (no shared global or server state), so they\n  // run safely co-located in the parallel lane and share one process warm-up\n  // instead of paying a cold start per isolated chunk.\n  /^tests\\/release\\/h23-release-artifacts\\.test\\.ts$/,\n  /^tests\\/release\\/h23-release-self-host\\.test\\.ts$/,\n  /^tests\\/release\\/h23-release\\.test\\.ts$/,\n  /^tests\\/security\\/tenant-isolation\\/http-runtime\\.test\\.ts$/,\n  /^tests\\/templates\\/new-b2b-support-web\\.test\\.ts$/,\n  /^tests\\/templates\\/new-agent-workroom\\.test\\.ts$/,\n  /^tests\\/templates\\/new-minimal-web\\.test\\.ts$/,\n  /^tests\\/templates\\/new-nuxt-web\\.test\\.ts$/,\n  /^tests\\/telemetry\\/telemetry-dev-server\\.test\\.ts$/,\n]"
       },
       "name": "STRICT_ISOLATED_TEST_PATTERNS",
       "qualifiedName": "STRICT_ISOLATED_TEST_PATTERNS",
       "span": {
-        "end": 25411,
-        "start": 23641
+        "end": 25501,
+        "start": 23731
       }
     },
     {
@@ -61975,20 +63804,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "30c5345507eb2e975c5e7a790db6d089c2e0862dbdd928a0dc77badad057ce40",
+      "contentHash": "30d19a47cd5b73c638320c667862f398de2017d62d37478301b14404ee420e8b",
       "file": "src/forge/cli/verify.ts",
       "id": "d1f2c9a350eff992b53d9518e717091b16175b644cf87c59aef32d01c9166298",
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
-        "sourceSlice": "STRICT_SERIAL_TEST_PATTERNS: RegExp[] = []"
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
+        "sourceSlice": "STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [\n  /^tests\\/agent-memory\\/h48-agent-memory\\.test\\.ts$/,\n]"
       },
       "name": "STRICT_SERIAL_TEST_PATTERNS",
       "qualifiedName": "STRICT_SERIAL_TEST_PATTERNS",
       "span": {
-        "end": 25461,
-        "start": 25419
+        "end": 25607,
+        "start": 25509
       }
     },
     {
@@ -61998,7 +63827,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "STRICT_TEST_CHUNK_SIZE = 12"
       },
       "name": "STRICT_TEST_CHUNK_SIZE",
@@ -62015,7 +63844,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "STRICT_TEST_COSTS: TestCost[] = [\"instant\", \"fast\", \"standard\", \"slow\"]"
       },
       "name": "STRICT_TEST_COSTS",
@@ -62026,19 +63855,19 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "03ff8c2ed091bf2759a467510e4156018525a9b7b6f05e153b14bf359070748e",
+      "contentHash": "0340f75530b1068f2984b3745c69bca9867f3544de64da830e1ff3014786f4c8",
       "file": "src/forge/cli/verify.ts",
       "id": "a4885f92bc7edc1aaf6a859557396a5faf18d86ab3e941728d4b2d09f7109a74",
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
-        "sourceSlice": "STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: number }> = [\n  { pattern: /^tests\\/cli\\/node-compat\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/cli\\/node-compat-dev-server\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/cli\\/node-compat-new\\.test\\.ts$/, estimatedMs: 8_000 },\n  { pattern: /^tests\\/cli\\/cli\\.test\\.ts$/, estimatedMs: 3_000 },\n  { pattern: /^tests\\/cli\\/cli-generation\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/cli\\/cli-verify\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/cli\\/cli-verify-changed\\.test\\.ts$/, estimatedMs: 5_000 },\n  { pattern: /^tests\\/db\\/pglite-adapter\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/dev\\/dev-workflow-worker\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/external-manifest\\/external-runtime-bridge\\.test\\.ts$/, estimatedMs: 4_000 },\n  { pattern: /^tests\\/external-manifest\\/external-runtime-cli\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/external-manifest\\/external-runtime-node-cli\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/external-manifest\\/go-adapter-conformance\\.test\\.ts$/, estimatedMs: 5_000 },\n  { pattern: /^tests\\/external-manifest\\/java-adapter-conformance\\.test\\.ts$/, estimatedMs: 20_000 },\n  { pattern: /^tests\\/impact\\/h28-impact\\.test\\.ts$/, estimatedMs: 8_000 },\n  { pattern: /^tests\\/impact\\/h28-impact-runner\\.test\\.ts$/, estimatedMs: 7_000 },\n  { pattern: /^tests\\/impact\\/h28-impact-runner-diagnostics\\.test\\.ts$/, estimatedMs: 3_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor-extract-action-apply\\.test\\.ts$/, estimatedMs: 10_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor-extract-action\\.test\\.ts$/, estimatedMs: 21_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor-extract-action-bindings\\.test\\.ts$/, estimatedMs: 10_000 },\n  { pattern: /^tests\\/release\\/h23-release-artifacts\\.test\\.ts$/, estimatedMs: 8_000 },\n  { pattern: /^tests\\/release\\/h23-release-self-host\\.test\\.ts$/, estimatedMs: 4_000 },\n  { pattern: /^tests\\/release\\/h23-release\\.test\\.ts$/, estimatedMs: 3_000 },\n  { pattern: /^tests\\/templates\\/new-b2b-support-web\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/new-agent-workroom\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/new-minimal-web\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/new-nuxt-web\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/create-forge-app\\.test\\.ts$/, estimatedMs: 8_000 },\n]"
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
+        "sourceSlice": "STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: number }> = [\n  { pattern: /^tests\\/agent-memory\\/h48-agent-memory\\.test\\.ts$/, estimatedMs: 105_000 },\n  { pattern: /^tests\\/cli\\/node-compat\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/cli\\/node-compat-dev-server\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/cli\\/node-compat-new\\.test\\.ts$/, estimatedMs: 8_000 },\n  { pattern: /^tests\\/cli\\/cli\\.test\\.ts$/, estimatedMs: 3_000 },\n  { pattern: /^tests\\/cli\\/cli-generation\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/cli\\/cli-verify\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/cli\\/cli-verify-changed\\.test\\.ts$/, estimatedMs: 5_000 },\n  { pattern: /^tests\\/db\\/pglite-adapter\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/dev\\/dev-workflow-worker\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/external-manifest\\/external-runtime-bridge\\.test\\.ts$/, estimatedMs: 4_000 },\n  { pattern: /^tests\\/external-manifest\\/external-runtime-cli\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/external-manifest\\/external-runtime-node-cli\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/external-manifest\\/go-adapter-conformance\\.test\\.ts$/, estimatedMs: 5_000 },\n  { pattern: /^tests\\/external-manifest\\/java-adapter-conformance\\.test\\.ts$/, estimatedMs: 20_000 },\n  { pattern: /^tests\\/impact\\/h28-impact\\.test\\.ts$/, estimatedMs: 8_000 },\n  { pattern: /^tests\\/impact\\/h28-impact-runner\\.test\\.ts$/, estimatedMs: 7_000 },\n  { pattern: /^tests\\/impact\\/h28-impact-runner-diagnostics\\.test\\.ts$/, estimatedMs: 3_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor\\.test\\.ts$/, estimatedMs: 6_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor-extract-action-apply\\.test\\.ts$/, estimatedMs: 10_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor-extract-action\\.test\\.ts$/, estimatedMs: 21_000 },\n  { pattern: /^tests\\/refactor\\/h27-refactor-extract-action-bindings\\.test\\.ts$/, estimatedMs: 10_000 },\n  { pattern: /^tests\\/release\\/h23-release-artifacts\\.test\\.ts$/, estimatedMs: 8_000 },\n  { pattern: /^tests\\/release\\/h23-release-self-host\\.test\\.ts$/, estimatedMs: 4_000 },\n  { pattern: /^tests\\/release\\/h23-release\\.test\\.ts$/, estimatedMs: 3_000 },\n  { pattern: /^tests\\/templates\\/new-b2b-support-web\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/new-agent-workroom\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/new-minimal-web\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/new-nuxt-web\\.test\\.ts$/, estimatedMs: 12_000 },\n  { pattern: /^tests\\/templates\\/create-forge-app\\.test\\.ts$/, estimatedMs: 8_000 },\n]"
       },
       "name": "STRICT_TEST_FALLBACK_MS_BY_PATH",
       "qualifiedName": "STRICT_TEST_FALLBACK_MS_BY_PATH",
       "span": {
-        "end": 23633,
+        "end": 23723,
         "start": 21030
       }
     },
@@ -62049,7 +63878,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "STRICT_TEST_MAX_DEFAULT_JOBS = 6"
       },
       "name": "STRICT_TEST_MAX_DEFAULT_JOBS",
@@ -62406,7 +64235,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "TESTGRAPH_PROFILE_RELATIVE_PATH = \".forge/test-runs/testgraph-profile.json\""
       },
       "name": "TESTGRAPH_PROFILE_RELATIVE_PATH",
@@ -62457,7 +64286,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "TEST_COST_FALLBACK_MS: Record<TestCost, number> = {\n  instant: 250,\n  fast: 1_000,\n  standard: 3_000,\n  slow: 12_000,\n  docker: 60_000,\n  browser: 60_000,\n}"
       },
       "name": "TEST_COST_FALLBACK_MS",
@@ -62474,7 +64303,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "TEST_COST_RANK: Record<TestCost, number> = {\n  instant: 0,\n  fast: 1,\n  standard: 2,\n  slow: 3,\n  docker: 4,\n  browser: 5,\n}"
       },
       "name": "TEST_COST_RANK",
@@ -62491,14 +64320,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "TEST_PLAN_DIR = \".forge/test-plans\""
       },
       "name": "TEST_PLAN_DIR",
       "qualifiedName": "TEST_PLAN_DIR",
       "span": {
-        "end": 2204,
-        "start": 2169
+        "end": 2185,
+        "start": 2150
       }
     },
     {
@@ -62525,14 +64354,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "TEST_RUN_DIR = \".forge/test-runs\""
       },
       "name": "TEST_RUN_DIR",
       "qualifiedName": "TEST_RUN_DIR",
       "span": {
-        "end": 2245,
-        "start": 2212
+        "end": 2226,
+        "start": 2193
       }
     },
     {
@@ -62559,14 +64388,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "TEXT_EXTENSIONS = new Set([\n  \"\",\n  \".css\",\n  \".env\",\n  \".example\",\n  \".html\",\n  \".json\",\n  \".md\",\n  \".ts\",\n  \".tsx\",\n])"
       },
       "name": "TEXT_EXTENSIONS",
       "qualifiedName": "TEXT_EXTENSIONS",
       "span": {
-        "end": 2212,
-        "start": 2092
+        "end": 2547,
+        "start": 2427
       }
     },
     {
@@ -63077,6 +64906,23 @@ export const appGraph = {
       "span": {
         "end": 225,
         "start": 177
+      }
+    },
+    {
+      "contentHash": "92f7360548f5d81d17569fe43faaa174bc86f0714d0adb3017ac36b80ad633b1",
+      "file": "src/forge/compiler/app-graph/tsconfig-hash.ts",
+      "id": "68623ee2c39fda365d3b886a7fc7cca3a18f24277ccc0484c394318d1ef7fb8e",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
+        "sourceSlice": "WORKSPACE_PATH_OPTIONS = new Set<keyof ts.CompilerOptions>([\n  \"baseUrl\",\n  \"rootDir\",\n  \"outDir\",\n])"
+      },
+      "name": "WORKSPACE_PATH_OPTIONS",
+      "qualifiedName": "WORKSPACE_PATH_OPTIONS",
+      "span": {
+        "end": 607,
+        "start": 506
       }
     },
     {
@@ -64089,14 +65935,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function addBunTestTimeout(command: string, timeoutMs: number): string {\n  const parts = command.split(/\\s+/).filter(Boolean);\n  const usesBunWrapper =\n    parts[0] === \"node\" &&\n    parts[1]?.replace(/\\\\/g, \"/\").endsWith(\"bin/forge-bun.mjs\") &&\n    parts[2] === \"test\";\n  if (\n    ((parts[0] === \"bun\" && parts[1] === \"test\") || usesBunWrapper) &&\n    !parts.some((part) => part === \"--timeout\" || part.startsWith(\"--timeout=\"))\n  ) {\n    return `${command} --timeout ${timeoutMs}`;\n  }\n  return command;\n}"
       },
       "name": "addBunTestTimeout",
       "qualifiedName": "addBunTestTimeout",
       "span": {
-        "end": 34311,
-        "start": 33804
+        "end": 34174,
+        "start": 33667
       }
     },
     {
@@ -64310,14 +66156,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function addRuntimeUsingTables(args: {\n  impact: ImpactedSystems;\n  tableNames: string[];\n  appGraph: AppGraph;\n  queryRegistry: QueryRegistry;\n  liveQueryRegistry: LiveQueryRegistry;\n  runtimeGraph: RuntimeGraph;\n}): void {\n  for (const table of args.tableNames) {\n    for (const symbol of args.appGraph.symbols) {\n      if (![\"command\", \"query\", \"liveQuery\", \"action\", \"workflow\"].includes(symbol.kind)) continue;\n      const metaText = canonicalJson(symbol.meta).toLowerCase();\n      const fileTextValue = symbol.file ? \"\" : \"\";\n      if (!metaText.includes(table.toLowerCase()) && !fileTextValue.includes(table.toLowerCase())) {\n        continue;\n      }\n      if (symbol.kind === \"command\") push(args.impact.runtime.commands, symbol.name);\n      if (symbol.kind === \"query\") push(args.impact.runtime.queries, symbol.name);\n      if (symbol.kind === \"liveQuery\") push(args.impact.runtime.liveQueries, symbol.name);\n      if (symbol.kind === \"action\") push(args.impact.runtime.actions, symbol.name);\n      if (symbol.kind === \"workflow\") push(args.impact.runtime.workflows, symbol.name);\n    }\n  }\n  if (args.tableNames.length > 0) {\n    for (const entry of args.runtimeGraph.entries) {\n      push(entry.kind === \"command\" ? args.impact.runtime.commands : args.impact.runtime.actions, entry.name);\n    }\n    for (const query of args.queryRegistry.queries) push(args.impact.runtime.queries, query.name);\n    for (const liveQuery of args.liveQueryRegistry.liveQueries) push(args.impact.runtime.liveQueries, liveQuery.name);\n  }\n}"
       },
       "name": "addRuntimeUsingTables",
       "qualifiedName": "addRuntimeUsingTables",
       "span": {
-        "end": 10431,
-        "start": 8901
+        "end": 10187,
+        "start": 8657
       }
     },
     {
@@ -64684,14 +66530,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function analyzeFiles(args: {\n  workspaceRoot: string;\n  files: string[];\n  includeGenerated: boolean;\n  excludeTests: boolean;\n  appGraph: AppGraph;\n  dataGraph: DataGraph;\n  packageGraph: PackageGraph;\n  runtimeGraph: RuntimeGraph;\n  queryRegistry: QueryRegistry;\n  liveQueryRegistry: LiveQueryRegistry;\n  policyRegistry: PolicyRegistry;\n  actionSubscriptions: ActionSubscriptions;\n  workflowRegistry: WorkflowRegistry;\n  workflowSubscriptions: WorkflowSubscriptions;\n}): ImpactedSystems {\n  const impact = emptyImpacted();\n  const tableNames = args.dataGraph.tables.map((table) => table.name).sort();\n  const policyNames = args.policyRegistry.policies.map((policy) => policy.name).sort();\n  const packageNames = args.packageGraph.packages.map((pkg) => pkg.name).sort();\n\n  for (const file of args.files) {\n    if (!args.includeGenerated && file.startsWith(`${GENERATED}/`)) {\n      push(impact.generatedArtifacts, file);\n      continue;\n    }\n    if (file === \"forge.lock\") {\n      push(impact.generatedArtifacts, file);\n      continue;\n    }\n    if (args.excludeTests && /\\.(test|spec)\\.(ts|tsx)$/.test(file)) {\n      continue;\n    }\n    const text = fileText(args.workspaceRoot, file);\n    const lowered = file.toLowerCase();\n    const packageDependencyImpact = packageDependencyFileImpactsPackages(args.workspaceRoot, file);\n\n    if (file === \"src/schema.ts\" || file === \"src/forge/schema.ts\" || lowered.includes(\"datagraph\")) {\n      for (const table of tableNames) push(impact.data.tables, table);\n      addRuntimeUsingTables({ impact, tableNames, appGraph: args.appGraph, queryRegistry: args.queryRegistry, liveQueryRegistry: args.liveQueryRegistry, runtimeGraph: args.runtimeGraph });\n      for (const policy of policyNames) push(impact.policies, policy);\n      push(impact.generatedArtifacts, \"src/forge/_generated/db.ts\");\n      push(impact.generatedArtifacts, \"src/forge/_generated/clientTypes.ts\");\n    }\n\n    for (const table of tableNames) {\n      if (text.includes(table) || file.includes(table)) {\n        push(impact.data.tables, table);\n      }\n    }\n    for (const policy of policyNames) {\n      if (text.includes(policy) || file.includes(policy)) {\n        push(impact.policies, policy);\n      }\n    }\n    for (const pkg of packageNames) {\n      if (importsPackage(text, pkg) || packageDependencyImpact) {\n        push(impact.packages, pkg);\n      }\n    }\n\n    if (lowered.includes(\"/commands/\")) {\n      const name = basenameNoExt(file);\n      push(impact.runtime.commands, name);\n      for (const event of eventsFromText(text)) {\n        for (const sub of args.actionSubscriptions.byEvent?.[event] ?? []) push(impact.runtime.actions, sub.actionName);\n        for (const sub of args.workflowSubscriptions.byEvent?.[event] ?? []) push(impact.runtime.workflows, sub.workflowName);\n      }\n    } else if (lowered.includes(\"/queries/\")) {\n      const name = basenameNoExt(file);\n      if (name.toLowerCase().startsWith(\"live\")) push(impact.runtime.liveQueries, name);\n      else push(impact.runtime.queries, name);\n    } else if (lowered.includes(\"/actions/\")) {\n      push(impact.runtime.actions, basenameNoExt(file));\n    } else if (lowered.includes(\"/workflows/\")) {\n      push(impact.runtime.workflows, basenameNoExt(file));\n    }\n\n    if (lowered.includes(\"/components/\") && file.endsWith(\".tsx\")) {\n      push(impact.frontend.components, componentName(file));\n    }\n    if (lowered.includes(\"/app/\") && file.endsWith(\".tsx\")) {\n      push(impact.frontend.pages, file.replace(/^web\\/app/, \"\").replace(/\\/page\\.tsx$/, \"\") || \"/\");\n    }\n    if ([\"dockerfile\", \"docker-compose.yml\", \"docker-compose.yaml\"].some((name) => lowered.endsWith(name)) || lowered.includes(\"/deploy/\")) {\n      push(impact.deploy, file);\n    }\n  }\n\n  if (impact.data.tables.length > 0) {\n    addRuntimeUsingTables({ impact, tableNames: impact.data.tables, appGraph: args.appGraph, queryRegistry: args.queryRegistry, liveQueryRegistry: args.liveQueryRegistry, runtimeGraph: args.runtimeGraph });\n  }\n\n  return sortImpact(impact);\n}"
       },
       "name": "analyzeFiles",
       "qualifiedName": "analyzeFiles",
       "span": {
-        "end": 17452,
-        "start": 13425
+        "end": 17315,
+        "start": 13288
       }
     },
     {
@@ -64701,14 +66547,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function analyzeGitHygiene(targetDir: string): NewCommandResult[\"gitHygiene\"] {\n  const gitignorePath = join(targetDir, \".gitignore\");\n  const gitignore = nodeFileSystem.exists(gitignorePath)\n    ? (nodeFileSystem.readText(gitignorePath) ?? \"\")\n    : \"\";\n  const missingPaths = REQUIRED_GITIGNORE_PATHS.filter(\n    (path) => !gitignore.includes(path),\n  );\n  return {\n    ok: missingPaths.length === 0,\n    ignoredPaths: [...REQUIRED_GITIGNORE_PATHS],\n    missingPaths,\n  };\n}"
       },
       "name": "analyzeGitHygiene",
       "qualifiedName": "analyzeGitHygiene",
       "span": {
-        "end": 7596,
-        "start": 7120
+        "end": 7934,
+        "start": 7458
       }
     },
     {
@@ -64718,14 +66564,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function analyzeImpact(options: ImpactCommandOptions): ImpactReport {\n  const source = sourceFromOptions(options);\n  const detected = detectChangedFiles(options.workspaceRoot, source);\n  const artifacts = loadArtifacts(options.workspaceRoot);\n  const changedFiles = detected.files;\n  const changeSummary = changeSummaryForImpact(options.workspaceRoot, source, changedFiles);\n  const generatedChangedFiles = changeSummary.byType.generated.count;\n  const authoredChangedFiles = Math.max(0, changeSummary.total.count - generatedChangedFiles);\n  const derivedOnly = changeSummary.total.count > 0 && authoredChangedFiles === 0 && generatedChangedFiles > 0;\n  const impacted = analyzeFiles({\n    workspaceRoot: options.workspaceRoot,\n    files: changedFiles,\n    includeGenerated: options.includeGenerated,\n    excludeTests: options.excludeTests,\n    ...artifacts,\n  });\n  const risk = derivedOnly ? derivedOnlyRisk() : riskFor(impacted, changedFiles);\n  const checks = requiredChecks(impacted).map((check) => check.command);\n  return {\n    ok: detected.diagnostics.every((diagnostic) => diagnostic.severity !== \"error\"),\n    source,\n    changedFiles,\n    authoredChangedFiles,\n    generatedChangedFiles,\n    derivedOnly,\n    impacted,\n    risk,\n    recommendedChecks: checks,\n    finalVerification: [\"forge verify --strict\"],\n    diagnostics: detected.diagnostics,\n    exitCode: detected.diagnostics.some((diagnostic) => diagnostic.severity === \"error\") ? 1 : 0,\n  };\n}"
       },
       "name": "analyzeImpact",
       "qualifiedName": "analyzeImpact",
       "span": {
-        "end": 29253,
-        "start": 27789
+        "end": 29116,
+        "start": 27652
       }
     },
     {
@@ -65069,6 +66915,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "47ef4acd3a3bd6591ee4bc409980c4ae1f490091db086355423a198fd4ed095b",
+      "file": "src/forge/agent-fabric/planning.ts",
+      "id": "09efdceeff8920eb9ac95a8f44b564a5f765f2e89c5d0c145131843f575539ec",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "48213a32b46aed8fdf3d14d45314803a3c471eae4e3e8258f9aee94377e0b967",
+        "sourceSlice": "function applyPlanDelta(\n  base: RunPlanRevision,\n  delta: PlanDelta,\n  digest: DigestFunction,\n): RunPlanRevision {\n  if (delta.rootExecutionId !== base.rootExecutionId || delta.baseRevisionId !== base.revisionId) {\n    throw new AgentFabricError(\n      \"AF_INVALID_PLAN\",\n      `Plan delta ${delta.deltaId} is stale or targets another execution`,\n    );\n  }\n\n  const nodes = new Map(base.nodes.map((node) => [node.nodeId, normalizedNode(node)]));\n  for (const operation of delta.operations) {\n    if (operation.kind === \"add_node\") {\n      if (nodes.has(operation.node.nodeId)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          `Cannot add existing workflow node ${operation.node.nodeId}`,\n        );\n      }\n      nodes.set(operation.node.nodeId, normalizedNode(operation.node));\n      continue;\n    }\n    if (operation.kind === \"replace_node\") {\n      if (!nodes.has(operation.node.nodeId)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          `Cannot replace missing workflow node ${operation.node.nodeId}`,\n        );\n      }\n      nodes.set(operation.node.nodeId, normalizedNode(operation.node));\n      continue;\n    }\n    if (!nodes.delete(operation.nodeId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_PLAN\",\n        `Cannot remove missing workflow node ${operation.nodeId}`,\n      );\n    }\n  }\n\n  const nextNodes = [...nodes.values()].sort((left, right) => left.nodeId.localeCompare(right.nodeId));\n  validateWorkflowNodes(nextNodes);\n  return {\n    ...base,\n    revisionId: delta.nextRevisionId,\n    revisionNumber: base.revisionNumber + 1,\n    parentRevisionId: base.revisionId,\n    sourcePlanDeltaId: delta.deltaId,\n    nodes: nextNodes,\n    contentDigest: computeRunPlanContentDigest(base.programVersionId, nextNodes, digest),\n  };\n}"
+      },
+      "name": "applyPlanDelta",
+      "qualifiedName": "applyPlanDelta",
+      "span": {
+        "end": 4564,
+        "start": 2754
+      }
+    },
+    {
       "contentHash": "687ad3163ebd1e419105bd3ed2593e87c357b8b37c5d666b79662785c18bf514",
       "file": "src/forge/refactor/index.ts",
       "id": "a9860fcffca3b6e4d04787cef473b4cbccd452bcd38731016daeb07d8763a30a",
@@ -65100,6 +66963,23 @@ export const appGraph = {
       "span": {
         "end": 15960,
         "start": 13714
+      }
+    },
+    {
+      "contentHash": "f22e68e9d85905ad77e86a01894da160235ea6522bef3d5e623599c74adc92bd",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "2963424fe54f1ac90862650db0ddf63ea3a16d555bcc32d356f84d8223f86be6",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function applyReservationToState(\n  state: ControlState,\n  reservation: ResourceReservation,\n): Pick<\n  ControlState,\n  | \"resourceReserved\"\n  | \"resourceConsumed\"\n  | \"resourceOwnerReserved\"\n  | \"resourceOwnerConsumed\"\n  | \"resourceReservations\"\n> {\n  if (getOwn(state.resourceReservations, reservation.reservationId)) {\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      `Reservation already exists: ${reservation.reservationId}`,\n    );\n  }\n  const reserved = { ...state.resourceReserved };\n  const consumed = { ...state.resourceConsumed };\n  const ownerReserved = cloneNested(state.resourceOwnerReserved);\n  const ownerConsumed = cloneNested(state.resourceOwnerConsumed);\n  const ownerReservedBucket = getOwn(ownerReserved, reservation.ownerId) ?? {};\n  const ownerConsumedBucket = getOwn(ownerConsumed, reservation.ownerId) ?? {};\n  setOwn(ownerReserved, reservation.ownerId, ownerReservedBucket);\n  setOwn(ownerConsumed, reservation.ownerId, ownerConsumedBucket);\n\n  const seen = new Set<string>();\n  let hasNonCounter = false;\n  for (const request of reservation.requests) {\n    if (seen.has(request.resource)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Reservation ${reservation.reservationId} repeats resource ${request.resource}`,\n      );\n    }\n    seen.add(request.resource);\n    const definition = getOwn(state.resourceDefinitions, request.resource);\n    if (!definition) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Unknown resource ${request.resource}`);\n    }\n    if (!Number.isFinite(request.amount) || request.amount <= 0) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Invalid resource amount ${request.resource}`);\n    }\n    if (definition.semantics === \"counter\") {\n      const projected = (getOwn(consumed, request.resource) ?? 0) + request.amount;\n      if (projected > definition.limit) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Reservation exceeds global counter ${request.resource}`,\n        );\n      }\n    } else {\n      hasNonCounter = true;\n      const projected =\n        (getOwn(reserved, request.resource) ?? 0) +\n        (getOwn(consumed, request.resource) ?? 0) +\n        request.amount;\n      if (projected > definition.limit) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Reservation exceeds global resource ${request.resource}`,\n        );\n      }\n    }\n  }\n\n  const expectedStatus = hasNonCounter ? \"active\" : \"consumed\";\n  if (reservation.status !== expectedStatus) {\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      `Reservation ${reservation.reservationId} has invalid initial status`,\n    );\n  }\n\n  for (const request of reservation.requests) {\n    const definition = getOwn(state.resourceDefinitions, request.resource)!;\n    if (definition.semantics === \"counter\") {\n      setOwn(consumed, request.resource, (getOwn(consumed, request.resource) ?? 0) + request.amount);\n      setOwn(ownerConsumedBucket, request.resource, (getOwn(ownerConsumedBucket, request.resource) ?? 0) + request.amount);\n    } else {\n      setOwn(reserved, request.resource, (getOwn(reserved, request.resource) ?? 0) + request.amount);\n      setOwn(ownerReservedBucket, request.resource, (getOwn(ownerReservedBucket, request.resource) ?? 0) + request.amount);\n    }\n  }\n\n  return {\n    resourceReserved: reserved,\n    resourceConsumed: consumed,\n    resourceOwnerReserved: ownerReserved,\n    resourceOwnerConsumed: ownerConsumed,\n    resourceReservations: {\n      ...state.resourceReservations,\n      [reservation.reservationId]: reservation,\n    },\n  };\n}"
+      },
+      "name": "applyReservationToState",
+      "qualifiedName": "applyReservationToState",
+      "span": {
+        "end": 8019,
+        "start": 4400
       }
     },
     {
@@ -65262,7 +67142,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function argvForExecutable(executable: string, args: string[]): string[] {\n  const trimmed = executable.trim();\n  if (!isLikelyPath(trimmed)) {\n    return resolveCommandArgv([trimmed, ...args]);\n  }\n  return isNodeRunnableBin(trimmed) ? [process.execPath, trimmed, ...args] : [trimmed, ...args];\n}"
       },
       "name": "argvForExecutable",
@@ -65279,7 +67159,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function argvForPackageBin(binPath: string, args: string[]): string[] {\n  return isNodeRunnableBin(binPath) ? [process.execPath, binPath, ...args] : [binPath, ...args];\n}"
       },
       "name": "argvForPackageBin",
@@ -65460,6 +67340,108 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "7722797ee1146b2d5e11c3933135420ebd600828066aa205e02b51d3c7034bd7",
+      "file": "src/forge/agent-fabric/resource-ledger.ts",
+      "id": "38dd3d45d5ba30601bb024df0ed380f730826167ef7ffdf5636f48c3f56bd1b3",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2c8c01d2bb86a94ee183b3ff04643c105ffc9ac7ceaabd661345fb01adac2295",
+        "sourceSlice": "function assertAmount(amount: number, resource: string): void {\n  if (!Number.isFinite(amount) || amount <= 0) {\n    throw new AgentFabricError(\n      \"AF_RESOURCE_EXHAUSTED\",\n      `Resource amount for ${resource} must be finite and greater than zero`,\n      { amount, resource },\n    );\n  }\n}"
+      },
+      "name": "assertAmount",
+      "qualifiedName": "assertAmount",
+      "span": {
+        "end": 593,
+        "start": 299
+      }
+    },
+    {
+      "contentHash": "70b2019df4dd374fcdf1216cf2ca8478913740ee1710d5f616fb5d2afd99c8b9",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "a4dd0c58bad462bf2d51a0b66edf2e46903e6998296099bc13fe75ee9a4c012f",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function assertAuthorizationCurrent(\n  authorization: OwnerAuthorization,\n  now: number,\n  revokedReason?: string,\n): void {\n  if (revokedReason) {\n    throw new AgentFabricError(\n      \"AF_GRANT_REJECTED\",\n      `Owner authorization ${authorization.authorizationId} is revoked`,\n      { revokedReason },\n    );\n  }\n  if (now < authorization.notBefore || now >= authorization.expiresAt) {\n    throw new AgentFabricError(\n      \"AF_GRANT_REJECTED\",\n      `Owner authorization ${authorization.authorizationId} is outside its validity window`,\n    );\n  }\n}"
+      },
+      "name": "assertAuthorizationCurrent",
+      "qualifiedName": "assertAuthorizationCurrent",
+      "span": {
+        "end": 7720,
+        "start": 7167
+      }
+    },
+    {
+      "contentHash": "48a67b219a3c44f7b832ace43d93f04eb7838c664d041b00f130d1f38adb07ff",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "b024843eb3f3a7d4734f1663669917c4160f9e55fe81d2bdd52a75d1ed3afe7b",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function assertEnvelopeContinuity(state: ControlState, event: ControlEventEnvelope): void {\n  validateControlEventEnvelope(event);\n  if (event.sequence !== state.lastSequence + 1) {\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      `Expected event sequence ${state.lastSequence + 1}, received ${event.sequence}`,\n    );\n  }\n  if (event.predecessorEventId !== state.lastEventId) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", `Event ${event.eventId} has an invalid predecessor`);\n  }\n  if (event.predecessorEventDigest !== state.lastEventDigest) {\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      `Event ${event.eventId} has an invalid predecessor digest`,\n    );\n  }\n  if (state.lastOccurredAt !== null && event.occurredAt < state.lastOccurredAt) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Control event timestamps are not monotonic\");\n  }\n  const { eventDigest: _eventDigest, ...withoutDigest } = event;\n  if (computeControlEventDigest(withoutDigest) !== event.eventDigest) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", `Event ${event.eventId} digest does not match`);\n  }\n}"
+      },
+      "name": "assertEnvelopeContinuity",
+      "qualifiedName": "assertEnvelopeContinuity",
+      "span": {
+        "end": 2570,
+        "start": 1442
+      }
+    },
+    {
+      "contentHash": "4bd035566b2f703c0fffd094394a0e1ed0da222714de616c5f940fcd757216f8",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "8cb508d7d0af430c7a96f01e9d8a0dda6432213570d3c38b2d7e4bde2413afaa",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function assertGrantAttenuated(\n  parent: ExecutionGrant,\n  child: ExecutionGrant,\n): void {\n  const violations = grantAttenuationViolations(parent, child);\n  if (violations.length > 0) {\n    throw new AgentFabricError(\n      \"AF_GRANT_REJECTED\",\n      `Derived grant ${child.grantId} is not attenuated from ${parent.grantId}`,\n      { violations },\n    );\n  }\n}"
+      },
+      "name": "assertGrantAttenuated",
+      "qualifiedName": "assertGrantAttenuated",
+      "span": {
+        "end": 5028,
+        "start": 4666
+      }
+    },
+    {
+      "contentHash": "29e0db1d5d48b1a8e446e459666578e7be2f80a0824e1691d367d0e92053c825",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "67a6ddeff6105ee50678d9b2ca21d699944164369697cc06ebf37300edccee49",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function assertGrantCurrent(\n  grant: ExecutionGrant,\n  now: number,\n  revokedReason?: string,\n): void {\n  if (revokedReason) {\n    throw new AgentFabricError(\n      \"AF_GRANT_REJECTED\",\n      `Grant ${grant.grantId} is revoked`,\n      { revokedReason },\n    );\n  }\n  if (now < grant.notBefore || now >= grant.expiresAt) {\n    throw new AgentFabricError(\n      \"AF_GRANT_REJECTED\",\n      `Grant ${grant.grantId} is outside its validity window`,\n    );\n  }\n}"
+      },
+      "name": "assertGrantCurrent",
+      "qualifiedName": "assertGrantCurrent",
+      "span": {
+        "end": 8186,
+        "start": 7729
+      }
+    },
+    {
+      "contentHash": "24b7565d2004cafb0fc39fd9b1eebcee972fedd305d39058d3dc0539ecbc4bac",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "4e5aa420617a037b9d89b6283494fbb34f0ae644fd6c3480ab4cbd9dcd0e32df",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function assertGrantLineageCurrent(\n  state: Pick<\n    ControlState,\n    | \"authorizations\"\n    | \"revokedAuthorizations\"\n    | \"grants\"\n    | \"revokedGrants\"\n    | \"resourceReservations\"\n  >,\n  grantId: string,\n  now: number,\n): void {\n  const seen = new Set<string>();\n  const selected = getOwn(state.grants, grantId);\n  if (!selected) throw new AgentFabricError(\"AF_NOT_FOUND\", `Unknown grant: ${grantId}`);\n  let current: ExecutionGrant = selected;\n\n  while (true) {\n    if (seen.has(current.grantId)) {\n      throw new AgentFabricError(\"AF_GRANT_REJECTED\", \"Grant ancestry contains a cycle\");\n    }\n    seen.add(current.grantId);\n    assertGrantCurrent(current, now, getOwn(state.revokedGrants, current.grantId));\n\n    if (current.parentGrantId) {\n      if (!current.reservationId) {\n        throw new AgentFabricError(\n          \"AF_GRANT_REJECTED\",\n          `Derived grant ${current.grantId} has no resource reservation`,\n        );\n      }\n      const reservation = getOwn(state.resourceReservations, current.reservationId);\n      if (!reservation || reservation.status === \"released\") {\n        throw new AgentFabricError(\n          \"AF_GRANT_REJECTED\",\n          `Derived grant ${current.grantId} has no current resource reservation`,\n        );\n      }\n    }\n\n    if (!current.parentGrantId) {\n      const authorization = getOwn(state.authorizations, current.rootAuthorizationId);\n      if (!authorization) {\n        throw new AgentFabricError(\n          \"AF_GRANT_REJECTED\",\n          `Root grant ${current.grantId} has no registered owner authorization`,\n        );\n      }\n      assertAuthorizationCurrent(\n        authorization,\n        now,\n        getOwn(state.revokedAuthorizations, authorization.authorizationId),\n      );\n      assertRootGrantAuthorized(authorization, current);\n      return;\n    }\n\n    const parent: ExecutionGrant | undefined = getOwn(state.grants, current.parentGrantId);\n    if (!parent) {\n      throw new AgentFabricError(\n        \"AF_GRANT_REJECTED\",\n        `Grant ${current.grantId} references missing parent ${current.parentGrantId}`,\n      );\n    }\n    assertGrantAttenuated(parent, current);\n    current = parent;\n  }\n}"
+      },
+      "name": "assertGrantLineageCurrent",
+      "qualifiedName": "assertGrantLineageCurrent",
+      "span": {
+        "end": 10363,
+        "start": 8195
+      }
+    },
+    {
       "contentHash": "ac4717a0db93de5137dddf55b1900c532e5f66dfc5373f861b797151183fc200",
       "file": "src/forge/compiler/package-upgrades/apply.ts",
       "id": "698c3b1f16ba26fc8d99052b951df9db9c9dff00fc96d1b636f68cfbdedee47b",
@@ -65474,6 +67456,40 @@ export const appGraph = {
       "span": {
         "end": 1292,
         "start": 903
+      }
+    },
+    {
+      "contentHash": "e3f4a6c69a74d08304dfd51b284f0aa5e070f31365acf5b1d589bfe442ecabbb",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "a492cab2a53035a222897983499a446e38f257c90b83108f255a5199584facf7",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function assertJsonArrayShape(value: readonly unknown[]): void {\n  if (Object.getPrototypeOf(value) !== Array.prototype) {\n    canonicalizationFailure(\"Canonical arrays must have Array.prototype\");\n  }\n\n  const ownKeys = Reflect.ownKeys(value);\n  const expectedIndexKeys = new Set(Array.from({ length: value.length }, (_, index) => String(index)));\n\n  for (const key of ownKeys) {\n    if (key === \"length\") continue;\n    if (typeof key !== \"string\" || !expectedIndexKeys.has(key)) {\n      canonicalizationFailure(\"Canonical arrays cannot contain extra or symbol properties\");\n    }\n    const descriptor = Object.getOwnPropertyDescriptor(value, key);\n    if (!descriptor?.enumerable || !(\"value\" in descriptor)) {\n      canonicalizationFailure(`Canonical array index ${key} must be an enumerable data property`);\n    }\n  }\n\n  for (let index = 0; index < value.length; index += 1) {\n    if (!Object.prototype.hasOwnProperty.call(value, index)) {\n      canonicalizationFailure(\"Canonical arrays cannot be sparse\");\n    }\n  }\n}"
+      },
+      "name": "assertJsonArrayShape",
+      "qualifiedName": "assertJsonArrayShape",
+      "span": {
+        "end": 2416,
+        "start": 1393
+      }
+    },
+    {
+      "contentHash": "8e9353b33dbd6f4094317e86cbfb0057476ba89aaaffc20e09c1bf4e8388c4b9",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "0ee15f98f12d117170dcbb899e83a508197c5b904b822d50a12a88acb219a0a7",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function assertJsonObjectShape(value: object): void {\n  const prototype = Object.getPrototypeOf(value);\n  if (prototype !== Object.prototype && prototype !== null) {\n    canonicalizationFailure(\"Canonical objects must have Object.prototype or null prototype\");\n  }\n\n  for (const key of Reflect.ownKeys(value)) {\n    if (typeof key !== \"string\") {\n      canonicalizationFailure(\"Canonical objects cannot contain symbol properties\");\n    }\n    const descriptor = Object.getOwnPropertyDescriptor(value, key);\n    if (!descriptor?.enumerable) {\n      canonicalizationFailure(`Canonical object property ${key} must be enumerable`);\n    }\n    if (!(\"value\" in descriptor)) {\n      canonicalizationFailure(`Canonical object property ${key} cannot be an accessor`);\n    }\n  }\n}"
+      },
+      "name": "assertJsonObjectShape",
+      "qualifiedName": "assertJsonObjectShape",
+      "span": {
+        "end": 1391,
+        "start": 622
       }
     },
     {
@@ -65511,6 +67527,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "61e78a8c37748ac253c801e998da568c23a32e5334643a6588fbf60c2dcb5899",
+      "file": "src/forge/agent-fabric/hardened-reducer.ts",
+      "id": "af24e793212d1c78e4267d50b621cadbe820bb003c8fa0a41a47e1133f23f3c5",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "02d60b062c9c151791fe9d4adf982d1dda6909f09322e6cba1190819d675c8fb",
+        "sourceSlice": "function assertPermitGoalAuthorityBinding(\n  state: ControlState,\n  permit: AttemptExecutionPermit,\n): void {\n  const intent = getOwn(state.dispatchIntents, permit.intentId);\n  const revision = getOwn(state.planRevisions, permit.planRevisionId);\n  const grant = getOwn(state.grants, permit.grantId);\n  const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;\n  const authorization = grant ? getOwn(state.authorizations, grant.rootAuthorizationId) : undefined;\n\n  if (!intent || !revision || !grant || !goal || !authorization) {\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      `Permit ${permit.permitId} has incomplete goal/authority lineage`,\n    );\n  }\n\n  if (\n    intent.planRevisionId !== revision.revisionId ||\n    intent.rootExecutionId !== revision.rootExecutionId ||\n    authorization.rootExecutionId !== revision.rootExecutionId ||\n    goal.authorityInvocationId !== grant.rootAuthorizationId ||\n    !authorization.goalIds.includes(goal.goalId)\n  ) {\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      `Permit ${permit.permitId} uses authority that is not bound to its GoalContract`,\n    );\n  }\n}"
+      },
+      "name": "assertPermitGoalAuthorityBinding",
+      "qualifiedName": "assertPermitGoalAuthorityBinding",
+      "span": {
+        "end": 4455,
+        "start": 3305
+      }
+    },
+    {
       "contentHash": "0d17abd8b8d67269f2252c31f21504884966c07582f727b7fb4286cdc7f52ad9",
       "file": "src/forge/runtime/db/read-only-client.ts",
       "id": "e271e34c4a8c0105a75ae5fd48b223302eadf3af3eedf04a2e73bbf9080ddffc",
@@ -65525,6 +67558,74 @@ export const appGraph = {
       "span": {
         "end": 2811,
         "start": 2704
+      }
+    },
+    {
+      "contentHash": "594aabc4ac2c95725f943fccda3bfa4893561fda27ddf49d46bf7bda46cacc77",
+      "file": "src/forge/agent-fabric/hardened-reducer.ts",
+      "id": "cd75437a74c9b850b80f9afc32d1f988edab749da8ebd87ee387a0a93dbe0d19",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "02d60b062c9c151791fe9d4adf982d1dda6909f09322e6cba1190819d675c8fb",
+        "sourceSlice": "function assertReplayOnlyInvariants(\n  events: readonly ControlEventEnvelope[],\n  state: ControlState,\n): void {\n  const permitByAttemptId = new Map<string, string>();\n\n  for (const event of events) {\n    if (event.payload.type === \"attempt_execution_permit_issued\") {\n      const permit = event.payload.permit;\n      const existingPermitId = permitByAttemptId.get(permit.attemptId);\n      if (existingPermitId) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Attempt ${permit.attemptId} has multiple permits: ${existingPermitId}, ${permit.permitId}`,\n        );\n      }\n      permitByAttemptId.set(permit.attemptId, permit.permitId);\n      assertPermitGoalAuthorityBinding(state, permit);\n    }\n\n    if (event.payload.type === \"attempt_outcome_committed\") {\n      const outcome = event.payload.outcome;\n      const expectedReportDigest = digestCanonical(workerReportFromOutcome(outcome), sha256Digest);\n      if (outcome.reportDigest !== expectedReportDigest) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Outcome ${outcome.outcomeId} report digest does not match its persisted report fields`,\n        );\n      }\n      const permit = getOwn(state.permits, outcome.permitId);\n      if (!permit) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Outcome ${outcome.outcomeId} references an unknown permit`,\n        );\n      }\n      assertPermitGoalAuthorityBinding(state, permit);\n    }\n  }\n}"
+      },
+      "name": "assertReplayOnlyInvariants",
+      "qualifiedName": "assertReplayOnlyInvariants",
+      "span": {
+        "end": 6491,
+        "start": 5008
+      }
+    },
+    {
+      "contentHash": "68995b0ec2432d13e63137f42019e7881ae67f19a7666ba8621349da5af1a4fb",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "0d9741fcf4d95a724b5edb8e1aac63c7ff4b4e86b00a987ff0b641dce1ef28b4",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function assertRootGrantAuthorized(\n  authorization: OwnerAuthorization,\n  grant: ExecutionGrant,\n): void {\n  const violations = rootGrantAuthorizationViolations(authorization, grant);\n  if (violations.length > 0) {\n    throw new AgentFabricError(\n      \"AF_GRANT_REJECTED\",\n      `Root grant ${grant.grantId} exceeds authorization ${authorization.authorizationId}`,\n      { violations },\n    );\n  }\n}"
+      },
+      "name": "assertRootGrantAuthorized",
+      "qualifiedName": "assertRootGrantAuthorized",
+      "span": {
+        "end": 2928,
+        "start": 2527
+      }
+    },
+    {
+      "contentHash": "351f5557889d2f007a195c55f43226a28110404652040cd857e7cccb94d87c58",
+      "file": "src/forge/agent-fabric/hardened-reducer.ts",
+      "id": "59df87b8bde7f8eaf7155c841c32f76990f0eede4045f46cc01452d63519a1b8",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "02d60b062c9c151791fe9d4adf982d1dda6909f09322e6cba1190819d675c8fb",
+        "sourceSlice": "function assertSingleRootExecution(events: readonly ControlEventEnvelope[]): void {\n  const rootExecutionId = events[0]?.rootExecutionId;\n  if (!rootExecutionId) return;\n  for (const event of events) {\n    if (event.rootExecutionId !== rootExecutionId) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Control stream mixes root executions ${rootExecutionId} and ${event.rootExecutionId}`,\n      );\n    }\n  }\n}"
+      },
+      "name": "assertSingleRootExecution",
+      "qualifiedName": "assertSingleRootExecution",
+      "span": {
+        "end": 812,
+        "start": 379
+      }
+    },
+    {
+      "contentHash": "b652caa3ee0d90b67f0cf2d8673f3739c5647602946566eac984cecaa621bb9c",
+      "file": "src/forge/agent-fabric/hardened-reducer.ts",
+      "id": "59c146612172acf6f40dd9693317b1627298066582d2c3572210c9102a85d605",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "02d60b062c9c151791fe9d4adf982d1dda6909f09322e6cba1190819d675c8fb",
+        "sourceSlice": "function assertStreamIdentityAndTemporalInvariants(\n  events: readonly ControlEventEnvelope[],\n): void {\n  const eventIds = new Set<string>();\n  const idempotencyKeys = new Set<string>();\n  const startupReportIds = new Set<string>();\n  const reportIds = new Set<string>();\n  const outcomeIds = new Set<string>();\n\n  for (const event of events) {\n    if (eventIds.has(event.eventId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Duplicate event ID ${event.eventId}`);\n    }\n    eventIds.add(event.eventId);\n\n    if (event.idempotencyKey !== undefined) {\n      if (idempotencyKeys.has(event.idempotencyKey)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Duplicate idempotency key ${event.idempotencyKey}`,\n        );\n      }\n      idempotencyKeys.add(event.idempotencyKey);\n    }\n\n    if (event.payload.type === \"owner_authorization_registered\") {\n      const authorization = event.payload.authorization;\n      if (event.occurredAt < authorization.notBefore || event.occurredAt >= authorization.expiresAt) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Owner authorization ${authorization.authorizationId} was admitted outside its validity window`,\n        );\n      }\n    }\n\n    if (event.payload.type === \"attempt_execution_permit_issued\") {\n      if (event.payload.permit.notBefore !== event.occurredAt) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Permit ${event.payload.permit.permitId} admission time differs from event time`,\n        );\n      }\n    }\n\n    if (event.payload.type === \"attempt_started\") {\n      if (startupReportIds.has(event.payload.startupReportId)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Startup report ID was reused: ${event.payload.startupReportId}`,\n        );\n      }\n      startupReportIds.add(event.payload.startupReportId);\n    }\n\n    if (event.payload.type === \"attempt_outcome_committed\") {\n      const outcome = event.payload.outcome;\n      if (outcomeIds.has(outcome.outcomeId)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Outcome ID was reused: ${outcome.outcomeId}`,\n        );\n      }\n      outcomeIds.add(outcome.outcomeId);\n      if (reportIds.has(outcome.reportId)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Worker report ID was reused: ${outcome.reportId}`,\n        );\n      }\n      reportIds.add(outcome.reportId);\n    }\n  }\n}"
+      },
+      "name": "assertStreamIdentityAndTemporalInvariants",
+      "qualifiedName": "assertStreamIdentityAndTemporalInvariants",
+      "span": {
+        "end": 3303,
+        "start": 814
       }
     },
     {
@@ -65959,14 +68060,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function basenameNoExt(file: string): string {\n  const name = normalize(file).split(\"/\").pop() ?? file;\n  return name.replace(/\\.(test|spec)?\\.?(ts|tsx|js|jsx|json|md|sql|yml|yaml)$/, \"\");\n}"
       },
       "name": "basenameNoExt",
       "qualifiedName": "basenameNoExt",
       "span": {
-        "end": 4297,
-        "start": 4107
+        "end": 4278,
+        "start": 4088
       }
     },
     {
@@ -66078,14 +68179,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function blockingExistingEntries(targetDir: string): string[] {\n  const allowed = new Set([\".git\", \".DS_Store\", \"Thumbs.db\"]);\n  return nodeFileSystem\n    .readDir(targetDir)\n    .map((entry) => entry.name)\n    .filter((name) => !allowed.has(name))\n    .sort();\n}"
       },
       "name": "blockingExistingEntries",
       "qualifiedName": "blockingExistingEntries",
       "span": {
-        "end": 7118,
-        "start": 6855
+        "end": 7456,
+        "start": 7193
       }
     },
     {
@@ -66120,6 +68221,23 @@ export const appGraph = {
       "span": {
         "end": 1487,
         "start": 1336
+      }
+    },
+    {
+      "contentHash": "f9ee4d5949358520539750828d783097a99eef6f86071fe96a187157fba109f3",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "5d99982b7e73ce2ebcee208ea1d74c061c13ef6a6a907c9875fae72fff5a5162",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function boolean(value: unknown, label: string): boolean {\n  if (typeof value !== \"boolean\") fail(`${label} must be boolean`);\n  return value;\n}"
+      },
+      "name": "boolean",
+      "qualifiedName": "boolean",
+      "span": {
+        "end": 2306,
+        "start": 2162
       }
     },
     {
@@ -66171,6 +68289,23 @@ export const appGraph = {
       "span": {
         "end": 51062,
         "start": 50950
+      }
+    },
+    {
+      "contentHash": "5e9ffec2c35c716ff58c09313ad6a82791086ef7e1f55a3a67eba0770e05f33f",
+      "file": "src/forge/agent-fabric/resource-ledger.ts",
+      "id": "30a1e7c021dc6bc69beefe380f67fcbbd2d43abac43d73003f73e4978c7eec1f",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2c8c01d2bb86a94ee183b3ff04643c105ffc9ac7ceaabd661345fb01adac2295",
+        "sourceSlice": "function bucket(\n  records: Record<Identifier, Record<string, number>>,\n  ownerId: Identifier,\n): Record<string, number> {\n  return getOwn(records, ownerId) ?? setOwn(records, ownerId, {});\n}"
+      },
+      "name": "bucket",
+      "qualifiedName": "bucket",
+      "span": {
+        "end": 786,
+        "start": 595
       }
     },
     {
@@ -66588,14 +68723,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function buildAuthzTestProof(options: TestCommandOptions): ImpactResult {\n  const tenant = options.tenant ?? \"acme\";\n  const otherTenant = options.otherTenant ?? \"globex\";\n  const policyRegistry = readJson<PolicyRegistry>(options.workspaceRoot, `${GENERATED}/policyRegistry.json`, {\n    schemaVersion: \"\",\n    generatorVersion: \"\",\n    analyzerVersion: \"\",\n    inputHash: \"\",\n    policies: [],\n    commandAuth: [],\n    queryAuth: [],\n    diagnostics: [],\n  });\n  const tenantScope = readJson<TenantScope>(options.workspaceRoot, `${GENERATED}/tenantScope.json`, {\n    schemaVersion: \"\",\n    generatorVersion: \"\",\n    inputHash: \"\",\n    tables: [],\n    diagnostics: [],\n  });\n  const capabilityMap = readJson<AgentCapabilityMap>(options.workspaceRoot, `${GENERATED}/capabilityMap.json`, {\n    schemaVersion: \"0.1.0\",\n    generatorVersion: \"\",\n    project: { name: \"\", type: \"forgeos-app\" },\n    summary: { covered: 0, backendOnly: 0, frontendOnly: 0, warnings: 0 },\n    entries: [],\n    diagnostics: [],\n  });\n  const agentContract = readJson<AgentContract | null>(options.workspaceRoot, `${GENERATED}/agentContract.json`, null);\n  const policyByName = new Map(policyRegistry.policies.map((policy) => [policy.name, policy]));\n  const protectedCommands = policyRegistry.commandAuth.filter((entry) => entry.auth.kind === \"policy\");\n  const protectedQueries = policyRegistry.queryAuth.filter((entry) => entry.auth.kind === \"policy\");\n  const capabilityPolicyBindings = capabilityMap.entries.filter((entry) => entry.runtime?.policy).length;\n  const capabilityMissingPolicy = capabilityMap.entries.filter((entry) => {\n    const runtime = entry.runtime;\n    if (!runtime) return false;\n    const touchesTenantData =\n      runtime.dependencies.some((dependency) => dependency.scope === \"tenant\") ||\n      runtime.tablesRead.some((table) => tenantScope.tables.some((scoped) => scoped.table === table)) ||\n      runtime.tablesWritten.some((table) => tenantScope.tables.some((scoped) => scoped.table === table));\n    return touchesTenantData && !runtime.policy;\n  });\n  const permissionBackedPolicies = policyRegistry.policies.filter((policy) => policy.permissions.length > 0);\n  const roleBackedPolicies = policyRegistry.policies.filter((policy) => policy.roles.length > 0);\n  const missingPolicyBindings = [\n    ...protectedCommands.map((entry) => entry.auth.kind === \"policy\" ? entry.auth.policy : undefined),\n    ...protectedQueries.map((entry) => entry.auth.kind === \"policy\" ? entry.auth.policy : undefined),\n  ].filter((policy): policy is string => typeof policy === \"string\" && !policyByName.has(policy));\n  const checks: AuthzTestProof[\"checks\"] = [\n    {\n      name: \"tenant-scope-present\",\n      ok: tenantScope.tables.length > 0 || agentContract?.auth.requiresTenant !== true,\n      message: tenantScope.tables.length > 0\n        ? \"tenant-scoped tables are present in tenantScope.json\"\n        : \"no tenant-scoped tables are declared\",\n      evidence: tenantScope.tables.map((table) => ({ table: table.table, tenantIdColumn: table.tenantIdColumn })),\n    },\n    {\n      name: \"runtime-policies-bound\",\n      ok: protectedCommands.length + protectedQueries.length > 0,\n      message: protectedCommands.length + protectedQueries.length > 0\n        ? \"runtime entries are bound to policies\"\n        : \"no policy-bound commands or queries were found\",\n      evidence: {\n        commands: protectedCommands.map((entry) => ({ name: entry.commandName, policy: entry.auth.kind === \"policy\" ? entry.auth.policy : null })),\n        queries: protectedQueries.map((entry) => ({ name: entry.queryName, policy: entry.auth.kind === \"policy\" ? entry.auth.policy : null })),\n      },\n    },\n    {\n      name: \"policy-bindings-resolve\",\n      ok: missingPolicyBindings.length === 0,\n      message: missingPolicyBindings.length === 0\n        ? \"all runtime policy bindings resolve to policyRegistry entries\"\n        : `missing policy definitions: ${missingPolicyBindings.join(\", \")}`,\n      evidence: missingPolicyBindings,\n    },\n    {\n      name: \"permission-or-role-backed\",\n      ok: permissionBackedPolicies.length > 0 || roleBackedPolicies.length > 0,\n      message: permissionBackedPolicies.length > 0\n        ? \"policies include permission-backed rules suitable for WorkOS-like auth\"\n        : roleBackedPolicies.length > 0\n          ? \"policies are role-backed; production auth should map roles or permissions explicitly\"\n          : \"policies are not backed by roles or permissions\",\n      evidence: policyRegistry.policies.map((policy) => ({\n        name: policy.name,\n        roles: policy.roles,\n        permissions: policy.permissions,\n      })),\n    },\n    {\n      name: \"capability-map-policies\",\n      ok: capabilityMissingPolicy.length === 0,\n      message: capabilityMissingPolicy.length === 0\n        ? \"tenant-sensitive capability-map runtime entries carry policy metadata\"\n        : \"some tenant-sensitive capability-map runtime entries have no policy metadata\",\n      evidence: capabilityMissingPolicy.map((entry) => ({\n        id: entry.id,\n        runtime: entry.runtime ? { kind: entry.runtime.kind, name: entry.runtime.name } : null,\n        dependencies: entry.runtime?.dependencies ?? [],\n      })),\n    },\n  ];\n  const ok = checks.every((check) => check.ok);\n  const authz: AuthzTestProof = {\n    schemaVersion: \"0.1.0\",\n    tenant,\n    otherTenant,\n    checks,\n    summary: {\n      ok,\n      tenantScopedTables: tenantScope.tables.length,\n      protectedCommands: protectedCommands.length,\n      protectedQueries: protectedQueries.length,\n      capabilityPolicyBindings,\n    },\n    limitations: [\n      \"This is a generated-contract proof, not a live HTTP/FGA execution.\",\n      \"Run forge dev --db memory and an app-specific HTTP harness to prove real token/claim enforcement.\",\n    ],\n    nextActions: [\n      `forge dev --db memory --port 0 --json`,\n      `forge test authz --tenant ${tenant} --other-tenant ${otherTenant} --json`,\n      \"forge inspect policies --json\",\n      \"forge inspect capabilities --json\",\n    ],\n  };\n  const diagnostics = checks\n    .filter((check) => !check.ok)\n    .map((check) => diag(\"error\", \"FORGE_AUTHZ_PROOF_FAILED\", check.message));\n  return { ok, authz, diagnostics, exitCode: ok ? 0 : 1 };\n}"
       },
       "name": "buildAuthzTestProof",
       "qualifiedName": "buildAuthzTestProof",
       "span": {
-        "end": 46546,
-        "start": 40302
+        "end": 46409,
+        "start": 40165
       }
     },
     {
@@ -67506,14 +69641,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function buildImpactTestPlan(options: TestCommandOptions): ImpactTestPlan {\n  const report = analyzeImpact({\n    workspaceRoot: options.workspaceRoot,\n    json: options.json,\n    write: false,\n    changed: options.changed,\n    staged: options.staged,\n    since: options.since,\n    featureId: options.featureId,\n    refactorId: options.refactorId,\n    upgradeId: options.upgradeId,\n    includeGenerated: false,\n    excludeTests: false,\n  });\n  const artifacts = loadArtifacts(options.workspaceRoot);\n  const lastRunByCommand = readLastRunByCommand(options.workspaceRoot);\n  const tests = selectTests(artifacts.testGraph, report.impacted, report.changedFiles, {\n    workspaceRoot: options.workspaceRoot,\n    maxCost: options.maxCost,\n    includeDocker: options.includeDocker,\n    includeBrowser: options.includeBrowser,\n    lastRunByCommand,\n  });\n  const generatedTypeScriptOnly =\n    report.changedFiles.length > 0 &&\n    report.changedFiles.every((file) =>\n      file === \"forge.lock\" ||\n      file.startsWith(\"src/forge/_generated/\") ||\n      (file.toLowerCase().endsWith(\".md\") && report.impacted.generatedArtifacts.length > 0)\n    ) &&\n    report.impacted.generatedArtifacts.some((file) => file.endsWith(\".ts\") || file.endsWith(\".d.ts\"));\n  const standardReason = generatedTypeScriptOnly\n    ? \"generated TypeScript artifacts changed\"\n    : \"TypeScript surface changed\";\n  return {\n    schemaVersion: \"0.1.0\",\n    source: report.source,\n    changedFiles: report.changedFiles,\n    authoredChangedFiles: report.authoredChangedFiles,\n    generatedChangedFiles: report.generatedChangedFiles,\n    derivedOnly: report.derivedOnly,\n    impacted: report.impacted,\n    risk: report.risk,\n    requiredChecks: [\n      ...requiredChecks(report.impacted),\n      ...selectUiScenarioChecks(report.impacted, options.includeBrowser),\n    ].filter((check) =>\n      costAllowed(check.cost, options.maxCost, options.includeDocker, options.includeBrowser),\n    ),\n    tests,\n    optionalChecks: ([\n      { kind: \"forge\", command: \"forge verify --standard\", cost: \"standard\", reason: standardReason },\n    ] satisfies TestPlanCheck[]).filter((check) =>\n      costAllowed(check.cost, options.maxCost, options.includeDocker, options.includeBrowser),\n    ),\n    finalVerification: [\"forge verify --strict\"],\n  };\n}"
       },
       "name": "buildImpactTestPlan",
       "qualifiedName": "buildImpactTestPlan",
       "span": {
-        "end": 31555,
-        "start": 29262
+        "end": 31418,
+        "start": 29125
       }
     },
     {
@@ -68832,14 +70967,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function buildStrictTestGraphPlan(\n  workspaceRoot: string,\n  testJobs?: number,\n  env: NodeJS.ProcessEnv = process.env,\n): VerifyTestGraphPlan {\n  const profile = readTestGraphProfile(workspaceRoot);\n  const entries = weightedStrictTestEntries(workspaceRoot, profile);\n  const partitioned = partitionStrictTestEntries(entries);\n  const parallelRaw = packWeightedStrictTestChunks(partitioned.parallel, STRICT_TEST_CHUNK_SIZE);\n  const isolatedRaw = oneFileChunks(partitioned.isolated);\n  const serialRaw = oneFileChunks(partitioned.serial);\n  const totalJobs = resolveStrictTestJobs({\n    requested: testJobs,\n    env,\n    chunkCount: parallelRaw.length + isolatedRaw.length,\n  });\n  const { parallelJobs, isolatedJobs } = resolveStrictLaneJobs({\n    totalJobs,\n    parallelChunkCount: parallelRaw.length,\n    isolatedChunkCount: isolatedRaw.length,\n    env,\n  });\n  let index = 1;\n  const toPlanChunks = (\n    lane: StrictTestLane,\n    chunks: Array<{ files: string[]; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }>,\n  ): VerifyTestGraphPlanChunk[] => chunks.map((chunk) => ({\n    index: index++,\n    lane,\n    files: chunk.files,\n    estimatedMs: chunk.estimatedMs,\n    durationSource: chunk.durationSource,\n  }));\n  const parallelChunks = toPlanChunks(\"parallel\", parallelRaw);\n  const isolatedChunks = toPlanChunks(\"isolated\", isolatedRaw);\n  const serialChunks = toPlanChunks(\"serial\", serialRaw);\n  const laneMode =\n    totalJobs <= 1 && parallelChunks.length > 0 && isolatedChunks.length > 0\n      ? \"sequential\"\n      : \"overlap\";\n  const chunks = [...parallelChunks, ...isolatedChunks, ...serialChunks];\n  const lanes = {\n    parallel: {\n      fileCount: partitioned.parallel.length,\n      chunkCount: parallelChunks.length,\n      estimatedMs: parallelChunks.reduce((sum, chunk) => sum + chunk.estimatedMs, 0),\n    },\n    isolated: {\n      fileCount: partitioned.isolated.length,\n      chunkCount: isolatedChunks.length,\n      estimatedMs: isolatedChunks.reduce((sum, chunk) => sum + chunk.estimatedMs, 0),\n    },\n    serial: {\n      fileCount: partitioned.serial.length,\n      chunkCount: serialChunks.length,\n      estimatedMs: serialChunks.reduce((sum, chunk) => sum + chunk.estimatedMs, 0),\n    },\n  };\n  const plan: VerifyTestGraphPlan = {\n    schemaVersion: \"0.1.0\",\n    fileCount: entries.length,\n    chunkCount: chunks.length,\n    totalJobs,\n    laneMode,\n    jobs: parallelJobs,\n    isolatedJobs,\n    lanes,\n    chunks,\n    criticalPathEstimateMs:\n      (laneMode === \"sequential\"\n        ? laneEstimate(parallelChunks, parallelJobs) + laneEstimate(isolatedChunks, isolatedJobs)\n        : Math.max(\n          laneEstimate(parallelChunks, parallelJobs),\n          laneEstimate(isolatedChunks, isolatedJobs),\n        )) +\n      lanes.serial.estimatedMs,\n    profilePath: TESTGRAPH_PROFILE_RELATIVE_PATH,\n    profileFound: profile !== null,\n    slowestFiles: [...entries]\n      .sort((left, right) => {\n        const byEstimate = right.estimatedMs - left.estimatedMs;\n        return byEstimate !== 0 ? byEstimate : left.file.localeCompare(right.file);\n      })\n      .slice(0, 10)\n      .map((entry) => ({\n        file: entry.file,\n        lane: entry.lane,\n        estimatedMs: entry.estimatedMs,\n        source: entry.durationSource,\n      })),\n    recommendations: [],\n  };\n  plan.recommendations = strictPlanRecommendations(plan);\n  return plan;\n}"
       },
       "name": "buildStrictTestGraphPlan",
       "qualifiedName": "buildStrictTestGraphPlan",
       "span": {
-        "end": 39822,
-        "start": 36433
+        "end": 39968,
+        "start": 36579
       }
     },
     {
@@ -69489,6 +71624,57 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "e8b332030f2f3b25e6b0e66fd56be2b58631c7705fb32d4d21c5de28a55a1737",
+      "file": "src/forge/compiler/app-graph/tsconfig-hash.ts",
+      "id": "0d17942a261d7f49d4177adf48478fe78cb74cd86702a8f7b463a1b06963c9f8",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
+        "sourceSlice": "function canonicalPathsOption(paths: ts.MapLike<string[]>): Record<string, string[]> {\n  return Object.fromEntries(\n    Object.entries(paths).map(([key, values]) => [\n      key,\n      values.map((value) => normalizePath(value)),\n    ]),\n  );\n}"
+      },
+      "name": "canonicalPathsOption",
+      "qualifiedName": "canonicalPathsOption",
+      "span": {
+        "end": 1110,
+        "start": 867
+      }
+    },
+    {
+      "contentHash": "bd4580a5967737aaef38c41cecee12fbc9d913ef237673136ca0242235fba05f",
+      "file": "src/forge/compiler/app-graph/tsconfig-hash.ts",
+      "id": "c672e1f6f81c6bed45661d371a9a46044b0d177868c09e45db10450ef93b7029",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
+        "sourceSlice": "function canonicalWorkspacePath(value: string, workspaceRoot: string): string {\n  if (!isAbsolute(value)) {\n    return normalizePath(value);\n  }\n  const relativePath = normalizePath(relative(resolve(workspaceRoot), value));\n  return relativePath || \".\";\n}"
+      },
+      "name": "canonicalWorkspacePath",
+      "qualifiedName": "canonicalWorkspacePath",
+      "span": {
+        "end": 865,
+        "start": 610
+      }
+    },
+    {
+      "contentHash": "04fefd40305aad0be1dc48f38764d33065327516cccbd1c654b164890c640ff9",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "f27fbb881a0a9bcf055a8271352396e0a8dede454819826ec5a63e8d50c67274",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function canonicalizationFailure(message: string): never {\n  throw new AgentFabricError(\"AF_CANONICALIZATION_FAILED\", message);\n}"
+      },
+      "name": "canonicalizationFailure",
+      "qualifiedName": "canonicalizationFailure",
+      "span": {
+        "end": 620,
+        "start": 491
+      }
+    },
+    {
       "contentHash": "6e2c6c4317c29de020c6260c1a628b2b218226892c6960fac9ab83bd33f82ddc",
       "file": "src/forge/compiler/emitter/lock.ts",
       "id": "0c5b65810ce6829a486aa28059a55026fbcb3c74ce535d173552a93148335818",
@@ -69503,6 +71689,23 @@ export const appGraph = {
       "span": {
         "end": 1382,
         "start": 752
+      }
+    },
+    {
+      "contentHash": "51c060294fd3fc2ad4430c1de2868d6296d9488e5523be58e6c64ec5bbbf07a8",
+      "file": "src/forge/compiler/package-graph/dts-extractor.ts",
+      "id": "e4e5a500d6dce69b10b0efedae8424f619e5ae32210778dc8317cf17bd1a5943",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "90d84614e45f3be513a6cdad66b7774b85822c970e40727f505c4f4025d1284d",
+        "sourceSlice": "function canonicalizeNodeModulesImportPaths(text: string): string {\n  return text.replace(/import\\(\"([^\"]+)\"/g, (match, importPath: string) => {\n    const normalized = importPath.replace(/\\\\/g, \"/\");\n    const marker = \"/node_modules/\";\n    const markerIndex = normalized.lastIndexOf(marker);\n    if (markerIndex < 0) {\n      return match;\n    }\n    return `import(\"${normalized.slice(markerIndex + marker.length)}\"`;\n  });\n}"
+      },
+      "name": "canonicalizeNodeModulesImportPaths",
+      "qualifiedName": "canonicalizeNodeModulesImportPaths",
+      "span": {
+        "end": 842,
+        "start": 417
       }
     },
     {
@@ -69682,14 +71885,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function changeSummaryForImpact(\n  workspaceRoot: string,\n  source: ImpactSource,\n  changedFiles: string[],\n): CategorizedFileSummary {\n  if (source.mode === \"changed\" || source.mode === \"staged\") {\n    const git = buildWorkspaceGitSummary(workspaceRoot);\n    if (git.available) {\n      return source.mode === \"staged\" ? git.changeSummary.staged : git.changeSummary.changed;\n    }\n  }\n  return categorizeFiles(changedFiles);\n}"
       },
       "name": "changeSummaryForImpact",
       "qualifiedName": "changeSummaryForImpact",
       "span": {
-        "end": 19104,
-        "start": 18678
+        "end": 18967,
+        "start": 18541
       }
     },
     {
@@ -70056,14 +72259,31 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function chunkFiles(files: string[], size: number): string[][] {\n  const chunks: string[][] = [];\n  for (let index = 0; index < files.length; index += size) {\n    chunks.push(files.slice(index, index + size));\n  }\n  return chunks;\n}"
       },
       "name": "chunkFiles",
       "qualifiedName": "chunkFiles",
       "span": {
-        "end": 27181,
-        "start": 26949
+        "end": 27327,
+        "start": 27095
+      }
+    },
+    {
+      "contentHash": "bed0997855160cbb54f6e79d49da7595070836f4da93d78e8796afb1b17c7c15",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "e1a9492e2ea1dde4f9873a0a1ae92ddc2178179f83d12c69795f7822ccd736e5",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function claim(value: unknown, label: string): void {\n  const claimValue = object(value, label);\n  keys(\n    claimValue,\n    [\"claimId\", \"intentId\", \"workerId\", \"attemptId\", \"leaseExpiresAt\", \"fencingToken\", \"committedAt\"],\n    [],\n    label,\n  );\n  for (const field of [\"claimId\", \"intentId\", \"workerId\", \"attemptId\"] as const) string(claimValue[field], `${label}.${field}`);\n  number(claimValue.leaseExpiresAt, `${label}.leaseExpiresAt`, { min: 0 });\n  number(claimValue.fencingToken, `${label}.fencingToken`, { integer: true, min: 1 });\n  number(claimValue.committedAt, `${label}.committedAt`, { min: 0 });\n}"
+      },
+      "name": "claim",
+      "qualifiedName": "claim",
+      "span": {
+        "end": 13483,
+        "start": 12872
       }
     },
     {
@@ -70209,14 +72429,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "ac69f4190327ca7765b09394bef5382e1b89d0d5bfa053b4de97722897cdf96a",
+        "fileContentHash": "90d84614e45f3be513a6cdad66b7774b85822c970e40727f505c4f4025d1284d",
         "sourceSlice": "function classifyDeclKind(node: ts.Declaration): ExportKind {\n  if (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node)) {\n    return \"function\";\n  }\n  if (ts.isClassDeclaration(node)) {\n    return \"class\";\n  }\n  if (ts.isInterfaceDeclaration(node)) {\n    return \"interface\";\n  }\n  if (ts.isTypeAliasDeclaration(node)) {\n    return \"type\";\n  }\n  if (ts.isModuleDeclaration(node)) {\n    return \"namespace\";\n  }\n  return \"const\";\n}"
       },
       "name": "classifyDeclKind",
       "qualifiedName": "classifyDeclKind",
       "span": {
-        "end": 1003,
-        "start": 563
+        "end": 1467,
+        "start": 1027
       }
     },
     {
@@ -70396,14 +72616,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function classifyStrictTestFile(file: string): StrictTestLane {\n  const normalized = normalizeTestPath(file);\n  if (STRICT_SERIAL_TEST_PATTERNS.some((pattern) => pattern.test(normalized))) {\n    return \"serial\";\n  }\n  if (STRICT_ISOLATED_TEST_PATTERNS.some((pattern) => pattern.test(normalized))) {\n    return \"isolated\";\n  }\n  return \"parallel\";\n}"
       },
       "name": "classifyStrictTestFile",
       "qualifiedName": "classifyStrictTestFile",
       "span": {
-        "end": 29960,
-        "start": 29612
+        "end": 30106,
+        "start": 29758
       }
     },
     {
@@ -70540,6 +72760,23 @@ export const appGraph = {
       "span": {
         "end": 2392,
         "start": 2061
+      }
+    },
+    {
+      "contentHash": "82c7b63554c6047461bfc30ed14049c2a7868a6ae7dfd94e256815f7a350375f",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "1cca6ba3e2d0e80063ac16a87caa7fbc12768912b9da8803f4281b146e01d2b0",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function cloneNested(\n  record: Readonly<Record<string, Readonly<Record<string, number>>>>,\n): Record<string, Record<string, number>> {\n  return Object.fromEntries(\n    Object.entries(record).map(([owner, values]) => [owner, { ...values }]),\n  );\n}"
+      },
+      "name": "cloneNested",
+      "qualifiedName": "cloneNested",
+      "span": {
+        "end": 3675,
+        "start": 3427
       }
     },
     {
@@ -71212,14 +73449,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function commandArgs(workspaceRoot: string, command: string): { executable: string; args: string[] } {\n  const parts = command.split(/\\s+/).filter(Boolean);\n  if (parts.length === 0) {\n    return { executable: process.execPath, args: [\"-e\", \"process.exit(0)\"] };\n  }\n  if (parts[0] === \"forge\") {\n    const localForge = localBinExecutable(workspaceRoot, \"forge\");\n    if (localForge) {\n      return { executable: localForge, args: parts.slice(1) };\n    }\n    const frameworkBin = join(workspaceRoot, \"bin\", \"forge.mjs\");\n    if (nodeFileSystem.exists(frameworkBin)) {\n      return nodeForgeArgs(frameworkBin, parts.slice(1));\n    }\n    const sourceBin = sourceRepoForgeBin();\n    if (sourceBin) {\n      return nodeForgeArgs(sourceBin, parts.slice(1));\n    }\n  }\n  const local = localBinExecutable(workspaceRoot, parts[0]!);\n  const argv = resolveCommandArgv([local ?? parts[0]!, ...parts.slice(1)]);\n  return { executable: argv[0]!, args: argv.slice(1) };\n}"
       },
       "name": "commandArgs",
       "qualifiedName": "commandArgs",
       "span": {
-        "end": 35270,
-        "start": 34313
+        "end": 35133,
+        "start": 34176
       }
     },
     {
@@ -71875,14 +74112,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function componentName(file: string): string {\n  return basenameNoExt(file);\n}"
       },
       "name": "componentName",
       "qualifiedName": "componentName",
       "span": {
-        "end": 4377,
-        "start": 4299
+        "end": 4358,
+        "start": 4280
       }
     },
     {
@@ -71971,6 +74208,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "0d3a85bf61045808677c10e57a766daffa4bc2b2a1098ea3571b1be12e83bad9",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "7390d88a931d1dc97c3cb2fdc932f5181ad87b3984e5f1234b3a16360b2a5a76",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "function computeControlEventDigest(\n  envelope: Omit<ControlEventEnvelope, \"eventDigest\">,\n): Digest {\n  return digestCanonical(eventDigestInput(envelope), sha256Digest);\n}"
+      },
+      "name": "computeControlEventDigest",
+      "qualifiedName": "computeControlEventDigest",
+      "span": {
+        "end": 4210,
+        "start": 4038
+      }
+    },
+    {
       "contentHash": "c408c2bf6d0a1c692e73a507493231edcf49bec039d14451cc53b89eb52fa865",
       "file": "src/forge/compiler/orchestrator/discover.ts",
       "id": "b247991850690b10d921cd1b4aecf3bb0e5828f1689c57a2e4ca8b58a5807d74",
@@ -72036,6 +74290,23 @@ export const appGraph = {
       "span": {
         "end": 162,
         "start": 7
+      }
+    },
+    {
+      "contentHash": "07b2e7546ddca077d9b080a662a0ddde8f2ff42ce029f6fea2259f6a537ed7d9",
+      "file": "src/forge/agent-fabric/planning.ts",
+      "id": "6695eb092a34d4ea7dfc1dbd29ad2612919ac78d1804b46ec971cd077aacf5e7",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "48213a32b46aed8fdf3d14d45314803a3c471eae4e3e8258f9aee94377e0b967",
+        "sourceSlice": "function computeRunPlanContentDigest(\n  programVersionId: string,\n  nodes: readonly WorkflowNode[],\n  digest: DigestFunction,\n) {\n  const normalized = nodes.map(normalizedNode).sort((left, right) =>\n    left.nodeId.localeCompare(right.nodeId)\n  );\n  validateWorkflowNodes(normalized);\n  return digestCanonical({ programVersionId, nodes: normalized }, digest);\n}"
+      },
+      "name": "computeRunPlanContentDigest",
+      "qualifiedName": "computeRunPlanContentDigest",
+      "span": {
+        "end": 2041,
+        "start": 1680
       }
     },
     {
@@ -72130,14 +74401,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function configuredAgentTargets(workspaceRoot: string): AgentAdapterTarget[] {\n  const targets: AgentAdapterTarget[] = [];\n  if (nodeFileSystem.exists(join(workspaceRoot, \".forge/agent/context.json\"))) {\n    targets.push(\"generic\");\n  }\n  if (nodeFileSystem.exists(join(workspaceRoot, \".codex\"))) {\n    targets.push(\"codex\");\n  }\n  if (nodeFileSystem.exists(join(workspaceRoot, \".cursor\"))) {\n    targets.push(\"cursor\");\n  }\n  if (nodeFileSystem.exists(join(workspaceRoot, \"CLAUDE.md\")) || nodeFileSystem.exists(join(workspaceRoot, \".claude\"))) {\n    targets.push(\"claude\");\n  }\n  return targets;\n}"
       },
       "name": "configuredAgentTargets",
       "qualifiedName": "configuredAgentTargets",
       "span": {
-        "end": 52691,
-        "start": 52093
+        "end": 52837,
+        "start": 52239
       }
     },
     {
@@ -72317,14 +74588,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function costAllowed(cost: TestCost, maxCost: TestCost, includeDocker: boolean, includeBrowser: boolean): boolean {\n  if (cost === \"docker\" && !includeDocker) return false;\n  if (cost === \"browser\" && !includeBrowser) return false;\n  return COST_ORDER.indexOf(cost) <= COST_ORDER.indexOf(maxCost);\n}"
       },
       "name": "costAllowed",
       "qualifiedName": "costAllowed",
       "span": {
-        "end": 23599,
-        "start": 23300
+        "end": 23462,
+        "start": 23163
       }
     },
     {
@@ -72546,6 +74817,23 @@ export const appGraph = {
       "span": {
         "end": 7898,
         "start": 7209
+      }
+    },
+    {
+      "contentHash": "50851b5a25660447bd1cc75c894f3945e695ea2bffb09c5da05ae40ae5b05b95",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "3d7b65177e3c070328c1a21b321722cdbd3e99a62e87fa48fa48ec9987acf3a4",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function createEmptyControlState(): ControlState {\n  return {\n    lastSequence: 0,\n    lastEventId: null,\n    lastEventDigest: null,\n    lastOccurredAt: null,\n    authorizations: {},\n    authorizationVerifications: {},\n    revokedAuthorizations: {},\n    resourceDefinitions: {},\n    resourceReserved: {},\n    resourceConsumed: {},\n    resourceOwnerReserved: {},\n    resourceOwnerConsumed: {},\n    resourceReservations: {},\n    goals: {},\n    grants: {},\n    revokedGrants: {},\n    planDeltas: {},\n    planRevisions: {},\n    activePlanRevisionByExecution: {},\n    dispatchIntents: {},\n    claims: {},\n    activeClaimByIntent: {},\n    claimByAttemptId: {},\n    permits: {},\n    attempts: {},\n    uncertaintyObservations: {},\n    outcomes: {},\n  };\n}"
+      },
+      "name": "createEmptyControlState",
+      "qualifiedName": "createEmptyControlState",
+      "span": {
+        "end": 1440,
+        "start": 693
       }
     },
     {
@@ -73005,6 +75293,23 @@ export const appGraph = {
       "span": {
         "end": 673,
         "start": 268
+      }
+    },
+    {
+      "contentHash": "902c4c67e4111a819ddf3399ee8424e51d64c166c1e93e43534a593b9a33589f",
+      "file": "src/forge/agent-fabric/planning.ts",
+      "id": "9faeae700e434d7d6f168b9585d9d970c9bacfb5de8b86e426d3d6a381d8dc09",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "48213a32b46aed8fdf3d14d45314803a3c471eae4e3e8258f9aee94377e0b967",
+        "sourceSlice": "function createRunPlanRevision(\n  rootExecutionId: string,\n  goalId: string,\n  program: WorkflowProgramVersion,\n  revisionId: string,\n  digest: DigestFunction,\n): RunPlanRevision {\n  validateWorkflowNodes(program.nodes);\n  const nodes = program.nodes.map(normalizedNode).sort((left, right) =>\n    left.nodeId.localeCompare(right.nodeId)\n  );\n  return {\n    revisionId,\n    rootExecutionId,\n    goalId,\n    programVersionId: `${program.programId}@${program.version}`,\n    revisionNumber: 1,\n    parentRevisionId: null,\n    sourcePlanDeltaId: null,\n    nodes,\n    contentDigest: computeRunPlanContentDigest(\n      `${program.programId}@${program.version}`,\n      nodes,\n      digest,\n    ),\n  };\n}"
+      },
+      "name": "createRunPlanRevision",
+      "qualifiedName": "createRunPlanRevision",
+      "span": {
+        "end": 2745,
+        "start": 2050
       }
     },
     {
@@ -73620,6 +75925,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "da407c8fe2867f9c60dbce0196d9261d7b0f94257710e8d6596b3266be7afccf",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "1340e32886e4aefc40f7dedaad4092712d37f361f03eff32ae7dd42cbf8d5e4c",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "function deepFreeze<T>(value: T): T {\n  if (value && typeof value === \"object\" && !Object.isFrozen(value)) {\n    Object.freeze(value);\n    for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child);\n  }\n  return value;\n}"
+      },
+      "name": "deepFreeze",
+      "qualifiedName": "deepFreeze",
+      "span": {
+        "end": 831,
+        "start": 583
+      }
+    },
+    {
       "contentHash": "ace8d961ce5b32573ea7e1949e8a57c148d0e2233428d43163c511217a9d5a4e",
       "file": "src/forge/agent-memory/bridge.ts",
       "id": "366d21e45e25b4ca5771eb0923b1cdcb77f93e4aba9e6900686ae80b9068d62b",
@@ -73977,6 +76299,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "41240e6dbeb5f4d925972cfeadc0fa12d87db7ee136b97063c3c53e66ff65d9a",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "79e666b79b87daab69fd19f8409ccc7183c259cc8d7e4be5343cc1b9cd0e2490",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function delegatedAttemptBudget(state: ControlState, grantId: string): number {\n  return Object.values(state.grants)\n    .filter((candidate) => candidate.parentGrantId === grantId)\n    .reduce((total, candidate) => total + candidate.maximumAttempts, 0);\n}"
+      },
+      "name": "delegatedAttemptBudget",
+      "qualifiedName": "delegatedAttemptBudget",
+      "span": {
+        "end": 11894,
+        "start": 11639
+      }
+    },
+    {
       "contentHash": "bb21fa43f776f53eef3ce590dfdedbcfabe4467e2bc4e45b6e144d8e0e006596",
       "file": "src/forge/delta/status.ts",
       "id": "ab6432a07d6b5474108a39cead7f50b59707311141251e90f963bfc13aaca640",
@@ -74085,14 +76424,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function dependencyInstallChecks(targetDir: string): Array<{ name: string; candidates: string[] }> {\n  const packageDirs = [targetDir, ...workspacePackageDirs(targetDir)];\n  const checks = new Map<string, string[]>();\n  for (const packageDir of packageDirs) {\n    for (const name of readPackageDependencyNames(join(packageDir, \"package.json\"))) {\n      const candidates = checks.get(name) ?? [];\n      candidates.push(join(targetDir, \"node_modules\", name));\n      candidates.push(join(packageDir, \"node_modules\", name));\n      checks.set(name, candidates);\n    }\n  }\n  return [...checks.entries()]\n    .map(([name, candidates]) => ({\n      name,\n      candidates: [...new Set(candidates)].sort(),\n    }))\n    .sort((a, b) => a.name.localeCompare(b.name));\n}"
       },
       "name": "dependencyInstallChecks",
       "qualifiedName": "dependencyInstallChecks",
       "span": {
-        "end": 11274,
-        "start": 10517
+        "end": 11612,
+        "start": 10855
       }
     },
     {
@@ -74283,6 +76622,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "7bfb37baaff644a5c8eb585e5a767f32d54cd663482862697098c2f1de4f0ae3",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "4089a15bb89e3df7c31cf7238d93f6e8c7bcca3d914420f013548280342b242a",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function deriveExecutionGrant(\n  parent: ExecutionGrant,\n  request: DerivedGrantRequest,\n  ledger: ResourceLedger,\n  now: number,\n): AuthorityResolution {\n  if (now < parent.notBefore || now >= parent.expiresAt) {\n    return reject(\"parent_grant_not_current\");\n  }\n\n  const aggregatedResourceRequests = Object.entries(\n    request.resourceRequests.reduce<Record<string, number>>((totals, resourceRequest) => {\n      setOwn(totals, resourceRequest.resource, (getOwn(totals, resourceRequest.resource) ?? 0) + resourceRequest.amount);\n      return totals;\n    }, {}),\n  ).map(([resource, amount]) => ({ resource, amount }));\n\n  const candidate: ExecutionGrant = {\n    grantId: request.grantId,\n    rootAuthorizationId: parent.rootAuthorizationId,\n    subjectId: request.subjectId,\n    parentGrantId: parent.grantId,\n    capabilities: [...request.capabilities],\n    sourceIds: [...request.sourceIds],\n    targetIds: [...request.targetIds],\n    effectClasses: [...request.effectClasses],\n    notBefore: request.notBefore,\n    expiresAt: request.expiresAt,\n    maximumAttempts: request.maximumAttempts,\n    delegationDepthRemaining: request.delegationDepthRemaining,\n    resourceCeilings: Object.fromEntries(\n      aggregatedResourceRequests.map((item) => [item.resource, item.amount]),\n    ),\n    reservationId: request.reservationId,\n  };\n  const violations = grantAttenuationViolations(parent, candidate);\n  if (violations.length > 0) return reject(...violations);\n\n  try {\n    const reserved = ledger.reserve(\n      request.reservationId,\n      parent.grantId,\n      aggregatedResourceRequests,\n      parent.resourceCeilings,\n    );\n    return {\n      outcome: \"allowed\",\n      reasonCodes: [],\n      limitations: [],\n      grant: {\n        ...candidate,\n        resourceCeilings: Object.fromEntries(\n          reserved.requests.map((item) => [item.resource, item.amount]),\n        ),\n      },\n    };\n  } catch (error) {\n    if (error instanceof AgentFabricError) {\n      return reject(error.code.toLowerCase());\n    }\n    return { outcome: \"unknown\", reasonCodes: [\"resource_reservation_unknown\"], limitations: [] };\n  }\n}"
+      },
+      "name": "deriveExecutionGrant",
+      "qualifiedName": "deriveExecutionGrant",
+      "span": {
+        "end": 7158,
+        "start": 5037
+      }
+    },
+    {
       "contentHash": "6e5c187d4c75d6739a9b7cccf350805838fc4d5eed785a041a0e20ea5a993d5f",
       "file": "src/forge/agent-memory/normalize.ts",
       "id": "716f56044b963e6f37e9541729d07f01be22ab34b08573f752d38e5dc38cd9ff",
@@ -74340,14 +76696,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function derivedOnlyRisk(): ImpactRisk {\n  return {\n    level: \"low\",\n    reasons: [\"Only derived generated artifacts changed\"],\n  };\n}"
       },
       "name": "derivedOnlyRisk",
       "qualifiedName": "derivedOnlyRisk",
       "span": {
-        "end": 19241,
-        "start": 19106
+        "end": 19104,
+        "start": 18969
       }
     },
     {
@@ -74382,6 +76738,23 @@ export const appGraph = {
       "span": {
         "end": 3116,
         "start": 2777
+      }
+    },
+    {
+      "contentHash": "a89b109f0621d63d357aeccb95303cb280ce487ba8bf472b0650056d58b6ce13",
+      "file": "src/forge/agent-fabric/p0a.ts",
+      "id": "d7799e7df09f0f0e6f8c8c0d79f896c1aaa69ad6205b42be42660d17be1d1d81",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "905bff927e6ef3a22ed41d4ab984d3aff6fae08bba94cbb89d2f8e2cde0a6174",
+        "sourceSlice": "function describeUnknown(error: unknown): string {\n  return error instanceof Error ? `${error.name}: ${error.message}` : \"adapter_operation_threw\";\n}"
+      },
+      "name": "describeUnknown",
+      "qualifiedName": "describeUnknown",
+      "span": {
+        "end": 658,
+        "start": 509
       }
     },
     {
@@ -74442,14 +76815,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function detectChangedFiles(\n  workspaceRoot: string,\n  source: ImpactSource,\n): { files: string[]; diagnostics: Diagnostic[] } {\n  if (source.mode === \"feature\" || source.mode === \"refactor\" || source.mode === \"upgrade\") {\n    return { files: readPlanFiles(workspaceRoot, source), diagnostics: [] };\n  }\n  const diagnostics: Diagnostic[] = [];\n  const result =\n    source.mode === \"staged\"\n      ? git([\"diff\", \"--cached\", \"--name-only\"], workspaceRoot)\n      : source.mode === \"since\" && source.base\n        ? git([\"diff\", \"--name-only\", source.base, \"--\"], workspaceRoot)\n        : git([\"diff\", \"--name-only\", \"HEAD\", \"--\"], workspaceRoot);\n  if (!result.ok) {\n    diagnostics.push(diag(\"error\", \"FORGE_IMPACT_GIT_UNAVAILABLE\", result.error ?? \"git unavailable\"));\n    return { files: [], diagnostics };\n  }\n  const files = new Set(result.files);\n  if (source.mode === \"changed\") {\n    for (const file of untrackedFiles(workspaceRoot)) {\n      files.add(file);\n    }\n  }\n  return {\n    files: scopeGitFilesToWorkspace(workspaceRoot, [...files].sort()).filter(\n      (file) => !isVolatileForgeState(file),\n    ),\n    diagnostics,\n  };\n}"
       },
       "name": "detectChangedFiles",
       "qualifiedName": "detectChangedFiles",
       "span": {
-        "end": 8899,
-        "start": 7761
+        "end": 8655,
+        "start": 7517
       }
     },
     {
@@ -75003,14 +77376,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function diag(severity: Diagnostic[\"severity\"], code: string, message: string, file?: string): Diagnostic {\n  return createDiagnostic({ severity, code, message, ...(file ? { file } : {}) });\n}"
       },
       "name": "diag",
       "qualifiedName": "diag",
       "span": {
-        "end": 2589,
-        "start": 2397
+        "end": 2570,
+        "start": 2378
       }
     },
     {
@@ -75224,14 +77597,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function diagnosticsForImpactTestRun(run: TestRunRecord): Diagnostic[] {\n  const timedOut = run.results.filter((result) => result.timedOut).map((result) => result.command);\n  if (timedOut.length > 0) {\n    return [diag(\"error\", \"FORGE_TEST_RUN_TIMEOUT\", `impact-selected command timed out: ${timedOut.join(\", \")}`)];\n  }\n\n  const resolutionFailures = run.results.filter((result) => result.failureKind === \"command-resolution-error\");\n  if (resolutionFailures.length > 0) {\n    return [diag(\n      \"error\",\n      \"FORGE_TEST_COMMAND_RESOLUTION_FAILED\",\n      `impact-selected command could not be resolved: ${resolutionFailures.map((result) => result.command).join(\", \")}`,\n    )];\n  }\n\n  const generatedDrift = run.results.filter((result) => result.failureKind === \"generated-drift\");\n  if (generatedDrift.length > 0) {\n    return [diag(\n      \"error\",\n      \"FORGE_IMPACT_GENERATED_DRIFT\",\n      `generated artifacts are stale: ${generatedDrift.map((result) => result.command).join(\", \")}`,\n    )];\n  }\n\n  if (run.failed.length > 0) {\n    return [diag(\"error\", \"FORGE_TEST_RUN_FAILED\", \"one or more impact-selected tests failed\")];\n  }\n\n  return [];\n}"
       },
       "name": "diagnosticsForImpactTestRun",
       "qualifiedName": "diagnosticsForImpactTestRun",
       "span": {
-        "end": 47707,
-        "start": 46555
+        "end": 47570,
+        "start": 46418
       }
     },
     {
@@ -75317,6 +77690,57 @@ export const appGraph = {
       "span": {
         "end": 4764,
         "start": 4635
+      }
+    },
+    {
+      "contentHash": "01d275db3957f98934ea4bb0169999ac121ddfec4c1e35f4f56738e3e083a36d",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "4578db143e4e1836af9f186a21fbf2fe35858767c1b45428e783d11889624b37",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function digest(value: unknown, label: string): string {\n  const result = string(value, label);\n  if (!DIGEST.test(result)) fail(`${label} must be a sha256 digest`);\n  return result;\n}"
+      },
+      "name": "digest",
+      "qualifiedName": "digest",
+      "span": {
+        "end": 1743,
+        "start": 1559
+      }
+    },
+    {
+      "contentHash": "a0697a89785a255e3b25cf7ab9de11bd9899795d2ec832746d458377e84cda2d",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "8122d54fdf0dc9078945cf3f6fd262ba651ad56ca8a0948cd4ef51d8638286cd",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function digestCanonical(\n  value: unknown,\n  digest: DigestFunction,\n): Digest {\n  return digest(stableStringify(value));\n}"
+      },
+      "name": "digestCanonical",
+      "qualifiedName": "digestCanonical",
+      "span": {
+        "end": 4987,
+        "start": 4863
+      }
+    },
+    {
+      "contentHash": "dc56f9e322978f09e1e82d5a6e7cd070d9a457f1d44974e53d99979bdab2cf83",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "2da571ee3fc37a041c28d99533ccd8957cb1d6df6c3d894364482f488567a3ee",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function digests(value: unknown, label: string): readonly string[] {\n  if (!Array.isArray(value)) fail(`${label} must be an array`);\n  return value.map((item, index) => digest(item, `${label}[${index}]`));\n}"
+      },
+      "name": "digests",
+      "qualifiedName": "digests",
+      "span": {
+        "end": 2724,
+        "start": 2517
       }
     },
     {
@@ -75439,6 +77863,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "5dd0a747e924ffa4e24b2a82558ff4d4be1adb61405decefb5a4b6f372862aac",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "e5d28a748dac648aeead0b34cb0681011b31f7e57ac2536219a98205f645e1e2",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function dispatchIntent(value: unknown, label: string): void {\n  const intent = object(value, label);\n  keys(\n    intent,\n    [\n      \"intentId\", \"rootExecutionId\", \"planRevisionId\", \"taskNodeId\", \"effectiveRunSpecDigest\",\n      \"sourceIds\", \"targetId\", \"requiredCapability\", \"effectClass\", \"createdAt\",\n    ],\n    [],\n    label,\n  );\n  for (const field of [\"intentId\", \"rootExecutionId\", \"planRevisionId\", \"taskNodeId\", \"targetId\", \"requiredCapability\"] as const) {\n    string(intent[field], `${label}.${field}`);\n  }\n  digest(intent.effectiveRunSpecDigest, `${label}.effectiveRunSpecDigest`);\n  strings(intent.sourceIds, `${label}.sourceIds`);\n  effectClasses([intent.effectClass], `${label}.effectClass`);\n  number(intent.createdAt, `${label}.createdAt`, { min: 0 });\n}"
+      },
+      "name": "dispatchIntent",
+      "qualifiedName": "dispatchIntent",
+      "span": {
+        "end": 12870,
+        "start": 12098
+      }
+    },
+    {
       "contentHash": "039be02e3e472614afd769a23753708e35a3011554f828d314150ad79a81b60d",
       "file": "src/forge/runtime/telemetry/flush.ts",
       "id": "dc0fcdb4f7332567a7dbecf47e2b3e73ae3e190af88512cb31c66c06094f88a6",
@@ -75479,14 +77920,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function displayName(name: string): string {\n  return name\n    .split(/[-_\\s]+/)\n    .filter(Boolean)\n    .map((part) => `${part[0]?.toUpperCase() ?? \"\"}${part.slice(1)}`)\n    .join(\" \");\n}"
       },
       "name": "displayName",
       "qualifiedName": "displayName",
       "span": {
-        "end": 3272,
-        "start": 3083
+        "end": 3607,
+        "start": 3418
       }
     },
     {
@@ -75677,6 +78118,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "40ffaa9fd7c12d46059891bf5a9b9c5e936b86faee1327538d318db0343a44c9",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "9cebf0ac41eb79e2434991043262efaf19b1f2e319034ff4c79a036de1cb515f",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function effectClasses(value: unknown, label: string): void {\n  for (const item of strings(value, label)) if (!EFFECT_CLASSES.has(item)) fail(`${label} contains ${item}`);\n}"
+      },
+      "name": "effectClasses",
+      "qualifiedName": "effectClasses",
+      "span": {
+        "end": 3185,
+        "start": 3012
+      }
+    },
+    {
       "contentHash": "8497828ec64093a07d3753b459920922050e5c5be551894f8ffed3d6cc38d384",
       "file": "src/forge/compiler/emitter/emit.ts",
       "id": "b899a221b549f7059e6e450574f38d4f77eaec88a00f27450e82785ccdf67be1",
@@ -75836,14 +78294,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function emptyImpacted(): ImpactedSystems {\n  return {\n    data: { tables: [], fields: [] },\n    runtime: { commands: [], queries: [], liveQueries: [], actions: [], workflows: [] },\n    frontend: { components: [], pages: [] },\n    policies: [],\n    packages: [],\n    generatedArtifacts: [],\n    deploy: [],\n  };\n}"
       },
       "name": "emptyImpacted",
       "qualifiedName": "emptyImpacted",
       "span": {
-        "end": 3304,
-        "start": 2991
+        "end": 3285,
+        "start": 2972
       }
     },
     {
@@ -76108,14 +78566,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function ensureGitignore(targetDir: string): void {\n  const gitignorePath = join(targetDir, \".gitignore\");\n  const existing = nodeFileSystem.exists(gitignorePath)\n    ? (nodeFileSystem.readText(gitignorePath) ?? \"\")\n    : \"\";\n  const normalized = existing.replace(/\\r\\n/g, \"\\n\");\n  const missingPaths = REQUIRED_GITIGNORE_PATHS.filter(\n    (path) => !normalized.includes(path),\n  );\n  if (normalized.trim().length > 0 && missingPaths.length === 0) {\n    return;\n  }\n\n  const sections = [\n    normalized.trimEnd(),\n    normalized.trim().length > 0 ? \"\" : \"node_modules/\\ndist/\\n.env\\n.env.local\",\n    \"# ForgeOS generated and local runtime artifacts\",\n    ...missingPaths,\n  ].filter(Boolean);\n  nodeFileSystem.writeText(gitignorePath, `${sections.join(\"\\n\")}\\n`);\n}"
       },
       "name": "ensureGitignore",
       "qualifiedName": "ensureGitignore",
       "span": {
-        "end": 8363,
-        "start": 7598
+        "end": 8701,
+        "start": 7936
       }
     },
     {
@@ -76176,14 +78634,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function ensureProjectName(name: string): string | null {\n  if (!name.trim()) {\n    return \"forge new requires a project name\";\n  }\n  if (name === \".\") {\n    return null;\n  }\n  if (name.includes(\"/\") || name.includes(\"\\\\\") || name === \"..\") {\n    return \"project name must be a directory name, not a path\";\n  }\n  return null;\n}"
       },
       "name": "ensureProjectName",
       "qualifiedName": "ensureProjectName",
       "span": {
-        "end": 6142,
-        "start": 5815
+        "end": 6480,
+        "start": 6153
       }
     },
     {
@@ -76448,14 +78906,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function estimateStrictTestEntry(\n  workspaceRoot: string,\n  file: string,\n  cost: TestCost,\n  lane: StrictTestLane,\n  profile: TestGraphProfileFile | null,\n): { estimatedMs: number; source: VerifyTestGraphDurationSource } {\n  const profiled = profile?.files[file];\n  const sourceHash = testFileSourceHash(workspaceRoot, file);\n  if (\n    profiled &&\n    sourceHash !== null &&\n    profiled.sourceHash === sourceHash &&\n    Number.isFinite(profiled.durationMs) &&\n    profiled.durationMs > 0\n  ) {\n    return { estimatedMs: Math.max(1, Math.round(profiled.durationMs)), source: \"profile\" };\n  }\n  const normalized = normalizeTestPath(file);\n  const pathOverride = STRICT_TEST_FALLBACK_MS_BY_PATH.find((entry) => entry.pattern.test(normalized));\n  const fallback = pathOverride?.estimatedMs ?? TEST_COST_FALLBACK_MS[cost] ?? TEST_COST_FALLBACK_MS.standard;\n  if (lane === \"serial\") {\n    return { estimatedMs: Math.max(fallback, 8_000), source: \"fallback\" };\n  }\n  if (lane === \"isolated\") {\n    return { estimatedMs: Math.max(fallback, 3_000), source: \"fallback\" };\n  }\n  return { estimatedMs: fallback, source: \"fallback\" };\n}"
       },
       "name": "estimateStrictTestEntry",
       "qualifiedName": "estimateStrictTestEntry",
       "span": {
-        "end": 31984,
-        "start": 30857
+        "end": 32130,
+        "start": 31003
       }
     },
     {
@@ -76609,6 +79067,23 @@ export const appGraph = {
       "span": {
         "end": 34966,
         "start": 34588
+      }
+    },
+    {
+      "contentHash": "0eef23991f6765b598fc9ca21d6bc21878574b8e77f30d7eb5e2e496e1dbff2e",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "d9d9b8dbb8974ca5b4358c98052019179e09fc6830a1ef79f9414244e6c873ec",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "function eventDigestInput(envelope: Omit<ControlEventEnvelope, \"eventDigest\">): unknown {\n  return envelope;\n}"
+      },
+      "name": "eventDigestInput",
+      "qualifiedName": "eventDigestInput",
+      "span": {
+        "end": 943,
+        "start": 833
       }
     },
     {
@@ -76805,14 +79280,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function eventsFromText(text: string): string[] {\n  const events: string[] = [];\n  const regex = /ctx\\.emit\\s*\\(\\s*[\"'`]([^\"'`]+)[\"'`]/g;\n  let match: RegExpExecArray | null;\n  while ((match = regex.exec(text))) {\n    push(events, match[1]);\n  }\n  return events.sort();\n}"
       },
       "name": "eventsFromText",
       "qualifiedName": "eventsFromText",
       "span": {
-        "end": 10704,
-        "start": 10433
+        "end": 10460,
+        "start": 10189
       }
     },
     {
@@ -76847,6 +79322,23 @@ export const appGraph = {
       "span": {
         "end": 102279,
         "start": 67038
+      }
+    },
+    {
+      "contentHash": "6514a009f28c09ab43a4c4d1ec963a5448d89d9786dc276724772d21cbba712f",
+      "file": "src/forge/agent-fabric/p0a.ts",
+      "id": "1de255c1c10b297ec86ee7612f0b59435789e638c480a7b1f205e3af85844f50",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "905bff927e6ef3a22ed41d4ab984d3aff6fae08bba94cbb89d2f8e2cde0a6174",
+        "sourceSlice": "async function executeP0aActivity(\n  input: ExecuteP0aActivityInput,\n): Promise<P0aActivityExecutionResult> {\n  input.conductor.authorizeAttemptDispatch(input.permit);\n\n  let startup;\n  try {\n    startup = await input.adapter.startAttempt(input.permit);\n  } catch (error) {\n    return recordUncertainty(\n      input.conductor,\n      input.permit,\n      \"startup\",\n      describeUnknown(error),\n    );\n  }\n\n  if (startup.status === \"unknown\") {\n    return recordUncertainty(\n      input.conductor,\n      input.permit,\n      \"startup\",\n      startup.reason,\n    );\n  }\n\n  try {\n    input.conductor.acceptStartupReport(input.permit, startup.report);\n  } catch (error) {\n    return recordUncertainty(\n      input.conductor,\n      input.permit,\n      \"startup\",\n      `startup_report_rejected:${describeUnknown(error)}`,\n    );\n  }\n\n  let outcome;\n  try {\n    outcome = await input.adapter.collectOutcome(input.permit.attemptId);\n  } catch (error) {\n    return recordUncertainty(\n      input.conductor,\n      input.permit,\n      \"outcome\",\n      describeUnknown(error),\n    );\n  }\n\n  if (outcome.status === \"unknown\") {\n    return recordUncertainty(\n      input.conductor,\n      input.permit,\n      \"outcome\",\n      outcome.reason,\n    );\n  }\n\n  try {\n    return input.conductor.commitOutcome(outcome.report as WorkerResultReport);\n  } catch (error) {\n    return recordUncertainty(\n      input.conductor,\n      input.permit,\n      \"outcome\",\n      `outcome_report_rejected:${describeUnknown(error)}`,\n    );\n  }\n}"
+      },
+      "name": "executeP0aActivity",
+      "qualifiedName": "executeP0aActivity",
+      "span": {
+        "end": 2471,
+        "start": 963
       }
     },
     {
@@ -77026,14 +79518,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function explainTest(workspaceRoot: string, testFile: string): ImpactResult {\n  const graph = loadArtifacts(workspaceRoot).testGraph;\n  const normalized = normalize(testFile);\n  const test = graph.tests.find((entry) => entry.file === normalized);\n  if (!test) {\n    return {\n      ok: false,\n      diagnostics: [diag(\"error\", \"FORGE_TEST_NOT_FOUND\", `test not found in TestGraph: ${testFile}`, testFile)],\n      exitCode: 1,\n    };\n  }\n  return { ok: true, test, diagnostics: [], exitCode: 0 };\n}"
       },
       "name": "explainTest",
       "qualifiedName": "explainTest",
       "span": {
-        "end": 40300,
-        "start": 39804
+        "end": 40163,
+        "start": 39667
       }
     },
     {
@@ -77077,14 +79569,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function extensionFor(path: string): string {\n  const name = path.split(/[\\\\/]/).pop() ?? \"\";\n  const index = name.indexOf(\".\");\n  return index === -1 ? \"\" : name.slice(index);\n}"
       },
       "name": "extensionFor",
       "qualifiedName": "extensionFor",
       "span": {
-        "end": 2983,
-        "start": 2805
+        "end": 3318,
+        "start": 3140
       }
     },
     {
@@ -77530,6 +80022,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "55f56db7294237620e2a14be8f8ecabd0cd09b93124ea8ead52861a14ac25b11",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "6b801b2b726779f2e3b414f24015910ff7bda18f7b46f8d46b9e745e5069b448",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function fail(message: string): never {\n  throw new AgentFabricError(\"AF_INVALID_EVENT\", message);\n}"
+      },
+      "name": "fail",
+      "qualifiedName": "fail",
+      "span": {
+        "end": 491,
+        "start": 391
+      }
+    },
+    {
       "contentHash": "969dfbc1214207cd9649aa47d7cab253acb6b61a906263dfbb690e88a0c49b1c",
       "file": "src/forge/runtime/webhooks/security.ts",
       "id": "19c6a69347d34c9557ea1a3e7a510b46bbbe5b8dad88ba7a625660963b849bc9",
@@ -77842,14 +80351,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function fileText(workspaceRoot: string, file: string): string {\n  try {\n    return nodeFileSystem.readText(join(workspaceRoot, file)) ?? \"\";\n  } catch {\n    return \"\";\n  }\n}"
       },
       "name": "fileText",
       "qualifiedName": "fileText",
       "span": {
-        "end": 4105,
-        "start": 3931
+        "end": 4086,
+        "start": 3912
       }
     },
     {
@@ -78437,7 +80946,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function firstFailureKind(results: Array<{ ok: boolean; timedOut?: boolean; failureKind?: string }>): string | undefined {\n  return results.find((result) => !result.ok)?.failureKind;\n}"
       },
       "name": "firstFailureKind",
@@ -78845,14 +81354,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function forgePackageSpec(targetDir: string, options: Pick<NewCommandOptions, \"forgePackageSpec\" | \"localForge\">): string {\n  if (options.forgePackageSpec && !options.localForge) {\n    return normalizeForgePackageSpec(options.forgePackageSpec);\n  }\n  if (options.localForge) {\n    return localForgePackageSpec(targetDir);\n  }\n  return DEFAULT_FORGE_PACKAGE_SPEC;\n}"
       },
       "name": "forgePackageSpec",
       "qualifiedName": "forgePackageSpec",
       "span": {
-        "end": 4434,
-        "start": 4070
+        "end": 4769,
+        "start": 4405
       }
     },
     {
@@ -80256,14 +82765,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function formatImpactHuman(result: ImpactResult): string {\n  if (result.report) {\n    const report = result.report;\n    return `Impact detected\n\nRisk: ${report.risk.level}\n\nChanged files:\n${report.changedFiles.map((file) => `  - ${file}`).join(\"\\n\") || \"  - none\"}\n\nRuntime:\n${[\n  ...report.impacted.runtime.commands.map((name) => `  - command ${name}`),\n  ...report.impacted.runtime.queries.map((name) => `  - query ${name}`),\n  ...report.impacted.runtime.liveQueries.map((name) => `  - liveQuery ${name}`),\n  ...report.impacted.runtime.actions.map((name) => `  - action ${name}`),\n  ...report.impacted.runtime.workflows.map((name) => `  - workflow ${name}`),\n].join(\"\\n\") || \"  - none\"}\n\nRequired checks:\n${report.recommendedChecks.map((check) => `  - ${check}`).join(\"\\n\") || \"  - none\"}\n\nFinal:\n  - forge verify --strict\n`;\n  }\n  if (result.plan) {\n    return renderTestPlanMarkdown(result.plan);\n  }\n  if (result.test) {\n    return `Test: ${result.test.file}\nCost: ${result.test.cost}\nConfidence: ${result.test.confidence}\nCovers: ${JSON.stringify(result.test.covers, null, 2)}\n`;\n  }\n  if (result.run) {\n    return `Impact test run ${result.run.id}\n\n${result.run.results.map((step) => {\n  const timeout = step.timedOut ? `, timed out after ${result.run?.timeoutMs ?? \"unknown\"}ms` : \"\";\n  const resolution = step.failureKind === \"command-resolution-error\" ? `, command resolution failed: ${step.stderr ?? \"unknown error\"}` : \"\";\n  return `${step.ok ? \"OK\" : \"FAIL\"} ${step.command} (${step.durationMs}ms${timeout}${resolution})`;\n}).join(\"\\n\")}\n`;\n  }\n  if (result.authz) {\n    const proof = result.authz;\n    return `Authz proof ${proof.summary.ok ? \"ok\" : \"failed\"}\n\nTenant: ${proof.tenant}\nOther tenant: ${proof.otherTenant}\n\nChecks:\n${proof.checks.map((check) => `  - ${check.ok ? \"OK\" : \"FAIL\"} ${check.name}: ${check.message}`).join(\"\\n\")}\n\nLimitations:\n${proof.limitations.map((item) => `  - ${item}`).join(\"\\n\")}\n\nNext:\n${proof.nextActions.map((item) => `  - ${item}`).join(\"\\n\")}\n`;\n  }\n  return result.diagnostics.map((diagnostic) => diagnostic.message).join(\"\\n\");\n}"
       },
       "name": "formatImpactHuman",
       "qualifiedName": "formatImpactHuman",
       "span": {
-        "end": 52299,
-        "start": 50216
+        "end": 52162,
+        "start": 50079
       }
     },
     {
@@ -80273,14 +82782,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function formatImpactJson(result: ImpactResult): string {\n  if (result.run) {\n    return `${JSON.stringify({\n      ok: result.ok,\n      plan: result.plan,\n      run: result.run,\n      diagnostics: result.diagnostics,\n      exitCode: result.exitCode,\n    }, null, 2)}\\n`;\n  }\n  return `${JSON.stringify(result.report ?? result.plan ?? result.test ?? result.run ?? result.authz ?? result, null, 2)}\\n`;\n}"
       },
       "name": "formatImpactJson",
       "qualifiedName": "formatImpactJson",
       "span": {
-        "end": 50207,
-        "start": 49805
+        "end": 50070,
+        "start": 49668
       }
     },
     {
@@ -80392,14 +82901,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function formatNewHuman(result: NewCommandResult): string {\n  if (result.exitCode !== 0) {\n    return `error: ${result.message}\\n`;\n  }\n\n  return [\n    result.message,\n    ...(result.fieldTest.requested\n      ? [\n          result.fieldTest.ok\n            ? \"Field-test setup completed: WorkOS, auth.md, check, and baseline commit are ready.\"\n            : `warning: field-test setup did not complete: ${result.fieldTest.steps.find((step) => !step.ok)?.name ?? \"not-run\"}`,\n        ]\n      : []),\n    ...(result.gitHygiene.ok\n      ? [\"Generated and operational Forge files are ignored by git.\"]\n      : [\n          `warning: template is missing gitignore entries: ${result.gitHygiene.missingPaths.join(\", \")}`,\n        ]),\n    \"\",\n    \"Next steps:\",\n    ...result.nextSteps.map((step) => `  ${step}`),\n    \"\",\n  ].join(\"\\n\");\n}"
       },
       "name": "formatNewHuman",
       "qualifiedName": "formatNewHuman",
       "span": {
-        "end": 21331,
-        "start": 20504
+        "end": 21733,
+        "start": 20906
       }
     },
     {
@@ -80409,14 +82918,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function formatNewJson(result: NewCommandResult): string {\n  return `${JSON.stringify({\n    schemaVersion: \"0.1.0\",\n    ok: result.exitCode === 0,\n    ...result,\n  }, null, 2)}\\n`;\n}"
       },
       "name": "formatNewJson",
       "qualifiedName": "formatNewJson",
       "span": {
-        "end": 21522,
-        "start": 21340
+        "end": 21924,
+        "start": 21742
       }
     },
     {
@@ -82120,6 +84629,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "eae8e31b1e5956b951935d52f431cd9fb490bb371d6471fc575bda4dbd13b108",
+      "file": "src/forge/agent-fabric/dictionary.ts",
+      "id": "a29473b28172caffeae699ebb2f93dfbb7971685665a3a297e38140c707adb91",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e24022652b6ea00b267b073bc50898e999311dc43b049325819f82c5ed04fb5c",
+        "sourceSlice": "function getOwn<T>(record: Readonly<Record<string, T>>, key: string): T | undefined {\n  return Object.hasOwn(record, key) ? record[key] : undefined;\n}"
+      },
+      "name": "getOwn",
+      "qualifiedName": "getOwn",
+      "span": {
+        "end": 321,
+        "start": 171
+      }
+    },
+    {
       "contentHash": "f01a8100da7504ed0f0d4bfe759be8b1d2d31a069b5e147f08910ea337997761",
       "file": "src/forge/agent-adapters/index.ts",
       "id": "0dcf7716e36cbb72dfd520d3724bd52e240189577fd634ed71c2b9c474ab37c5",
@@ -82279,14 +84805,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function git(args: string[], workspaceRoot: string): { ok: boolean; files: string[]; error?: string } {\n  const result = spawnSync(\"git\", args, {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    windowsHide: true,\n  });\n  if (result.status !== 0) {\n    return { ok: false, files: [], error: result.stderr || result.stdout || \"git command failed\" };\n  }\n  return {\n    ok: true,\n    files: result.stdout.split(/\\r?\\n/).map(normalize).filter(Boolean).sort(),\n  };\n}"
       },
       "name": "git",
       "qualifiedName": "git",
       "span": {
-        "end": 4843,
-        "start": 4379
+        "end": 4824,
+        "start": 4360
       }
     },
     {
@@ -82324,23 +84850,6 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "3651e9bae0b1566933887d41ff56c870226b01a73a4f6db30e2c1f26823a2593",
-      "file": "src/forge/impact/index.ts",
-      "id": "c6e24fe116f37ae5056a8e4f4b1176484b2d57e8f40693f376a93d31ea8d3212",
-      "kind": "code.function",
-      "meta": {
-        "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
-        "sourceSlice": "function gitRoot(workspaceRoot: string): string | null {\n  const result = spawnSync(\"git\", [\"rev-parse\", \"--show-toplevel\"], {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    windowsHide: true,\n  });\n  if (result.status !== 0) {\n    return null;\n  }\n  return result.stdout.trim() || null;\n}"
-      },
-      "name": "gitRoot",
-      "qualifiedName": "gitRoot",
-      "span": {
-        "end": 5137,
-        "start": 4845
-      }
-    },
-    {
       "contentHash": "7e02d8ef36ed0e31dcb958b5952a920061ecf1bf532e3cf294e7162b2823b31c",
       "file": "src/forge/runtime/release/runtime.ts",
       "id": "4125b80052cc2e905f4af61993e711f5da1d029ab710c8af493e3b985f64eaeb",
@@ -82372,6 +84881,74 @@ export const appGraph = {
       "span": {
         "end": 6527,
         "start": 5510
+      }
+    },
+    {
+      "contentHash": "489e69e41e6ae26340b3603d24adcd0a79987408621c1c650357f80f102e36fe",
+      "file": "src/forge/impact/index.ts",
+      "id": "9d1fdad720465ff9adbf6e65905990212c40a5efa08397c7edb361a66e780ae4",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
+        "sourceSlice": "function gitWorkspacePrefix(workspaceRoot: string): string | null {\n  const result = spawnSync(\"git\", [\"rev-parse\", \"--show-prefix\"], {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    windowsHide: true,\n  });\n  if (result.status !== 0) {\n    return null;\n  }\n  return normalize(result.stdout.trim()).replace(/\\/+$/u, \"\");\n}"
+      },
+      "name": "gitWorkspacePrefix",
+      "qualifiedName": "gitWorkspacePrefix",
+      "span": {
+        "end": 5151,
+        "start": 4826
+      }
+    },
+    {
+      "contentHash": "745845c06d5015d7592e730ca2401437b8c66bcb808fdf7a7a6d6a78afa15952",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "68a493e7c8452dc0a32fc7825802bdea24b077701fbad1e9f07adb78a0e6f532",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function goal(value: unknown, label: string): void {\n  const goalValue = object(value, label);\n  keys(\n    goalValue,\n    [\n      \"goalId\", \"revision\", \"authorityInvocationId\", \"objectives\", \"nonObjectives\",\n      \"acceptanceCriteria\", \"allowedEffectClasses\", \"prohibitedEffectClasses\", \"sourceBoundary\",\n    ],\n    [],\n    label,\n  );\n  string(goalValue.goalId, `${label}.goalId`);\n  number(goalValue.revision, `${label}.revision`, { integer: true, min: 1 });\n  string(goalValue.authorityInvocationId, `${label}.authorityInvocationId`);\n  textStrings(goalValue.objectives, `${label}.objectives`);\n  textStrings(goalValue.nonObjectives, `${label}.nonObjectives`);\n  textStrings(goalValue.acceptanceCriteria, `${label}.acceptanceCriteria`);\n  effectClasses(goalValue.allowedEffectClasses, `${label}.allowedEffectClasses`);\n  effectClasses(goalValue.prohibitedEffectClasses, `${label}.prohibitedEffectClasses`);\n  const boundary = object(goalValue.sourceBoundary, `${label}.sourceBoundary`);\n  keys(boundary, [\"sourceIds\", \"allowExpansion\"], [], `${label}.sourceBoundary`);\n  strings(boundary.sourceIds, `${label}.sourceBoundary.sourceIds`);\n  boolean(boundary.allowExpansion, `${label}.sourceBoundary.allowExpansion`);\n}"
+      },
+      "name": "goal",
+      "qualifiedName": "goal",
+      "span": {
+        "end": 7621,
+        "start": 6402
+      }
+    },
+    {
+      "contentHash": "e2ae1ffa01c992574d82a54bdaaf4bb6b0a7ec12fab1059001bf5f9104835e6c",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "279ecf66f5385039dbaf34537a21c9a4e1eaeb44cb92901fec9b08d70ba28a5c",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function grant(value: unknown, label: string): void {\n  const grantValue = object(value, label);\n  keys(\n    grantValue,\n    [\n      \"grantId\", \"rootAuthorizationId\", \"subjectId\", \"parentGrantId\", \"capabilities\", \"sourceIds\",\n      \"targetIds\", \"effectClasses\", \"notBefore\", \"expiresAt\", \"maximumAttempts\",\n      \"delegationDepthRemaining\", \"resourceCeilings\",\n    ],\n    [\"reservationId\"],\n    label,\n  );\n  for (const field of [\"grantId\", \"rootAuthorizationId\", \"subjectId\"] as const) {\n    string(grantValue[field], `${label}.${field}`);\n  }\n  if (grantValue.parentGrantId !== null) string(grantValue.parentGrantId, `${label}.parentGrantId`);\n  for (const field of [\"capabilities\", \"sourceIds\", \"targetIds\"] as const) {\n    strings(grantValue[field], `${label}.${field}`);\n  }\n  effectClasses(grantValue.effectClasses, `${label}.effectClasses`);\n  number(grantValue.notBefore, `${label}.notBefore`, { min: 0 });\n  number(grantValue.expiresAt, `${label}.expiresAt`, { min: 0 });\n  number(grantValue.maximumAttempts, `${label}.maximumAttempts`, { integer: true, min: 1 });\n  number(grantValue.delegationDepthRemaining, `${label}.delegationDepthRemaining`, { integer: true, min: 0 });\n  recordOfPositiveNumbers(grantValue.resourceCeilings, `${label}.resourceCeilings`);\n  if (grantValue.reservationId !== undefined) string(grantValue.reservationId, `${label}.reservationId`);\n}"
+      },
+      "name": "grant",
+      "qualifiedName": "grant",
+      "span": {
+        "end": 9000,
+        "start": 7623
+      }
+    },
+    {
+      "contentHash": "aa390b74fb53768fb865708e85a22ca666fb1af68d49d11e69d75ce4e7f86516",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "daa4be581be0a8a77a334d7b6e516bf7520808a9a06616e2d5132c902fd908ab",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function grantAttenuationViolations(\n  parent: ExecutionGrant,\n  child: ExecutionGrant,\n): readonly string[] {\n  const violations: string[] = [];\n  if (child.parentGrantId !== parent.grantId) violations.push(\"parent_grant_mismatch\");\n  if (child.rootAuthorizationId !== parent.rootAuthorizationId) {\n    violations.push(\"root_authorization_changed\");\n  }\n  if (!child.reservationId) violations.push(\"derived_grant_missing_reservation\");\n  if (!isSubset(child.capabilities, parent.capabilities)) violations.push(\"capability_scope_expanded\");\n  if (!isSubset(child.sourceIds, parent.sourceIds)) violations.push(\"source_scope_expanded\");\n  if (!isSubset(child.targetIds, parent.targetIds)) violations.push(\"target_scope_expanded\");\n  if (!isSubset<EffectClass>(child.effectClasses, parent.effectClasses)) {\n    violations.push(\"effect_scope_expanded\");\n  }\n  if (child.notBefore < parent.notBefore || child.expiresAt > parent.expiresAt) {\n    violations.push(\"time_scope_expanded\");\n  }\n  if (child.expiresAt <= child.notBefore) violations.push(\"invalid_time_window\");\n  if (child.maximumAttempts <= 0 || child.maximumAttempts > parent.maximumAttempts) {\n    violations.push(\"attempt_limit_expanded\");\n  }\n  if (\n    child.delegationDepthRemaining < 0 ||\n    child.delegationDepthRemaining >= parent.delegationDepthRemaining\n  ) {\n    violations.push(\"delegation_depth_not_attenuated\");\n  }\n  for (const [resource, amount] of Object.entries(child.resourceCeilings)) {\n    const ceiling = getOwn(parent.resourceCeilings, resource);\n    if (!Number.isFinite(amount) || amount <= 0 || ceiling === undefined || amount > ceiling) {\n      violations.push(`resource_ceiling_expanded:${resource}`);\n    }\n  }\n  return violations;\n}"
+      },
+      "name": "grantAttenuationViolations",
+      "qualifiedName": "grantAttenuationViolations",
+      "span": {
+        "end": 4657,
+        "start": 2937
       }
     },
     {
@@ -83701,37 +86278,37 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "212b3d5418e077d98c3a058985a014aea2d41d62127002a2d5e563b48af9c987",
+      "contentHash": "2e5c79fc02e6cd236c2d91e3a113450e02a5b9c2461921dd3417f5bf4cee71fe",
       "file": "src/forge/compiler/app-graph/tsconfig-hash.ts",
       "id": "bd5a24e2f39f939e9e038965d6906e6817b6c2fd0a5b9e69e86c2aad54841a1b",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03ce95abf946390fe3b72b9bf16c7da3dae644de95b2256c5b958aff51d1ca19",
-        "sourceSlice": "function hashTsCompilerOptions(options: ts.CompilerOptions): string {\n  const relevant: Record<string, unknown> = {};\n  for (const key of RELEVANT_COMPILER_OPTIONS) {\n    const value = options[key];\n    if (value !== undefined) {\n      relevant[key] = value;\n    }\n  }\n  return hashStable(canonicalJson(relevant));\n}"
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
+        "sourceSlice": "function hashTsCompilerOptions(\n  options: ts.CompilerOptions,\n  workspaceRoot?: string,\n): string {\n  const relevant: Record<string, unknown> = {};\n  for (const key of RELEVANT_COMPILER_OPTIONS) {\n    const value = options[key];\n    if (value === undefined) {\n      continue;\n    }\n    if (workspaceRoot && WORKSPACE_PATH_OPTIONS.has(key) && typeof value === \"string\") {\n      relevant[key] = canonicalWorkspacePath(value, workspaceRoot);\n      continue;\n    }\n    if (key === \"paths\" && typeof value === \"object\" && value !== null) {\n      relevant[key] = canonicalPathsOption(value as ts.MapLike<string[]>);\n      continue;\n    }\n    relevant[key] = value;\n  }\n  return hashStable(canonicalJson(relevant));\n}"
       },
       "name": "hashTsCompilerOptions",
       "qualifiedName": "hashTsCompilerOptions",
       "span": {
-        "end": 708,
-        "start": 392
+        "end": 1830,
+        "start": 1119
       }
     },
     {
-      "contentHash": "f84669f2da4b2a1ad362466e15f85281b0ca30b26e72cfb2cf04bb51bbfffc8b",
+      "contentHash": "f327be15acb66690cfa89b86196a6df36d4ef9ea06d4ccc344b97252fd2683fa",
       "file": "src/forge/compiler/app-graph/tsconfig-hash.ts",
       "id": "5063de0ecb8d6029da76d25226133aa8bf705ffa4575c4d93fead3cae09705ba",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03ce95abf946390fe3b72b9bf16c7da3dae644de95b2256c5b958aff51d1ca19",
-        "sourceSlice": "function hashTsconfigForWorkspace(\n  workspaceRoot: string,\n  tsconfigPath?: string,\n): string {\n  const parsed = loadTsconfig(workspaceRoot, tsconfigPath);\n  return hashTsCompilerOptions(parsed.options);\n}"
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
+        "sourceSlice": "function hashTsconfigForWorkspace(\n  workspaceRoot: string,\n  tsconfigPath?: string,\n): string {\n  const parsed = loadTsconfig(workspaceRoot, tsconfigPath);\n  return hashTsCompilerOptions(parsed.options, workspaceRoot);\n}"
       },
       "name": "hashTsconfigForWorkspace",
       "qualifiedName": "hashTsconfigForWorkspace",
       "span": {
-        "end": 1435,
-        "start": 1229
+        "end": 2572,
+        "start": 2351
       }
     },
     {
@@ -84302,14 +86879,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function importsPackage(text: string, packageName: string): boolean {\n  const escaped = packageName.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n  return new RegExp(\n    `(?:from\\\\s+[\"']${escaped}(?:/[^\"']*)?[\"']|import\\\\s*\\\\(\\\\s*[\"']${escaped}(?:/[^\"']*)?[\"']\\\\s*\\\\)|require\\\\s*\\\\(\\\\s*[\"']${escaped}(?:/[^\"']*)?[\"']\\\\s*\\\\))`,\n  ).test(text);\n}"
       },
       "name": "importsPackage",
       "qualifiedName": "importsPackage",
       "span": {
-        "end": 11045,
-        "start": 10706
+        "end": 10801,
+        "start": 10462
       }
     },
     {
@@ -84472,14 +87049,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function inferFailureKind(command: string, exitCode: number, stdout: string, stderr: string): string | undefined {\n  if (exitCode === 0) {\n    return undefined;\n  }\n  const output = `${stdout}\\n${stderr}`;\n  if (\n    command.startsWith(\"forge generate --check\") &&\n    output.includes(\"FORGE_DRIFT\")\n  ) {\n    return \"generated-drift\";\n  }\n  return \"test-failure\";\n}"
       },
       "name": "inferFailureKind",
       "qualifiedName": "inferFailureKind",
       "span": {
-        "end": 36062,
-        "start": 35696
+        "end": 35925,
+        "start": 35559
       }
     },
     {
@@ -85129,6 +87706,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "84442d7113305cfd70ee15ae6d3f8bc72c3d49fd0fe992de2aa8a24c66145f22",
+      "file": "src/forge/cli/new.ts",
+      "id": "ad001e1316d4e2f96cd0bb39c7b341c8cf40b0d807ca1d1e384b630f7601d552",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
+        "sourceSlice": "function installArgsFor(\n  packageManager: NewPackageManager,\n  platform: NodeJS.Platform = process.platform,\n): string[] {\n  if (packageManager === \"yarn\") return [\"install\", \"--no-immutable\"];\n  if (packageManager === \"bun\" && platform === \"win32\") {\n    return [\"install\", \"--backend=copyfile\"];\n  }\n  return [\"install\"];\n}"
+      },
+      "name": "installArgsFor",
+      "qualifiedName": "installArgsFor",
+      "span": {
+        "end": 1802,
+        "start": 1476
+      }
+    },
+    {
       "contentHash": "8dd01ef85e2f91d1475fcb17b49fab3ddb632c7f3f448f87cf6b02ea38627e13",
       "file": "src/forge/cli/studio.ts",
       "id": "3b36002b844dc8eb52447e0e129cdc0c7279a5dff7dee6343be436fafbfabfce",
@@ -85186,14 +87780,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function intersects(a: string[], b: string[]): string | null {\n  for (const value of a) {\n    if (b.includes(value)) return value;\n  }\n  return null;\n}"
       },
       "name": "intersects",
       "qualifiedName": "intersects",
       "span": {
-        "end": 23752,
-        "start": 23601
+        "end": 23615,
+        "start": 23464
       }
     },
     {
@@ -85211,6 +87805,23 @@ export const appGraph = {
       "span": {
         "end": 5682,
         "start": 1859
+      }
+    },
+    {
+      "contentHash": "61c04f759b5420ec62b3abbd967598b9a963ee4e77088f1888b46e4786851948",
+      "file": "src/forge/agent-fabric/errors.ts",
+      "id": "b4e0f09c2368617172caf4909b3b4b2a82a45f5e2c725951154a9969a22372d8",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "b00be6ce7d9e24458c6f6c6c9c58ca3a3fb6ccc823d6bc4b5d2b526bb1a67903",
+        "sourceSlice": "function isAgentFabricError(error: unknown): error is AgentFabricError {\n  return error instanceof AgentFabricError;\n}"
+      },
+      "name": "isAgentFabricError",
+      "qualifiedName": "isAgentFabricError",
+      "span": {
+        "end": 803,
+        "start": 685
       }
     },
     {
@@ -85373,14 +87984,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function isCurrentDirectoryTarget(name: string): boolean {\n  return name === \".\";\n}"
       },
       "name": "isCurrentDirectoryTarget",
       "qualifiedName": "isCurrentDirectoryTarget",
       "span": {
-        "end": 6227,
-        "start": 6144
+        "end": 6565,
+        "start": 6482
       }
     },
     {
@@ -85594,7 +88205,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function isForgeOsFrameworkWorkspace(workspaceRoot: string): boolean {\n  const pkg = readWorkspacePackageJson(workspaceRoot);\n  return (\n    pkg.name === \"forgeos\" &&\n    nodeFileSystem.exists(join(workspaceRoot, \"src/forge/cli/verify.ts\")) &&\n    nodeFileSystem.exists(join(workspaceRoot, \"bin/forge.mjs\"))\n  );\n}"
       },
       "name": "isForgeOsFrameworkWorkspace",
@@ -85730,7 +88341,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function isLikelyPath(value: string): boolean {\n  return value.includes(\"/\") || value.includes(\"\\\\\") || /^[a-z]:/iu.test(value);\n}"
       },
       "name": "isLikelyPath",
@@ -85832,7 +88443,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function isNodeRunnableBin(executable: string): boolean {\n  if (/\\.(cjs|js|mjs)$/iu.test(executable)) {\n    return true;\n  }\n  if (!nodeFileSystem.exists(executable)) {\n    return false;\n  }\n  try {\n    const head = (nodeFileSystem.readText(executable) ?? \"\").slice(0, 256);\n    const firstLine = head.split(/\\r?\\n/u)[0] ?? \"\";\n    return firstLine.includes(\"node\") || head.includes(\"require(\") || head.includes(\"import \");\n  } catch {\n    return false;\n  }\n}"
       },
       "name": "isNodeRunnableBin",
@@ -85934,14 +88545,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function isPackageDependencyFile(file: string): boolean {\n  return [\n    \"package.json\",\n    \"package-lock.json\",\n    \"npm-shrinkwrap.json\",\n    \"pnpm-lock.yaml\",\n    \"yarn.lock\",\n    \"bun.lock\",\n    \"bun.lockb\",\n  ].includes(normalize(file));\n}"
       },
       "name": "isPackageDependencyFile",
       "qualifiedName": "isPackageDependencyFile",
       "span": {
-        "end": 11292,
-        "start": 11047
+        "end": 11048,
+        "start": 10803
       }
     },
     {
@@ -86404,6 +89015,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "a3677e75715952a711405ac98ea7b55c3a5163da2c50b195416338f662fbd86a",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "f49aad4bdd28fe07342e5a30a6e864a13a326bd7609cd275a295fce209a201d4",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function isSubset<T>(child: readonly T[], parent: readonly T[]): boolean {\n  const allowed = new Set(parent);\n  return child.every((value) => allowed.has(value));\n}"
+      },
+      "name": "isSubset",
+      "qualifiedName": "isSubset",
+      "span": {
+        "end": 470,
+        "start": 306
+      }
+    },
+    {
       "contentHash": "fe25a405aecadd568e98e8cc59c768de550981231a7d99c9c6bcc434f508da5a",
       "file": "src/forge/runtime/auth/types.ts",
       "id": "1645439d27fd98dee9d8a2039e71770f0925f372115e771b369db152e791c0b4",
@@ -86478,14 +89106,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function isTextFile(path: string): boolean {\n  return TEXT_EXTENSIONS.has(extensionFor(path));\n}"
       },
       "name": "isTextFile",
       "qualifiedName": "isTextFile",
       "span": {
-        "end": 3081,
-        "start": 2985
+        "end": 3416,
+        "start": 3320
       }
     },
     {
@@ -86693,6 +89321,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "33bf2c419c16f532c83b3376c8dabe1f3df96f4985b6bd2740e3ead83d4ed904",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "25b89574581ea2f083240dbf18fc61ec4f2fdf313b9ce2f83b983e796fe499cb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function issuedAttemptsForGrant(state: ControlState, grantId: string): number {\n  return Object.values(state.permits).filter((permit) => permit.grantId === grantId).length;\n}"
+      },
+      "name": "issuedAttemptsForGrant",
+      "qualifiedName": "issuedAttemptsForGrant",
+      "span": {
+        "end": 11637,
+        "start": 11463
+      }
+    },
+    {
       "contentHash": "9dff252fd55aeb0ea91301cff4e14d6cbed6840387df4b90777944aa48e1e94b",
       "file": "src/forge/brownfield-import/index.ts",
       "id": "6101fd778426fccb542dea66a67c4a4959dc262ec8433bfb54afe21318c1ee12",
@@ -86880,6 +89525,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "6b5e80652ed59f63cc2e6f0f735612dabd358064c8be77a5de1d945009746ac5",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "6437ccd47f0f98a89e3f4a1a858eb2a116d1afb4710c7fc1647b770863344499",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function keys(\n  value: Record<string, unknown>,\n  required: readonly string[],\n  optional: readonly string[],\n  label: string,\n): void {\n  const allowed = new Set([...required, ...optional]);\n  for (const key of required) if (!(key in value)) fail(`${label}.${key} is required`);\n  for (const key of Object.keys(value)) if (!allowed.has(key)) fail(`${label}.${key} is not allowed`);\n}"
+      },
+      "name": "keys",
+      "qualifiedName": "keys",
+      "span": {
+        "end": 1101,
+        "start": 716
+      }
+    },
+    {
       "contentHash": "2152e0fd2dafed9242f35cdb3e5fe40e0f7ce6ae78cda96a12a3f316d650f012",
       "file": "src/forge/compiler/package-graph/oracle.ts",
       "id": "6a077d06ec36bf78057cfdceee696175ed55b87601b3269e8f9dcf724daa9f1d",
@@ -86920,14 +89582,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function laneEstimate(chunks: VerifyTestGraphPlanChunk[], jobs: number): number {\n  const workers = Array.from({ length: Math.max(1, jobs) }, () => 0);\n  for (const chunk of chunks) {\n    workers.sort((left, right) => left - right);\n    workers[0] += chunk.estimatedMs;\n  }\n  return Math.max(...workers, 0);\n}"
       },
       "name": "laneEstimate",
       "qualifiedName": "laneEstimate",
       "span": {
-        "end": 35192,
-        "start": 34883
+        "end": 35338,
+        "start": 35029
       }
     },
     {
@@ -87016,20 +89678,37 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "925d87b77934fd1f88002f71eb264b844e87aabeb84627ee020718e8f16ce2a5",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "489dd7e2c8d59a61a5445f746f6a0913c8c2e999f18bb66b55e86f6fef7a0be7",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "function ledgerProjection(snapshot: ResourceLedgerSnapshot) {\n  return {\n    definitions: snapshot.definitions,\n    reserved: snapshot.reserved,\n    consumed: snapshot.consumed,\n    ownerReserved: snapshot.ownerReserved,\n    ownerConsumed: snapshot.ownerConsumed,\n    reservations: snapshot.reservations,\n  };\n}"
+      },
+      "name": "ledgerProjection",
+      "qualifiedName": "ledgerProjection",
+      "span": {
+        "end": 1862,
+        "start": 1551
+      }
+    },
+    {
       "contentHash": "4e7f7f0769e7e47bfe66fe0a445db702fa269a47a9a395ee4e1664fbe7a7d73b",
       "file": "src/forge/impact/index.ts",
       "id": "05851301142584f7642a3235d7ccbebf265c3115205c0cd0bc375499dbfbf86c",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function legacyBunTestCommand(file: string): string {\n  return `bun test ${file}`;\n}"
       },
       "name": "legacyBunTestCommand",
       "qualifiedName": "legacyBunTestCommand",
       "span": {
-        "end": 26486,
-        "start": 26402
+        "end": 26349,
+        "start": 26265
       }
     },
     {
@@ -87787,14 +90466,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function loadArtifacts(workspaceRoot: string) {\n  return {\n    appGraph: readJson<AppGraph>(workspaceRoot, `${GENERATED}/appGraph.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", symbols: [], edges: [], moduleGraph: { nodes: [] }, diagnostics: [] }),\n    dataGraph: readJson<DataGraph>(workspaceRoot, `${GENERATED}/dataGraph.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", tables: [], diagnostics: [] }),\n    packageGraph: readJson<PackageGraph>(workspaceRoot, `${GENERATED}/packageGraph.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", packages: [] }),\n    runtimeGraph: readJson<RuntimeGraph>(workspaceRoot, `${GENERATED}/runtimeGraph.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", entries: [], diagnostics: [] }),\n    queryRegistry: readJson<QueryRegistry>(workspaceRoot, `${GENERATED}/queryRegistry.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", queries: [], diagnostics: [] }),\n    liveQueryRegistry: readJson<LiveQueryRegistry>(workspaceRoot, `${GENERATED}/liveQueryRegistry.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", liveQueries: [], diagnostics: [] }),\n    policyRegistry: readJson<PolicyRegistry>(workspaceRoot, `${GENERATED}/policyRegistry.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", policies: [], commandAuth: [], queryAuth: [], diagnostics: [] }),\n    actionSubscriptions: readJson<ActionSubscriptions>(workspaceRoot, `${GENERATED}/actionSubscriptions.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", subscriptions: [], byEvent: {}, diagnostics: [] }),\n    workflowRegistry: readJson<WorkflowRegistry>(workspaceRoot, `${GENERATED}/workflowRegistry.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", workflows: [], diagnostics: [] }),\n    workflowSubscriptions: readJson<WorkflowSubscriptions>(workspaceRoot, `${GENERATED}/workflowSubscriptions.json`, { schemaVersion: \"\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", subscriptions: [], byEvent: {}, diagnostics: [] }),\n    testGraph: readJson<TestGraph>(workspaceRoot, `${GENERATED}/testGraph.json`, { schemaVersion: \"0.1.0\", generatorVersion: \"\", analyzerVersion: \"\", inputHash: \"\", tests: [], diagnostics: [] }),\n  };\n}"
       },
       "name": "loadArtifacts",
       "qualifiedName": "loadArtifacts",
       "span": {
-        "end": 21671,
-        "start": 19243
+        "end": 21534,
+        "start": 19106
       }
     },
     {
@@ -88433,14 +91112,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "03ce95abf946390fe3b72b9bf16c7da3dae644de95b2256c5b958aff51d1ca19",
+        "fileContentHash": "0452ddcb3aa973c99a7f6359589e12a12e6873444a678ca7553cb1a0a1868476",
         "sourceSlice": "function loadTsconfig(\n  workspaceRoot: string,\n  tsconfigPath?: string,\n): ts.ParsedCommandLine {\n  const configPath =\n    tsconfigPath ?? ts.findConfigFile(workspaceRoot, ts.sys.fileExists, \"tsconfig.json\");\n\n  if (!configPath) {\n    return {\n      options: {},\n      fileNames: [],\n      errors: [],\n    };\n  }\n\n  const read = ts.readConfigFile(configPath, ts.sys.readFile);\n  return ts.parseJsonConfigFileContent(\n    read.config,\n    ts.sys,\n    workspaceRoot,\n    undefined,\n    configPath,\n  );\n}"
       },
       "name": "loadTsconfig",
       "qualifiedName": "loadTsconfig",
       "span": {
-        "end": 1220,
-        "start": 717
+        "end": 2342,
+        "start": 1839
       }
     },
     {
@@ -88518,14 +91197,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function localBinExecutable(workspaceRoot: string, command: string): string | null {\n  if (\n    command.includes(\"\\\\\") ||\n    command.includes(\"/\") ||\n    command.includes(\":\") ||\n    /\\.[a-z0-9]+$/i.test(command)\n  ) {\n    return null;\n  }\n  const extensions = process.platform === \"win32\" ? [\".cmd\", \".exe\", \".bat\", \"\"] : [\"\"];\n  for (const extension of extensions) {\n    const candidate = join(workspaceRoot, \"node_modules\", \".bin\", `${command}${extension}`);\n    if (nodeFileSystem.exists(candidate)) {\n      return candidate;\n    }\n  }\n  return null;\n}"
       },
       "name": "localBinExecutable",
       "qualifiedName": "localBinExecutable",
       "span": {
-        "end": 33383,
-        "start": 32826
+        "end": 33246,
+        "start": 32689
       }
     },
     {
@@ -88552,14 +91231,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function localForgePackageSpec(targetDir: string): string {\n  const root = packageRoot();\n  const relativeRoot = relative(targetDir, root).replace(/\\\\/g, \"/\");\n  if (!relativeRoot || relativeRoot.includes(\":\")) {\n    return pathToFileURL(root).href;\n  }\n  return `file:${relativeRoot.startsWith(\".\") ? relativeRoot : `./${relativeRoot}`}`;\n}"
       },
       "name": "localForgePackageSpec",
       "qualifiedName": "localForgePackageSpec",
       "span": {
-        "end": 3615,
-        "start": 3274
+        "end": 3950,
+        "start": 3609
       }
     },
     {
@@ -88756,14 +91435,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function lockfileNamesFor(packageManager: NewPackageManager): string[] {\n  switch (packageManager) {\n    case \"bun\":\n      return [\"bun.lock\", \"bun.lockb\"];\n    case \"npm\":\n      return [\"package-lock.json\"];\n    case \"pnpm\":\n      return [\"pnpm-lock.yaml\"];\n    case \"yarn\":\n      return [\"yarn.lock\"];\n  }\n}"
       },
       "name": "lockfileNamesFor",
       "qualifiedName": "lockfileNamesFor",
       "span": {
-        "end": 9423,
-        "start": 9114
+        "end": 9761,
+        "start": 9452
       }
     },
     {
@@ -89487,7 +92166,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function missingNativeTypecheckResult(): ScriptRunResult {\n  return {\n    exitCode: 1,\n    stdout: \"\",\n    stderr: [\n      \"No TypeScript native checker was found.\",\n      \"Install an aliased RC with `npm install -D typescript-7@npm:typescript@rc`,\",\n      \"set FORGE_TS7_TSC, or install @typescript/native-preview.\",\n    ].join(\" \"),\n    command: \"typescript native --noEmit\",\n    durationMs: 0,\n    timedOut: false,\n    spawnError: true,\n  };\n}"
       },
       "name": "missingNativeTypecheckResult",
@@ -89827,7 +92506,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function nativeTypecheckArgs(): string[] {\n  const args = [\"--noEmit\"];\n  const checkers = positiveIntegerEnv(\"FORGE_TS7_CHECKERS\");\n  const builders = positiveIntegerEnv(\"FORGE_TS7_BUILDERS\");\n  const singleThreaded = process.env.FORGE_TS7_SINGLE_THREADED?.trim().toLowerCase();\n  if (checkers) {\n    args.push(\"--checkers\", checkers);\n  }\n  if (builders) {\n    args.push(\"--builders\", builders);\n  }\n  if (singleThreaded === \"1\" || singleThreaded === \"true\" || singleThreaded === \"yes\") {\n    args.push(\"--singleThreaded\");\n  }\n  return args;\n}"
       },
       "name": "nativeTypecheckArgs",
@@ -89844,7 +92523,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function nativeTypecheckCandidates(workspaceRoot: string): TypecheckCandidate[] {\n  const args = nativeTypecheckArgs();\n  const candidates: TypecheckCandidate[] = [];\n  const explicitTsc = process.env.FORGE_TS7_TSC?.trim();\n  if (explicitTsc) {\n    candidates.push({\n      label: \"FORGE_TS7_TSC\",\n      argv: argvForExecutable(explicitTsc, args),\n      command: `${explicitTsc} ${args.join(\" \")}`,\n    });\n  }\n\n  const aliasedTs7 = packageBinPath(workspaceRoot, \"typescript-7\", \"tsc\");\n  if (aliasedTs7) {\n    candidates.push({\n      label: \"typescript-7\",\n      argv: argvForPackageBin(aliasedTs7, args),\n      command: \"typescript-7 tsc --noEmit\",\n    });\n  }\n\n  if ((packageMajorVersion(workspaceRoot, \"typescript\") ?? 0) >= 7) {\n    const rootTs = packageBinPath(workspaceRoot, \"typescript\", \"tsc\");\n    if (rootTs) {\n      candidates.push({\n        label: \"typescript@7\",\n        argv: argvForPackageBin(rootTs, args),\n        command: \"typescript@7 tsc --noEmit\",\n      });\n    }\n  }\n\n  const nativePreview = packageBinPath(workspaceRoot, \"@typescript/native-preview\", \"tsgo\");\n  if (nativePreview) {\n    candidates.push({\n      label: \"@typescript/native-preview\",\n      argv: argvForPackageBin(nativePreview, args),\n      command: \"@typescript/native-preview tsgo --noEmit\",\n    });\n  }\n\n  return candidates;\n}"
       },
       "name": "nativeTypecheckCandidates",
@@ -89980,14 +92659,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function nodeForgeArgs(binPath: string, args: string[]): { executable: string; args: string[] } {\n  const argv = resolveCommandArgv([\"node\", binPath, ...args]);\n  return { executable: argv[0]!, args: argv.slice(1) };\n}"
       },
       "name": "nodeForgeArgs",
       "qualifiedName": "nodeForgeArgs",
       "span": {
-        "end": 33802,
-        "start": 33584
+        "end": 33665,
+        "start": 33447
       }
     },
     {
@@ -89997,7 +92676,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function nodeModulePackageRoot(workspaceRoot: string, packageName: string): string {\n  return join(workspaceRoot, \"node_modules\", ...packageName.split(\"/\"));\n}"
       },
       "name": "nodeModulePackageRoot",
@@ -90025,6 +92704,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "28308ec4731f2d6e0dd79f173a0855be9df5fc31019cc2ec56a1ac2d0d54c6b3",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "3c943f6e94bb71371f3749ba626be4bcf4dcb297c4c4807c89f8cd615efd2c56",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function normalize(value: unknown, seen: Set<object>): unknown {\n  if (value === null || typeof value === \"string\" || typeof value === \"boolean\") {\n    return value;\n  }\n\n  if (typeof value === \"number\") {\n    if (!Number.isFinite(value)) {\n      canonicalizationFailure(\"Canonical values cannot contain non-finite numbers\");\n    }\n    return Object.is(value, -0) ? 0 : value;\n  }\n\n  if (typeof value === \"undefined\" || typeof value === \"function\" || typeof value === \"symbol\") {\n    canonicalizationFailure(`Unsupported canonical value type: ${typeof value}`);\n  }\n\n  if (typeof value === \"bigint\") {\n    canonicalizationFailure(\"BigInt values must be encoded as strings before canonicalization\");\n  }\n\n  if (Array.isArray(value)) {\n    if (seen.has(value)) canonicalizationFailure(\"Canonical values cannot be cyclic\");\n    assertJsonArrayShape(value);\n    seen.add(value);\n    const normalized: unknown[] = [];\n    for (let index = 0; index < value.length; index += 1) {\n      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));\n      if (!descriptor || !(\"value\" in descriptor)) {\n        seen.delete(value);\n        canonicalizationFailure(`Canonical array index ${index} must be an own data property`);\n      }\n      normalized[index] = normalize(descriptor.value, seen);\n    }\n    seen.delete(value);\n    return normalized;\n  }\n\n  if (typeof value === \"object\") {\n    if (seen.has(value)) canonicalizationFailure(\"Canonical values cannot be cyclic\");\n    assertJsonObjectShape(value);\n    seen.add(value);\n    const record = value as Record<string, unknown>;\n    // A null-prototype accumulator is required so an own `__proto__` key is\n    // preserved as data rather than invoking Object.prototype's legacy setter.\n    const normalized = Object.create(null) as Record<string, unknown>;\n    for (const key of Object.keys(record).sort()) {\n      if (record[key] === undefined) {\n        canonicalizationFailure(`Canonical object property ${key} is undefined`);\n      }\n      normalized[key] = normalize(record[key], seen);\n    }\n    seen.delete(value);\n    return normalized;\n  }\n\n  canonicalizationFailure(\"Unsupported canonical value\");\n}"
+      },
+      "name": "normalize",
+      "qualifiedName": "normalize",
+      "span": {
+        "end": 4585,
+        "start": 2418
+      }
+    },
+    {
       "contentHash": "ed49c648922175d8d66718aa9c6e3c3708f6482baf7b7e412467e6512d4a5b69",
       "file": "src/forge/compiler/fs/memory.ts",
       "id": "15b2229bc6004c04f5e18066251da10d384ee66a73b0d2538f375b2aa4952e37",
@@ -90048,14 +92744,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function normalize(path: string): string {\n  return path.replace(/\\\\/g, \"/\").replace(/^\\.\\//, \"\");\n}"
       },
       "name": "normalize",
       "qualifiedName": "normalize",
       "span": {
-        "end": 2691,
-        "start": 2591
+        "end": 2672,
+        "start": 2572
       }
     },
     {
@@ -90303,14 +92999,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function normalizeForgePackageSpec(spec: string): string {\n  if (!spec.toLowerCase().startsWith(\"file:\") || !spec.includes(\"\\\\\")) {\n    return spec;\n  }\n  const fileTarget = spec.slice(\"file:\".length);\n  if (/^[a-z]:[\\\\/]/i.test(fileTarget)) {\n    return `file:///${fileTarget.replace(/\\\\/g, \"/\")}`;\n  }\n  if (fileTarget.startsWith(\"\\\\\\\\\")) {\n    return pathToFileURL(resolve(fileTarget)).href;\n  }\n  return `file:${fileTarget.replace(/\\\\/g, \"/\")}`;\n}"
       },
       "name": "normalizeForgePackageSpec",
       "qualifiedName": "normalizeForgePackageSpec",
       "span": {
-        "end": 4068,
-        "start": 3617
+        "end": 4403,
+        "start": 3952
       }
     },
     {
@@ -90705,20 +93401,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "1611b4113bb645cd18661a870638d12f2c1577cd44e9e7028f9737993bb4f6d8",
+      "contentHash": "e796acf7cc2416780c9ea44b2c1e673f1b589aeef54ad35c0428fff9467c8ad5",
       "file": "src/forge/compiler/package-graph/dts-extractor.ts",
       "id": "9c65423622da91bf779369d59d4bf6c7c16462a8648226c6468d889ee8baeea5",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "ac69f4190327ca7765b09394bef5382e1b89d0d5bfa053b4de97722897cdf96a",
-        "sourceSlice": "function normalizeSignatureText(text: string): string {\n  return text\n    .replace(/\\r\\n/g, \"\\n\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}"
+        "fileContentHash": "90d84614e45f3be513a6cdad66b7774b85822c970e40727f505c4f4025d1284d",
+        "sourceSlice": "function normalizeSignatureText(text: string): string {\n  return canonicalizeNodeModulesImportPaths(text)\n    .replace(/\\r\\n/g, \"\\n\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}"
       },
       "name": "normalizeSignatureText",
       "qualifiedName": "normalizeSignatureText",
       "span": {
-        "end": 561,
-        "start": 423
+        "end": 1025,
+        "start": 851
       }
     },
     {
@@ -90847,14 +93543,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function normalizeTestPath(file: string): string {\n  return file.replace(/\\\\/g, \"/\");\n}"
       },
       "name": "normalizeTestPath",
       "qualifiedName": "normalizeTestPath",
       "span": {
-        "end": 29552,
-        "start": 29465
+        "end": 29698,
+        "start": 29611
       }
     },
     {
@@ -90960,6 +93656,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "f92e2fd21a8f55b5335bc82d5b631480758a7c914feebaef01e8f2d651a7bcab",
+      "file": "src/forge/agent-fabric/planning.ts",
+      "id": "c3a2f2adbfed9fd2e046a4cd89c82f86b5db70b51f42956cc627a046a3b85eba",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "48213a32b46aed8fdf3d14d45314803a3c471eae4e3e8258f9aee94377e0b967",
+        "sourceSlice": "function normalizedNode(node: WorkflowNode): WorkflowNode {\n  return {\n    ...node,\n    dependsOn: [...node.dependsOn].sort(),\n  };\n}"
+      },
+      "name": "normalizedNode",
+      "qualifiedName": "normalizedNode",
+      "span": {
+        "end": 359,
+        "start": 226
+      }
+    },
+    {
       "contentHash": "625756e7896bac2c685b65239a46199a86b8f76b15f69ba2c48c68c24f79f9b4",
       "file": "src/forge/runtime/live/invalidation-log.ts",
       "id": "65afa1a5dd50f219eead4c35a693a37fe0e86a645393ec8440ffce6f89aa7784",
@@ -90977,6 +93690,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "80d9259f3a3c355bbed2b7830239bdcc6170f2cb070cbaeda58b91a92fd94ba5",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "dd382466b72c3a52b356bf2115ad7c2f2dec6f0fce06b02fccf5cb8edc5f04a1",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function number(value: unknown, label: string, options: { integer?: boolean; min?: number } = {}): number {\n  if (typeof value !== \"number\" || !Number.isFinite(value)) fail(`${label} must be a finite number`);\n  if (options.integer && !Number.isInteger(value)) fail(`${label} must be an integer`);\n  if (options.min !== undefined && value < options.min) fail(`${label} must be >= ${options.min}`);\n  return value;\n}"
+      },
+      "name": "number",
+      "qualifiedName": "number",
+      "span": {
+        "end": 2160,
+        "start": 1745
+      }
+    },
+    {
       "contentHash": "591075bfe7935a0c50933bee76378948ea4d011fff484a4d64cad95716b93d1e",
       "file": "src/forge/agent-memory/normalize.ts",
       "id": "82a0706bd235cf4e8251beac8d925dfb5791b31ed3fcfbe2eeb17a8bbff3c37f",
@@ -90991,6 +93721,23 @@ export const appGraph = {
       "span": {
         "end": 12709,
         "start": 12496
+      }
+    },
+    {
+      "contentHash": "e857d4af577c65cdf3f3cb14d18b4c70344c847e092cd3b28d0eb7a9afd940bd",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "e5b6330d5585b6927d23bc9d43c0276575f2b44128bf7011304b44d8051f282c",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function object(value: unknown, label: string): Record<string, unknown> {\n  if (!value || typeof value !== \"object\" || Array.isArray(value)) fail(`${label} must be an object`);\n  return value as Record<string, unknown>;\n}"
+      },
+      "name": "object",
+      "qualifiedName": "object",
+      "span": {
+        "end": 714,
+        "start": 493
       }
     },
     {
@@ -91170,14 +93917,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function oneFileChunks(\n  entries: StrictTestEntry[],\n): Array<{ files: string[]; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }> {\n  return [...entries]\n    .sort((left, right) => {\n      const byEstimate = right.estimatedMs - left.estimatedMs;\n      return byEstimate !== 0 ? byEstimate : left.file.localeCompare(right.file);\n    })\n    .map((entry) => ({\n      files: [entry.file],\n      estimatedMs: entry.estimatedMs,\n      durationSource: entry.durationSource,\n    }));\n}"
       },
       "name": "oneFileChunks",
       "qualifiedName": "oneFileChunks",
       "span": {
-        "end": 34881,
-        "start": 34382
+        "end": 35027,
+        "start": 34528
       }
     },
     {
@@ -91283,13 +94030,30 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "651a5e00252bbb4c9375e9a54fc984b6708cb8be9ab7c0e1b52d3b113f346114",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "515e402b594c044ae8a93662d9503f0810e48545cee2ec04e11b4ac800a697c9",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function outcome(value: unknown, label: string): void {\n  const outcomeValue = object(value, label);\n  keys(\n    outcomeValue,\n    [\n      \"outcomeId\", \"attemptId\", \"permitId\", \"intentId\", \"planRevisionId\",\n      \"effectiveRunSpecDigest\", \"fencingToken\", \"status\", \"resultDigest\", \"reportId\",\n      \"reportDigest\", \"evidenceDigests\", \"reportedAt\", \"committedAt\",\n    ],\n    [],\n    label,\n  );\n  for (const field of [\"outcomeId\", \"attemptId\", \"permitId\", \"intentId\", \"planRevisionId\", \"reportId\"] as const) {\n    string(outcomeValue[field], `${label}.${field}`);\n  }\n  digest(outcomeValue.effectiveRunSpecDigest, `${label}.effectiveRunSpecDigest`);\n  number(outcomeValue.fencingToken, `${label}.fencingToken`, { integer: true, min: 1 });\n  const status = string(outcomeValue.status, `${label}.status`);\n  if (!new Set([\"succeeded\", \"failed\"]).has(status)) fail(`${label}.status is invalid`);\n  digest(outcomeValue.resultDigest, `${label}.resultDigest`);\n  digest(outcomeValue.reportDigest, `${label}.reportDigest`);\n  digests(outcomeValue.evidenceDigests, `${label}.evidenceDigests`);\n  number(outcomeValue.reportedAt, `${label}.reportedAt`, { min: 0 });\n  number(outcomeValue.committedAt, `${label}.committedAt`, { min: 0 });\n}"
+      },
+      "name": "outcome",
+      "qualifiedName": "outcome",
+      "span": {
+        "end": 17199,
+        "start": 15971
+      }
+    },
+    {
       "contentHash": "1474547cd9b42feed016be138275b9ee4e224ad98ce71e8b483b7b75b218336e",
       "file": "src/forge/cli/verify.ts",
       "id": "5d937723c1b4c7f7a319e51c39299ceeb186461b9c4764b65c8341332dbf09d9",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function outputExcerpt(stdout: string, stderr: string): string {\n  const combined = [stderr.trim(), stdout.trim()].filter(Boolean).join(\"\\n\");\n  if (!combined) {\n    return \"\";\n  }\n  const normalized = combined.replace(/\\s+/g, \" \").trim();\n  return normalized.length > 300 ? `${normalized.slice(0, 297)}...` : normalized;\n}"
       },
       "name": "outputExcerpt",
@@ -91317,20 +94081,54 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "16f6c6a04cb4c96bba371ed89430ea05b69c9973bf79a3e487de46f19ec7771e",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "5ea8ad0e1d23f58a4888fe86adbdb7a17edead17b70f1636b44151999e038b9e",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function ownerAuthorization(value: unknown, label: string): void {\n  const authorization = object(value, label);\n  keys(\n    authorization,\n    [\n      \"authorizationId\", \"principalId\", \"rootExecutionId\", \"goalIds\", \"subjectIds\",\n      \"capabilities\", \"sourceIds\", \"targetIds\", \"effectClasses\", \"notBefore\", \"expiresAt\",\n      \"maximumAttempts\", \"maximumDelegationDepth\", \"resourceCeilings\",\n    ],\n    [],\n    label,\n  );\n  for (const field of [\"authorizationId\", \"principalId\", \"rootExecutionId\"] as const) {\n    string(authorization[field], `${label}.${field}`);\n  }\n  for (const field of [\"goalIds\", \"subjectIds\", \"capabilities\", \"sourceIds\", \"targetIds\"] as const) {\n    strings(authorization[field], `${label}.${field}`);\n  }\n  effectClasses(authorization.effectClasses, `${label}.effectClasses`);\n  number(authorization.notBefore, `${label}.notBefore`, { min: 0 });\n  number(authorization.expiresAt, `${label}.expiresAt`, { min: 0 });\n  number(authorization.maximumAttempts, `${label}.maximumAttempts`, { integer: true, min: 1 });\n  number(authorization.maximumDelegationDepth, `${label}.maximumDelegationDepth`, { integer: true, min: 0 });\n  recordOfPositiveNumbers(authorization.resourceCeilings, `${label}.resourceCeilings`);\n}"
+      },
+      "name": "ownerAuthorization",
+      "qualifiedName": "ownerAuthorization",
+      "span": {
+        "end": 5323,
+        "start": 4086
+      }
+    },
+    {
+      "contentHash": "659278ae8eaeb47dba8d1fc8ae32bfb82c738f4c42ba10d2a19b0431ea42b567",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "093f7fe4eccbc02f29ccd01d3c68f9b9c9dc5ae70956c6df7c4e876643707425",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function ownerAuthorizationVerification(value: unknown, label: string): void {\n  const verification = object(value, label);\n  keys(verification, [\"verifierId\", \"authorizationDigest\", \"evidenceDigest\"], [], label);\n  string(verification.verifierId, `${label}.verifierId`);\n  digest(verification.authorizationDigest, `${label}.authorizationDigest`);\n  digest(verification.evidenceDigest, `${label}.evidenceDigest`);\n}"
+      },
+      "name": "ownerAuthorizationVerification",
+      "qualifiedName": "ownerAuthorizationVerification",
+      "span": {
+        "end": 5740,
+        "start": 5325
+      }
+    },
+    {
       "contentHash": "b35530f1868811ebfa471a791e46d2d27fa9f7ae6ee82057155ea7a404a5776c",
       "file": "src/forge/cli/verify.ts",
       "id": "aaf321be219a4f7f612e5d9c17c8419520e64964fd1202e924b4d42877d84e63",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function packWeightedStrictTestChunks(\n  entries: Array<{ file: string; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }>,\n  size: number,\n): Array<{ files: string[]; estimatedMs: number; durationSource: VerifyTestGraphDurationSource }> {\n  if (entries.length === 0) {\n    return [];\n  }\n  const binCount = Math.max(1, Math.ceil(entries.length / Math.max(1, size)));\n  const bins = Array.from({ length: binCount }, () => ({\n    files: [] as string[],\n    estimatedMs: 0,\n    durationSource: \"profile\" as VerifyTestGraphDurationSource,\n  }));\n  const ordered = [...entries].sort((left, right) => {\n    const byEstimate = right.estimatedMs - left.estimatedMs;\n    return byEstimate !== 0 ? byEstimate : left.file.localeCompare(right.file);\n  });\n  for (const entry of ordered) {\n    const target = bins\n      .filter((bin) => bin.files.length < size)\n      .sort((left, right) => {\n        const byEstimate = left.estimatedMs - right.estimatedMs;\n        return byEstimate !== 0 ? byEstimate : left.files.length - right.files.length;\n      })[0] ?? bins[0]!;\n    target.files.push(entry.file);\n    target.files.sort();\n    target.estimatedMs += entry.estimatedMs;\n    if (entry.durationSource === \"fallback\") {\n      target.durationSource = \"fallback\";\n    }\n  }\n  return bins.filter((bin) => bin.files.length > 0);\n}"
       },
       "name": "packWeightedStrictTestChunks",
       "qualifiedName": "packWeightedStrictTestChunks",
       "span": {
-        "end": 34380,
-        "start": 33045
+        "end": 34526,
+        "start": 33191
       }
     },
     {
@@ -91357,7 +94155,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function packageBinPath(workspaceRoot: string, packageName: string, binName: string): string | undefined {\n  const packageRoot = nodeModulePackageRoot(workspaceRoot, packageName);\n  const packageJson = readNodeModulePackageJson(workspaceRoot, packageName);\n  if (!packageJson) {\n    return undefined;\n  }\n\n  let relativeBin: string | undefined;\n  if (typeof packageJson.bin === \"string\") {\n    relativeBin = packageJson.bin;\n  } else if (packageJson.bin && typeof packageJson.bin === \"object\") {\n    const value = (packageJson.bin as Record<string, unknown>)[binName];\n    relativeBin = typeof value === \"string\" ? value : undefined;\n  }\n\n  const candidates = [\n    relativeBin ? join(packageRoot, relativeBin) : undefined,\n    join(packageRoot, \"bin\", binName),\n  ].filter((candidate): candidate is string => typeof candidate === \"string\");\n\n  return candidates.find((candidate) => nodeFileSystem.exists(candidate));\n}"
       },
       "name": "packageBinPath",
@@ -91374,14 +94172,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function packageDependencyFileImpactsPackages(workspaceRoot: string, file: string): boolean {\n  const normalized = normalize(file);\n  if (!isPackageDependencyFile(normalized)) {\n    return false;\n  }\n  if (normalized !== \"package.json\") {\n    return true;\n  }\n  return packageJsonHasDependencyImpact(workspaceRoot);\n}"
       },
       "name": "packageDependencyFileImpactsPackages",
       "qualifiedName": "packageDependencyFileImpactsPackages",
       "span": {
-        "end": 13423,
-        "start": 13106
+        "end": 13286,
+        "start": 12969
       }
     },
     {
@@ -91510,14 +94308,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function packageJsonDependencyFingerprint(raw: string): string | null {\n  try {\n    const parsed = JSON.parse(raw) as Record<string, unknown>;\n    const relevant: Record<string, unknown> = {};\n    for (const key of PACKAGE_JSON_DEPENDENCY_KEYS) {\n      if (Object.prototype.hasOwnProperty.call(parsed, key)) {\n        relevant[key] = parsed[key];\n      }\n    }\n    return canonicalJson(relevant);\n  } catch {\n    return null;\n  }\n}"
       },
       "name": "packageJsonDependencyFingerprint",
       "qualifiedName": "packageJsonDependencyFingerprint",
       "span": {
-        "end": 12525,
-        "start": 12094
+        "end": 12388,
+        "start": 11957
       }
     },
     {
@@ -91527,14 +94325,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function packageJsonHasDependencyImpact(workspaceRoot: string): boolean {\n  const current = nodeFileSystem.readText(join(workspaceRoot, \"package.json\"));\n  const previous = readHeadFile(workspaceRoot, \"package.json\");\n  if (current === null || previous === null) {\n    return true;\n  }\n\n  const currentFingerprint = packageJsonDependencyFingerprint(current);\n  const previousFingerprint = packageJsonDependencyFingerprint(previous);\n  if (currentFingerprint === null || previousFingerprint === null) {\n    return true;\n  }\n  return currentFingerprint !== previousFingerprint;\n}"
       },
       "name": "packageJsonHasDependencyImpact",
       "qualifiedName": "packageJsonHasDependencyImpact",
       "span": {
-        "end": 13104,
-        "start": 12527
+        "end": 12967,
+        "start": 12390
       }
     },
     {
@@ -91595,7 +94393,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function packageMajorVersion(workspaceRoot: string, packageName: string): number | undefined {\n  const version = packageVersion(workspaceRoot, packageName);\n  const match = version?.match(/^(\\d+)/u);\n  if (!match) {\n    return undefined;\n  }\n  const parsed = Number(match[1]);\n  return Number.isInteger(parsed) ? parsed : undefined;\n}"
       },
       "name": "packageMajorVersion",
@@ -91623,20 +94421,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "3ed837036ef1cb28e0ee4ef17b4b069c92fbc65c213809a379a8e08a0036e5bc",
+      "contentHash": "c11a4f317dce032a7e6bf6bd793eb8f1af2425b45863d6e21af7b0fd2229c896",
       "file": "src/forge/cli/new.ts",
       "id": "1634461e801c1a432bb901419bbe0eb8bff769ba4baf3d147cffb930772e5581",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
-        "sourceSlice": "function packageManagerSpec(packageManager: string): string {\n  switch (packageManager) {\n    case \"bun\":\n      return \"bun@1.3.14\";\n    case \"npm\":\n      return \"npm@10.9.0\";\n    case \"pnpm\":\n      return \"pnpm@9.15.4\";\n    case \"yarn\":\n      return \"yarn@4.6.0\";\n    default:\n      return packageManager;\n  }\n}"
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
+        "sourceSlice": "function packageManagerSpec(packageManager: string): string {\n  switch (packageManager) {\n    case \"bun\":\n      return \"bun@1.3.14\";\n    case \"npm\":\n      return \"npm@11.19.0\";\n    case \"pnpm\":\n      return \"pnpm@10.34.5\";\n    case \"yarn\":\n      return \"yarn@4.18.0\";\n    default:\n      return packageManager;\n  }\n}"
       },
       "name": "packageManagerSpec",
       "qualifiedName": "packageManagerSpec",
       "span": {
-        "end": 4748,
-        "start": 4436
+        "end": 5086,
+        "start": 4771
       }
     },
     {
@@ -91765,14 +94563,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function packageRoot(): string {\n  let current = moduleDir(import.meta);\n  const root = parse(current).root;\n  while (true) {\n    if (\n      nodeFileSystem.exists(join(current, \"package.json\")) &&\n      nodeFileSystem.exists(join(current, \"templates\"))\n    ) {\n      return current;\n    }\n    const parent = dirname(current);\n    if (parent === current || current === root) {\n      return resolve(moduleDir(import.meta), \"..\", \"..\", \"..\");\n    }\n    current = parent;\n  }\n}"
       },
       "name": "packageRoot",
       "qualifiedName": "packageRoot",
       "span": {
-        "end": 2688,
-        "start": 2215
+        "end": 3023,
+        "start": 2550
       }
     },
     {
@@ -91799,7 +94597,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function packageScriptFailureDiagnostic(\n  scriptName: string,\n  code: string,\n  result: { exitCode: number; stdout: string; stderr: string; command: string },\n): Diagnostic {\n  const excerpt = outputExcerpt(result.stdout, result.stderr);\n  return createDiagnostic({\n    severity: \"error\",\n    code,\n    message: `${scriptName} script failed with exit code ${result.exitCode}`,\n    fixHint: excerpt ? `Last output: ${excerpt}` : undefined,\n    suggestedCommands: [\n      result.command,\n      `forge verify --skip-${scriptName === \"test\" ? \"tests\" : scriptName}`,\n      \"forge dev --once --json\",\n    ],\n  });\n}"
       },
       "name": "packageScriptFailureDiagnostic",
@@ -91816,7 +94614,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function packageScriptFailureKind(result: { exitCode: number; timedOut?: boolean }): string | undefined {\n  if (result.timedOut) {\n    return \"timeout\";\n  }\n  return result.exitCode === 0 ? undefined : \"script-failure\";\n}"
       },
       "name": "packageScriptFailureKind",
@@ -91867,7 +94665,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function packageVersion(workspaceRoot: string, packageName: string): string | undefined {\n  const version = readNodeModulePackageJson(workspaceRoot, packageName)?.version;\n  return typeof version === \"string\" ? version : undefined;\n}"
       },
       "name": "packageVersion",
@@ -93975,14 +96773,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function partitionStrictTestEntries(entries: StrictTestEntry[]): {\n  parallel: StrictTestEntry[];\n  isolated: StrictTestEntry[];\n  serial: StrictTestEntry[];\n} {\n  const parallel: StrictTestEntry[] = [];\n  const isolated: StrictTestEntry[] = [];\n  const serial: StrictTestEntry[] = [];\n  for (const entry of entries) {\n    const lane = entry.lane;\n    if (lane === \"serial\") {\n      serial.push(entry);\n      continue;\n    }\n    if (lane === \"isolated\") {\n      isolated.push(entry);\n      continue;\n    }\n    parallel.push(entry);\n  }\n  return { parallel, isolated, serial };\n}"
       },
       "name": "partitionStrictTestEntries",
       "qualifiedName": "partitionStrictTestEntries",
       "span": {
-        "end": 33036,
-        "start": 32458
+        "end": 33182,
+        "start": 32604
       }
     },
     {
@@ -94122,6 +96920,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "450c347eb8f24baed0c43c77c187bd743ac87507bba57b2a2d4a85649eca19c6",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "cdc7ec03302beda6351500961f22814e75ac7159a532a1f0d1bd93c1428678ef",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function payload(value: unknown, label: string): void {\n  const payloadValue = object(value, label);\n  const type = string(payloadValue.type, `${label}.type`);\n  switch (type) {\n    case \"owner_authorization_registered\":\n      keys(payloadValue, [\"type\", \"authorization\", \"verification\"], [], label);\n      ownerAuthorization(payloadValue.authorization, `${label}.authorization`);\n      ownerAuthorizationVerification(payloadValue.verification, `${label}.verification`);\n      return;\n    case \"owner_authorization_revoked\":\n      keys(payloadValue, [\"type\", \"authorizationId\", \"reason\"], [], label);\n      string(payloadValue.authorizationId, `${label}.authorizationId`);\n      string(payloadValue.reason, `${label}.reason`);\n      return;\n    case \"resource_ledger_initialized\":\n      keys(payloadValue, [\"type\", \"definitions\"], [], label);\n      resourceDefinitions(payloadValue.definitions, `${label}.definitions`);\n      return;\n    case \"resource_reservation_consumed\":\n    case \"resource_reservation_released\":\n      keys(payloadValue, [\"type\", \"reservationId\"], [], label);\n      string(payloadValue.reservationId, `${label}.reservationId`);\n      return;\n    case \"goal_registered\":\n      keys(payloadValue, [\"type\", \"goal\"], [], label);\n      goal(payloadValue.goal, `${label}.goal`);\n      return;\n    case \"grant_registered\":\n      keys(payloadValue, [\"type\", \"grant\", \"reservation\"], [], label);\n      grant(payloadValue.grant, `${label}.grant`);\n      if (payloadValue.reservation !== null) reservation(payloadValue.reservation, `${label}.reservation`);\n      return;\n    case \"grant_revoked\":\n      keys(payloadValue, [\"type\", \"grantId\", \"reason\"], [], label);\n      string(payloadValue.grantId, `${label}.grantId`);\n      string(payloadValue.reason, `${label}.reason`);\n      return;\n    case \"plan_delta_registered\":\n      keys(payloadValue, [\"type\", \"delta\"], [], label);\n      planDelta(payloadValue.delta, `${label}.delta`);\n      return;\n    case \"plan_revision_activated\":\n      keys(payloadValue, [\"type\", \"revision\"], [], label);\n      revision(payloadValue.revision, `${label}.revision`);\n      return;\n    case \"dispatch_intent_committed\":\n      keys(payloadValue, [\"type\", \"intent\"], [], label);\n      dispatchIntent(payloadValue.intent, `${label}.intent`);\n      return;\n    case \"scheduling_claim_committed\":\n      keys(payloadValue, [\"type\", \"claim\"], [], label);\n      claim(payloadValue.claim, `${label}.claim`);\n      return;\n    case \"attempt_execution_permit_issued\":\n      keys(payloadValue, [\"type\", \"permit\"], [], label);\n      permit(payloadValue.permit, `${label}.permit`);\n      return;\n    case \"attempt_started\":\n      keys(payloadValue, [\"type\", \"attemptId\", \"permitId\", \"startupReportId\", \"startedAt\"], [], label);\n      string(payloadValue.attemptId, `${label}.attemptId`);\n      string(payloadValue.permitId, `${label}.permitId`);\n      string(payloadValue.startupReportId, `${label}.startupReportId`);\n      number(payloadValue.startedAt, `${label}.startedAt`, { min: 0 });\n      return;\n    case \"attempt_uncertainty_observed\":\n      keys(payloadValue, [\"type\", \"observation\"], [], label);\n      uncertainty(payloadValue.observation, `${label}.observation`);\n      return;\n    case \"attempt_outcome_committed\":\n      keys(payloadValue, [\"type\", \"outcome\"], [], label);\n      outcome(payloadValue.outcome, `${label}.outcome`);\n      return;\n    default:\n      fail(`${label}.type is unknown: ${type}`);\n  }\n}"
+      },
+      "name": "payload",
+      "qualifiedName": "payload",
+      "span": {
+        "end": 20657,
+        "start": 17201
+      }
+    },
+    {
       "contentHash": "381bcf74cecc6053b672c1b65237308262a6285e84e51f603d9af0c99fba89bb",
       "file": "src/forge/cli/ai.ts",
       "id": "cc2e5d35949a2cc56fe15dac3988ba37d5ddbe8734862fb1a423461a903f8c67",
@@ -94258,6 +97073,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "dd8338c2555833eb40d1b6cb0e30a7d586eb83e9b644bbfea8fb339f49cd471a",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "89714b9661650a45827b584b40efd5822d9236b113f7551292f23a04d48a10cb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function permit(value: unknown, label: string): void {\n  const permitValue = object(value, label);\n  keys(\n    permitValue,\n    [\n      \"permitId\", \"intentId\", \"claimId\", \"attemptId\", \"workerId\", \"planRevisionId\",\n      \"effectiveRunSpecDigest\", \"grantId\", \"fencingToken\", \"notBefore\", \"expiresAt\",\n    ],\n    [],\n    label,\n  );\n  for (const field of [\"permitId\", \"intentId\", \"claimId\", \"attemptId\", \"workerId\", \"planRevisionId\", \"grantId\"] as const) {\n    string(permitValue[field], `${label}.${field}`);\n  }\n  digest(permitValue.effectiveRunSpecDigest, `${label}.effectiveRunSpecDigest`);\n  number(permitValue.fencingToken, `${label}.fencingToken`, { integer: true, min: 1 });\n  number(permitValue.notBefore, `${label}.notBefore`, { min: 0 });\n  number(permitValue.expiresAt, `${label}.expiresAt`, { min: 0 });\n}"
+      },
+      "name": "permit",
+      "qualifiedName": "permit",
+      "span": {
+        "end": 14300,
+        "start": 13485
+      }
+    },
+    {
       "contentHash": "7ed7947d20642ed25e8297ee6b210ec03bb756595658dbc07e4a500aba299361",
       "file": "src/forge/delta/status.ts",
       "id": "3137d398526fb7c15891dbe71c31303060180ba7bee6714725c18bfde6184982",
@@ -94391,6 +97223,23 @@ export const appGraph = {
       "span": {
         "end": 36650,
         "start": 14010
+      }
+    },
+    {
+      "contentHash": "42c0f6fe6b0169af7b115a79d60b106c29d1ffeda3d3c60bf6e02b83b6eade1d",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "9b44a7724c1ae31e41cb5b0d8396e86f82385aadf5f49f6dc0a1a40a87274c54",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function planDelta(value: unknown, label: string): void {\n  const delta = object(value, label);\n  keys(delta, [\"deltaId\", \"rootExecutionId\", \"baseRevisionId\", \"nextRevisionId\", \"operations\"], [], label);\n  for (const field of [\"deltaId\", \"rootExecutionId\", \"baseRevisionId\", \"nextRevisionId\"] as const) {\n    string(delta[field], `${label}.${field}`);\n  }\n  if (!Array.isArray(delta.operations)) fail(`${label}.operations must be an array`);\n  delta.operations.forEach((item, index) => {\n    const operation = object(item, `${label}.operations[${index}]`);\n    const kind = string(operation.kind, `${label}.operations[${index}].kind`);\n    if (kind === \"remove_node\") {\n      keys(operation, [\"kind\", \"nodeId\"], [], `${label}.operations[${index}]`);\n      string(operation.nodeId, `${label}.operations[${index}].nodeId`);\n      return;\n    }\n    if (kind === \"add_node\" || kind === \"replace_node\") {\n      keys(operation, [\"kind\", \"node\"], [], `${label}.operations[${index}]`);\n      workflowNode(operation.node, `${label}.operations[${index}].node`);\n      return;\n    }\n    fail(`${label}.operations[${index}].kind is invalid`);\n  });\n}"
+      },
+      "name": "planDelta",
+      "qualifiedName": "planDelta",
+      "span": {
+        "end": 11159,
+        "start": 10021
       }
     },
     {
@@ -94655,7 +97504,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function positiveIntegerEnv(name: string): string | undefined {\n  const value = process.env[name]?.trim();\n  if (!value) {\n    return undefined;\n  }\n  const parsed = Number(value);\n  return Number.isInteger(parsed) && parsed >= 1 ? String(parsed) : undefined;\n}"
       },
       "name": "positiveIntegerEnv",
@@ -95029,7 +97878,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function printProgress(options: VerifyOptions, message: string): void {\n  if (!options.json) {\n    console.error(message);\n  }\n}"
       },
       "name": "printProgress",
@@ -95437,14 +98286,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function projectNameForTarget(options: NewCommandOptions, targetDir: string): string {\n  return isCurrentDirectoryTarget(options.name)\n    ? sanitizePackageName(basename(targetDir))\n    : options.name;\n}"
       },
       "name": "projectNameForTarget",
       "qualifiedName": "projectNameForTarget",
       "span": {
-        "end": 6853,
-        "start": 6650
+        "end": 7191,
+        "start": 6988
       }
     },
     {
@@ -95607,14 +98456,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function push(values: string[], value: string | undefined): void {\n  if (value && !values.includes(value)) {\n    values.push(value);\n  }\n}"
       },
       "name": "push",
       "qualifiedName": "push",
       "span": {
-        "end": 3444,
-        "start": 3306
+        "end": 3425,
+        "start": 3287
       }
     },
     {
@@ -95879,7 +98728,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function quoteWindowsCommandArg(value: string): string {\n  if (!/[\\s\"]/u.test(value)) {\n    return value;\n  }\n  return `\"${value.replace(/\"/g, \"\\\"\\\"\")}\"`;\n}"
       },
       "name": "quoteWindowsCommandArg",
@@ -96825,20 +99674,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "19faabe592db7800740554c88ced848f1d33e0c0cf023ae9b23784fe7b0aa4ca",
+      "contentHash": "5bbbca7db1e71f5bacf241f5e69d8534185151a64321e96435c5257cddd2b805",
       "file": "src/forge/impact/index.ts",
       "id": "1f07943e438ae10588bb60f9e2377842817105303feab1be71964906c2ace1f2",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
-        "sourceSlice": "function readHeadFile(workspaceRoot: string, file: string): string | null {\n  const root = gitRoot(workspaceRoot);\n  if (!root) {\n    return null;\n  }\n\n  const relativeToGitRoot = normalize(relative(resolve(root), resolve(workspaceRoot, file)));\n  if (!relativeToGitRoot || relativeToGitRoot.startsWith(\"..\") || relativeToGitRoot.includes(\":\")) {\n    return null;\n  }\n\n  const result = spawnSync(\"git\", [\"show\", `HEAD:${relativeToGitRoot}`], {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    windowsHide: true,\n  });\n  if (result.status !== 0) {\n    return null;\n  }\n  return result.stdout;\n}"
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
+        "sourceSlice": "function readHeadFile(workspaceRoot: string, file: string): string | null {\n  const prefix = gitWorkspacePrefix(workspaceRoot);\n  if (prefix === null) {\n    return null;\n  }\n\n  const workspaceFile = normalize(file);\n  if (\n    !workspaceFile ||\n    workspaceFile === \"..\" ||\n    workspaceFile.startsWith(\"../\") ||\n    workspaceFile.startsWith(\"/\") ||\n    workspaceFile.includes(\":\")\n  ) {\n    return null;\n  }\n  const repoFile = prefix ? `${prefix}/${workspaceFile}` : workspaceFile;\n\n  const result = spawnSync(\"git\", [\"show\", `HEAD:${repoFile}`], {\n    cwd: workspaceRoot,\n    encoding: \"utf8\",\n    windowsHide: true,\n  });\n  if (result.status !== 0) {\n    return null;\n  }\n  return result.stdout;\n}"
       },
       "name": "readHeadFile",
       "qualifiedName": "readHeadFile",
       "span": {
-        "end": 12092,
-        "start": 11498
+        "end": 11955,
+        "start": 11254
       }
     },
     {
@@ -97069,14 +99918,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function readJson<T>(workspaceRoot: string, relative: string, fallback: T): T {\n  const absolute = join(workspaceRoot, relative);\n  const content = nodeFileSystem.readText(absolute);\n  if (content === null) {\n    return fallback;\n  }\n  return JSON.parse(stripDeterministicHeader(content)) as T;\n}"
       },
       "name": "readJson",
       "qualifiedName": "readJson",
       "span": {
-        "end": 2989,
-        "start": 2693
+        "end": 2970,
+        "start": 2674
       }
     },
     {
@@ -97171,14 +100020,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function readLastRunByCommand(workspaceRoot: string): Map<string, TestRunStep> {\n  const raw = nodeFileSystem.readText(join(workspaceRoot, TEST_RUN_DIR, \"last.json\"));\n  if (raw === null) {\n    return new Map();\n  }\n  try {\n    const record = JSON.parse(stripDeterministicHeader(raw)) as TestRunRecord;\n    return new Map(record.results.map((result) => [result.command, result]));\n  } catch {\n    return new Map();\n  }\n}"
       },
       "name": "readLastRunByCommand",
       "qualifiedName": "readLastRunByCommand",
       "span": {
-        "end": 22093,
-        "start": 21673
+        "end": 21956,
+        "start": 21536
       }
     },
     {
@@ -97273,7 +100122,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function readNodeModulePackageJson(\n  workspaceRoot: string,\n  packageName: string,\n): PackageJsonWithBin | undefined {\n  const packageJsonPath = join(nodeModulePackageRoot(workspaceRoot, packageName), \"package.json\");\n  if (!nodeFileSystem.exists(packageJsonPath)) {\n    return undefined;\n  }\n\n  try {\n    return JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? \"{}\") as PackageJsonWithBin;\n  } catch {\n    return undefined;\n  }\n}"
       },
       "name": "readNodeModulePackageJson",
@@ -97324,14 +100173,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function readPackageDependencyNames(packageJsonPath: string): string[] {\n  try {\n    const parsed = JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? \"{}\") as {\n      dependencies?: Record<string, string>;\n      devDependencies?: Record<string, string>;\n    };\n    return Object.keys({\n      ...(parsed.dependencies ?? {}),\n      ...(parsed.devDependencies ?? {}),\n    }).sort();\n  } catch {\n    return [];\n  }\n}"
       },
       "name": "readPackageDependencyNames",
       "qualifiedName": "readPackageDependencyNames",
       "span": {
-        "end": 9842,
-        "start": 9425
+        "end": 10180,
+        "start": 9763
       }
     },
     {
@@ -97579,7 +100428,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function readPackageScripts(workspaceRoot: string): PackageScripts {\n  const packageJsonPath = join(workspaceRoot, \"package.json\");\n  if (!nodeFileSystem.exists(packageJsonPath)) {\n    return {};\n  }\n\n  try {\n    const pkg = JSON.parse((nodeFileSystem.readText(packageJsonPath) ?? \"\")) as {\n      scripts?: PackageScripts;\n    };\n    return pkg.scripts ?? {};\n  } catch {\n    return {};\n  }\n}"
       },
       "name": "readPackageScripts",
@@ -97698,14 +100547,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function readPlanFiles(workspaceRoot: string, source: ImpactSource): string[] {\n  const candidates =\n    source.mode === \"feature\"\n      ? [source.id ?? \"\", `.forge/features/plans/${source.id}/plan.json`]\n      : source.mode === \"refactor\"\n        ? [source.id ?? \"\", `.forge/refactors/${source.id}/plan.json`]\n        : source.mode === \"upgrade\"\n          ? [source.id ?? \"\", `.forge/upgrades/${source.id}/plan.json`]\n          : [];\n  for (const candidate of candidates) {\n    if (!candidate) continue;\n    const absolute = join(workspaceRoot, candidate);\n    const raw = nodeFileSystem.readText(absolute);\n    if (raw === null) continue;\n    const parsed = JSON.parse(raw) as Record<string, unknown>;\n    const files = [\n      ...(((parsed.filesToCreate as Array<{ file?: string }>) ?? []).map((file) => file.file)),\n      ...(((parsed.filesToModify as Array<{ file?: string }>) ?? []).map((file) => file.file)),\n      ...(((parsed.filesToDelete as Array<{ file?: string }>) ?? []).map((file) => file.file)),\n      ...(((parsed.generatedChanges as Array<{ file?: string }>) ?? []).map((file) => file.file)),\n      ...(((parsed.affected as { files?: string[] } | undefined)?.files) ?? []),\n    ];\n    return files.filter((file): file is string => Boolean(file)).map(normalize).sort();\n  }\n  return [];\n}"
       },
       "name": "readPlanFiles",
       "qualifiedName": "readPlanFiles",
       "span": {
-        "end": 7752,
-        "start": 6447
+        "end": 7508,
+        "start": 6203
       }
     },
     {
@@ -97885,14 +100734,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function readTestGraph(workspaceRoot: string): TestGraph | null {\n  const raw = nodeFileSystem.readText(join(workspaceRoot, \"src/forge/_generated/testGraph.json\"));\n  if (!raw) {\n    return null;\n  }\n  return JSON.parse(stripDeterministicHeader(raw)) as TestGraph;\n}"
       },
       "name": "readTestGraph",
       "qualifiedName": "readTestGraph",
       "span": {
-        "end": 26297,
-        "start": 26031
+        "end": 26443,
+        "start": 26177
       }
     },
     {
@@ -97902,14 +100751,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function readTestGraphProfile(workspaceRoot: string): TestGraphProfileFile | null {\n  const raw = nodeFileSystem.readText(testGraphProfilePath(workspaceRoot));\n  if (!raw) {\n    return null;\n  }\n  try {\n    const parsed = JSON.parse(raw) as TestGraphProfileFile;\n    if (parsed.schemaVersion !== \"0.1.0\" || typeof parsed.files !== \"object\") {\n      return null;\n    }\n    return parsed;\n  } catch {\n    return null;\n  }\n}"
       },
       "name": "readTestGraphProfile",
       "qualifiedName": "readTestGraphProfile",
       "span": {
-        "end": 30855,
-        "start": 30434
+        "end": 31001,
+        "start": 30580
       }
     },
     {
@@ -98208,7 +101057,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function readWorkspacePackageJson(workspaceRoot: string): Record<string, unknown> {\n  const packageJsonPath = join(workspaceRoot, \"package.json\");\n  if (!nodeFileSystem.exists(packageJsonPath)) {\n    return {};\n  }\n  try {\n    return JSON.parse(nodeFileSystem.readText(packageJsonPath) ?? \"{}\") as Record<string, unknown>;\n  } catch {\n    return {};\n  }\n}"
       },
       "name": "readWorkspacePackageJson",
@@ -98440,6 +101289,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9a22ef61d75cffe41efbab9ad99c60e46f7a253d0caa422951d59b9018171a16",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "eb314a75f999a9a1523aa0e73a190b46eed6cdea1d75c999ceaa31e72fbcad10",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function recordOfPositiveNumbers(value: unknown, label: string): void {\n  const record = object(value, label);\n  for (const [key, amount] of Object.entries(record)) {\n    const parsed = number(amount, `${label}.${key}`);\n    if (parsed <= 0) fail(`${label}.${key} must be > 0`);\n  }\n}"
+      },
+      "name": "recordOfPositiveNumbers",
+      "qualifiedName": "recordOfPositiveNumbers",
+      "span": {
+        "end": 3010,
+        "start": 2726
+      }
+    },
+    {
       "contentHash": "927d2f7728863d52647ec07930c75e5bafd61dd3bd29b0a7da8decebcba3dbb2",
       "file": "src/forge/delta/recorder.ts",
       "id": "d7a9ccb2195003ddbb2e73609ce180fe1e234224f2506ad25e1c078f9947164b",
@@ -98505,6 +101371,23 @@ export const appGraph = {
       "span": {
         "end": 11678,
         "start": 6675
+      }
+    },
+    {
+      "contentHash": "d42c0855fd32bece473aca328d9ebf8e3cc14363d4441523fd8fd89e4ae8d0a1",
+      "file": "src/forge/agent-fabric/p0a.ts",
+      "id": "5407f0529d9d5fecbba2f8d847f28119ddfae631d733499e27fe469d0d5c28b2",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "905bff927e6ef3a22ed41d4ab984d3aff6fae08bba94cbb89d2f8e2cde0a6174",
+        "sourceSlice": "function recordUncertainty(\n  conductor: ForgeAgentConductor,\n  permit: AttemptExecutionPermit,\n  phase: \"startup\" | \"outcome\",\n  reason: string,\n): P0aActivityExecutionResult {\n  return {\n    status: \"unknown\",\n    observation: conductor.recordAttemptUncertainty(permit, phase, reason),\n  };\n}"
+      },
+      "name": "recordUncertainty",
+      "qualifiedName": "recordUncertainty",
+      "span": {
+        "end": 954,
+        "start": 660
       }
     },
     {
@@ -98712,6 +101595,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "f77ab6e5bee687739c71e48b9cfe89cfca3d03eecd2200ae962c8fe4e343fd3a",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "c0c12f80a9590908c6328f5a15f3a141b201ead13a4ce3abdebe6e2c54bbdc90",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function reduceControlEvent(\n  state: ControlState,\n  event: ControlEventEnvelope,\n  trust: ReplayTrustContext,\n): ControlState {\n  assertEnvelopeContinuity(state, event);\n  const next: ControlState = {\n    ...state,\n    lastSequence: event.sequence,\n    lastEventId: event.eventId,\n    lastEventDigest: event.eventDigest,\n    lastOccurredAt: event.occurredAt,\n  };\n  const payload = event.payload;\n\n  if (payload.type === \"owner_authorization_registered\") {\n    const authorization = payload.authorization;\n    if (getOwn(state.authorizations, authorization.authorizationId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Owner authorization already exists: ${authorization.authorizationId}`,\n      );\n    }\n    if (authorization.rootExecutionId !== event.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Owner authorization is in the wrong root execution\");\n    }\n    if (authorization.expiresAt <= authorization.notBefore) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Owner authorization has an invalid time window\");\n    }\n    const expectedAuthorizationDigest = digestCanonical(authorization, sha256Digest);\n    if (\n      payload.verification.authorizationDigest !== expectedAuthorizationDigest ||\n      !trust.ownerAuthorizationVerifier.verifyRecorded(authorization, payload.verification)\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Owner authorization admission is not trusted\");\n    }\n    return {\n      ...next,\n      authorizations: { ...state.authorizations, [authorization.authorizationId]: authorization },\n      authorizationVerifications: {\n        ...state.authorizationVerifications,\n        [authorization.authorizationId]: payload.verification,\n      },\n    };\n  }\n\n  if (payload.type === \"owner_authorization_revoked\") {\n    if (!getOwn(state.authorizations, payload.authorizationId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Unknown owner authorization: ${payload.authorizationId}`);\n    }\n    return {\n      ...next,\n      revokedAuthorizations: {\n        ...state.revokedAuthorizations,\n        [payload.authorizationId]: payload.reason,\n      },\n    };\n  }\n\n  if (payload.type === \"resource_ledger_initialized\") {\n    if (Object.keys(state.resourceDefinitions).length > 0) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Resource ledger is already initialized\");\n    }\n    if (!trust.resourceDefinitions) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Replay lacks trusted resource definitions\");\n    }\n    const recorded = sortedDefinitions(payload.definitions);\n    const trusted = sortedDefinitions(trust.resourceDefinitions);\n    if (stableStringify(recorded) !== stableStringify(trusted)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Resource definitions do not match replay trust\");\n    }\n    const definitions = resourceDefinitionMap(recorded);\n    return {\n      ...next,\n      resourceDefinitions: definitions,\n      resourceReserved: Object.fromEntries(recorded.map(({ resource }) => [resource, 0])),\n      resourceConsumed: Object.fromEntries(recorded.map(({ resource }) => [resource, 0])),\n    };\n  }\n\n  if (payload.type === \"resource_reservation_consumed\") {\n    return { ...next, ...transitionReservation(state, payload.reservationId, \"consume\") };\n  }\n\n  if (payload.type === \"resource_reservation_released\") {\n    return { ...next, ...transitionReservation(state, payload.reservationId, \"release\") };\n  }\n\n  if (payload.type === \"goal_registered\") {\n    const authorization = getOwn(state.authorizations, payload.goal.authorityInvocationId);\n    if (!authorization) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Goal ${payload.goal.goalId} has no registered owner authorization`,\n      );\n    }\n    assertAuthorizationCurrent(\n      authorization,\n      event.occurredAt,\n      getOwn(state.revokedAuthorizations, authorization.authorizationId),\n    );\n    if (!authorization.goalIds.includes(payload.goal.goalId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Owner authorization does not cover this goal\");\n    }\n    if (getOwn(state.goals, payload.goal.goalId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Goal already exists: ${payload.goal.goalId}`);\n    }\n    return { ...next, goals: { ...state.goals, [payload.goal.goalId]: payload.goal } };\n  }\n\n  if (payload.type === \"grant_registered\") {\n    const grant = payload.grant;\n    if (getOwn(state.grants, grant.grantId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Grant already exists: ${grant.grantId}`);\n    }\n    if (grant.parentGrantId) {\n      const parent = getOwn(state.grants, grant.parentGrantId);\n      if (!parent) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Derived grant references unknown parent ${grant.parentGrantId}`,\n        );\n      }\n      if (Object.keys(state.resourceDefinitions).length === 0) {\n        throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Derived grant precedes resource ledger initialization\");\n      }\n      assertGrantLineageCurrent(state, parent.grantId, event.occurredAt);\n      assertGrantAttenuated(parent, grant);\n      if (!payload.reservation || !reservationMatchesGrant(payload.reservation, grant)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Derived grant ${grant.grantId} is missing its matching reservation`,\n        );\n      }\n      if (\n        issuedAttemptsForGrant(state, parent.grantId) +\n          delegatedAttemptBudget(state, parent.grantId) +\n          grant.maximumAttempts >\n        parent.maximumAttempts\n      ) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Derived grants exceed parent attempt budget ${parent.grantId}`,\n        );\n      }\n      for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {\n        const allocated = Object.values(state.grants)\n          .filter((candidate) => candidate.parentGrantId === parent.grantId)\n          .reduce((total, candidate) => total + (getOwn(candidate.resourceCeilings, resource) ?? 0), 0);\n        if (allocated + amount > (getOwn(parent.resourceCeilings, resource) ?? -1)) {\n          throw new AgentFabricError(\n            \"AF_INVALID_EVENT\",\n            `Derived grants exceed parent resource ${resource}`,\n          );\n        }\n      }\n      const accounting = applyReservationToState(state, payload.reservation);\n      return {\n        ...next,\n        ...accounting,\n        grants: { ...state.grants, [grant.grantId]: grant },\n      };\n    }\n\n    if (payload.reservation !== null) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Root grant cannot carry a child reservation\");\n    }\n    const authorization = getOwn(state.authorizations, grant.rootAuthorizationId);\n    if (!authorization) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Root grant ${grant.grantId} has no registered owner authorization`,\n      );\n    }\n    if (authorization.rootExecutionId !== event.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Root grant authorization is in the wrong execution\");\n    }\n    assertAuthorizationCurrent(\n      authorization,\n      event.occurredAt,\n      getOwn(state.revokedAuthorizations, authorization.authorizationId),\n    );\n    assertRootGrantAuthorized(authorization, grant);\n    const siblingRoots = Object.values(state.grants).filter(\n      (candidate) => candidate.parentGrantId === null &&\n        candidate.rootAuthorizationId === authorization.authorizationId,\n    );\n    if (\n      siblingRoots.reduce((total, candidate) => total + candidate.maximumAttempts, 0) +\n        grant.maximumAttempts >\n      authorization.maximumAttempts\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Root grants exceed owner attempt budget\");\n    }\n    for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {\n      const allocated = siblingRoots.reduce(\n        (total, candidate) => total + (getOwn(candidate.resourceCeilings, resource) ?? 0),\n        0,\n      );\n      if (allocated + amount > (getOwn(authorization.resourceCeilings, resource) ?? -1)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          `Root grants exceed owner authorization resource ${resource}`,\n        );\n      }\n    }\n    return { ...next, grants: { ...state.grants, [grant.grantId]: grant } };\n  }\n\n  if (payload.type === \"grant_revoked\") {\n    if (!getOwn(state.grants, payload.grantId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Unknown grant: ${payload.grantId}`);\n    }\n    return {\n      ...next,\n      revokedGrants: { ...state.revokedGrants, [payload.grantId]: payload.reason },\n    };\n  }\n\n  if (payload.type === \"plan_delta_registered\") {\n    const delta = payload.delta;\n    if (delta.rootExecutionId !== event.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Plan delta is in the wrong root execution\");\n    }\n    if (getOwn(state.planDeltas, delta.deltaId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Plan delta already exists: ${delta.deltaId}`);\n    }\n    const base = getOwn(state.planRevisions, delta.baseRevisionId);\n    if (!base || getOwn(state.activePlanRevisionByExecution, event.rootExecutionId) !== base.revisionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Plan delta does not target the active revision\");\n    }\n    return { ...next, planDeltas: { ...state.planDeltas, [delta.deltaId]: delta } };\n  }\n\n  if (payload.type === \"plan_revision_activated\") {\n    const revision = payload.revision;\n    if (revision.rootExecutionId !== event.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Plan revision is in the wrong root execution\");\n    }\n    if (!getOwn(state.goals, revision.goalId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Unknown goal: ${revision.goalId}`);\n    }\n    if (getOwn(state.planRevisions, revision.revisionId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Plan revision already exists: ${revision.revisionId}`);\n    }\n    const expectedDigest = computeRunPlanContentDigest(\n      revision.programVersionId,\n      revision.nodes,\n      sha256Digest,\n    );\n    if (revision.contentDigest !== expectedDigest) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Plan revision content digest does not match\");\n    }\n    const currentId = getOwn(state.activePlanRevisionByExecution, revision.rootExecutionId) ?? null;\n    if (revision.parentRevisionId !== currentId) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Plan revision ${revision.revisionId} does not extend the active revision`,\n      );\n    }\n    if (currentId === null) {\n      if (revision.revisionNumber !== 1 || revision.sourcePlanDeltaId !== null) {\n        throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Initial plan revision has invalid lineage\");\n      }\n    } else {\n      const parent = getOwn(state.planRevisions, currentId)!;\n      if (revision.goalId !== parent.goalId || revision.programVersionId !== parent.programVersionId) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          \"Plan revision cannot silently change goal or workflow program\",\n        );\n      }\n      if (revision.revisionNumber !== parent.revisionNumber + 1 || !revision.sourcePlanDeltaId) {\n        throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Plan revision has invalid revision lineage\");\n      }\n      const delta = getOwn(state.planDeltas, revision.sourcePlanDeltaId);\n      if (\n        !delta ||\n        delta.rootExecutionId !== revision.rootExecutionId ||\n        delta.baseRevisionId !== parent.revisionId ||\n        delta.nextRevisionId !== revision.revisionId\n      ) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          \"Plan revision is not backed by its registered PlanDelta\",\n        );\n      }\n      const derived = applyPlanDelta(parent, delta, sha256Digest);\n      if (stableStringify(derived) !== stableStringify(revision)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_EVENT\",\n          \"Plan revision content does not match its registered PlanDelta\",\n        );\n      }\n    }\n    return {\n      ...next,\n      planRevisions: { ...state.planRevisions, [revision.revisionId]: revision },\n      activePlanRevisionByExecution: {\n        ...state.activePlanRevisionByExecution,\n        [revision.rootExecutionId]: revision.revisionId,\n      },\n    };\n  }\n\n  if (payload.type === \"dispatch_intent_committed\") {\n    const intent = payload.intent;\n    if (intent.rootExecutionId !== event.rootExecutionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Dispatch intent is in the wrong root execution\");\n    }\n    if (intent.createdAt > event.occurredAt) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Dispatch intent cannot be created in the future\");\n    }\n    if (getOwn(state.activePlanRevisionByExecution, intent.rootExecutionId) !== intent.planRevisionId) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Dispatch intent references a non-current plan revision ${intent.planRevisionId}`,\n      );\n    }\n    const revision = getOwn(state.planRevisions, intent.planRevisionId);\n    const goal = revision ? getOwn(state.goals, revision.goalId) : undefined;\n    if (!revision || !goal) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Dispatch intent has no active GoalContract\");\n    }\n    if (\n      !goal.allowedEffectClasses.includes(intent.effectClass) ||\n      goal.prohibitedEffectClasses.includes(intent.effectClass) ||\n      (!goal.sourceBoundary.allowExpansion &&\n        !intent.sourceIds.every((sourceId) => goal.sourceBoundary.sourceIds.includes(sourceId)))\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Dispatch intent violates its GoalContract\");\n    }\n    if (!revision.nodes.some((node) => node.nodeId === intent.taskNodeId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Dispatch intent references missing plan node ${intent.taskNodeId}`,\n      );\n    }\n    if (getOwn(state.dispatchIntents, intent.intentId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Dispatch intent already exists: ${intent.intentId}`);\n    }\n    return {\n      ...next,\n      dispatchIntents: { ...state.dispatchIntents, [intent.intentId]: intent },\n    };\n  }\n\n  if (payload.type === \"scheduling_claim_committed\") {\n    const claim = payload.claim;\n    const intent = getOwn(state.dispatchIntents, claim.intentId);\n    if (!intent) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Claim references unknown intent ${claim.intentId}`);\n    }\n    if (getOwn(state.claimByAttemptId, claim.attemptId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Attempt ID already claimed: ${claim.attemptId}`);\n    }\n    if (getOwn(state.activePlanRevisionByExecution, event.rootExecutionId) !== intent.planRevisionId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Claim targets a superseded plan revision\");\n    }\n    if (claim.committedAt !== event.occurredAt || claim.leaseExpiresAt <= claim.committedAt) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Claim timestamps are inconsistent\");\n    }\n    if (Object.values(state.outcomes).some((outcome) => outcome.intentId === claim.intentId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Claim ${claim.claimId} targets an intent with an existing outcome`,\n      );\n    }\n    if (getOwn(state.claims, claim.claimId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Claim already exists: ${claim.claimId}`);\n    }\n    const currentClaimId = getOwn(state.activeClaimByIntent, claim.intentId);\n    const currentClaim = currentClaimId ? getOwn(state.claims, currentClaimId) : undefined;\n    if (currentClaim && currentClaim.leaseExpiresAt > event.occurredAt) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Claim ${claim.claimId} overlaps a current lease`);\n    }\n    if (claim.fencingToken !== (currentClaim?.fencingToken ?? 0) + 1) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Claim ${claim.claimId} has an invalid fencing token`);\n    }\n    return {\n      ...next,\n      claims: { ...state.claims, [claim.claimId]: claim },\n      activeClaimByIntent: { ...state.activeClaimByIntent, [claim.intentId]: claim.claimId },\n      claimByAttemptId: { ...state.claimByAttemptId, [claim.attemptId]: claim.claimId },\n    };\n  }\n\n  if (payload.type === \"attempt_execution_permit_issued\") {\n    const permit = payload.permit;\n    const claim = getOwn(state.claims, permit.claimId);\n    const grant = getOwn(state.grants, permit.grantId);\n    const intent = getOwn(state.dispatchIntents, permit.intentId);\n    if (!claim || !grant || !intent) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Permit references missing authority state\");\n    }\n    if (getOwn(state.permits, permit.permitId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Permit already exists: ${permit.permitId}`);\n    }\n    if (\n      getOwn(state.claimByAttemptId, permit.attemptId) !== claim.claimId ||\n      getOwn(state.activeClaimByIntent, permit.intentId) !== claim.claimId ||\n      permit.attemptId !== claim.attemptId ||\n      permit.workerId !== claim.workerId ||\n      permit.fencingToken !== claim.fencingToken ||\n      permit.planRevisionId !== intent.planRevisionId ||\n      permit.effectiveRunSpecDigest !== intent.effectiveRunSpecDigest\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Permit does not match its claim or intent\");\n    }\n    if (\n      grant.subjectId !== permit.workerId ||\n      !grant.capabilities.includes(intent.requiredCapability) ||\n      !grant.effectClasses.includes(intent.effectClass) ||\n      !intent.sourceIds.every((sourceId) => grant.sourceIds.includes(sourceId)) ||\n      !grant.targetIds.includes(intent.targetId) ||\n      permit.notBefore > event.occurredAt ||\n      event.occurredAt >= permit.expiresAt ||\n      permit.expiresAt > claim.leaseExpiresAt ||\n      permit.expiresAt > grant.expiresAt\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Permit exceeds its grant, claim, or intent\");\n    }\n    assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);\n    if (\n      issuedAttemptsForGrant(state, grant.grantId) + delegatedAttemptBudget(state, grant.grantId) >=\n      grant.maximumAttempts\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Grant attempt budget is exhausted\");\n    }\n    return { ...next, permits: { ...state.permits, [permit.permitId]: permit } };\n  }\n\n  if (payload.type === \"attempt_started\") {\n    const permit = getOwn(state.permits, payload.permitId);\n    if (!permit || payload.attemptId !== permit.attemptId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Attempt does not match a known permit\");\n    }\n    if (getOwn(state.attempts, payload.attemptId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Attempt already exists: ${payload.attemptId}`);\n    }\n    const claim = getOwn(state.claims, permit.claimId);\n    const grant = getOwn(state.grants, permit.grantId);\n    if (\n      !claim ||\n      !grant ||\n      getOwn(state.claimByAttemptId, payload.attemptId) !== claim.claimId ||\n      payload.startedAt < permit.notBefore ||\n      payload.startedAt > event.occurredAt ||\n      payload.startedAt >= permit.expiresAt ||\n      getOwn(state.activeClaimByIntent, permit.intentId) !== claim.claimId ||\n      claim.leaseExpiresAt <= event.occurredAt ||\n      event.occurredAt < permit.notBefore ||\n      event.occurredAt >= permit.expiresAt ||\n      getOwn(state.activePlanRevisionByExecution, event.rootExecutionId) !== permit.planRevisionId\n    ) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Attempt started without current authority\");\n    }\n    assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);\n    return {\n      ...next,\n      attempts: {\n        ...state.attempts,\n        [payload.attemptId]: {\n          permitId: payload.permitId,\n          startupStatus: \"started\",\n          startedAt: payload.startedAt,\n          startupReportId: payload.startupReportId,\n        },\n      },\n    };\n  }\n\n  if (payload.type === \"attempt_uncertainty_observed\") {\n    const observation = payload.observation;\n    const permit = getOwn(state.permits, observation.permitId);\n    if (!permit || observation.attemptId !== permit.attemptId) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Uncertainty observation does not match its permit\");\n    }\n    if (observation.observedAt !== event.occurredAt) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Uncertainty observation timestamp is inconsistent\");\n    }\n    if (observation.phase === \"outcome\" && !getOwn(state.attempts, observation.attemptId)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Outcome uncertainty requires a confirmed startup\");\n    }\n    if (getOwn(state.uncertaintyObservations, observation.observationId)) {\n      throw new AgentFabricError(\n        \"AF_INVALID_EVENT\",\n        `Uncertainty observation already exists: ${observation.observationId}`,\n      );\n    }\n    return {\n      ...next,\n      uncertaintyObservations: {\n        ...state.uncertaintyObservations,\n        [observation.observationId]: observation,\n      },\n    };\n  }\n\n  const outcome = payload.outcome;\n  const attempt = getOwn(state.attempts, outcome.attemptId);\n  if (!attempt) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", `Outcome references unknown attempt ${outcome.attemptId}`);\n  }\n  if (getOwn(state.outcomes, outcome.attemptId)) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", `Outcome already exists for attempt ${outcome.attemptId}`);\n  }\n  if (outcome.committedAt !== event.occurredAt) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Outcome commit time must match its event time\");\n  }\n  const permit = getOwn(state.permits, attempt.permitId);\n  const claim = permit ? getOwn(state.claims, permit.claimId) : undefined;\n  const grant = permit ? getOwn(state.grants, permit.grantId) : undefined;\n  const intent = permit ? getOwn(state.dispatchIntents, permit.intentId) : undefined;\n  if (\n    !permit ||\n    !claim ||\n    !grant ||\n    !intent ||\n    outcome.permitId !== permit.permitId ||\n    outcome.intentId !== permit.intentId ||\n    outcome.planRevisionId !== permit.planRevisionId ||\n    outcome.effectiveRunSpecDigest !== permit.effectiveRunSpecDigest ||\n    outcome.fencingToken !== permit.fencingToken ||\n    getOwn(state.claimByAttemptId, outcome.attemptId) !== claim.claimId ||\n    outcome.reportedAt < attempt.startedAt ||\n    outcome.reportedAt > event.occurredAt ||\n    event.occurredAt < permit.notBefore ||\n    event.occurredAt >= permit.expiresAt ||\n    getOwn(state.activeClaimByIntent, permit.intentId) !== claim.claimId ||\n    claim.fencingToken !== permit.fencingToken ||\n    claim.leaseExpiresAt <= event.occurredAt ||\n    getOwn(state.activePlanRevisionByExecution, event.rootExecutionId) !== permit.planRevisionId\n  ) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Outcome committed without matching current authority\");\n  }\n  assertGrantLineageCurrent(state, grant.grantId, event.occurredAt);\n  return {\n    ...next,\n    outcomes: { ...state.outcomes, [outcome.attemptId]: outcome },\n  };\n}"
+      },
+      "name": "reduceControlEvent",
+      "qualifiedName": "reduceControlEvent",
+      "span": {
+        "end": 35198,
+        "start": 11903
+      }
+    },
+    {
       "contentHash": "90111fd3b77de79da7d4938fb6e2f1e5f5dee37e26732b04231cdb9007163446",
       "file": "src/forge/runtime/executor.ts",
       "id": "6904e9a69f8cf3c965a183aad5ddea6f7eb19830e1b89960ea45454bff15e25d",
@@ -98794,6 +101694,23 @@ export const appGraph = {
       "span": {
         "end": 14558,
         "start": 14408
+      }
+    },
+    {
+      "contentHash": "11f3490a54f4a10939d12634c28cea2b47044d481e83e72999ec6e176b9052eb",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "4b2e1b870516fae004ac5425c3f3c304adec638c00278bc57b0b7c68466eff4b",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function reject(...reasonCodes: string[]): AuthorityResolution {\n  return { outcome: \"rejected\", reasonCodes, limitations: [] };\n}"
+      },
+      "name": "reject",
+      "qualifiedName": "reject",
+      "span": {
+        "end": 602,
+        "start": 472
       }
     },
     {
@@ -101319,14 +104236,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function renderTestPlanMarkdown(plan: ImpactTestPlan): string {\n  const tests = plan.tests\n    .map((test) => {\n      const notes = [\n        test.lastDurationMs !== undefined ? `last ${test.lastDurationMs}ms` : null,\n        test.lastRunOk === false ? \"failed last run\" : null,\n      ].filter(Boolean).join(\", \");\n      return notes ? `${test.command} # ${notes}` : test.command;\n    })\n    .join(\"\\n\") || \"# no targeted tests selected\";\n  const checks = plan.requiredChecks.map((check) => check.command).join(\"\\n\") || \"# no checks\";\n  return `# Test Plan\n\nRisk: ${plan.risk.level}\n\n## Changed Files\n\n${plan.changedFiles.map((file) => `- ${file}`).join(\"\\n\") || \"- none\"}\n\n## Required Checks\n\n\\`\\`\\`bash\n${checks}\n\\`\\`\\`\n\n## Targeted Tests\n\n\\`\\`\\`bash\n${tests}\n\\`\\`\\`\n\n## Final\n\n\\`\\`\\`bash\nforge verify --strict\n\\`\\`\\`\n`;\n}"
       },
       "name": "renderTestPlanMarkdown",
       "qualifiedName": "renderTestPlanMarkdown",
       "span": {
-        "end": 32824,
-        "start": 32000
+        "end": 32687,
+        "start": 31863
       }
     },
     {
@@ -102010,20 +104927,37 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9a44028bea621077ca38ec091f7e6a91e26a715ac6acc9eb92210e30c99fb2f4",
+      "file": "src/forge/agent-fabric/resource-ledger.ts",
+      "id": "27b4e8182169f8c91683d6a4dd17801cedc72bde63c57fa400beb882d26a70fb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2c8c01d2bb86a94ee183b3ff04643c105ffc9ac7ceaabd661345fb01adac2295",
+        "sourceSlice": "function replaceRecord<T>(target: Record<string, T>, source: Readonly<Record<string, T>>): void {\n  for (const key of Object.keys(target)) delete target[key];\n  for (const [key, value] of Object.entries(source)) setOwn(target, key, structuredClone(value));\n}"
+      },
+      "name": "replaceRecord",
+      "qualifiedName": "replaceRecord",
+      "span": {
+        "end": 1046,
+        "start": 788
+      }
+    },
+    {
       "contentHash": "89d70a6c97eec3103a4296b1d6a8c8ad1aff82469d436f65d94ceac95aa75c8f",
       "file": "src/forge/cli/new.ts",
       "id": "eeac1a591df6abee2850a6b4c951ff4f395cc49b4db5baf82eb5fb3adad2234c",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function replaceTokens(targetDir: string, appName: string, packageManager: string, packageSpec: string): void {\n  const packageManagerWithVersion = packageManagerSpec(packageManager);\n  function walk(dir: string): void {\n    for (const entry of nodeFileSystem.readDir(dir)) {\n      const absolute = join(dir, entry.name);\n      if (entry.isDirectory) {\n        if (entry.name === \"_generated\" || entry.name === \"node_modules\" || entry.name === \".git\") {\n          continue;\n        }\n        walk(absolute);\n        continue;\n      }\n      if (!entry.isFile || !isTextFile(absolute)) {\n        continue;\n      }\n\n      const text = (nodeFileSystem.readText(absolute) ?? \"\")\n        .replaceAll(\"__FORGE_APP_NAME__\", appName)\n        .replaceAll(\"__FORGE_APP_TITLE__\", displayName(appName))\n        .replaceAll(\"__PACKAGE_MANAGER__\", packageManager)\n        .replaceAll(\"__PACKAGE_MANAGER_SPEC__\", packageManagerWithVersion)\n        .replaceAll(\"__FORGE_PACKAGE_SPEC__\", packageSpec);\n      nodeFileSystem.writeText(absolute, text);\n    }\n  }\n\n  walk(targetDir);\n}"
       },
       "name": "replaceTokens",
       "qualifiedName": "replaceTokens",
       "span": {
-        "end": 5813,
-        "start": 4750
+        "end": 6151,
+        "start": 5088
       }
     },
     {
@@ -102044,20 +104978,54 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "d91026478c0276f34e4b6026224d45d404b77e6c754798acc5e6f5cc3f9533ee",
+      "file": "src/forge/agent-fabric/hardened-reducer.ts",
+      "id": "6941469f6577fa657c95dbe7e37368999e4a91f33665ead31f9f36028c4c623f",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "02d60b062c9c151791fe9d4adf982d1dda6909f09322e6cba1190819d675c8fb",
+        "sourceSlice": "function replayControlState(\n  events: readonly ControlEventEnvelope[],\n  trust: ReplayTrustContext,\n): ControlState {\n  try {\n    assertSingleRootExecution(events);\n    assertStreamIdentityAndTemporalInvariants(events);\n    const state = replayLegacyControlState(events, trust);\n    assertReplayOnlyInvariants(events, state);\n    return state;\n  } catch (error) {\n    if (error instanceof AgentFabricError) throw error;\n    throw new AgentFabricError(\n      \"AF_INVALID_EVENT\",\n      \"Malformed control stream could not be replayed\",\n      {\n        causeName: error instanceof Error ? error.name : typeof error,\n        causeMessage: error instanceof Error ? error.message : String(error),\n      },\n    );\n  }\n}"
+      },
+      "name": "replayControlState",
+      "qualifiedName": "replayControlState",
+      "span": {
+        "end": 7213,
+        "start": 6500
+      }
+    },
+    {
+      "contentHash": "871929a89627244ab52409340fb0474796e98eb6a59ad3684e08d458efb508ec",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "22b9e7e34b56bd9730a93dcb0f5d97daf7c59e4ed36f3bf73c939c8e29e8d7fb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function replayControlState(\n  events: readonly ControlEventEnvelope[],\n  trust: ReplayTrustContext,\n): ControlState {\n  return events.reduce((state, event) => reduceControlEvent(state, event, trust), createEmptyControlState());\n}"
+      },
+      "name": "replayControlState",
+      "qualifiedName": "replayControlState",
+      "span": {
+        "end": 35437,
+        "start": 35207
+      }
+    },
+    {
       "contentHash": "27f7f9dc62de2a755128a1c5bd857bee839617f47c2bc1f7e5d76458d93e3401",
       "file": "src/forge/impact/index.ts",
       "id": "338b2f16fa12aff038fb7f771286be4b48af8234f33b9131fa702c92b2ae3950",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function requiredChecks(impact: ImpactedSystems): TestPlanCheck[] {\n  const checks: TestPlanCheck[] = [\n    { kind: \"forge\", command: \"forge generate --check\", cost: \"fast\", reason: \"generated artifacts must stay deterministic\" },\n    { kind: \"forge\", command: \"forge check\", cost: \"instant\", reason: \"runtime guards and static Forge checks\" },\n  ];\n  if (impact.data.tables.length > 0) {\n    checks.push({ kind: \"forge\", command: \"forge db diff --json\", cost: \"standard\", reason: \"schema/table impact requires migration diff\" });\n    checks.push({ kind: \"forge\", command: \"forge rls check --json\", cost: \"standard\", reason: \"data impact can affect tenant isolation\" });\n  }\n  if (impact.policies.length > 0) {\n    checks.push({ kind: \"forge\", command: \"forge policy check --strict-policies\", cost: \"fast\", reason: \"policy impact detected\" });\n  }\n  if (impact.packages.length > 0) {\n    checks.push({ kind: \"forge\", command: \"forge deps upgrade-check --json\", cost: \"standard\", reason: \"package impact detected\" });\n  }\n  if (impact.deploy.length > 0) {\n    checks.push({ kind: \"forge\", command: \"forge self-host check\", cost: \"standard\", reason: \"deployment impact detected\" });\n  }\n  return checks;\n}"
       },
       "name": "requiredChecks",
       "qualifiedName": "requiredChecks",
       "span": {
-        "end": 23298,
-        "start": 22095
+        "end": 23161,
+        "start": 21958
       }
     },
     {
@@ -102109,6 +105077,40 @@ export const appGraph = {
       "span": {
         "end": 3532,
         "start": 3339
+      }
+    },
+    {
+      "contentHash": "6fdffb92225af1fb72852af14af2f372dd97974f379f1b441e1340346fe043fd",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "02e3388627f8547938c4ae1000cabbc8ec53b1c28936abda0fd94511d62e4959",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function reservation(value: unknown, label: string): void {\n  const reservationValue = object(value, label);\n  keys(reservationValue, [\"reservationId\", \"ownerId\", \"requests\", \"status\"], [], label);\n  string(reservationValue.reservationId, `${label}.reservationId`);\n  string(reservationValue.ownerId, `${label}.ownerId`);\n  if (!Array.isArray(reservationValue.requests)) fail(`${label}.requests must be an array`);\n  reservationValue.requests.forEach((item, index) => {\n    const request = object(item, `${label}.requests[${index}]`);\n    keys(request, [\"resource\", \"amount\"], [], `${label}.requests[${index}]`);\n    string(request.resource, `${label}.requests[${index}].resource`);\n    const amount = number(request.amount, `${label}.requests[${index}].amount`);\n    if (amount <= 0) fail(`${label}.requests[${index}].amount must be > 0`);\n  });\n  const status = string(reservationValue.status, `${label}.status`);\n  if (!new Set([\"active\", \"consumed\", \"released\"]).has(status)) fail(`${label}.status is invalid`);\n}"
+      },
+      "name": "reservation",
+      "qualifiedName": "reservation",
+      "span": {
+        "end": 10019,
+        "start": 9002
+      }
+    },
+    {
+      "contentHash": "a8c0269340e753d371769e05c6a337fe7153a07b9785b7f669e5afd80d20b269",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "a6fb9b761a8219d00e7424d77add1547cf3d4466bb1b2ac763f1642230899883",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function reservationMatchesGrant(reservation: ResourceReservation, grant: ExecutionGrant): boolean {\n  if (!grant.parentGrantId || !grant.reservationId) return false;\n  if (\n    reservation.reservationId !== grant.reservationId ||\n    reservation.ownerId !== grant.parentGrantId ||\n    reservation.status === \"released\"\n  ) {\n    return false;\n  }\n  const seen = new Set<string>();\n  const requestCeilings: Record<string, number> = {};\n  for (const request of reservation.requests) {\n    if (seen.has(request.resource)) return false;\n    seen.add(request.resource);\n    setOwn(requestCeilings, request.resource, request.amount);\n  }\n  return stableStringify(requestCeilings) === stableStringify(grant.resourceCeilings);\n}"
+      },
+      "name": "reservationMatchesGrant",
+      "qualifiedName": "reservationMatchesGrant",
+      "span": {
+        "end": 4398,
+        "start": 3677
       }
     },
     {
@@ -102543,14 +105545,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "ac69f4190327ca7765b09394bef5382e1b89d0d5bfa053b4de97722897cdf96a",
+        "fileContentHash": "90d84614e45f3be513a6cdad66b7774b85822c970e40727f505c4f4025d1284d",
         "sourceSlice": "function resolveExportName(symbol: ts.Symbol, decl: ts.Declaration): string {\n  const symbolName = symbol.getName();\n  if (symbolName !== \"default\") {\n    return symbolName;\n  }\n  if (ts.isClassDeclaration(decl) && decl.name != null) {\n    return decl.name.text;\n  }\n  if (ts.isFunctionDeclaration(decl) && decl.name != null) {\n    return decl.name.text;\n  }\n  if (ts.isInterfaceDeclaration(decl) && decl.name != null) {\n    return decl.name.text;\n  }\n  return symbolName;\n}"
       },
       "name": "resolveExportName",
       "qualifiedName": "resolveExportName",
       "span": {
-        "end": 1479,
-        "start": 1005
+        "end": 1943,
+        "start": 1469
       }
     },
     {
@@ -102968,7 +105970,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function resolveScriptTimeoutMs(options: VerifyOptions): number {\n  if (options.scriptTimeoutMs && Number.isFinite(options.scriptTimeoutMs)) {\n    return options.scriptTimeoutMs;\n  }\n  const fromEnv = process.env.FORGE_VERIFY_SCRIPT_TIMEOUT_MS;\n  if (fromEnv) {\n    const parsed = Number(fromEnv);\n    if (Number.isFinite(parsed) && parsed >= 1) {\n      return Math.floor(parsed);\n    }\n  }\n  return DEFAULT_SCRIPT_TIMEOUT_MS;\n}"
       },
       "name": "resolveScriptTimeoutMs",
@@ -103019,14 +106021,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function resolveStrictIsolatedTestJobs(options: {\n  requested?: number;\n  env?: NodeJS.ProcessEnv;\n  chunkCount: number;\n}): number {\n  if (options.chunkCount <= 1) {\n    return 1;\n  }\n  const fromEnv = options.env?.FORGE_VERIFY_ISOLATED_TEST_JOBS;\n  const parsedEnv = fromEnv ? Number(fromEnv) : undefined;\n  const requested = options.requested ?? parsedEnv;\n  if (requested !== undefined && Number.isInteger(requested) && requested >= 1) {\n    return Math.min(requested, options.chunkCount);\n  }\n  return Math.min(STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS, options.chunkCount);\n}"
       },
       "name": "resolveStrictIsolatedTestJobs",
       "qualifiedName": "resolveStrictIsolatedTestJobs",
       "span": {
-        "end": 29463,
-        "start": 28886
+        "end": 29609,
+        "start": 29032
       }
     },
     {
@@ -103036,14 +106038,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function resolveStrictLaneJobs(options: {\n  totalJobs: number;\n  parallelChunkCount: number;\n  isolatedChunkCount: number;\n  env?: NodeJS.ProcessEnv;\n}): { parallelJobs: number; isolatedJobs: number } {\n  if (options.parallelChunkCount === 0) {\n    return {\n      parallelJobs: 0,\n      isolatedJobs: resolveStrictIsolatedTestJobs({\n        env: options.env,\n        chunkCount: Math.min(options.totalJobs, options.isolatedChunkCount),\n      }),\n    };\n  }\n  if (options.isolatedChunkCount === 0) {\n    return {\n      parallelJobs: Math.min(options.totalJobs, options.parallelChunkCount),\n      isolatedJobs: 0,\n    };\n  }\n  const requestedIsolated = resolveStrictIsolatedTestJobs({\n    env: options.env,\n    chunkCount: options.isolatedChunkCount,\n  });\n  const isolatedJobs = Math.min(\n    requestedIsolated,\n    options.isolatedChunkCount,\n    Math.max(1, options.totalJobs - 1),\n  );\n  const parallelJobs = Math.min(\n    options.parallelChunkCount,\n    Math.max(1, options.totalJobs - isolatedJobs),\n  );\n  return { parallelJobs, isolatedJobs };\n}"
       },
       "name": "resolveStrictLaneJobs",
       "qualifiedName": "resolveStrictLaneJobs",
       "span": {
-        "end": 28877,
-        "start": 27826
+        "end": 29023,
+        "start": 27972
       }
     },
     {
@@ -103053,14 +106055,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function resolveStrictTestJobs(options: {\n  requested?: number;\n  env?: NodeJS.ProcessEnv;\n  chunkCount: number;\n}): number {\n  if (options.chunkCount <= 1) {\n    return 1;\n  }\n  const fromEnv = options.env?.FORGE_VERIFY_TEST_JOBS;\n  const parsedEnv = fromEnv ? Number(fromEnv) : undefined;\n  const requested = options.requested ?? parsedEnv;\n  if (requested !== undefined && Number.isInteger(requested) && requested >= 1) {\n    return Math.min(requested, options.chunkCount);\n  }\n\n  const cpuBound = Math.max(2, Math.floor(availableParallelism() / 2));\n  return Math.min(STRICT_TEST_MAX_DEFAULT_JOBS, cpuBound, options.chunkCount);\n}"
       },
       "name": "resolveStrictTestJobs",
       "qualifiedName": "resolveStrictTestJobs",
       "span": {
-        "end": 27824,
-        "start": 27190
+        "end": 27970,
+        "start": 27336
       }
     },
     {
@@ -103155,14 +106157,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function resolveTestCommandTimeoutMs(timeoutMs?: number): number {\n  if (timeoutMs && Number.isFinite(timeoutMs) && timeoutMs >= 1) {\n    return Math.floor(timeoutMs);\n  }\n  const fromEnv = process.env.FORGE_TEST_COMMAND_TIMEOUT_MS;\n  if (fromEnv) {\n    const parsed = Number(fromEnv);\n    if (Number.isFinite(parsed) && parsed >= 1) {\n      return Math.floor(parsed);\n    }\n  }\n  return DEFAULT_TEST_COMMAND_TIMEOUT_MS;\n}"
       },
       "name": "resolveTestCommandTimeoutMs",
       "qualifiedName": "resolveTestCommandTimeoutMs",
       "span": {
-        "end": 35694,
-        "start": 35272
+        "end": 35557,
+        "start": 35135
       }
     },
     {
@@ -103189,7 +106191,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function resolveTypechecker(options: VerifyOptions): TypecheckerChoice {\n  if (options.typechecker) {\n    return options.typechecker;\n  }\n  const fromEnv = process.env.FORGE_TYPECHECKER;\n  return (\n    fromEnv === \"native\" ||\n    fromEnv === \"ts7\" ||\n    fromEnv === \"tsgo\" ||\n    fromEnv === \"auto\" ||\n    fromEnv === \"tsc\"\n  )\n    ? fromEnv\n    : \"tsc\";\n}"
       },
       "name": "resolveTypechecker",
@@ -103223,14 +106225,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function resolveVerifyProfile(options: VerifyOptions): VerifyProfile {\n  if (options.internal) {\n    return \"internal\";\n  }\n  if (options.changed) {\n    return \"changed\";\n  }\n  if (options.fast || options.smoke) {\n    return \"smoke\";\n  }\n  if (options.strict) {\n    return \"strict\";\n  }\n  if (options.standard) {\n    return \"standard\";\n  }\n  return \"default\";\n}"
       },
       "name": "resolveVerifyProfile",
       "qualifiedName": "resolveVerifyProfile",
       "span": {
-        "end": 49489,
-        "start": 49128
+        "end": 49635,
+        "start": 49274
       }
     },
     {
@@ -103299,6 +106301,57 @@ export const appGraph = {
       "span": {
         "end": 1334,
         "start": 1189
+      }
+    },
+    {
+      "contentHash": "5da0645133498db55354a7d390b24af319f4faee1710169c3780aec46bf85888",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "37b0209ee6fd959cad430da2ea1c4ce2a4ea0eed3b206ea9430d87ab30d134c7",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function resourceDefinition(value: unknown, label: string): void {\n  const definition = object(value, label);\n  keys(definition, [\"resource\", \"semantics\", \"limit\"], [], label);\n  string(definition.resource, `${label}.resource`);\n  const semantics = string(definition.semantics, `${label}.semantics`);\n  if (!RESOURCE_SEMANTICS.has(semantics)) fail(`${label}.semantics is invalid`);\n  number(definition.limit, `${label}.limit`, { min: 0 });\n}"
+      },
+      "name": "resourceDefinition",
+      "qualifiedName": "resourceDefinition",
+      "span": {
+        "end": 6183,
+        "start": 5742
+      }
+    },
+    {
+      "contentHash": "703b8b706c2aec7ab167b7b04951412268ebc9205ad54e14e6ca0d4f84f56643",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "db5f86bdbcf8100cffd174feeb7a19e7117752397fe9e26b71016e3c5c1e2752",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function resourceDefinitionMap(definitions: readonly ResourceDefinition[]) {\n  return Object.fromEntries(definitions.map((definition) => [definition.resource, definition]));\n}"
+      },
+      "name": "resourceDefinitionMap",
+      "qualifiedName": "resourceDefinitionMap",
+      "span": {
+        "end": 3425,
+        "start": 3250
+      }
+    },
+    {
+      "contentHash": "41c5d005416d01597531c4382f4ca3c4e5a56382e726124231bdad294f0082ab",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "07c66363ea7258ad0a301b399c496fcb82344206680fe2680d257caa44ed90da",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function resourceDefinitions(value: unknown, label: string): void {\n  if (!Array.isArray(value)) fail(`${label} must be an array`);\n  value.forEach((item, index) => resourceDefinition(item, `${label}[${index}]`));\n}"
+      },
+      "name": "resourceDefinitions",
+      "qualifiedName": "resourceDefinitions",
+      "span": {
+        "end": 6400,
+        "start": 6185
       }
     },
     {
@@ -103472,6 +106525,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "63b615cc8ed243b5af83cc68f4ef87e7abc269aaf690ceac23c671164eb54ffb",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "5214fa367dc7c59413f33a692c8edd127285fa827fd8cb7880c368c3e7b74f07",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function revision(value: unknown, label: string): void {\n  const revisionValue = object(value, label);\n  keys(\n    revisionValue,\n    [\n      \"revisionId\", \"rootExecutionId\", \"goalId\", \"programVersionId\", \"revisionNumber\",\n      \"parentRevisionId\", \"sourcePlanDeltaId\", \"nodes\", \"contentDigest\",\n    ],\n    [],\n    label,\n  );\n  for (const field of [\"revisionId\", \"rootExecutionId\", \"goalId\", \"programVersionId\"] as const) {\n    string(revisionValue[field], `${label}.${field}`);\n  }\n  number(revisionValue.revisionNumber, `${label}.revisionNumber`, { integer: true, min: 1 });\n  if (revisionValue.parentRevisionId !== null) string(revisionValue.parentRevisionId, `${label}.parentRevisionId`);\n  if (revisionValue.sourcePlanDeltaId !== null) string(revisionValue.sourcePlanDeltaId, `${label}.sourcePlanDeltaId`);\n  workflowNodes(revisionValue.nodes, `${label}.nodes`);\n  digest(revisionValue.contentDigest, `${label}.contentDigest`);\n}"
+      },
+      "name": "revision",
+      "qualifiedName": "revision",
+      "span": {
+        "end": 12096,
+        "start": 11161
+      }
+    },
+    {
       "contentHash": "ac6c94147c92dba99e7233f0dd07e1995db9104aa0e02d38fdda571c3c5a56ff",
       "file": "src/forge/refactor/index.ts",
       "id": "ed5e54482e9133f320959bef1b2c54a39ef4a3e50a1af7ebb04e3367c6d81635",
@@ -103580,14 +106650,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function riskFor(impact: ImpactedSystems, files: string[]): ImpactRisk {\n  const reasons: string[] = [];\n  let level: ImpactRisk[\"level\"] = \"low\";\n  if (impact.data.tables.length > 0) {\n    level = \"high\";\n    reasons.push(\"DataGraph or schema impact detected\");\n  }\n  if (impact.policies.length > 0) {\n    level = \"high\";\n    reasons.push(\"Policy surface changed\");\n  }\n  if (impact.runtime.liveQueries.length > 0 || impact.runtime.workflows.length > 0) {\n    if (level === \"low\") level = \"medium\";\n    reasons.push(\"Reactive or workflow runtime impacted\");\n  }\n  if (impact.runtime.commands.length > 0 || impact.runtime.queries.length > 0 || impact.runtime.actions.length > 0) {\n    if (level === \"low\") level = \"medium\";\n    reasons.push(\"Runtime entry impacted\");\n  }\n  if (impact.packages.length > 0) {\n    level = \"high\";\n    reasons.push(\"Package graph or lockfile impact detected\");\n  }\n  if (impact.deploy.length > 0) {\n    level = \"high\";\n    reasons.push(\"Deploy or release artifact impact detected\");\n  }\n  if (files.some((file) => file.startsWith(`${GENERATED}/`))) {\n    if (level === \"low\") level = \"medium\";\n    reasons.push(\"Generated artifact changed\");\n  }\n  return { level, reasons: reasons.sort() };\n}"
       },
       "name": "riskFor",
       "qualifiedName": "riskFor",
       "span": {
-        "end": 18676,
-        "start": 17454
+        "end": 18539,
+        "start": 17317
       }
     },
     {
@@ -103826,6 +106896,23 @@ export const appGraph = {
       "span": {
         "end": 5240,
         "start": 4480
+      }
+    },
+    {
+      "contentHash": "b54dd052d4ed56d5b1ec7e4bf7fd007565f047585104a0d39518248038dca8ae",
+      "file": "src/forge/agent-fabric/authority.ts",
+      "id": "602b6f3ed941997d4ea5109df927980b1ba7caddee36e0158c3082a694330de7",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "bb7658b06ff21f65411e4e671f0a1847206f4208bb464c65599ea77699648f72",
+        "sourceSlice": "function rootGrantAuthorizationViolations(\n  authorization: OwnerAuthorization,\n  grant: ExecutionGrant,\n): readonly string[] {\n  const violations: string[] = [];\n  if (grant.parentGrantId !== null) violations.push(\"root_grant_has_parent\");\n  if (grant.rootAuthorizationId !== authorization.authorizationId) {\n    violations.push(\"root_authorization_mismatch\");\n  }\n  if (authorization.rootExecutionId.length === 0) violations.push(\"authorization_missing_execution\");\n  if (!authorization.subjectIds.includes(grant.subjectId)) violations.push(\"subject_not_authorized\");\n  if (!isSubset(grant.capabilities, authorization.capabilities)) violations.push(\"capability_scope_expanded\");\n  if (!isSubset(grant.sourceIds, authorization.sourceIds)) violations.push(\"source_scope_expanded\");\n  if (!isSubset(grant.targetIds, authorization.targetIds)) violations.push(\"target_scope_expanded\");\n  if (!isSubset<EffectClass>(grant.effectClasses, authorization.effectClasses)) {\n    violations.push(\"effect_scope_expanded\");\n  }\n  if (grant.notBefore < authorization.notBefore || grant.expiresAt > authorization.expiresAt) {\n    violations.push(\"time_scope_expanded\");\n  }\n  if (grant.expiresAt <= grant.notBefore) violations.push(\"invalid_time_window\");\n  if (grant.maximumAttempts <= 0 || grant.maximumAttempts > authorization.maximumAttempts) {\n    violations.push(\"attempt_limit_expanded\");\n  }\n  if (\n    grant.delegationDepthRemaining < 0 ||\n    grant.delegationDepthRemaining > authorization.maximumDelegationDepth\n  ) {\n    violations.push(\"delegation_depth_expanded\");\n  }\n  for (const [resource, amount] of Object.entries(grant.resourceCeilings)) {\n    const ceiling = getOwn(authorization.resourceCeilings, resource);\n    if (!Number.isFinite(amount) || amount <= 0 || ceiling === undefined || amount > ceiling) {\n      violations.push(`resource_ceiling_expanded:${resource}`);\n    }\n  }\n  return violations;\n}"
+      },
+      "name": "rootGrantAuthorizationViolations",
+      "qualifiedName": "rootGrantAuthorizationViolations",
+      "span": {
+        "end": 2518,
+        "start": 611
       }
     },
     {
@@ -104651,14 +107738,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function runCommand(workspaceRoot: string, command: string, timeoutMs: number): Promise<TestRunStep> {\n  const started = Date.now();\n  let resolved: { executable: string; args: string[] };\n  const effectiveCommand = addBunTestTimeout(command, timeoutMs);\n  try {\n    resolved = commandArgs(workspaceRoot, effectiveCommand);\n  } catch (error) {\n    return Promise.resolve({\n      command: effectiveCommand,\n      ok: false,\n      exitCode: 1,\n      durationMs: Date.now() - started,\n      failureKind: \"command-resolution-error\",\n      stderr: error instanceof Error ? error.message : String(error),\n    });\n  }\n  const path = [join(workspaceRoot, \"node_modules\", \".bin\"), process.env.PATH ?? \"\"].filter(Boolean).join(delimiter);\n  return new Promise((resolve) => {\n    let settled = false;\n    let timedOut = false;\n    const child = spawn(resolved.executable, resolved.args, {\n      cwd: workspaceRoot,\n      env: { ...process.env, PATH: path },\n      stdio: [\"ignore\", \"pipe\", \"pipe\"],\n      windowsHide: true,\n    });\n    const timer = setTimeout(() => {\n      timedOut = true;\n      try {\n        child.kill();\n      } catch {\n        // Process may have already exited.\n      }\n    }, timeoutMs);\n    let stdout = \"\";\n    let stderr = \"\";\n    child.stdout?.on(\"data\", (chunk) => { stdout += String(chunk); });\n    child.stderr?.on(\"data\", (chunk) => { stderr += String(chunk); });\n    child.on(\"error\", (error) => {\n      clearTimeout(timer);\n      if (settled) return;\n      settled = true;\n      resolve({\n        command: effectiveCommand,\n        ok: false,\n        exitCode: 1,\n        durationMs: Date.now() - started,\n        failureKind: \"spawn-error\",\n        stderr: error.message,\n      });\n    });\n    child.on(\"close\", (code) => {\n      clearTimeout(timer);\n      if (settled) return;\n      settled = true;\n      resolve({\n        command: effectiveCommand,\n        ok: !timedOut && (code ?? 1) === 0,\n        exitCode: timedOut ? 1 : code ?? 1,\n        durationMs: Date.now() - started,\n        timedOut,\n        failureKind: timedOut ? \"timeout\" : inferFailureKind(effectiveCommand, code ?? 1, stdout, stderr),\n        stdout,\n        stderr,\n      });\n    });\n  });\n}"
       },
       "name": "runCommand",
       "qualifiedName": "runCommand",
       "span": {
-        "end": 38252,
-        "start": 36064
+        "end": 38115,
+        "start": 35927
       }
     },
     {
@@ -105586,14 +108673,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function runImpactCommand(options: ImpactCommandOptions): ImpactResult {\n  const report = analyzeImpact(options);\n  if (options.write) {\n    const plan = buildImpactTestPlan({\n      subcommand: \"plan\",\n      workspaceRoot: options.workspaceRoot,\n      json: options.json,\n      write: true,\n      changed: options.changed,\n      staged: options.staged,\n      since: options.since,\n      featureId: options.featureId,\n      refactorId: options.refactorId,\n      upgradeId: options.upgradeId,\n      maxCost: \"standard\",\n      includeDocker: false,\n      includeBrowser: false,\n      bail: false,\n    });\n    writeTestPlan(options.workspaceRoot, plan);\n  }\n  return { ok: report.ok, report, diagnostics: report.diagnostics, exitCode: report.exitCode };\n}"
       },
       "name": "runImpactCommand",
       "qualifiedName": "runImpactCommand",
       "span": {
-        "end": 49796,
-        "start": 49045
+        "end": 49659,
+        "start": 48908
       }
     },
     {
@@ -105620,14 +108707,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "async function runImpactTestPlan(\n  workspaceRoot: string,\n  plan: ImpactTestPlan,\n  options: { bail: boolean; report?: string; timeoutMs?: number },\n): Promise<TestRunRecord> {\n  const commands = [\n    ...plan.requiredChecks.map((check) => check.command),\n    ...plan.tests.map((test) => test.command),\n  ];\n  const results: TestRunStep[] = [];\n  const started = Date.now();\n  const timeoutMs = resolveTestCommandTimeoutMs(options.timeoutMs);\n  for (const command of commands) {\n    const result = await runCommand(workspaceRoot, command, timeoutMs);\n    results.push(result);\n    if (!result.ok && options.bail) {\n      break;\n    }\n  }\n  const record: TestRunRecord = {\n    schemaVersion: \"0.1.0\",\n    id: `run_${hashStable(`${Date.now()}:${commands.join(\"|\")}`).slice(0, 12)}`,\n    changedHash: `sha256:${hashStable(canonicalJson(plan.changedFiles))}`,\n    planHash: `sha256:${hashStable(canonicalJson(plan))}`,\n    source: plan.source,\n    commands,\n    timeoutMs,\n    results,\n    failed: results.filter((result) => !result.ok).map((result) => result.command),\n    durationMs: Date.now() - started,\n  };\n  const reportPath = options.report ?? join(TEST_RUN_DIR, \"last.json\");\n  const absolute = join(workspaceRoot, reportPath);\n  nodeFileSystem.mkdirp(dirname(absolute));\n  nodeFileSystem.writeText(absolute, serializeCanonical(record));\n  if (!options.report) {\n    const archive = join(workspaceRoot, TEST_RUN_DIR, `${record.id}.json`);\n    nodeFileSystem.writeText(archive, serializeCanonical(record));\n  }\n  return record;\n}"
       },
       "name": "runImpactTestPlan",
       "qualifiedName": "runImpactTestPlan",
       "span": {
-        "end": 39795,
-        "start": 38261
+        "end": 39658,
+        "start": 38124
       }
     },
     {
@@ -105824,7 +108911,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runNativeTypecheck(workspaceRoot: string, timeoutMs: number): Promise<ScriptRunResult> {\n  const [candidate] = nativeTypecheckCandidates(workspaceRoot);\n  if (!candidate) {\n    return missingNativeTypecheckResult();\n  }\n  return spawnArgv(workspaceRoot, candidate.argv, timeoutMs, candidate.command);\n}"
       },
       "name": "runNativeTypecheck",
@@ -105835,20 +108922,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "9ec5f1d654ea3313b193712f7b442844f9769444d48e3282fdfe1dfc464e46d6",
+      "contentHash": "045da5a8f44954d5ebf9c0a6d0b1fe8d26ede7f3d8d745fe4f4d386680126bfa",
       "file": "src/forge/cli/new.ts",
       "id": "5902044d97604c7dec9bc7b7a048673cfd15e0b3a67656f3ccc3200a27a3ccb8",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
-        "sourceSlice": "async function runNewCommand(options: NewCommandOptions): Promise<NewCommandResult> {\n  const projectNameError = ensureProjectName(options.name);\n  if (projectNameError) {\n    return {\n      name: options.name,\n      template: options.template,\n      targetDir: \"\",\n      packageManager: options.packageManager,\n      installed: false,\n      gitInitialized: false,\n      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n      generated: false,\n      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n      exitCode: 1,\n      message: projectNameError,\n      nextSteps: [],\n    };\n  }\n\n  const source = templateRoot(options.template);\n  if (!nodeFileSystem.exists(source)) {\n    return {\n      name: options.name,\n      template: options.template,\n      targetDir: \"\",\n      packageManager: options.packageManager,\n      installed: false,\n      gitInitialized: false,\n      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n      generated: false,\n      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n      exitCode: 1,\n      message: `unknown template '${options.template}'`,\n      nextSteps: [],\n    };\n  }\n\n  const targetDir = targetDirectoryFor(options);\n  const appName = projectNameForTarget(options, targetDir);\n  const currentDirectoryTarget = isCurrentDirectoryTarget(options.name);\n  if (nodeFileSystem.exists(targetDir) && !currentDirectoryTarget) {\n    return {\n      name: appName,\n      template: options.template,\n      targetDir,\n      packageManager: options.packageManager,\n      installed: false,\n      gitInitialized: false,\n      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n      generated: false,\n      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n      exitCode: 1,\n      message: `target directory already exists: ${relative(options.workspaceRoot, targetDir)}`,\n      nextSteps: [],\n    };\n  }\n  if (nodeFileSystem.exists(targetDir) && currentDirectoryTarget) {\n    const blocking = blockingExistingEntries(targetDir);\n    if (blocking.length > 0) {\n      return {\n        name: appName,\n        template: options.template,\n        targetDir,\n        packageManager: options.packageManager,\n        installed: false,\n        gitInitialized: false,\n        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n        generated: false,\n        gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n        exitCode: 1,\n        message: `current directory is not empty: ${blocking.slice(0, 6).join(\", \")}${blocking.length > 6 ? ` (+${blocking.length - 6})` : \"\"}`,\n        nextSteps: [],\n      };\n    }\n  }\n\n  nodeFileSystem.mkdirp(targetDir);\n  cpSync(source, targetDir, { recursive: true, force: true });\n  ensureGitignore(targetDir);\n  replaceTokens(\n    targetDir,\n    appName,\n    options.packageManager,\n    forgePackageSpec(targetDir, options),\n  );\n\n  let installed = false;\n  if (options.install) {\n    const installCode = await spawnCommand(options.packageManager, [\"install\"], targetDir);\n    installed = installCode === 0;\n    if (!installed) {\n      return {\n        name: appName,\n        template: options.template,\n        targetDir,\n        packageManager: options.packageManager,\n        installed,\n        gitInitialized: false,\n        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n        generated: false,\n        gitHygiene: analyzeGitHygiene(targetDir),\n        exitCode: 1,\n        message: `${options.packageManager} install failed`,\n        nextSteps: [],\n      };\n    }\n    await waitForInstallArtifacts(targetDir, options.packageManager);\n  }\n\n  let generated = false;\n  if (nodeFileSystem.exists(join(targetDir, \"node_modules\"))) {\n    if (installed) {\n      await waitForInstallArtifacts(targetDir, options.packageManager);\n      const generateCode = await spawnCommand(options.packageManager, [\"run\", \"generate\"], targetDir);\n      generated = generateCode === 0;\n    } else {\n      const generate = await runGenerate({\n        workspaceRoot: targetDir,\n        check: false,\n        dryRun: false,\n        json: false,\n        concurrency: 4,\n      });\n      generated = generate.exitCode === 0;\n    }\n    if (!generated) {\n      return {\n        name: appName,\n        template: options.template,\n        targetDir,\n        packageManager: options.packageManager,\n        installed,\n        gitInitialized: false,\n        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n        generated,\n        gitHygiene: analyzeGitHygiene(targetDir),\n        exitCode: 1,\n        message: \"forge generate failed\",\n        nextSteps: [],\n      };\n    }\n  }\n\n  let gitInitialized = false;\n  if (options.git) {\n    const gitCode = await spawnCommand(\"git\", [\"init\"], targetDir);\n    gitInitialized = gitCode === 0;\n  }\n\n  const fieldTestSteps: NewCommandResult[\"fieldTest\"][\"steps\"] = [];\n  if (options.fieldTest && installed) {\n    const steps: Array<{ name: string; command: string; args: string[] }> = [\n      { name: \"workos\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"add\", \"auth\", \"workos\", \"--json\"] },\n      { name: \"generate-workos\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"generate\"] },\n      { name: \"authmd\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"authmd\", \"generate\", \"--json\"] },\n      { name: \"authmd-check\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"authmd\", \"check\", \"--json\"] },\n      { name: \"workos-doctor\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"workos\", \"doctor\", \"--json\"] },\n      { name: \"workos-seed\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"workos\", \"seed\", \"--file\", \"workos-seed.yml\", \"--dry-run\", \"--json\"] },\n      { name: \"check\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"check\", \"--json\"] },\n    ];\n    for (const step of steps) {\n      const code = await spawnCommand(step.command, step.args, targetDir);\n      fieldTestSteps.push({ name: step.name, ok: code === 0, command: [step.command, ...step.args].join(\" \") });\n      if (code !== 0) {\n        break;\n      }\n    }\n    if (gitInitialized && fieldTestSteps.every((step) => step.ok)) {\n      const addCode = await spawnCommand(\"git\", [\"add\", \"-A\"], targetDir);\n      const commitCode = addCode === 0\n        ? await spawnCommand(\"git\", [\n          \"-c\",\n          \"user.name=ForgeOS\",\n          \"-c\",\n          \"user.email=forgeos@example.invalid\",\n          \"commit\",\n          \"-m\",\n          \"Initial ForgeOS field-test scaffold\",\n        ], targetDir)\n        : 1;\n      fieldTestSteps.push({\n        name: \"baseline-commit\",\n        ok: addCode === 0 && commitCode === 0,\n        command: 'git add -A && git commit -m \"Initial ForgeOS field-test scaffold\"',\n      });\n    }\n  }\n  const fieldTest = {\n    requested: Boolean(options.fieldTest),\n    ok: !options.fieldTest || (installed && fieldTestSteps.length > 0 && fieldTestSteps.every((step) => step.ok)),\n    steps: fieldTestSteps,\n  };\n\n  const nextSteps = [\n    ...(currentDirectoryTarget ? [] : [`cd ${options.name}`]),\n    ...(installed ? [] : [`${options.packageManager} install`]),\n    ...(generated ? [] : [`${options.packageManager} run generate`]),\n    ...(options.fieldTest ? [`${options.packageManager} run forge -- agent onboard --target codex --json`] : []),\n    `${options.packageManager} run dev -- --open`,\n    `${options.packageManager} run verify`,\n  ];\n  const gitHygiene = analyzeGitHygiene(targetDir);\n\n  return {\n    name: appName,\n    template: options.template,\n    targetDir,\n    packageManager: options.packageManager,\n    installed,\n    gitInitialized,\n    fieldTest,\n    generated,\n    gitHygiene,\n    exitCode: fieldTest.ok ? 0 : 1,\n    message: `Created ${appName} from template ${options.template}.`,\n    nextSteps,\n  };\n}"
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
+        "sourceSlice": "async function runNewCommand(options: NewCommandOptions): Promise<NewCommandResult> {\n  const projectNameError = ensureProjectName(options.name);\n  if (projectNameError) {\n    return {\n      name: options.name,\n      template: options.template,\n      targetDir: \"\",\n      packageManager: options.packageManager,\n      installed: false,\n      gitInitialized: false,\n      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n      generated: false,\n      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n      exitCode: 1,\n      message: projectNameError,\n      nextSteps: [],\n    };\n  }\n\n  const source = templateRoot(options.template);\n  if (!nodeFileSystem.exists(source)) {\n    return {\n      name: options.name,\n      template: options.template,\n      targetDir: \"\",\n      packageManager: options.packageManager,\n      installed: false,\n      gitInitialized: false,\n      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n      generated: false,\n      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n      exitCode: 1,\n      message: `unknown template '${options.template}'`,\n      nextSteps: [],\n    };\n  }\n\n  const targetDir = targetDirectoryFor(options);\n  const appName = projectNameForTarget(options, targetDir);\n  const currentDirectoryTarget = isCurrentDirectoryTarget(options.name);\n  if (nodeFileSystem.exists(targetDir) && !currentDirectoryTarget) {\n    return {\n      name: appName,\n      template: options.template,\n      targetDir,\n      packageManager: options.packageManager,\n      installed: false,\n      gitInitialized: false,\n      fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n      generated: false,\n      gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n      exitCode: 1,\n      message: `target directory already exists: ${relative(options.workspaceRoot, targetDir)}`,\n      nextSteps: [],\n    };\n  }\n  if (nodeFileSystem.exists(targetDir) && currentDirectoryTarget) {\n    const blocking = blockingExistingEntries(targetDir);\n    if (blocking.length > 0) {\n      return {\n        name: appName,\n        template: options.template,\n        targetDir,\n        packageManager: options.packageManager,\n        installed: false,\n        gitInitialized: false,\n        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n        generated: false,\n        gitHygiene: { ok: false, ignoredPaths: [], missingPaths: [] },\n        exitCode: 1,\n        message: `current directory is not empty: ${blocking.slice(0, 6).join(\", \")}${blocking.length > 6 ? ` (+${blocking.length - 6})` : \"\"}`,\n        nextSteps: [],\n      };\n    }\n  }\n\n  nodeFileSystem.mkdirp(targetDir);\n  cpSync(source, targetDir, { recursive: true, force: true });\n  ensureGitignore(targetDir);\n  replaceTokens(\n    targetDir,\n    appName,\n    options.packageManager,\n    forgePackageSpec(targetDir, options),\n  );\n\n  let installed = false;\n  if (options.install) {\n    const installArgs = installArgsFor(options.packageManager);\n    const installCode = await spawnCommand(options.packageManager, installArgs, targetDir);\n    installed = installCode === 0;\n    if (!installed) {\n      return {\n        name: appName,\n        template: options.template,\n        targetDir,\n        packageManager: options.packageManager,\n        installed,\n        gitInitialized: false,\n        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n        generated: false,\n        gitHygiene: analyzeGitHygiene(targetDir),\n        exitCode: 1,\n        message: `${options.packageManager} install failed`,\n        nextSteps: [],\n      };\n    }\n    await waitForInstallArtifacts(targetDir, options.packageManager);\n  }\n\n  let generated = false;\n  if (nodeFileSystem.exists(join(targetDir, \"node_modules\"))) {\n    if (installed) {\n      await waitForInstallArtifacts(targetDir, options.packageManager);\n      const generateCode = await spawnCommand(options.packageManager, [\"run\", \"generate\"], targetDir);\n      generated = generateCode === 0;\n    } else {\n      const generate = await runGenerate({\n        workspaceRoot: targetDir,\n        check: false,\n        dryRun: false,\n        json: false,\n        concurrency: 4,\n      });\n      generated = generate.exitCode === 0;\n    }\n    if (!generated) {\n      return {\n        name: appName,\n        template: options.template,\n        targetDir,\n        packageManager: options.packageManager,\n        installed,\n        gitInitialized: false,\n        fieldTest: { requested: Boolean(options.fieldTest), ok: false, steps: [] },\n        generated,\n        gitHygiene: analyzeGitHygiene(targetDir),\n        exitCode: 1,\n        message: \"forge generate failed\",\n        nextSteps: [],\n      };\n    }\n  }\n\n  let gitInitialized = false;\n  if (options.git) {\n    const gitCode = await spawnCommand(\"git\", [\"init\"], targetDir);\n    gitInitialized = gitCode === 0;\n  }\n\n  const fieldTestSteps: NewCommandResult[\"fieldTest\"][\"steps\"] = [];\n  if (options.fieldTest && installed) {\n    const steps: Array<{ name: string; command: string; args: string[] }> = [\n      { name: \"workos\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"add\", \"auth\", \"workos\", \"--json\"] },\n      { name: \"generate-workos\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"generate\"] },\n      { name: \"authmd\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"authmd\", \"generate\", \"--json\"] },\n      { name: \"authmd-check\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"authmd\", \"check\", \"--json\"] },\n      { name: \"workos-doctor\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"workos\", \"doctor\", \"--json\"] },\n      { name: \"workos-seed\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"workos\", \"seed\", \"--file\", \"workos-seed.yml\", \"--dry-run\", \"--json\"] },\n      { name: \"check\", command: options.packageManager, args: [\"run\", \"forge\", \"--\", \"check\", \"--json\"] },\n    ];\n    for (const step of steps) {\n      const code = await spawnCommand(step.command, step.args, targetDir);\n      fieldTestSteps.push({ name: step.name, ok: code === 0, command: [step.command, ...step.args].join(\" \") });\n      if (code !== 0) {\n        break;\n      }\n    }\n    if (gitInitialized && fieldTestSteps.every((step) => step.ok)) {\n      const addCode = await spawnCommand(\"git\", [\"add\", \"-A\"], targetDir);\n      const commitCode = addCode === 0\n        ? await spawnCommand(\"git\", [\n          \"-c\",\n          \"user.name=ForgeOS\",\n          \"-c\",\n          \"user.email=forgeos@example.invalid\",\n          \"commit\",\n          \"-m\",\n          \"Initial ForgeOS field-test scaffold\",\n        ], targetDir)\n        : 1;\n      fieldTestSteps.push({\n        name: \"baseline-commit\",\n        ok: addCode === 0 && commitCode === 0,\n        command: 'git add -A && git commit -m \"Initial ForgeOS field-test scaffold\"',\n      });\n    }\n  }\n  const fieldTest = {\n    requested: Boolean(options.fieldTest),\n    ok: !options.fieldTest || (installed && fieldTestSteps.length > 0 && fieldTestSteps.every((step) => step.ok)),\n    steps: fieldTestSteps,\n  };\n\n  const nextSteps = [\n    ...(currentDirectoryTarget ? [] : [`cd ${options.name}`]),\n    ...(installed ? [] : [`${options.packageManager} install`]),\n    ...(generated ? [] : [`${options.packageManager} run generate`]),\n    ...(options.fieldTest ? [`${options.packageManager} run forge -- agent onboard --target codex --json`] : []),\n    `${options.packageManager} run dev -- --open`,\n    `${options.packageManager} run verify`,\n  ];\n  const gitHygiene = analyzeGitHygiene(targetDir);\n\n  return {\n    name: appName,\n    template: options.template,\n    targetDir,\n    packageManager: options.packageManager,\n    installed,\n    gitInitialized,\n    fieldTest,\n    generated,\n    gitHygiene,\n    exitCode: fieldTest.ok ? 0 : 1,\n    message: `Created ${appName} from template ${options.template}.`,\n    nextSteps,\n  };\n}"
       },
       "name": "runNewCommand",
       "qualifiedName": "runNewCommand",
       "span": {
-        "end": 20495,
-        "start": 12576
+        "end": 20897,
+        "start": 12914
       }
     },
     {
@@ -105960,7 +109047,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runPackageScript(\n  workspaceRoot: string,\n  scriptName: string,\n  timeoutMs: number,\n): Promise<ScriptRunResult> {\n  return spawnPackageRun(workspaceRoot, scriptName, timeoutMs);\n}"
       },
       "name": "runPackageScript",
@@ -106045,7 +109132,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runPreferredTypecheck(\n  options: VerifyOptions,\n  scripts: PackageScripts,\n  timeoutMs: number,\n): Promise<{ result: ScriptRunResult; diagnostics: Diagnostic[]; label: string }> {\n  const choice = resolveTypechecker(options);\n  if (choice === \"tsc\") {\n    return { result: await runTscTypecheck(options.workspaceRoot, scripts, timeoutMs), diagnostics: [], label: \"tsc\" };\n  }\n\n  const attempts: Array<{ label: string; result: ScriptRunResult }> = [];\n  if (choice === \"native\" || choice === \"ts7\" || choice === \"auto\") {\n    const native = await runNativeTypecheck(options.workspaceRoot, timeoutMs);\n    if (native.exitCode === 0) {\n      return {\n        result: native,\n        diagnostics: [],\n        label: choice === \"auto\" ? \"auto->native\" : choice,\n      };\n    }\n    attempts.push({ label: \"native\", result: native });\n  }\n\n  if (choice === \"tsgo\" || choice === \"auto\") {\n    const tsgo = await runTsgoTypecheck(options.workspaceRoot, timeoutMs);\n    if (tsgo.exitCode === 0) {\n      return {\n        result: tsgo,\n        diagnostics: [],\n        label: choice === \"auto\" ? \"auto->tsgo\" : \"tsgo\",\n      };\n    }\n    attempts.push({ label: \"tsgo\", result: tsgo });\n  }\n\n  const fallback = await runTscTypecheck(options.workspaceRoot, scripts, timeoutMs);\n  return {\n    result: fallback,\n    diagnostics: [typecheckerFallbackDiagnostic(choice, attempts)],\n    label: `${choice}->tsc`,\n  };\n}"
       },
       "name": "runPreferredTypecheck",
@@ -106453,14 +109540,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runStandardImpactTests(\n  options: VerifyOptions,\n): Promise<{ steps: VerifyStep[]; diagnostics: Diagnostic[]; testCoverageReason?: string }> {\n  const started = Date.now();\n  const diagnostics: Diagnostic[] = [];\n  const steps: VerifyStep[] = [];\n  const plan = buildImpactTestPlan({\n    subcommand: \"run\",\n    workspaceRoot: options.workspaceRoot,\n    json: options.json,\n    write: false,\n    changed: true,\n    staged: false,\n    maxCost: \"standard\",\n    includeDocker: false,\n    includeBrowser: false,\n    bail: false,\n  });\n  const impactOnlyPlan = {\n    ...plan,\n    requiredChecks: [],\n  };\n  const commands = impactOnlyPlan.tests.map((test) => test.command);\n\n  if (commands.length === 0) {\n    const reason = plan.derivedOnly\n      ? \"changed files are derived generated artifacts only\"\n      : \"impact planner selected no test files for the current changes\";\n    steps.push(skippedStep(\"impact-tests\", \"no changed files selected an impact test\"));\n    diagnostics.push(\n      createDiagnostic({\n        severity: \"warning\",\n        code: FORGE_VERIFY_NO_TESTS_SELECTED,\n        message: \"standard verification did not select any impact tests; only non-test checks ran\",\n        fixHint: \"Run forge verify --strict when you need full test-suite coverage.\",\n        suggestedCommands: [\n          \"forge test plan --changed --json\",\n          \"forge verify --strict\",\n        ],\n      }),\n    );\n    return { steps, diagnostics, testCoverageReason: reason };\n  }\n\n  const record = await runImpactTestPlan(options.workspaceRoot, impactOnlyPlan, {\n    bail: false,\n    timeoutMs: resolveScriptTimeoutMs(options),\n  });\n  steps.push({\n    name: \"impact-tests\",\n    ok: record.failed.length === 0,\n    exitCode: record.failed.length === 0 ? 0 : 1,\n    command: \"forge test run --changed --max-cost standard --json\",\n    durationMs: Date.now() - started,\n    timedOut: record.results.some((result) => result.timedOut),\n    failureKind: firstFailureKind(record.results),\n  });\n  if (record.failed.length > 0) {\n    diagnostics.push(...diagnosticsForImpactTestRun(record));\n    diagnostics.push(\n      createDiagnostic({\n        severity: \"error\",\n        code: \"FORGE_VERIFY_TESTS\",\n        message: `impact-selected tests failed: ${record.failed.join(\", \")}; inspect .forge/test-runs/last.json for command output`,\n        suggestedCommands: [\n          \"forge test run --changed --max-cost standard --json\",\n          \"forge repair diagnose --from-last-test-run --json\",\n          \"forge verify --strict\",\n        ],\n      }),\n    );\n  }\n  return { steps, diagnostics };\n}"
       },
       "name": "runStandardImpactTests",
       "qualifiedName": "runStandardImpactTests",
       "span": {
-        "end": 52084,
-        "start": 49491
+        "end": 52230,
+        "start": 49637
       }
     },
     {
@@ -106504,14 +109591,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runStrictGraphChunkPool(\n  workspaceRoot: string,\n  chunks: VerifyTestGraphPlanChunk[],\n  timeoutMs: number,\n  jobs: number,\n  totalChunks = chunks.length,\n): Promise<{ results: Array<StrictGraphChunkResult | undefined>; timedOut: boolean }> {\n  const results: Array<StrictGraphChunkResult | undefined> = [];\n  let nextChunk = 0;\n  let stopScheduling = false;\n\n  async function runNextChunk(): Promise<void> {\n    while (!stopScheduling) {\n      const chunkIndex = nextChunk;\n      nextChunk += 1;\n      const chunk = chunks[chunkIndex];\n      if (!chunk) {\n        return;\n      }\n      const result = await runStrictGraphTestChunk(\n        workspaceRoot,\n        chunk.files,\n        chunk.index - 1,\n        totalChunks,\n        timeoutMs,\n      );\n      results[chunkIndex] = {\n        ...result,\n        files: chunk.files,\n        lane: chunk.lane,\n        chunkIndex: chunk.index,\n        chunkCount: totalChunks,\n      };\n      if (result.exitCode !== 0) {\n        stopScheduling = true;\n        return;\n      }\n    }\n  }\n\n  await Promise.all(Array.from({ length: jobs }, () => runNextChunk()));\n  return {\n    results,\n    timedOut: results.some((result) => result?.timedOut),\n  };\n}"
       },
       "name": "runStrictGraphChunkPool",
       "qualifiedName": "runStrictGraphChunkPool",
       "span": {
-        "end": 41031,
-        "start": 39824
+        "end": 41177,
+        "start": 39970
       }
     },
     {
@@ -106521,14 +109608,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function runStrictGraphTestChunk(\n  workspaceRoot: string,\n  chunk: string[],\n  chunkIndex: number,\n  chunkCount: number,\n  timeoutMs: number,\n): Promise<ScriptRunResult> {\n  const argv = resolveCommandArgv([\"bun\", \"test\", ...chunk, \"--timeout\", String(timeoutMs)]);\n  const chunkCommand = `bun test <TestGraph chunk ${chunkIndex + 1}/${chunkCount}, ${chunk.length} files> --timeout ${timeoutMs}`;\n  const chunkTempDir = mkdtempSync(join(tmpdir(), `forge-testgraph-${chunkIndex + 1}-`));\n  return spawnArgv(workspaceRoot, argv, timeoutMs, chunkCommand, {\n    TMP: chunkTempDir,\n    TEMP: chunkTempDir,\n    TMPDIR: chunkTempDir,\n    FORGE_TEST_TMPDIR: chunkTempDir,\n    FORGE_VERIFY_CHUNK_INDEX: String(chunkIndex + 1),\n    FORGE_VERIFY_CHUNK_COUNT: String(chunkCount),\n    FORGE_DEV_PORT: \"0\",\n  }).finally(() => {\n    rmSync(chunkTempDir, { recursive: true, force: true });\n  });\n}"
       },
       "name": "runStrictGraphTestChunk",
       "qualifiedName": "runStrictGraphTestChunk",
       "span": {
-        "end": 49126,
-        "start": 48244
+        "end": 49272,
+        "start": 48390
       }
     },
     {
@@ -106538,14 +109625,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runStrictGraphTests(\n  workspaceRoot: string,\n  timeoutMs: number,\n  testJobs?: number,\n): Promise<ScriptRunResult & {\n  fileCount: number;\n  chunkCount: number;\n  jobs: number;\n  isolatedJobs: number;\n  plan: VerifyTestGraphPlan;\n  failedFiles: string[];\n  failedChunk?: number;\n  reportPath?: string;\n}> {\n  const plan = buildStrictTestGraphPlan(workspaceRoot, testJobs);\n  if (plan.fileCount === 0) {\n    return {\n      exitCode: 1,\n      stdout: \"\",\n      stderr: \"TestGraph has no non-docker/browser tests\",\n      command: \"forge strict TestGraph tests\",\n      durationMs: 0,\n      timedOut: false,\n      spawnError: true,\n      fileCount: 0,\n      chunkCount: 0,\n      jobs: 0,\n      isolatedJobs: 0,\n      plan,\n      failedFiles: [],\n    };\n  }\n\n  const started = Date.now();\n  let stdout = \"\";\n  let stderr = \"\";\n  let timedOut = false;\n  let exitCode = 0;\n  let failedOutput: Pick<ScriptRunResult, \"stdout\" | \"stderr\"> | null = null;\n  const parallelChunks = plan.chunks.filter((chunk) => chunk.lane === \"parallel\");\n  const isolatedChunks = plan.chunks.filter((chunk) => chunk.lane === \"isolated\");\n  const serialChunks = plan.chunks.filter((chunk) => chunk.lane === \"serial\");\n\n  let command = `bun test <${plan.fileCount} TestGraph files in ${plan.chunkCount} chunks, ${plan.laneMode} lanes, total jobs ${plan.totalJobs}, parallel jobs ${plan.jobs}, isolated jobs ${plan.isolatedJobs}, isolated ${isolatedChunks.length}, serial ${serialChunks.length}> --timeout ${timeoutMs}`;\n  const parallelPool = () => runStrictGraphChunkPool(\n    workspaceRoot,\n    parallelChunks,\n    timeoutMs,\n    plan.jobs,\n    plan.chunkCount,\n  );\n  const isolatedPool = () => runStrictGraphChunkPool(\n    workspaceRoot,\n    isolatedChunks,\n    timeoutMs,\n    plan.isolatedJobs,\n    plan.chunkCount,\n  );\n  const [parallelRun, isolatedRun] = plan.laneMode === \"sequential\"\n    ? [await parallelPool(), await isolatedPool()]\n    : await Promise.all([parallelPool(), isolatedPool()]);\n  const orderedResults: StrictGraphChunkResult[] = [];\n  for (const result of parallelRun.results) {\n    if (result) {\n      orderedResults.push(result);\n    }\n  }\n  for (const result of isolatedRun.results) {\n    if (result) {\n      orderedResults.push(result);\n    }\n  }\n  timedOut = timedOut || parallelRun.timedOut;\n  timedOut = timedOut || isolatedRun.timedOut;\n\n  if (\n    parallelRun.results.every((result) => result?.exitCode === 0) &&\n    isolatedRun.results.every((result) => result?.exitCode === 0)\n  ) {\n    for (const chunk of serialChunks) {\n      const result = await runStrictGraphTestChunk(\n        workspaceRoot,\n        chunk.files,\n        chunk.index - 1,\n        plan.chunkCount,\n        timeoutMs,\n      );\n      orderedResults.push({\n        ...result,\n        files: chunk.files,\n        lane: chunk.lane,\n        chunkIndex: chunk.index,\n        chunkCount: plan.chunkCount,\n      });\n      timedOut = timedOut || result.timedOut;\n      if (result.exitCode !== 0) {\n        break;\n      }\n    }\n  }\n\n  writeTestGraphProfile(workspaceRoot, orderedResults);\n\n  let failedResult: StrictGraphChunkResult | undefined;\n  for (const result of orderedResults) {\n    if (!result) {\n      continue;\n    }\n    stdout += result.stdout;\n    stderr += result.stderr;\n    timedOut = timedOut || result.timedOut;\n    if (result.exitCode !== 0) {\n      exitCode = result.exitCode;\n      command = result.command;\n      failedOutput = { stdout: result.stdout, stderr: result.stderr };\n      failedResult = result;\n      break;\n    }\n  }\n\n  const report = writeStrictGraphTestRunRecord(\n    workspaceRoot,\n    plan,\n    orderedResults,\n    timeoutMs,\n    Date.now() - started,\n  );\n\n  return {\n    exitCode,\n    stdout: failedOutput?.stdout ?? stdout,\n    stderr: failedOutput?.stderr ?? stderr,\n    command,\n    durationMs: Date.now() - started,\n    timedOut,\n    fileCount: plan.fileCount,\n    chunkCount: plan.chunkCount,\n    jobs: plan.jobs,\n    isolatedJobs: plan.isolatedJobs,\n    plan,\n    failedFiles: failedResult?.files ?? [],\n    failedChunk: failedResult?.chunkIndex,\n    reportPath: `.forge/test-runs/${report.id}.json`,\n  };\n}"
       },
       "name": "runStrictGraphTests",
       "qualifiedName": "runStrictGraphTests",
       "span": {
-        "end": 48242,
-        "start": 44106
+        "end": 48388,
+        "start": 44252
       }
     },
     {
@@ -106742,14 +109829,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "async function runTestCommand(options: TestCommandOptions): Promise<ImpactResult> {\n  if (options.subcommand === \"authz\") {\n    return buildAuthzTestProof(options);\n  }\n  if (options.subcommand === \"explain\") {\n    return explainTest(options.workspaceRoot, options.testFile ?? \"\");\n  }\n  let plan: ImpactTestPlan;\n  if (options.subcommand === \"run\" && options.planPath) {\n    const raw = nodeFileSystem.readText(join(options.workspaceRoot, options.planPath));\n    plan = JSON.parse(raw ?? \"{}\") as ImpactTestPlan;\n  } else {\n    plan = buildImpactTestPlan(options);\n  }\n  if (options.write) {\n    writeTestPlan(options.workspaceRoot, plan);\n  }\n  if (options.subcommand === \"plan\") {\n    return { ok: true, plan, diagnostics: [], exitCode: 0 };\n  }\n  if (plan.requiredChecks.length === 0 && plan.tests.length === 0) {\n    const diagnostic = diag(\"warning\", \"FORGE_TEST_PLAN_EMPTY\", \"test plan has no commands to run\");\n    return { ok: true, plan, diagnostics: [diagnostic], exitCode: 0 };\n  }\n  const run = await runImpactTestPlan(options.workspaceRoot, plan, {\n    bail: options.bail,\n    report: options.report,\n    timeoutMs: options.timeoutMs,\n  });\n  return {\n    ok: run.failed.length === 0,\n    plan,\n    run,\n    diagnostics: diagnosticsForImpactTestRun(run),\n    exitCode: run.failed.length > 0 ? 1 : 0,\n  };\n}"
       },
       "name": "runTestCommand",
       "qualifiedName": "runTestCommand",
       "span": {
-        "end": 49036,
-        "start": 47716
+        "end": 48899,
+        "start": 47579
       }
     },
     {
@@ -106776,7 +109863,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runTscTypecheck(\n  workspaceRoot: string,\n  scripts: PackageScripts,\n  timeoutMs: number,\n): Promise<ScriptRunResult> {\n  if (scripts.typecheck) {\n    return runPackageScript(workspaceRoot, \"typecheck\", timeoutMs);\n  }\n  const argv = resolveCommandArgv([\"tsc\", \"--noEmit\"]);\n  return spawnArgv(workspaceRoot, argv, timeoutMs, \"tsc --noEmit\");\n}"
       },
       "name": "runTscTypecheck",
@@ -106793,7 +109880,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runTsgoTypecheck(workspaceRoot: string, timeoutMs: number): Promise<ScriptRunResult> {\n  const args = nativeTypecheckArgs();\n  const nativePreview = packageBinPath(workspaceRoot, \"@typescript/native-preview\", \"tsgo\");\n  if (nativePreview) {\n    return spawnArgv(\n      workspaceRoot,\n      argvForPackageBin(nativePreview, args),\n      timeoutMs,\n      \"@typescript/native-preview tsgo --noEmit\",\n    );\n  }\n  const argv = resolveCommandArgv([\"tsgo\", ...args]);\n  return spawnArgv(workspaceRoot, argv, timeoutMs, \"tsgo --noEmit\");\n}"
       },
       "name": "runTsgoTypecheck",
@@ -106912,14 +109999,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function runVerifyCommand(\n  options: VerifyOptions,\n): Promise<VerifyResult> {\n  const started = Date.now();\n  const steps: VerifyStep[] = [];\n  const diagnostics: Diagnostic[] = [];\n  const scripts = readPackageScripts(options.workspaceRoot);\n  const scriptTimeoutMs = resolveScriptTimeoutMs(options);\n  const profile = resolveVerifyProfile(options);\n  const frameworkWorkspace = isForgeOsFrameworkWorkspace(options.workspaceRoot);\n  const canRunInternalTests = options.internal || !frameworkWorkspace;\n  let testGraphPlan: VerifyTestGraphPlan | undefined;\n  let testCoverageReason: string | undefined;\n\n  if (options.testPlan) {\n    if (frameworkWorkspace && !options.internal) {\n      steps.push({\n        name: \"tests:framework-testgraph-plan\",\n        ok: true,\n        skipped: true,\n        skipReason: \"ForgeOS framework TestGraph is maintainer-only; use forge verify framework --test-plan --json\",\n      });\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"warning\",\n          code: \"FORGE_VERIFY_INTERNAL_TESTS_SKIPPED\",\n          message: \"Skipped ForgeOS framework TestGraph plan during app-level verify.\",\n          fixHint: \"Run forge verify framework --test-plan --json when maintaining ForgeOS itself.\",\n          suggestedCommands: [\n            \"forge verify framework --test-plan --json\",\n            \"forge verify --standard --json\",\n          ],\n        }),\n      );\n      return {\n        ok: true,\n        profile,\n        steps,\n        diagnostics,\n        durationMs: Date.now() - started,\n        exitCode: 0,\n      };\n    }\n    testGraphPlan = buildStrictTestGraphPlan(options.workspaceRoot, options.testJobs);\n    steps.push({\n      name: \"tests:testgraph-plan\",\n      ok: testGraphPlan.fileCount > 0,\n      skipped: false,\n      exitCode: testGraphPlan.fileCount > 0 ? 0 : 1,\n      command: `forge verify --strict --test-plan (${testGraphPlan.fileCount} files, ${testGraphPlan.chunkCount} chunks)`,\n      durationMs: Date.now() - started,\n    });\n    if (testGraphPlan.fileCount === 0) {\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"error\",\n          code: \"FORGE_VERIFY_TESTGRAPH_EMPTY\",\n          message: \"TestGraph has no non-docker/browser tests\",\n        }),\n      );\n    }\n    const ok = steps.every((step) => step.ok);\n    return {\n      ok,\n      profile,\n      steps,\n      diagnostics,\n      testGraphPlan,\n      durationMs: Date.now() - started,\n      exitCode: ok ? 0 : 1,\n    };\n  }\n\n  if (options.changed) {\n    const plan = buildImpactTestPlan({\n      subcommand: \"run\",\n      workspaceRoot: options.workspaceRoot,\n      json: options.json,\n      write: false,\n      changed: true,\n      staged: false,\n      maxCost: \"standard\",\n      includeDocker: false,\n      includeBrowser: false,\n      bail: false,\n    });\n    const record = await runImpactTestPlan(options.workspaceRoot, plan, {\n      bail: false,\n      timeoutMs: scriptTimeoutMs,\n    });\n    for (const result of record.results) {\n      steps.push({\n        name: result.command,\n        ok: result.ok,\n        exitCode: result.exitCode,\n        command: result.command,\n        durationMs: result.durationMs,\n        timedOut: result.timedOut,\n        failureKind: result.failureKind,\n      });\n    }\n    if (record.failed.length > 0) {\n      diagnostics.push(...diagnosticsForImpactTestRun(record));\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"error\",\n          code: \"FORGE_VERIFY_CHANGED_INCOMPLETE\",\n          message: `impact-based verification failed: ${record.failed.join(\", \")}; run forge test run --changed --json for details`,\n        }),\n      );\n    }\n    const ok = record.failed.length === 0;\n    return { ok, profile, steps, diagnostics, durationMs: Date.now() - started, exitCode: ok ? 0 : 1 };\n  }\n\n  printProgress(options, \"verify: generate-check\");\n  const generateStarted = Date.now();\n  const generateCheck = await runGenerateCommand({\n    workspaceRoot: options.workspaceRoot,\n    check: true,\n    dryRun: false,\n    json: false,\n    concurrency: 4,\n  });\n  steps.push({\n    name: \"generate-check\",\n    ok: generateCheck.exitCode === 0,\n    exitCode: generateCheck.exitCode,\n    durationMs: Date.now() - generateStarted,\n  });\n  steps.push({\n    name: \"agent-contract-check\",\n    ok: generateCheck.exitCode === 0,\n    exitCode: generateCheck.exitCode,\n    durationMs: Date.now() - generateStarted,\n  });\n  diagnostics.push(...generateCheck.errors, ...generateCheck.warnings);\n\n  printProgress(options, \"verify: forge-check\");\n  const checkStarted = Date.now();\n  const forgeCheck = await runCheckCommand(options.workspaceRoot, {\n    strictSecrets: options.strict || options.internal === true,\n  });\n  steps.push({\n    name: \"forge-check\",\n    ok: forgeCheck.exitCode === 0,\n    exitCode: forgeCheck.exitCode,\n    durationMs: Date.now() - checkStarted,\n  });\n  diagnostics.push(...forgeCheck.errors, ...forgeCheck.warnings);\n\n  if (profile === \"strict\" || profile === \"standard\" || profile === \"internal\") {\n    printProgress(options, \"verify: policy-check-strict\");\n    const policyStarted = Date.now();\n    const policyCheck = await runPolicyCommand({\n      subcommand: \"check\",\n      workspaceRoot: options.workspaceRoot,\n      json: false,\n      strictPolicies: true,\n    });\n    steps.push({\n      name: \"policy-check-strict\",\n      ok: policyCheck.exitCode === 0,\n      exitCode: policyCheck.exitCode,\n      durationMs: Date.now() - policyStarted,\n    });\n    if (policyCheck.diagnostics) {\n      diagnostics.push(...policyCheck.diagnostics);\n    }\n    if (policyCheck.exitCode !== 0) {\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"error\",\n          code: FORGE_VERIFY_POLICY,\n          message: \"forge policy check --strict-policies failed\",\n        }),\n      );\n    }\n\n    printProgress(options, \"verify: auth-check\");\n    const authStarted = Date.now();\n    const authCheck = await runAuthCommand({\n      subcommand: \"check\",\n      workspaceRoot: options.workspaceRoot,\n      json: false,\n    });\n    steps.push({\n      name: \"auth-check\",\n      ok: authCheck.exitCode === 0,\n      exitCode: authCheck.exitCode,\n      durationMs: Date.now() - authStarted,\n    });\n    if (!authCheck.ok && authCheck.error) {\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"error\",\n          code: authCheck.error.code,\n          message: authCheck.error.message,\n        }),\n      );\n    }\n\n    printProgress(options, \"verify: rls-check\");\n    const rlsStarted = Date.now();\n    const rlsCheck = await runRlsCommand({\n      subcommand: \"check\",\n      workspaceRoot: options.workspaceRoot,\n      db: \"pglite\",\n      json: false,\n    });\n    steps.push({\n      name: \"rls-check\",\n      ok: rlsCheck.exitCode === 0,\n      exitCode: rlsCheck.exitCode,\n      durationMs: Date.now() - rlsStarted,\n    });\n    diagnostics.push(...rlsCheck.diagnostics);\n\n    const agentTargets = configuredAgentTargets(options.workspaceRoot);\n    if (agentTargets.length === 0) {\n      steps.push(skippedStep(\"agent-adapter-check\", \"no agent adapter exports configured\"));\n    } else {\n      for (const target of agentTargets) {\n        const agentCheck = runAgentCheck({\n          subcommand: \"check\",\n          workspaceRoot: options.workspaceRoot,\n          json: false,\n          target,\n          dryRun: false,\n          force: false,\n          preserveUserSections: true,\n          skills: true,\n          rules: true,\n        });\n        steps.push({\n          name: `agent-adapter-check:${target}`,\n          ok: agentCheck.exitCode === 0,\n          exitCode: agentCheck.exitCode,\n        });\n        diagnostics.push(...agentCheck.diagnostics);\n      }\n    }\n  }\n\n  if (options.skipTypecheck) {\n    steps.push(skippedStep(\"typecheck\", \"--skip-typecheck\"));\n  } else {\n    const typechecker = resolveTypechecker(options);\n    printProgress(options, `verify: typecheck (${typechecker}, ${scriptTimeoutMs}ms timeout)`);\n    const { result: typecheck, diagnostics: typecheckDiagnostics } = await runPreferredTypecheck(\n      options,\n      scripts,\n      scriptTimeoutMs,\n    );\n    steps.push({\n      name: \"typecheck\",\n      ok: typecheck.exitCode === 0,\n      exitCode: typecheck.exitCode,\n      command: typecheck.command,\n      durationMs: typecheck.durationMs,\n      timedOut: typecheck.timedOut,\n      failureKind: packageScriptFailureKind(typecheck),\n    });\n    diagnostics.push(...typecheckDiagnostics);\n    if (typecheck.timedOut) {\n      diagnostics.push(timedOutDiagnostic(\"typecheck\", scriptTimeoutMs));\n    } else if (typecheck.exitCode !== 0) {\n      diagnostics.push(\n        packageScriptFailureDiagnostic(\"typecheck\", \"FORGE_VERIFY_TYPECHECK\", typecheck),\n      );\n    }\n  }\n\n  if (profile === \"smoke\" && nodeFileSystem.exists(join(options.workspaceRoot, \"web\"))) {\n    printProgress(options, \"verify: ui-audit\");\n    const uiStarted = Date.now();\n    const uiAudit = await runUiCommand({\n      subcommand: \"audit\",\n      workspaceRoot: options.workspaceRoot,\n      json: false,\n      headed: false,\n      browser: \"chromium\",\n      trace: \"off\",\n      screenshot: \"off\",\n      video: \"off\",\n      baseUrl: \"http://127.0.0.1:3000\",\n      runtimeUrl: \"http://127.0.0.1:3765\",\n      reuseServers: true,\n      startServers: false,\n      all: false,\n      changed: false,\n      ci: false,\n      timeoutMs: 30_000,\n    });\n    steps.push({\n      name: \"ui-audit\",\n      ok: uiAudit.exitCode === 0,\n      exitCode: uiAudit.exitCode,\n      durationMs: Date.now() - uiStarted,\n    });\n    diagnostics.push(...uiAudit.diagnostics);\n  }\n\n  if (profile === \"smoke\") {\n    steps.push(skippedStep(\"tests\", \"--smoke/--fast\"));\n  } else if (options.skipTests) {\n    steps.push(skippedStep(\"tests\", \"--skip-tests\"));\n  } else if (profile === \"standard\") {\n    printProgress(options, \"verify: impact-tests (standard profile)\");\n    const impact = await runStandardImpactTests(options);\n    steps.push(...impact.steps);\n    diagnostics.push(...impact.diagnostics);\n    testCoverageReason = impact.testCoverageReason;\n    steps.push(skippedStep(\"tests\", \"--standard uses impact-selected tests; use --strict for the full test script\"));\n  } else if ((profile === \"strict\" || profile === \"internal\") && !options.fullTests) {\n    if (!canRunInternalTests) {\n      steps.push({\n        name: \"tests:framework-testgraph\",\n        ok: true,\n        skipped: true,\n        skipReason: \"ForgeOS framework tests are maintainer-only; use forge verify framework or --internal\",\n      });\n      diagnostics.push(\n        createDiagnostic({\n          severity: \"warning\",\n          code: \"FORGE_VERIFY_INTERNAL_TESTS_SKIPPED\",\n          message: \"Skipped ForgeOS framework tests during app-level verify.\",\n          fixHint: \"Run forge verify framework when maintaining ForgeOS itself. App projects still run their own TestGraph under forge verify --strict.\",\n          suggestedCommands: [\n            \"forge verify framework\",\n            \"forge verify --internal\",\n            \"forge verify --standard\",\n          ],\n        }),\n      );\n    } else {\n    printProgress(options, `verify: tests (strict TestGraph, ${scriptTimeoutMs}ms timeout)`);\n    const tests = await runStrictGraphTests(options.workspaceRoot, scriptTimeoutMs, options.testJobs);\n    testGraphPlan = tests.plan;\n    steps.push({\n      name: \"tests:testgraph-strict\",\n      ok: tests.exitCode === 0,\n      exitCode: tests.exitCode,\n      command: tests.command,\n      durationMs: tests.durationMs,\n      timedOut: tests.timedOut,\n      failureKind: packageScriptFailureKind(tests),\n    });\n    if (tests.timedOut) {\n      diagnostics.push(timedOutDiagnostic(\"test\", scriptTimeoutMs));\n    } else if (tests.exitCode !== 0) {\n      diagnostics.push(\n        strictGraphFailureDiagnostic(tests),\n      );\n    }\n    }\n  } else if ((profile === \"strict\" || profile === \"internal\") && options.fullTests && !canRunInternalTests) {\n    steps.push({\n      name: \"tests:framework-full\",\n      ok: true,\n      skipped: true,\n      skipReason: \"ForgeOS framework package tests are maintainer-only; use forge verify framework --full or --internal --full\",\n    });\n    diagnostics.push(\n      createDiagnostic({\n        severity: \"warning\",\n        code: \"FORGE_VERIFY_INTERNAL_TESTS_SKIPPED\",\n        message: \"Skipped ForgeOS framework package tests during app-level verify.\",\n        fixHint: \"Run forge verify framework --full when maintaining ForgeOS itself.\",\n        suggestedCommands: [\n          \"forge verify framework --full\",\n          \"forge verify --internal --full\",\n          \"forge verify --standard\",\n        ],\n      }),\n    );\n  } else if (!scripts.test) {\n    steps.push(skippedStep(\"tests\", \"no test script in package.json\"));\n  } else {\n    printProgress(options, `verify: tests (${scriptTimeoutMs}ms timeout)`);\n    const tests = await runPackageScript(options.workspaceRoot, \"test\", scriptTimeoutMs);\n    steps.push({\n      name: \"tests\",\n      ok: tests.exitCode === 0,\n      exitCode: tests.exitCode,\n      command: tests.command,\n      durationMs: tests.durationMs,\n      timedOut: tests.timedOut,\n      failureKind: packageScriptFailureKind(tests),\n    });\n    if (tests.timedOut) {\n      diagnostics.push(timedOutDiagnostic(\"test\", scriptTimeoutMs));\n    } else if (tests.exitCode !== 0) {\n      diagnostics.push(\n        packageScriptFailureDiagnostic(\"test\", \"FORGE_VERIFY_TESTS\", tests),\n      );\n    }\n  }\n\n  if (profile === \"smoke\") {\n    steps.push(skippedStep(\"eslint\", \"--smoke/--fast\"));\n  } else if (options.skipEslint) {\n    steps.push(skippedStep(\"eslint\", \"--skip-eslint\"));\n  } else {\n    const lint = await lintForgeGuards(options.workspaceRoot);\n    steps.push({\n      name: \"eslint\",\n      ok: lint.exitCode === 0,\n      exitCode: lint.exitCode,\n    });\n    diagnostics.push(...lint.diagnostics);\n  }\n\n  const ok = steps.every((step) => step.ok);\n  return {\n    ok,\n    profile,\n    steps,\n    diagnostics,\n    testGraphPlan,\n    testCoverageReason,\n    durationMs: Date.now() - started,\n    exitCode: ok ? 0 : 1,\n  };\n}"
       },
       "name": "runVerifyCommand",
       "qualifiedName": "runVerifyCommand",
       "span": {
-        "end": 66749,
-        "start": 52700
+        "end": 66895,
+        "start": 52846
       }
     },
     {
@@ -107745,14 +110832,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function sanitizePackageName(name: string): string {\n  return name\n    .trim()\n    .toLowerCase()\n    .replace(/[^a-z0-9._-]+/g, \"-\")\n    .replace(/-+/g, \"-\")\n    .replace(/^[._-]+|[._-]+$/g, \"\") || \"forge-app\";\n}"
       },
       "name": "sanitizePackageName",
       "qualifiedName": "sanitizePackageName",
       "span": {
-        "end": 6648,
-        "start": 6435
+        "end": 6986,
+        "start": 6773
       }
     },
     {
@@ -107892,20 +110979,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "c4a69990837ccde956f5cc6a4cf931f7fe1b82cd7b18ef45870664a618fec5f2",
+      "contentHash": "8cfa715895d666cd1a57e4af170a3b662920f8875d4d133176a63c658e15b55f",
       "file": "src/forge/impact/index.ts",
       "id": "87c3f6d4ace0fc90db43ec9c90d344e14eb4afab3b2118b951769b693bf44fad",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
-        "sourceSlice": "function scopeGitFilesToWorkspace(workspaceRoot: string, files: string[]): string[] {\n  const root = gitRoot(workspaceRoot);\n  if (!root) {\n    return files;\n  }\n  const gitTop = normalize(resolve(root));\n  const workspace = normalize(resolve(workspaceRoot));\n  if (gitTop === workspace) {\n    return files;\n  }\n\n  const prefix = normalize(relative(gitTop, workspace));\n  if (!prefix || prefix.startsWith(\"..\") || prefix.includes(\":\")) {\n    return files;\n  }\n\n  return files\n    .filter((file) => file.startsWith(`${prefix}/`))\n    .map((file) => file.slice(prefix.length + 1))\n    .filter(Boolean)\n    .sort();\n}"
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
+        "sourceSlice": "function scopeGitFilesToWorkspace(workspaceRoot: string, files: string[]): string[] {\n  const prefix = gitWorkspacePrefix(workspaceRoot);\n  if (prefix === null || prefix === \"\") {\n    return files;\n  }\n\n  return files\n    .filter((file) => file.startsWith(`${prefix}/`))\n    .map((file) => file.slice(prefix.length + 1))\n    .filter(Boolean)\n    .sort();\n}"
       },
       "name": "scopeGitFilesToWorkspace",
       "qualifiedName": "scopeGitFilesToWorkspace",
       "span": {
-        "end": 5753,
-        "start": 5139
+        "end": 5509,
+        "start": 5153
       }
     },
     {
@@ -108408,14 +111495,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function selectTests(\n  testGraph: TestGraph,\n  impact: ImpactedSystems,\n  changedFiles: string[],\n  options: {\n    workspaceRoot: string;\n    maxCost: TestCost;\n    includeDocker: boolean;\n    includeBrowser: boolean;\n    lastRunByCommand: Map<string, TestRunStep>;\n  },\n): TargetedTest[] {\n  const selected: TargetedTest[] = [];\n  for (const test of testGraph.tests) {\n    const changedTestFile = changedFiles.includes(test.file);\n    if (test.confidence === \"weak\" && !changedTestFile) continue;\n    if (!costAllowed(test.cost, options.maxCost, options.includeDocker, options.includeBrowser)) continue;\n    const reason =\n      intersects(test.covers.commands, impact.runtime.commands)?.replace(/^/, \"covers impacted command \") ??\n      intersects(test.covers.queries, impact.runtime.queries)?.replace(/^/, \"covers impacted query \") ??\n      intersects(test.covers.liveQueries, impact.runtime.liveQueries)?.replace(/^/, \"covers impacted liveQuery \") ??\n      intersects(test.covers.actions, impact.runtime.actions)?.replace(/^/, \"covers impacted action \") ??\n      intersects(test.covers.workflows, impact.runtime.workflows)?.replace(/^/, \"covers impacted workflow \") ??\n      intersects(test.covers.tables, impact.data.tables)?.replace(/^/, \"covers impacted table \") ??\n      intersects(test.covers.policies, impact.policies)?.replace(/^/, \"covers impacted policy \") ??\n      intersects(test.covers.components, impact.frontend.components)?.replace(/^/, \"covers impacted component \") ??\n      intersects(test.covers.packages, impact.packages)?.replace(/^/, \"covers impacted package \");\n    if (!reason && !changedTestFile) continue;\n    const command = testCommandForFile(options.workspaceRoot, test.file);\n    const legacyCommand = legacyBunTestCommand(test.file);\n    const lastRun =\n      options.lastRunByCommand.get(command) ?? options.lastRunByCommand.get(legacyCommand);\n    selected.push({\n      file: test.file,\n      command,\n      reason: reason ?? \"changed test file\",\n      cost: test.cost,\n      confidence: test.confidence,\n      ...(lastRun ? { lastDurationMs: lastRun.durationMs, lastRunOk: lastRun.ok } : {}),\n    });\n  }\n  return selected.sort((a, b) => {\n    const failedBias = Number(a.lastRunOk === false) - Number(b.lastRunOk === false);\n    if (failedBias !== 0) return -failedBias;\n    const costBias = COST_ORDER.indexOf(a.cost) - COST_ORDER.indexOf(b.cost);\n    if (costBias !== 0) return costBias;\n    const durationBias = (a.lastDurationMs ?? Number.MAX_SAFE_INTEGER) - (b.lastDurationMs ?? Number.MAX_SAFE_INTEGER);\n    if (durationBias !== 0) return durationBias;\n    return a.file.localeCompare(b.file);\n  });\n}"
       },
       "name": "selectTests",
       "qualifiedName": "selectTests",
       "span": {
-        "end": 26400,
-        "start": 23754
+        "end": 26263,
+        "start": 23617
       }
     },
     {
@@ -108425,14 +111512,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function selectUiScenarioChecks(\n  impact: ImpactedSystems,\n  includeBrowser: boolean,\n): TestPlanCheck[] {\n  if (!includeBrowser) return [];\n  const checks: TestPlanCheck[] = [];\n  const hasFrontend = impact.frontend.components.length > 0 || impact.frontend.pages.length > 0;\n  if (hasFrontend) {\n    checks.push({\n      kind: \"forge\",\n      command: \"forge ui smoke --scenario home-loads\",\n      cost: \"browser\",\n      reason: \"frontend impact should load in a browser\",\n    });\n  }\n  if (impact.runtime.liveQueries.length > 0 || impact.data.tables.length > 0) {\n    checks.push({\n      kind: \"forge\",\n      command: \"forge ui smoke --scenario tickets-live-update\",\n      cost: \"browser\",\n      reason: \"liveQuery/data impact should verify browser reactivity\",\n    });\n  }\n  if (impact.policies.length > 0) {\n    checks.push({\n      kind: \"forge\",\n      command: \"forge ui smoke --scenario policy-denied-visible\",\n      cost: \"browser\",\n      reason: \"policy impact should verify browser error/traceId handling\",\n    });\n  }\n  return checks;\n}"
       },
       "name": "selectUiScenarioChecks",
       "qualifiedName": "selectUiScenarioChecks",
       "span": {
-        "end": 27780,
-        "start": 26735
+        "end": 27643,
+        "start": 26598
       }
     },
     {
@@ -108484,6 +111571,23 @@ export const appGraph = {
       "span": {
         "end": 91232,
         "start": 89457
+      }
+    },
+    {
+      "contentHash": "1e4e1c83c118a9e9fed7e49b2ae81ae1fa531740039ca28060e954bc4c743e4d",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "77bf46513bcf33f23887bb11ef7e8604829323a50c172f2fce67c66b919c9f51",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "function semanticFingerprint(event: UncommittedControlEvent): string {\n  return stableStringify({\n    eventId: event.eventId,\n    rootExecutionId: event.rootExecutionId,\n    idempotencyKey: event.idempotencyKey ?? null,\n    payload: event.payload,\n  });\n}"
+      },
+      "name": "semanticFingerprint",
+      "qualifiedName": "semanticFingerprint",
+      "span": {
+        "end": 1200,
+        "start": 945
       }
     },
     {
@@ -111139,6 +114243,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9f907408129031c138d9384e7589ef4b09741cc792159cd4a9f264f9c56c31d1",
+      "file": "src/forge/agent-fabric/dictionary.ts",
+      "id": "a67ab53eec9a6697793f89680071b92e742474d3d329ca3d84a29cfdb28c13d3",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e24022652b6ea00b267b073bc50898e999311dc43b049325819f82c5ed04fb5c",
+        "sourceSlice": "function setOwn<T>(record: Record<string, T>, key: string, value: T): T {\n  Object.defineProperty(record, key, {\n    value, enumerable: true, configurable: true, writable: true,\n  });\n  return value;\n}"
+      },
+      "name": "setOwn",
+      "qualifiedName": "setOwn",
+      "span": {
+        "end": 531,
+        "start": 330
+      }
+    },
+    {
       "contentHash": "dec5260c39935876dbe15b3616b50d43006319ea17a5e6d549b4518230c69359",
       "file": "src/forge/runtime/telemetry/sinks/posthog.ts",
       "id": "55a5f2968026f667b0febb1890c6fdad974c1215150f6a88bec985f29e7d8624",
@@ -111238,6 +114359,23 @@ export const appGraph = {
       "span": {
         "end": 2413,
         "start": 2300
+      }
+    },
+    {
+      "contentHash": "26a945cb937b457acd64fa0449afa2739c198725f16a9a2f0bc9b4675853ed4a",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "811e43c6a1c55daf94ac0ec1c516bb5ee34c1dc446fdf9fdff2d2740014165d1",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function sha256Digest(canonicalValue: string): Digest {\n  return `sha256:${createHash(\"sha256\").update(canonicalValue).digest(\"hex\")}`;\n}"
+      },
+      "name": "sha256Digest",
+      "qualifiedName": "sha256Digest",
+      "span": {
+        "end": 4854,
+        "start": 4717
       }
     },
     {
@@ -111706,7 +114844,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function skippedStep(name: string, reason: string): VerifyStep {\n  return {\n    name,\n    ok: true,\n    skipped: true,\n    skipReason: reason,\n  };\n}"
       },
       "name": "skippedStep",
@@ -111904,6 +115042,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "807b99599433af966bb376160ffa2464d580662f1fdd0218017451be65ea3383",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "577e48ee73c94df45a46de46e78cd53d81e7e71314213a2487e9e0b8406d07c9",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "function snapshotFromState(state: ControlState): ResourceLedgerSnapshot {\n  return {\n    definitions: structuredClone(state.resourceDefinitions),\n    reserved: structuredClone(state.resourceReserved),\n    consumed: structuredClone(state.resourceConsumed),\n    ownerReserved: structuredClone(state.resourceOwnerReserved),\n    ownerConsumed: structuredClone(state.resourceOwnerConsumed),\n    reservations: structuredClone(state.resourceReservations),\n  };\n}"
+      },
+      "name": "snapshotFromState",
+      "qualifiedName": "snapshotFromState",
+      "span": {
+        "end": 2654,
+        "start": 2199
+      }
+    },
+    {
+      "contentHash": "e491501ca5af4d0b771f75cddda5f68c4b89762bf26bddd3876bbba50d10694c",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "dc12ecf4176c41c6364af439881511a14f188c06caa1ffeb0976996ce43a2f5a",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "function snapshotHasUsage(snapshot: ResourceLedgerSnapshot): boolean {\n  return Object.values(snapshot.reserved).some((value) => value !== 0) ||\n    Object.values(snapshot.consumed).some((value) => value !== 0) ||\n    Object.keys(snapshot.ownerReserved).length > 0 ||\n    Object.keys(snapshot.ownerConsumed).length > 0 ||\n    Object.keys(snapshot.reservations).length > 0;\n}"
+      },
+      "name": "snapshotHasUsage",
+      "qualifiedName": "snapshotHasUsage",
+      "span": {
+        "end": 3030,
+        "start": 2656
+      }
+    },
+    {
       "contentHash": "326e64d512a03b0a4c9e59141c7deee15163959a90cc3f616020829c1b2a29ac",
       "file": "src/forge/compiler/integration/add.ts",
       "id": "4bd359e206408f09cd5a52a94a86b59371eaaeb2f85cbd893a7a6ca7255291d8",
@@ -111995,14 +115167,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function sortImpact(impact: ImpactedSystems): ImpactedSystems {\n  for (const values of [\n    impact.data.tables,\n    impact.data.fields,\n    impact.runtime.commands,\n    impact.runtime.queries,\n    impact.runtime.liveQueries,\n    impact.runtime.actions,\n    impact.runtime.workflows,\n    impact.frontend.components,\n    impact.frontend.pages,\n    impact.policies,\n    impact.packages,\n    impact.generatedArtifacts,\n    impact.deploy,\n  ]) {\n    values.sort();\n  }\n  return impact;\n}"
       },
       "name": "sortImpact",
       "qualifiedName": "sortImpact",
       "span": {
-        "end": 3929,
-        "start": 3446
+        "end": 3910,
+        "start": 3427
       }
     },
     {
@@ -112074,6 +115246,57 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "06f49952087a8c550bfb175bb2a00f7d3475348f3381b14fd8658e45719f8df3",
+      "file": "src/forge/agent-fabric/conductor.ts",
+      "id": "2b3471771d1db4daf7db343d62a60c89c1103cbca3937bc8a0ed1a33b582ba3e",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "e9dece6027824172eb15b5e2813be5f3db8fb3ef88910b779c7e1ac915de9cd3",
+        "sourceSlice": "function sortedDefinitions(definitions: Readonly<Record<string, ResourceDefinition>>): ResourceDefinition[] {\n  return Object.values(definitions)\n    .map((definition) => ({ ...definition }))\n    .sort((left, right) => left.resource.localeCompare(right.resource));\n}"
+      },
+      "name": "sortedDefinitions",
+      "qualifiedName": "sortedDefinitions",
+      "span": {
+        "end": 1647,
+        "start": 1381
+      }
+    },
+    {
+      "contentHash": "1538296fdccf45160b6a5284c210e3915e37b322c60af0791bc6a8af780a43ed",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "0a5f262bb279a44d1c36910d5d72a5031e88f3d8c879da05b28f90115dd713e3",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "function sortedDefinitions(\n  definitions: Readonly<Record<string, ResourceDefinition>>,\n): ResourceDefinition[] {\n  return Object.values(definitions)\n    .map((definition) => ({ ...definition }))\n    .sort((left, right) => left.resource.localeCompare(right.resource));\n}"
+      },
+      "name": "sortedDefinitions",
+      "qualifiedName": "sortedDefinitions",
+      "span": {
+        "end": 1549,
+        "start": 1278
+      }
+    },
+    {
+      "contentHash": "db9cec3477be390c4fd7572fece52728e971ab81c40dfb70e94eae29551298c7",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "e06a060d995ac9e9c3dca8ea74b05863ba54c6b082bc302cab3c65501ccd3946",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function sortedDefinitions(definitions: readonly ResourceDefinition[]): ResourceDefinition[] {\n  const byName = new Map<string, ResourceDefinition>();\n  for (const definition of definitions) {\n    if (byName.has(definition.resource)) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Duplicate resource definition ${definition.resource}`);\n    }\n    if (!Number.isFinite(definition.limit) || definition.limit < 0) {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", `Invalid resource limit ${definition.resource}`);\n    }\n    byName.set(definition.resource, { ...definition });\n  }\n  return [...byName.values()].sort((a, b) => a.resource.localeCompare(b.resource));\n}"
+      },
+      "name": "sortedDefinitions",
+      "qualifiedName": "sortedDefinitions",
+      "span": {
+        "end": 3248,
+        "start": 2572
+      }
+    },
+    {
       "contentHash": "5e24226ebeaab3f0698463c35bcfc847f2128c45567ea7aa0ef008cbd35116ad",
       "file": "src/forge/cli/commands.ts",
       "id": "1736075f79622bd588e13eeb10e51bba7f1ca254abb24f7ab9aaa1d1a01394d4",
@@ -112114,14 +115337,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function sourceFromOptions(options: ImpactCommandOptions | TestCommandOptions): ImpactSource {\n  if (options.staged) return { mode: \"staged\", base: \"index\" };\n  if (options.since) return { mode: \"since\", base: options.since };\n  if (options.featureId) return { mode: \"feature\", id: options.featureId };\n  if (options.refactorId) return { mode: \"refactor\", id: options.refactorId };\n  if (options.upgradeId) return { mode: \"upgrade\", id: options.upgradeId };\n  return { mode: \"changed\", base: \"HEAD\" };\n}"
       },
       "name": "sourceFromOptions",
       "qualifiedName": "sourceFromOptions",
       "span": {
-        "end": 6445,
-        "start": 5942
+        "end": 6201,
+        "start": 5698
       }
     },
     {
@@ -112233,14 +115456,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function sourceRepoForgeBin(): string | null {\n  const candidate = fileURLToPath(new URL(\"../../../bin/forge.mjs\", import.meta.url));\n  return nodeFileSystem.exists(candidate) ? candidate : null;\n}"
       },
       "name": "sourceRepoForgeBin",
       "qualifiedName": "sourceRepoForgeBin",
       "span": {
-        "end": 33582,
-        "start": 33385
+        "end": 33445,
+        "start": 33248
       }
     },
     {
@@ -112335,7 +115558,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function spawnArgv(\n  workspaceRoot: string,\n  argv: string[],\n  timeoutMs: number,\n  command = argv.join(\" \"),\n  envOverrides?: Record<string, string>,\n): Promise<ScriptRunResult> {\n  const started = Date.now();\n\n  return new Promise((resolve) => {\n    let settled = false;\n    let timedOut = false;\n    let child: ReturnType<typeof spawn>;\n    const spawnCommand = wrapWindowsCommandScript(argv);\n    try {\n      child = spawn(spawnCommand[0]!, spawnCommand.slice(1), {\n        cwd: workspaceRoot,\n        env: envOverrides ? { ...process.env, ...envOverrides } : process.env,\n        stdio: [\"ignore\", \"pipe\", \"pipe\"],\n        windowsHide: true,\n      });\n    } catch (error) {\n      resolve({\n        exitCode: 1,\n        stdout: \"\",\n        stderr: error instanceof Error ? error.message : String(error),\n        command,\n        durationMs: Date.now() - started,\n        timedOut: false,\n        spawnError: true,\n      });\n      return;\n    }\n\n    let stdout = \"\";\n    let stderr = \"\";\n    const timer = setTimeout(() => {\n      timedOut = true;\n      try {\n        child.kill();\n      } catch {\n        // Process may already have exited.\n      }\n    }, timeoutMs);\n\n    child.stdout?.on(\"data\", (chunk) => {\n      stdout += String(chunk);\n    });\n    child.stderr?.on(\"data\", (chunk) => {\n      stderr += String(chunk);\n    });\n    child.on(\"error\", (error) => {\n      clearTimeout(timer);\n      if (!settled) {\n        settled = true;\n        resolve({\n          exitCode: 1,\n          stdout,\n          stderr: error instanceof Error ? error.message : String(error),\n          command,\n          durationMs: Date.now() - started,\n          timedOut,\n          spawnError: true,\n        });\n      }\n    });\n    child.on(\"close\", (code) => {\n      clearTimeout(timer);\n      if (!settled) {\n        settled = true;\n        resolve({\n          exitCode: timedOut ? 1 : code ?? 1,\n          stdout,\n          stderr,\n          command,\n          durationMs: Date.now() - started,\n          timedOut,\n        });\n      }\n    });\n  });\n}"
       },
       "name": "spawnArgv",
@@ -112369,14 +115592,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "async function spawnCommand(\n  command: string,\n  args: string[],\n  cwd: string,\n): Promise<number> {\n  let argv = resolvePackageManagerArgv([command, ...args]);\n  if (process.platform === \"win32\" && /\\.(cmd|bat)$/i.test(argv[0] ?? \"\")) {\n    argv = [process.env.ComSpec ?? \"cmd.exe\", \"/d\", \"/c\", command, ...args];\n  }\n  return new Promise<number>((resolveExitCode) => {\n    let child: ReturnType<typeof spawn>;\n    try {\n      child = spawn(argv[0]!, argv.slice(1), {\n        cwd,\n        stdio: [\"ignore\", \"inherit\", \"inherit\"],\n        windowsHide: true,\n      });\n    } catch {\n      resolveExitCode(1);\n      return;\n    }\n    child.on(\"error\", () => resolveExitCode(1));\n    child.on(\"close\", (code) => resolveExitCode(code ?? 1));\n  });\n}"
       },
       "name": "spawnCommand",
       "qualifiedName": "spawnCommand",
       "span": {
-        "end": 9111,
-        "start": 8365
+        "end": 9449,
+        "start": 8703
       }
     },
     {
@@ -112437,7 +115660,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "async function spawnPackageRun(\n  workspaceRoot: string,\n  scriptName: string,\n  timeoutMs: number,\n): Promise<ScriptRunResult> {\n  const packageManager = detectPackageManager(workspaceRoot);\n  let argv = resolvePackageManagerArgv([packageManager, \"run\", scriptName]);\n  if (process.platform === \"win32\" && /\\.(cmd|bat)$/i.test(argv[0] ?? \"\")) {\n    argv = [process.env.ComSpec ?? \"cmd.exe\", \"/d\", \"/c\", packageManager, \"run\", scriptName];\n  }\n  return spawnArgv(workspaceRoot, argv, timeoutMs, argv.join(\" \"));\n}"
       },
       "name": "spawnPackageRun",
@@ -113179,6 +116402,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "4a215af0f7817dfdb02ddf6988c955f33e92c8c3ad51998224500b282d429273",
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "id": "e2b2a081ec8adaf889d9890775a9f83927efbf7eef4afcf1f3c699dab8a006e6",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7ab4183c323c7efef0a2c146607932448cde3905e89afd8e7cd340f31c045d39",
+        "sourceSlice": "function stableStringify(value: unknown): string {\n  return JSON.stringify(normalize(value, new Set<object>()));\n}"
+      },
+      "name": "stableStringify",
+      "qualifiedName": "stableStringify",
+      "span": {
+        "end": 4708,
+        "start": 4594
+      }
+    },
+    {
       "contentHash": "ec6b06ab451b369fe15378b3f5cd589560ab426b3fed8a2b2a22d12dd6835980",
       "file": "src/forge/react/index.ts",
       "id": "f86d1761a16da1fa1f7a8f7f5bb6729db9ceaedc01f6e77b6c489c7321e05268",
@@ -113383,6 +116623,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "3be73a55105692424451e2abc37ccea9fc827b5e99e7a5125f44171c64231058",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "eb5fc45cbcc6cec9cbaaaf7aa405198ab556729dc086f86668bd5bcc95312673",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "function stateLedgerProjection(state: ControlState) {\n  return {\n    definitions: state.resourceDefinitions,\n    reserved: state.resourceReserved,\n    consumed: state.resourceConsumed,\n    ownerReserved: state.resourceOwnerReserved,\n    ownerConsumed: state.resourceOwnerConsumed,\n    reservations: state.resourceReservations,\n  };\n}"
+      },
+      "name": "stateLedgerProjection",
+      "qualifiedName": "stateLedgerProjection",
+      "span": {
+        "end": 2197,
+        "start": 1864
+      }
+    },
+    {
       "contentHash": "f23aecd2f034740b8428f4dbcba550bf678fa4b4520af4b4e6e6704e493c4d2d",
       "file": "src/forge/agent-memory/normalize.ts",
       "id": "cee4bc817f306eadaec8df09f8c3d9764d8403b67bbfe2aa508edeaff8fcf6c9",
@@ -113474,14 +116731,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function strictGraphChunkToTestRunStep(result: StrictGraphChunkResult, timeoutMs: number): TestRunStep & {\n  files: string[];\n  lane: StrictTestLane;\n  chunkIndex: number;\n  chunkCount: number;\n  reproduceCommand: string;\n} {\n  return {\n    command: result.command,\n    ok: result.exitCode === 0,\n    exitCode: result.exitCode,\n    durationMs: result.durationMs,\n    timedOut: result.timedOut,\n    failureKind: packageScriptFailureKind(result),\n    stdout: result.stdout,\n    stderr: result.stderr,\n    files: result.files,\n    lane: result.lane,\n    chunkIndex: result.chunkIndex,\n    chunkCount: result.chunkCount,\n    reproduceCommand: `bun test ${result.files.join(\" \")} --timeout ${timeoutMs}`,\n  };\n}"
       },
       "name": "strictGraphChunkToTestRunStep",
       "qualifiedName": "strictGraphChunkToTestRunStep",
       "span": {
-        "end": 42847,
-        "start": 42141
+        "end": 42993,
+        "start": 42287
       }
     },
     {
@@ -113491,7 +116748,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function strictGraphFailureDiagnostic(result: {\n  exitCode: number;\n  stdout: string;\n  stderr: string;\n  command: string;\n  failedFiles: string[];\n  failedChunk?: number;\n  reportPath?: string;\n}): Diagnostic {\n  const excerpt = outputExcerpt(result.stdout, result.stderr);\n  const files = result.failedFiles.slice(0, 8);\n  const hidden = Math.max(0, result.failedFiles.length - files.length);\n  const fileSummary = files.length > 0\n    ? `${files.join(\", \")}${hidden > 0 ? `, ... +${hidden} more` : \"\"}`\n    : \"unknown files\";\n  const report = result.reportPath ?? \".forge/test-runs/last.json\";\n  return createDiagnostic({\n    severity: \"error\",\n    code: \"FORGE_VERIFY_TESTS\",\n    message: `strict TestGraph failed${result.failedChunk ? ` in chunk ${result.failedChunk}` : \"\"} with exit code ${result.exitCode}: ${fileSummary}`,\n    fixHint: excerpt\n      ? `Inspect ${report} and rerun the failing files. Last output: ${excerpt}`\n      : `Inspect ${report} and rerun the failing files.`,\n    suggestedCommands: [\n      result.failedFiles.length > 0\n        ? `bun test ${result.failedFiles.join(\" \")}`\n        : result.command,\n      \"forge repair diagnose --from-last-test-run --json\",\n      \"forge verify --strict\",\n    ],\n  });\n}"
       },
       "name": "strictGraphFailureDiagnostic",
@@ -113508,14 +116765,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function strictPlanRecommendations(plan: VerifyTestGraphPlan): string[] {\n  const recommendations: string[] = [];\n  if (!plan.profileFound) {\n    recommendations.push(`Run forge verify --strict once to create ${TESTGRAPH_PROFILE_RELATIVE_PATH}; later plans use measured durations.`);\n  }\n  if (plan.lanes.serial.chunkCount > 0 && plan.lanes.serial.estimatedMs > plan.criticalPathEstimateMs * 0.35) {\n    recommendations.push(\"Split or de-globalize the slowest serial tests; serial work is now the main critical-path limiter.\");\n  } else if (plan.lanes.serial.chunkCount === 0 && plan.lanes.isolated.chunkCount > 0) {\n    recommendations.push(\"No current strict TestGraph files require the serial lane; optimize isolated runtime/template tests next.\");\n  }\n  if (plan.lanes.isolated.chunkCount > 0 && plan.isolatedJobs < STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS) {\n    recommendations.push(`Set FORGE_VERIFY_ISOLATED_TEST_JOBS=${STRICT_ISOLATED_TEST_MAX_DEFAULT_JOBS} on machines that can run isolated runtime tests concurrently.`);\n  }\n  const slowest = plan.slowestFiles[0];\n  if (slowest) {\n    recommendations.push(`Inspect ${slowest.file}; it is currently the heaviest estimated TestGraph file.`);\n  }\n  return recommendations;\n}"
       },
       "name": "strictPlanRecommendations",
       "qualifiedName": "strictPlanRecommendations",
       "span": {
-        "end": 36424,
-        "start": 35194
+        "end": 36570,
+        "start": 35340
       }
     },
     {
@@ -113525,14 +116782,31 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function strictTestEntries(workspaceRoot: string): Array<{ file: string; cost: TestCost }> {\n  const graph = readTestGraph(workspaceRoot);\n  if (!graph) {\n    return [];\n  }\n  const byFile = new Map<string, TestCost>();\n  for (const test of graph.tests) {\n    if (!STRICT_TEST_COSTS.includes(test.cost)) {\n      continue;\n    }\n    const existing = byFile.get(test.file);\n    if (!existing || TEST_COST_RANK[test.cost] > TEST_COST_RANK[existing]) {\n      byFile.set(test.file, test.cost);\n    }\n  }\n  return [...byFile.entries()]\n    .map(([file, cost]) => ({ file, cost }))\n    .sort((left, right) => left.file.localeCompare(right.file));\n}"
       },
       "name": "strictTestEntries",
       "qualifiedName": "strictTestEntries",
       "span": {
-        "end": 26940,
-        "start": 26299
+        "end": 27086,
+        "start": 26445
+      }
+    },
+    {
+      "contentHash": "0f53c59a5f8f445b19869a0985703e9dc97e610204b127055bab40a6b4c735c0",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "f9bf88c92c9738f88452016afd3d1d439be31559fec692fa4ab11c98669c731a",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function string(value: unknown, label: string): string {\n  if (typeof value !== \"string\" || value.length === 0) fail(`${label} must be a non-empty string`);\n  return value;\n}"
+      },
+      "name": "string",
+      "qualifiedName": "string",
+      "span": {
+        "end": 1277,
+        "start": 1103
       }
     },
     {
@@ -113686,6 +116960,23 @@ export const appGraph = {
       "span": {
         "end": 4665,
         "start": 4290
+      }
+    },
+    {
+      "contentHash": "62f29eba08e24010cdcaff0acb59682be48ed4ae319a6ead242b901acc0bef28",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "5ff82e2670566d7a967ff4ecba9a2048ffdec507f3fc05d3902eba102a9e577c",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function strings(value: unknown, label: string): readonly string[] {\n  if (!Array.isArray(value)) fail(`${label} must be an array`);\n  return value.map((item, index) => string(item, `${label}[${index}]`));\n}"
+      },
+      "name": "strings",
+      "qualifiedName": "strings",
+      "span": {
+        "end": 2515,
+        "start": 2308
       }
     },
     {
@@ -114630,14 +117921,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function targetDirectoryFor(options: NewCommandOptions): string {\n  return isCurrentDirectoryTarget(options.name)\n    ? resolve(options.workspaceRoot)\n    : resolve(options.workspaceRoot, options.name);\n}"
       },
       "name": "targetDirectoryFor",
       "qualifiedName": "targetDirectoryFor",
       "span": {
-        "end": 6433,
-        "start": 6229
+        "end": 6771,
+        "start": 6567
       }
     },
     {
@@ -114681,14 +117972,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function templateRoot(template: NewTemplateName): string {\n  return join(packageRoot(), \"templates\", template);\n}"
       },
       "name": "templateRoot",
       "qualifiedName": "templateRoot",
       "span": {
-        "end": 2803,
-        "start": 2690
+        "end": 3138,
+        "start": 3025
       }
     },
     {
@@ -114749,14 +118040,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function testCommandForFile(workspaceRoot: string, file: string): string {\n  if (nodeFileSystem.exists(join(workspaceRoot, \"bin\", \"forge-bun.mjs\"))) {\n    return `node ./bin/forge-bun.mjs test ${file}`;\n  }\n  return legacyBunTestCommand(file);\n}"
       },
       "name": "testCommandForFile",
       "qualifiedName": "testCommandForFile",
       "span": {
-        "end": 26733,
-        "start": 26488
+        "end": 26596,
+        "start": 26351
       }
     },
     {
@@ -114766,14 +118057,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function testFileSourceHash(workspaceRoot: string, file: string): string | null {\n  const source = nodeFileSystem.readText(join(workspaceRoot, file));\n  if (source === null) {\n    return null;\n  }\n  return createHash(\"sha256\")\n    .update(normalizeTestPath(file))\n    .update(\"\\0\")\n    .update(source)\n    .digest(\"hex\")\n    .slice(0, 16);\n}"
       },
       "name": "testFileSourceHash",
       "qualifiedName": "testFileSourceHash",
       "span": {
-        "end": 30432,
-        "start": 30091
+        "end": 30578,
+        "start": 30237
       }
     },
     {
@@ -114783,14 +118074,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function testGraphProfilePath(workspaceRoot: string): string {\n  return join(workspaceRoot, TESTGRAPH_PROFILE_RELATIVE_PATH);\n}"
       },
       "name": "testGraphProfilePath",
       "qualifiedName": "testGraphProfilePath",
       "span": {
-        "end": 30089,
-        "start": 29962
+        "end": 30235,
+        "start": 30108
       }
     },
     {
@@ -114862,13 +118153,30 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "aadf11ab918823cd071648b2663ddbb19034a330f27573ea99c765317ff1c20f",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "48942729f9147ea27e39574ce58eff9197d9ce58c8e7666b20f91280e1155d47",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function textStrings(value: unknown, label: string): readonly string[] {\n  if (!Array.isArray(value)) fail(`${label} must be an array`);\n  return value.map((item, index) => {\n    if (typeof item !== \"string\") fail(`${label}[${index}] must be a string`);\n    return item;\n  });\n}"
+      },
+      "name": "textStrings",
+      "qualifiedName": "textStrings",
+      "span": {
+        "end": 1557,
+        "start": 1279
+      }
+    },
+    {
       "contentHash": "37581e3dc79ec6139896b41c047bba1f54ae66aaf2d8f7216e04264eb4ad0f19",
       "file": "src/forge/cli/verify.ts",
       "id": "632a309329903af619126dd19864914e04b3ac52d2d39bd80551dd1d4ec6b566",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function timedOutDiagnostic(scriptName: string, timeoutMs: number): Diagnostic {\n  return createDiagnostic({\n    severity: \"error\",\n    code: FORGE_VERIFY_SCRIPT_TIMEOUT,\n    message: `${scriptName} script timed out after ${timeoutMs}ms`,\n    suggestedCommands: [\n      `forge verify --skip-tests --skip-eslint --script-timeout-ms ${timeoutMs}`,\n      \"forge test plan --changed --json\",\n      \"forge verify --changed\",\n    ],\n  });\n}"
       },
       "name": "timedOutDiagnostic",
@@ -115270,6 +118578,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "66677a0c200fb57c10bab4af59332607c92be3edbb811e4f28a281bef6e31ef0",
+      "file": "src/forge/agent-fabric/reducer.ts",
+      "id": "d38c2d71cf9202c63b4edd76d2022e9a7b12b0cfd8ce498e9e85fb7be85884e8",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "2253cad2f6e3e35d2179d993d9ed47932e66cd6a1e016360e7314b98d2c25195",
+        "sourceSlice": "function transitionReservation(\n  state: ControlState,\n  reservationId: string,\n  transition: \"consume\" | \"release\",\n): Pick<\n  ControlState,\n  | \"resourceReserved\"\n  | \"resourceConsumed\"\n  | \"resourceOwnerReserved\"\n  | \"resourceOwnerConsumed\"\n  | \"resourceReservations\"\n> {\n  const current = getOwn(state.resourceReservations, reservationId);\n  if (!current) {\n    throw new AgentFabricError(\"AF_INVALID_EVENT\", `Unknown reservation ${reservationId}`);\n  }\n  const reserved = { ...state.resourceReserved };\n  const consumed = { ...state.resourceConsumed };\n  const ownerReserved = cloneNested(state.resourceOwnerReserved);\n  const ownerConsumed = cloneNested(state.resourceOwnerConsumed);\n  const ownerReservedBucket = getOwn(ownerReserved, current.ownerId) ?? {};\n  const ownerConsumedBucket = getOwn(ownerConsumed, current.ownerId) ?? {};\n  setOwn(ownerReserved, current.ownerId, ownerReservedBucket);\n  setOwn(ownerConsumed, current.ownerId, ownerConsumedBucket);\n\n  if (transition === \"consume\") {\n    if (current.status === \"released\") {\n      throw new AgentFabricError(\"AF_INVALID_EVENT\", \"Released reservation cannot be consumed\");\n    }\n    if (current.status === \"active\") {\n      for (const request of current.requests) {\n        const definition = getOwn(state.resourceDefinitions, request.resource)!;\n        if (definition.semantics === \"consumable\") {\n          setOwn(reserved, request.resource, (getOwn(reserved, request.resource) ?? 0) - request.amount);\n          setOwn(consumed, request.resource, (getOwn(consumed, request.resource) ?? 0) + request.amount);\n          setOwn(ownerReservedBucket, request.resource, (getOwn(ownerReservedBucket, request.resource) ?? 0) - request.amount);\n          setOwn(ownerConsumedBucket, request.resource, (getOwn(ownerConsumedBucket, request.resource) ?? 0) + request.amount);\n        }\n      }\n    }\n    return {\n      resourceReserved: reserved,\n      resourceConsumed: consumed,\n      resourceOwnerReserved: ownerReserved,\n      resourceOwnerConsumed: ownerConsumed,\n      resourceReservations: {\n        ...state.resourceReservations,\n        [reservationId]: { ...current, status: \"consumed\" },\n      },\n    };\n  }\n\n  if (current.status !== \"released\") {\n    if (current.status === \"active\") {\n      for (const request of current.requests) {\n        const definition = getOwn(state.resourceDefinitions, request.resource)!;\n        if (definition.semantics !== \"counter\") {\n          setOwn(reserved, request.resource, (getOwn(reserved, request.resource) ?? 0) - request.amount);\n          setOwn(ownerReservedBucket, request.resource, (getOwn(ownerReservedBucket, request.resource) ?? 0) - request.amount);\n        }\n      }\n    } else {\n      for (const request of current.requests) {\n        const definition = getOwn(state.resourceDefinitions, request.resource)!;\n        if (definition.semantics === \"capacity\") {\n          setOwn(reserved, request.resource, (getOwn(reserved, request.resource) ?? 0) - request.amount);\n          setOwn(ownerReservedBucket, request.resource, (getOwn(ownerReservedBucket, request.resource) ?? 0) - request.amount);\n        }\n      }\n    }\n  }\n  return {\n    resourceReserved: reserved,\n    resourceConsumed: consumed,\n    resourceOwnerReserved: ownerReserved,\n    resourceOwnerConsumed: ownerConsumed,\n    resourceReservations: {\n      ...state.resourceReservations,\n      [reservationId]: { ...current, status: \"released\" },\n    },\n  };\n}"
+      },
+      "name": "transitionReservation",
+      "qualifiedName": "transitionReservation",
+      "span": {
+        "end": 11461,
+        "start": 8021
+      }
+    },
+    {
       "contentHash": "187c496c5548077b108125aa039ab42f2981c04b31829a432bdd23243cfb9c9a",
       "file": "src/forge/agent-memory/bridge.ts",
       "id": "80be63bd377b5e4912ab2cb9cb3de226740671aaacea05302428acc309e53f66",
@@ -115395,7 +118720,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function typecheckAttemptSummary(label: string, result: ScriptRunResult): string {\n  if (result.timedOut) {\n    return `${label}: timed out`;\n  }\n  if (result.spawnError) {\n    return `${label}: command unavailable`;\n  }\n  return `${label}: exit code ${result.exitCode}`;\n}"
       },
       "name": "typecheckAttemptSummary",
@@ -115412,7 +118737,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function typecheckerFallbackDiagnostic(\n  choice: TypecheckerChoice,\n  attempts: Array<{ label: string; result: ScriptRunResult }>,\n): Diagnostic {\n  const excerpt = attempts\n    .map((attempt) => outputExcerpt(attempt.result.stdout, attempt.result.stderr))\n    .find(Boolean);\n  return createDiagnostic({\n    severity: \"warning\",\n    code: \"FORGE_VERIFY_TYPECHECKER_FALLBACK\",\n    message: `${choice} typecheck failed; fell back to tsc (${attempts\n      .map((attempt) => typecheckAttemptSummary(attempt.label, attempt.result))\n      .join(\"; \")})`,\n    fixHint: excerpt ? `Last native output: ${excerpt}` : undefined,\n    suggestedCommands: [\n      \"npm install -D typescript-7@npm:typescript@rc\",\n      \"npm install -D @typescript/native-preview\",\n      \"forge verify --typechecker tsc\",\n    ],\n  });\n}"
       },
       "name": "typecheckerFallbackDiagnostic",
@@ -115454,6 +118779,23 @@ export const appGraph = {
       "span": {
         "end": 13447,
         "start": 12047
+      }
+    },
+    {
+      "contentHash": "c5fc79866d2b0f5d1901ef53b71b50e0384a6e0be1779e9d750412fe0d49b55f",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "216ac14eb2f717b29515a89334b5407aa768610222e762918494a418a283ab60",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function uncertainty(value: unknown, label: string): void {\n  const observation = object(value, label);\n  keys(observation, [\"observationId\", \"attemptId\", \"permitId\", \"phase\", \"reason\", \"observedAt\"], [], label);\n  string(observation.observationId, `${label}.observationId`);\n  string(observation.attemptId, `${label}.attemptId`);\n  string(observation.permitId, `${label}.permitId`);\n  const phase = string(observation.phase, `${label}.phase`);\n  if (!new Set([\"startup\", \"outcome\"]).has(phase)) fail(`${label}.phase is invalid`);\n  string(observation.reason, `${label}.reason`);\n  number(observation.observedAt, `${label}.observedAt`, { min: 0 });\n}"
+      },
+      "name": "uncertainty",
+      "qualifiedName": "uncertainty",
+      "span": {
+        "end": 15969,
+        "start": 15319
       }
     },
     {
@@ -115854,14 +119196,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function untrackedFiles(workspaceRoot: string): string[] {\n  const result = git([\"ls-files\", \"--others\", \"--exclude-standard\"], workspaceRoot);\n  return result.ok ? result.files : [];\n}"
       },
       "name": "untrackedFiles",
       "qualifiedName": "untrackedFiles",
       "span": {
-        "end": 5940,
-        "start": 5755
+        "end": 5696,
+        "start": 5511
       }
     },
     {
@@ -116066,6 +119408,23 @@ export const appGraph = {
       "span": {
         "end": 14230,
         "start": 13491
+      }
+    },
+    {
+      "contentHash": "fa8692e311e6843c358792ec1cfeb59174990d3e211ab5329daa4c90e90fe1f5",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "654a1f07c5320f2caeb59396591d9f7de053b529a82b501f8f4e6a163ed670bb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function validateControlEventEnvelope(value: unknown): asserts value is ControlEventEnvelope {\n  const event = object(value, \"event\");\n  keys(\n    event,\n    [\n      \"eventId\", \"rootExecutionId\", \"occurredAt\", \"payload\", \"sequence\", \"predecessorEventId\",\n      \"predecessorEventDigest\", \"eventDigest\",\n    ],\n    [\"idempotencyKey\"],\n    \"event\",\n  );\n  validateUncommittedControlEvent({\n    eventId: event.eventId,\n    rootExecutionId: event.rootExecutionId,\n    occurredAt: event.occurredAt,\n    ...(event.idempotencyKey === undefined ? {} : { idempotencyKey: event.idempotencyKey }),\n    payload: event.payload,\n  });\n  number(event.sequence, \"event.sequence\", { integer: true, min: 1 });\n  if (event.predecessorEventId !== null) string(event.predecessorEventId, \"event.predecessorEventId\");\n  if (event.predecessorEventDigest !== null) digest(event.predecessorEventDigest, \"event.predecessorEventDigest\");\n  digest(event.eventDigest, \"event.eventDigest\");\n}"
+      },
+      "name": "validateControlEventEnvelope",
+      "qualifiedName": "validateControlEventEnvelope",
+      "span": {
+        "end": 22177,
+        "start": 21217
       }
     },
     {
@@ -116290,6 +119649,57 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "ed2c178c7dba76f975bb1ff4092aee21b439912aa772643af3bc12bcef035ea4",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "739aa66e56731c2e9f218f85cca93e30995490d80a62e3ab8807b6f93f8c3680",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function validateUncommittedControlEvent(value: unknown): asserts value is UncommittedControlEvent {\n  const event = object(value, \"event\");\n  keys(event, [\"eventId\", \"rootExecutionId\", \"occurredAt\", \"payload\"], [\"idempotencyKey\"], \"event\");\n  string(event.eventId, \"event.eventId\");\n  string(event.rootExecutionId, \"event.rootExecutionId\");\n  number(event.occurredAt, \"event.occurredAt\", { min: 0 });\n  if (event.idempotencyKey !== undefined) string(event.idempotencyKey, \"event.idempotencyKey\");\n  payload(event.payload, \"event.payload\");\n}"
+      },
+      "name": "validateUncommittedControlEvent",
+      "qualifiedName": "validateUncommittedControlEvent",
+      "span": {
+        "end": 21208,
+        "start": 20666
+      }
+    },
+    {
+      "contentHash": "dc3ed3786d91e874a1c986cc615b78c6034fb139adc9f2ca92b9d607d753fb1d",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "9fe0633a6877095e51e093463c1721379d64a86c015cf2700c36a9ba8d5bc326",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function validateWorkerResultReport(value: unknown): asserts value is WorkerResultReport {\n  const report = object(value, \"report\");\n  keys(\n    report,\n    [\n      \"reportId\", \"attemptId\", \"permitId\", \"intentId\", \"planRevisionId\",\n      \"effectiveRunSpecDigest\", \"fencingToken\", \"status\", \"resultDigest\", \"evidenceDigests\",\n      \"reportedAt\",\n    ],\n    [],\n    \"report\",\n  );\n  for (const field of [\"reportId\", \"attemptId\", \"permitId\", \"intentId\", \"planRevisionId\"] as const) {\n    string(report[field], `report.${field}`);\n  }\n  digest(report.effectiveRunSpecDigest, \"report.effectiveRunSpecDigest\");\n  number(report.fencingToken, \"report.fencingToken\", { integer: true, min: 1 });\n  const status = string(report.status, \"report.status\");\n  if (!new Set([\"succeeded\", \"failed\"]).has(status)) fail(\"report.status is invalid\");\n  digest(report.resultDigest, \"report.resultDigest\");\n  digests(report.evidenceDigests, \"report.evidenceDigests\");\n  number(report.reportedAt, \"report.reportedAt\", { min: 0 });\n}"
+      },
+      "name": "validateWorkerResultReport",
+      "qualifiedName": "validateWorkerResultReport",
+      "span": {
+        "end": 15317,
+        "start": 14309
+      }
+    },
+    {
+      "contentHash": "21511bb404f743e7028d578c61892a75cf63666a5a5840b97a2882263c484d1e",
+      "file": "src/forge/agent-fabric/planning.ts",
+      "id": "19b7fcdb1519e2ad51473d171d00994ed4ffe2d807806bebf7706a57ede68230",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "48213a32b46aed8fdf3d14d45314803a3c471eae4e3e8258f9aee94377e0b967",
+        "sourceSlice": "function validateWorkflowNodes(nodes: readonly WorkflowNode[]): void {\n  const byId = new Map<string, WorkflowNode>();\n  for (const node of nodes) {\n    if (byId.has(node.nodeId)) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", `Duplicate workflow node: ${node.nodeId}`);\n    }\n    byId.set(node.nodeId, node);\n  }\n\n  for (const node of nodes) {\n    for (const dependency of node.dependsOn) {\n      if (!byId.has(dependency)) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          `Node ${node.nodeId} depends on missing node ${dependency}`,\n        );\n      }\n      if (dependency === node.nodeId) {\n        throw new AgentFabricError(\n          \"AF_INVALID_PLAN\",\n          `Node ${node.nodeId} cannot depend on itself`,\n        );\n      }\n    }\n  }\n\n  const visiting = new Set<string>();\n  const visited = new Set<string>();\n  const visit = (nodeId: string): void => {\n    if (visiting.has(nodeId)) {\n      throw new AgentFabricError(\"AF_INVALID_PLAN\", `Workflow cycle detected at ${nodeId}`);\n    }\n    if (visited.has(nodeId)) return;\n    visiting.add(nodeId);\n    for (const dependency of byId.get(nodeId)?.dependsOn ?? []) {\n      visit(dependency);\n    }\n    visiting.delete(nodeId);\n    visited.add(nodeId);\n  };\n\n  for (const nodeId of byId.keys()) visit(nodeId);\n}"
+      },
+      "name": "validateWorkflowNodes",
+      "qualifiedName": "validateWorkflowNodes",
+      "span": {
+        "end": 1671,
+        "start": 368
+      }
+    },
+    {
       "contentHash": "452b61da012e5a5fee91da76cf5b63c23ac8f2881c8d287e1c251e2d3fb570c3",
       "file": "src/forge/cli/rls.ts",
       "id": "b586e44bd0196eaecd214b7d10a7d21cd50ae40ab31d5b53132c68a7b6523e07",
@@ -116483,14 +119893,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "async function waitForInstallArtifacts(\n  targetDir: string,\n  packageManager: NewPackageManager,\n): Promise<void> {\n  const lockfiles = lockfileNamesFor(packageManager).map((name) => join(targetDir, name));\n  const dependencyChecks = dependencyInstallChecks(targetDir);\n  let previousSignature = \"\";\n  let stableReads = 0;\n\n  for (let attempt = 0; attempt < 80; attempt++) {\n    const dependencySignature = dependencyChecks.map((check) => `${check.name}:${\n      check.candidates.some((candidate) => nodeFileSystem.exists(candidate)) ? \"1\" : \"0\"\n    }`);\n    const signature = [\n      nodeFileSystem.exists(join(targetDir, \"node_modules\")) ? \"node_modules:1\" : \"node_modules:0\",\n      ...dependencySignature,\n      ...lockfiles.map((path) => {\n        if (!nodeFileSystem.exists(path)) {\n          return `${path}:missing`;\n        }\n        return `${path}:${statSync(path).size}`;\n      }),\n    ].join(\"|\");\n\n    const dependenciesReady = dependencySignature.every((entry) => entry.endsWith(\":1\"));\n    if (signature === previousSignature && signature.includes(\"node_modules:1\") && dependenciesReady) {\n      stableReads += 1;\n      if (stableReads >= 2) {\n        return;\n      }\n    } else {\n      stableReads = 0;\n      previousSignature = signature;\n    }\n\n    await sleep(100);\n  }\n}"
       },
       "name": "waitForInstallArtifacts",
       "qualifiedName": "waitForInstallArtifacts",
       "span": {
-        "end": 12567,
-        "start": 11276
+        "end": 12905,
+        "start": 11614
       }
     },
     {
@@ -116704,14 +120114,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function weightedStrictTestEntries(\n  workspaceRoot: string,\n  profile: TestGraphProfileFile | null,\n): StrictTestEntry[] {\n  return strictTestEntries(workspaceRoot).map(({ file, cost }) => {\n    const lane = classifyStrictTestFile(file);\n    const estimate = estimateStrictTestEntry(workspaceRoot, file, cost, lane, profile);\n    return {\n      file,\n      cost,\n      lane,\n      estimatedMs: estimate.estimatedMs,\n      durationSource: estimate.source,\n    };\n  });\n}"
       },
       "name": "weightedStrictTestEntries",
       "qualifiedName": "weightedStrictTestEntries",
       "span": {
-        "end": 32456,
-        "start": 31986
+        "end": 32602,
+        "start": 32132
       }
     },
     {
@@ -117208,6 +120618,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "0f1da3739ebc21b2aec139aa6cc3bdbabd386dc887bef88db36697dae5caa248",
+      "file": "src/forge/agent-fabric/hardened-reducer.ts",
+      "id": "b555bbc4bd51cf7a5583957a24db35084893ee2dbf809e8092672b724b9ffc51",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "02d60b062c9c151791fe9d4adf982d1dda6909f09322e6cba1190819d675c8fb",
+        "sourceSlice": "function workerReportFromOutcome(\n  outcome: ControlState[\"outcomes\"][string],\n): WorkerResultReport {\n  return {\n    reportId: outcome.reportId,\n    attemptId: outcome.attemptId,\n    permitId: outcome.permitId,\n    intentId: outcome.intentId,\n    planRevisionId: outcome.planRevisionId,\n    effectiveRunSpecDigest: outcome.effectiveRunSpecDigest,\n    fencingToken: outcome.fencingToken,\n    status: outcome.status,\n    resultDigest: outcome.resultDigest,\n    evidenceDigests: [...outcome.evidenceDigests],\n    reportedAt: outcome.reportedAt,\n  };\n}"
+      },
+      "name": "workerReportFromOutcome",
+      "qualifiedName": "workerReportFromOutcome",
+      "span": {
+        "end": 5006,
+        "start": 4457
+      }
+    },
+    {
       "contentHash": "b479952a805c27eecf8392adeecd6d1aec620411171d9a1de6ebb658d4aa6fb1",
       "file": "src/forge/server.ts",
       "id": "1b12e64d01ed5c26b41034536ea75bf83e81bc89fed6032a82d2d30e4a8cdd1f",
@@ -117222,6 +120649,40 @@ export const appGraph = {
       "span": {
         "end": 8154,
         "start": 7952
+      }
+    },
+    {
+      "contentHash": "11e1db8e4574d789f945e1b447cd8bacf19005e2ff4df0600a633ae620cb10ca",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "f2106cbde47cfbde66b712084deda1ea114b4895d3e5585d21d0072f867d90b5",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function workflowNode(value: unknown, label: string): void {\n  const node = object(value, label);\n  keys(\n    node,\n    [\"nodeId\", \"kind\", \"dependsOn\"],\n    [\"agentSpecId\", \"harnessSpecId\", \"executionProfileId\", \"outputContractId\"],\n    label,\n  );\n  string(node.nodeId, `${label}.nodeId`);\n  const kind = string(node.kind, `${label}.kind`);\n  if (!new Set([\"activity\", \"verification\", \"join\"]).has(kind)) fail(`${label}.kind is invalid`);\n  strings(node.dependsOn, `${label}.dependsOn`);\n  for (const optional of [\"agentSpecId\", \"harnessSpecId\", \"executionProfileId\", \"outputContractId\"] as const) {\n    if (node[optional] !== undefined) string(node[optional], `${label}.${optional}`);\n  }\n}"
+      },
+      "name": "workflowNode",
+      "qualifiedName": "workflowNode",
+      "span": {
+        "end": 3879,
+        "start": 3187
+      }
+    },
+    {
+      "contentHash": "a8975c16e58e794cfd80962bb9c4bab3a171e418024bc346954bf514a319cdd3",
+      "file": "src/forge/agent-fabric/validation.ts",
+      "id": "30a3028b8545dd7ea486cccc6170501cd72c7d6270700356771cc0b8497baba4",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "084c50f67b465c7ddddb94f8d7417dc70deaba87d7cced14b97b003445a9a5e1",
+        "sourceSlice": "function workflowNodes(value: unknown, label: string): void {\n  if (!Array.isArray(value)) fail(`${label} must be an array`);\n  value.forEach((item, index) => workflowNode(item, `${label}[${index}]`));\n}"
+      },
+      "name": "workflowNodes",
+      "qualifiedName": "workflowNodes",
+      "span": {
+        "end": 4084,
+        "start": 3881
       }
     },
     {
@@ -117401,14 +120862,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "function workspacePackageDirs(targetDir: string): string[] {\n  try {\n    const parsed = JSON.parse(nodeFileSystem.readText(join(targetDir, \"package.json\")) ?? \"{}\") as {\n      workspaces?: string[] | { packages?: string[] };\n    };\n    const workspaces = Array.isArray(parsed.workspaces)\n      ? parsed.workspaces\n      : Array.isArray(parsed.workspaces?.packages)\n        ? parsed.workspaces.packages\n        : [];\n    return workspaces\n      .filter((workspace) => !workspace.includes(\"*\"))\n      .map((workspace) => join(targetDir, workspace))\n      .filter((workspaceDir) => nodeFileSystem.exists(join(workspaceDir, \"package.json\")));\n  } catch {\n    return [];\n  }\n}"
       },
       "name": "workspacePackageDirs",
       "qualifiedName": "workspacePackageDirs",
       "span": {
-        "end": 10515,
-        "start": 9844
+        "end": 10853,
+        "start": 10182
       }
     },
     {
@@ -117469,7 +120930,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function wrapWindowsCommandScript(argv: string[]): string[] {\n  if (process.platform !== \"win32\" || !/\\.(cmd|bat)$/iu.test(argv[0] ?? \"\")) {\n    return argv;\n  }\n  return [\n    process.env.ComSpec ?? \"cmd.exe\",\n    \"/d\",\n    \"/s\",\n    \"/c\",\n    argv.map(quoteWindowsCommandArg).join(\" \"),\n  ];\n}"
       },
       "name": "wrapWindowsCommandScript",
@@ -117962,14 +121423,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function writeStrictGraphTestRunRecord(\n  workspaceRoot: string,\n  plan: VerifyTestGraphPlan,\n  results: StrictGraphChunkResult[],\n  timeoutMs: number,\n  durationMs: number,\n): TestRunRecord {\n  const commands = results.map((result) => result.command);\n  const record: TestRunRecord = {\n    schemaVersion: \"0.1.0\",\n    id: `run_${createHash(\"sha256\")\n      .update(`${Date.now()}:${commands.join(\"|\")}:${plan.fileCount}:${plan.chunkCount}`)\n      .digest(\"hex\")\n      .slice(0, 12)}`,\n    changedHash: `sha256:${createHash(\"sha256\").update(canonicalJson(plan.chunks)).digest(\"hex\")}`,\n    planHash: `sha256:${createHash(\"sha256\").update(canonicalJson(plan)).digest(\"hex\")}`,\n    source: { mode: \"changed\", id: \"verify-strict-testgraph\" },\n    commands,\n    timeoutMs,\n    results: results.map((result) => strictGraphChunkToTestRunStep(result, timeoutMs)),\n    failed: results.filter((result) => result.exitCode !== 0).map((result) => result.command),\n    durationMs,\n  };\n  const runDir = join(workspaceRoot, \".forge/test-runs\");\n  nodeFileSystem.mkdirp(runDir);\n  nodeFileSystem.writeText(join(runDir, \"last.json\"), serializeCanonical(record));\n  nodeFileSystem.writeText(join(runDir, `${record.id}.json`), serializeCanonical(record));\n  return record;\n}"
       },
       "name": "writeStrictGraphTestRunRecord",
       "qualifiedName": "writeStrictGraphTestRunRecord",
       "span": {
-        "end": 44104,
-        "start": 42849
+        "end": 44250,
+        "start": 42995
       }
     },
     {
@@ -117996,14 +121457,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "function writeTestGraphProfile(\n  workspaceRoot: string,\n  results: Array<StrictGraphChunkResult | undefined>,\n): void {\n  const existing = readTestGraphProfile(workspaceRoot);\n  const now = new Date().toISOString();\n  const files = { ...(existing?.files ?? {}) };\n  for (const result of results) {\n    if (!result || result.files.length === 0) {\n      continue;\n    }\n    const perFileDuration = Math.max(1, Math.round(result.durationMs / result.files.length));\n    for (const file of result.files) {\n      const previous = files[file];\n      files[file] = {\n        durationMs: perFileDuration,\n        runs: (previous?.runs ?? 0) + 1,\n        lane: result.lane,\n        sourceHash: testFileSourceHash(workspaceRoot, file) ?? previous?.sourceHash,\n        lastExitCode: result.exitCode,\n        lastRunAt: now,\n      };\n    }\n  }\n  const profile: TestGraphProfileFile = {\n    schemaVersion: \"0.1.0\",\n    updatedAt: now,\n    files,\n  };\n  const path = testGraphProfilePath(workspaceRoot);\n  nodeFileSystem.mkdirp(dirname(path));\n  nodeFileSystem.writeText(path, `${JSON.stringify(profile, null, 2)}\\n`);\n}"
       },
       "name": "writeTestGraphProfile",
       "qualifiedName": "writeTestGraphProfile",
       "span": {
-        "end": 42139,
-        "start": 41033
+        "end": 42285,
+        "start": 41179
       }
     },
     {
@@ -118013,14 +121474,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5ea3b5df229c829a3eee90df2ebeac25939884cd14b7551af8b3638fe4088b27",
+        "fileContentHash": "9e89c08add72d58acf52e223db53e7867783f0c221226e1b7ccff588084d6a99",
         "sourceSlice": "function writeTestPlan(workspaceRoot: string, plan: ImpactTestPlan): string {\n  const dir = join(workspaceRoot, TEST_PLAN_DIR, plan.source.mode);\n  nodeFileSystem.mkdirp(dir);\n  const jsonPath = join(dir, \"plan.json\");\n  nodeFileSystem.writeText(jsonPath, serializeCanonical(plan));\n  nodeFileSystem.writeText(join(dir, \"plan.md\"), renderTestPlanMarkdown(plan));\n  return normalize(jsonPath.replace(`${workspaceRoot}/`, \"\"));\n}"
       },
       "name": "writeTestPlan",
       "qualifiedName": "writeTestPlan",
       "span": {
-        "end": 31991,
-        "start": 31564
+        "end": 31854,
+        "start": 31427
       }
     },
     {
@@ -118245,6 +121706,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "2754053abafc749cbe0a1c282bad2d3438423b4eb3573e8631ae4e194af0a553",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "8ac7c43934718b7433ef01189ff9c063f975e144376de45f6462cfc9bfca1d4b",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AdapterManifest {\n  adapterId: Identifier;\n  version: string;\n  capabilities: readonly string[];\n  supportsCancellation: boolean;\n  supportsObservation: boolean;\n}"
+      },
+      "name": "AdapterManifest",
+      "qualifiedName": "AdapterManifest",
+      "span": {
+        "end": 8177,
+        "start": 8004
+      }
+    },
+    {
       "contentHash": "0183dfce0c65dd74feccde91f79459b79a68d5100b52dc23b09486a3b724286f",
       "file": "src/forge/compiler/types/cli.ts",
       "id": "92c000eee7dd8466f4dca7391a7b9336a29adda83224a9b84075101e66a145db",
@@ -118276,6 +121754,23 @@ export const appGraph = {
       "span": {
         "end": 1746,
         "start": 1643
+      }
+    },
+    {
+      "contentHash": "487c7866995686f018ff2c0b3852684f3f9a71616916991a8f2b8d0b486cd497",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "db7a58428d72e31b8260d5a0cdde09b8f00d4a9b94499b16be05d9c24f50077c",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AgentAdapter {\n  manifest(): AdapterManifest;\n  startAttempt(permit: AttemptExecutionPermit): Promise<AdapterStartResult>;\n  observeAttempt(attemptId: Identifier): Promise<readonly RuntimeObservation[]>;\n  collectOutcome(attemptId: Identifier): Promise<AdapterOutcomeResult>;\n  requestCancellation(attemptId: Identifier): Promise<{ acknowledged: boolean }>;\n  observeTermination(attemptId: Identifier): Promise<\"terminated\" | \"running\" | \"unknown\">;\n}"
+      },
+      "name": "AgentAdapter",
+      "qualifiedName": "AgentAdapter",
+      "span": {
+        "end": 9306,
+        "start": 8845
       }
     },
     {
@@ -119299,6 +122794,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9756318f6e6762b15ffb7cde58cfe14dca534aa386b295dced9476d674c638d4",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "4de05e9fd8f21fb33729d404f79bd6324b86a2610a397ea7c18f02121824eb49",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AgentSpec {\n  agentSpecId: Identifier;\n  role: string;\n  objective: string;\n  instructions: readonly string[];\n  outputContractId: Identifier;\n  stopConditions: readonly string[];\n}"
+      },
+      "name": "AgentSpec",
+      "qualifiedName": "AgentSpec",
+      "span": {
+        "end": 2958,
+        "start": 2767
+      }
+    },
+    {
       "contentHash": "a9955ccad0c7adb46beeb54e509304be9c4ad4f9ae406be25a2fe7351288851a",
       "file": "src/forge/compiler/agent-contract/types.ts",
       "id": "6ea4d76c125455c11da91719ad8de0d0a957015020f196ec99b74bae288bf5f0",
@@ -119826,6 +123338,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "a9712fefa330f0000cf7efb1cdf011442be6a88305e3ee31b44bdc34138715e9",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "caa95642f20c292eb579c87029325dd9a58df047e00c9a6c70fa3a61d984b32a",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "interface AppendControlEventInput {\n  expectedSequence: number;\n  event: UncommittedControlEvent;\n}"
+      },
+      "name": "AppendControlEventInput",
+      "qualifiedName": "AppendControlEventInput",
+      "span": {
+        "end": 434,
+        "start": 335
+      }
+    },
+    {
       "contentHash": "3966c1ef782cff896915ce6832ac24170df4b2944d1c19bf14e4ee91f538a07f",
       "file": "src/forge/compiler/release/types.ts",
       "id": "8a595bda117f3b6e4a3a57c1a4db17069b12e42e1b39ee5352e4dc910c2521ab",
@@ -119840,6 +123369,74 @@ export const appGraph = {
       "span": {
         "end": 1301,
         "start": 1163
+      }
+    },
+    {
+      "contentHash": "323b0cbb6f74b627b877a5a6227a6d13ec80b47524110fabc40363ac1bd82541",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "a0eb0362c281f36e219964cc0296ce409ebf6ff6f8b5c0ddcfa6af494a29d983",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AttemptControlState {\n  permitId: Identifier;\n  startupStatus: \"started\";\n  startedAt: EpochMilliseconds;\n  startupReportId: Identifier;\n}"
+      },
+      "name": "AttemptControlState",
+      "qualifiedName": "AttemptControlState",
+      "span": {
+        "end": 9463,
+        "start": 9315
+      }
+    },
+    {
+      "contentHash": "da5444aa6081eadf6d394fd13f1be0ff6db0df16f57d38e0ff19b4621048ffcb",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "e594d4900ee9fd281b0744df0375a25d39b157e55e5c64f950f330d5ce5828c3",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AttemptExecutionPermit {\n  permitId: Identifier;\n  intentId: Identifier;\n  claimId: Identifier;\n  attemptId: Identifier;\n  workerId: Identifier;\n  planRevisionId: Identifier;\n  effectiveRunSpecDigest: Digest;\n  grantId: Identifier;\n  fencingToken: number;\n  notBefore: EpochMilliseconds;\n  expiresAt: EpochMilliseconds;\n}"
+      },
+      "name": "AttemptExecutionPermit",
+      "qualifiedName": "AttemptExecutionPermit",
+      "span": {
+        "end": 6981,
+        "start": 6650
+      }
+    },
+    {
+      "contentHash": "447f64b1ea5c26cc4940adfa8c07a3c498adbf36520a88593d98c419f82a3594",
+      "file": "src/forge/agent-fabric/adapter.ts",
+      "id": "cf2a6142bba2fae6a3ee7a78f4bea7f83811776e0cfc4154afc6ae9b8b08f02e",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "29d77a174299a3336255ebf55af63ad97ebbfb0ef0bd52ecafb635835b2a822a",
+        "sourceSlice": "interface AttemptRecord {\n  permit: AttemptExecutionPermit;\n  startedAt: number;\n  cancelled: boolean;\n}"
+      },
+      "name": "AttemptRecord",
+      "qualifiedName": "AttemptRecord",
+      "span": {
+        "end": 537,
+        "start": 433
+      }
+    },
+    {
+      "contentHash": "a598f7e224a883e81b277a527b7249924c0d6080741c4a055d92b28a9c806a3f",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "f66de2a031771aebb827e0fc0ddef024eade25e565e128b8b57fd3e7196d8392",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AttemptUncertaintyObservation {\n  observationId: Identifier;\n  attemptId: Identifier;\n  permitId: Identifier;\n  phase: \"startup\" | \"outcome\";\n  reason: string;\n  observedAt: EpochMilliseconds;\n}"
+      },
+      "name": "AttemptUncertaintyObservation",
+      "qualifiedName": "AttemptUncertaintyObservation",
+      "span": {
+        "end": 7995,
+        "start": 7791
       }
     },
     {
@@ -119959,6 +123556,40 @@ export const appGraph = {
       "span": {
         "end": 761,
         "start": 499
+      }
+    },
+    {
+      "contentHash": "348e44bfc03f41d1e380734ddec362f7370c5fb9066ca48f5fcc7f4f18aea008",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "fa2e7d7fcb3d4606b93fe283de0b2799c46f64e94d10764830c11eb66f869fdb",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AuthoritativeOutcomeCommit {\n  outcomeId: Identifier;\n  attemptId: Identifier;\n  permitId: Identifier;\n  intentId: Identifier;\n  planRevisionId: Identifier;\n  effectiveRunSpecDigest: Digest;\n  fencingToken: number;\n  status: \"succeeded\" | \"failed\";\n  resultDigest: Digest;\n  reportId: Identifier;\n  reportDigest: Digest;\n  evidenceDigests: readonly Digest[];\n  reportedAt: EpochMilliseconds;\n  committedAt: EpochMilliseconds;\n}"
+      },
+      "name": "AuthoritativeOutcomeCommit",
+      "qualifiedName": "AuthoritativeOutcomeCommit",
+      "span": {
+        "end": 7782,
+        "start": 7345
+      }
+    },
+    {
+      "contentHash": "daa15362c1d8fe1021395c729c363561033251d3f7cf4c998e411c939af65652",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "053e2514ca61d25aea1ed00f67e9a03035e18ffdbfff4066351782dd1622d0aa",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface AuthorityResolution {\n  outcome: \"allowed\" | \"rejected\" | \"unknown\";\n  grant?: ExecutionGrant;\n  reasonCodes: readonly string[];\n  limitations: readonly string[];\n}"
+      },
+      "name": "AuthorityResolution",
+      "qualifiedName": "AuthorityResolution",
+      "span": {
+        "end": 5911,
+        "start": 5737
       }
     },
     {
@@ -120778,6 +124409,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "21d3c2490490aa1f0fb5bdc27ac328e36b9429a162890f01f10f2abb8524dbf0",
+      "file": "src/forge/agent-fabric/conductor.ts",
+      "id": "b491c442ece18c6e42a72acc814515695a7dddc03d48efa255c0446674e1c8aa",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e9dece6027824172eb15b5e2813be5f3db8fb3ef88910b779c7e1ac915de9cd3",
+        "sourceSlice": "interface ClaimDispatchInput {\n  claimId: string;\n  intentId: string;\n  workerId: string;\n  attemptId: string;\n  leaseDurationMs: number;\n}"
+      },
+      "name": "ClaimDispatchInput",
+      "qualifiedName": "ClaimDispatchInput",
+      "span": {
+        "end": 1253,
+        "start": 1114
+      }
+    },
+    {
+      "contentHash": "21d3c2490490aa1f0fb5bdc27ac328e36b9429a162890f01f10f2abb8524dbf0",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "136581fe710a31fbf46a87e8171ce996f40815eef35aab113aa58440c55f8488",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "interface ClaimDispatchInput {\n  claimId: string;\n  intentId: string;\n  workerId: string;\n  attemptId: string;\n  leaseDurationMs: number;\n}"
+      },
+      "name": "ClaimDispatchInput",
+      "qualifiedName": "ClaimDispatchInput",
+      "span": {
+        "end": 1150,
+        "start": 1011
+      }
+    },
+    {
       "contentHash": "4818c0a0c9b16a27a701dbf90a7ecf4a8fc8ad66d8fcff9ca470a01f60373cc5",
       "file": "src/forge/runtime/outbox/types.ts",
       "id": "ff09a67e82277f9334b9e1c817dd2a939339ed2a604319f2d98cd3fc89faf646",
@@ -120860,6 +124525,23 @@ export const appGraph = {
       "span": {
         "end": 947,
         "start": 377
+      }
+    },
+    {
+      "contentHash": "d0fa8ccff5f78c635b9d2643f2b5be5dd033e66b100e8748260c367956a96859",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "bcb645d589ed6588f2b1ec5d9160872f5c0287b4557bef1f8574852dd1e33444",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface Clock {\n  now(): EpochMilliseconds;\n}"
+      },
+      "name": "Clock",
+      "qualifiedName": "Clock",
+      "span": {
+        "end": 13173,
+        "start": 13126
       }
     },
     {
@@ -121285,6 +124967,57 @@ export const appGraph = {
       "span": {
         "end": 451,
         "start": 390
+      }
+    },
+    {
+      "contentHash": "2012031e8aa1596567726a23d838d29c283778a9a0e03790911437b11f751d88",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "cb62afa8455da2b9c9a7416958012ccc706e6a038cbc45d282748d1118780a65",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ControlEventEnvelope extends UncommittedControlEvent {\n  sequence: number;\n  predecessorEventId: Identifier | null;\n  predecessorEventDigest: Digest | null;\n  eventDigest: Digest;\n}"
+      },
+      "name": "ControlEventEnvelope",
+      "qualifiedName": "ControlEventEnvelope",
+      "span": {
+        "end": 11246,
+        "start": 11055
+      }
+    },
+    {
+      "contentHash": "2ac4ca28dbfef4b198b3440cd46f30ce4b9c1f225414af7bd8c110d0aafa2ee7",
+      "file": "src/forge/agent-fabric/journal.ts",
+      "id": "4946143b18c8e50122456f31d1341ee5594ea094eee21646a9b7c4f7957a99f0",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "57902ed761e90a626dc28b8d12511f3a7e72c1c7d4e843f6b9d446dc2bbd561e",
+        "sourceSlice": "interface ControlJournal {\n  append(input: AppendControlEventInput): ControlEventEnvelope;\n  readAll(): readonly ControlEventEnvelope[];\n}"
+      },
+      "name": "ControlJournal",
+      "qualifiedName": "ControlJournal",
+      "span": {
+        "end": 581,
+        "start": 443
+      }
+    },
+    {
+      "contentHash": "2de2c6cadcc482593a9d4b1f53840ddf889d73716965064ae2bb5d373d39ecfe",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "38af9d234f597e583dc515c1efb846944bd11ce80834dbbf82e9a47a35971e1f",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ControlState {\n  lastSequence: number;\n  lastEventId: Identifier | null;\n  lastEventDigest: Digest | null;\n  lastOccurredAt: EpochMilliseconds | null;\n  authorizations: Readonly<Record<Identifier, OwnerAuthorization>>;\n  authorizationVerifications: Readonly<Record<Identifier, OwnerAuthorizationVerification>>;\n  revokedAuthorizations: Readonly<Record<Identifier, string>>;\n  resourceDefinitions: Readonly<Record<string, ResourceDefinition>>;\n  resourceReserved: Readonly<Record<string, number>>;\n  resourceConsumed: Readonly<Record<string, number>>;\n  resourceOwnerReserved: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;\n  resourceOwnerConsumed: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;\n  resourceReservations: Readonly<Record<Identifier, ResourceReservation>>;\n  goals: Readonly<Record<Identifier, GoalContract>>;\n  grants: Readonly<Record<Identifier, ExecutionGrant>>;\n  revokedGrants: Readonly<Record<Identifier, string>>;\n  planDeltas: Readonly<Record<Identifier, PlanDelta>>;\n  planRevisions: Readonly<Record<Identifier, RunPlanRevision>>;\n  activePlanRevisionByExecution: Readonly<Record<Identifier, Identifier>>;\n  dispatchIntents: Readonly<Record<Identifier, DispatchIntent>>;\n  claims: Readonly<Record<Identifier, SchedulingClaim>>;\n  activeClaimByIntent: Readonly<Record<Identifier, Identifier>>;\n  claimByAttemptId: Readonly<Record<Identifier, Identifier>>;\n  permits: Readonly<Record<Identifier, AttemptExecutionPermit>>;\n  attempts: Readonly<Record<Identifier, AttemptControlState>>;\n  uncertaintyObservations: Readonly<Record<Identifier, AttemptUncertaintyObservation>>;\n  outcomes: Readonly<Record<Identifier, AuthoritativeOutcomeCommit>>;\n}"
+      },
+      "name": "ControlState",
+      "qualifiedName": "ControlState",
+      "span": {
+        "end": 12963,
+        "start": 11255
       }
     },
     {
@@ -122665,6 +126398,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "bd6c33fdd27e8d2b2970d449ff907c0d53b062f35d0b0794ddd4e223c4451df9",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "c4ea23bed8e67a2c23dad50869c7eaf1212e054ef8ab95a40995ac3cef0a3669",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface DerivedGrantRequest {\n  grantId: Identifier;\n  subjectId: Identifier;\n  capabilities: readonly string[];\n  sourceIds: readonly Identifier[];\n  targetIds: readonly Identifier[];\n  effectClasses: readonly EffectClass[];\n  notBefore: EpochMilliseconds;\n  expiresAt: EpochMilliseconds;\n  maximumAttempts: number;\n  delegationDepthRemaining: number;\n  reservationId: Identifier;\n  resourceRequests: readonly ResourceReservationRequest[];\n}"
+      },
+      "name": "DerivedGrantRequest",
+      "qualifiedName": "DerivedGrantRequest",
+      "span": {
+        "end": 5728,
+        "start": 5284
+      }
+    },
+    {
+      "contentHash": "99c5008c9842e0256d267d2ac6dd11bb73bdc5093a44c90bdb8bec0faa2804d0",
+      "file": "src/forge/agent-fabric/adapter.ts",
+      "id": "0485e0a1396d6cb928b9b560bece7549439331c60199427f3d45923e65be68b9",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "29d77a174299a3336255ebf55af63ad97ebbfb0ef0bd52ecafb635835b2a822a",
+        "sourceSlice": "interface DeterministicAdapterFixture {\n  effectiveRunSpecDigest: Digest;\n  outcomeStatus: \"succeeded\" | \"failed\";\n  resultDigest: Digest;\n  evidenceDigests?: readonly Digest[];\n}"
+      },
+      "name": "DeterministicAdapterFixture",
+      "qualifiedName": "DeterministicAdapterFixture",
+      "span": {
+        "end": 431,
+        "start": 252
+      }
+    },
+    {
       "contentHash": "68a11baf429dc4d8ca53a327e715f1fa5d5dc75ad3c4b60717308adb6f4e4ec9",
       "file": "src/forge/compiler/primitives/header.ts",
       "id": "33ef26a8de0ef1b87dbce30e0aa60a5247d6ba143b5c73fd7fc16860fd2c70ec",
@@ -123226,6 +126993,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "c680f3ad33d03ebc825ffcc8996ea64eca0190044b95232a5aa4926c2d885f2f",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "fb90c3258a02224b86db6995cc1b06c8ca288b7fed3220c12a25e6e134fadf17",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface DispatchIntent {\n  intentId: Identifier;\n  rootExecutionId: Identifier;\n  planRevisionId: Identifier;\n  taskNodeId: Identifier;\n  effectiveRunSpecDigest: Digest;\n  sourceIds: readonly Identifier[];\n  targetId: Identifier;\n  requiredCapability: string;\n  effectClass: EffectClass;\n  createdAt: EpochMilliseconds;\n}"
+      },
+      "name": "DispatchIntent",
+      "qualifiedName": "DispatchIntent",
+      "span": {
+        "end": 6243,
+        "start": 5920
+      }
+    },
+    {
+      "contentHash": "781226ba414c02ee5e556ca35a988addae3546b14aebdeb72b31360fba639164",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "c261f3ad0b182d27ee9791979c013305de98c139f64582ecd23f11fc2733aaf5",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface DispatchOffer {\n  offerId: Identifier;\n  intentId: Identifier;\n  audiencePool: Identifier;\n  expiresAt: EpochMilliseconds;\n  nonAuthoritative: true;\n}"
+      },
+      "name": "DispatchOffer",
+      "qualifiedName": "DispatchOffer",
+      "span": {
+        "end": 6412,
+        "start": 6252
+      }
+    },
+    {
       "contentHash": "d10fdc70b912c99da7d66b5361f296ceb19e61f410721ffac1b82e93e51acfb7",
       "file": "src/forge/compiler/sandbox/backends/docker.ts",
       "id": "e645744d48845589ffda0863cf79edc829c34b305bf894a7a36250599d9c7180",
@@ -123359,6 +127160,23 @@ export const appGraph = {
       "span": {
         "end": 1298,
         "start": 1146
+      }
+    },
+    {
+      "contentHash": "2ebb672370fc8d3e8dbc5c4029fec9739861a412ce603fd1c9b0ec7ecf7976a4",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "704bbbf06b7b7425866abf89e598c87f56aa0704b8a6e9e58b6e8f73fd56e088",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface EffectiveRunSpec {\n  effectiveRunSpecId: Identifier;\n  rootExecutionId: Identifier;\n  goalId: Identifier;\n  planRevisionId: Identifier;\n  nodeId: Identifier;\n  agentSpecId: Identifier;\n  harnessSpecId: Identifier;\n  executionProfileId: Identifier;\n  contextPackDigest: Digest;\n  materializationDigest: Digest;\n}"
+      },
+      "name": "EffectiveRunSpec",
+      "qualifiedName": "EffectiveRunSpec",
+      "span": {
+        "end": 3873,
+        "start": 3552
       }
     },
     {
@@ -123546,6 +127364,74 @@ export const appGraph = {
       "span": {
         "end": 869,
         "start": 806
+      }
+    },
+    {
+      "contentHash": "e587263252aa354da1af1b6bcd86d87a0de37cc2ac1046d7d7504fcc0094e633",
+      "file": "src/forge/agent-fabric/p0a.ts",
+      "id": "61ba4dbad9b0e438dbf3dccb323d2c9a5bcf397e07e9002fdce007a7003ffbea",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "905bff927e6ef3a22ed41d4ab984d3aff6fae08bba94cbb89d2f8e2cde0a6174",
+        "sourceSlice": "interface ExecuteP0aActivityInput {\n  conductor: ForgeAgentConductor;\n  adapter: AgentAdapter;\n  permit: AttemptExecutionPermit;\n}"
+      },
+      "name": "ExecuteP0aActivityInput",
+      "qualifiedName": "ExecuteP0aActivityInput",
+      "span": {
+        "end": 363,
+        "start": 233
+      }
+    },
+    {
+      "contentHash": "d3339e06874d6e959681dbf643d1c97b7dd827ac7b3ecad948c610afff030f17",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "6298801bfda1d9f567f4f5dd9e40a9ef684d7c3cc54362a9a0944f44eab17c99",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ExecutionGrant {\n  grantId: Identifier;\n  rootAuthorizationId: Identifier;\n  subjectId: Identifier;\n  parentGrantId: Identifier | null;\n  capabilities: readonly string[];\n  sourceIds: readonly Identifier[];\n  targetIds: readonly Identifier[];\n  effectClasses: readonly EffectClass[];\n  notBefore: EpochMilliseconds;\n  expiresAt: EpochMilliseconds;\n  maximumAttempts: number;\n  delegationDepthRemaining: number;\n  resourceCeilings: Readonly<Record<string, number>>;\n  reservationId?: Identifier;\n}"
+      },
+      "name": "ExecutionGrant",
+      "qualifiedName": "ExecutionGrant",
+      "span": {
+        "end": 5275,
+        "start": 4769
+      }
+    },
+    {
+      "contentHash": "7116f75186b58bfa1725395947dc2d590b81e1476210a778c1d28050dd3157d7",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "6496e121296ac4358bf3dc3a9516accdbb0f841d2f18093dd43b50263c3db9ed",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ExecutionProfile {\n  executionProfileId: Identifier;\n  isolation: \"process\" | \"container\" | \"microvm\" | \"remote\";\n  network: \"denied\" | \"provider_only\" | \"restricted\";\n  filesystem: \"read_only\" | \"isolated_write\";\n  durability: \"ephemeral\" | \"durable\";\n  maximumWallClockMs: number;\n}"
+      },
+      "name": "ExecutionProfile",
+      "qualifiedName": "ExecutionProfile",
+      "span": {
+        "end": 3543,
+        "start": 3249
+      }
+    },
+    {
+      "contentHash": "e3bd04665256c205f15201e972125e0875e1ecc9c8431aa165b61e81d32adf07",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "1d7e0309b77ca03fec8794b23ddc8d28d5086e7ed13e10a8b1de316fac292549",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ExecutorStartupReport {\n  startupReportId: Identifier;\n  attemptId: Identifier;\n  observedSpecDigest: Digest;\n  startedAt: EpochMilliseconds;\n}"
+      },
+      "name": "ExecutorStartupReport",
+      "qualifiedName": "ExecutorStartupReport",
+      "span": {
+        "end": 8339,
+        "start": 8186
       }
     },
     {
@@ -124943,6 +128829,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9d6e36ca511965a79652b6926c23b944dc21ae395797a4064b8a1c9f162a3348",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "39eef9488d78add283e11e64e0b245dfed4c290994f8a3459fbda43ee14f71cf",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface GoalContract {\n  goalId: Identifier;\n  revision: number;\n  authorityInvocationId: Identifier;\n  objectives: readonly string[];\n  nonObjectives: readonly string[];\n  acceptanceCriteria: readonly string[];\n  allowedEffectClasses: readonly EffectClass[];\n  prohibitedEffectClasses: readonly EffectClass[];\n  sourceBoundary: {\n    sourceIds: readonly Identifier[];\n    allowExpansion: boolean;\n  };\n}"
+      },
+      "name": "GoalContract",
+      "qualifiedName": "GoalContract",
+      "span": {
+        "end": 641,
+        "start": 235
+      }
+    },
+    {
       "contentHash": "f9d17b5360c7786c5c009620efdb2ece9287d7b0585912277128877a520269e2",
       "file": "src/forge/cli/golden-path.ts",
       "id": "51a19f49a6b4d11cd71c5ba5e69431f9c36c9f241ae2f4d4e3343db8c8daff2b",
@@ -125025,6 +128928,23 @@ export const appGraph = {
       "span": {
         "end": 3035,
         "start": 825
+      }
+    },
+    {
+      "contentHash": "5b16294d9e21ce4fe14ab810145211f9e4119383174ffd71c098334a02743f52",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "fbb0156b5171d7091b54ed61107b33f460a427ad79ffbd4e62aa74318926f984",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface HarnessSpec {\n  harnessSpecId: Identifier;\n  systemPromptLayers: readonly Digest[];\n  toolIds: readonly Identifier[];\n  pluginIds: readonly Identifier[];\n  memoryMode: \"none\" | \"run_scoped\" | \"project_scoped\";\n  delegationPolicy: \"none\" | \"attenuated_children\";\n}"
+      },
+      "name": "HarnessSpec",
+      "qualifiedName": "HarnessSpec",
+      "span": {
+        "end": 3240,
+        "start": 2967
       }
     },
     {
@@ -125467,6 +129387,40 @@ export const appGraph = {
       "span": {
         "end": 572,
         "start": 265
+      }
+    },
+    {
+      "contentHash": "3f81458faf2fd798f919c363c2878ba87485d588ef67d723d3d460a84d68a48d",
+      "file": "src/forge/agent-fabric/conductor.ts",
+      "id": "5466c114bdede2d2681a32c1c13e8829bfc99bca4cb01c8d47a4b6102eb6670b",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e9dece6027824172eb15b5e2813be5f3db8fb3ef88910b779c7e1ac915de9cd3",
+        "sourceSlice": "interface IssuePermitInput {\n  permitId: string;\n  claimId: string;\n  grantId: string;\n  maximumValidityMs: number;\n}"
+      },
+      "name": "IssuePermitInput",
+      "qualifiedName": "IssuePermitInput",
+      "span": {
+        "end": 1379,
+        "start": 1262
+      }
+    },
+    {
+      "contentHash": "3f81458faf2fd798f919c363c2878ba87485d588ef67d723d3d460a84d68a48d",
+      "file": "src/forge/agent-fabric/hardened-conductor.ts",
+      "id": "38ddbeb7766552b8cde996ac7992b777075c2cd53fc704f992d921926bccceb2",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "c51604419b246764c074fe30c2c00c502b2aa717e4990406c9523805cc4a167c",
+        "sourceSlice": "interface IssuePermitInput {\n  permitId: string;\n  claimId: string;\n  grantId: string;\n  maximumValidityMs: number;\n}"
+      },
+      "name": "IssuePermitInput",
+      "qualifiedName": "IssuePermitInput",
+      "span": {
+        "end": 1276,
+        "start": 1159
       }
     },
     {
@@ -126241,7 +130195,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "interface NewCommandOptions {\n  name: string;\n  template: NewTemplateName;\n  packageManager: NewPackageManager;\n  install: boolean;\n  git: boolean;\n  fieldTest?: boolean;\n  forgePackageSpec?: string;\n  localForge?: boolean;\n  workspaceRoot: string;\n}"
       },
       "name": "NewCommandOptions",
@@ -126258,7 +130212,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "interface NewCommandResult {\n  name: string;\n  template: NewTemplateName;\n  targetDir: string;\n  packageManager: NewPackageManager;\n  installed: boolean;\n  gitInitialized: boolean;\n  fieldTest: {\n    requested: boolean;\n    ok: boolean;\n    steps: Array<{ name: string; ok: boolean; command: string }>;\n  };\n  generated: boolean;\n  gitHygiene: {\n    ok: boolean;\n    ignoredPaths: string[];\n    missingPaths: string[];\n  };\n  exitCode: 0 | 1;\n  message: string;\n  nextSteps: string[];\n}"
       },
       "name": "NewCommandResult",
@@ -126524,6 +130478,57 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "53dd4f0c78d563eb5b738038296874090270ca20d23c7c7d04a519a30baf8044",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "0515ea48b2670fd758715b5547265931d2243d21771dcc96a205b520105cd390",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface OwnerAuthorization {\n  authorizationId: Identifier;\n  principalId: Identifier;\n  rootExecutionId: Identifier;\n  goalIds: readonly Identifier[];\n  subjectIds: readonly Identifier[];\n  capabilities: readonly string[];\n  sourceIds: readonly Identifier[];\n  targetIds: readonly Identifier[];\n  effectClasses: readonly EffectClass[];\n  notBefore: EpochMilliseconds;\n  expiresAt: EpochMilliseconds;\n  maximumAttempts: number;\n  maximumDelegationDepth: number;\n  resourceCeilings: Readonly<Record<string, number>>;\n}"
+      },
+      "name": "OwnerAuthorization",
+      "qualifiedName": "OwnerAuthorization",
+      "span": {
+        "end": 1169,
+        "start": 650
+      }
+    },
+    {
+      "contentHash": "d205dc62752f720d8a0e8678d5f2a89d654dc7c2d455d3bbbbaf5ec21537e5cc",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "399327763e65e2e515158a2af2dd5a49994933402383174aadcbe422c5371755",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface OwnerAuthorizationVerification {\n  verifierId: Identifier;\n  authorizationDigest: Digest;\n  evidenceDigest: Digest;\n}"
+      },
+      "name": "OwnerAuthorizationVerification",
+      "qualifiedName": "OwnerAuthorizationVerification",
+      "span": {
+        "end": 1305,
+        "start": 1178
+      }
+    },
+    {
+      "contentHash": "bcd953a049236974671ff2eb173fd2e27d2bec87469f630bdeba624de2e36e17",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "2718ca81353e1039b714bdd237e69522ad4fa2ef616f1dfbbad147d80089fdbe",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface OwnerAuthorizationVerifier {\n  verify(\n    authorization: OwnerAuthorization,\n    authorizationDigest: Digest,\n  ): OwnerAuthorizationVerification;\n  /** Deterministic/offline verification used when reconstructing authority from a journal. */\n  verifyRecorded(\n    authorization: OwnerAuthorization,\n    verification: OwnerAuthorizationVerification,\n  ): boolean;\n}"
+      },
+      "name": "OwnerAuthorizationVerifier",
+      "qualifiedName": "OwnerAuthorizationVerifier",
+      "span": {
+        "end": 1689,
+        "start": 1314
+      }
+    },
+    {
       "contentHash": "0012f3f9ee2565629b2f891d65c2451272b4a5d36086e27944f820e5f2102ce5",
       "file": "src/forge/compiler/types/package-graph.ts",
       "id": "1f27d9d5449987fad1c81f377d97747394bbebc541c42242ab8509063c77dfca",
@@ -126649,7 +130654,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface PackageJsonWithBin {\n  version?: unknown;\n  bin?: unknown;\n}"
       },
       "name": "PackageJsonWithBin",
@@ -126768,7 +130773,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface PackageScripts {\n  typecheck?: string;\n  test?: string;\n  lint?: string;\n}"
       },
       "name": "PackageScripts",
@@ -127065,6 +131070,23 @@ export const appGraph = {
       "span": {
         "end": 75,
         "start": 7
+      }
+    },
+    {
+      "contentHash": "0f3f2a2c0f11ffcb7592dffe9a36c1a24cf5a7dac8bbd18b0d343f0502e69154",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "20722e10314b6808ef0b53e08fa2c08ad8b5b2ed1e98f67877c83a6966518589",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface PlanDelta {\n  deltaId: Identifier;\n  rootExecutionId: Identifier;\n  baseRevisionId: Identifier;\n  nextRevisionId: Identifier;\n  operations: readonly PlanDeltaOperation[];\n}"
+      },
+      "name": "PlanDelta",
+      "qualifiedName": "PlanDelta",
+      "span": {
+        "end": 2758,
+        "start": 2576
       }
     },
     {
@@ -128037,6 +132059,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "6c5d5889cec3712b7c95735dba50caf7f5837841f8d29a7688daedc49ffa7ef1",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "9969c7486a76909171e26e2154768fffb917091f898579524112788d8cd465b4",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ReplayTrustContext {\n  ownerAuthorizationVerifier: OwnerAuthorizationVerifier;\n  resourceDefinitions?: readonly ResourceDefinition[];\n}"
+      },
+      "name": "ReplayTrustContext",
+      "qualifiedName": "ReplayTrustContext",
+      "span": {
+        "end": 13117,
+        "start": 12972
+      }
+    },
+    {
       "contentHash": "28a05834563d809139cc7bc5fafd0838aff3dfd85c6d2335b2a59af893a52e43",
       "file": "src/forge/compiler/types/package-graph.ts",
       "id": "b3bae6eceebe62e7479866b33dc979772a4364b28c101d1b19274e420c28898d",
@@ -128153,6 +132192,74 @@ export const appGraph = {
       "span": {
         "end": 1433,
         "start": 737
+      }
+    },
+    {
+      "contentHash": "49edd7bc90cf8587a9b71b91256e2be0ac4ac008ca8f2564cc1ea67ed00264aa",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "b6d35121931f2c047a68dcfc6b73be3a7ba1e24b5ada9d90f887bc80b495bc1c",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ResourceDefinition {\n  resource: string;\n  semantics: ResourceSemantics;\n  limit: number;\n}"
+      },
+      "name": "ResourceDefinition",
+      "qualifiedName": "ResourceDefinition",
+      "span": {
+        "end": 4055,
+        "start": 3954
+      }
+    },
+    {
+      "contentHash": "47ee8094656b7ffd541d142c7a460776ae317e036a6b5f0fd01e812fa733fa3e",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "ab1858b55ee9ecf2c5fca7b45e1cf2d9c0c225d898aa81abdca3378c40284277",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ResourceLedgerSnapshot {\n  definitions: Readonly<Record<string, ResourceDefinition>>;\n  reserved: Readonly<Record<string, number>>;\n  consumed: Readonly<Record<string, number>>;\n  ownerReserved: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;\n  ownerConsumed: Readonly<Record<Identifier, Readonly<Record<string, number>>>>;\n  reservations: Readonly<Record<Identifier, ResourceReservation>>;\n}"
+      },
+      "name": "ResourceLedgerSnapshot",
+      "qualifiedName": "ResourceLedgerSnapshot",
+      "span": {
+        "end": 4760,
+        "start": 4342
+      }
+    },
+    {
+      "contentHash": "2747e5328a4d05c76c838a19f430af18d29b63b35e1f17a0d25a1eb56b57b311",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "38b0842734ebf7e30445f5bde67c8bf257207e02204994c35d76e8fb3c2bbda1",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ResourceReservation {\n  reservationId: Identifier;\n  ownerId: Identifier;\n  requests: readonly ResourceReservationRequest[];\n  status: \"active\" | \"consumed\" | \"released\";\n}"
+      },
+      "name": "ResourceReservation",
+      "qualifiedName": "ResourceReservation",
+      "span": {
+        "end": 4333,
+        "start": 4151
+      }
+    },
+    {
+      "contentHash": "8140aea8db4fc71aa4f16d554f3561a81fcab4294d53dedba07dd6a90b9b0505",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "39f2b864c871df24b22f10042b8d3a06102a2bbfbf644703ce394351d352e1b0",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface ResourceReservationRequest {\n  resource: string;\n  amount: number;\n}"
+      },
+      "name": "ResourceReservationRequest",
+      "qualifiedName": "ResourceReservationRequest",
+      "span": {
+        "end": 4142,
+        "start": 4064
       }
     },
     {
@@ -128751,6 +132858,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9f36531e424c01f7f00ec455bdbeb0e1db4b1972dcbfcae0698fced2c73634d5",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "5feeb4afa8bea361350332cdc830503d261294feeefe95dd717bc1584abf2527",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface RunPlanRevision {\n  revisionId: Identifier;\n  rootExecutionId: Identifier;\n  goalId: Identifier;\n  programVersionId: Identifier;\n  revisionNumber: number;\n  parentRevisionId: Identifier | null;\n  sourcePlanDeltaId: Identifier | null;\n  nodes: readonly WorkflowNode[];\n  contentDigest: Digest;\n}"
+      },
+      "name": "RunPlanRevision",
+      "qualifiedName": "RunPlanRevision",
+      "span": {
+        "end": 2390,
+        "start": 2086
+      }
+    },
+    {
       "contentHash": "179175692544f3d262cc72815fac52d8a44b6ceeb2aabb033639e3f5007c1f50",
       "file": "src/forge/runtime/query/run-query.ts",
       "id": "da6967e0e8567aefe52d54d202def0fa2978f19644d1efa38715539945d7a680",
@@ -129023,6 +133147,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "b3cd5753e284bb17db144b77b5307509b1e2040fbab1b997ef182610dbcb0466",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "6726f52fbb4628457f6183f2e3c8cbfb4096e73401c9ae7af47c03b354d55c6d",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface RuntimeObservation {\n  observationId: Identifier;\n  attemptId: Identifier;\n  sourceClass: \"executor_self_report\" | \"adapter_observation\" | \"host_observation\";\n  claim: string;\n  observedAt: EpochMilliseconds;\n}"
+      },
+      "name": "RuntimeObservation",
+      "qualifiedName": "RuntimeObservation",
+      "span": {
+        "end": 8568,
+        "start": 8348
+      }
+    },
+    {
       "contentHash": "f2e936139a7888ccde5d2a810277fe6a0365cbca4f38514a00f70a1a5db9052e",
       "file": "src/forge/runtime/release/runtime.ts",
       "id": "6339bc123448e708ee85cc2fcb13a9e9c23e0ba5e028efc5311fff7ef0abf42b",
@@ -129125,13 +133266,30 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "853f7645a066674859c404bec240577584a770d092b52ceac9f13d8af42a3edc",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "99d167176afbb166baf66847d137c97c85263fab331e08c10eb76a06bf5d3c24",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface SchedulingClaim {\n  claimId: Identifier;\n  intentId: Identifier;\n  workerId: Identifier;\n  attemptId: Identifier;\n  leaseExpiresAt: EpochMilliseconds;\n  fencingToken: number;\n  committedAt: EpochMilliseconds;\n}"
+      },
+      "name": "SchedulingClaim",
+      "qualifiedName": "SchedulingClaim",
+      "span": {
+        "end": 6641,
+        "start": 6421
+      }
+    },
+    {
       "contentHash": "c59c8a664e9f84d09a449f03f00fce2d520daeaa3285bbfa8a62ea10f0e2f6d7",
       "file": "src/forge/cli/verify.ts",
       "id": "6010037ef7e7536680422398d3dda2a667f43fe9fc4b7c8c9748a3365f6c9bea",
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface ScriptRunResult {\n  exitCode: number;\n  stdout: string;\n  stderr: string;\n  command: string;\n  durationMs: number;\n  timedOut: boolean;\n  spawnError?: boolean;\n}"
       },
       "name": "ScriptRunResult",
@@ -129879,14 +134037,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface StrictGraphChunkResult extends ScriptRunResult {\n  files: string[];\n  lane: StrictTestLane;\n  chunkIndex: number;\n  chunkCount: number;\n}"
       },
       "name": "StrictGraphChunkResult",
       "qualifiedName": "StrictGraphChunkResult",
       "span": {
-        "end": 25772,
-        "start": 25625
+        "end": 25918,
+        "start": 25771
       }
     },
     {
@@ -129896,14 +134054,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface StrictTestEntry {\n  file: string;\n  cost: TestCost;\n  lane: StrictTestLane;\n  estimatedMs: number;\n  durationSource: VerifyTestGraphDurationSource;\n}"
       },
       "name": "StrictTestEntry",
       "qualifiedName": "StrictTestEntry",
       "span": {
-        "end": 25623,
-        "start": 25464
+        "end": 25769,
+        "start": 25610
       }
     },
     {
@@ -130440,14 +134598,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface TestGraphProfileFile {\n  schemaVersion: \"0.1.0\";\n  updatedAt: string;\n  files: Record<string, {\n    durationMs: number;\n    runs: number;\n    lane: StrictTestLane;\n    sourceHash?: string;\n    lastExitCode: number;\n    lastRunAt: string;\n  }>;\n}"
       },
       "name": "TestGraphProfileFile",
       "qualifiedName": "TestGraphProfileFile",
       "span": {
-        "end": 26029,
-        "start": 25774
+        "end": 26175,
+        "start": 25920
       }
     },
     {
@@ -130525,7 +134683,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "interface TypecheckCandidate {\n  label: string;\n  argv: string[];\n  command: string;\n}"
       },
       "name": "TypecheckCandidate",
@@ -130754,6 +134912,23 @@ export const appGraph = {
       "span": {
         "end": 2467,
         "start": 2179
+      }
+    },
+    {
+      "contentHash": "432bdda35c2f41c16510774c513c45239de04b35dd20bf1a584c1f550bb6246e",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "490cd03046887733e0daac14c5666fe9471d81b111912b204d12c82f3ad2769e",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface UncommittedControlEvent {\n  eventId: Identifier;\n  rootExecutionId: Identifier;\n  occurredAt: EpochMilliseconds;\n  idempotencyKey?: Identifier;\n  payload: ControlEvent;\n}"
+      },
+      "name": "UncommittedControlEvent",
+      "qualifiedName": "UncommittedControlEvent",
+      "span": {
+        "end": 11046,
+        "start": 10866
       }
     },
     {
@@ -131556,6 +135731,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "8473590207ff7afb22e076e4edd8a0a85e500575255eab28153809d051f229b2",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "759ef9d7c7a344ca24c33f89afecb5f3ce7e5740439052382afab3e19356de91",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface WorkerResultReport {\n  reportId: Identifier;\n  attemptId: Identifier;\n  permitId: Identifier;\n  intentId: Identifier;\n  planRevisionId: Identifier;\n  effectiveRunSpecDigest: Digest;\n  fencingToken: number;\n  status: \"succeeded\" | \"failed\";\n  resultDigest: Digest;\n  evidenceDigests: readonly Digest[];\n  reportedAt: EpochMilliseconds;\n}"
+      },
+      "name": "WorkerResultReport",
+      "qualifiedName": "WorkerResultReport",
+      "span": {
+        "end": 7336,
+        "start": 6990
+      }
+    },
+    {
       "contentHash": "72dd2d339ae5e8bdef891021f99ea20fea6904b2ebcb223e8cae4671d3789a4d",
       "file": "src/forge/cli/workflow.ts",
       "id": "b6994b1173903bfc6712649d32c6820bd07a5f7922ad556b83af0de70d67cd46",
@@ -131604,6 +135796,40 @@ export const appGraph = {
       "span": {
         "end": 307,
         "start": 137
+      }
+    },
+    {
+      "contentHash": "7308912274e2dc7f4eb2a5f2e7fd6b540190bceee089eaf8471aae2f26024982",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "a588bbb5af10e87cc43b3a03f5e7fca5a88231a5efbe800a4800d13860b26b3d",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface WorkflowNode {\n  nodeId: Identifier;\n  kind: \"activity\" | \"verification\" | \"join\";\n  dependsOn: readonly Identifier[];\n  agentSpecId?: Identifier;\n  harnessSpecId?: Identifier;\n  executionProfileId?: Identifier;\n  outputContractId?: Identifier;\n}"
+      },
+      "name": "WorkflowNode",
+      "qualifiedName": "WorkflowNode",
+      "span": {
+        "end": 1954,
+        "start": 1698
+      }
+    },
+    {
+      "contentHash": "1e9f6272378bb4c143824b2433ffe69063091544b8b58849516a7fed95d9621a",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "1740a6497790a612e0f2773f2a35fd84bad42a0dd15790d23c4b80906638a876",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "interface WorkflowProgramVersion {\n  programId: Identifier;\n  version: number;\n  nodes: readonly WorkflowNode[];\n}"
+      },
+      "name": "WorkflowProgramVersion",
+      "qualifiedName": "WorkflowProgramVersion",
+      "span": {
+        "end": 2077,
+        "start": 1963
       }
     },
     {
@@ -131879,6 +136105,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "b425e74021402d0931a5b07ea88c7516c6b8f9f525585745f2a833e3b690a132",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "0edb2511fb2eb5759cff9f65d09f9e456ff9102d288889abb25781f324f3f06c",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type AdapterOutcomeResult =\n  | { status: \"reported\"; report: WorkerResultReport }\n  | { status: \"unknown\"; reason: string };"
+      },
+      "name": "AdapterOutcomeResult",
+      "qualifiedName": "AdapterOutcomeResult",
+      "span": {
+        "end": 8836,
+        "start": 8711
+      }
+    },
+    {
+      "contentHash": "00e3f2fc11f0fba30a0929974c637c51f88c9fe9e0ca39435dcb19f6de7e613f",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "ffe3d049e8d4ac7a4929186d91f9aadc944723b812b15d3a105ea370bc447f28",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type AdapterStartResult =\n  | { status: \"started\"; report: ExecutorStartupReport }\n  | { status: \"unknown\"; reason: string };"
+      },
+      "name": "AdapterStartResult",
+      "qualifiedName": "AdapterStartResult",
+      "span": {
+        "end": 8702,
+        "start": 8577
+      }
+    },
+    {
       "contentHash": "6e33d96bb1855d2c702baffa922b217e217b179406ad91ea389458136a7f25ac",
       "file": "src/forge/agent-adapters/types.ts",
       "id": "ee2e686425685843d8fce8487bfd98e3816510ede57b52118823a225370370c0",
@@ -131944,6 +136204,23 @@ export const appGraph = {
       "span": {
         "end": 369,
         "start": 307
+      }
+    },
+    {
+      "contentHash": "a71375e462cb7518c05e04124e559be675e1b988e6911c899d70a1aa74c9d315",
+      "file": "src/forge/agent-fabric/errors.ts",
+      "id": "bf1cb6a17e4061b8cc486d4e677a77731e77c1723c4197695a04f394508defa2",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "b00be6ce7d9e24458c6f6c6c9c58ca3a3fb6ccc823d6bc4b5d2b526bb1a67903",
+        "sourceSlice": "type AgentFabricErrorCode =\n  | \"AF_CANONICALIZATION_FAILED\"\n  | \"AF_CONFLICT\"\n  | \"AF_DUPLICATE_ID\"\n  | \"AF_GRANT_REJECTED\"\n  | \"AF_INVALID_EVENT\"\n  | \"AF_INVALID_PLAN\"\n  | \"AF_INVALID_STATE\"\n  | \"AF_NOT_FOUND\"\n  | \"AF_PERMIT_REJECTED\"\n  | \"AF_RESOURCE_EXHAUSTED\"\n  | \"AF_STALE_ATTEMPT\";"
+      },
+      "name": "AgentFabricErrorCode",
+      "qualifiedName": "AgentFabricErrorCode",
+      "span": {
+        "end": 295,
+        "start": 7
       }
     },
     {
@@ -132423,6 +136700,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "4ffcb0cd0dcabc107dd25c508b12f21b7cb1a40c6fc17599d58820a1bb08be61",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "1901a0441973b361f943d82972d68d4368803377a482eb725555cedab8663088",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type ControlEvent =\n  | {\n      type: \"owner_authorization_registered\";\n      authorization: OwnerAuthorization;\n      verification: OwnerAuthorizationVerification;\n    }\n  | { type: \"owner_authorization_revoked\"; authorizationId: Identifier; reason: string }\n  | { type: \"resource_ledger_initialized\"; definitions: readonly ResourceDefinition[] }\n  | { type: \"resource_reservation_consumed\"; reservationId: Identifier }\n  | { type: \"resource_reservation_released\"; reservationId: Identifier }\n  | { type: \"goal_registered\"; goal: GoalContract }\n  | { type: \"grant_registered\"; grant: ExecutionGrant; reservation: ResourceReservation | null }\n  | { type: \"grant_revoked\"; grantId: Identifier; reason: string }\n  | { type: \"plan_delta_registered\"; delta: PlanDelta }\n  | { type: \"plan_revision_activated\"; revision: RunPlanRevision }\n  | { type: \"dispatch_intent_committed\"; intent: DispatchIntent }\n  | { type: \"scheduling_claim_committed\"; claim: SchedulingClaim }\n  | { type: \"attempt_execution_permit_issued\"; permit: AttemptExecutionPermit }\n  | {\n      type: \"attempt_started\";\n      attemptId: Identifier;\n      permitId: Identifier;\n      startupReportId: Identifier;\n      startedAt: EpochMilliseconds;\n    }\n  | { type: \"attempt_uncertainty_observed\"; observation: AttemptUncertaintyObservation }\n  | { type: \"attempt_outcome_committed\"; outcome: AuthoritativeOutcomeCommit };"
+      },
+      "name": "ControlEvent",
+      "qualifiedName": "ControlEvent",
+      "span": {
+        "end": 10857,
+        "start": 9472
+      }
+    },
+    {
       "contentHash": "6874daed8187ed2a45227cd6b99c0c28e512039c859647bb4b6679efce7ad91e",
       "file": "src/forge/runtime/runner/command-transaction.ts",
       "id": "0b8942e93ed0fe67d247ae6bb729d760a950fe18cab0f44b5146deb2c669fe9f",
@@ -132831,6 +137125,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "5bdcd2c7b856534ec3ab4fc114e281cd07ee7fbe1f3e1a643424346bae005551",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "ed5d291e2a0775119e9126b0f51e13b8234f87f287d57e7d34f2cdbf7650f5e0",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type Digest = `sha256:${string}`;"
+      },
+      "name": "Digest",
+      "qualifiedName": "Digest",
+      "span": {
+        "end": 40,
+        "start": 7
+      }
+    },
+    {
+      "contentHash": "d2553a0751b7b1ecf1e34c2cd89f07ff49fc0cd20a4cf372478c9cf322c7ee86",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "f00e39ebc5d6f52b4f93a1c6193d53bb42ab97ef822880a7d2ff68ef14e9c2e5",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type DigestFunction = (canonicalValue: string) => Digest;"
+      },
+      "name": "DigestFunction",
+      "qualifiedName": "DigestFunction",
+      "span": {
+        "end": 13239,
+        "start": 13182
+      }
+    },
+    {
       "contentHash": "e5192b7e25048f144f9e1dca39133c3f8db904b445649986feaccfec0aa88546",
       "file": "src/forge/cli/docs.ts",
       "id": "5667b9f90b3c83822ca9aaa593c260b6670a05d8efe686ecb51803b3a1b7bbf5",
@@ -132845,6 +137173,23 @@ export const appGraph = {
       "span": {
         "end": 393,
         "start": 363
+      }
+    },
+    {
+      "contentHash": "90ba632b2772682d444b5fa18a1548959cf806717ab6307a2e4b0322c794b7e3",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "44830bbc5ea41fb591586276528be91d7c5f3e91d53332d2598b41c4eafe1c7c",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type EffectClass =\n  | \"read\"\n  | \"internal_write\"\n  | \"bounded_external_inference\"\n  | \"consequential\";"
+      },
+      "name": "EffectClass",
+      "qualifiedName": "EffectClass",
+      "span": {
+        "end": 226,
+        "start": 122
       }
     },
     {
@@ -132896,6 +137241,23 @@ export const appGraph = {
       "span": {
         "end": 6853,
         "start": 6794
+      }
+    },
+    {
+      "contentHash": "2265db14a004be0e98a54d68923e27735dac3b588a4ff31dc21b1fb2da440833",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "fe097bc8f7c8817bd52bcbfd9bae9fce2da30429aaabdd6c87f5ab20a8f804e7",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type EpochMilliseconds = number;"
+      },
+      "name": "EpochMilliseconds",
+      "qualifiedName": "EpochMilliseconds",
+      "span": {
+        "end": 113,
+        "start": 81
       }
     },
     {
@@ -133987,6 +138349,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "411e30c6130ba47fdc4ef5e9509c8908f7ac8292c90c57061334d95048b158ac",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "743260192fd6076282afb8a59285e280323d27e3fa17050e7a0866a4162b5a75",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type Identifier = string;"
+      },
+      "name": "Identifier",
+      "qualifiedName": "Identifier",
+      "span": {
+        "end": 73,
+        "start": 48
+      }
+    },
+    {
       "contentHash": "ed7f7525d97722a45ed597bbbecee0a4a8a907ff5a759b7ed8c925f26bdef5cf",
       "file": "src/forge/impact/types.ts",
       "id": "5d5eef9a99fe5050e1d7f1fc04aed6c6f258617f31f7b74ff78e3e3b78492225",
@@ -134282,7 +138661,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "type NewPackageManager = \"bun\" | \"npm\" | \"pnpm\" | \"yarn\";"
       },
       "name": "NewPackageManager",
@@ -134299,7 +138678,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "112a8c05bd33fc9dade6d87591db55f1916d2e112cecfbaeb085c3ebe4833d40",
+        "fileContentHash": "a77e55fea5328f9d4657ec846cbb1a98b9e73753d16e14e59e2666370df5e961",
         "sourceSlice": "type NewTemplateName = \"agent-workroom\" | \"b2b-support-web\" | \"minimal-web\" | \"nuxt-web\" | \"vendor-access\";"
       },
       "name": "NewTemplateName",
@@ -134341,6 +138720,23 @@ export const appGraph = {
       "span": {
         "end": 1291,
         "start": 1219
+      }
+    },
+    {
+      "contentHash": "c3ffacc29986643fb6bfce334731a56fc05cde02d67be8a25c92b596a49b8098",
+      "file": "src/forge/agent-fabric/p0a.ts",
+      "id": "43a123a96f2bdd5145fd51666114a03494f120cfbe415871a12c72ad838b27c0",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "905bff927e6ef3a22ed41d4ab984d3aff6fae08bba94cbb89d2f8e2cde0a6174",
+        "sourceSlice": "type P0aActivityExecutionResult =\n  | AuthoritativeOutcomeCommit\n  | { status: \"unknown\"; observation: AttemptUncertaintyObservation };"
+      },
+      "name": "P0aActivityExecutionResult",
+      "qualifiedName": "P0aActivityExecutionResult",
+      "span": {
+        "end": 507,
+        "start": 372
       }
     },
     {
@@ -134392,6 +138788,23 @@ export const appGraph = {
       "span": {
         "end": 427,
         "start": 332
+      }
+    },
+    {
+      "contentHash": "55d91bee978cf1e953dafd1eba564415f835ee9dc9ccd26ecb9685d81d1c3a30",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "b414504cb35a0461ae4718f3bc31ca754f1e55113a7bb1b7aba37d2abb37d61a",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type PlanDeltaOperation =\n  | { kind: \"add_node\"; node: WorkflowNode }\n  | { kind: \"replace_node\"; node: WorkflowNode }\n  | { kind: \"remove_node\"; nodeId: Identifier };"
+      },
+      "name": "PlanDeltaOperation",
+      "qualifiedName": "PlanDeltaOperation",
+      "span": {
+        "end": 2567,
+        "start": 2399
       }
     },
     {
@@ -134698,6 +139111,23 @@ export const appGraph = {
       "span": {
         "end": 578,
         "start": 533
+      }
+    },
+    {
+      "contentHash": "fda811631b4a6f85efe3a76d940806a00784a00eaa04524f469624773f7706a6",
+      "file": "src/forge/agent-fabric/types.ts",
+      "id": "92637364c14d497abc2b28acf7fad7b2dd47f6923af74520a65b112ebf227516",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ba6e7071068ba6d52a9f7aa92a18bb47d670b797670dd02e7e592bf62913ed02",
+        "sourceSlice": "type ResourceSemantics = \"consumable\" | \"capacity\" | \"counter\";"
+      },
+      "name": "ResourceSemantics",
+      "qualifiedName": "ResourceSemantics",
+      "span": {
+        "end": 3945,
+        "start": 3882
       }
     },
     {
@@ -135115,14 +139545,14 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "type StrictTestLane = VerifyTestGraphLane;"
       },
       "name": "StrictTestLane",
       "qualifiedName": "StrictTestLane",
       "span": {
-        "end": 29603,
-        "start": 29561
+        "end": 29749,
+        "start": 29707
       }
     },
     {
@@ -135302,7 +139732,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "5cc2ec5f8ed7686fd56a6c123b3e68ff2318b642d9f0dca31119936a591c8e4c",
+        "fileContentHash": "92107c8b5baf30b0b56fb96d992bb87ea9a413cecbd083e33e3419b93db57949",
         "sourceSlice": "type TypecheckerChoice = \"tsc\" | \"native\" | \"ts7\" | \"tsgo\" | \"auto\";"
       },
       "name": "TypecheckerChoice",
