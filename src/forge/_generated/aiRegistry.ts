@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=cefae73a286f2c10ee10ee59b0d06dd93a157cd7085a48f2f9e097d8c03c61a3 content=f31938ef70031255af2bf04171b3627b785ea71d1a670d434de4dbb8358d9901
+// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=f31938ef70031255af2bf04171b3627b785ea71d1a670d434de4dbb8358d9901
 export const aiRegistry = {
   "agents": [],
   "analyzerVersion": "1.1.0",
