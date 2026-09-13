@@ -88,13 +88,28 @@ describe("release channel guard", () => {
     expect(result.stderr).toContain("Unable to read Changesets prerelease state");
   });
 
-  test("Changesets minor versioning advances alpha.63 to alpha.64 in pre mode", () => {
+  test("Changesets workspace versioning advances alpha.63 to alpha.64 in pre mode", () => {
     const root = temporaryRoot();
     const changesetDir = join(root, ".changeset");
+    const createPackageDir = join(root, "packages", "create-forge-app");
+    const eslintPackageDir = join(root, "packages", "eslint-plugin-forge");
     mkdirSync(changesetDir, { recursive: true });
+    mkdirSync(createPackageDir, { recursive: true });
+    mkdirSync(eslintPackageDir, { recursive: true });
+
     writeJson(join(root, "package.json"), {
       name: "forgeos",
       version: "0.1.0-alpha.63",
+      workspaces: [".", "packages/*"],
+    });
+    writeJson(join(createPackageDir, "package.json"), {
+      name: "create-forgeos-app",
+      version: "0.1.0-alpha.5",
+    });
+    writeJson(join(eslintPackageDir, "package.json"), {
+      name: "eslint-plugin-forge",
+      version: "0.0.0",
+      private: true,
     });
     writeJson(join(changesetDir, "config.json"), {
       changelog: false,
@@ -109,7 +124,11 @@ describe("release channel guard", () => {
     writeJson(join(changesetDir, "pre.json"), {
       mode: "pre",
       tag: "alpha",
-      initialVersions: { forgeos: "0.1.0-alpha.63" },
+      initialVersions: {
+        forgeos: "0.1.0-alpha.63",
+        "create-forgeos-app": "0.1.0-alpha.5",
+        "eslint-plugin-forge": "0.0.0",
+      },
       changesets: [],
     });
     writeFileSync(
@@ -129,6 +148,15 @@ describe("release channel guard", () => {
 
     const versioned = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string };
     expect(versioned.version).toBe("0.1.0-alpha.64");
+    const createPackage = JSON.parse(readFileSync(join(createPackageDir, "package.json"), "utf8")) as {
+      version: string;
+    };
+    const eslintPackage = JSON.parse(readFileSync(join(eslintPackageDir, "package.json"), "utf8")) as {
+      version: string;
+    };
+    expect(createPackage.version).toBe("0.1.0-alpha.5");
+    expect(eslintPackage.version).toBe("0.0.0");
+
     const nextPre = JSON.parse(readFileSync(join(changesetDir, "pre.json"), "utf8")) as {
       mode: string;
       tag: string;
