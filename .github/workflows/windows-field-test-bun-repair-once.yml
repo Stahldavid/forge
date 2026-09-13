@@ -36,7 +36,6 @@ jobs:
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
-
           const scriptPath = 'scripts/field-test-forgeos.mjs';
           let script = fs.readFileSync(scriptPath, 'utf8');
           const oldCommand = 'function commandName(command) {\n  return process.platform === "win32" ? `${command}.cmd` : command;\n}\n';
@@ -53,21 +52,23 @@ jobs:
           let test = fs.readFileSync(testPath, 'utf8');
           const insertAt = test.lastIndexOf('\n});');
           if (insertAt < 0) throw new Error('test insertion point not found');
-          const additions = `
-
-  test("Windows Bun uses executable resolution instead of a fabricated cmd shim", () => {
-    const source = readFileSync("scripts/field-test-forgeos.mjs", "utf8");
-
-    expect(source).toContain('return command === "bun" ? command : \`\${command}.cmd\`;');
-  });
-
-  test("Windows field-test scratch prefers an absolute RUNNER_TEMP", () => {
-    const source = readFileSync("scripts/field-test-forgeos.mjs", "utf8");
-
-    expect(source).toContain('process.platform === "win32" && runnerTemp && isAbsolute(runnerTemp)');
-    expect(source).toContain('mkdtemp(join(fieldScratchRoot(), "forgeos-field-"))');
-    expect(source).toContain('return tmpdir();');
-  });`;
+          const additions = [
+            '',
+            '',
+            '  test("Windows Bun uses executable resolution instead of a fabricated cmd shim", () => {',
+            '    const source = readFileSync("scripts/field-test-forgeos.mjs", "utf8");',
+            '',
+            '    expect(source).toContain(\'return command === "bun" ? command : `${command}.cmd`;\');',
+            '  });',
+            '',
+            '  test("Windows field-test scratch prefers an absolute RUNNER_TEMP", () => {',
+            '    const source = readFileSync("scripts/field-test-forgeos.mjs", "utf8");',
+            '',
+            '    expect(source).toContain(\'process.platform === "win32" && runnerTemp && isAbsolute(runnerTemp)\');',
+            '    expect(source).toContain(\'mkdtemp(join(fieldScratchRoot(), "forgeos-field-"))\');',
+            '    expect(source).toContain(\'return tmpdir();\');',
+            '  });',
+          ].join('\n');
           test = test.slice(0, insertAt) + additions + test.slice(insertAt);
           fs.writeFileSync(testPath, test, 'utf8');
           NODE
