@@ -1,0 +1,56 @@
+name: Generated Refresh V3 Exact Proof
+
+on:
+  push:
+    branches:
+      - diagnostic/generated-refresh-v3-f9b7c0b
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      SUBJECT_SHA: f9b7c0b62e2b62befd7dfb16a5f67d83d2870452
+    steps:
+      - name: Checkout exact refresh head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        shell: bash
+        run: bun install --ignore-scripts
+
+      - name: Record exact clean provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+          printf 'subject=%s\nexecution=%s\ntree=%s\n' "$SUBJECT_SHA" "$(git rev-parse HEAD)" "$(git show -s --format=%T HEAD)"
+
+      - name: Prove committed generated state is clean
+        shell: bash
+        run: |
+          node ./bin/forge.mjs generate --check
+          test -z "$(git status --porcelain=v1)"
+
+      - name: Framework verification with real exit
+        shell: bash
+        run: node ./bin/forge.mjs verify framework --script-timeout-ms 120000
