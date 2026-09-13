@@ -17,9 +17,9 @@ accepted, normatively specified, traced and evidence-backed.
 The first P0b vertical is intentionally narrow:
 
 > execute one bounded external model inference under an already-issued P0a
-> `AttemptExecutionPermit`, bind the exact authorized destination, context, materialized
-> invocation and returned result to the existing permit/result lineage, and treat every
-> model/provider observation as evidence rather than authority.
+> `AttemptExecutionPermit`, bind the exact authorized destination, model, context,
+> materialized invocation and returned result to the existing permit/result lineage, and treat
+> every model/provider observation as evidence rather than authority.
 
 P0b does **not** replace P0a. The accepted P0a conductor remains the authority plane. P0b adds
 a nondeterministic executor behind the existing `AgentAdapter` boundary.
@@ -96,14 +96,14 @@ verified OwnerAuthorization
   -> current ExecutionGrant including bounded_external_inference
   -> DispatchIntent(
        authorized sourceIds,
-       authorized provider targetId,
+       authorized provider/model targetId,
        effectClass = bounded_external_inference)
   -> SchedulingClaim + lease/fence
   -> AttemptExecutionPermit
   -> exact EffectiveRunSpec
   -> exact context pack + model materialization
   -> pre-dispatch bounds + authority validation
-  -> provider-only model invocation
+  -> one physical provider request, automatic transport retries disabled
   -> ExecutorStartupReport
   -> provider result / bounded evidence artifact
   -> WorkerResultReport
@@ -181,25 +181,28 @@ Provider inference is the one externally allowed operation in this slice. It may
 latency and billing consequences; that does not convert it into arbitrary target mutation.
 No target with `consequential` semantics may be mutated by the model or adapter.
 
-### 5.5 Provider destination is an authority-bound target
+### 5.5 Provider/model destination is an authority-bound target
 
-The actual provider destination SHALL be bound to the existing target-authority path.
+The actual provider/model destination SHALL be bound to the existing target-authority path.
 
 Before any network dispatch:
 
 1. `DispatchIntent.targetId` must resolve through a trusted, deterministic provider-target
-   registry to the provider class that will actually be invoked;
+   registry;
 2. the current grant/root authorization must already authorize that exact `targetId`;
-3. the materialized invocation's provider must match the provider resolved from that target;
-4. the adapter must reject a mismatch before opening a network request.
+3. the resolved target must identify the provider and either an exact allowed model or a finite
+   allowlist/model policy;
+4. the materialized invocation's provider and model must satisfy that resolved target policy;
+5. the adapter must reject any provider/model mismatch before opening a network request.
 
 P0b-A SHALL NOT accept an arbitrary URL, base URL or host from model output, prompt content or
 untrusted materialization data. The first vertical should use the existing Forge provider
 resolver and its configured provider destinations. Support for arbitrary custom endpoints is a
 later, separately scoped network/target-resolution feature.
 
-This target binding prevents a permit authorized for one logical provider destination from
-being reused to call another provider or an attacker-controlled endpoint.
+This target binding prevents a permit authorized for one logical provider/model destination
+from being reused to call another provider, an unauthorized model or an attacker-controlled
+endpoint.
 
 ### 5.6 Authorized source/context boundary
 
@@ -241,6 +244,7 @@ MaterializedModelInvocation
   temperature?
   maxOutputTokens
   maximumRequestBytes
+  maximumResultBytes
   outputMode = text
 ```
 
@@ -255,7 +259,7 @@ required:
    `AttemptExecutionPermit.effectiveRunSpecDigest`;
 5. its context pack must resolve to `EffectiveRunSpec.contextPackDigest` and pass the source
    checks in §5.6;
-6. its provider must pass the target/provider checks in §5.5;
+6. its provider/model must pass the target checks in §5.5;
 7. provider execution must not begin if any binding fails.
 
 This creates the required chain:
@@ -265,23 +269,24 @@ permit.effectiveRunSpecDigest
   -> exact EffectiveRunSpec
        -> contextPackDigest -> exact authorized context pack/source set
        -> materializationDigest -> exact bounded model invocation
-  -> intent.targetId -> exact authorized provider destination
+  -> intent.targetId -> exact authorized provider/model policy
   -> provider/model/prompt/options actually executed
 ```
 
 A prompt, context pack, provider, model or option supplied out of band after permit issuance
 must not be able to replace the content-bound invocation.
 
-### 6.2 Hard pre-dispatch bounds
+### 6.2 Hard pre-dispatch and result bounds
 
 `bounded_external_inference` must be bounded in executable terms, not only by name.
 
 The adapter SHALL reject before provider dispatch unless all of these are finite and within
 implementation-defined accepted maxima:
 
-- exactly one provider request for the live attempt/permit;
+- exactly one governed physical provider request for the live attempt/permit;
 - serialized non-secret request/materialization size at or below `maximumRequestBytes`;
 - `maxOutputTokens` present, positive and at or below a finite configured maximum;
+- `maximumResultBytes` present, positive and at or below a finite configured maximum;
 - `ExecutionProfile.maximumWallClockMs` present, positive and at or below a finite configured
   maximum.
 
@@ -289,17 +294,38 @@ The implementation may additionally enforce provider-specific input-token or cos
 but it must not rely solely on a provider-specific tokenizer to establish the baseline safety
 bound. A provider-neutral serialized request-size limit is required.
 
-If a request exceeds a bound, no network request is sent. This is a deterministic preflight
-rejection, not provider uncertainty.
+If a request exceeds a pre-dispatch bound, no network request is sent. This is a deterministic
+preflight rejection, not provider uncertainty.
 
-### 6.3 Resolver boundary
+If a provider returns data that exceeds the accepted result bound, the adapter must not truncate
+it and report a successful complete result. The implementation must document whether an
+oversized-but-completely-observed response is an admissible terminal failure or uncertainty;
+if completeness/termination is not proven, it defaults to uncertainty.
+
+### 6.3 No hidden SDK/provider retries
+
+The one-request rule includes retries performed below the Agent Fabric adapter.
+
+For P0b-A:
+
+- automatic retry behavior in the AI SDK/provider client must be disabled or otherwise proven
+  incapable of emitting a second physical provider request for one attempt;
+- a transport retry must not be hidden behind one `startAttempt()` call;
+- retry after uncertainty must use the existing governed retry path with a new current
+  scheduling claim/permit/attempt under remaining authority and budgets;
+- the live/deterministic evidence must expose enough transport instrumentation to prove the
+  physical request count for the tested adapter path.
+
+A later slice may design governed provider-level retry semantics. P0b-A does not.
+
+### 6.4 Resolver boundary
 
 The first implementation may use injected, in-memory resolvers/registries for:
 
 - `EffectiveRunSpec`;
 - context pack;
 - model materialization;
-- provider target.
+- provider/model target.
 
 Production materialization/context storage is out of scope.
 
@@ -307,7 +333,7 @@ Resolvers are trusted only to supply candidate data for the configured IDs. The 
 verify content digests and authority relationships before external execution; successful
 lookup alone is insufficient.
 
-### 6.4 Secrets are not materialization content
+### 6.5 Secrets are not materialization content
 
 API keys, bearer tokens and provider credentials SHALL NOT participate in canonical prompt/
 materialization/result content and SHALL NOT be written into journal events, evidence bodies,
@@ -323,10 +349,11 @@ the secret value.
 Within one live adapter instance, `startAttempt()` must be idempotent for the same
 `attemptId + permitId`:
 
-- the first call creates one attempt record and launches at most one provider invocation;
+- the first call creates one attempt record and launches at most one physical provider request;
 - a retry with the same attempt/permit returns the existing startup identity/state and must
-  not issue a second provider call;
-- reuse of the same `attemptId` with a different permit fails closed.
+  not issue a second provider request;
+- reuse of the same `attemptId` with a different permit fails closed;
+- SDK/client automatic retries are subject to §6.3 and cannot silently violate this rule.
 
 This is an in-process guarantee only. P0b-A does not claim crash-safe exactly-once provider
 execution because production persistence and external reconciliation remain deferred.
@@ -373,7 +400,7 @@ commands, acceptance decisions or completion claims remain untrusted output data
 For this first vertical, `WorkerResultReport.status = succeeded` means only:
 
 > the authorized bounded model invocation completed and the complete text result artifact was
-> captured under the required bindings.
+> captured under the required bindings and size limits.
 
 It does **not** mean:
 
@@ -390,8 +417,8 @@ existing trusted deterministic check already performs it outside the model.
 A successfully captured provider response may produce a `WorkerResultReport` with
 `status = succeeded` only when:
 
-- the exact authorized destination, context pack and permitted materialization were used;
-- all pre-dispatch bounds passed;
+- the exact authorized destination/model, context pack and permitted materialization were used;
+- all request/result/time bounds passed;
 - the complete text result required by the P0b-A result envelope was captured;
 - its result digest was computed from one documented canonical result representation;
 - evidence digests bind the bounded provider-execution evidence selected by the
@@ -471,11 +498,12 @@ The implementation and review must explicitly cover at least these threats:
 1. **authority injection through model text** — output claims authority it does not possess;
 2. **materialization substitution** — provider/model/prompt/options differ from the content
    bound before permit issuance;
-3. **provider-target substitution / SSRF** — an authorized target is redirected to another
-   provider or arbitrary network endpoint;
+3. **provider/model target substitution / SSRF** — an authorized target is redirected to
+   another provider, unauthorized model or arbitrary network endpoint;
 4. **source-boundary bypass** — unauthorized context is inserted into the model request;
 5. **permit substitution** — adapter result/report is rebound to another attempt/permit;
-6. **duplicate dispatch** — retries trigger multiple provider calls for one live attempt;
+6. **duplicate dispatch / hidden retry** — adapter or SDK retries trigger multiple provider
+   requests for one live attempt;
 7. **late-result resurrection** — stale output regains commit authority after expiry/revocation;
 8. **provider/transport ambiguity** — timeout or connection loss is mislabeled terminal
    success/failure;
@@ -488,8 +516,8 @@ The implementation and review must explicitly cover at least these threats:
 12. **tool/effect smuggling** — model-selected tools or plugins mutate targets despite the
     model-only P0b-A scope;
 13. **replay nondeterminism** — replay invokes the provider or depends on live provider state;
-14. **cost amplification / oversized request** — retries or missing request/output/time bounds
-    multiply spend or resource usage;
+14. **cost amplification / oversized request or response** — retries or missing
+    request/output/result/time bounds multiply spend or resource usage;
 15. **semantic-success confusion** — transport/model completion is incorrectly reported as
     factual correctness or goal acceptance.
 
@@ -503,22 +531,26 @@ live-provider evidence.
 
 Required negative/positive vectors include at minimum:
 
-- correct permit + exact target/context/materialization -> one adapter dispatch and one bound
-  report;
+- correct permit + exact target/model/context/materialization -> one adapter dispatch and one
+  bound report;
 - wrong effective-run-spec digest -> no provider dispatch;
 - wrong materialization digest -> no provider dispatch;
 - wrong context-pack digest -> no provider dispatch;
 - context pack containing source IDs outside `DispatchIntent.sourceIds` -> no provider dispatch;
-- provider/materialization does not match `DispatchIntent.targetId` provider mapping -> no
+- provider/materialization does not match `DispatchIntent.targetId` provider policy -> no
   provider dispatch;
+- model outside target's exact/allowlisted model policy -> no provider dispatch;
 - arbitrary/custom endpoint supplied through materialization -> reject/no provider dispatch;
 - provider/model/prompt/options substitution -> no provider dispatch;
 - request above `maximumRequestBytes` -> no provider dispatch;
 - invalid/unbounded `maxOutputTokens` -> no provider dispatch;
+- invalid/unbounded `maximumResultBytes` -> no provider dispatch;
 - invalid/unbounded wall-clock profile -> no provider dispatch;
+- oversized returned result -> cannot become successful complete result;
 - effect class other than `bounded_external_inference` -> reject before provider dispatch;
 - missing authority for `bounded_external_inference` -> reject before provider dispatch;
 - duplicate `startAttempt` for same permit -> no duplicate provider call;
+- simulated SDK/provider retryable error -> physical request count remains one for that attempt;
 - same attempt with different permit -> conflict/fail closed;
 - provider throw before/around dispatch -> uncertainty according to documented classification;
 - timeout -> uncertainty;
@@ -543,9 +575,11 @@ Before runtime adoption, at least one opt-in live-provider run must prove:
 
 - real network/provider execution occurred;
 - exact provider/model coordinate is captured;
-- the actual provider corresponds to the authorized `DispatchIntent.targetId`;
+- the actual provider/model corresponds to the authorized `DispatchIntent.targetId` policy;
 - the exact context pack/source set is content-bound and within the authorized source set;
-- request-size, output-token and wall-clock bounds were active;
+- request-size, result-size, output-token and wall-clock bounds were active;
+- automatic provider/SDK retry is disabled for the tested path and transport instrumentation
+  observes one physical request for the attempt;
 - no secret value is logged;
 - the invocation was authorized as `bounded_external_inference`;
 - one permit maps to one observed adapter attempt for the live process;
@@ -566,10 +600,12 @@ needed for:
 
 1. a provider-backed Agent Fabric adapter;
 2. immutable/content-bound P0b model materialization plus in-memory resolver;
-3. in-memory context-pack and provider-target resolution sufficient for the bounded vertical;
-4. reuse of the existing Forge AI provider/secrets layer;
-5. deterministic pre-dispatch validation for source, target, effect and request bounds;
-6. bounded result/evidence digest construction;
+3. in-memory context-pack and provider/model-target resolution sufficient for the bounded
+   vertical;
+4. reuse of the existing Forge AI provider/secrets layer with automatic retries disabled for
+   the P0b-A path;
+5. deterministic pre-dispatch validation for source, target/model, effect and request bounds;
+6. bounded result/evidence digest construction and result-size validation;
 7. timeout/cancellation/uncertainty handling;
 8. deterministic conformance tests and an opt-in live-provider smoke surface;
 9. necessary public experimental exports/documentation for the P0b-A adapter.
@@ -585,13 +621,15 @@ P0b-A does **not** authorize:
 - production persistent/PGlite Agent Fabric journal storage;
 - production transactional outbox coupling;
 - crash-safe exactly-once provider invocation;
+- provider/SDK automatic retry hidden inside one attempt;
 - arbitrary/custom provider endpoint resolution supplied by untrusted input;
 - consequential-effect broker or arbitrary external target mutation;
 - effect request/resolution/authorization/materialization/reconciliation pipeline;
 - tool-using autonomous model loops;
 - dynamic plugin installation or promotion;
 - child-agent delegation driven by live model output;
-- adaptive model routing or automatic provider selection;
+- adaptive model routing or automatic provider/model selection outside the authorized target
+  policy;
 - full HarnessSpec compiler/materializer;
 - production context retrieval/storage or source expansion;
 - project-scoped/persistent governed memory;
@@ -647,9 +685,9 @@ This planning record may be adopted only when:
 | `P0B-P01` | exact S1.3 closure adoption baseline, merge parents/tree and current repository baseline are accurate |
 | `P0B-P02` | first vertical is limited to one bounded real model/provider inference behind the existing `AgentAdapter`/permit boundary |
 | `P0B-P03` | deterministic authority remains outside model/provider control; model output cannot manufacture grants/claims/permits/outcomes or goal acceptance |
-| `P0B-P04` | provider destination is bound to authorized `DispatchIntent.targetId`; exact invocation materialization is content-bound to `EffectiveRunSpec` and the permit before network dispatch |
+| `P0B-P04` | provider/model destination is bound to authorized `DispatchIntent.targetId`; exact invocation materialization is content-bound to `EffectiveRunSpec` and the permit before network dispatch |
 | `P0B-P05` | exact context pack is digest-bound and its source set is constrained to authorized `DispatchIntent.sourceIds` |
-| `P0B-P06` | one request, request-size, output-token and wall-clock bounds make `bounded_external_inference` executable rather than nominal |
+| `P0B-P06` | one physical request with hidden retries disabled plus request-size, result-size, output-token and wall-clock bounds makes `bounded_external_inference` executable rather than nominal |
 | `P0B-P07` | replay prohibition on provider/model re-execution is explicit |
 | `P0B-P08` | timeout, transport ambiguity, cancellation and late result semantics default safely to uncertainty where terminal state is unproven |
 | `P0B-P09` | tools/plugins/delegation/consequential target mutation, arbitrary endpoints and production persistence are explicitly excluded |
@@ -668,15 +706,15 @@ A later implementation PR may be adopted only when all of the following are true
 | --- | --- |
 | `P0B-A01` | implementation is based on the exact adopted P0b planning baseline and relevant baseline movement is assessed |
 | `P0B-A02` | one real provider-backed adapter exists without a second authority/control plane |
-| `P0B-A03` | provider destination, context pack, model materialization and `EffectiveRunSpec`/permit digest chain are enforced before provider dispatch |
-| `P0B-A04` | dispatch effect class is exactly `bounded_external_inference` and current goal/authorization/grant permit its target, sources and effect |
-| `P0B-A05` | request-size, output-token, one-call and wall-clock limits are finite and fail before network dispatch when exceeded |
-| `P0B-A06` | same live attempt/permit cannot cause duplicate provider dispatch inside one adapter instance |
+| `P0B-A03` | provider/model destination, context pack, model materialization and `EffectiveRunSpec`/permit digest chain are enforced before provider dispatch |
+| `P0B-A04` | dispatch effect class is exactly `bounded_external_inference` and current goal/authorization/grant permit its target/model policy, sources and effect |
+| `P0B-A05` | request-size, result-size, output-token, one-physical-call and wall-clock limits are finite and fail closed when violated |
+| `P0B-A06` | same live attempt/permit cannot cause duplicate provider dispatch and SDK/provider automatic retry cannot create hidden extra requests |
 | `P0B-A07` | provider output remains non-authoritative evidence; invocation success is not conflated with factual correctness or goal acceptance |
 | `P0B-A08` | ambiguity/late/cancellation/revocation vectors cannot fabricate a terminal authoritative result |
 | `P0B-A09` | replay of accepted P0b control state performs zero provider/model callbacks |
 | `P0B-A10` | deterministic negative/positive conformance suite is complete and P0a/S1.1 regression corpus remains green |
-| `P0B-A11` | at least one live-provider smoke is captured with exact SHA/environment/provider/model/authorized target and no leaked secret values |
+| `P0B-A11` | at least one live-provider smoke is captured with exact SHA/environment/provider/model/authorized target, one observed physical request and no leaked secret values |
 | `P0B-A12` | no tools/plugins/delegation/consequential target effects, arbitrary endpoints, production persistence/recovery or adaptive routing are bundled |
 | `P0B-A13` | issue #44 repository enforcement prerequisite is satisfied and verified by readback; applicable CI and fail-closed Security Assurance succeed on the final candidate with path-filtered skips classified accurately |
 | `P0B-A14` | independent exact-final-SHA review reports zero unresolved BLOCKER/HIGH/MEDIUM, followed by an explicitly authorized merge |
@@ -687,10 +725,10 @@ P0b-A is successful when Forge can demonstrate the following without overclaimin
 
 > A real external model was invoked nondeterministically, but every authority-changing
 > decision remained deterministic and governed by the existing P0a control plane; the exact
-> provider target, authorized source context, invocation and result were content-bound to one
-> authorized attempt; request/output/time bounds constrained the external inference; ambiguous
-> execution became uncertainty; model text remained non-authoritative; and replay reconstructed
-> the accepted state without rerunning the model.
+> provider/model target, authorized source context, invocation and result were content-bound to
+> one authorized attempt; request/result/output/time bounds constrained one physical external
+> inference; ambiguous execution became uncertainty; model text remained non-authoritative;
+> and replay reconstructed the accepted state without rerunning the model.
 
 That is the first meaningful step beyond the deterministic P0a proof while preserving the
 architecture's central trust boundary.
