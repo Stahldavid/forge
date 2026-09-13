@@ -103,6 +103,7 @@ verified OwnerAuthorization
   -> exact EffectiveRunSpec
   -> exact context pack + model materialization
   -> pre-dispatch bounds + authority validation
+  -> trusted provider credential resolution
   -> one physical provider request, automatic transport retries disabled
   -> ExecutorStartupReport
   -> provider result / bounded evidence artifact
@@ -333,14 +334,21 @@ Resolvers are trusted only to supply candidate data for the configured IDs. The 
 verify content digests and authority relationships before external execution; successful
 lookup alone is insufficient.
 
-### 6.5 Secrets are not materialization content
+### 6.5 Credential resolution and secret non-content
 
 API keys, bearer tokens and provider credentials SHALL NOT participate in canonical prompt/
 materialization/result content and SHALL NOT be written into journal events, evidence bodies,
 telemetry or error strings.
 
-The materialization may identify the provider or the **name** of the required secret, but not
-the secret value.
+The materialized invocation SHALL NOT select an arbitrary secret name. Credential lookup must
+be derived exclusively from the already-authorized provider/model target through a trusted
+provider resolver. For the existing Forge provider layer, this means provider-specific secret
+selection remains in the trusted resolver rather than in prompt/materialization data.
+
+A materializer-controlled value such as `secretName = "DATABASE_URL"` must therefore be
+structurally impossible or rejected before secret resolution. Missing provider credentials may
+produce a redacted deterministic/provider-start failure according to the implementation's
+failure classification, but the secret value itself never becomes evidence content.
 
 ## 7. Physical-attempt semantics
 
@@ -501,24 +509,26 @@ The implementation and review must explicitly cover at least these threats:
 3. **provider/model target substitution / SSRF** — an authorized target is redirected to
    another provider, unauthorized model or arbitrary network endpoint;
 4. **source-boundary bypass** — unauthorized context is inserted into the model request;
-5. **permit substitution** — adapter result/report is rebound to another attempt/permit;
-6. **duplicate dispatch / hidden retry** — adapter or SDK retries trigger multiple provider
+5. **credential-selector injection** — untrusted materialization attempts to select an
+   unrelated Forge secret;
+6. **permit substitution** — adapter result/report is rebound to another attempt/permit;
+7. **duplicate dispatch / hidden retry** — adapter or SDK retries trigger multiple provider
    requests for one live attempt;
-7. **late-result resurrection** — stale output regains commit authority after expiry/revocation;
-8. **provider/transport ambiguity** — timeout or connection loss is mislabeled terminal
+8. **late-result resurrection** — stale output regains commit authority after expiry/revocation;
+9. **provider/transport ambiguity** — timeout or connection loss is mislabeled terminal
    success/failure;
-9. **secret leakage** — API keys or credential material enter digests, telemetry, exceptions or
-   evidence logs;
-10. **prompt/result leakage** — sensitive request/response bodies are emitted to normal CI/logs
+10. **secret leakage** — API keys or credential material enter digests, telemetry, exceptions or
+    evidence logs;
+11. **prompt/result leakage** — sensitive request/response bodies are emitted to normal CI/logs
     without an explicit evidence policy;
-11. **unbounded external access** — adapter can call arbitrary network targets instead of the
+12. **unbounded external access** — adapter can call arbitrary network targets instead of the
     authorized provider path;
-12. **tool/effect smuggling** — model-selected tools or plugins mutate targets despite the
+13. **tool/effect smuggling** — model-selected tools or plugins mutate targets despite the
     model-only P0b-A scope;
-13. **replay nondeterminism** — replay invokes the provider or depends on live provider state;
-14. **cost amplification / oversized request or response** — retries or missing
+14. **replay nondeterminism** — replay invokes the provider or depends on live provider state;
+15. **cost amplification / oversized request or response** — retries or missing
     request/output/result/time bounds multiply spend or resource usage;
-15. **semantic-success confusion** — transport/model completion is incorrectly reported as
+16. **semantic-success confusion** — transport/model completion is incorrectly reported as
     factual correctness or goal acceptance.
 
 ## 12. Required conformance evidence for P0b-A implementation
@@ -541,6 +551,8 @@ Required negative/positive vectors include at minimum:
   provider dispatch;
 - model outside target's exact/allowlisted model policy -> no provider dispatch;
 - arbitrary/custom endpoint supplied through materialization -> reject/no provider dispatch;
+- materialization attempts to select an arbitrary unrelated secret name -> reject/no secret
+  lookup and no provider dispatch;
 - provider/model/prompt/options substitution -> no provider dispatch;
 - request above `maximumRequestBytes` -> no provider dispatch;
 - invalid/unbounded `maxOutputTokens` -> no provider dispatch;
@@ -576,6 +588,7 @@ Before runtime adoption, at least one opt-in live-provider run must prove:
 - real network/provider execution occurred;
 - exact provider/model coordinate is captured;
 - the actual provider/model corresponds to the authorized `DispatchIntent.targetId` policy;
+- credentials were resolved by the trusted provider resolver rather than materialization input;
 - the exact context pack/source set is content-bound and within the authorized source set;
 - request-size, result-size, output-token and wall-clock bounds were active;
 - automatic provider/SDK retry is disabled for the tested path and transport instrumentation
@@ -602,8 +615,8 @@ needed for:
 2. immutable/content-bound P0b model materialization plus in-memory resolver;
 3. in-memory context-pack and provider/model-target resolution sufficient for the bounded
    vertical;
-4. reuse of the existing Forge AI provider/secrets layer with automatic retries disabled for
-   the P0b-A path;
+4. reuse of the existing Forge AI provider/secrets layer with credential choice derived only
+   from trusted provider resolution and automatic retries disabled for the P0b-A path;
 5. deterministic pre-dispatch validation for source, target/model, effect and request bounds;
 6. bounded result/evidence digest construction and result-size validation;
 7. timeout/cancellation/uncertainty handling;
@@ -622,6 +635,7 @@ P0b-A does **not** authorize:
 - production transactional outbox coupling;
 - crash-safe exactly-once provider invocation;
 - provider/SDK automatic retry hidden inside one attempt;
+- arbitrary credential-key selection by model/materialization input;
 - arbitrary/custom provider endpoint resolution supplied by untrusted input;
 - consequential-effect broker or arbitrary external target mutation;
 - effect request/resolution/authorization/materialization/reconciliation pipeline;
@@ -690,7 +704,7 @@ This planning record may be adopted only when:
 | `P0B-P06` | one physical request with hidden retries disabled plus request-size, result-size, output-token and wall-clock bounds makes `bounded_external_inference` executable rather than nominal |
 | `P0B-P07` | replay prohibition on provider/model re-execution is explicit |
 | `P0B-P08` | timeout, transport ambiguity, cancellation and late result semantics default safely to uncertainty where terminal state is unproven |
-| `P0B-P09` | tools/plugins/delegation/consequential target mutation, arbitrary endpoints and production persistence are explicitly excluded |
+| `P0B-P09` | credentials come only from trusted provider resolution; tools/plugins/delegation/consequential target mutation, arbitrary endpoints and production persistence are explicitly excluded |
 | `P0B-P10` | deterministic conformance vectors plus separate live-provider evidence obligations and secret/prompt/result handling are explicit |
 | `P0B-P11` | issue #44 is explicitly blocking for runtime adoption; planning diff remains governance/documentation only and no P0b runtime implementation is bundled |
 | `P0B-P12` | applicable repository checks and independent exact-final-SHA review report zero unresolved BLOCKER/HIGH/MEDIUM, followed by explicitly authorized merge |
@@ -706,7 +720,7 @@ A later implementation PR may be adopted only when all of the following are true
 | --- | --- |
 | `P0B-A01` | implementation is based on the exact adopted P0b planning baseline and relevant baseline movement is assessed |
 | `P0B-A02` | one real provider-backed adapter exists without a second authority/control plane |
-| `P0B-A03` | provider/model destination, context pack, model materialization and `EffectiveRunSpec`/permit digest chain are enforced before provider dispatch |
+| `P0B-A03` | provider/model destination, trusted credential resolution, context pack, model materialization and `EffectiveRunSpec`/permit digest chain are enforced before provider dispatch |
 | `P0B-A04` | dispatch effect class is exactly `bounded_external_inference` and current goal/authorization/grant permit its target/model policy, sources and effect |
 | `P0B-A05` | request-size, result-size, output-token, one-physical-call and wall-clock limits are finite and fail closed when violated |
 | `P0B-A06` | same live attempt/permit cannot cause duplicate provider dispatch and SDK/provider automatic retry cannot create hidden extra requests |
@@ -715,7 +729,7 @@ A later implementation PR may be adopted only when all of the following are true
 | `P0B-A09` | replay of accepted P0b control state performs zero provider/model callbacks |
 | `P0B-A10` | deterministic negative/positive conformance suite is complete and P0a/S1.1 regression corpus remains green |
 | `P0B-A11` | at least one live-provider smoke is captured with exact SHA/environment/provider/model/authorized target, one observed physical request and no leaked secret values |
-| `P0B-A12` | no tools/plugins/delegation/consequential target effects, arbitrary endpoints, production persistence/recovery or adaptive routing are bundled |
+| `P0B-A12` | no tools/plugins/delegation/consequential target effects, arbitrary endpoints, arbitrary credential-key selection, production persistence/recovery or adaptive routing are bundled |
 | `P0B-A13` | issue #44 repository enforcement prerequisite is satisfied and verified by readback; applicable CI and fail-closed Security Assurance succeed on the final candidate with path-filtered skips classified accurately |
 | `P0B-A14` | independent exact-final-SHA review reports zero unresolved BLOCKER/HIGH/MEDIUM, followed by an explicitly authorized merge |
 
@@ -725,10 +739,10 @@ P0b-A is successful when Forge can demonstrate the following without overclaimin
 
 > A real external model was invoked nondeterministically, but every authority-changing
 > decision remained deterministic and governed by the existing P0a control plane; the exact
-> provider/model target, authorized source context, invocation and result were content-bound to
-> one authorized attempt; request/result/output/time bounds constrained one physical external
-> inference; ambiguous execution became uncertainty; model text remained non-authoritative;
-> and replay reconstructed the accepted state without rerunning the model.
+> provider/model target, trusted credential path, authorized source context, invocation and
+> result were bound to one authorized attempt; request/result/output/time bounds constrained
+> one physical external inference; ambiguous execution became uncertainty; model text remained
+> non-authoritative; and replay reconstructed the accepted state without rerunning the model.
 
 That is the first meaningful step beyond the deterministic P0a proof while preserving the
 architecture's central trust boundary.
