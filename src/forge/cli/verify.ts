@@ -669,6 +669,7 @@ const TEST_COST_RANK: Record<TestCost, number> = {
   browser: 5,
 };
 const STRICT_TEST_FALLBACK_MS_BY_PATH: Array<{ pattern: RegExp; estimatedMs: number }> = [
+  { pattern: /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/, estimatedMs: 105_000 },
   { pattern: /^tests\/cli\/node-compat\.test\.ts$/, estimatedMs: 12_000 },
   { pattern: /^tests\/cli\/node-compat-dev-server\.test\.ts$/, estimatedMs: 6_000 },
   { pattern: /^tests\/cli\/node-compat-new\.test\.ts$/, estimatedMs: 8_000 },
@@ -735,7 +736,9 @@ const STRICT_ISOLATED_TEST_PATTERNS = [
   /^tests\/templates\/new-nuxt-web\.test\.ts$/,
   /^tests\/telemetry\/telemetry-dev-server\.test\.ts$/,
 ];
-const STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [];
+const STRICT_SERIAL_TEST_PATTERNS: RegExp[] = [
+  /^tests\/agent-memory\/h48-agent-memory\.test\.ts$/,
+];
 
 interface StrictTestEntry {
   file: string;

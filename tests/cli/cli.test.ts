@@ -3528,7 +3528,7 @@ describe("Forge CLI", () => {
     expect(plan.jobs + plan.isolatedJobs).toBeLessThanOrEqual(plan.totalJobs);
     expect(plan.jobs).toBeGreaterThan(0);
     expect(plan.isolatedJobs).toBeGreaterThan(0);
-    expect(plan.lanes.serial.chunkCount).toBe(0);
+    expect(plan.lanes.serial.chunkCount).toBe(1);
     expect(plan.slowestFiles.length).toBeGreaterThan(0);
 
     const singleWorkerPlan = buildStrictTestGraphPlan(process.cwd(), 1, {});
@@ -3538,10 +3538,11 @@ describe("Forge CLI", () => {
     expect(singleWorkerPlan.isolatedJobs).toBe(1);
   }, 20_000);
 
-  test("strict TestGraph lanes isolate global-heavy tests without serializing them", () => {
+  test("strict TestGraph lanes classify global-heavy tests across isolated and serial execution", () => {
     expect(classifyStrictTestFile("tests/client/client-query.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/cli/cli.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/db/pglite-adapter.test.ts")).toBe("isolated");
+    expect(classifyStrictTestFile("tests/agent-memory/h48-agent-memory.test.ts")).toBe("serial");
     expect(classifyStrictTestFile("tests/dev/server.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/external-manifest/external-runtime-bridge.test.ts")).toBe("isolated");
     expect(classifyStrictTestFile("tests/external-manifest/external-runtime-cli.test.ts")).toBe("parallel");
