@@ -1,0 +1,71 @@
+name: Refresh release TestGraph one-shot
+
+on:
+  push:
+    branches:
+      - fix/release-alpha-prerelease-guard
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.event.head_commit.message != 'chore(release): refresh generated test graph'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch head
+        uses: actions/checkout@v4
+        with:
+          ref: fix/release-alpha-prerelease-guard
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Generate canonical artifacts
+        run: node ./bin/forge.mjs generate
+
+      - name: Require exactly the expected TestGraph drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed < <(git status --porcelain=v1 | sed -E 's/^.. //' | sort)
+          printf 'Changed after generate:\n'
+          printf ' - %s\n' "${changed[@]}"
+          expected=(
+            'src/forge/_generated/testGraph.json'
+            'src/forge/_generated/testGraph.ts'
+          )
+          if [[ "${#changed[@]}" -ne "${#expected[@]}" ]]; then
+            echo '::error::Generation changed an unexpected number of files.'
+            git status --short
+            exit 1
+          fi
+          for index in "${!expected[@]}"; do
+            if [[ "${changed[$index]}" != "${expected[$index]}" ]]; then
+              echo "::error::Unexpected generated drift: expected ${expected[$index]}, got ${changed[$index]}"
+              git status --short
+              exit 1
+            fi
+          done
+
+      - name: Commit canonical TestGraph refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/forge/_generated/testGraph.json src/forge/_generated/testGraph.ts
+          git commit -m 'chore(release): refresh generated test graph'
+          git push origin HEAD:fix/release-alpha-prerelease-guard
