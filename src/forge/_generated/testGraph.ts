@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=cefae73a286f2c10ee10ee59b0d06dd93a157cd7085a48f2f9e097d8c03c61a3 content=596675b47d87a6c1b0107b81ce53f18599d9d17b7c83b8bf5b9fd6be7676d0a0
+// @forge-generated generator=0.1.0-alpha.63 input=cefae73a286f2c10ee10ee59b0d06dd93a157cd7085a48f2f9e097d8c03c61a3 content=00044a895dce0e034430263fbe7ad05b12825a4910bc72fe979d061a0f4706e6
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
@@ -3243,6 +3243,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/release/h23-release.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/release-channel-guard.test.ts",
       "kind": "unknown",
       "reasons": []
     },
