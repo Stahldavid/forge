@@ -40,6 +40,9 @@ jobs:
         with:
           bun-version: 1.3.14
 
+      - name: Install checkout dependencies
+        run: npm install --ignore-scripts --package-lock=false
+
       - name: Record provenance and command paths
         shell: bash
         env:
@@ -48,6 +51,7 @@ jobs:
           set -u
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           mkdir -p issue45-evidence
+          git status --porcelain=v1 > issue45-evidence/status-after-install.txt
           node - <<'NODE' > issue45-evidence/environment.json
           const cp = require('node:child_process');
           const os = require('node:os');
