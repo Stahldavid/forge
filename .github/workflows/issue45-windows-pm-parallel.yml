@@ -1,0 +1,134 @@
+name: Issue 45 Windows PM Parallel Diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/issue45-windows-pm-parallel
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package_manager: [npm, pnpm, yarn, bun]
+    env:
+      SUBJECT_SHA: f29b717f496b7edcd74e3f230c962e568fd0e5d2
+    steps:
+      - name: Checkout exact current main subject
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install pinned npm
+        run: npm install --global npm@11.19.0
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Record provenance and command paths
+        shell: bash
+        env:
+          PM: ${{ matrix.package_manager }}
+        run: |
+          set -u
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          mkdir -p issue45-evidence
+          node - <<'NODE' > issue45-evidence/environment.json
+          const cp = require('node:child_process');
+          const os = require('node:os');
+          const run = (command, args) => {
+            const r = cp.spawnSync(command, args, { encoding: 'utf8', windowsHide: true });
+            return { status: r.status, error: r.error?.message ?? null, stdout: r.stdout?.trim() ?? '', stderr: r.stderr?.trim() ?? '' };
+          };
+          console.log(JSON.stringify({
+            pm: process.env.PM,
+            subject: process.env.SUBJECT_SHA,
+            execution: cp.spawnSync('git', ['rev-parse','HEAD'], {encoding:'utf8'}).stdout.trim(),
+            tree: cp.spawnSync('git', ['show','-s','--format=%T','HEAD'], {encoding:'utf8'}).stdout.trim(),
+            cwd: process.cwd(),
+            tmpdir: os.tmpdir(),
+            runnerTemp: process.env.RUNNER_TEMP,
+            command: run('where.exe', [process.env.PM]),
+            commandCmd: run('where.exe', [`${process.env.PM}.cmd`]),
+            commandExe: run('where.exe', [`${process.env.PM}.exe`]),
+          }, null, 2));
+          NODE
+          cat issue45-evidence/environment.json
+
+      - name: Pack exact current-main source
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/issue45-pack"
+          PACK_FILE=$(npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/issue45-pack" --json | node -e 'let s=""; process.stdin.on("data",c=>s+=c); process.stdin.on("end",()=>process.stdout.write(JSON.parse(s)[0].filename))')
+          PACK_SPEC=$(node --input-type=module -e 'import { resolve } from "node:path"; import { pathToFileURL } from "node:url"; console.log(pathToFileURL(resolve(process.argv[1])).href)' "$RUNNER_TEMP/issue45-pack/$PACK_FILE")
+          PACK_PATH="${PACK_SPEC#file:///}"
+          echo "FORGE_LOCAL_PACK_SPEC=$PACK_SPEC" >> "$GITHUB_ENV"
+          echo "FORGE_LOCAL_PACK_PATH=$PACK_PATH" >> "$GITHUB_ENV"
+
+      - name: Reproduce default and same-drive fallback
+        shell: bash
+        env:
+          PM: ${{ matrix.package_manager }}
+        run: |
+          set +e
+          spec="$FORGE_LOCAL_PACK_SPEC"
+          if [ "$PM" = bun ] || [ "$PM" = yarn ]; then
+            spec="$FORGE_LOCAL_PACK_PATH"
+            export MSYS2_ARG_CONV_EXCL="*"
+          else
+            unset MSYS2_ARG_CONV_EXCL
+          fi
+
+          node scripts/field-test-forgeos.mjs \
+            --package-managers "$PM" \
+            --templates minimal-web \
+            --forge-spec "$spec" \
+            --install \
+            --json \
+            --write-report "issue45-evidence/default-$PM.json" \
+            --timeout-ms 240000 \
+            > "issue45-evidence/default-$PM.log" 2>&1
+          default_code=$?
+          printf 'default_exit=%s\n' "$default_code" | tee issue45-evidence/result.txt
+          tail -n 120 "issue45-evidence/default-$PM.log" || true
+
+          if [ "$default_code" -ne 0 ]; then
+            TEMP="$RUNNER_TEMP" TMP="$RUNNER_TEMP" node scripts/field-test-forgeos.mjs \
+              --package-managers "$PM" \
+              --templates minimal-web \
+              --forge-spec "$spec" \
+              --install \
+              --json \
+              --write-report "issue45-evidence/runner-temp-$PM.json" \
+              --timeout-ms 240000 \
+              > "issue45-evidence/runner-temp-$PM.log" 2>&1
+            runner_temp_code=$?
+            printf 'runner_temp_exit=%s\n' "$runner_temp_code" | tee -a issue45-evidence/result.txt
+            tail -n 120 "issue45-evidence/runner-temp-$PM.log" || true
+          else
+            printf 'runner_temp_exit=not-run\n' | tee -a issue45-evidence/result.txt
+          fi
+          exit 0
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue45-windows-${{ matrix.package_manager }}
+          path: issue45-evidence
+          if-no-files-found: error
