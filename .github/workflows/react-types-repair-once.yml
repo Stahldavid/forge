@@ -1,0 +1,86 @@
+name: React Types Packaging Repair Once
+
+on:
+  push:
+    branches:
+      - fix/react-types-runtime-dependency
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/react-types-runtime-dependency
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Reconcile lockfile and install
+        run: bun install --ignore-scripts
+
+      - name: Run focused package regression
+        run: bun test tests/release/react-package-metadata.test.ts --timeout 120000
+
+      - name: Prove packed consumer typechecks without explicit React types
+        shell: bash
+        run: |
+          ROOT="$RUNNER_TEMP/react-types-consumer"
+          PACK_DIR="$RUNNER_TEMP/react-types-pack"
+          mkdir -p "$ROOT" "$PACK_DIR"
+          npm pack --ignore-scripts --pack-destination "$PACK_DIR" --json > "$RUNNER_TEMP/react-types-pack.json"
+          PACK_FILE=$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(p[0].filename)' "$RUNNER_TEMP/react-types-pack.json")
+          cd "$ROOT"
+          npm init -y >/dev/null
+          npm install --ignore-scripts "$PACK_DIR/$PACK_FILE" >/dev/null
+          npm ls @types/react --all
+          cat > index.ts <<'TS'
+          import type { ForgeProviderProps } from "forgeos/react";
+          declare const props: ForgeProviderProps;
+          void props;
+          TS
+          cat > tsconfig.json <<'JSON'
+          {
+            "compilerOptions": {
+              "module": "NodeNext",
+              "moduleResolution": "NodeNext",
+              "noEmit": true,
+              "skipLibCheck": false,
+              "strict": true,
+              "target": "ES2022"
+            },
+            "include": ["index.ts"]
+          }
+          JSON
+          ./node_modules/.bin/tsc -p tsconfig.json
+
+      - name: Refresh canonical generated state
+        run: |
+          node ./bin/forge.mjs generate
+          node ./bin/forge.mjs generate --check
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Remove one-shot workflow and commit candidate
+        shell: bash
+        run: |
+          rm .github/workflows/react-types-repair-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --stat
+          git commit -m "fix(package): ship React types with public React export"
+          git push origin HEAD:fix/react-types-runtime-dependency
