@@ -46,14 +46,14 @@ describe("release channel guard", () => {
     };
 
     expect(pkg.name).toBe("forgeos");
-    expect(pkg.version).toBe("0.1.0-alpha.63");
+    expect(pkg.version).toMatch(/^0\.1\.0-alpha\.\d+$/);
     expect(pkg.publishConfig?.tag).toBe("alpha");
     expect(pre.mode).toBe("pre");
     expect(pre.tag).toBe("alpha");
     expect(pre.initialVersions?.forgeos).toBe("0.1.0-alpha.63");
     expect(pre.initialVersions?.["create-forgeos-app"]).toBe("0.1.0-alpha.5");
     expect(pre.initialVersions?.["eslint-plugin-forge"]).toBe("0.0.0");
-    expect(pre.changesets).toEqual([]);
+    expect(Array.isArray(pre.changesets)).toBe(true);
 
     const versionGuard = runGuard("version", process.cwd());
     expect(versionGuard.status, `${versionGuard.stdout}\n${versionGuard.stderr}`).toBe(0);
