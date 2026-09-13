@@ -1,0 +1,155 @@
+name: Issue 45 Windows Current Main Diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/issue45-windows-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: windows-latest
+    env:
+      SUBJECT_SHA: f29b717f496b7edcd74e3f230c962e568fd0e5d2
+    steps:
+      - name: Checkout exact current main subject
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install pinned npm
+        run: npm install --global npm@11.19.0
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install workspace dependencies
+        run: npm install --ignore-scripts --package-lock=false
+
+      - name: Record exact provenance and Windows command paths
+        shell: bash
+        run: |
+          set -u
+          mkdir -p issue45-evidence
+          {
+            printf 'subject=%s\n' "$SUBJECT_SHA"
+            printf 'execution=%s\n' "$(git rev-parse HEAD)"
+            printf 'tree=%s\n' "$(git show -s --format=%T HEAD)"
+            node -e 'const os=require("node:os"); console.log(JSON.stringify({cwd:process.cwd(),tmpdir:os.tmpdir(),runnerTemp:process.env.RUNNER_TEMP,TEMP:process.env.TEMP,TMP:process.env.TMP,platform:process.platform},null,2))'
+            printf '%s\n' '--- where commands ---'
+            where.exe node || true
+            where.exe npm || true
+            where.exe npm.cmd || true
+            where.exe pnpm || true
+            where.exe pnpm.cmd || true
+            where.exe yarn || true
+            where.exe yarn.cmd || true
+            where.exe bun || true
+            where.exe bun.exe || true
+            where.exe bun.cmd || true
+            printf '%s\n' '--- direct versions ---'
+            node --version || true
+            npm --version || true
+            pnpm --version || true
+            yarn --version || true
+            bun --version || true
+            cmd.exe /d /c bun.cmd --version || true
+            bun.exe --version || true
+          } | tee issue45-evidence/environment.txt
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+
+      - name: Pack local Forge source
+        shell: bash
+        run: |
+          mkdir -p field-package
+          PACK_FILE=$(npm pack --ignore-scripts --pack-destination field-package --json | node -e 'let s=""; process.stdin.on("data", c => s += c); process.stdin.on("end", () => process.stdout.write(JSON.parse(s)[0].filename))')
+          PACK_SPEC=$(node --input-type=module -e 'import { resolve } from "node:path"; import { pathToFileURL } from "node:url"; console.log(pathToFileURL(resolve(process.argv[1])).href)' "field-package/$PACK_FILE")
+          PACK_PATH="${PACK_SPEC#file:///}"
+          echo "FORGE_LOCAL_PACK_SPEC=$PACK_SPEC" >> "$GITHUB_ENV"
+          echo "FORGE_LOCAL_PACK_PATH=$PACK_PATH" >> "$GITHUB_ENV"
+          printf 'pack_file=%s\npack_spec=%s\npack_path=%s\n' "$PACK_FILE" "$PACK_SPEC" "$PACK_PATH" | tee issue45-evidence/package.txt
+
+      - name: Reproduce field cases from default os.tmpdir
+        shell: bash
+        run: |
+          set +e
+          overall=0
+          for pm in npm pnpm yarn bun; do
+            spec="$FORGE_LOCAL_PACK_SPEC"
+            if [ "$pm" = bun ] || [ "$pm" = yarn ]; then
+              spec="$FORGE_LOCAL_PACK_PATH"
+              export MSYS2_ARG_CONV_EXCL="*"
+            else
+              unset MSYS2_ARG_CONV_EXCL
+            fi
+            printf '\n===== default tmpdir / %s =====\n' "$pm" | tee -a issue45-evidence/default-summary.txt
+            node scripts/field-test-forgeos.mjs \
+              --package-managers "$pm" \
+              --templates minimal-web \
+              --forge-spec "$spec" \
+              --install \
+              --json \
+              --write-report "issue45-evidence/default-$pm.json" \
+              --timeout-ms 600000 \
+              > "issue45-evidence/default-$pm.log" 2>&1
+            code=$?
+            printf 'pm=%s exit=%s\n' "$pm" "$code" | tee -a issue45-evidence/default-summary.txt
+            tail -n 80 "issue45-evidence/default-$pm.log" || true
+            if [ "$code" -ne 0 ]; then overall=1; fi
+          done
+          printf 'default_overall=%s\n' "$overall" | tee -a issue45-evidence/default-summary.txt
+          exit 0
+
+      - name: Re-run failures with RUNNER_TEMP as TEMP and TMP
+        shell: bash
+        run: |
+          set +e
+          for pm in npm pnpm yarn bun; do
+            if grep -q "pm=$pm exit=0" issue45-evidence/default-summary.txt; then
+              printf 'pm=%s skipped_runner_temp=true reason=default_pass\n' "$pm" | tee -a issue45-evidence/runner-temp-summary.txt
+              continue
+            fi
+            spec="$FORGE_LOCAL_PACK_SPEC"
+            if [ "$pm" = bun ] || [ "$pm" = yarn ]; then
+              spec="$FORGE_LOCAL_PACK_PATH"
+              export MSYS2_ARG_CONV_EXCL="*"
+            else
+              unset MSYS2_ARG_CONV_EXCL
+            fi
+            printf '\n===== RUNNER_TEMP tmpdir / %s =====\n' "$pm" | tee -a issue45-evidence/runner-temp-summary.txt
+            TEMP="$RUNNER_TEMP" TMP="$RUNNER_TEMP" node scripts/field-test-forgeos.mjs \
+              --package-managers "$pm" \
+              --templates minimal-web \
+              --forge-spec "$spec" \
+              --install \
+              --json \
+              --write-report "issue45-evidence/runner-temp-$pm.json" \
+              --timeout-ms 600000 \
+              > "issue45-evidence/runner-temp-$pm.log" 2>&1
+            code=$?
+            printf 'pm=%s exit=%s\n' "$pm" "$code" | tee -a issue45-evidence/runner-temp-summary.txt
+            tail -n 80 "issue45-evidence/runner-temp-$pm.log" || true
+          done
+          exit 0
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue45-windows-current-main
+          path: issue45-evidence
+          if-no-files-found: error
