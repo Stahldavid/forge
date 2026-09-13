@@ -73,4 +73,18 @@ describe("field-test script", () => {
     expect(source).toContain("No organization seeded");
     expect(source).toContain("FORGE_DEV_SERVER_ERROR");
   });
+
+  test("Windows Bun uses executable resolution instead of a fabricated cmd shim", () => {
+    const source = readFileSync("scripts/field-test-forgeos.mjs", "utf8");
+
+    expect(source).toContain('return command === "bun" ? command : `${command}.cmd`;');
+  });
+
+  test("Windows field-test scratch prefers an absolute RUNNER_TEMP", () => {
+    const source = readFileSync("scripts/field-test-forgeos.mjs", "utf8");
+
+    expect(source).toContain('process.platform === "win32" && runnerTemp && isAbsolute(runnerTemp)');
+    expect(source).toContain('mkdtemp(join(fieldScratchRoot(), "forgeos-field-"))');
+    expect(source).toContain('return tmpdir();');
+  });
 });
