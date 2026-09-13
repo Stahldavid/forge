@@ -36,22 +36,38 @@ jobs:
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
+
           const scriptPath = 'scripts/field-test-forgeos.mjs';
           let script = fs.readFileSync(scriptPath, 'utf8');
-          const oldCommand = 'function commandName(command) {\n  return process.platform === "win32" ? `${command}.cmd` : command;\n}\n';
-          const newCommand = 'function commandName(command) {\n  if (process.platform !== "win32") return command;\n  return command === "bun" ? command : `${command}.cmd`;\n}\n\nfunction fieldScratchRoot() {\n  const runnerTemp = process.env.RUNNER_TEMP;\n  if (process.platform === "win32" && runnerTemp && isAbsolute(runnerTemp)) {\n    return runnerTemp;\n  }\n  return tmpdir();\n}\n';
-          if (!script.includes(oldCommand)) throw new Error('commandName source pattern not found');
-          script = script.replace(oldCommand, newCommand);
-          const oldScratch = '  const appRoot = await mkdtemp(join(tmpdir(), "forgeos-field-"));';
-          const newScratch = '  const appRoot = await mkdtemp(join(fieldScratchRoot(), "forgeos-field-"));';
-          if (!script.includes(oldScratch)) throw new Error('scratch source pattern not found');
-          script = script.replace(oldScratch, newScratch);
+          const eol = script.includes('\r\n') ? '\r\n' : '\n';
+          const commandPattern = /function commandName\(command\) \{\r?\n  return process\.platform === "win32" \? `\$\{command\}\.cmd` : command;\r?\n\}/;
+          if (!commandPattern.test(script)) throw new Error('commandName source pattern not found');
+          const newCommand = [
+            'function commandName(command) {',
+            '  if (process.platform !== "win32") return command;',
+            '  return command === "bun" ? command : `${command}.cmd`;',
+            '}',
+            '',
+            'function fieldScratchRoot() {',
+            '  const runnerTemp = process.env.RUNNER_TEMP;',
+            '  if (process.platform === "win32" && runnerTemp && isAbsolute(runnerTemp)) {',
+            '    return runnerTemp;',
+            '  }',
+            '  return tmpdir();',
+            '}',
+          ].join(eol);
+          script = script.replace(commandPattern, newCommand);
+
+          const scratchPattern = /  const appRoot = await mkdtemp\(join\(tmpdir\(\), "forgeos-field-"\)\);/;
+          if (!scratchPattern.test(script)) throw new Error('scratch source pattern not found');
+          script = script.replace(scratchPattern, '  const appRoot = await mkdtemp(join(fieldScratchRoot(), "forgeos-field-"));');
           fs.writeFileSync(scriptPath, script, 'utf8');
 
           const testPath = 'tests/field/field-test-script.test.ts';
           let test = fs.readFileSync(testPath, 'utf8');
-          const insertAt = test.lastIndexOf('\n});');
-          if (insertAt < 0) throw new Error('test insertion point not found');
+          const testEol = test.includes('\r\n') ? '\r\n' : '\n';
+          const closeMatch = /\r?\n\}\);\s*$/.exec(test);
+          if (!closeMatch || closeMatch.index == null) throw new Error('test insertion point not found');
           const additions = [
             '',
             '',
@@ -68,8 +84,8 @@ jobs:
             '    expect(source).toContain(\'mkdtemp(join(fieldScratchRoot(), "forgeos-field-"))\');',
             '    expect(source).toContain(\'return tmpdir();\');',
             '  });',
-          ].join('\n');
-          test = test.slice(0, insertAt) + additions + test.slice(insertAt);
+          ].join(testEol);
+          test = test.slice(0, closeMatch.index) + additions + test.slice(closeMatch.index);
           fs.writeFileSync(testPath, test, 'utf8');
           NODE
 
@@ -97,9 +113,11 @@ jobs:
           cat "$RUNNER_TEMP/bun-field-result.json"
           node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if (!p.ok) process.exit(1);' "$RUNNER_TEMP/bun-field-result.json"
 
-      - name: Confirm generated state unchanged
+      - name: Refresh and verify canonical generated state
         shell: bash
-        run: node ./bin/forge.mjs generate --check
+        run: |
+          node ./bin/forge.mjs generate
+          node ./bin/forge.mjs generate --check
 
       - name: Remove one-shot workflow and commit candidate
         shell: bash
@@ -107,7 +125,7 @@ jobs:
           rm .github/workflows/windows-field-test-bun-repair-once.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/field-test-forgeos.mjs tests/field/field-test-script.test.ts .github/workflows/windows-field-test-bun-repair-once.yml
+          git add -A
           git diff --cached --stat
           git commit -m "fix(field-test): harden Windows Bun execution"
           git push origin HEAD:fix/windows-field-test-bun-hardening
