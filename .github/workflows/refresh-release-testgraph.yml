@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   refresh:
-    if: github.event.head_commit.message != 'chore(release): refresh generated test graph'
+    if: "${{ github.event.head_commit.message != 'chore(release): refresh generated test graph' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
