@@ -43,34 +43,57 @@ jobs:
         shell: bash
         run: |
           set -u
-          mkdir -p issue45-evidence
-          {
-            printf 'subject=%s\n' "$SUBJECT_SHA"
-            printf 'execution=%s\n' "$(git rev-parse HEAD)"
-            printf 'tree=%s\n' "$(git show -s --format=%T HEAD)"
-            node -e 'const os=require("node:os"); console.log(JSON.stringify({cwd:process.cwd(),tmpdir:os.tmpdir(),runnerTemp:process.env.RUNNER_TEMP,TEMP:process.env.TEMP,TMP:process.env.TMP,platform:process.platform},null,2))'
-            printf '%s\n' '--- where commands ---'
-            where.exe node || true
-            where.exe npm || true
-            where.exe npm.cmd || true
-            where.exe pnpm || true
-            where.exe pnpm.cmd || true
-            where.exe yarn || true
-            where.exe yarn.cmd || true
-            where.exe bun || true
-            where.exe bun.exe || true
-            where.exe bun.cmd || true
-            printf '%s\n' '--- direct versions ---'
-            node --version || true
-            npm --version || true
-            pnpm --version || true
-            yarn --version || true
-            bun --version || true
-            cmd.exe /d /c bun.cmd --version || true
-            bun.exe --version || true
-          } | tee issue45-evidence/environment.txt
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           test -z "$(git status --porcelain=v1)"
+          mkdir -p issue45-evidence
+          node - <<'NODE' | tee issue45-evidence/environment.txt
+          const cp = require('node:child_process');
+          const os = require('node:os');
+          const run = (command, args) => {
+            const result = cp.spawnSync(command, args, { encoding: 'utf8', windowsHide: true });
+            return {
+              command: [command, ...args].join(' '),
+              status: result.status,
+              error: result.error?.message ?? null,
+              stdout: result.stdout?.trim() ?? '',
+              stderr: result.stderr?.trim() ?? '',
+            };
+          };
+          const where = (command) => run('where.exe', [command]);
+          console.log(JSON.stringify({
+            subject: process.env.SUBJECT_SHA,
+            execution: cp.spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim(),
+            tree: cp.spawnSync('git', ['show', '-s', '--format=%T', 'HEAD'], { encoding: 'utf8' }).stdout.trim(),
+            paths: {
+              cwd: process.cwd(),
+              tmpdir: os.tmpdir(),
+              runnerTemp: process.env.RUNNER_TEMP,
+              TEMP: process.env.TEMP,
+              TMP: process.env.TMP,
+              platform: process.platform,
+            },
+            commands: {
+              node: where('node'),
+              npm: where('npm'),
+              npmCmd: where('npm.cmd'),
+              pnpm: where('pnpm'),
+              pnpmCmd: where('pnpm.cmd'),
+              yarn: where('yarn'),
+              yarnCmd: where('yarn.cmd'),
+              bun: where('bun'),
+              bunExe: where('bun.exe'),
+              bunCmd: where('bun.cmd'),
+            },
+            versions: {
+              node: run('node', ['--version']),
+              npm: run('npm.cmd', ['--version']),
+              pnpm: run('pnpm.cmd', ['--version']),
+              yarn: run('yarn.cmd', ['--version']),
+              bun: run('bun.exe', ['--version']),
+              bunCmdViaCmd: run(process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', 'bun.cmd', '--version']),
+            },
+          }, null, 2));
+          NODE
 
       - name: Pack local Forge source
         shell: bash
