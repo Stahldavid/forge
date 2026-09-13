@@ -1,0 +1,91 @@
+name: Issue 45 React Types Current Main Diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/issue45-react-types-current-main
+
+permissions:
+  contents: read
+
+jobs:
+  consumer:
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: f29b717f496b7edcd74e3f230c962e568fd0e5d2
+    steps:
+      - name: Checkout exact current main subject
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install workspace dependencies
+        run: npm install --ignore-scripts --package-lock=false
+
+      - name: Record clean exact provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test -z "$(git status --porcelain=v1)"
+          printf 'subject=%s\nexecution=%s\ntree=%s\n' "$SUBJECT_SHA" "$(git rev-parse HEAD)" "$(git show -s --format=%T HEAD)"
+
+      - name: Pack ForgeOS
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/issue45-react/pack"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/issue45-react/pack" --json > "$RUNNER_TEMP/issue45-react/pack.json"
+          PACK_FILE=$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(p[0].filename)' "$RUNNER_TEMP/issue45-react/pack.json")
+          echo "FORGE_TARBALL=$RUNNER_TEMP/issue45-react/pack/$PACK_FILE" >> "$GITHUB_ENV"
+
+      - name: Compile consumer without explicit React types
+        shell: bash
+        run: |
+          set +e
+          ROOT="$RUNNER_TEMP/issue45-react/consumer"
+          mkdir -p "$ROOT"
+          cd "$ROOT"
+          npm init -y >/dev/null
+          npm install --ignore-scripts "$FORGE_TARBALL" > install.log 2>&1
+          install_code=$?
+          cat > index.ts <<'TS'
+          import type { ForgeProviderProps } from "forgeos/react";
+          declare const props: ForgeProviderProps;
+          void props;
+          TS
+          cat > tsconfig.json <<'JSON'
+          {
+            "compilerOptions": {
+              "module": "NodeNext",
+              "moduleResolution": "NodeNext",
+              "noEmit": true,
+              "skipLibCheck": false,
+              "strict": true,
+              "target": "ES2022"
+            },
+            "include": ["index.ts"]
+          }
+          JSON
+          npm ls @types/react --all > types-tree.txt 2>&1
+          types_code=$?
+          ./node_modules/.bin/tsc -p tsconfig.json > tsc.txt 2>&1
+          tsc_code=$?
+          printf 'install_exit=%s\ntypes_tree_exit=%s\ntsc_exit=%s\n' "$install_code" "$types_code" "$tsc_code" | tee result.txt
+          cat types-tree.txt || true
+          cat tsc.txt || true
+          mkdir -p "$RUNNER_TEMP/issue45-react/evidence"
+          cp install.log types-tree.txt tsc.txt result.txt package.json tsconfig.json index.ts "$RUNNER_TEMP/issue45-react/evidence/"
+          exit 0
+
+      - name: Upload consumer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue45-react-types-current-main
+          path: ${{ runner.temp }}/issue45-react/evidence
+          if-no-files-found: error
