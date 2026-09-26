@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=3b3f96c123788bb5e580e982533cd5df919d64caf5fab8d955fe64de99bdae08
+// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=c683c3641ce10166951bc59557b1996aa3629a1d449e3d34a5bf0381588fb6d4
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
@@ -3305,6 +3305,28 @@ export const testGraph = {
       "file": "tests/release/version-alignment.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "@changesets/cli"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/version-packages-generation.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages @changesets/cli"
+      ]
     },
     {
       "confidence": "confirmed",
