@@ -1,0 +1,10 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "forgeos": "0.1.0-alpha.63",
+    "create-forgeos-app": "0.1.0-alpha.5",
+    "eslint-plugin-forge": "0.0.0"
+  },
+  "changesets": []
+}

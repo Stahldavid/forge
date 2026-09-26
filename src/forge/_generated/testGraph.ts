@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=26598d34daac1eaa4f8d19b28ebc86643b01d23afd812cd0e69e46619e0ea520
+// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=3b3f96c123788bb5e580e982533cd5df919d64caf5fab8d955fe64de99bdae08
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
@@ -3269,6 +3269,24 @@ export const testGraph = {
         "confirmed: packages react",
         "probable: packages @types/react"
       ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/release-channel-guard.test.ts",
+      "kind": "unknown",
+      "reasons": []
     },
     {
       "confidence": "weak",

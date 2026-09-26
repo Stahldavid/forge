@@ -73,9 +73,12 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("FORGE_ALLOW_FIRST_NPM_PUBLISH");
     expect(workflow).toContain("npm run release:verify-public-alpha");
     expect(workflow).toContain("--skip-create");
-    expect(readFileSync(join(process.cwd(), "scripts", "publish-npm-alpha-package.mjs"), "utf8")).toContain(
-      "--allow-first-publish",
-    );
+    const publishHelper = readFileSync(join(process.cwd(), "scripts", "publish-npm-alpha-package.mjs"), "utf8");
+    expect(publishHelper).toContain("--allow-first-publish");
+    expect(publishHelper).toContain("assertPublishChannel(packageDir)");
+    const versionHelper = readFileSync(join(process.cwd(), "scripts", "version-packages.mjs"), "utf8");
+    expect(versionHelper).toContain('assertVersioningPreMode(".")');
+    expect(versionHelper).toContain('assertPublishChannel(".")');
     expect(readFileSync(join(process.cwd(), "scripts", "publish-trusted-alpha.mjs"), "utf8")).toContain(
       "--allow-create-first-publish",
     );
@@ -91,8 +94,14 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("git restore .");
     expect(workflow).toContain("git clean -fd");
     expect(workflow).toContain("NPM_CONFIG_PROVENANCE: \"true\"");
-    expect(workflow).toContain("npm publish --access public --tag alpha");
+    expect(workflow).toContain("node scripts/release-channel-guard.mjs publish .");
+    expect(workflow).toContain(`PUBLISH_TAG="$(node -p "require('./package.json').publishConfig?.tag ?? 'alpha'")"`);
+    expect(workflow).toContain('npm publish --access public --tag "${PUBLISH_TAG}"');
     expect(workflow).toContain("npm run release:smoke");
+    const manualGuardStart = workflow.indexOf("name: Enforce release channel");
+    const manualVersionCheckStart = workflow.indexOf("name: Check npm package version");
+    expect(manualGuardStart).toBeGreaterThan(-1);
+    expect(manualVersionCheckStart).toBeGreaterThan(manualGuardStart);
     const forgeosPublishStart = workflow.indexOf("name: Publish ForgeOS package");
     const forgeosLatestStart = workflow.indexOf("name: Promote ForgeOS latest tag");
     const forgeosPublishBlock = workflow.slice(forgeosPublishStart, forgeosLatestStart);
