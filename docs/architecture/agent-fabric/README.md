@@ -17,10 +17,11 @@ P0a implementation surface.
 | [`S1.2_SCOPE_AND_GATE.md`](./S1.2_SCOPE_AND_GATE.md), [`S1.2_DESIGN_PLAN.md`](./S1.2_DESIGN_PLAN.md) | Adopted scope and delivery plan for the reference implementation design. |
 | [`S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md`](./S1.2_REFERENCE_IMPLEMENTATION_DESIGN.md), [`S1.2_IMPLEMENTATION_TRACEABILITY.md`](./S1.2_IMPLEMENTATION_TRACEABILITY.md), [`S1.2_DESIGN_DECISIONS.md`](./S1.2_DESIGN_DECISIONS.md) | Adopted reference implementation design; 24 operation mappings, 35 invariant mappings, 16 event-family mappings and preserved S12-F01/F02 history. |
 | [`S1.2_ADOPTION_RECORD.md`](./S1.2_ADOPTION_RECORD.md) | Records the exact reviewed head, checks, repair-aware evidence and merge that completed S12-D12 and adopted S1.2. |
-| [`S1.3_SCOPE_AND_GATE.md`](./S1.3_SCOPE_AND_GATE.md), [`S1.3_CONFORMANCE_PLAN.md`](./S1.3_CONFORMANCE_PLAN.md) | Adopted S1.3 Proof & Conformance planning package; S13-P08 complete. It authorizes only the limited S1.3-A evidence/reproduction stage, not new tooling or P0b. |
+| [`S1.3_SCOPE_AND_GATE.md`](./S1.3_SCOPE_AND_GATE.md), [`S1.3_CONFORMANCE_PLAN.md`](./S1.3_CONFORMANCE_PLAN.md) | Adopted S1.3 Proof & Conformance planning package; S13-P08 complete. It authorized only the limited S1.3-A evidence/reproduction stage, not new tooling or P0b. |
 | [`S1.3_EVIDENCE_CATALOG.md`](./S1.3_EVIDENCE_CATALOG.md), [`S1.3_CONFORMANCE_MATRIX.md`](./S1.3_CONFORMANCE_MATRIX.md), [`S1.3_REPRODUCTION_PROTOCOL.md`](./S1.3_REPRODUCTION_PROTOCOL.md), [`S1.3_GAP_AND_TOOLING_REGISTER.md`](./S1.3_GAP_AND_TOOLING_REGISTER.md) | Adopted S1.3-A Evidence Registry & Reproduction Baseline: stable evidence/gap IDs, 24 OP / 35 I / 16 event cross-index, reproduction rules and tooling-need decisions; historical candidate wording is preserved inside the reviewed artifacts. |
 | [`S1.3_A_ADOPTION_RECORD.md`](./S1.3_A_ADOPTION_RECORD.md) | Records the exact reviewed head, exact-SHA gates, preserved FAIL/INCONCLUSIVE observations and merge that completed S13-A12 and adopted S1.3-A. |
-| [`S1.3_FINAL_CLOSURE_RECORD.md`](./S1.3_FINAL_CLOSURE_RECORD.md) | Review-candidate closure supplement that binds the post-S1.3-A evidence/repairs to the current canonical baseline while preserving historical GAP-002/GAP-008 limitations; adoption is pending. |
+| [`S1.3_FINAL_CLOSURE_RECORD.md`](./S1.3_FINAL_CLOSURE_RECORD.md) | Adopted final S1.3 closure supplement. It binds post-S1.3-A evidence/repairs while preserving historical GAP-002/GAP-008 limitations and establishes the boundary to P0b. |
+| [`P0B_SCOPE_AND_GATE.md`](./P0B_SCOPE_AND_GATE.md) | Planning proposal for the first bounded nondeterministic P0b vertical: one real provider-backed model invocation behind the existing P0a authority/permit/result boundary. Not adopted until independent review and explicit merge. |
 
 ## Baseline coordinates
 
@@ -50,19 +51,27 @@ branch remaining available.
 | S1.3 scope and conformance plan | [PR #18](https://github.com/Stahldavid/forge/pull/18), `801c2192e64652ade19a642b2f09f8660963c74f` | `ADOPTED`; S13-P08 complete; reviewed head `c694e9091bc1211b27d7e5e934ff4b9905e6ae89` |
 | Delta semantic timeline test timeout/cleanup | [PR #20](https://github.com/Stahldavid/forge/pull/20), `92c470ae2319aed9bde734d4506767677abe5a3c` | Adopted separately; reviewed head `0c8fe25d65ff5619395f3cf1f24635ba99a8e34c`; test-only, no Agent Fabric semantic change |
 | S1.3-A evidence/reproduction baseline | [PR #19](https://github.com/Stahldavid/forge/pull/19), `de9449648d821086db3d6f214c1a39cd4c659c7e` | `ADOPTED`; S13-A12 complete; reviewed head `b48a8fb4d77a1d8f5df7d9d523623a2037966da0` |
-| S1.3 final closure | pending independent review and explicit adoption | `REVIEW_CANDIDATE`; GAP-001/009 proposed CLOSED; GAP-002/008 retained OPEN as historical/nonblocking limitations; GAP-003…007 preserved as deferred applicability |
+| S1.3 final closure | [PR #43](https://github.com/Stahldavid/forge/pull/43), `f29b717f496b7edcd74e3f230c962e568fd0e5d2` | `ADOPTED`; reviewed head `36a6c75dfcc2c59e33fb04a8dfb9ce95da10f2ed`; adopted tree `49677d9979c2652c96f1cc4e0f2f82a17cb10f8e` |
+| P0b bounded model-adapter scope | pending independent review and explicit adoption | `PLANNING_PROPOSAL`; runtime implementation not yet authorized |
 
 The adopted S1.3 planning coordinate remains
 `main@801c2192e64652ade19a642b2f09f8660963c74f`. The separately adopted PR #20 moved the
 repository/reproduction baseline to `main@92c470ae2319aed9bde734d4506767677abe5a3c`; that
 movement was assessed under S13-A01. S1.3-A was subsequently adopted by PR #19 at
-`main@de9449648d821086db3d6f214c1a39cd4c659c7e`. Candidate/planning labels in the exact
-reviewed source artifacts are preserved as authored; adoption merges and adoption records
-establish their subsequent status.
+`main@de9449648d821086db3d6f214c1a39cd4c659c7e`.
 
-The proposed S1.3 final closure is a later supplement over the post-S1.3-A repair/evidence
-chain. Until that closure record is independently reviewed and explicitly adopted, it must
-not be read as an already-adopted status change to the historical gap register.
+S1.3 is formally closed by PR #43 at
+`main@f29b717f496b7edcd74e3f230c962e568fd0e5d2`. The closure preserves GAP-002 and GAP-008 as
+historical/nonblocking limitations, closes GAP-001 and GAP-009 through separately adopted
+evidence, and keeps GAP-003…007 within their previously adopted applicability boundaries.
+Candidate/planning labels in exact historical source artifacts remain preserved as authored;
+adoption merges and later supplements establish subsequent state.
+
+The P0b Scope & Gate is a new planning proposal over that closed baseline. Until it is
+independently reviewed and explicitly adopted, it does not authorize runtime implementation.
+If adopted, it authorizes implementation work only for the bounded P0b-A model-invocation
+vertical defined in that record; the implementation itself still requires separate evidence,
+review and explicit merge.
 
 After adoption, changes must not silently rewrite history. A material change to a frozen
 architecture decision requires a new superseding decision record that identifies:
@@ -105,6 +114,10 @@ change an `OP-*`/`I-*` obligation. The adopted S1.3-A baseline may classify gaps
 recommend a future decision, but it cannot itself implement a repair/tool or erase a
 historical failed or inconclusive observation.
 
+P0b planning inherits that precedence. A model/provider adapter may extend execution, but
+cannot override the accepted deterministic authority/replay semantics merely because a live
+provider behaves differently or exposes additional capabilities.
+
 ## Scope boundary
 
 The freeze does **not** declare the entire future Agent Fabric implemented or
@@ -116,22 +129,22 @@ production-ready. It distinguishes three categories:
 - **DEFERRED** — intentionally outside the accepted baseline and requiring a future slice
   and separate acceptance evidence.
 
-S1.2 — Reference Implementation Design is adopted. S1.3 planning is adopted. S1.3-A —
-Evidence Registry & Reproduction Baseline is also adopted and establishes the trusted
-repository evidence/reproduction baseline for the accepted scope.
+S1.2 — Reference Implementation Design is adopted. S1.3 planning and S1.3-A are adopted, and
+S1.3 is now formally closed through the final closure record.
 
-The adopted S1.3-A package organizes existing evidence with stable IDs, separates historical
+The closed S1.3 evidence package organizes evidence with stable IDs, separates historical
 acceptance from current reproduction/source mapping, preserves `PASS`/`FAIL`/`SKIPPED`/
 `NOT_APPLICABLE`/`BLOCKED`/`INCONCLUSIVE`, cross-indexes all 24 OP rules, 35 invariants and
-16 persisted event families, defines exact-SHA reproduction discipline and classifies gaps.
-An evidence gap may remain visibly open; it cannot be hidden by a broad green suite.
+16 persisted event families, defines exact-SHA reproduction discipline and retains historical
+limitations without converting them into false green claims.
 
 A generic conformance runner, formal model checking, proof/evidence signing, cross-language
-or JCS conformance, machine-readable evidence automation, production retention, runtime/
-schema/dependency/workflow changes, blanket timeout changes and P0b are **not** authorized
-by S1.3-A adoption. Any later gap closure, tooling proposal or implementation slice requires
-a separate objective, scope, exact-SHA evidence, independent review and adoption.
+or JCS conformance, machine-readable evidence automation, production retention, production
+persistence/recovery, consequential effects and the broader future Agent Fabric remain
+outside the accepted P0a/S1.3 baseline.
 
-The proposed final closure does not change that P0b boundary. If adopted, the next Agent
-Fabric program step must still begin with a separate P0b Scope & Gate planning record before
-any P0b runtime implementation is authorized.
+The current P0b proposal is limited to one real provider-backed bounded external inference
+behind the existing P0a permit/result boundary. It explicitly excludes tools/plugins,
+consequential target mutation, production persistence/outbox, recovery epochs, adaptive
+routing, persistent governed memory and plugin/evolution promotion. No P0b runtime behavior is
+accepted until a separately reviewed and explicitly authorized implementation PR is merged.
