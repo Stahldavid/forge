@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.63 input=cefae73a286f2c10ee10ee59b0d06dd93a157cd7085a48f2f9e097d8c03c61a3 content=596675b47d87a6c1b0107b81ce53f18599d9d17b7c83b8bf5b9fd6be7676d0a0
+// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=26598d34daac1eaa4f8d19b28ebc86643b01d23afd812cd0e69e46619e0ea520
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "cefae73a286f2c10ee10ee59b0d06dd93a157cd7085a48f2f9e097d8c03c61a3",
+  "inputHash": "128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -3245,6 +3245,30 @@ export const testGraph = {
       "file": "tests/release/h23-release.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "@types/react",
+          "react"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/react-package-metadata.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages react",
+        "probable: packages @types/react"
+      ]
     },
     {
       "confidence": "weak",
