@@ -21,6 +21,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       proposal: true, ownerReview: true, durableStatus: true,
       codingWorker: true, ownerServer: true,
       sandboxVerification: { supported: true, localReadiness: "not_checked" },
+      cancellation: { supported: true, concurrentRequestsRequireOwnerServer: true,
+        activeModelStopIsBestEffort: true },
       consequentialEffects: false,
       privateMemory: "owner_cli_only",
       adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,
@@ -83,7 +85,17 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
         `${remote.taskId}: ${remote.state}; execution ${remote.canStart ? "available" : "not available"}\n`);
       return 0;
     }
-    service = await LocalTaskService.open(repositoryRoot);
+    try { service = await LocalTaskService.open(repositoryRoot); }
+    catch (error) {
+      if (options.subcommand === "cancel") {
+        throw new Error("Cannot reach the active local task owner. Start forge fabric serve before run to cancel an in-flight model call", { cause: error });
+      }
+      throw error;
+    }
+    if (options.subcommand === "cancel" &&
+        (await service.status(options.taskId ?? "")).state === "model_uncertain") {
+      throw new Error("An in-flight model call can only be cancelled through its running forge fabric serve owner");
+    }
     const status = options.subcommand === "propose"
       ? await service.propose(proposal)
       : options.subcommand === "evidence"

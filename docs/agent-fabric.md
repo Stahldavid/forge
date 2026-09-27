@@ -14,6 +14,9 @@ control journal, browser-based owner review, an isolated Ollama coding worker,
 and MCP proposal/status tools backed by a local owner process. It does not make
 a production persistence or security claim. Its scope and remaining gates are
 in [`P0B_B_LOCAL_CODING_SCOPE.md`](./architecture/agent-fabric/P0B_B_LOCAL_CODING_SCOPE.md).
+The [single-owner acceptance matrix](./architecture/agent-fabric/LOCAL_SINGLE_OWNER_ACCEPTANCE.md)
+separates the current local implementation from its remaining release and human
+acceptance gates.
 Owner-selected local memory, fixed two-process data workers, and a standalone
 Evolution Registry have separate narrow workflows below. These do not grant
 the Ollama coding worker new tools or executable extensions.
@@ -67,11 +70,14 @@ single-PC workflow, not a production security or multi-host claim.
 
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
 
-- model-selected tools, plugins or child delegation beyond P0b-A;
+- model-selected tools, plugins or child delegation (the local data workers use
+  fixed code-owned child permits only);
 - PGlite-backed production persistence/outbox integration for Agent Fabric;
-- consequential-effect brokers and reconciliation against real systems;
+- general consequential-effect brokers and arbitrary external-system effects
+  (the local pilot has fixed patch and Docker verification receipts only);
 - recovery epochs and integrity-unknown recovery;
-- adaptive model routing/harness compilation beyond the P0a contracts;
+- adaptive model routing and general harness compilation beyond the fixed
+  two-process data workflow;
 - executable plugin promotion, shared production memory, and autonomous self-evolution;
 - production deployment or production security claims.
 
@@ -292,8 +298,9 @@ attempt. Changed source content or HEAD blocks a stale attempt.
 the owner restarts. During an active model call, it requests abort from the
 local adapter. The returned `model_uncertain` state does not prove the provider
 stopped; a dispatched attempt cannot be retried. Cancellation does not stop
-patch materialization or Docker verification that has already started. Use
-`fabric serve` as the single owner when issuing `run` and `cancel` concurrently.
+patch materialization or Docker verification that has already started. Start
+`fabric serve` before `run` when you need a second CLI process to cancel an
+in-flight call; a one-shot `run` has no cross-process abort endpoint.
 `review-result` shows the recorded diff for a separate owner decision. Acceptance
 records a decision only; it does not alter the original checkout or merge code.
 
