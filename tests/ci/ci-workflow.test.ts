@@ -12,7 +12,9 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("ubuntu-latest");
     expect(workflow).toContain("windows-latest");
     expect(workflow).toContain("macos-latest");
-    expect(workflow).toContain("node-version: [22, 24]");
+    expect(nodeBreadthJob).toContain("github.event_name == 'pull_request'");
+    expect(nodeBreadthJob).toContain('"os":"windows-latest","node-version":22');
+    expect(nodeBreadthJob).toContain('"os":"macos-latest","node-version":24');
     expect(workflow).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(workflow).toContain("node .\\bin\\forge.mjs doctor windows --json");
     expect(workflow).toContain("Minimal template package-manager smoke");

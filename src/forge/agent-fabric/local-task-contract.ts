@@ -69,7 +69,10 @@ function relativeFilePath(value: unknown, field: string): string {
       /[\\:*?"<>|]/u.test(path)) invalid(field);
   const segments = path.split("/");
   if (segments.some((segment) => segment.length === 0 || segment === "." ||
-      segment === ".." || segment.toLowerCase() === ".git" ||
+      segment === ".." || [".git", ".forge", ".ssh", "node_modules", "_generated"].includes(segment.toLowerCase()) ||
+      /^\.env(?:\.|$)/iu.test(segment) ||
+      [".npmrc", ".pypirc", "forge.lock", "id_rsa", "id_ed25519"].includes(segment.toLowerCase()) ||
+      /\.(?:pem|key|p12|pfx)$/iu.test(segment) ||
       segment.endsWith(".") || segment.endsWith(" ") ||
       Buffer.byteLength(segment, "utf8") > 100 ||
       /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/iu.test(segment))) invalid(field);

@@ -204,3 +204,42 @@ import {
 ```
 
 That public entry point exposes the hardened Conductor and hardened replay functions. The lower-level implementation modules remain internal implementation detail of the experimental P0a package surface.
+
+## Local coding pilot (experimental)
+
+The framework checkout also exposes a bounded single-owner CLI path. Run these commands
+from the root of a trusted Git repository with Ollama running and `qwen3:0.6b`
+installed. This pilot uses no hosted API key or Codex model turn.
+
+```text
+node bin/forge.mjs fabric capabilities --json
+node bin/forge.mjs fabric propose --file task.json --json
+node bin/forge.mjs fabric status <task-id> --json
+node bin/forge.mjs fabric review <task-id> --json
+node bin/forge.mjs fabric run <task-id> --json
+node bin/forge.mjs fabric review-result <task-id> --json
+```
+
+`task.json` is an untrusted proposal. Its required fields are `schemaVersion: 1`,
+`repositoryId`, the full `baseCommit`, `goal`, `acceptanceCriteria`, `nonObjectives`,
+`sourcePaths`, `writablePaths`, `requestedModelTargetId: "target:ollama:local"`, and
+`limits` with `maximumAttempts`, `maximumWallClockMs`, `maximumOutputTokens`,
+`maximumContextBytes`, `maximumPatchBytes`, and a Unix millisecond `expiresAt`.
+`review` opens a local browser window showing the exact proposal and digest; `run`
+consumes one approved model attempt and writes a diff in an isolated Git worktree.
+`review-result` shows the recorded diff for a separate owner decision. Acceptance
+records a decision only; it does not alter the original checkout or merge code.
+
+The local store lives under `.forge/local/agent-fabric` and has one PGlite process
+owner. A crashed model attempt with a committed permit and no outcome remains
+uncertain; a repeated `run` does not spend another attempt. A committed model result
+can be materialized after restart. The existing MCP server reports CLI availability
+through `fabric_capabilities`; it does not expose task mutation tools. The popup is
+a cooperative same-account interaction, so it is not a security boundary against
+an agent with unrestricted shell or UI control. The model receives only approved
+source files and cannot run shell commands. The Git worktree confines patch
+materialization, but it is not a container or VM sandbox.
+
+Maintainers can run `bun scripts/agent-fabric-local-smoke.ts` for an opt-in real
+Ollama fixture. That script injects a synthetic test approval and confirms a diff;
+it does not prove the human popup flow or coding quality on real projects.

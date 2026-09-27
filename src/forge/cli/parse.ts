@@ -276,6 +276,7 @@ export type ForgeCommand =
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
+  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "review" | "run" | "review-result"; workspaceRoot: string; json: boolean; file?: string; taskId?: string }
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
@@ -501,6 +502,7 @@ export const TOP_LEVEL_COMMANDS = [
   "docs",
   "agent-contract",
   "agent",
+  "fabric",
   "mcp",
   "review",
   "ui",
@@ -1261,6 +1263,25 @@ export function parseCli(argv: string[]): ParsedCli {
             pollIntervalMs: pollIntervalMs ? Math.floor(pollIntervalMs) : undefined,
           },
         },
+        workspaceRoot,
+        errors,
+      };
+    }
+    case "fabric": {
+      const subcommand = rest[0];
+      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "review" && subcommand !== "run" && subcommand !== "review-result") {
+        errors.push("forge fabric requires subcommand: capabilities, propose, status, review, run, or review-result");
+        return { command: null, workspaceRoot, errors };
+      }
+      const file = parseOptionValue(argv, "--file");
+      const taskId = subcommand === "status" || subcommand === "review" || subcommand === "run" || subcommand === "review-result" ? rest[1] : undefined;
+      if (subcommand === "propose" && (!file || file.startsWith("--"))) errors.push("forge fabric propose requires --file <proposal.json>");
+      if ((subcommand === "status" || subcommand === "review" || subcommand === "run" || subcommand === "review-result") && !taskId) errors.push(`forge fabric ${subcommand} requires a task id`);
+      return {
+        command: errors.length === 0 ? {
+          kind: "fabric", subcommand, workspaceRoot, json: parseFlag(argv, "--json"),
+          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}),
+        } : null,
         workspaceRoot,
         errors,
       };

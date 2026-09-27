@@ -5,6 +5,10 @@ on:
     branches: [main, master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -78,9 +82,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      # PRs exercise the canonical Node version on Linux and Windows. Main
+      # retains the full OS/Node matrix once per merge.
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [22, 24]
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"windows-latest","node-version":24},{"os":"macos-latest","node-version":22},{"os":"macos-latest","node-version":24}]') }}
     steps:
       - uses: actions/checkout@v4
 

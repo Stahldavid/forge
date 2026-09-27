@@ -21,7 +21,7 @@ test("MCP exposes an honest read-only Agent Fabric boundary", async () => {
     });
     const payload = JSON.parse((called?.result as { content: { text: string }[] }).content[0]?.text ?? "null");
     expect(payload).toMatchObject({
-      ok: true, codingTaskControl: "not_connected", ownerApproval: "not_connected",
+      ok: true, codingTaskControl: "local_cli_available", ownerApproval: "local_popup_available",
       taskMutationTools: false,
     });
     const invalid = await handleMcpRequest(workspace, {

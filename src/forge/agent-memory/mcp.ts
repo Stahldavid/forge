@@ -130,9 +130,10 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       schemaVersion: 1,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
-      codingTaskControl: "not_connected",
-      ownerApproval: "not_connected",
+      codingTaskControl: "local_cli_available",
+      ownerApproval: "local_popup_available",
       taskMutationTools: false,
+      cli: "forge fabric capabilities --json",
     };
   }
   if (name === "agent_context") {

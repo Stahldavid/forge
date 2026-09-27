@@ -506,17 +506,17 @@ describe("H30 agent adapter export", () => {
     expect(JSON.stringify(result.commands)).toContain("forge agent hooks smoke --target codex --json");
   });
 
-  test("agent onboard accepts visible Codex hook canary while native proof is pending", async () => {
+  test("agent onboard does not mistake a Codex hook canary for user trust", async () => {
     const root = scaffoldGenerateWorkspace("agent-onboard-codex");
     try {
       const result = await runAgentOnboard({ ...options(root, "codex"), subcommand: "onboard" });
-      expect(result.ok).toBe(true);
-      expect(result.readyToEdit).toBe(true);
+      expect(result.ok).toBe(false);
+      expect(result.readyToEdit).toBe(false);
       expect(result.summary).toMatchObject({
         adapter: "ready",
-        hookBridge: "ready",
-        approvalRequired: false,
-        approvalStatus: "accepted",
+        hookBridge: "waiting-for-user-trust",
+        approvalRequired: true,
+        approvalStatus: "unverified",
         nativeTrustStatus: "waiting-for-native-signal",
         safeToEdit: true,
       });
@@ -530,7 +530,7 @@ describe("H30 agent adapter export", () => {
       expect(result.commands.dev).toBe("forge dev --once --json");
       expect(result.commands.context).toBe("forge agent context --current --json");
       expect(result.steps.find((step) => step.name === "hook-approval")?.message).toContain(
-        "trusted native signal proof is still pending",
+        "approve the installed hooks",
       );
       expect(result.recommendedReadFiles).toContain("AGENTS.md");
     } finally {
@@ -562,22 +562,22 @@ describe("H30 agent adapter export", () => {
     expect(smoke.smokeReady).toBe(true);
     expect(smoke.trustedNativeReady).toBe(false);
     expect(smoke.readinessLevel).toBe("canary");
-    expect(smoke.approvalRequired).toBe(false);
+    expect(smoke.approvalRequired).toBe(true);
     expect(smoke.canary?.visible).toBe(true);
     const stillWaiting = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
-    expect(stillWaiting.ok).toBe(true);
+    expect(stillWaiting.ok).toBe(false);
     expect(stillWaiting.visibleInMemory).toBe(true);
     expect(stillWaiting.usefulSignals).toBeGreaterThan(0);
     expect(stillWaiting.nativeSignals).toBe(0);
     expect(stillWaiting.canarySignals).toBeGreaterThan(0);
-    expect(stillWaiting.approvalRequired).toBe(false);
-    expect(stillWaiting.approvalStatus).toBe("accepted");
+    expect(stillWaiting.approvalRequired).toBe(true);
+    expect(stillWaiting.approvalStatus).toBe("unverified");
     expect(stillWaiting.nativeTrustStatus).toBe("waiting-for-native-signal");
     expect(stillWaiting.nextActions).toContain(
-      "forge agent memory --entry codex --json",
+      "forge agent ingest codex --watch --file .forge/agent/events.ndjson --json",
     );
     expect(stillWaiting.nextActions).not.toContain("Approve the installed hooks in Codex Desktop (Confiar em tudo or Revisar hooks)");
-    expect(stillWaiting.checks.find((check) => check.name === "codex-hook-approval")?.message).toContain("accepted");
+    expect(stillWaiting.checks.find((check) => check.name === "codex-hook-approval")?.message).toContain("unverified");
 
     await recordNativeCodexSignal(root);
     const ready = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
@@ -674,8 +674,8 @@ describe("H30 agent adapter export", () => {
     expect(result.usefulSignals).toBeGreaterThan(0);
     expect(result.nativeSignals).toBe(0);
     expect(result.canarySignals).toBeGreaterThan(0);
-    expect(result.approvalRequired).toBe(false);
-    expect(result.approvalStatus).toBe("accepted");
+    expect(result.approvalRequired).toBe(true);
+    expect(result.approvalStatus).toBe("unverified");
     expect(result.nativeTrustStatus).toBe("waiting-for-native-signal");
     expect(result.lastSignal?.summary).toContain("forge agent hooks smoke");
     expect(result.canary).toMatchObject({
@@ -695,13 +695,13 @@ describe("H30 agent adapter export", () => {
     expect(result.nextActions).toContain("forge agent memory --entry codex --json");
     expect(result.checks.some((check) => check.name === "canary-memory-readable" && check.ok)).toBe(true);
     expect(result.checks.some((check) => check.name === "codex-hook-approval" && check.ok)).toBe(true);
-    expect(result.diagnostics.some((diag) => diag.code === "FORGE_AGENT_HOOK_APPROVAL_REQUIRED")).toBe(false);
+    expect(result.diagnostics.some((diag) => diag.code === "FORGE_AGENT_HOOK_APPROVAL_REQUIRED")).toBe(true);
     expect(JSON.stringify(result.ingestResult)).toContain("FORGE_HOOK_SMOKE_CANARY");
     const human = formatAgentHuman(result);
     expect(human).toContain("smoke ready: yes");
     expect(human).toContain("trusted native ready: no");
     expect(human).toContain("readiness level: canary");
-    expect(human).toContain("approval: accepted");
+    expect(human).toContain("approval: unverified");
     expect(human).toContain("native trust: waiting-for-native-signal");
     expect(human).toContain("Canary:");
     expect(human).toContain("marker: FORGE_HOOK_SMOKE_CANARY");
@@ -737,19 +737,19 @@ describe("H30 agent adapter export", () => {
       expect(smoke.readinessLevel).toBe("canary");
 
       const needsNativeSignal = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
-      expect(needsNativeSignal.ok).toBe(true);
+      expect(needsNativeSignal.ok).toBe(false);
       expect(needsNativeSignal.summary).toMatchObject({
         adapter: "ready",
-        hookBridge: "ready",
-        approvalRequired: false,
-        approvalStatus: "accepted",
+        hookBridge: "waiting-for-user-trust",
+        approvalRequired: true,
+        approvalStatus: "unverified",
         nativeTrustStatus: "waiting-for-native-signal",
         recentEvents: 1,
         usefulSignals: 1,
         nativeSignals: 0,
         canarySignals: 1,
       });
-      expect(needsNativeSignal.nextActions).toContain("forge agent context --current --json");
+      expect(needsNativeSignal.nextActions).toContain("forge agent hooks status --target codex --json");
 
       await recordNativeCodexSignal(root);
 
