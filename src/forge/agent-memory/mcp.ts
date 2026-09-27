@@ -124,6 +124,7 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
 
 async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>): Promise<unknown> {
   if (name === "fabric_capabilities") {
+    if (Object.keys(args).length !== 0) throw new Error("fabric_capabilities accepts no arguments");
     return {
       ok: true,
       schemaVersion: 1,

@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  AgentFabricError, LocalControlStore, digestCanonical, sha256Digest,
-  type OwnerAuthorization, type OwnerAuthorizationVerifier,
-} from "../../src/forge/agent-fabric/index.ts";
+import { digestCanonical, sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
+import { AgentFabricError } from "../../src/forge/agent-fabric/errors.ts";
+import { LocalControlStore } from "../../src/forge/agent-fabric/local-control-store.ts";
+import type {
+  OwnerAuthorization, OwnerAuthorizationVerifier,
+} from "../../src/forge/agent-fabric/types.ts";
 import { PgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 import type { DbAdapter } from "../../src/forge/runtime/db/adapter.ts";
 

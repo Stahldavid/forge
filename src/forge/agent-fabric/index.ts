@@ -8,8 +8,6 @@ export type {
 } from "./hardened-conductor.ts";
 export * from "./errors.ts";
 export * from "./journal.ts";
-export * from "./local-control-store.ts";
-export * from "./local-task-contract.ts";
 export * from "./p0a.ts";
 export * from "./p0b-model-adapter.ts";
 export * from "./planning.ts";

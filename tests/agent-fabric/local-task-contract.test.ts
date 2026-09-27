@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import {
-  AgentFabricError, validateLocalCodingTaskProposal,
-} from "../../src/forge/agent-fabric/index.ts";
+import { AgentFabricError } from "../../src/forge/agent-fabric/errors.ts";
+import { validateLocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
 
 function proposal() {
   return {

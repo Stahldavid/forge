@@ -24,6 +24,11 @@ test("MCP exposes an honest read-only Agent Fabric boundary", async () => {
       ok: true, codingTaskControl: "not_connected", ownerApproval: "not_connected",
       taskMutationTools: false,
     });
+    const invalid = await handleMcpRequest(workspace, {
+      jsonrpc: "2.0", id: 3, method: "tools/call",
+      params: { name: "fabric_capabilities", arguments: { authorize: true } },
+    });
+    expect(invalid?.error).toMatchObject({ code: -32000 });
   } finally {
     rmSync(workspace, { recursive: true, force: true });
   }
