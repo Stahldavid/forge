@@ -12,6 +12,40 @@ function git(root: string, ...args: string[]): string {
 }
 
 describe("local task service", () => {
+  test("one proposal cannot open two simultaneous owner decisions", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-review-race-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      let decide!: (value: "approved" | "rejected") => void;
+      let windowCount = 0;
+      const service = await LocalTaskService.open(root, async () => {
+        windowCount += 1;
+        return new Promise((resolve) => { decide = resolve; });
+      });
+      try {
+        const proposed = await service.propose({
+          schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+          goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+          sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+          requestedModelTargetId: "target:ollama:local",
+          limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+            maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+        });
+        const first = service.review(proposed.taskId);
+        await expect(service.review(proposed.taskId)).rejects.toThrow("active owner review");
+        while (windowCount === 0) await new Promise((resolve) => setTimeout(resolve, 5));
+        decide("rejected");
+        expect((await first).state).toBe("rejected");
+        expect(windowCount).toBe(1);
+      } finally { await service.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
   test("validates before persistence, binds approval, and replays after restart", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-service-"));
     try {
@@ -31,9 +65,15 @@ describe("local task service", () => {
           maximumOutputTokens: 256, maximumContextBytes: 4_096,
           maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
       };
-      const service = await LocalTaskService.open(root, async () => "approved", async () => ({
-        text: JSON.stringify({ schemaVersion: 1, files: [{ path: "source.txt", content: "changed\n" }] }),
-      }));
+      let signalModelStarted!: () => void;
+      let releaseModel!: () => void;
+      const modelStarted = new Promise<void>((resolve) => { signalModelStarted = resolve; });
+      const modelRelease = new Promise<void>((resolve) => { releaseModel = resolve; });
+      const service = await LocalTaskService.open(root, async () => "approved", async () => {
+        signalModelStarted();
+        await modelRelease;
+        return { text: JSON.stringify({ schemaVersion: 1, files: [{ path: "source.txt", content: "changed\n" }] }) };
+      });
       try {
         await expect(service.propose({ ...proposal, baseCommit: "f".repeat(40) })).rejects.toThrow();
         await expect(service.propose({ ...proposal, sourcePaths: [".env.local"] })).rejects.toThrow();
@@ -42,7 +82,12 @@ describe("local task service", () => {
         const approved = await service.review(proposed.taskId);
         expect(approved.state).toBe("owner_approved");
         await expect(service.review(proposed.taskId)).rejects.toThrow();
-        const completed = await service.run(proposed.taskId);
+        const running = service.run(proposed.taskId);
+        await modelStarted;
+        const inFlight = await service.status(proposed.taskId);
+        expect(inFlight.state).toBe("model_uncertain");
+        releaseModel();
+        const completed = await running;
         expect(completed.state).toBe("patch_ready");
         expect(completed.patch?.changedPaths).toEqual(["source.txt"]);
         await expect(service.run(proposed.taskId)).rejects.toThrow();

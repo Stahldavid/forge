@@ -43,6 +43,8 @@ export class LocalControlStore {
   private readonly definitions: readonly ResourceDefinition[];
   private schemaReady?: Promise<unknown>;
   private closed = false;
+  private readonly externalRoots = new Set<string>();
+  private readonly externalRuns = new Set<Promise<unknown>>();
 
   constructor(private readonly options: LocalControlStoreOptions) {
     if (options.adapter.kind !== "pglite") {
@@ -169,6 +171,9 @@ export class LocalControlStore {
     operation: (conductor: ForgeAgentConductor) => T,
   ): Promise<LocalControlTransitionResult<T>> {
     return this.serialized(async () => {
+      if (this.externalRoots.has(rootExecutionId)) {
+        throw new AgentFabricError("AF_CONFLICT", "External attempt is still in flight for this root");
+      }
       const before = await this.load(rootExecutionId);
       const { journal, conductor } = this.hydrate(rootExecutionId, before);
       const result = operation(conductor);
@@ -183,32 +188,50 @@ export class LocalControlStore {
   }
 
   /**
-   * Hold the single-owner store while an external adapter runs. The permit is
-   * committed in a prior transition. A crash leaves that permit without an
-   * outcome, which recovery must classify as uncertain rather than retrying.
+   * Keep one external attempt per root while releasing the database writer
+   * lock for the model call. The permit is committed in a prior transition.
+   * A crash leaves it without an outcome, which recovery classifies as uncertain.
    */
   async runExternal<T>(
     rootExecutionId: string,
     operation: (conductor: ForgeAgentConductor) => Promise<T>,
   ): Promise<LocalControlTransitionResult<T>> {
-    return this.serialized(async () => {
+    const prepared = await this.serialized(async () => {
+      if (this.externalRoots.has(rootExecutionId)) {
+        throw new AgentFabricError("AF_CONFLICT", "External attempt is already in flight for this root");
+      }
       const before = await this.load(rootExecutionId);
       const { journal, conductor } = this.hydrate(rootExecutionId, before);
+      this.externalRoots.add(rootExecutionId);
+      return { before, journal, conductor };
+    });
+    // No database transaction or writer lock remains open around the model call.
+    // A status read can therefore see only a committed journal prefix.
+    const execution = (async (): Promise<LocalControlTransitionResult<T>> => {
       let result: T | undefined;
       let failure: unknown;
       try {
-        result = await operation(conductor);
+        result = await operation(prepared.conductor);
       } catch (error) {
         failure = error;
       }
-      const after = journal.readAll();
-      await this.persist(rootExecutionId, before.length, after.slice(before.length));
+      const after = await this.serialized(async () => {
+        const events = prepared.journal.readAll();
+        await this.persist(rootExecutionId, prepared.before.length, events.slice(prepared.before.length));
+        return events;
+      });
       if (failure !== undefined) throw failure;
       return { result: result as T, events: after };
-    });
+    })();
+    this.externalRuns.add(execution);
+    try { return await execution; } finally {
+      this.externalRuns.delete(execution);
+      this.externalRoots.delete(rootExecutionId);
+    }
   }
 
   async close(): Promise<void> {
+    await Promise.allSettled([...this.externalRuns]);
     this.closed = true;
     await this.tail;
     await this.options.adapter.close();

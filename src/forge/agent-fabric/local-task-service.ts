@@ -12,6 +12,8 @@ import { createRunPlanRevision } from "./planning.ts";
 import { requestLocalApproval, requestLocalPatchAcceptance, type LocalApprovalDecision, type LocalApprovalView, type LocalPatchReviewView } from "./local-approval-window.ts";
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
+import { localFabricPath } from "./local-paths.ts";
+import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
 import type { Digest, GoalContract, OwnerAuthorization, OwnerAuthorizationVerifier } from "./types.ts";
 
 export interface LocalTaskStatus {
@@ -167,6 +169,7 @@ export class LocalTaskService {
   private readonly inbox: LocalTaskInbox;
   private readonly control: LocalControlStore;
   private readonly approvedDigests = new Set<Digest>();
+  private readonly activeReviews = new Set<string>();
 
   private constructor(
     readonly repositoryRoot: string,
@@ -176,6 +179,7 @@ export class LocalTaskService {
     private readonly modelExecutor?: ModelExecutor,
     private readonly patchAcceptance: (view: LocalPatchReviewView) => Promise<LocalApprovalDecision> = requestLocalPatchAcceptance,
   ) {
+    adapter = serializeLocalAdapter(adapter);
     this.inbox = new LocalTaskInbox(adapter);
     this.control = new LocalControlStore({
       adapter, clock: { now: Date.now },
@@ -190,9 +194,8 @@ export class LocalTaskService {
     patchAcceptance: (view: LocalPatchReviewView) => Promise<LocalApprovalDecision> = requestLocalPatchAcceptance,
   ): Promise<LocalTaskService> {
     const repositoryRoot = checkedRepositoryRoot(workspaceRoot);
-    const localRoot = join(repositoryRoot, ".forge", "local", "agent-fabric");
-    const key = loadOwnerKey(join(localRoot, "owner.key"));
-    const adapter = await createPgliteAdapter(join(localRoot, "pglite"));
+    const key = loadOwnerKey(localFabricPath(repositoryRoot, "owner.key"));
+    const adapter = await createPgliteAdapter(localFabricPath(repositoryRoot, "pglite"));
     return new LocalTaskService(repositoryRoot, adapter, key, approvalWindow, modelExecutor, patchAcceptance);
   }
 
@@ -227,7 +230,7 @@ export class LocalTaskService {
       throw new AgentFabricError("AF_INVALID_STATE", "Owner decision has no recorded patch");
     }
     if (patch) {
-      const expectedPath = join(this.repositoryRoot, ".forge", "local", "agent-fabric", "artifacts", `${digestSuffix(record.proposalDigest)}.diff`);
+      const expectedPath = localFabricPath(this.repositoryRoot, "artifacts", `${digestSuffix(record.proposalDigest)}.diff`);
       if (!outcome || patch.diffPath !== expectedPath || !existsSync(expectedPath) ||
           sha256Digest(readFileSync(expectedPath, "utf8")) !== patch.diffDigest) {
         throw new AgentFabricError("AF_INVALID_STATE", "Local patch evidence failed readback");
@@ -261,6 +264,18 @@ export class LocalTaskService {
   }
 
   async review(taskId: string): Promise<LocalTaskStatus> {
+    if (this.activeReviews.has(taskId)) {
+      throw new AgentFabricError("AF_CONFLICT", "Task already has an active owner review");
+    }
+    this.activeReviews.add(taskId);
+    try {
+      return await this.reviewExclusive(taskId);
+    } finally {
+      this.activeReviews.delete(taskId);
+    }
+  }
+
+  private async reviewExclusive(taskId: string): Promise<LocalTaskStatus> {
     const record = await this.inbox.get(taskId);
     if (!record || record.repositoryRoot !== this.repositoryRoot) {
       throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
@@ -273,6 +288,10 @@ export class LocalTaskService {
       taskId, repositoryRoot: this.repositoryRoot,
       proposal: record.proposal, proposalDigest: record.proposalDigest,
     });
+    const latest = await this.status(taskId);
+    if (latest.state !== "proposed" || record.proposal.limits.expiresAt <= Date.now()) {
+      throw new AgentFabricError("AF_CONFLICT", "Task changed or expired during owner review");
+    }
     if (decision === "rejected") {
       await this.inbox.reject(taskId, record.proposalDigest);
       return this.status(taskId);
@@ -396,7 +415,7 @@ export class LocalTaskService {
       optional(_name: string): undefined { return undefined; },
       has(_name: string): boolean { return false; },
     };
-    const artifactPath = join(this.repositoryRoot, ".forge", "local", "agent-fabric", "artifacts", `${suffix}.model.json`);
+    const artifactPath = localFabricPath(this.repositoryRoot, "artifacts", `${suffix}.model.json`);
     const external = await this.control.runExternal(ids.rootExecutionId, async (conductor) => {
       const adapter = new P0bModelAdapter({
         conductor, now: Date.now,
@@ -430,7 +449,7 @@ export class LocalTaskService {
         committed.payload.outcome.status !== "succeeded") {
       throw new AgentFabricError("AF_INVALID_STATE", "No successful committed model outcome to materialize");
     }
-    const artifactPath = join(this.repositoryRoot, ".forge", "local", "agent-fabric", "artifacts", `${suffix}.model.json`);
+    const artifactPath = localFabricPath(this.repositoryRoot, "artifacts", `${suffix}.model.json`);
     if (!existsSync(artifactPath) || Buffer.byteLength(readFileSync(artifactPath)) > record.proposal.limits.maximumPatchBytes + 512) {
       throw new AgentFabricError("AF_INVALID_STATE", "Committed model artifact is missing or oversized");
     }

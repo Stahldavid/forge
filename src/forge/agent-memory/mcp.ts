@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { DeltaStore } from "../delta/store.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
 import { ingestEnvelope } from "./bridge.ts";
 import { normalizeAgentEvent } from "./normalize.ts";
+import { requestLocalTask } from "../agent-fabric/local-task-server.ts";
 
 interface JsonRpcRequest {
   jsonrpc?: "2.0";
@@ -35,6 +36,18 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
               properties: {},
               additionalProperties: false,
             },
+          },
+          {
+            name: "fabric_propose",
+            description: "Submit an untrusted local coding task proposal to the running Agent Fabric owner. This does not approve or run it.",
+            inputSchema: { type: "object", properties: { proposal: { type: "object" } },
+              required: ["proposal"], additionalProperties: false },
+          },
+          {
+            name: "fabric_status",
+            description: "Read status and bounded evidence for a local coding task from the running Agent Fabric owner.",
+            inputSchema: { type: "object", properties: { taskId: { type: "string" } },
+              required: ["taskId"], additionalProperties: false },
           },
           {
             name: "agent_context",
@@ -96,10 +109,10 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
 }
 
 export async function runMcpServe(workspaceRoot: string): Promise<number> {
-  let buffer = "";
+  let buffer: Buffer = Buffer.alloc(0);
   let sawFramedMessage = false;
   for await (const chunk of process.stdin) {
-    buffer += Buffer.isBuffer(chunk) ? chunk.toString("utf8") : String(chunk);
+    buffer = Buffer.concat([buffer, Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))]);
     const parsed = parseMcpFrames(buffer);
     buffer = parsed.remainder;
     if (parsed.requests.length > 0) {
@@ -112,7 +125,7 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
       }
     }
   }
-  const leftover = buffer.trim();
+  const leftover = buffer.toString("utf8").trim();
   if (!sawFramedMessage && leftover.startsWith("{")) {
     const result = await handleMcpRequest(workspaceRoot, JSON.parse(leftover) as JsonRpcRequest);
     if (result) {
@@ -130,11 +143,22 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       schemaVersion: 1,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
-      codingTaskControl: "local_cli_available",
-      ownerApproval: "local_popup_available",
-      taskMutationTools: false,
+      codingTaskControl: "local_owner_service_required",
+      ownerApproval: "local_popup_cli_only",
+      taskMutationTools: ["fabric_propose"],
       cli: "forge fabric capabilities --json",
     };
+  }
+  if (name === "fabric_propose" || name === "fabric_status") {
+    const keys = Object.keys(args).sort().join(",");
+    if (name === "fabric_propose" && keys !== "proposal") throw new Error("fabric_propose requires only proposal");
+    if (name === "fabric_status" && (keys !== "taskId" || typeof args.taskId !== "string")) {
+      throw new Error("fabric_status requires only taskId");
+    }
+    const status = await requestLocalTask(realpathSync(workspaceRoot),
+      name === "fabric_propose" ? "propose" : "status", args);
+    if (!status) throw new Error("Agent Fabric local owner is not running; start forge fabric serve");
+    return { ok: true, status };
   }
   if (name === "agent_context") {
     return buildAgentMemoryContext({
@@ -218,26 +242,30 @@ function response(id: JsonRpcRequest["id"], result: unknown, error?: Record<stri
   return error ? { jsonrpc: "2.0", id: id ?? null, error } : { jsonrpc: "2.0", id: id ?? null, result };
 }
 
-function parseMcpFrames(raw: string): { requests: JsonRpcRequest[]; remainder: string } {
+function parseMcpFrames(raw: Buffer): { requests: JsonRpcRequest[]; remainder: Buffer } {
   const messages: JsonRpcRequest[] = [];
   let cursor = 0;
   while (cursor < raw.length) {
-    const headerEnd = raw.indexOf("\r\n\r\n", cursor);
+    const headerEnd = raw.indexOf(Buffer.from("\r\n\r\n"), cursor);
     if (headerEnd === -1) {
       break;
     }
-    const header = raw.slice(cursor, headerEnd);
+    const header = raw.subarray(cursor, headerEnd).toString("ascii");
     const match = /Content-Length:\s*(\d+)/i.exec(header);
     if (!match) {
       break;
     }
     const length = Number(match[1]);
     const bodyStart = headerEnd + 4;
-    const body = raw.slice(bodyStart, bodyStart + length);
+    if (!Number.isSafeInteger(length) || length < 0 || length > 1024 * 1024) {
+      throw new Error("Invalid MCP Content-Length");
+    }
+    if (raw.length - bodyStart < length) break;
+    const body = raw.subarray(bodyStart, bodyStart + length).toString("utf8");
     messages.push(JSON.parse(body) as JsonRpcRequest);
     cursor = bodyStart + length;
   }
-  return { requests: messages, remainder: raw.slice(cursor) };
+  return { requests: messages, remainder: raw.subarray(cursor) };
 }
 
 function writeMcpMessage(message: Record<string, unknown>): void {

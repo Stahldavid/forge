@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.63 input=826e266f4ac7c916cfc1cf8a75cf40c6617710076c778159ef594d9636da98d9 content=e897e7c0a882e3c1526b0d28932c322258a36fa7fc5d40b760ef36a340681aa4
+// @forge-generated generator=0.1.0-alpha.63 input=84e91710081b76fb63c11fe704185090832d0113ff972e147f9de33e12dd16f7 content=29e3805a8715bce01f33879409ba3d5d04af3e90d47298bbb423106f49033283
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "826e266f4ac7c916cfc1cf8a75cf40c6617710076c778159ef594d9636da98d9",
+  "inputHash": "84e91710081b76fb63c11fe704185090832d0113ff972e147f9de33e12dd16f7",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -212,6 +212,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/local-approval-window.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-fabric/local-control-store.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -231,6 +249,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-fabric/local-task-contract.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/local-task-server.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -414,7 +450,43 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/serialized-local-adapter.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-memory/h48-agent-memory.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-memory/mcp-frames.test.ts",
       "kind": "unknown",
       "reasons": []
     },

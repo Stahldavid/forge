@@ -276,7 +276,7 @@ export type ForgeCommand =
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
-  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "review" | "run" | "review-result"; workspaceRoot: string; json: boolean; file?: string; taskId?: string }
+  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "review" | "run" | "review-result" | "serve"; workspaceRoot: string; json: boolean; file?: string; taskId?: string }
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
@@ -1269,8 +1269,8 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "fabric": {
       const subcommand = rest[0];
-      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "review" && subcommand !== "run" && subcommand !== "review-result") {
-        errors.push("forge fabric requires subcommand: capabilities, propose, status, review, run, or review-result");
+      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "review" && subcommand !== "run" && subcommand !== "review-result" && subcommand !== "serve") {
+        errors.push("forge fabric requires subcommand: capabilities, propose, status, review, run, review-result, or serve");
         return { command: null, workspaceRoot, errors };
       }
       const file = parseOptionValue(argv, "--file");

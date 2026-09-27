@@ -42,6 +42,7 @@ function formatHelp(): string {
     "  forge fabric review <task-id> --json  Open the local owner review window",
     "  forge fabric run <task-id> --json  Run one approved local Ollama attempt",
     "  forge fabric review-result <task-id> --json  Review and record a local diff decision",
+    "  forge fabric serve --json  Start the single local task owner for CLI and MCP clients",
     "  forge docs check --json  Check public docs, ReadTheDocs config, links, and local MkDocs tooling",
     "  forge docs check --build --install-venv --json  Build docs strictly in a local RTD-style venv",
     "  forge release doctor --json  Check npm publish readiness plus separate production deploy readiness",

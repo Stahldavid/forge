@@ -25,12 +25,10 @@ forge agent timeline --target codex --json
 forge mcp serve
 ```
 
-`forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. The MCP surface is intentionally kept read/context oriented; ForgeOS does not duplicate mutating CLI workflows as new MCP tools during alpha hardening.
+`forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. It also exposes `fabric_propose` and `fabric_status` when `forge fabric serve` owns the local task store. The proposal tool records an untrusted request; it grants no authority. Approval, execution, and result acceptance remain in the CLI and the local owner popup.
 
-The experimental `fabric_capabilities` read tool reports whether governed coding-task
-control and owner approval are connected. An unconnected response is an explicit
-capability boundary; it does not imply that the P0a/P0b-A library exports can already
-start a durable coding task through MCP.
+The experimental `fabric_capabilities` read tool reports this CLI/MCP boundary.
+The MCP task tools require a running local owner and do not start a model call.
 
 `forge agent onboard --target codex --json` is the recommended first command when an external agent enters a ForgeOS repo. It prepares the adapter files, records a smoke canary, runs the compact dev diagnostic cycle, and returns whether the agent is ready to edit.
 
