@@ -755,6 +755,33 @@ describe("H48 agent memory bridge", () => {
     }
   }, 30_000);
 
+  test("drains a burst of Codex hook events without exhausting database handles", async () => {
+    const root = tempWorkspace("h48-codex-hook-queue-burst");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(
+        queueFile,
+        [...Array.from({ length: 64 }, (_, index) => queuedCodexHookLine(root, "PostToolUse", `burst-${index}`)), ""].join("\n"),
+        "utf8",
+      );
+
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(drained.errors).toEqual([]);
+      expect(drained.eventsIngested).toBe(64);
+
+      const store = await DeltaStore.open(root, { access: "read" });
+      try {
+        expect(await store.listAgentMemoryEvents({ target: "codex", limit: 100 })).toHaveLength(64);
+      } finally {
+        await store.close();
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   test("queue drain reports Delta busy without advancing the checkpoint", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-busy");
     let store: DeltaStore | null = null;

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=84e91710081b76fb63c11fe704185090832d0113ff972e147f9de33e12dd16f7 content=e6dafa9b9a63c60ef20ed5f47f15a33316a395cf9bc9b755f4bb6f4312772541
+// @forge-generated generator=0.1.0-alpha.63 input=3ba530f8432c93912c3e9b02ed9be6c6365dad9216f0a63d0c0a517cb06d4665 content=c8db755715f7f1adcb605acc5eeaab27e2bb772710de383d006d20b28a70c541
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
@@ -1776,6 +1776,11 @@ export const appGraph = {
       "from": "0a6186d1e0562c8bc04a83f0686433bd9775c51eda47fc141e39cc9f39b9f4cd",
       "kind": "registers",
       "to": "68987cb2f54e60ea263a73dbfeae986cbd2f6f84b4c277ac49c7c9708a0ac232"
+    },
+    {
+      "from": "0a7b6def755bf2f09cc0f674360cab093e76eccdfc1c5c99c4e79288c99b2af3",
+      "kind": "registers",
+      "to": "4fd5babac6f3009a9b6a0956db8c0717688bdf12a2ce320f89b27437dea8827d"
     },
     {
       "from": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f",
@@ -36309,7 +36314,7 @@ export const appGraph = {
     }
   ],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "6f9d74e04a89475c2964d6132b099d0df3f68d3ac66c5661e1ff4dbe0860e502",
+  "inputHash": "eba6242d33072d7ffcbb31928a3b2f2cb3624fd7bafb5c46dd3441f08d08f488",
   "moduleGraph": {
     "nodes": [
       {
@@ -57106,14 +57111,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "DEFAULT_QUEUE_COMPACT_AFTER_BYTES = 256 * 1024"
       },
       "name": "DEFAULT_QUEUE_COMPACT_AFTER_BYTES",
       "qualifiedName": "DEFAULT_QUEUE_COMPACT_AFTER_BYTES",
       "span": {
-        "end": 16522,
-        "start": 16476
+        "end": 16770,
+        "start": 16724
       }
     },
     {
@@ -57123,14 +57128,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "DEFAULT_QUEUE_HISTORY_MAX_BYTES = 1024 * 1024"
       },
       "name": "DEFAULT_QUEUE_HISTORY_MAX_BYTES",
       "qualifiedName": "DEFAULT_QUEUE_HISTORY_MAX_BYTES",
       "span": {
-        "end": 16575,
-        "start": 16530
+        "end": 16823,
+        "start": 16778
       }
     },
     {
@@ -57140,14 +57145,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "DEFAULT_QUEUE_INSPECT_MAX_BYTES = 1024 * 1024"
       },
       "name": "DEFAULT_QUEUE_INSPECT_MAX_BYTES",
       "qualifiedName": "DEFAULT_QUEUE_INSPECT_MAX_BYTES",
       "span": {
-        "end": 20596,
-        "start": 20551
+        "end": 20844,
+        "start": 20799
       }
     },
     {
@@ -67731,14 +67736,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function agentMemoryEventBindings(event: AgentMemoryEventRecord): {\n  toolName?: string;\n  command?: string;\n  status?: string;\n  files: string[];\n  entries: string[];\n  proofs: string[];\n} {\n  const raw = event.data.bindings;\n  if (!raw || typeof raw !== \"object\" || Array.isArray(raw)) {\n    return { files: [], entries: [], proofs: [] };\n  }\n  const record = raw as Record<string, unknown>;\n  return {\n    toolName: typeof record.toolName === \"string\" ? record.toolName : undefined,\n    command: typeof record.command === \"string\" ? record.command : undefined,\n    status: typeof record.status === \"string\" ? record.status : undefined,\n    files: arrayOfStrings(record.files),\n    entries: arrayOfStrings(record.entries),\n    proofs: arrayOfStrings(record.proofs),\n  };\n}"
       },
       "name": "agentMemoryEventBindings",
       "qualifiedName": "agentMemoryEventBindings",
       "span": {
-        "end": 40841,
-        "start": 40067
+        "end": 41632,
+        "start": 40858
       }
     },
     {
@@ -67748,7 +67753,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function agentMemoryEventMatchesTarget(event: AgentMemoryEventRecord, target: string | undefined): boolean {\n  if (!target) {\n    return true;\n  }\n  return event.sourceName === target ||\n    event.summary?.includes(target) === true ||\n    JSON.stringify(event.data).includes(target);\n}"
       },
       "name": "agentMemoryEventMatchesTarget",
@@ -68190,7 +68195,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function appendFallbackAgentMemoryEvent(\n  workspaceRoot: string,\n  envelope: AgentEventEnvelope,\n  summary: string | undefined,\n  bindings: Record<string, unknown>,\n): AgentMemoryEventRecord {\n  const file = fallbackMemoryPath(workspaceRoot);\n  mkdirSync(dirname(file), { recursive: true });\n  const event = eventRecordFromEnvelope(envelope, summary, bindings);\n  appendFileSync(file, `${JSON.stringify(event)}\\n`, \"utf8\");\n  return event;\n}"
       },
       "name": "appendFallbackAgentMemoryEvent",
@@ -68632,14 +68637,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function arrayOfStrings(value: unknown): string[] {\n  return Array.isArray(value) ? value.filter((item): item is string => typeof item === \"string\" && item.length > 0) : [];\n}"
       },
       "name": "arrayOfStrings",
       "qualifiedName": "arrayOfStrings",
       "span": {
-        "end": 41018,
-        "start": 40843
+        "end": 41809,
+        "start": 41634
       }
     },
     {
@@ -75160,14 +75165,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function compactAgentMemoryQueueFile(options: {\n  watchFile: string;\n  originalBuffer: Buffer;\n  consumedOffset: number;\n  compactAfterBytes: number;\n  historyMaxBytes: number;\n}): { compacted: boolean; historyFile: string } {\n  const historyFile = queueHistoryPath(options.watchFile);\n  if (options.consumedOffset < options.compactAfterBytes) {\n    return { compacted: false, historyFile };\n  }\n  const currentBuffer = readFileSync(options.watchFile);\n  const originalConsumed = options.originalBuffer.subarray(0, options.consumedOffset);\n  const currentPrefix = currentBuffer.subarray(0, options.consumedOffset);\n  if (!currentPrefix.equals(originalConsumed)) {\n    return { compacted: false, historyFile };\n  }\n  mkdirSync(dirname(historyFile), { recursive: true });\n  const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);\n  const redactedConsumedHistory = redactedQueueHistoryBuffer(originalConsumed);\n  writeFileSync(\n    historyFile,\n    trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),\n  );\n  writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));\n  writeQueueCheckpoint(options.watchFile, 0);\n  return { compacted: true, historyFile };\n}"
       },
       "name": "compactAgentMemoryQueueFile",
       "qualifiedName": "compactAgentMemoryQueueFile",
       "span": {
-        "end": 18025,
-        "start": 16760
+        "end": 18273,
+        "start": 17008
       }
     },
     {
@@ -77557,14 +77562,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function deepMerge(left: Record<string, unknown>, right: Record<string, unknown>): Record<string, unknown> {\n  const output: Record<string, unknown> = { ...left };\n  for (const [key, value] of Object.entries(right)) {\n    const existing = output[key];\n    output[key] =\n      existing && typeof existing === \"object\" && !Array.isArray(existing) &&\n      value && typeof value === \"object\" && !Array.isArray(value)\n        ? deepMerge(existing as Record<string, unknown>, value as Record<string, unknown>)\n        : value;\n  }\n  return output;\n}"
       },
       "name": "deepMerge",
       "qualifiedName": "deepMerge",
       "span": {
-        "end": 44951,
-        "start": 44407
+        "end": 45742,
+        "start": 45198
       }
     },
     {
@@ -79710,20 +79715,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "4d78d08d6a33992ed1db171fee948d42d94afc167c6367311d26419181b5d34f",
+      "contentHash": "9312ac72914b655a6870afac229eccfa0dcecc1a9fbdea655c2b1668b27a12f2",
       "file": "src/forge/agent-memory/bridge.ts",
       "id": "4cfeeebe67b4d14b4b43c4a802bebdde6074b99047fed9bef599249aa5dfac8c",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
-        "sourceSlice": "async function drainAgentMemoryQueueFile(options: {\n  workspaceRoot: string;\n  watchFile: string;\n  source: string;\n  eventName?: string;\n  startOffset?: number;\n  compactAfterBytes?: number;\n  historyMaxBytes?: number;\n}): Promise<{\n  eventsIngested: number;\n  errors: string[];\n  bytesRead: number;\n  pendingBytes: number;\n  checkpointFile: string;\n  compacted: boolean;\n  historyFile: string;\n  busy?: AgentMemoryUnavailableResult[\"busy\"];\n}> {\n  const historyFile = queueHistoryPath(options.watchFile);\n  if (!existsSync(options.watchFile)) {\n    return {\n      eventsIngested: 0,\n      errors: [],\n      bytesRead: 0,\n      pendingBytes: 0,\n      checkpointFile: queueCheckpointPath(options.watchFile),\n      compacted: false,\n      historyFile,\n    };\n  }\n  const fileBuffer = readFileSync(options.watchFile);\n  let bytesRead = options.startOffset ?? readQueueCheckpoint(options.watchFile, fileBuffer.length);\n  if (bytesRead > fileBuffer.length) {\n    bytesRead = 0;\n  }\n  const { complete, pendingBytes } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));\n  let eventsIngested = 0;\n  const errors: string[] = [];\n  let consumedOffset = bytesRead;\n\n  for (const line of complete) {\n    if (!line.raw.trim()) {\n      consumedOffset = bytesRead + line.endOffset;\n      writeQueueCheckpoint(options.watchFile, consumedOffset);\n      continue;\n    }\n    const parsed = normalizeRawInput(line.raw);\n    if (!parsed) {\n      errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);\n      break;\n    }\n    const queued = parseQueuedHookLine(parsed);\n    const payload = queued?.payload ?? parsed;\n    const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;\n    const ingestSource = queued?.source ?? options.source;\n    const envelope = normalizeAgentEvent({\n      workspaceRoot: ingestRoot,\n      source: ingestSource,\n      eventName: queued?.eventName ?? options.eventName,\n      raw: payload,\n      integration: ingestSource === \"cursor\" ? \"mcp\" : \"native-hook\",\n    });\n    if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {\n      consumedOffset = bytesRead + line.endOffset;\n      writeQueueCheckpoint(options.watchFile, consumedOffset);\n      continue;\n    }\n    const result = await ingestEnvelope(ingestRoot, envelope);\n    if (result.ok) {\n      eventsIngested += 1;\n      consumedOffset = bytesRead + line.endOffset;\n      writeQueueCheckpoint(options.watchFile, consumedOffset);\n    } else if (isDeltaBusyIngestResult(result)) {\n      return {\n        eventsIngested,\n        errors,\n        bytesRead,\n        pendingBytes,\n        checkpointFile: queueCheckpointPath(options.watchFile),\n        compacted: false,\n        historyFile,\n        busy: result.busy,\n      };\n    } else {\n      errors.push(result.error ?? \"agent memory ingest failed\");\n      break;\n    }\n  }\n\n  const retention = errors.length === 0 && consumedOffset > 0\n    ? compactAgentMemoryQueueFile({\n        watchFile: options.watchFile,\n        originalBuffer: fileBuffer,\n        consumedOffset,\n        compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,\n        historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,\n      })\n    : { compacted: false, historyFile };\n  const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;\n\n  return {\n    eventsIngested,\n    errors,\n    bytesRead: bytesAfterRetention,\n    pendingBytes,\n    checkpointFile: queueCheckpointPath(options.watchFile),\n    compacted: retention.compacted,\n    historyFile: retention.historyFile,\n  };\n}"
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
+        "sourceSlice": "async function drainAgentMemoryQueueFile(options: {\n  workspaceRoot: string;\n  watchFile: string;\n  source: string;\n  eventName?: string;\n  startOffset?: number;\n  compactAfterBytes?: number;\n  historyMaxBytes?: number;\n}): Promise<{\n  eventsIngested: number;\n  errors: string[];\n  bytesRead: number;\n  pendingBytes: number;\n  checkpointFile: string;\n  compacted: boolean;\n  historyFile: string;\n  busy?: AgentMemoryUnavailableResult[\"busy\"];\n}> {\n  const historyFile = queueHistoryPath(options.watchFile);\n  if (!existsSync(options.watchFile)) {\n    return {\n      eventsIngested: 0,\n      errors: [],\n      bytesRead: 0,\n      pendingBytes: 0,\n      checkpointFile: queueCheckpointPath(options.watchFile),\n      compacted: false,\n      historyFile,\n    };\n  }\n  const fileBuffer = readFileSync(options.watchFile);\n  let bytesRead = options.startOffset ?? readQueueCheckpoint(options.watchFile, fileBuffer.length);\n  if (bytesRead > fileBuffer.length) {\n    bytesRead = 0;\n  }\n  const { complete, pendingBytes } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));\n  let eventsIngested = 0;\n  const errors: string[] = [];\n  let consumedOffset = bytesRead;\n  let store: DeltaStore | undefined;\n\n  try {\n    for (const line of complete) {\n      if (!line.raw.trim()) {\n        consumedOffset = bytesRead + line.endOffset;\n        writeQueueCheckpoint(options.watchFile, consumedOffset);\n        continue;\n      }\n      const parsed = normalizeRawInput(line.raw);\n      if (!parsed) {\n        errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);\n        break;\n      }\n      const queued = parseQueuedHookLine(parsed);\n      const payload = queued?.payload ?? parsed;\n      const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;\n      const ingestSource = queued?.source ?? options.source;\n      const envelope = normalizeAgentEvent({\n        workspaceRoot: ingestRoot,\n        source: ingestSource,\n        eventName: queued?.eventName ?? options.eventName,\n        raw: payload,\n        integration: ingestSource === \"cursor\" ? \"mcp\" : \"native-hook\",\n      });\n      if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {\n        consumedOffset = bytesRead + line.endOffset;\n        writeQueueCheckpoint(options.watchFile, consumedOffset);\n        continue;\n      }\n      let result: AgentIngestResult;\n      if (!store) {\n        const opened = await openMemoryStore(ingestRoot, \"write\");\n        if (isMemoryUnavailable(opened)) {\n          result = { ...opened, envelope };\n        } else {\n          store = opened;\n          result = await recordAgentMemoryEnvelope(store, envelope);\n        }\n      } else {\n        result = await recordAgentMemoryEnvelope(store, envelope);\n      }\n      if (result.ok) {\n        eventsIngested += 1;\n        consumedOffset = bytesRead + line.endOffset;\n        writeQueueCheckpoint(options.watchFile, consumedOffset);\n      } else if (isDeltaBusyIngestResult(result)) {\n        return {\n          eventsIngested,\n          errors,\n          bytesRead,\n          pendingBytes,\n          checkpointFile: queueCheckpointPath(options.watchFile),\n          compacted: false,\n          historyFile,\n          busy: result.busy,\n        };\n      } else {\n        errors.push(result.error ?? \"agent memory ingest failed\");\n        break;\n      }\n    }\n  } finally {\n    await store?.close();\n  }\n\n  const retention = errors.length === 0 && consumedOffset > 0\n    ? compactAgentMemoryQueueFile({\n        watchFile: options.watchFile,\n        originalBuffer: fileBuffer,\n        consumedOffset,\n        compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,\n        historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,\n      })\n    : { compacted: false, historyFile };\n  const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;\n\n  return {\n    eventsIngested,\n    errors,\n    bytesRead: bytesAfterRetention,\n    pendingBytes,\n    checkpointFile: queueCheckpointPath(options.watchFile),\n    compacted: retention.compacted,\n    historyFile: retention.historyFile,\n  };\n}"
       },
       "name": "drainAgentMemoryQueueFile",
       "qualifiedName": "drainAgentMemoryQueueFile",
       "span": {
-        "end": 25439,
-        "start": 21810
+        "end": 26230,
+        "start": 22058
       }
     },
     {
@@ -80906,7 +80911,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function eventRecordFromEnvelope(\n  envelope: AgentEventEnvelope,\n  summary: string | undefined,\n  bindings: Record<string, unknown>,\n): AgentMemoryEventRecord {\n  const capturedAt = envelope.event.timestamp || new Date().toISOString();\n  return {\n    id: createDeltaId(\"amem\"),\n    externalEventId: createDeltaId(\"aevt\"),\n    sourceName: String(envelope.source.agent),\n    integrationKind: String(envelope.source.integration),\n    trustLevel: envelope.capture.trustLevel,\n    externalSessionId: envelope.session.externalSessionId,\n    externalTurnId: envelope.session.turnId,\n    eventKind: envelope.event.kind,\n    normalizedKind: envelope.event.kind,\n    summary,\n    confidence: envelope.capture.confidence,\n    capturedAt,\n    data: { envelope, bindings },\n  };\n}"
       },
       "name": "eventRecordFromEnvelope",
@@ -81858,7 +81863,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function fallbackMemoryPath(workspaceRoot: string): string {\n  return join(workspaceRoot, \".forge\", \"agent\", \"events.ndjson\");\n}"
       },
       "name": "fallbackMemoryPath",
@@ -83201,14 +83206,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function formatAgentContextTarget(result: AgentMemoryContextPack): string {\n  const target = result.scopeTarget;\n  const parts: string[] = [target.kind];\n  if (target.value) {\n    parts.push(target.value);\n  }\n  if (target.semanticTarget && target.semanticTarget !== target.value) {\n    parts.push(`semantic=${target.semanticTarget}`);\n  }\n  if (target.currentSessionId) {\n    parts.push(`session=${target.currentSessionId}`);\n  }\n  return parts.join(\" \");\n}"
       },
       "name": "formatAgentContextTarget",
       "qualifiedName": "formatAgentContextTarget",
       "span": {
-        "end": 38424,
-        "start": 37966
+        "end": 39215,
+        "start": 38757
       }
     },
     {
@@ -83269,14 +83274,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {\n  const summary = result.agentMemory.summary;\n  const lines = [\n    `Forge Agent Context (${result.scope}${result.entry ? `: ${result.entry}` : \"\"})`,\n    \"\",\n    `target: ${formatAgentContextTarget(result)}`,\n    `events: ${summary.events}`,\n    `sources: ${summary.sources.length > 0 ? summary.sources.join(\", \") : \"none\"}`,\n    `tools: ${summary.tools.length > 0 ? summary.tools.join(\", \") : \"none\"}`,\n    `files: ${summary.files}`,\n    `entries: ${summary.entries}`,\n    `proofs: ${summary.proofs}`,\n    ...(summary.latestEventAt ? [`latest: ${summary.latestEventAt}`] : []),\n  ];\n  if (Object.keys(result.currentState).length > 0) {\n    lines.push(\"\", \"Current:\");\n    for (const [key, value] of Object.entries(result.currentState)) {\n      if (value !== undefined) {\n        lines.push(`  ${key}: ${Array.isArray(value) ? value.join(\", \") : String(value)}`);\n      }\n    }\n  }\n  const recent = result.agentMemory.events.slice(-5);\n  if (recent.length > 0) {\n    lines.push(\"\", \"Recent:\");\n    for (const event of recent) {\n      const parts = [\n        event.capturedAt,\n        event.source,\n        event.kind,\n        event.tool,\n        event.status,\n        event.summary,\n      ].filter(Boolean);\n      lines.push(`  - ${parts.join(\" | \")}`);\n    }\n  }\n  if (result.agentMemory.openQuestions.length > 0) {\n    lines.push(\"\", \"Open questions:\");\n    for (const question of result.agentMemory.openQuestions.slice(0, 5)) {\n      lines.push(`  - ${question}`);\n    }\n  }\n  if (result.recommendedCommands.length > 0) {\n    lines.push(\"\", \"Next:\");\n    for (const command of result.recommendedCommands.slice(0, 6)) {\n      lines.push(`  ${command}`);\n    }\n  }\n  return `${lines.join(\"\\n\")}\\n`;\n}"
       },
       "name": "formatAgentMemoryContextHuman",
       "qualifiedName": "formatAgentMemoryContextHuman",
       "span": {
-        "end": 37964,
-        "start": 36181
+        "end": 38755,
+        "start": 36972
       }
     },
     {
@@ -83286,14 +83291,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function formatAgentMemoryEventsHuman(events: AgentMemoryEventRecord[]): string {\n  const sources = uniqueStrings(events.map((event) => event.sourceName));\n  const tools = uniqueStrings(events.flatMap((event) => {\n    const tool = agentMemoryEventBindings(event).toolName;\n    return tool ? [tool] : [];\n  }));\n  const latest = events.at(-1)?.capturedAt;\n  const lines = [\n    \"Forge Agent Memory\",\n    \"\",\n    `events: ${events.length}`,\n    `sources: ${sources.length > 0 ? sources.join(\", \") : \"none\"}`,\n    `tools: ${tools.length > 0 ? tools.join(\", \") : \"none\"}`,\n    ...(latest ? [`latest: ${latest}`] : []),\n  ];\n  if (events.length === 0) {\n    lines.push(\"\", \"no agent memory events recorded\");\n    return `${lines.join(\"\\n\")}\\n`;\n  }\n  lines.push(\"\", \"Recent:\");\n  for (const event of events.slice(-12)) {\n    const bindings = agentMemoryEventBindings(event);\n    const parts = [\n      event.capturedAt,\n      event.sourceName,\n      event.normalizedKind,\n      bindings.toolName,\n      bindings.status,\n      event.summary,\n    ].filter(Boolean);\n    lines.push(`  - ${parts.join(\" | \")}`);\n    const details = [\n      bindings.command ? `command: ${bindings.command}` : undefined,\n      bindings.files.length > 0 ? `files: ${bindings.files.slice(0, 4).join(\", \")}` : undefined,\n      bindings.entries.length > 0 ? `entries: ${bindings.entries.slice(0, 4).join(\", \")}` : undefined,\n      bindings.proofs.length > 0 ? `proofs: ${bindings.proofs.slice(0, 4).join(\", \")}` : undefined,\n    ].filter(Boolean);\n    if (details.length > 0) {\n      lines.push(`    ${details.join(\" | \")}`);\n    }\n  }\n  return `${lines.join(\"\\n\")}\\n`;\n}"
       },
       "name": "formatAgentMemoryEventsHuman",
       "qualifiedName": "formatAgentMemoryEventsHuman",
       "span": {
-        "end": 40065,
-        "start": 38426
+        "end": 40856,
+        "start": 39217
       }
     },
     {
@@ -83303,14 +83308,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function formatAgentMemoryHuman(result: AgentMemoryCommandResult): string {\n  if (\"event\" in result || \"envelope\" in result) {\n    return result.ok\n      ? `agent memory ingested: ${result.event?.normalizedKind ?? \"event\"}\\n`\n      : `agent memory ingest failed: ${result.error ?? \"unknown error\"}\\n`;\n  }\n  if (\"watch\" in result) {\n    return [\n      `agent memory ${result.watch ? \"watch\" : \"queue ingest\"} ${result.ok ? \"ready\" : \"failed\"} for ${result.source}`,\n      ...(result.file ? [`file: ${result.file}`] : []),\n      `events ingested: ${result.eventsIngested}`,\n      ...(result.errors.length > 0 ? [\"errors:\", ...result.errors.map((error) => `- ${error}`)] : []),\n    ].join(\"\\n\") + \"\\n\";\n  }\n  if (\"filesPlanned\" in result) {\n    return [\n      `Forge Agent Memory Bridge ${result.ok ? \"installed\" : \"failed\"} for ${result.target}.`,\n      \"files written:\",\n      ...(result.filesWritten.length > 0 ? result.filesWritten.map((file) => `- ${file}`) : [\"- none\"]),\n      \"privacy:\",\n      \"- raw prompts: off\",\n      \"- raw completions: off\",\n      \"- raw tool args: off\",\n      \"- transcript import: off\",\n    ].join(\"\\n\") + \"\\n\";\n  }\n  if (\"agentMemory\" in result) {\n    return formatAgentMemoryContextHuman(result);\n  }\n  if (!result.ok) {\n    const nextActions = \"nextActions\" in result && Array.isArray(result.nextActions) ? result.nextActions : [];\n    return [\n      \"Forge Agent Memory unavailable\",\n      \"\",\n      result.error ?? \"agent memory command failed\",\n      ...(nextActions.length > 0 ? [\"\", \"Next:\", ...nextActions.map((action) => `  ${action}`)] : []),\n    ].join(\"\\n\") + \"\\n\";\n  }\n  return formatAgentMemoryEventsHuman(\"events\" in result ? result.events : []);\n}"
       },
       "name": "formatAgentMemoryHuman",
       "qualifiedName": "formatAgentMemoryHuman",
       "span": {
-        "end": 36179,
-        "start": 34484
+        "end": 36970,
+        "start": 35275
       }
     },
     {
@@ -83320,14 +83325,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function formatAgentMemoryJson(result: AgentMemoryCommandResult): string {\n  return `${JSON.stringify(result, null, 2)}\\n`;\n}"
       },
       "name": "formatAgentMemoryJson",
       "qualifiedName": "formatAgentMemoryJson",
       "span": {
-        "end": 34475,
-        "start": 34350
+        "end": 35266,
+        "start": 35141
       }
     },
     {
@@ -87026,7 +87031,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function hasExternalPglitePostmaster(workspaceRoot: string): boolean {\n  return existsSync(join(workspaceRoot, \".forge\", \"delta\", \"delta.db\", \"postmaster.pid\")) &&\n    !existsSync(join(workspaceRoot, \".forge\", \"delta\", \"delta.lock\"));\n}"
       },
       "name": "hasExternalPglitePostmaster",
@@ -88947,14 +88952,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function ingestAgentMemory(options: AgentMemoryCommandOptions): Promise<AgentIngestResult> {\n  const source = options.source ?? options.target ?? \"generic\";\n  const raw = normalizeRawInput(options.input ?? await readStdinJson({ timeoutMs: 2000 }));\n  if (!raw) {\n    return { ok: false, exitCode: 1, error: \"agent ingest requires JSON input on stdin or --input\" };\n  }\n  const envelope = normalizeAgentEvent({\n    workspaceRoot: options.workspaceRoot,\n    source,\n    eventName: options.eventName,\n    raw,\n    integration: source === \"cursor\" ? \"mcp\" : \"native-hook\",\n  });\n  return ingestEnvelope(options.workspaceRoot, envelope);\n}"
       },
       "name": "ingestAgentMemory",
       "qualifiedName": "ingestAgentMemory",
       "span": {
-        "end": 13324,
-        "start": 12684
+        "end": 13572,
+        "start": 12932
       }
     },
     {
@@ -88964,30 +88969,30 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function ingestAgentMemoryQueueFile(options: AgentMemoryCommandOptions): Promise<AgentIngestWatchResult> {\n  const source = options.source ?? options.target ?? \"generic\";\n  const watchFile = isAbsolute(options.file ?? \"\")\n    ? options.file as string\n    : resolve(options.workspaceRoot, options.file ?? \"\");\n  if (!options.file) {\n    return {\n      ok: false,\n      watch: false,\n      source,\n      eventsIngested: 0,\n      errors: [\"agent ingest --file requires --file <events.jsonl|events.ndjson>\"],\n      nextActions: [`forge agent ingest ${source} --file .forge/agent/events.ndjson --json`],\n      exitCode: 1,\n    };\n  }\n  if (!existsSync(watchFile)) {\n    return {\n      ok: false,\n      watch: false,\n      source,\n      file: options.file,\n      eventsIngested: 0,\n      errors: [`queue file does not exist: ${options.file}`],\n      nextActions: [`forge agent hooks status --target ${source} --json`],\n      exitCode: 1,\n    };\n  }\n  const drained = await drainAgentMemoryQueueFile({\n    workspaceRoot: options.workspaceRoot,\n    watchFile,\n    source,\n    eventName: options.eventName,\n  });\n  const errors = [\n    ...drained.errors,\n    ...(drained.busy ? [\"DeltaDB is busy; queue checkpoint was not advanced\"] : []),\n  ];\n  return {\n    ok: errors.length === 0,\n    watch: false,\n    source,\n    file: options.file,\n    eventsIngested: drained.eventsIngested,\n    errors,\n    bytesRead: drained.bytesRead,\n    pendingBytes: drained.pendingBytes,\n    checkpointFile: drained.checkpointFile,\n    compacted: drained.compacted,\n    historyFile: drained.historyFile,\n    ...(drained.busy ? { busy: drained.busy, pendingDueToBusy: true } : {}),\n    nextActions: [\n      ...(drained.busy ? [\"forge delta status --json\"] : []),\n      `forge agent memory --entry ${source} --json`,\n      `forge agent hooks status --target ${source} --json`,\n    ],\n    exitCode: errors.length === 0 ? 0 : 1,\n  };\n}"
       },
       "name": "ingestAgentMemoryQueueFile",
       "qualifiedName": "ingestAgentMemoryQueueFile",
       "span": {
-        "end": 15235,
-        "start": 13326
+        "end": 15483,
+        "start": 13574
       }
     },
     {
-      "contentHash": "80a7fb6244adffc1b38292def8118835f1a66ededd62cac8ca42c234007c46dd",
+      "contentHash": "9af336b792091bf7c7fd31001a33bd1a852661b625498039b1c61c3a18cf3a94",
       "file": "src/forge/agent-memory/bridge.ts",
       "id": "c52743559970ab48ffa92f468302c1ade2f50df21a986a3d4f18977463e6cbe9",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
-        "sourceSlice": "async function ingestEnvelope(workspaceRoot: string, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {\n  const bindings = extractAgentEventBindings(envelope);\n  const summary = summarizeAgentEvent(envelope);\n  const store = await openMemoryStore(workspaceRoot, \"write\");\n  if (isMemoryUnavailable(store)) {\n    if (shouldUseFallbackMemory(store, workspaceRoot)) {\n      const event = appendFallbackAgentMemoryEvent(workspaceRoot, envelope, summary, bindings);\n      return {\n        ok: true,\n        event,\n        envelope,\n        exitCode: 0,\n        fallback: {\n          kind: \"agent-events-ndjson\",\n          path: \".forge/agent/events.ndjson\",\n          reason: \"pglite-active\",\n        },\n      };\n    }\n    return {\n      ...store,\n      envelope,\n    };\n  }\n  try {\n    const event = await store.recordAgentMemoryEvent({ envelope, summary, bindings });\n    return { ok: true, event, envelope, exitCode: 0 };\n  } finally {\n    await store.close();\n  }\n}"
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
+        "sourceSlice": "async function ingestEnvelope(workspaceRoot: string, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {\n  const store = await openMemoryStore(workspaceRoot, \"write\");\n  if (isMemoryUnavailable(store)) {\n    if (shouldUseFallbackMemory(store, workspaceRoot)) {\n      const event = appendFallbackAgentMemoryEvent(\n        workspaceRoot,\n        envelope,\n        summarizeAgentEvent(envelope),\n        extractAgentEventBindings(envelope),\n      );\n      return {\n        ok: true,\n        event,\n        envelope,\n        exitCode: 0,\n        fallback: {\n          kind: \"agent-events-ndjson\",\n          path: \".forge/agent/events.ndjson\",\n          reason: \"pglite-active\",\n        },\n      };\n    }\n    return {\n      ...store,\n      envelope,\n    };\n  }\n  try {\n    return await recordAgentMemoryEnvelope(store, envelope);\n  } finally {\n    await store.close();\n  }\n}"
       },
       "name": "ingestEnvelope",
       "qualifiedName": "ingestEnvelope",
       "span": {
-        "end": 12682,
+        "end": 12586,
         "start": 11709
       }
     },
@@ -89185,14 +89190,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function inspectAgentMemoryQueueFile(options: {\n  workspaceRoot: string;\n  watchFile: string;\n  source: string;\n  eventName?: string;\n}): AgentMemoryQueueInspectionResult {\n  const checkpointFile = queueCheckpointPath(options.watchFile);\n  const base = {\n    exists: existsSync(options.watchFile),\n    source: options.source,\n    file: options.watchFile,\n    events: 0,\n    nativeSignals: 0,\n    canarySignals: 0,\n    usefulSignals: 0,\n    ignoredOutOfWorkspaceEvents: 0,\n    bytesRead: 0,\n    pendingBytes: 0,\n    checkpointFile,\n    errors: [] as string[],\n  };\n  if (!base.exists) {\n    return base;\n  }\n  const fileBuffer = readFileSync(options.watchFile);\n  const bytesRead = readQueueCheckpoint(options.watchFile, fileBuffer.length);\n  const inspected = inspectionBufferFromCheckpoint(fileBuffer, bytesRead, DEFAULT_QUEUE_INSPECT_MAX_BYTES);\n  const { complete, pendingBytes } = splitCompleteJsonLines(inspected.buffer);\n  const result: AgentMemoryQueueInspectionResult = {\n    ...base,\n    bytesRead,\n    inspectedBytes: inspected.buffer.length,\n    skippedBytes: inspected.skippedBytes,\n    truncated: inspected.truncated,\n    pendingBytes,\n  };\n  for (const line of complete) {\n    if (!line.raw.trim()) {\n      continue;\n    }\n    const parsed = normalizeRawInput(line.raw);\n    if (!parsed) {\n      result.errors.push(`could not parse queued hook line at byte ${inspected.offset + line.endOffset}`);\n      continue;\n    }\n    const queued = parseQueuedHookLine(parsed);\n    const payload = queued?.payload ?? parsed;\n    const source = queued?.source ?? options.source;\n    const workspaceRoot = queued?.workspaceRoot ?? options.workspaceRoot;\n    const envelope = normalizeAgentEvent({\n      workspaceRoot,\n      source,\n      eventName: queued?.eventName ?? options.eventName,\n      raw: payload,\n      integration: source === \"cursor\" ? \"mcp\" : \"native-hook\",\n    });\n    if (source !== options.source) {\n      continue;\n    }\n    if (!workspaceRootsMatch(workspaceRoot, options.workspaceRoot)) {\n      result.ignoredOutOfWorkspaceEvents += 1;\n      continue;\n    }\n    const canary = envelope.payload.forgeHookCanary === \"FORGE_HOOK_SMOKE_CANARY\";\n    if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {\n      continue;\n    }\n    result.events += 1;\n    if (canary) {\n      result.canarySignals += 1;\n    } else if (envelope.source.integration === \"native-hook\" && envelope.capture.trustLevel === \"direct-hook\" &&\n               typeof envelope.session.externalSessionId === \"string\" &&\n               envelope.session.externalSessionId !== \"forge-hook-probe\" &&\n               envelope.payload.forgeHookProbe !== true) {\n      result.nativeSignals += 1;\n    }\n    if (queuedEventHasUsefulSignal(envelope)) {\n      result.usefulSignals += 1;\n    }\n    const timestamp = queuedEventTimestamp(parsed, envelope);\n    if (timestamp && (!result.latestEventAt || timestamp > result.latestEventAt)) {\n      result.latestEventAt = timestamp;\n    }\n  }\n  return result;\n}"
       },
       "name": "inspectAgentMemoryQueueFile",
       "qualifiedName": "inspectAgentMemoryQueueFile",
       "span": {
-        "end": 29453,
-        "start": 26416
+        "end": 30244,
+        "start": 27207
       }
     },
     {
@@ -89474,14 +89479,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function inspectionBufferFromCheckpoint(fileBuffer: Buffer, checkpointOffset: number, maxBytes: number): {\n  buffer: Buffer;\n  offset: number;\n  truncated: boolean;\n  skippedBytes: number;\n} {\n  const availableBytes = Math.max(0, fileBuffer.length - checkpointOffset);\n  if (availableBytes <= maxBytes) {\n    return {\n      buffer: fileBuffer.subarray(checkpointOffset),\n      offset: checkpointOffset,\n      truncated: false,\n      skippedBytes: 0,\n    };\n  }\n  let offset = fileBuffer.length - maxBytes;\n  const firstNewline = fileBuffer.subarray(offset).indexOf(10);\n  if (firstNewline >= 0) {\n    offset += firstNewline + 1;\n  }\n  return {\n    buffer: fileBuffer.subarray(offset),\n    offset,\n    truncated: true,\n    skippedBytes: Math.max(0, offset - checkpointOffset),\n  };\n}"
       },
       "name": "inspectionBufferFromCheckpoint",
       "qualifiedName": "inspectionBufferFromCheckpoint",
       "span": {
-        "end": 21381,
-        "start": 20599
+        "end": 21629,
+        "start": 20847
       }
     },
     {
@@ -89491,14 +89496,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function installAgentMemory(options: AgentMemoryCommandOptions): AgentInstallResult {\n  const target = normalizeInstallTarget(options.target ?? options.source ?? \"generic\");\n  const files =\n    target === \"codex\"\n      ? codexInstallFiles(options.workspaceRoot)\n      : target === \"claude-code\"\n        ? claudeCodeInstallFiles()\n        : target === \"cursor\"\n          ? cursorInstallFiles()\n          : [];\n  if (files.length === 0) {\n    return {\n      ok: false,\n      target,\n      filesWritten: [],\n      filesPlanned: [],\n      privacy: privacyDefaults(),\n      warnings: [`unknown agent memory install target: ${target}`],\n      exitCode: 1,\n    };\n  }\n  const filesWritten: string[] = [];\n  for (const file of files) {\n    const absolute = join(options.workspaceRoot, file.path);\n    const content = maybeMergeJson(absolute, file.content);\n    if (options.dryRun) {\n      continue;\n    }\n    if (!options.force && existsSync(absolute) && readFileSync(absolute, \"utf8\") === content) {\n      continue;\n    }\n    mkdirSync(dirname(absolute), { recursive: true });\n    writeFileSync(absolute, content);\n    filesWritten.push(file.path);\n  }\n  const planned = files.map((file) => file.path);\n  if (target === \"codex\") {\n    return codexInstallResult(filesWritten, planned);\n  }\n  if (target === \"claude-code\") {\n    return claudeCodeInstallResult(filesWritten, planned);\n  }\n  return cursorInstallResult(filesWritten, planned);\n}"
       },
       "name": "installAgentMemory",
       "qualifiedName": "installAgentMemory",
       "span": {
-        "end": 34234,
-        "start": 32801
+        "end": 35025,
+        "start": 33592
       }
     },
     {
@@ -89644,7 +89649,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function isAgentMemoryEventRecord(value: unknown): value is AgentMemoryEventRecord {\n  return Boolean(\n    value &&\n    typeof value === \"object\" &&\n    !Array.isArray(value) &&\n    typeof (value as { id?: unknown }).id === \"string\" &&\n    typeof (value as { sourceName?: unknown }).sourceName === \"string\" &&\n    typeof (value as { eventKind?: unknown }).eventKind === \"string\" &&\n    typeof (value as { capturedAt?: unknown }).capturedAt === \"string\",\n  );\n}"
       },
       "name": "isAgentMemoryEventRecord",
@@ -89882,7 +89887,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function isDeltaBusyIngestResult(result: AgentIngestResult): boolean {\n  return result.ok === false && result.busy?.code === \"FORGE_DELTA_BUSY\";\n}"
       },
       "name": "isDeltaBusyIngestResult",
@@ -89984,7 +89989,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function isExternalPgliteRead(result: AgentMemoryUnavailableResult): boolean {\n  return Boolean(\n    result.busy?.relativeLockPath.endsWith(\"postmaster.pid\") &&\n    result.busy.processAlive === false,\n  );\n}"
       },
       "name": "isExternalPgliteRead",
@@ -90205,7 +90210,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function isMemoryUnavailable(result: DeltaStore | AgentMemoryUnavailableResult): result is AgentMemoryUnavailableResult {\n  return \"ok\" in result && result.ok === false;\n}"
       },
       "name": "isMemoryUnavailable",
@@ -90222,7 +90227,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function isMissingAgentMemorySchema(error: unknown): boolean {\n  const message = error instanceof Error ? error.message : String(error);\n  return /agent_memory_events/i.test(message) && /does not exist|no such table|missing/i.test(message);\n}"
       },
       "name": "isMissingAgentMemorySchema",
@@ -91650,7 +91655,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function listAgentMemoryEventsWithSchemaRepair(\n  workspaceRoot: string,\n  target: string | undefined,\n  limit: number | undefined,\n): Promise<AgentMemoryEventRecord[] | AgentMemoryUnavailableResult> {\n  const fallbackEvents = readFallbackAgentMemoryEvents(workspaceRoot, target, limit);\n  let store = await openMemoryStore(workspaceRoot, \"read\");\n  if (isMemoryUnavailable(store)) {\n    if (shouldUseFallbackMemory(store, workspaceRoot)) {\n      return fallbackEvents;\n    }\n    return store;\n  }\n  try {\n    return mergeAgentMemoryEvents(await store.listAgentMemoryEvents({ target, limit }), fallbackEvents, limit);\n  } catch (error) {\n    await store.close().catch(() => undefined);\n    if (!isMissingAgentMemorySchema(error)) {\n      return memoryUnavailable(error, workspaceRoot);\n    }\n    const repairStore = await openMemoryStore(workspaceRoot, \"write\");\n    if (isMemoryUnavailable(repairStore)) {\n      return repairStore;\n    }\n    try {\n      await repairStore.init();\n      return await repairStore.listAgentMemoryEvents({ target, limit });\n    } catch (repairError) {\n      return memoryUnavailable(repairError, workspaceRoot);\n    } finally {\n      await repairStore.close();\n    }\n  } finally {\n    await store.close().catch(() => undefined);\n  }\n}"
       },
       "name": "listAgentMemoryEventsWithSchemaRepair",
@@ -93792,14 +93797,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function maybeMergeJson(path: string, generated: string): string {\n  if (!existsSync(path) || !path.endsWith(\".json\")) {\n    return generated;\n  }\n  try {\n    const current = JSON.parse(readFileSync(path, \"utf8\")) as unknown;\n    const next = JSON.parse(generated) as unknown;\n    if (!current || typeof current !== \"object\" || Array.isArray(current) || !next || typeof next !== \"object\" || Array.isArray(next)) {\n      return generated;\n    }\n    return `${JSON.stringify(deepMerge(current as Record<string, unknown>, next as Record<string, unknown>), null, 2)}\\n`;\n  } catch {\n    return generated;\n  }\n}"
       },
       "name": "maybeMergeJson",
       "qualifiedName": "maybeMergeJson",
       "span": {
-        "end": 44405,
-        "start": 43799
+        "end": 45196,
+        "start": 44590
       }
     },
     {
@@ -93843,7 +93848,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function memoryUnavailable(error: unknown, workspaceRoot: string): AgentMemoryUnavailableResult {\n  const message = error instanceof Error ? error.message : \"agent memory store is unavailable\";\n  const busy = error instanceof DeltaStoreBusyError;\n  const busyInfo = busy ? describeDeltaStoreBusy(error, workspaceRoot) : undefined;\n  const busySummary = busyInfo ? summarizeDeltaStoreBusy(busyInfo) : undefined;\n  return {\n    ok: false,\n    error: busySummary ? `${message} (${busySummary})` : message,\n    events: [],\n    ...(busyInfo ? { busy: busyInfo } : {}),\n    diagnostics: [\n      createDiagnostic({\n        severity: \"error\",\n        code: busy ? \"FORGE_DELTA_BUSY\" : \"FORGE_AGENT_MEMORY_UNAVAILABLE\",\n        message: busy\n          ? `Forge Delta local store is busy: ${message}${busySummary ? ` (${busySummary})` : \"\"}`\n          : message,\n        ...(busy\n          ? {\n              fixHint: busyInfo?.processAlive\n                ? `Wait for pid ${busyInfo.pid ?? \"shown in the lock file\"} to finish, then retry the agent memory command.`\n                : `If no Forge/agent process is still running, inspect ${busyInfo?.relativeLockPath ?? \".forge/delta/delta.lock\"} and retry.`,\n              suggestedCommands: [\n                \"forge delta status --json\",\n                \"forge agent timeline --json\",\n                \"forge agent hooks status --target codex --json\",\n              ],\n            }\n          : {}),\n      }),\n    ],\n    nextActions: [\n      \"forge delta status --json\",\n      ...(busyInfo?.processAlive ? [] : [\"forge delta repair --dry-run --json\"]),\n      \"forge agent timeline --json\",\n      \"forge agent hooks status --target codex --json\",\n    ],\n    exitCode: 1,\n  };\n}"
       },
       "name": "memoryUnavailable",
@@ -93877,7 +93882,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function mergeAgentMemoryEvents(\n  primary: AgentMemoryEventRecord[],\n  fallback: AgentMemoryEventRecord[],\n  limit: number | undefined,\n): AgentMemoryEventRecord[] {\n  const seen = new Set<string>();\n  const merged = [...primary, ...fallback]\n    .filter((event) => {\n      if (seen.has(event.id)) {\n        return false;\n      }\n      seen.add(event.id);\n      return true;\n    })\n    .sort((left, right) => {\n      const byTime = left.capturedAt.localeCompare(right.capturedAt);\n      return byTime === 0 ? left.id.localeCompare(right.id) : byTime;\n    });\n  return limit ? merged.slice(-Math.max(1, Math.min(limit, 200))) : merged;\n}"
       },
       "name": "mergeAgentMemoryEvents",
@@ -94897,14 +94902,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function normalizeInstallTarget(target: string): AgentMemorySourceName | string {\n  if (target === \"claude\") {\n    return \"claude-code\";\n  }\n  return target;\n}"
       },
       "name": "normalizeInstallTarget",
       "qualifiedName": "normalizeInstallTarget",
       "span": {
-        "end": 41273,
-        "start": 41114
+        "end": 42064,
+        "start": 41905
       }
     },
     {
@@ -95118,14 +95123,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function normalizeRawInput(input: unknown): Record<string, unknown> | null {\n  if (input && typeof input === \"object\" && !Array.isArray(input)) {\n    return input as Record<string, unknown>;\n  }\n  if (typeof input === \"string\" && input.trim()) {\n    try {\n      const parsed = JSON.parse(input) as unknown;\n      return parsed && typeof parsed === \"object\" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;\n    } catch {\n      return null;\n    }\n  }\n  return null;\n}"
       },
       "name": "normalizeRawInput",
       "qualifiedName": "normalizeRawInput",
       "span": {
-        "end": 41761,
-        "start": 41275
+        "end": 42552,
+        "start": 42066
       }
     },
     {
@@ -95611,14 +95616,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function objectField(value: Record<string, unknown>, key: string): Record<string, unknown> | undefined {\n  const child = value[key];\n  return child && typeof child === \"object\" && !Array.isArray(child) ? child as Record<string, unknown> : undefined;\n}"
       },
       "name": "objectField",
       "qualifiedName": "objectField",
       "span": {
-        "end": 42014,
-        "start": 41763
+        "end": 42805,
+        "start": 42554
       }
     },
     {
@@ -95883,7 +95888,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function openMemoryStore(\n  workspaceRoot: string,\n  access: \"read\" | \"write\" = \"write\",\n): Promise<DeltaStore | AgentMemoryUnavailableResult> {\n  const retryDelays = access === \"write\" ? [25, 75, 150] : [];\n  for (let attempt = 0; ; attempt += 1) {\n    try {\n      return await DeltaStore.open(workspaceRoot, {\n        access,\n        ...(access === \"write\" ? { waitMs: 1_500, retryDelayMs: 50 } : {}),\n      });\n    } catch (error) {\n      if (!(error instanceof DeltaStoreBusyError) || attempt >= retryDelays.length) {\n        return memoryUnavailable(error, workspaceRoot);\n      }\n      await sleep(retryDelays[attempt] ?? 0);\n    }\n  }\n}"
       },
       "name": "openMemoryStore",
@@ -98025,14 +98030,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function parseQueuedHookLine(raw: Record<string, unknown>): {\n  source: string;\n  eventName?: string;\n  workspaceRoot?: string;\n  payload: Record<string, unknown>;\n} | null {\n  if (raw.forgeHookQueueV1 !== true) {\n    return null;\n  }\n  const payload = objectField(raw, \"payload\") ?? objectField(raw, \"raw\");\n  if (!payload) {\n    return null;\n  }\n  return {\n    source: typeof raw.source === \"string\" ? raw.source : \"codex\",\n    eventName: typeof raw.eventName === \"string\" ? raw.eventName : undefined,\n    workspaceRoot: typeof raw.workspaceRoot === \"string\" ? raw.workspaceRoot : undefined,\n    payload,\n  };\n}"
       },
       "name": "parseQueuedHookLine",
       "qualifiedName": "parseQueuedHookLine",
       "span": {
-        "end": 43797,
-        "start": 43184
+        "end": 44588,
+        "start": 43975
       }
     },
     {
@@ -100558,14 +100563,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function queueCheckpointPath(watchFile: string): string {\n  return `${watchFile}.checkpoint.json`;\n}"
       },
       "name": "queueCheckpointPath",
       "qualifiedName": "queueCheckpointPath",
       "span": {
-        "end": 15337,
-        "start": 15237
+        "end": 15585,
+        "start": 15485
       }
     },
     {
@@ -100575,14 +100580,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function queueHistoryPath(watchFile: string): string {\n  return `${watchFile}.history`;\n}"
       },
       "name": "queueHistoryPath",
       "qualifiedName": "queueHistoryPath",
       "span": {
-        "end": 15428,
-        "start": 15339
+        "end": 15676,
+        "start": 15587
       }
     },
     {
@@ -100592,14 +100597,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function queuedEventHasUsefulSignal(envelope: AgentEventEnvelope): boolean {\n  const bindings = extractAgentEventBindings(envelope);\n  const files = bindings.files;\n  const entries = bindings.entries;\n  const proofs = bindings.proofs;\n  return (\n    typeof bindings.toolName === \"string\" ||\n    typeof bindings.command === \"string\" ||\n    typeof bindings.status === \"string\" ||\n    (Array.isArray(files) && files.length > 0) ||\n    (Array.isArray(entries) && entries.length > 0) ||\n    (Array.isArray(proofs) && proofs.length > 0)\n  );\n}"
       },
       "name": "queuedEventHasUsefulSignal",
       "qualifiedName": "queuedEventHasUsefulSignal",
       "span": {
-        "end": 25978,
-        "start": 25441
+        "end": 26769,
+        "start": 26232
       }
     },
     {
@@ -100609,14 +100614,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function queuedEventTimestamp(raw: Record<string, unknown>, envelope: AgentEventEnvelope): string | undefined {\n  const enqueuedAt = raw.enqueuedAt;\n  return typeof enqueuedAt === \"string\" && enqueuedAt.length > 0\n    ? enqueuedAt\n    : envelope.event.timestamp;\n}"
       },
       "name": "queuedEventTimestamp",
       "qualifiedName": "queuedEventTimestamp",
       "span": {
-        "end": 26244,
-        "start": 25980
+        "end": 27035,
+        "start": 26771
       }
     },
     {
@@ -101136,7 +101141,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function readFallbackAgentMemoryEvents(\n  workspaceRoot: string,\n  target: string | undefined,\n  limit: number | undefined,\n): AgentMemoryEventRecord[] {\n  const file = fallbackMemoryPath(workspaceRoot);\n  if (!existsSync(file)) {\n    return [];\n  }\n  const events: AgentMemoryEventRecord[] = [];\n  for (const line of readFileSync(file, \"utf8\").split(/\\r?\\n/)) {\n    if (!line.trim()) {\n      continue;\n    }\n    try {\n      const parsed = JSON.parse(line) as unknown;\n      if (isAgentMemoryEventRecord(parsed) && agentMemoryEventMatchesTarget(parsed, target)) {\n        events.push(parsed);\n      }\n    } catch {\n      // Keep fallback recovery best effort; malformed lines should not break hooks.\n    }\n  }\n  return limit ? events.slice(-Math.max(1, Math.min(limit, 200))) : events;\n}"
       },
       "name": "readFallbackAgentMemoryEvents",
@@ -102598,14 +102603,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function readQueueCheckpoint(watchFile: string, fileSize: number): number {\n  const checkpointFile = queueCheckpointPath(watchFile);\n  if (!existsSync(checkpointFile)) {\n    return 0;\n  }\n  try {\n    const parsed = JSON.parse(readFileSync(checkpointFile, \"utf8\")) as unknown;\n    const offset = parsed && typeof parsed === \"object\" && !Array.isArray(parsed)\n      ? (parsed as { offset?: unknown }).offset\n      : undefined;\n    if (typeof offset !== \"number\" || !Number.isFinite(offset) || offset < 0) {\n      return 0;\n    }\n    return offset > fileSize ? 0 : Math.floor(offset);\n  } catch {\n    return 0;\n  }\n}"
       },
       "name": "readQueueCheckpoint",
       "qualifiedName": "readQueueCheckpoint",
       "span": {
-        "end": 16043,
-        "start": 15430
+        "end": 16291,
+        "start": 15678
       }
     },
     {
@@ -102734,14 +102739,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function readStdinJson(options?: { timeoutMs?: number }): Promise<unknown> {\n  if (process.stdin.isTTY) {\n    return undefined;\n  }\n  const timeoutMs = options?.timeoutMs ?? 2000;\n  const chunks: Buffer[] = [];\n  let settled = false;\n\n  return await new Promise<unknown>((resolve) => {\n    const finish = () => {\n      if (settled) {\n        return;\n      }\n      settled = true;\n      clearTimeout(timer);\n      process.stdin.removeListener(\"data\", onData);\n      process.stdin.removeListener(\"end\", finish);\n      process.stdin.removeListener(\"close\", finish);\n      process.stdin.removeListener(\"error\", finish);\n      const raw = Buffer.concat(chunks).toString(\"utf8\").trim();\n      resolve(raw ? raw : undefined);\n    };\n    const onData = (chunk: Buffer | string) => {\n      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));\n    };\n    const timer = setTimeout(() => {\n      process.stdin.destroy();\n      finish();\n    }, timeoutMs);\n    process.stdin.on(\"data\", onData);\n    process.stdin.on(\"end\", finish);\n    process.stdin.on(\"close\", finish);\n    process.stdin.on(\"error\", finish);\n    process.stdin.resume();\n  });\n}"
       },
       "name": "readStdinJson",
       "qualifiedName": "readStdinJson",
       "span": {
-        "end": 43182,
-        "start": 42023
+        "end": 43973,
+        "start": 42814
       }
     },
     {
@@ -103255,6 +103260,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "9551abf332cc9cae29f4cbd05770e24acb861a3f5d695e55cdd5670e7049f6de",
+      "file": "src/forge/agent-memory/bridge.ts",
+      "id": "0a7b6def755bf2f09cc0f674360cab093e76eccdfc1c5c99c4e79288c99b2af3",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
+        "sourceSlice": "async function recordAgentMemoryEnvelope(store: DeltaStore, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {\n  const event = await store.recordAgentMemoryEvent({\n    envelope,\n    summary: summarizeAgentEvent(envelope),\n    bindings: extractAgentEventBindings(envelope),\n  });\n  return { ok: true, event, envelope, exitCode: 0 };\n}"
+      },
+      "name": "recordAgentMemoryEnvelope",
+      "qualifiedName": "recordAgentMemoryEnvelope",
+      "span": {
+        "end": 12930,
+        "start": 12588
+      }
+    },
+    {
       "contentHash": "c02abdd034361a36b97ccfebe6957fcae4ece7562657b0c173d6f3716adeba54",
       "file": "src/forge/runtime/ai/context.ts",
       "id": "86a3d1fd71dee07aef184a970f6805e4c7e56e05d36ee5bf2602cf5faf576fe5",
@@ -103567,14 +103589,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function redactedQueueHistoryBuffer(consumedBuffer: Buffer): Buffer {\n  const { complete } = splitCompleteJsonLines(consumedBuffer);\n  const lines: string[] = [];\n  for (const line of complete) {\n    if (!line.raw.trim()) {\n      continue;\n    }\n    const parsed = normalizeRawInput(line.raw);\n    if (!parsed) {\n      lines.push(JSON.stringify({\n        forgeHookQueueV1: true,\n        historyRedacted: true,\n        rawStored: false,\n        payloadRedacted: true,\n        payload: { _parseError: true },\n      }));\n      continue;\n    }\n    lines.push(JSON.stringify(redactedQueueHistoryEntry(parsed)));\n  }\n  return Buffer.from(lines.length > 0 ? `${lines.join(\"\\n\")}\\n` : \"\", \"utf8\");\n}"
       },
       "name": "redactedQueueHistoryBuffer",
       "qualifiedName": "redactedQueueHistoryBuffer",
       "span": {
-        "end": 18718,
-        "start": 18027
+        "end": 18966,
+        "start": 18275
       }
     },
     {
@@ -103584,14 +103606,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function redactedQueueHistoryEntry(parsed: Record<string, unknown>): Record<string, unknown> {\n  if (parsed.forgeHookQueueV1 !== true) {\n    return {\n      historyRedacted: true,\n      rawStored: false,\n      payloadRedacted: true,\n      payload: redactAgentPayload(parsed).value,\n    };\n  }\n  const queuedPayload = objectField(parsed, \"payload\") ?? objectField(parsed, \"raw\") ?? {};\n  return {\n    forgeHookQueueV1: true,\n    source: typeof parsed.source === \"string\" ? parsed.source : \"codex\",\n    eventName: typeof parsed.eventName === \"string\" ? parsed.eventName : undefined,\n    workspaceRoot: typeof parsed.workspaceRoot === \"string\" ? parsed.workspaceRoot : undefined,\n    enqueuedAt: typeof parsed.enqueuedAt === \"string\" ? parsed.enqueuedAt : undefined,\n    historyRedacted: true,\n    rawStored: false,\n    payloadRedacted: true,\n    payload: parsed.payloadRedacted === true ? queuedPayload : redactAgentPayload(queuedPayload).value,\n  };\n}"
       },
       "name": "redactedQueueHistoryEntry",
       "qualifiedName": "redactedQueueHistoryEntry",
       "span": {
-        "end": 19669,
-        "start": 18720
+        "end": 19917,
+        "start": 18968
       }
     },
     {
@@ -109602,7 +109624,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function runAgentMemoryCommand(options: AgentMemoryCommandOptions): Promise<AgentMemoryCommandResult> {\n  if (options.subcommand === \"install\") {\n    return installAgentMemory(options);\n  }\n  if (options.subcommand === \"ingest\") {\n    if (options.watch) {\n      return watchAgentMemoryIngest(options);\n    }\n    if (options.file) {\n      return ingestAgentMemoryQueueFile(options);\n    }\n    return ingestAgentMemory(options);\n  }\n  if (options.subcommand === \"context\") {\n    try {\n      return await buildAgentMemoryContext({\n        workspaceRoot: options.workspaceRoot,\n        entry: options.entry,\n        change: options.change,\n        proof: options.proof,\n        handoff: options.handoff,\n        limit: options.limit,\n      });\n    } catch (error) {\n      return memoryUnavailable(error, options.workspaceRoot);\n    }\n  }\n  const events = await listAgentMemoryEventsWithSchemaRepair(options.workspaceRoot, options.entry, options.limit);\n  if (!Array.isArray(events)) {\n    return events;\n  }\n  return {\n    ok: true,\n    events,\n    exitCode: 0,\n  };\n}"
       },
       "name": "runAgentMemoryCommand",
@@ -116793,14 +116815,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function shouldSkipQueuedHookEnvelope(\n  envelope: AgentEventEnvelope,\n  options: { source: string; workspaceRoot: string },\n): boolean {\n  return (\n    envelope.source.agent !== options.source ||\n    !workspaceRootsMatch(envelope.workspace.root, options.workspaceRoot) ||\n    envelope.payload.forgeHookProbe === true ||\n    envelope.payload._parseError === true ||\n    envelope.payload._invalidPayload === true\n  );\n}"
       },
       "name": "shouldSkipQueuedHookEnvelope",
       "qualifiedName": "shouldSkipQueuedHookEnvelope",
       "span": {
-        "end": 21801,
-        "start": 21383
+        "end": 22049,
+        "start": 21631
       }
     },
     {
@@ -116844,7 +116866,7 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function shouldUseFallbackMemory(\n  result: AgentMemoryUnavailableResult,\n  workspaceRoot: string,\n): boolean {\n  return isExternalPgliteRead(result) || (!result.busy && hasExternalPglitePostmaster(workspaceRoot));\n}"
       },
       "name": "shouldUseFallbackMemory",
@@ -117099,14 +117121,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function sleep(ms: number): Promise<void> {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}"
       },
       "name": "sleep",
       "qualifiedName": "sleep",
       "span": {
-        "end": 34341,
-        "start": 34236
+        "end": 35132,
+        "start": 35027
       }
     },
     {
@@ -117966,14 +117988,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function splitCompleteJsonLines(buffer: Buffer): {\n  complete: Array<{ raw: string; endOffset: number }>;\n  completeBytes: number;\n  pendingBytes: number;\n} {\n  const lastNewline = buffer.lastIndexOf(10);\n  if (lastNewline < 0) {\n    return { complete: [], completeBytes: 0, pendingBytes: buffer.length };\n  }\n  const completeBytes = lastNewline + 1;\n  const text = buffer.subarray(0, completeBytes).toString(\"utf8\");\n  const lines: Array<{ raw: string; endOffset: number }> = [];\n  let offset = 0;\n  for (const rawLine of text.split(/(?<=\\n)/)) {\n    if (!rawLine) {\n      continue;\n    }\n    const byteLength = Buffer.byteLength(rawLine);\n    offset += byteLength;\n    const normalized = rawLine.replace(/\\r?\\n$/, \"\");\n    lines.push({ raw: normalized, endOffset: offset });\n  }\n  return { complete: lines, completeBytes, pendingBytes: buffer.length - completeBytes };\n}"
       },
       "name": "splitCompleteJsonLines",
       "qualifiedName": "splitCompleteJsonLines",
       "span": {
-        "end": 20543,
-        "start": 19671
+        "end": 20791,
+        "start": 19919
       }
     },
     {
@@ -120873,14 +120895,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function trimBufferStart(buffer: Buffer, maxBytes: number): Buffer {\n  if (buffer.length <= maxBytes) {\n    return buffer;\n  }\n  return buffer.subarray(buffer.length - maxBytes);\n}"
       },
       "name": "trimBufferStart",
       "qualifiedName": "trimBufferStart",
       "span": {
-        "end": 16758,
-        "start": 16578
+        "end": 17006,
+        "start": 16826
       }
     },
     {
@@ -121332,14 +121354,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function uniqueStrings(values: string[]): string[] {\n  return [...new Set(values)].sort();\n}"
       },
       "name": "uniqueStrings",
       "qualifiedName": "uniqueStrings",
       "span": {
-        "end": 41112,
-        "start": 41020
+        "end": 41903,
+        "start": 41811
       }
     },
     {
@@ -122352,14 +122374,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promise<AgentIngestWatchResult> {\n  const source = options.source ?? options.target ?? \"generic\";\n  const file = options.file;\n  if (options.dryRun) {\n    return {\n      ok: true,\n      watch: true,\n      source,\n      ...(file ? { file } : {}),\n      dryRun: true,\n      eventsIngested: 0,\n      errors: [],\n      nextActions: [\n        `forge agent ingest ${source} --watch${file ? ` --file ${file}` : \"\"} --json`,\n        `forge agent hooks status --target ${source} --json`,\n      ],\n      exitCode: 0,\n    };\n  }\n  if (!file) {\n    return {\n      ok: false,\n      watch: true,\n      source,\n      eventsIngested: 0,\n      errors: [\"agent ingest --watch requires --file <events.jsonl|events.ndjson>\"],\n      nextActions: [`forge agent ingest ${source} --watch --file .forge/agent/events.ndjson --json`],\n      exitCode: 1,\n    };\n  }\n  const watchFile = isAbsolute(file) ? file : resolve(options.workspaceRoot, file);\n  if (!existsSync(watchFile)) {\n    return {\n      ok: false,\n      watch: true,\n      source,\n      file,\n      eventsIngested: 0,\n      errors: [`watch file does not exist: ${file}`],\n      nextActions: [`New-Item -ItemType File -Path ${file}`, `forge agent ingest ${source} --watch --file ${file} --json`],\n      exitCode: 1,\n    };\n  }\n\n  let eventsIngested = 0;\n  const errors: string[] = [];\n  let busyRetries = 0;\n  let lastBusy: AgentMemoryUnavailableResult[\"busy\"] | undefined;\n  let pendingIngest = Promise.resolve();\n  let retryTimer: ReturnType<typeof setTimeout> | undefined;\n  const scheduleBusyRetry = () => {\n    if (retryTimer) {\n      return;\n    }\n    retryTimer = setTimeout(() => {\n      retryTimer = undefined;\n      pendingIngest = pendingIngest.then(ingestNewContent, ingestNewContent);\n    }, 500);\n  };\n  const ingestNewContent = async () => {\n    const result = await drainAgentMemoryQueueFile({\n      workspaceRoot: options.workspaceRoot,\n      watchFile,\n      source,\n      eventName: options.eventName,\n    });\n    eventsIngested += result.eventsIngested;\n    if (result.busy) {\n      busyRetries += 1;\n      lastBusy = result.busy;\n      scheduleBusyRetry();\n      return;\n    }\n    lastBusy = undefined;\n    errors.push(...result.errors);\n  };\n\n  await ingestNewContent();\n  return await new Promise<AgentIngestWatchResult>((resolve) => {\n    const watcher = watch(watchFile, { persistent: true }, () => {\n      pendingIngest = pendingIngest.then(ingestNewContent, ingestNewContent);\n    });\n    const shutdown = () => {\n      if (retryTimer) {\n        clearTimeout(retryTimer);\n        retryTimer = undefined;\n      }\n      watcher.close();\n      void pendingIngest.finally(() => {\n        resolve({\n          ok: errors.length === 0,\n          watch: true,\n          source,\n          file,\n          eventsIngested,\n          errors,\n          ...(lastBusy ? { busy: lastBusy, pendingDueToBusy: true, busyRetries } : {}),\n          nextActions: [\n            ...(lastBusy ? [\"forge delta status --json\"] : []),\n            `forge agent memory --entry ${source} --json`,\n            `forge agent hooks status --target ${source} --json`,\n          ],\n          exitCode: errors.length === 0 ? 0 : 1,\n        });\n      });\n    };\n    process.once(\"SIGINT\", shutdown);\n    process.once(\"SIGTERM\", shutdown);\n  });\n}"
       },
       "name": "watchAgentMemoryIngest",
       "qualifiedName": "watchAgentMemoryIngest",
       "span": {
-        "end": 32799,
-        "start": 29455
+        "end": 33590,
+        "start": 30246
       }
     },
     {
@@ -123202,14 +123224,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function workspaceRootsMatch(left: string | undefined, right: string): boolean {\n  if (!left) {\n    return true;\n  }\n  return resolve(left) === resolve(right);\n}"
       },
       "name": "workspaceRootsMatch",
       "qualifiedName": "workspaceRootsMatch",
       "span": {
-        "end": 26407,
-        "start": 26246
+        "end": 27198,
+        "start": 27037
       }
     },
     {
@@ -123627,14 +123649,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "function writeQueueCheckpoint(watchFile: string, offset: number): void {\n  const checkpointFile = queueCheckpointPath(watchFile);\n  mkdirSync(dirname(checkpointFile), { recursive: true });\n  writeFileSync(\n    checkpointFile,\n    `${JSON.stringify({\n      schema: \"forge.agent-hook-queue-checkpoint.v1\",\n      file: watchFile,\n      offset,\n      updatedAt: new Date().toISOString(),\n    }, null, 2)}\\n`,\n    \"utf8\",\n  );\n}"
       },
       "name": "writeQueueCheckpoint",
       "qualifiedName": "writeQueueCheckpoint",
       "span": {
-        "end": 16468,
-        "start": 16045
+        "end": 16716,
+        "start": 16293
       }
     },
     {
@@ -124783,7 +124805,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "interface AgentMemoryCommandOptions {\n  subcommand: \"install\" | \"ingest\" | \"context\" | \"memory\";\n  workspaceRoot: string;\n  json: boolean;\n  target?: string;\n  source?: string;\n  eventName?: string;\n  input?: unknown;\n  entry?: string;\n  change?: string;\n  proof?: string;\n  handoff?: boolean;\n  current?: boolean;\n  dryRun?: boolean;\n  force?: boolean;\n  limit?: number;\n  watch?: boolean;\n  file?: string;\n  pollIntervalMs?: number;\n}"
       },
       "name": "AgentMemoryCommandOptions",
@@ -124851,7 +124873,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "interface AgentMemoryQueueInspectionResult {\n  exists: boolean;\n  source: string;\n  file: string;\n  events: number;\n  nativeSignals: number;\n  canarySignals: number;\n  usefulSignals: number;\n  ignoredOutOfWorkspaceEvents: number;\n  bytesRead: number;\n  pendingBytes: number;\n  inspectedBytes?: number;\n  skippedBytes?: number;\n  truncated?: boolean;\n  checkpointFile: string;\n  errors: string[];\n  latestEventAt?: string;\n}"
       },
       "name": "AgentMemoryQueueInspectionResult",
@@ -138978,7 +139000,7 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "7db82823f475f362c5884e7c095077d80cc71cd68a69c040e86844ff849112e9",
+        "fileContentHash": "8d9576d8769a87e8bf1ea241f47dbb0104e32ba5bd93ccdfc4cdb5d360202617",
         "sourceSlice": "type AgentMemoryCommandResult =\n  | AgentInstallResult\n  | AgentIngestResult\n  | AgentIngestWatchResult\n  | AgentMemoryContextPack\n  | { ok: true; events: AgentMemoryEventRecord[]; exitCode: 0 }\n  | AgentMemoryUnavailableResult;"
       },
       "name": "AgentMemoryCommandResult",
