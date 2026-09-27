@@ -3,8 +3,8 @@
  * Lightweight Codex hook runner — no Forge CLI, no DeltaDB.
  * Reads stdin with a short timeout, enqueues a redacted event to .forge/agent/events.ndjson, exits.
  */
-import { createHash } from "node:crypto";
-import { appendFileSync, mkdirSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { appendFileSync, mkdirSync, openSync, closeSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 const STDIN_TIMEOUT_MS = 750;
@@ -17,6 +17,8 @@ if (!eventName) {
 
 const workspaceRoot = resolve(process.cwd());
 const eventsFile = join(workspaceRoot, ".forge", "agent", "events.ndjson");
+const queueLockFile = `${eventsFile}.append-lock.json`;
+const QUEUE_LOCK_WAIT_MS = 500;
 
 const SAFE_ID = /^[A-Za-z0-9_.:-]{1,128}$/u;
 
@@ -81,7 +83,67 @@ async function main() {
   };
 
   mkdirSync(dirname(eventsFile), { recursive: true });
-  appendFileSync(eventsFile, `${JSON.stringify(entry)}\n`, "utf8");
+  const lock = await acquireQueueLock();
+  try {
+    appendFileSync(eventsFile, `${JSON.stringify(entry)}\n`, "utf8");
+  } finally {
+    releaseQueueLock(lock);
+  }
+}
+
+async function acquireQueueLock() {
+  const started = Date.now();
+  const token = randomUUID();
+  for (;;) {
+    try {
+      const fd = openSync(queueLockFile, "wx");
+      try {
+        writeFileSync(fd, JSON.stringify({ pid: process.pid, token, createdAt: new Date().toISOString() }));
+      } finally {
+        closeSync(fd);
+      }
+      return token;
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+      clearStaleQueueLock();
+      if (Date.now() - started >= QUEUE_LOCK_WAIT_MS) {
+        throw new Error("hook queue append lock remained busy");
+      }
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 15));
+    }
+  }
+}
+
+function clearStaleQueueLock() {
+  try {
+    const stat = statSync(queueLockFile);
+    const holder = JSON.parse(readFileSync(queueLockFile, "utf8"));
+    const ageMs = Date.now() - stat.mtimeMs;
+    if (ageMs < 2000) return;
+    if (ageMs < 30000 && processAlive(holder.pid)) return;
+    unlinkSync(queueLockFile);
+  } catch {
+    // A new holder may have replaced the lock; the next attempt will retry.
+  }
+}
+
+function processAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
+  }
+}
+
+function releaseQueueLock(token) {
+  try {
+    const holder = JSON.parse(readFileSync(queueLockFile, "utf8"));
+    if (holder.token === token) unlinkSync(queueLockFile);
+  } catch {
+    // A stopped hook cannot keep the queue lock alive.
+  }
 }
 
 function sanitizePayload(raw, hookEventName) {

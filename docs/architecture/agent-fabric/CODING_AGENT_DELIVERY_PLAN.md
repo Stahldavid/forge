@@ -1,9 +1,11 @@
 # Agent Fabric for coding agents — ordered delivery plan
 
-Status: proposed delivery plan. This record does not adopt a new runtime capability or
-change the S1.0B1/S1.1 protocol. Each runtime slice needs its own reviewed scope,
-implementation, evidence, and adoption record. The P0a kernel and P0b-A bounded model
-adapter are the current accepted starting point.
+Status: delivery plan with local implementation in progress. This record does not
+adopt a new runtime capability or change the S1.0B1/S1.1 protocol. Each runtime
+slice needs its own reviewed scope, implementation, evidence, and adoption record.
+The P0a kernel and P0b-A bounded model adapter are the accepted starting point.
+The owner later authorized publication of `forgeos@0.1.0-alpha.64`, so the original
+instruction in step 0 to leave PR #10 open is superseded.
 
 ## Intended outcome and cost boundary
 
@@ -33,7 +35,7 @@ The two user journeys are intentionally ordered:
 
 | Step | Deliverable | Acceptance evidence | Depends on |
 | --- | --- | --- | --- |
-| 0. Release integrity | Complete P0b-A release note and validate the release candidate at its exact head. Leave PR #10 open and do not publish. | CI/security/package smoke bound to the candidate SHA; npm dist-tag readback; release workflow did not publish. | Current accepted P0b-A. |
+| 0. Release integrity | Complete P0b-A release note, validate its exact head, and publish only with owner authorization. | CI/security/package smoke bound to the candidate SHA; npm dist-tag and public package readback. | Current accepted P0b-A. |
 | 1. Contract and threat model | Versioned local task contract, owner identity, root/repository/branch allowlist, permitted reads and effects, budgets, cancellation, evidence states, and restart semantics. Classify any changes to frozen decisions. | Reviewable scope/gate with positive and adversarial vectors, including malformed and cross-repository requests. | 0. |
 | 2. CLI observation | Add `forge fabric` proposal/status/evidence commands with bounded output and redaction. Keep Agent Memory distinct from authoritative control state. | CLI fixtures cover valid, malformed, stale, and unknown tasks; restart does not invent state. No command can start work yet. | 1. |
 | 3. Durable local control | Transactional local journal, trusted owner ingress, compare-and-swap append, verified replay, and recovery classification. Adapt the synchronous Conductor boundary explicitly instead of placing asynchronous storage behind it implicitly. | Kill/restart, corruption, duplicate request, concurrent append, lost response, and stale fencing tests; replay never calls a model; every acknowledged transition survives restart. | 1; can proceed alongside 2. |
@@ -114,3 +116,8 @@ Passing this scenario establishes only the local pilot. Steps 8–12 finish the 
 Agent Fabric direction in the frozen architecture; each requires a separate scope and
 acceptance record. General coding quality and production readiness remain unproven
 until their own evaluations and operational gates pass.
+
+For the current owner request, the target stops at a single-owner PC. Step 12's
+multiuser production expansion requires a separate target and is outside this
+acceptance. The optional Docker verification path executes only fixed approved
+Node test files; it does not yet authorize arbitrary consequential effects.

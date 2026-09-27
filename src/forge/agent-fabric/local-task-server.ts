@@ -5,12 +5,15 @@ import type { AddressInfo } from "node:net";
 import { dirname } from "node:path";
 import { AgentFabricError, isAgentFabricError } from "./errors.ts";
 import { LocalTaskService, type LocalTaskStatus } from "./local-task-service.ts";
+import type { LocalMemoryEntry } from "./local-intelligence.ts";
 import { localFabricPath } from "./local-paths.ts";
 
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
 
-export type LocalTaskAction = "propose" | "status" | "review" | "run" | "review-result";
+export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result";
+export type LocalMemoryAction = "memory-add" | "memory-list" | "memory-delete";
+export type LocalMemoryResult = LocalMemoryEntry | readonly LocalMemoryEntry[] | { deleted: boolean };
 
 interface OwnerEndpoint {
   schemaVersion: 1;
@@ -101,9 +104,23 @@ async function dispatch(service: LocalTaskService, action: LocalTaskAction, requ
     throw new AgentFabricError("AF_INVALID_STATE", "Task request requires only taskId");
   }
   if (action === "status") return service.status(request.taskId);
+  if (action === "evidence") return service.evidence(request.taskId);
   if (action === "review") return service.review(request.taskId);
   if (action === "run") return service.run(request.taskId);
+  if (action === "cancel") return service.cancel(request.taskId);
+  if (action === "reconcile") return service.reconcile(request.taskId);
+  if (action === "verify") return service.verify(request.taskId);
+  if (action === "recover-verification") return service.recoverVerification(request.taskId);
   return service.reviewResult(request.taskId);
+}
+
+function dispatchMemory(service: LocalTaskService, action: LocalMemoryAction, request: Record<string, unknown>): LocalMemoryResult {
+  if (action === "memory-add") return service.rememberMemory(request);
+  if (action === "memory-list") return service.listMemory(request);
+  if (Object.keys(request).join(",") !== "id") {
+    throw new AgentFabricError("AF_INVALID_STATE", "Memory deletion requires only id");
+  }
+  return { deleted: service.forgetMemory(request.id) };
 }
 
 export interface LocalTaskOwnerServer {
@@ -138,14 +155,17 @@ export async function serveLocalTasks(
         response.writeHead(403).end(JSON.stringify({ ok: false, error: "unauthorized" }));
         return;
       }
-      const action = request.url?.slice("/v1/".length) as LocalTaskAction;
+      const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction;
       if (request.method !== "POST" || !request.url?.startsWith("/v1/") ||
-          !["propose", "status", "review", "run", "review-result"].includes(action)) {
+          !["propose", "status", "evidence", "review", "run", "cancel", "reconcile", "verify", "recover-verification", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action)) {
         response.writeHead(404).end(JSON.stringify({ ok: false, error: "unknown_action" }));
         return;
       }
-      void readBody(request).then((body) => dispatch(service, action, body)).then((status) => {
-        if (!response.destroyed) response.writeHead(200).end(JSON.stringify({ ok: true, status }));
+      void readBody(request).then(async (body) => {
+        if (action.startsWith("memory-")) return { memory: dispatchMemory(service, action as LocalMemoryAction, body) };
+        return { status: await dispatch(service, action as LocalTaskAction, body) };
+      }).then((result) => {
+        if (!response.destroyed) response.writeHead(200).end(JSON.stringify({ ok: true, ...result }));
       }).catch((error: unknown) => {
         if (!response.destroyed) response.writeHead(isAgentFabricError(error) ? 400 : 500).end(JSON.stringify({
           ok: false, code: isAgentFabricError(error) ? error.code : "AF_INVALID_STATE",
@@ -179,6 +199,28 @@ export async function serveLocalTasks(
   }
 }
 
+export async function requestLocalMemory(repositoryRoot: string, action: LocalMemoryAction,
+  body: Record<string, unknown>): Promise<LocalMemoryResult | null> {
+  const endpoint = readEndpoint(repositoryRoot);
+  if (!endpoint) return null;
+  let response: Response;
+  try {
+    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {
+      method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body), redirect: "manual", signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    throw new AgentFabricError("AF_INVALID_STATE", "Local Agent Fabric owner is unreachable; restart it before retrying");
+  }
+  if (response.status >= 300) {
+    const result = await response.json().catch(() => ({})) as { error?: string };
+    throw new AgentFabricError("AF_INVALID_STATE", result.error ?? "Local memory request failed");
+  }
+  const result = await response.json() as { ok?: boolean; memory?: LocalMemoryResult };
+  if (!result.ok || result.memory === undefined) throw new AgentFabricError("AF_INVALID_STATE", "Local owner returned no memory result");
+  return result.memory;
+}
+
 export async function requestLocalTask(
   repositoryRoot: string,
   action: LocalTaskAction,
@@ -191,8 +233,8 @@ export async function requestLocalTask(
     response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {
       method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
       body: JSON.stringify(body), redirect: "manual",
-      signal: AbortSignal.timeout(action === "run" ? 130_000 :
-        action === "review" || action === "review-result" ? 310_000 : 10_000),
+      signal: AbortSignal.timeout(action === "run" ? 130_000 : action === "verify" ? 250_000 :
+        action === "review" || action === "review-result" || action === "recover-verification" ? 310_000 : 10_000),
     });
   } catch {
     throw new AgentFabricError("AF_INVALID_STATE", "Local Agent Fabric owner is unreachable; restart it before retrying");

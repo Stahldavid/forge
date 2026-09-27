@@ -291,6 +291,7 @@ import {
 } from "../agent-adapters/index.ts";
 import { runMcpServe } from "../agent-memory/mcp.ts";
 import { runFabricCommand } from "./fabric.ts";
+import { runEvolutionCommand } from "./evolution.ts";
 import {
   formatReviewHuman,
   formatReviewJson,
@@ -315,7 +316,7 @@ import { runQuery } from "../runtime/query/run-query.ts";
 import { resolveAuthFromCli } from "../runtime/auth/resolve.ts";
 import { getActiveDbAdapter } from "../runtime/executor.ts";
 import { CLI_VERSION, FORGEOS_VERSION } from "../version.ts";
-import type { CategorizedFileSummary } from "../workspace/change-summary.ts";
+import { authoredChangePaths, type CategorizedFileSummary } from "../workspace/change-summary.ts";
 import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import { buildWorkspaceGitSummary } from "../workspace/git-summary.ts";
 import { startCommandHeartbeat } from "./progress.ts";
@@ -2410,6 +2411,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "fabric": {
       return runFabricCommand(command);
     }
+    case "evolution": {
+      return runEvolutionCommand(command);
+    }
     case "mcp": {
       return runMcpServe(command.workspaceRoot);
     }
@@ -2507,6 +2511,10 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     case "diff": {
       const changed = runChangedCommand(command.workspaceRoot);
       const diffPlan = changed.data.diffPlan as { authoredDiffCommand: string; generatedDiffCommand: string; fullDiffCommand: string };
+      const gitSummary = command.target === "authored" ? buildWorkspaceGitSummary(command.workspaceRoot) : null;
+      const authoredPaths = gitSummary ? authoredChangePaths(gitSummary.changeSummary.changed) : null;
+      const authoredAvailable = command.target !== "authored" || (gitSummary?.available === true && authoredPaths !== null);
+      const exitCode = changed.exitCode === 0 && authoredAvailable ? 0 : 1;
       const commandText = command.target === "generated"
         ? diffPlan.generatedDiffCommand
         : command.target === "full"
@@ -2515,12 +2523,22 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       if (command.json) {
         process.stdout.write(formatJsonResult({
           schemaVersion: "0.1.0",
-          ok: changed.ok,
+          ok: exitCode === 0,
           target: command.target,
           command: commandText,
-          exitCode: changed.exitCode,
+          exitCode,
         }));
-        return changed.exitCode;
+        return exitCode;
+      }
+      if (command.target === "authored") {
+        if (!authoredAvailable || !authoredPaths) return 1;
+        if (authoredPaths.length === 0) return 0;
+        const result = spawnSync("git", ["diff", "--", ...authoredPaths.map((file) => `:(top,literal)${file}`)], {
+          cwd: command.workspaceRoot,
+          stdio: "inherit",
+          windowsHide: true,
+        });
+        return result.status === 0 ? 0 : 1;
       }
       const result = spawnSync(commandText, {
         cwd: command.workspaceRoot,

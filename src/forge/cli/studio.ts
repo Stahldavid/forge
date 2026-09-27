@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { createConnection } from "node:net";
 import { basename, join, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -1259,6 +1260,18 @@ export async function runStudioBridgeLoop(
 ): Promise<0 | 1> {
   do {
     const result = await runStudioBridgeCommand(options);
+    const readyNonce = process.env.FORGE_STUDIO_BRIDGE_READY_NONCE;
+    if (readyNonce && /^[0-9a-f-]{36}$/i.test(readyNonce)) {
+      const appRoot = resolve(options.workspaceRoot, options.path ?? ".");
+      const readyPath = join(appRoot, ".forge", "studio", `bridge-ready-${readyNonce}.json`);
+      nodeFileSystem.mkdirp(join(appRoot, ".forge", "studio"));
+      nodeFileSystem.writeText(readyPath, `${JSON.stringify({
+        pid: process.pid,
+        ok: result.ok && result.posted,
+        diagnostics: result.diagnostics.map((diagnostic) => diagnostic.message),
+      })}\n`);
+      delete process.env.FORGE_STUDIO_BRIDGE_READY_NONCE;
+    }
     onResult(result);
     if (options.once || options.dryRun) {
       return result.exitCode;
@@ -1393,35 +1406,14 @@ function previewStatePath(appRoot: string): string {
   return join(appRoot, ".forge", "studio", "preview.json");
 }
 
-function readPreviewState(appRoot: string): { pid?: number; command?: string; previewPort?: number; runtimePort?: number } | null {
+function readPreviewState(appRoot: string): { pid?: number; previewPort?: number; listenerPid?: number } | null {
   const path = previewStatePath(appRoot);
-  if (!nodeFileSystem.exists(path)) {
-    return null;
-  }
+  if (!nodeFileSystem.exists(path)) return null;
   try {
-    return JSON.parse(nodeFileSystem.readText(path) ?? "{}") as {
-      pid?: number;
-      command?: string;
-      previewPort?: number;
-      runtimePort?: number;
-    };
+    return JSON.parse(nodeFileSystem.readText(path) ?? "{}") as { pid?: number; previewPort?: number; listenerPid?: number };
   } catch {
     return null;
   }
-}
-
-function livePreviewState(appRoot: string, previewPort: number): { pid?: number; command?: string } | null {
-  const state = readPreviewState(appRoot);
-  if (!state?.pid) {
-    return null;
-  }
-  if (state.previewPort === previewPort && processIsRunning(state.pid)) {
-    return { pid: state.pid, command: state.command };
-  }
-  if (!processIsRunning(state.pid)) {
-    nodeFileSystem.remove(previewStatePath(appRoot));
-  }
-  return null;
 }
 
 function writePreviewState(input: {
@@ -1429,6 +1421,7 @@ function writePreviewState(input: {
   pid?: number;
   previewPort: number;
   command: string;
+  listenerPid?: number;
 }): void {
   if (!input.pid || !processIsRunning(input.pid)) {
     return;
@@ -1438,21 +1431,18 @@ function writePreviewState(input: {
     pid: input.pid,
     command: input.command,
     previewPort: input.previewPort,
+    ...(input.listenerPid ? { listenerPid: input.listenerPid } : {}),
     runtimePort: STUDIO_TARGET_RUNTIME_PORT,
     startedAt: new Date().toISOString(),
+    readyAt: new Date().toISOString(),
   }, null, 2)}\n`);
 }
 
-function spawnForgeDev(appRoot: string, previewPort: number): { pid?: number; command: string; alreadyRunning: boolean; error?: string } {
-  const existing = livePreviewState(appRoot, previewPort);
-  if (existing?.pid) {
-    return {
-      pid: existing.pid,
-      command: existing.command ?? targetAppDevCommand(previewPort),
-      alreadyRunning: true,
-    };
-  }
-  const cliEntry = process.argv[1];
+async function spawnForgeDev(appRoot: string, previewPort: number): Promise<{ pid?: number; command: string; error?: string }> {
+  // This path is reached only after the preview probe failed. A live PID in an
+  // old state file does not prove that it is still serving this port.
+  nodeFileSystem.remove(previewStatePath(appRoot));
+  const cliEntry = process.argv[1] ? resolve(process.argv[1]) : undefined;
   const command = cliEntry ? process.execPath : "forge";
   const args = cliEntry
     ? [cliEntry, "dev", "--port", String(STUDIO_TARGET_RUNTIME_PORT), "--web-port", String(previewPort)]
@@ -1466,13 +1456,18 @@ function spawnForgeDev(appRoot: string, previewPort: number): { pid?: number; co
       windowsHide: true,
       shell: !cliEntry && process.platform === "win32",
     });
+    const spawnError = await new Promise<Error | undefined>((resolve) => {
+      child.once("error", (error) => resolve(error));
+      child.once("spawn", () => resolve(undefined));
+    });
+    if (spawnError) {
+      return { command: label, error: spawnError.message };
+    }
     child.unref();
-    writePreviewState({ appRoot, pid: child.pid, previewPort, command: label });
-    return { pid: child.pid, command: label, alreadyRunning: false };
+    return { pid: child.pid, command: label };
   } catch (error) {
     return {
       command: label,
-      alreadyRunning: false,
       error: error instanceof Error ? error.message : String(error),
     };
   }
@@ -1490,7 +1485,25 @@ function processIsRunning(pid: number | undefined): boolean {
   }
 }
 
+export function parseWindowsNetstatListener(output: string, port: number): { pid: number; evidence: string } | null {
+  for (const line of output.split(/\r?\n/)) {
+    const match = /^\s*TCP\s+\S+:(\d+)\s+\S+\s+LISTENING\s+(\d+)\s*$/i.exec(line);
+    if (match && Number(match[1]) === port && Number(match[2]) > 0) {
+      return { pid: Number(match[2]), evidence: "netstat reported a listener on the preview port" };
+    }
+  }
+  return null;
+}
+
 function detectListeningProcess(port: number): { pid?: number; command?: string; evidence: string } | null {
+  if (process.platform === "win32") {
+    const netstat = spawnSync("netstat", ["-ano", "-p", "TCP"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      windowsHide: true,
+    });
+    return netstat.status === 0 ? parseWindowsNetstatListener(netstat.stdout, port) : null;
+  }
   const lsof = spawnSync("lsof", [`-iTCP:${port}`, "-sTCP:LISTEN", "-n", "-P", "-Fp", "-Fc"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
@@ -1541,14 +1554,15 @@ function readBridgeState(appRoot: string): { pid?: number; command?: string } | 
   }
 }
 
-function spawnForgeStudioBridge(input: {
+export async function spawnForgeStudioBridge(input: {
   appRoot: string;
   previewPort: number;
   targets: string[];
   studioUrl: string;
   intervalMs: number;
   probeAppServer?: boolean;
-}): { pid?: number; command: string; alreadyRunning: boolean; error?: string } {
+  cliEntry?: string;
+}): Promise<{ pid?: number; command: string; alreadyRunning: boolean; error?: string }> {
   const existing = readBridgeState(input.appRoot);
   if (existing?.pid && processIsRunning(existing.pid)) {
     return {
@@ -1557,8 +1571,11 @@ function spawnForgeStudioBridge(input: {
       alreadyRunning: true,
     };
   }
+  if (existing) nodeFileSystem.remove(bridgeStatePath(input.appRoot));
 
-  const cliEntry = process.argv[1];
+  const cliEntry = input.cliEntry
+    ? resolve(input.cliEntry)
+    : process.argv[1] ? resolve(process.argv[1]) : undefined;
   const command = cliEntry ? process.execPath : "forge";
   const targetArgs = input.targets.flatMap((target) => ["--target", target]);
   const args = [
@@ -1576,7 +1593,11 @@ function spawnForgeStudioBridge(input: {
     "--json",
     ...(input.probeAppServer ? ["--probe-codex-server"] : []),
   ];
-  const label = `forge ${args.filter((arg) => arg !== cliEntry).join(" ")}`;
+  const label = `forge ${args.filter((arg) => arg !== cliEntry).map((arg) =>
+    /\s/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg
+  ).join(" ")}`;
+  const readyNonce = randomUUID();
+  const readyPath = join(input.appRoot, ".forge", "studio", `bridge-ready-${readyNonce}.json`);
   try {
     nodeFileSystem.mkdirp(join(input.appRoot, ".forge", "studio"));
     const child = spawn(command, args, {
@@ -1585,8 +1606,43 @@ function spawnForgeStudioBridge(input: {
       stdio: "ignore",
       windowsHide: true,
       shell: !cliEntry && process.platform === "win32",
+      env: { ...process.env, FORGE_STUDIO_BRIDGE_READY_NONCE: readyNonce },
     });
+    const spawnError = await new Promise<Error | undefined>((resolve) => {
+      child.once("error", (error) => resolve(error));
+      child.once("spawn", () => resolve(undefined));
+    });
+    if (spawnError) {
+      return { command: label, alreadyRunning: false, error: spawnError.message };
+    }
     child.unref();
+    type BridgeReadySignal = { pid?: number; ok?: boolean; diagnostics?: string[] };
+    let ready: BridgeReadySignal | null = null;
+    for (let attempt = 0; attempt < 150; attempt++) {
+      if (nodeFileSystem.exists(readyPath)) {
+        try {
+          ready = JSON.parse(nodeFileSystem.readText(readyPath) ?? "{}") as BridgeReadySignal;
+          break;
+        } catch {
+          // The child may still be writing the marker. Keep waiting for a
+          // complete readiness signal while it is alive.
+        }
+      }
+      if (!processIsRunning(child.pid)) break;
+      await sleep(100);
+    }
+    nodeFileSystem.remove(readyPath);
+    if (!ready?.ok || ready.pid !== child.pid || !processIsRunning(child.pid)) {
+      if (processIsRunning(child.pid)) {
+        try { child.kill(); } catch { /* The child may have just exited. */ }
+      }
+      return {
+        command: label,
+        alreadyRunning: false,
+        error: ready?.diagnostics?.join("; ") ||
+          (ready ? "bridge readiness signal was invalid" : "bridge exited or timed out before its first successful snapshot"),
+      };
+    }
     const state = {
       pid: child.pid,
       command: label,
@@ -1595,6 +1651,7 @@ function spawnForgeStudioBridge(input: {
       intervalMs: input.intervalMs,
       targets: input.targets,
       startedAt: new Date().toISOString(),
+      readyAt: new Date().toISOString(),
     };
     nodeFileSystem.writeText(bridgeStatePath(input.appRoot), `${JSON.stringify(state, null, 2)}\n`);
     return { pid: child.pid, command: label, alreadyRunning: false };
@@ -1610,16 +1667,20 @@ function spawnForgeStudioBridge(input: {
 async function waitForPreviewAfterStart(
   preview: Omit<StudioAttachResult["preview"], "status">,
   startCommand: string,
+  pid: number | undefined,
 ): Promise<StudioAttachResult["preview"]["status"]> {
   let status = previewStatus("not-running", `preview is not reachable at ${preview.url}`, [startCommand, "forge dev --once --json"]);
   for (let attempt = 0; attempt < 20; attempt++) {
+    if (!processIsRunning(pid)) {
+      return previewStatus("not-running", `preview process exited before ${preview.url} became reachable`, [startCommand, "forge dev --once --json"]);
+    }
     await sleep(attempt === 0 ? 500 : 1000);
     status = await probeStudioPreview(preview, {
       dryRun: false,
       startCommand,
       timeoutMs: 750,
     });
-    if (status.state === "reachable") {
+    if (status.state === "reachable" && processIsRunning(pid)) {
       return status;
     }
   }
@@ -1788,7 +1849,22 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   if (attach.preview.status.state === "reachable") {
     skippedReason = "already-running";
     const listener = previewPort ? detectListeningProcess(previewPort) : null;
-    previewOwner = listener
+    const state = readPreviewState(appRoot);
+    const managed = Boolean(
+      listener?.pid && state?.listenerPid === listener.pid &&
+      state.previewPort === previewPort && processIsRunning(state.pid),
+    );
+    if (managed) {
+      pid = state?.pid;
+    }
+    previewOwner = managed
+      ? {
+          kind: "forge-managed",
+          ...(pid ? { pid } : {}),
+          evidence: `${attach.preview.url} is reachable and its listener matches the recorded ForgeOS process`,
+          statePath: normalizePath(relative(appRoot, previewStatePath(appRoot))),
+        }
+      : listener
       ? {
           kind: "external-process",
           ...(listener.pid ? { pid: listener.pid } : {}),
@@ -1820,23 +1896,8 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     skippedReason = install.attempted ? "install-failed" : "missing-dependencies";
   } else {
     startAttempted = true;
-    const spawned = spawnForgeDev(appRoot, previewPort);
-    if (spawned.alreadyRunning) {
-      startAttempted = false;
-      skippedReason = "already-running";
-      pid = spawned.pid;
-      previewOwner = {
-        kind: "forge-managed",
-        ...(pid ? { pid } : {}),
-        evidence: "live .forge/studio/preview.json matched the preview port and process is alive",
-        statePath: normalizePath(relative(appRoot, previewStatePath(appRoot))),
-      };
-      previewStatusAfter = await probeStudioPreview(attach.preview, {
-        dryRun: false,
-        startCommand: commands.startTargetApp,
-        timeoutMs: 750,
-      });
-    } else if (spawned.error) {
+    const spawned = await spawnForgeDev(appRoot, previewPort);
+    if (spawned.error) {
       diagnostics.push(createDiagnostic({
         severity: "error",
         code: "FORGE_STUDIO_PREVIEW_START_FAILED",
@@ -1845,21 +1906,24 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
         suggestedCommands: [commands.startTargetApp, commands.probePreview],
       }));
     } else {
-      started = true;
       pid = spawned.pid;
-      previewOwner = {
-        kind: "forge-managed",
-        ...(pid ? { pid } : {}),
-        evidence: "ForgeOS started the target preview for this studio open request",
-        statePath: normalizePath(relative(appRoot, previewStatePath(appRoot))),
-      };
-      previewStatusAfter = await waitForPreviewAfterStart(attach.preview, commands.startTargetApp);
-      if (previewStatusAfter.state !== "reachable") {
+      previewStatusAfter = await waitForPreviewAfterStart(attach.preview, commands.startTargetApp, pid);
+      if (previewStatusAfter.state === "reachable" && processIsRunning(pid)) {
+        started = true;
+        const listenerPid = detectListeningProcess(previewPort)?.pid;
+        writePreviewState({ appRoot, pid, previewPort, command: spawned.command, listenerPid });
+        previewOwner = {
+          kind: "forge-managed",
+          ...(pid ? { pid } : {}),
+          evidence: "ForgeOS started the target preview and verified its listener",
+          statePath: normalizePath(relative(appRoot, previewStatePath(appRoot))),
+        };
+      } else {
         diagnostics.push(createDiagnostic({
-          severity: "warning",
-          code: "FORGE_STUDIO_PREVIEW_START_PENDING",
-          message: `started ${commands.startTargetApp}, but ${attach.preview.url} is not reachable yet`,
-          fixHint: "The dev server may still be compiling. Re-run forge studio doctor after it settles.",
+          severity: "error",
+          code: "FORGE_STUDIO_PREVIEW_START_FAILED",
+          message: `${commands.startTargetApp} did not make ${attach.preview.url} reachable: ${previewStatusAfter.reason}`,
+          fixHint: `Run ${commands.startTargetApp} in ${appRoot} to inspect its output, then retry.`,
           suggestedCommands: [commands.probePreview, commands.doctor],
         }));
       }
@@ -1885,7 +1949,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   }
 
   let bridgeResult: StudioBridgeResult | undefined;
-  let autoBridge: ReturnType<typeof spawnForgeStudioBridge> | undefined;
+  let autoBridge: Awaited<ReturnType<typeof spawnForgeStudioBridge>> | undefined;
   if (shouldBridge && !options.dryRun) {
     const intervalMs = Math.max(1000, Math.floor(options.intervalMs ?? 5000));
     bridgeResult = await runStudioBridgeCommand({
@@ -1898,7 +1962,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     });
     diagnostics.push(...bridgeResult.diagnostics);
     if (!options.dryRun && bridgeResult.ok && preview.status.state === "reachable" && previewPort) {
-      autoBridge = spawnForgeStudioBridge({
+      autoBridge = await spawnForgeStudioBridge({
         appRoot,
         previewPort,
         targets: attach.targets,
@@ -1908,7 +1972,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
       });
       if (autoBridge.error) {
         diagnostics.push(createDiagnostic({
-          severity: "warning",
+          severity: "error",
           code: "FORGE_STUDIO_BRIDGE_AUTOSTART_FAILED",
           message: `initial snapshot was delivered, but the live Studio bridge could not be started: ${autoBridge.error}`,
           fixHint: `Run ${autoBridge.command} in ${appRoot}.`,
@@ -1921,7 +1985,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   const bridge = bridgeResult
     ? {
         attempted: true,
-        ok: bridgeResult.ok,
+        ok: bridgeResult.ok && !autoBridge?.error,
         posted: bridgeResult.posted,
         dryRun: bridgeResult.dryRun,
         mode: autoBridge && !autoBridge.error ? "watch" as const : bridgeResult.mode,

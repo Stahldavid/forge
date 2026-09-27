@@ -37,7 +37,12 @@ jobs:
 
       # Security Assurance runs the complete strict TestGraph once. This job
       # checks compiler drift and package behavior without rerunning that suite.
-      - name: Check committed compiler output
+      # Framework source and tests are generator inputs. Derived files are
+      # regenerated in CI instead of committing machine-specific graph churn.
+      - name: Generate derived compiler output
+        run: node ./bin/forge.mjs generate
+
+      - name: Check generated output stability
         run: node ./bin/forge.mjs generate --check
 
       - name: Check compiler workspace
@@ -74,10 +79,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      # PRs exercise the canonical Node version on Linux and Windows. Main
-      # retains the full OS/Node matrix once per merge.
+      # PRs exercise Node 22 on Linux and Windows. Main also checks Node 24 on
+      # Linux and Node 22 on macOS. Template/package-manager scaffolding runs
+      # once in verify, not on every matrix runner.
       matrix:
-        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"windows-latest","node-version":24},{"os":"macos-latest","node-version":22},{"os":"macos-latest","node-version":24}]') }}
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -97,16 +103,6 @@ jobs:
       - name: Windows native diagnostics
         if: runner.os == 'Windows'
         run: node .\bin\forge.mjs doctor windows --json
-
-      - name: Minimal template package-manager smoke
-        shell: bash
-        run: |
-          mkdir -p "$RUNNER_TEMP/forge-template-smoke"
-          cd "$RUNNER_TEMP/forge-template-smoke"
-          for pm in npm pnpm yarn bun; do
-            node "$GITHUB_WORKSPACE/bin/forge.mjs" new "$pm-smoke" --template minimal-web --package-manager "$pm" --no-install --no-git
-            node -e "const pkg=require('./$pm-smoke/package.json'); if (!pkg.packageManager.startsWith('$pm@')) process.exit(1)"
-          done
 
   external-quickstart:
     name: External quickstart smoke

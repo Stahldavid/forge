@@ -25,7 +25,7 @@ forge agent timeline --target codex --json
 forge mcp serve
 ```
 
-`forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. It also exposes `fabric_propose` and `fabric_status` when `forge fabric serve` owns the local task store. The proposal tool records an untrusted request; it grants no authority. Approval, execution, and result acceptance remain in the CLI and the local owner popup.
+`forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. It also exposes `fabric_propose`, `fabric_status`, and `fabric_evidence` when `forge fabric serve` owns the local task store. The proposal tool records an untrusted request; it grants no authority. The evidence tool reports bounded, digest-bound provenance without raw model output or diff content. Approval, execution, and result acceptance remain in the CLI and the local owner popup.
 
 The experimental `fabric_capabilities` read tool reports this CLI/MCP boundary.
 The MCP task tools require a running local owner and do not start a model call.

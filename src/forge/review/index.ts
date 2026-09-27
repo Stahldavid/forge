@@ -8,6 +8,7 @@ import { analyzeImpact, buildImpactTestPlan, detectChangedFiles } from "../impac
 import type { ImpactCommandOptions, ImpactSource } from "../impact/types.ts";
 import { buildDiffPlanFromChangeSummary, categorizeFiles } from "../workspace/change-summary.ts";
 import type { CategorizedFileSummary, ChangeType } from "../workspace/change-summary.ts";
+import { forgeCliCommandForWorkspace } from "../workspace/forge-cli.ts";
 import type {
   ReviewChanged,
   ReviewCommandOptions,
@@ -781,7 +782,10 @@ function buildReport(options: ReviewCommandOptions): ReviewReport {
   const generatedPaths = ctx.changed.generated;
   const changeSummary = categorizeFiles(ctx.changed.files);
   const reviewFocus = buildReviewFocus(changeSummary);
-  const diffPlan: ReviewDiffPlan = buildDiffPlanFromChangeSummary(changeSummary);
+  const diffPlan: ReviewDiffPlan = buildDiffPlanFromChangeSummary(
+    changeSummary,
+    forgeCliCommandForWorkspace(options.workspaceRoot, "forge diff authored"),
+  );
   return {
     schemaVersion: "0.1.0",
     reviewVersion: REVIEW_VERSION,
@@ -852,7 +856,7 @@ ${report.changed.files.filter((file) => !file.startsWith(`${GENERATED}/`) && fil
 Generated artifacts are derived and collapsed by default.
 
 - Generated files: ${report.diffPlan.generatedFiles}
-- Authored diff: \`${report.diffPlan.authoredDiffCommand}\`
+- Authored diff: \`${report.diffPlan.authoredDiffCommand || (report.diffPlan.authoredFiles ? "(diff unavailable)" : "(no authored changes)")}\`
 - Generated diff: \`${report.diffPlan.generatedDiffCommand}\`
 
 ## Findings

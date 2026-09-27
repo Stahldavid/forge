@@ -1,4 +1,5 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, watch, writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { createDeltaId } from "../delta/ids.ts";
@@ -471,6 +472,74 @@ function queueHistoryPath(watchFile: string): string {
   return `${watchFile}.history`;
 }
 
+function queueAppendLockPath(watchFile: string): string {
+  return `${watchFile}.append-lock.json`;
+}
+
+function queueLockHolderAlive(pid: unknown): boolean {
+  if (typeof pid !== "number" || !Number.isInteger(pid) || pid <= 0) {
+    return false;
+  }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return Boolean(error && typeof error === "object" && "code" in error && error.code === "EPERM");
+  }
+}
+
+function clearStaleQueueAppendLock(lockPath: string): void {
+  try {
+    const stat = statSync(lockPath);
+    const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: unknown };
+    const ageMs = Date.now() - stat.mtimeMs;
+    if (ageMs < 2_000 || (ageMs < 30_000 && queueLockHolderAlive(holder.pid))) {
+      return;
+    }
+    unlinkSync(lockPath);
+  } catch {
+    // A concurrent hook may have replaced the lock; retry acquisition instead.
+  }
+}
+
+async function acquireQueueAppendLock(watchFile: string, waitMs = 500): Promise<string | null> {
+  const lockPath = queueAppendLockPath(watchFile);
+  const token = randomUUID();
+  const started = Date.now();
+  for (;;) {
+    try {
+      const fd = openSync(lockPath, "wx");
+      try {
+        writeFileSync(fd, JSON.stringify({ pid: process.pid, token, createdAt: new Date().toISOString() }));
+      } finally {
+        closeSync(fd);
+      }
+      return token;
+    } catch (error) {
+      if (!(error && typeof error === "object" && "code" in error && error.code === "EEXIST")) {
+        throw error;
+      }
+      clearStaleQueueAppendLock(lockPath);
+      if (Date.now() - started >= waitMs) {
+        return null;
+      }
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 15));
+    }
+  }
+}
+
+function releaseQueueAppendLock(watchFile: string, token: string): void {
+  const lockPath = queueAppendLockPath(watchFile);
+  try {
+    const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { token?: unknown };
+    if (holder.token === token) {
+      unlinkSync(lockPath);
+    }
+  } catch {
+    // Best effort; stale lock recovery handles interrupted processes.
+  }
+}
+
 function readQueueCheckpoint(watchFile: string, fileSize: number): number {
   const checkpointFile = queueCheckpointPath(watchFile);
   if (!existsSync(checkpointFile)) {
@@ -515,33 +584,41 @@ function trimBufferStart(buffer: Buffer, maxBytes: number): Buffer {
   return buffer.subarray(buffer.length - maxBytes);
 }
 
-function compactAgentMemoryQueueFile(options: {
+async function compactAgentMemoryQueueFile(options: {
   watchFile: string;
   originalBuffer: Buffer;
   consumedOffset: number;
   compactAfterBytes: number;
   historyMaxBytes: number;
-}): { compacted: boolean; historyFile: string } {
+}): Promise<{ compacted: boolean; historyFile: string }> {
   const historyFile = queueHistoryPath(options.watchFile);
   if (options.consumedOffset < options.compactAfterBytes) {
     return { compacted: false, historyFile };
   }
-  const currentBuffer = readFileSync(options.watchFile);
-  const originalConsumed = options.originalBuffer.subarray(0, options.consumedOffset);
-  const currentPrefix = currentBuffer.subarray(0, options.consumedOffset);
-  if (!currentPrefix.equals(originalConsumed)) {
+  const lock = await acquireQueueAppendLock(options.watchFile);
+  if (!lock) {
     return { compacted: false, historyFile };
   }
-  mkdirSync(dirname(historyFile), { recursive: true });
-  const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);
-  const redactedConsumedHistory = redactedQueueHistoryBuffer(originalConsumed);
-  writeFileSync(
-    historyFile,
-    trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),
-  );
-  writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
-  writeQueueCheckpoint(options.watchFile, 0);
-  return { compacted: true, historyFile };
+  try {
+    const currentBuffer = readFileSync(options.watchFile);
+    const originalConsumed = options.originalBuffer.subarray(0, options.consumedOffset);
+    const currentPrefix = currentBuffer.subarray(0, options.consumedOffset);
+    if (!currentPrefix.equals(originalConsumed)) {
+      return { compacted: false, historyFile };
+    }
+    mkdirSync(dirname(historyFile), { recursive: true });
+    const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);
+    const redactedConsumedHistory = redactedQueueHistoryBuffer(originalConsumed);
+    writeFileSync(
+      historyFile,
+      trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),
+    );
+    writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
+    writeQueueCheckpoint(options.watchFile, 0);
+    return { compacted: true, historyFile };
+  } finally {
+    releaseQueueAppendLock(options.watchFile, lock);
+  }
 }
 
 function redactedQueueHistoryBuffer(consumedBuffer: Buffer): Buffer {
@@ -688,7 +765,44 @@ export async function drainAgentMemoryQueueFile(options: {
       historyFile,
     };
   }
-  const fileBuffer = readFileSync(options.watchFile);
+  // Avoid opening PGlite when the queue has no complete lines. Once there is work,
+  // acquire its writer lock before reading the checkpoint: another drainer may
+  // have consumed these bytes while this process waited for the lock.
+  const initialBuffer = readFileSync(options.watchFile);
+  const initialOffset = options.startOffset ?? readQueueCheckpoint(options.watchFile, initialBuffer.length);
+  if (splitCompleteJsonLines(initialBuffer.subarray(Math.min(initialOffset, initialBuffer.length))).complete.length === 0) {
+    return {
+      eventsIngested: 0,
+      errors: [],
+      bytesRead: initialOffset,
+      pendingBytes: Math.max(0, initialBuffer.length - initialOffset),
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: false,
+      historyFile,
+    };
+  }
+
+  const opened = await openMemoryStore(options.workspaceRoot, "write");
+  if (isMemoryUnavailable(opened)) {
+    return {
+      eventsIngested: 0,
+      errors: opened.busy ? [] : [opened.error],
+      bytesRead: initialOffset,
+      pendingBytes: Math.max(0, initialBuffer.length - initialOffset),
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: false,
+      historyFile,
+      ...(opened.busy ? { busy: opened.busy } : {}),
+    };
+  }
+
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = readFileSync(options.watchFile);
+  } catch (error) {
+    await opened.close();
+    throw error;
+  }
   let bytesRead = options.startOffset ?? readQueueCheckpoint(options.watchFile, fileBuffer.length);
   if (bytesRead > fileBuffer.length) {
     bytesRead = 0;
@@ -697,7 +811,7 @@ export async function drainAgentMemoryQueueFile(options: {
   let eventsIngested = 0;
   const errors: string[] = [];
   let consumedOffset = bytesRead;
-  let store: DeltaStore | undefined;
+  const store = opened;
 
   try {
     for (const line of complete) {
@@ -727,18 +841,7 @@ export async function drainAgentMemoryQueueFile(options: {
         writeQueueCheckpoint(options.watchFile, consumedOffset);
         continue;
       }
-      let result: AgentIngestResult;
-      if (!store) {
-        const opened = await openMemoryStore(ingestRoot, "write");
-        if (isMemoryUnavailable(opened)) {
-          result = { ...opened, envelope };
-        } else {
-          store = opened;
-          result = await recordAgentMemoryEnvelope(store, envelope);
-        }
-      } else {
-        result = await recordAgentMemoryEnvelope(store, envelope);
-      }
+      const result = await recordAgentMemoryEnvelope(store, envelope);
       if (result.ok) {
         eventsIngested += 1;
         consumedOffset = bytesRead + line.endOffset;
@@ -759,30 +862,30 @@ export async function drainAgentMemoryQueueFile(options: {
         break;
       }
     }
+
+    const retention = errors.length === 0 && consumedOffset > 0
+      ? await compactAgentMemoryQueueFile({
+          watchFile: options.watchFile,
+          originalBuffer: fileBuffer,
+          consumedOffset,
+          compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,
+          historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,
+        })
+      : { compacted: false, historyFile };
+    const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;
+
+    return {
+      eventsIngested,
+      errors,
+      bytesRead: bytesAfterRetention,
+      pendingBytes,
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: retention.compacted,
+      historyFile: retention.historyFile,
+    };
   } finally {
-    await store?.close();
+    await store.close();
   }
-
-  const retention = errors.length === 0 && consumedOffset > 0
-    ? compactAgentMemoryQueueFile({
-        watchFile: options.watchFile,
-        originalBuffer: fileBuffer,
-        consumedOffset,
-        compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,
-        historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,
-      })
-    : { compacted: false, historyFile };
-  const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;
-
-  return {
-    eventsIngested,
-    errors,
-    bytesRead: bytesAfterRetention,
-    pendingBytes,
-    checkpointFile: queueCheckpointPath(options.watchFile),
-    compacted: retention.compacted,
-    historyFile: retention.historyFile,
-  };
 }
 
 function queuedEventHasUsefulSignal(envelope: AgentEventEnvelope): boolean {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { AgentFabricError } from "../../src/forge/agent-fabric/errors.ts";
 import { validateLocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
+import { parseCli } from "../../src/forge/cli/parse.ts";
 
 function proposal() {
   return {
@@ -12,7 +13,7 @@ function proposal() {
     nonObjectives: ["Do not publish a release"],
     sourcePaths: ["src/forge/agent-fabric/journal.ts"],
     writablePaths: ["src/forge/agent-fabric/local-helper.ts"],
-    requestedModelTargetId: "target:ollama:local",
+    requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
     limits: {
       maximumAttempts: 1,
       maximumWallClockMs: 60_000,
@@ -25,12 +26,44 @@ function proposal() {
 }
 
 describe("local coding task proposal contract", () => {
+  test("pins model identity in new proposal digests and reads legacy bytes only in stored mode", () => {
+    const current = proposal();
+    const pinned = validateLocalCodingTaskProposal(current);
+    expect(pinned.proposal.requestedModelId).toBe("qwen2.5-coder:3b");
+    expect(validateLocalCodingTaskProposal({ ...current, requestedModelId: "qwen3:0.6b" }).proposalDigest)
+      .not.toBe(pinned.proposalDigest);
+    const { requestedModelId: _omitted, ...legacy } = current;
+    expect(() => validateLocalCodingTaskProposal(legacy)).toThrow("requestedModelId");
+    const stored = validateLocalCodingTaskProposal(legacy, "stored");
+    expect(stored.proposal.requestedModelId).toBeUndefined();
+    expect(stored.proposalDigest).not.toBe(pinned.proposalDigest);
+  });
+
+  test("owner memory CLI commands require explicit input", () => {
+    expect(parseCli(["fabric", "memory-add", "--file", "note.json"]).command)
+      .toMatchObject({ kind: "fabric", subcommand: "memory-add", file: "note.json" });
+    expect(parseCli(["fabric", "memory-list", "--file", "paths.json"]).command)
+      .toMatchObject({ kind: "fabric", subcommand: "memory-list", file: "paths.json" });
+    expect(parseCli(["fabric", "memory-delete", "memory:" + "a".repeat(32)]).command)
+      .toMatchObject({ kind: "fabric", subcommand: "memory-delete", taskId: "memory:" + "a".repeat(32) });
+    expect(parseCli(["fabric", "memory-add"]).errors.length).toBeGreaterThan(0);
+  });
+  test("binds only explicit bounded private memory IDs", () => {
+    const id = `memory:${"a".repeat(32)}`;
+    const selected = validateLocalCodingTaskProposal({ ...proposal(), memoryIds: [id] });
+    expect(selected.proposal.memoryIds).toEqual([id]);
+    expect(selected.proposalDigest).not.toBe(validateLocalCodingTaskProposal(proposal()).proposalDigest);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), memoryIds: [id, id] })).toThrow();
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), memoryIds: ["memory:bad"] })).toThrow();
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), memoryIds: [] })).toThrow();
+  });
   test("binds exact admitted content, then freezes a detached copy", () => {
     const request = proposal();
     const first = validateLocalCodingTaskProposal(request);
     const reordered = {
       limits: { ...request.limits },
       requestedModelTargetId: request.requestedModelTargetId,
+      requestedModelId: request.requestedModelId,
       writablePaths: request.writablePaths,
       sourcePaths: request.sourcePaths,
       nonObjectives: request.nonObjectives,
@@ -104,5 +137,25 @@ describe("local coding task proposal contract", () => {
     });
     expect(() => validateLocalCodingTaskProposal(request)).toThrow(AgentFabricError);
     expect(called).toBe(false);
+  });
+
+  test("binds only bounded verification descriptors to the approved proposal", () => {
+    const verification = { imageId: `sha256:${"a".repeat(64)}`, commands: [
+      { kind: "git-diff-check", timeoutMs: 5_000 },
+      { kind: "node-test-file", path: "pass.test.mjs", timeoutMs: 20_000 },
+    ] };
+    const accepted = validateLocalCodingTaskProposal({ ...proposal(), verification });
+    expect(accepted.proposal.verification?.commands).toHaveLength(2);
+    expect(validateLocalCodingTaskProposal(proposal()).proposalDigest).not.toBe(accepted.proposalDigest);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), verification: {
+      ...verification, commands: [{ kind: "git-diff-check", timeoutMs: 5_000 },
+        { kind: "node-test-file", path: "../secrets.test.mjs", timeoutMs: 20_000 }],
+    } })).toThrow(AgentFabricError);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), verification: {
+      ...verification, commands: [{ kind: "git-diff-check", timeoutMs: 5_000 },
+        { kind: "shell", command: "curl example.com", timeoutMs: 20_000 }],
+    } })).toThrow(AgentFabricError);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(),
+      writablePaths: ["pass.test.mjs"], verification })).toThrow(AgentFabricError);
   });
 });

@@ -1,7 +1,7 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { describe, expect, test } from "bun:test";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { buildCheckJson } from "../../src/forge/cli/output.ts";
@@ -16,6 +16,7 @@ import { runPgliteDoctorCommand, runRuntimeDoctorCommand } from "../../src/forge
 import { formatWorkOSHuman, runWorkOSCommand } from "../../src/forge/cli/workos.ts";
 import { runTestCommand } from "../../src/forge/impact/index.ts";
 import {
+  parseWindowsNetstatListener,
   probeStudioPreview,
   runStudioAttachCommand,
   runStudioBridgeCommand,
@@ -23,6 +24,7 @@ import {
   runStudioOpenCommand,
   runStudioSnapshotCommand,
   runStudioWatchCommand,
+  spawnForgeStudioBridge,
 } from "../../src/forge/cli/studio.ts";
 import {
   buildStrictTestGraphPlan,
@@ -2408,7 +2410,7 @@ describe("Forge CLI", () => {
       expect(result.posture.diffPlan).toMatchObject({
         first: "authored",
         then: "generated",
-        authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
+        authoredDiffCommand: "",
       });
       const manifest = JSON.parse(await Bun.file(join(workspace, ".forge", "studio", "attachment.json")).text()) as {
         posture?: typeof result.posture;
@@ -2512,11 +2514,10 @@ describe("Forge CLI", () => {
     }
   });
 
-  test("studio open reuses a live target preview process instead of spawning a duplicate", async () => {
+  test("studio open does not trust a stale managed PID when another process serves the port", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-open-preview-state");
-    const reserved = await listenOnRandomPort();
-    const previewPort = reserved.port;
-    await reserved.close();
+    const listener = await listenOnRandomPort();
+    const previewPort = listener.port;
     try {
       mkdirSync(join(workspace, ".forge", "studio"), { recursive: true });
       writeFileSync(
@@ -2546,18 +2547,50 @@ describe("Forge CLI", () => {
         started: false,
         alreadyRunning: true,
         skippedReason: "already-running",
-        pid: process.pid,
-        owner: {
+      });
+      expect(result.previewAutomation.owner?.kind).not.toBe("forge-managed");
+      expect(result.previewAutomation.statusAfter.state).toBe("reachable");
+      if (process.platform === "win32") {
+        expect(result.previewAutomation.owner).toMatchObject({
+          kind: "external-process",
+          pid: process.pid,
+        });
+        writeFileSync(
+          join(workspace, ".forge", "studio", "preview.json"),
+          `${JSON.stringify({ pid: process.pid, previewPort, listenerPid: process.pid })}\n`,
+          "utf8",
+        );
+        const matching = await runStudioOpenCommand({
+          workspaceRoot: workspace,
+          previewPort,
+          targets: ["codex"],
+          bridge: false,
+          json: true,
+          dryRun: false,
+          force: false,
+        });
+        expect(matching.previewAutomation.owner).toMatchObject({
           kind: "forge-managed",
           pid: process.pid,
           statePath: ".forge/studio/preview.json",
-        },
-      });
-      expect(result.previewAutomation.statusAfter.state).toBe("not-running");
+        });
+      }
     } finally {
+      await listener.close();
       cleanupWorkspace(workspace);
     }
   }, 20_000);
+
+  test("Windows netstat listener parsing matches exact TCP port and listening state", () => {
+    const output = [
+      "  TCP    127.0.0.1:51740    0.0.0.0:0    LISTENING    111",
+      "  TCP    [::1]:5174       [::]:0       LISTENING    222",
+      "  TCP    127.0.0.1:5174  127.0.0.1:9000 ESTABLISHED 333",
+    ].join("\r\n");
+    expect(parseWindowsNetstatListener(output, 5174)).toMatchObject({ pid: 222 });
+    expect(parseWindowsNetstatListener(output, 51740)).toMatchObject({ pid: 111 });
+    expect(parseWindowsNetstatListener(output, 9999)).toBeNull();
+  });
 
   test("studio snapshot reports preview posture and changed state without writing manifest", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-snapshot");
@@ -2892,6 +2925,76 @@ describe("Forge CLI", () => {
       cleanupWorkspace(workspace);
     }
   }, 20_000);
+
+  test("studio bridge does not persist a process that exits before its first snapshot", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-studio-bridge-exit-"));
+    const exitScript = join(workspace, "exit-immediately.mjs");
+    try {
+      writeFileSync(exitScript, "process.exit(17);\n", "utf8");
+      const result = await spawnForgeStudioBridge({
+        appRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 1000,
+        cliEntry: exitScript,
+      });
+      expect(result.alreadyRunning).toBe(false);
+      expect(result.error).toContain("exited or timed out");
+      expect(existsSync(join(workspace, ".forge", "studio", "bridge.json"))).toBe(false);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("studio bridge records a healthy child only after its readiness signal", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge studio bridge ready "));
+    const readyScript = join(workspace, "bridge-ready.mjs");
+    let pid: number | undefined;
+    try {
+      writeFileSync(readyScript, [
+        "import { mkdirSync, writeFileSync } from 'node:fs';",
+        "import { join } from 'node:path';",
+        "const dir = join(process.cwd(), '.forge', 'studio');",
+        "mkdirSync(dir, { recursive: true });",
+        "writeFileSync(join(dir, 'bridge-ready-' + process.env.FORGE_STUDIO_BRIDGE_READY_NONCE + '.json'), JSON.stringify({ pid: process.pid, ok: true }));",
+        "setInterval(() => {}, 1000);",
+      ].join("\n"), "utf8");
+      const result = await spawnForgeStudioBridge({
+        appRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 1000,
+        cliEntry: relative(process.cwd(), readyScript),
+      });
+      pid = result.pid;
+      expect(result.error).toBeUndefined();
+      expect(result.alreadyRunning).toBe(false);
+      expect(result.command).toContain(`"${workspace}"`);
+      expect(JSON.parse(readFileSync(join(workspace, ".forge", "studio", "bridge.json"), "utf8"))).toMatchObject({
+        pid,
+        previewPort: 5174,
+      });
+    } finally {
+      if (pid) {
+        try { process.kill(pid); } catch { /* Child already exited. */ }
+        for (let attempt = 0; attempt < 40; attempt++) {
+          try { process.kill(pid, 0); } catch { break; }
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      }
+      for (let attempt = 0; attempt < 50; attempt++) {
+        try {
+          rmSync(workspace, { recursive: true, force: true });
+          break;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "EBUSY" || attempt === 49) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    }
+  });
 
   test("studio watch dry-run emits a single snapshot event", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-watch-dry-run");

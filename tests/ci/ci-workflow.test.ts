@@ -15,10 +15,11 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("macos-latest");
     expect(nodeBreadthJob).toContain("github.event_name == 'pull_request'");
     expect(nodeBreadthJob).toContain('"os":"windows-latest","node-version":22');
-    expect(nodeBreadthJob).toContain('"os":"macos-latest","node-version":24');
+    expect(nodeBreadthJob).toContain('"os":"ubuntu-latest","node-version":24');
+    expect(nodeBreadthJob).toContain('"os":"macos-latest","node-version":22');
     expect(workflow).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(workflow).toContain("node .\\bin\\forge.mjs doctor windows --json");
-    expect(workflow).toContain("Minimal template package-manager smoke");
+    expect(workflow).toContain("package manager template smoke");
     expect(workflow).toContain("external-quickstart:");
     expect(workflow).toContain("External quickstart smoke");
     expect(workflow).toContain("--forge-spec \"file:$GITHUB_WORKSPACE\"");
@@ -27,6 +28,10 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("Packed package smoke");
     expect(workflow).toContain("npm run release:smoke");
     expect(workflow).toContain("node ./bin/forge.mjs generate --check");
+    expect(workflow.indexOf("run: node ./bin/forge.mjs generate\n"))
+      .toBeLessThan(workflow.indexOf("run: node ./bin/forge.mjs generate --check"));
+    expect(security.indexOf("run: node ./bin/forge.mjs generate\n"))
+      .toBeLessThan(security.indexOf("run: node ./bin/forge.mjs generate --check"));
     expect(workflow).toContain("npm run lint");
     expect(workflow).not.toContain("run: bun test");
     expect(workflow).not.toContain("forge verify --standard");

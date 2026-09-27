@@ -14,15 +14,71 @@ control journal, browser-based owner review, an isolated Ollama coding worker,
 and MCP proposal/status tools backed by a local owner process. It does not make
 a production persistence or security claim. Its scope and remaining gates are
 in [`P0B_B_LOCAL_CODING_SCOPE.md`](./architecture/agent-fabric/P0B_B_LOCAL_CODING_SCOPE.md).
+The [single-owner acceptance matrix](./architecture/agent-fabric/LOCAL_SINGLE_OWNER_ACCEPTANCE.md)
+separates the current local implementation from its remaining release and human
+acceptance gates.
+Owner-selected local memory, fixed two-process data workers, and a standalone
+Evolution Registry have separate narrow workflows below. These do not grant
+the Ollama coding worker new tools or executable extensions.
+
+`LocalAdaptiveHarness.run()` is a fixed local demonstration of two permitted
+Node processes (`inventory` and `constraints`) followed by an authoritative
+join. Each child receives only bounded text on stdin, an empty environment,
+and a one second wall limit. The coordinator validates each digest against its
+own input before committing the P0a result; cancellation, timeout, or an
+invalid report leaves the join blocked. This trusted data worker is not an
+arbitrary coding agent or an OS security sandbox.
+
+The single-PC CLI wraps that harness with a local owner decision and durable
+readback. From the repository root, create a JSON file with exactly two fields,
+for example `{"inventory":"src/a.ts","constraints":"read only"}`. Each field
+is data of at most 256 UTF-8 bytes. Then run:
+
+```bash
+node bin/forge.mjs fabric adaptive-propose --file input.json --json
+node bin/forge.mjs fabric adaptive-review <run-id> --json
+node bin/forge.mjs fabric adaptive-run <run-id> --json
+node bin/forge.mjs fabric adaptive-status <run-id> --json
+```
+
+To narrow the two data fields through an owner-selected Evolution profile,
+pass `--channel canary` or `--channel stable` to `adaptive-propose` after that
+channel has a selected `local-adaptive-input-profile` version. The proposal
+binds the immutable version ID before review. The owner window displays it,
+and `adaptive-run` checks that the same version remains selected and loadable
+before issuing permits. A changed or revoked selection blocks the run. The
+profile validates labels and lengths only; it does not provide code, tools,
+instructions, or worker behavior.
+Profile decisions and an adaptive run share a local process lock, so a
+promotion or revocation cannot race between profile readback and worker dispatch.
+
+`adaptive-review` opens a loopback browser window showing both exact inputs,
+the bound profile version when present, and their proposal digest. The approval
+expires after five minutes and permits one run. The
+CLI commits the owner authorization, fixed plan, child grants, and both P0a
+permits to a separate local PGlite journal before starting either process.
+The result record and authoritative join can be read after closing and
+reopening the CLI. If the process dies after committing the join but before
+saving the result record, status still reports the authoritative join but may
+omit process IDs and child details. A run cannot be repeated; a crash after
+dispatch is shown as uncertain unless the durable journal contains the join.
+Cancellation, failed workers, or missing results never authorize a join.
+Local records and the owner verifier key live under `.forge/local/agent-fabric`.
+The local owner lock prevents concurrent mutating CLI invocations; after a
+crash, inspect `adaptive-status` before any manual lock recovery. This is a
+single-PC workflow, not a production security or multi-host claim.
 
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
 
-- model-selected tools, plugins or child delegation beyond P0b-A;
+- model-selected tools, plugins or child delegation (the local data workers use
+  fixed code-owned child permits only);
 - PGlite-backed production persistence/outbox integration for Agent Fabric;
-- consequential-effect brokers and reconciliation against real systems;
+- general consequential-effect brokers and arbitrary external-system effects
+  (the local pilot has fixed patch and Docker verification receipts only);
 - recovery epochs and integrity-unknown recovery;
-- adaptive model routing/harness compilation beyond the P0a contracts;
-- plugin promotion, persistent memory, and governed self-evolution;
+- adaptive model routing and general harness compilation beyond the fixed
+  two-process data workflow;
+- executable plugin promotion, shared production memory, and autonomous self-evolution;
 - production deployment or production security claims.
 
 ## P0a scope
@@ -208,45 +264,153 @@ That public entry point exposes the hardened Conductor and hardened replay funct
 ## Local coding pilot (experimental)
 
 The framework checkout also exposes a bounded single-owner CLI path. Run these commands
-from the root of a trusted Git repository with Ollama running and `qwen3:0.6b`
+from the root of a trusted Git repository with Ollama running and `qwen2.5-coder:3b`
 installed. This pilot uses no hosted API key or Codex model turn.
 
 ```text
 node bin/forge.mjs fabric capabilities --json
 node bin/forge.mjs fabric propose --file task.json --json
+node bin/forge.mjs fabric memory-add --file note.json --json
+node bin/forge.mjs fabric memory-list --file paths.json --json
+node bin/forge.mjs fabric memory-delete <memory-id> --json
 node bin/forge.mjs fabric status <task-id> --json
+node bin/forge.mjs fabric evidence <task-id> --json
 node bin/forge.mjs fabric review <task-id> --json
 node bin/forge.mjs fabric run <task-id> --json
+node bin/forge.mjs fabric cancel <task-id> --json
+node bin/forge.mjs fabric reconcile <task-id> --json
+node bin/forge.mjs fabric verify <task-id> --json
 node bin/forge.mjs fabric review-result <task-id> --json
 node bin/forge.mjs fabric serve --json
 ```
 
 `task.json` is an untrusted proposal. Its required fields are `schemaVersion: 1`,
 `repositoryId`, the full `baseCommit`, `goal`, `acceptanceCriteria`, `nonObjectives`,
-`sourcePaths`, `writablePaths`, `requestedModelTargetId: "target:ollama:local"`, and
+`sourcePaths`, `writablePaths`, `requestedModelTargetId: "target:ollama:local"`,
+`requestedModelId: "qwen2.5-coder:3b"`, and
 `limits` with `maximumAttempts`, `maximumWallClockMs`, `maximumOutputTokens`,
 `maximumContextBytes`, `maximumPatchBytes`, and a Unix millisecond `expiresAt`.
 `review` opens a local browser window showing the exact proposal and digest; `run`
 consumes one approved model attempt and writes a diff in an isolated Git worktree.
+The model ID is part of that digest and appears in the owner review. Existing
+tasks approved before model pinning cannot start a new model call; submit a fresh
+proposal. Their saved outcomes and patches remain available for readback, while
+the exact model for a legacy outcome is reported as unknown.
+The service captures the allowlisted tracked source files at the exact current
+HEAD when proposing and rechecks them before spending the approved model
+attempt. Changed source content or HEAD blocks a stale attempt.
+`cancel` revokes an unused owner approval so `run` cannot start it, including after
+the owner restarts. During an active model call, it requests abort from the
+local adapter. The returned `model_uncertain` state does not prove the provider
+stopped; a dispatched attempt cannot be retried. Cancellation does not stop
+patch materialization or Docker verification that has already started. Start
+`fabric serve` before `run` when you need a second CLI process to cancel an
+in-flight call; a one-shot `run` has no cross-process abort endpoint.
 `review-result` shows the recorded diff for a separate owner decision. Acceptance
 records a decision only; it does not alter the original checkout or merge code.
+
+Private memory is opt in and local to this checkout. `memory-add` reads a JSON
+file such as `{ "sourcePaths": ["src/example.ts"], "text": "Owner note",
+"retentionMs": 86400000 }`; `memory-list` reads a JSON file containing only
+`sourcePaths`. Both require an unchanged tracked source snapshot. Notes are
+bounded to 2 KiB, retained for at most 30 days, and stored under
+`.forge/local/agent-fabric`. `memory-delete` removes a note by its returned ID.
+To select notes for a coding task, add `"memoryIds": ["memory:<id>"]` to
+`task.json` using returned full IDs. The proposal digest binds those IDs; the
+owner review displays their text and provenance. Missing, expired, deleted, or
+source-stale notes block approval or execution. Selected notes consume the
+existing context byte budget and are labeled `untrusted_memory` in the model
+context. MCP task tools cannot add, list, or delete private memory.
+
+An optional `verification` field binds an immutable local Docker image ID and
+two to four bounded command descriptors into the proposal digest. The first
+descriptor is `{ "kind": "git-diff-check", "timeoutMs": 5000 }`; the remaining
+descriptors are `{ "kind": "node-test-file", "path": "pass.test.mjs",
+"timeoutMs": 20000 }`. The owner sees these exact commands and image in the
+approval window. The image ID must match the locally installed `node:22`
+image with a `node@sha256` registry digest; the service rejects a proposal
+pointing to another local image and rechecks the tag before execution.
+Each Node test file must exist in the pinned commit and be outside the task's
+writable paths, so the model cannot replace the test that judges its patch.
+After `run` produces a patch, `verify` checks deterministic test paths,
+mount encoding, Docker context, and the pinned image before recording a durable
+intent. A dispatch barrier is recorded before container execution. The owner
+can clear only an intent that has no dispatch barrier; a potentially started
+container cannot be retried automatically. `git diff --check` runs with external
+diff and filesystem monitor helpers disabled on the host; Node tests run inside
+Docker Desktop without network, with an
+immutable already-installed image, read-only checkout, nonroot user and resource
+limits. Accepting a patch with an approved verification profile requires all
+checks to pass; a failed or uncertain result can still be rejected by the owner.
 
 The local store lives under `.forge/local/agent-fabric` and has one PGlite process
 owner. Start `forge fabric serve` to keep that owner running while separate CLI
 and MCP clients connect through a loopback endpoint. The endpoint token stays in
-the local repository store and is not printed. The MCP tools `fabric_propose` and
-`fabric_status` use that same owner; they cannot approve, run, or accept a task.
+the local repository store and is not printed. The MCP tools `fabric_propose`,
+`fabric_status`, and `fabric_evidence` use that same owner; they cannot approve,
+run, or accept a task. `fabric_evidence` returns a digest-bound provenance summary
+without raw model text or diff content.
 Without a running owner, CLI commands open the store for a single operation and
 MCP task tools report that the owner is unavailable. A crashed model attempt with
 a committed permit and no outcome remains
 uncertain; a repeated `run` does not spend another attempt. A committed model result
-can be materialized after restart. The existing MCP server reports the boundary
+can be materialized after restart if no patch-effect intent was issued. Patch
+materialization records a durable intent before creating the isolated checkout.
+A crash after that intent reports `patch_uncertain`; `run` will not reapply it.
+`fabric reconcile` reads the checkout and diff artifact against the committed
+model result and records a receipt only when they match exactly. It never
+creates or rewrites the patch. The existing MCP server reports the boundary
 through `fabric_capabilities`. The popup is
 a cooperative same-account interaction, so it is not a security boundary against
 an agent with unrestricted shell or UI control. The model receives only approved
 source files and cannot run shell commands. The Git worktree confines patch
-materialization, but it is not a container or VM sandbox.
+materialization; optional Node verification is container isolated. This pilot
+does not yet broker arbitrary consequential effects or attest to sandbox escape
+resistance against a hostile local administrator.
 
 Maintainers can run `bun scripts/agent-fabric-local-smoke.ts` for an opt-in real
 Ollama fixture. That script injects a synthetic test approval and confirms a diff;
 it does not prove the human popup flow or coding quality on real projects.
+`FORGE_FABRIC_DOCKER_SMOKE=1 bun test tests/agent-fabric/local-task-service.test.ts`
+exercises the service, approved verification, Docker Desktop, durable readback,
+and acceptance with a synthetic approval callback.
+
+### Local Evolution Registry (single owner)
+
+The local extension workflow pins a candidate's bytes before evaluation. A
+manifest is a repository file with exactly these fields:
+
+```json
+{"schemaVersion":1,"extensionKey":"sample","artifactPath":"extensions/sample.js"}
+```
+
+The artifact and manifest must be regular files inside the repository. The
+artifact is limited to 1 MiB and the manifest to 16 KiB. Forge copies both to
+content addressed files under `.forge/local/agent-fabric/evolution/`; edits to
+the source files after registration do not change the registered version.
+
+```bash
+node bin/forge.mjs evolution register --manifest extensions/sample.json --json
+node bin/forge.mjs evolution evaluate extension:sha256:<digest> --json
+node bin/forge.mjs evolution status extension:sha256:<digest> --json
+node bin/forge.mjs evolution review canary extension:sha256:<digest> --json
+node bin/forge.mjs evolution review promote extension:sha256:<digest> --json
+node bin/forge.mjs evolution load sample --channel stable --json
+node bin/forge.mjs evolution review rollback extension:sha256:<older-digest> --json
+node bin/forge.mjs evolution review revoke extension:sha256:<digest> --json
+```
+
+Evaluation is a fixed local suite that checks stored artifact integrity,
+stored manifest integrity, and the manifest contract. It does not execute the
+candidate. Each version evaluates once; a failed or interrupted evaluation
+requires a new candidate version. Canary, promotion, rollback, and revocation
+open a loopback owner review window. Rejection or timeout leaves selection
+unchanged. Rollback can select only a previously stable version that still has
+a passing evaluation. Revocation clears selections and blocks future loading.
+
+The `load` command reports verified metadata. Local runtime callers can use
+`LocalEvolutionService.loadSelected` to obtain bytes after the same channel,
+evaluation, revocation, and digest checks. This registry does not import or
+execute those bytes or grant them side effects. Its review window is a
+cooperative human checkpoint; same-account shell or browser automation is
+outside its protection boundary. No hosted model or API key is used.

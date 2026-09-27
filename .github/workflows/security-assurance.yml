@@ -53,7 +53,10 @@ jobs:
       - name: Prepare evidence directory
         run: mkdir -p security/evidence/latest
 
-      - name: Generate drift check
+      - name: Generate derived compiler output
+        run: node ./bin/forge.mjs generate
+
+      - name: Generate stability check
         run: node ./bin/forge.mjs generate --check | tee security/evidence/latest/generate-check.txt
 
       - name: Forge guardrails

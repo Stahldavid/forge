@@ -44,7 +44,7 @@ target still binds the exact `ollama` provider and installed model ID. This exte
 limited to local model text generation and does not add general custom endpoints.
 
 Deterministic coverage is in `tests/agent-fabric/p0b-model-adapter.test.ts`. For the
-credential-free live smoke, install a local text model with `ollama pull qwen3:0.6b`,
+credential-free live smoke, install a local text model with `ollama pull qwen2.5-coder:3b`,
 ensure Ollama is serving loopback, and run from a clean checkout:
 
 ```bash

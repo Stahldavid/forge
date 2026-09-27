@@ -8,6 +8,10 @@ export type {
 } from "./hardened-conductor.ts";
 export * from "./errors.ts";
 export * from "./journal.ts";
+export { LocalEvolutionRegistry } from "./local-evolution-registry.ts";
+export type { ExtensionCandidate, ExtensionVersion, FixedEvaluationSuite, EvaluationRecord,
+  EvolutionChannel, EvolutionDecisionAction, EvolutionVersionStatus, EvolutionOwnerVerifier } from "./local-evolution-registry.ts";
+export { LocalEvolutionService, LOCAL_EVOLUTION_SUITE } from "./local-evolution-service.ts";
 export * from "./p0a.ts";
 export * from "./p0b-model-adapter.ts";
 export * from "./planning.ts";

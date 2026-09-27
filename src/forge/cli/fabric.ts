@@ -1,23 +1,37 @@
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
-import { requestLocalTask, serveLocalTasks, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
+import { LOCAL_CODING_MODEL, LOCAL_CODING_TARGET } from "../agent-fabric/local-task-contract.ts";
+import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
+import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "review" | "run" | "review-result" | "serve";
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | AdaptiveCliOptions["subcommand"];
   workspaceRoot: string;
   json: boolean;
   file?: string;
   taskId?: string;
+  channel?: "canary" | "stable";
 }
 
 export async function runFabricCommand(options: FabricCliOptions): Promise<number> {
+  if (options.subcommand.startsWith("adaptive-")) return runAdaptiveCommand(options as AdaptiveCliOptions);
   if (options.subcommand === "capabilities") {
     const result = {
       ok: true, schemaVersion: 1, runtime: "local-pilot",
       proposal: true, ownerReview: true, durableStatus: true,
-      codingWorker: true, ownerServer: true, consequentialEffects: false,
-      mcpTaskMutation: "proposal_and_status_only", nativeCodexHookProofRequired: true,
+      codingWorker: true, ownerServer: true,
+      codingWorkerModel: { targetId: LOCAL_CODING_TARGET, modelId: LOCAL_CODING_MODEL,
+        proposalField: "requestedModelId" },
+      sandboxVerification: { supported: true, localReadiness: "not_checked" },
+      cancellation: { supported: true, concurrentRequestsRequireOwnerServer: true,
+        activeModelStopIsBestEffort: true },
+      consequentialEffects: false,
+      privateMemory: "owner_cli_only",
+      adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,
+        selectedDataProfile: "optional_canary_or_stable" },
+      mcpTaskMutation: "proposal_only", mcpEvidence: true,
+      nativeCodexHookProofRequired: true,
     };
     process.stdout.write(options.json ? `${JSON.stringify(result, null, 2)}\n` :
       "Agent Fabric local pilot: proposal, owner review, bounded Ollama coding, and durable status are available.\n");
@@ -42,15 +56,29 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       return 0;
     }
     let proposal: unknown;
-    if (options.subcommand === "propose") {
-      if (!options.file) throw new Error("A proposal file is required");
+    if (options.subcommand === "propose" || options.subcommand === "memory-add" || options.subcommand === "memory-list") {
+      if (!options.file) throw new Error("A request file is required");
       const file = realpathSync(resolve(repositoryRoot, options.file));
       const relation = relative(repositoryRoot, file);
-      if (!relation || relation.startsWith("..") || isAbsolute(relation)) {
+      if (options.subcommand === "propose" && (!relation || relation.startsWith("..") || isAbsolute(relation))) {
         throw new Error("Proposal file must be inside the current repository");
       }
-      if (statSync(file).size > 32 * 1024) throw new Error("Proposal file exceeds 32 KiB");
+      if (statSync(file).size > (options.subcommand === "propose" ? 32 * 1024 : 4 * 1024)) throw new Error("Request file exceeds byte limit");
       proposal = JSON.parse(readFileSync(file, "utf8")) as unknown;
+    }
+    if (options.subcommand.startsWith("memory-")) {
+      const action = options.subcommand as LocalMemoryAction;
+      const body = action === "memory-delete" ? { id: options.taskId ?? "" } : proposal as Record<string, unknown>;
+      const remote = await requestLocalMemory(repositoryRoot, action, body);
+      if (remote === null) {
+        service = await LocalTaskService.open(repositoryRoot);
+      }
+      const memory = remote ?? (action === "memory-add" ? service!.rememberMemory(body)
+        : action === "memory-list" ? service!.listMemory(body)
+          : { deleted: service!.forgetMemory(body.id) });
+      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, memory }, null, 2)}\n` :
+        `${JSON.stringify(memory, null, 2)}\n`);
+      return 0;
     }
     const action = options.subcommand as LocalTaskAction;
     const body = action === "propose" ? { proposal } : { taskId: options.taskId ?? "" };
@@ -60,13 +88,33 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
         `${remote.taskId}: ${remote.state}; execution ${remote.canStart ? "available" : "not available"}\n`);
       return 0;
     }
-    service = await LocalTaskService.open(repositoryRoot);
+    try { service = await LocalTaskService.open(repositoryRoot); }
+    catch (error) {
+      if (options.subcommand === "cancel") {
+        throw new Error("Cannot reach the active local task owner. Start forge fabric serve before run to cancel an in-flight model call", { cause: error });
+      }
+      throw error;
+    }
+    if (options.subcommand === "cancel" &&
+        (await service.status(options.taskId ?? "")).state === "model_uncertain") {
+      throw new Error("An in-flight model call can only be cancelled through its running forge fabric serve owner");
+    }
     const status = options.subcommand === "propose"
       ? await service.propose(proposal)
+      : options.subcommand === "evidence"
+        ? await service.evidence(options.taskId ?? "")
       : options.subcommand === "review"
         ? await service.review(options.taskId ?? "")
         : options.subcommand === "run"
           ? await service.run(options.taskId ?? "")
+          : options.subcommand === "cancel"
+            ? await service.cancel(options.taskId ?? "")
+          : options.subcommand === "reconcile"
+            ? await service.reconcile(options.taskId ?? "")
+          : options.subcommand === "verify"
+            ? await service.verify(options.taskId ?? "")
+          : options.subcommand === "recover-verification"
+            ? await service.recoverVerification(options.taskId ?? "")
           : options.subcommand === "review-result"
             ? await service.reviewResult(options.taskId ?? "")
           : await service.status(options.taskId ?? "");

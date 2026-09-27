@@ -26,6 +26,7 @@ export type DiffPlan = {
   generatedCollapsedByDefault: boolean;
   generatedFiles: number;
   authoredFiles: number;
+  operationalFiles: number;
   authoredDiffCommand: string;
   generatedDiffCommand: string;
   fullDiffCommand: string;
@@ -44,6 +45,15 @@ export const CHANGE_TYPES: ChangeType[] = [
   "config",
   "other",
 ];
+
+// Keep complete paths for executable diff plans without expanding compact JSON summaries.
+const categorizedPaths = new WeakMap<CategorizedFileSummary, Record<ChangeType, string[]>>();
+const AUTHORED_TYPES = CHANGE_TYPES.filter((type) => type !== "generated" && type !== "operational");
+
+export function authoredChangePaths(summary: CategorizedFileSummary): string[] | null {
+  const groups = categorizedPaths.get(summary);
+  return groups ? AUTHORED_TYPES.flatMap((type) => groups[type]).sort() : null;
+}
 
 export function compactFiles(files: string[], sampleSize = 12): FileListSummary {
   return {
@@ -195,11 +205,13 @@ export function categorizeFiles(
   const primaryTypes = CHANGE_TYPES
     .filter((type) => byType[type].count > 0)
     .sort((left, right) => byType[right].count - byType[left].count);
-  return {
+  const result: CategorizedFileSummary = {
     total: compactFiles(sorted, sampleSize),
     byType,
     primaryTypes,
   };
+  categorizedPaths.set(result, groups);
+  return result;
 }
 
 export function filterCategorizedSummary(
@@ -225,7 +237,7 @@ export function filterCategorizedSummary(
   const primaryTypes = CHANGE_TYPES
     .filter((type) => byType[type].count > 0)
     .sort((left, right) => byType[right].count - byType[left].count);
-  return {
+  const result: CategorizedFileSummary = {
     total: {
       count: totalCount,
       sample: totalSample,
@@ -234,6 +246,14 @@ export function filterCategorizedSummary(
     byType,
     primaryTypes,
   };
+  const originalPaths = categorizedPaths.get(summary);
+  if (originalPaths) {
+    const filteredPaths = Object.fromEntries(
+      CHANGE_TYPES.map((type) => [type, include.has(type) ? originalPaths[type] : []]),
+    ) as Record<ChangeType, string[]>;
+    categorizedPaths.set(result, filteredPaths);
+  }
+  return result;
 }
 
 export function summarizeChangeTypes(summary: CategorizedFileSummary): string {
@@ -243,20 +263,30 @@ export function summarizeChangeTypes(summary: CategorizedFileSummary): string {
     .join(", ");
 }
 
-export function buildDiffPlanFromChangeSummary(summary: CategorizedFileSummary): DiffPlan {
+export function buildDiffPlanFromChangeSummary(
+  summary: CategorizedFileSummary,
+  authoredCommand = "forge diff authored",
+): DiffPlan {
   const generatedFiles = summary.byType.generated.count;
-  const authoredFiles = Math.max(0, summary.total.count - generatedFiles);
+  const operationalFiles = summary.byType.operational.count;
+  const authoredFiles = AUTHORED_TYPES
+    .reduce((count, type) => count + summary.byType[type].count, 0);
+  const authoredPaths = authoredChangePaths(summary);
+  const operationalSummary = operationalFiles > 0
+    ? ` ${operationalFiles} operational file(s) are tracked separately;`
+    : "";
   return {
     first: "authored",
     then: "generated",
     generatedCollapsedByDefault: generatedFiles > 0,
     generatedFiles,
     authoredFiles,
-    authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
+    operationalFiles,
+    authoredDiffCommand: authoredPaths?.length ? authoredCommand : "",
     generatedDiffCommand: 'git diff -- src/forge/_generated forge.lock AGENTS.md ":(glob)**/AGENTS.md" .forge/agent/context.json',
     fullDiffCommand: "git diff",
     summary: generatedFiles > 0
-      ? `${authoredFiles} authored file(s) first; ${generatedFiles} generated artifact(s) are derived and should be reviewed after the source cause.`
-      : `${authoredFiles} authored file(s); no generated artifacts changed.`,
+      ? `${authoredFiles} authored file(s) first;${operationalSummary} ${generatedFiles} generated artifact(s) are derived and should be reviewed after the source cause.`
+      : `${authoredFiles} authored file(s);${operationalSummary} no generated artifacts changed.`,
   };
 }
