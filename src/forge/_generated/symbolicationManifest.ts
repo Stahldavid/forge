@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=3ba530f8432c93912c3e9b02ed9be6c6365dad9216f0a63d0c0a517cb06d4665 content=bca297a631fd49585d44d5550032f3679fa39992df6e3aa402a8cdfe27f3a82e
+// @forge-generated generator=0.1.0-alpha.64 input=5bea3de626e4a7db3a5bbe226a820619b19a6e1347922b0a4f97fedf6654c489 content=47722a1889825946b4404d3b0cf0b2465bf58f1a9a922f8be83366e6a921509d
 export const symbolicationManifest = {
   "diagnostics": [],
   "localSymbolication": true,
@@ -11,7 +11,7 @@ export const symbolicationManifest = {
     "otel",
     "custom"
   ],
-  "releaseId": "forgeos@0.1.0-alpha.63+unknown",
+  "releaseId": "forgeos@0.1.0-alpha.64+unknown",
   "schemaVersion": "0.1.0",
   "sourceMapCount": 0
 } as const;
