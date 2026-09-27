@@ -13,6 +13,7 @@ import { requestLocalApproval, requestLocalPatchAcceptance, type LocalApprovalDe
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
 import { localFabricPath } from "./local-paths.ts";
+import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
 import type { Digest, GoalContract, OwnerAuthorization, OwnerAuthorizationVerifier } from "./types.ts";
 
 export interface LocalTaskStatus {
@@ -168,6 +169,7 @@ export class LocalTaskService {
   private readonly inbox: LocalTaskInbox;
   private readonly control: LocalControlStore;
   private readonly approvedDigests = new Set<Digest>();
+  private readonly activeReviews = new Set<string>();
 
   private constructor(
     readonly repositoryRoot: string,
@@ -177,6 +179,7 @@ export class LocalTaskService {
     private readonly modelExecutor?: ModelExecutor,
     private readonly patchAcceptance: (view: LocalPatchReviewView) => Promise<LocalApprovalDecision> = requestLocalPatchAcceptance,
   ) {
+    adapter = serializeLocalAdapter(adapter);
     this.inbox = new LocalTaskInbox(adapter);
     this.control = new LocalControlStore({
       adapter, clock: { now: Date.now },
@@ -261,6 +264,18 @@ export class LocalTaskService {
   }
 
   async review(taskId: string): Promise<LocalTaskStatus> {
+    if (this.activeReviews.has(taskId)) {
+      throw new AgentFabricError("AF_CONFLICT", "Task already has an active owner review");
+    }
+    this.activeReviews.add(taskId);
+    try {
+      return await this.reviewExclusive(taskId);
+    } finally {
+      this.activeReviews.delete(taskId);
+    }
+  }
+
+  private async reviewExclusive(taskId: string): Promise<LocalTaskStatus> {
     const record = await this.inbox.get(taskId);
     if (!record || record.repositoryRoot !== this.repositoryRoot) {
       throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
@@ -273,6 +288,10 @@ export class LocalTaskService {
       taskId, repositoryRoot: this.repositoryRoot,
       proposal: record.proposal, proposalDigest: record.proposalDigest,
     });
+    const latest = await this.status(taskId);
+    if (latest.state !== "proposed" || record.proposal.limits.expiresAt <= Date.now()) {
+      throw new AgentFabricError("AF_CONFLICT", "Task changed or expired during owner review");
+    }
     if (decision === "rejected") {
       await this.inbox.reject(taskId, record.proposalDigest);
       return this.status(taskId);

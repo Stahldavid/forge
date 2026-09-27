@@ -12,6 +12,40 @@ function git(root: string, ...args: string[]): string {
 }
 
 describe("local task service", () => {
+  test("one proposal cannot open two simultaneous owner decisions", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-review-race-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      let decide!: (value: "approved" | "rejected") => void;
+      let windowCount = 0;
+      const service = await LocalTaskService.open(root, async () => {
+        windowCount += 1;
+        return new Promise((resolve) => { decide = resolve; });
+      });
+      try {
+        const proposed = await service.propose({
+          schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+          goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+          sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+          requestedModelTargetId: "target:ollama:local",
+          limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+            maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+        });
+        const first = service.review(proposed.taskId);
+        await expect(service.review(proposed.taskId)).rejects.toThrow("active owner review");
+        while (windowCount === 0) await new Promise((resolve) => setTimeout(resolve, 5));
+        decide("rejected");
+        expect((await first).state).toBe("rejected");
+        expect(windowCount).toBe(1);
+      } finally { await service.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
   test("validates before persistence, binds approval, and replays after restart", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-service-"));
     try {

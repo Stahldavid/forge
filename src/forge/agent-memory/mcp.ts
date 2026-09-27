@@ -109,10 +109,10 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
 }
 
 export async function runMcpServe(workspaceRoot: string): Promise<number> {
-  let buffer = "";
+  let buffer: Buffer = Buffer.alloc(0);
   let sawFramedMessage = false;
   for await (const chunk of process.stdin) {
-    buffer += Buffer.isBuffer(chunk) ? chunk.toString("utf8") : String(chunk);
+    buffer = Buffer.concat([buffer, Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))]);
     const parsed = parseMcpFrames(buffer);
     buffer = parsed.remainder;
     if (parsed.requests.length > 0) {
@@ -125,7 +125,7 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
       }
     }
   }
-  const leftover = buffer.trim();
+  const leftover = buffer.toString("utf8").trim();
   if (!sawFramedMessage && leftover.startsWith("{")) {
     const result = await handleMcpRequest(workspaceRoot, JSON.parse(leftover) as JsonRpcRequest);
     if (result) {
@@ -242,26 +242,30 @@ function response(id: JsonRpcRequest["id"], result: unknown, error?: Record<stri
   return error ? { jsonrpc: "2.0", id: id ?? null, error } : { jsonrpc: "2.0", id: id ?? null, result };
 }
 
-function parseMcpFrames(raw: string): { requests: JsonRpcRequest[]; remainder: string } {
+function parseMcpFrames(raw: Buffer): { requests: JsonRpcRequest[]; remainder: Buffer } {
   const messages: JsonRpcRequest[] = [];
   let cursor = 0;
   while (cursor < raw.length) {
-    const headerEnd = raw.indexOf("\r\n\r\n", cursor);
+    const headerEnd = raw.indexOf(Buffer.from("\r\n\r\n"), cursor);
     if (headerEnd === -1) {
       break;
     }
-    const header = raw.slice(cursor, headerEnd);
+    const header = raw.subarray(cursor, headerEnd).toString("ascii");
     const match = /Content-Length:\s*(\d+)/i.exec(header);
     if (!match) {
       break;
     }
     const length = Number(match[1]);
     const bodyStart = headerEnd + 4;
-    const body = raw.slice(bodyStart, bodyStart + length);
+    if (!Number.isSafeInteger(length) || length < 0 || length > 1024 * 1024) {
+      throw new Error("Invalid MCP Content-Length");
+    }
+    if (raw.length - bodyStart < length) break;
+    const body = raw.subarray(bodyStart, bodyStart + length).toString("utf8");
     messages.push(JSON.parse(body) as JsonRpcRequest);
     cursor = bodyStart + length;
   }
-  return { requests: messages, remainder: raw.slice(cursor) };
+  return { requests: messages, remainder: raw.subarray(cursor) };
 }
 
 function writeMcpMessage(message: Record<string, unknown>): void {
