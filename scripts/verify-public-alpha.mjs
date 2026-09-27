@@ -17,10 +17,10 @@ const expectedCreateVersion =
 const skipCreate = args.includes("--skip-create");
 const keep = args.includes("--keep");
 const versionAttempts = Number(
-  args.find((arg) => arg.startsWith("--version-attempts="))?.slice("--version-attempts=".length) ?? "24",
+  args.find((arg) => arg.startsWith("--version-attempts="))?.slice("--version-attempts=".length) ?? "40",
 );
 const versionDelayMs = Number(
-  args.find((arg) => arg.startsWith("--version-delay-ms="))?.slice("--version-delay-ms=".length) ?? "5000",
+  args.find((arg) => arg.startsWith("--version-delay-ms="))?.slice("--version-delay-ms=".length) ?? "15000",
 );
 const publicProofEnv = {
   AI_GATEWAY_API_KEY: "forge-public-smoke-redacted-ai-gateway-key",
@@ -90,7 +90,7 @@ function sleep(ms) {
 async function assertVersion(packageSpec, expected) {
   let lastActual = "unresolved";
   for (let attempt = 1; attempt <= versionAttempts; attempt += 1) {
-    const result = run("npm", ["view", packageSpec, "version", "--json"], {
+    const result = run("npm", ["view", packageSpec, "version", "--json", "--prefer-online"], {
       capture: true,
       check: false,
     });
