@@ -14,7 +14,8 @@ resolver chooses the credential from the authorized provider. Context content is
 the exact prompt supplied to the SDK.
 
 The live executor uses AI SDK `generateText` with `maxRetries: 0`, an abort signal and a
-transport guard that allows at most one physical request per invocation. The adapter keeps
+transport guard that allows at most one physical request per invocation. Redirect handling is
+manual so an HTTP 3xx cannot hide another request or a new host. The adapter keeps
 one in-memory attempt record per attempt ID. A duplicate start with the same permit returns
 the same startup identity; a different permit conflicts. Startup means the local executor
 has begun, not that the provider accepted a request. There is no crash-safe exactly-once

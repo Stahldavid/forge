@@ -134,7 +134,8 @@ export function createForgeModelExecutor(
       requests += 1;
       if (requests !== 1) throw new Error("p0b_duplicate_physical_request");
       onPhysicalRequest?.();
-      return trustedTransport(input, init);
+      // Native fetch follows 3xx by default, which would hide extra requests and hosts.
+      return trustedTransport(input, { ...init, redirect: "manual" });
     }, { preconnect: fetch.preconnect });
     const model = await resolveLanguageModel(
       invocation.provider, invocation.model, secrets, transport,

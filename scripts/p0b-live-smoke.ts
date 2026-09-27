@@ -16,6 +16,9 @@ function requireValue(name: string): string {
 async function main(): Promise<void> {
   const model = requireValue("FORGE_P0B_SMOKE_MODEL");
   requireValue("OPENAI_API_KEY");
+  if (execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()) {
+    throw new Error("live smoke requires a clean worktree for exact-SHA evidence");
+  }
   const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   const now = Date.now();
   const verifier: OwnerAuthorizationVerifier = {

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { createServer } from "node:http";
 import {
   AgentFabricError, ForgeAgentConductor, MemoryControlJournal, P0bModelAdapter,
   createForgeModelExecutor, createRunPlanRevision, digestCanonical, executeP0bActivity, replayControlState,
@@ -281,5 +282,39 @@ describe("P0b-A bounded model adapter", () => {
     }, () => { physicalRequests += 1; }, fakeTransport);
     await expect(execute(f.invocation, f.context, new AbortController().signal)).rejects.toThrow();
     expect(physicalRequests).toBe(1);
+  });
+
+  test("native fetch cannot follow a redirect into a second physical request", async () => {
+    let hits = 0;
+    const server = createServer((request, response) => {
+      hits += 1;
+      if (request.url === "/redirect") {
+        response.writeHead(302, { location: "/second" });
+      } else {
+        response.writeHead(200, { "content-type": "application/json" });
+      }
+      response.end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Missing test server port");
+      const localURL = `http://127.0.0.1:${address.port}/redirect`;
+      const forwardingTransport = Object.assign(
+        async (_input: RequestInfo | URL, init?: RequestInit) => fetch(localURL, init),
+        { preconnect: fetch.preconnect },
+      );
+      const f = fixture();
+      let observedRequests = 0;
+      const execute = createForgeModelExecutor({
+        optional: () => "test-only-key", get: () => "test-only-key", has: () => true,
+      }, () => { observedRequests += 1; }, forwardingTransport);
+      await expect(execute(f.invocation, f.context, new AbortController().signal)).rejects.toThrow();
+      expect(observedRequests).toBe(1);
+      expect(hits).toBe(1);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => error ? reject(error) : resolve()));
+    }
   });
 });
