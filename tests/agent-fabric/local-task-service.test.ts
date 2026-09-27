@@ -200,10 +200,18 @@ describe("local task service", () => {
         expect((await reopened.evidence(status.taskId)).provenance?.patch?.diffDigest).toBe(status.patch?.diffDigest);
         const extra = join(status.patch!.worktreeRoot, "extra.txt");
         writeFileSync(extra, "unreviewed\n");
-        await expect(reopened.reviewResult(status.taskId)).rejects.toThrow("unrecorded");
+        expect((await reopened.status(status.taskId)).state).toBe("patch_mismatch");
+        expect((await reopened.evidence(status.taskId)).evidence).toBe("patch_mismatch");
+        await expect(reopened.reviewResult(status.taskId)).rejects.toThrow("no undecided patch");
         rmSync(extra);
+        expect((await reopened.status(status.taskId)).state).toBe("patch_ready");
         const accepted = await reopened.reviewResult(status.taskId);
         expect(accepted.state).toBe("accepted");
+        const edited = join(status.patch!.worktreeRoot, "source.txt");
+        writeFileSync(edited, "tampered after acceptance\n");
+        expect((await reopened.status(status.taskId)).state).toBe("patch_mismatch");
+        writeFileSync(edited, "changed\n");
+        expect((await reopened.status(status.taskId)).state).toBe("accepted");
         await expect(reopened.reviewResult(status.taskId)).rejects.toThrow();
       } finally {
         await reopened.close();

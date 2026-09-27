@@ -60,6 +60,8 @@ export interface P0bModelAdapterOptions {
   resolveHarness: (id: string) => HarnessSpec | undefined;
   resolveProfile: (id: string) => ExecutionProfile | undefined;
   executeModel: ModelExecutor;
+  /** Trusted local artifact readback before a successful report can commit. */
+  persistResultArtifact?: (attemptId: string, text: string, resultDigest: Digest) => Promise<void> | void;
 }
 
 export interface P0bBounds {
@@ -329,6 +331,14 @@ export class P0bModelAdapter implements AgentAdapter {
           Buffer.byteLength(result.text, "utf8") > prepared.invocation.maximumResultBytes) {
         return { status: "unknown", reason: "invalid_or_oversized_provider_result" };
       }
+      const resultDigest = sha256Digest(result.text);
+      if (this.options.persistResultArtifact) {
+        try {
+          await this.options.persistResultArtifact(permit.attemptId, result.text, resultDigest);
+        } catch {
+          return { status: "unknown", reason: "result_artifact_readback_unknown" };
+        }
+      }
       this.resultArtifacts.set(permit.attemptId, result.text);
       const report: WorkerResultReport = {
         reportId: `report:${permit.attemptId}`,
@@ -339,7 +349,7 @@ export class P0bModelAdapter implements AgentAdapter {
         effectiveRunSpecDigest: permit.effectiveRunSpecDigest,
         fencingToken: permit.fencingToken,
         status: "succeeded",
-        resultDigest: sha256Digest(result.text),
+        resultDigest,
         evidenceDigests: [digestCanonical({
           provider: prepared.invocation.provider,
           model: prepared.invocation.model,

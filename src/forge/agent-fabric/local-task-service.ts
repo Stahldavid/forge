@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import { digestCanonical, sha256Digest } from "./canonical.ts";
@@ -28,9 +28,9 @@ export interface LocalTaskStatus {
   memoryIds?: readonly string[];
   writablePaths: readonly string[];
   requestedModelTargetId: string;
-  state: "proposed" | "rejected" | "owner_approved" | "model_uncertain" | "model_reported" | "model_failed" | "patch_uncertain" | "patch_ready" | "accepted" | "rejected_patch";
+  state: "proposed" | "rejected" | "owner_approved" | "model_uncertain" | "model_reported" | "model_failed" | "patch_uncertain" | "patch_mismatch" | "patch_ready" | "accepted" | "rejected_patch";
   canStart: boolean;
-  evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_uncertain" | "patch_ready";
+  evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_uncertain" | "patch_mismatch" | "patch_ready";
   patch?: LocalPatchEvidence;
   ownerDecision?: "approved" | "rejected";
   verification?: { state: "started" | "finished"; containerDispatched: boolean; outcome?: LocalVerificationEvidence["outcome"];
@@ -58,6 +58,25 @@ export interface LocalTaskProvenance {
 
 function digestSuffix(digest: Digest): string {
   return digest.slice("sha256:".length);
+}
+
+function persistLocalModelArtifact(path: string, resultDigest: Digest, modelText: string): void {
+  const bytes = JSON.stringify({ resultDigest, text: modelText });
+  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+  if (!existsSync(path)) {
+    try {
+      writeFileSync(path, bytes, { flag: "wx", mode: 0o600, flush: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    }
+    if (process.platform !== "win32") {
+      const fd = openSync(dirname(path), "r");
+      try { fsyncSync(fd); } finally { closeSync(fd); }
+    }
+  }
+  if (readFileSync(path, "utf8") !== bytes) {
+    throw new AgentFabricError("AF_INVALID_STATE", "Local model artifact failed durable readback");
+  }
 }
 
 function identities(digest: Digest) {
@@ -340,15 +359,17 @@ export class LocalTaskService {
     if (ownerDecision && !patch) {
       throw new AgentFabricError("AF_INVALID_STATE", "Owner decision has no recorded patch");
     }
+    let patchMismatched = false;
     if (patch) {
       const expectedPath = localFabricPath(this.repositoryRoot, "artifacts", `${digestSuffix(record.proposalDigest)}.diff`);
-      if (!outcome || patch.diffPath !== expectedPath || !existsSync(expectedPath) ||
-          sha256Digest(readFileSync(expectedPath, "utf8")) !== patch.diffDigest) {
-        throw new AgentFabricError("AF_INVALID_STATE", "Local patch evidence failed readback");
+      if (!outcome || patch.diffPath !== expectedPath) {
+        throw new AgentFabricError("AF_INVALID_STATE", "Local patch evidence is not bound to the model outcome");
       }
+      try { verifyLocalPatchEvidence(patch); } catch { patchMismatched = true; }
     }
     const state = record.state === "rejected" ? "rejected"
       : materialization?.state === "started" ? "patch_uncertain"
+      : patchMismatched ? "patch_mismatch"
       : ownerDecision === "approved" ? "accepted"
         : ownerDecision === "rejected" ? "rejected_patch"
       : patch ? "patch_ready"
@@ -368,7 +389,7 @@ export class LocalTaskService {
       requestedModelTargetId: record.proposal.requestedModelTargetId,
       state,
       canStart: state === "owner_approved" && record.proposal.limits.expiresAt > Date.now(),
-      evidence: materialization?.state === "started" ? "patch_uncertain" : patch ? "patch_ready" : outcome && outcome.payload.type === "attempt_outcome_committed" &&
+      evidence: materialization?.state === "started" ? "patch_uncertain" : patchMismatched ? "patch_mismatch" : patch ? "patch_ready" : outcome && outcome.payload.type === "attempt_outcome_committed" &&
         outcome.payload.outcome.status !== "succeeded" ? "model_failure"
         : outcome ? "model_result" : permit ? "provider_uncertain" : "not_started",
       ...(patch ? { patch } : {}),
@@ -386,7 +407,7 @@ export class LocalTaskService {
   /** Bounded, digest-bound readback for CLI and MCP clients; never exposes model text or raw diff. */
   async evidence(taskId: string): Promise<LocalTaskStatus> {
     const status = await this.status(taskId);
-    if (status.patch) verifyLocalPatchEvidence(status.patch);
+    if (status.patch && status.state !== "patch_mismatch") verifyLocalPatchEvidence(status.patch);
     const ids = identities(status.proposalDigest);
     const events = await this.control.readAll(ids.rootExecutionId);
     const permitEvent = events.find((event) => event.payload.type === "attempt_execution_permit_issued");
@@ -600,14 +621,11 @@ export class LocalTaskService {
         resolveHarness: (id) => id === harness.harnessSpecId ? harness : undefined,
         resolveProfile: (id) => id === profile.executionProfileId ? profile : undefined,
         executeModel: this.modelExecutor ?? createForgeModelExecutor(secrets),
+        persistResultArtifact: (_attemptId, text, resultDigest) => {
+          persistLocalModelArtifact(artifactPath, resultDigest, text);
+        },
       });
       const outcome = await executeP0bActivity({ conductor, adapter, permit });
-      const text = adapter.resultArtifact(permit.attemptId);
-      if (outcome.status === "succeeded" && text &&
-          outcome.resultDigest === sha256Digest(text)) {
-        mkdirSync(dirname(artifactPath), { recursive: true });
-        writeFileSync(artifactPath, JSON.stringify({ resultDigest: outcome.resultDigest, text }), { flag: "wx" });
-      }
       return outcome;
     });
     if (external.result.status !== "succeeded") return this.status(taskId);
