@@ -109,6 +109,31 @@ describe("local PGlite control store", () => {
     });
   });
 
+  test("reads committed state during an external call and blocks same-root transitions", async () => {
+    await withPglite(async (adapter) => {
+      const store = new LocalControlStore({ adapter, clock, ownerAuthorizationVerifier: verifier });
+      let started!: () => void;
+      let release!: () => void;
+      const inFlight = new Promise<void>((resolve) => { started = resolve; });
+      const gate = new Promise<void>((resolve) => { release = resolve; });
+      const running = store.runExternal(rootExecutionId, async (conductor) => {
+        conductor.registerOwnerAuthorization(authorization("external"));
+        started();
+        await gate;
+        return "done";
+      });
+      await inFlight;
+      expect(await store.readAll(rootExecutionId)).toHaveLength(0);
+      await expect(store.transition(rootExecutionId, (conductor) => {
+        conductor.registerOwnerAuthorization(authorization("intruder"));
+      })).rejects.toMatchObject({ code: "AF_CONFLICT" });
+      release();
+      expect((await running).result).toBe("done");
+      expect((await store.readAll(rootExecutionId)).map((event) => event.sequence)).toEqual([1]);
+      await store.close();
+    });
+  });
+
   test("rolls back a partial SQL batch and never acknowledges it", async () => {
     await withPglite(async (adapter) => {
       let inserts = 0;

@@ -9,10 +9,10 @@ P0b-A invokes one real model through the existing P0a permit and result boundary
 accepted scope and exact adoption evidence are recorded in
 [`P0B_A_ADOPTION_RECORD.md`](./architecture/agent-fabric/P0B_A_ADOPTION_RECORD.md).
 
-The proposed local coding pilot has bounded proposal validation, an experimental
-single-process PGlite control-journal boundary, and read-only MCP capability discovery.
-These primitives do not yet provide owner approval, task creation through MCP, a coding
-worker, or a production persistence claim. Their proposed scope and remaining gates are
+The local coding pilot has bounded proposal validation, a single-process PGlite
+control journal, browser-based owner review, an isolated Ollama coding worker,
+and MCP proposal/status tools backed by a local owner process. It does not make
+a production persistence or security claim. Its scope and remaining gates are
 in [`P0B_B_LOCAL_CODING_SCOPE.md`](./architecture/agent-fabric/P0B_B_LOCAL_CODING_SCOPE.md).
 
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
@@ -218,6 +218,7 @@ node bin/forge.mjs fabric status <task-id> --json
 node bin/forge.mjs fabric review <task-id> --json
 node bin/forge.mjs fabric run <task-id> --json
 node bin/forge.mjs fabric review-result <task-id> --json
+node bin/forge.mjs fabric serve --json
 ```
 
 `task.json` is an untrusted proposal. Its required fields are `schemaVersion: 1`,
@@ -231,10 +232,16 @@ consumes one approved model attempt and writes a diff in an isolated Git worktre
 records a decision only; it does not alter the original checkout or merge code.
 
 The local store lives under `.forge/local/agent-fabric` and has one PGlite process
-owner. A crashed model attempt with a committed permit and no outcome remains
+owner. Start `forge fabric serve` to keep that owner running while separate CLI
+and MCP clients connect through a loopback endpoint. The endpoint token stays in
+the local repository store and is not printed. The MCP tools `fabric_propose` and
+`fabric_status` use that same owner; they cannot approve, run, or accept a task.
+Without a running owner, CLI commands open the store for a single operation and
+MCP task tools report that the owner is unavailable. A crashed model attempt with
+a committed permit and no outcome remains
 uncertain; a repeated `run` does not spend another attempt. A committed model result
-can be materialized after restart. The existing MCP server reports CLI availability
-through `fabric_capabilities`; it does not expose task mutation tools. The popup is
+can be materialized after restart. The existing MCP server reports the boundary
+through `fabric_capabilities`. The popup is
 a cooperative same-account interaction, so it is not a security boundary against
 an agent with unrestricted shell or UI control. The model receives only approved
 source files and cannot run shell commands. The Git worktree confines patch

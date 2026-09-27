@@ -31,9 +31,15 @@ describe("local task service", () => {
           maximumOutputTokens: 256, maximumContextBytes: 4_096,
           maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
       };
-      const service = await LocalTaskService.open(root, async () => "approved", async () => ({
-        text: JSON.stringify({ schemaVersion: 1, files: [{ path: "source.txt", content: "changed\n" }] }),
-      }));
+      let signalModelStarted!: () => void;
+      let releaseModel!: () => void;
+      const modelStarted = new Promise<void>((resolve) => { signalModelStarted = resolve; });
+      const modelRelease = new Promise<void>((resolve) => { releaseModel = resolve; });
+      const service = await LocalTaskService.open(root, async () => "approved", async () => {
+        signalModelStarted();
+        await modelRelease;
+        return { text: JSON.stringify({ schemaVersion: 1, files: [{ path: "source.txt", content: "changed\n" }] }) };
+      });
       try {
         await expect(service.propose({ ...proposal, baseCommit: "f".repeat(40) })).rejects.toThrow();
         await expect(service.propose({ ...proposal, sourcePaths: [".env.local"] })).rejects.toThrow();
@@ -42,7 +48,12 @@ describe("local task service", () => {
         const approved = await service.review(proposed.taskId);
         expect(approved.state).toBe("owner_approved");
         await expect(service.review(proposed.taskId)).rejects.toThrow();
-        const completed = await service.run(proposed.taskId);
+        const running = service.run(proposed.taskId);
+        await modelStarted;
+        const inFlight = await service.status(proposed.taskId);
+        expect(inFlight.state).toBe("model_uncertain");
+        releaseModel();
+        const completed = await running;
         expect(completed.state).toBe("patch_ready");
         expect(completed.patch?.changedPaths).toEqual(["source.txt"]);
         await expect(service.run(proposed.taskId)).rejects.toThrow();

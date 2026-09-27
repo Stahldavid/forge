@@ -84,7 +84,7 @@ jobs:
         run: npm run security:deps -- security/evidence/latest/dependency-audit.json
 
       - name: Framework verification
-        run: node ./bin/forge.mjs verify framework --script-timeout-ms 120000 | tee security/evidence/latest/verify-framework.txt
+        run: node ./bin/forge.mjs verify framework --json --script-timeout-ms 120000 | tee security/evidence/latest/verify-framework.json
 
       - name: Security assurance tests
         run: node ./bin/forge-bun.mjs test tests/security --timeout 120000 | tee security/evidence/latest/security-tests.txt

@@ -121,8 +121,13 @@ async function requestLocalDecision(
       response.writeHead(200).end("proposal" in view ? renderPage(view, token) : renderPatchPage(view, token));
       return;
     }
+    // Chrome sends Origin: null for a same-origin form POST when the page uses
+    // Referrer-Policy: no-referrer. Fetch metadata distinguishes that browser
+    // case from a cross-site form while the unguessable token binds the decision.
+    const sameOriginPost = request.headers.origin === origin ||
+      (request.headers.origin === "null" && request.headers["sec-fetch-site"] === "same-origin");
     if (request.method !== "POST" || request.url !== `/decision/${token}` || decided ||
-        request.headers.origin !== origin ||
+        !sameOriginPost ||
         request.headers["content-type"] !== "application/x-www-form-urlencoded") {
       response.writeHead(403).end();
       return;

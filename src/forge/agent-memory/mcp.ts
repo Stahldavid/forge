@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { DeltaStore } from "../delta/store.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
 import { ingestEnvelope } from "./bridge.ts";
 import { normalizeAgentEvent } from "./normalize.ts";
+import { requestLocalTask } from "../agent-fabric/local-task-server.ts";
 
 interface JsonRpcRequest {
   jsonrpc?: "2.0";
@@ -35,6 +36,18 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
               properties: {},
               additionalProperties: false,
             },
+          },
+          {
+            name: "fabric_propose",
+            description: "Submit an untrusted local coding task proposal to the running Agent Fabric owner. This does not approve or run it.",
+            inputSchema: { type: "object", properties: { proposal: { type: "object" } },
+              required: ["proposal"], additionalProperties: false },
+          },
+          {
+            name: "fabric_status",
+            description: "Read status and bounded evidence for a local coding task from the running Agent Fabric owner.",
+            inputSchema: { type: "object", properties: { taskId: { type: "string" } },
+              required: ["taskId"], additionalProperties: false },
           },
           {
             name: "agent_context",
@@ -130,11 +143,22 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       schemaVersion: 1,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
-      codingTaskControl: "local_cli_available",
-      ownerApproval: "local_popup_available",
-      taskMutationTools: false,
+      codingTaskControl: "local_owner_service_required",
+      ownerApproval: "local_popup_cli_only",
+      taskMutationTools: ["fabric_propose"],
       cli: "forge fabric capabilities --json",
     };
+  }
+  if (name === "fabric_propose" || name === "fabric_status") {
+    const keys = Object.keys(args).sort().join(",");
+    if (name === "fabric_propose" && keys !== "proposal") throw new Error("fabric_propose requires only proposal");
+    if (name === "fabric_status" && (keys !== "taskId" || typeof args.taskId !== "string")) {
+      throw new Error("fabric_status requires only taskId");
+    }
+    const status = await requestLocalTask(realpathSync(workspaceRoot),
+      name === "fabric_propose" ? "propose" : "status", args);
+    if (!status) throw new Error("Agent Fabric local owner is not running; start forge fabric serve");
+    return { ok: true, status };
   }
   if (name === "agent_context") {
     return buildAgentMemoryContext({

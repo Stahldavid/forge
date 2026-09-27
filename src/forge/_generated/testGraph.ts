@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.63 input=826e266f4ac7c916cfc1cf8a75cf40c6617710076c778159ef594d9636da98d9 content=e897e7c0a882e3c1526b0d28932c322258a36fa7fc5d40b760ef36a340681aa4
+// @forge-generated generator=0.1.0-alpha.63 input=a08fcdd61a2c08c9ad9f137db56d152ed9da57eb81f62f3955e05ebec85271ff content=3c1f3e4c3ebd29a3f7a807906b100c918062b4e77eb212142c4fd7fbd5a15393
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "826e266f4ac7c916cfc1cf8a75cf40c6617710076c778159ef594d9636da98d9",
+  "inputHash": "a08fcdd61a2c08c9ad9f137db56d152ed9da57eb81f62f3955e05ebec85271ff",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -212,6 +212,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/local-approval-window.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-fabric/local-control-store.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -231,6 +249,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-fabric/local-task-contract.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/local-task-server.test.ts",
       "kind": "unknown",
       "reasons": []
     },

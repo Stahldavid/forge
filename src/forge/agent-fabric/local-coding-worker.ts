@@ -5,6 +5,7 @@ import { sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import type { LocalCodingTaskProposal } from "./local-task-contract.ts";
 import type { Digest } from "./types.ts";
+import { localFabricPath } from "./local-paths.ts";
 
 function git(root: string, args: readonly string[], maxBuffer = 128 * 1024): string {
   try {
@@ -126,8 +127,7 @@ export function materializeLocalCodingPatch(
   modelText: string,
 ): LocalPatchEvidence {
   const files = validateModelFiles(modelText, task);
-  const localRoot = join(repositoryRoot, ".forge", "local", "agent-fabric");
-  const worktreeRoot = join(localRoot, "worktrees", taskId.replace(/^task:/u, ""));
+  const worktreeRoot = localFabricPath(repositoryRoot, "worktrees", taskId.replace(/^task:/u, ""));
   const existing = existsSync(worktreeRoot);
   if (!existing) {
     mkdirSync(dirname(worktreeRoot), { recursive: true });
@@ -165,7 +165,7 @@ export function materializeLocalCodingPatch(
   if (changedPaths.length === 0 || changedPaths.some((path) => !task.writablePaths.includes(path))) {
     throw new AgentFabricError("AF_INVALID_STATE", "Resulting diff contains an unauthorized path");
   }
-  const diffPath = join(localRoot, "artifacts", `${taskId.replace(/^task:/u, "")}.diff`);
+  const diffPath = localFabricPath(repositoryRoot, "artifacts", `${taskId.replace(/^task:/u, "")}.diff`);
   mkdirSync(dirname(diffPath), { recursive: true });
   if (existsSync(diffPath)) {
     if (readFileSync(diffPath, "utf8") !== diff) {
