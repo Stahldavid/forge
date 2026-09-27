@@ -755,6 +755,40 @@ describe("H48 agent memory bridge", () => {
     }
   }, 30_000);
 
+  test("serializes concurrent queue drains before reading the checkpoint", async () => {
+    const root = tempWorkspace("h48-codex-hook-concurrent-drain");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(queueFile, [
+        queuedCodexHookLine(root, "SessionStart", "codex-concurrent-1"),
+        queuedCodexHookLine(root, "PostToolUse", "codex-concurrent-1"),
+        "",
+      ].join("\n"), "utf8");
+
+      const [first, second] = await Promise.all([
+        drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex", compactAfterBytes: 1 }),
+        drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex", compactAfterBytes: 1 }),
+      ]);
+      expect(first.errors).toEqual([]);
+      expect(second.errors).toEqual([]);
+      expect(first.busy).toBeUndefined();
+      expect(second.busy).toBeUndefined();
+      expect(first.eventsIngested + second.eventsIngested).toBe(2);
+      expect(readFileSync(queueFile, "utf8")).toBe("");
+
+      const store = await DeltaStore.open(root, { access: "read" });
+      try {
+        expect(await store.listAgentMemoryEvents({ target: "codex" })).toHaveLength(2);
+      } finally {
+        await store.close();
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 45_000);
+
   test("drains a burst of Codex hook events without exhausting database handles", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-burst");
     try {

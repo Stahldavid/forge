@@ -688,7 +688,44 @@ export async function drainAgentMemoryQueueFile(options: {
       historyFile,
     };
   }
-  const fileBuffer = readFileSync(options.watchFile);
+  // Avoid opening PGlite when the queue has no complete lines. Once there is work,
+  // acquire its writer lock before reading the checkpoint: another drainer may
+  // have consumed these bytes while this process waited for the lock.
+  const initialBuffer = readFileSync(options.watchFile);
+  const initialOffset = options.startOffset ?? readQueueCheckpoint(options.watchFile, initialBuffer.length);
+  if (splitCompleteJsonLines(initialBuffer.subarray(Math.min(initialOffset, initialBuffer.length))).complete.length === 0) {
+    return {
+      eventsIngested: 0,
+      errors: [],
+      bytesRead: initialOffset,
+      pendingBytes: Math.max(0, initialBuffer.length - initialOffset),
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: false,
+      historyFile,
+    };
+  }
+
+  const opened = await openMemoryStore(options.workspaceRoot, "write");
+  if (isMemoryUnavailable(opened)) {
+    return {
+      eventsIngested: 0,
+      errors: opened.busy ? [] : [opened.error],
+      bytesRead: initialOffset,
+      pendingBytes: Math.max(0, initialBuffer.length - initialOffset),
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: false,
+      historyFile,
+      ...(opened.busy ? { busy: opened.busy } : {}),
+    };
+  }
+
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = readFileSync(options.watchFile);
+  } catch (error) {
+    await opened.close();
+    throw error;
+  }
   let bytesRead = options.startOffset ?? readQueueCheckpoint(options.watchFile, fileBuffer.length);
   if (bytesRead > fileBuffer.length) {
     bytesRead = 0;
@@ -697,7 +734,7 @@ export async function drainAgentMemoryQueueFile(options: {
   let eventsIngested = 0;
   const errors: string[] = [];
   let consumedOffset = bytesRead;
-  let store: DeltaStore | undefined;
+  const store = opened;
 
   try {
     for (const line of complete) {
@@ -727,18 +764,7 @@ export async function drainAgentMemoryQueueFile(options: {
         writeQueueCheckpoint(options.watchFile, consumedOffset);
         continue;
       }
-      let result: AgentIngestResult;
-      if (!store) {
-        const opened = await openMemoryStore(ingestRoot, "write");
-        if (isMemoryUnavailable(opened)) {
-          result = { ...opened, envelope };
-        } else {
-          store = opened;
-          result = await recordAgentMemoryEnvelope(store, envelope);
-        }
-      } else {
-        result = await recordAgentMemoryEnvelope(store, envelope);
-      }
+      const result = await recordAgentMemoryEnvelope(store, envelope);
       if (result.ok) {
         eventsIngested += 1;
         consumedOffset = bytesRead + line.endOffset;
@@ -759,30 +785,30 @@ export async function drainAgentMemoryQueueFile(options: {
         break;
       }
     }
+
+    const retention = errors.length === 0 && consumedOffset > 0
+      ? compactAgentMemoryQueueFile({
+          watchFile: options.watchFile,
+          originalBuffer: fileBuffer,
+          consumedOffset,
+          compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,
+          historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,
+        })
+      : { compacted: false, historyFile };
+    const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;
+
+    return {
+      eventsIngested,
+      errors,
+      bytesRead: bytesAfterRetention,
+      pendingBytes,
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: retention.compacted,
+      historyFile: retention.historyFile,
+    };
   } finally {
-    await store?.close();
+    await store.close();
   }
-
-  const retention = errors.length === 0 && consumedOffset > 0
-    ? compactAgentMemoryQueueFile({
-        watchFile: options.watchFile,
-        originalBuffer: fileBuffer,
-        consumedOffset,
-        compactAfterBytes: options.compactAfterBytes ?? DEFAULT_QUEUE_COMPACT_AFTER_BYTES,
-        historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,
-      })
-    : { compacted: false, historyFile };
-  const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;
-
-  return {
-    eventsIngested,
-    errors,
-    bytesRead: bytesAfterRetention,
-    pendingBytes,
-    checkpointFile: queueCheckpointPath(options.watchFile),
-    compacted: retention.compacted,
-    historyFile: retention.historyFile,
-  };
 }
 
 function queuedEventHasUsefulSignal(envelope: AgentEventEnvelope): boolean {
