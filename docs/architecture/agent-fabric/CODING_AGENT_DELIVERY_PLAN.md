@@ -35,7 +35,7 @@ The two user journeys are intentionally ordered:
 | 1. Contract and threat model | Versioned local task contract, owner identity, root/repository/branch allowlist, permitted reads and effects, budgets, cancellation, evidence states, and restart semantics. Classify any changes to frozen decisions. | Reviewable scope/gate with positive and adversarial vectors, including malformed and cross-repository requests. | 0. |
 | 2. MCP observation | Add read-only Agent Fabric task/status/evidence tools to `forge mcp serve`, with bounded output and redaction. Keep Agent Memory distinct from authoritative control state. | Two MCP clients or protocol fixtures complete initialize/list/call; restart and unknown-task results are honest. No tool can start work yet. | 1. |
 | 3. Durable local control | Transactional local journal, trusted owner ingress, compare-and-swap append, verified replay, and recovery classification. Adapt the synchronous Conductor boundary explicitly instead of placing asynchronous storage behind it implicitly. | Kill/restart, corruption, duplicate request, concurrent append, lost response, and stale fencing tests; replay never calls a model; every acknowledged transition survives restart. | 1; can proceed alongside 2. |
-| 4. Governed MCP writes | Add narrowly scoped `propose`, `authorize`, `cancel`, and `start` operations. Each write takes an idempotency key and exact task version; explicit owner authorization is separate from model text or MCP client identity. | Unauthorized, stale, replayed, path-escape, and oversized requests fail without target mutation; successful requests replay to the same control state. | 2, 3. |
+| 4. Governed requests | MCP may propose a task and request cancellation or start against an exact authorized revision. Owner authorization enters through a separate trusted local interaction; MCP client identity or model text cannot self-authorize. Each request takes an idempotency key and task version. | Unauthorized, stale, replayed, path-escape, and oversized requests fail without target mutation; successful requests replay to the same control state. | 2, 3. |
 | 5. Isolated local worker | Materialize a Git worktree from a pinned commit; use a fixed, trusted Ollama endpoint/model; bound wall time, tokens, context, file paths, tool commands, and output. Route proposed edits through a reviewable effect boundary. | A real keyless task yields a diff and evidence; cancellation and ambiguous model/command outcomes stay nonterminal; no changes escape the checkout. | 3, 4. |
 | 6. Assurance and owner acceptance | Capture exact base/head, diff digest, commands, exit codes, focused tests, independent review provenance, and an owner decision. Separate observed test results from task acceptance. | A bad patch is rejected; a good patch can be accepted without implicit merge/release; all statuses retain `blocked`/`inconclusive` where applicable. | 5. |
 | 7. Portable agent integration | Publish MCP setup for Codex and another compatible client; run equivalent read/write contract cases. Add an optional external-worker adapter only after its permission, cost, and cancellation behavior is specified. | Real two-client interoperability evidence, with versioned protocol fixture; no paid Codex turn in the default suite. | 2, 4, 6. |
@@ -72,8 +72,10 @@ be silently promoted to success.
    projection. Dispatch external work only after the permit batch commits. Prove the
    boundary with crash and concurrent-writer tests before considering PostgreSQL or
    multi-host operation.
-2. Define local owner authentication for both CLI and MCP. Loopback transport or a
-   client-supplied owner string alone is insufficient authorization for writes.
+2. Define local owner authentication for the trusted approval path and client
+   identification for MCP. Loopback transport, a client-supplied owner string, or
+   a model-callable CLI alone is insufficient authorization. Keep the approval
+   channel inaccessible to the worker sandbox.
 3. Define effect classes for checkout creation, file edits, commands, Git operations,
    and external network requests. The local worker starts with the narrowest useful
    classes; publish/deploy/merge are excluded.
