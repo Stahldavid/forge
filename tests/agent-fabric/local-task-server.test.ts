@@ -77,7 +77,7 @@ test("CLI and MCP clients share one local owner without MCP approval tools", asy
         expect(mcpEvidence).toMatchObject({
           ok: true, taskId: mcpStatus.status.taskId, state: "proposed",
           provenance: { schemaVersion: 1, baseCommit: proposal.baseCommit,
-            modelTargetId: "target:ollama:local", model: "qwen3:0.6b" },
+            modelTargetId: "target:ollama:local", model: "qwen2.5-coder:3b" },
         });
         expect(mcpEvidence.provenance.evidenceDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
         expect(JSON.stringify(mcpEvidence)).not.toContain("source.txt changes");

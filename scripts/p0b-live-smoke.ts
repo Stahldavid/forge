@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   }
   const provider = requestedProvider;
   const model = provider === "ollama"
-    ? process.env.FORGE_P0B_SMOKE_MODEL ?? "qwen3:0.6b"
+    ? process.env.FORGE_P0B_SMOKE_MODEL ?? "qwen2.5-coder:3b"
     : requireValue("FORGE_P0B_SMOKE_MODEL");
   if (provider === "openai") requireValue("OPENAI_API_KEY");
   if (execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()) {

@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { generateText, wrapLanguageModel } from "ai";
 import { resolveLanguageModel } from "../runtime/ai/providers.ts";
 import type { ForgeModelProvider } from "../runtime/ai/providers.ts";
 import type { SecretsContext } from "../runtime/secrets/types.ts";
@@ -29,7 +29,7 @@ export interface MaterializedModelInvocation {
   maxOutputTokens: number;
   maximumRequestBytes: number;
   maximumResultBytes: number;
-  outputMode: "text";
+  outputMode: "text" | "json";
   purpose?: string;
   temperature?: number;
 }
@@ -60,6 +60,8 @@ export interface P0bModelAdapterOptions {
   resolveHarness: (id: string) => HarnessSpec | undefined;
   resolveProfile: (id: string) => ExecutionProfile | undefined;
   executeModel: ModelExecutor;
+  /** Trusted artifact validation; rejection is a definitive failed model result. */
+  validateResult?: (text: string) => void;
   /** Trusted local artifact readback before a successful report can commit. */
   persistResultArtifact?: (attemptId: string, text: string, resultDigest: Digest) => Promise<void> | void;
 }
@@ -139,9 +141,18 @@ export function createForgeModelExecutor(
       // Native fetch follows 3xx by default, which would hide extra requests and hosts.
       return trustedTransport(input, { ...init, redirect: "manual" });
     }, { preconnect: fetch.preconnect });
-    const model = await resolveLanguageModel(
+    let model = await resolveLanguageModel(
       invocation.provider, invocation.model, secrets, transport,
     );
+    if (invocation.outputMode === "json") {
+      if (typeof model === "string" || model.specificationVersion !== "v3") {
+        throw new AgentFabricError("AF_INVALID_STATE", "JSON output requires a v3 language model");
+      }
+      model = wrapLanguageModel({ model, middleware: {
+        specificationVersion: "v3",
+        transformParams: async ({ params }) => ({ ...params, responseFormat: { type: "json" } }),
+      } });
+    }
     const result = await generateText({
       model,
       system: invocation.systemPrompt,
@@ -244,7 +255,9 @@ export class P0bModelAdapter implements AgentAdapter {
         !target.allowedModels.includes(invocation.model) ||
         target.provider !== invocation.provider ||
         invocation.contextPackDigest !== spec.contextPackDigest ||
-        invocation.schemaVersion !== 1 || invocation.outputMode !== "text" ||
+        invocation.schemaVersion !== 1 ||
+        (invocation.outputMode !== "text" &&
+          (invocation.outputMode !== "json" || invocation.provider !== "ollama")) ||
         typeof invocation.systemPrompt !== "string" || typeof invocation.prompt !== "string" ||
         (invocation.temperature !== undefined &&
           (!Number.isFinite(invocation.temperature) || invocation.temperature < 0 || invocation.temperature > 2))) {
@@ -332,14 +345,21 @@ export class P0bModelAdapter implements AgentAdapter {
         return { status: "unknown", reason: "invalid_or_oversized_provider_result" };
       }
       const resultDigest = sha256Digest(result.text);
-      if (this.options.persistResultArtifact) {
+      let valid = true;
+      try {
+        this.options.validateResult?.(result.text);
+      } catch (error) {
+        if (!(error instanceof AgentFabricError) || error.code !== "AF_INVALID_STATE") throw error;
+        valid = false;
+      }
+      if (valid && this.options.persistResultArtifact) {
         try {
           await this.options.persistResultArtifact(permit.attemptId, result.text, resultDigest);
         } catch {
           return { status: "unknown", reason: "result_artifact_readback_unknown" };
         }
       }
-      this.resultArtifacts.set(permit.attemptId, result.text);
+      if (valid) this.resultArtifacts.set(permit.attemptId, result.text);
       const report: WorkerResultReport = {
         reportId: `report:${permit.attemptId}`,
         attemptId: permit.attemptId,
@@ -348,7 +368,7 @@ export class P0bModelAdapter implements AgentAdapter {
         planRevisionId: permit.planRevisionId,
         effectiveRunSpecDigest: permit.effectiveRunSpecDigest,
         fencingToken: permit.fencingToken,
-        status: "succeeded",
+        status: valid ? "succeeded" : "failed",
         resultDigest,
         evidenceDigests: [digestCanonical({
           provider: prepared.invocation.provider,

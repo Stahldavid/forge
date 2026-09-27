@@ -264,7 +264,7 @@ That public entry point exposes the hardened Conductor and hardened replay funct
 ## Local coding pilot (experimental)
 
 The framework checkout also exposes a bounded single-owner CLI path. Run these commands
-from the root of a trusted Git repository with Ollama running and `qwen3:0.6b`
+from the root of a trusted Git repository with Ollama running and `qwen2.5-coder:3b`
 installed. This pilot uses no hosted API key or Codex model turn.
 
 ```text

@@ -56,7 +56,8 @@ export function buildLocalCodingContext(repositoryRoot: string, task: Readonly<L
   return content;
 }
 
-function validateModelFiles(text: string, task: Readonly<LocalCodingTaskProposal>): readonly { path: string; content: string }[] {
+/** Check the complete proposal before recording a successful result or a patch effect intent. */
+export function validateLocalCodingModelOutput(text: string, task: Readonly<LocalCodingTaskProposal>): readonly { path: string; content: string }[] {
   if (Buffer.byteLength(text, "utf8") > task.limits.maximumPatchBytes) {
     throw new AgentFabricError("AF_INVALID_STATE", "Model output exceeds the approved patch byte limit");
   }
@@ -163,7 +164,7 @@ export function readbackLocalCodingPatch(
   repositoryRoot: string, taskId: string,
   task: Readonly<LocalCodingTaskProposal>, modelText: string,
 ): LocalPatchEvidence {
-  const files = validateModelFiles(modelText, task);
+  const files = validateLocalCodingModelOutput(modelText, task);
   const worktreePath = localFabricPath(repositoryRoot, "worktrees", taskId.replace(/^task:/u, ""));
   if (!existsSync(worktreePath)) throw new AgentFabricError("AF_CONFLICT", "Patch checkout was not materialized");
   const worktreeRoot = realpathSync(worktreePath);
@@ -212,7 +213,7 @@ export function materializeLocalCodingPatch(
   task: Readonly<LocalCodingTaskProposal>,
   modelText: string,
 ): LocalPatchEvidence {
-  const files = validateModelFiles(modelText, task);
+  const files = validateLocalCodingModelOutput(modelText, task);
   const worktreeRoot = localFabricPath(repositoryRoot, "worktrees", taskId.replace(/^task:/u, ""));
   const existing = existsSync(worktreeRoot);
   if (!existing) {

@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import { digestCanonical, sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
-import { buildLocalCodingContext, materializeLocalCodingPatch, readbackLocalCodingPatch, verifyLocalPatchEvidence, type LocalPatchEvidence } from "./local-coding-worker.ts";
+import { buildLocalCodingContext, materializeLocalCodingPatch, readbackLocalCodingPatch, validateLocalCodingModelOutput, verifyLocalPatchEvidence, type LocalPatchEvidence } from "./local-coding-worker.ts";
 import { validateLocalCodingTaskProposal } from "./local-task-contract.ts";
 import { createForgeModelExecutor, executeP0bActivity, P0bModelAdapter, type ModelExecutor } from "./p0b-model-adapter.ts";
 import { createRunPlanRevision } from "./planning.ts";
@@ -45,7 +45,7 @@ export interface LocalTaskProvenance {
   baseCommit: string;
   memoryIds?: readonly string[];
   modelTargetId: string;
-  model: "qwen3:0.6b";
+  model: "qwen2.5-coder:3b";
   permit?: { permitId: string; attemptId: string; fencingToken: number };
   outcome?: { status: "succeeded" | "failed"; resultDigest: Digest; reportDigest: Digest; committedAt: number };
   patch?: { diffDigest: Digest; changedPaths: readonly string[]; verification: LocalPatchEvidence["verification"] };
@@ -427,7 +427,7 @@ export class LocalTaskService {
       baseCommit: status.baseCommit,
       ...(status.memoryIds ? { memoryIds: status.memoryIds } : {}),
       modelTargetId: status.requestedModelTargetId,
-      model: "qwen3:0.6b" as const,
+      model: "qwen2.5-coder:3b" as const,
       ...(permit ? { permit: { permitId: permit.permitId, attemptId: permit.attemptId,
         fencingToken: permit.fencingToken } } : {}),
       ...(outcome ? { outcome: { status: outcome.status, resultDigest: outcome.resultDigest,
@@ -513,7 +513,7 @@ export class LocalTaskService {
     }
     const task = record.proposal;
     const targetId = "target:ollama:local";
-    const model = "qwen3:0.6b";
+    const model = "qwen2.5-coder:3b";
     if (task.requestedModelTargetId !== targetId ||
         task.limits.expiresAt - Date.now() < task.limits.maximumWallClockMs + 10_000) {
       throw new AgentFabricError("AF_INVALID_STATE", "Local model target or remaining approval window is invalid");
@@ -565,7 +565,7 @@ export class LocalTaskService {
       maxOutputTokens: task.limits.maximumOutputTokens,
       maximumRequestBytes: 64 * 1024,
       maximumResultBytes: task.limits.maximumPatchBytes,
-      outputMode: "text" as const,
+      outputMode: "json" as const,
     };
     const materializationDigest = digestCanonical(invocation, sha256Digest);
     const spec = {
@@ -635,6 +635,7 @@ export class LocalTaskService {
         resolveHarness: (id) => id === harness.harnessSpecId ? harness : undefined,
         resolveProfile: (id) => id === profile.executionProfileId ? profile : undefined,
         executeModel: this.modelExecutor ?? createForgeModelExecutor(secrets),
+        validateResult: (text) => { validateLocalCodingModelOutput(text, task); },
         persistResultArtifact: (_attemptId, text, resultDigest) => {
           persistLocalModelArtifact(artifactPath, resultDigest, text);
         },
@@ -691,6 +692,7 @@ export class LocalTaskService {
 
   private async materializeReportedModel(record: LocalTaskRecord): Promise<LocalTaskStatus> {
     const saved = await this.committedModelText(record);
+    validateLocalCodingModelOutput(saved.text, record.proposal);
     await this.inbox.beginMaterialization(record.taskId, saved.resultDigest);
     const patch = materializeLocalCodingPatch(this.repositoryRoot, record.taskId, record.proposal, saved.text);
     await this.inbox.recordPatch(record.taskId, patch);

@@ -24,14 +24,33 @@ general sandbox for adversarial source code or external agent executables.
 | Plan step | Local implementation | Acceptance limit |
 | --- | --- | --- |
 | 0 Release integrity | Public `forgeos@0.1.0-alpha.64` was read back; this change has a patch changeset. | The next package must pass its own exact-head release and public readback. |
-| 1-4 Contract, CLI, control, approval | Bounded task contract, owner-scoped PGlite journal, CLI and local popup. | Final popup decision and crash/replay evidence still need exact-head confirmation. |
-| 5-6 Worker and assurance | P0a permit-bound local Ollama call, isolated checkout, patch digest, status/readback, and separate diff acceptance. | Model quality and owner acceptance must be observed on a real fixture; ambiguous dispatch never means success. |
+| 1-4 Contract, CLI, control, approval | Bounded task contract, owner-scoped PGlite journal, CLI and local popup. | Delegated popup decisions were observed on a disposable fixture; exact-head release confirmation remains. |
+| 5-6 Worker and assurance | P0a permit-bound local Ollama call, isolated checkout, patch digest, status/readback, and separate diff acceptance. | Real local model and Docker checks passed; ambiguous dispatch never means success. Model quality outside the fixed fixture is not established. |
 | 7 Agent clients | CLI and proposal/status/evidence MCP adapter share one local owner; two independent stdio clients were exercised. | A native Codex App MCP call in the current app session is still unobserved. MCP cannot approve or run. |
 | 8 Effects and sandbox | Fixed patch and Docker verification paths use durable intents, inspectable receipts, and fail-closed reconciliation. | No arbitrary consequential effect broker or OS sandbox for coding agents is adopted. |
 | 9 Context and memory | Source snapshot checks, bounded private owner memory, deletion, and proposal binding. | Memory is untrusted context, never authority. No shared multiuser memory. |
 | 10 Adaptive harness | Owner-reviewed fixed two-process digest workflow with attenuated P0a child permits and durable join readback. | These are data workers, not multiple general coding agents; a crash before committed join remains uncertain. |
 | 11 Evolution Registry | Immutable versioned, fixed-schema data profiles; fixed evaluation and owner canary/promotion/revocation. | No executable extension or autonomous self-promotion. |
 | 12 Multiuser production | Outside the selected one-PC target. | Requires separate identity, tenant, storage, operations, and security gates. |
+
+## Local acceptance evidence
+
+- A real `qwen2.5-coder:3b` run changed only `answer.txt: alpha -> beta` in an
+  isolated checkout. `git diff --check` and the fixed Docker Node check passed.
+  Reopening the owner returned the same evidence digest without another model
+  call. A separate two-client MCP smoke observed one owner across a restart and
+  made zero model calls.
+- The disposable task `task:67b0c5df78a53e1d502320db213e6485c7e5948edfc9eb2dd23c5a322a4527eb`
+  was approved, run, and its diff `sha256:0ace9a0bec6340fcb7273627a2b8a73600dcc94c48014067000e36057ef22e2a`
+  accepted through two Chrome popup decisions. The user explicitly delegated
+  these clicks to the agent. This proves the UI decision path, but does not
+  establish an independent human decision for this fixture.
+- Two earlier owner-approved `qwen3:0.6b` attempts returned malformed file
+  proposals. The original remains `patch_uncertain` due to the pre-fix effect
+  ordering; its isolated checkout was never created. The second committed a
+  definitive `model_failed` outcome without a patch intent or retry. Neither
+  attempt was replayed. The fixed worker now validates before committing a
+  successful result or beginning patch materialization.
 
 ## Final evidence to record
 
@@ -40,8 +59,9 @@ general sandbox for adversarial source code or external agent executables.
    verification result, including any machine-specific blocker.
 3. Real keyless Ollama patch, Docker verification, restart readback, and a
    two-client MCP proposal/status/evidence run on that exact candidate.
-4. Human owner approval and diff decision in the final local popup. A synthetic
-   approval test cannot substitute for this observation.
+4. Popup approval and diff decision in the final local flow, with the decision
+   actor recorded. The delegated disposable-fixture clicks above cannot be
+   described as independent human review.
 5. Merged release PR, npm `alpha` dist-tag and installed-package smoke if this
    candidate is published.
 

@@ -17,6 +17,54 @@ function git(root: string, ...args: string[]): string {
 }
 
 describe("local task service", () => {
+  test("malformed fenced model JSON fails durably before patch intent or worktree creation", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-invalid-model-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      const proposal: LocalCodingTaskProposal = {
+        schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+        goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+        sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+        requestedModelTargetId: "target:ollama:local",
+        limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+          maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+      };
+      let modelCalls = 0;
+      const service = await LocalTaskService.open(root, async () => "approved", async () => {
+        modelCalls += 1;
+        return { text: "```json\n{\"schemaVersion\":1,\"files\":[{\"path\":\"source.txt\",\"content\":\"bad\"}\n```" };
+      });
+      let taskId = "";
+      try {
+        taskId = (await service.propose(proposal)).taskId;
+        await service.review(taskId);
+        const failed = await service.run(taskId);
+        expect(failed.state).toBe("model_failed");
+        expect(failed.evidence).toBe("model_failure");
+        expect(failed.patch).toBeUndefined();
+        expect(existsSync(localFabricPath(root, "worktrees", taskId.slice(5)))).toBe(false);
+        await expect(service.run(taskId)).rejects.toThrow("no unused owner-approved model attempt");
+        expect(modelCalls).toBe(1);
+      } finally { await service.close(); }
+      const db = await createPgliteAdapter(localFabricPath(root, "pglite"));
+      try {
+        const intents = await db.query("SELECT task_id FROM _forge_agent_fabric_local_materializations WHERE task_id = $1", [taskId]);
+        expect(intents.rows).toHaveLength(0);
+      } finally { await db.close(); }
+      const reopened = await LocalTaskService.open(root, async () => "rejected");
+      try {
+        expect((await reopened.status(taskId)).state).toBe("model_failed");
+        await expect(reopened.run(taskId)).rejects.toThrow("no unused owner-approved model attempt");
+      } finally { await reopened.close(); }
+      expect(modelCalls).toBe(1);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
   test("a source edit during the owner popup cannot authorize a stale proposal", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-review-stale-"));
     try {
