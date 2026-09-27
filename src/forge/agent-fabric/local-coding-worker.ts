@@ -19,14 +19,14 @@ function git(root: string, args: readonly string[], maxBuffer = 128 * 1024): str
 }
 
 /** Git checkout may invoke post-checkout and configured smudge/process filters. */
-function inertCheckoutOptions(repositoryRoot: string): string[] {
+function inertCheckoutOptions(repositoryRoot: string, configRoot = repositoryRoot): string[] {
   const hooksDir = localFabricPath(repositoryRoot, "empty-hooks");
   mkdirSync(hooksDir, { recursive: true, mode: 0o700 });
   let names = "";
   try {
     names = execFileSync("git", ["config", "--name-only", "--get-regexp",
       "^filter\\..*\\.(process|smudge|clean)$"], {
-      cwd: repositoryRoot, encoding: "utf8", windowsHide: true,
+      cwd: configRoot, encoding: "utf8", windowsHide: true,
       timeout: 10_000, maxBuffer: 64 * 1024, stdio: ["ignore", "pipe", "ignore"],
     });
   } catch (error) {
@@ -218,7 +218,11 @@ export function materializeLocalCodingPatch(
   if (!existing) {
     mkdirSync(dirname(worktreeRoot), { recursive: true });
     git(repositoryRoot, [...inertCheckoutOptions(repositoryRoot),
-      "worktree", "add", "--detach", "--", worktreeRoot, task.baseCommit]);
+      "worktree", "add", "--detach", "--no-checkout", "--", worktreeRoot, task.baseCommit]);
+    // Resolve includeIf and worktree-specific filter settings from the new
+    // worktree before any checkout reads untrusted repository content.
+    git(worktreeRoot, [...inertCheckoutOptions(repositoryRoot, worktreeRoot),
+      "reset", "--hard", task.baseCommit]);
   }
   const canonical = realpathSync(worktreeRoot);
   const reportedRoot = realpathSync(git(canonical, ["rev-parse", "--show-toplevel"]).trim());
@@ -241,7 +245,8 @@ export function materializeLocalCodingPatch(
       syncParentDirectories(target, canonical);
     }
   }
-  git(canonical, [...inertCheckoutOptions(repositoryRoot), "add", "-N", "--", ...files.map((file) => file.path)]);
+  git(canonical, [...inertCheckoutOptions(repositoryRoot, canonical),
+    "add", "-N", "--", ...files.map((file) => file.path)]);
   const diff = git(canonical, ["diff", "--no-ext-diff", "--binary", "--", ...files.map((file) => file.path)],
     task.limits.maximumPatchBytes + 1);
   const diffBytes = Buffer.byteLength(diff, "utf8");
