@@ -3,6 +3,9 @@ import { AgentFabricError } from "./errors.ts";
 import type { Digest } from "./types.ts";
 import type { LocalVerificationCommand } from "./local-verification.ts";
 
+export const LOCAL_CODING_MODEL = "qwen2.5-coder:3b" as const;
+export const LOCAL_CODING_TARGET = "target:ollama:local" as const;
+
 /** Untrusted request data. This does not grant authority or start a task. */
 export interface LocalCodingTaskProposal {
   schemaVersion: 1;
@@ -15,6 +18,8 @@ export interface LocalCodingTaskProposal {
   memoryIds?: readonly string[];
   writablePaths: readonly string[];
   requestedModelTargetId: string;
+  /** Required for new proposals; absent only in stored proposals predating model pinning. */
+  requestedModelId?: string;
   verification?: { imageId: string; commands: readonly LocalVerificationCommand[] };
   limits: {
     maximumAttempts: number;
@@ -113,7 +118,10 @@ function freezeDeep<T>(value: T): T {
  * Validate and digest only a proposal. Trusted repository resolution, owner admission,
  * path readback, resource reservation, and execution happen at later boundaries.
  */
-export function validateLocalCodingTaskProposal(input: unknown): ValidatedLocalCodingTaskProposal {
+export function validateLocalCodingTaskProposal(
+  input: unknown,
+  mode: "new" | "stored" = "new",
+): ValidatedLocalCodingTaskProposal {
   const canonical = stableStringify(input);
   if (Buffer.byteLength(canonical, "utf8") > MAX_PROPOSAL_BYTES) invalid("proposalBytes");
   const decoded = JSON.parse(canonical) as Record<string, unknown>;
@@ -121,9 +129,13 @@ export function validateLocalCodingTaskProposal(input: unknown): ValidatedLocalC
     Object.hasOwn(decoded, "verification");
   const hasMemory = decoded !== null && typeof decoded === "object" && !Array.isArray(decoded) &&
     Object.hasOwn(decoded, "memoryIds");
+  const hasModel = decoded !== null && typeof decoded === "object" && !Array.isArray(decoded) &&
+    Object.hasOwn(decoded, "requestedModelId");
+  if (!hasModel && mode !== "stored") invalid("requestedModelId");
   const raw = record(decoded, "proposal", [
     "schemaVersion", "repositoryId", "baseCommit", "goal", "acceptanceCriteria",
     "nonObjectives", "sourcePaths", "writablePaths", "requestedModelTargetId", "limits",
+    ...(hasModel ? ["requestedModelId"] : []),
     ...(hasVerification ? ["verification"] : []),
     ...(hasMemory ? ["memoryIds"] : []),
   ]);
@@ -171,6 +183,7 @@ export function validateLocalCodingTaskProposal(input: unknown): ValidatedLocalC
     ...(hasMemory ? { memoryIds: memoryIds(raw.memoryIds) } : {}),
     writablePaths: pathList(raw.writablePaths, "writablePaths", 12),
     requestedModelTargetId: identifier(raw.requestedModelTargetId, "requestedModelTargetId"),
+    ...(hasModel ? { requestedModelId: identifier(raw.requestedModelId, "requestedModelId") } : {}),
     ...(verification ? { verification } : {}),
     limits: {
       maximumAttempts: positiveInteger(limits.maximumAttempts, "limits.maximumAttempts", 3),

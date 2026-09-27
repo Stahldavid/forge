@@ -68,7 +68,8 @@ function renderPage(view: LocalApprovalView, token: string): string {
     row("Memória privada selecionada (dados sem autoridade)", view.memory?.map((entry) =>
       `${entry.id}: ${entry.text} (fonte ${entry.sourceSnapshotDigest}; expira ${new Date(entry.expiresAt).toISOString()})`).join(" • ") || "Nenhuma"),
     row("Escrita", task.writablePaths.join(" • ")),
-    row("Modelo local", task.requestedModelTargetId),
+    row("Alvo local", task.requestedModelTargetId),
+    row("Modelo aprovado", task.requestedModelId ?? "Desconhecido (proposta antiga)"),
     row("Limites", `${task.limits.maximumAttempts} tentativa(s); ${task.limits.maximumWallClockMs} ms; ${task.limits.maximumOutputTokens} tokens; ${task.limits.maximumContextBytes} bytes de contexto; ${task.limits.maximumPatchBytes} bytes de patch`),
     row("Expira", expires),
     row("Comandos de verificação", task.verification

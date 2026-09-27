@@ -6,7 +6,7 @@ import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import { digestCanonical, sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import { buildLocalCodingContext, materializeLocalCodingPatch, readbackLocalCodingPatch, validateLocalCodingModelOutput, verifyLocalPatchEvidence, type LocalPatchEvidence } from "./local-coding-worker.ts";
-import { validateLocalCodingTaskProposal } from "./local-task-contract.ts";
+import { LOCAL_CODING_MODEL, LOCAL_CODING_TARGET, validateLocalCodingTaskProposal } from "./local-task-contract.ts";
 import { createForgeModelExecutor, executeP0bActivity, P0bModelAdapter, type ModelExecutor } from "./p0b-model-adapter.ts";
 import { createRunPlanRevision } from "./planning.ts";
 import { requestLocalApproval, requestLocalPatchAcceptance, requestLocalVerificationRecovery, type LocalApprovalDecision, type LocalApprovalView, type LocalPatchReviewView, type LocalVerificationRecoveryView } from "./local-approval-window.ts";
@@ -28,6 +28,7 @@ export interface LocalTaskStatus {
   memoryIds?: readonly string[];
   writablePaths: readonly string[];
   requestedModelTargetId: string;
+  requestedModelId: string | null;
   state: "proposed" | "rejected" | "owner_approved" | "cancelled" | "model_uncertain" | "model_reported" | "model_failed" | "patch_uncertain" | "patch_mismatch" | "patch_ready" | "accepted" | "rejected_patch";
   canStart: boolean;
   evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_uncertain" | "patch_mismatch" | "patch_ready";
@@ -45,7 +46,7 @@ export interface LocalTaskProvenance {
   baseCommit: string;
   memoryIds?: readonly string[];
   modelTargetId: string;
-  model: "qwen2.5-coder:3b";
+  model: string | null;
   permit?: { permitId: string; attemptId: string; fencingToken: number };
   outcome?: { status: "succeeded" | "failed"; resultDigest: Digest; reportDigest: Digest; committedAt: number };
   patch?: { diffDigest: Digest; changedPaths: readonly string[]; verification: LocalPatchEvidence["verification"] };
@@ -295,6 +296,10 @@ export class LocalTaskService {
 
   async propose(input: unknown): Promise<LocalTaskStatus> {
     const validated = validateLocalCodingTaskProposal(input);
+    if (validated.proposal.requestedModelTargetId !== LOCAL_CODING_TARGET ||
+        validated.proposal.requestedModelId !== LOCAL_CODING_MODEL) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Local task must pin the supported model and target");
+    }
     const existingTaskId = `task:${digestSuffix(validated.proposalDigest)}`;
     const existing = await this.inbox.get(existingTaskId);
     if (existing) {
@@ -392,8 +397,11 @@ export class LocalTaskService {
       ...(record.proposal.memoryIds ? { memoryIds: record.proposal.memoryIds } : {}),
       writablePaths: record.proposal.writablePaths,
       requestedModelTargetId: record.proposal.requestedModelTargetId,
+      requestedModelId: record.proposal.requestedModelId ?? null,
       state,
-      canStart: state === "owner_approved" && record.proposal.limits.expiresAt > Date.now(),
+      canStart: state === "owner_approved" && record.proposal.requestedModelId === LOCAL_CODING_MODEL &&
+        record.proposal.requestedModelTargetId === LOCAL_CODING_TARGET &&
+        record.proposal.limits.expiresAt > Date.now(),
       evidence: materialization?.state === "started" ? "patch_uncertain" : patchMismatched ? "patch_mismatch" : patch ? "patch_ready" : outcome && outcome.payload.type === "attempt_outcome_committed" &&
         outcome.payload.outcome.status !== "succeeded" ? "model_failure"
         : outcome ? "model_result" : permit ? "provider_uncertain" : "not_started",
@@ -427,7 +435,7 @@ export class LocalTaskService {
       baseCommit: status.baseCommit,
       ...(status.memoryIds ? { memoryIds: status.memoryIds } : {}),
       modelTargetId: status.requestedModelTargetId,
-      model: "qwen2.5-coder:3b" as const,
+      model: status.requestedModelId,
       ...(permit ? { permit: { permitId: permit.permitId, attemptId: permit.attemptId,
         fencingToken: permit.fencingToken } } : {}),
       ...(outcome ? { outcome: { status: outcome.status, resultDigest: outcome.resultDigest,
@@ -457,6 +465,10 @@ export class LocalTaskService {
     const record = await this.inbox.get(taskId);
     if (!record || record.repositoryRoot !== this.repositoryRoot) {
       throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
+    }
+    if (record.proposal.requestedModelId !== LOCAL_CODING_MODEL ||
+        record.proposal.requestedModelTargetId !== LOCAL_CODING_TARGET) {
+      throw new AgentFabricError("AF_CONFLICT", "Task has no pinned supported model; submit a fresh proposal");
     }
     const current = await this.status(taskId);
     if (current.state !== "proposed" || record.proposal.limits.expiresAt <= Date.now()) {
@@ -508,12 +520,16 @@ export class LocalTaskService {
     if (before.state === "model_reported") {
       return this.materializeReportedModel(record);
     }
+    if (record.proposal.requestedModelId !== LOCAL_CODING_MODEL ||
+        record.proposal.requestedModelTargetId !== LOCAL_CODING_TARGET) {
+      throw new AgentFabricError("AF_CONFLICT", "Task has no pinned supported model; submit a fresh proposal");
+    }
     if (!before.canStart) {
       throw new AgentFabricError("AF_CONFLICT", "Task has no unused owner-approved model attempt");
     }
     const task = record.proposal;
-    const targetId = "target:ollama:local";
-    const model = "qwen2.5-coder:3b";
+    const targetId = LOCAL_CODING_TARGET;
+    const model = LOCAL_CODING_MODEL;
     if (task.requestedModelTargetId !== targetId ||
         task.limits.expiresAt - Date.now() < task.limits.maximumWallClockMs + 10_000) {
       throw new AgentFabricError("AF_INVALID_STATE", "Local model target or remaining approval window is invalid");

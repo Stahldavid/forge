@@ -13,7 +13,7 @@ function proposal() {
     nonObjectives: ["Do not publish a release"],
     sourcePaths: ["src/forge/agent-fabric/journal.ts"],
     writablePaths: ["src/forge/agent-fabric/local-helper.ts"],
-    requestedModelTargetId: "target:ollama:local",
+    requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
     limits: {
       maximumAttempts: 1,
       maximumWallClockMs: 60_000,
@@ -26,6 +26,19 @@ function proposal() {
 }
 
 describe("local coding task proposal contract", () => {
+  test("pins model identity in new proposal digests and reads legacy bytes only in stored mode", () => {
+    const current = proposal();
+    const pinned = validateLocalCodingTaskProposal(current);
+    expect(pinned.proposal.requestedModelId).toBe("qwen2.5-coder:3b");
+    expect(validateLocalCodingTaskProposal({ ...current, requestedModelId: "qwen3:0.6b" }).proposalDigest)
+      .not.toBe(pinned.proposalDigest);
+    const { requestedModelId: _omitted, ...legacy } = current;
+    expect(() => validateLocalCodingTaskProposal(legacy)).toThrow("requestedModelId");
+    const stored = validateLocalCodingTaskProposal(legacy, "stored");
+    expect(stored.proposal.requestedModelId).toBeUndefined();
+    expect(stored.proposalDigest).not.toBe(pinned.proposalDigest);
+  });
+
   test("owner memory CLI commands require explicit input", () => {
     expect(parseCli(["fabric", "memory-add", "--file", "note.json"]).command)
       .toMatchObject({ kind: "fabric", subcommand: "memory-add", file: "note.json" });
@@ -50,6 +63,7 @@ describe("local coding task proposal contract", () => {
     const reordered = {
       limits: { ...request.limits },
       requestedModelTargetId: request.requestedModelTargetId,
+      requestedModelId: request.requestedModelId,
       writablePaths: request.writablePaths,
       sourcePaths: request.sourcePaths,
       nonObjectives: request.nonObjectives,

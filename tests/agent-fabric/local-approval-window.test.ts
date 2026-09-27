@@ -11,7 +11,7 @@ test("local popup accepts Chrome no-referrer same-origin POST but rejects cross-
       schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: "a".repeat(40),
       goal: "Change a fixture", acceptanceCriteria: ["fixture changes"], nonObjectives: [],
       sourcePaths: ["fixture.txt"], writablePaths: ["fixture.txt"],
-      requestedModelTargetId: "target:ollama:local",
+      requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
       limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
         maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 60_000 },
     },
@@ -21,6 +21,7 @@ test("local popup accepts Chrome no-referrer same-origin POST but rejects cross-
     openBrowser: async (url) => {
       const page = await fetch(url);
       expect(page.status).toBe(200);
+      expect(await page.text()).toContain("qwen2.5-coder:3b");
       expect(page.headers.get("referrer-policy")).toBe("no-referrer");
       const endpoint = new URL(url);
       endpoint.pathname = `/decision/${endpoint.pathname.slice(1)}`;

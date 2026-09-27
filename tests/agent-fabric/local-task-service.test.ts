@@ -4,6 +4,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { LocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
+import { validateLocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
 import { LocalTaskService } from "../../src/forge/agent-fabric/local-task-service.ts";
 import { LocalTaskInbox } from "../../src/forge/agent-fabric/local-task-inbox.ts";
 import { digestCanonical, sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
@@ -17,6 +18,55 @@ function git(root: string, ...args: string[]): string {
 }
 
 describe("local task service", () => {
+  test("legacy unpinned tasks cannot dispatch and disclose an unknown model", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-legacy-model-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      const proposal: LocalCodingTaskProposal = {
+        schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+        goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+        sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
+        limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+          maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+      };
+      const setup = await LocalTaskService.open(root, async () => "rejected");
+      try { await setup.propose(proposal); } finally { await setup.close(); }
+      const { requestedModelId: _omitted, ...legacy } = proposal;
+      const digest = validateLocalCodingTaskProposal(legacy, "stored").proposalDigest;
+      const taskId = `task:${digest.slice("sha256:".length)}`;
+      const db = await createPgliteAdapter(localFabricPath(root, "pglite"));
+      try {
+        await db.query(`INSERT INTO _forge_agent_fabric_local_tasks
+          (task_id, repository_root, proposal_digest, proposal_json, state, created_at)
+          VALUES ($1, $2, $3, $4, 'proposed', $5)`,
+          [taskId, root, digest, JSON.stringify(legacy), Date.now()]);
+      } finally { await db.close(); }
+      let modelCalls = 0;
+      const service = await LocalTaskService.open(root, async () => "approved", async () => {
+        modelCalls += 1;
+        return { text: "{}" };
+      });
+      try {
+        const status = await service.status(taskId);
+        expect(status.requestedModelId).toBeNull();
+        expect(status.canStart).toBe(false);
+        expect((await service.evidence(taskId)).provenance?.model).toBeNull();
+        await expect(service.review(taskId)).rejects.toThrow("fresh proposal");
+        await expect(service.run(taskId)).rejects.toThrow("fresh proposal");
+        await expect(service.propose(legacy)).rejects.toThrow("requestedModelId");
+        await expect(service.propose({ ...proposal, requestedModelId: "qwen3:0.6b" }))
+          .rejects.toThrow("pin the supported model");
+        expect(modelCalls).toBe(0);
+      } finally { await service.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
   test("malformed fenced model JSON fails durably before patch intent or worktree creation", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-invalid-model-"));
     try {
@@ -30,7 +80,7 @@ describe("local task service", () => {
         schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
         goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
         sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-        requestedModelTargetId: "target:ollama:local",
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
           maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
       };
@@ -78,7 +128,7 @@ describe("local task service", () => {
         schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
         goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
         sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-        requestedModelTargetId: "target:ollama:local",
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
           maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
       };
@@ -108,7 +158,7 @@ describe("local task service", () => {
         schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
         goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
         sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-        requestedModelTargetId: "target:ollama:local",
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
           maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
       };
@@ -164,7 +214,7 @@ describe("local task service", () => {
           schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
           goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
           sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-          requestedModelTargetId: "target:ollama:local",
+          requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
           limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
             maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
         })).taskId;
@@ -221,7 +271,7 @@ describe("local task service", () => {
           schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
           goal: "Change source.txt", acceptanceCriteria: ["source.txt changes"], nonObjectives: [],
           sourcePaths: ["source.txt"], writablePaths: ["source.txt"], memoryIds: [note.id],
-          requestedModelTargetId: "target:ollama:local",
+          requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
           limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
             maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
         };
@@ -336,7 +386,7 @@ describe("local task service", () => {
           schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
           goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
           sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-          requestedModelTargetId: "target:ollama:local",
+          requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
           limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
             maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
         });
@@ -364,7 +414,7 @@ describe("local task service", () => {
         schemaVersion: 1, repositoryId: "repo:fixture", baseCommit,
         goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"],
         nonObjectives: [], sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-        requestedModelTargetId: "target:ollama:local",
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         limits: { maximumAttempts: 1, maximumWallClockMs: 60_000,
           maximumOutputTokens: 256, maximumContextBytes: 4_096,
           maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
@@ -486,7 +536,7 @@ if (process.env.FORGE_FABRIC_DOCKER_SMOKE === "1") {
       const proposal: LocalCodingTaskProposal = {
         schemaVersion: 1, repositoryId: "repo:verification-continuation", baseCommit: git(root, "rev-parse", "HEAD"),
         goal: "Change answer to beta", acceptanceCriteria: ["answer.txt contains beta"], nonObjectives: [],
-        sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"], requestedModelTargetId: "target:ollama:local",
+        sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"], requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         verification: { imageId, commands: [
           { kind: "git-diff-check", timeoutMs: 5_000 },
           { kind: "node-test-file", path: "one.test.mjs", timeoutMs: 20_000 },
@@ -569,7 +619,7 @@ if (process.env.FORGE_FABRIC_DOCKER_SMOKE === "1") {
         schemaVersion: 1, repositoryId: "repo:verified", baseCommit: git(root, "rev-parse", "HEAD"),
         goal: "Change answer to beta", acceptanceCriteria: ["answer.txt contains beta"],
         nonObjectives: [], sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"],
-        requestedModelTargetId: "target:ollama:local",
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         verification: { imageId, commands: [
           { kind: "git-diff-check", timeoutMs: 5_000 },
           { kind: "node-test-file", path: "pass.test.mjs", timeoutMs: 20_000 },

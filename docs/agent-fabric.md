@@ -286,11 +286,16 @@ node bin/forge.mjs fabric serve --json
 
 `task.json` is an untrusted proposal. Its required fields are `schemaVersion: 1`,
 `repositoryId`, the full `baseCommit`, `goal`, `acceptanceCriteria`, `nonObjectives`,
-`sourcePaths`, `writablePaths`, `requestedModelTargetId: "target:ollama:local"`, and
+`sourcePaths`, `writablePaths`, `requestedModelTargetId: "target:ollama:local"`,
+`requestedModelId: "qwen2.5-coder:3b"`, and
 `limits` with `maximumAttempts`, `maximumWallClockMs`, `maximumOutputTokens`,
 `maximumContextBytes`, `maximumPatchBytes`, and a Unix millisecond `expiresAt`.
 `review` opens a local browser window showing the exact proposal and digest; `run`
 consumes one approved model attempt and writes a diff in an isolated Git worktree.
+The model ID is part of that digest and appears in the owner review. Existing
+tasks approved before model pinning cannot start a new model call; submit a fresh
+proposal. Their saved outcomes and patches remain available for readback, while
+the exact model for a legacy outcome is reported as unknown.
 The service captures the allowlisted tracked source files at the exact current
 HEAD when proposing and rechecks them before spending the approved model
 attempt. Changed source content or HEAD blocks a stale attempt.

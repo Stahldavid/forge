@@ -172,7 +172,7 @@ export class LocalTaskInbox {
     } catch {
       throw new AgentFabricError("AF_INVALID_STATE", "Stored task proposal is not JSON");
     }
-    const validated = validateLocalCodingTaskProposal(parsed);
+    const validated = validateLocalCodingTaskProposal(parsed, "stored");
     if (row.task_id !== taskId || row.proposal_digest !== validated.proposalDigest ||
         taskIdFor(validated.proposalDigest) !== taskId ||
         (row.state !== "proposed" && row.state !== "rejected") ||

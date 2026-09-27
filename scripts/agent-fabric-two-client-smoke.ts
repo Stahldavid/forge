@@ -111,7 +111,7 @@ try {
         schemaVersion: 1, repositoryId: "repo:two-client-fixture", baseCommit,
         goal: "Change the fixture", acceptanceCriteria: ["answer.txt changes"], nonObjectives: [],
         sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"],
-        requestedModelTargetId: "target:ollama:local",
+        requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
         limits: { maximumAttempts: 1, maximumWallClockMs: 60_000,
           maximumOutputTokens: 256, maximumContextBytes: 4_096,
           maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },

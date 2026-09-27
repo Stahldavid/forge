@@ -35,7 +35,7 @@ test("CLI and MCP clients share one local owner without MCP approval tools", asy
           schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
           goal: "Change source.txt", acceptanceCriteria: ["source.txt changes"], nonObjectives: [],
           sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
-          requestedModelTargetId: "target:ollama:local",
+          requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
           limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
             maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
         };

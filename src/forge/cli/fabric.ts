@@ -1,6 +1,7 @@
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
+import { LOCAL_CODING_MODEL, LOCAL_CODING_TARGET } from "../agent-fabric/local-task-contract.ts";
 import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
 
@@ -20,6 +21,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       ok: true, schemaVersion: 1, runtime: "local-pilot",
       proposal: true, ownerReview: true, durableStatus: true,
       codingWorker: true, ownerServer: true,
+      codingWorkerModel: { targetId: LOCAL_CODING_TARGET, modelId: LOCAL_CODING_MODEL,
+        proposalField: "requestedModelId" },
       sandboxVerification: { supported: true, localReadiness: "not_checked" },
       cancellation: { supported: true, concurrentRequestsRequireOwnerServer: true,
         activeModelStopIsBestEffort: true },

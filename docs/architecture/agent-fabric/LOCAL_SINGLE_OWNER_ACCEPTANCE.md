@@ -40,11 +40,17 @@ general sandbox for adversarial source code or external agent executables.
   Reopening the owner returned the same evidence digest without another model
   call. A separate two-client MCP smoke observed one owner across a restart and
   made zero model calls.
-- The disposable task `task:67b0c5df78a53e1d502320db213e6485c7e5948edfc9eb2dd23c5a322a4527eb`
+- The pinned-model disposable task `task:17e2370c2ba46d38e2437a38d098f92ef2ec3aea5be77107073add81c7eb0736`
   was approved, run, and its diff `sha256:0ace9a0bec6340fcb7273627a2b8a73600dcc94c48014067000e36057ef22e2a`
   accepted through two Chrome popup decisions. The user explicitly delegated
-  these clicks to the agent. This proves the UI decision path, but does not
-  establish an independent human decision for this fixture.
+  these clicks to the agent. Restart readback reported `accepted` and the
+  pinned model `qwen2.5-coder:3b`. This proves the UI decision path, but does
+  not establish an independent human decision for this fixture.
+- The approved model ID is part of the new proposal digest and owner popup.
+  Old proposals without that field retain their stored digest, report
+  `model: null` in provenance, and cannot initiate a new model call from an
+  unused approval. A new proposal and decision are required after a model
+  change.
 - Two earlier owner-approved `qwen3:0.6b` attempts returned malformed file
   proposals. The original remains `patch_uncertain` due to the pre-fix effect
   ordering; its isolated checkout was never created. The second committed a

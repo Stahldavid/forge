@@ -29,7 +29,7 @@ async function main(): Promise<void> {
       acceptanceCriteria: ["answer.txt contains exactly beta followed by a newline"],
       nonObjectives: ["Do not change any other file"],
       sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"],
-      requestedModelTargetId: "target:ollama:local",
+      requestedModelTargetId: "target:ollama:local", requestedModelId: "qwen2.5-coder:3b",
       ...(withDocker ? { verification: { imageId: trustedLocalNodeImageId(), commands: [
         { kind: "git-diff-check" as const, timeoutMs: 5_000 },
         { kind: "node-test-file" as const, path: "answer.test.mjs", timeoutMs: 20_000 },
