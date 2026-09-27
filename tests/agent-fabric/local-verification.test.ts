@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { afterEach, expect, test } from "bun:test";
 import { sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
 import type { LocalPatchEvidence } from "../../src/forge/agent-fabric/local-coding-worker.ts";
 import {
-  preflightLocalDockerVerification, runLocalVerification, type VerificationExecutor, type VerificationProcessInvocation,
+  executeVerificationProcess, preflightLocalDockerVerification, runLocalVerification, type VerificationExecutor, type VerificationProcessInvocation,
   type VerificationProcessResult,
 } from "../../src/forge/agent-fabric/local-verification.ts";
 
@@ -120,6 +120,21 @@ test("runs only the approved commands with a pinned offline read-only Docker con
   expect(dockerRun?.args.some((arg) => arg.startsWith("type=bind,src=") &&
     arg.endsWith(",dst=/workspace,readonly"))).toBe(true);
   expect(calls.every((call) => call.maxOutputBytes === 64 * 1024)).toBe(true);
+});
+
+test("host diff verification does not invoke a repository fsmonitor helper", async () => {
+  const { root, patch } = fixture();
+  const marker = join(root, "fsmonitor-ran");
+  const helper = join(root, "fsmonitor-helper");
+  writeFileSync(helper, `#!/bin/sh\nprintf invoked > "${marker.replaceAll("\\", "/")}"\n`);
+  chmodSync(helper, 0o755);
+  git(patch.worktreeRoot, ["config", "core.fsmonitor", helper]);
+  const calls: VerificationProcessInvocation[] = [];
+  const docker = stubbed(calls);
+  const observed = await runLocalVerification(request(patch),
+    (invocation) => invocation.executable === "git" ? executeVerificationProcess(invocation) : docker(invocation));
+  expect(observed.outcome).toBe("passed");
+  expect(existsSync(marker)).toBe(false);
 });
 
 test("rejects traversal and missing or unapproved test files before Docker execution", async () => {

@@ -16,7 +16,9 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
     const result = {
       ok: true, schemaVersion: 1, runtime: "local-pilot",
       proposal: true, ownerReview: true, durableStatus: true,
-      codingWorker: true, ownerServer: true, sandboxVerification: true, consequentialEffects: false,
+      codingWorker: true, ownerServer: true,
+      sandboxVerification: { supported: true, localReadiness: "not_checked" },
+      consequentialEffects: false,
       privateMemory: "owner_cli_only",
       mcpTaskMutation: "proposal_only", mcpEvidence: true,
       nativeCodexHookProofRequired: true,

@@ -350,7 +350,7 @@ export async function runLocalVerification(
   for (const descriptor of request.commands) {
     verifyLocalPatchEvidence(request.patch);
     if (descriptor.kind === "git-diff-check") {
-      const args = ["--no-pager", "-c", "diff.external=", "diff",
+      const args = ["--no-pager", "-c", "core.fsmonitor=false", "-c", "diff.external=", "diff",
         "--no-ext-diff", "--no-textconv", "--check"];
       const { result, durationMs } = await run(executor, "git", args, worktreeRoot, descriptor.timeoutMs);
       results.push(evidence(descriptor, "host-git", ["git", ...args], null, result, durationMs));

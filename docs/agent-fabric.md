@@ -14,6 +14,9 @@ control journal, browser-based owner review, an isolated Ollama coding worker,
 and MCP proposal/status tools backed by a local owner process. It does not make
 a production persistence or security claim. Its scope and remaining gates are
 in [`P0B_B_LOCAL_CODING_SCOPE.md`](./architecture/agent-fabric/P0B_B_LOCAL_CODING_SCOPE.md).
+Owner-selected local memory, fixed two-process data workers, and a standalone
+Evolution Registry have separate narrow workflows below. These do not grant
+the Ollama coding worker new tools or executable extensions.
 
 `LocalAdaptiveHarness.run()` is a fixed local demonstration of two permitted
 Node processes (`inventory` and `constraints`) followed by an authoritative
@@ -31,7 +34,7 @@ The following remain explicitly deferred and must not be inferred from architect
 - consequential-effect brokers and reconciliation against real systems;
 - recovery epochs and integrity-unknown recovery;
 - adaptive model routing/harness compilation beyond the P0a contracts;
-- plugin promotion, persistent memory, and governed self-evolution;
+- executable plugin promotion, shared production memory, and autonomous self-evolution;
 - production deployment or production security claims.
 
 ## P0a scope
@@ -272,11 +275,13 @@ image with a `node@sha256` registry digest; the service rejects a proposal
 pointing to another local image and rechecks the tag before execution.
 Each Node test file must exist in the pinned commit and be outside the task's
 writable paths, so the model cannot replace the test that judges its patch.
-After `run` produces a patch, `verify` checks deterministic test paths and
-mount encoding, then records a durable
-dispatch intent before running checks. A lost process leaves the verification
-state `started`, which cannot be retried automatically. `git diff --check` runs
-on the host; Node tests run inside Docker Desktop without network, with an
+After `run` produces a patch, `verify` checks deterministic test paths,
+mount encoding, Docker context, and the pinned image before recording a durable
+intent. A dispatch barrier is recorded before container execution. The owner
+can clear only an intent that has no dispatch barrier; a potentially started
+container cannot be retried automatically. `git diff --check` runs with external
+diff and filesystem monitor helpers disabled on the host; Node tests run inside
+Docker Desktop without network, with an
 immutable already-installed image, read-only checkout, nonroot user and resource
 limits. Accepting a patch with an approved verification profile requires all
 checks to pass; a failed or uncertain result can still be rejected by the owner.
@@ -310,6 +315,8 @@ Maintainers can run `bun scripts/agent-fabric-local-smoke.ts` for an opt-in real
 Ollama fixture. That script injects a synthetic test approval and confirms a diff;
 it does not prove the human popup flow or coding quality on real projects.
 `FORGE_FABRIC_DOCKER_SMOKE=1 bun test tests/agent-fabric/local-task-service.test.ts`
+exercises the service, approved verification, Docker Desktop, durable readback,
+and acceptance with a synthetic approval callback.
 
 ### Local Evolution Registry (single owner)
 
@@ -350,5 +357,3 @@ evaluation, revocation, and digest checks. This registry does not import or
 execute those bytes or grant them side effects. Its review window is a
 cooperative human checkpoint; same-account shell or browser automation is
 outside its protection boundary. No hosted model or API key is used.
-exercises the service, approved verification, Docker Desktop, durable readback,
-and acceptance with a synthetic approval callback.
