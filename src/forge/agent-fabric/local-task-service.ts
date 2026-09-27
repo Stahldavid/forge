@@ -12,6 +12,7 @@ import { createRunPlanRevision } from "./planning.ts";
 import { requestLocalApproval, requestLocalPatchAcceptance, type LocalApprovalDecision, type LocalApprovalView, type LocalPatchReviewView } from "./local-approval-window.ts";
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
+import { assertCurrentLocalSourceSnapshot, captureLocalSourceSnapshot } from "./local-intelligence.ts";
 import { runLocalVerification, type LocalVerificationEvidence } from "./local-verification.ts";
 import { localFabricPath } from "./local-paths.ts";
 import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
@@ -225,6 +226,10 @@ export class LocalTaskService {
     assertPathsDoNotEscape(this.repositoryRoot, [
       ...validated.proposal.sourcePaths, ...validated.proposal.writablePaths,
     ]);
+    const snapshot = captureLocalSourceSnapshot(this.repositoryRoot, validated.proposal.sourcePaths);
+    if (snapshot.commit !== validated.proposal.baseCommit) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Base commit is not the current source snapshot");
+    }
     const record = await this.inbox.propose(validated.proposal, this.repositoryRoot);
     return this.status(record.taskId);
   }
@@ -391,10 +396,15 @@ export class LocalTaskService {
     }
     const ids = identities(record.proposalDigest);
     const sourceIds = task.sourcePaths.map((path) => `source:${path}`);
+    const sourceSnapshot = captureLocalSourceSnapshot(this.repositoryRoot, task.sourcePaths);
+    if (sourceSnapshot.commit !== task.baseCommit) {
+      throw new AgentFabricError("AF_CONFLICT", "Approved source snapshot is stale");
+    }
     const context = {
       schemaVersion: 1 as const, sourceIds,
       content: buildLocalCodingContext(this.repositoryRoot, task),
     };
+    assertCurrentLocalSourceSnapshot(sourceSnapshot);
     const contextPackDigest = digestCanonical(context, sha256Digest);
     const harness = {
       harnessSpecId: `harness:${digestSuffix(record.proposalDigest)}`,

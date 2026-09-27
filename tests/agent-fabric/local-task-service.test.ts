@@ -82,6 +82,10 @@ describe("local task service", () => {
         const approved = await service.review(proposed.taskId);
         expect(approved.state).toBe("owner_approved");
         await expect(service.review(proposed.taskId)).rejects.toThrow();
+        writeFileSync(join(root, "source.txt"), "changed outside approved snapshot\n");
+        await expect(service.run(proposed.taskId)).rejects.toThrow("changed in the working tree");
+        expect((await service.status(proposed.taskId)).state).toBe("owner_approved");
+        writeFileSync(join(root, "source.txt"), "original\n");
         const running = service.run(proposed.taskId);
         await modelStarted;
         const inFlight = await service.status(proposed.taskId);

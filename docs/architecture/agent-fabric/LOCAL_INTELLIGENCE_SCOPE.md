@@ -24,9 +24,11 @@ Their text is context data. It cannot grant permissions, change budgets, approve
 effects, or override the owner's task contract. This module exposes no MCP or model
 tool, and it does not invoke a model.
 
-Outstanding for complete step 9: wire these primitives through the trusted task
-service and owner controls; prove integration with context selection, redaction,
-retention operations, and recovery; evaluate relevance and resistance to prompt
-injection on real coding tasks. The module is single-process local storage, without
+The trusted task service now checks the source snapshot at proposal and before
+model dispatch; a changed source or HEAD blocks spending the approved attempt.
+The private memory store is not yet exposed through owner controls or used in
+context selection. Outstanding for complete step 9: prove redaction, retention
+operations, and recovery through the service; evaluate relevance and resistance
+to prompt injection on real coding tasks. The module is single-process local storage, without
 cross-process write fencing, encrypted storage, or protection from an unrestricted
 process in the same OS account.

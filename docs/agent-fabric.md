@@ -230,6 +230,9 @@ node bin/forge.mjs fabric serve --json
 `maximumContextBytes`, `maximumPatchBytes`, and a Unix millisecond `expiresAt`.
 `review` opens a local browser window showing the exact proposal and digest; `run`
 consumes one approved model attempt and writes a diff in an isolated Git worktree.
+The service captures the allowlisted tracked source files at the exact current
+HEAD when proposing and rechecks them before spending the approved model
+attempt. Changed source content or HEAD blocks a stale attempt.
 `review-result` shows the recorded diff for a separate owner decision. Acceptance
 records a decision only; it does not alter the original checkout or merge code.
 
