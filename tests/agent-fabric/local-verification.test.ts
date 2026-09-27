@@ -66,6 +66,7 @@ function stubbed(
   runResult: VerificationProcessResult = passed("ok\n"),
   imagePresent = true,
 ): VerificationExecutor {
+  let containerName = "";
   return async (invocation) => {
     calls.push(invocation);
     if (invocation.executable === "git") return passed();
@@ -79,7 +80,34 @@ function stubbed(
       return imagePresent ? passed(`${IMAGE_ID}\n`) :
         { ...passed(), exitCode: 1, stderr: "image absent" };
     }
-    if (invocation.args.includes("run")) return runResult;
+    if (invocation.args.includes("create")) {
+      containerName = invocation.args[invocation.args.indexOf("--name") + 1]!;
+      return passed("container-id\n");
+    }
+    if (invocation.args.includes("start")) return passed();
+    if (invocation.args.includes("stop")) return passed();
+    if (invocation.args.includes("inspect") && invocation.args.includes("container")) {
+      const identity = invocation.args.find((arg) => arg.startsWith("forge-fabric-verify-"))
+        ? containerName : "";
+      const source = calls.find((call) => call.args.includes("create"));
+      const labels = source?.args ?? [];
+      return passed(JSON.stringify({
+        Name: `/${identity}`, Image: IMAGE_ID,
+        Config: { Image: IMAGE_ID, User: "65534:65534",
+          Labels: {
+            "dev.forge.fabric.effect": "local_docker_node_test_v1",
+            "dev.forge.fabric.verification": labels.find((arg) => arg.startsWith("dev.forge.fabric.verification="))?.split("=")[1],
+            "dev.forge.fabric.test": "pass.test.mjs",
+          }, Cmd: ["--test", "/workspace/pass.test.mjs"] },
+        HostConfig: { NetworkMode: "none", ReadonlyRootfs: true, Privileged: false,
+          CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"] },
+        Mounts: [{ Destination: "/workspace", RW: false }],
+        State: { Status: "exited", ExitCode: runResult.exitCode ?? 0,
+          StartedAt: "2026-01-01T00:00:00Z",
+          FinishedAt: runResult.timedOut ? "2026-01-01T00:00:30Z" : "2026-01-01T00:00:01Z" },
+      }));
+    }
+    if (invocation.args.includes("logs")) return passed(runResult.stdout);
     if (invocation.args.includes("rm")) return passed();
     throw new Error("Unexpected verification subprocess");
   };
@@ -103,9 +131,10 @@ test("runs only the approved commands with a pinned offline read-only Docker con
   expect(result.commands.map((command) => command.outcome)).toEqual(["passed", "passed"]);
   expect(result.commands[1]?.imageId).toBe(IMAGE_ID);
   expect(result.commands[1]?.outputDigest).toBe(sha256Digest(JSON.stringify(["ok\n", ""])));
-  const dockerRun = calls.find((call) => call.args.includes("run"));
+  const dockerRun = calls.find((call) => call.args.includes("create"));
   expect(dockerRun?.executable).toBe("docker");
   expect(dockerRun?.args).toContain("--pull=never");
+  expect(dockerRun?.args).toContain("dev.forge.fabric.effect=local_docker_node_test_v1");
   expect(dockerRun?.args).toContain("--network=none");
   expect(dockerRun?.args).toContain("--read-only");
   expect(dockerRun?.args).toContain("--cap-drop=ALL");
@@ -158,7 +187,7 @@ test("fails closed when the exact Docker image is absent", async () => {
   const result = await runLocalVerification(request(patch), stubbed(calls, passed(), false));
   expect(result.outcome).toBe("unavailable");
   expect(result.commands.at(-1)?.outcome).toBe("unavailable");
-  expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+  expect(calls.some((call) => call.args.includes("create"))).toBe(false);
 });
 
 test("checks Docker context and both image identities without starting a container", async () => {
@@ -166,7 +195,7 @@ test("checks Docker context and both image identities without starting a contain
   const calls: VerificationProcessInvocation[] = [];
   await preflightLocalDockerVerification(request(patch), stubbed(calls));
   expect(calls.filter((call) => call.executable === "docker")).toHaveLength(3);
-  expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+  expect(calls.some((call) => call.args.includes("create"))).toBe(false);
   const unavailable: VerificationExecutor = async (invocation) => {
     calls.push(invocation);
     return { ...passed(), exitCode: null, spawnError: "Docker stopped" };
@@ -182,7 +211,7 @@ test("commits a dispatch barrier before the first container run", async () => {
   let barrier = false;
   const executor = stubbed(calls);
   const guarded: VerificationExecutor = (invocation) => {
-    if (invocation.args.includes("run")) expect(barrier).toBe(true);
+    if (invocation.args.includes("create")) expect(barrier).toBe(true);
     return executor(invocation);
   };
   const result = await runLocalVerification(request(patch), guarded, async () => { barrier = true; });
@@ -191,6 +220,55 @@ test("commits a dispatch barrier before the first container run", async () => {
   await expect(runLocalVerification(request(patch), guarded, async () => {
     throw new Error("durable barrier unavailable");
   })).rejects.toThrow("durable barrier unavailable");
+});
+
+test("records the named Docker intent before create and its receipt before cleanup", async () => {
+  const { patch } = fixture();
+  const calls: VerificationProcessInvocation[] = [];
+  const executor = stubbed(calls);
+  const identity = sha256Digest("approved verification request");
+  let intent = false;
+  let receipt = false;
+  const guarded: VerificationExecutor = (invocation) => {
+    if (invocation.args.includes("create")) expect(intent).toBe(true);
+    if (invocation.args.includes("rm")) expect(receipt).toBe(true);
+    return executor(invocation);
+  };
+  const result = await runLocalVerification(request(patch), guarded, {
+    identity,
+    beforeDockerCreate: async (index, name) => {
+      expect(index).toBe(1);
+      expect(name).toBe(`forge-fabric-verify-${identity.slice(7, 39)}-1`);
+      intent = true;
+    },
+    receipt: async (index, command) => {
+      if (index === 1) {
+        expect(intent).toBe(true);
+        expect(command.argv).toContain(`forge-fabric-verify-${identity.slice(7, 39)}-1`);
+        receipt = true;
+      }
+    },
+  });
+  expect(result.outcome).toBe("passed");
+  expect(receipt).toBe(true);
+  expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+});
+
+test("leaves an ambiguous create intent and never starts or cleans the container", async () => {
+  const { patch } = fixture();
+  const calls: VerificationProcessInvocation[] = [];
+  const normal = stubbed(calls);
+  const executor: VerificationExecutor = (invocation) => invocation.args.includes("create")
+    ? Promise.resolve({ ...passed(), exitCode: null, spawnError: "connection lost" })
+    : normal(invocation);
+  let intent = false;
+  await expect(runLocalVerification(request(patch), executor, {
+    identity: sha256Digest("request"),
+    beforeDockerCreate: async () => { intent = true; },
+    receipt: async () => {},
+  })).rejects.toThrow("creation is uncertain");
+  expect(intent).toBe(true);
+  expect(calls.some((call) => call.args.includes("start") || call.args.includes("rm"))).toBe(false);
 });
 
 test("keeps timeout, test failure, and output limit distinct", async () => {

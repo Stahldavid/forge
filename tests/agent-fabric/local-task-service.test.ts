@@ -6,7 +6,8 @@ import { join } from "node:path";
 import type { LocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
 import { LocalTaskService } from "../../src/forge/agent-fabric/local-task-service.ts";
 import { LocalTaskInbox } from "../../src/forge/agent-fabric/local-task-inbox.ts";
-import { sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
+import { digestCanonical, sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
+import { localVerificationContainerName } from "../../src/forge/agent-fabric/local-verification.ts";
 import { buildLocalCodingContext, materializeLocalCodingPatch } from "../../src/forge/agent-fabric/local-coding-worker.ts";
 import { localFabricPath } from "../../src/forge/agent-fabric/local-paths.ts";
 import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
@@ -61,6 +62,54 @@ describe("local task service", () => {
         await expect(service.propose({ ...proposal, goal: "Another change" })).rejects.toThrow("missing, expired, or stale");
       } finally { await service.close(); }
     } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+  test("persists one Docker intent and its exact command receipt across inbox reopen", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-verification-command-"));
+    const path = join(root, "pglite");
+    const taskId = `task:${"c".repeat(64)}`;
+    const diffDigest = sha256Digest("patch");
+    const requestDigest = sha256Digest("approved request");
+    const descriptor = { kind: "node-test-file" as const, path: "pass.test.mjs", timeoutMs: 20_000 };
+    const descriptorDigest = digestCanonical(descriptor, sha256Digest);
+    const name = localVerificationContainerName(requestDigest, 1);
+    let adapter = await createPgliteAdapter(path);
+    try {
+      let inbox = new LocalTaskInbox(adapter);
+      await inbox.recordPatch(taskId, {
+        worktreeRoot: root, baseCommit: "b".repeat(40), changedPaths: ["source.txt"],
+        diffDigest, diffBytes: 4, diffPath: join(root, "patch.diff"),
+        verification: "diff_check_passed",
+      });
+      await inbox.beginVerification(taskId, diffDigest, requestDigest);
+      await inbox.beginVerificationDockerCommand(taskId, requestDigest, 1, descriptorDigest, name);
+      expect((await inbox.getVerification(taskId))?.containerDispatched).toBe(true);
+      await expect(inbox.beginVerificationDockerCommand(taskId, requestDigest, 1, descriptorDigest, name))
+        .rejects.toThrow("already have started");
+      await expect(inbox.clearUndispatchedVerification(taskId, diffDigest, requestDigest))
+        .rejects.toThrow("retry is forbidden");
+      await adapter.close();
+      adapter = await createPgliteAdapter(path);
+      inbox = new LocalTaskInbox(adapter);
+      expect(await inbox.getVerificationCommands(taskId, requestDigest)).toMatchObject([
+        { ordinal: 1, containerName: name, state: "intent" },
+      ]);
+      const evidence = {
+        descriptor, runtime: "docker-node" as const,
+        argv: ["docker", "--context", "desktop-linux", "create", "--name", name],
+        imageId: `sha256:${"a".repeat(64)}`, outcome: "passed" as const,
+        exitCode: 0, outputDigest: sha256Digest("output"), capturedOutputBytes: 0,
+        outputPreview: "", durationMs: 100,
+      };
+      await inbox.receiptVerificationCommand(taskId, requestDigest, 1, descriptorDigest, evidence);
+      expect(await inbox.getVerificationCommands(taskId, requestDigest)).toMatchObject([
+        { ordinal: 1, containerName: name, state: "receipted", evidence },
+      ]);
+      await expect(inbox.receiptVerificationCommand(taskId, requestDigest, 1, descriptorDigest, evidence))
+        .rejects.toThrow("intent changed");
+    } finally {
+      await adapter.close();
+      rmSync(root, { recursive: true, force: true });
+    }
   }, 30_000);
 
   test("owner can clear only an intent with no container dispatch barrier", async () => {

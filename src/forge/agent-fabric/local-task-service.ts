@@ -13,7 +13,7 @@ import { requestLocalApproval, requestLocalPatchAcceptance, requestLocalVerifica
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
 import { assertCurrentLocalSourceSnapshot, captureLocalSourceSnapshot, LocalPrivateIntelligenceMemory, type LocalMemoryEntry, type LocalSourceSnapshot } from "./local-intelligence.ts";
-import { preflightLocalDockerVerification, runLocalVerification, trustedLocalNodeImageId, type LocalVerificationEvidence } from "./local-verification.ts";
+import { cleanupReceiptedLocalDockerVerification, preflightLocalDockerVerification, readbackLocalDockerVerification, runLocalVerification, trustedLocalNodeImageId, type LocalVerificationCommandEvidence, type LocalVerificationEvidence } from "./local-verification.ts";
 import { localFabricPath } from "./local-paths.ts";
 import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
 import type { Digest, GoalContract, OwnerAuthorization, OwnerAuthorizationVerifier } from "./types.ts";
@@ -737,11 +737,17 @@ export class LocalTaskService {
         diffDigest: status.patch.diffDigest, spec }, sha256Digest);
       await this.inbox.beginVerification(taskId, status.patch.diffDigest, requestDigest);
       let containerDispatched = false;
-      const observed = await runLocalVerification(request, undefined, async () => {
-        if (!containerDispatched) {
-          await this.inbox.markVerificationContainerDispatched(taskId, requestDigest);
+      const observed = await runLocalVerification(request, undefined, {
+        identity: requestDigest,
+        beforeDockerCreate: async (index, name, descriptor) => {
+          await this.inbox.beginVerificationDockerCommand(taskId, requestDigest, index,
+            digestCanonical(descriptor, sha256Digest), name);
           containerDispatched = true;
-        }
+        },
+        receipt: async (index, command) => {
+          await this.inbox.receiptVerificationCommand(taskId, requestDigest, index,
+            digestCanonical(command.descriptor, sha256Digest), { ...command, outputPreview: "" });
+        },
       });
       if (!containerDispatched && observed.outcome === "unavailable") {
         throw new AgentFabricError("AF_CONFLICT", "Verification stopped before container dispatch; owner recovery is available");
@@ -753,6 +759,71 @@ export class LocalTaskService {
     } finally { this.activeVerifications.delete(taskId); }
   }
 
+  /** Read back only previously intended Docker commands; never start an uncertain command. */
+  private async reconcileVerificationStarted(taskId: string): Promise<LocalTaskStatus> {
+    const record = await this.inbox.get(taskId);
+    const status = await this.status(taskId);
+    const intent = await this.inbox.getVerification(taskId);
+    if (!record || record.repositoryRoot !== this.repositoryRoot ||
+        !record.proposal.verification || status.state !== "patch_ready" || !status.patch ||
+        !intent || intent.state !== "started" || !intent.containerDispatched) {
+      throw new AgentFabricError("AF_CONFLICT", "No dispatched verification is available for reconciliation");
+    }
+    verifyLocalPatchEvidence(status.patch);
+    const spec = record.proposal.verification;
+    const request = { patch: status.patch, imageId: spec.imageId, commands: spec.commands };
+    const requestDigest = digestCanonical({ proposalDigest: record.proposalDigest,
+      diffDigest: status.patch.diffDigest, spec }, sha256Digest);
+    if (requestDigest !== intent.requestDigest || intent.diffDigest !== status.patch.diffDigest) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Verification intent does not match the approved patch");
+    }
+    const records = await this.inbox.getVerificationCommands(taskId, requestDigest);
+    const commands: LocalVerificationCommandEvidence[] = [];
+    for (const [index, descriptor] of spec.commands.entries()) {
+      if (commands.at(-1)?.outcome !== undefined && commands.at(-1)?.outcome !== "passed") break;
+      const saved = records.find((command) => command.ordinal === index);
+      if (!saved || saved.descriptorDigest !== digestCanonical(descriptor, sha256Digest)) {
+        throw new AgentFabricError("AF_CONFLICT", "An approved verification command has no matching durable intent");
+      }
+      if (saved.state === "receipted") {
+        if (!saved.evidence) throw new AgentFabricError("AF_INVALID_STATE", "Verification receipt is missing evidence");
+        commands.push(saved.evidence);
+        continue;
+      }
+      if (descriptor.kind !== "node-test-file") {
+        throw new AgentFabricError("AF_INVALID_STATE", "Only Docker commands may have pending effects");
+      }
+      const readback = await readbackLocalDockerVerification(request, requestDigest, index);
+      if (!readback) {
+        throw new AgentFabricError("AF_CONFLICT", "Docker container is absent or still running; execution remains uncertain");
+      }
+      await this.inbox.receiptVerificationCommand(taskId, requestDigest, index,
+        saved.descriptorDigest, { ...readback, outputPreview: "" });
+      commands.push(readback);
+      await cleanupReceiptedLocalDockerVerification(request, requestDigest, index);
+    }
+    if (commands.length === 0 || (commands.at(-1)?.outcome === "passed" &&
+        commands.length !== spec.commands.length)) {
+      throw new AgentFabricError("AF_CONFLICT", "Approved verification commands remain undispatched");
+    }
+    verifyLocalPatchEvidence(status.patch);
+    await this.inbox.finishVerification(taskId, {
+      patchDigest: status.patch.diffDigest, imageId: spec.imageId,
+      outcome: commands.at(-1)!.outcome,
+      commands: commands.map((command) => ({ ...command, outputPreview: "" })),
+    }, requestDigest);
+    return this.status(taskId);
+  }
+
+  async reconcileVerification(taskId: string): Promise<LocalTaskStatus> {
+    if (this.activeVerifications.has(taskId)) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification is active in this owner process");
+    }
+    this.activeVerifications.add(taskId);
+    try { return await this.reconcileVerificationStarted(taskId); }
+    finally { this.activeVerifications.delete(taskId); }
+  }
+
   /** Only the owner may clear an intent that is proven to predate container dispatch. */
   async recoverVerification(taskId: string): Promise<LocalTaskStatus> {
     if (this.activeVerifications.has(taskId)) {
@@ -762,6 +833,9 @@ export class LocalTaskService {
     try {
       const status = await this.status(taskId);
       const intent = await this.inbox.getVerification(taskId);
+      if (intent?.state === "started" && intent.containerDispatched) {
+        return this.reconcileVerificationStarted(taskId);
+      }
       if (status.state !== "patch_ready" || !status.patch || !intent ||
           intent.state !== "started" || intent.containerDispatched) {
         throw new AgentFabricError("AF_CONFLICT", "Only a pre-container verification intent can be recovered");

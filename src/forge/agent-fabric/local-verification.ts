@@ -1,6 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, lstatSync, realpathSync } from "node:fs";
-import { randomUUID } from "node:crypto";
 import { isAbsolute, join, resolve, sep } from "node:path";
 import { sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
@@ -68,6 +67,21 @@ export interface LocalVerificationEvidence {
   imageId: string;
   outcome: LocalVerificationOutcome;
   commands: readonly LocalVerificationCommandEvidence[];
+}
+
+/** A callback must commit its receipt before the Docker container is removed. */
+export interface LocalVerificationHooks {
+  identity: Digest;
+  beforeDockerCreate(index: number, containerName: string,
+    descriptor: Extract<LocalVerificationCommand, { kind: "node-test-file" }>): Promise<void>;
+  receipt(index: number, command: LocalVerificationCommandEvidence): Promise<void>;
+}
+
+export function localVerificationContainerName(identity: Digest, index: number): string {
+  if (!/^sha256:[0-9a-f]{64}$/u.test(identity) || !Number.isSafeInteger(index) || index < 1 || index > 3) {
+    invalid("Invalid verification container identity");
+  }
+  return `forge-fabric-verify-${identity.slice(7, 39)}-${index}`;
 }
 
 /** Run a command without a shell and stop reading once the output budget is exhausted. */
@@ -334,6 +348,87 @@ function failedControl(result: VerificationProcessResult): boolean {
   return outcomeOf(result) !== "passed";
 }
 
+function dockerCreateArgs(request: LocalVerificationRequest, worktreeRoot: string,
+  descriptor: Extract<LocalVerificationCommand, { kind: "node-test-file" }>,
+  identity: Digest, name: string): string[] {
+  return [
+    "--context", DOCKER_CONTEXT, "create", "--pull=never", "--name", name,
+    "--label", "dev.forge.fabric.effect=local_docker_node_test_v1",
+    "--label", `dev.forge.fabric.verification=${identity}`,
+    "--label", `dev.forge.fabric.test=${descriptor.path}`,
+    "--network=none", "--read-only", "--cap-drop=ALL",
+    "--security-opt=no-new-privileges", "--pids-limit=64", "--memory=512m",
+    "--memory-swap=512m", "--cpus=1", "--user=65534:65534",
+    "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
+    "--mount", `type=bind,src=${worktreeRoot},dst=/workspace,readonly`,
+    "--workdir=/workspace", "--entrypoint=node", request.imageId,
+    "--test", `/workspace/${descriptor.path}`,
+  ];
+}
+
+/** Inspect an existing named container only. Missing or running containers stay unresolved. */
+export async function readbackLocalDockerVerification(
+  request: LocalVerificationRequest, identity: Digest, index: number,
+  executor: VerificationExecutor = executeVerificationProcess,
+): Promise<LocalVerificationCommandEvidence | null> {
+  preflightLocalVerification(request);
+  const descriptor = request.commands[index];
+  if (!descriptor || descriptor.kind !== "node-test-file") invalid("Invalid Docker verification command index");
+  const worktreeRoot = realpathSync(request.patch.worktreeRoot);
+  const name = localVerificationContainerName(identity, index);
+  const inspected = await run(executor, "docker", [
+    "--context", DOCKER_CONTEXT, "inspect", "--type", "container", name,
+    "--format", "{{json .}}",
+  ], worktreeRoot, DOCKER_CONTROL_TIMEOUT_MS);
+  if (failedControl(inspected.result)) return null;
+  let container: any;
+  try { container = JSON.parse(inspected.result.stdout); }
+  catch { invalid("Docker verification inspect returned invalid JSON"); }
+  if (container?.Name !== `/${name}` || container?.Image !== request.imageId ||
+      container?.Config?.Image !== request.imageId ||
+      container?.Config?.Labels?.["dev.forge.fabric.effect"] !== "local_docker_node_test_v1" ||
+      container?.Config?.Labels?.["dev.forge.fabric.verification"] !== identity ||
+      container?.Config?.Labels?.["dev.forge.fabric.test"] !== descriptor.path ||
+      JSON.stringify(container?.Config?.Cmd) !== JSON.stringify(["--test", `/workspace/${descriptor.path}`]) ||
+      container?.Config?.User !== "65534:65534" ||
+      container?.HostConfig?.NetworkMode !== "none" ||
+      container?.HostConfig?.ReadonlyRootfs !== true ||
+      container?.HostConfig?.Privileged !== false ||
+      !container?.HostConfig?.CapDrop?.includes("ALL") ||
+      !container?.HostConfig?.SecurityOpt?.includes("no-new-privileges") ||
+      !container?.Mounts?.some((mount: { Destination?: string; RW?: boolean }) =>
+        mount.Destination === "/workspace" && mount.RW === false)) {
+    invalid("Docker verification container identity does not match its durable intent");
+  }
+  if (container.State?.Status !== "exited" || !Number.isSafeInteger(container.State.ExitCode)) return null;
+  const logs = await run(executor, "docker", [
+    "--context", DOCKER_CONTEXT, "logs", name,
+  ], worktreeRoot, DOCKER_CONTROL_TIMEOUT_MS);
+  if (logs.result.spawnError || logs.result.timedOut || logs.result.exitCode !== 0) return null;
+  const started = Date.parse(container.State.StartedAt);
+  const finished = Date.parse(container.State.FinishedAt);
+  const durationMs = Number.isFinite(started) && Number.isFinite(finished) && finished >= started
+    ? finished - started : 0;
+  const result = { ...logs.result, exitCode: container.State.ExitCode,
+    timedOut: durationMs > descriptor.timeoutMs };
+  return evidence(descriptor, "docker-node",
+    ["docker", ...dockerCreateArgs(request, worktreeRoot, descriptor, identity, name)],
+    request.imageId, result, durationMs);
+}
+
+/** A cleanup failure leaves a receipted container for a later maintenance pass. */
+export async function cleanupReceiptedLocalDockerVerification(
+  request: LocalVerificationRequest, identity: Digest, index: number,
+  executor: VerificationExecutor = executeVerificationProcess,
+): Promise<boolean> {
+  const cwd = realpathSync(request.patch.worktreeRoot);
+  const name = localVerificationContainerName(identity, index);
+  const removed = await run(executor, "docker", [
+    "--context", DOCKER_CONTEXT, "rm", name,
+  ], cwd, DOCKER_CONTROL_TIMEOUT_MS);
+  return !failedControl(removed.result);
+}
+
 /**
  * Verify an approved patch without executing repository code on the host.
  * The Node test runner can read the isolated checkout, but cannot modify it or use the network.
@@ -341,19 +436,25 @@ function failedControl(result: VerificationProcessResult): boolean {
 export async function runLocalVerification(
   request: LocalVerificationRequest,
   executor: VerificationExecutor = executeVerificationProcess,
-  beforeDockerRun?: () => Promise<void>,
+  callbacks?: LocalVerificationHooks | (() => Promise<void>),
 ): Promise<LocalVerificationEvidence> {
   preflightLocalVerification(request);
   const worktreeRoot = realpathSync(request.patch.worktreeRoot);
   const results: LocalVerificationCommandEvidence[] = [];
+  const hooks = typeof callbacks === "function" ? undefined : callbacks;
+  const identity = hooks?.identity ?? sha256Digest(JSON.stringify([
+    request.patch.diffDigest, request.imageId, request.commands,
+  ]));
   let imageChecked = false;
-  for (const descriptor of request.commands) {
+  for (const [index, descriptor] of request.commands.entries()) {
     verifyLocalPatchEvidence(request.patch);
     if (descriptor.kind === "git-diff-check") {
       const args = ["--no-pager", "-c", "core.fsmonitor=false", "-c", "diff.external=", "diff",
         "--no-ext-diff", "--no-textconv", "--check"];
       const { result, durationMs } = await run(executor, "git", args, worktreeRoot, descriptor.timeoutMs);
-      results.push(evidence(descriptor, "host-git", ["git", ...args], null, result, durationMs));
+      const command = evidence(descriptor, "host-git", ["git", ...args], null, result, durationMs);
+      await hooks?.receipt(index, command);
+      results.push(command);
     } else {
       checkedTestPath(worktreeRoot, descriptor.path);
       if (!imageChecked) {
@@ -393,34 +494,31 @@ export async function runLocalVerification(
         }
         imageChecked = true;
       }
-      const name = `forge-fabric-verify-${randomUUID()}`;
-      const args = [
-        "--context", DOCKER_CONTEXT, "run", "--rm", "--pull=never", "--name", name,
-        "--network=none", "--read-only", "--cap-drop=ALL",
-        "--security-opt=no-new-privileges", "--pids-limit=64", "--memory=512m",
-        "--memory-swap=512m", "--cpus=1", "--user=65534:65534",
-        "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
-        "--mount", `type=bind,src=${worktreeRoot},dst=/workspace,readonly`,
-        "--workdir=/workspace", "--entrypoint=node", request.imageId,
-        "--test", `/workspace/${descriptor.path}`,
-      ];
+      const name = localVerificationContainerName(identity, index);
+      const args = dockerCreateArgs(request, worktreeRoot, descriptor, identity, name);
       if (worktreeRoot.includes(",") || /[\r\n]/u.test(worktreeRoot)) {
         invalid("Checkout path cannot be represented as a Docker bind mount");
       }
-      await beforeDockerRun?.();
-      const { result, durationMs } = await run(executor, "docker", args, worktreeRoot, descriptor.timeoutMs);
-      let finalResult = result;
-      if (result.timedOut || result.outputLimitExceeded || result.spawnError) {
-        const cleanup = await run(executor, "docker", [
-          "--context", DOCKER_CONTEXT, "rm", "--force", name,
-        ], worktreeRoot, DOCKER_CONTROL_TIMEOUT_MS);
-        if (failedControl(cleanup.result)) {
-          finalResult = { ...result, timedOut: false, outputLimitExceeded: false,
-            spawnError: "Container cleanup could not be confirmed" };
-        }
+      if (typeof callbacks === "function") await callbacks();
+      await hooks?.beforeDockerCreate(index, name, descriptor);
+      const created = await run(executor, "docker", args, worktreeRoot, DOCKER_CONTROL_TIMEOUT_MS);
+      if (failedControl(created.result)) {
+        invalid("Docker container creation is uncertain; reconcile the named container before retrying");
       }
-      results.push(evidence(descriptor, "docker-node", ["docker", ...args],
-        request.imageId, finalResult, durationMs));
+      const started = await run(executor, "docker", [
+        "--context", DOCKER_CONTEXT, "start", "--attach", name,
+      ], worktreeRoot, descriptor.timeoutMs);
+      if (started.result.timedOut || started.result.outputLimitExceeded) {
+        await run(executor, "docker", [
+          "--context", DOCKER_CONTEXT, "stop", "--time", "1", name,
+        ], worktreeRoot, DOCKER_CONTROL_TIMEOUT_MS);
+      }
+      const command = await readbackLocalDockerVerification(request, identity, index, executor);
+      if (!command) invalid("Docker container outcome is unresolved; reconcile the named container");
+      await hooks?.receipt(index, command);
+      results.push(command);
+      // The container remains inspectable until its receipt commits.
+      await cleanupReceiptedLocalDockerVerification(request, identity, index, executor);
     }
     verifyLocalPatchEvidence(request.patch);
     if (results.at(-1)?.outcome !== "passed") break;

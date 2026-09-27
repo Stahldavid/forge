@@ -2,7 +2,7 @@ import type { DbAdapter } from "../runtime/db/adapter.ts";
 import { AgentFabricError } from "./errors.ts";
 import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import type { LocalPatchEvidence } from "./local-coding-worker.ts";
-import type { LocalVerificationEvidence } from "./local-verification.ts";
+import type { LocalVerificationCommandEvidence, LocalVerificationEvidence } from "./local-verification.ts";
 import {
   validateLocalCodingTaskProposal,
   type ValidatedLocalCodingTaskProposal,
@@ -50,6 +50,20 @@ const CREATE_VERIFICATION_DISPATCHES_TABLE = `
     request_digest TEXT NOT NULL
   )`;
 
+const CREATE_VERIFICATION_COMMANDS_TABLE = `
+  CREATE TABLE IF NOT EXISTS _forge_agent_fabric_local_verification_commands (
+    task_id TEXT NOT NULL,
+    ordinal INTEGER NOT NULL CHECK (ordinal BETWEEN 0 AND 3),
+    request_digest TEXT NOT NULL,
+    descriptor_digest TEXT NOT NULL,
+    effect_kind TEXT CHECK (effect_kind IS NULL OR effect_kind = 'local_docker_node_test_v1'),
+    container_name TEXT,
+    state TEXT NOT NULL CHECK (state IN ('intent', 'receipted')),
+    evidence_json TEXT,
+    evidence_digest TEXT,
+    PRIMARY KEY (task_id, ordinal)
+  )`;
+
 const CREATE_MATERIALIZATIONS_TABLE = `
   CREATE TABLE IF NOT EXISTS _forge_agent_fabric_local_materializations (
     task_id TEXT PRIMARY KEY,
@@ -73,6 +87,14 @@ export interface LocalVerificationRecord {
   evidenceDigest?: Digest;
 }
 
+export interface LocalVerificationCommandRecord {
+  ordinal: number;
+  descriptorDigest: Digest;
+  containerName: string | null;
+  state: "intent" | "receipted";
+  evidence?: LocalVerificationCommandEvidence;
+}
+
 export interface LocalTaskRecord extends ValidatedLocalCodingTaskProposal {
   taskId: string;
   repositoryRoot: string;
@@ -91,6 +113,7 @@ export class LocalTaskInbox {
   private decisionSchemaReady?: Promise<unknown>;
   private verificationSchemaReady?: Promise<unknown>;
   private verificationDispatchSchemaReady?: Promise<unknown>;
+  private verificationCommandsSchemaReady?: Promise<unknown>;
   private materializationSchemaReady?: Promise<unknown>;
 
   constructor(private readonly adapter: DbAdapter) {
@@ -278,6 +301,113 @@ export class LocalTaskInbox {
     await this.verificationDispatchSchemaReady;
   }
 
+  private async verificationCommandsReady(): Promise<void> {
+    this.verificationCommandsSchemaReady ??= this.adapter.query(CREATE_VERIFICATION_COMMANDS_TABLE);
+    await this.verificationCommandsSchemaReady;
+  }
+
+  async beginVerificationDockerCommand(taskId: string, requestDigest: Digest,
+    ordinal: number, descriptorDigest: Digest, containerName: string): Promise<void> {
+    if (!Number.isSafeInteger(ordinal) || ordinal < 1 || ordinal > 3 ||
+        !/^forge-fabric-verify-[0-9a-f]{32}-[1-3]$/u.test(containerName)) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Invalid Docker verification command identity");
+    }
+    await this.verificationCommandsReady();
+    const result = await this.adapter.query(
+      `INSERT INTO _forge_agent_fabric_local_verification_commands
+       (task_id, ordinal, request_digest, descriptor_digest, effect_kind, container_name, state)
+       SELECT task_id, $3, request_digest, $4, 'local_docker_node_test_v1', $5, 'intent'
+       FROM _forge_agent_fabric_local_verifications
+       WHERE task_id = $1 AND request_digest = $2 AND state = 'started'
+       ON CONFLICT (task_id, ordinal) DO NOTHING`,
+      [taskId, requestDigest, ordinal, descriptorDigest, containerName],
+    );
+    if (result.rowCount !== 1) {
+      throw new AgentFabricError("AF_CONFLICT", "Docker verification command may already have started");
+    }
+  }
+
+  async receiptVerificationCommand(taskId: string, requestDigest: Digest,
+    ordinal: number, descriptorDigest: Digest,
+    evidence: LocalVerificationCommandEvidence): Promise<void> {
+    await this.verificationCommandsReady();
+    if (digestCanonical(evidence.descriptor, sha256Digest) !== descriptorDigest ||
+        (ordinal === 0 && evidence.runtime !== "host-git") ||
+        (ordinal > 0 && evidence.runtime !== "docker-node")) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Verification receipt does not match command intent");
+    }
+    const encoded = stableStringify(evidence);
+    const digest = digestCanonical(evidence, sha256Digest);
+    if (ordinal === 0) {
+      const result = await this.adapter.query(
+        `INSERT INTO _forge_agent_fabric_local_verification_commands
+         (task_id, ordinal, request_digest, descriptor_digest, state, evidence_json, evidence_digest)
+         SELECT task_id, 0, request_digest, $3, 'receipted', $4, $5
+         FROM _forge_agent_fabric_local_verifications
+         WHERE task_id = $1 AND request_digest = $2 AND state = 'started'
+         ON CONFLICT (task_id, ordinal) DO NOTHING`,
+        [taskId, requestDigest, descriptorDigest, encoded, digest],
+      );
+      if (result.rowCount !== 1) throw new AgentFabricError("AF_CONFLICT", "Git verification receipt already exists");
+      return;
+    }
+    const result = await this.adapter.query(
+      `UPDATE _forge_agent_fabric_local_verification_commands
+       SET state = 'receipted', evidence_json = $5, evidence_digest = $6
+       WHERE task_id = $1 AND request_digest = $2 AND ordinal = $3
+         AND descriptor_digest = $4 AND state = 'intent'
+         AND container_name = $7`,
+      [taskId, requestDigest, ordinal, descriptorDigest, encoded, digest,
+        evidence.argv[evidence.argv.indexOf("--name") + 1]],
+    );
+    if (result.rowCount !== 1) {
+      throw new AgentFabricError("AF_CONFLICT", "Docker verification intent changed before receipt");
+    }
+  }
+
+  async getVerificationCommands(taskId: string, requestDigest: Digest): Promise<LocalVerificationCommandRecord[]> {
+    await this.verificationCommandsReady();
+    const result = await this.adapter.query(
+      `SELECT ordinal, request_digest, descriptor_digest, effect_kind, container_name, state,
+         evidence_json, evidence_digest
+       FROM _forge_agent_fabric_local_verification_commands
+       WHERE task_id = $1 ORDER BY ordinal`, [taskId],
+    );
+    return result.rows.map((row) => {
+      const ordinal = Number(row.ordinal);
+      if (!Number.isSafeInteger(ordinal) || ordinal < 0 || ordinal > 3 ||
+          row.request_digest !== requestDigest ||
+          typeof row.descriptor_digest !== "string" ||
+          !/^sha256:[0-9a-f]{64}$/u.test(row.descriptor_digest) ||
+          (row.state !== "intent" && row.state !== "receipted") ||
+          (ordinal === 0 && (row.container_name !== null || row.effect_kind !== null)) ||
+          (ordinal > 0 && (typeof row.container_name !== "string" ||
+            row.effect_kind !== "local_docker_node_test_v1" ||
+            !/^forge-fabric-verify-[0-9a-f]{32}-[1-3]$/u.test(row.container_name)))) {
+        throw new AgentFabricError("AF_INVALID_STATE", "Stored verification command intent is invalid");
+      }
+      if (row.state === "intent") {
+        if (row.evidence_json !== null || row.evidence_digest !== null) {
+          throw new AgentFabricError("AF_INVALID_STATE", "Unreceipted Docker command has evidence");
+        }
+        return { ordinal, descriptorDigest: row.descriptor_digest as Digest,
+          containerName: row.container_name as string, state: "intent" as const };
+      }
+      let evidence: LocalVerificationCommandEvidence;
+      try { evidence = JSON.parse(String(row.evidence_json)) as LocalVerificationCommandEvidence; }
+      catch { throw new AgentFabricError("AF_INVALID_STATE", "Stored verification command receipt is not JSON"); }
+      if (digestCanonical(evidence, sha256Digest) !== row.evidence_digest ||
+          digestCanonical(evidence.descriptor, sha256Digest) !== row.descriptor_digest ||
+          (ordinal === 0 && evidence.runtime !== "host-git") ||
+          (ordinal > 0 && (evidence.runtime !== "docker-node" ||
+            evidence.argv[evidence.argv.indexOf("--name") + 1] !== row.container_name))) {
+        throw new AgentFabricError("AF_INVALID_STATE", "Stored verification command receipt failed readback");
+      }
+      return { ordinal, descriptorDigest: row.descriptor_digest as Digest,
+        containerName: row.container_name as string | null, state: "receipted" as const, evidence };
+    });
+  }
+
   /** Durable barrier: after this commits, a container may have started and retry is forbidden. */
   async markVerificationContainerDispatched(taskId: string, requestDigest: Digest): Promise<void> {
     await this.verificationDispatchReady();
@@ -295,20 +425,45 @@ export class LocalTaskInbox {
   /** Owner-approved recovery is possible only when no container dispatch barrier exists. */
   async clearUndispatchedVerification(taskId: string, diffDigest: Digest, requestDigest: Digest): Promise<void> {
     await this.verificationDispatchReady();
-    const result = await this.adapter.query(
-      `DELETE FROM _forge_agent_fabric_local_verifications AS intent
-       WHERE intent.task_id = $1 AND intent.diff_digest = $2 AND intent.request_digest = $3
-         AND intent.state = 'started' AND NOT EXISTS (
-           SELECT 1 FROM _forge_agent_fabric_local_verification_dispatches AS dispatch
-           WHERE dispatch.task_id = intent.task_id
-         )`, [taskId, diffDigest, requestDigest],
-    );
-    if (result.rowCount !== 1) {
-      throw new AgentFabricError("AF_CONFLICT", "Verification may have dispatched a container; retry is forbidden");
+    await this.verificationCommandsReady();
+    const tx = await this.adapter.begin();
+    try {
+      const result = await tx.query(
+        `DELETE FROM _forge_agent_fabric_local_verifications AS intent
+         WHERE intent.task_id = $1 AND intent.diff_digest = $2 AND intent.request_digest = $3
+           AND intent.state = 'started' AND NOT EXISTS (
+             SELECT 1 FROM _forge_agent_fabric_local_verification_dispatches AS dispatch
+             WHERE dispatch.task_id = intent.task_id
+           ) AND NOT EXISTS (
+             SELECT 1 FROM _forge_agent_fabric_local_verification_commands AS command
+             WHERE command.task_id = intent.task_id AND command.container_name IS NOT NULL
+           )`, [taskId, diffDigest, requestDigest],
+      );
+      if (result.rowCount !== 1) {
+        throw new AgentFabricError("AF_CONFLICT", "Verification may have dispatched a container; retry is forbidden");
+      }
+      await tx.query(
+        `DELETE FROM _forge_agent_fabric_local_verification_commands
+         WHERE task_id = $1 AND request_digest = $2 AND ordinal = 0 AND container_name IS NULL`,
+        [taskId, requestDigest],
+      );
+      await tx.commit();
+    } catch (error) {
+      await tx.rollback();
+      throw error;
     }
   }
 
   async finishVerification(taskId: string, evidence: LocalVerificationEvidence, requestDigest: Digest): Promise<void> {
+    const commands = await this.getVerificationCommands(taskId, requestDigest);
+    for (const [ordinal, command] of evidence.commands.entries()) {
+      if (command.runtime === "docker-node" && !command.argv.includes("create")) continue;
+      const saved = commands.find((entry) => entry.ordinal === ordinal);
+      if (saved?.state !== "receipted" || !saved.evidence ||
+          digestCanonical(saved.evidence, sha256Digest) !== digestCanonical(command, sha256Digest)) {
+        throw new AgentFabricError("AF_CONFLICT", "Verification result has no matching command receipt");
+      }
+    }
     const evidenceDigest = digestCanonical(evidence, sha256Digest);
     const result = await this.adapter.query(
       `UPDATE _forge_agent_fabric_local_verifications SET state = 'finished',
@@ -323,9 +478,12 @@ export class LocalTaskInbox {
     this.verificationSchemaReady ??= this.adapter.query(CREATE_VERIFICATIONS_TABLE);
     await this.verificationSchemaReady;
     await this.verificationDispatchReady();
+    await this.verificationCommandsReady();
     const result = await this.adapter.query(
       `SELECT intent.diff_digest, intent.request_digest, intent.state, intent.evidence_json,
-         intent.evidence_digest, dispatch.request_digest AS dispatched_digest
+         intent.evidence_digest, dispatch.request_digest AS dispatched_digest,
+         EXISTS (SELECT 1 FROM _forge_agent_fabric_local_verification_commands AS command
+           WHERE command.task_id = intent.task_id AND command.container_name IS NOT NULL) AS has_docker_command
        FROM _forge_agent_fabric_local_verifications AS intent
        LEFT JOIN _forge_agent_fabric_local_verification_dispatches AS dispatch
          ON dispatch.task_id = intent.task_id WHERE intent.task_id = $1`, [taskId],
@@ -340,7 +498,7 @@ export class LocalTaskInbox {
     if (row.state === "started") {
       if (row.evidence_json !== null || row.evidence_digest !== null) throw new AgentFabricError("AF_INVALID_STATE", "Started verification has a result");
       return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest,
-        state: "started", containerDispatched: row.dispatched_digest !== null };
+        state: "started", containerDispatched: row.dispatched_digest !== null || row.has_docker_command === true };
     }
     let evidence: LocalVerificationEvidence;
     try { evidence = JSON.parse(String(row.evidence_json)) as LocalVerificationEvidence; }
@@ -349,7 +507,7 @@ export class LocalTaskInbox {
       throw new AgentFabricError("AF_INVALID_STATE", "Stored verification result failed digest readback");
     }
     return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest,
-      state: "finished", containerDispatched: row.dispatched_digest !== null,
+      state: "finished", containerDispatched: row.dispatched_digest !== null || row.has_docker_command === true,
       evidence, evidenceDigest: row.evidence_digest as Digest };
   }
 
