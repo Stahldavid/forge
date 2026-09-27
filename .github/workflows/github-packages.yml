@@ -8,6 +8,8 @@ on:
     tags:
       - "v*"
       - "forgeos-v*"
+    paths-ignore:
+      - "docs/**"
 
 concurrency:
   group: github-packages-${{ github.ref }}
