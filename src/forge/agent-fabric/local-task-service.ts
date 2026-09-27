@@ -28,7 +28,7 @@ export interface LocalTaskStatus {
   memoryIds?: readonly string[];
   writablePaths: readonly string[];
   requestedModelTargetId: string;
-  state: "proposed" | "rejected" | "owner_approved" | "model_uncertain" | "model_reported" | "model_failed" | "patch_uncertain" | "patch_mismatch" | "patch_ready" | "accepted" | "rejected_patch";
+  state: "proposed" | "rejected" | "owner_approved" | "cancelled" | "model_uncertain" | "model_reported" | "model_failed" | "patch_uncertain" | "patch_mismatch" | "patch_ready" | "accepted" | "rejected_patch";
   canStart: boolean;
   evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_uncertain" | "patch_mismatch" | "patch_ready";
   patch?: LocalPatchEvidence;
@@ -215,6 +215,8 @@ export class LocalTaskService {
   private readonly approvedDigests = new Set<Digest>();
   private readonly activeReviews = new Set<string>();
   private readonly activeVerifications = new Set<string>();
+  private readonly cancellationRequests = new Set<string>();
+  private readonly activeModels = new Map<string, { adapter: P0bModelAdapter; attemptId: string }>();
 
   private constructor(
     readonly repositoryRoot: string,
@@ -337,6 +339,9 @@ export class LocalTaskService {
     const approved = events.some((event) =>
       event.payload.type === "owner_authorization_registered" &&
       event.payload.authorization.authorizationId === ids.authorizationId);
+    const revoked = events.some((event) =>
+      event.payload.type === "owner_authorization_revoked" &&
+      event.payload.authorizationId === ids.authorizationId);
     const permit = events.some((event) => event.payload.type === "attempt_execution_permit_issued");
     const outcome = events.find((event) => event.payload.type === "attempt_outcome_committed");
     const patch = await this.inbox.getPatch(taskId);
@@ -377,7 +382,7 @@ export class LocalTaskService {
           ? "model_failed"
           : outcome ? "model_reported"
           : permit ? "model_uncertain"
-            : approved ? "owner_approved" : "proposed";
+            : revoked ? "cancelled" : approved ? "owner_approved" : "proposed";
     return {
       taskId, proposalDigest: record.proposalDigest,
       repositoryRoot: this.repositoryRoot,
@@ -574,7 +579,11 @@ export class LocalTaskService {
     const suffix = digestSuffix(record.proposalDigest);
     const permit = (await this.control.transition(ids.rootExecutionId, (conductor) => {
       const state = conductor.state();
+      if (this.cancellationRequests.has(taskId)) {
+        throw new AgentFabricError("AF_CONFLICT", "Task cancellation was requested before model dispatch");
+      }
       if (!Object.hasOwn(state.authorizations, ids.authorizationId) ||
+          Object.hasOwn(state.revokedAuthorizations, ids.authorizationId) ||
           Object.keys(state.permits).length !== 0) {
         throw new AgentFabricError("AF_CONFLICT", "Owner approval is absent or attempt already dispatched");
       }
@@ -612,6 +621,10 @@ export class LocalTaskService {
     };
     const artifactPath = localFabricPath(this.repositoryRoot, "artifacts", `${suffix}.model.json`);
     const external = await this.control.runExternal(ids.rootExecutionId, async (conductor) => {
+      if (this.cancellationRequests.has(taskId)) {
+        return { status: "unknown" as const,
+          observation: conductor.recordAttemptUncertainty(permit, "startup", "cancellation_requested_before_dispatch") };
+      }
       const adapter = new P0bModelAdapter({
         conductor, now: Date.now,
         resolveSpec: (digest) => digest === effectiveRunSpecDigest ? spec : undefined,
@@ -625,11 +638,54 @@ export class LocalTaskService {
           persistLocalModelArtifact(artifactPath, resultDigest, text);
         },
       });
-      const outcome = await executeP0bActivity({ conductor, adapter, permit });
-      return outcome;
+      // startAttempt registers its controller before the first await. Publish the
+      // adapter immediately afterward so another owner request can abort it.
+      const execution = executeP0bActivity({ conductor, adapter, permit });
+      this.activeModels.set(taskId, { adapter, attemptId: permit.attemptId });
+      try {
+        if (this.cancellationRequests.has(taskId)) await adapter.requestCancellation(permit.attemptId);
+        return await execution;
+      } finally {
+        this.activeModels.delete(taskId);
+      }
     });
     if (external.result.status !== "succeeded") return this.status(taskId);
     return this.materializeReportedModel(record);
+  }
+
+  /** Cancellation is an abort request, never evidence of provider termination. */
+  async cancel(taskId: string): Promise<LocalTaskStatus> {
+    const record = await this.inbox.get(taskId);
+    if (!record || record.repositoryRoot !== this.repositoryRoot) {
+      throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
+    }
+    const before = await this.status(taskId);
+    if (before.state === "proposed") {
+      this.cancellationRequests.add(taskId);
+      await this.inbox.reject(taskId, record.proposalDigest);
+      return this.status(taskId);
+    }
+    if (before.state !== "owner_approved" && before.state !== "model_uncertain") return before;
+    this.cancellationRequests.add(taskId);
+    const ids = identities(record.proposalDigest);
+    if (before.state === "owner_approved") {
+      try {
+        await this.control.transition(ids.rootExecutionId, (conductor) => {
+          const state = conductor.state();
+          if (Object.keys(state.permits).length === 0 &&
+              Object.hasOwn(state.authorizations, ids.authorizationId) &&
+              !Object.hasOwn(state.revokedAuthorizations, ids.authorizationId)) {
+            conductor.revokeOwnerAuthorization(ids.authorizationId, "owner_requested_local_task_cancellation");
+          }
+        });
+      } catch (error) {
+        if (!(error instanceof AgentFabricError) || error.code !== "AF_CONFLICT") throw error;
+        // The run may have committed its permit between status and transition.
+      }
+    }
+    const active = this.activeModels.get(taskId);
+    if (active) await active.adapter.requestCancellation(active.attemptId);
+    return this.status(taskId);
   }
 
   private async materializeReportedModel(record: LocalTaskRecord): Promise<LocalTaskStatus> {

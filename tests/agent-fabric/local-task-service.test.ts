@@ -17,6 +17,104 @@ function git(root: string, ...args: string[]): string {
 }
 
 describe("local task service", () => {
+  test("cancelling unused approval survives restart and cannot start a model", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-cancel-approval-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      let modelCalls = 0;
+      const proposal: LocalCodingTaskProposal = {
+        schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+        goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+        sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+        requestedModelTargetId: "target:ollama:local",
+        limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+          maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+      };
+      const service = await LocalTaskService.open(root, async () => "approved", async () => {
+        modelCalls += 1;
+        return { text: "unexpected" };
+      });
+      let taskId: string;
+      try {
+        taskId = (await service.propose(proposal)).taskId;
+        expect((await service.review(taskId)).state).toBe("owner_approved");
+        expect(await service.cancel(taskId)).toMatchObject({ state: "cancelled", canStart: false, evidence: "not_started" });
+        expect((await service.cancel(taskId)).state).toBe("cancelled");
+        await expect(service.run(taskId)).rejects.toThrow("no unused owner-approved model attempt");
+      } finally { await service.close(); }
+      const reopened = await LocalTaskService.open(root, async () => "approved", async () => {
+        modelCalls += 1;
+        return { text: "unexpected" };
+      });
+      try {
+        expect((await reopened.status(taskId!)).state).toBe("cancelled");
+        await expect(reopened.run(taskId!)).rejects.toThrow("no unused owner-approved model attempt");
+        expect(modelCalls).toBe(0);
+      } finally { await reopened.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
+  test("active cancellation aborts the local adapter without proving provider termination", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-cancel-active-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      let started!: () => void;
+      const modelStarted = new Promise<void>((resolve) => { started = resolve; });
+      let modelCalls = 0;
+      let aborted = false;
+      let finishModel!: (value: { text: string }) => void;
+      const service = await LocalTaskService.open(root, async () => "approved", async (_invocation, _context, signal) => {
+        modelCalls += 1;
+        started();
+        return new Promise((resolve) => {
+          finishModel = resolve;
+          signal.addEventListener("abort", () => { aborted = true; }, { once: true });
+        });
+      });
+      let taskId: string;
+      try {
+        taskId = (await service.propose({
+          schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+          goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+          sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+          requestedModelTargetId: "target:ollama:local",
+          limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+            maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+        })).taskId;
+        await service.review(taskId);
+        const running = service.run(taskId);
+        await modelStarted;
+        expect(await service.cancel(taskId)).toMatchObject({ state: "model_uncertain", canStart: false,
+          evidence: "provider_uncertain" });
+        expect(aborted).toBe(true);
+        // A provider may still deliver a result after acknowledging the abort signal.
+        finishModel({ text: JSON.stringify({ schemaVersion: 1, files: [{ path: "source.txt", content: "late\n" }] }) });
+        expect((await running).state).toBe("model_uncertain");
+        await expect(service.run(taskId)).rejects.toThrow("no unused owner-approved model attempt");
+      } finally { await service.close(); }
+      const reopened = await LocalTaskService.open(root, async () => "approved", async () => {
+        modelCalls += 1;
+        return { text: "unexpected" };
+      });
+      try {
+        expect((await reopened.status(taskId!)).state).toBe("model_uncertain");
+        expect((await reopened.cancel(taskId!)).state).toBe("model_uncertain");
+        await expect(reopened.run(taskId!)).rejects.toThrow("no unused owner-approved model attempt");
+        expect(modelCalls).toBe(1);
+      } finally { await reopened.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
   test("owner-selected memory is shown for review and sent as bounded untrusted context", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-memory-service-"));
     try {

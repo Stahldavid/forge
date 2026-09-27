@@ -5,7 +5,7 @@ import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemory
 import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | AdaptiveCliOptions["subcommand"];
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | AdaptiveCliOptions["subcommand"];
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -92,6 +92,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
         ? await service.review(options.taskId ?? "")
         : options.subcommand === "run"
           ? await service.run(options.taskId ?? "")
+          : options.subcommand === "cancel"
+            ? await service.cancel(options.taskId ?? "")
           : options.subcommand === "reconcile"
             ? await service.reconcile(options.taskId ?? "")
           : options.subcommand === "verify"

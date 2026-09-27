@@ -271,6 +271,7 @@ node bin/forge.mjs fabric status <task-id> --json
 node bin/forge.mjs fabric evidence <task-id> --json
 node bin/forge.mjs fabric review <task-id> --json
 node bin/forge.mjs fabric run <task-id> --json
+node bin/forge.mjs fabric cancel <task-id> --json
 node bin/forge.mjs fabric reconcile <task-id> --json
 node bin/forge.mjs fabric verify <task-id> --json
 node bin/forge.mjs fabric review-result <task-id> --json
@@ -287,6 +288,12 @@ consumes one approved model attempt and writes a diff in an isolated Git worktre
 The service captures the allowlisted tracked source files at the exact current
 HEAD when proposing and rechecks them before spending the approved model
 attempt. Changed source content or HEAD blocks a stale attempt.
+`cancel` revokes an unused owner approval so `run` cannot start it, including after
+the owner restarts. During an active model call, it requests abort from the
+local adapter. The returned `model_uncertain` state does not prove the provider
+stopped; a dispatched attempt cannot be retried. Cancellation does not stop
+patch materialization or Docker verification that has already started. Use
+`fabric serve` as the single owner when issuing `run` and `cancel` concurrently.
 `review-result` shows the recorded diff for a separate owner decision. Acceptance
 records a decision only; it does not alter the original checkout or merge code.
 

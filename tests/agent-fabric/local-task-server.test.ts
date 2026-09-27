@@ -6,10 +6,17 @@ import { join } from "node:path";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { LocalTaskService } from "../../src/forge/agent-fabric/local-task-service.ts";
 import { requestLocalMemory, requestLocalTask, serveLocalTasks } from "../../src/forge/agent-fabric/local-task-server.ts";
+import { parseCli } from "../../src/forge/cli/parse.ts";
 
 function git(root: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd: root, encoding: "utf8", windowsHide: true }).trim();
 }
+
+test("fabric cancel requires a task id", () => {
+  expect(parseCli(["fabric", "cancel", `task:${"a".repeat(64)}`, "--json"]).command)
+    .toMatchObject({ kind: "fabric", subcommand: "cancel", taskId: `task:${"a".repeat(64)}`, json: true });
+  expect(parseCli(["fabric", "cancel"]).errors).toContain("forge fabric cancel requires an id");
+});
 
 test("CLI and MCP clients share one local owner without MCP approval tools", async () => {
   const root = mkdtempSync(join(tmpdir(), "forge-fabric-owner-"));
@@ -83,6 +90,8 @@ test("CLI and MCP clients share one local owner without MCP approval tools", asy
 
         const reviewed = await requestLocalTask(root, "review", { taskId: mcpStatus.status.taskId });
         expect(reviewed?.state).toBe("owner_approved");
+        const cancelled = await requestLocalTask(root, "cancel", { taskId: mcpStatus.status.taskId });
+        expect(cancelled).toMatchObject({ state: "cancelled", canStart: false });
       } finally {
         await owner.close();
       }

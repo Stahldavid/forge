@@ -45,6 +45,7 @@ function formatHelp(): string {
     "  forge fabric evidence <task-id> --json  Read bounded task provenance and result digests",
     "  forge fabric review <task-id> --json  Open the local owner review window",
     "  forge fabric run <task-id> --json  Run one approved local Ollama attempt",
+    "  forge fabric cancel <task-id> --json  Request best-effort task cancellation",
     "  forge fabric reconcile <task-id> --json  Read back an uncertain patch effect without rerunning it",
     "  forge fabric verify <task-id> --json  Run owner-approved local checks in Docker Desktop",
     "  forge fabric recover-verification <task-id> --json  Ask owner to clear a pre-container verification intent",
