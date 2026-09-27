@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=0439047e248d49da4c0bad6c54d6accfbdd68738a961a52f373ffb440742f841
+// @forge-generated generator=0.1.0-alpha.63 input=2f9604dc41facd1ee37603a8e15defa5f5ee82a9dd061b0fe5f7998946250f0b content=0439047e248d49da4c0bad6c54d6accfbdd68738a961a52f373ffb440742f841
 export const liveProductionManifest = {
   "dependencyGranularity": "table-tenant",
   "invalidationSource": "durable-table",
