@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=c683c3641ce10166951bc59557b1996aa3629a1d449e3d34a5bf0381588fb6d4
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=af60c88eb3f583200a4bc1ed444143d6d181e41497ba701bdfe53fe8faadc3eb
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630",
+  "inputHash": "62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -213,6 +213,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-fabric/p0a.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/p0b-model-adapter.test.ts",
       "kind": "unknown",
       "reasons": []
     },

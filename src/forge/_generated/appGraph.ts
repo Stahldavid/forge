@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=9efa7033a87171011db40c7ae24602d339f0dc97c4713b0ea9bf32f15b8266c1
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=53e3d4b35903e68646c67e1cba764130f92729dc7065cfd6ccdcfc290994f1bc
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
@@ -1241,6 +1241,11 @@ export const appGraph = {
       "from": "06cc92f3afdb4ff0745dbec28b32771ada3aeb9cdabd99e90d0ca38d21aef1a0",
       "kind": "registers",
       "to": "33609d0cddfeec45340c6b07169a9612c5ccab288b86ac2f9db4a1099bf1f84d"
+    },
+    {
+      "from": "06d76dba45c3dbd7b8fd3ac69f98d21a29c8960e8f32242139ca5cc2a1fbf43b",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "06e52c9cb984fc497c21c3930d1e97301a62102b4f2ecc6c0a2473a7521ffa9d",
@@ -4243,6 +4248,11 @@ export const appGraph = {
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
     },
     {
+      "from": "1af44b0db4445335e197d29068eca8a34836565a5d3c5195ffbac4bacc211761",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "1afbb5daca486238d0af0637df54ceeab5ad722b710e54fbd3c403cad1cd3cfc",
       "kind": "registers",
       "to": "6e5d810e4098c821e82dee45eaf58d3bf4c7e0c1863900cd27bc4d69508215e5"
@@ -4746,6 +4756,11 @@ export const appGraph = {
       "from": "1f760f6b97c74c9474d1089e6537e2c8cde124f2ab5fce0631636d207bdf6618",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
+    },
+    {
+      "from": "1f781b058b316f8d3ff6b1fa6ca2c3ec3932952c48b06538488aafae8d55861f",
+      "kind": "registers",
+      "to": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
     },
     {
       "from": "1f7d0264a686f26e52df2ab99c76e63558641de2d804d457446042a796e07be1",
@@ -6953,6 +6968,11 @@ export const appGraph = {
       "to": "d999850d9a6aceb8a1016891973560d69ffb5e613609c9849bcd7fe1780fda14"
     },
     {
+      "from": "2f7d93cdb9f6f7f09ecdbe98c0c16d4d0019f4ada63c598105f150fa255843cb",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "2f879a65252657d5adf525571fbc403d9f986b96b8e88b360efcfc3b6146a0a2",
       "kind": "registers",
       "to": "3fe52c3e22858aa259c5c5107efba290904b11240d7376d60cea1269bf504640"
@@ -7931,6 +7951,11 @@ export const appGraph = {
       "from": "36bb33cac5a7a3cbb2e87f23a22c713ef79a9a15371ea8391bbc9b31e5c829c2",
       "kind": "registers",
       "to": "a7efe22061b9a1725843fc228971a5bd1dfe6089302f2bb148f6d45ed626db4c"
+    },
+    {
+      "from": "36bd98067d51a673b20c53e955ba4632d3fa7a35a130ed2a2dbd021c7f5b3514",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "36dedbebdb8edf469d738e368677edeb862bd40f50adf1f46ff6847c231052c2",
@@ -9303,6 +9328,11 @@ export const appGraph = {
       "to": "070a10abdc72c2b6beba1cc613751bccdfd577bee475fa9e69a8d1c6364101bb"
     },
     {
+      "from": "412af5a5056f1990b8cdd5c9b91b9d29d68a125119359b921b254b77bd42a2cb",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "412bb4659ad46cecae92fc5243566a6b2310a11b8fe6b526fef1fc4af347bda9",
       "kind": "registers",
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
@@ -10541,6 +10571,11 @@ export const appGraph = {
       "from": "4965cdae26d92f2710a8ec1d658d6783e8d0cb2e496afa3353de2b320e80fe49",
       "kind": "registers",
       "to": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb"
+    },
+    {
+      "from": "499686bd707187d6348cf9f6a1561d2c022b73411cb2ab088629962d19127a2a",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "499884e9f9bc9714ce4ba84edbb0be56e85b3d3d5e452a0f55e0a898c684c18c",
@@ -11971,6 +12006,11 @@ export const appGraph = {
       "from": "55835edf52e833bdbae499825ddca82a40d90a3a5d08b3369640f62211c798e4",
       "kind": "registers",
       "to": "39fb45c8506e1c614b9fb5008b34bba27cdc873ee6401b350bfc571b74643399"
+    },
+    {
+      "from": "558b02ea4ad441af252f500f4892585c5714aa90c68a82d6e1f24a0d19aac9e5",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "558c96f0ca11cce537f63cb5ed6c80fd1818b29662219a8525a3f6358cb45d0b",
@@ -16378,6 +16418,11 @@ export const appGraph = {
       "to": "fb25365ca1530eec59b5a8279b4a9ce331466885dc9774c5dca1a80a88d5b90f"
     },
     {
+      "from": "774a2978f3d358a193a2004d498e437a36e70bc1485eaec4fb0acfa041701bea",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "77554bc17d947456e5f02a6bf4e416da8631f886b1f846e4eaaac30f6bdbc7e7",
       "kind": "registers",
       "to": "d19dce22cb18c7a2c8ae542ef480bc324f33a967f0cfe580091dd3db0259e622"
@@ -18271,6 +18316,11 @@ export const appGraph = {
       "from": "84c1c9465b0149b08e21a6a5f44444af6d1cc15e1f7038736356c2ec0b1ba6e1",
       "kind": "registers",
       "to": "6e5d810e4098c821e82dee45eaf58d3bf4c7e0c1863900cd27bc4d69508215e5"
+    },
+    {
+      "from": "84c3e3388e897e28c28abf69a7f6abbdfa3fbfc17c23efdde2635941525f9511",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "84e4a71c17289ce27dbfbf531114a9f970738508fbba8bef96b2f955956608c3",
@@ -21993,6 +22043,11 @@ export const appGraph = {
       "to": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
     },
     {
+      "from": "9f9617086be6740296394b23edb9798c9362c5b4e9be2892d9ad27b66d3a46a8",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "9f97a99f4429153d3bd8b13eb04359064abd92160f7c99ef0c053c63340b3f8e",
       "kind": "registers",
       "to": "218ff0cd398cfcc09a1f44ba9c5b569246817556277f4168cc7f1c4b3e2b5097"
@@ -22718,6 +22773,11 @@ export const appGraph = {
       "to": "4b98df43b6f2e925f5188c398f7a6b93aaa3b06004918a53a4686555da05b0e8"
     },
     {
+      "from": "a510bec6f9245d089a2e9557b49288cfbe6da5783845bf98cfb5b067bbcfda83",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "a5213f3c86ff60996f5f409995eefabffd95e360c1d2e584ba024f7d2e6252af",
       "kind": "registers",
       "to": "65708b2a5de2631c2207e4dc038ce70c5e039d82dec7b99773d7f42032db955c"
@@ -23001,6 +23061,11 @@ export const appGraph = {
       "from": "a6742ec4c63cd6150a6e80266ee93666a7476cee7231b917dd37a87f41252cab",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "a676e706dd2fd0655e9b8b8f4ab833790d7e71f70d4251abb0f9bf2b464fb80a",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "a67ab53eec9a6697793f89680071b92e742474d3d329ca3d84a29cfdb28c13d3",
@@ -24506,6 +24571,11 @@ export const appGraph = {
       "from": "b0cd97ad31740ec8fcd5a020298e4e797c2525e04ad34d0f98622112f9142e5c",
       "kind": "registers",
       "to": "edcb4d40ee9bdef3dcdd3b4ec39e5c89d523798784123b4154c6ee794952d22a"
+    },
+    {
+      "from": "b0cead19dc0ed3ad92925cf04bb55f00c1214abbf3643807491d9acdcf259ed6",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "b0cf2ca13edca8349f01467bd0bbed3660986dcb66b6e948a943eaf016373a2b",
@@ -26943,6 +27013,46 @@ export const appGraph = {
       "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "7355767412cb654450fba64a33f80b3dd8515f3710a394d3cc63b344bc09e080"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
+      "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+    },
+    {
       "from": "c2866a5902c65bfd90c78fb8e2b19fdf9ff3eb4b4234ea7f7a18b4007893c627",
       "kind": "registers",
       "to": "5194e753dfe17c025a21587e67d0e565e2b724a47cf73042cddaf6dae1663e0b"
@@ -28223,6 +28333,11 @@ export const appGraph = {
       "to": "099b8363d1e78cb6d3060d5070f5b0768ee6d9a71bf60b26ccb93076688947b7"
     },
     {
+      "from": "cb5a8cf820b046e8f8cd9944f745d6b6c7955cab8c555282746dfb4ac91af137",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "cb5dbbf012b1743138885068c71fb8fe3cf72678b910716e4c6037a6f7430d7f",
       "kind": "registers",
       "to": "089f5c6e9f6b4f083d69332ccb973c358e39951f904611700cd669cf747f3343"
@@ -29081,6 +29196,11 @@ export const appGraph = {
       "from": "d23000d96842ff364388ca462b8e33206b418286e37ae7c842e5bda82d6491fe",
       "kind": "registers",
       "to": "0493b60b7868e024a5ea1432ac0ec52d2a2debd336090a2a1911a5e94015b7cf"
+    },
+    {
+      "from": "d2365a83779fdc705f9819fd37c6d9518146f93bdda11610647df2045a2a0cd9",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "d24407c6a493d8a782db1ecf61404242a66fcc0b2a339607924a3f41bd29b62c",
@@ -30263,6 +30383,11 @@ export const appGraph = {
       "to": "6954fd71425c35550b3b197f4e8796162c93571f3d982ed9115e901688ba8b96"
     },
     {
+      "from": "db107de4effed72cc69138c214dec3a785666e134f2871ed33e4b3e533cce6c7",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
+    },
+    {
       "from": "db1495c5e6649b1d4271e4319a9e0961389b86e4ecf0b371a155d7d078d36213",
       "kind": "registers",
       "to": "6a14b99a8b6501da7c0e792b595afbbb636c8d5518527ba8b9feed91c67ff225"
@@ -30956,6 +31081,11 @@ export const appGraph = {
       "from": "dea918b9479c8583821b7f70f2cdaff27ae5f8d4f95a8766103f92d6abde7feb",
       "kind": "registers",
       "to": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
+    },
+    {
+      "from": "deaaf17ca5bdcf5013b540cff4d16437c8baf0e49a6a5bc89b113f7284ee865a",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "deb2f446715d0e386b188162a3369e462caa5dd37502b820f976e80db985fbe3",
@@ -33256,6 +33386,11 @@ export const appGraph = {
       "from": "ef259a9a5c87c4a44e34f6c0a8d3b82e46feb95dfd2ded43350927e79cf3da35",
       "kind": "registers",
       "to": "0493b60b7868e024a5ea1432ac0ec52d2a2debd336090a2a1911a5e94015b7cf"
+    },
+    {
+      "from": "ef3331037c2128302376a0494c1ef4f89563c164b729a967cffdd8a0f0a416c1",
+      "kind": "registers",
+      "to": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c"
     },
     {
       "from": "ef3e33067a53356a66b55aed1d0252402f3045499e59c2fed005e25249b44af5",
@@ -35589,7 +35724,7 @@ export const appGraph = {
     }
   ],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "df8cd7bb126178b526b9228108d34d59e62842953ef13537129ce1c8f10ba9ec",
+  "inputHash": "99c350b34de7ff5fde1b4599213e5c2e036b370eb0f59971a7990c8bda20c867",
   "moduleGraph": {
     "nodes": [
       {
@@ -37788,8 +37923,18 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "@ai-sdk/openai",
             "span": {
-              "end": 1338,
-              "start": 1322
+              "end": 1274,
+              "start": 1258
+            },
+            "specifier": "@ai-sdk/openai",
+            "subpath": ""
+          },
+          {
+            "importKind": "dynamic",
+            "packageName": "@ai-sdk/openai",
+            "span": {
+              "end": 1952,
+              "start": 1936
             },
             "specifier": "@ai-sdk/openai",
             "subpath": ""
@@ -37798,8 +37943,8 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "@ai-sdk/anthropic",
             "span": {
-              "end": 1769,
-              "start": 1750
+              "end": 2401,
+              "start": 2382
             },
             "specifier": "@ai-sdk/anthropic",
             "subpath": ""
@@ -37808,8 +37953,8 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "ai",
             "span": {
-              "end": 2184,
-              "start": 2180
+              "end": 2834,
+              "start": 2830
             },
             "specifier": "ai",
             "subpath": ""
@@ -49660,6 +49805,82 @@ export const appGraph = {
       },
       {
         "declaredContexts": [],
+        "directPackageImports": [
+          {
+            "importKind": "static",
+            "packageName": "ai",
+            "span": {
+              "end": 33,
+              "start": 29
+            },
+            "specifier": "ai",
+            "subpath": ""
+          }
+        ],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+        "id": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+        "localImports": [
+          {
+            "span": {
+              "end": 100,
+              "start": 72
+            },
+            "toModuleId": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
+          },
+          {
+            "span": {
+              "end": 170,
+              "start": 142
+            },
+            "toModuleId": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
+          },
+          {
+            "span": {
+              "end": 237,
+              "start": 208
+            },
+            "toModuleId": "7355767412cb654450fba64a33f80b3dd8515f3710a394d3cc63b344bc09e080"
+          },
+          {
+            "span": {
+              "end": 318,
+              "start": 302
+            },
+            "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
+          },
+          {
+            "span": {
+              "end": 366,
+              "start": 353
+            },
+            "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
+          },
+          {
+            "span": {
+              "end": 429,
+              "start": 404
+            },
+            "toModuleId": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
+          },
+          {
+            "span": {
+              "end": 509,
+              "start": 499
+            },
+            "toModuleId": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
+          },
+          {
+            "span": {
+              "end": 727,
+              "start": 715
+            },
+            "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/runtime/workflows/cancel.ts",
@@ -54281,6 +54502,23 @@ export const appGraph = {
       "span": {
         "end": 3586,
         "start": 621
+      }
+    },
+    {
+      "contentHash": "c9a07e89909dfb431fe0693eb1d33369c0f4d562da168b163ef9626c9670407b",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "412af5a5056f1990b8cdd5c9b91b9d29d68a125119359b921b254b77bd42a2cb",
+      "kind": "code.class",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "class P0bModelAdapter implements AgentAdapter {\n  private readonly attempts = new Map<string, AttemptRecord>();\n  private readonly resultArtifacts = new Map<string, string>();\n\n  constructor(private readonly options: P0bModelAdapterOptions) {}\n\n  isBoundTo(conductor: ForgeAgentConductor): boolean {\n    return conductor === this.options.conductor;\n  }\n\n  /** Ephemeral complete text artifact; its digest is the report's resultDigest. */\n  resultArtifact(attemptId: string): string | undefined {\n    return this.resultArtifacts.get(attemptId);\n  }\n\n  manifest() {\n    return {\n      adapterId: \"forge-agent-fabric/p0b-model-adapter\",\n      version: \"0.1.0\",\n      capabilities: [\"bounded_external_inference\", \"observation\", \"cancellation\"],\n      supportsCancellation: true,\n      supportsObservation: true,\n    };\n  }\n\n  /** Deterministic preflight. Call before executeP0aActivity so rejection is not uncertainty. */\n  preflight(permit: AttemptExecutionPermit): PreparedAttempt {\n    this.options.conductor.authorizeAttemptDispatch(permit);\n    const state = this.options.conductor.state();\n    const intent = own(state.dispatchIntents, permit.intentId);\n    const grant = own(state.grants, permit.grantId);\n    const revision = intent && own(state.planRevisions, intent.planRevisionId);\n    const goal = revision && own(state.goals, revision.goalId);\n    const authorization = grant && own(state.authorizations, grant.rootAuthorizationId);\n    if (!intent || !grant || !revision || !goal || !authorization ||\n        intent.effectClass !== \"bounded_external_inference\" ||\n        !goal.allowedEffectClasses.includes(intent.effectClass) ||\n        goal.prohibitedEffectClasses.includes(intent.effectClass) ||\n        !authorization.effectClasses.includes(intent.effectClass) ||\n        !grant.effectClasses.includes(intent.effectClass) ||\n        !authorization.targetIds.includes(intent.targetId) ||\n        !grant.targetIds.includes(intent.targetId) ||\n        !intent.sourceIds.every((id) => goal.sourceBoundary.sourceIds.includes(id) &&\n          authorization.sourceIds.includes(id) && grant.sourceIds.includes(id))) {\n      reject(\"effect, source, target, or authority mismatch\");\n    }\n\n    const spec = this.options.resolveSpec(permit.effectiveRunSpecDigest);\n    if (!spec || digestCanonical(spec, sha256Digest) !== permit.effectiveRunSpecDigest ||\n        spec.rootExecutionId !== intent.rootExecutionId ||\n        spec.goalId !== goal.goalId ||\n        spec.planRevisionId !== intent.planRevisionId ||\n        spec.nodeId !== intent.taskNodeId) {\n      reject(\"effective run spec mismatch\");\n    }\n    const node = revision.nodes.find((candidate) => candidate.nodeId === spec.nodeId);\n    if (!node || node.kind !== \"activity\" || node.agentSpecId !== spec.agentSpecId ||\n        node.harnessSpecId !== spec.harnessSpecId ||\n        node.executionProfileId !== spec.executionProfileId) {\n      reject(\"workflow node mismatch\");\n    }\n    const context = this.options.resolveContext(spec.contextPackDigest);\n    if (!context || digestCanonical(context, sha256Digest) !== spec.contextPackDigest) {\n      reject(\"context pack digest mismatch\");\n    }\n    exactKeys(context, [\"schemaVersion\", \"sourceIds\", \"content\"]);\n    if (context.schemaVersion !== 1 || !Array.isArray(context.sourceIds) ||\n        typeof context.content !== \"string\" ||\n        !context.sourceIds.every((id) => typeof id === \"string\" && intent.sourceIds.includes(id))) {\n      reject(\"context source mismatch\");\n    }\n    const invocation = this.options.resolveInvocation(spec.materializationDigest);\n    if (!invocation || digestCanonical(invocation, sha256Digest) !== spec.materializationDigest) {\n      reject(\"model materialization digest mismatch\");\n    }\n    exactKeys(invocation, [\n      \"schemaVersion\", \"provider\", \"model\", \"systemPrompt\", \"prompt\", \"contextPackDigest\",\n      \"maxOutputTokens\", \"maximumRequestBytes\", \"maximumResultBytes\", \"outputMode\",\n    ], [\"purpose\", \"temperature\"]);\n    const target = this.options.resolveTarget(intent.targetId);\n    if (!target || target.targetId !== intent.targetId ||\n        !Array.isArray(target.allowedModels) || target.allowedModels.length === 0 ||\n        target.allowedModels.length > 16 ||\n        !target.allowedModels.every((model) => typeof model === \"string\" && model.length > 0) ||\n        ![\"openai\", \"anthropic\", \"gateway\", \"ollama\"].includes(invocation.provider) ||\n        typeof invocation.model !== \"string\" || invocation.model.length === 0 ||\n        !target.allowedModels.includes(invocation.model) ||\n        target.provider !== invocation.provider ||\n        invocation.contextPackDigest !== spec.contextPackDigest ||\n        invocation.schemaVersion !== 1 || invocation.outputMode !== \"text\" ||\n        typeof invocation.systemPrompt !== \"string\" || typeof invocation.prompt !== \"string\" ||\n        (invocation.temperature !== undefined &&\n          (!Number.isFinite(invocation.temperature) || invocation.temperature < 0 || invocation.temperature > 2))) {\n      reject(\"provider, model, or invocation mismatch\");\n    }\n    const harness = this.options.resolveHarness(spec.harnessSpecId);\n    const profile = this.options.resolveProfile(spec.executionProfileId);\n    if (!harness || harness.harnessSpecId !== spec.harnessSpecId ||\n        harness.toolIds.length !== 0 || harness.pluginIds.length !== 0 ||\n        harness.delegationPolicy !== \"none\" || harness.memoryMode !== \"none\" ||\n        !profile || profile.executionProfileId !== spec.executionProfileId ||\n        profile.network !== \"provider_only\" || profile.filesystem !== \"read_only\" ||\n        profile.durability !== \"ephemeral\") {\n      reject(\"harness or execution profile outside P0b-A\");\n    }\n    if (!positiveBound(invocation.maxOutputTokens, P0B_MAXIMUM_BOUNDS.maximumOutputTokens) ||\n        !positiveBound(invocation.maximumRequestBytes, P0B_MAXIMUM_BOUNDS.maximumRequestBytes) ||\n        !positiveBound(invocation.maximumResultBytes, P0B_MAXIMUM_BOUNDS.maximumResultBytes) ||\n        !positiveBound(profile.maximumWallClockMs, P0B_MAXIMUM_BOUNDS.maximumWallClockMs) ||\n        Buffer.byteLength(stableStringify({ invocation, context }), \"utf8\") >\n          invocation.maximumRequestBytes) {\n      reject(\"request, output, result, or wall-clock bound exceeded\");\n    }\n    if (profile.maximumWallClockMs > permit.expiresAt - this.options.now()) {\n      reject(\"permit expires before wall-clock bound\");\n    }\n    // Resolver callbacks are synchronous but may observe a changed authority state.\n    this.options.conductor.authorizeAttemptDispatch(permit);\n    return {\n      invocation: copyFrozen(invocation),\n      context: copyFrozen(context),\n      wallClockMs: profile.maximumWallClockMs,\n    };\n  }\n\n  async startAttempt(permit: AttemptExecutionPermit): Promise<AdapterStartResult> {\n    const existing = this.attempts.get(permit.attemptId);\n    if (existing) {\n      if (stableStringify(existing.permit) !== stableStringify(permit)) {\n        throw new AgentFabricError(\"AF_CONFLICT\", \"Attempt was started with a different permit\");\n      }\n      return this.startReport(existing);\n    }\n    const prepared = this.preflight(permit);\n    const startedAt = this.options.now();\n    const controller = new AbortController();\n    const record: AttemptRecord = {\n      permit: copyFrozen(permit), startedAt, controller, cancelled: false,\n      settled: Promise.resolve({ status: \"unknown\", reason: \"not_started\" }),\n    };\n    this.attempts.set(permit.attemptId, record);\n    record.settled = this.run(record, prepared);\n    return this.startReport(record);\n  }\n\n  private startReport(record: AttemptRecord): AdapterStartResult {\n    return { status: \"started\", report: {\n      startupReportId: `startup:${record.permit.attemptId}`,\n      attemptId: record.permit.attemptId,\n      observedSpecDigest: record.permit.effectiveRunSpecDigest,\n      startedAt: record.startedAt,\n    } };\n  }\n\n  private async run(record: AttemptRecord, prepared: PreparedAttempt): Promise<AdapterOutcomeResult> {\n    const { permit, controller } = record;\n    let timer: ReturnType<typeof setTimeout> | undefined;\n    const timeout = new Promise<never>((_, rejectTimeout) => {\n      timer = setTimeout(() => {\n        controller.abort();\n        rejectTimeout(new Error(\"provider_timeout\"));\n      }, prepared.wallClockMs);\n    });\n    try {\n      this.options.conductor.authorizeAttemptDispatch(permit);\n      const result = await Promise.race([\n        this.options.executeModel(prepared.invocation, prepared.context, controller.signal), timeout,\n      ]);\n      if (record.cancelled || controller.signal.aborted ||\n          this.options.now() >= permit.expiresAt) {\n        return { status: \"unknown\", reason: \"late_or_cancelled_provider_result\" };\n      }\n      if (!result || typeof result.text !== \"string\" ||\n          Buffer.byteLength(result.text, \"utf8\") > prepared.invocation.maximumResultBytes) {\n        return { status: \"unknown\", reason: \"invalid_or_oversized_provider_result\" };\n      }\n      this.resultArtifacts.set(permit.attemptId, result.text);\n      const report: WorkerResultReport = {\n        reportId: `report:${permit.attemptId}`,\n        attemptId: permit.attemptId,\n        permitId: permit.permitId,\n        intentId: permit.intentId,\n        planRevisionId: permit.planRevisionId,\n        effectiveRunSpecDigest: permit.effectiveRunSpecDigest,\n        fencingToken: permit.fencingToken,\n        status: \"succeeded\",\n        resultDigest: sha256Digest(result.text),\n        evidenceDigests: [digestCanonical({\n          provider: prepared.invocation.provider,\n          model: prepared.invocation.model,\n          materializationDigest: digestCanonical(prepared.invocation, sha256Digest),\n          contextPackDigest: prepared.invocation.contextPackDigest,\n          resultDigest: sha256Digest(result.text),\n        }, sha256Digest)],\n        reportedAt: this.options.now(),\n      };\n      return { status: \"reported\", report };\n    } catch {\n      // Provider errors may occur before or after remote acceptance. Neither is proof of failure.\n      return { status: \"unknown\", reason: \"provider_dispatch_or_transport_unknown\" };\n    } finally {\n      if (timer) clearTimeout(timer);\n    }\n  }\n\n  async observeAttempt(attemptId: string): Promise<readonly RuntimeObservation[]> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return [];\n    return [{\n      observationId: `observation:${attemptId}:adapter-state`,\n      attemptId,\n      sourceClass: \"adapter_observation\",\n      claim: attempt.cancelled ? \"cancellation_requested\" : \"started_or_settled\",\n      observedAt: this.options.now(),\n    }];\n  }\n\n  async collectOutcome(attemptId: string): Promise<AdapterOutcomeResult> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { status: \"unknown\", reason: \"attempt_not_observed\" };\n    const result = await attempt.settled;\n    return attempt.cancelled\n      ? { status: \"unknown\", reason: \"cancellation_termination_unproven\" }\n      : result;\n  }\n\n  async requestCancellation(attemptId: string): Promise<{ acknowledged: boolean }> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { acknowledged: false };\n    attempt.cancelled = true;\n    attempt.controller.abort();\n    return { acknowledged: true };\n  }\n\n  async observeTermination(_attemptId: string): Promise<\"terminated\" | \"running\" | \"unknown\"> {\n    // Abort acknowledgement cannot prove remote termination.\n    return \"unknown\";\n  }\n}"
+      },
+      "name": "P0bModelAdapter",
+      "qualifiedName": "P0bModelAdapter",
+      "span": {
+        "end": 16655,
+        "start": 5151
       }
     },
     {
@@ -62325,6 +62563,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "ef9ab298c3f17949fd8d40116e8578297e69a0f0fe0f94cde6a086e0a861253f",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "cb5a8cf820b046e8f8cd9944f745d6b6c7955cab8c555282746dfb4ac91af137",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "P0B_MAXIMUM_BOUNDS: P0bBounds = Object.freeze({\n  maximumRequestBytes: 64 * 1024,\n  maximumResultBytes: 64 * 1024,\n  maximumOutputTokens: 4096,\n  maximumWallClockMs: 120_000,\n})"
+      },
+      "name": "P0B_MAXIMUM_BOUNDS",
+      "qualifiedName": "P0B_MAXIMUM_BOUNDS",
+      "span": {
+        "end": 2516,
+        "start": 2339
+      }
+    },
+    {
       "contentHash": "a7acb329c0256d7944fd46e420b3c34aa79ecf46da2388a8c3a4c5f0ac00680c",
       "file": "src/forge/compiler/package-graph/constants.ts",
       "id": "aefc5032f2ec6a9fe3157d733d8e3dc29272780a2e09bf8c361f29fdd5d0d17f",
@@ -62586,14 +62841,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "77128d0b2c6316e82f79b47cc959de9ba7f8876cb66ff0d8aa57002dad868473",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
         "sourceSlice": "PROVIDER_SECRETS: Record<ForgeAiProvider, string> = {\n  openai: \"OPENAI_API_KEY\",\n  anthropic: \"ANTHROPIC_API_KEY\",\n  gateway: \"AI_GATEWAY_API_KEY\",\n}"
       },
       "name": "PROVIDER_SECRETS",
       "qualifiedName": "PROVIDER_SECRETS",
       "span": {
-        "end": 610,
-        "start": 460
+        "end": 763,
+        "start": 613
       }
     },
     {
@@ -74565,6 +74820,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "90e5a25b9ae61c910d2833f68a1cdbf6bb20c452022473c3ed109596d2b64dd1",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "774a2978f3d358a193a2004d498e437a36e70bc1485eaec4fb0acfa041701bea",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "function copyFrozen<T>(value: T): T {\n  const copy = JSON.parse(stableStringify(value)) as T;\n  const freeze = (item: unknown): void => {\n    if (item && typeof item === \"object\") {\n      Object.values(item).forEach(freeze);\n      Object.freeze(item);\n    }\n  };\n  freeze(copy);\n  return copy;\n}"
+      },
+      "name": "copyFrozen",
+      "qualifiedName": "copyFrozen",
+      "span": {
+        "end": 3589,
+        "start": 3294
+      }
+    },
+    {
       "contentHash": "4f18e7a3c7927eb6ac0f0d36e440beeb133b4e6d10660f0024666254173f1086",
       "file": "src/forge/dev/server.ts",
       "id": "71e82a39675db869b0ac81e8676fa39a154a505151c51c6285c0ac6426550648",
@@ -74936,6 +75208,23 @@ export const appGraph = {
       "span": {
         "end": 5048,
         "start": 3578
+      }
+    },
+    {
+      "contentHash": "6014e7f0fcf63ed004c2cff23caae685f335ce53a6014e8902cffe96c7c0cb65",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "ef3331037c2128302376a0494c1ef4f89563c164b729a967cffdd8a0f0a416c1",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "function createForgeModelExecutor(\n  secrets: SecretsContext,\n  onPhysicalRequest?: () => void,\n  trustedTransport: typeof fetch = fetch,\n): ModelExecutor {\n  return async (invocation, context, signal) => {\n    let requests = 0;\n    const transport = Object.assign(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {\n      requests += 1;\n      if (requests !== 1) throw new Error(\"p0b_duplicate_physical_request\");\n      onPhysicalRequest?.();\n      // Native fetch follows 3xx by default, which would hide extra requests and hosts.\n      return trustedTransport(input, { ...init, redirect: \"manual\" });\n    }, { preconnect: fetch.preconnect });\n    const model = await resolveLanguageModel(\n      invocation.provider, invocation.model, secrets, transport,\n    );\n    const result = await generateText({\n      model,\n      system: invocation.systemPrompt,\n      prompt: `${context.content}\\n\\n${invocation.prompt}`,\n      maxOutputTokens: invocation.maxOutputTokens,\n      temperature: invocation.temperature,\n      maxRetries: 0,\n      abortSignal: signal,\n    });\n    return { text: result.text };\n  };\n}"
+      },
+      "name": "createForgeModelExecutor",
+      "qualifiedName": "createForgeModelExecutor",
+      "span": {
+        "end": 5142,
+        "start": 4011
       }
     },
     {
@@ -79291,6 +79580,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "c7f0519bbdafb59e25883d4ba0d3b05c94e34762bdb09e4b915b347557a3bf07",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "499686bd707187d6348cf9f6a1561d2c022b73411cb2ab088629962d19127a2a",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "function exactKeys(value: object, required: readonly string[], optional: readonly string[] = []): void {\n  const keys = Object.keys(value);\n  if (required.some((key) => !Object.hasOwn(value, key)) ||\n      keys.some((key) => !required.includes(key) && !optional.includes(key))) {\n    reject(\"unsupported or missing materialization field\");\n  }\n}"
+      },
+      "name": "exactKeys",
+      "qualifiedName": "exactKeys",
+      "span": {
+        "end": 3003,
+        "start": 2658
+      }
+    },
+    {
       "contentHash": "988ee2b54fe92d963193af001c4e798776b82c703b072c88ba2f151c3a4c6948",
       "file": "src/forge/cli/feature.ts",
       "id": "d185c62b604ab2db5b72c98140133d6bdd2c89df6953ad941080c76ab5847330",
@@ -79339,6 +79645,23 @@ export const appGraph = {
       "span": {
         "end": 2471,
         "start": 963
+      }
+    },
+    {
+      "contentHash": "951d3337b07ee1f54fcb3692d793b7ee64441ee2434d421866ec29a5e723a52a",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "06d76dba45c3dbd7b8fd3ac69f98d21a29c8960e8f32242139ca5cc2a1fbf43b",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "async function executeP0bActivity(input: {\n  conductor: ForgeAgentConductor;\n  adapter: P0bModelAdapter;\n  permit: AttemptExecutionPermit;\n}): Promise<P0aActivityExecutionResult> {\n  if (!input.adapter.isBoundTo(input.conductor)) reject(\"adapter/conductor mismatch\");\n  input.adapter.preflight(input.permit);\n  return executeP0aActivity(input);\n}"
+      },
+      "name": "executeP0bActivity",
+      "qualifiedName": "executeP0bActivity",
+      "span": {
+        "end": 17010,
+        "start": 16664
       }
     },
     {
@@ -81286,14 +81609,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "77128d0b2c6316e82f79b47cc959de9ba7f8876cb66ff0d8aa57002dad868473",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
         "sourceSlice": "function forgeError(code: string, message: string): never {\n  const error = new Error(message);\n  (error as Error & { code: string }).code = code;\n  throw error;\n}"
       },
       "name": "forgeError",
       "qualifiedName": "forgeError",
       "span": {
-        "end": 452,
-        "start": 289
+        "end": 605,
+        "start": 442
       }
     },
     {
@@ -94081,6 +94404,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "3541fb81e4035f1f6a3096984789c671bd535f31a5de5bf8bccfee9ce9bb4d31",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "deaaf17ca5bdcf5013b540cff4d16437c8baf0e49a6a5bc89b113f7284ee865a",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "function own<T>(record: Readonly<Record<string, T>>, key: string): T | undefined {\n  return Object.hasOwn(record, key) ? record[key] : undefined;\n}"
+      },
+      "name": "own",
+      "qualifiedName": "own",
+      "span": {
+        "end": 3292,
+        "start": 3145
+      }
+    },
+    {
       "contentHash": "16f6c6a04cb4c96bba371ed89430ea05b69c9973bf79a3e487de46f19ec7771e",
       "file": "src/forge/agent-fabric/validation.ts",
       "id": "5ea8ad0e1d23f58a4888fe86adbdb7a17edead17b70f1636b44151999e038b9e",
@@ -97478,6 +97818,23 @@ export const appGraph = {
       "span": {
         "end": 12682,
         "start": 12058
+      }
+    },
+    {
+      "contentHash": "4201110690dd37a71c7b67c614f93c5a37f78fbd4c34ee42f3245b82307fe552",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "2f7d93cdb9f6f7f09ecdbe98c0c16d4d0019f4ada63c598105f150fa255843cb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "function positiveBound(value: number, ceiling: number): boolean {\n  return Number.isSafeInteger(value) && value > 0 && value <= ceiling;\n}"
+      },
+      "name": "positiveBound",
+      "qualifiedName": "positiveBound",
+      "span": {
+        "end": 3143,
+        "start": 3005
       }
     },
     {
@@ -101714,6 +102071,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "84144b2b3123e54c850085de1fa07a15c50332c5e810a1723450d8e8cb20ad47",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "1af44b0db4445335e197d29068eca8a34836565a5d3c5195ffbac4bacc211761",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "function reject(reason: string): never {\n  throw new AgentFabricError(\"AF_PERMIT_REJECTED\", `P0b model preflight rejected: ${reason}`);\n}"
+      },
+      "name": "reject",
+      "qualifiedName": "reject",
+      "span": {
+        "end": 2656,
+        "start": 2519
+      }
+    },
+    {
       "contentHash": "cb512f21c907880f947142447a857a43760512e0803b80c09e14c30459fd8f89",
       "file": "src/forge/delta/store.ts",
       "id": "90d1f6f779937b1628a5811200b91fc71e5b04893be43235a116c24c48691ab5",
@@ -105658,20 +106032,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "deea0d03e8c5fc8327e5c6047c7745c2dee28cf4568d8d13f75d68af9665d70a",
+      "contentHash": "baae4cdbe9ae87cc38b7de198bef599b80cc30eb9bb7a201f90bd3b174214ea7",
       "file": "src/forge/runtime/ai/providers.ts",
       "id": "a73b0cde07fef23771b88ab0cf3c3d28dff69847d2ce657e21bc5b63377c4036",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "77128d0b2c6316e82f79b47cc959de9ba7f8876cb66ff0d8aa57002dad868473",
-        "sourceSlice": "async function resolveLanguageModel(\n  provider: ForgeAiProvider,\n  model: string,\n  secrets: SecretsContext,\n): Promise<LanguageModel> {\n  if (!model || model.trim().length === 0) {\n    forgeError(FORGE_AI_MODEL_MISSING, \"AI model is required\");\n  }\n\n  switch (provider) {\n    case \"openai\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.openai);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.openai}' is not set for openai provider`,\n        );\n      }\n      const { createOpenAI } = await import(\"@ai-sdk/openai\");\n      const openai = createOpenAI({ apiKey });\n      return openai(model);\n    }\n    case \"anthropic\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.anthropic);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.anthropic}' is not set for anthropic provider`,\n        );\n      }\n      const { createAnthropic } = await import(\"@ai-sdk/anthropic\");\n      const anthropic = createAnthropic({ apiKey });\n      return anthropic(model);\n    }\n    case \"gateway\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.gateway);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.gateway}' is not set for gateway provider`,\n        );\n      }\n      const { createGateway } = await import(\"ai\");\n      const gateway = createGateway({ apiKey });\n      return gateway(model);\n    }\n    default:\n      forgeError(\n        FORGE_AI_PROVIDER_UNKNOWN,\n        `unknown AI provider '${String(provider)}'`,\n      );\n  }\n}"
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
+        "sourceSlice": "async function resolveLanguageModel(\n  provider: ForgeModelProvider,\n  model: string,\n  secrets: SecretsContext,\n  transport?: typeof fetch,\n): Promise<LanguageModel> {\n  if (!model || model.trim().length === 0) {\n    forgeError(FORGE_AI_MODEL_MISSING, \"AI model is required\");\n  }\n\n  switch (provider) {\n    case \"ollama\": {\n      const { createOpenAI } = await import(\"@ai-sdk/openai\");\n      // Ollama's OpenAI-compatible API ignores this nonsecret placeholder.\n      // The endpoint is fixed loopback; materialization cannot choose a host or port.\n      const ollama = createOpenAI({\n        baseURL: \"http://127.0.0.1:11434/v1\",\n        apiKey: \"ollama\",\n        fetch: transport,\n      });\n      return ollama.chat(model);\n    }\n    case \"openai\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.openai);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.openai}' is not set for openai provider`,\n        );\n      }\n      const { createOpenAI } = await import(\"@ai-sdk/openai\");\n      const openai = createOpenAI({ apiKey, fetch: transport });\n      return openai(model);\n    }\n    case \"anthropic\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.anthropic);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.anthropic}' is not set for anthropic provider`,\n        );\n      }\n      const { createAnthropic } = await import(\"@ai-sdk/anthropic\");\n      const anthropic = createAnthropic({ apiKey, fetch: transport });\n      return anthropic(model);\n    }\n    case \"gateway\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.gateway);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.gateway}' is not set for gateway provider`,\n        );\n      }\n      const { createGateway } = await import(\"ai\");\n      const gateway = createGateway({ apiKey, fetch: transport });\n      return gateway(model);\n    }\n    default:\n      forgeError(\n        FORGE_AI_PROVIDER_UNKNOWN,\n        `unknown AI provider '${String(provider)}'`,\n      );\n  }\n}"
       },
       "name": "resolveLanguageModel",
       "qualifiedName": "resolveLanguageModel",
       "span": {
-        "end": 2404,
-        "start": 735
+        "end": 3072,
+        "start": 888
       }
     },
     {
@@ -105834,14 +106208,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "77128d0b2c6316e82f79b47cc959de9ba7f8876cb66ff0d8aa57002dad868473",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
         "sourceSlice": "function resolveProviderSecret(provider: ForgeAiProvider): string {\n  return PROVIDER_SECRETS[provider];\n}"
       },
       "name": "resolveProviderSecret",
       "qualifiedName": "resolveProviderSecret",
       "span": {
-        "end": 726,
-        "start": 620
+        "end": 879,
+        "start": 773
       }
     },
     {
@@ -123423,6 +123797,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "d5be8ad65c79e9e1d7c82012ef42ad6480a480686e027c7f5c020d049b2decb2",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "84c3e3388e897e28c28abf69a7f6abbdfa3fbfc17c23efdde2635941525f9511",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface AttemptRecord {\n  permit: AttemptExecutionPermit;\n  startedAt: number;\n  controller: AbortController;\n  cancelled: boolean;\n  settled: Promise<AdapterOutcomeResult>;\n}"
+      },
+      "name": "AttemptRecord",
+      "qualifiedName": "AttemptRecord",
+      "span": {
+        "end": 3914,
+        "start": 3737
+      }
+    },
+    {
       "contentHash": "a598f7e224a883e81b277a527b7249924c0d6080741c4a055d92b28a9c806a3f",
       "file": "src/forge/agent-fabric/types.ts",
       "id": "f66de2a031771aebb827e0fc0ddef024eade25e565e128b8b57fd3e7196d8392",
@@ -130002,6 +130393,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "adbd6e503e900431cf0a76a14096d1ad811bb11a79e64c75a0ac0e86472135b6",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "a510bec6f9245d089a2e9557b49288cfbe6da5783845bf98cfb5b067bbcfda83",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface MaterializedModelInvocation {\n  schemaVersion: 1;\n  provider: ForgeModelProvider;\n  model: string;\n  systemPrompt: string;\n  prompt: string;\n  contextPackDigest: Digest;\n  maxOutputTokens: number;\n  maximumRequestBytes: number;\n  maximumResultBytes: number;\n  outputMode: \"text\";\n  purpose?: string;\n  temperature?: number;\n}"
+      },
+      "name": "MaterializedModelInvocation",
+      "qualifiedName": "MaterializedModelInvocation",
+      "span": {
+        "end": 1272,
+        "start": 937
+      }
+    },
+    {
       "contentHash": "50d2b713001c51db0c589ef255fd2c6411038ea72d5554c394a7caa9c866ff03",
       "file": "src/forge/runtime/db/memory-adapter.ts",
       "id": "f3b3a9b859d71393b67a796a8b3c468a8c9af86e03ae40a438a9c2465946c6b3",
@@ -130121,6 +130529,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "d838eee297279c929ea203c55bc3072c0b1cc388e2c9913774954cece3022243",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "db107de4effed72cc69138c214dec3a785666e134f2871ed33e4b3e533cce6c7",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface ModelContextPack {\n  schemaVersion: 1;\n  sourceIds: readonly string[];\n  content: string;\n}"
+      },
+      "name": "ModelContextPack",
+      "qualifiedName": "ModelContextPack",
+      "span": {
+        "end": 928,
+        "start": 827
+      }
+    },
+    {
       "contentHash": "d1f13e87ad90239e19ea7519c9309dc7a87413444f0db9f108dde4f2351a78c2",
       "file": "src/forge/runtime/ai/cost-estimator.ts",
       "id": "7fca41d2d23d6aa76130282c9b570d3ca4da994f13047fb5ef61264ccbb95bfc",
@@ -130138,6 +130563,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "85c255db5af6d9eb663de6df7acdac3a3db96ea70ea24f597b182ab2292365e3",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "a676e706dd2fd0655e9b8b8f4ab833790d7e71f70d4251abb0f9bf2b464fb80a",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface ModelInvocationResult {\n  text: string;\n}"
+      },
+      "name": "ModelInvocationResult",
+      "qualifiedName": "ModelInvocationResult",
+      "span": {
+        "end": 1454,
+        "start": 1403
+      }
+    },
+    {
       "contentHash": "9adf3a5a6a688eecfa7014afe0dd6036eaa8b859c95dd2846a8a8ead2f77cf80",
       "file": "src/forge/cli/ai.ts",
       "id": "40cb5bc5214eee4da8ad5c6e528531614d9a7b36f20a81442ad6f67ceeb9f048",
@@ -130152,6 +130594,23 @@ export const appGraph = {
       "span": {
         "end": 10206,
         "start": 10051
+      }
+    },
+    {
+      "contentHash": "3b6b3462a0afef7eaa213f935c6a78f4ab02fc147d23d08b5ef1411987575c31",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "d2365a83779fdc705f9819fd37c6d9518146f93bdda11610647df2045a2a0cd9",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface ModelTarget {\n  targetId: string;\n  provider: ForgeModelProvider;\n  allowedModels: readonly string[];\n}"
+      },
+      "name": "ModelTarget",
+      "qualifiedName": "ModelTarget",
+      "span": {
+        "end": 1394,
+        "start": 1281
       }
     },
     {
@@ -130526,6 +130985,40 @@ export const appGraph = {
       "span": {
         "end": 1689,
         "start": 1314
+      }
+    },
+    {
+      "contentHash": "b716cf74bd44ce86425e67d359c86adc185faaab612276de77a65b7c1cd67179",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "558b02ea4ad441af252f500f4892585c5714aa90c68a82d6e1f24a0d19aac9e5",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface P0bBounds {\n  maximumRequestBytes: number;\n  maximumResultBytes: number;\n  maximumOutputTokens: number;\n  maximumWallClockMs: number;\n}"
+      },
+      "name": "P0bBounds",
+      "qualifiedName": "P0bBounds",
+      "span": {
+        "end": 2324,
+        "start": 2179
+      }
+    },
+    {
+      "contentHash": "6f2108ee62eed2b7ef5eaf577b36e51eac62dde56237d339d0768e1d1762f50b",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "9f9617086be6740296394b23edb9798c9362c5b4e9be2892d9ad27b66d3a46a8",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface P0bModelAdapterOptions {\n  conductor: ForgeAgentConductor;\n  now: () => number;\n  resolveSpec: (digest: Digest) => EffectiveRunSpec | undefined;\n  resolveContext: (digest: Digest) => ModelContextPack | undefined;\n  resolveInvocation: (digest: Digest) => MaterializedModelInvocation | undefined;\n  resolveTarget: (targetId: string) => ModelTarget | undefined;\n  resolveHarness: (id: string) => HarnessSpec | undefined;\n  resolveProfile: (id: string) => ExecutionProfile | undefined;\n  executeModel: ModelExecutor;\n}"
+      },
+      "name": "P0bModelAdapterOptions",
+      "qualifiedName": "P0bModelAdapterOptions",
+      "span": {
+        "end": 2170,
+        "start": 1646
       }
     },
     {
@@ -131359,6 +131852,23 @@ export const appGraph = {
       "span": {
         "end": 2564,
         "start": 2456
+      }
+    },
+    {
+      "contentHash": "62bd74bc9023adee851bc08e4f4fc077df9c7e0ad6068cfaf67015aaa0fb80e3",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "36bd98067d51a673b20c53e955ba4632d3fa7a35a130ed2a2dbd021c7f5b3514",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface PreparedAttempt {\n  invocation: Readonly<MaterializedModelInvocation>;\n  context: Readonly<ModelContextPack>;\n  wallClockMs: number;\n}"
+      },
+      "name": "PreparedAttempt",
+      "qualifiedName": "PreparedAttempt",
+      "span": {
+        "end": 3735,
+        "start": 3591
       }
     },
     {
@@ -137975,6 +138485,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "75573842fdf710e5b7e1467e88777da961cca0d49e0c14a60c3c5031820e7e84",
+      "file": "src/forge/runtime/ai/providers.ts",
+      "id": "1f781b058b316f8d3ff6b1fa6ca2c3ec3932952c48b06538488aafae8d55861f",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
+        "sourceSlice": "type ForgeModelProvider = ForgeAiProvider | \"ollama\";"
+      },
+      "name": "ForgeModelProvider",
+      "qualifiedName": "ForgeModelProvider",
+      "span": {
+        "end": 440,
+        "start": 387
+      }
+    },
+    {
       "contentHash": "4e54f54e2b216666f3076f7b7c3798f81c118d0c74e2e7c899a095703019cf46",
       "file": "src/forge/react/index.ts",
       "id": "d0cee86c8ad9b56ea42ede5c0d14b3ab4dea353fe2422b21a313815ee9736f1a",
@@ -138652,6 +139179,23 @@ export const appGraph = {
       "span": {
         "end": 320,
         "start": 75
+      }
+    },
+    {
+      "contentHash": "625c67d32100657094f5d5f8f47df7c1ca6dd2ea5783013532dd73d10d9a8d4a",
+      "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
+      "id": "b0cead19dc0ed3ad92925cf04bb55f00c1214abbf3643807491d9acdcf259ed6",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "type ModelExecutor = (\n  invocation: Readonly<MaterializedModelInvocation>,\n  context: Readonly<ModelContextPack>,\n  signal: AbortSignal,\n) => Promise<ModelInvocationResult>;"
+      },
+      "name": "ModelExecutor",
+      "qualifiedName": "ModelExecutor",
+      "span": {
+        "end": 1637,
+        "start": 1463
       }
     },
     {

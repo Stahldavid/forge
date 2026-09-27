@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=128a75a60a7187f4b372ac9ffdd8c42ca3f2eac7281400dd5418fce8108ea630 content=4c569da5df387f6bb7fe7fd94d42b4cc6b05f5218ab0bc129d9637c184625057
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=4c569da5df387f6bb7fe7fd94d42b4cc6b05f5218ab0bc129d9637c184625057
 export const mockMap = {
   "@ai-sdk/anthropic": "src/forge/_generated/testkits/ai.anthropic.mock.ts",
   "@ai-sdk/openai": "src/forge/_generated/testkits/ai.openai.mock.ts",
