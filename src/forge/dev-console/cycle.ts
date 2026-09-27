@@ -761,7 +761,12 @@ function buildAgentContext(input: {
     frontendReady: frontend?.present ? frontend.bridgeFiles.length > 0 : false,
     changedFiles: impact?.changedFiles ?? 0,
     ...(impact?.changeSummary ? { changeSummary: impact.changeSummary } : {}),
-    ...(impact?.changeSummary ? { diffPlan: buildDiffPlanFromChangeSummary(impact.changeSummary) } : {}),
+    ...(impact?.changeSummary ? {
+      diffPlan: buildDiffPlanFromChangeSummary(
+        impact.changeSummary,
+        forgeCliCommandForWorkspace(input.workspaceRoot, "forge diff authored"),
+      ),
+    } : {}),
     blockingIssues: errorDiagnostics.map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`).slice(0, 8),
     recommendedReadFiles: [...new Set(suggestedReadFiles)].slice(0, 12),
     recommendedCommands: input.nextActions.map((action) => action.command).slice(0, 8),

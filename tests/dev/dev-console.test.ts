@@ -577,7 +577,7 @@ describe("H33 forge dev console", () => {
           "node bin/forge.mjs dev --once --json",
           "node bin/forge.mjs check --json",
         ]);
-        expect(event.agentContext.diffPlan?.authoredDiffCommand).toContain("git diff -- .");
+        expect(event.agentContext.diffPlan?.authoredDiffCommand).toBe("");
       } finally {
         cleanupWorkspace(workspace);
       }
@@ -1019,7 +1019,7 @@ describe("H33 forge dev console", () => {
           first: "authored",
           then: "generated",
           generatedCollapsedByDefault: true,
-          authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
+          authoredDiffCommand: "forge diff authored",
         });
         expect(cycle.summary.agentContext.diffPlan?.generatedDiffCommand).toContain("src/forge/_generated");
         expect(cycle.summary.agentContext.diffPlan?.generatedDiffCommand).toContain("forge.lock");

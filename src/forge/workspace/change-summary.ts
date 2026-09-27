@@ -46,6 +46,15 @@ export const CHANGE_TYPES: ChangeType[] = [
   "other",
 ];
 
+// Keep complete paths for executable diff plans without expanding compact JSON summaries.
+const categorizedPaths = new WeakMap<CategorizedFileSummary, Record<ChangeType, string[]>>();
+const AUTHORED_TYPES = CHANGE_TYPES.filter((type) => type !== "generated" && type !== "operational");
+
+export function authoredChangePaths(summary: CategorizedFileSummary): string[] | null {
+  const groups = categorizedPaths.get(summary);
+  return groups ? AUTHORED_TYPES.flatMap((type) => groups[type]).sort() : null;
+}
+
 export function compactFiles(files: string[], sampleSize = 12): FileListSummary {
   return {
     count: files.length,
@@ -196,11 +205,13 @@ export function categorizeFiles(
   const primaryTypes = CHANGE_TYPES
     .filter((type) => byType[type].count > 0)
     .sort((left, right) => byType[right].count - byType[left].count);
-  return {
+  const result: CategorizedFileSummary = {
     total: compactFiles(sorted, sampleSize),
     byType,
     primaryTypes,
   };
+  categorizedPaths.set(result, groups);
+  return result;
 }
 
 export function filterCategorizedSummary(
@@ -226,7 +237,7 @@ export function filterCategorizedSummary(
   const primaryTypes = CHANGE_TYPES
     .filter((type) => byType[type].count > 0)
     .sort((left, right) => byType[right].count - byType[left].count);
-  return {
+  const result: CategorizedFileSummary = {
     total: {
       count: totalCount,
       sample: totalSample,
@@ -235,6 +246,14 @@ export function filterCategorizedSummary(
     byType,
     primaryTypes,
   };
+  const originalPaths = categorizedPaths.get(summary);
+  if (originalPaths) {
+    const filteredPaths = Object.fromEntries(
+      CHANGE_TYPES.map((type) => [type, include.has(type) ? originalPaths[type] : []]),
+    ) as Record<ChangeType, string[]>;
+    categorizedPaths.set(result, filteredPaths);
+  }
+  return result;
 }
 
 export function summarizeChangeTypes(summary: CategorizedFileSummary): string {
@@ -244,12 +263,15 @@ export function summarizeChangeTypes(summary: CategorizedFileSummary): string {
     .join(", ");
 }
 
-export function buildDiffPlanFromChangeSummary(summary: CategorizedFileSummary): DiffPlan {
+export function buildDiffPlanFromChangeSummary(
+  summary: CategorizedFileSummary,
+  authoredCommand = "forge diff authored",
+): DiffPlan {
   const generatedFiles = summary.byType.generated.count;
   const operationalFiles = summary.byType.operational.count;
-  const authoredFiles = CHANGE_TYPES
-    .filter((type) => type !== "generated" && type !== "operational")
+  const authoredFiles = AUTHORED_TYPES
     .reduce((count, type) => count + summary.byType[type].count, 0);
+  const authoredPaths = authoredChangePaths(summary);
   const operationalSummary = operationalFiles > 0
     ? ` ${operationalFiles} operational file(s) are tracked separately;`
     : "";
@@ -260,7 +282,7 @@ export function buildDiffPlanFromChangeSummary(summary: CategorizedFileSummary):
     generatedFiles,
     authoredFiles,
     operationalFiles,
-    authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
+    authoredDiffCommand: authoredPaths?.length ? authoredCommand : "",
     generatedDiffCommand: 'git diff -- src/forge/_generated forge.lock AGENTS.md ":(glob)**/AGENTS.md" .forge/agent/context.json',
     fullDiffCommand: "git diff",
     summary: generatedFiles > 0

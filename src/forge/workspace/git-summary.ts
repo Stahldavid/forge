@@ -326,10 +326,31 @@ export function workspaceChangeClassifier(workspaceRoot: string): ChangeClassifi
   };
 }
 
-function parseStatusPath(line: string): string {
-  const raw = line.slice(2).trimStart();
-  const renamed = raw.split(" -> ");
-  return (renamed[renamed.length - 1] ?? raw).replace(/\\/g, "/");
+export function parsePorcelainStatus(output: string): {
+  staged: string[];
+  unstaged: string[];
+  untracked: string[];
+} {
+  const records = output.split("\0");
+  const staged: string[] = [];
+  const unstaged: string[] = [];
+  const untracked: string[] = [];
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index];
+    if (!record) continue;
+    const x = record[0] ?? " ";
+    const y = record[1] ?? " ";
+    const file = record.slice(3);
+    // -z emits the destination first, then an extra NUL-terminated source for renames/copies.
+    if (x === "R" || x === "C" || y === "R" || y === "C") index += 1;
+    if (x === "?" && y === "?") {
+      untracked.push(file);
+    } else {
+      if (x !== " ") staged.push(file);
+      if (y !== " ") unstaged.push(file);
+    }
+  }
+  return { staged, unstaged, untracked };
 }
 
 export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSummary {
@@ -338,29 +359,10 @@ export function buildWorkspaceGitSummary(workspaceRoot: string): WorkspaceGitSum
     return filesystemSummary(workspaceRoot, root.error);
   }
 
-  const status = runGit(["status", "--porcelain=v1", "-uall"], workspaceRoot, { trim: false });
+  const status = runGit(["status", "--porcelain=v1", "-z", "-uall"], workspaceRoot, { trim: false });
   const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"], workspaceRoot);
   const commit = runGit(["rev-parse", "--short", "HEAD"], workspaceRoot);
-  const lines = status.ok ? status.stdout.split(/\r?\n/).filter(Boolean) : [];
-  const staged: string[] = [];
-  const unstaged: string[] = [];
-  const untracked: string[] = [];
-
-  for (const line of lines) {
-    const x = line[0] ?? " ";
-    const y = line[1] ?? " ";
-    const file = parseStatusPath(line);
-    if (x === "?" && y === "?") {
-      untracked.push(file);
-      continue;
-    }
-    if (x !== " ") {
-      staged.push(file);
-    }
-    if (y !== " ") {
-      unstaged.push(file);
-    }
-  }
+  const { staged, unstaged, untracked } = parsePorcelainStatus(status.ok ? status.stdout : "");
 
   const stagedFiles = filterVolatileForgeState([...new Set(staged)].sort());
   const unstagedFiles = filterVolatileForgeState([...new Set(unstaged)].sort());

@@ -2409,7 +2409,7 @@ describe("Forge CLI", () => {
       expect(result.posture.diffPlan).toMatchObject({
         first: "authored",
         then: "generated",
-        authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
+        authoredDiffCommand: "",
       });
       const manifest = JSON.parse(await Bun.file(join(workspace, ".forge", "studio", "attachment.json")).text()) as {
         posture?: typeof result.posture;

@@ -6,10 +6,11 @@ import {
   filterCategorizedSummary,
   summarizeChangeTypes,
 } from "../workspace/change-summary.ts";
-import { forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
+import { forgeCliCommandForWorkspace, forgeCliCommandsForWorkspace } from "../workspace/forge-cli.ts";
 import {
   buildWorkspaceGitSummary,
   listWorkspaceFiles,
+  parsePorcelainStatus,
   workspaceChangeClassifier,
   type WorkspaceGitSummary,
 } from "../workspace/git-summary.ts";
@@ -155,19 +156,13 @@ function buildRecommendedCommands(git: WorkspaceGitSummary): string[] {
   ];
 }
 
-function parseStatusPath(line: string): string {
-  const raw = line.slice(2).trimStart();
-  const renamed = raw.split(" -> ");
-  return (renamed[renamed.length - 1] ?? raw).replace(/\\/g, "/");
-}
-
 function gitStatusFiles(workspaceRoot: string): {
   changed: string[];
   staged: string[];
   unstaged: string[];
   untracked: string[];
 } | null {
-  const result = spawnSync("git", ["status", "--porcelain=v1", "-uall"], {
+  const result = spawnSync("git", ["status", "--porcelain=v1", "-z", "-uall"], {
     cwd: workspaceRoot,
     encoding: "utf8",
     windowsHide: true,
@@ -175,29 +170,12 @@ function gitStatusFiles(workspaceRoot: string): {
   if (result.status !== 0) {
     return null;
   }
-  const staged = new Set<string>();
-  const unstaged = new Set<string>();
-  const untracked = new Set<string>();
-  for (const line of result.stdout.split(/\r?\n/).filter(Boolean)) {
-    const x = line[0] ?? " ";
-    const y = line[1] ?? " ";
-    const file = parseStatusPath(line);
-    if (x === "?" && y === "?") {
-      untracked.add(file);
-      continue;
-    }
-    if (x !== " ") {
-      staged.add(file);
-    }
-    if (y !== " ") {
-      unstaged.add(file);
-    }
-  }
+  const { staged, unstaged, untracked } = parsePorcelainStatus(result.stdout);
   return {
     changed: [...new Set([...staged, ...unstaged, ...untracked])].sort(),
-    staged: [...staged].sort(),
-    unstaged: [...unstaged].sort(),
-    untracked: [...untracked].sort(),
+    staged: [...new Set(staged)].sort(),
+    unstaged: [...new Set(unstaged)].sort(),
+    untracked: [...new Set(untracked)].sort(),
   };
 }
 
@@ -325,7 +303,10 @@ export function runChangedCommand(workspaceRoot: string, options: { authoredOnly
   const recommendedCommands = forgeCliCommandsForWorkspace(workspaceRoot, buildRecommendedCommands(git));
   const reviewFocus = buildReviewFocus(viewHumanChanges, viewDerivedChanges);
   const generatedExplanation = buildGeneratedChangeExplanation(viewHumanChanges, viewDerivedChanges);
-  const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(viewChanged);
+  const diffPlan: DiffPlan = buildDiffPlanFromChangeSummary(
+    viewChanged,
+    git.available ? forgeCliCommandForWorkspace(workspaceRoot, "forge diff authored") : "",
+  );
   const ok = git.available || git.source === "filesystem" || git.source === "forge-baseline";
 
   return {
@@ -383,7 +364,7 @@ export function formatChangedHuman(result: ChangedCommandResult): string {
   const derived = result.data.derivedChanges as Record<string, { count: number; sample: string[]; hidden: number } | number>;
   const reviewFocus = result.data.reviewFocus as { summary?: string; suggestedOrder?: string[] } | undefined;
   const generatedExplanation = result.data.generatedExplanation as { summary?: string } | undefined;
-  const diffPlan = result.data.diffPlan as { summary?: string; authoredDiffCommand?: string; generatedDiffCommand?: string; generatedCollapsedByDefault?: boolean } | undefined;
+  const diffPlan = result.data.diffPlan as { summary?: string; authoredFiles?: number; authoredDiffCommand?: string; generatedDiffCommand?: string; generatedCollapsedByDefault?: boolean } | undefined;
   const risks = (result.data.risks as string[] | undefined) ?? [];
   const advisories = (result.data.advisories as string[] | undefined) ?? [];
   const nextActions = (result.data.nextActions as string[] | undefined) ?? [];
@@ -407,7 +388,7 @@ export function formatChangedHuman(result: ChangedCommandResult): string {
 
   if (diffPlan?.summary) {
     lines.push(`Diff plan: ${diffPlan.summary}`);
-    lines.push(`  authored: ${diffPlan.authoredDiffCommand ?? "git diff"}`);
+    lines.push(`  authored: ${diffPlan.authoredDiffCommand || (diffPlan.authoredFiles ? "(diff unavailable)" : "(no authored changes)")}`);
     if (diffPlan.generatedCollapsedByDefault) {
       lines.push(`  generated: ${diffPlan.generatedDiffCommand ?? "git diff -- src/forge/_generated forge.lock"}`);
     }

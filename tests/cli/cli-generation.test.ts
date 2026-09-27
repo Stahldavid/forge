@@ -17,6 +17,8 @@ import {
 import { runBaselineCommand } from "../../src/forge/cli/baseline.ts";
 import { buildGenerateJson, buildInspectJson } from "../../src/forge/cli/output.ts";
 import { formatChangedHuman } from "../../src/forge/cli/changed.ts";
+import { authoredChangePaths } from "../../src/forge/workspace/change-summary.ts";
+import { buildWorkspaceGitSummary } from "../../src/forge/workspace/git-summary.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -776,7 +778,7 @@ describe("Forge CLI generation and inspection", () => {
         generatedFiles: 1,
       });
       expect(formatChangedHuman(changed)).toContain("2 authored file(s) first; 1 operational file(s)");
-      expect(JSON.stringify(changed.data.diffPlan)).toContain("git diff -- .");
+      expect(JSON.stringify(changed.data.diffPlan)).toContain("forge diff authored");
       expect(JSON.stringify(changed.data.diffPlan)).toContain("git diff -- src/forge/_generated forge.lock");
       expect((changed.data.reviewFocus as { suggestedOrder: string[] }).suggestedOrder).toEqual([
         "source",
@@ -809,6 +811,80 @@ describe("Forge CLI generation and inspection", () => {
       cleanupWorkspace(workspace);
     }
   });
+
+  test("diff authored uses complete literal paths and excludes operational changes", () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-diff-authored-"));
+    const forgeBin = join(import.meta.dir, "..", "..", "bin", "forge.mjs");
+    const git = (...args: string[]) => {
+      const result = spawnSync("git", args, { cwd: workspace, encoding: "utf8", windowsHide: true });
+      expect(result.status).toBe(0);
+    };
+    try {
+      git("init");
+      git("config", "user.email", "forge@example.com");
+      git("config", "user.name", "Forge Test");
+      mkdirSync(join(workspace, "docs"), { recursive: true });
+      const special = "docs/space & [literal].md";
+      for (const file of [
+        special,
+        "docs/old name.md",
+        "docs/zz-hidden.md",
+        ...Array.from({ length: 8 }, (_, index) => `docs/a-${index}.md`),
+      ]) {
+        writeFileSync(join(workspace, file), "before\n", "utf8");
+      }
+      writeFileSync(join(workspace, ".workos-seed-state.json"), "operational before\n", "utf8");
+      writeFileSync(join(workspace, "forge.lock"), "generated before\n", "utf8");
+      git("add", ".");
+      git("commit", "-m", "initial");
+
+      git("mv", "docs/old name.md", "docs/renamed & [literal].md");
+      writeFileSync(join(workspace, special), "AUTHORED_SPECIAL\n", "utf8");
+      writeFileSync(join(workspace, "docs", "zz-hidden.md"), "AUTHORED_HIDDEN\n", "utf8");
+      for (let index = 0; index < 8; index += 1) {
+        writeFileSync(join(workspace, "docs", `a-${index}.md`), `AUTHORED_${index}\n`, "utf8");
+      }
+      writeFileSync(join(workspace, ".workos-seed-state.json"), "OPERATIONAL_ONLY\n", "utf8");
+      writeFileSync(join(workspace, "forge.lock"), "GENERATED_ONLY\n", "utf8");
+
+      const changed = runChangedCommand(workspace);
+      const docs = (changed.data.git as { changed: { byType: { docs: { sample: string[] } } } }).changed.byType.docs;
+      const authoredPaths = authoredChangePaths(buildWorkspaceGitSummary(workspace).changeSummary.changed);
+      expect(authoredPaths).toContain("docs/renamed & [literal].md");
+      expect(authoredPaths).not.toContain("docs/old name.md");
+      expect(authoredPaths).toContain("docs/zz-hidden.md");
+      expect(docs.sample).not.toContain("docs/zz-hidden.md");
+      expect(JSON.stringify(changed.data.diffPlan)).not.toContain("zz-hidden.md");
+      expect(changed.data.diffPlan).toMatchObject({
+        authoredFiles: 11,
+        operationalFiles: 1,
+        generatedFiles: 1,
+        authoredDiffCommand: "forge diff authored",
+      });
+      const diff = spawnSync("node", [forgeBin, "diff", "authored"], {
+        cwd: workspace,
+        encoding: "utf8",
+        windowsHide: true,
+      });
+      expect(diff.status).toBe(0);
+      expect(diff.stdout).toContain("AUTHORED_SPECIAL");
+      expect(diff.stdout).toContain("AUTHORED_HIDDEN");
+      expect(diff.stdout).not.toContain("OPERATIONAL_ONLY");
+      expect(diff.stdout).not.toContain("GENERATED_ONLY");
+
+      git("reset", "--hard", "HEAD");
+      writeFileSync(join(workspace, ".workos-seed-state.json"), "OPERATIONAL_ONLY\n", "utf8");
+      const empty = spawnSync("node", [forgeBin, "diff", "authored", "--json"], {
+        cwd: workspace,
+        encoding: "utf8",
+        windowsHide: true,
+      });
+      expect(empty.status).toBe(0);
+      expect(JSON.parse(empty.stdout)).toMatchObject({ target: "authored", command: "", ok: true });
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test("changed succeeds in non-git workspaces using filesystem inventory", async () => {
     const workspace = mkdtempSync(join(tmpdir(), "cli-changed-no-git-"));
@@ -848,6 +924,8 @@ describe("Forge CLI generation and inspection", () => {
         generatedFiles: 0,
         untrackedFiles: 1,
       });
+      expect(authored.data.diffPlan).toMatchObject({ authoredFiles: 1, authoredDiffCommand: "" });
+      expect(formatChangedHuman(authored)).toContain("authored: (diff unavailable)");
       const authoredGit = authored.data.git as {
         changed: {
           total: { sample: string[] };
