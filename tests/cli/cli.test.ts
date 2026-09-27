@@ -16,6 +16,7 @@ import { runPgliteDoctorCommand, runRuntimeDoctorCommand } from "../../src/forge
 import { formatWorkOSHuman, runWorkOSCommand } from "../../src/forge/cli/workos.ts";
 import { runTestCommand } from "../../src/forge/impact/index.ts";
 import {
+  parseWindowsNetstatListener,
   probeStudioPreview,
   runStudioAttachCommand,
   runStudioBridgeCommand,
@@ -2512,11 +2513,10 @@ describe("Forge CLI", () => {
     }
   });
 
-  test("studio open reuses a live target preview process instead of spawning a duplicate", async () => {
+  test("studio open does not trust a stale managed PID when another process serves the port", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-open-preview-state");
-    const reserved = await listenOnRandomPort();
-    const previewPort = reserved.port;
-    await reserved.close();
+    const listener = await listenOnRandomPort();
+    const previewPort = listener.port;
     try {
       mkdirSync(join(workspace, ".forge", "studio"), { recursive: true });
       writeFileSync(
@@ -2546,18 +2546,50 @@ describe("Forge CLI", () => {
         started: false,
         alreadyRunning: true,
         skippedReason: "already-running",
-        pid: process.pid,
-        owner: {
+      });
+      expect(result.previewAutomation.owner?.kind).not.toBe("forge-managed");
+      expect(result.previewAutomation.statusAfter.state).toBe("reachable");
+      if (process.platform === "win32") {
+        expect(result.previewAutomation.owner).toMatchObject({
+          kind: "external-process",
+          pid: process.pid,
+        });
+        writeFileSync(
+          join(workspace, ".forge", "studio", "preview.json"),
+          `${JSON.stringify({ pid: process.pid, previewPort, listenerPid: process.pid })}\n`,
+          "utf8",
+        );
+        const matching = await runStudioOpenCommand({
+          workspaceRoot: workspace,
+          previewPort,
+          targets: ["codex"],
+          bridge: false,
+          json: true,
+          dryRun: false,
+          force: false,
+        });
+        expect(matching.previewAutomation.owner).toMatchObject({
           kind: "forge-managed",
           pid: process.pid,
           statePath: ".forge/studio/preview.json",
-        },
-      });
-      expect(result.previewAutomation.statusAfter.state).toBe("not-running");
+        });
+      }
     } finally {
+      await listener.close();
       cleanupWorkspace(workspace);
     }
   }, 20_000);
+
+  test("Windows netstat listener parsing matches exact TCP port and listening state", () => {
+    const output = [
+      "  TCP    127.0.0.1:51740    0.0.0.0:0    LISTENING    111",
+      "  TCP    [::1]:5174       [::]:0       LISTENING    222",
+      "  TCP    127.0.0.1:5174  127.0.0.1:9000 ESTABLISHED 333",
+    ].join("\r\n");
+    expect(parseWindowsNetstatListener(output, 5174)).toMatchObject({ pid: 222 });
+    expect(parseWindowsNetstatListener(output, 51740)).toMatchObject({ pid: 111 });
+    expect(parseWindowsNetstatListener(output, 9999)).toBeNull();
+  });
 
   test("studio snapshot reports preview posture and changed state without writing manifest", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-snapshot");
