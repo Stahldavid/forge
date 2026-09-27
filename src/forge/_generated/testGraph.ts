@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.63 input=a08fcdd61a2c08c9ad9f137db56d152ed9da57eb81f62f3955e05ebec85271ff content=3c1f3e4c3ebd29a3f7a807906b100c918062b4e77eb212142c4fd7fbd5a15393
+// @forge-generated generator=0.1.0-alpha.63 input=84e91710081b76fb63c11fe704185090832d0113ff972e147f9de33e12dd16f7 content=29e3805a8715bce01f33879409ba3d5d04af3e90d47298bbb423106f49033283
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "a08fcdd61a2c08c9ad9f137db56d152ed9da57eb81f62f3955e05ebec85271ff",
+  "inputHash": "84e91710081b76fb63c11fe704185090832d0113ff972e147f9de33e12dd16f7",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -450,7 +450,43 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/serialized-local-adapter.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-memory/h48-agent-memory.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-memory/mcp-frames.test.ts",
       "kind": "unknown",
       "reasons": []
     },
