@@ -24,13 +24,18 @@ export interface LocalPatchReviewView {
   sandboxVerification?: { state: "started" | "finished"; outcome?: string; evidenceDigest?: Digest };
 }
 
-export interface LocalVerificationRecoveryView {
+interface LocalVerificationRecoveryBase {
   kind: "verification-recovery";
   taskId: string;
   repositoryRoot: string;
   diffDigest: Digest;
   requestDigest: Digest;
 }
+
+export type LocalVerificationRecoveryView = LocalVerificationRecoveryBase & (
+  | { mode: "clear" }
+  | { mode: "continue"; remainingCommands: readonly { path: string; timeoutMs: number }[] }
+);
 
 export type LocalApprovalDecision = "approved" | "rejected";
 
@@ -83,7 +88,15 @@ function renderPatchPage(view: LocalPatchReviewView, token: string): string {
 }
 
 function renderVerificationRecoveryPage(view: LocalVerificationRecoveryView, token: string): string {
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Forge · Recuperar verificação</title></head><body><main><h1>Recuperar verificação</h1><p>O registro durável confirma que nenhum contêiner foi iniciado nesta tentativa. Aprovar remove somente esta intenção de verificação e permite iniciar uma nova tentativa com o mesmo perfil aprovado. Se houver qualquer registro de início de contêiner, a recuperação será recusada.</p><p>Repositório: <strong>${escapeHtml(view.repositoryRoot)}</strong></p><p>Tarefa: <strong>${escapeHtml(view.taskId)}</strong></p><p>Diff: <strong>${escapeHtml(view.diffDigest)}</strong></p><p>Solicitação: <strong>${escapeHtml(view.requestDigest)}</strong></p><form method="post" action="/decision/${token}"><input type="hidden" name="digest" value="${escapeHtml(view.requestDigest)}"><button type="submit" name="decision" value="approved">Permitir nova verificação</button><button type="submit" name="decision" value="rejected">Manter bloqueada</button></form></main></body></html>`;
+  const continuation = view.mode === "continue";
+  const explanation = continuation
+    ? "Os comandos anteriores têm recibos duráveis. Aprovar executa somente os testes restantes do mesmo perfil aprovado, em contêineres isolados. Nenhum comando já iniciado será repetido; um início incerto continuará bloqueado."
+    : "O registro durável confirma que nenhum contêiner foi iniciado nesta tentativa. Aprovar remove somente esta intenção de verificação e permite iniciar uma nova tentativa com o mesmo perfil aprovado.";
+  const remaining = continuation
+    ? `<h2>Testes restantes</h2><ul>${view.remainingCommands.map((command) =>
+      `<li>${escapeHtml(command.path)} (${command.timeoutMs} ms)</li>`).join("")}</ul>` : "";
+  const approveLabel = continuation ? "Executar testes restantes" : "Permitir nova verificação";
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Forge · Recuperar verificação</title></head><body><main><h1>Recuperar verificação</h1><p>${explanation}</p><p>Repositório: <strong>${escapeHtml(view.repositoryRoot)}</strong></p><p>Tarefa: <strong>${escapeHtml(view.taskId)}</strong></p><p>Diff: <strong>${escapeHtml(view.diffDigest)}</strong></p><p>Solicitação: <strong>${escapeHtml(view.requestDigest)}</strong></p>${remaining}<form method="post" action="/decision/${token}"><input type="hidden" name="digest" value="${escapeHtml(view.requestDigest)}"><button type="submit" name="decision" value="approved">${approveLabel}</button><button type="submit" name="decision" value="rejected">Manter bloqueada</button></form></main></body></html>`;
 }
 
 async function openBrowser(url: string): Promise<void> {

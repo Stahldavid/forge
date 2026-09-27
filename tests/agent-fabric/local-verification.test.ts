@@ -293,6 +293,24 @@ test("leaves an ambiguous create intent and never starts or cleans the container
   expect(calls.some((call) => call.args.includes("start") || call.args.includes("rm"))).toBe(false);
 });
 
+test("continuation skips a receipted prefix and refuses a failed or changed prefix", async () => {
+  const { patch } = fixture();
+  const approved = request(patch);
+  const first = await runLocalVerification(approved, stubbed([]));
+  const prefix = [first.commands[0]!];
+  const calls: VerificationProcessInvocation[] = [];
+  const resumed = await runLocalVerification(approved, stubbed(calls), undefined, prefix);
+  expect(resumed.outcome).toBe("passed");
+  expect(resumed.commands).toHaveLength(approved.commands.length);
+  expect(calls.some((call) => call.executable === "git")).toBe(false);
+  expect(calls.filter((call) => call.args.includes("create"))).toHaveLength(1);
+  await expect(runLocalVerification(approved, stubbed([]), undefined,
+    [{ ...prefix[0]!, outcome: "failed" }])).rejects.toThrow("not a passed prefix");
+  await expect(runLocalVerification(approved, stubbed([]), undefined,
+    [{ ...prefix[0]!, descriptor: { kind: "git-diff-check", timeoutMs: 1 } }]))
+    .rejects.toThrow("not a passed prefix");
+});
+
 test("keeps timeout, test failure, and output limit distinct", async () => {
   const { patch } = fixture();
   const timedOut = await runLocalVerification(request(patch), stubbed([], {

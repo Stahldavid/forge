@@ -815,8 +815,8 @@ export class LocalTaskService {
     } finally { this.activeVerifications.delete(taskId); }
   }
 
-  /** Read back only previously intended Docker commands; never start an uncertain command. */
-  private async reconcileVerificationStarted(taskId: string): Promise<LocalTaskStatus> {
+  /** Read back intended commands; owner approval may dispatch only an untouched suffix. */
+  private async reconcileVerificationStarted(taskId: string, allowContinuation = false): Promise<LocalTaskStatus> {
     const record = await this.inbox.get(taskId);
     const status = await this.status(taskId);
     const intent = await this.inbox.getVerification(taskId);
@@ -835,11 +835,19 @@ export class LocalTaskService {
     }
     const records = await this.inbox.getVerificationCommands(taskId, requestDigest);
     const commands: LocalVerificationCommandEvidence[] = [];
+    let nextUndispatched = -1;
     for (const [index, descriptor] of spec.commands.entries()) {
       if (commands.at(-1)?.outcome !== undefined && commands.at(-1)?.outcome !== "passed") break;
       const saved = records.find((command) => command.ordinal === index);
-      if (!saved || saved.descriptorDigest !== digestCanonical(descriptor, sha256Digest)) {
-        throw new AgentFabricError("AF_CONFLICT", "An approved verification command has no matching durable intent");
+      if (!saved) {
+        if (index === 0 || records.some((command) => command.ordinal > index)) {
+          throw new AgentFabricError("AF_INVALID_STATE", "Verification command receipts are not a contiguous prefix");
+        }
+        nextUndispatched = index;
+        break;
+      }
+      if (saved.descriptorDigest !== digestCanonical(descriptor, sha256Digest)) {
+        throw new AgentFabricError("AF_INVALID_STATE", "Verification command intent differs from the approved profile");
       }
       if (saved.state === "receipted") {
         if (!saved.evidence) throw new AgentFabricError("AF_INVALID_STATE", "Verification receipt is missing evidence");
@@ -857,6 +865,47 @@ export class LocalTaskService {
         saved.descriptorDigest, { ...readback, outputPreview: "" });
       commands.push(readback);
       await cleanupReceiptedLocalDockerVerification(request, requestDigest, index);
+    }
+    if (nextUndispatched >= 0 && commands.at(-1)?.outcome === "passed") {
+      if (!allowContinuation) {
+        throw new AgentFabricError("AF_CONFLICT", "Approved verification commands remain undispatched; owner continuation is required");
+      }
+      const remainingCommands = spec.commands.slice(nextUndispatched).map((command) => {
+        if (command.kind !== "node-test-file") {
+          throw new AgentFabricError("AF_INVALID_STATE", "Only never-intended Docker tests may continue");
+        }
+        return { path: command.path, timeoutMs: command.timeoutMs };
+      });
+      const decision = await this.verificationRecovery({
+        kind: "verification-recovery", mode: "continue", taskId,
+        repositoryRoot: this.repositoryRoot, diffDigest: intent.diffDigest,
+        requestDigest, remainingCommands,
+      });
+      if (decision !== "approved") return this.status(taskId);
+      verifyLocalPatchEvidence(status.patch);
+      await preflightLocalDockerVerification(request);
+      verifyLocalPatchEvidence(status.patch);
+      const current = await this.inbox.getVerification(taskId);
+      if (!current || current.state !== "started" || current.requestDigest !== requestDigest ||
+          current.diffDigest !== status.patch.diffDigest) {
+        throw new AgentFabricError("AF_CONFLICT", "Verification intent changed during owner continuation");
+      }
+      const resumed = await runLocalVerification(request, undefined, {
+        identity: requestDigest,
+        beforeDockerCreate: async (index, name, descriptor) => {
+          await this.inbox.beginVerificationDockerCommand(taskId, requestDigest, index,
+            digestCanonical(descriptor, sha256Digest), name);
+        },
+        receipt: async (index, command) => {
+          await this.inbox.receiptVerificationCommand(taskId, requestDigest, index,
+            digestCanonical(command.descriptor, sha256Digest), { ...command, outputPreview: "" });
+        },
+      }, commands);
+      const after = await this.inbox.getVerificationCommands(taskId, requestDigest);
+      if (!after.some((command) => command.ordinal === nextUndispatched)) {
+        throw new AgentFabricError("AF_CONFLICT", "Continuation stopped before Docker intent; owner may retry recovery");
+      }
+      commands.splice(0, commands.length, ...resumed.commands);
     }
     if (commands.length === 0 || (commands.at(-1)?.outcome === "passed" &&
         commands.length !== spec.commands.length)) {
@@ -890,7 +939,7 @@ export class LocalTaskService {
       const status = await this.status(taskId);
       const intent = await this.inbox.getVerification(taskId);
       if (intent?.state === "started" && intent.containerDispatched) {
-        return this.reconcileVerificationStarted(taskId);
+        return this.reconcileVerificationStarted(taskId, true);
       }
       if (status.state !== "patch_ready" || !status.patch || !intent ||
           intent.state !== "started" || intent.containerDispatched) {
@@ -898,7 +947,7 @@ export class LocalTaskService {
       }
       verifyLocalPatchEvidence(status.patch);
       const decision = await this.verificationRecovery({
-        kind: "verification-recovery", taskId, repositoryRoot: this.repositoryRoot,
+        kind: "verification-recovery", mode: "clear", taskId, repositoryRoot: this.repositoryRoot,
         diffDigest: intent.diffDigest, requestDigest: intent.requestDigest,
       });
       if (decision !== "approved") return this.status(taskId);

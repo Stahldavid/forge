@@ -391,6 +391,90 @@ describe("local task service", () => {
 });
 
 if (process.env.FORGE_FABRIC_DOCKER_SMOKE === "1") {
+  test("owner can continue only never-intended tests after a receipted Docker command", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-verification-continuation-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "answer.txt"), "alpha\n");
+      for (const path of ["one.test.mjs", "two.test.mjs"]) {
+        writeFileSync(join(root, path),
+          "import { test } from 'node:test'; import assert from 'node:assert/strict'; test('pass', () => assert.equal(1, 1));\n");
+      }
+      git(root, "add", "answer.txt", "one.test.mjs", "two.test.mjs");
+      git(root, "commit", "-qm", "fixture");
+      const imageId = execFileSync("docker", ["--context", "desktop-linux", "image", "inspect", "node:22", "--format", "{{.Id}}"],
+        { encoding: "utf8", windowsHide: true }).trim();
+      const proposal: LocalCodingTaskProposal = {
+        schemaVersion: 1, repositoryId: "repo:verification-continuation", baseCommit: git(root, "rev-parse", "HEAD"),
+        goal: "Change answer to beta", acceptanceCriteria: ["answer.txt contains beta"], nonObjectives: [],
+        sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"], requestedModelTargetId: "target:ollama:local",
+        verification: { imageId, commands: [
+          { kind: "git-diff-check", timeoutMs: 5_000 },
+          { kind: "node-test-file", path: "one.test.mjs", timeoutMs: 20_000 },
+          { kind: "node-test-file", path: "two.test.mjs", timeoutMs: 20_000 },
+        ] },
+        limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+          maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+      };
+      const service = await LocalTaskService.open(root, async () => "approved",
+        async () => ({ text: JSON.stringify({ schemaVersion: 1,
+          files: [{ path: "answer.txt", content: "beta\n" }] }) }));
+      let taskId = "";
+      let firstReceiptDigest = sha256Digest("");
+      try {
+        taskId = (await service.propose(proposal)).taskId;
+        await service.review(taskId);
+        await service.run(taskId);
+        const inbox = (service as unknown as { inbox: LocalTaskInbox }).inbox;
+        const originalBegin = inbox.beginVerificationDockerCommand.bind(inbox);
+        inbox.beginVerificationDockerCommand = async (id, digest, index, descriptorDigest, name) => {
+          if (index === 2) throw new Error("simulated crash before second Docker intent");
+          return originalBegin(id, digest, index, descriptorDigest, name);
+        };
+        await expect(service.verify(taskId)).rejects.toThrow("simulated crash");
+        const intent = await inbox.getVerification(taskId);
+        expect(intent?.state).toBe("started");
+        const commands = await inbox.getVerificationCommands(taskId, intent!.requestDigest);
+        expect(commands.map((command) => [command.ordinal, command.state])).toEqual([
+          [0, "receipted"], [1, "receipted"],
+        ]);
+        firstReceiptDigest = sha256Digest(JSON.stringify(commands[1]!.evidence));
+      } finally { await service.close(); }
+      let approvals = 0;
+      const reopened = await LocalTaskService.open(root, async () => "rejected", undefined,
+        async () => "rejected", async (view) => {
+          approvals += 1;
+          expect(view.mode).toBe("continue");
+          if (view.mode === "continue") {
+            expect(view.remainingCommands).toEqual([{ path: "two.test.mjs", timeoutMs: 20_000 }]);
+          }
+          return approvals === 1 ? "rejected" : "approved";
+        });
+      try {
+        await expect(reopened.reconcileVerification(taskId)).rejects.toThrow("owner continuation is required");
+        expect(approvals).toBe(0);
+        const blocked = await reopened.recoverVerification(taskId);
+        expect(blocked.verification?.state).toBe("started");
+        const blockedInbox = (reopened as unknown as { inbox: LocalTaskInbox }).inbox;
+        const blockedIntent = await blockedInbox.getVerification(taskId);
+        expect((await blockedInbox.getVerificationCommands(taskId, blockedIntent!.requestDigest))
+          .map((command) => command.ordinal)).toEqual([0, 1]);
+        const result = await reopened.recoverVerification(taskId);
+        expect(result.verification?.outcome).toBe("passed");
+        expect(approvals).toBe(2);
+        const inbox = (reopened as unknown as { inbox: LocalTaskInbox }).inbox;
+        const intent = await inbox.getVerification(taskId);
+        const commands = await inbox.getVerificationCommands(taskId, intent!.requestDigest);
+        expect(commands.map((command) => [command.ordinal, command.state])).toEqual([
+          [0, "receipted"], [1, "receipted"], [2, "receipted"],
+        ]);
+        expect(sha256Digest(JSON.stringify(commands[1]!.evidence))).toBe(firstReceiptDigest);
+      } finally { await reopened.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 120_000);
+
   test("owner-approved verification survives restart and gates diff acceptance", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-verified-task-"));
     try {

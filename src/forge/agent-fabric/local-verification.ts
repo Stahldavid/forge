@@ -1,7 +1,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, lstatSync, realpathSync } from "node:fs";
 import { isAbsolute, join, resolve, sep } from "node:path";
-import { sha256Digest } from "./canonical.ts";
+import { digestCanonical, sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import { verifyLocalPatchEvidence, type LocalPatchEvidence } from "./local-coding-worker.ts";
 import type { Digest } from "./types.ts";
@@ -450,16 +450,25 @@ export async function runLocalVerification(
   request: LocalVerificationRequest,
   executor: VerificationExecutor = executeVerificationProcess,
   callbacks?: LocalVerificationHooks | (() => Promise<void>),
+  completedCommands: readonly LocalVerificationCommandEvidence[] = [],
 ): Promise<LocalVerificationEvidence> {
   preflightLocalVerification(request);
+  if (completedCommands.length > request.commands.length || completedCommands.some((command, index) =>
+    command.outcome !== "passed" ||
+    digestCanonical(command.descriptor, sha256Digest) !== digestCanonical(request.commands[index], sha256Digest) ||
+    command.runtime !== (index === 0 ? "host-git" : "docker-node") ||
+    (index > 0 && command.imageId !== request.imageId))) {
+    invalid("Verification continuation is not a passed prefix of the approved commands");
+  }
   const worktreeRoot = realpathSync(request.patch.worktreeRoot);
-  const results: LocalVerificationCommandEvidence[] = [];
+  const results: LocalVerificationCommandEvidence[] = [...completedCommands];
   const hooks = typeof callbacks === "function" ? undefined : callbacks;
   const identity = hooks?.identity ?? sha256Digest(JSON.stringify([
     request.patch.diffDigest, request.imageId, request.commands,
   ]));
   let imageChecked = false;
   for (const [index, descriptor] of request.commands.entries()) {
+    if (index < completedCommands.length) continue;
     verifyLocalPatchEvidence(request.patch);
     if (descriptor.kind === "git-diff-check") {
       const args = ["--no-pager", "-c", "core.fsmonitor=false", "-c", "diff.external=", "diff",
