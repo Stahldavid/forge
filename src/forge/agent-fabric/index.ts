@@ -9,6 +9,7 @@ export type {
 export * from "./errors.ts";
 export * from "./journal.ts";
 export * from "./p0a.ts";
+export * from "./p0b-model-adapter.ts";
 export * from "./planning.ts";
 export { replayControlState } from "./hardened-reducer.ts";
 export { createEmptyControlState } from "./reducer.ts";

@@ -27,6 +27,7 @@ export async function resolveLanguageModel(
   provider: ForgeAiProvider,
   model: string,
   secrets: SecretsContext,
+  transport?: typeof fetch,
 ): Promise<LanguageModel> {
   if (!model || model.trim().length === 0) {
     forgeError(FORGE_AI_MODEL_MISSING, "AI model is required");
@@ -42,7 +43,7 @@ export async function resolveLanguageModel(
         );
       }
       const { createOpenAI } = await import("@ai-sdk/openai");
-      const openai = createOpenAI({ apiKey });
+      const openai = createOpenAI({ apiKey, fetch: transport });
       return openai(model);
     }
     case "anthropic": {
@@ -54,7 +55,7 @@ export async function resolveLanguageModel(
         );
       }
       const { createAnthropic } = await import("@ai-sdk/anthropic");
-      const anthropic = createAnthropic({ apiKey });
+      const anthropic = createAnthropic({ apiKey, fetch: transport });
       return anthropic(model);
     }
     case "gateway": {
@@ -66,7 +67,7 @@ export async function resolveLanguageModel(
         );
       }
       const { createGateway } = await import("ai");
-      const gateway = createGateway({ apiKey });
+      const gateway = createGateway({ apiKey, fetch: transport });
       return gateway(model);
     }
     default:
