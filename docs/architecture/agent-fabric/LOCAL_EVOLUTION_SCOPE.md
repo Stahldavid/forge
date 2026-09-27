@@ -52,3 +52,38 @@ pass/fail/inconclusive results, owner rejection, stale decisions, canary/promoti
 rollback, revocation, immutable attempt versions, and PGlite reopen. Typecheck and
 the repository's generated checks remain release gates. These tests prove the local
 registry state machine, not live extension execution.
+
+## Fixed local adaptive data profile
+
+The local service now accepts only manifest schema v1 with extension key
+`local-adaptive-input-profile` and a repository-relative `.json` artifact.
+The artifact is one canonical UTF-8 JSON object followed by a newline:
+
+```json
+{"constraints":{"maxLength":40,"requiredLabel":"limits"},"inventory":{"maxLength":48,"requiredLabel":"source"},"kind":"local-adaptive-input-profile","schemaVersion":1}
+```
+
+Each rule has exactly `maxLength` and `requiredLabel`. Labels are lowercase
+ASCII tokens of at most 24 characters; lengths are integers bounded by the
+fixed harness's 256-character input ceiling. A worker input must be
+`label:nonempty-payload` and fit its rule's total length. The profile cannot
+select tools, code, grants, network access, execution settings, or workers.
+
+The fixed suite checks stored artifact and manifest digests, manifest binding,
+the strict artifact contract, and deterministic positive and negative input
+probes. Invalid code-like or over-limit artifacts can be registered for review,
+but evaluate as failed and cannot be selected. This is local deterministic
+validation, not a safety or quality assessment of generated code.
+
+`LocalEvolutionService.resolveSelectedLocalAdaptiveInputs(channel, attemptId,
+inventory, constraints)` verifies the selected version, parses the profile,
+checks both inputs, binds the exact version to a fresh attempt ID, and returns
+that version with the unchanged inputs. A selection change before binding
+fails closed. The caller must record the returned version in its run evidence.
+A revoked version cannot bind a new attempt; historical bindings remain
+readable. The service does not schedule a run or grant capabilities.
+
+Changing the fixed suite digest makes previous service evaluations from the
+older arbitrary-byte format incompatible with this v1 profile suite. Existing
+registry rows and decision receipts remain stored; migration or re-evaluation
+of old rows is not implemented.

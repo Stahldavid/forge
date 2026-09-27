@@ -6,6 +6,8 @@ import type { DbAdapter } from "../runtime/db/adapter.ts";
 import { digestCanonical, sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
 import { localEvolutionOwnerVerifier } from "./local-evolution-approval.ts";
+import { LOCAL_ADAPTIVE_EXTENSION_KEY, assertLocalAdaptiveInputs,
+  evaluateLocalAdaptiveProfile, parseLocalAdaptiveInputProfile } from "./local-evolution-profile.ts";
 import { LocalEvolutionRegistry, type EvolutionChannel, type EvolutionDecisionAction,
   type EvolutionOwnerVerifier, type EvolutionVersionStatus, type FixedEvaluationSuite } from "./local-evolution-registry.ts";
 import { localFabricPath } from "./local-paths.ts";
@@ -13,9 +15,9 @@ import type { Digest } from "./types.ts";
 
 const MAX_MANIFEST = 16 * 1024;
 const MAX_ARTIFACT = 1024 * 1024;
-const KEY = /^[a-z][a-z0-9._-]{0,63}$/u;
-const suiteId = "local-extension-integrity-v1";
-const caseIds = ["artifact-integrity", "manifest-integrity", "manifest-contract"] as const;
+const suiteId = "local-adaptive-input-profile-v1";
+const caseIds = ["artifact-integrity", "manifest-integrity", "manifest-contract",
+  "profile-contract", "accept-valid-input", "reject-wrong-label", "reject-over-limit"] as const;
 export const LOCAL_EVOLUTION_SUITE: FixedEvaluationSuite = {
   suiteId, caseIds, suiteDigest: digestCanonical({ suiteId, caseIds }, sha256Digest),
 };
@@ -34,9 +36,10 @@ function strictManifest(bytes: Buffer): ExtensionManifest {
   if (!value || typeof value !== "object" || Array.isArray(value)) invalid("Extension manifest must be an object");
   const item = value as Partial<ExtensionManifest>;
   if (Object.keys(item).sort().join(",") !== "artifactPath,extensionKey,schemaVersion" ||
-      item.schemaVersion !== 1 || typeof item.extensionKey !== "string" || !KEY.test(item.extensionKey) ||
+      item.schemaVersion !== 1 || typeof item.extensionKey !== "string" || item.extensionKey !== LOCAL_ADAPTIVE_EXTENSION_KEY ||
       typeof item.artifactPath !== "string" || !/^[A-Za-z0-9_./-]{1,256}$/u.test(item.artifactPath) ||
-      item.artifactPath.split("/").some((part) => part === ".." || part === "." || part === "")) {
+      item.artifactPath.split("/").some((part) => part === ".." || part === "." || part === "") ||
+      !item.artifactPath.endsWith(".json")) {
     invalid("Extension manifest is outside the local v1 contract");
   }
   return item as ExtensionManifest;
@@ -94,10 +97,20 @@ export class LocalEvolutionService {
       if (manifest) {
         try { contract = strictManifest(manifest).extensionKey === version.extensionKey; } catch { /* fixed case fails */ }
       }
+      const profile = artifact ? evaluateLocalAdaptiveProfile(artifact) :
+        { contract: false, acceptsValid: false, rejectsWrongLabel: false, rejectsOverLimit: false };
       return [
         { caseId: caseIds[0], passed: artifactObserved === version.artifactDigest, evidenceDigest: artifactObserved },
         { caseId: caseIds[1], passed: manifestObserved === version.manifestDigest, evidenceDigest: manifestObserved },
         { caseId: caseIds[2], passed: contract, evidenceDigest: digestCanonical({ manifestDigest: manifestObserved, extensionKey: version.extensionKey, contract }, sha256Digest) },
+        ...([
+          ["profile-contract", profile.contract],
+          ["accept-valid-input", profile.acceptsValid],
+          ["reject-wrong-label", profile.rejectsWrongLabel],
+          ["reject-over-limit", profile.rejectsOverLimit],
+        ] as const).map(([caseId, passed]) => ({
+          caseId, passed, evidenceDigest: digestCanonical({ artifactDigest: artifactObserved, caseId, passed }, sha256Digest),
+        })),
       ];
     };
     try { return new LocalEvolutionService(root, adapter, new LocalEvolutionRegistry({
@@ -159,5 +172,20 @@ export class LocalEvolutionService {
       throw new AgentFabricError("AF_CONFLICT", "Extension selection changed during load");
     }
     return { versionId, artifact, manifest };
+  }
+
+  /** Bind one attempt to the selected immutable profile and narrow only its input data. */
+  async resolveSelectedLocalAdaptiveInputs(channel: EvolutionChannel, attemptId: string,
+    inventory: string, constraints: string): Promise<{
+    versionId: string; inventory: string; constraints: string;
+  }> {
+    const loaded = await this.loadSelected(LOCAL_ADAPTIVE_EXTENSION_KEY, channel);
+    const profile = parseLocalAdaptiveInputProfile(loaded.artifact);
+    assertLocalAdaptiveInputs(profile, inventory, constraints);
+    const binding = await this.registry.bindAttempt(attemptId, LOCAL_ADAPTIVE_EXTENSION_KEY, channel);
+    if (binding.versionId !== loaded.versionId) {
+      throw new AgentFabricError("AF_CONFLICT", "Selected profile changed before attempt binding");
+    }
+    return { versionId: binding.versionId, inventory, constraints };
   }
 }
