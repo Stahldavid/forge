@@ -16,6 +16,7 @@ import {
 } from "../../src/forge/cli/commands.ts";
 import { runBaselineCommand } from "../../src/forge/cli/baseline.ts";
 import { buildGenerateJson, buildInspectJson } from "../../src/forge/cli/output.ts";
+import { formatChangedHuman } from "../../src/forge/cli/changed.ts";
 import {
   cleanupWorkspace,
   defaultGenerateOptions,
@@ -738,6 +739,7 @@ describe("Forge CLI generation and inspection", () => {
       writeFileSync(join(workspace, "src", "commands", "changed.ts"), "export const ok = true;\n", "utf8");
       writeFileSync(join(workspace, "docs", "changed.md"), "# Changed\n", "utf8");
       writeFileSync(join(workspace, "forge.lock"), "changed generated lock\n", "utf8");
+      writeFileSync(join(workspace, ".workos-seed-state.json"), "{}\n", "utf8");
 
       const changed = runChangedCommand(workspace);
       expect(changed.exitCode).toBe(0);
@@ -745,8 +747,8 @@ describe("Forge CLI generation and inspection", () => {
         schemaVersion: "0.1.0",
         ok: true,
         summary: {
-          changedFiles: 3,
-          humanFiles: 2,
+          changedFiles: 4,
+          humanFiles: 3,
           generatedFiles: 1,
         },
       });
@@ -770,13 +772,16 @@ describe("Forge CLI generation and inspection", () => {
         then: "generated",
         generatedCollapsedByDefault: true,
         authoredFiles: 2,
+        operationalFiles: 1,
         generatedFiles: 1,
       });
+      expect(formatChangedHuman(changed)).toContain("2 authored file(s) first; 1 operational file(s)");
       expect(JSON.stringify(changed.data.diffPlan)).toContain("git diff -- .");
       expect(JSON.stringify(changed.data.diffPlan)).toContain("git diff -- src/forge/_generated forge.lock");
       expect((changed.data.reviewFocus as { suggestedOrder: string[] }).suggestedOrder).toEqual([
         "source",
         "docs",
+        "operational",
         "generated",
       ]);
       expect((changed.data.nextActions as string[])[0]).toBe("forge generate --check --json");
@@ -788,6 +793,11 @@ describe("Forge CLI generation and inspection", () => {
         view: "authored",
         changedFiles: 2,
         humanFiles: 2,
+        generatedFiles: 0,
+      });
+      expect(authored.data.diffPlan).toMatchObject({
+        authoredFiles: 2,
+        operationalFiles: 0,
         generatedFiles: 0,
       });
       const authoredDerived = authored.data.derivedChanges as {

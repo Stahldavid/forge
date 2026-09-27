@@ -26,6 +26,7 @@ export type DiffPlan = {
   generatedCollapsedByDefault: boolean;
   generatedFiles: number;
   authoredFiles: number;
+  operationalFiles: number;
   authoredDiffCommand: string;
   generatedDiffCommand: string;
   fullDiffCommand: string;
@@ -245,18 +246,25 @@ export function summarizeChangeTypes(summary: CategorizedFileSummary): string {
 
 export function buildDiffPlanFromChangeSummary(summary: CategorizedFileSummary): DiffPlan {
   const generatedFiles = summary.byType.generated.count;
-  const authoredFiles = Math.max(0, summary.total.count - generatedFiles);
+  const operationalFiles = summary.byType.operational.count;
+  const authoredFiles = CHANGE_TYPES
+    .filter((type) => type !== "generated" && type !== "operational")
+    .reduce((count, type) => count + summary.byType[type].count, 0);
+  const operationalSummary = operationalFiles > 0
+    ? ` ${operationalFiles} operational file(s) are tracked separately;`
+    : "";
   return {
     first: "authored",
     then: "generated",
     generatedCollapsedByDefault: generatedFiles > 0,
     generatedFiles,
     authoredFiles,
+    operationalFiles,
     authoredDiffCommand: 'git diff -- . ":(exclude)src/forge/_generated/**" ":(exclude)forge.lock"',
     generatedDiffCommand: 'git diff -- src/forge/_generated forge.lock AGENTS.md ":(glob)**/AGENTS.md" .forge/agent/context.json',
     fullDiffCommand: "git diff",
     summary: generatedFiles > 0
-      ? `${authoredFiles} authored file(s) first; ${generatedFiles} generated artifact(s) are derived and should be reviewed after the source cause.`
-      : `${authoredFiles} authored file(s); no generated artifacts changed.`,
+      ? `${authoredFiles} authored file(s) first;${operationalSummary} ${generatedFiles} generated artifact(s) are derived and should be reviewed after the source cause.`
+      : `${authoredFiles} authored file(s);${operationalSummary} no generated artifacts changed.`,
   };
 }
