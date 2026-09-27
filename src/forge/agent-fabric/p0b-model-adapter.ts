@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { resolveLanguageModel } from "../runtime/ai/providers.ts";
-import type { ForgeAiProvider } from "../runtime/ai/types.ts";
+import type { ForgeModelProvider } from "../runtime/ai/providers.ts";
 import type { SecretsContext } from "../runtime/secrets/types.ts";
 import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
@@ -21,7 +21,7 @@ export interface ModelContextPack {
 
 export interface MaterializedModelInvocation {
   schemaVersion: 1;
-  provider: ForgeAiProvider;
+  provider: ForgeModelProvider;
   model: string;
   systemPrompt: string;
   prompt: string;
@@ -36,7 +36,7 @@ export interface MaterializedModelInvocation {
 
 export interface ModelTarget {
   targetId: string;
-  provider: ForgeAiProvider;
+  provider: ForgeModelProvider;
   allowedModels: readonly string[];
 }
 
@@ -237,7 +237,7 @@ export class P0bModelAdapter implements AgentAdapter {
         !Array.isArray(target.allowedModels) || target.allowedModels.length === 0 ||
         target.allowedModels.length > 16 ||
         !target.allowedModels.every((model) => typeof model === "string" && model.length > 0) ||
-        !["openai", "anthropic", "gateway"].includes(invocation.provider) ||
+        !["openai", "anthropic", "gateway", "ollama"].includes(invocation.provider) ||
         typeof invocation.model !== "string" || invocation.model.length === 0 ||
         !target.allowedModels.includes(invocation.model) ||
         target.provider !== invocation.provider ||

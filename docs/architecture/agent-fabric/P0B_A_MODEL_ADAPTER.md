@@ -32,9 +32,20 @@ is bound into the report; the control journal contains the digest and no provide
 `succeeded` proves structural invocation completion only. It does not decide the goal's
 acceptance criteria or authorize instructions in the text.
 
-Deterministic coverage is in `tests/agent-fabric/p0b-model-adapter.test.ts`. To capture the
-separate opt-in live evidence, configure `OPENAI_API_KEY` and
-`FORGE_P0B_SMOKE_MODEL` in the local process environment and run:
+## User-authorized keyless local extension
+
+The original P0b plan named Forge's three hosted providers. The operator explicitly declined
+API-key use and authorized a local Ollama extension on 2026-09-27. The trusted provider
+resolver now maps `ollama` to the fixed `http://127.0.0.1:11434/v1` chat-completions endpoint.
+The endpoint cannot be selected by a prompt or materialization. It uses the existing AI SDK
+OpenAI-compatible client with a literal, nonsecret `ollama` placeholder, which the local
+Ollama server ignores; no provider key is read. Redirects remain blocked. The authorized
+target still binds the exact `ollama` provider and installed model ID. This extension is
+limited to local model text generation and does not add general custom endpoints.
+
+Deterministic coverage is in `tests/agent-fabric/p0b-model-adapter.test.ts`. For the
+credential-free live smoke, install a local text model with `ollama pull qwen3:0.6b`,
+ensure Ollama is serving loopback, and run from a clean checkout:
 
 ```bash
 node --import tsx scripts/p0b-live-smoke.ts
@@ -44,3 +55,5 @@ The smoke reports the exact Git SHA, local environment, authorized provider/mode
 effect class, digest chain, permit/attempt, physical request count, result digest and replay
 check. It prints no prompt, response text or credential. A passing local deterministic suite
 is not a substitute for this live gate. The live run is required before P0b-A adoption/merge.
+An explicit `FORGE_P0B_SMOKE_PROVIDER=openai` plus model and credential can still exercise the
+hosted path, but the keyless Ollama path is the default and the one authorized here.

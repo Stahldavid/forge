@@ -1,4 +1,4 @@
-/** Opt-in live evidence for P0b-A. Requires OPENAI_API_KEY and FORGE_P0B_SMOKE_MODEL. */
+/** Opt-in live evidence for P0b-A; defaults to keyless local Ollama. */
 import { execFileSync } from "node:child_process";
 import {
   ForgeAgentConductor, MemoryControlJournal, P0bModelAdapter,
@@ -14,8 +14,15 @@ function requireValue(name: string): string {
 }
 
 async function main(): Promise<void> {
-  const model = requireValue("FORGE_P0B_SMOKE_MODEL");
-  requireValue("OPENAI_API_KEY");
+  const requestedProvider = process.env.FORGE_P0B_SMOKE_PROVIDER ?? "ollama";
+  if (requestedProvider !== "ollama" && requestedProvider !== "openai") {
+    throw new Error("Unsupported smoke provider");
+  }
+  const provider = requestedProvider;
+  const model = provider === "ollama"
+    ? process.env.FORGE_P0B_SMOKE_MODEL ?? "qwen3:0.6b"
+    : requireValue("FORGE_P0B_SMOKE_MODEL");
+  if (provider === "openai") requireValue("OPENAI_API_KEY");
   if (execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()) {
     throw new Error("live smoke requires a clean worktree for exact-SHA evidence");
   }
@@ -35,14 +42,14 @@ async function main(): Promise<void> {
   const conductor = new ForgeAgentConductor(
     "run:p0b-live", journal, { now: Date.now }, sha256Digest, verifier,
   );
-  const targetId = `target:openai:${model}`;
+  const targetId = `target:${provider}:${model}`;
   conductor.registerOwnerAuthorization({
     authorizationId: "auth:p0b-live", principalId: "owner:local-operator",
     rootExecutionId: "run:p0b-live", goalIds: ["goal:p0b-live"],
     subjectIds: ["worker:p0b-live"], capabilities: ["model.invoke"],
     sourceIds: ["source:p0b-smoke"], targetIds: [targetId],
     effectClasses: ["bounded_external_inference"], notBefore: now - 1000,
-    expiresAt: now + 90_000, maximumAttempts: 1, maximumDelegationDepth: 0,
+    expiresAt: now + 150_000, maximumAttempts: 1, maximumDelegationDepth: 0,
     resourceCeilings: {},
   });
   conductor.registerGoal({
@@ -60,7 +67,7 @@ async function main(): Promise<void> {
   const profile = {
     executionProfileId: "profile:p0b-live", isolation: "process" as const,
     network: "provider_only" as const, filesystem: "read_only" as const,
-    durability: "ephemeral" as const, maximumWallClockMs: 30_000,
+    durability: "ephemeral" as const, maximumWallClockMs: 60_000,
   };
   const revision = createRunPlanRevision("run:p0b-live", "goal:p0b-live", {
     programId: "program:p0b-live", version: 1,
@@ -74,7 +81,7 @@ async function main(): Promise<void> {
     subjectId: "worker:p0b-live", parentGrantId: null,
     capabilities: ["model.invoke"], sourceIds: ["source:p0b-smoke"],
     targetIds: [targetId], effectClasses: ["bounded_external_inference"],
-    notBefore: now - 1000, expiresAt: now + 90_000,
+    notBefore: now - 1000, expiresAt: now + 150_000,
     maximumAttempts: 1, delegationDepthRemaining: 0, resourceCeilings: {},
   });
   const context = {
@@ -83,10 +90,10 @@ async function main(): Promise<void> {
   };
   const contextPackDigest = digestCanonical(context, sha256Digest);
   const invocation = {
-    schemaVersion: 1 as const, provider: "openai" as const, model,
+    schemaVersion: 1 as const, provider, model,
     systemPrompt: "Return one short text sentence. Do not call tools.",
-    prompt: "Acknowledge the smoke context in a short sentence.",
-    contextPackDigest, maxOutputTokens: 64, maximumRequestBytes: 2048,
+    prompt: "/no_think Acknowledge the smoke context in a short sentence.",
+    contextPackDigest, maxOutputTokens: 256, maximumRequestBytes: 2048,
     maximumResultBytes: 2048, outputMode: "text" as const,
   };
   const materializationDigest = digestCanonical(invocation, sha256Digest);
@@ -108,11 +115,11 @@ async function main(): Promise<void> {
   const claim = conductor.claimDispatch({
     claimId: "claim:p0b-live", intentId: "intent:p0b-live",
     workerId: "worker:p0b-live", attemptId: "attempt:p0b-live",
-    leaseDurationMs: 80_000,
+    leaseDurationMs: 120_000,
   });
   const permit = conductor.issuePermit({
     permitId: "permit:p0b-live", claimId: claim.claimId,
-    grantId: "grant:p0b-live", maximumValidityMs: 60_000,
+    grantId: "grant:p0b-live", maximumValidityMs: 90_000,
   });
   let physicalRequests = 0;
   const secrets = {
@@ -130,7 +137,7 @@ async function main(): Promise<void> {
     conductor, now: Date.now,
     resolveSpec: () => spec, resolveContext: () => context,
     resolveInvocation: () => invocation,
-    resolveTarget: () => ({ targetId, provider: "openai", allowedModels: [model] }),
+    resolveTarget: () => ({ targetId, provider, allowedModels: [model] }),
     resolveHarness: () => harness, resolveProfile: () => profile,
     executeModel: createForgeModelExecutor(secrets, () => { physicalRequests += 1; }),
   });
@@ -143,7 +150,7 @@ async function main(): Promise<void> {
     throw new Error(`P0b live smoke failed structurally: status=${outcome.status}, physicalRequests=${physicalRequests}`);
   }
   process.stdout.write(`${JSON.stringify({
-    status: "passed", head, environment: "local-windows", provider: "openai", model,
+    status: "passed", head, environment: "local-windows", provider, model,
     targetId, effectClass: "bounded_external_inference", contextPackDigest,
     materializationDigest, effectiveRunSpecDigest, permitId: permit.permitId,
     attemptId: permit.attemptId, physicalRequests, resultDigest: outcome.resultDigest,

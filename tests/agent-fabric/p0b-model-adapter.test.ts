@@ -201,6 +201,7 @@ describe("P0b-A bounded model adapter", () => {
     const configurations: Parameters<typeof fixture>[2][] = [
       { context: { sourceIds: ["source:other"] } },
       { invocation: { provider: "anthropic" } },
+      { invocation: { provider: "ollama" } },
       { invocation: { model: "other-model" } },
       { invocation: { maxOutputTokens: 0 } },
       { invocation: { maxOutputTokens: 100_000 } },
@@ -316,5 +317,36 @@ describe("P0b-A bounded model adapter", () => {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => error ? reject(error) : resolve()));
     }
+  });
+
+  test("local Ollama uses fixed loopback chat endpoint without credential lookup", async () => {
+    let credentialLookups = 0;
+    let physicalRequests = 0;
+    let observedURL = "";
+    const fakeTransport = Object.assign(async (input: RequestInfo | URL) => {
+      observedURL = String(input);
+      return new Response(JSON.stringify({
+        id: "local-test", object: "chat.completion", created: 1,
+        model: "qwen3:0.6b",
+        choices: [{ index: 0, message: { role: "assistant", content: "Local result." },
+          finish_reason: "stop" }],
+        usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }, { preconnect: fetch.preconnect });
+    const f = fixture(undefined, "bounded_external_inference", {
+      invocation: { provider: "ollama", model: "qwen3:0.6b" },
+      target: { targetId: target.targetId, provider: "ollama", allowedModels: ["qwen3:0.6b"] },
+    });
+    const execute = createForgeModelExecutor({
+      optional: () => { credentialLookups += 1; throw new Error("no key expected"); },
+      get: () => { credentialLookups += 1; throw new Error("no key expected"); },
+      has: () => { credentialLookups += 1; throw new Error("no key expected"); },
+    }, () => { physicalRequests += 1; }, fakeTransport);
+    const result = await execute(f.invocation, f.context, new AbortController().signal);
+    expect(result.text).toBe("Local result.");
+    expect(observedURL).toBe("http://127.0.0.1:11434/v1/chat/completions");
+    expect(physicalRequests).toBe(1);
+    expect(credentialLookups).toBe(0);
+    expect(f.adapter.preflight(f.permit).invocation.provider).toBe("ollama");
   });
 });
