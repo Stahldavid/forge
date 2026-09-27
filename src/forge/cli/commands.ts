@@ -291,6 +291,7 @@ import {
 } from "../agent-adapters/index.ts";
 import { runMcpServe } from "../agent-memory/mcp.ts";
 import { runFabricCommand } from "./fabric.ts";
+import { runEvolutionCommand } from "./evolution.ts";
 import {
   formatReviewHuman,
   formatReviewJson,
@@ -2409,6 +2410,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
     }
     case "fabric": {
       return runFabricCommand(command);
+    }
+    case "evolution": {
+      return runEvolutionCommand(command);
     }
     case "mcp": {
       return runMcpServe(command.workspaceRoot);

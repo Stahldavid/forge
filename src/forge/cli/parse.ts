@@ -58,6 +58,7 @@ import type { ForgeDoOptions } from "../intent/types.ts";
 import type { BenchCommandOptions, BenchSubcommand } from "../bench.ts";
 import type { BrownfieldImportCommandOptions } from "../brownfield-import/types.ts";
 import type { CairCommandOptions, CairSubcommand } from "../cair/types.ts";
+import type { EvolutionCliOptions } from "./evolution.ts";
 
 export type ForgeCommand =
   | { kind: "version"; json: boolean }
@@ -277,6 +278,7 @@ export type ForgeCommand =
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
   | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete"; workspaceRoot: string; json: boolean; file?: string; taskId?: string }
+  | ({ kind: "evolution" } & EvolutionCliOptions)
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
@@ -503,6 +505,7 @@ export const TOP_LEVEL_COMMANDS = [
   "agent-contract",
   "agent",
   "fabric",
+  "evolution",
   "mcp",
   "review",
   "ui",
@@ -1286,6 +1289,33 @@ export function parseCli(argv: string[]): ParsedCli {
         workspaceRoot,
         errors,
       };
+    }
+    case "evolution": {
+      const subcommand = rest[0];
+      if (subcommand !== "register" && subcommand !== "evaluate" && subcommand !== "status" &&
+          subcommand !== "review" && subcommand !== "load") {
+        errors.push("forge evolution requires register, evaluate, status, review, or load");
+        return { command: null, workspaceRoot, errors };
+      }
+      const manifest = parseOptionValue(argv, "--manifest");
+      const channel = parseOptionValue(argv, "--channel");
+      const action = rest[1];
+      const versionId = subcommand === "review" ? rest[2] : rest[1];
+      const extensionKey = rest[1];
+      if (subcommand === "register" && !manifest) errors.push("forge evolution register requires --manifest <file>");
+      if ((subcommand === "evaluate" || subcommand === "status" || subcommand === "review") &&
+          !versionId) errors.push(`forge evolution ${subcommand} requires a version id`);
+      if (subcommand === "review" && !["canary", "promote", "rollback", "revoke"].includes(action ?? ""))
+        errors.push("forge evolution review requires canary, promote, rollback, or revoke");
+      if (subcommand === "load" && (!extensionKey || (channel !== "canary" && channel !== "stable")))
+        errors.push("forge evolution load requires <extension-key> --channel canary|stable");
+      return { command: errors.length === 0 ? {
+        kind: "evolution", subcommand, workspaceRoot, json: parseFlag(argv, "--json"),
+        ...(manifest ? { manifest } : {}),
+        ...(subcommand === "review" || subcommand === "evaluate" || subcommand === "status" ? { versionId } : {}),
+        ...(subcommand === "review" ? { action: action as "canary" | "promote" | "rollback" | "revoke" } : {}),
+        ...(subcommand === "load" ? { extensionKey, channel: channel as "canary" | "stable" } : {}),
+      } : null, workspaceRoot, errors };
     }
     case "mcp": {
       const subcommand = rest[0];
@@ -3300,6 +3330,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--step",
     "--sink",
     "--file",
+    "--manifest",
+    "--channel",
     "--telemetry",
     "--user-id",
     "--tenant-id",
@@ -3455,6 +3487,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--step" ||
         arg === "--sink" ||
         arg === "--file" ||
+        arg === "--manifest" ||
+        arg === "--channel" ||
         arg === "--write-report" ||
         arg === "--telemetry" ||
         arg === "--user-id" ||

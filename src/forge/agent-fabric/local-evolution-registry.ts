@@ -40,6 +40,14 @@ export interface EvaluationRecord {
 export type EvolutionDecisionAction = "canary" | "promote" | "rollback" | "revoke";
 export type EvolutionChannel = "canary" | "stable";
 
+export interface EvolutionVersionStatus {
+  version: ExtensionVersion;
+  evaluation: EvaluationRecord | null;
+  revoked: boolean;
+  channels: readonly EvolutionChannel[];
+  lastDecision: { action: EvolutionDecisionAction; decidedAt: number; verifierId: string } | null;
+}
+
 export interface OwnerDecisionChallenge {
   decisionNonce: string;
   action: EvolutionDecisionAction;
@@ -281,6 +289,26 @@ export class LocalEvolutionRegistry {
       `SELECT version_id FROM _forge_fabric_extension_revocations WHERE version_id=$1`, [versionId],
     )).rows.length > 0) invalid("Selected extension is revoked");
     return versionId;
+  }
+
+  /** Bounded owner status for one immutable version; no artifact bytes or decision secrets. */
+  async status(versionId: string): Promise<EvolutionVersionStatus | null> {
+    const version = await this.getVersion(versionId);
+    if (!version) return null;
+    const [evaluation, revokedRows, selectionRows, decisionRows] = await Promise.all([
+      this.getEvaluation(versionId),
+      this.options.adapter.query(`SELECT version_id FROM _forge_fabric_extension_revocations WHERE version_id=$1`, [versionId]),
+      this.options.adapter.query(`SELECT channel FROM _forge_fabric_extension_selections WHERE extension_key=$1 AND version_id=$2`,
+        [version.extensionKey, versionId]),
+      this.options.adapter.query(`SELECT action,decided_at,verifier_id FROM _forge_fabric_extension_decisions
+        WHERE version_id=$1 ORDER BY decision_sequence DESC LIMIT 1`, [versionId]),
+    ]);
+    const channels = selectionRows.rows.map((row) => row.channel as EvolutionChannel);
+    if (channels.some((channel) => channel !== "canary" && channel !== "stable")) invalid("Stored channel is inconsistent");
+    const last = decisionRows.rows[0];
+    return { version, evaluation, revoked: revokedRows.rows.length > 0, channels,
+      lastDecision: last ? { action: last.action as EvolutionDecisionAction,
+        decidedAt: Number(last.decided_at), verifierId: String(last.verifier_id) } : null };
   }
 
   async decide(action: EvolutionDecisionAction, versionId: string, expectedSelection: string | null): Promise<void> {

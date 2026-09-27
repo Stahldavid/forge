@@ -301,5 +301,45 @@ Maintainers can run `bun scripts/agent-fabric-local-smoke.ts` for an opt-in real
 Ollama fixture. That script injects a synthetic test approval and confirms a diff;
 it does not prove the human popup flow or coding quality on real projects.
 `FORGE_FABRIC_DOCKER_SMOKE=1 bun test tests/agent-fabric/local-task-service.test.ts`
+
+### Local Evolution Registry (single owner)
+
+The local extension workflow pins a candidate's bytes before evaluation. A
+manifest is a repository file with exactly these fields:
+
+```json
+{"schemaVersion":1,"extensionKey":"sample","artifactPath":"extensions/sample.js"}
+```
+
+The artifact and manifest must be regular files inside the repository. The
+artifact is limited to 1 MiB and the manifest to 16 KiB. Forge copies both to
+content addressed files under `.forge/local/agent-fabric/evolution/`; edits to
+the source files after registration do not change the registered version.
+
+```bash
+node bin/forge.mjs evolution register --manifest extensions/sample.json --json
+node bin/forge.mjs evolution evaluate extension:sha256:<digest> --json
+node bin/forge.mjs evolution status extension:sha256:<digest> --json
+node bin/forge.mjs evolution review canary extension:sha256:<digest> --json
+node bin/forge.mjs evolution review promote extension:sha256:<digest> --json
+node bin/forge.mjs evolution load sample --channel stable --json
+node bin/forge.mjs evolution review rollback extension:sha256:<older-digest> --json
+node bin/forge.mjs evolution review revoke extension:sha256:<digest> --json
+```
+
+Evaluation is a fixed local suite that checks stored artifact integrity,
+stored manifest integrity, and the manifest contract. It does not execute the
+candidate. Each version evaluates once; a failed or interrupted evaluation
+requires a new candidate version. Canary, promotion, rollback, and revocation
+open a loopback owner review window. Rejection or timeout leaves selection
+unchanged. Rollback can select only a previously stable version that still has
+a passing evaluation. Revocation clears selections and blocks future loading.
+
+The `load` command reports verified metadata. Local runtime callers can use
+`LocalEvolutionService.loadSelected` to obtain bytes after the same channel,
+evaluation, revocation, and digest checks. This registry does not import or
+execute those bytes or grant them side effects. Its review window is a
+cooperative human checkpoint; same-account shell or browser automation is
+outside its protection boundary. No hosted model or API key is used.
 exercises the service, approved verification, Docker Desktop, durable readback,
 and acceptance with a synthetic approval callback.
