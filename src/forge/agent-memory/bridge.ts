@@ -1,4 +1,5 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, watch, writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { createDeltaId } from "../delta/ids.ts";
@@ -471,6 +472,74 @@ function queueHistoryPath(watchFile: string): string {
   return `${watchFile}.history`;
 }
 
+function queueAppendLockPath(watchFile: string): string {
+  return `${watchFile}.append-lock.json`;
+}
+
+function queueLockHolderAlive(pid: unknown): boolean {
+  if (typeof pid !== "number" || !Number.isInteger(pid) || pid <= 0) {
+    return false;
+  }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return Boolean(error && typeof error === "object" && "code" in error && error.code === "EPERM");
+  }
+}
+
+function clearStaleQueueAppendLock(lockPath: string): void {
+  try {
+    const stat = statSync(lockPath);
+    const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: unknown };
+    const ageMs = Date.now() - stat.mtimeMs;
+    if (ageMs < 2_000 || (ageMs < 30_000 && queueLockHolderAlive(holder.pid))) {
+      return;
+    }
+    unlinkSync(lockPath);
+  } catch {
+    // A concurrent hook may have replaced the lock; retry acquisition instead.
+  }
+}
+
+async function acquireQueueAppendLock(watchFile: string, waitMs = 500): Promise<string | null> {
+  const lockPath = queueAppendLockPath(watchFile);
+  const token = randomUUID();
+  const started = Date.now();
+  for (;;) {
+    try {
+      const fd = openSync(lockPath, "wx");
+      try {
+        writeFileSync(fd, JSON.stringify({ pid: process.pid, token, createdAt: new Date().toISOString() }));
+      } finally {
+        closeSync(fd);
+      }
+      return token;
+    } catch (error) {
+      if (!(error && typeof error === "object" && "code" in error && error.code === "EEXIST")) {
+        throw error;
+      }
+      clearStaleQueueAppendLock(lockPath);
+      if (Date.now() - started >= waitMs) {
+        return null;
+      }
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 15));
+    }
+  }
+}
+
+function releaseQueueAppendLock(watchFile: string, token: string): void {
+  const lockPath = queueAppendLockPath(watchFile);
+  try {
+    const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { token?: unknown };
+    if (holder.token === token) {
+      unlinkSync(lockPath);
+    }
+  } catch {
+    // Best effort; stale lock recovery handles interrupted processes.
+  }
+}
+
 function readQueueCheckpoint(watchFile: string, fileSize: number): number {
   const checkpointFile = queueCheckpointPath(watchFile);
   if (!existsSync(checkpointFile)) {
@@ -515,33 +584,41 @@ function trimBufferStart(buffer: Buffer, maxBytes: number): Buffer {
   return buffer.subarray(buffer.length - maxBytes);
 }
 
-function compactAgentMemoryQueueFile(options: {
+async function compactAgentMemoryQueueFile(options: {
   watchFile: string;
   originalBuffer: Buffer;
   consumedOffset: number;
   compactAfterBytes: number;
   historyMaxBytes: number;
-}): { compacted: boolean; historyFile: string } {
+}): Promise<{ compacted: boolean; historyFile: string }> {
   const historyFile = queueHistoryPath(options.watchFile);
   if (options.consumedOffset < options.compactAfterBytes) {
     return { compacted: false, historyFile };
   }
-  const currentBuffer = readFileSync(options.watchFile);
-  const originalConsumed = options.originalBuffer.subarray(0, options.consumedOffset);
-  const currentPrefix = currentBuffer.subarray(0, options.consumedOffset);
-  if (!currentPrefix.equals(originalConsumed)) {
+  const lock = await acquireQueueAppendLock(options.watchFile);
+  if (!lock) {
     return { compacted: false, historyFile };
   }
-  mkdirSync(dirname(historyFile), { recursive: true });
-  const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);
-  const redactedConsumedHistory = redactedQueueHistoryBuffer(originalConsumed);
-  writeFileSync(
-    historyFile,
-    trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),
-  );
-  writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
-  writeQueueCheckpoint(options.watchFile, 0);
-  return { compacted: true, historyFile };
+  try {
+    const currentBuffer = readFileSync(options.watchFile);
+    const originalConsumed = options.originalBuffer.subarray(0, options.consumedOffset);
+    const currentPrefix = currentBuffer.subarray(0, options.consumedOffset);
+    if (!currentPrefix.equals(originalConsumed)) {
+      return { compacted: false, historyFile };
+    }
+    mkdirSync(dirname(historyFile), { recursive: true });
+    const existingHistory = existsSync(historyFile) ? readFileSync(historyFile) : Buffer.alloc(0);
+    const redactedConsumedHistory = redactedQueueHistoryBuffer(originalConsumed);
+    writeFileSync(
+      historyFile,
+      trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),
+    );
+    writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
+    writeQueueCheckpoint(options.watchFile, 0);
+    return { compacted: true, historyFile };
+  } finally {
+    releaseQueueAppendLock(options.watchFile, lock);
+  }
 }
 
 function redactedQueueHistoryBuffer(consumedBuffer: Buffer): Buffer {
@@ -787,7 +864,7 @@ export async function drainAgentMemoryQueueFile(options: {
     }
 
     const retention = errors.length === 0 && consumedOffset > 0
-      ? compactAgentMemoryQueueFile({
+      ? await compactAgentMemoryQueueFile({
           watchFile: options.watchFile,
           originalBuffer: fileBuffer,
           consumedOffset,

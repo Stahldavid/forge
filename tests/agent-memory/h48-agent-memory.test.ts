@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -784,6 +784,43 @@ describe("H48 agent memory bridge", () => {
       } finally {
         await store.close();
       }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 45_000);
+
+  test("hook append waits for queue compaction lock", async () => {
+    const root = tempWorkspace("h48-codex-hook-append-lock");
+    try {
+      const installed = await runAgentMemoryCommand({ subcommand: "install", workspaceRoot: root, json: true, target: "codex" });
+      expect(installed.exitCode).toBe(0);
+      const agentDir = join(root, ".forge", "agent");
+      const queueFile = join(agentDir, "events.ndjson");
+      const lockFile = `${queueFile}.append-lock.json`;
+      writeFileSync(lockFile, JSON.stringify({ pid: process.pid, token: "test-holder" }), "utf8");
+
+      const child = spawn(process.execPath, [join(agentDir, "codex-hook.mjs"), "SessionStart"], {
+        cwd: root,
+        stdio: ["pipe", "ignore", "pipe"],
+        windowsHide: true,
+      });
+      const closePromise = new Promise<number | null>((resolveExit) => child.on("close", resolveExit));
+      child.stdin.end(JSON.stringify({ session_id: "codex-append-lock", cwd: root }));
+      let stderr = "";
+      child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString("utf8"); });
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 100));
+      expect(existsSync(queueFile)).toBe(false);
+      unlinkSync(lockFile);
+      const exitCode = await closePromise;
+      expect(exitCode, stderr).toBe(0);
+      expect(readFileSync(queueFile, "utf8")).toContain("codex-append-lock");
+      expect(existsSync(lockFile)).toBe(false);
+
+      writeFileSync(lockFile, JSON.stringify({ pid: process.pid, token: "test-holder-2" }), "utf8");
+      const drain = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex", compactAfterBytes: 1 });
+      expect(drain.eventsIngested).toBe(1);
+      expect(drain.compacted).toBe(false);
+      expect(readFileSync(queueFile, "utf8")).toContain("codex-append-lock");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
