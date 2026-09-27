@@ -345,12 +345,15 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
 }
 
 export async function ingestEnvelope(workspaceRoot: string, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {
-  const bindings = extractAgentEventBindings(envelope);
-  const summary = summarizeAgentEvent(envelope);
   const store = await openMemoryStore(workspaceRoot, "write");
   if (isMemoryUnavailable(store)) {
     if (shouldUseFallbackMemory(store, workspaceRoot)) {
-      const event = appendFallbackAgentMemoryEvent(workspaceRoot, envelope, summary, bindings);
+      const event = appendFallbackAgentMemoryEvent(
+        workspaceRoot,
+        envelope,
+        summarizeAgentEvent(envelope),
+        extractAgentEventBindings(envelope),
+      );
       return {
         ok: true,
         event,
@@ -369,11 +372,19 @@ export async function ingestEnvelope(workspaceRoot: string, envelope: AgentEvent
     };
   }
   try {
-    const event = await store.recordAgentMemoryEvent({ envelope, summary, bindings });
-    return { ok: true, event, envelope, exitCode: 0 };
+    return await recordAgentMemoryEnvelope(store, envelope);
   } finally {
     await store.close();
   }
+}
+
+async function recordAgentMemoryEnvelope(store: DeltaStore, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {
+  const event = await store.recordAgentMemoryEvent({
+    envelope,
+    summary: summarizeAgentEvent(envelope),
+    bindings: extractAgentEventBindings(envelope),
+  });
+  return { ok: true, event, envelope, exitCode: 0 };
 }
 
 async function ingestAgentMemory(options: AgentMemoryCommandOptions): Promise<AgentIngestResult> {
@@ -686,54 +697,70 @@ export async function drainAgentMemoryQueueFile(options: {
   let eventsIngested = 0;
   const errors: string[] = [];
   let consumedOffset = bytesRead;
+  let store: DeltaStore | undefined;
 
-  for (const line of complete) {
-    if (!line.raw.trim()) {
-      consumedOffset = bytesRead + line.endOffset;
-      writeQueueCheckpoint(options.watchFile, consumedOffset);
-      continue;
+  try {
+    for (const line of complete) {
+      if (!line.raw.trim()) {
+        consumedOffset = bytesRead + line.endOffset;
+        writeQueueCheckpoint(options.watchFile, consumedOffset);
+        continue;
+      }
+      const parsed = normalizeRawInput(line.raw);
+      if (!parsed) {
+        errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);
+        break;
+      }
+      const queued = parseQueuedHookLine(parsed);
+      const payload = queued?.payload ?? parsed;
+      const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;
+      const ingestSource = queued?.source ?? options.source;
+      const envelope = normalizeAgentEvent({
+        workspaceRoot: ingestRoot,
+        source: ingestSource,
+        eventName: queued?.eventName ?? options.eventName,
+        raw: payload,
+        integration: ingestSource === "cursor" ? "mcp" : "native-hook",
+      });
+      if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
+        consumedOffset = bytesRead + line.endOffset;
+        writeQueueCheckpoint(options.watchFile, consumedOffset);
+        continue;
+      }
+      let result: AgentIngestResult;
+      if (!store) {
+        const opened = await openMemoryStore(ingestRoot, "write");
+        if (isMemoryUnavailable(opened)) {
+          result = { ...opened, envelope };
+        } else {
+          store = opened;
+          result = await recordAgentMemoryEnvelope(store, envelope);
+        }
+      } else {
+        result = await recordAgentMemoryEnvelope(store, envelope);
+      }
+      if (result.ok) {
+        eventsIngested += 1;
+        consumedOffset = bytesRead + line.endOffset;
+        writeQueueCheckpoint(options.watchFile, consumedOffset);
+      } else if (isDeltaBusyIngestResult(result)) {
+        return {
+          eventsIngested,
+          errors,
+          bytesRead,
+          pendingBytes,
+          checkpointFile: queueCheckpointPath(options.watchFile),
+          compacted: false,
+          historyFile,
+          busy: result.busy,
+        };
+      } else {
+        errors.push(result.error ?? "agent memory ingest failed");
+        break;
+      }
     }
-    const parsed = normalizeRawInput(line.raw);
-    if (!parsed) {
-      errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);
-      break;
-    }
-    const queued = parseQueuedHookLine(parsed);
-    const payload = queued?.payload ?? parsed;
-    const ingestRoot = queued?.workspaceRoot ?? options.workspaceRoot;
-    const ingestSource = queued?.source ?? options.source;
-    const envelope = normalizeAgentEvent({
-      workspaceRoot: ingestRoot,
-      source: ingestSource,
-      eventName: queued?.eventName ?? options.eventName,
-      raw: payload,
-      integration: ingestSource === "cursor" ? "mcp" : "native-hook",
-    });
-    if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
-      consumedOffset = bytesRead + line.endOffset;
-      writeQueueCheckpoint(options.watchFile, consumedOffset);
-      continue;
-    }
-    const result = await ingestEnvelope(ingestRoot, envelope);
-    if (result.ok) {
-      eventsIngested += 1;
-      consumedOffset = bytesRead + line.endOffset;
-      writeQueueCheckpoint(options.watchFile, consumedOffset);
-    } else if (isDeltaBusyIngestResult(result)) {
-      return {
-        eventsIngested,
-        errors,
-        bytesRead,
-        pendingBytes,
-        checkpointFile: queueCheckpointPath(options.watchFile),
-        compacted: false,
-        historyFile,
-        busy: result.busy,
-      };
-    } else {
-      errors.push(result.error ?? "agent memory ingest failed");
-      break;
-    }
+  } finally {
+    await store?.close();
   }
 
   const retention = errors.length === 0 && consumedOffset > 0
