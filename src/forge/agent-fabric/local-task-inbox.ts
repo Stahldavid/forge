@@ -44,6 +44,20 @@ const CREATE_VERIFICATIONS_TABLE = `
     evidence_digest TEXT
   )`;
 
+const CREATE_MATERIALIZATIONS_TABLE = `
+  CREATE TABLE IF NOT EXISTS _forge_agent_fabric_local_materializations (
+    task_id TEXT PRIMARY KEY,
+    result_digest TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('started', 'receipted')),
+    diff_digest TEXT
+  )`;
+
+export interface LocalMaterializationRecord {
+  resultDigest: Digest;
+  state: "started" | "receipted";
+  diffDigest?: Digest;
+}
+
 export interface LocalVerificationRecord {
   diffDigest: Digest;
   requestDigest: Digest;
@@ -69,6 +83,7 @@ export class LocalTaskInbox {
   private patchSchemaReady?: Promise<unknown>;
   private decisionSchemaReady?: Promise<unknown>;
   private verificationSchemaReady?: Promise<unknown>;
+  private materializationSchemaReady?: Promise<unknown>;
 
   constructor(private readonly adapter: DbAdapter) {
     if (adapter.kind !== "pglite") {
@@ -185,6 +200,52 @@ export class LocalTaskInbox {
     } catch {
       throw new AgentFabricError("AF_INVALID_STATE", "Stored patch evidence is not JSON");
     }
+  }
+
+  async beginMaterialization(taskId: string, resultDigest: Digest): Promise<void> {
+    this.materializationSchemaReady ??= this.adapter.query(CREATE_MATERIALIZATIONS_TABLE);
+    await this.materializationSchemaReady;
+    const inserted = await this.adapter.query(
+      `INSERT INTO _forge_agent_fabric_local_materializations
+       (task_id, result_digest, state) VALUES ($1, $2, 'started')
+       ON CONFLICT (task_id) DO NOTHING`, [taskId, resultDigest],
+    );
+    if (inserted.rowCount !== 1) {
+      throw new AgentFabricError("AF_CONFLICT", "Patch materialization already started; reconcile its receipt before retrying");
+    }
+  }
+
+  async receiptMaterialization(taskId: string, resultDigest: Digest, diffDigest: Digest): Promise<void> {
+    const patch = await this.getPatch(taskId);
+    if (!patch || patch.diffDigest !== diffDigest) {
+      throw new AgentFabricError("AF_CONFLICT", "Materialization receipt has no matching patch readback");
+    }
+    const updated = await this.adapter.query(
+      `UPDATE _forge_agent_fabric_local_materializations SET state = 'receipted', diff_digest = $3
+       WHERE task_id = $1 AND result_digest = $2 AND state = 'started'`,
+      [taskId, resultDigest, diffDigest],
+    );
+    if (updated.rowCount !== 1) throw new AgentFabricError("AF_CONFLICT", "Materialization receipt was already recorded or changed");
+  }
+
+  async getMaterialization(taskId: string): Promise<LocalMaterializationRecord | null> {
+    this.materializationSchemaReady ??= this.adapter.query(CREATE_MATERIALIZATIONS_TABLE);
+    await this.materializationSchemaReady;
+    const result = await this.adapter.query(
+      `SELECT result_digest, state, diff_digest FROM _forge_agent_fabric_local_materializations WHERE task_id = $1`,
+      [taskId],
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    if (typeof row.result_digest !== "string" || !/^sha256:[0-9a-f]{64}$/u.test(row.result_digest) ||
+        (row.state !== "started" && row.state !== "receipted") ||
+        (row.state === "started" && row.diff_digest !== null) ||
+        (row.state === "receipted" && (typeof row.diff_digest !== "string" ||
+          !/^sha256:[0-9a-f]{64}$/u.test(row.diff_digest)))) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Stored patch materialization is inconsistent");
+    }
+    return { resultDigest: row.result_digest as Digest, state: row.state,
+      ...(row.state === "receipted" ? { diffDigest: row.diff_digest as Digest } : {}) };
   }
 
   async beginVerification(taskId: string, diffDigest: Digest, requestDigest: Digest): Promise<void> {

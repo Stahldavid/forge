@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import { digestCanonical, sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
-import { buildLocalCodingContext, materializeLocalCodingPatch, verifyLocalPatchEvidence, type LocalPatchEvidence } from "./local-coding-worker.ts";
+import { buildLocalCodingContext, materializeLocalCodingPatch, readbackLocalCodingPatch, verifyLocalPatchEvidence, type LocalPatchEvidence } from "./local-coding-worker.ts";
 import { validateLocalCodingTaskProposal } from "./local-task-contract.ts";
 import { createForgeModelExecutor, executeP0bActivity, P0bModelAdapter, type ModelExecutor } from "./p0b-model-adapter.ts";
 import { createRunPlanRevision } from "./planning.ts";
@@ -27,13 +27,14 @@ export interface LocalTaskStatus {
   sourcePaths: readonly string[];
   writablePaths: readonly string[];
   requestedModelTargetId: string;
-  state: "proposed" | "rejected" | "owner_approved" | "model_uncertain" | "model_reported" | "model_failed" | "patch_ready" | "accepted" | "rejected_patch";
+  state: "proposed" | "rejected" | "owner_approved" | "model_uncertain" | "model_reported" | "model_failed" | "patch_uncertain" | "patch_ready" | "accepted" | "rejected_patch";
   canStart: boolean;
-  evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_ready";
+  evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_uncertain" | "patch_ready";
   patch?: LocalPatchEvidence;
   ownerDecision?: "approved" | "rejected";
   verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"];
     imageId?: string; commands?: LocalVerificationEvidence["commands"]; evidenceDigest?: Digest };
+  materialization?: { state: "started" | "receipted"; resultDigest: Digest; diffDigest?: Digest };
   provenance?: LocalTaskProvenance;
 }
 
@@ -49,6 +50,7 @@ export interface LocalTaskProvenance {
   ownerDecision?: "approved" | "rejected";
   verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"];
     imageId?: string; commands?: LocalVerificationEvidence["commands"]; evidenceDigest?: Digest };
+  materialization?: { state: "started" | "receipted"; resultDigest: Digest; diffDigest?: Digest };
   evidenceDigest: Digest;
 }
 
@@ -267,6 +269,14 @@ export class LocalTaskService {
     const permit = events.some((event) => event.payload.type === "attempt_execution_permit_issued");
     const outcome = events.find((event) => event.payload.type === "attempt_outcome_committed");
     const patch = await this.inbox.getPatch(taskId);
+    const materialization = await this.inbox.getMaterialization(taskId);
+    if (materialization && (outcome?.payload.type !== "attempt_outcome_committed" ||
+        outcome.payload.outcome.status !== "succeeded" ||
+        materialization.resultDigest !== outcome.payload.outcome.resultDigest ||
+        (materialization.state === "receipted" &&
+          (!patch || materialization.diffDigest !== patch.diffDigest)))) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Patch materialization receipt is inconsistent with model outcome");
+    }
     const ownerDecision = await this.inbox.getPatchDecision(taskId);
     const verification = await this.inbox.getVerification(taskId);
     if (verification && (!record.proposal.verification || !patch ||
@@ -286,6 +296,7 @@ export class LocalTaskService {
       }
     }
     const state = record.state === "rejected" ? "rejected"
+      : materialization?.state === "started" ? "patch_uncertain"
       : ownerDecision === "approved" ? "accepted"
         : ownerDecision === "rejected" ? "rejected_patch"
       : patch ? "patch_ready"
@@ -304,11 +315,12 @@ export class LocalTaskService {
       requestedModelTargetId: record.proposal.requestedModelTargetId,
       state,
       canStart: state === "owner_approved" && record.proposal.limits.expiresAt > Date.now(),
-      evidence: patch ? "patch_ready" : outcome && outcome.payload.type === "attempt_outcome_committed" &&
+      evidence: materialization?.state === "started" ? "patch_uncertain" : patch ? "patch_ready" : outcome && outcome.payload.type === "attempt_outcome_committed" &&
         outcome.payload.outcome.status !== "succeeded" ? "model_failure"
         : outcome ? "model_result" : permit ? "provider_uncertain" : "not_started",
       ...(patch ? { patch } : {}),
       ...(ownerDecision ? { ownerDecision } : {}),
+      ...(materialization ? { materialization } : {}),
       ...(verification ? { verification: { state: verification.state,
         ...(verification.evidence ? { outcome: verification.evidence.outcome,
           imageId: verification.evidence.imageId,
@@ -342,6 +354,7 @@ export class LocalTaskService {
       ...(status.patch ? { patch: { diffDigest: status.patch.diffDigest,
         changedPaths: status.patch.changedPaths, verification: status.patch.verification } } : {}),
       ...(status.ownerDecision ? { ownerDecision: status.ownerDecision } : {}),
+      ...(status.materialization ? { materialization: status.materialization } : {}),
       ...(status.verification ? { verification: status.verification } : {}),
     };
     return { ...status, provenance: { ...evidence, evidenceDigest: digestCanonical(evidence, sha256Digest) } };
@@ -530,6 +543,15 @@ export class LocalTaskService {
   }
 
   private async materializeReportedModel(record: LocalTaskRecord): Promise<LocalTaskStatus> {
+    const saved = await this.committedModelText(record);
+    await this.inbox.beginMaterialization(record.taskId, saved.resultDigest);
+    const patch = materializeLocalCodingPatch(this.repositoryRoot, record.taskId, record.proposal, saved.text);
+    await this.inbox.recordPatch(record.taskId, patch);
+    await this.inbox.receiptMaterialization(record.taskId, saved.resultDigest, patch.diffDigest);
+    return this.status(record.taskId);
+  }
+
+  private async committedModelText(record: LocalTaskRecord): Promise<{ resultDigest: Digest; text: string }> {
     const suffix = digestSuffix(record.proposalDigest);
     const ids = identities(record.proposalDigest);
     const events = await this.control.readAll(ids.rootExecutionId);
@@ -552,9 +574,27 @@ export class LocalTaskService {
         saved.resultDigest !== committed.payload.outcome.resultDigest) {
       throw new AgentFabricError("AF_INVALID_STATE", "Committed model artifact failed digest readback");
     }
-    const patch = materializeLocalCodingPatch(this.repositoryRoot, record.taskId, record.proposal, saved.text);
-    await this.inbox.recordPatch(record.taskId, patch);
-    return this.status(record.taskId);
+    return saved;
+  }
+
+  /** Read only external checkout and artifact bytes before completing an interrupted receipt. */
+  async reconcile(taskId: string): Promise<LocalTaskStatus> {
+    const record = await this.inbox.get(taskId);
+    if (!record || record.repositoryRoot !== this.repositoryRoot) {
+      throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
+    }
+    const intent = await this.inbox.getMaterialization(taskId);
+    if (!intent || intent.state !== "started") {
+      throw new AgentFabricError("AF_CONFLICT", "Task has no uncertain patch materialization");
+    }
+    const saved = await this.committedModelText(record);
+    if (saved.resultDigest !== intent.resultDigest) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Patch intent differs from committed model result");
+    }
+    const patch = readbackLocalCodingPatch(this.repositoryRoot, taskId, record.proposal, saved.text);
+    await this.inbox.recordPatch(taskId, patch);
+    await this.inbox.receiptMaterialization(taskId, saved.resultDigest, patch.diffDigest);
+    return this.status(taskId);
   }
 
   async reviewResult(taskId: string): Promise<LocalTaskStatus> {

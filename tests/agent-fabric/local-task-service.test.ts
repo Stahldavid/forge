@@ -6,6 +6,8 @@ import { join } from "node:path";
 import type { LocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
 import { LocalTaskService } from "../../src/forge/agent-fabric/local-task-service.ts";
 import { buildLocalCodingContext, materializeLocalCodingPatch } from "../../src/forge/agent-fabric/local-coding-worker.ts";
+import { localFabricPath } from "../../src/forge/agent-fabric/local-paths.ts";
+import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
 
 function git(root: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd: root, encoding: "utf8", windowsHide: true }).trim();
@@ -103,10 +105,20 @@ describe("local task service", () => {
       } finally {
         await service.close();
       }
+      // Recreate the durable state of a crash after patch readback but before
+      // the receipt commit. Reconciliation may inspect bytes but may not rerun.
+      const adapter = await createPgliteAdapter(localFabricPath(root, "pglite"));
+      try {
+        await adapter.query(`UPDATE _forge_agent_fabric_local_materializations
+          SET state = 'started', diff_digest = NULL`);
+      } finally { await adapter.close(); }
       const reopened = await LocalTaskService.open(root, async () => "rejected", undefined, async () => "approved");
       try {
         const status = await reopened.propose(proposal);
-        expect(status.state).toBe("patch_ready");
+        expect(status.state).toBe("patch_uncertain");
+        expect(status.evidence).toBe("patch_uncertain");
+        await expect(reopened.run(status.taskId)).rejects.toThrow("no unused owner-approved model attempt");
+        expect((await reopened.reconcile(status.taskId)).state).toBe("patch_ready");
         expect((await reopened.evidence(status.taskId)).provenance?.patch?.diffDigest).toBe(status.patch?.diffDigest);
         const extra = join(status.patch!.worktreeRoot, "extra.txt");
         writeFileSync(extra, "unreviewed\n");

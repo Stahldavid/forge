@@ -10,7 +10,7 @@ import { localFabricPath } from "./local-paths.ts";
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
 
-export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "verify" | "review-result";
+export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result";
 
 interface OwnerEndpoint {
   schemaVersion: 1;
@@ -104,6 +104,7 @@ async function dispatch(service: LocalTaskService, action: LocalTaskAction, requ
   if (action === "evidence") return service.evidence(request.taskId);
   if (action === "review") return service.review(request.taskId);
   if (action === "run") return service.run(request.taskId);
+  if (action === "reconcile") return service.reconcile(request.taskId);
   if (action === "verify") return service.verify(request.taskId);
   return service.reviewResult(request.taskId);
 }
@@ -142,7 +143,7 @@ export async function serveLocalTasks(
       }
       const action = request.url?.slice("/v1/".length) as LocalTaskAction;
       if (request.method !== "POST" || !request.url?.startsWith("/v1/") ||
-          !["propose", "status", "evidence", "review", "run", "verify", "review-result"].includes(action)) {
+          !["propose", "status", "evidence", "review", "run", "reconcile", "verify", "review-result"].includes(action)) {
         response.writeHead(404).end(JSON.stringify({ ok: false, error: "unknown_action" }));
         return;
       }

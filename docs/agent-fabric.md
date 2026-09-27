@@ -218,6 +218,7 @@ node bin/forge.mjs fabric status <task-id> --json
 node bin/forge.mjs fabric evidence <task-id> --json
 node bin/forge.mjs fabric review <task-id> --json
 node bin/forge.mjs fabric run <task-id> --json
+node bin/forge.mjs fabric reconcile <task-id> --json
 node bin/forge.mjs fabric verify <task-id> --json
 node bin/forge.mjs fabric review-result <task-id> --json
 node bin/forge.mjs fabric serve --json
@@ -266,7 +267,12 @@ Without a running owner, CLI commands open the store for a single operation and
 MCP task tools report that the owner is unavailable. A crashed model attempt with
 a committed permit and no outcome remains
 uncertain; a repeated `run` does not spend another attempt. A committed model result
-can be materialized after restart. The existing MCP server reports the boundary
+can be materialized after restart if no patch-effect intent was issued. Patch
+materialization records a durable intent before creating the isolated checkout.
+A crash after that intent reports `patch_uncertain`; `run` will not reapply it.
+`fabric reconcile` reads the checkout and diff artifact against the committed
+model result and records a receipt only when they match exactly. It never
+creates or rewrites the patch. The existing MCP server reports the boundary
 through `fabric_capabilities`. The popup is
 a cooperative same-account interaction, so it is not a security boundary against
 an agent with unrestricted shell or UI control. The model receives only approved

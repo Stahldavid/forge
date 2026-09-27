@@ -119,6 +119,53 @@ export function verifyLocalPatchEvidence(patch: LocalPatchEvidence): void {
   }
 }
 
+/** Observe an interrupted materialization without creating a checkout or writing files. */
+export function readbackLocalCodingPatch(
+  repositoryRoot: string, taskId: string,
+  task: Readonly<LocalCodingTaskProposal>, modelText: string,
+): LocalPatchEvidence {
+  const files = validateModelFiles(modelText, task);
+  const worktreePath = localFabricPath(repositoryRoot, "worktrees", taskId.replace(/^task:/u, ""));
+  if (!existsSync(worktreePath)) throw new AgentFabricError("AF_CONFLICT", "Patch checkout was not materialized");
+  const worktreeRoot = realpathSync(worktreePath);
+  const normalized = (value: string) => process.platform === "win32" ? value.toLowerCase() : value;
+  if (normalized(realpathSync(git(worktreeRoot, ["rev-parse", "--show-toplevel"]).trim())) !== normalized(worktreeRoot) ||
+      git(worktreeRoot, ["rev-parse", "HEAD"]).trim() !== task.baseCommit) {
+    throw new AgentFabricError("AF_CONFLICT", "Patch checkout does not match its approved base");
+  }
+  for (const file of files) {
+    const target = checkedTarget(worktreeRoot, file.path);
+    if (!existsSync(target) || readFileSync(target, "utf8") !== file.content) {
+      throw new AgentFabricError("AF_CONFLICT", "Patch checkout differs from the committed model result");
+    }
+  }
+  if (git(worktreeRoot, ["diff", "--cached", "--binary"]).length > 0 ||
+      git(worktreeRoot, ["ls-files", "--others", "--exclude-standard"]).length > 0) {
+    throw new AgentFabricError("AF_CONFLICT", "Patch checkout has unrecorded files or staged changes");
+  }
+  const diff = git(worktreeRoot, ["diff", "--binary"], task.limits.maximumPatchBytes + 1);
+  const diffBytes = Buffer.byteLength(diff, "utf8");
+  if (diffBytes === 0 || diffBytes > task.limits.maximumPatchBytes) {
+    throw new AgentFabricError("AF_CONFLICT", "Patch readback is empty or exceeds the approved limit");
+  }
+  const changedPaths = git(worktreeRoot, ["diff", "--name-only"]).trim().split(/\r?\n/u).filter(Boolean);
+  if (changedPaths.length !== files.length ||
+      changedPaths.some((path) => !files.some((file) => file.path === path))) {
+    throw new AgentFabricError("AF_CONFLICT", "Patch readback changed an unauthorized path");
+  }
+  const diffPath = localFabricPath(repositoryRoot, "artifacts", `${taskId.replace(/^task:/u, "")}.diff`);
+  if (!existsSync(diffPath) || readFileSync(diffPath, "utf8") !== diff) {
+    throw new AgentFabricError("AF_CONFLICT", "Patch artifact is missing or differs from checkout");
+  }
+  let verification: LocalPatchEvidence["verification"] = "diff_check_passed";
+  try { git(worktreeRoot, ["diff", "--check"]); }
+  catch { verification = "diff_check_failed"; }
+  const patch: LocalPatchEvidence = { worktreeRoot, baseCommit: task.baseCommit,
+    changedPaths, diffDigest: sha256Digest(diff), diffBytes, diffPath, verification };
+  verifyLocalPatchEvidence(patch);
+  return patch;
+}
+
 /** Apply a model's file proposal only inside a fresh checkout of the pinned commit. */
 export function materializeLocalCodingPatch(
   repositoryRoot: string,

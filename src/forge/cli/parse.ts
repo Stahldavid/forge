@@ -276,7 +276,7 @@ export type ForgeCommand =
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
-  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "verify" | "review-result" | "serve"; workspaceRoot: string; json: boolean; file?: string; taskId?: string }
+  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result" | "serve"; workspaceRoot: string; json: boolean; file?: string; taskId?: string }
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
@@ -1269,14 +1269,14 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "fabric": {
       const subcommand = rest[0];
-      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "verify" && subcommand !== "review-result" && subcommand !== "serve") {
-        errors.push("forge fabric requires subcommand: capabilities, propose, status, evidence, review, run, verify, review-result, or serve");
+      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "review-result" && subcommand !== "serve") {
+        errors.push("forge fabric requires subcommand: capabilities, propose, status, evidence, review, run, reconcile, verify, review-result, or serve");
         return { command: null, workspaceRoot, errors };
       }
       const file = parseOptionValue(argv, "--file");
-      const taskId = subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "verify" || subcommand === "review-result" ? rest[1] : undefined;
+      const taskId = subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "review-result" ? rest[1] : undefined;
       if (subcommand === "propose" && (!file || file.startsWith("--"))) errors.push("forge fabric propose requires --file <proposal.json>");
-      if ((subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "verify" || subcommand === "review-result") && !taskId) errors.push(`forge fabric ${subcommand} requires a task id`);
+      if ((subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "review-result") && !taskId) errors.push(`forge fabric ${subcommand} requires a task id`);
       return {
         command: errors.length === 0 ? {
           kind: "fabric", subcommand, workspaceRoot, json: parseFlag(argv, "--json"),

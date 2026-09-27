@@ -4,7 +4,7 @@ import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
 import { requestLocalTask, serveLocalTasks, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "verify" | "review-result" | "serve";
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result" | "serve";
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -70,6 +70,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
         ? await service.review(options.taskId ?? "")
         : options.subcommand === "run"
           ? await service.run(options.taskId ?? "")
+          : options.subcommand === "reconcile"
+            ? await service.reconcile(options.taskId ?? "")
           : options.subcommand === "verify"
             ? await service.verify(options.taskId ?? "")
           : options.subcommand === "review-result"

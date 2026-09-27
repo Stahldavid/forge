@@ -56,3 +56,10 @@ fixed artifact demonstrates the broker chain while those integrations need
 their own trusted request types, target confinement, approval binding, crash
 recovery, and explicit adoption evidence. A matching file after an interrupted
 write is intentionally not promoted to success without a committed receipt.
+
+The local task service separately records a patch materialization intent before
+its fixed Git worktree effect. On interruption it exposes `patch_uncertain` and
+an explicit read-only `fabric reconcile` path that checks the checkout against
+the committed model result before recording a receipt. This service path is not
+yet implemented through `LocalEffectBroker`; the broker's fixed artifact remains
+a reference for other consequential effect kinds.
