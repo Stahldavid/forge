@@ -214,6 +214,9 @@ installed. This pilot uses no hosted API key or Codex model turn.
 ```text
 node bin/forge.mjs fabric capabilities --json
 node bin/forge.mjs fabric propose --file task.json --json
+node bin/forge.mjs fabric memory-add --file note.json --json
+node bin/forge.mjs fabric memory-list --file paths.json --json
+node bin/forge.mjs fabric memory-delete <memory-id> --json
 node bin/forge.mjs fabric status <task-id> --json
 node bin/forge.mjs fabric evidence <task-id> --json
 node bin/forge.mjs fabric review <task-id> --json
@@ -236,6 +239,19 @@ HEAD when proposing and rechecks them before spending the approved model
 attempt. Changed source content or HEAD blocks a stale attempt.
 `review-result` shows the recorded diff for a separate owner decision. Acceptance
 records a decision only; it does not alter the original checkout or merge code.
+
+Private memory is opt in and local to this checkout. `memory-add` reads a JSON
+file such as `{ "sourcePaths": ["src/example.ts"], "text": "Owner note",
+"retentionMs": 86400000 }`; `memory-list` reads a JSON file containing only
+`sourcePaths`. Both require an unchanged tracked source snapshot. Notes are
+bounded to 2 KiB, retained for at most 30 days, and stored under
+`.forge/local/agent-fabric`. `memory-delete` removes a note by its returned ID.
+To select notes for a coding task, add `"memoryIds": ["memory:<id>"]` to
+`task.json` using returned full IDs. The proposal digest binds those IDs; the
+owner review displays their text and provenance. Missing, expired, deleted, or
+source-stale notes block approval or execution. Selected notes consume the
+existing context byte budget and are labeled `untrusted_memory` in the model
+context. MCP task tools cannot add, list, or delete private memory.
 
 An optional `verification` field binds an immutable local Docker image ID and
 two to four bounded command descriptors into the proposal digest. The first

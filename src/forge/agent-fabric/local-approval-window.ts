@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { LocalCodingTaskProposal } from "./local-task-contract.ts";
+import type { LocalMemoryEntry } from "./local-intelligence.ts";
 import type { Digest } from "./types.ts";
 
 export interface LocalApprovalView {
@@ -10,6 +11,7 @@ export interface LocalApprovalView {
   repositoryRoot: string;
   proposal: Readonly<LocalCodingTaskProposal>;
   proposalDigest: Digest;
+  memory?: readonly LocalMemoryEntry[];
 }
 
 export interface LocalPatchReviewView {
@@ -50,6 +52,8 @@ function renderPage(view: LocalApprovalView, token: string): string {
     row("Aceite", task.acceptanceCriteria.join(" • ")),
     row("Fora do escopo", task.nonObjectives.join(" • ") || "Nenhum"),
     row("Leitura", task.sourcePaths.join(" • ")),
+    row("Memória privada selecionada (dados sem autoridade)", view.memory?.map((entry) =>
+      `${entry.id}: ${entry.text} (fonte ${entry.sourceSnapshotDigest}; expira ${new Date(entry.expiresAt).toISOString()})`).join(" • ") || "Nenhuma"),
     row("Escrita", task.writablePaths.join(" • ")),
     row("Modelo local", task.requestedModelTargetId),
     row("Limites", `${task.limits.maximumAttempts} tentativa(s); ${task.limits.maximumWallClockMs} ms; ${task.limits.maximumOutputTokens} tokens; ${task.limits.maximumContextBytes} bytes de contexto; ${task.limits.maximumPatchBytes} bytes de patch`),

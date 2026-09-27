@@ -1,10 +1,10 @@
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
-import { requestLocalTask, serveLocalTasks, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
+import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result" | "serve";
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete";
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -17,6 +17,7 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       ok: true, schemaVersion: 1, runtime: "local-pilot",
       proposal: true, ownerReview: true, durableStatus: true,
       codingWorker: true, ownerServer: true, sandboxVerification: true, consequentialEffects: false,
+      privateMemory: "owner_cli_only",
       mcpTaskMutation: "proposal_only", mcpEvidence: true,
       nativeCodexHookProofRequired: true,
     };
@@ -43,15 +44,29 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       return 0;
     }
     let proposal: unknown;
-    if (options.subcommand === "propose") {
-      if (!options.file) throw new Error("A proposal file is required");
+    if (options.subcommand === "propose" || options.subcommand === "memory-add" || options.subcommand === "memory-list") {
+      if (!options.file) throw new Error("A request file is required");
       const file = realpathSync(resolve(repositoryRoot, options.file));
       const relation = relative(repositoryRoot, file);
-      if (!relation || relation.startsWith("..") || isAbsolute(relation)) {
+      if (options.subcommand === "propose" && (!relation || relation.startsWith("..") || isAbsolute(relation))) {
         throw new Error("Proposal file must be inside the current repository");
       }
-      if (statSync(file).size > 32 * 1024) throw new Error("Proposal file exceeds 32 KiB");
+      if (statSync(file).size > (options.subcommand === "propose" ? 32 * 1024 : 4 * 1024)) throw new Error("Request file exceeds byte limit");
       proposal = JSON.parse(readFileSync(file, "utf8")) as unknown;
+    }
+    if (options.subcommand.startsWith("memory-")) {
+      const action = options.subcommand as LocalMemoryAction;
+      const body = action === "memory-delete" ? { id: options.taskId ?? "" } : proposal as Record<string, unknown>;
+      const remote = await requestLocalMemory(repositoryRoot, action, body);
+      if (remote === null) {
+        service = await LocalTaskService.open(repositoryRoot);
+      }
+      const memory = remote ?? (action === "memory-add" ? service!.rememberMemory(body)
+        : action === "memory-list" ? service!.listMemory(body)
+          : { deleted: service!.forgetMemory(body.id) });
+      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, memory }, null, 2)}\n` :
+        `${JSON.stringify(memory, null, 2)}\n`);
+      return 0;
     }
     const action = options.subcommand as LocalTaskAction;
     const body = action === "propose" ? { proposal } : { taskId: options.taskId ?? "" };

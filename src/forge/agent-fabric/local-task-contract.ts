@@ -12,6 +12,7 @@ export interface LocalCodingTaskProposal {
   acceptanceCriteria: readonly string[];
   nonObjectives: readonly string[];
   sourcePaths: readonly string[];
+  memoryIds?: readonly string[];
   writablePaths: readonly string[];
   requestedModelTargetId: string;
   verification?: { imageId: string; commands: readonly LocalVerificationCommand[] };
@@ -88,6 +89,13 @@ function pathList(value: unknown, field: string, maximum: number): string[] {
   return paths;
 }
 
+function memoryIds(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 8 ||
+      value.some((id) => typeof id !== "string" || !/^memory:[0-9a-f]{32}$/u.test(id)) ||
+      new Set(value).size !== value.length) invalid("memoryIds");
+  return value as string[];
+}
+
 function positiveInteger(value: unknown, field: string, maximum: number): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0 || value > maximum) invalid(field);
   return value;
@@ -111,10 +119,13 @@ export function validateLocalCodingTaskProposal(input: unknown): ValidatedLocalC
   const decoded = JSON.parse(canonical) as Record<string, unknown>;
   const hasVerification = decoded !== null && typeof decoded === "object" && !Array.isArray(decoded) &&
     Object.hasOwn(decoded, "verification");
+  const hasMemory = decoded !== null && typeof decoded === "object" && !Array.isArray(decoded) &&
+    Object.hasOwn(decoded, "memoryIds");
   const raw = record(decoded, "proposal", [
     "schemaVersion", "repositoryId", "baseCommit", "goal", "acceptanceCriteria",
     "nonObjectives", "sourcePaths", "writablePaths", "requestedModelTargetId", "limits",
     ...(hasVerification ? ["verification"] : []),
+    ...(hasMemory ? ["memoryIds"] : []),
   ]);
   if (raw.schemaVersion !== 1) invalid("schemaVersion");
   if (typeof raw.baseCommit !== "string" || !/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u.test(raw.baseCommit)) {
@@ -157,6 +168,7 @@ export function validateLocalCodingTaskProposal(input: unknown): ValidatedLocalC
     acceptanceCriteria: textList(raw.acceptanceCriteria, "acceptanceCriteria", 1, 16),
     nonObjectives: textList(raw.nonObjectives, "nonObjectives", 0, 16),
     sourcePaths: pathList(raw.sourcePaths, "sourcePaths", 24),
+    ...(hasMemory ? { memoryIds: memoryIds(raw.memoryIds) } : {}),
     writablePaths: pathList(raw.writablePaths, "writablePaths", 12),
     requestedModelTargetId: identifier(raw.requestedModelTargetId, "requestedModelTargetId"),
     ...(verification ? { verification } : {}),

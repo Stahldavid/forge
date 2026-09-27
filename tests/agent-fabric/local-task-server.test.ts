@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { LocalTaskService } from "../../src/forge/agent-fabric/local-task-service.ts";
-import { requestLocalTask, serveLocalTasks } from "../../src/forge/agent-fabric/local-task-server.ts";
+import { requestLocalMemory, requestLocalTask, serveLocalTasks } from "../../src/forge/agent-fabric/local-task-server.ts";
 
 function git(root: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd: root, encoding: "utf8", windowsHide: true }).trim();
@@ -38,6 +38,16 @@ test("CLI and MCP clients share one local owner without MCP approval tools", asy
         expect(names).toContain("fabric_status");
         expect(names).toContain("fabric_evidence");
         expect(names).not.toContain("fabric_approve");
+        expect(names).not.toContain("fabric_memory_add");
+
+        const added = await requestLocalMemory(root, "memory-add", {
+          sourcePaths: ["source.txt"], text: "private owner note", retentionMs: 60_000,
+        }) as { id: string };
+        expect(added.id).toMatch(/^memory:[0-9a-f]{32}$/);
+        expect(await requestLocalMemory(root, "memory-list", { sourcePaths: ["source.txt"] }))
+          .toMatchObject([{ id: added.id, authority: "untrusted_memory" }]);
+        expect(await requestLocalMemory(root, "memory-delete", { id: added.id })).toEqual({ deleted: true });
+        expect(await requestLocalMemory(root, "memory-list", { sourcePaths: ["source.txt"] })).toEqual([]);
 
         const submitted = await handleMcpRequest(root, {
           method: "tools/call", id: 2, params: { name: "fabric_propose", arguments: { proposal } },
