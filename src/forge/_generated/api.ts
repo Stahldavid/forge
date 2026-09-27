@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=2f9604dc41facd1ee37603a8e15defa5f5ee82a9dd061b0fe5f7998946250f0b content=27d3a4a014087190b216b9bec68a5b3fe79e6856c4f15a863447472e68f919bd
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=27d3a4a014087190b216b9bec68a5b3fe79e6856c4f15a863447472e68f919bd
 export const api = {
   "queries": {},
   "commands": {},

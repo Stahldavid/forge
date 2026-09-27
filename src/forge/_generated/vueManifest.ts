@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.63 input=2f9604dc41facd1ee37603a8e15defa5f5ee82a9dd061b0fe5f7998946250f0b content=7c3ebc58cf29205f694b8f0e5466c23e1aded1d79a8038d6087f5bd01bfc1ca3
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=673a52d66938539609ebd68e7036a2ad7164d6650781bd019b3ca913f0ee1153
 export const vueManifest = {
   "schemaVersion": "1.0.0",
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "0279522abbbb8b02f3362e61c95d10e765b08edac535ed4a3b091776ef58be83",
+  "inputHash": "d4fcbe6d1e43b1121d82d237077b4b0bcdd22cd086a05d0972fa2ce86fa4fdbb",
   "entrypoint": "src/forge/_generated/vue.ts",
   "composables": [
     "provideForge",

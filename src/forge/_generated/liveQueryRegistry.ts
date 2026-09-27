@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.63 input=2f9604dc41facd1ee37603a8e15defa5f5ee82a9dd061b0fe5f7998946250f0b content=026b7e6496b2b5841df5a9b0541f5f3101b6b93bffeb77489bc0047ab563fb48
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=a31afd552b18d045efdde9f696be2d2e9312ea9c1a1d4c0877da0c5af03fbe63
 export const liveQueryRegistry = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "8298b7190ffb231a728fb381779b73353d2a7f44257a2f61597d87362c196dbd",
+  "inputHash": "c6b6418cedd9897bef069c5819bfac8c7069b62f8523e819cdaf1e37e39c72d8",
   "liveQueries": [],
   "schemaVersion": "0.1.0"
 } as const;

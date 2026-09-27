@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=2f9604dc41facd1ee37603a8e15defa5f5ee82a9dd061b0fe5f7998946250f0b content=980f15221a181c383fe80f0a4e90ddfddf18b0991d0d50714817c465b769c47d
+// @forge-generated generator=0.1.0-alpha.63 input=62246762620888d4eb3bd4233fe8c61c4adcead4d706dd12016618e6604e0aeb content=53e3d4b35903e68646c67e1cba764130f92729dc7065cfd6ccdcfc290994f1bc
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
@@ -4756,6 +4756,11 @@ export const appGraph = {
       "from": "1f760f6b97c74c9474d1089e6537e2c8cde124f2ab5fce0631636d207bdf6618",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
+    },
+    {
+      "from": "1f781b058b316f8d3ff6b1fa6ca2c3ec3932952c48b06538488aafae8d55861f",
+      "kind": "registers",
+      "to": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
     },
     {
       "from": "1f7d0264a686f26e52df2ab99c76e63558641de2d804d457446042a796e07be1",
@@ -27020,6 +27025,11 @@ export const appGraph = {
     {
       "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
       "kind": "imports",
+      "to": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
+    },
+    {
+      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
+      "kind": "imports",
       "to": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
     },
     {
@@ -27041,11 +27051,6 @@ export const appGraph = {
       "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
       "kind": "imports",
       "to": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
-    },
-    {
-      "from": "c26b6edf6b2d4d0c98c30fcec9e9778cea2bebbe3ad86babd07b4867489cf40c",
-      "kind": "imports",
-      "to": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
     },
     {
       "from": "c2866a5902c65bfd90c78fb8e2b19fdf9ff3eb4b4234ea7f7a18b4007893c627",
@@ -35719,7 +35724,7 @@ export const appGraph = {
     }
   ],
   "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "2adca202dace332c2ba6c4e7121ebff98d5e0dbe5f67c3f629b4741ee67fb13f",
+  "inputHash": "99c350b34de7ff5fde1b4599213e5c2e036b370eb0f59971a7990c8bda20c867",
   "moduleGraph": {
     "nodes": [
       {
@@ -37918,8 +37923,18 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "@ai-sdk/openai",
             "span": {
-              "end": 1366,
-              "start": 1350
+              "end": 1274,
+              "start": 1258
+            },
+            "specifier": "@ai-sdk/openai",
+            "subpath": ""
+          },
+          {
+            "importKind": "dynamic",
+            "packageName": "@ai-sdk/openai",
+            "span": {
+              "end": 1952,
+              "start": 1936
             },
             "specifier": "@ai-sdk/openai",
             "subpath": ""
@@ -37928,8 +37943,8 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "@ai-sdk/anthropic",
             "span": {
-              "end": 1815,
-              "start": 1796
+              "end": 2401,
+              "start": 2382
             },
             "specifier": "@ai-sdk/anthropic",
             "subpath": ""
@@ -37938,8 +37953,8 @@ export const appGraph = {
             "importKind": "dynamic",
             "packageName": "ai",
             "span": {
-              "end": 2248,
-              "start": 2244
+              "end": 2834,
+              "start": 2830
             },
             "specifier": "ai",
             "subpath": ""
@@ -49815,50 +49830,50 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 163,
-              "start": 139
+              "end": 170,
+              "start": 142
             },
-            "toModuleId": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
+            "toModuleId": "13840407d054a772a8410ea97cc1b6abf51431e1da68280bd051993ad0a9190d"
           },
           {
             "span": {
-              "end": 230,
-              "start": 201
+              "end": 237,
+              "start": 208
             },
             "toModuleId": "7355767412cb654450fba64a33f80b3dd8515f3710a394d3cc63b344bc09e080"
           },
           {
             "span": {
-              "end": 311,
-              "start": 295
+              "end": 318,
+              "start": 302
             },
             "toModuleId": "174fe273d4db935ad2cc44a738c21bffd7e54b297bd6b5648e267de13a72bf8a"
           },
           {
             "span": {
-              "end": 359,
-              "start": 346
+              "end": 366,
+              "start": 353
             },
             "toModuleId": "7489e00f83624c8c8f4d8337a0cc7de9324a5ee5729a13236739e0139026776c"
           },
           {
             "span": {
-              "end": 422,
-              "start": 397
+              "end": 429,
+              "start": 404
             },
             "toModuleId": "e3774eeb832590a88c2d85f495d06e7619f3370fa2b7b20697e8ce55b586374f"
           },
           {
             "span": {
-              "end": 502,
-              "start": 492
+              "end": 509,
+              "start": 499
             },
             "toModuleId": "2bf99b7e737b484e14fb48f4192e295c76187fb9fa99bfe65ce70fab9d5188a7"
           },
           {
             "span": {
-              "end": 720,
-              "start": 708
+              "end": 727,
+              "start": 715
             },
             "toModuleId": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
           }
@@ -54490,20 +54505,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "739558c90bd916121a2fe3a4aede4c519ff04cfd786b4592fd96ecf57357a8e0",
+      "contentHash": "c9a07e89909dfb431fe0693eb1d33369c0f4d562da168b163ef9626c9670407b",
       "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
       "id": "412af5a5056f1990b8cdd5c9b91b9d29d68a125119359b921b254b77bd42a2cb",
       "kind": "code.class",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
-        "sourceSlice": "class P0bModelAdapter implements AgentAdapter {\n  private readonly attempts = new Map<string, AttemptRecord>();\n  private readonly resultArtifacts = new Map<string, string>();\n\n  constructor(private readonly options: P0bModelAdapterOptions) {}\n\n  isBoundTo(conductor: ForgeAgentConductor): boolean {\n    return conductor === this.options.conductor;\n  }\n\n  /** Ephemeral complete text artifact; its digest is the report's resultDigest. */\n  resultArtifact(attemptId: string): string | undefined {\n    return this.resultArtifacts.get(attemptId);\n  }\n\n  manifest() {\n    return {\n      adapterId: \"forge-agent-fabric/p0b-model-adapter\",\n      version: \"0.1.0\",\n      capabilities: [\"bounded_external_inference\", \"observation\", \"cancellation\"],\n      supportsCancellation: true,\n      supportsObservation: true,\n    };\n  }\n\n  /** Deterministic preflight. Call before executeP0aActivity so rejection is not uncertainty. */\n  preflight(permit: AttemptExecutionPermit): PreparedAttempt {\n    this.options.conductor.authorizeAttemptDispatch(permit);\n    const state = this.options.conductor.state();\n    const intent = own(state.dispatchIntents, permit.intentId);\n    const grant = own(state.grants, permit.grantId);\n    const revision = intent && own(state.planRevisions, intent.planRevisionId);\n    const goal = revision && own(state.goals, revision.goalId);\n    const authorization = grant && own(state.authorizations, grant.rootAuthorizationId);\n    if (!intent || !grant || !revision || !goal || !authorization ||\n        intent.effectClass !== \"bounded_external_inference\" ||\n        !goal.allowedEffectClasses.includes(intent.effectClass) ||\n        goal.prohibitedEffectClasses.includes(intent.effectClass) ||\n        !authorization.effectClasses.includes(intent.effectClass) ||\n        !grant.effectClasses.includes(intent.effectClass) ||\n        !authorization.targetIds.includes(intent.targetId) ||\n        !grant.targetIds.includes(intent.targetId) ||\n        !intent.sourceIds.every((id) => goal.sourceBoundary.sourceIds.includes(id) &&\n          authorization.sourceIds.includes(id) && grant.sourceIds.includes(id))) {\n      reject(\"effect, source, target, or authority mismatch\");\n    }\n\n    const spec = this.options.resolveSpec(permit.effectiveRunSpecDigest);\n    if (!spec || digestCanonical(spec, sha256Digest) !== permit.effectiveRunSpecDigest ||\n        spec.rootExecutionId !== intent.rootExecutionId ||\n        spec.goalId !== goal.goalId ||\n        spec.planRevisionId !== intent.planRevisionId ||\n        spec.nodeId !== intent.taskNodeId) {\n      reject(\"effective run spec mismatch\");\n    }\n    const node = revision.nodes.find((candidate) => candidate.nodeId === spec.nodeId);\n    if (!node || node.kind !== \"activity\" || node.agentSpecId !== spec.agentSpecId ||\n        node.harnessSpecId !== spec.harnessSpecId ||\n        node.executionProfileId !== spec.executionProfileId) {\n      reject(\"workflow node mismatch\");\n    }\n    const context = this.options.resolveContext(spec.contextPackDigest);\n    if (!context || digestCanonical(context, sha256Digest) !== spec.contextPackDigest) {\n      reject(\"context pack digest mismatch\");\n    }\n    exactKeys(context, [\"schemaVersion\", \"sourceIds\", \"content\"]);\n    if (context.schemaVersion !== 1 || !Array.isArray(context.sourceIds) ||\n        typeof context.content !== \"string\" ||\n        !context.sourceIds.every((id) => typeof id === \"string\" && intent.sourceIds.includes(id))) {\n      reject(\"context source mismatch\");\n    }\n    const invocation = this.options.resolveInvocation(spec.materializationDigest);\n    if (!invocation || digestCanonical(invocation, sha256Digest) !== spec.materializationDigest) {\n      reject(\"model materialization digest mismatch\");\n    }\n    exactKeys(invocation, [\n      \"schemaVersion\", \"provider\", \"model\", \"systemPrompt\", \"prompt\", \"contextPackDigest\",\n      \"maxOutputTokens\", \"maximumRequestBytes\", \"maximumResultBytes\", \"outputMode\",\n    ], [\"purpose\", \"temperature\"]);\n    const target = this.options.resolveTarget(intent.targetId);\n    if (!target || target.targetId !== intent.targetId ||\n        !Array.isArray(target.allowedModels) || target.allowedModels.length === 0 ||\n        target.allowedModels.length > 16 ||\n        !target.allowedModels.every((model) => typeof model === \"string\" && model.length > 0) ||\n        ![\"openai\", \"anthropic\", \"gateway\"].includes(invocation.provider) ||\n        typeof invocation.model !== \"string\" || invocation.model.length === 0 ||\n        !target.allowedModels.includes(invocation.model) ||\n        target.provider !== invocation.provider ||\n        invocation.contextPackDigest !== spec.contextPackDigest ||\n        invocation.schemaVersion !== 1 || invocation.outputMode !== \"text\" ||\n        typeof invocation.systemPrompt !== \"string\" || typeof invocation.prompt !== \"string\" ||\n        (invocation.temperature !== undefined &&\n          (!Number.isFinite(invocation.temperature) || invocation.temperature < 0 || invocation.temperature > 2))) {\n      reject(\"provider, model, or invocation mismatch\");\n    }\n    const harness = this.options.resolveHarness(spec.harnessSpecId);\n    const profile = this.options.resolveProfile(spec.executionProfileId);\n    if (!harness || harness.harnessSpecId !== spec.harnessSpecId ||\n        harness.toolIds.length !== 0 || harness.pluginIds.length !== 0 ||\n        harness.delegationPolicy !== \"none\" || harness.memoryMode !== \"none\" ||\n        !profile || profile.executionProfileId !== spec.executionProfileId ||\n        profile.network !== \"provider_only\" || profile.filesystem !== \"read_only\" ||\n        profile.durability !== \"ephemeral\") {\n      reject(\"harness or execution profile outside P0b-A\");\n    }\n    if (!positiveBound(invocation.maxOutputTokens, P0B_MAXIMUM_BOUNDS.maximumOutputTokens) ||\n        !positiveBound(invocation.maximumRequestBytes, P0B_MAXIMUM_BOUNDS.maximumRequestBytes) ||\n        !positiveBound(invocation.maximumResultBytes, P0B_MAXIMUM_BOUNDS.maximumResultBytes) ||\n        !positiveBound(profile.maximumWallClockMs, P0B_MAXIMUM_BOUNDS.maximumWallClockMs) ||\n        Buffer.byteLength(stableStringify({ invocation, context }), \"utf8\") >\n          invocation.maximumRequestBytes) {\n      reject(\"request, output, result, or wall-clock bound exceeded\");\n    }\n    if (profile.maximumWallClockMs > permit.expiresAt - this.options.now()) {\n      reject(\"permit expires before wall-clock bound\");\n    }\n    // Resolver callbacks are synchronous but may observe a changed authority state.\n    this.options.conductor.authorizeAttemptDispatch(permit);\n    return {\n      invocation: copyFrozen(invocation),\n      context: copyFrozen(context),\n      wallClockMs: profile.maximumWallClockMs,\n    };\n  }\n\n  async startAttempt(permit: AttemptExecutionPermit): Promise<AdapterStartResult> {\n    const existing = this.attempts.get(permit.attemptId);\n    if (existing) {\n      if (stableStringify(existing.permit) !== stableStringify(permit)) {\n        throw new AgentFabricError(\"AF_CONFLICT\", \"Attempt was started with a different permit\");\n      }\n      return this.startReport(existing);\n    }\n    const prepared = this.preflight(permit);\n    const startedAt = this.options.now();\n    const controller = new AbortController();\n    const record: AttemptRecord = {\n      permit: copyFrozen(permit), startedAt, controller, cancelled: false,\n      settled: Promise.resolve({ status: \"unknown\", reason: \"not_started\" }),\n    };\n    this.attempts.set(permit.attemptId, record);\n    record.settled = this.run(record, prepared);\n    return this.startReport(record);\n  }\n\n  private startReport(record: AttemptRecord): AdapterStartResult {\n    return { status: \"started\", report: {\n      startupReportId: `startup:${record.permit.attemptId}`,\n      attemptId: record.permit.attemptId,\n      observedSpecDigest: record.permit.effectiveRunSpecDigest,\n      startedAt: record.startedAt,\n    } };\n  }\n\n  private async run(record: AttemptRecord, prepared: PreparedAttempt): Promise<AdapterOutcomeResult> {\n    const { permit, controller } = record;\n    let timer: ReturnType<typeof setTimeout> | undefined;\n    const timeout = new Promise<never>((_, rejectTimeout) => {\n      timer = setTimeout(() => {\n        controller.abort();\n        rejectTimeout(new Error(\"provider_timeout\"));\n      }, prepared.wallClockMs);\n    });\n    try {\n      this.options.conductor.authorizeAttemptDispatch(permit);\n      const result = await Promise.race([\n        this.options.executeModel(prepared.invocation, prepared.context, controller.signal), timeout,\n      ]);\n      if (record.cancelled || controller.signal.aborted ||\n          this.options.now() >= permit.expiresAt) {\n        return { status: \"unknown\", reason: \"late_or_cancelled_provider_result\" };\n      }\n      if (!result || typeof result.text !== \"string\" ||\n          Buffer.byteLength(result.text, \"utf8\") > prepared.invocation.maximumResultBytes) {\n        return { status: \"unknown\", reason: \"invalid_or_oversized_provider_result\" };\n      }\n      this.resultArtifacts.set(permit.attemptId, result.text);\n      const report: WorkerResultReport = {\n        reportId: `report:${permit.attemptId}`,\n        attemptId: permit.attemptId,\n        permitId: permit.permitId,\n        intentId: permit.intentId,\n        planRevisionId: permit.planRevisionId,\n        effectiveRunSpecDigest: permit.effectiveRunSpecDigest,\n        fencingToken: permit.fencingToken,\n        status: \"succeeded\",\n        resultDigest: sha256Digest(result.text),\n        evidenceDigests: [digestCanonical({\n          provider: prepared.invocation.provider,\n          model: prepared.invocation.model,\n          materializationDigest: digestCanonical(prepared.invocation, sha256Digest),\n          contextPackDigest: prepared.invocation.contextPackDigest,\n          resultDigest: sha256Digest(result.text),\n        }, sha256Digest)],\n        reportedAt: this.options.now(),\n      };\n      return { status: \"reported\", report };\n    } catch {\n      // Provider errors may occur before or after remote acceptance. Neither is proof of failure.\n      return { status: \"unknown\", reason: \"provider_dispatch_or_transport_unknown\" };\n    } finally {\n      if (timer) clearTimeout(timer);\n    }\n  }\n\n  async observeAttempt(attemptId: string): Promise<readonly RuntimeObservation[]> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return [];\n    return [{\n      observationId: `observation:${attemptId}:adapter-state`,\n      attemptId,\n      sourceClass: \"adapter_observation\",\n      claim: attempt.cancelled ? \"cancellation_requested\" : \"started_or_settled\",\n      observedAt: this.options.now(),\n    }];\n  }\n\n  async collectOutcome(attemptId: string): Promise<AdapterOutcomeResult> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { status: \"unknown\", reason: \"attempt_not_observed\" };\n    const result = await attempt.settled;\n    return attempt.cancelled\n      ? { status: \"unknown\", reason: \"cancellation_termination_unproven\" }\n      : result;\n  }\n\n  async requestCancellation(attemptId: string): Promise<{ acknowledged: boolean }> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { acknowledged: false };\n    attempt.cancelled = true;\n    attempt.controller.abort();\n    return { acknowledged: true };\n  }\n\n  async observeTermination(_attemptId: string): Promise<\"terminated\" | \"running\" | \"unknown\"> {\n    // Abort acknowledgement cannot prove remote termination.\n    return \"unknown\";\n  }\n}"
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "class P0bModelAdapter implements AgentAdapter {\n  private readonly attempts = new Map<string, AttemptRecord>();\n  private readonly resultArtifacts = new Map<string, string>();\n\n  constructor(private readonly options: P0bModelAdapterOptions) {}\n\n  isBoundTo(conductor: ForgeAgentConductor): boolean {\n    return conductor === this.options.conductor;\n  }\n\n  /** Ephemeral complete text artifact; its digest is the report's resultDigest. */\n  resultArtifact(attemptId: string): string | undefined {\n    return this.resultArtifacts.get(attemptId);\n  }\n\n  manifest() {\n    return {\n      adapterId: \"forge-agent-fabric/p0b-model-adapter\",\n      version: \"0.1.0\",\n      capabilities: [\"bounded_external_inference\", \"observation\", \"cancellation\"],\n      supportsCancellation: true,\n      supportsObservation: true,\n    };\n  }\n\n  /** Deterministic preflight. Call before executeP0aActivity so rejection is not uncertainty. */\n  preflight(permit: AttemptExecutionPermit): PreparedAttempt {\n    this.options.conductor.authorizeAttemptDispatch(permit);\n    const state = this.options.conductor.state();\n    const intent = own(state.dispatchIntents, permit.intentId);\n    const grant = own(state.grants, permit.grantId);\n    const revision = intent && own(state.planRevisions, intent.planRevisionId);\n    const goal = revision && own(state.goals, revision.goalId);\n    const authorization = grant && own(state.authorizations, grant.rootAuthorizationId);\n    if (!intent || !grant || !revision || !goal || !authorization ||\n        intent.effectClass !== \"bounded_external_inference\" ||\n        !goal.allowedEffectClasses.includes(intent.effectClass) ||\n        goal.prohibitedEffectClasses.includes(intent.effectClass) ||\n        !authorization.effectClasses.includes(intent.effectClass) ||\n        !grant.effectClasses.includes(intent.effectClass) ||\n        !authorization.targetIds.includes(intent.targetId) ||\n        !grant.targetIds.includes(intent.targetId) ||\n        !intent.sourceIds.every((id) => goal.sourceBoundary.sourceIds.includes(id) &&\n          authorization.sourceIds.includes(id) && grant.sourceIds.includes(id))) {\n      reject(\"effect, source, target, or authority mismatch\");\n    }\n\n    const spec = this.options.resolveSpec(permit.effectiveRunSpecDigest);\n    if (!spec || digestCanonical(spec, sha256Digest) !== permit.effectiveRunSpecDigest ||\n        spec.rootExecutionId !== intent.rootExecutionId ||\n        spec.goalId !== goal.goalId ||\n        spec.planRevisionId !== intent.planRevisionId ||\n        spec.nodeId !== intent.taskNodeId) {\n      reject(\"effective run spec mismatch\");\n    }\n    const node = revision.nodes.find((candidate) => candidate.nodeId === spec.nodeId);\n    if (!node || node.kind !== \"activity\" || node.agentSpecId !== spec.agentSpecId ||\n        node.harnessSpecId !== spec.harnessSpecId ||\n        node.executionProfileId !== spec.executionProfileId) {\n      reject(\"workflow node mismatch\");\n    }\n    const context = this.options.resolveContext(spec.contextPackDigest);\n    if (!context || digestCanonical(context, sha256Digest) !== spec.contextPackDigest) {\n      reject(\"context pack digest mismatch\");\n    }\n    exactKeys(context, [\"schemaVersion\", \"sourceIds\", \"content\"]);\n    if (context.schemaVersion !== 1 || !Array.isArray(context.sourceIds) ||\n        typeof context.content !== \"string\" ||\n        !context.sourceIds.every((id) => typeof id === \"string\" && intent.sourceIds.includes(id))) {\n      reject(\"context source mismatch\");\n    }\n    const invocation = this.options.resolveInvocation(spec.materializationDigest);\n    if (!invocation || digestCanonical(invocation, sha256Digest) !== spec.materializationDigest) {\n      reject(\"model materialization digest mismatch\");\n    }\n    exactKeys(invocation, [\n      \"schemaVersion\", \"provider\", \"model\", \"systemPrompt\", \"prompt\", \"contextPackDigest\",\n      \"maxOutputTokens\", \"maximumRequestBytes\", \"maximumResultBytes\", \"outputMode\",\n    ], [\"purpose\", \"temperature\"]);\n    const target = this.options.resolveTarget(intent.targetId);\n    if (!target || target.targetId !== intent.targetId ||\n        !Array.isArray(target.allowedModels) || target.allowedModels.length === 0 ||\n        target.allowedModels.length > 16 ||\n        !target.allowedModels.every((model) => typeof model === \"string\" && model.length > 0) ||\n        ![\"openai\", \"anthropic\", \"gateway\", \"ollama\"].includes(invocation.provider) ||\n        typeof invocation.model !== \"string\" || invocation.model.length === 0 ||\n        !target.allowedModels.includes(invocation.model) ||\n        target.provider !== invocation.provider ||\n        invocation.contextPackDigest !== spec.contextPackDigest ||\n        invocation.schemaVersion !== 1 || invocation.outputMode !== \"text\" ||\n        typeof invocation.systemPrompt !== \"string\" || typeof invocation.prompt !== \"string\" ||\n        (invocation.temperature !== undefined &&\n          (!Number.isFinite(invocation.temperature) || invocation.temperature < 0 || invocation.temperature > 2))) {\n      reject(\"provider, model, or invocation mismatch\");\n    }\n    const harness = this.options.resolveHarness(spec.harnessSpecId);\n    const profile = this.options.resolveProfile(spec.executionProfileId);\n    if (!harness || harness.harnessSpecId !== spec.harnessSpecId ||\n        harness.toolIds.length !== 0 || harness.pluginIds.length !== 0 ||\n        harness.delegationPolicy !== \"none\" || harness.memoryMode !== \"none\" ||\n        !profile || profile.executionProfileId !== spec.executionProfileId ||\n        profile.network !== \"provider_only\" || profile.filesystem !== \"read_only\" ||\n        profile.durability !== \"ephemeral\") {\n      reject(\"harness or execution profile outside P0b-A\");\n    }\n    if (!positiveBound(invocation.maxOutputTokens, P0B_MAXIMUM_BOUNDS.maximumOutputTokens) ||\n        !positiveBound(invocation.maximumRequestBytes, P0B_MAXIMUM_BOUNDS.maximumRequestBytes) ||\n        !positiveBound(invocation.maximumResultBytes, P0B_MAXIMUM_BOUNDS.maximumResultBytes) ||\n        !positiveBound(profile.maximumWallClockMs, P0B_MAXIMUM_BOUNDS.maximumWallClockMs) ||\n        Buffer.byteLength(stableStringify({ invocation, context }), \"utf8\") >\n          invocation.maximumRequestBytes) {\n      reject(\"request, output, result, or wall-clock bound exceeded\");\n    }\n    if (profile.maximumWallClockMs > permit.expiresAt - this.options.now()) {\n      reject(\"permit expires before wall-clock bound\");\n    }\n    // Resolver callbacks are synchronous but may observe a changed authority state.\n    this.options.conductor.authorizeAttemptDispatch(permit);\n    return {\n      invocation: copyFrozen(invocation),\n      context: copyFrozen(context),\n      wallClockMs: profile.maximumWallClockMs,\n    };\n  }\n\n  async startAttempt(permit: AttemptExecutionPermit): Promise<AdapterStartResult> {\n    const existing = this.attempts.get(permit.attemptId);\n    if (existing) {\n      if (stableStringify(existing.permit) !== stableStringify(permit)) {\n        throw new AgentFabricError(\"AF_CONFLICT\", \"Attempt was started with a different permit\");\n      }\n      return this.startReport(existing);\n    }\n    const prepared = this.preflight(permit);\n    const startedAt = this.options.now();\n    const controller = new AbortController();\n    const record: AttemptRecord = {\n      permit: copyFrozen(permit), startedAt, controller, cancelled: false,\n      settled: Promise.resolve({ status: \"unknown\", reason: \"not_started\" }),\n    };\n    this.attempts.set(permit.attemptId, record);\n    record.settled = this.run(record, prepared);\n    return this.startReport(record);\n  }\n\n  private startReport(record: AttemptRecord): AdapterStartResult {\n    return { status: \"started\", report: {\n      startupReportId: `startup:${record.permit.attemptId}`,\n      attemptId: record.permit.attemptId,\n      observedSpecDigest: record.permit.effectiveRunSpecDigest,\n      startedAt: record.startedAt,\n    } };\n  }\n\n  private async run(record: AttemptRecord, prepared: PreparedAttempt): Promise<AdapterOutcomeResult> {\n    const { permit, controller } = record;\n    let timer: ReturnType<typeof setTimeout> | undefined;\n    const timeout = new Promise<never>((_, rejectTimeout) => {\n      timer = setTimeout(() => {\n        controller.abort();\n        rejectTimeout(new Error(\"provider_timeout\"));\n      }, prepared.wallClockMs);\n    });\n    try {\n      this.options.conductor.authorizeAttemptDispatch(permit);\n      const result = await Promise.race([\n        this.options.executeModel(prepared.invocation, prepared.context, controller.signal), timeout,\n      ]);\n      if (record.cancelled || controller.signal.aborted ||\n          this.options.now() >= permit.expiresAt) {\n        return { status: \"unknown\", reason: \"late_or_cancelled_provider_result\" };\n      }\n      if (!result || typeof result.text !== \"string\" ||\n          Buffer.byteLength(result.text, \"utf8\") > prepared.invocation.maximumResultBytes) {\n        return { status: \"unknown\", reason: \"invalid_or_oversized_provider_result\" };\n      }\n      this.resultArtifacts.set(permit.attemptId, result.text);\n      const report: WorkerResultReport = {\n        reportId: `report:${permit.attemptId}`,\n        attemptId: permit.attemptId,\n        permitId: permit.permitId,\n        intentId: permit.intentId,\n        planRevisionId: permit.planRevisionId,\n        effectiveRunSpecDigest: permit.effectiveRunSpecDigest,\n        fencingToken: permit.fencingToken,\n        status: \"succeeded\",\n        resultDigest: sha256Digest(result.text),\n        evidenceDigests: [digestCanonical({\n          provider: prepared.invocation.provider,\n          model: prepared.invocation.model,\n          materializationDigest: digestCanonical(prepared.invocation, sha256Digest),\n          contextPackDigest: prepared.invocation.contextPackDigest,\n          resultDigest: sha256Digest(result.text),\n        }, sha256Digest)],\n        reportedAt: this.options.now(),\n      };\n      return { status: \"reported\", report };\n    } catch {\n      // Provider errors may occur before or after remote acceptance. Neither is proof of failure.\n      return { status: \"unknown\", reason: \"provider_dispatch_or_transport_unknown\" };\n    } finally {\n      if (timer) clearTimeout(timer);\n    }\n  }\n\n  async observeAttempt(attemptId: string): Promise<readonly RuntimeObservation[]> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return [];\n    return [{\n      observationId: `observation:${attemptId}:adapter-state`,\n      attemptId,\n      sourceClass: \"adapter_observation\",\n      claim: attempt.cancelled ? \"cancellation_requested\" : \"started_or_settled\",\n      observedAt: this.options.now(),\n    }];\n  }\n\n  async collectOutcome(attemptId: string): Promise<AdapterOutcomeResult> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { status: \"unknown\", reason: \"attempt_not_observed\" };\n    const result = await attempt.settled;\n    return attempt.cancelled\n      ? { status: \"unknown\", reason: \"cancellation_termination_unproven\" }\n      : result;\n  }\n\n  async requestCancellation(attemptId: string): Promise<{ acknowledged: boolean }> {\n    const attempt = this.attempts.get(attemptId);\n    if (!attempt) return { acknowledged: false };\n    attempt.cancelled = true;\n    attempt.controller.abort();\n    return { acknowledged: true };\n  }\n\n  async observeTermination(_attemptId: string): Promise<\"terminated\" | \"running\" | \"unknown\"> {\n    // Abort acknowledgement cannot prove remote termination.\n    return \"unknown\";\n  }\n}"
       },
       "name": "P0bModelAdapter",
       "qualifiedName": "P0bModelAdapter",
       "span": {
-        "end": 16632,
-        "start": 5138
+        "end": 16655,
+        "start": 5151
       }
     },
     {
@@ -62554,14 +62569,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "P0B_MAXIMUM_BOUNDS: P0bBounds = Object.freeze({\n  maximumRequestBytes: 64 * 1024,\n  maximumResultBytes: 64 * 1024,\n  maximumOutputTokens: 4096,\n  maximumWallClockMs: 120_000,\n})"
       },
       "name": "P0B_MAXIMUM_BOUNDS",
       "qualifiedName": "P0B_MAXIMUM_BOUNDS",
       "span": {
-        "end": 2503,
-        "start": 2326
+        "end": 2516,
+        "start": 2339
       }
     },
     {
@@ -62826,14 +62841,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "8d0e0c0fc19efd95d7df1bc86642cdd2361ef6ea54f3149dc737311eae8219cf",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
         "sourceSlice": "PROVIDER_SECRETS: Record<ForgeAiProvider, string> = {\n  openai: \"OPENAI_API_KEY\",\n  anthropic: \"ANTHROPIC_API_KEY\",\n  gateway: \"AI_GATEWAY_API_KEY\",\n}"
       },
       "name": "PROVIDER_SECRETS",
       "qualifiedName": "PROVIDER_SECRETS",
       "span": {
-        "end": 610,
-        "start": 460
+        "end": 763,
+        "start": 613
       }
     },
     {
@@ -74811,14 +74826,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "function copyFrozen<T>(value: T): T {\n  const copy = JSON.parse(stableStringify(value)) as T;\n  const freeze = (item: unknown): void => {\n    if (item && typeof item === \"object\") {\n      Object.values(item).forEach(freeze);\n      Object.freeze(item);\n    }\n  };\n  freeze(copy);\n  return copy;\n}"
       },
       "name": "copyFrozen",
       "qualifiedName": "copyFrozen",
       "span": {
-        "end": 3576,
-        "start": 3281
+        "end": 3589,
+        "start": 3294
       }
     },
     {
@@ -75202,14 +75217,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "function createForgeModelExecutor(\n  secrets: SecretsContext,\n  onPhysicalRequest?: () => void,\n  trustedTransport: typeof fetch = fetch,\n): ModelExecutor {\n  return async (invocation, context, signal) => {\n    let requests = 0;\n    const transport = Object.assign(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {\n      requests += 1;\n      if (requests !== 1) throw new Error(\"p0b_duplicate_physical_request\");\n      onPhysicalRequest?.();\n      // Native fetch follows 3xx by default, which would hide extra requests and hosts.\n      return trustedTransport(input, { ...init, redirect: \"manual\" });\n    }, { preconnect: fetch.preconnect });\n    const model = await resolveLanguageModel(\n      invocation.provider, invocation.model, secrets, transport,\n    );\n    const result = await generateText({\n      model,\n      system: invocation.systemPrompt,\n      prompt: `${context.content}\\n\\n${invocation.prompt}`,\n      maxOutputTokens: invocation.maxOutputTokens,\n      temperature: invocation.temperature,\n      maxRetries: 0,\n      abortSignal: signal,\n    });\n    return { text: result.text };\n  };\n}"
       },
       "name": "createForgeModelExecutor",
       "qualifiedName": "createForgeModelExecutor",
       "span": {
-        "end": 5129,
-        "start": 3998
+        "end": 5142,
+        "start": 4011
       }
     },
     {
@@ -79571,14 +79586,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "function exactKeys(value: object, required: readonly string[], optional: readonly string[] = []): void {\n  const keys = Object.keys(value);\n  if (required.some((key) => !Object.hasOwn(value, key)) ||\n      keys.some((key) => !required.includes(key) && !optional.includes(key))) {\n    reject(\"unsupported or missing materialization field\");\n  }\n}"
       },
       "name": "exactKeys",
       "qualifiedName": "exactKeys",
       "span": {
-        "end": 2990,
-        "start": 2645
+        "end": 3003,
+        "start": 2658
       }
     },
     {
@@ -79639,14 +79654,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "async function executeP0bActivity(input: {\n  conductor: ForgeAgentConductor;\n  adapter: P0bModelAdapter;\n  permit: AttemptExecutionPermit;\n}): Promise<P0aActivityExecutionResult> {\n  if (!input.adapter.isBoundTo(input.conductor)) reject(\"adapter/conductor mismatch\");\n  input.adapter.preflight(input.permit);\n  return executeP0aActivity(input);\n}"
       },
       "name": "executeP0bActivity",
       "qualifiedName": "executeP0bActivity",
       "span": {
-        "end": 16987,
-        "start": 16641
+        "end": 17010,
+        "start": 16664
       }
     },
     {
@@ -81594,14 +81609,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "8d0e0c0fc19efd95d7df1bc86642cdd2361ef6ea54f3149dc737311eae8219cf",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
         "sourceSlice": "function forgeError(code: string, message: string): never {\n  const error = new Error(message);\n  (error as Error & { code: string }).code = code;\n  throw error;\n}"
       },
       "name": "forgeError",
       "qualifiedName": "forgeError",
       "span": {
-        "end": 452,
-        "start": 289
+        "end": 605,
+        "start": 442
       }
     },
     {
@@ -94395,14 +94410,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "function own<T>(record: Readonly<Record<string, T>>, key: string): T | undefined {\n  return Object.hasOwn(record, key) ? record[key] : undefined;\n}"
       },
       "name": "own",
       "qualifiedName": "own",
       "span": {
-        "end": 3279,
-        "start": 3132
+        "end": 3292,
+        "start": 3145
       }
     },
     {
@@ -97812,14 +97827,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "function positiveBound(value: number, ceiling: number): boolean {\n  return Number.isSafeInteger(value) && value > 0 && value <= ceiling;\n}"
       },
       "name": "positiveBound",
       "qualifiedName": "positiveBound",
       "span": {
-        "end": 3130,
-        "start": 2992
+        "end": 3143,
+        "start": 3005
       }
     },
     {
@@ -102062,14 +102077,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "function reject(reason: string): never {\n  throw new AgentFabricError(\"AF_PERMIT_REJECTED\", `P0b model preflight rejected: ${reason}`);\n}"
       },
       "name": "reject",
       "qualifiedName": "reject",
       "span": {
-        "end": 2643,
-        "start": 2506
+        "end": 2656,
+        "start": 2519
       }
     },
     {
@@ -106017,20 +106032,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "2dcf56fb7d361429914d6bbe819b44fb276ec3b5f13078c0aecc36bfa55da5dc",
+      "contentHash": "baae4cdbe9ae87cc38b7de198bef599b80cc30eb9bb7a201f90bd3b174214ea7",
       "file": "src/forge/runtime/ai/providers.ts",
       "id": "a73b0cde07fef23771b88ab0cf3c3d28dff69847d2ce657e21bc5b63377c4036",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "8d0e0c0fc19efd95d7df1bc86642cdd2361ef6ea54f3149dc737311eae8219cf",
-        "sourceSlice": "async function resolveLanguageModel(\n  provider: ForgeAiProvider,\n  model: string,\n  secrets: SecretsContext,\n  transport?: typeof fetch,\n): Promise<LanguageModel> {\n  if (!model || model.trim().length === 0) {\n    forgeError(FORGE_AI_MODEL_MISSING, \"AI model is required\");\n  }\n\n  switch (provider) {\n    case \"openai\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.openai);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.openai}' is not set for openai provider`,\n        );\n      }\n      const { createOpenAI } = await import(\"@ai-sdk/openai\");\n      const openai = createOpenAI({ apiKey, fetch: transport });\n      return openai(model);\n    }\n    case \"anthropic\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.anthropic);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.anthropic}' is not set for anthropic provider`,\n        );\n      }\n      const { createAnthropic } = await import(\"@ai-sdk/anthropic\");\n      const anthropic = createAnthropic({ apiKey, fetch: transport });\n      return anthropic(model);\n    }\n    case \"gateway\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.gateway);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.gateway}' is not set for gateway provider`,\n        );\n      }\n      const { createGateway } = await import(\"ai\");\n      const gateway = createGateway({ apiKey, fetch: transport });\n      return gateway(model);\n    }\n    default:\n      forgeError(\n        FORGE_AI_PROVIDER_UNKNOWN,\n        `unknown AI provider '${String(provider)}'`,\n      );\n  }\n}"
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
+        "sourceSlice": "async function resolveLanguageModel(\n  provider: ForgeModelProvider,\n  model: string,\n  secrets: SecretsContext,\n  transport?: typeof fetch,\n): Promise<LanguageModel> {\n  if (!model || model.trim().length === 0) {\n    forgeError(FORGE_AI_MODEL_MISSING, \"AI model is required\");\n  }\n\n  switch (provider) {\n    case \"ollama\": {\n      const { createOpenAI } = await import(\"@ai-sdk/openai\");\n      // Ollama's OpenAI-compatible API ignores this nonsecret placeholder.\n      // The endpoint is fixed loopback; materialization cannot choose a host or port.\n      const ollama = createOpenAI({\n        baseURL: \"http://127.0.0.1:11434/v1\",\n        apiKey: \"ollama\",\n        fetch: transport,\n      });\n      return ollama.chat(model);\n    }\n    case \"openai\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.openai);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.openai}' is not set for openai provider`,\n        );\n      }\n      const { createOpenAI } = await import(\"@ai-sdk/openai\");\n      const openai = createOpenAI({ apiKey, fetch: transport });\n      return openai(model);\n    }\n    case \"anthropic\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.anthropic);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.anthropic}' is not set for anthropic provider`,\n        );\n      }\n      const { createAnthropic } = await import(\"@ai-sdk/anthropic\");\n      const anthropic = createAnthropic({ apiKey, fetch: transport });\n      return anthropic(model);\n    }\n    case \"gateway\": {\n      const apiKey = secrets.optional(PROVIDER_SECRETS.gateway);\n      if (!apiKey) {\n        forgeError(\n          FORGE_AI_SECRET_MISSING,\n          `required secret '${PROVIDER_SECRETS.gateway}' is not set for gateway provider`,\n        );\n      }\n      const { createGateway } = await import(\"ai\");\n      const gateway = createGateway({ apiKey, fetch: transport });\n      return gateway(model);\n    }\n    default:\n      forgeError(\n        FORGE_AI_PROVIDER_UNKNOWN,\n        `unknown AI provider '${String(provider)}'`,\n      );\n  }\n}"
       },
       "name": "resolveLanguageModel",
       "qualifiedName": "resolveLanguageModel",
       "span": {
-        "end": 2486,
-        "start": 735
+        "end": 3072,
+        "start": 888
       }
     },
     {
@@ -106193,14 +106208,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "8d0e0c0fc19efd95d7df1bc86642cdd2361ef6ea54f3149dc737311eae8219cf",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
         "sourceSlice": "function resolveProviderSecret(provider: ForgeAiProvider): string {\n  return PROVIDER_SECRETS[provider];\n}"
       },
       "name": "resolveProviderSecret",
       "qualifiedName": "resolveProviderSecret",
       "span": {
-        "end": 726,
-        "start": 620
+        "end": 879,
+        "start": 773
       }
     },
     {
@@ -123788,14 +123803,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "interface AttemptRecord {\n  permit: AttemptExecutionPermit;\n  startedAt: number;\n  controller: AbortController;\n  cancelled: boolean;\n  settled: Promise<AdapterOutcomeResult>;\n}"
       },
       "name": "AttemptRecord",
       "qualifiedName": "AttemptRecord",
       "span": {
-        "end": 3901,
-        "start": 3724
+        "end": 3914,
+        "start": 3737
       }
     },
     {
@@ -130378,20 +130393,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "bfb3f5e2ff10366ba0df02f3b0b633698dd449d02f34c7241b8a07d9a83c7c0f",
+      "contentHash": "adbd6e503e900431cf0a76a14096d1ad811bb11a79e64c75a0ac0e86472135b6",
       "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
       "id": "a510bec6f9245d089a2e9557b49288cfbe6da5783845bf98cfb5b067bbcfda83",
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
-        "sourceSlice": "interface MaterializedModelInvocation {\n  schemaVersion: 1;\n  provider: ForgeAiProvider;\n  model: string;\n  systemPrompt: string;\n  prompt: string;\n  contextPackDigest: Digest;\n  maxOutputTokens: number;\n  maximumRequestBytes: number;\n  maximumResultBytes: number;\n  outputMode: \"text\";\n  purpose?: string;\n  temperature?: number;\n}"
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface MaterializedModelInvocation {\n  schemaVersion: 1;\n  provider: ForgeModelProvider;\n  model: string;\n  systemPrompt: string;\n  prompt: string;\n  contextPackDigest: Digest;\n  maxOutputTokens: number;\n  maximumRequestBytes: number;\n  maximumResultBytes: number;\n  outputMode: \"text\";\n  purpose?: string;\n  temperature?: number;\n}"
       },
       "name": "MaterializedModelInvocation",
       "qualifiedName": "MaterializedModelInvocation",
       "span": {
-        "end": 1262,
-        "start": 930
+        "end": 1272,
+        "start": 937
       }
     },
     {
@@ -130520,14 +130535,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "interface ModelContextPack {\n  schemaVersion: 1;\n  sourceIds: readonly string[];\n  content: string;\n}"
       },
       "name": "ModelContextPack",
       "qualifiedName": "ModelContextPack",
       "span": {
-        "end": 921,
-        "start": 820
+        "end": 928,
+        "start": 827
       }
     },
     {
@@ -130554,14 +130569,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "interface ModelInvocationResult {\n  text: string;\n}"
       },
       "name": "ModelInvocationResult",
       "qualifiedName": "ModelInvocationResult",
       "span": {
-        "end": 1441,
-        "start": 1390
+        "end": 1454,
+        "start": 1403
       }
     },
     {
@@ -130582,20 +130597,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "a76bba126601b14bf8d68b60dc801f8e4b31db78309cbb0b869f3462b7df75d9",
+      "contentHash": "3b6b3462a0afef7eaa213f935c6a78f4ab02fc147d23d08b5ef1411987575c31",
       "file": "src/forge/agent-fabric/p0b-model-adapter.ts",
       "id": "d2365a83779fdc705f9819fd37c6d9518146f93bdda11610647df2045a2a0cd9",
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
-        "sourceSlice": "interface ModelTarget {\n  targetId: string;\n  provider: ForgeAiProvider;\n  allowedModels: readonly string[];\n}"
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
+        "sourceSlice": "interface ModelTarget {\n  targetId: string;\n  provider: ForgeModelProvider;\n  allowedModels: readonly string[];\n}"
       },
       "name": "ModelTarget",
       "qualifiedName": "ModelTarget",
       "span": {
-        "end": 1381,
-        "start": 1271
+        "end": 1394,
+        "start": 1281
       }
     },
     {
@@ -130979,14 +130994,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "interface P0bBounds {\n  maximumRequestBytes: number;\n  maximumResultBytes: number;\n  maximumOutputTokens: number;\n  maximumWallClockMs: number;\n}"
       },
       "name": "P0bBounds",
       "qualifiedName": "P0bBounds",
       "span": {
-        "end": 2311,
-        "start": 2166
+        "end": 2324,
+        "start": 2179
       }
     },
     {
@@ -130996,14 +131011,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "interface P0bModelAdapterOptions {\n  conductor: ForgeAgentConductor;\n  now: () => number;\n  resolveSpec: (digest: Digest) => EffectiveRunSpec | undefined;\n  resolveContext: (digest: Digest) => ModelContextPack | undefined;\n  resolveInvocation: (digest: Digest) => MaterializedModelInvocation | undefined;\n  resolveTarget: (targetId: string) => ModelTarget | undefined;\n  resolveHarness: (id: string) => HarnessSpec | undefined;\n  resolveProfile: (id: string) => ExecutionProfile | undefined;\n  executeModel: ModelExecutor;\n}"
       },
       "name": "P0bModelAdapterOptions",
       "qualifiedName": "P0bModelAdapterOptions",
       "span": {
-        "end": 2157,
-        "start": 1633
+        "end": 2170,
+        "start": 1646
       }
     },
     {
@@ -131846,14 +131861,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "interface PreparedAttempt {\n  invocation: Readonly<MaterializedModelInvocation>;\n  context: Readonly<ModelContextPack>;\n  wallClockMs: number;\n}"
       },
       "name": "PreparedAttempt",
       "qualifiedName": "PreparedAttempt",
       "span": {
-        "end": 3722,
-        "start": 3578
+        "end": 3735,
+        "start": 3591
       }
     },
     {
@@ -138470,6 +138485,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "75573842fdf710e5b7e1467e88777da961cca0d49e0c14a60c3c5031820e7e84",
+      "file": "src/forge/runtime/ai/providers.ts",
+      "id": "1f781b058b316f8d3ff6b1fa6ca2c3ec3932952c48b06538488aafae8d55861f",
+      "kind": "code.type",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "e4ca33a73f078ab55eb43a5fbb8add3ababb5ce92117f64997e8fb396dfd4579",
+        "sourceSlice": "type ForgeModelProvider = ForgeAiProvider | \"ollama\";"
+      },
+      "name": "ForgeModelProvider",
+      "qualifiedName": "ForgeModelProvider",
+      "span": {
+        "end": 440,
+        "start": 387
+      }
+    },
+    {
       "contentHash": "4e54f54e2b216666f3076f7b7c3798f81c118d0c74e2e7c899a095703019cf46",
       "file": "src/forge/react/index.ts",
       "id": "d0cee86c8ad9b56ea42ede5c0d14b3ab4dea353fe2422b21a313815ee9736f1a",
@@ -139156,14 +139188,14 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "366c07a80244fedf9a5e7a8eb2e4a29abd118bb836f00294884302b059c1ea5c",
+        "fileContentHash": "8cd84c9d735b04f7bd0923ef7503c3049c316d4e5ea71ea58e1e781c5c1c47b8",
         "sourceSlice": "type ModelExecutor = (\n  invocation: Readonly<MaterializedModelInvocation>,\n  context: Readonly<ModelContextPack>,\n  signal: AbortSignal,\n) => Promise<ModelInvocationResult>;"
       },
       "name": "ModelExecutor",
       "qualifiedName": "ModelExecutor",
       "span": {
-        "end": 1624,
-        "start": 1450
+        "end": 1637,
+        "start": 1463
       }
     },
     {
