@@ -93,15 +93,18 @@ function stubbed(
       const labels = source?.args ?? [];
       return passed(JSON.stringify({
         Name: `/${identity}`, Image: IMAGE_ID,
-        Config: { Image: IMAGE_ID, User: "65534:65534",
+        Config: { Image: IMAGE_ID, User: "65534:65534", Entrypoint: ["node"], WorkingDir: "/workspace",
           Labels: {
             "dev.forge.fabric.effect": "local_docker_node_test_v1",
             "dev.forge.fabric.verification": labels.find((arg) => arg.startsWith("dev.forge.fabric.verification="))?.split("=")[1],
             "dev.forge.fabric.test": "pass.test.mjs",
           }, Cmd: ["--test", "/workspace/pass.test.mjs"] },
         HostConfig: { NetworkMode: "none", ReadonlyRootfs: true, Privileged: false,
-          CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"] },
-        Mounts: [{ Destination: "/workspace", RW: false }],
+          CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64,
+          Memory: 536_870_912, MemorySwap: 536_870_912, NanoCpus: 1_000_000_000,
+          Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=64m" },
+          Mounts: [{ Type: "bind", Source: source?.cwd, Target: "/workspace", ReadOnly: true }] },
+        Mounts: [{ Type: "bind", Source: source?.cwd, Destination: "/workspace", RW: false }],
         State: { Status: "exited", ExitCode: runResult.exitCode ?? 0,
           StartedAt: "2026-01-01T00:00:00Z",
           FinishedAt: runResult.timedOut ? "2026-01-01T00:00:30Z" : "2026-01-01T00:00:01Z" },
@@ -252,6 +255,25 @@ test("records the named Docker intent before create and its receipt before clean
   expect(result.outcome).toBe("passed");
   expect(receipt).toBe(true);
   expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+});
+
+test("rejects a named container with a different entrypoint, checkout mount, or extra mount", async () => {
+  const { patch } = fixture();
+  for (const alteration of ["entrypoint", "source", "extra-mount"] as const) {
+    const calls: VerificationProcessInvocation[] = [];
+    const normal = stubbed(calls);
+    const forged: VerificationExecutor = async (invocation) => {
+      const result = await normal(invocation);
+      if (!(invocation.args.includes("inspect") && invocation.args.includes("container"))) return result;
+      const inspected = JSON.parse(result.stdout);
+      if (alteration === "entrypoint") inspected.Config.Entrypoint = ["sh"];
+      if (alteration === "source") inspected.Mounts[0].Source = "C:\\wrong-checkout";
+      if (alteration === "extra-mount") inspected.Mounts.push({ Type: "bind", Source: "C:\\secrets", Destination: "/secrets", RW: false });
+      return { ...result, stdout: JSON.stringify(inspected) };
+    };
+    await expect(runLocalVerification(request(patch), forged)).rejects.toThrow("identity does not match");
+    expect(calls.some((call) => call.args.includes("rm"))).toBe(false);
+  }
 });
 
 test("leaves an ambiguous create intent and never starts or cleans the container", async () => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LocalAdaptiveService } from "../../src/forge/agent-fabric/local-adaptive-service.ts";
@@ -114,6 +114,11 @@ describe("local adaptive CLI service", () => {
       expect(first.profile?.versionId).toBe(version.version.versionId);
       await service.review(first.id);
       expect(reviewedVersion).toBe(version.version.versionId);
+      const lock = join(path, ".forge", "local", "agent-fabric", "adaptive-lock");
+      writeFileSync(lock, "running", { flag: "wx" });
+      try {
+        expect(evolution.decide("revoke", version.version.versionId)).rejects.toThrow("Adaptive owner is busy");
+      } finally { unlinkSync(lock); }
       const succeeded = await service.run(first.id);
       expect(succeeded.phase).toBe("succeeded");
       expect(succeeded.profile?.versionId).toBe(version.version.versionId);

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
@@ -142,11 +142,20 @@ export class LocalEvolutionService {
   }
 
   async decide(action: EvolutionDecisionAction, versionId: string): Promise<EvolutionVersionStatus> {
-    const before = await this.status(versionId);
-    const channel: EvolutionChannel = action === "canary" ? "canary" : "stable";
-    const expected = await this.registry.selected(before.version.extensionKey, channel);
-    await this.registry.decide(action, versionId, expected);
-    return this.status(versionId);
+    // Adaptive execution holds this same lock from profile readback through worker
+    // dispatch. A concurrent promotion or revocation must not pass between those
+    // two operations and silently change what the owner approved.
+    const lockPath = localFabricPath(this.repositoryRoot, "adaptive-lock");
+    let descriptor: number;
+    try { descriptor = openSync(lockPath, "wx", 0o600); }
+    catch { throw new AgentFabricError("AF_CONFLICT", "Adaptive owner is busy; inspect adaptive status before changing its profile"); }
+    try {
+      const before = await this.status(versionId);
+      const channel: EvolutionChannel = action === "canary" ? "canary" : "stable";
+      const expected = await this.registry.selected(before.version.extensionKey, channel);
+      await this.registry.decide(action, versionId, expected);
+      return this.status(versionId);
+    } finally { closeSync(descriptor); unlinkSync(lockPath); }
   }
 
   /** Loading returns verified bytes only for the currently selected, evaluated, non-revoked version. */

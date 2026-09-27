@@ -14,6 +14,9 @@ The two profiles and their permitted tools are frozen in code. Inputs cannot
 select an agent, harness, provider, tool, command, network destination, or
 execution profile. The worker calculation is a deterministic digest; it is a
 protocol rehearsal, not an AI coding task.
+The profile's read-only filesystem and denied-network declarations describe
+the behavior expected of this fixed trusted script; process launch does not
+enforce them as an operating-system sandbox.
 
 The local CLI wrapper (`forge fabric adaptive-*`) records an owner-reviewed
 proposal, optionally binds a selected Evolution data-profile version, commits
@@ -21,6 +24,9 @@ P0a permits to local PGlite before process dispatch, and persists a bounded
 result. `adaptive-status` reads the authoritative join after restart without
 rerunning workers. A crash after dispatch without a committed join is uncertain
 and requires a fresh owner-approved proposal for another attempt.
+If the join is committed before a crash but the separate result file is not,
+status can prove the join while process IDs and child details remain unavailable.
+Promotion/revocation decisions and adaptive execution use the same local lock.
 
 The existing P0a Conductor remains the authority for transitions. The harness
 requires the exact active plan and a coordinator grant authorized for one
@@ -37,10 +43,9 @@ insufficient parent attempt budget, a failed child, and oversized input.
 
 ## Limits before step 10 can be adopted
 
-- This module computes the two results in its caller process. Its compiled
-  `process` execution profile is intended for a future worker adapter; this
-  slice does not launch or isolate processes and does not prove runtime wall
-  time, CPU, or memory enforcement.
+- The CLI starts the two fixed digest scripts in separate Node processes with
+  empty inherited environment and a wall timeout, but this is not an OS sandbox
+  and does not prove CPU or memory isolation.
 - The CLI can rebind exact committed permits in a fresh Conductor for its one
   dispatch, but it never resumes workers after a crash. Recovery beyond
   authoritative readback, retries, and concurrent-host behavior remain outside

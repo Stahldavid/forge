@@ -46,6 +46,8 @@ and `adaptive-run` checks that the same version remains selected and loadable
 before issuing permits. A changed or revoked selection blocks the run. The
 profile validates labels and lengths only; it does not provide code, tools,
 instructions, or worker behavior.
+Profile decisions and an adaptive run share a local process lock, so a
+promotion or revocation cannot race between profile readback and worker dispatch.
 
 `adaptive-review` opens a loopback browser window showing both exact inputs,
 the bound profile version when present, and their proposal digest. The approval
@@ -53,8 +55,10 @@ expires after five minutes and permits one run. The
 CLI commits the owner authorization, fixed plan, child grants, and both P0a
 permits to a separate local PGlite journal before starting either process.
 The result record and authoritative join can be read after closing and
-reopening the CLI. A run cannot be repeated; a crash after dispatch is shown
-as uncertain unless the durable journal contains the authoritative join.
+reopening the CLI. If the process dies after committing the join but before
+saving the result record, status still reports the authoritative join but may
+omit process IDs and child details. A run cannot be repeated; a crash after
+dispatch is shown as uncertain unless the durable journal contains the join.
 Cancellation, failed workers, or missing results never authorize a join.
 Local records and the owner verifier key live under `.forge/local/agent-fabric`.
 The local owner lock prevents concurrent mutating CLI invocations; after a

@@ -384,8 +384,12 @@ export async function readbackLocalDockerVerification(
   let container: any;
   try { container = JSON.parse(inspected.result.stdout); }
   catch { invalid("Docker verification inspect returned invalid JSON"); }
+  const configuredMounts = container?.HostConfig?.Mounts;
+  const actualMounts = container?.Mounts;
   if (container?.Name !== `/${name}` || container?.Image !== request.imageId ||
       container?.Config?.Image !== request.imageId ||
+      JSON.stringify(container?.Config?.Entrypoint) !== JSON.stringify(["node"]) ||
+      container?.Config?.WorkingDir !== "/workspace" ||
       container?.Config?.Labels?.["dev.forge.fabric.effect"] !== "local_docker_node_test_v1" ||
       container?.Config?.Labels?.["dev.forge.fabric.verification"] !== identity ||
       container?.Config?.Labels?.["dev.forge.fabric.test"] !== descriptor.path ||
@@ -396,8 +400,17 @@ export async function readbackLocalDockerVerification(
       container?.HostConfig?.Privileged !== false ||
       !container?.HostConfig?.CapDrop?.includes("ALL") ||
       !container?.HostConfig?.SecurityOpt?.includes("no-new-privileges") ||
-      !container?.Mounts?.some((mount: { Destination?: string; RW?: boolean }) =>
-        mount.Destination === "/workspace" && mount.RW === false)) {
+      container?.HostConfig?.PidsLimit !== 64 ||
+      container?.HostConfig?.Memory !== 536_870_912 ||
+      container?.HostConfig?.MemorySwap !== 536_870_912 ||
+      container?.HostConfig?.NanoCpus !== 1_000_000_000 ||
+      container?.HostConfig?.Tmpfs?.["/tmp"] !== "rw,noexec,nosuid,nodev,size=64m" ||
+      !Array.isArray(configuredMounts) || configuredMounts.length !== 1 ||
+      configuredMounts[0]?.Type !== "bind" || configuredMounts[0]?.Source !== worktreeRoot ||
+      configuredMounts[0]?.Target !== "/workspace" || configuredMounts[0]?.ReadOnly !== true ||
+      !Array.isArray(actualMounts) || actualMounts.length !== 1 ||
+      actualMounts[0]?.Type !== "bind" || actualMounts[0]?.Source !== worktreeRoot ||
+      actualMounts[0]?.Destination !== "/workspace" || actualMounts[0]?.RW !== false) {
     invalid("Docker verification container identity does not match its durable intent");
   }
   if (container.State?.Status !== "exited" || !Number.isSafeInteger(container.State.ExitCode)) return null;
