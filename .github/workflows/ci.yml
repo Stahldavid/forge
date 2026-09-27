@@ -37,7 +37,12 @@ jobs:
 
       # Security Assurance runs the complete strict TestGraph once. This job
       # checks compiler drift and package behavior without rerunning that suite.
-      - name: Check committed compiler output
+      # Framework source and tests are generator inputs. Derived files are
+      # regenerated in CI instead of committing machine-specific graph churn.
+      - name: Generate derived compiler output
+        run: node ./bin/forge.mjs generate
+
+      - name: Check generated output stability
         run: node ./bin/forge.mjs generate --check
 
       - name: Check compiler workspace

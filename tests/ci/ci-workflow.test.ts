@@ -28,6 +28,10 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("Packed package smoke");
     expect(workflow).toContain("npm run release:smoke");
     expect(workflow).toContain("node ./bin/forge.mjs generate --check");
+    expect(workflow.indexOf("run: node ./bin/forge.mjs generate\n"))
+      .toBeLessThan(workflow.indexOf("run: node ./bin/forge.mjs generate --check"));
+    expect(security.indexOf("run: node ./bin/forge.mjs generate\n"))
+      .toBeLessThan(security.indexOf("run: node ./bin/forge.mjs generate --check"));
     expect(workflow).toContain("npm run lint");
     expect(workflow).not.toContain("run: bun test");
     expect(workflow).not.toContain("forge verify --standard");
