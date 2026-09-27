@@ -4,11 +4,14 @@ Forge Agent Fabric is an experimental protocol-oriented execution layer for dyna
 
 ## Implementation status
 
-**Only the deterministic P0a protocol kernel is implemented in this branch.**
+The deterministic P0a protocol kernel and the bounded P0b-A model adapter are implemented.
+P0b-A invokes one real model through the existing P0a permit and result boundary. Its
+accepted scope and exact adoption evidence are recorded in
+[`P0B_A_ADOPTION_RECORD.md`](./architecture/agent-fabric/P0B_A_ADOPTION_RECORD.md).
 
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
 
-- a real non-deterministic P0b model adapter;
+- model-selected tools, plugins or child delegation beyond P0b-A;
 - PGlite-backed production persistence/outbox integration for Agent Fabric;
 - consequential-effect brokers and reconciliation against real systems;
 - recovery epochs and integrity-unknown recovery;
