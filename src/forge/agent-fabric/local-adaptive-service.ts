@@ -35,6 +35,7 @@ interface AdaptiveRecord {
   startedAt?: number;
   finishedAt?: number;
   result?: LocalAdaptiveProcessResult;
+  resultReceipt?: Digest;
   failure?: string;
 }
 export interface AdaptiveStatus {
@@ -204,6 +205,12 @@ export class LocalAdaptiveService {
         approvedAt: record.approvedAt })).digest("hex")}`;
   }
 
+  private resultReceipt(record: AdaptiveRecord): Digest {
+    return `sha256:${createHmac("sha256", this.ownerKey).update("forge-local-adaptive-result/v1:")
+      .update(JSON.stringify({ id: record.id, inputDigest: record.inputDigest,
+        profile: record.profile ?? null, result: record.result })).digest("hex")}`;
+  }
+
   private async assertProfileBinding(record: AdaptiveRecord): Promise<void> {
     if (!record.profile) return;
     const evolution = await LocalEvolutionService.open(this.repositoryRoot);
@@ -325,7 +332,10 @@ export class LocalAdaptiveService {
           harness.resumePrepared();
           return harness.runPrepared(signal);
         });
-        record.result = executed.result;
+        // Sign the JSON representation that will be written to disk. PIDs are
+        // local observations; child outcomes are also checked against P0a below.
+        record.result = JSON.parse(JSON.stringify(executed.result)) as LocalAdaptiveProcessResult;
+        record.resultReceipt = this.resultReceipt(record);
         record.phase = executed.result.join.status === "succeeded" ? "succeeded" : "blocked";
       } catch (error) {
         record.phase = "uncertain";
@@ -348,6 +358,25 @@ export class LocalAdaptiveService {
     const state = replayControlState(events, { ownerAuthorizationVerifier: this.verifier, resourceDefinitions: WORKERS });
     const outcomes = Object.values(state.outcomes);
     const join = state.outcomes[`attempt:${ids(id).revision}:join`];
+    if (record.result) {
+      const expected = this.resultReceipt(record);
+      if (!record.resultReceipt || record.resultReceipt.length !== expected.length ||
+          !timingSafeEqual(Buffer.from(record.resultReceipt), Buffer.from(expected))) {
+        throw new AgentFabricError("AF_INVALID_STATE", "Adaptive saved result receipt is invalid");
+      }
+      for (const role of ["inventory", "constraints"] as const) {
+        const saved = record.result.children?.[role];
+        const authoritative = state.outcomes[`attempt:${ids(id).revision}:${role}`];
+        if (!saved) throw new AgentFabricError("AF_INVALID_STATE", "Adaptive saved child is missing");
+        if ((saved.status === "succeeded" || saved.status === "failed") &&
+            (!authoritative || digestCanonical(saved, sha256Digest) !== digestCanonical(authoritative, sha256Digest))) {
+          throw new AgentFabricError("AF_INVALID_STATE", "Adaptive saved child differs from authoritative outcome");
+        }
+        if (saved.status !== "succeeded" && saved.status !== "failed" && authoritative) {
+          throw new AgentFabricError("AF_INVALID_STATE", "Adaptive saved child differs from authoritative outcome");
+        }
+      }
+    }
     const phase: Phase = join?.status === "succeeded" ? "succeeded" :
       record.phase === "running" ? "uncertain" : record.phase;
     if (record.phase === "succeeded" && !join) throw new AgentFabricError("AF_INVALID_STATE", "Adaptive result has no authoritative join");

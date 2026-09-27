@@ -51,6 +51,11 @@ describe("local adaptive CLI service", () => {
       expect(readback.journal.joinOutcome?.resultDigest).toBe(result.journal.joinOutcome?.resultDigest);
       expect(readback.result?.workerPids).toEqual(result.result?.workerPids);
       expect(service.run(proposed.id)).rejects.toThrow("unused owner approval");
+      const recordPath = join(path, ".forge", "local", "agent-fabric", "adaptive-runs", `${proposed.id}.json`);
+      const record = JSON.parse(readFileSync(recordPath, "utf8"));
+      record.result.workerPids.inventory = 999_999;
+      writeFileSync(recordPath, JSON.stringify(record));
+      expect(service.status(proposed.id)).rejects.toThrow("result receipt is invalid");
     } finally { await service.close(); }
   });
 

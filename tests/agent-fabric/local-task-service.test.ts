@@ -17,6 +17,35 @@ function git(root: string, ...args: string[]): string {
 }
 
 describe("local task service", () => {
+  test("a source edit during the owner popup cannot authorize a stale proposal", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-review-stale-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "source.txt"), "original\n");
+      git(root, "add", "source.txt");
+      git(root, "commit", "-qm", "fixture");
+      const proposal: LocalCodingTaskProposal = {
+        schemaVersion: 1, repositoryId: "repo:fixture", baseCommit: git(root, "rev-parse", "HEAD"),
+        goal: "Edit the fixture", acceptanceCriteria: ["Change source.txt"], nonObjectives: [],
+        sourcePaths: ["source.txt"], writablePaths: ["source.txt"],
+        requestedModelTargetId: "target:ollama:local",
+        limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+          maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+      };
+      const service = await LocalTaskService.open(root, async () => {
+        writeFileSync(join(root, "source.txt"), "changed during review\n");
+        return "approved";
+      });
+      try {
+        const taskId = (await service.propose(proposal)).taskId;
+        await expect(service.review(taskId)).rejects.toThrow("allowlisted source changed");
+        expect((await service.status(taskId)).state).toBe("proposed");
+      } finally { await service.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
   test("cancelling unused approval survives restart and cannot start a model", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-cancel-approval-"));
     try {

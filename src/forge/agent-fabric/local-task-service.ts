@@ -483,6 +483,7 @@ export class LocalTaskService {
     if (decision !== "approved") {
       throw new AgentFabricError("AF_INVALID_STATE", "Invalid local approval decision");
     }
+    assertCurrentLocalSourceSnapshot(reviewSnapshot);
     this.selectedMemory(reviewSnapshot, record.proposal.memoryIds);
     const { authorization, goal } = authorityFor(record, Date.now());
     const authorizationDigest = digestCanonical(authorization, sha256Digest);
