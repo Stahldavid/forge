@@ -7,11 +7,12 @@ separate exact-head review, conformance evidence, and an adoption record.
 
 ## 1. Purpose and boundary
 
-P0b-B is a single-owner, single-host pilot that makes a bounded coding task visible to
-external MCP clients and executes an explicitly authorized attempt with a local Ollama
-model. Codex, Claude Code, Cursor, or another MCP client may consume the same contract,
-but none is an authority source. Codex model execution is excluded from the default
-path, as are hosted API keys and automatic publication.
+P0b-B is a single-owner, single-host pilot led by `forge fabric` CLI commands. A
+local Forge approval window displays the exact proposed task before the owner starts
+an attempt with Ollama. MCP follows as an adapter over the same task service, so
+Codex, Claude Code, Cursor, and other clients can use one contract. None is an
+authority source. Codex model execution is excluded from the default path, as are
+hosted API keys and automatic publication.
 
 The first real task is deliberately narrow: a small edit in a **trusted repository**,
 using a pinned base commit, an isolated Git worktree, bounded source context, one local
@@ -49,28 +50,29 @@ requires its own schema, replay rule, and compatibility assessment. A separate t
 projection can be rebuilt from trusted journal events; it cannot become a second
 authority source.
 
-## 3. MCP interface and trusted ingress
+## 3. CLI, approval window, and MCP adapter
 
-The existing `forge mcp serve` is read/context oriented. Expansion is staged:
+The CLI is the first client of one local task service. Expansion is staged:
 
-1. Read-only `fabric_capabilities`, `fabric_task`, and `fabric_evidence` tools expose
-   bounded, redacted status. Before durable storage, they report `unavailable` or
-   `not_implemented` honestly rather than inventing task state.
-2. `fabric_propose` accepts only an untrusted proposal and returns its digest/ID.
-   Proposal creation confers no run permission. `fabric_request_start` and
-   `fabric_request_cancel` can request a transition but must pass exact version,
-   idempotency, and current owner authorization checks.
-3. Owner admission occurs through a **separate trusted local interaction** that shows
-   the exact repository, base, paths, effects, model, budgets, and task digest. The
-   worker process and MCP model tool surface cannot reach this approval channel.
-   `initialize`, stdio possession, loopback origin, a client-supplied `principalId`,
-   or the ability to invoke a CLI command is not proof of owner consent.
+1. `forge fabric propose`, `status`, and `evidence` use bounded, redacted data. A
+   proposal is untrusted and confers no run permission. Before durable storage, status
+   reports `unavailable` honestly.
+2. Forge opens a local approval window showing repository, base commit, paths,
+   effects, model, budgets, verification commands, and a digest of the immutable
+   revision. The owner can approve or reject that exact revision. A CLI flag, model
+   output, or MCP request cannot substitute for the visible decision. An approval
+   applies once and expires; a changed revision requires a new decision.
+3. The bounded Ollama worker receives task data but has no shell, browser, approval
+   endpoint, or general tools. `forge mcp serve` later maps read-only tools to the
+   same task service. Any MCP proposal/request surface requires its own compatibility
+   review and cannot add a second authorization path.
 
-The first implementation may expose only stage 1 while the approval mechanism is
-built. A general `fabric_authorize` tool must not be added to MCP without a separate
-authenticated user-presence design and adversarial tests. If the trusted local
-interaction cannot be isolated from the worker/client, P0b-B stops at read-only MCP
-and proposal capture; execution is not accepted.
+The browser window is a cooperative user experience, not proof against a hostile
+agent with unrestricted shell or UI automation in the same OS account. This pilot
+therefore only accepts a bounded text-only worker and a trusted local repository.
+Stronger owner presence, such as Windows Hello/passkey, and isolation of an external
+coding client require a later security slice. A general `fabric_authorize` tool must
+not be added to MCP in this pilot.
 
 MCP tool output excludes secrets, raw prompts/completions, hidden command arguments,
 and raw private files. Unknown IDs, malformed parameters, oversized requests, and
@@ -133,13 +135,13 @@ deployment.
 | Gate | Required evidence |
 | --- | --- |
 | B-P01 | Exact P0a/P0b-A baseline and affected frozen rules identified; no silent supersession. |
-| B-P02 | Versioned task/effect/MCP contract with unknown, stale, duplicate, and malformed request semantics. |
-| B-P03 | Trusted owner ingress demonstrably inaccessible to the model/worker; MCP proposal cannot grant authority. |
+| B-P02 | Versioned task/effect/CLI contract with unknown, stale, duplicate, and malformed request semantics; MCP is an adapter. |
+| B-P03 | The approval window binds the displayed immutable revision and is inaccessible to the bounded Ollama worker; unrestricted same-account agents remain outside this pilot's security claim. |
 | B-P04 | PGlite transaction and replay design proves no acknowledged lost append, no partial event batch, and no model invocation during replay. |
 | B-P05 | Exact repo/base/path/model/budget bindings and separate effect authorization, with a trusted-repo limitation. |
 | B-P06 | Explicit failure and uncertainty behavior for crash, cancellation, stale fencing, storage corruption, ambiguous patch result, and failed verification. |
 | B-P07 | No Codex model turn, hosted provider key, arbitrary network endpoint, merge, publish, or deploy in default acceptance. |
-| B-A01 | Protocol fixtures exercise two MCP clients or independent compatible implementations; read-only phase is verified before mutation. |
+| B-A01 | CLI proposal/status/evidence and approval-window paths are exercised before a separate two-client MCP compatibility gate. |
 | B-A02 | Kill/restart/concurrent-write and forged-authority adversarial tests pass at the reviewed SHA. |
 | B-A03 | Real local Ollama coding smoke on a trusted fixture repo produces a bounded diff and check evidence, then restart shows it without another model call. |
 | B-A04 | Independent review provenance and exact-head CI/security checks are recorded; limitations remain explicit in the adoption record. |

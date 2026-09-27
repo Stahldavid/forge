@@ -7,8 +7,9 @@ adapter are the current accepted starting point.
 
 ## Intended outcome and cost boundary
 
-The first usable target is a **single-owner local pilot**. Codex and other MCP clients can
-inspect a Forge task and request governed operations. Forge can then run a coding task in
+The first usable target is a **single-owner local pilot**. The `forge fabric` CLI can
+propose and inspect a task, while a local Forge window shows its exact scope for owner
+approval. Forge can then run a coding task in
 an isolated checkout using a locally installed Ollama model. The owner can inspect the
 diff, checks, evidence, and uncertainty, and decide whether to accept the result. Forge
 does not merge, publish, deploy, or spend a hosted model credit in this pilot.
@@ -22,10 +23,11 @@ memory limits, even though it needs no API key.
 
 The two user journeys are intentionally ordered:
 
-1. An external coding agent uses Forge over MCP to understand a task, permissions,
-   state, and evidence. Existing Agent Memory tools remain available.
-2. Forge creates and supervises a local coding attempt, with the same task visible to
-   MCP clients. A second client implementation exercises the vendor-neutral protocol.
+1. An owner or cooperating coding agent uses the Forge CLI to propose and inspect a
+   task. The owner sees the exact scope in a local approval window.
+2. Forge supervises one bounded Ollama coding attempt. MCP then exposes the same
+   task/status/evidence service to Codex and another compatible client; existing
+   Agent Memory tools remain available.
 
 ## Delivery sequence
 
@@ -33,12 +35,12 @@ The two user journeys are intentionally ordered:
 | --- | --- | --- | --- |
 | 0. Release integrity | Complete P0b-A release note and validate the release candidate at its exact head. Leave PR #10 open and do not publish. | CI/security/package smoke bound to the candidate SHA; npm dist-tag readback; release workflow did not publish. | Current accepted P0b-A. |
 | 1. Contract and threat model | Versioned local task contract, owner identity, root/repository/branch allowlist, permitted reads and effects, budgets, cancellation, evidence states, and restart semantics. Classify any changes to frozen decisions. | Reviewable scope/gate with positive and adversarial vectors, including malformed and cross-repository requests. | 0. |
-| 2. MCP observation | Add read-only Agent Fabric task/status/evidence tools to `forge mcp serve`, with bounded output and redaction. Keep Agent Memory distinct from authoritative control state. | Two MCP clients or protocol fixtures complete initialize/list/call; restart and unknown-task results are honest. No tool can start work yet. | 1. |
+| 2. CLI observation | Add `forge fabric` proposal/status/evidence commands with bounded output and redaction. Keep Agent Memory distinct from authoritative control state. | CLI fixtures cover valid, malformed, stale, and unknown tasks; restart does not invent state. No command can start work yet. | 1. |
 | 3. Durable local control | Transactional local journal, trusted owner ingress, compare-and-swap append, verified replay, and recovery classification. Adapt the synchronous Conductor boundary explicitly instead of placing asynchronous storage behind it implicitly. | Kill/restart, corruption, duplicate request, concurrent append, lost response, and stale fencing tests; replay never calls a model; every acknowledged transition survives restart. | 1; can proceed alongside 2. |
-| 4. Governed requests | MCP may propose a task and request cancellation or start against an exact authorized revision. Owner authorization enters through a separate trusted local interaction; MCP client identity or model text cannot self-authorize. Each request takes an idempotency key and task version. | Unauthorized, stale, replayed, path-escape, and oversized requests fail without target mutation; successful requests replay to the same control state. | 2, 3. |
+| 4. Local approval window | CLI proposal stays untrusted. A local Forge window displays and approves an exact revision, effect set, and budget before start; cancellation and retries use version and idempotency checks. No CLI or MCP `--approve` shortcut exists. | Rejected, changed, expired, replayed, path-escape, and oversized requests cannot start work; approval is one-use and the bounded Ollama worker cannot invoke it. | 2, 3. |
 | 5. Isolated local worker | Materialize a Git worktree from a pinned commit in a trusted repository; use a fixed Ollama endpoint/model; bound wall time, tokens, context, paths, and output. Treat the patch as data and run only owner-approved verification commands. | A real keyless task yields a diff and evidence; cancellation and ambiguous outcomes stay nonterminal; patch application is confined to the isolated checkout. | 3, 4. |
 | 6. Assurance and owner acceptance | Capture exact base/head, diff digest, commands, exit codes, focused tests, independent review provenance, and an owner decision. Separate observed test results from task acceptance. | A bad patch is rejected; a good patch can be accepted without implicit merge/release; all statuses retain `blocked`/`inconclusive` where applicable. | 5. |
-| 7. Portable agent integration | Publish MCP setup for Codex and another compatible client; run equivalent read/write contract cases. Add an optional external-worker adapter only after its permission, cost, and cancellation behavior is specified. | Real two-client interoperability evidence, with versioned protocol fixture; no paid Codex turn in the default suite. | 2, 4, 6. |
+| 7. Portable agent integration | Add a thin MCP adapter over the CLI's task service and publish setup for Codex and another compatible client. Add an optional external-worker adapter only after its permission, cost, and cancellation behavior is specified. | Real two-client read and proposal interoperability evidence, with a versioned protocol fixture; no paid Codex turn or MCP approval tool in the default suite. | 2, 4, 6. |
 | 8. Consequential effects and sandbox | Define the effect broker's request, resolution, authorization, materialization, receipt, readback, and reconciliation chain. Isolate untrusted commands in a governed container/VM before broadening beyond trusted repositories. | Crash at every boundary preserves an honest effect state; unknown receipts never become success; sandbox escape and out-of-scope effect probes are rejected. | 3, 6. |
 | 9. Forge Intelligence and memory | Add source-grounded repository/context resolution, assessment/provenance, invalidation, and governed persistent memory. Memory informs proposals but never grants authority. | Changed source invalidates stale context; untrusted instructions cannot promote themselves; private content retention and deletion are tested. | 3, 6. |
 | 10. Adaptive harness and multiple agents | Compile bounded agent/harness profiles, delegate through attenuated child grants, schedule leased workers, account for resources, and coordinate joins/cancellation/recovery. | Two local workers complete a bounded workflow; stale lease, over-budget child, and failed join cannot create an authoritative outcome. | 8, 9. |
@@ -47,7 +49,9 @@ The two user journeys are intentionally ordered:
 
 Steps 2 and 3 may be built in parallel after the contract is adopted. The dependency
 barrier before any MCP write is deliberate: a mutating MCP surface would otherwise
-create a second, weak authority path around the Conductor. Step 5 must not claim
+create a second, weak authority path around the Conductor. The local approval window
+is a cooperative pilot interaction; it is not a security boundary against an external
+agent with unrestricted shell and UI control in the same OS account. Step 5 must not claim
 exactly-once model execution after a crash; an ambiguous attempt is recorded as
 uncertain and reconciled or explicitly reauthorized.
 
@@ -76,10 +80,11 @@ be silently promoted to success.
    projection. Dispatch external work only after the permit batch commits. Prove the
    boundary with crash and concurrent-writer tests before considering PostgreSQL or
    multi-host operation.
-2. Define local owner authentication for the trusted approval path and client
-   identification for MCP. Loopback transport, a client-supplied owner string, or
-   a model-callable CLI alone is insufficient authorization. Keep the approval
-   channel inaccessible to the worker sandbox.
+2. Bind the local approval window to the immutable revision and keep it outside the
+   bounded Ollama worker. Loopback transport, a client-supplied owner string, or a
+   model-callable CLI alone is insufficient authorization. The cooperative pilot
+   does not claim protection against an unrestricted same-account agent; stronger
+   owner presence and client isolation are later security gates.
 3. Define effect classes for checkout creation, file edits, commands, Git operations,
    and external network requests. The local worker starts with the narrowest useful
    classes; publish/deploy/merge are excluded.
@@ -93,15 +98,16 @@ be silently promoted to success.
 
 ## End-to-end local acceptance scenario
 
-From a clean checkout, an owner configures Forge MCP and a local Ollama model without an
-API key. An MCP client reads the repository context, proposes a small coding task, and
-receives a stable task ID. The owner authorizes an exact scope and budget. Forge creates
+From a clean checkout, an owner configures the Forge CLI and a local Ollama model without
+an API key. A CLI client proposes a small coding task and receives a stable task ID.
+The owner approves the exact scope and budget in a Forge window. Forge creates
 an isolated checkout, runs one bounded local attempt, records the resulting diff and
 checks, and exposes the evidence over MCP. After forcibly stopping and restarting Forge,
 the same task and evidence are visible and no model call is repeated. The owner either
 rejects the diff or explicitly accepts it. An unrelated repository, expired grant,
-stale attempt, or forged client identity cannot authorize work. The same read and write
-contract works through a second MCP client. Every run records the exact source commit,
+stale attempt, or forged proposal cannot authorize work through the bounded worker.
+After the CLI pilot is accepted, two MCP clients read the same state and propose through
+the same service. Every run records the exact source commit,
 model identifier, tool versions, test result, and remaining limits.
 
 Passing this scenario establishes only the local pilot. Steps 8–12 finish the broader
