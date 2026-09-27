@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync, lstatSync, realpathSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { isAbsolute, join, resolve, sep } from "node:path";
@@ -165,6 +165,32 @@ function validateRequest(request: LocalVerificationRequest): void {
   }
 }
 
+function parseTrustedNodeImage(stdout: string): string | null {
+  const separator = stdout.indexOf("|");
+  if (separator < 0) return null;
+  const imageId = stdout.slice(0, separator).trim();
+  let repoDigests: unknown;
+  try { repoDigests = JSON.parse(stdout.slice(separator + 1).trim()); }
+  catch { return null; }
+  if (!/^sha256:[0-9a-f]{64}$/u.test(imageId) || !Array.isArray(repoDigests) ||
+      !repoDigests.some((digest) => typeof digest === "string" &&
+        /^node@sha256:[0-9a-f]{64}$/u.test(digest))) return null;
+  return imageId;
+}
+
+/** Resolve the owner machine's official Node image tag, never an arbitrary proposal image. */
+export function trustedLocalNodeImageId(): string {
+  try {
+    const output = execFileSync("docker", ["--context", DOCKER_CONTEXT,
+      "image", "inspect", "node:22", "--format", "{{.Id}}|{{json .RepoDigests}}"],
+    { encoding: "utf8", windowsHide: true, timeout: DOCKER_CONTROL_TIMEOUT_MS,
+      maxBuffer: 16 * 1024, stdio: ["ignore", "pipe", "ignore"] });
+    const imageId = parseTrustedNodeImage(output);
+    if (imageId) return imageId;
+  } catch { /* fail closed below */ }
+  return invalid("Trusted local node:22 image with registry digest is unavailable");
+}
+
 function checkedTestPath(worktreeRoot: string, path: string): string {
   if (typeof path !== "string" || path.length < 1 || path.length > 240 ||
       isAbsolute(path) || path.includes("\\") || path.includes(":") ||
@@ -192,6 +218,19 @@ function checkedTestPath(worktreeRoot: string, path: string): string {
     invalid("Verification test target is not a regular checkout file");
   }
   return target;
+}
+
+/** Check deterministic paths and mount encoding before recording a dispatch intent. */
+export function preflightLocalVerification(request: LocalVerificationRequest): void {
+  validateRequest(request);
+  verifyLocalPatchEvidence(request.patch);
+  const worktreeRoot = realpathSync(request.patch.worktreeRoot);
+  if (worktreeRoot.includes(",") || /[\r\n]/u.test(worktreeRoot)) {
+    invalid("Checkout path cannot be represented as a Docker bind mount");
+  }
+  for (const descriptor of request.commands) {
+    if (descriptor.kind === "node-test-file") checkedTestPath(worktreeRoot, descriptor.path);
+  }
 }
 
 function bounded(result: VerificationProcessResult): VerificationProcessResult {
@@ -272,8 +311,7 @@ export async function runLocalVerification(
   request: LocalVerificationRequest,
   executor: VerificationExecutor = executeVerificationProcess,
 ): Promise<LocalVerificationEvidence> {
-  validateRequest(request);
-  verifyLocalPatchEvidence(request.patch);
+  preflightLocalVerification(request);
   const worktreeRoot = realpathSync(request.patch.worktreeRoot);
   const results: LocalVerificationCommandEvidence[] = [];
   let imageChecked = false;
@@ -297,6 +335,17 @@ export async function runLocalVerification(
           results.push(evidence(descriptor, "docker-node", ["docker", "context", "inspect", DOCKER_CONTEXT],
             request.imageId, { ...context.result, exitCode: null,
               spawnError: "Local Docker Desktop context is unavailable" }, context.durationMs));
+          break;
+        }
+        const tagged = await run(executor, "docker", [
+          "--context", DOCKER_CONTEXT, "image", "inspect", "node:22",
+          "--format", "{{.Id}}|{{json .RepoDigests}}",
+        ], worktreeRoot, DOCKER_CONTROL_TIMEOUT_MS);
+        if (failedControl(tagged.result) || parseTrustedNodeImage(tagged.result.stdout) !== request.imageId) {
+          results.push(evidence(descriptor, "docker-node",
+            ["docker", "--context", DOCKER_CONTEXT, "image", "inspect", "node:22"],
+            request.imageId, { ...tagged.result, exitCode: null,
+              spawnError: "Approved image is not the trusted local node:22 image" }, tagged.durationMs));
           break;
         }
         const inspect = await run(executor, "docker", [

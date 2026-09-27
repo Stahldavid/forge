@@ -241,7 +241,11 @@ two to four bounded command descriptors into the proposal digest. The first
 descriptor is `{ "kind": "git-diff-check", "timeoutMs": 5000 }`; the remaining
 descriptors are `{ "kind": "node-test-file", "path": "pass.test.mjs",
 "timeoutMs": 20000 }`. The owner sees these exact commands and image in the
-approval window. After `run` produces a patch, `verify` records a durable
+approval window. The image ID must match the locally installed `node:22`
+image with a `node@sha256` registry digest; the service rejects a proposal
+pointing to another local image and rechecks the tag before execution.
+After `run` produces a patch, `verify` checks deterministic test paths and
+mount encoding, then records a durable
 dispatch intent before running checks. A lost process leaves the verification
 state `started`, which cannot be retried automatically. `git diff --check` runs
 on the host; Node tests run inside Docker Desktop without network, with an

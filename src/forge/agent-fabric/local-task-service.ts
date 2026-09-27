@@ -13,7 +13,7 @@ import { requestLocalApproval, requestLocalPatchAcceptance, type LocalApprovalDe
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
 import { assertCurrentLocalSourceSnapshot, captureLocalSourceSnapshot } from "./local-intelligence.ts";
-import { runLocalVerification, type LocalVerificationEvidence } from "./local-verification.ts";
+import { preflightLocalVerification, runLocalVerification, trustedLocalNodeImageId, type LocalVerificationEvidence } from "./local-verification.ts";
 import { localFabricPath } from "./local-paths.ts";
 import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
 import type { Digest, GoalContract, OwnerAuthorization, OwnerAuthorizationVerifier } from "./types.ts";
@@ -231,6 +231,10 @@ export class LocalTaskService {
     const snapshot = captureLocalSourceSnapshot(this.repositoryRoot, validated.proposal.sourcePaths);
     if (snapshot.commit !== validated.proposal.baseCommit) {
       throw new AgentFabricError("AF_INVALID_STATE", "Base commit is not the current source snapshot");
+    }
+    if (validated.proposal.verification &&
+        validated.proposal.verification.imageId !== trustedLocalNodeImageId()) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Proposal verification image is not trusted local node:22");
     }
     const record = await this.inbox.propose(validated.proposal, this.repositoryRoot);
     return this.status(record.taskId);
@@ -577,6 +581,8 @@ export class LocalTaskService {
       throw new AgentFabricError("AF_CONFLICT", "Verification already started or patch is not ready");
     }
     verifyLocalPatchEvidence(status.patch);
+    preflightLocalVerification({ patch: status.patch, imageId: spec.imageId,
+      commands: spec.commands });
     const requestDigest = digestCanonical({ proposalDigest: record.proposalDigest,
       diffDigest: status.patch.diffDigest, spec }, sha256Digest);
     await this.inbox.beginVerification(taskId, status.patch.diffDigest, requestDigest);

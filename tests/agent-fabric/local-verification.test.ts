@@ -72,6 +72,9 @@ function stubbed(
     if (invocation.args[0] === "context") {
       return passed(JSON.stringify("npipe:////./pipe/dockerDesktopLinuxEngine"));
     }
+    if (invocation.args.includes("node:22")) {
+      return passed(`${IMAGE_ID}|["node@sha256:${"b".repeat(64)}"]\n`);
+    }
     if (invocation.args.includes("image")) {
       return imagePresent ? passed(`${IMAGE_ID}\n`) :
         { ...passed(), exitCode: 1, stderr: "image absent" };
