@@ -221,6 +221,15 @@ export class LocalTaskService {
 
   async propose(input: unknown): Promise<LocalTaskStatus> {
     const validated = validateLocalCodingTaskProposal(input);
+    const existingTaskId = `task:${digestSuffix(validated.proposalDigest)}`;
+    const existing = await this.inbox.get(existingTaskId);
+    if (existing) {
+      if (existing.repositoryRoot !== this.repositoryRoot ||
+          existing.proposalDigest !== validated.proposalDigest) {
+        throw new AgentFabricError("AF_CONFLICT", "Proposal identity belongs to another repository or revision");
+      }
+      return this.status(existingTaskId);
+    }
     const commit = git(this.repositoryRoot, "rev-parse", `${validated.proposal.baseCommit}^{commit}`);
     if (commit !== validated.proposal.baseCommit) {
       throw new AgentFabricError("AF_INVALID_STATE", "Base commit does not resolve exactly");
