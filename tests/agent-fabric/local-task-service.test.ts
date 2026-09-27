@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { LocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
 import { LocalTaskService } from "../../src/forge/agent-fabric/local-task-service.ts";
+import { LocalTaskInbox } from "../../src/forge/agent-fabric/local-task-inbox.ts";
+import { sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
 import { buildLocalCodingContext, materializeLocalCodingPatch } from "../../src/forge/agent-fabric/local-coding-worker.ts";
 import { localFabricPath } from "../../src/forge/agent-fabric/local-paths.ts";
 import { createPgliteAdapter } from "../../src/forge/runtime/db/pglite-adapter.ts";
@@ -59,6 +61,36 @@ describe("local task service", () => {
         await expect(service.propose({ ...proposal, goal: "Another change" })).rejects.toThrow("missing, expired, or stale");
       } finally { await service.close(); }
     } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
+
+  test("owner can clear only an intent with no container dispatch barrier", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-verification-intent-"));
+    const adapter = await createPgliteAdapter(join(root, "pglite"));
+    try {
+      const inbox = new LocalTaskInbox(adapter);
+      const taskId = `task:${"a".repeat(64)}`;
+      const diffDigest = sha256Digest("diff");
+      const requestDigest = sha256Digest("request");
+      await inbox.recordPatch(taskId, {
+        worktreeRoot: root, baseCommit: "b".repeat(40), changedPaths: ["source.txt"],
+        diffDigest, diffBytes: 4, diffPath: join(root, "patch.diff"),
+        verification: "diff_check_passed",
+      });
+      await inbox.beginVerification(taskId, diffDigest, requestDigest);
+      expect((await inbox.getVerification(taskId))?.containerDispatched).toBe(false);
+      await inbox.clearUndispatchedVerification(taskId, diffDigest, requestDigest);
+      expect(await inbox.getVerification(taskId)).toBeNull();
+      await inbox.beginVerification(taskId, diffDigest, requestDigest);
+      await inbox.markVerificationContainerDispatched(taskId, requestDigest);
+      expect((await inbox.getVerification(taskId))?.containerDispatched).toBe(true);
+      await expect(inbox.clearUndispatchedVerification(taskId, diffDigest, requestDigest))
+        .rejects.toThrow("retry is forbidden");
+      await expect(inbox.beginVerification(taskId, diffDigest, requestDigest))
+        .rejects.toThrow("already dispatched");
+    } finally {
+      await adapter.close();
+      rmSync(root, { recursive: true, force: true });
+    }
   }, 30_000);
   test("one proposal cannot open two simultaneous owner decisions", async () => {
     const root = mkdtempSync(join(tmpdir(), "forge-fabric-review-race-"));

@@ -233,6 +233,37 @@ export function preflightLocalVerification(request: LocalVerificationRequest): v
   }
 }
 
+/** Read-only Docker availability and exact image checks before consuming an intent. */
+export async function preflightLocalDockerVerification(
+  request: LocalVerificationRequest,
+  executor: VerificationExecutor = executeVerificationProcess,
+): Promise<void> {
+  preflightLocalVerification(request);
+  const cwd = realpathSync(request.patch.worktreeRoot);
+  const context = await run(executor, "docker", [
+    "context", "inspect", DOCKER_CONTEXT, "--format", "{{json .Endpoints.docker.Host}}",
+  ], cwd, DOCKER_CONTROL_TIMEOUT_MS);
+  let endpoint: unknown;
+  try { endpoint = JSON.parse(context.result.stdout.trim()); } catch { /* fail closed below */ }
+  if (failedControl(context.result) || endpoint !== "npipe:////./pipe/dockerDesktopLinuxEngine") {
+    invalid("Local Docker Desktop context is unavailable");
+  }
+  const tagged = await run(executor, "docker", [
+    "--context", DOCKER_CONTEXT, "image", "inspect", "node:22",
+    "--format", "{{.Id}}|{{json .RepoDigests}}",
+  ], cwd, DOCKER_CONTROL_TIMEOUT_MS);
+  if (failedControl(tagged.result) || parseTrustedNodeImage(tagged.result.stdout) !== request.imageId) {
+    invalid("Approved image is not the trusted local node:22 image");
+  }
+  const inspect = await run(executor, "docker", [
+    "--context", DOCKER_CONTEXT, "image", "inspect", request.imageId,
+    "--format", "{{.Id}}",
+  ], cwd, DOCKER_CONTROL_TIMEOUT_MS);
+  if (failedControl(inspect.result) || inspect.result.stdout.trim() !== request.imageId) {
+    invalid("Approved Docker image is unavailable");
+  }
+}
+
 function bounded(result: VerificationProcessResult): VerificationProcessResult {
   const combined = Buffer.byteLength(result.stdout, "utf8") + Buffer.byteLength(result.stderr, "utf8");
   if (combined <= MAX_OUTPUT_BYTES) return result;
@@ -310,6 +341,7 @@ function failedControl(result: VerificationProcessResult): boolean {
 export async function runLocalVerification(
   request: LocalVerificationRequest,
   executor: VerificationExecutor = executeVerificationProcess,
+  beforeDockerRun?: () => Promise<void>,
 ): Promise<LocalVerificationEvidence> {
   preflightLocalVerification(request);
   const worktreeRoot = realpathSync(request.patch.worktreeRoot);
@@ -375,6 +407,7 @@ export async function runLocalVerification(
       if (worktreeRoot.includes(",") || /[\r\n]/u.test(worktreeRoot)) {
         invalid("Checkout path cannot be represented as a Docker bind mount");
       }
+      await beforeDockerRun?.();
       const { result, durationMs } = await run(executor, "docker", args, worktreeRoot, descriptor.timeoutMs);
       let finalResult = result;
       if (result.timedOut || result.outputLimitExceeded || result.spawnError) {

@@ -4,7 +4,7 @@ import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
 import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete";
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete";
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -89,6 +89,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
             ? await service.reconcile(options.taskId ?? "")
           : options.subcommand === "verify"
             ? await service.verify(options.taskId ?? "")
+          : options.subcommand === "recover-verification"
+            ? await service.recoverVerification(options.taskId ?? "")
           : options.subcommand === "review-result"
             ? await service.reviewResult(options.taskId ?? "")
           : await service.status(options.taskId ?? "");

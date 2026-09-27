@@ -44,6 +44,12 @@ const CREATE_VERIFICATIONS_TABLE = `
     evidence_digest TEXT
   )`;
 
+const CREATE_VERIFICATION_DISPATCHES_TABLE = `
+  CREATE TABLE IF NOT EXISTS _forge_agent_fabric_local_verification_dispatches (
+    task_id TEXT PRIMARY KEY,
+    request_digest TEXT NOT NULL
+  )`;
+
 const CREATE_MATERIALIZATIONS_TABLE = `
   CREATE TABLE IF NOT EXISTS _forge_agent_fabric_local_materializations (
     task_id TEXT PRIMARY KEY,
@@ -62,6 +68,7 @@ export interface LocalVerificationRecord {
   diffDigest: Digest;
   requestDigest: Digest;
   state: "started" | "finished";
+  containerDispatched: boolean;
   evidence?: LocalVerificationEvidence;
   evidenceDigest?: Digest;
 }
@@ -83,6 +90,7 @@ export class LocalTaskInbox {
   private patchSchemaReady?: Promise<unknown>;
   private decisionSchemaReady?: Promise<unknown>;
   private verificationSchemaReady?: Promise<unknown>;
+  private verificationDispatchSchemaReady?: Promise<unknown>;
   private materializationSchemaReady?: Promise<unknown>;
 
   constructor(private readonly adapter: DbAdapter) {
@@ -265,6 +273,41 @@ export class LocalTaskInbox {
     }
   }
 
+  private async verificationDispatchReady(): Promise<void> {
+    this.verificationDispatchSchemaReady ??= this.adapter.query(CREATE_VERIFICATION_DISPATCHES_TABLE);
+    await this.verificationDispatchSchemaReady;
+  }
+
+  /** Durable barrier: after this commits, a container may have started and retry is forbidden. */
+  async markVerificationContainerDispatched(taskId: string, requestDigest: Digest): Promise<void> {
+    await this.verificationDispatchReady();
+    const result = await this.adapter.query(
+      `INSERT INTO _forge_agent_fabric_local_verification_dispatches (task_id, request_digest)
+       SELECT task_id, request_digest FROM _forge_agent_fabric_local_verifications
+       WHERE task_id = $1 AND request_digest = $2 AND state = 'started'
+       ON CONFLICT (task_id) DO NOTHING`, [taskId, requestDigest],
+    );
+    if (result.rowCount !== 1) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification may already have dispatched a container");
+    }
+  }
+
+  /** Owner-approved recovery is possible only when no container dispatch barrier exists. */
+  async clearUndispatchedVerification(taskId: string, diffDigest: Digest, requestDigest: Digest): Promise<void> {
+    await this.verificationDispatchReady();
+    const result = await this.adapter.query(
+      `DELETE FROM _forge_agent_fabric_local_verifications AS intent
+       WHERE intent.task_id = $1 AND intent.diff_digest = $2 AND intent.request_digest = $3
+         AND intent.state = 'started' AND NOT EXISTS (
+           SELECT 1 FROM _forge_agent_fabric_local_verification_dispatches AS dispatch
+           WHERE dispatch.task_id = intent.task_id
+         )`, [taskId, diffDigest, requestDigest],
+    );
+    if (result.rowCount !== 1) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification may have dispatched a container; retry is forbidden");
+    }
+  }
+
   async finishVerification(taskId: string, evidence: LocalVerificationEvidence, requestDigest: Digest): Promise<void> {
     const evidenceDigest = digestCanonical(evidence, sha256Digest);
     const result = await this.adapter.query(
@@ -279,19 +322,25 @@ export class LocalTaskInbox {
   async getVerification(taskId: string): Promise<LocalVerificationRecord | null> {
     this.verificationSchemaReady ??= this.adapter.query(CREATE_VERIFICATIONS_TABLE);
     await this.verificationSchemaReady;
+    await this.verificationDispatchReady();
     const result = await this.adapter.query(
-      `SELECT diff_digest, request_digest, state, evidence_json, evidence_digest
-       FROM _forge_agent_fabric_local_verifications WHERE task_id = $1`, [taskId],
+      `SELECT intent.diff_digest, intent.request_digest, intent.state, intent.evidence_json,
+         intent.evidence_digest, dispatch.request_digest AS dispatched_digest
+       FROM _forge_agent_fabric_local_verifications AS intent
+       LEFT JOIN _forge_agent_fabric_local_verification_dispatches AS dispatch
+         ON dispatch.task_id = intent.task_id WHERE intent.task_id = $1`, [taskId],
     );
     const row = result.rows[0];
     if (!row) return null;
     if (typeof row.diff_digest !== "string" || typeof row.request_digest !== "string" ||
-        (row.state !== "started" && row.state !== "finished")) {
+        (row.state !== "started" && row.state !== "finished") ||
+        (row.dispatched_digest !== null && row.dispatched_digest !== row.request_digest)) {
       throw new AgentFabricError("AF_INVALID_STATE", "Stored verification intent is invalid");
     }
     if (row.state === "started") {
       if (row.evidence_json !== null || row.evidence_digest !== null) throw new AgentFabricError("AF_INVALID_STATE", "Started verification has a result");
-      return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest, state: "started" };
+      return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest,
+        state: "started", containerDispatched: row.dispatched_digest !== null };
     }
     let evidence: LocalVerificationEvidence;
     try { evidence = JSON.parse(String(row.evidence_json)) as LocalVerificationEvidence; }
@@ -300,7 +349,8 @@ export class LocalTaskInbox {
       throw new AgentFabricError("AF_INVALID_STATE", "Stored verification result failed digest readback");
     }
     return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest,
-      state: "finished", evidence, evidenceDigest: row.evidence_digest as Digest };
+      state: "finished", containerDispatched: row.dispatched_digest !== null,
+      evidence, evidenceDigest: row.evidence_digest as Digest };
   }
 
   async recordPatchDecision(taskId: string, diffDigest: Digest, decision: "approved" | "rejected", now = Date.now()): Promise<void> {

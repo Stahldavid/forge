@@ -24,6 +24,14 @@ export interface LocalPatchReviewView {
   sandboxVerification?: { state: "started" | "finished"; outcome?: string; evidenceDigest?: Digest };
 }
 
+export interface LocalVerificationRecoveryView {
+  kind: "verification-recovery";
+  taskId: string;
+  repositoryRoot: string;
+  diffDigest: Digest;
+  requestDigest: Digest;
+}
+
 export type LocalApprovalDecision = "approved" | "rejected";
 
 interface ApprovalWindowOptions {
@@ -74,6 +82,10 @@ function renderPatchPage(view: LocalPatchReviewView, token: string): string {
   </style></head><body><main><h1>Revisar resultado</h1><p>Esta decisão registra seu aceite do diff. Ela não faz merge, publica ou altera o checkout original.</p><p>Repositório: <strong>${escapeHtml(view.repositoryRoot)}</strong></p><p>Commit base: <strong>${escapeHtml(view.baseCommit)}</strong></p><p>Tarefa: <strong>${escapeHtml(view.taskId)}</strong></p><p>Verificação Git: <strong>${escapeHtml(view.verification)}</strong></p><p>Verificação isolada: <strong>${escapeHtml(view.sandboxVerification ? `${view.sandboxVerification.state}: ${view.sandboxVerification.outcome ?? "incerta"}; ${view.sandboxVerification.evidenceDigest ?? "sem recibo"}` : "não solicitada")}</strong></p><p>Digest do diff: <strong>${escapeHtml(view.diffDigest)}</strong></p><pre>${escapeHtml(view.diff)}</pre><form method="post" action="/decision/${token}"><input type="hidden" name="digest" value="${escapeHtml(view.diffDigest)}"><button type="submit" name="decision" value="approved">Aceitar este diff</button><button type="submit" name="decision" value="rejected">Rejeitar</button></form></main></body></html>`;
 }
 
+function renderVerificationRecoveryPage(view: LocalVerificationRecoveryView, token: string): string {
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Forge · Recuperar verificação</title></head><body><main><h1>Recuperar verificação</h1><p>O registro durável confirma que nenhum contêiner foi iniciado nesta tentativa. Aprovar remove somente esta intenção de verificação e permite iniciar uma nova tentativa com o mesmo perfil aprovado. Se houver qualquer registro de início de contêiner, a recuperação será recusada.</p><p>Repositório: <strong>${escapeHtml(view.repositoryRoot)}</strong></p><p>Tarefa: <strong>${escapeHtml(view.taskId)}</strong></p><p>Diff: <strong>${escapeHtml(view.diffDigest)}</strong></p><p>Solicitação: <strong>${escapeHtml(view.requestDigest)}</strong></p><form method="post" action="/decision/${token}"><input type="hidden" name="digest" value="${escapeHtml(view.requestDigest)}"><button type="submit" name="decision" value="approved">Permitir nova verificação</button><button type="submit" name="decision" value="rejected">Manter bloqueada</button></form></main></body></html>`;
+}
+
 async function openBrowser(url: string): Promise<void> {
   const command = process.platform === "win32" ? "explorer.exe" : process.platform === "darwin" ? "open" : "xdg-open";
   await new Promise<void>((resolve, reject) => {
@@ -98,11 +110,19 @@ export async function requestLocalPatchAcceptance(
   return requestLocalDecision(view, options);
 }
 
+export async function requestLocalVerificationRecovery(
+  view: LocalVerificationRecoveryView,
+  options: ApprovalWindowOptions = {},
+): Promise<LocalApprovalDecision> {
+  return requestLocalDecision(view, options);
+}
+
 async function requestLocalDecision(
-  view: LocalApprovalView | LocalPatchReviewView,
+  view: LocalApprovalView | LocalPatchReviewView | LocalVerificationRecoveryView,
   options: ApprovalWindowOptions,
 ): Promise<LocalApprovalDecision> {
-  const boundDigest = "proposal" in view ? view.proposalDigest : view.diffDigest;
+  const boundDigest = "kind" in view ? view.requestDigest :
+    "proposal" in view ? view.proposalDigest : view.diffDigest;
   const token = randomBytes(32).toString("hex");
   const timeoutMs = options.timeoutMs ?? 300_000;
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 300_000) {
@@ -125,7 +145,8 @@ async function requestLocalDecision(
     }
     if (request.method === "GET" && request.url === `/${token}` && !decided) {
       response.setHeader("Content-Type", "text/html; charset=utf-8");
-      response.writeHead(200).end("proposal" in view ? renderPage(view, token) : renderPatchPage(view, token));
+      response.writeHead(200).end("kind" in view ? renderVerificationRecoveryPage(view, token) :
+        "proposal" in view ? renderPage(view, token) : renderPatchPage(view, token));
       return;
     }
     // Chrome sends Origin: null for a same-origin form POST when the page uses

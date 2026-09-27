@@ -6,7 +6,7 @@ import { afterEach, expect, test } from "bun:test";
 import { sha256Digest } from "../../src/forge/agent-fabric/canonical.ts";
 import type { LocalPatchEvidence } from "../../src/forge/agent-fabric/local-coding-worker.ts";
 import {
-  runLocalVerification, type VerificationExecutor, type VerificationProcessInvocation,
+  preflightLocalDockerVerification, runLocalVerification, type VerificationExecutor, type VerificationProcessInvocation,
   type VerificationProcessResult,
 } from "../../src/forge/agent-fabric/local-verification.ts";
 
@@ -144,6 +144,38 @@ test("fails closed when the exact Docker image is absent", async () => {
   expect(result.outcome).toBe("unavailable");
   expect(result.commands.at(-1)?.outcome).toBe("unavailable");
   expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+});
+
+test("checks Docker context and both image identities without starting a container", async () => {
+  const { patch } = fixture();
+  const calls: VerificationProcessInvocation[] = [];
+  await preflightLocalDockerVerification(request(patch), stubbed(calls));
+  expect(calls.filter((call) => call.executable === "docker")).toHaveLength(3);
+  expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+  const unavailable: VerificationExecutor = async (invocation) => {
+    calls.push(invocation);
+    return { ...passed(), exitCode: null, spawnError: "Docker stopped" };
+  };
+  await expect(preflightLocalDockerVerification(request(patch), unavailable))
+    .rejects.toThrow("context is unavailable");
+  expect(calls.some((call) => call.args.includes("run"))).toBe(false);
+});
+
+test("commits a dispatch barrier before the first container run", async () => {
+  const { patch } = fixture();
+  const calls: VerificationProcessInvocation[] = [];
+  let barrier = false;
+  const executor = stubbed(calls);
+  const guarded: VerificationExecutor = (invocation) => {
+    if (invocation.args.includes("run")) expect(barrier).toBe(true);
+    return executor(invocation);
+  };
+  const result = await runLocalVerification(request(patch), guarded, async () => { barrier = true; });
+  expect(result.outcome).toBe("passed");
+  expect(barrier).toBe(true);
+  await expect(runLocalVerification(request(patch), guarded, async () => {
+    throw new Error("durable barrier unavailable");
+  })).rejects.toThrow("durable barrier unavailable");
 });
 
 test("keeps timeout, test failure, and output limit distinct", async () => {

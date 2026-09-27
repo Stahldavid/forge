@@ -9,11 +9,11 @@ import { buildLocalCodingContext, materializeLocalCodingPatch, readbackLocalCodi
 import { validateLocalCodingTaskProposal } from "./local-task-contract.ts";
 import { createForgeModelExecutor, executeP0bActivity, P0bModelAdapter, type ModelExecutor } from "./p0b-model-adapter.ts";
 import { createRunPlanRevision } from "./planning.ts";
-import { requestLocalApproval, requestLocalPatchAcceptance, type LocalApprovalDecision, type LocalApprovalView, type LocalPatchReviewView } from "./local-approval-window.ts";
+import { requestLocalApproval, requestLocalPatchAcceptance, requestLocalVerificationRecovery, type LocalApprovalDecision, type LocalApprovalView, type LocalPatchReviewView, type LocalVerificationRecoveryView } from "./local-approval-window.ts";
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
 import { assertCurrentLocalSourceSnapshot, captureLocalSourceSnapshot, LocalPrivateIntelligenceMemory, type LocalMemoryEntry, type LocalSourceSnapshot } from "./local-intelligence.ts";
-import { preflightLocalVerification, runLocalVerification, trustedLocalNodeImageId, type LocalVerificationEvidence } from "./local-verification.ts";
+import { preflightLocalDockerVerification, runLocalVerification, trustedLocalNodeImageId, type LocalVerificationEvidence } from "./local-verification.ts";
 import { localFabricPath } from "./local-paths.ts";
 import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
 import type { Digest, GoalContract, OwnerAuthorization, OwnerAuthorizationVerifier } from "./types.ts";
@@ -33,7 +33,7 @@ export interface LocalTaskStatus {
   evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_uncertain" | "patch_ready";
   patch?: LocalPatchEvidence;
   ownerDecision?: "approved" | "rejected";
-  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"];
+  verification?: { state: "started" | "finished"; containerDispatched: boolean; outcome?: LocalVerificationEvidence["outcome"];
     imageId?: string; commands?: LocalVerificationEvidence["commands"]; evidenceDigest?: Digest };
   materialization?: { state: "started" | "receipted"; resultDigest: Digest; diffDigest?: Digest };
   provenance?: LocalTaskProvenance;
@@ -50,7 +50,7 @@ export interface LocalTaskProvenance {
   outcome?: { status: "succeeded" | "failed"; resultDigest: Digest; reportDigest: Digest; committedAt: number };
   patch?: { diffDigest: Digest; changedPaths: readonly string[]; verification: LocalPatchEvidence["verification"] };
   ownerDecision?: "approved" | "rejected";
-  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"];
+  verification?: { state: "started" | "finished"; containerDispatched: boolean; outcome?: LocalVerificationEvidence["outcome"];
     imageId?: string; commands?: LocalVerificationEvidence["commands"]; evidenceDigest?: Digest };
   materialization?: { state: "started" | "receipted"; resultDigest: Digest; diffDigest?: Digest };
   evidenceDigest: Digest;
@@ -195,6 +195,7 @@ export class LocalTaskService {
   private readonly control: LocalControlStore;
   private readonly approvedDigests = new Set<Digest>();
   private readonly activeReviews = new Set<string>();
+  private readonly activeVerifications = new Set<string>();
 
   private constructor(
     readonly repositoryRoot: string,
@@ -203,6 +204,7 @@ export class LocalTaskService {
     private readonly approvalWindow: (view: LocalApprovalView) => Promise<LocalApprovalDecision>,
     private readonly modelExecutor?: ModelExecutor,
     private readonly patchAcceptance: (view: LocalPatchReviewView) => Promise<LocalApprovalDecision> = requestLocalPatchAcceptance,
+    private readonly verificationRecovery: (view: LocalVerificationRecoveryView) => Promise<LocalApprovalDecision> = requestLocalVerificationRecovery,
   ) {
     this.memory = new LocalPrivateIntelligenceMemory(repositoryRoot);
     adapter = serializeLocalAdapter(adapter);
@@ -262,11 +264,12 @@ export class LocalTaskService {
     approvalWindow: (view: LocalApprovalView) => Promise<LocalApprovalDecision> = requestLocalApproval,
     modelExecutor?: ModelExecutor,
     patchAcceptance: (view: LocalPatchReviewView) => Promise<LocalApprovalDecision> = requestLocalPatchAcceptance,
+    verificationRecovery: (view: LocalVerificationRecoveryView) => Promise<LocalApprovalDecision> = requestLocalVerificationRecovery,
   ): Promise<LocalTaskService> {
     const repositoryRoot = checkedRepositoryRoot(workspaceRoot);
     const key = loadOwnerKey(localFabricPath(repositoryRoot, "owner.key"));
     const adapter = await createPgliteAdapter(localFabricPath(repositoryRoot, "pglite"));
-    return new LocalTaskService(repositoryRoot, adapter, key, approvalWindow, modelExecutor, patchAcceptance);
+    return new LocalTaskService(repositoryRoot, adapter, key, approvalWindow, modelExecutor, patchAcceptance, verificationRecovery);
   }
 
   async propose(input: unknown): Promise<LocalTaskStatus> {
@@ -372,6 +375,7 @@ export class LocalTaskService {
       ...(ownerDecision ? { ownerDecision } : {}),
       ...(materialization ? { materialization } : {}),
       ...(verification ? { verification: { state: verification.state,
+        containerDispatched: verification.containerDispatched,
         ...(verification.evidence ? { outcome: verification.evidence.outcome,
           imageId: verification.evidence.imageId,
           commands: verification.evidence.commands,
@@ -692,28 +696,68 @@ export class LocalTaskService {
   }
 
   async verify(taskId: string): Promise<LocalTaskStatus> {
-    const record = await this.inbox.get(taskId);
-    if (!record || record.repositoryRoot !== this.repositoryRoot) {
-      throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
+    if (this.activeVerifications.has(taskId)) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification is active in this owner process");
     }
-    const spec = record.proposal.verification;
-    if (!spec) throw new AgentFabricError("AF_CONFLICT", "No owner-approved verification profile for this task");
-    const status = await this.status(taskId);
-    if (status.state !== "patch_ready" || !status.patch || status.verification) {
-      throw new AgentFabricError("AF_CONFLICT", "Verification already started or patch is not ready");
+    this.activeVerifications.add(taskId);
+    try {
+      const record = await this.inbox.get(taskId);
+      if (!record || record.repositoryRoot !== this.repositoryRoot) {
+        throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
+      }
+      const spec = record.proposal.verification;
+      if (!spec) throw new AgentFabricError("AF_CONFLICT", "No owner-approved verification profile for this task");
+      const status = await this.status(taskId);
+      if (status.state !== "patch_ready" || !status.patch || status.verification) {
+        throw new AgentFabricError("AF_CONFLICT", "Verification already started or patch is not ready");
+      }
+      verifyLocalPatchEvidence(status.patch);
+      const request = { patch: status.patch, imageId: spec.imageId, commands: spec.commands };
+      await preflightLocalDockerVerification(request);
+      verifyLocalPatchEvidence(status.patch);
+      const requestDigest = digestCanonical({ proposalDigest: record.proposalDigest,
+        diffDigest: status.patch.diffDigest, spec }, sha256Digest);
+      await this.inbox.beginVerification(taskId, status.patch.diffDigest, requestDigest);
+      let containerDispatched = false;
+      const observed = await runLocalVerification(request, undefined, async () => {
+        if (!containerDispatched) {
+          await this.inbox.markVerificationContainerDispatched(taskId, requestDigest);
+          containerDispatched = true;
+        }
+      });
+      if (!containerDispatched && observed.outcome === "unavailable") {
+        throw new AgentFabricError("AF_CONFLICT", "Verification stopped before container dispatch; owner recovery is available");
+      }
+      const result: LocalVerificationEvidence = { ...observed,
+        commands: observed.commands.map((command) => ({ ...command, outputPreview: "" })) };
+      await this.inbox.finishVerification(taskId, result, requestDigest);
+      return this.status(taskId);
+    } finally { this.activeVerifications.delete(taskId); }
+  }
+
+  /** Only the owner may clear an intent that is proven to predate container dispatch. */
+  async recoverVerification(taskId: string): Promise<LocalTaskStatus> {
+    if (this.activeVerifications.has(taskId)) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification is active in this owner process");
     }
-    verifyLocalPatchEvidence(status.patch);
-    preflightLocalVerification({ patch: status.patch, imageId: spec.imageId,
-      commands: spec.commands });
-    const requestDigest = digestCanonical({ proposalDigest: record.proposalDigest,
-      diffDigest: status.patch.diffDigest, spec }, sha256Digest);
-    await this.inbox.beginVerification(taskId, status.patch.diffDigest, requestDigest);
-    const observed = await runLocalVerification({ patch: status.patch,
-      imageId: spec.imageId, commands: spec.commands });
-    const result: LocalVerificationEvidence = { ...observed,
-      commands: observed.commands.map((command) => ({ ...command, outputPreview: "" })) };
-    await this.inbox.finishVerification(taskId, result, requestDigest);
-    return this.status(taskId);
+    this.activeVerifications.add(taskId);
+    try {
+      const status = await this.status(taskId);
+      const intent = await this.inbox.getVerification(taskId);
+      if (status.state !== "patch_ready" || !status.patch || !intent ||
+          intent.state !== "started" || intent.containerDispatched) {
+        throw new AgentFabricError("AF_CONFLICT", "Only a pre-container verification intent can be recovered");
+      }
+      verifyLocalPatchEvidence(status.patch);
+      const decision = await this.verificationRecovery({
+        kind: "verification-recovery", taskId, repositoryRoot: this.repositoryRoot,
+        diffDigest: intent.diffDigest, requestDigest: intent.requestDigest,
+      });
+      if (decision !== "approved") return this.status(taskId);
+      verifyLocalPatchEvidence(status.patch);
+      await this.inbox.clearUndispatchedVerification(taskId, intent.diffDigest, intent.requestDigest);
+      return this.status(taskId);
+    } finally { this.activeVerifications.delete(taskId); }
   }
 
   async close(): Promise<void> {

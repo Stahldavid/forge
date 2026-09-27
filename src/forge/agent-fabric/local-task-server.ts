@@ -11,7 +11,7 @@ import { localFabricPath } from "./local-paths.ts";
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
 
-export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "review-result";
+export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "recover-verification" | "review-result";
 export type LocalMemoryAction = "memory-add" | "memory-list" | "memory-delete";
 export type LocalMemoryResult = LocalMemoryEntry | readonly LocalMemoryEntry[] | { deleted: boolean };
 
@@ -109,6 +109,7 @@ async function dispatch(service: LocalTaskService, action: LocalTaskAction, requ
   if (action === "run") return service.run(request.taskId);
   if (action === "reconcile") return service.reconcile(request.taskId);
   if (action === "verify") return service.verify(request.taskId);
+  if (action === "recover-verification") return service.recoverVerification(request.taskId);
   return service.reviewResult(request.taskId);
 }
 
@@ -155,7 +156,7 @@ export async function serveLocalTasks(
       }
       const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction;
       if (request.method !== "POST" || !request.url?.startsWith("/v1/") ||
-          !["propose", "status", "evidence", "review", "run", "reconcile", "verify", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action)) {
+          !["propose", "status", "evidence", "review", "run", "reconcile", "verify", "recover-verification", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action)) {
         response.writeHead(404).end(JSON.stringify({ ok: false, error: "unknown_action" }));
         return;
       }
@@ -232,7 +233,7 @@ export async function requestLocalTask(
       method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
       body: JSON.stringify(body), redirect: "manual",
       signal: AbortSignal.timeout(action === "run" ? 130_000 : action === "verify" ? 250_000 :
-        action === "review" || action === "review-result" ? 310_000 : 10_000),
+        action === "review" || action === "review-result" || action === "recover-verification" ? 310_000 : 10_000),
     });
   } catch {
     throw new AgentFabricError("AF_INVALID_STATE", "Local Agent Fabric owner is unreachable; restart it before retrying");
