@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 describe("CI workflow breadth", () => {
   test("covers Node smoke across OS and supported Node majors", () => {
     const workflow = readFileSync(join(process.cwd(), ".github", "workflows", "ci.yml"), "utf8");
+    const security = readFileSync(join(process.cwd(), ".github", "workflows", "security-assurance.yml"), "utf8");
     const npmrc = readFileSync(join(process.cwd(), ".npmrc"), "utf8");
     const nodeBreadthJob = workflow.split("  external-quickstart:")[0]?.split("  node-breadth:")[1] ?? "";
 
@@ -12,7 +13,9 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("ubuntu-latest");
     expect(workflow).toContain("windows-latest");
     expect(workflow).toContain("macos-latest");
-    expect(workflow).toContain("node-version: [22, 24]");
+    expect(nodeBreadthJob).toContain("github.event_name == 'pull_request'");
+    expect(nodeBreadthJob).toContain('"os":"windows-latest","node-version":22');
+    expect(nodeBreadthJob).toContain('"os":"macos-latest","node-version":24');
     expect(workflow).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(workflow).toContain("node .\\bin\\forge.mjs doctor windows --json");
     expect(workflow).toContain("Minimal template package-manager smoke");
@@ -23,6 +26,12 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("npm run forge -- verify --smoke --json --script-timeout-ms 120000");
     expect(workflow).toContain("Packed package smoke");
     expect(workflow).toContain("npm run release:smoke");
+    expect(workflow).toContain("node ./bin/forge.mjs generate --check");
+    expect(workflow).toContain("npm run lint");
+    expect(workflow).not.toContain("run: bun test");
+    expect(workflow).not.toContain("forge verify --standard");
+    expect(security).toContain("forge.mjs verify framework");
+    expect(security).toContain("test tests/security");
     expect(nodeBreadthJob).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(nodeBreadthJob).not.toContain("node ./bin/forge.mjs dev --once --json");
     expect(nodeBreadthJob).not.toContain("node ./bin/forge.mjs verify --smoke");

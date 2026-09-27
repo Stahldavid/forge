@@ -28,6 +28,15 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
       return response(request.id, {
         tools: [
           {
+            name: "fabric_capabilities",
+            description: "Read the current Agent Fabric coding-task capability boundary.",
+            inputSchema: {
+              type: "object",
+              properties: {},
+              additionalProperties: false,
+            },
+          },
+          {
             name: "agent_context",
             description: "Read the ForgeOS Agent Memory context pack for the current work or a runtime entry.",
             inputSchema: {
@@ -114,6 +123,19 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
 }
 
 async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>): Promise<unknown> {
+  if (name === "fabric_capabilities") {
+    if (Object.keys(args).length !== 0) throw new Error("fabric_capabilities accepts no arguments");
+    return {
+      ok: true,
+      schemaVersion: 1,
+      protocolKernel: "p0a_available",
+      boundedModelAdapter: "p0b_a_available",
+      codingTaskControl: "local_cli_available",
+      ownerApproval: "local_popup_available",
+      taskMutationTools: false,
+      cli: "forge fabric capabilities --json",
+    };
+  }
   if (name === "agent_context") {
     return buildAgentMemoryContext({
       workspaceRoot,

@@ -683,6 +683,7 @@ describe("H48 agent memory bridge", () => {
           session_id: "codex-session-redacted-queue",
           hook_event_name: "PostToolUse",
           prompt: `do the publish with ${secret}`,
+          future_codex_field: { privateText: `unrecognized payload ${secret}` },
           tool_name: "Bash",
           tool_use_id: "toolu_redacted_queue",
           tool_input: {
@@ -708,10 +709,11 @@ describe("H48 agent memory bridge", () => {
       expect(entry.rawStored).toBe(false);
       expect(entry.payloadRedacted).toBe(true);
       expect(payload.commandStored).toBe(false);
-      expect(payload.commandSummary).toContain("forge run billing.createInvoice");
+      expect(payload.commandSummary).toBe("forge run");
       expect(payload.responseStored).toBe(false);
       expect(serialized).not.toContain(secret);
       expect(serialized).not.toContain("do the publish");
+      expect(serialized).not.toContain("unrecognized payload");
       expect(serialized).not.toContain("\"tool_input\":{\"command\"");
       expect(serialized).not.toContain("\"tool_response\":{\"exitCode\"");
     } finally {

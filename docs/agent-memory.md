@@ -27,6 +27,11 @@ forge mcp serve
 
 `forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. The MCP surface is intentionally kept read/context oriented; ForgeOS does not duplicate mutating CLI workflows as new MCP tools during alpha hardening.
 
+The experimental `fabric_capabilities` read tool reports whether governed coding-task
+control and owner approval are connected. An unconnected response is an explicit
+capability boundary; it does not imply that the P0a/P0b-A library exports can already
+start a durable coding task through MCP.
+
 `forge agent onboard --target codex --json` is the recommended first command when an external agent enters a ForgeOS repo. It prepares the adapter files, records a smoke canary, runs the compact dev diagnostic cycle, and returns whether the agent is ready to edit.
 
 `forge agent hooks status --target codex --json` checks whether the native hook bridge is installed, the local memory store is readable, and recent events contain useful signals. For Codex Desktop, installed hook files alone are not enough: Codex may show a trust prompt before running new hooks. Once ForgeOS can see a canary or useful hook event, status returns `approvalStatus: "accepted"` with `approvalRequired: false`; `nativeTrustStatus: "waiting-for-native-signal"` separately means a trusted native Codex event has not appeared yet.

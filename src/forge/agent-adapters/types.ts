@@ -140,7 +140,7 @@ export interface AgentPrintContextResult {
 }
 
 export type AgentHookBridgeState = "ready" | "missing" | "not-supported" | "waiting-for-user-trust" | "memory-unavailable";
-export type AgentHookApprovalStatus = "not-required" | "waiting-for-user-trust" | "accepted" | "trusted" | "memory-unavailable";
+export type AgentHookApprovalStatus = "not-required" | "waiting-for-user-trust" | "unverified" | "trusted" | "memory-unavailable";
 export type AgentHookNativeTrustStatus = "not-required" | "waiting-for-native-signal" | "trusted" | "memory-unavailable";
 export type AgentHookReadinessLevel = "none" | "canary" | "trusted-native";
 

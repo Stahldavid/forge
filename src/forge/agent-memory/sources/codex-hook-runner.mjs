@@ -18,23 +18,7 @@ if (!eventName) {
 const workspaceRoot = resolve(process.cwd());
 const eventsFile = join(workspaceRoot, ".forge", "agent", "events.ndjson");
 
-const RAW_TEXT_KEYS = new Set([
-  "prompt",
-  "userPrompt",
-  "last_assistant_message",
-  "lastAssistantMessage",
-  "completion",
-  "message",
-  "transcript",
-  "transcript_path",
-  "transcriptPath",
-  "output",
-  "stdout",
-  "stderr",
-  "result",
-]);
-
-const RAW_ARGS_KEYS = new Set(["args", "arguments", "tool_input", "toolInput", "tool_response", "toolResponse", "input"]);
+const SAFE_ID = /^[A-Za-z0-9_.:-]{1,128}$/u;
 
 function readStdin(timeoutMs) {
   return new Promise((resolveRead) => {
@@ -101,12 +85,14 @@ async function main() {
 }
 
 function sanitizePayload(raw, hookEventName) {
-  const payload = stripRawPayload(raw);
-  if (!payload.hook_event_name) {
-    payload.hook_event_name = hookEventName;
-  }
-  if (!payload.cwd) {
-    payload.cwd = workspaceRoot;
+  // Construct the queued event from known metadata. Recursively copying unknown
+  // fields risks persisting new Codex payload fields containing private text.
+  const payload = { hook_event_name: hookEventName, cwd: workspaceRoot };
+  if (raw.session_id === "forge-hook-probe" || raw.forgeHookProbe === true) payload.forgeHookProbe = true;
+  if (raw.forgeHookCanary === "FORGE_HOOK_SMOKE_CANARY") payload.forgeHookCanary = "FORGE_HOOK_SMOKE_CANARY";
+  for (const key of ["session_id", "turn_id", "tool_name", "tool_use_id", "permission_mode", "model", "source", "reason", "trigger"]) {
+    const value = raw[key];
+    if (typeof value === "string" && SAFE_ID.test(value)) payload[key] = value;
   }
 
   const toolInput = objectField(raw, "tool_input") ?? objectField(raw, "toolInput");
@@ -119,11 +105,6 @@ function sanitizePayload(raw, hookEventName) {
     payload.commandKind = classifyCommand(stringField(raw, "tool_name") ?? stringField(raw, "toolName"), command);
   }
 
-  const description = stringField(toolInput, "description");
-  if (description) {
-    payload.approvalDescriptionSummary = safeSummary(description, 180);
-  }
-
   const exitCode = numberField(toolResponse, "exitCode") ?? numberField(toolResponse, "exit_code") ??
     numberField(raw, "exitCode") ?? numberField(raw, "exit_code");
   if (exitCode !== undefined) {
@@ -131,14 +112,9 @@ function sanitizePayload(raw, hookEventName) {
     payload.resultStatus = exitCode === 0 ? "success" : "failed";
   } else {
     const status = stringField(toolResponse, "status") ?? stringField(raw, "status");
-    if (status) {
+    if (status && SAFE_ID.test(status)) {
       payload.resultStatus = status;
     }
-  }
-
-  const responseSummary = summarizeToolResponse(toolResponse);
-  if (responseSummary) {
-    payload.responseSummary = responseSummary;
   }
   if (toolResponse) {
     payload.responseHash = hashStable(JSON.stringify(toolResponse));
@@ -146,37 +122,6 @@ function sanitizePayload(raw, hookEventName) {
   }
 
   return payload;
-}
-
-function stripRawPayload(value) {
-  if (Array.isArray(value)) {
-    return value.slice(0, 50).map((item) => stripRawPayload(item));
-  }
-  if (!value || typeof value !== "object") {
-    return value;
-  }
-  const output = {};
-  for (const [key, child] of Object.entries(value)) {
-    if (RAW_TEXT_KEYS.has(key)) {
-      output[`${key}Hash`] = hashStable(typeof child === "string" ? child : JSON.stringify(child ?? null));
-      output[`${key}Stored`] = false;
-      if (typeof child === "string" && !isPromptLikeKey(key)) {
-        const summary = safeSummary(child, 160);
-        if (summary) {
-          output[`${key}Summary`] = summary;
-        }
-      }
-      continue;
-    }
-    if (RAW_ARGS_KEYS.has(key)) {
-      output[`${key}Hash`] = hashStable(JSON.stringify(child ?? null));
-      output[`${key}Stored`] = false;
-      output[`${key}Shape`] = describeShape(child);
-      continue;
-    }
-    output[key] = stripRawPayload(child);
-  }
-  return output;
 }
 
 function objectField(value, key) {
@@ -203,43 +148,9 @@ function numberField(value, key) {
   return typeof child === "number" && Number.isFinite(child) ? child : undefined;
 }
 
-function describeShape(value) {
-  if (Array.isArray(value)) {
-    return { kind: "array", length: value.length };
-  }
-  if (value && typeof value === "object") {
-    return {
-      kind: "object",
-      keys: Object.keys(value).slice(0, 20).sort(),
-    };
-  }
-  return { kind: typeof value };
-}
-
 function summarizeCommand(command) {
-  return safeSummary(
-    command
-      .replace(/--(token|api-key|apikey|password|secret)\s+[^\s]+/giu, "--$1 [REDACTED]")
-      .replace(/(["']?)(token|apiKey|api_key|password|secret)(["']?)\s*:\s*(["'])(.*?)\4/giu, "$1$2$3: \"[REDACTED]\""),
-    220,
-  ) ?? "[command redacted]";
-}
-
-function summarizeToolResponse(response) {
-  if (!response || typeof response !== "object" || Array.isArray(response)) {
-    return undefined;
-  }
-  const text = stringField(response, "stdout") ?? stringField(response, "stderr") ??
-    stringField(response, "output") ?? stringField(response, "result");
-  return text ? safeSummary(text, 180) : undefined;
-}
-
-function safeSummary(value, maxLength) {
-  const normalized = scrubSecretTokens(value).replace(/\s+/gu, " ").trim();
-  if (!normalized) {
-    return undefined;
-  }
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
+  const match = /^\s*(forge)\s+(status|changed|check|verify|run|agent|fabric|generate|inspect|test)\b/u.exec(command);
+  return match ? match.slice(1).filter(Boolean).join(" ") : "[command redacted]";
 }
 
 function classifyCommand(toolName, command) {
@@ -250,18 +161,6 @@ function classifyCommand(toolName, command) {
     return "shell";
   }
   return "unknown";
-}
-
-function isPromptLikeKey(key) {
-  return key.toLowerCase().includes("prompt") || key.toLowerCase().includes("completion") || key.toLowerCase().includes("message");
-}
-
-function scrubSecretTokens(value) {
-  return value
-    .replace(/\bsk[-_][A-Za-z0-9_\-.]{8,}\b/gu, "[REDACTED]")
-    .replace(/\bnpm_[A-Za-z0-9]{16,}\b/gu, "[REDACTED]")
-    .replace(/\bgh[pousr]_[A-Za-z0-9_]{16,}\b/gu, "[REDACTED]")
-    .replace(/\b(?:xox[baprs]-)[A-Za-z0-9-]{16,}\b/gu, "[REDACTED]");
 }
 
 function hashStable(value) {

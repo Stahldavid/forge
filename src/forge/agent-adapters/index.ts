@@ -998,6 +998,8 @@ function eventIsNativeHookEvent(event: AgentMemoryEventRecord): boolean {
   return (
     !eventIsForgeHookCanary(event) &&
     !eventIsForgeHookProbe(event) &&
+    typeof event.externalSessionId === "string" &&
+    event.externalSessionId !== "forge-hook-probe" &&
     event.integrationKind === "native-hook" &&
     event.trustLevel === "direct-hook"
   );
@@ -1009,7 +1011,7 @@ function hookApprovalStatusFor(
   nativeSignals: number,
   observableSignals = 0,
   memoryReadable = true,
-): "not-required" | "waiting-for-user-trust" | "accepted" | "trusted" | "memory-unavailable" {
+): "not-required" | "waiting-for-user-trust" | "unverified" | "trusted" | "memory-unavailable" {
   if (target !== "codex" || !installed) {
     return "not-required";
   }
@@ -1019,7 +1021,9 @@ function hookApprovalStatusFor(
   if (nativeSignals > 0) {
     return "trusted";
   }
-  return observableSignals > 0 ? "accepted" : "waiting-for-user-trust";
+  // A Forge-generated canary proves only the local ingest path. It cannot
+  // establish that the user trusted the hook definition in Codex Desktop.
+  return observableSignals > 0 ? "unverified" : "waiting-for-user-trust";
 }
 
 function hookNativeTrustStatusFor(
@@ -1044,12 +1048,12 @@ function codexHookApprovalMessage(
 ): string {
   if (approvalStatus === "waiting-for-user-trust") {
     if (canarySignals > 0) {
-      return "ForgeOS can see the Codex smoke canary; hook approval is accepted, but trusted native Codex signal proof is still pending";
+      return "ForgeOS can see a smoke canary, but Codex hook approval is unverified; review the hook in Codex Desktop and wait for a native signal";
     }
     return "ForgeOS has not seen a trusted native Codex hook signal yet; approve the Codex Desktop hook prompt if shown, then continue a Codex session in this workspace";
   }
-  if (approvalStatus === "accepted" && nativeTrustStatus === "waiting-for-native-signal") {
-    return "Codex hook approval is accepted for local editing; ForgeOS is still waiting for a trusted native Codex signal for stronger provenance";
+  if (approvalStatus === "unverified" && nativeTrustStatus === "waiting-for-native-signal") {
+    return "Codex hook approval is unverified; smoke canaries do not prove user trust or native execution";
   }
   if (approvalStatus === "trusted") {
     return "Codex Desktop hook trust is confirmed by a native hook signal";
@@ -1368,7 +1372,7 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
   const observableSignals = Math.max(usefulSignals, canarySignals);
   const approvalStatus = hookApprovalStatusFor(target, installed, nativeSignals, observableSignals, deltaWritable);
   const nativeTrustStatus = hookNativeTrustStatusFor(target, installed, nativeSignals, deltaWritable);
-  const approvalRequired = approvalStatus === "waiting-for-user-trust";
+  const approvalRequired = approvalStatus === "waiting-for-user-trust" || approvalStatus === "unverified";
   const codexHookInspection = installTarget === "codex"
     ? inspectCodexHookCommands(options.workspaceRoot)
     : undefined;
@@ -1481,14 +1485,14 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
       },
       {
         name: "native-hook-signal",
-        ok: target !== "codex" || !deltaWritable || nativeSignals > 0 || approvalStatus === "accepted",
+        ok: target !== "codex" || !deltaWritable || nativeSignals > 0,
         message: target !== "codex"
           ? "native Codex hook approval is not required for this target"
           : !deltaWritable
             ? "trusted Codex native hook signals cannot be verified until Agent Memory is readable"
           : nativeSignals > 0
             ? `${nativeSignals} trusted Codex native hook signal(s) visible or queued`
-            : "hook approval is accepted, but Codex has not emitted a trusted native hook signal yet",
+            : "only canary signals are visible; Codex has not emitted a trusted native hook signal",
         evidence: {
           nativeSignals,
           canarySignals,
@@ -1612,7 +1616,7 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     memoryReadable,
   );
   const nativeTrustStatus = hookNativeTrustStatusFor(target, Boolean(installTarget && installed), nativeSignals, memoryReadable);
-  const approvalRequired = approvalStatus === "waiting-for-user-trust";
+  const approvalRequired = approvalStatus === "waiting-for-user-trust" || approvalStatus === "unverified";
   const hookBridgeState = !installTarget
     ? "not-supported"
     : !memoryReadable
@@ -1690,14 +1694,14 @@ export async function runAgentDoctor(options: AgentCommandOptions): Promise<Agen
     },
     {
       name: "native-hook-signal",
-      ok: !installTarget || target !== "codex" || !memoryReadable || nativeSignals > 0 || approvalStatus === "accepted",
+      ok: !installTarget || target !== "codex" || !memoryReadable || nativeSignals > 0,
       message: !installTarget || target !== "codex"
         ? "native Codex hook approval is not required for this target"
         : !memoryReadable
           ? "trusted Codex native hook signals cannot be verified until Agent Memory is readable"
         : nativeSignals > 0
           ? `${nativeSignals} trusted Codex native hook signal(s) visible or queued`
-          : "hook approval is accepted, but Codex has not emitted a trusted native hook signal yet",
+          : "only canary signals are visible; Codex has not emitted a trusted native hook signal",
       evidence: {
         nativeSignals,
         canarySignals,
@@ -1911,8 +1915,8 @@ export async function runAgentOnboard(options: AgentCommandOptions): Promise<Age
               ? "Codex hook trust cannot be verified until Agent Memory is readable"
             : doctor.summary.approvalStatus === "trusted"
               ? "Codex hook trust is confirmed by a native hook signal"
-            : doctor.summary.approvalStatus === "accepted"
-              ? "Codex hook approval is accepted; trusted native signal proof is still pending"
+            : doctor.summary.approvalStatus === "unverified"
+              ? "Codex hook approval is unverified; a smoke canary is not native proof"
               : "hook approval is not required for this target",
         }]
       : []),
@@ -2171,7 +2175,7 @@ export async function runAgentHooksSmoke(options: AgentCommandOptions): Promise<
       ? [createDiagnostic({
           severity: "warning",
           code: "FORGE_AGENT_HOOK_APPROVAL_REQUIRED",
-          message: "Codex Desktop hook approval is still pending because ForgeOS has not seen a canary, useful hook event, or trusted native hook signal yet. Approve the hook prompt if Codex shows one, then continue a Codex session in this workspace.",
+          message: "Codex Desktop hook approval cannot be inferred from a smoke canary. Review the exact hook definition in Codex Desktop, then continue a session and verify a native hook signal.",
           suggestedCommands: hookApprovalNextActions(target, status.canarySignals),
         })]
       : []),

@@ -857,7 +857,10 @@ export function inspectAgentMemoryQueueFile(options: {
     result.events += 1;
     if (canary) {
       result.canarySignals += 1;
-    } else if (envelope.source.integration === "native-hook" && envelope.capture.trustLevel === "direct-hook") {
+    } else if (envelope.source.integration === "native-hook" && envelope.capture.trustLevel === "direct-hook" &&
+               typeof envelope.session.externalSessionId === "string" &&
+               envelope.session.externalSessionId !== "forge-hook-probe" &&
+               envelope.payload.forgeHookProbe !== true) {
       result.nativeSignals += 1;
     }
     if (queuedEventHasUsefulSignal(envelope)) {

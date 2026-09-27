@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createConnection } from "node:net";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join, resolve } from "node:path";
+import { delimiter, dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 
@@ -40,7 +40,9 @@ function npmGlobalBin(prefix) {
 }
 
 function forgeBin(prefix) {
-  return process.platform === "win32" ? join(prefix, "forge.cmd") : join(prefix, "bin", "forge");
+  return process.platform === "win32"
+    ? join(prefix, "node_modules", "forgeos", "bin", "forge.mjs")
+    : join(prefix, "bin", "forge");
 }
 
 function run(command, args, options = {}) {
@@ -50,6 +52,8 @@ function run(command, args, options = {}) {
   const argv =
     process.platform === "win32" && command === npmCommand
       ? [process.env.ComSpec ?? "cmd.exe", ["/d", "/c", command, ...args]]
+      : process.platform === "win32" && command.endsWith("forge.mjs")
+        ? [process.execPath, [command, ...args]]
       : [command, args];
   const result = spawnSync(argv[0], argv[1], {
     cwd: options.cwd ?? repoRoot,
@@ -136,7 +140,9 @@ function stopPreview(pid) {
     if (process.platform !== "win32") {
       process.kill(-pid, "SIGTERM");
     } else {
-      process.kill(pid, "SIGTERM");
+      spawnSync("taskkill.exe", ["/PID", String(pid), "/T", "/F"], {
+        stdio: "ignore", windowsHide: true, timeout: 5000,
+      });
     }
   } catch {
     try {
@@ -266,8 +272,8 @@ try {
   assert(hookSmoke.ok === true && hookSmoke.smokeReady === true, "hook smoke did not pass the canary contract");
   assert(hookSmoke.trustedNativeReady === false, "hook smoke should not claim trusted native readiness from a canary alone");
   assert(hookSmoke.hookRunnerProbe?.stdinHangSafe === true, "hook smoke did not prove stdin hang safety");
-  assert(hookSmoke.approvalRequired === false, "hook smoke should accept a visible canary for local editing");
-  assert(hookSmoke.approvalStatus === "accepted", "hook smoke should report accepted approval after a visible canary");
+  assert(hookSmoke.approvalRequired === true, "hook smoke must not treat a canary as Codex hook approval");
+  assert(hookSmoke.approvalStatus === "unverified", "hook smoke must report native approval as unverified after a canary");
   assert(
     hookSmoke.nativeTrustStatus === "waiting-for-native-signal",
     "hook smoke should keep native Codex provenance separate from canary readiness",
@@ -329,6 +335,16 @@ try {
     rmSync(tarballPath, { force: true });
   }
   evidence.cleanup.previewPortClosed = !(await portReachable(previewPort));
-  rmSync(tempRoot, { recursive: true, force: true });
+  try {
+    if (!resolve(tempRoot).startsWith(`${resolve(tmpdir())}${sep}`)) {
+      throw new Error("packed smoke cleanup path escaped the temp directory");
+    }
+    rmSync(tempRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });
+  } catch (cleanupError) {
+    evidence.ok = false;
+    evidence.error ??= cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+    writeEvidence();
+    throw cleanupError;
+  }
   writeEvidence();
 }

@@ -5,6 +5,10 @@ on:
     branches: [main, master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -31,24 +35,16 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: Unit and integration tests
-        id: unit_integration_tests
-        timeout-minutes: 20
-        run: bun test
+      # Security Assurance runs the complete strict TestGraph once. This job
+      # checks compiler drift and package behavior without rerunning that suite.
+      - name: Check committed compiler output
+        run: node ./bin/forge.mjs generate --check
 
-      - name: Unit/integration failure diagnostics
-        if: ${{ failure() && steps.unit_integration_tests.outcome != 'success' }}
-        shell: bash
-        run: |
-          echo "::group::Process snapshot after unit/integration failure"
-          ps -eo pid,ppid,pgid,stat,etime,comm --forest || true
-          echo "::endgroup::"
+      - name: Check compiler workspace
+        run: node ./bin/forge.mjs check
 
-      - name: Generate committed compiler output
-        run: bun run forge generate
-
-      - name: Verify compiler workspace
-        run: bun run forge verify --standard --script-timeout-ms 120000
+      - name: Lint
+        run: npm run lint
 
       - name: Setup basic example
         run: node scripts/setup-example.mjs
@@ -78,9 +74,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      # PRs exercise the canonical Node version on Linux and Windows. Main
+      # retains the full OS/Node matrix once per merge.
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [22, 24]
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"windows-latest","node-version":24},{"os":"macos-latest","node-version":22},{"os":"macos-latest","node-version":24}]') }}
     steps:
       - uses: actions/checkout@v4
 
