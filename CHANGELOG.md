@@ -1,5 +1,24 @@
 # forgeos
 
+## 0.1.0-alpha.64
+
+### Minor Changes
+
+- [#9](https://github.com/Stahldavid/forge/pull/9) [`ea0e5b6`](https://github.com/Stahldavid/forge/commit/ea0e5b6067e520d40cca23b461ca53d057ef0aca) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add the experimental Forge Agent Fabric P0a protocol kernel with replay-prevalidated authoritative transitions, exact GoalContract/authorization binding, attenuated grants, journal-coupled resource accounting, globally unique attempt identities, fenced attempt-bound permits, non-terminal uncertainty observations, content-bound outcome provenance, deterministic replay, and adversarial conformance tests.
+
+- [#54](https://github.com/Stahldavid/forge/pull/54) [`8721bb5`](https://github.com/Stahldavid/forge/commit/8721bb5466b337ccac75d7212c6a6e597bc338ac) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add the experimental Agent Fabric P0b-A bounded model adapter behind the P0a authorization, permit, and result boundary. Model invocation binds the provider target, context, and materialization to one attempt; enforces finite request, response, token, and time limits; blocks hidden retries and redirects; and treats ambiguous execution as uncertainty. A fixed loopback Ollama path supports keyless local inference. Model output remains non-authoritative; tools, delegation, persistent recovery, and production readiness are outside this release.
+
+### Patch Changes
+
+- [#57](https://github.com/Stahldavid/forge/pull/57) [`98c3211`](https://github.com/Stahldavid/forge/commit/98c321103d7771a38dc27a5720b336ff8c817f83) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add an experimental local `forge fabric` coding task flow with durable proposal and
+  control records, visible owner review, a bounded Ollama attempt, isolated Git diff
+  materialization, and a separate result decision. Keep MCP task mutation disabled
+  and correct Codex hook trust reporting for synthetic smoke events.
+
+- [#58](https://github.com/Stahldavid/forge/pull/58) [`a4da2d0`](https://github.com/Stahldavid/forge/commit/a4da2d0eb5b84737bf56ae7ad5924ba16cee6669) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Add a single local Agent Fabric owner process so CLI and MCP clients share the
+  same PGlite-backed task service. MCP can submit untrusted proposals and read
+  status while owner approval, execution, and diff acceptance remain outside MCP.
+
 ## 0.1.0-alpha.63
 
 ### Patch Changes

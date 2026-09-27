@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.63 input=3ba530f8432c93912c3e9b02ed9be6c6365dad9216f0a63d0c0a517cb06d4665 content=c8db755715f7f1adcb605acc5eeaab27e2bb772710de383d006d20b28a70c541
+// @forge-generated generator=0.1.0-alpha.64 input=5bea3de626e4a7db3a5bbe226a820619b19a6e1347922b0a4f97fedf6654c489 content=891311f7a859489134a5b7e79ec0da89c87f4b3857094e75177b7a190157ad0b
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
@@ -36313,8 +36313,8 @@ export const appGraph = {
       "to": "88bcc46f811fc6737a95053e829ef9684e374c1df1209c7219ffe75ef94a4441"
     }
   ],
-  "generatorVersion": "0.1.0-alpha.63",
-  "inputHash": "eba6242d33072d7ffcbb31928a3b2f2cb3624fd7bafb5c46dd3441f08d08f488",
+  "generatorVersion": "0.1.0-alpha.64",
+  "inputHash": "ab19a97d677de2b57e0170a3a7804ef8cf726c7945d8314c595691322e614434",
   "moduleGraph": {
     "nodes": [
       {
@@ -56482,7 +56482,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "1787acbe6f0eba24b83e29167d7e5eb75bdf197c1807b8e23df96fdc5544eef2",
+        "fileContentHash": "7382b0e21d6f4532a249079e970a17ec3d4ddfdee1726d3f6f26159617680f22",
         "sourceSlice": "CLI_VERSION = FORGEOS_VERSION"
       },
       "name": "CLI_VERSION",
@@ -58074,14 +58074,14 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "7e2e106f989951751c6c926f0eaad1ec2ac91ed508e474b66782075698988ea5",
+      "contentHash": "20135115819791ef2ac7ba7a466fd29cdfa4256a1b9158cef7902633deaa25e3",
       "file": "src/forge/version.ts",
       "id": "64157f7bae0f32d8fe0f1e6365f94378c94659999b35bf77e524fb1879ef395e",
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "1787acbe6f0eba24b83e29167d7e5eb75bdf197c1807b8e23df96fdc5544eef2",
-        "sourceSlice": "FORGEOS_VERSION = \"0.1.0-alpha.63\""
+        "fileContentHash": "7382b0e21d6f4532a249079e970a17ec3d4ddfdee1726d3f6f26159617680f22",
+        "sourceSlice": "FORGEOS_VERSION = \"0.1.0-alpha.64\""
       },
       "name": "FORGEOS_VERSION",
       "qualifiedName": "FORGEOS_VERSION",
@@ -62891,7 +62891,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "1787acbe6f0eba24b83e29167d7e5eb75bdf197c1807b8e23df96fdc5544eef2",
+        "fileContentHash": "7382b0e21d6f4532a249079e970a17ec3d4ddfdee1726d3f6f26159617680f22",
         "sourceSlice": "GENERATOR_VERSION = FORGEOS_VERSION"
       },
       "name": "GENERATOR_VERSION",

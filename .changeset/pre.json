@@ -6,5 +6,10 @@
     "create-forgeos-app": "0.1.0-alpha.5",
     "eslint-plugin-forge": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "agent-fabric-local-coding-pilot",
+    "agent-fabric-local-owner-mcp",
+    "agent-fabric-p0a",
+    "agent-fabric-p0b-a"
+  ]
 }
