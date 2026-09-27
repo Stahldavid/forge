@@ -42,7 +42,9 @@ export function parseLocalAdaptiveInputProfile(bytes: Buffer): LocalAdaptiveInpu
     invalid("Local adaptive profile size is invalid");
   }
   let value: unknown;
-  const raw = bytes.toString("utf8");
+  let raw: string;
+  try { raw = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+  catch { invalid("Local adaptive profile is not UTF-8"); }
   try { value = JSON.parse(raw); } catch { invalid("Local adaptive profile is invalid JSON"); }
   if (!exactKeys(value, ["schemaVersion", "kind", "inventory", "constraints"]) ||
       value.schemaVersion !== 1 || value.kind !== "local-adaptive-input-profile" ||
