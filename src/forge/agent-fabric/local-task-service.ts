@@ -236,6 +236,11 @@ export class LocalTaskService {
         validated.proposal.verification.imageId !== trustedLocalNodeImageId()) {
       throw new AgentFabricError("AF_INVALID_STATE", "Proposal verification image is not trusted local node:22");
     }
+    for (const command of validated.proposal.verification?.commands ?? []) {
+      if (command.kind === "node-test-file") {
+        git(this.repositoryRoot, "cat-file", "-e", `${validated.proposal.baseCommit}:${command.path}`);
+      }
+    }
     const record = await this.inbox.propose(validated.proposal, this.repositoryRoot);
     return this.status(record.taskId);
   }

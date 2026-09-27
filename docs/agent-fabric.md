@@ -244,6 +244,8 @@ descriptors are `{ "kind": "node-test-file", "path": "pass.test.mjs",
 approval window. The image ID must match the locally installed `node:22`
 image with a `node@sha256` registry digest; the service rejects a proposal
 pointing to another local image and rechecks the tag before execution.
+Each Node test file must exist in the pinned commit and be outside the task's
+writable paths, so the model cannot replace the test that judges its patch.
 After `run` produces a patch, `verify` checks deterministic test paths and
 mount encoding, then records a durable
 dispatch intent before running checks. A lost process leaves the verification

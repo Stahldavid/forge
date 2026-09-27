@@ -176,15 +176,11 @@ if (process.env.FORGE_FABRIC_DOCKER_SMOKE === "1") {
         const verified = await service.verify(taskId);
         expect(verified.verification?.outcome).toBe("passed");
         await expect(service.verify(taskId)).rejects.toThrow("already started");
-        const missing = await service.propose({ ...proposal, goal: "Second isolated task",
+        await expect(service.propose({ ...proposal, goal: "Second isolated task",
           verification: { imageId, commands: [
             { kind: "git-diff-check", timeoutMs: 5_000 },
             { kind: "node-test-file", path: "missing.test.mjs", timeoutMs: 20_000 },
-          ] } });
-        await service.review(missing.taskId);
-        await service.run(missing.taskId);
-        await expect(service.verify(missing.taskId)).rejects.toThrow("Verification test path");
-        expect((await service.status(missing.taskId)).verification).toBeUndefined();
+          ] } })).rejects.toThrow("Git repository check failed");
       } finally { await service.close(); }
       const reopened = await LocalTaskService.open(root, async () => "rejected", undefined, async () => "approved");
       try {

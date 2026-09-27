@@ -122,5 +122,7 @@ describe("local coding task proposal contract", () => {
       ...verification, commands: [{ kind: "git-diff-check", timeoutMs: 5_000 },
         { kind: "shell", command: "curl example.com", timeoutMs: 20_000 }],
     } })).toThrow(AgentFabricError);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(),
+      writablePaths: ["pass.test.mjs"], verification })).toThrow(AgentFabricError);
   });
 });

@@ -169,6 +169,10 @@ export function validateLocalCodingTaskProposal(input: unknown): ValidatedLocalC
       expiresAt: positiveInteger(limits.expiresAt, "limits.expiresAt", Number.MAX_SAFE_INTEGER),
     },
   };
+  if (proposal.verification?.commands.some((command) => command.kind === "node-test-file" &&
+      proposal.writablePaths.some((path) => path.toLowerCase() === command.path.toLowerCase()))) {
+    invalid("verification.commands cannot test a writable file");
+  }
   const proposalDigest = digestCanonical(proposal, sha256Digest);
   return { proposal: freezeDeep(proposal), proposalDigest };
 }
