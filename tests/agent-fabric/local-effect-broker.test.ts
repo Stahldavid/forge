@@ -128,6 +128,26 @@ describe("local consequential effect broker", () => {
     }
   });
 
+  test("authorization that expires during asynchronous owner verification cannot create an intent", async () => {
+    const f = await fixture();
+    try {
+      let clock = 1_000;
+      const broker = new LocalEffectBroker({
+        adapter: f.adapter, repositoryRoot: f.root, ownerId: "local-owner",
+        now: () => clock,
+        verifyOwner: async () => { clock = 2_000; return true; },
+      });
+      const challenge = broker.prepare(request, 1_500);
+      await expect(broker.dispatch(request, {
+        ownerId: "local-owner", challengeDigest: challenge.challengeDigest,
+        expiresAt: 1_500, proof: "trusted-local-owner-proof",
+      })).rejects.toThrow("expired");
+      expect((await broker.inspect(challenge.requestDigest)).state).toBe("not_dispatched");
+    } finally {
+      await f.adapter.close();
+    }
+  });
+
   test("concurrent requests resolve to one intent and one immutable artifact", async () => {
     const f = await fixture();
     try {

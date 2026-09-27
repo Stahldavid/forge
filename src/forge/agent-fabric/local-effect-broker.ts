@@ -75,6 +75,8 @@ export interface LocalEffectBrokerOptions {
   repositoryRoot: string;
   ownerId: string;
   verifyOwner: LocalEffectOwnerVerifier;
+  /** Trusted clock; injectable only by the owner service for deterministic tests. */
+  now?: () => number;
   /** Fault injection is for deterministic crash-boundary tests. Never exposes a client route. */
   onBoundary?: (boundary: LocalEffectBoundary) => Promise<void> | void;
 }
@@ -268,7 +270,7 @@ export class LocalEffectBroker {
     return this.inspect(requestDigest);
   }
 
-  async dispatch(input: unknown, authorization: LocalEffectAuthorization, now = Date.now()): Promise<LocalEffectObservation> {
+  async dispatch(input: unknown, authorization: LocalEffectAuthorization): Promise<LocalEffectObservation> {
     if (!authorization || typeof authorization !== "object" ||
         !exactKeys(authorization as unknown as Record<string, unknown>,
           ["ownerId", "challengeDigest", "expiresAt", "proof"]) ||
@@ -276,14 +278,20 @@ export class LocalEffectBroker {
         authorization.proof.length > 4096) reject("Invalid owner authorization");
     const { request, challenge, bytes } = this.resolve(input, authorization.expiresAt);
     if (authorization.ownerId !== this.options.ownerId ||
-        authorization.challengeDigest !== challenge.challengeDigest ||
-        !Number.isSafeInteger(now) || now >= authorization.expiresAt) {
-      reject("Owner authorization is stale or does not bind this effect");
+        authorization.challengeDigest !== challenge.challengeDigest) {
+      reject("Owner authorization does not bind this effect");
     }
     return this.serialized(async () => {
       const existing = await this.load(challenge.requestDigest);
       if (existing) return this.observe(existing, challenge.requestDigest);
+      const readClock = () => this.options.now?.() ?? Date.now();
+      const isCurrent = () => {
+        const current = readClock();
+        return Number.isSafeInteger(current) && current >= 0 && current < authorization.expiresAt;
+      };
+      if (!isCurrent()) reject("Owner authorization expired before effect dispatch");
       if (!(await this.options.verifyOwner(challenge, authorization))) reject("Owner authorization was not verified");
+      if (!isCurrent()) reject("Owner authorization expired during effect verification");
       const authorizationDigest = sha256Digest(stableStringify({
         version: 1, ownerId: authorization.ownerId, challengeDigest: challenge.challengeDigest,
         proofDigest: digestBytes(authorization.proof),
@@ -291,6 +299,10 @@ export class LocalEffectBroker {
       const dir = localFabricPath(this.repositoryRoot, "effects");
       await mkdir(dir, { recursive: true });
       this.artifactPath(challenge.requestDigest); // reject symbolic-link substitution before intent
+      const now = readClock();
+      if (!Number.isSafeInteger(now) || now < 0 || now >= authorization.expiresAt) {
+        reject("Owner authorization expired before effect intent");
+      }
       const inserted = await this.options.adapter.query(
         `INSERT INTO _forge_agent_fabric_local_effects
          (request_digest, challenge_digest, task_id, subject_digest, artifact_digest,

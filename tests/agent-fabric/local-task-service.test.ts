@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { LocalCodingTaskProposal } from "../../src/forge/agent-fabric/local-task-contract.ts";
@@ -131,6 +131,13 @@ describe("local task service", () => {
         await reopened.close();
       }
       expect(buildLocalCodingContext(root, proposal)).toContain("original");
+      const hooksDir = join(root, "owner-hooks");
+      const hookMarker = join(root, "post-checkout-ran");
+      mkdirSync(hooksDir);
+      writeFileSync(join(hooksDir, "post-checkout"),
+        `#!/bin/sh\nprintf triggered > "${hookMarker.replaceAll("\\", "/")}"\n`);
+      chmodSync(join(hooksDir, "post-checkout"), 0o755);
+      git(root, "config", "core.hooksPath", hooksDir);
       expect(() => materializeLocalCodingPatch(root, "task:" + "a".repeat(64), proposal,
         JSON.stringify({ schemaVersion: 1, files: [{ path: "other.txt", content: "bad" }] }))).toThrow();
       const patch = materializeLocalCodingPatch(root, "task:" + "a".repeat(64), proposal,
@@ -143,6 +150,7 @@ describe("local task service", () => {
       const mapped = materializeLocalCodingPatch(root, "task:" + "c".repeat(64), proposal,
         "{\"source.txt\":\"changed\\n\"}");
       expect(mapped.changedPaths).toEqual(["source.txt"]);
+      expect(existsSync(hookMarker)).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

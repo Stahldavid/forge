@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { sha256Digest } from "./canonical.ts";
 import { AgentFabricError } from "./errors.ts";
@@ -9,13 +9,39 @@ import { localFabricPath } from "./local-paths.ts";
 
 function git(root: string, args: readonly string[], maxBuffer = 128 * 1024): string {
   try {
-    return execFileSync("git", [...args], {
+    return execFileSync("git", ["-c", "core.fsmonitor=false", ...args], {
       cwd: root, encoding: "utf8", windowsHide: true,
       timeout: 10_000, maxBuffer, stdio: ["ignore", "pipe", "ignore"],
     });
   } catch {
     throw new AgentFabricError("AF_INVALID_STATE", `Git operation failed: ${args[0] ?? "unknown"}`);
   }
+}
+
+/** Git checkout may invoke post-checkout and configured smudge/process filters. */
+function inertCheckoutOptions(repositoryRoot: string): string[] {
+  const hooksDir = localFabricPath(repositoryRoot, "empty-hooks");
+  mkdirSync(hooksDir, { recursive: true, mode: 0o700 });
+  let names = "";
+  try {
+    names = execFileSync("git", ["config", "--name-only", "--get-regexp",
+      "^filter\\..*\\.(process|smudge|clean)$"], {
+      cwd: repositoryRoot, encoding: "utf8", windowsHide: true,
+      timeout: 10_000, maxBuffer: 64 * 1024, stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch (error) {
+    if ((error as { status?: number }).status !== 1) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Cannot inspect Git checkout filters");
+    }
+  }
+  const options = ["-c", `core.hooksPath=${hooksDir}`, "-c", "core.fsmonitor=false"];
+  for (const name of new Set(names.split(/\r?\n/u).filter(Boolean))) {
+    if (!/^filter\.[a-z0-9_.-]+\.(?:process|smudge|clean)$/iu.test(name)) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Unsupported Git checkout filter setting");
+    }
+    options.push("-c", `${name}=`);
+  }
+  return options;
 }
 
 export function buildLocalCodingContext(repositoryRoot: string, task: Readonly<LocalCodingTaskProposal>): string {
@@ -91,6 +117,19 @@ function checkedTarget(worktreeRoot: string, path: string): string {
   return target;
 }
 
+function syncParentDirectories(path: string, root: string): void {
+  // Directory fsync is supported on POSIX. Windows file flush persists the file
+  // itself; a missing directory entry after a crash remains a readback failure.
+  if (process.platform === "win32") return;
+  let directory = dirname(path);
+  while (directory.startsWith(`${root}/`) || directory === root) {
+    const fd = openSync(directory, "r");
+    try { fsyncSync(fd); } finally { closeSync(fd); }
+    if (directory === root) break;
+    directory = dirname(directory);
+  }
+}
+
 export interface LocalPatchEvidence {
   worktreeRoot: string;
   baseCommit: string;
@@ -108,11 +147,11 @@ export function verifyLocalPatchEvidence(patch: LocalPatchEvidence): void {
   if (checkoutRoot !== canonical || git(canonical, ["rev-parse", "HEAD"]).trim() !== patch.baseCommit) {
     throw new AgentFabricError("AF_CONFLICT", "Approved patch checkout moved from its recorded base");
   }
-  if (git(canonical, ["diff", "--cached", "--binary"]).length > 0 ||
+  if (git(canonical, ["diff", "--no-ext-diff", "--cached", "--binary"]).length > 0 ||
       git(canonical, ["ls-files", "--others", "--exclude-standard"]).length > 0) {
     throw new AgentFabricError("AF_CONFLICT", "Patch checkout has unrecorded files or staged changes");
   }
-  const diff = git(canonical, ["diff", "--binary"], patch.diffBytes + 1);
+  const diff = git(canonical, ["diff", "--no-ext-diff", "--binary"], patch.diffBytes + 1);
   if (sha256Digest(diff) !== patch.diffDigest ||
       sha256Digest(readFileSync(patch.diffPath, "utf8")) !== patch.diffDigest) {
     throw new AgentFabricError("AF_CONFLICT", "Live patch no longer matches its recorded diff");
@@ -139,16 +178,16 @@ export function readbackLocalCodingPatch(
       throw new AgentFabricError("AF_CONFLICT", "Patch checkout differs from the committed model result");
     }
   }
-  if (git(worktreeRoot, ["diff", "--cached", "--binary"]).length > 0 ||
+  if (git(worktreeRoot, ["diff", "--no-ext-diff", "--cached", "--binary"]).length > 0 ||
       git(worktreeRoot, ["ls-files", "--others", "--exclude-standard"]).length > 0) {
     throw new AgentFabricError("AF_CONFLICT", "Patch checkout has unrecorded files or staged changes");
   }
-  const diff = git(worktreeRoot, ["diff", "--binary"], task.limits.maximumPatchBytes + 1);
+  const diff = git(worktreeRoot, ["diff", "--no-ext-diff", "--binary"], task.limits.maximumPatchBytes + 1);
   const diffBytes = Buffer.byteLength(diff, "utf8");
   if (diffBytes === 0 || diffBytes > task.limits.maximumPatchBytes) {
     throw new AgentFabricError("AF_CONFLICT", "Patch readback is empty or exceeds the approved limit");
   }
-  const changedPaths = git(worktreeRoot, ["diff", "--name-only"]).trim().split(/\r?\n/u).filter(Boolean);
+  const changedPaths = git(worktreeRoot, ["diff", "--no-ext-diff", "--name-only"]).trim().split(/\r?\n/u).filter(Boolean);
   if (changedPaths.length !== files.length ||
       changedPaths.some((path) => !files.some((file) => file.path === path))) {
     throw new AgentFabricError("AF_CONFLICT", "Patch readback changed an unauthorized path");
@@ -178,7 +217,8 @@ export function materializeLocalCodingPatch(
   const existing = existsSync(worktreeRoot);
   if (!existing) {
     mkdirSync(dirname(worktreeRoot), { recursive: true });
-    git(repositoryRoot, ["worktree", "add", "--detach", "--", worktreeRoot, task.baseCommit]);
+    git(repositoryRoot, [...inertCheckoutOptions(repositoryRoot),
+      "worktree", "add", "--detach", "--", worktreeRoot, task.baseCommit]);
   }
   const canonical = realpathSync(worktreeRoot);
   const reportedRoot = realpathSync(git(canonical, ["rev-parse", "--show-toplevel"]).trim());
@@ -197,17 +237,18 @@ export function materializeLocalCodingPatch(
       }
     } else {
       mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, file.content, { flag: "w" });
+      writeFileSync(target, file.content, { flag: "w", flush: true });
+      syncParentDirectories(target, canonical);
     }
   }
-  git(canonical, ["add", "-N", "--", ...files.map((file) => file.path)]);
-  const diff = git(canonical, ["diff", "--binary", "--", ...files.map((file) => file.path)],
+  git(canonical, [...inertCheckoutOptions(repositoryRoot), "add", "-N", "--", ...files.map((file) => file.path)]);
+  const diff = git(canonical, ["diff", "--no-ext-diff", "--binary", "--", ...files.map((file) => file.path)],
     task.limits.maximumPatchBytes + 1);
   const diffBytes = Buffer.byteLength(diff, "utf8");
   if (diffBytes === 0 || diffBytes > task.limits.maximumPatchBytes) {
     throw new AgentFabricError("AF_INVALID_STATE", "Resulting diff is empty or exceeds the approved patch limit");
   }
-  const changedPaths = git(canonical, ["diff", "--name-only", "--", ...files.map((file) => file.path)])
+  const changedPaths = git(canonical, ["diff", "--no-ext-diff", "--name-only", "--", ...files.map((file) => file.path)])
     .trim().split(/\r?\n/u).filter(Boolean);
   if (changedPaths.length === 0 || changedPaths.some((path) => !task.writablePaths.includes(path))) {
     throw new AgentFabricError("AF_INVALID_STATE", "Resulting diff contains an unauthorized path");
@@ -219,7 +260,8 @@ export function materializeLocalCodingPatch(
       throw new AgentFabricError("AF_CONFLICT", "Existing diff artifact differs from the model result");
     }
   } else {
-    writeFileSync(diffPath, diff, { flag: "wx" });
+    writeFileSync(diffPath, diff, { flag: "wx", flush: true });
+    syncParentDirectories(diffPath, repositoryRoot);
   }
   if (sha256Digest(readFileSync(diffPath, "utf8")) !== sha256Digest(diff)) {
     throw new AgentFabricError("AF_INVALID_STATE", "Diff artifact failed readback");
