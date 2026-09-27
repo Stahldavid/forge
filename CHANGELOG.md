@@ -1,5 +1,15 @@
 # forgeos
 
+## 0.1.0-alpha.65
+
+### Patch Changes
+
+- [#61](https://github.com/Stahldavid/forge/pull/61) [`6fb76d7`](https://github.com/Stahldavid/forge/commit/6fb76d734257d96d1d366528848801cbd3698395) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Harden the single-owner Agent Fabric CLI and MCP pilot with durable patch and
+  verification receipts, owner-controlled source-grounded memory, guarded local
+  effects, a fixed two-worker harness, and a local Evolution Registry. Improve
+  Codex hook ingestion, Studio startup, release propagation checks, and targeted
+  CI coverage.
+
 ## 0.1.0-alpha.64
 
 ### Minor Changes
