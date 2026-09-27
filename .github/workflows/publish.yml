@@ -66,43 +66,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Generate release artifacts
-        run: npm run forge -- generate
-
-      - name: Security proof
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_publish
-          AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
-          ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
-          OPENAI_API_KEY: forge-ci-redacted-openai-key
-        run: npm run forge -- security prove --db postgres --full --json
-
-      - name: RLS mutation proof
-        run: npm run forge -- rls mutate-test --json
-
-      - name: Release evidence and SBOM
-        run: npm run release:evidence
-
-      - name: Dependency vulnerability evidence
-        run: npm run security:deps
-
-      - name: Test
-        run: npm test
-
-      - name: Restore workspace after tests
-        run: |
-          git restore .
-          git clean -fd
-
-      - name: Regenerate release artifacts
-        run: npm run forge -- generate
-
-      - name: Smoke packed package
-        run: npm run release:smoke
-
       - name: Create Release PR
         id: changesets
         uses: changesets/action@v1
@@ -113,9 +76,61 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Typecheck
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run typecheck
+
+      - name: Generate release artifacts
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run forge -- generate
+
+      - name: Security proof
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_publish
+          AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
+          ANTHROPIC_API_KEY: forge-ci-redacted-anthropic-key
+          OPENAI_API_KEY: forge-ci-redacted-openai-key
+        run: npm run forge -- security prove --db postgres --full --json
+
+      - name: RLS mutation proof
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run forge -- rls mutate-test --json
+
+      - name: Release evidence and SBOM
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run release:evidence
+
+      - name: Dependency vulnerability evidence
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run security:deps
+
+      - name: Test
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm test
+
+      - name: Restore workspace after tests
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          git restore .
+          git clean -fd
+
+      - name: Regenerate release artifacts
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run forge -- generate
+
+      - name: Smoke packed package
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: npm run release:smoke
+
+      - name: Mark release gates passed
+        id: release-gates
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
+
       - name: Publish ForgeOS package
         id: forgeos-package
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.release-gates.outputs.passed == 'true'
         env:
           NPM_CONFIG_PROVENANCE: "true"
         run: node scripts/publish-npm-alpha-package.mjs .

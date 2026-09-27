@@ -105,6 +105,19 @@ describe("npm publish workflow", () => {
     const forgeosPublishStart = workflow.indexOf("name: Publish ForgeOS package");
     const forgeosLatestStart = workflow.indexOf("name: Promote ForgeOS latest tag");
     const forgeosPublishBlock = workflow.slice(forgeosPublishStart, forgeosLatestStart);
+    const changesetsStart = workflow.indexOf("name: Create Release PR");
+    expect(changesetsStart).toBeLessThan(workflow.indexOf("name: Typecheck"));
+    for (const name of [
+      "Typecheck", "Generate release artifacts", "Security proof", "RLS mutation proof",
+      "Release evidence and SBOM", "Dependency vulnerability evidence", "Test",
+      "Restore workspace after tests", "Regenerate release artifacts", "Smoke packed package",
+    ]) {
+      const start = workflow.indexOf(`name: ${name}`, changesetsStart);
+      const end = workflow.indexOf("\n      - name:", start + 1);
+      expect(start).toBeGreaterThan(changesetsStart);
+      expect(workflow.slice(start, end)).toContain("if: steps.changesets.outputs.hasChangesets == 'false'");
+    }
+    expect(forgeosPublishBlock).toContain("steps.release-gates.outputs.passed == 'true'");
     expect(forgeosPublishBlock).not.toContain("NPM_TOKEN");
     expect(forgeosPublishBlock).not.toContain("NODE_AUTH_TOKEN");
     expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
