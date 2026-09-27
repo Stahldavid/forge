@@ -2,16 +2,19 @@ import { readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
 import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
+import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete";
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | AdaptiveCliOptions["subcommand"];
   workspaceRoot: string;
   json: boolean;
   file?: string;
   taskId?: string;
+  channel?: "canary" | "stable";
 }
 
 export async function runFabricCommand(options: FabricCliOptions): Promise<number> {
+  if (options.subcommand.startsWith("adaptive-")) return runAdaptiveCommand(options as AdaptiveCliOptions);
   if (options.subcommand === "capabilities") {
     const result = {
       ok: true, schemaVersion: 1, runtime: "local-pilot",
@@ -20,6 +23,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       sandboxVerification: { supported: true, localReadiness: "not_checked" },
       consequentialEffects: false,
       privateMemory: "owner_cli_only",
+      adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,
+        selectedDataProfile: "optional_canary_or_stable" },
       mcpTaskMutation: "proposal_only", mcpEvidence: true,
       nativeCodexHookProofRequired: true,
     };

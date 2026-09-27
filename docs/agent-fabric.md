@@ -24,8 +24,42 @@ join. Each child receives only bounded text on stdin, an empty environment,
 and a one second wall limit. The coordinator validates each digest against its
 own input before committing the P0a result; cancellation, timeout, or an
 invalid report leaves the join blocked. This trusted data worker is not an
-arbitrary coding agent or an OS security sandbox, and the in-memory run has no
-restart recovery.
+arbitrary coding agent or an OS security sandbox.
+
+The single-PC CLI wraps that harness with a local owner decision and durable
+readback. From the repository root, create a JSON file with exactly two fields,
+for example `{"inventory":"src/a.ts","constraints":"read only"}`. Each field
+is data of at most 256 UTF-8 bytes. Then run:
+
+```bash
+node bin/forge.mjs fabric adaptive-propose --file input.json --json
+node bin/forge.mjs fabric adaptive-review <run-id> --json
+node bin/forge.mjs fabric adaptive-run <run-id> --json
+node bin/forge.mjs fabric adaptive-status <run-id> --json
+```
+
+To narrow the two data fields through an owner-selected Evolution profile,
+pass `--channel canary` or `--channel stable` to `adaptive-propose` after that
+channel has a selected `local-adaptive-input-profile` version. The proposal
+binds the immutable version ID before review. The owner window displays it,
+and `adaptive-run` checks that the same version remains selected and loadable
+before issuing permits. A changed or revoked selection blocks the run. The
+profile validates labels and lengths only; it does not provide code, tools,
+instructions, or worker behavior.
+
+`adaptive-review` opens a loopback browser window showing both exact inputs,
+the bound profile version when present, and their proposal digest. The approval
+expires after five minutes and permits one run. The
+CLI commits the owner authorization, fixed plan, child grants, and both P0a
+permits to a separate local PGlite journal before starting either process.
+The result record and authoritative join can be read after closing and
+reopening the CLI. A run cannot be repeated; a crash after dispatch is shown
+as uncertain unless the durable journal contains the authoritative join.
+Cancellation, failed workers, or missing results never authorize a join.
+Local records and the owner verifier key live under `.forge/local/agent-fabric`.
+The local owner lock prevents concurrent mutating CLI invocations; after a
+crash, inspect `adaptive-status` before any manual lock recovery. This is a
+single-PC workflow, not a production security or multi-host claim.
 
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
 

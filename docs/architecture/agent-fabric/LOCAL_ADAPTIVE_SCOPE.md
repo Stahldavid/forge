@@ -15,6 +15,13 @@ select an agent, harness, provider, tool, command, network destination, or
 execution profile. The worker calculation is a deterministic digest; it is a
 protocol rehearsal, not an AI coding task.
 
+The local CLI wrapper (`forge fabric adaptive-*`) records an owner-reviewed
+proposal, optionally binds a selected Evolution data-profile version, commits
+P0a permits to local PGlite before process dispatch, and persists a bounded
+result. `adaptive-status` reads the authoritative join after restart without
+rerunning workers. A crash after dispatch without a committed join is uncertain
+and requires a fresh owner-approved proposal for another attempt.
+
 The existing P0a Conductor remains the authority for transitions. The harness
 requires the exact active plan and a coordinator grant authorized for one
 join and two child attempts. Each child receives a derived grant with one
@@ -34,10 +41,10 @@ insufficient parent attempt budget, a failed child, and oversized input.
   `process` execution profile is intended for a future worker adapter; this
   slice does not launch or isolate processes and does not prove runtime wall
   time, CPU, or memory enforcement.
-- The Conductor journal persists grants, claims, permits, and outcomes, but
-  this harness object does not reconstruct its own in-memory handles after a
-  restart. Recovery, cancellation, retries, and concurrent-host behavior are
-  outside this slice.
+- The CLI can rebind exact committed permits in a fresh Conductor for its one
+  dispatch, but it never resumes workers after a crash. Recovery beyond
+  authoritative readback, retries, and concurrent-host behavior remain outside
+  this slice. The direct harness object remains in-memory.
 - Grant creation and intent dispatch are separate P0a transitions. A failure
   during preparation can leave a reserved child grant without a matching
   worker. Adoption requires transactional orchestration or explicit cleanup

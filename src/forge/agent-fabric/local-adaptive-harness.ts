@@ -199,9 +199,39 @@ export class LocalAdaptiveHarness {
   /** Execute both permitted roles in separate bounded Node processes and join
    * only committed, parent-verified child digests. */
   async run(signal?: AbortSignal): Promise<LocalAdaptiveProcessResult> {
-    if (this.processRunStarted) throw new AgentFabricError("AF_CONFLICT", "Process workflow already started");
     if (signal?.aborted) throw new AgentFabricError("AF_INVALID_STATE", "Process workflow cancelled before prepare");
-    const permits = this.prepare();
+    if (!this.prepared) this.prepare();
+    return this.runPrepared(signal);
+  }
+
+  /** Rebind only the two exact permits already committed in a durable journal. */
+  resumePrepared(): void {
+    if (this.prepared || this.processRunStarted) throw new AgentFabricError("AF_CONFLICT", "Harness already prepared");
+    const state = this.config.conductor.state();
+    const revision = state.planRevisions[this.config.revisionId];
+    if (!revision || state.activePlanRevisionByExecution[this.config.rootExecutionId] !== this.config.revisionId ||
+        stableStringify(revision) !== stableStringify(compileLocalAdaptiveRevision(
+          this.config.rootExecutionId, revision.goalId, this.config.revisionId))) {
+      throw new AgentFabricError("AF_INVALID_PLAN", "Fixed local harness requires its active exact plan");
+    }
+    for (const role of ROLES) {
+      const permit = state.permits[this.permitId(role)];
+      if (!permit || permit.attemptId !== this.attemptId(role) ||
+          permit.intentId !== this.intentId(role) || permit.grantId !== this.grantId(role) ||
+          permit.effectiveRunSpecDigest !== this.specDigest(role) ||
+          state.outcomes[permit.attemptId]) {
+        throw new AgentFabricError("AF_INVALID_STATE", `Missing or already used ${role} permit`);
+      }
+      this.permits[role] = permit;
+    }
+    this.prepared = true;
+  }
+
+  /** Execute a previously committed pair of permits exactly once. */
+  async runPrepared(signal?: AbortSignal): Promise<LocalAdaptiveProcessResult> {
+    if (!this.prepared || this.processRunStarted) throw new AgentFabricError("AF_CONFLICT", "Process workflow is not ready");
+    if (signal?.aborted) throw new AgentFabricError("AF_INVALID_STATE", "Process workflow cancelled before start");
+    const permits = { inventory: this.requirePermit("inventory"), constraints: this.requirePermit("constraints") };
     this.processRunStarted = true;
     const adapters = {
       inventory: new LocalAdaptiveProcessAdapter("inventory", this.inputs.inventory, this.config.clock, signal),
