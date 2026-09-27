@@ -15,6 +15,15 @@ and MCP proposal/status tools backed by a local owner process. It does not make
 a production persistence or security claim. Its scope and remaining gates are
 in [`P0B_B_LOCAL_CODING_SCOPE.md`](./architecture/agent-fabric/P0B_B_LOCAL_CODING_SCOPE.md).
 
+`LocalAdaptiveHarness.run()` is a fixed local demonstration of two permitted
+Node processes (`inventory` and `constraints`) followed by an authoritative
+join. Each child receives only bounded text on stdin, an empty environment,
+and a one second wall limit. The coordinator validates each digest against its
+own input before committing the P0a result; cancellation, timeout, or an
+invalid report leaves the join blocked. This trusted data worker is not an
+arbitrary coding agent or an OS security sandbox, and the in-memory run has no
+restart recovery.
+
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
 
 - model-selected tools, plugins or child delegation beyond P0b-A;

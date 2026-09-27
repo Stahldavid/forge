@@ -7,6 +7,8 @@ import {
 import {
   LocalAdaptiveHarness, compileLocalAdaptiveRevision,
 } from "../../src/forge/agent-fabric/local-adaptive-harness.ts";
+import { LocalAdaptiveProcessAdapter } from "../../src/forge/agent-fabric/local-adaptive-worker.ts";
+import { executeP0aActivity } from "../../src/forge/agent-fabric/p0a.ts";
 
 class ManualClock implements Clock {
   constructor(private value = 1_000) {}
@@ -71,6 +73,40 @@ function fixture(parentAttempts = 3, workers = 2, globalWorkerCapacity = 2) {
 }
 
 describe("fixed local adaptive harness", () => {
+  test("two real bounded worker processes return verified digests before join", async () => {
+    const { harness, conductor } = fixture();
+    const result = await harness.run();
+    expect(result.children.inventory.status).toBe("succeeded");
+    expect(result.children.constraints.status).toBe("succeeded");
+    expect(result.workerPids.inventory).toBeNumber();
+    expect(result.workerPids.constraints).toBeNumber();
+    expect(result.workerPids.inventory).not.toBe(process.pid);
+    expect(result.workerPids.constraints).not.toBe(process.pid);
+    expect(result.workerPids.inventory).not.toBe(result.workerPids.constraints);
+    expect(result.join.status).toBe("succeeded");
+    expect(Object.keys(conductor.state().outcomes)).toHaveLength(3);
+  });
+
+  test("cancellation prevents a process result from authorizing the join", async () => {
+    const { harness, conductor } = fixture();
+    const abort = new AbortController();
+    const running = harness.run(abort.signal);
+    abort.abort();
+    const result = await running;
+    expect(result.join).toEqual({ status: "blocked", reason: "incomplete_or_failed_child" });
+    expect(Object.values(conductor.state().outcomes).some((outcome) => outcome.intentId.endsWith(":join"))).toBe(false);
+  });
+
+  test("a nonzero worker exit commits failure and blocks the join", async () => {
+    const { harness, conductor, clock } = fixture();
+    const permits = harness.prepare();
+    // Deliberately bypass the harness input bound to exercise the child failure path.
+    const worker = new LocalAdaptiveProcessAdapter("inventory", "x".repeat(257), clock);
+    const child = await executeP0aActivity({ conductor, adapter: worker, permit: permits.inventory });
+    expect(child.status).toBe("failed");
+    expect(harness.join()).toEqual({ status: "blocked", reason: "incomplete_or_failed_child" });
+  });
+
   test("two attenuated workers join only after authoritative bounded results", () => {
     const { harness, conductor } = fixture();
     const permits = harness.prepare();

@@ -2,6 +2,8 @@ import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import { ForgeAgentConductor } from "./hardened-conductor.ts";
 import { AgentFabricError } from "./errors.ts";
 import { createRunPlanRevision } from "./planning.ts";
+import { executeP0aActivity, type P0aActivityExecutionResult } from "./p0a.ts";
+import { LocalAdaptiveProcessAdapter } from "./local-adaptive-worker.ts";
 import type {
   AgentSpec, AttemptExecutionPermit, AuthoritativeOutcomeCommit, Clock, Digest,
   ExecutionProfile, HarnessSpec, RunPlanRevision, WorkflowProgramVersion,
@@ -102,13 +104,21 @@ export type LocalAdaptiveJoinResult =
   | { status: "blocked"; reason: "incomplete_or_failed_child" | "unexpected_child_result" }
   | { status: "succeeded"; outcome: AuthoritativeOutcomeCommit };
 
+export interface LocalAdaptiveProcessResult {
+  children: Readonly<Record<LocalAdaptiveRole,
+    P0aActivityExecutionResult | { status: "error"; reason: string }>>;
+  workerPids: Readonly<Partial<Record<LocalAdaptiveRole, number>>>;
+  join: LocalAdaptiveJoinResult;
+}
+
 /**
- * A deterministic local protocol slice. It does not launch an OS process or a model.
- * Real worker adapters must use these permits and supply separately verified reports.
+ * A fixed two-process data workflow with a deterministic in-process test seam.
+ * The workers digest supplied text only; they do not run arbitrary task code.
  */
 export class LocalAdaptiveHarness {
   private readonly permits: Partial<Record<LocalAdaptiveRole, AttemptExecutionPermit>> = {};
   private prepared = false;
+  private processRunStarted = false;
   private readonly inputs: Record<LocalAdaptiveRole, string>;
 
   constructor(private readonly config: LocalAdaptiveHarnessInput) {
@@ -184,6 +194,30 @@ export class LocalAdaptiveHarness {
     }
     this.prepared = true;
     return { inventory: this.requirePermit("inventory"), constraints: this.requirePermit("constraints") };
+  }
+
+  /** Execute both permitted roles in separate bounded Node processes and join
+   * only committed, parent-verified child digests. */
+  async run(signal?: AbortSignal): Promise<LocalAdaptiveProcessResult> {
+    if (this.processRunStarted) throw new AgentFabricError("AF_CONFLICT", "Process workflow already started");
+    if (signal?.aborted) throw new AgentFabricError("AF_INVALID_STATE", "Process workflow cancelled before prepare");
+    const permits = this.prepare();
+    this.processRunStarted = true;
+    const adapters = {
+      inventory: new LocalAdaptiveProcessAdapter("inventory", this.inputs.inventory, this.config.clock, signal),
+      constraints: new LocalAdaptiveProcessAdapter("constraints", this.inputs.constraints, this.config.clock, signal),
+    };
+    const settled = await Promise.allSettled(ROLES.map((role) =>
+      executeP0aActivity({ conductor: this.config.conductor, adapter: adapters[role], permit: permits[role] })));
+    const children = {} as Record<LocalAdaptiveRole, LocalAdaptiveProcessResult["children"][LocalAdaptiveRole]>;
+    for (const [index, role] of ROLES.entries()) {
+      const result = settled[index]!;
+      children[role] = result.status === "fulfilled" ? result.value :
+        { status: "error", reason: result.reason instanceof Error ? result.reason.message : "activity_rejected" };
+    }
+    return { children,
+      workerPids: { inventory: adapters.inventory.pid, constraints: adapters.constraints.pid },
+      join: this.join() };
   }
 
   /** Runs only a fixed data digest. Failure can narrow authority, never expand it. */
