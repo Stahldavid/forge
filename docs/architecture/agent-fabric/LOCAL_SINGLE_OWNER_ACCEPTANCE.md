@@ -1,9 +1,10 @@
 # Agent Fabric single-owner local acceptance
 
-Status: candidate. This record tracks the one-PC, one-owner target selected for
-the current delivery. An exact-head CI result, a fresh real Ollama/Docker run,
-and an owner decision through the final popup are required before calling the
-pilot accepted. Package publication is a separate release gate.
+Status: accepted for the bounded one-PC, one-owner local pilot on 2026-09-28.
+The exact-head checks, real Ollama/Docker run, delegated popup decisions on a
+disposable fixture, and public package readback passed. Native Codex Desktop
+MCP calls and hook events remain unobserved in this app session, so this is
+not acceptance of that integration or of the broader multiuser architecture.
 
 ## Product boundary
 
@@ -23,10 +24,10 @@ general sandbox for adversarial source code or external agent executables.
 
 | Plan step | Local implementation | Acceptance limit |
 | --- | --- | --- |
-| 0 Release integrity | Public `forgeos@0.1.0-alpha.64` was read back; this change has a patch changeset. | The next package must pass its own exact-head release and public readback. |
-| 1-4 Contract, CLI, control, approval | Bounded task contract, owner-scoped PGlite journal, CLI and local popup. | Delegated popup decisions were observed on a disposable fixture; exact-head release confirmation remains. |
+| 0 Release integrity | [Implementation PR #61](https://github.com/Stahldavid/forge/pull/61) merged at `6fb76d734257d96d1d366528848801cbd3698395`; [release PR #62](https://github.com/Stahldavid/forge/pull/62) merged at `3801303e0fbbd011610f21173b8260e0cd046a38`. The [publish run](https://github.com/Stahldavid/forge/actions/runs/36356759977) passed, npm `alpha` resolved to `forgeos@0.1.0-alpha.65`, and an isolated registry install reported the same CLI version. | The npm `latest` tag remains `0.1.0-alpha.33`; the workflow skipped its optional promotion because `NPM_TOKEN` is absent. |
+| 1-4 Contract, CLI, control, approval | Bounded task contract, owner-scoped PGlite journal, CLI and local popup. Delegated popup decisions were observed on a disposable fixture. | Those clicks were made by the agent under explicit user delegation, not by an independent human reviewer. |
 | 5-6 Worker and assurance | P0a permit-bound local Ollama call, isolated checkout, patch digest, status/readback, and separate diff acceptance. | Real local model and Docker checks passed; ambiguous dispatch never means success. Model quality outside the fixed fixture is not established. |
-| 7 Agent clients | CLI and proposal/status/evidence MCP adapter share one local owner; two independent stdio clients were exercised. | A native Codex App MCP call in the current app session is still unobserved. MCP cannot approve or run. |
+| 7 Agent clients | CLI and proposal/status/evidence MCP adapter share one local owner; two independent stdio clients were exercised. The CLI was called successfully from Codex Desktop. | A native Codex App MCP call and native hook event in the current app session are still unobserved. MCP cannot approve or run. |
 | 8 Effects and sandbox | Fixed patch and Docker verification paths use durable intents, inspectable receipts, and fail-closed reconciliation. | No arbitrary consequential effect broker or OS sandbox for coding agents is adopted. |
 | 9 Context and memory | Source snapshot checks, bounded private owner memory, deletion, and proposal binding. | Memory is untrusted context, never authority. No shared multiuser memory. |
 | 10 Adaptive harness | Owner-reviewed fixed two-process digest workflow with attenuated P0a child permits and durable join readback. | These are data workers, not multiple general coding agents; a crash before committed join remains uncertain. |
@@ -58,18 +59,33 @@ general sandbox for adversarial source code or external agent executables.
   attempt was replayed. The fixed worker now validates before committing a
   successful result or beginning patch materialization.
 
-## Final evidence to record
+## Release and acceptance evidence
 
-1. Candidate Git commit, tree, PR and required CI/security check results.
-2. Focused tests, TypeScript and lint, Forge generation/check, and framework
-   verification result, including any machine-specific blocker.
-3. Real keyless Ollama patch, Docker verification, restart readback, and a
-   two-client MCP proposal/status/evidence run on that exact candidate.
-4. Popup approval and diff decision in the final local flow, with the decision
-   actor recorded. The delegated disposable-fixture clicks above cannot be
-   described as independent human review.
-5. Merged release PR, npm `alpha` dist-tag and installed-package smoke if this
-   candidate is published.
+1. Implementation candidate `b02211895c77d7e5201435b4ac737aaee7603fed`
+   passed seven exact-head PR checks, including CI, security, Nuxt, Windows,
+   Linux, quickstart, and GitGuardian. Independent security review found a
+   model-pinning issue; the candidate fixed it and follow-up review found no
+   actionable issue. The release PR head
+   `eeeb1745ca06e8ab68cb0a719fced870ea319a94` also passed seven checks.
+2. Local focused model-pinning tests passed 30/30. TypeScript, lint, Forge
+   generation/check, and framework verification passed on the implementation
+   candidate. The real keyless `qwen2.5-coder:3b` fixture changed only
+   `answer.txt: alpha -> beta`, passed `git diff --check` and the fixed Docker
+   Node check, and preserved its evidence digest after owner restart. Two MCP
+   stdio clients read the same owner across a restart without model calls.
+3. The final popup approval and diff decision were clicked by the agent under
+   explicit user delegation on a disposable fixture. The persisted task is
+   `accepted` with pinned model `qwen2.5-coder:3b` and diff digest
+   `sha256:0ace9a0bec6340fcb7273627a2b8a73600dcc94c48014067000e36057ef22e2a`.
+   This does not establish independent human review.
+4. The publish workflow passed after the release merge. `npm view` resolved
+   `forgeos@alpha` to `0.1.0-alpha.65`; a fresh temporary npm install executed
+   its own `forge --version` and returned `0.1.0-alpha.65`.
+5. The current Codex Desktop tool list contains no exposed `fabric_*` MCP
+   tools, and `forge agent onboard --target codex --json` reports zero native
+   hook signals. Native Codex Desktop integration requires a separate observed
+   call and event before it can be called accepted.
 
-This record is a gate checklist, not a claim that every broader Agent Fabric
-architecture capability has been adopted.
+This is acceptance of the bounded local pilot. It is not a claim that arbitrary
+coding agents, an OS sandbox, native Codex Desktop integration, or multiuser
+production have been delivered.
