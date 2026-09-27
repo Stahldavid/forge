@@ -9,6 +9,12 @@ P0b-A invokes one real model through the existing P0a permit and result boundary
 accepted scope and exact adoption evidence are recorded in
 [`P0B_A_ADOPTION_RECORD.md`](./architecture/agent-fabric/P0B_A_ADOPTION_RECORD.md).
 
+The proposed local coding pilot has bounded proposal validation, an experimental
+single-process PGlite control-journal boundary, and read-only MCP capability discovery.
+These primitives do not yet provide owner approval, task creation through MCP, a coding
+worker, or a production persistence claim. Their proposed scope and remaining gates are
+in [`P0B_B_LOCAL_CODING_SCOPE.md`](./architecture/agent-fabric/P0B_B_LOCAL_CODING_SCOPE.md).
+
 The following remain explicitly deferred and must not be inferred from architecture notes, historical handoffs, or local experiments:
 
 - model-selected tools, plugins or child delegation beyond P0b-A;
