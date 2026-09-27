@@ -36,6 +36,7 @@ test("CLI and MCP clients share one local owner without MCP approval tools", asy
         const names = ((list?.result as { tools: { name: string }[] }).tools).map((tool) => tool.name);
         expect(names).toContain("fabric_propose");
         expect(names).toContain("fabric_status");
+        expect(names).toContain("fabric_evidence");
         expect(names).not.toContain("fabric_approve");
 
         const submitted = await handleMcpRequest(root, {
@@ -51,6 +52,18 @@ test("CLI and MCP clients share one local owner without MCP approval tools", asy
         });
         const mcpReadStatus = JSON.parse((mcpRead?.result as { content: { text: string }[] }).content[0]!.text);
         expect(mcpReadStatus.status.taskId).toBe(mcpStatus.status.taskId);
+        const evidenceRead = await handleMcpRequest(root, {
+          method: "tools/call", id: 4,
+          params: { name: "fabric_evidence", arguments: { taskId: mcpStatus.status.taskId } },
+        });
+        const mcpEvidence = JSON.parse((evidenceRead?.result as { content: { text: string }[] }).content[0]!.text);
+        expect(mcpEvidence).toMatchObject({
+          ok: true, taskId: mcpStatus.status.taskId, state: "proposed",
+          provenance: { schemaVersion: 1, baseCommit: proposal.baseCommit,
+            modelTargetId: "target:ollama:local", model: "qwen3:0.6b" },
+        });
+        expect(mcpEvidence.provenance.evidenceDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+        expect(JSON.stringify(mcpEvidence)).not.toContain("source.txt changes");
 
         const forbidden = await fetch(`http://127.0.0.1:${owner.port}/v1/status`, {
           method: "POST", headers: { "Content-Type": "application/json" },

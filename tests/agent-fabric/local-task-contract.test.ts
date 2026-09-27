@@ -105,4 +105,22 @@ describe("local coding task proposal contract", () => {
     expect(() => validateLocalCodingTaskProposal(request)).toThrow(AgentFabricError);
     expect(called).toBe(false);
   });
+
+  test("binds only bounded verification descriptors to the approved proposal", () => {
+    const verification = { imageId: `sha256:${"a".repeat(64)}`, commands: [
+      { kind: "git-diff-check", timeoutMs: 5_000 },
+      { kind: "node-test-file", path: "pass.test.mjs", timeoutMs: 20_000 },
+    ] };
+    const accepted = validateLocalCodingTaskProposal({ ...proposal(), verification });
+    expect(accepted.proposal.verification?.commands).toHaveLength(2);
+    expect(validateLocalCodingTaskProposal(proposal()).proposalDigest).not.toBe(accepted.proposalDigest);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), verification: {
+      ...verification, commands: [{ kind: "git-diff-check", timeoutMs: 5_000 },
+        { kind: "node-test-file", path: "../secrets.test.mjs", timeoutMs: 20_000 }],
+    } })).toThrow(AgentFabricError);
+    expect(() => validateLocalCodingTaskProposal({ ...proposal(), verification: {
+      ...verification, commands: [{ kind: "git-diff-check", timeoutMs: 5_000 },
+        { kind: "shell", command: "curl example.com", timeoutMs: 20_000 }],
+    } })).toThrow(AgentFabricError);
+  });
 });

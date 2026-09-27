@@ -14,6 +14,7 @@ test("MCP exposes proposals and status only through the local owner", async () =
     expect(names).toContain("fabric_capabilities");
     expect(names).toContain("fabric_propose");
     expect(names).toContain("fabric_status");
+    expect(names).toContain("fabric_evidence");
     expect(names).not.toContain("fabric_authorize");
     expect(names).not.toContain("fabric_start");
 
@@ -25,6 +26,7 @@ test("MCP exposes proposals and status only through the local owner", async () =
     expect(payload).toMatchObject({
       ok: true, codingTaskControl: "local_owner_service_required", ownerApproval: "local_popup_cli_only",
       taskMutationTools: ["fabric_propose"],
+      taskReadTools: ["fabric_status", "fabric_evidence"],
     });
     const invalid = await handleMcpRequest(workspace, {
       jsonrpc: "2.0", id: 3, method: "tools/call",

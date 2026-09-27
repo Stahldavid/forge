@@ -1,7 +1,8 @@
 import type { DbAdapter } from "../runtime/db/adapter.ts";
 import { AgentFabricError } from "./errors.ts";
-import { stableStringify } from "./canonical.ts";
+import { digestCanonical, sha256Digest, stableStringify } from "./canonical.ts";
 import type { LocalPatchEvidence } from "./local-coding-worker.ts";
+import type { LocalVerificationEvidence } from "./local-verification.ts";
 import {
   validateLocalCodingTaskProposal,
   type ValidatedLocalCodingTaskProposal,
@@ -33,6 +34,24 @@ const CREATE_DECISIONS_TABLE = `
     decided_at BIGINT NOT NULL
   )`;
 
+const CREATE_VERIFICATIONS_TABLE = `
+  CREATE TABLE IF NOT EXISTS _forge_agent_fabric_local_verifications (
+    task_id TEXT PRIMARY KEY,
+    diff_digest TEXT NOT NULL,
+    request_digest TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('started', 'finished')),
+    evidence_json TEXT,
+    evidence_digest TEXT
+  )`;
+
+export interface LocalVerificationRecord {
+  diffDigest: Digest;
+  requestDigest: Digest;
+  state: "started" | "finished";
+  evidence?: LocalVerificationEvidence;
+  evidenceDigest?: Digest;
+}
+
 export interface LocalTaskRecord extends ValidatedLocalCodingTaskProposal {
   taskId: string;
   repositoryRoot: string;
@@ -49,6 +68,7 @@ export class LocalTaskInbox {
   private schemaReady?: Promise<unknown>;
   private patchSchemaReady?: Promise<unknown>;
   private decisionSchemaReady?: Promise<unknown>;
+  private verificationSchemaReady?: Promise<unknown>;
 
   constructor(private readonly adapter: DbAdapter) {
     if (adapter.kind !== "pglite") {
@@ -165,6 +185,61 @@ export class LocalTaskInbox {
     } catch {
       throw new AgentFabricError("AF_INVALID_STATE", "Stored patch evidence is not JSON");
     }
+  }
+
+  async beginVerification(taskId: string, diffDigest: Digest, requestDigest: Digest): Promise<void> {
+    const patch = await this.getPatch(taskId);
+    if (!patch || patch.diffDigest !== diffDigest) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification patch changed");
+    }
+    this.verificationSchemaReady ??= this.adapter.query(CREATE_VERIFICATIONS_TABLE);
+    await this.verificationSchemaReady;
+    const result = await this.adapter.query(
+      `INSERT INTO _forge_agent_fabric_local_verifications
+       (task_id, diff_digest, request_digest, state) VALUES ($1, $2, $3, 'started')
+       ON CONFLICT (task_id) DO NOTHING`, [taskId, diffDigest, requestDigest],
+    );
+    if (result.rowCount !== 1) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification already dispatched; read back its result or reconcile uncertain execution");
+    }
+  }
+
+  async finishVerification(taskId: string, evidence: LocalVerificationEvidence, requestDigest: Digest): Promise<void> {
+    const evidenceDigest = digestCanonical(evidence, sha256Digest);
+    const result = await this.adapter.query(
+      `UPDATE _forge_agent_fabric_local_verifications SET state = 'finished',
+       evidence_json = $4, evidence_digest = $5
+       WHERE task_id = $1 AND diff_digest = $2 AND request_digest = $3 AND state = 'started'`,
+      [taskId, evidence.patchDigest, requestDigest, stableStringify(evidence), evidenceDigest],
+    );
+    if (result.rowCount !== 1) throw new AgentFabricError("AF_CONFLICT", "Verification intent changed before result commit");
+  }
+
+  async getVerification(taskId: string): Promise<LocalVerificationRecord | null> {
+    this.verificationSchemaReady ??= this.adapter.query(CREATE_VERIFICATIONS_TABLE);
+    await this.verificationSchemaReady;
+    const result = await this.adapter.query(
+      `SELECT diff_digest, request_digest, state, evidence_json, evidence_digest
+       FROM _forge_agent_fabric_local_verifications WHERE task_id = $1`, [taskId],
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    if (typeof row.diff_digest !== "string" || typeof row.request_digest !== "string" ||
+        (row.state !== "started" && row.state !== "finished")) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Stored verification intent is invalid");
+    }
+    if (row.state === "started") {
+      if (row.evidence_json !== null || row.evidence_digest !== null) throw new AgentFabricError("AF_INVALID_STATE", "Started verification has a result");
+      return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest, state: "started" };
+    }
+    let evidence: LocalVerificationEvidence;
+    try { evidence = JSON.parse(String(row.evidence_json)) as LocalVerificationEvidence; }
+    catch { throw new AgentFabricError("AF_INVALID_STATE", "Stored verification result is not JSON"); }
+    if (evidence.patchDigest !== row.diff_digest || digestCanonical(evidence, sha256Digest) !== row.evidence_digest) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Stored verification result failed digest readback");
+    }
+    return { diffDigest: row.diff_digest as Digest, requestDigest: row.request_digest as Digest,
+      state: "finished", evidence, evidenceDigest: row.evidence_digest as Digest };
   }
 
   async recordPatchDecision(taskId: string, diffDigest: Digest, decision: "approved" | "rejected", now = Date.now()): Promise<void> {

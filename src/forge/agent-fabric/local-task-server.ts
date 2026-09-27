@@ -10,7 +10,7 @@ import { localFabricPath } from "./local-paths.ts";
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
 
-export type LocalTaskAction = "propose" | "status" | "review" | "run" | "review-result";
+export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "verify" | "review-result";
 
 interface OwnerEndpoint {
   schemaVersion: 1;
@@ -101,8 +101,10 @@ async function dispatch(service: LocalTaskService, action: LocalTaskAction, requ
     throw new AgentFabricError("AF_INVALID_STATE", "Task request requires only taskId");
   }
   if (action === "status") return service.status(request.taskId);
+  if (action === "evidence") return service.evidence(request.taskId);
   if (action === "review") return service.review(request.taskId);
   if (action === "run") return service.run(request.taskId);
+  if (action === "verify") return service.verify(request.taskId);
   return service.reviewResult(request.taskId);
 }
 
@@ -140,7 +142,7 @@ export async function serveLocalTasks(
       }
       const action = request.url?.slice("/v1/".length) as LocalTaskAction;
       if (request.method !== "POST" || !request.url?.startsWith("/v1/") ||
-          !["propose", "status", "review", "run", "review-result"].includes(action)) {
+          !["propose", "status", "evidence", "review", "run", "verify", "review-result"].includes(action)) {
         response.writeHead(404).end(JSON.stringify({ ok: false, error: "unknown_action" }));
         return;
       }
@@ -191,7 +193,7 @@ export async function requestLocalTask(
     response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {
       method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
       body: JSON.stringify(body), redirect: "manual",
-      signal: AbortSignal.timeout(action === "run" ? 130_000 :
+      signal: AbortSignal.timeout(action === "run" ? 130_000 : action === "verify" ? 250_000 :
         action === "review" || action === "review-result" ? 310_000 : 10_000),
     });
   } catch {

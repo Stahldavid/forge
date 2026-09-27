@@ -12,6 +12,7 @@ import { createRunPlanRevision } from "./planning.ts";
 import { requestLocalApproval, requestLocalPatchAcceptance, type LocalApprovalDecision, type LocalApprovalView, type LocalPatchReviewView } from "./local-approval-window.ts";
 import { LocalControlStore } from "./local-control-store.ts";
 import { LocalTaskInbox, type LocalTaskRecord } from "./local-task-inbox.ts";
+import { runLocalVerification, type LocalVerificationEvidence } from "./local-verification.ts";
 import { localFabricPath } from "./local-paths.ts";
 import { serializeLocalAdapter } from "./serialized-local-adapter.ts";
 import type { Digest, GoalContract, OwnerAuthorization, OwnerAuthorizationVerifier } from "./types.ts";
@@ -30,6 +31,22 @@ export interface LocalTaskStatus {
   evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_ready";
   patch?: LocalPatchEvidence;
   ownerDecision?: "approved" | "rejected";
+  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"]; evidenceDigest?: Digest };
+  provenance?: LocalTaskProvenance;
+}
+
+export interface LocalTaskProvenance {
+  schemaVersion: 1;
+  proposalDigest: Digest;
+  baseCommit: string;
+  modelTargetId: string;
+  model: "qwen3:0.6b";
+  permit?: { permitId: string; attemptId: string; fencingToken: number };
+  outcome?: { status: "succeeded" | "failed"; resultDigest: Digest; reportDigest: Digest; committedAt: number };
+  patch?: { diffDigest: Digest; changedPaths: readonly string[]; verification: LocalPatchEvidence["verification"] };
+  ownerDecision?: "approved" | "rejected";
+  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"]; evidenceDigest?: Digest };
+  evidenceDigest: Digest;
 }
 
 function digestSuffix(digest: Digest): string {
@@ -226,6 +243,13 @@ export class LocalTaskService {
     const outcome = events.find((event) => event.payload.type === "attempt_outcome_committed");
     const patch = await this.inbox.getPatch(taskId);
     const ownerDecision = await this.inbox.getPatchDecision(taskId);
+    const verification = await this.inbox.getVerification(taskId);
+    if (verification && (!record.proposal.verification || !patch ||
+        verification.diffDigest !== patch.diffDigest ||
+        verification.requestDigest !== digestCanonical({ proposalDigest: record.proposalDigest,
+          diffDigest: patch.diffDigest, spec: record.proposal.verification }, sha256Digest))) {
+      throw new AgentFabricError("AF_INVALID_STATE", "Verification intent is not bound to the approved proposal and patch");
+    }
     if (ownerDecision && !patch) {
       throw new AgentFabricError("AF_INVALID_STATE", "Owner decision has no recorded patch");
     }
@@ -260,7 +284,40 @@ export class LocalTaskService {
         : outcome ? "model_result" : permit ? "provider_uncertain" : "not_started",
       ...(patch ? { patch } : {}),
       ...(ownerDecision ? { ownerDecision } : {}),
+      ...(verification ? { verification: { state: verification.state,
+        ...(verification.evidence ? { outcome: verification.evidence.outcome,
+          evidenceDigest: verification.evidenceDigest } : {}) } } : {}),
     };
+  }
+
+  /** Bounded, digest-bound readback for CLI and MCP clients; never exposes model text or raw diff. */
+  async evidence(taskId: string): Promise<LocalTaskStatus> {
+    const status = await this.status(taskId);
+    if (status.patch) verifyLocalPatchEvidence(status.patch);
+    const ids = identities(status.proposalDigest);
+    const events = await this.control.readAll(ids.rootExecutionId);
+    const permitEvent = events.find((event) => event.payload.type === "attempt_execution_permit_issued");
+    const outcomeEvent = events.find((event) => event.payload.type === "attempt_outcome_committed");
+    const permit = permitEvent?.payload.type === "attempt_execution_permit_issued"
+      ? permitEvent.payload.permit : undefined;
+    const outcome = outcomeEvent?.payload.type === "attempt_outcome_committed"
+      ? outcomeEvent.payload.outcome : undefined;
+    const evidence = {
+      schemaVersion: 1 as const,
+      proposalDigest: status.proposalDigest,
+      baseCommit: status.baseCommit,
+      modelTargetId: status.requestedModelTargetId,
+      model: "qwen3:0.6b" as const,
+      ...(permit ? { permit: { permitId: permit.permitId, attemptId: permit.attemptId,
+        fencingToken: permit.fencingToken } } : {}),
+      ...(outcome ? { outcome: { status: outcome.status, resultDigest: outcome.resultDigest,
+        reportDigest: outcome.reportDigest, committedAt: outcome.committedAt } } : {}),
+      ...(status.patch ? { patch: { diffDigest: status.patch.diffDigest,
+        changedPaths: status.patch.changedPaths, verification: status.patch.verification } } : {}),
+      ...(status.ownerDecision ? { ownerDecision: status.ownerDecision } : {}),
+      ...(status.verification ? { verification: status.verification } : {}),
+    };
+    return { ...status, provenance: { ...evidence, evidenceDigest: digestCanonical(evidence, sha256Digest) } };
   }
 
   async review(taskId: string): Promise<LocalTaskStatus> {
@@ -475,6 +532,8 @@ export class LocalTaskService {
     }
     const patch = status.patch;
     verifyLocalPatchEvidence(patch);
+    const record = await this.inbox.get(taskId);
+    if (!record) throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
     const diff = readFileSync(patch.diffPath, "utf8");
     if (sha256Digest(diff) !== patch.diffDigest) {
       throw new AgentFabricError("AF_INVALID_STATE", "Diff changed before owner review");
@@ -482,9 +541,36 @@ export class LocalTaskService {
     const decision = await this.patchAcceptance({
       taskId, repositoryRoot: this.repositoryRoot, baseCommit: status.baseCommit,
       diffDigest: patch.diffDigest, diff, verification: patch.verification,
+      ...(status.verification ? { sandboxVerification: status.verification } : {}),
     });
     verifyLocalPatchEvidence(patch);
+    if (decision === "approved" && record.proposal.verification && status.verification?.outcome !== "passed") {
+      throw new AgentFabricError("AF_CONFLICT", "Cannot accept a patch whose approved verification did not pass");
+    }
     await this.inbox.recordPatchDecision(taskId, patch.diffDigest, decision);
+    return this.status(taskId);
+  }
+
+  async verify(taskId: string): Promise<LocalTaskStatus> {
+    const record = await this.inbox.get(taskId);
+    if (!record || record.repositoryRoot !== this.repositoryRoot) {
+      throw new AgentFabricError("AF_NOT_FOUND", "Unknown local coding task");
+    }
+    const spec = record.proposal.verification;
+    if (!spec) throw new AgentFabricError("AF_CONFLICT", "No owner-approved verification profile for this task");
+    const status = await this.status(taskId);
+    if (status.state !== "patch_ready" || !status.patch || status.verification) {
+      throw new AgentFabricError("AF_CONFLICT", "Verification already started or patch is not ready");
+    }
+    verifyLocalPatchEvidence(status.patch);
+    const requestDigest = digestCanonical({ proposalDigest: record.proposalDigest,
+      diffDigest: status.patch.diffDigest, spec }, sha256Digest);
+    await this.inbox.beginVerification(taskId, status.patch.diffDigest, requestDigest);
+    const observed = await runLocalVerification({ patch: status.patch,
+      imageId: spec.imageId, commands: spec.commands });
+    const result: LocalVerificationEvidence = { ...observed,
+      commands: observed.commands.map((command) => ({ ...command, outputPreview: "" })) };
+    await this.inbox.finishVerification(taskId, result, requestDigest);
     return this.status(taskId);
   }
 

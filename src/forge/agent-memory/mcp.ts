@@ -50,6 +50,12 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
               required: ["taskId"], additionalProperties: false },
           },
           {
+            name: "fabric_evidence",
+            description: "Read digest-bound task provenance without raw model output or diff content.",
+            inputSchema: { type: "object", properties: { taskId: { type: "string" } },
+              required: ["taskId"], additionalProperties: false },
+          },
+          {
             name: "agent_context",
             description: "Read the ForgeOS Agent Memory context pack for the current work or a runtime entry.",
             inputSchema: {
@@ -146,18 +152,23 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       codingTaskControl: "local_owner_service_required",
       ownerApproval: "local_popup_cli_only",
       taskMutationTools: ["fabric_propose"],
+      taskReadTools: ["fabric_status", "fabric_evidence"],
       cli: "forge fabric capabilities --json",
     };
   }
-  if (name === "fabric_propose" || name === "fabric_status") {
+  if (name === "fabric_propose" || name === "fabric_status" || name === "fabric_evidence") {
     const keys = Object.keys(args).sort().join(",");
     if (name === "fabric_propose" && keys !== "proposal") throw new Error("fabric_propose requires only proposal");
-    if (name === "fabric_status" && (keys !== "taskId" || typeof args.taskId !== "string")) {
-      throw new Error("fabric_status requires only taskId");
+    if ((name === "fabric_status" || name === "fabric_evidence") &&
+        (keys !== "taskId" || typeof args.taskId !== "string")) {
+      throw new Error(`${name} requires only taskId`);
     }
     const status = await requestLocalTask(realpathSync(workspaceRoot),
-      name === "fabric_propose" ? "propose" : "status", args);
+      name === "fabric_propose" ? "propose" : name === "fabric_evidence" ? "evidence" : "status", args);
     if (!status) throw new Error("Agent Fabric local owner is not running; start forge fabric serve");
+    if (name === "fabric_evidence") {
+      return { ok: true, taskId: status.taskId, state: status.state, provenance: status.provenance };
+    }
     return { ok: true, status };
   }
   if (name === "agent_context") {

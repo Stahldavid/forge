@@ -215,8 +215,10 @@ installed. This pilot uses no hosted API key or Codex model turn.
 node bin/forge.mjs fabric capabilities --json
 node bin/forge.mjs fabric propose --file task.json --json
 node bin/forge.mjs fabric status <task-id> --json
+node bin/forge.mjs fabric evidence <task-id> --json
 node bin/forge.mjs fabric review <task-id> --json
 node bin/forge.mjs fabric run <task-id> --json
+node bin/forge.mjs fabric verify <task-id> --json
 node bin/forge.mjs fabric review-result <task-id> --json
 node bin/forge.mjs fabric serve --json
 ```
@@ -231,11 +233,26 @@ consumes one approved model attempt and writes a diff in an isolated Git worktre
 `review-result` shows the recorded diff for a separate owner decision. Acceptance
 records a decision only; it does not alter the original checkout or merge code.
 
+An optional `verification` field binds an immutable local Docker image ID and
+two to four bounded command descriptors into the proposal digest. The first
+descriptor is `{ "kind": "git-diff-check", "timeoutMs": 5000 }`; the remaining
+descriptors are `{ "kind": "node-test-file", "path": "pass.test.mjs",
+"timeoutMs": 20000 }`. The owner sees these exact commands and image in the
+approval window. After `run` produces a patch, `verify` records a durable
+dispatch intent before running checks. A lost process leaves the verification
+state `started`, which cannot be retried automatically. `git diff --check` runs
+on the host; Node tests run inside Docker Desktop without network, with an
+immutable already-installed image, read-only checkout, nonroot user and resource
+limits. Accepting a patch with an approved verification profile requires all
+checks to pass; a failed or uncertain result can still be rejected by the owner.
+
 The local store lives under `.forge/local/agent-fabric` and has one PGlite process
 owner. Start `forge fabric serve` to keep that owner running while separate CLI
 and MCP clients connect through a loopback endpoint. The endpoint token stays in
-the local repository store and is not printed. The MCP tools `fabric_propose` and
-`fabric_status` use that same owner; they cannot approve, run, or accept a task.
+the local repository store and is not printed. The MCP tools `fabric_propose`,
+`fabric_status`, and `fabric_evidence` use that same owner; they cannot approve,
+run, or accept a task. `fabric_evidence` returns a digest-bound provenance summary
+without raw model text or diff content.
 Without a running owner, CLI commands open the store for a single operation and
 MCP task tools report that the owner is unavailable. A crashed model attempt with
 a committed permit and no outcome remains
@@ -245,8 +262,13 @@ through `fabric_capabilities`. The popup is
 a cooperative same-account interaction, so it is not a security boundary against
 an agent with unrestricted shell or UI control. The model receives only approved
 source files and cannot run shell commands. The Git worktree confines patch
-materialization, but it is not a container or VM sandbox.
+materialization; optional Node verification is container isolated. This pilot
+does not yet broker arbitrary consequential effects or attest to sandbox escape
+resistance against a hostile local administrator.
 
 Maintainers can run `bun scripts/agent-fabric-local-smoke.ts` for an opt-in real
 Ollama fixture. That script injects a synthetic test approval and confirms a diff;
 it does not prove the human popup flow or coding quality on real projects.
+`FORGE_FABRIC_DOCKER_SMOKE=1 bun test tests/agent-fabric/local-task-service.test.ts`
+exercises the service, approved verification, Docker Desktop, durable readback,
+and acceptance with a synthetic approval callback.

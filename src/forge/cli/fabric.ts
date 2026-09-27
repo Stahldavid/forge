@@ -4,7 +4,7 @@ import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
 import { requestLocalTask, serveLocalTasks, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "review" | "run" | "review-result" | "serve";
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "verify" | "review-result" | "serve";
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -16,8 +16,9 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
     const result = {
       ok: true, schemaVersion: 1, runtime: "local-pilot",
       proposal: true, ownerReview: true, durableStatus: true,
-      codingWorker: true, ownerServer: true, consequentialEffects: false,
-      mcpTaskMutation: "proposal_and_status_only", nativeCodexHookProofRequired: true,
+      codingWorker: true, ownerServer: true, sandboxVerification: true, consequentialEffects: false,
+      mcpTaskMutation: "proposal_only", mcpEvidence: true,
+      nativeCodexHookProofRequired: true,
     };
     process.stdout.write(options.json ? `${JSON.stringify(result, null, 2)}\n` :
       "Agent Fabric local pilot: proposal, owner review, bounded Ollama coding, and durable status are available.\n");
@@ -63,10 +64,14 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
     service = await LocalTaskService.open(repositoryRoot);
     const status = options.subcommand === "propose"
       ? await service.propose(proposal)
+      : options.subcommand === "evidence"
+        ? await service.evidence(options.taskId ?? "")
       : options.subcommand === "review"
         ? await service.review(options.taskId ?? "")
         : options.subcommand === "run"
           ? await service.run(options.taskId ?? "")
+          : options.subcommand === "verify"
+            ? await service.verify(options.taskId ?? "")
           : options.subcommand === "review-result"
             ? await service.reviewResult(options.taskId ?? "")
           : await service.status(options.taskId ?? "");

@@ -90,6 +90,10 @@ describe("local task service", () => {
         const completed = await running;
         expect(completed.state).toBe("patch_ready");
         expect(completed.patch?.changedPaths).toEqual(["source.txt"]);
+        const evidence = await service.evidence(proposed.taskId);
+        expect(evidence.provenance?.outcome?.status).toBe("succeeded");
+        expect(evidence.provenance?.patch?.diffDigest).toBe(completed.patch?.diffDigest);
+        expect(evidence.provenance?.evidenceDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
         await expect(service.run(proposed.taskId)).rejects.toThrow();
       } finally {
         await service.close();
@@ -98,6 +102,7 @@ describe("local task service", () => {
       try {
         const status = await reopened.propose(proposal);
         expect(status.state).toBe("patch_ready");
+        expect((await reopened.evidence(status.taskId)).provenance?.patch?.diffDigest).toBe(status.patch?.diffDigest);
         const extra = join(status.patch!.worktreeRoot, "extra.txt");
         writeFileSync(extra, "unreviewed\n");
         await expect(reopened.reviewResult(status.taskId)).rejects.toThrow("unrecorded");
@@ -126,3 +131,55 @@ describe("local task service", () => {
     }
   }, 30_000);
 });
+
+if (process.env.FORGE_FABRIC_DOCKER_SMOKE === "1") {
+  test("owner-approved verification survives restart and gates diff acceptance", async () => {
+    const root = mkdtempSync(join(tmpdir(), "forge-fabric-verified-task-"));
+    try {
+      git(root, "init", "-q");
+      git(root, "config", "user.name", "Forge Test");
+      git(root, "config", "user.email", "forge-test@example.invalid");
+      writeFileSync(join(root, "answer.txt"), "alpha\n");
+      writeFileSync(join(root, "pass.test.mjs"),
+        "import { test } from 'node:test'; import assert from 'node:assert/strict'; test('answer', () => assert.equal(1, 1));\n");
+      git(root, "add", "answer.txt", "pass.test.mjs");
+      git(root, "commit", "-qm", "fixture");
+      const imageId = execFileSync("docker", ["--context", "desktop-linux", "image", "inspect", "node:22", "--format", "{{.Id}}"],
+        { encoding: "utf8", windowsHide: true }).trim();
+      const proposal: LocalCodingTaskProposal = {
+        schemaVersion: 1, repositoryId: "repo:verified", baseCommit: git(root, "rev-parse", "HEAD"),
+        goal: "Change answer to beta", acceptanceCriteria: ["answer.txt contains beta"],
+        nonObjectives: [], sourcePaths: ["answer.txt"], writablePaths: ["answer.txt"],
+        requestedModelTargetId: "target:ollama:local",
+        verification: { imageId, commands: [
+          { kind: "git-diff-check", timeoutMs: 5_000 },
+          { kind: "node-test-file", path: "pass.test.mjs", timeoutMs: 20_000 },
+        ] },
+        limits: { maximumAttempts: 1, maximumWallClockMs: 60_000, maximumOutputTokens: 256,
+          maximumContextBytes: 4_096, maximumPatchBytes: 4_096, expiresAt: Date.now() + 120_000 },
+      };
+      const service = await LocalTaskService.open(root, async (view) => {
+        expect(view.proposal.verification?.imageId).toBe(imageId);
+        return "approved";
+      }, async () => ({ text: JSON.stringify({ schemaVersion: 1,
+        files: [{ path: "answer.txt", content: "beta\n" }] }) }), async () => "approved");
+      let taskId: string;
+      try {
+        taskId = (await service.propose(proposal)).taskId;
+        await service.review(taskId);
+        expect((await service.run(taskId)).state).toBe("patch_ready");
+        await expect(service.reviewResult(taskId)).rejects.toThrow("did not pass");
+        const verified = await service.verify(taskId);
+        expect(verified.verification?.outcome).toBe("passed");
+        await expect(service.verify(taskId)).rejects.toThrow("already started");
+      } finally { await service.close(); }
+      const reopened = await LocalTaskService.open(root, async () => "rejected", undefined, async () => "approved");
+      try {
+        const evidence = await reopened.evidence(taskId!);
+        expect(evidence.provenance?.verification?.outcome).toBe("passed");
+        expect(evidence.provenance?.verification?.evidenceDigest).toMatch(/^sha256:[0-9a-f]{64}$/u);
+        expect((await reopened.reviewResult(taskId!)).state).toBe("accepted");
+      } finally { await reopened.close(); }
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 90_000);
+}
