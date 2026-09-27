@@ -78,16 +78,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Typecheck
+      - name: Check exact ForgeOS version on npm
+        id: publish_target
         if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if ACTUAL="$(npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null)"; then
+            if [ "${ACTUAL}" != "${PACKAGE_VERSION}" ]; then
+              echo "::error::Exact npm version lookup returned '${ACTUAL}', expected '${PACKAGE_VERSION}'."
+              exit 1
+            fi
+            echo "needs_publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${PACKAGE_NAME}@${PACKAGE_VERSION} already exists; skipping release gates."
+          else
+            echo "needs_publish=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${PACKAGE_NAME}@${PACKAGE_VERSION} is not confirmed public; running release gates."
+          fi
+
+      - name: Typecheck
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run typecheck
 
       - name: Generate release artifacts
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run forge -- generate
 
       - name: Security proof
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/forge_publish
           AI_GATEWAY_API_KEY: forge-ci-redacted-ai-gateway-key
@@ -96,43 +114,43 @@ jobs:
         run: npm run forge -- security prove --db postgres --full --json
 
       - name: RLS mutation proof
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run forge -- rls mutate-test --json
 
       - name: Release evidence and SBOM
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run release:evidence
 
       - name: Dependency vulnerability evidence
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run security:deps
 
       - name: Test
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm test
 
       - name: Restore workspace after tests
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: |
           git restore .
           git clean -fd
 
       - name: Regenerate release artifacts
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run forge -- generate
 
       - name: Smoke packed package
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: npm run release:smoke
 
       - name: Mark release gates passed
         id: release-gates
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: echo "passed=true" >> "$GITHUB_OUTPUT"
 
       - name: Publish ForgeOS package
         id: forgeos-package
-        if: steps.changesets.outputs.hasChangesets == 'false' && steps.release-gates.outputs.passed == 'true'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.publish_target.outputs.needs_publish == 'true' && steps.release-gates.outputs.passed == 'true'
         env:
           NPM_CONFIG_PROVENANCE: "true"
         run: node scripts/publish-npm-alpha-package.mjs .
