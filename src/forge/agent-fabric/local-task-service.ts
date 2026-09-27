@@ -32,7 +32,8 @@ export interface LocalTaskStatus {
   evidence: "not_started" | "provider_uncertain" | "model_result" | "model_failure" | "patch_ready";
   patch?: LocalPatchEvidence;
   ownerDecision?: "approved" | "rejected";
-  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"]; evidenceDigest?: Digest };
+  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"];
+    imageId?: string; commands?: LocalVerificationEvidence["commands"]; evidenceDigest?: Digest };
   provenance?: LocalTaskProvenance;
 }
 
@@ -46,7 +47,8 @@ export interface LocalTaskProvenance {
   outcome?: { status: "succeeded" | "failed"; resultDigest: Digest; reportDigest: Digest; committedAt: number };
   patch?: { diffDigest: Digest; changedPaths: readonly string[]; verification: LocalPatchEvidence["verification"] };
   ownerDecision?: "approved" | "rejected";
-  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"]; evidenceDigest?: Digest };
+  verification?: { state: "started" | "finished"; outcome?: LocalVerificationEvidence["outcome"];
+    imageId?: string; commands?: LocalVerificationEvidence["commands"]; evidenceDigest?: Digest };
   evidenceDigest: Digest;
 }
 
@@ -291,6 +293,8 @@ export class LocalTaskService {
       ...(ownerDecision ? { ownerDecision } : {}),
       ...(verification ? { verification: { state: verification.state,
         ...(verification.evidence ? { outcome: verification.evidence.outcome,
+          imageId: verification.evidence.imageId,
+          commands: verification.evidence.commands,
           evidenceDigest: verification.evidenceDigest } : {}) } } : {}),
     };
   }

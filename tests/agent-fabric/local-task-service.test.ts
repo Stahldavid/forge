@@ -182,6 +182,9 @@ if (process.env.FORGE_FABRIC_DOCKER_SMOKE === "1") {
         const evidence = await reopened.evidence(taskId!);
         expect(evidence.provenance?.verification?.outcome).toBe("passed");
         expect(evidence.provenance?.verification?.evidenceDigest).toMatch(/^sha256:[0-9a-f]{64}$/u);
+        expect(evidence.provenance?.verification?.commands?.[1]?.argv).toContain("--network=none");
+        expect(evidence.provenance?.verification?.commands?.[1]?.exitCode).toBe(0);
+        expect(evidence.provenance?.verification?.commands?.[1]?.outputPreview).toBe("");
         expect((await reopened.reviewResult(taskId!)).state).toBe("accepted");
       } finally { await reopened.close(); }
     } finally { rmSync(root, { recursive: true, force: true }); }
