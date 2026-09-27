@@ -24,6 +24,7 @@ P0a implementation surface.
 | [`P0B_SCOPE_AND_GATE.md`](./P0B_SCOPE_AND_GATE.md) | Adopted planning scope for the first bounded nondeterministic P0b vertical. Historical proposal wording in that record remains as authored. |
 | [`P0B_A_MODEL_ADAPTER.md`](./P0B_A_MODEL_ADAPTER.md), [`P0B_A_ADOPTION_RECORD.md`](./P0B_A_ADOPTION_RECORD.md) | P0b-A implementation description and exact reviewed-head adoption evidence, including the authorized keyless local Ollama smoke. |
 | [`CODING_AGENT_DELIVERY_PLAN.md`](./CODING_AGENT_DELIVERY_PLAN.md) | Proposed ordered local-first delivery plan for MCP clients and a keyless coding worker; it does not adopt a new runtime capability. |
+| [`P0B_B_LOCAL_CODING_SCOPE.md`](./P0B_B_LOCAL_CODING_SCOPE.md) | Candidate scope and gates for a trusted-repository, single-owner MCP and local Ollama coding pilot; no runtime adoption claim. |
 
 ## Baseline coordinates
 
