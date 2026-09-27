@@ -1,7 +1,7 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { describe, expect, test } from "bun:test";
 import { parseCli, hasUnknownOption } from "../../src/forge/cli/parse.ts";
 import { buildCheckJson } from "../../src/forge/cli/output.ts";
@@ -24,6 +24,7 @@ import {
   runStudioOpenCommand,
   runStudioSnapshotCommand,
   runStudioWatchCommand,
+  spawnForgeStudioBridge,
 } from "../../src/forge/cli/studio.ts";
 import {
   buildStrictTestGraphPlan,
@@ -2924,6 +2925,76 @@ describe("Forge CLI", () => {
       cleanupWorkspace(workspace);
     }
   }, 20_000);
+
+  test("studio bridge does not persist a process that exits before its first snapshot", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge-studio-bridge-exit-"));
+    const exitScript = join(workspace, "exit-immediately.mjs");
+    try {
+      writeFileSync(exitScript, "process.exit(17);\n", "utf8");
+      const result = await spawnForgeStudioBridge({
+        appRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 1000,
+        cliEntry: exitScript,
+      });
+      expect(result.alreadyRunning).toBe(false);
+      expect(result.error).toContain("exited or timed out");
+      expect(existsSync(join(workspace, ".forge", "studio", "bridge.json"))).toBe(false);
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test("studio bridge records a healthy child only after its readiness signal", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "forge studio bridge ready "));
+    const readyScript = join(workspace, "bridge-ready.mjs");
+    let pid: number | undefined;
+    try {
+      writeFileSync(readyScript, [
+        "import { mkdirSync, writeFileSync } from 'node:fs';",
+        "import { join } from 'node:path';",
+        "const dir = join(process.cwd(), '.forge', 'studio');",
+        "mkdirSync(dir, { recursive: true });",
+        "writeFileSync(join(dir, 'bridge-ready-' + process.env.FORGE_STUDIO_BRIDGE_READY_NONCE + '.json'), JSON.stringify({ pid: process.pid, ok: true }));",
+        "setInterval(() => {}, 1000);",
+      ].join("\n"), "utf8");
+      const result = await spawnForgeStudioBridge({
+        appRoot: workspace,
+        previewPort: 5174,
+        targets: ["codex"],
+        studioUrl: "http://127.0.0.1:3765",
+        intervalMs: 1000,
+        cliEntry: relative(process.cwd(), readyScript),
+      });
+      pid = result.pid;
+      expect(result.error).toBeUndefined();
+      expect(result.alreadyRunning).toBe(false);
+      expect(result.command).toContain(`"${workspace}"`);
+      expect(JSON.parse(readFileSync(join(workspace, ".forge", "studio", "bridge.json"), "utf8"))).toMatchObject({
+        pid,
+        previewPort: 5174,
+      });
+    } finally {
+      if (pid) {
+        try { process.kill(pid); } catch { /* Child already exited. */ }
+        for (let attempt = 0; attempt < 40; attempt++) {
+          try { process.kill(pid, 0); } catch { break; }
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      }
+      for (let attempt = 0; attempt < 50; attempt++) {
+        try {
+          rmSync(workspace, { recursive: true, force: true });
+          break;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "EBUSY" || attempt === 49) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    }
+  });
 
   test("studio watch dry-run emits a single snapshot event", async () => {
     const workspace = scaffoldGenerateWorkspace("forge-studio-watch-dry-run");

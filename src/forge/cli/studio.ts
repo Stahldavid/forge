@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { createConnection } from "node:net";
 import { basename, join, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -1259,6 +1260,18 @@ export async function runStudioBridgeLoop(
 ): Promise<0 | 1> {
   do {
     const result = await runStudioBridgeCommand(options);
+    const readyNonce = process.env.FORGE_STUDIO_BRIDGE_READY_NONCE;
+    if (readyNonce && /^[0-9a-f-]{36}$/i.test(readyNonce)) {
+      const appRoot = resolve(options.workspaceRoot, options.path ?? ".");
+      const readyPath = join(appRoot, ".forge", "studio", `bridge-ready-${readyNonce}.json`);
+      nodeFileSystem.mkdirp(join(appRoot, ".forge", "studio"));
+      nodeFileSystem.writeText(readyPath, `${JSON.stringify({
+        pid: process.pid,
+        ok: result.ok && result.posted,
+        diagnostics: result.diagnostics.map((diagnostic) => diagnostic.message),
+      })}\n`);
+      delete process.env.FORGE_STUDIO_BRIDGE_READY_NONCE;
+    }
     onResult(result);
     if (options.once || options.dryRun) {
       return result.exitCode;
@@ -1429,7 +1442,7 @@ async function spawnForgeDev(appRoot: string, previewPort: number): Promise<{ pi
   // This path is reached only after the preview probe failed. A live PID in an
   // old state file does not prove that it is still serving this port.
   nodeFileSystem.remove(previewStatePath(appRoot));
-  const cliEntry = process.argv[1];
+  const cliEntry = process.argv[1] ? resolve(process.argv[1]) : undefined;
   const command = cliEntry ? process.execPath : "forge";
   const args = cliEntry
     ? [cliEntry, "dev", "--port", String(STUDIO_TARGET_RUNTIME_PORT), "--web-port", String(previewPort)]
@@ -1541,14 +1554,15 @@ function readBridgeState(appRoot: string): { pid?: number; command?: string } | 
   }
 }
 
-function spawnForgeStudioBridge(input: {
+export async function spawnForgeStudioBridge(input: {
   appRoot: string;
   previewPort: number;
   targets: string[];
   studioUrl: string;
   intervalMs: number;
   probeAppServer?: boolean;
-}): { pid?: number; command: string; alreadyRunning: boolean; error?: string } {
+  cliEntry?: string;
+}): Promise<{ pid?: number; command: string; alreadyRunning: boolean; error?: string }> {
   const existing = readBridgeState(input.appRoot);
   if (existing?.pid && processIsRunning(existing.pid)) {
     return {
@@ -1557,8 +1571,11 @@ function spawnForgeStudioBridge(input: {
       alreadyRunning: true,
     };
   }
+  if (existing) nodeFileSystem.remove(bridgeStatePath(input.appRoot));
 
-  const cliEntry = process.argv[1];
+  const cliEntry = input.cliEntry
+    ? resolve(input.cliEntry)
+    : process.argv[1] ? resolve(process.argv[1]) : undefined;
   const command = cliEntry ? process.execPath : "forge";
   const targetArgs = input.targets.flatMap((target) => ["--target", target]);
   const args = [
@@ -1576,7 +1593,11 @@ function spawnForgeStudioBridge(input: {
     "--json",
     ...(input.probeAppServer ? ["--probe-codex-server"] : []),
   ];
-  const label = `forge ${args.filter((arg) => arg !== cliEntry).join(" ")}`;
+  const label = `forge ${args.filter((arg) => arg !== cliEntry).map((arg) =>
+    /\s/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg
+  ).join(" ")}`;
+  const readyNonce = randomUUID();
+  const readyPath = join(input.appRoot, ".forge", "studio", `bridge-ready-${readyNonce}.json`);
   try {
     nodeFileSystem.mkdirp(join(input.appRoot, ".forge", "studio"));
     const child = spawn(command, args, {
@@ -1585,8 +1606,43 @@ function spawnForgeStudioBridge(input: {
       stdio: "ignore",
       windowsHide: true,
       shell: !cliEntry && process.platform === "win32",
+      env: { ...process.env, FORGE_STUDIO_BRIDGE_READY_NONCE: readyNonce },
     });
+    const spawnError = await new Promise<Error | undefined>((resolve) => {
+      child.once("error", (error) => resolve(error));
+      child.once("spawn", () => resolve(undefined));
+    });
+    if (spawnError) {
+      return { command: label, alreadyRunning: false, error: spawnError.message };
+    }
     child.unref();
+    type BridgeReadySignal = { pid?: number; ok?: boolean; diagnostics?: string[] };
+    let ready: BridgeReadySignal | null = null;
+    for (let attempt = 0; attempt < 150; attempt++) {
+      if (nodeFileSystem.exists(readyPath)) {
+        try {
+          ready = JSON.parse(nodeFileSystem.readText(readyPath) ?? "{}") as BridgeReadySignal;
+          break;
+        } catch {
+          // The child may still be writing the marker. Keep waiting for a
+          // complete readiness signal while it is alive.
+        }
+      }
+      if (!processIsRunning(child.pid)) break;
+      await sleep(100);
+    }
+    nodeFileSystem.remove(readyPath);
+    if (!ready?.ok || ready.pid !== child.pid || !processIsRunning(child.pid)) {
+      if (processIsRunning(child.pid)) {
+        try { child.kill(); } catch { /* The child may have just exited. */ }
+      }
+      return {
+        command: label,
+        alreadyRunning: false,
+        error: ready?.diagnostics?.join("; ") ||
+          (ready ? "bridge readiness signal was invalid" : "bridge exited or timed out before its first successful snapshot"),
+      };
+    }
     const state = {
       pid: child.pid,
       command: label,
@@ -1595,6 +1651,7 @@ function spawnForgeStudioBridge(input: {
       intervalMs: input.intervalMs,
       targets: input.targets,
       startedAt: new Date().toISOString(),
+      readyAt: new Date().toISOString(),
     };
     nodeFileSystem.writeText(bridgeStatePath(input.appRoot), `${JSON.stringify(state, null, 2)}\n`);
     return { pid: child.pid, command: label, alreadyRunning: false };
@@ -1892,7 +1949,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   }
 
   let bridgeResult: StudioBridgeResult | undefined;
-  let autoBridge: ReturnType<typeof spawnForgeStudioBridge> | undefined;
+  let autoBridge: Awaited<ReturnType<typeof spawnForgeStudioBridge>> | undefined;
   if (shouldBridge && !options.dryRun) {
     const intervalMs = Math.max(1000, Math.floor(options.intervalMs ?? 5000));
     bridgeResult = await runStudioBridgeCommand({
@@ -1905,7 +1962,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
     });
     diagnostics.push(...bridgeResult.diagnostics);
     if (!options.dryRun && bridgeResult.ok && preview.status.state === "reachable" && previewPort) {
-      autoBridge = spawnForgeStudioBridge({
+      autoBridge = await spawnForgeStudioBridge({
         appRoot,
         previewPort,
         targets: attach.targets,
@@ -1915,7 +1972,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
       });
       if (autoBridge.error) {
         diagnostics.push(createDiagnostic({
-          severity: "warning",
+          severity: "error",
           code: "FORGE_STUDIO_BRIDGE_AUTOSTART_FAILED",
           message: `initial snapshot was delivered, but the live Studio bridge could not be started: ${autoBridge.error}`,
           fixHint: `Run ${autoBridge.command} in ${appRoot}.`,
@@ -1928,7 +1985,7 @@ export async function runStudioOpenCommand(options: StudioAttachOptions): Promis
   const bridge = bridgeResult
     ? {
         attempted: true,
-        ok: bridgeResult.ok,
+        ok: bridgeResult.ok && !autoBridge?.error,
         posted: bridgeResult.posted,
         dryRun: bridgeResult.dryRun,
         mode: autoBridge && !autoBridge.error ? "watch" as const : bridgeResult.mode,
