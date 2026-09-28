@@ -5,6 +5,7 @@ import { buildAgentMemoryContext } from "./context-pack.ts";
 import { ingestEnvelope } from "./bridge.ts";
 import { normalizeAgentEvent } from "./normalize.ts";
 import { requestLocalTask } from "../agent-fabric/local-task-server.ts";
+import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 
 interface JsonRpcRequest {
   jsonrpc?: "2.0";
@@ -54,6 +55,28 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
             description: "Read digest-bound task provenance without raw model output or diff content.",
             inputSchema: { type: "object", properties: { taskId: { type: "string" } },
               required: ["taskId"], additionalProperties: false },
+          },
+          {
+            name: "fabric_change_propose",
+            description: "Register a change request for independent review. The exact diff is pinned when the owner runs the reviewer; this tool does not start a paid reviewer or approve the change.",
+            inputSchema: { type: "object", properties: { request: {
+              type: "object",
+              properties: { objective: { type: "string" }, acceptanceCriteria: { type: "array", items: { type: "string" } },
+                implementer: { type: "string" } },
+              required: ["objective", "acceptanceCriteria", "implementer"], additionalProperties: false,
+            } }, required: ["request"], additionalProperties: false },
+          },
+          {
+            name: "fabric_change_status",
+            description: "Read the current state of a pinned change review without starting a reviewer.",
+            inputSchema: { type: "object", properties: { changeId: { type: "string" } },
+              required: ["changeId"], additionalProperties: false },
+          },
+          {
+            name: "fabric_change_evidence",
+            description: "Read exact-diff and review evidence for a pinned change without starting a reviewer.",
+            inputSchema: { type: "object", properties: { changeId: { type: "string" } },
+              required: ["changeId"], additionalProperties: false },
           },
           {
             name: "agent_context",
@@ -154,6 +177,9 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       cancellation: "owner_cli_only_best_effort",
       taskMutationTools: ["fabric_propose"],
       taskReadTools: ["fabric_status", "fabric_evidence"],
+      changeMutationTools: ["fabric_change_propose"],
+      changeReadTools: ["fabric_change_status", "fabric_change_evidence"],
+      changeReviewDispatch: "owner_cli_only",
       cli: "forge fabric capabilities --json",
     };
   }
@@ -171,6 +197,28 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       return { ok: true, taskId: status.taskId, state: status.state, provenance: status.provenance };
     }
     return { ok: true, status };
+  }
+  if (name === "fabric_change_propose" || name === "fabric_change_status" || name === "fabric_change_evidence") {
+    const keys = Object.keys(args).sort().join(",");
+    if (name === "fabric_change_propose" &&
+        (keys !== "request" || !args.request || typeof args.request !== "object" || Array.isArray(args.request))) {
+      throw new Error("fabric_change_propose requires only request");
+    }
+    if (name !== "fabric_change_propose" &&
+        (keys !== "changeId" || typeof args.changeId !== "string" || args.changeId.length === 0)) {
+      throw new Error(`${name} requires only changeId`);
+    }
+    const service = await LocalChangeReviewService.open(realpathSync(workspaceRoot));
+    try {
+      const result = name === "fabric_change_propose"
+        ? await service.propose(args.request as Parameters<LocalChangeReviewService["propose"]>[0])
+        : name === "fabric_change_status"
+          ? await service.status(args.changeId as string)
+          : await service.evidence(args.changeId as string);
+      return { ok: true, ...(name === "fabric_change_evidence" ? { evidence: result } : { status: result }) };
+    } finally {
+      await service.close();
+    }
   }
   if (name === "agent_context") {
     return buildAgentMemoryContext({

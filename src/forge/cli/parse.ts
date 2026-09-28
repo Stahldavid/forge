@@ -277,7 +277,7 @@ export type ForgeCommand =
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
-  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "adaptive-propose" | "adaptive-review" | "adaptive-run" | "adaptive-status"; workspaceRoot: string; json: boolean; file?: string; taskId?: string; channel?: "canary" | "stable" }
+  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "adaptive-propose" | "adaptive-review" | "adaptive-run" | "adaptive-status" | "change-propose" | "change-status" | "change-review" | "change-evidence"; workspaceRoot: string; json: boolean; file?: string; taskId?: string; channel?: "canary" | "stable" }
   | ({ kind: "evolution" } & EvolutionCliOptions)
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
@@ -1272,15 +1272,19 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "fabric": {
       const subcommand = rest[0];
-      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "cancel" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "recover-verification" && subcommand !== "review-result" && subcommand !== "serve" && subcommand !== "memory-add" && subcommand !== "memory-list" && subcommand !== "memory-delete" && subcommand !== "adaptive-propose" && subcommand !== "adaptive-review" && subcommand !== "adaptive-run" && subcommand !== "adaptive-status") {
+      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "cancel" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "recover-verification" && subcommand !== "review-result" && subcommand !== "serve" && subcommand !== "memory-add" && subcommand !== "memory-list" && subcommand !== "memory-delete" && subcommand !== "adaptive-propose" && subcommand !== "adaptive-review" && subcommand !== "adaptive-run" && subcommand !== "adaptive-status" && subcommand !== "change-propose" && subcommand !== "change-status" && subcommand !== "change-review" && subcommand !== "change-evidence") {
         errors.push("forge fabric requires a supported task or memory subcommand");
         return { command: null, workspaceRoot, errors };
       }
       const file = parseOptionValue(argv, "--file");
       const adaptiveChannel = parseOptionValue(argv, "--channel");
       if (adaptiveChannel && (subcommand !== "adaptive-propose" || (adaptiveChannel !== "canary" && adaptiveChannel !== "stable"))) errors.push("--channel requires adaptive-propose and canary or stable");
-      const taskId = subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "cancel" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "recover-verification" || subcommand === "review-result" || subcommand === "memory-delete" || subcommand === "adaptive-review" || subcommand === "adaptive-run" || subcommand === "adaptive-status" ? rest[1] : undefined;
+      const isChangeReadOrReview = subcommand === "change-status" || subcommand === "change-review" || subcommand === "change-evidence";
+      const taskId = isChangeReadOrReview ? parseOptionValue(argv, "--task-id")
+        : subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "cancel" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "recover-verification" || subcommand === "review-result" || subcommand === "memory-delete" || subcommand === "adaptive-review" || subcommand === "adaptive-run" || subcommand === "adaptive-status" ? rest[1] : undefined;
       if (subcommand === "propose" && (!file || file.startsWith("--"))) errors.push("forge fabric propose requires --file <proposal.json>");
+      if (subcommand === "change-propose" && (!file || file.startsWith("--"))) errors.push("forge fabric change-propose requires --file <request.json>");
+      if (isChangeReadOrReview && (!taskId || taskId.startsWith("--"))) errors.push(`forge fabric ${subcommand} requires --task-id <change-id>`);
       if (subcommand === "adaptive-propose" && (!file || file.startsWith("--"))) errors.push("forge fabric adaptive-propose requires --file <input.json>");
       if ((subcommand === "memory-add" || subcommand === "memory-list") && (!file || file.startsWith("--"))) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);
       if ((subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "cancel" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "recover-verification" || subcommand === "review-result" || subcommand === "memory-delete") && !taskId) errors.push(`forge fabric ${subcommand} requires an id`);

@@ -1,12 +1,13 @@
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
+import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 import { LOCAL_CODING_MODEL, LOCAL_CODING_TARGET } from "../agent-fabric/local-task-contract.ts";
 import { requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
 
 export interface FabricCliOptions {
-  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | AdaptiveCliOptions["subcommand"];
+  subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "change-propose" | "change-status" | "change-review" | "change-evidence" | AdaptiveCliOptions["subcommand"];
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -30,6 +31,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       privateMemory: "owner_cli_only",
       adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,
         selectedDataProfile: "optional_canary_or_stable" },
+      adversarialChangeReview: { propose: true, status: true, evidence: true,
+        reviewer: "codex_cli_owner_command_only", automaticPaidReview: false },
       mcpTaskMutation: "proposal_only", mcpEvidence: true,
       nativeCodexHookProofRequired: true,
     };
@@ -39,6 +42,7 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
   }
 
   let service: LocalTaskService | undefined;
+  let changeService: LocalChangeReviewService | undefined;
   try {
     const repositoryRoot = realpathSync(options.workspaceRoot);
     if (options.subcommand === "serve") {
@@ -53,6 +57,31 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       } finally {
         await owner.close();
       }
+      return 0;
+    }
+    if (options.subcommand === "change-propose" || options.subcommand === "change-status" ||
+        options.subcommand === "change-review" || options.subcommand === "change-evidence") {
+      let request: unknown;
+      if (options.subcommand === "change-propose") {
+        if (!options.file) throw new Error("A change request file is required");
+        const file = realpathSync(resolve(repositoryRoot, options.file));
+        const relation = relative(repositoryRoot, file);
+        if (!relation || relation.startsWith("..") || isAbsolute(relation)) {
+          throw new Error("Change request file must be inside the current repository");
+        }
+        if (statSync(file).size > 32 * 1024) throw new Error("Change request file exceeds byte limit");
+        request = JSON.parse(readFileSync(file, "utf8")) as unknown;
+      }
+      changeService = await LocalChangeReviewService.open(repositoryRoot);
+      const changeId = options.taskId ?? "";
+      const status = options.subcommand === "change-propose"
+        ? await changeService.propose(request as Parameters<LocalChangeReviewService["propose"]>[0])
+        : options.subcommand === "change-status"
+          ? await changeService.status(changeId)
+          : options.subcommand === "change-evidence"
+            ? await changeService.evidence(changeId)
+            : await changeService.review(changeId);
+      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\n`);
       return 0;
     }
     let proposal: unknown;
@@ -127,5 +156,6 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
     return 1;
   } finally {
     await service?.close();
+    await changeService?.close();
   }
 }

@@ -375,6 +375,45 @@ it does not prove the human popup flow or coding quality on real projects.
 exercises the service, approved verification, Docker Desktop, durable readback,
 and acceptance with a synthetic approval callback.
 
+### Codex App implementation with adversarial review (local preview)
+
+The Codex App may implement a change in the current checkout. Register the work
+before editing with a JSON request such as
+`{"objective":"Change the parser","acceptanceCriteria":["The new case is handled"],"implementer":"codex-app"}`.
+Place the request under the ignored `.forge/local/` directory, then use:
+
+```bash
+node bin/forge.mjs fabric change-propose --file .forge/local/change-request.json --json
+node bin/forge.mjs fabric change-status --task-id <change-id> --json
+node bin/forge.mjs fabric change-review --task-id <change-id> --json
+node bin/forge.mjs fabric change-evidence --task-id <change-id> --json
+```
+
+`change-review` is an explicit owner CLI action that starts a **new Codex CLI
+review turn** using the machine's existing Codex login. That turn may consume
+Codex usage. The MCP tools `fabric_change_propose`, `fabric_change_status`, and
+`fabric_change_evidence` can register and inspect a change but cannot start a
+review or mark it accepted. The request pins the base commit; review later
+captures staged, unstaged, and non-ignored new files without modifying the
+user's Git index. Local Forge state under `.forge/local` and `.forge/delta` is
+excluded. A review is limited to 1 MiB, 100 paths, and eight rounds; binary
+patches, symlinks, and submodules are rejected.
+
+Each round records an immutable diff and request digest before dispatch. The
+reviewer runs against a separate checkout of that exact diff in read-only
+sandbox mode. A valid structured report bound to the request digest is required;
+process exit zero alone is insufficient. `canAccept` becomes true only for a
+passing report on the **current** diff. Editing the checkout after a pass makes
+it `needs_review`, and the next review creates a new round. An interrupted
+review remains uncertain and will not automatically spend another turn. An
+inconclusive completed review may be retried explicitly. For an interrupted
+review, inspect its evidence and create a fresh change request if another paid
+turn is warranted; the uncertain intent remains in the original record.
+`canAccept` is evidence for the human workflow; this preview does not intercept
+Git merges or edits made outside the CLI. Same-account shell access can alter
+the local ledger and is outside the pilot's security boundary. The Codex CLI
+review protocol has fake-process tests but no paid, real-model smoke yet.
+
 ### Local Evolution Registry (single owner)
 
 The local extension workflow pins a candidate's bytes before evaluation. A
