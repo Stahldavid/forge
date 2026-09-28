@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.65 input=dbf2c962fa9cf8e2fa9dc988c6cf3a4e462e8f7dd759f143418b9538a08f4a85 content=d5967c203c4ecb427d0cf694931a3cc8dc6dd88726fcd4b71b79c2ab0c464e10
+// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=d5967c203c4ecb427d0cf694931a3cc8dc6dd88726fcd4b71b79c2ab0c464e10
 export const sqlPlan = {
   "checksum": "e00b135de6e380256e8116fb3ac28f4d925aef552528a58b4dc5285782737654",
   "diagnostics": [],
