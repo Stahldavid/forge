@@ -7,6 +7,7 @@
     "eslint-plugin-forge": "0.0.0"
   },
   "changesets": [
+    "agent-fabric-codex-review",
     "agent-fabric-local-assurance",
     "agent-fabric-local-coding-pilot",
     "agent-fabric-local-owner-mcp",

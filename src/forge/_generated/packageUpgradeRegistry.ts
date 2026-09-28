@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.65 input=dbf2c962fa9cf8e2fa9dc988c6cf3a4e462e8f7dd759f143418b9538a08f4a85 content=7982e92a4427031867a766294c34a834a734387bea5e2d481e1afb18aafdea33
+// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=da6ee6c51aeadabc6abda30051e320299d7be427dc905dd426cfde1ec141a30b
 export const packageUpgradeRegistry = {
   "commands": [
     "forge deps outdated --json",
@@ -10,6 +10,6 @@ export const packageUpgradeRegistry = {
     "forge deps upgrade-rollback <planId>"
   ],
   "planDirectory": ".forge/upgrades",
-  "plannerVersion": "0.1.0-alpha.65",
+  "plannerVersion": "0.1.0-alpha.66",
   "schemaVersion": "0.1.0"
 } as const;

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.65 input=dbf2c962fa9cf8e2fa9dc988c6cf3a4e462e8f7dd759f143418b9538a08f4a85 content=b889f482f13e129edc1e11c7192e91d63414952d726ac5722719abfb9362c2cb
+// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=2dafa1c78e9927f05c35c750d0dc6af4b39b254fab86ae923a28a1f6fd252617
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.65",
-  "inputHash": "dbf2c962fa9cf8e2fa9dc988c6cf3a4e462e8f7dd759f143418b9538a08f4a85",
+  "generatorVersion": "0.1.0-alpha.66",
+  "inputHash": "57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -140,6 +140,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/codex-adversarial-review.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-fabric/dispatch-offer-own-key-regressions.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -249,6 +267,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-fabric/local-approval-window.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/local-change-review-service.test.ts",
       "kind": "unknown",
       "reasons": []
     },
