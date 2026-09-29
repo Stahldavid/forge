@@ -978,6 +978,10 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
 
   try {
     for (const line of complete) {
+      // The local owner also serves CLI/MCP IPC. PGlite may resolve work in
+      // microtasks, so a long replay must explicitly let the socket poll phase
+      // run between records instead of starving health and read requests.
+      if (options.store) await new Promise<void>((resolveYield) => setImmediate(resolveYield));
       if ((options.maxEvents && linesProcessed >= options.maxEvents) ||
           (options.maxDurationMs && linesProcessed > 0 && Date.now() - startedAt >= options.maxDurationMs)) {
         break;
