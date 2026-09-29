@@ -35,7 +35,7 @@ function formatHelp(): string {
     "  forge doctor agent --target codex --json  Check adapter, hooks, and Agent Memory readiness",
     "  forge doctor delta --json  Check DeltaDB writability, queue drain, redaction, and gitignore posture",
     "  forge doctor runtime --json  Check generated freshness, local dev lifecycle, and PGlite posture",
-    "  forge agent ingest codex --watch --file .forge/agent/events.ndjson --json",
+    "  forge agent ingest codex --watch --file .forge/agent/events.ndjson --json  Explicit queue watcher for debugging",
     "  forge fabric capabilities --json  Report the connected Agent Fabric local capabilities",
     "  forge fabric propose --file task.json --json  Record an untrusted coding task proposal",
     "  forge fabric memory-add --file note.json --json  Retain a bounded private note for a source snapshot",

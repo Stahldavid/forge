@@ -92,6 +92,7 @@ export interface AgentMemoryContextEvent {
 
 export interface AgentMemoryContextPack {
   ok: true;
+  freshness?: AgentMemoryFreshness;
   scope: "current" | "entry" | "change" | "proof" | "handoff";
   scopeTarget: {
     kind: "current-session" | "entry" | "change" | "proof" | "handoff";
@@ -128,6 +129,16 @@ export interface AgentMemoryContextPack {
     openQuestions: string[];
   };
   exitCode: 0;
+}
+
+export interface AgentMemoryFreshness {
+  status: "current" | "pending" | "unavailable";
+  pendingBytes: number;
+  queuedEvents: number;
+  inspectedEventsTruncated: boolean;
+  lastQueuedAt?: string;
+  latestMatchingEventAt?: string;
+  error?: string;
 }
 
 export interface AgentInstallResult {

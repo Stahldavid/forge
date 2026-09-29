@@ -227,7 +227,7 @@ Approve the Codex Desktop hook prompt if status is still `waiting-for-user-trust
 
 **Symptom:** A mutating agent-memory, timeline, session, or repair command returns `FORGE_DELTA_BUSY`, or Studio reports DeltaDB/PGlite is active.
 
-**Cause:** Another local ForgeOS or external-agent process owns the PGlite writer lock. Read-only commands should still work; writer operations fail fast instead of hanging.
+**Cause:** The local Delta owner may be starting, unavailable, or unable to open the PGlite data directory. An existing `postmaster.pid` alone does not prove that another live process owns the database. Inspect the reported original error, owner state, and queue checkpoint before considering repair.
 
 **Fix:**
 
@@ -236,7 +236,7 @@ forge delta status --json
 forge agent hooks status --target codex --json
 ```
 
-Read the JSON `busy` block for lock path, pid, process-alive signal, lock age, cwd, and command. Wait for the owning command to finish when it is alive. If the process is gone, inspect `.forge/delta/delta.lock` before running repair.
+Check the owner status and the queue backlog in the JSON response. If another process is confirmed as the owner, wait for it to finish. If the owner is unavailable, preserve `.forge/delta/delta.db` and `.forge/agent/events.ndjson` while diagnosing the original opening error. A delayed checkpoint means the hooks can be receiving events while Agent Memory is stale. Do not reset the Delta database merely to clear a `busy` report.
 
 ## Local DB mode: memory vs PGlite
 

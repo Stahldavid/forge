@@ -4,8 +4,10 @@
  * Reads stdin with a short timeout, enqueues a redacted event to .forge/agent/events.ndjson, exits.
  */
 import { createHash, randomUUID } from "node:crypto";
-import { appendFileSync, mkdirSync, openSync, closeSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { execFileSync, spawn } from "node:child_process";
+import { connect } from "node:net";
+import { appendFileSync, mkdirSync, openSync, closeSync, existsSync, readFileSync, readSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 
 const STDIN_TIMEOUT_MS = 750;
 const eventName = process.argv[2];
@@ -18,6 +20,7 @@ if (!eventName) {
 const workspaceRoot = resolve(process.cwd());
 const eventsFile = join(workspaceRoot, ".forge", "agent", "events.ndjson");
 const queueLockFile = `${eventsFile}.append-lock.json`;
+const brokerStartLockFile = join(workspaceRoot, ".forge", "agent", "broker-start-lock.json");
 const QUEUE_LOCK_WAIT_MS = 500;
 
 const SAFE_ID = /^[A-Za-z0-9_.:-]{1,128}$/u;
@@ -73,6 +76,7 @@ async function main() {
 
   const entry = {
     forgeHookQueueV1: true,
+    queueEventId: randomUUID(),
     source: "codex",
     eventName,
     workspaceRoot,
@@ -85,10 +89,92 @@ async function main() {
   mkdirSync(dirname(eventsFile), { recursive: true });
   const lock = await acquireQueueLock();
   try {
+    ensureQueueLineBoundary();
     appendFileSync(eventsFile, `${JSON.stringify(entry)}\n`, "utf8");
   } finally {
     releaseQueueLock(lock);
   }
+  await wakeBroker();
+}
+
+function ensureQueueLineBoundary() {
+  if (!existsSync(eventsFile)) return;
+  const size = statSync(eventsFile).size;
+  if (size === 0) return;
+  const fd = openSync(eventsFile, "r");
+  try {
+    const last = Buffer.alloc(1);
+    if (readSync(fd, last, 0, 1, size - 1) === 1 && last[0] !== 10) {
+      appendFileSync(eventsFile, "\n", "utf8");
+    }
+  } finally {
+    closeSync(fd);
+  }
+}
+
+async function wakeBroker() {
+  const endpointPath = join(workspaceRoot, ".forge", "delta", "broker-endpoint.json");
+  try {
+    const endpoint = JSON.parse(readFileSync(endpointPath, "utf8"));
+    if (endpoint?.root === workspaceRoot && await signalBroker(endpoint)) {
+      try { unlinkSync(brokerStartLockFile); } catch { /* already absent */ }
+      return;
+    }
+  } catch { /* no active broker */ }
+  const metaPath = join(workspaceRoot, ".forge", "agent", "codex-hook.meta.json");
+  let brokerRunnerPath;
+  try {
+    const meta = JSON.parse(readFileSync(metaPath, "utf8"));
+    if (meta?.workspaceRoot !== workspaceRoot || typeof meta.brokerRunnerPath !== "string" ||
+        !isAbsolute(meta.brokerRunnerPath) || !existsSync(meta.brokerRunnerPath)) return;
+    brokerRunnerPath = meta.brokerRunnerPath;
+  } catch { return; }
+  try {
+    const old = statSync(brokerStartLockFile);
+    if (Date.now() - old.mtimeMs < 10_000) return;
+    unlinkSync(brokerStartLockFile);
+  } catch { /* no launch in progress */ }
+  try {
+    const fd = openSync(brokerStartLockFile, "wx");
+    try { writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() })); }
+    finally { closeSync(fd); }
+  } catch { return; }
+  try {
+    const child = spawn(process.execPath, [brokerRunnerPath, workspaceRoot], {
+      cwd: dirname(brokerRunnerPath), detached: true, windowsHide: true, stdio: "ignore",
+    });
+    child.once("error", () => { try { unlinkSync(brokerStartLockFile); } catch { /* retry on next hook */ } });
+    child.unref();
+  } catch {
+    try { unlinkSync(brokerStartLockFile); } catch { /* retry on next hook */ }
+  }
+}
+
+function signalBroker(endpoint) {
+  if (typeof endpoint?.pipe !== "string" || typeof endpoint?.token !== "string" ||
+      !/^[0-9a-f]{64}$/u.test(endpoint.token)) return Promise.resolve(false);
+  return new Promise((resolveSignal) => {
+    const socket = connect(endpoint.pipe);
+    let settled = false;
+    let response = "";
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolveSignal(ok);
+    };
+    socket.setTimeout(500, () => finish(false));
+    socket.once("error", () => finish(false));
+    socket.once("close", () => finish(false));
+    socket.once("connect", () => socket.write(`${JSON.stringify({ token: endpoint.token, method: "wake", args: [] })}\n`));
+    socket.on("data", (chunk) => {
+      response += chunk.toString("utf8");
+      const newline = response.indexOf("\n");
+      if (newline < 0) return;
+      try { finish(JSON.parse(response.slice(0, newline)).ok === true); }
+      catch { finish(false); }
+    });
+  });
 }
 
 async function acquireQueueLock() {
@@ -120,7 +206,9 @@ function clearStaleQueueLock() {
     const holder = JSON.parse(readFileSync(queueLockFile, "utf8"));
     const ageMs = Date.now() - stat.mtimeMs;
     if (ageMs < 2000) return;
-    if (ageMs < 30000 && processAlive(holder.pid)) return;
+    // A live compactor may hold this lock for longer than the stale-age
+    // threshold. Never let a hook append to the soon-to-be-replaced file.
+    if (processAlive(holder.pid) && !pidWasReused(holder.pid, holder.createdAt)) return;
     unlinkSync(queueLockFile);
   } catch {
     // A new holder may have replaced the lock; the next attempt will retry.
@@ -135,6 +223,21 @@ function processAlive(pid) {
   } catch (error) {
     return error?.code === "EPERM";
   }
+}
+
+function pidWasReused(pid, ownerCreatedAt) {
+  const createdAt = typeof ownerCreatedAt === "string" ? Date.parse(ownerCreatedAt) : NaN;
+  if (!Number.isSafeInteger(pid) || pid <= 0 || !Number.isFinite(createdAt)) return false;
+  try {
+    const output = process.platform === "win32"
+      ? execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
+          `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`],
+        { encoding: "utf8", timeout: 3000, windowsHide: true, stdio: ["ignore", "pipe", "ignore"] })
+      : execFileSync("ps", ["-p", String(pid), "-o", "lstart="],
+        { encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] });
+    const observedStart = Date.parse(output.trim());
+    return Number.isFinite(observedStart) && observedStart > createdAt + 1000;
+  } catch { return false; }
 }
 
 function releaseQueueLock(token) {

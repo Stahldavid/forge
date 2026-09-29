@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -11,6 +12,7 @@ import { codexInstallFiles } from "../../src/forge/agent-memory/sources/codex.ts
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
+import { shutdownDeltaBroker } from "../../src/forge/delta/broker.ts";
 import { createAmbientDeltaRecorder } from "../../src/forge/delta/recorder.ts";
 
 function tempWorkspace(name: string): string {
@@ -508,14 +510,11 @@ describe("H48 agent memory bridge", () => {
       if (!("checks" in smoke) || !("diagnostics" in smoke) || !("nextActions" in smoke)) {
         throw new Error("expected hook smoke result");
       }
-      expect(smoke.exitCode).toBe(1);
-      expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_DELTA_BUSY")).toBe(true);
-      expect(JSON.stringify(smoke)).toContain("\"busy\"");
-      expect(JSON.stringify(smoke)).toContain("\"relativeLockPath\":\".forge/delta/delta.lock\"");
+      expect(smoke.exitCode).toBe(0);
+      expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_DELTA_BUSY")).toBe(false);
       expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_AGENT_HOOK_CANARY_NOT_VISIBLE")).toBe(false);
       expect(smoke.diagnostics.some((diagnostic) => diagnostic.code === "FORGE_AGENT_HOOK_CANARY_MISSING")).toBe(false);
-      expect(smoke.checks.find((check) => check.name === "canary-visible")?.message).toBe("not checked because canary ingest failed");
-      expect(smoke.nextActions).toContain("forge delta status --json");
+      expect(smoke.checks.find((check) => check.name === "canary-visible")?.ok).toBe(true);
     } finally {
       if (store) {
         await store.close();
@@ -755,6 +754,196 @@ describe("H48 agent memory bridge", () => {
     }
   }, 30_000);
 
+  test("replays a committed queue line after checkpoint rollback without duplicate memory", async () => {
+    const root = tempWorkspace("h48-codex-hook-replay-rollback");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(queueFile, `${queuedCodexHookLine(root, "SessionStart", "replay-1")}\n`, "utf8");
+      const first = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(first.eventsIngested).toBe(1);
+      writeFileSync(`${queueFile}.checkpoint.json`, JSON.stringify({ offset: 0 }), "utf8");
+      const replay = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(replay.errors).toEqual([]);
+      const store = await DeltaStore.open(root, { access: "read" });
+      try {
+        expect(await store.listAgentMemoryEvents({ target: "codex" })).toHaveLength(1);
+      } finally {
+        await store.close();
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("keeps distinct legacy occurrences even when queued lines are byte-identical", async () => {
+    const root = tempWorkspace("h48-codex-hook-identical-lines");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const line = queuedCodexHookLine(root, "SessionStart", "same-session");
+      writeFileSync(queueFile, `${line}\n${line}\n`, "utf8");
+      const first = await drainAgentMemoryQueueFile({
+        workspaceRoot: root, watchFile: queueFile, source: "codex", maxEvents: 1, compactAfterBytes: 1,
+      });
+      expect(first.eventsIngested).toBe(1);
+      expect(first.compacted).toBe(true);
+      const second = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(second.eventsIngested).toBe(1);
+      writeFileSync(`${queueFile}.checkpoint.json`, JSON.stringify({ offset: 0 }), "utf8");
+      await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      const store = await DeltaStore.open(root, { access: "read" });
+      try { expect(await store.listAgentMemoryEvents({ target: "codex" })).toHaveLength(2); }
+      finally { await store.close(); }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("recovers unconsumed tail after queue replacement before checkpoint reset", async () => {
+    const root = tempWorkspace("h48-codex-hook-compaction-crash");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const lines = ["first", "second", "third"].map((name) => queuedCodexHookLine(root, "SessionStart", name));
+      writeFileSync(queueFile, `${lines.join("\n")}\n`, "utf8");
+      const first = await drainAgentMemoryQueueFile({
+        workspaceRoot: root, watchFile: queueFile, source: "codex", maxEvents: 1,
+      });
+      expect(first.eventsIngested).toBe(1);
+      const oldCheckpoint = JSON.parse(readFileSync(`${queueFile}.checkpoint.json`, "utf8")) as { offset: number };
+      expect(oldCheckpoint.offset).toBeGreaterThan(0);
+      // Simulate the exact crash state: atomic replacement landed, checkpoint
+      // still points into the previous generation's consumed prefix.
+      writeFileSync(queueFile, `${JSON.stringify({ forgeHookQueueGeneration: randomUUID() })}\n${lines.slice(1).join("\n")}\n`, "utf8");
+      expect(readFileSync(queueFile).length).toBeGreaterThan(oldCheckpoint.offset);
+      const recovered = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(recovered.errors).toEqual([]);
+      expect(recovered.eventsIngested).toBe(2);
+      const store = await DeltaStore.open(root, { access: "read" });
+      try { expect(await store.listAgentMemoryEvents({ target: "codex" })).toHaveLength(3); }
+      finally { await store.close(); }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("replays old queue safely if checkpoint survives but rename does not", async () => {
+    const root = tempWorkspace("h48-codex-hook-compaction-rollback");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const original = `${queuedCodexHookLine(root, "SessionStart", "rollback-one")}\n${queuedCodexHookLine(root, "SessionStart", "rollback-two")}\n`;
+      writeFileSync(queueFile, original, "utf8");
+      const compacted = await drainAgentMemoryQueueFile({
+        workspaceRoot: root, watchFile: queueFile, source: "codex", maxEvents: 1, compactAfterBytes: 1,
+      });
+      expect(compacted.compacted).toBe(true);
+      const checkpoint = JSON.parse(readFileSync(`${queueFile}.checkpoint.json`, "utf8")) as { generation?: string };
+      expect(checkpoint.generation).toBeDefined();
+      // Power loss may preserve the newer checkpoint yet restore the old name.
+      writeFileSync(queueFile, original, "utf8");
+      const replay = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(replay.errors).toEqual([]);
+      const store = await DeltaStore.open(root, { access: "read" });
+      try { expect(await store.listAgentMemoryEvents({ target: "codex" })).toHaveLength(2); }
+      finally { await store.close(); }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("migrates normalized fallback records without granting native hook trust", async () => {
+    const root = tempWorkspace("h48-codex-hook-fallback-migration");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      const envelope = normalizeAgentEvent({
+        workspaceRoot: root, source: "generic", integration: "manual-import", eventName: "SessionStart",
+        raw: { session_id: "legacy-fallback", hook_event_name: "SessionStart" },
+      });
+      envelope.capture.trustLevel = "manual-import";
+      const fallback = {
+        id: "amem_legacy", externalEventId: "aevt_legacy", sourceName: "generic",
+        integrationKind: "manual-import", trustLevel: "manual-import", eventKind: envelope.event.kind,
+        normalizedKind: envelope.event.kind, confidence: envelope.capture.confidence,
+        capturedAt: envelope.event.timestamp, data: { envelope, bindings: {} },
+      };
+      writeFileSync(queueFile, `${JSON.stringify(fallback)}\n${queuedCodexHookLine(root, "SessionStart", "native-after-legacy")}\n`, "utf8");
+      const before = inspectAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(before.nativeSignals).toBe(1);
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(drained.errors).toEqual([]);
+      expect(drained.eventsIngested).toBe(2);
+      const store = await DeltaStore.open(root, { access: "read" });
+      try {
+        const events = await store.listAgentMemoryEvents({ limit: 10 });
+        expect(events).toHaveLength(2);
+        expect(events.find((event) => event.externalSessionId === "legacy-fallback")?.trustLevel).toBe("manual-import");
+      } finally { await store.close(); }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("bounded memory read drains a batch and reports remaining queue work", async () => {
+    const root = tempWorkspace("h48-codex-hook-bounded-read");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(queueFile, [
+        ...Array.from({ length: 130 }, (_, index) => queuedCodexHookLine(root, "PostToolUse", `bounded-${index}`)),
+        "",
+      ].join("\n"), "utf8");
+      const bounded = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex", maxEvents: 1 });
+      expect(bounded.eventsIngested).toBe(1);
+      expect(bounded.pendingBytes).toBeGreaterThan(0);
+      const read = await runAgentMemoryCommand({ subcommand: "memory", workspaceRoot: root, json: true, entry: "codex", limit: 200 });
+      expect(read.ok).toBe(true);
+      if (read.ok && "freshness" in read && read.freshness) {
+        expect(["pending", "current"]).toContain(read.freshness.status);
+        if (read.freshness.status === "pending") expect(read.freshness.pendingBytes).toBeGreaterThan(0);
+      }
+      const after = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(after.errors).toEqual([]);
+      const complete = await runAgentMemoryCommand({ subcommand: "context", workspaceRoot: root, json: true });
+      expect(complete.ok).toBe(true);
+      if (complete.ok && "agentMemory" in complete) {
+        expect(complete.freshness?.status).toBe("current");
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 45_000);
+
+  test("quarantines malformed line metadata and continues to a valid hook", async () => {
+    const root = tempWorkspace("h48-codex-hook-reject");
+    try {
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queueFile = join(agentDir, "events.ndjson");
+      writeFileSync(queueFile, [
+        "{invalid sensitive_canary_123",
+        queuedCodexHookLine(root, "SessionStart", "after-reject"),
+        "",
+      ].join("\n"), "utf8");
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(drained.errors).toEqual([]);
+      expect(drained.eventsIngested).toBe(1);
+      const rejection = readFileSync(`${queueFile}.rejects.ndjson`, "utf8");
+      expect(rejection).toContain("invalid-json-object");
+      expect(rejection).not.toContain("sensitive_canary_123");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   test("serializes concurrent queue drains before reading the checkpoint", async () => {
     const root = tempWorkspace("h48-codex-hook-concurrent-drain");
     try {
@@ -776,7 +965,9 @@ describe("H48 agent memory bridge", () => {
       expect(first.busy).toBeUndefined();
       expect(second.busy).toBeUndefined();
       expect(first.eventsIngested + second.eventsIngested).toBe(2);
-      expect(readFileSync(queueFile, "utf8")).toBe("");
+      const compactedQueue = readFileSync(queueFile, "utf8");
+      expect(compactedQueue).toMatch(/^\{"forgeHookQueueGeneration":"[0-9a-f-]+"\}\n$/u);
+      expect(first.pendingBytes + second.pendingBytes).toBe(0);
 
       const store = await DeltaStore.open(root, { access: "read" });
       try {
@@ -798,6 +989,8 @@ describe("H48 agent memory bridge", () => {
       const queueFile = join(agentDir, "events.ndjson");
       const lockFile = `${queueFile}.append-lock.json`;
       writeFileSync(lockFile, JSON.stringify({ pid: process.pid, token: "test-holder" }), "utf8");
+      const oldLockTime = new Date(Date.now() - 60_000);
+      utimesSync(lockFile, oldLockTime, oldLockTime);
 
       const child = spawn(process.execPath, [join(agentDir, "codex-hook.mjs"), "SessionStart"], {
         cwd: root,
@@ -817,6 +1010,7 @@ describe("H48 agent memory bridge", () => {
       expect(existsSync(lockFile)).toBe(false);
 
       writeFileSync(lockFile, JSON.stringify({ pid: process.pid, token: "test-holder-2" }), "utf8");
+      utimesSync(lockFile, oldLockTime, oldLockTime);
       const drain = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex", compactAfterBytes: 1 });
       expect(drain.eventsIngested).toBe(1);
       expect(drain.compacted).toBe(false);
@@ -825,6 +1019,75 @@ describe("H48 agent memory bridge", () => {
       rmSync(root, { recursive: true, force: true });
     }
   }, 45_000);
+
+  test("hook alone starts local owner and reaches Agent Memory without a CLI read", async () => {
+    const root = tempWorkspace("h48-codex-hook-autostart");
+    try {
+      const installed = await runAgentMemoryCommand({ subcommand: "install", workspaceRoot: root, json: true, target: "codex" });
+      expect(installed.exitCode).toBe(0);
+      // A PID can be reused while an old endpoint remains. The hook must
+      // authenticate a live broker over IPC instead of trusting that PID.
+      const deltaDir = join(root, ".forge", "delta");
+      mkdirSync(deltaDir, { recursive: true });
+      const endpointId = createHash("sha256").update(root).digest("hex").slice(0, 24);
+      writeFileSync(join(deltaDir, "broker-endpoint.json"), JSON.stringify({
+        version: 1, root, pid: process.pid, createdAt: "2020-01-01T00:00:00.000Z",
+        pipe: process.platform === "win32" ? `\\\\.\\pipe\\forge-delta-${endpointId}`
+          : join(tmpdir(), `forge-delta-${process.getuid?.() ?? "user"}-${endpointId}.sock`),
+        token: "0".repeat(64),
+      }));
+      const runner = join(root, ".forge", "agent", "codex-hook.mjs");
+      const result = spawnSync(process.execPath, [runner, "SessionStart"], {
+        cwd: root, input: JSON.stringify({ session_id: "hook-autostart", cwd: root }),
+        encoding: "utf8", windowsHide: true,
+        env: { ...process.env, FORGE_DELTA_BACKGROUND_DRAIN: "1" },
+      });
+      expect(result.status).toBe(0);
+      const queueFile = join(root, ".forge", "agent", "events.ndjson");
+      const checkpoint = `${queueFile}.checkpoint.json`;
+      let consumed = false;
+      for (let attempt = 0; attempt < 150; attempt += 1) {
+        if (existsSync(checkpoint)) {
+          const state = JSON.parse(readFileSync(checkpoint, "utf8")) as { offset?: number };
+          if ((state.offset ?? 0) > 0) { consumed = true; break; }
+        }
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, 100));
+      }
+      expect(consumed).toBe(true);
+      const store = await DeltaStore.open(root, { access: "read" });
+      try {
+        const events = await store.listAgentMemoryEvents({ target: "codex" });
+        expect(events.some((event) => event.externalSessionId === "hook-autostart")).toBe(true);
+      } finally { await store.close(); }
+    } finally {
+      await shutdownDeltaBroker(root).catch(() => undefined);
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test("new hook seals a crashed partial line before appending its event", async () => {
+    const root = tempWorkspace("h48-codex-hook-partial-repair");
+    try {
+      await runAgentMemoryCommand({ subcommand: "install", workspaceRoot: root, json: true, target: "codex" });
+      const queueFile = join(root, ".forge", "agent", "events.ndjson");
+      writeFileSync(queueFile, "{broken sensitive_partial_123", "utf8");
+      const runner = join(root, ".forge", "agent", "codex-hook.mjs");
+      const result = spawnSync(process.execPath, [runner, "SessionStart"], {
+        cwd: root, input: JSON.stringify({ session_id: "after-partial", cwd: root }),
+        encoding: "utf8", windowsHide: true,
+        env: { ...process.env, FORGE_DELTA_BACKGROUND_DRAIN: "0" },
+      });
+      expect(result.status).toBe(0);
+      expect(readFileSync(queueFile, "utf8").split(/\r?\n/u).filter(Boolean)).toHaveLength(2);
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(drained.errors).toEqual([]);
+      expect(drained.eventsIngested).toBe(1);
+      expect(readFileSync(`${queueFile}.rejects.ndjson`, "utf8")).not.toContain("sensitive_partial_123");
+    } finally {
+      await shutdownDeltaBroker(root).catch(() => undefined);
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test("drains a burst of Codex hook events without exhausting database handles", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-burst");
@@ -853,7 +1116,7 @@ describe("H48 agent memory bridge", () => {
     }
   }, 30_000);
 
-  test("queue drain reports Delta busy without advancing the checkpoint", async () => {
+  test("queue drain shares the active Delta owner and advances the checkpoint", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-busy");
     let store: DeltaStore | null = null;
     try {
@@ -870,18 +1133,17 @@ describe("H48 agent memory bridge", () => {
       );
 
       store = await DeltaStore.open(root);
-      const blocked = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
-      expect(blocked.errors).toEqual([]);
-      expect(blocked.busy?.code).toBe("FORGE_DELTA_BUSY");
-      expect(blocked.eventsIngested).toBe(0);
-      expect(existsSync(`${queueFile}.checkpoint.json`)).toBe(false);
+      const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
+      expect(drained.errors).toEqual([]);
+      expect(drained.busy).toBeUndefined();
+      expect(drained.eventsIngested).toBe(1);
+      expect(existsSync(`${queueFile}.checkpoint.json`)).toBe(true);
 
       await store.close();
       store = null;
       const retried = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
       expect(retried.errors).toEqual([]);
-      expect(retried.busy).toBeUndefined();
-      expect(retried.eventsIngested).toBe(1);
+      expect(retried.eventsIngested).toBe(0);
 
       const readStore = await DeltaStore.open(root, { access: "read" });
       const events = await readStore.listAgentMemoryEvents({ target: "codex" });
@@ -1031,7 +1293,7 @@ describe("H48 agent memory bridge", () => {
     }
   });
 
-  test("queue drain waits for a short-lived Delta writer before reporting busy", async () => {
+  test("queue drain proceeds while another Delta handle remains open", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-waits");
     let store: DeltaStore | null = null;
     try {
@@ -1048,13 +1310,7 @@ describe("H48 agent memory bridge", () => {
       );
 
       store = await DeltaStore.open(root);
-      const delayedClose = setTimeout(() => {
-        void store?.close().then(() => {
-          store = null;
-        });
-      }, 100);
       const drained = await drainAgentMemoryQueueFile({ workspaceRoot: root, watchFile: queueFile, source: "codex" });
-      clearTimeout(delayedClose);
       expect(drained.errors).toEqual([]);
       expect(drained.busy).toBeUndefined();
       expect(drained.eventsIngested).toBe(1);
@@ -1070,7 +1326,7 @@ describe("H48 agent memory bridge", () => {
       }
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   test("retains partial Codex hook queue line until newline completes it", async () => {
     const root = tempWorkspace("h48-codex-hook-queue-partial");
@@ -1142,14 +1398,18 @@ describe("H48 agent memory bridge", () => {
       expect(drained.errors).toEqual([]);
       expect(drained.eventsIngested).toBe(2);
       expect(drained.compacted).toBe(true);
-      expect(readFileSync(queueFile, "utf8")).toBe(partialLine);
+      const compactedQueue = readFileSync(queueFile, "utf8");
+      expect(compactedQueue).toMatch(/^\{"forgeHookQueueGeneration":"[0-9a-f-]+"\}\n/u);
+      expect(compactedQueue.endsWith(partialLine)).toBe(true);
       const history = readFileSync(drained.historyFile, "utf8");
       expect(history).toContain("codex-session-retention-1");
       expect(history).toContain("\"payloadRedacted\":true");
       expect(history).not.toContain(secret);
       expect(history).not.toContain("\"raw\":");
       expect(history).not.toContain("forge run billing.createInvoice --args");
-      expect(readFileSync(`${queueFile}.checkpoint.json`, "utf8")).toContain("\"offset\": 0");
+      const checkpoint = JSON.parse(readFileSync(`${queueFile}.checkpoint.json`, "utf8")) as { offset: number; generation: string };
+      expect(checkpoint.offset).toBe(Buffer.byteLength(compactedQueue) - Buffer.byteLength(partialLine));
+      expect(checkpoint.generation).toBeDefined();
 
       const store = await DeltaStore.open(root);
       const events = await store.listAgentMemoryEvents({ target: "codex" });

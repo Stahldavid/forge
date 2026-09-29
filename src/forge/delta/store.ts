@@ -1,4 +1,5 @@
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { createPgliteAdapter } from "../runtime/db/pglite-adapter.ts";
 import type { DbAdapter } from "../runtime/db/adapter.ts";
@@ -9,7 +10,13 @@ import { createDeltaId } from "./ids.ts";
 import { redactDeltaPayload } from "./redaction.ts";
 import { classifyArtifactKind, classifyDeltaPath, type DeltaSemanticHint } from "./classifier.ts";
 import { readDeltaGitSnapshot, type DeltaGitSnapshot } from "./git-observer.ts";
+import { inspectDeltaAgentQueue } from "./queue-status.ts";
+import { pidWasReused } from "./process-identity.ts";
 import type { AgentEventEnvelope, AgentMemoryEventRecord } from "../agent-memory/types.ts";
+
+let deltaBrokerOwnsProcess = false;
+/** Called only by the detached broker process before opening its physical PGlite store. */
+export function markDeltaBrokerOwnerProcess(): void { deltaBrokerOwnsProcess = true; }
 
 export type DeltaActorKind = "human" | "agent" | "forge" | "ci" | "git" | "unknown";
 export type DeltaSessionSource = "forge-dev" | "forge-command" | "agent-adapter" | "git" | "auto";
@@ -92,6 +99,7 @@ export interface DeltaAppendInput {
 
 export interface DeltaAgentMemoryEventInput {
   envelope: AgentEventEnvelope;
+  idempotencyKey?: string;
   summary?: string;
   bindings?: {
     toolName?: string;
@@ -229,7 +237,7 @@ export interface DeltaStatusDetails {
     queuePath: string;
     queueExists: boolean;
     queueSizeBytes: number;
-    queuePendingEvents: number;
+    queuePendingEvents: number | null;
     queueRedaction: "none" | "redacted" | "legacy-raw-present" | "mixed" | "unknown";
     queueHistoryPath: string;
     queueHistoryExists: boolean;
@@ -387,7 +395,7 @@ function lockLooksStale(holder: Record<string, unknown> | null): boolean {
   }
   const pid = typeof holder.pid === "number" && Number.isInteger(holder.pid) && holder.pid > 0 ? holder.pid : undefined;
   if (pid) {
-    return !processLooksAlive(pid);
+    return !processLooksAlive(pid) || pidWasReused(pid, holder.createdAt);
   }
   const createdAt = typeof holder.createdAt === "string" ? Date.parse(holder.createdAt) : NaN;
   return !Number.isFinite(createdAt) || Date.now() - createdAt > 30_000;
@@ -426,7 +434,9 @@ export function describeDeltaStoreBusy(
   const createdAt = typeof holder?.createdAt === "string" ? holder.createdAt : undefined;
   const createdMs = createdAt ? Date.parse(createdAt) : NaN;
   const cwd = typeof holder?.cwd === "string" ? displayDeltaBusyCwd(workspaceRoot, holder.cwd) : undefined;
-  const command = typeof holder?.command === "string" ? redactDeltaBusyCommand(holder.command) : undefined;
+  const command = typeof holder?.command === "string"
+    ? redactDeltaBusyCommand(holder.command).replaceAll(workspaceRoot, "[workspace]")
+    : undefined;
   return {
     code: "FORGE_DELTA_BUSY",
     lockPath: error.lockPath,
@@ -554,26 +564,6 @@ function deltaStoreInitialized(storePath: string): boolean {
   return existsSync(join(storePath, "PG_VERSION"));
 }
 
-function readPglitePostmasterHolder(storePath: string): Record<string, unknown> | null {
-  const postmasterPath = join(storePath, "postmaster.pid");
-  if (!existsSync(postmasterPath)) {
-    return null;
-  }
-  try {
-    const lines = readFileSync(postmasterPath, "utf8").split(/\r?\n/);
-    const pid = Number(lines[0]);
-    return {
-      ...(Number.isInteger(pid) && pid > 0 ? { pid } : {}),
-      createdAt: statSync(postmasterPath).mtime.toISOString(),
-      command: "pglite postmaster.pid",
-    };
-  } catch {
-    return {
-      command: "pglite postmaster.pid",
-    };
-  }
-}
-
 export class DeltaStore {
   private closed = false;
 
@@ -586,6 +576,29 @@ export class DeltaStore {
 
   static async open(workspaceRoot: string, options: DeltaStoreOpenOptions = {}): Promise<DeltaStore> {
     const storePath = getDeltaStorePath(workspaceRoot);
+    if (!deltaBrokerOwnsProcess) {
+      const { ensureDeltaBroker, requestDeltaBroker, DELTA_BROKER_METHODS } = await import("./broker.ts");
+      await ensureDeltaBroker(workspaceRoot);
+      const handleId = randomUUID();
+      await requestDeltaBroker(workspaceRoot, "openHandle", [handleId]);
+      const remote = new DeltaStore(workspaceRoot, storePath, null as unknown as DbAdapter, null);
+      return new Proxy(remote, {
+        get(target, property, receiver) {
+          if (property === "close") return async () => {
+            if (target.closed) return;
+            target.closed = true;
+            await requestDeltaBroker(workspaceRoot, "closeHandle", [handleId]);
+          };
+          if (typeof property === "string" && DELTA_BROKER_METHODS.has(property)) {
+            return async (...args: unknown[]) => {
+              if (target.closed) throw new Error("Delta store handle is closed");
+              return requestDeltaBroker(workspaceRoot, property, args);
+            };
+          }
+          return Reflect.get(target, property, receiver);
+        },
+      });
+    }
     mkdirSync(dirname(storePath), { recursive: true });
     const initializedBeforeOpen = deltaStoreInitialized(storePath);
     const lock = options.access === "read" ? null : await acquireDeltaStoreLockWithWait(workspaceRoot, options);
@@ -614,12 +627,6 @@ export class DeltaStore {
         await store.close().catch(() => undefined);
       } else if (lock) {
         releaseDeltaStoreLock(lock);
-      }
-      if (!(error instanceof DeltaStoreBusyError)) {
-        const holder = readPglitePostmasterHolder(storePath);
-        if (holder) {
-          throw new DeltaStoreBusyError(join(storePath, "postmaster.pid"), holder);
-        }
       }
       throw error;
     }
@@ -775,7 +782,39 @@ export class DeltaStore {
   }
 
   async recordAgentMemoryEvent(input: DeltaAgentMemoryEventInput): Promise<AgentMemoryEventRecord> {
+    const transaction = await this.adapter.begin();
+    try {
     const envelope = input.envelope;
+    const replayId = input.idempotencyKey
+      ? deterministicTimelineId("aevt", [input.idempotencyKey])
+      : undefined;
+    if (replayId) {
+      const existing = await this.adapter.query(
+        `SELECT ame.*, e.external_session_id, e.external_turn_id, e.event_kind, e.captured_at,
+                s.source_name, s.integration_kind, s.trust_level
+         FROM agent_memory_events ame
+         JOIN external_agent_events e ON e.id = ame.external_event_id
+         JOIN agent_event_sources s ON s.id = e.source_id
+         WHERE e.id = $1 LIMIT 1`,
+        [replayId],
+      );
+      if (existing.rows[0]) {
+        const row = existing.rows[0];
+        await transaction.commit();
+        return {
+          id: String(row.id), externalEventId: String(row.external_event_id),
+          sourceName: String(row.source_name), integrationKind: String(row.integration_kind),
+          trustLevel: String(row.trust_level),
+          externalSessionId: typeof row.external_session_id === "string" ? row.external_session_id : undefined,
+          externalTurnId: typeof row.external_turn_id === "string" ? row.external_turn_id : undefined,
+          eventKind: String(row.event_kind), normalizedKind: String(row.normalized_kind),
+          summary: typeof row.summary === "string" ? row.summary : undefined,
+          confidence: Number(row.confidence ?? 0), capturedAt: String(row.captured_at),
+          operationId: typeof row.operation_id === "string" ? row.operation_id : undefined,
+          data: parseJsonRecord(row.data_json),
+        };
+      }
+    }
     const timestamp = envelope.event.timestamp || new Date().toISOString();
     const sourceId = deterministicTimelineId("agsrc", [
       String(envelope.source.agent),
@@ -863,7 +902,7 @@ export class DeltaStore {
         : undefined,
     });
 
-    const externalEventId = createDeltaId("aevt");
+    const externalEventId = replayId ?? createDeltaId("aevt");
     const payloadJson = JSON.stringify(envelope.payload);
     await this.adapter.query(
       `INSERT INTO external_agent_events
@@ -903,7 +942,7 @@ export class DeltaStore {
       ],
     );
 
-    return {
+    const record: AgentMemoryEventRecord = {
       id: memoryId,
       externalEventId,
       sourceName: String(envelope.source.agent),
@@ -919,6 +958,12 @@ export class DeltaStore {
       operationId,
       data,
     };
+    await transaction.commit();
+    return record;
+    } catch (error) {
+      await transaction.rollback().catch(() => undefined);
+      throw error;
+    }
   }
 
   async listAgentMemoryEvents(filter: { target?: string; limit?: number } = {}): Promise<AgentMemoryEventRecord[]> {
@@ -1025,7 +1070,7 @@ export class DeltaStore {
     const queueHistorySizeBytes = queueHistoryStat?.size ?? 0;
     const operationCount = countAt(1);
     const queueRedaction = inspectAgentQueueRedaction(queuePath);
-    const queuePendingEvents = countNdjsonLines(queuePath);
+    const queuePendingEvents = inspectDeltaAgentQueue(this.workspaceRoot).pendingEvents;
     const queueHistoryLines = countNdjsonLines(queueHistoryPath);
     const storedVersion = meta.get("schemaVersion");
     const lastOperationId = meta.get("semantic.lastOperationId");

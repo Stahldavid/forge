@@ -1,5 +1,5 @@
 import { DeltaStore } from "../delta/store.ts";
-import type { AgentMemoryContextEvent, AgentMemoryContextPack, AgentMemoryEventRecord } from "./types.ts";
+import type { AgentMemoryContextEvent, AgentMemoryContextPack, AgentMemoryEventRecord, AgentMemoryFreshness } from "./types.ts";
 
 export async function buildAgentMemoryContext(input: {
   workspaceRoot: string;
@@ -8,6 +8,7 @@ export async function buildAgentMemoryContext(input: {
   proof?: string;
   handoff?: boolean;
   limit?: number;
+  freshness?: AgentMemoryFreshness;
 }): Promise<AgentMemoryContextPack> {
   const store = await DeltaStore.open(input.workspaceRoot, { access: "read" });
   try {
@@ -47,6 +48,12 @@ export async function buildAgentMemoryContext(input: {
     const openQuestions = timeline?.openQuestions ?? [];
     return {
       ok: true,
+      ...(input.freshness ? {
+        freshness: {
+          ...input.freshness,
+          ...(contextEventItems.at(-1)?.capturedAt ? { latestMatchingEventAt: contextEventItems.at(-1)!.capturedAt } : {}),
+        },
+      } : {}),
       scope,
       scopeTarget: contextScopeTarget(input, scope, target, currentSession?.id),
       entry: input.entry,
