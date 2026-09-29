@@ -1535,6 +1535,7 @@ describe("H48 agent memory bridge", () => {
         });
       }
     } finally {
+      await shutdownDeltaBroker(root).catch(() => undefined);
       rmSync(root, { recursive: true, force: true });
     }
   });
