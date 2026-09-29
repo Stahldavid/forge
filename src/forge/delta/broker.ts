@@ -294,17 +294,25 @@ export async function runDeltaBroker(workspaceRoot: string | undefined): Promise
           return;
         }
         lastActivity = Date.now();
+        // Health and wake signals do not touch PGlite. A large queue replay
+        // must not make a healthy owner fail its short liveness probe.
+        if (request.method === "ping" || request.method === "wake") {
+          if (closing) {
+            socket.end(`${JSON.stringify({ ok: false, error: { name: "Error", message: "Delta broker is closing" } })}\n`);
+          } else {
+            if (request.method === "wake") {
+              queuePendingBytes = 1;
+              setImmediate(drainQueue);
+            }
+            socket.end(`${JSON.stringify({ ok: true, value: true })}\n`);
+          }
+          return;
+        }
         pending += 1;
         const method = request.method;
         const args = request.args;
         const work = serial.then(async () => {
           if (closing) throw new Error("Delta broker is closing");
-          if (method === "ping") return true;
-          if (method === "wake") {
-            queuePendingBytes = inspectDeltaAgentQueue(root).pendingBytes ?? 1;
-            setImmediate(drainQueue);
-            return true;
-          }
           if (method === "stop") {
             closing = true;
             await store!.close();
@@ -351,14 +359,14 @@ export async function runDeltaBroker(workspaceRoot: string | undefined): Promise
         return drainAgentMemoryQueueFile({
           workspaceRoot: root,
           watchFile: join(root, ".forge", "agent", "events.ndjson"),
-          source: "codex", maxEvents: 128, maxDurationMs: 1_000, store: store!,
+          source: "codex", maxEvents: 32, maxDurationMs: 500, store: store!,
         });
       });
       serial = work.then(() => undefined, () => undefined);
       void work.then((result) => {
         queuePendingBytes = result.pendingBytes;
         if (result.eventsIngested > 0) lastActivity = Date.now();
-        if (result.pendingBytes > 0 && result.eventsIngested > 0) setTimeout(drainQueue, 0);
+        if (result.pendingBytes > 0 && result.eventsIngested > 0) setTimeout(drainQueue, 25);
       }, () => { queuePendingBytes = 1; }).finally(() => { drainScheduled = false; });
     };
     const drainTimer = backgroundDrain ? setInterval(drainQueue, 2_000) : undefined;

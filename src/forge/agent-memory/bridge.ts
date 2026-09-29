@@ -985,19 +985,16 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
       linesProcessed += 1;
       if (!line.raw.trim()) {
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
       const parsed = normalizeRawInput(line.raw);
       if (!parsed) {
         quarantineQueuedLine(options.watchFile, line.raw, bytesRead + line.endOffset, "invalid-json-object");
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
       if (typeof parsed.forgeHookQueueGeneration === "string") {
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
       if (isAgentMemoryEventRecord(parsed)) {
@@ -1005,12 +1002,10 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
         if (!legacyEnvelope) {
           quarantineQueuedLine(options.watchFile, line.raw, bytesRead + line.endOffset, "invalid-legacy-memory-record");
           consumedOffset = bytesRead + line.endOffset;
-          writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
           continue;
         }
         if (!workspaceRootsMatch(legacyEnvelope.workspace.root, options.workspaceRoot)) {
           consumedOffset = bytesRead + line.endOffset;
-          writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
           continue;
         }
         const migrated = await recordAgentMemoryEnvelope(store, legacyEnvelope, `fallback:${parsed.id}`);
@@ -1020,7 +1015,6 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
         }
         eventsIngested += 1;
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
       const queued = parseQueuedHookLine(parsed);
@@ -1036,7 +1030,6 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
       });
       if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
       const queueEventId = typeof parsed.queueEventId === "string" && /^[0-9a-f-]{36}$/iu.test(parsed.queueEventId)
@@ -1046,8 +1039,8 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
       if (result.ok) {
         eventsIngested += 1;
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
       } else if (isDeltaBusyIngestResult(result)) {
+        if (consumedOffset !== bytesRead) writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         return {
           eventsIngested,
           errors,
@@ -1063,6 +1056,11 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
         break;
       }
     }
+
+    // Every persisted event has a stable idempotency key. Committing one
+    // checkpoint per bounded batch avoids thousands of fsyncs during replay;
+    // a crash before this write safely replays the batch without duplicating it.
+    if (consumedOffset !== bytesRead) writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
 
     const retention = errors.length === 0 && consumedOffset > 0
       ? await compactAgentMemoryQueueFile({
