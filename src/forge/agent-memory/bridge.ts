@@ -10,6 +10,7 @@ import { redactAgentPayload } from "./redaction.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
 import { claudeCodeInstallFiles, claudeCodeInstallResult } from "./sources/claude-code.ts";
 import { codexInstallFiles, codexInstallResult, privacyDefaults } from "./sources/codex.ts";
+import { readCodexHookMeta } from "./hook-runner.ts";
 import { cursorInstallFiles, cursorInstallResult } from "./sources/cursor.ts";
 import type {
   AgentEventEnvelope,
@@ -38,6 +39,7 @@ export interface AgentMemoryCommandOptions {
   current?: boolean;
   dryRun?: boolean;
   force?: boolean;
+  mcpServer?: string;
   limit?: number;
   watch?: boolean;
   file?: string;
@@ -786,6 +788,7 @@ function redactedQueueHistoryEntry(parsed: Record<string, unknown>): Record<stri
   return {
     forgeHookQueueV1: true,
     source: typeof parsed.source === "string" ? parsed.source : "codex",
+    integration: parsed.integration === "mcp" ? "mcp" : "native-hook",
     eventName: typeof parsed.eventName === "string" ? parsed.eventName : undefined,
     workspaceRoot: typeof parsed.workspaceRoot === "string" ? parsed.workspaceRoot : undefined,
     enqueuedAt: typeof parsed.enqueuedAt === "string" ? parsed.enqueuedAt : undefined,
@@ -1030,7 +1033,7 @@ async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainO
         source: ingestSource,
         eventName: queued?.eventName ?? options.eventName,
         raw: payload,
-        integration: ingestSource === "cursor" ? "mcp" : "native-hook",
+        integration: queued?.integration ?? (ingestSource === "cursor" ? "mcp" : "native-hook"),
       });
       if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
         consumedOffset = bytesRead + line.endOffset;
@@ -1204,7 +1207,7 @@ export function inspectAgentMemoryQueueFile(options: {
       source,
       eventName: queued?.eventName ?? options.eventName,
       raw: payload,
-      integration: source === "cursor" ? "mcp" : "native-hook",
+      integration: queued?.integration ?? (source === "cursor" ? "mcp" : "native-hook"),
     });
     if (source !== options.source) {
       continue;
@@ -1364,9 +1367,11 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
 
 function installAgentMemory(options: AgentMemoryCommandOptions): AgentInstallResult {
   const target = normalizeInstallTarget(options.target ?? options.source ?? "generic");
+  const previousCodexMeta = target === "codex" ? readCodexHookMeta(options.workspaceRoot) : null;
+  const mcpServer = options.mcpServer ?? (previousCodexMeta?.transport === "mcp_tool" ? previousCodexMeta.mcpServer : undefined);
   const files =
     target === "codex"
-      ? codexInstallFiles(options.workspaceRoot)
+      ? codexInstallFiles(options.workspaceRoot, mcpServer)
       : target === "claude-code"
         ? claudeCodeInstallFiles()
         : target === "cursor"
@@ -1672,6 +1677,7 @@ export async function readStdinJson(options?: { timeoutMs?: number }): Promise<u
 
 function parseQueuedHookLine(raw: Record<string, unknown>): {
   source: string;
+  integration: "mcp" | "native-hook";
   eventName?: string;
   workspaceRoot?: string;
   payload: Record<string, unknown>;
@@ -1685,6 +1691,7 @@ function parseQueuedHookLine(raw: Record<string, unknown>): {
   }
   return {
     source: typeof raw.source === "string" ? raw.source : "codex",
+    integration: raw.integration === "mcp" ? "mcp" : "native-hook",
     eventName: typeof raw.eventName === "string" ? raw.eventName : undefined,
     workspaceRoot: typeof raw.workspaceRoot === "string" ? raw.workspaceRoot : undefined,
     payload,

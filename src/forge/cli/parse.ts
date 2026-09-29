@@ -1249,6 +1249,7 @@ export function parseCli(argv: string[]): ParsedCli {
             target,
             dryRun: parseFlag(argv, "--dry-run"),
             force: parseFlag(argv, "--force"),
+            mcpServer: parseOptionValue(argv, "--mcp-server"),
             preserveUserSections: !parseFlag(argv, "--no-preserve-user-sections"),
             skills: !parseFlag(argv, "--no-skills"),
             rules: !parseFlag(argv, "--no-rules"),
@@ -3397,6 +3398,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--interval-ms",
     "--workspace-id",
     "--poll-interval",
+    "--mcp-server",
     "--allow-dev-auth",
     "--token",
     "--prod",
@@ -3527,6 +3529,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--interval-ms" ||
         arg === "--workspace-id" ||
         arg === "--poll-interval" ||
+        arg === "--mcp-server" ||
         arg === "--token"
         || arg === "--to" ||
         arg === "--env" ||

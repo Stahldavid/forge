@@ -27,6 +27,8 @@ forge mcp serve
 
 `forge mcp serve` exposes Forge context, memory, timeline, and inspect tools to MCP-compatible agents. It also exposes `fabric_propose`, `fabric_status`, and `fabric_evidence` when `forge fabric serve` owns the local task store. The proposal tool records an untrusted request; it grants no authority. The evidence tool reports bounded, digest-bound provenance without raw model output or diff content. Approval, execution, and result acceptance remain in the CLI and the local owner popup.
 
+On Windows, use `forge agent install codex --mcp-server <configured-server-name> --force --json` when Codex already has `forge mcp serve` connected to the **same workspace**. This installs `mcp_tool` lifecycle hooks instead of per-event command hooks, avoiding a visible PowerShell launch for every tool call. The `agent_hook_ingest` MCP tool passes each event to the existing redacting queue runner with a hidden Node child. Codex must review the changed hook definitions; restart the MCP connection so it discovers the new tool. `SessionStart` can arrive before the MCP connection is ready, so treat that one event as best effort. Without `--mcp-server`, installation retains the command-hook mode for other setups. MCP events are marked `mcp-tool` provenance because an ordinary MCP caller can invoke the same tool; they are useful operational signals, not independent proof that Codex Desktop executed the hook. For `PostToolUse`, only bounded response status metadata is transferred through the hook.
+
 The experimental `fabric_capabilities` read tool reports this CLI/MCP boundary.
 The MCP task tools require a running local owner and do not start a model call.
 

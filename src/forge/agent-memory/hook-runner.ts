@@ -3,6 +3,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { releaseManifest } from "../_generated/releaseManifest.ts";
 import {
+  CODEX_MCP_HOOK_TOOL,
   CODEX_HOOK_META_RELATIVE,
   CODEX_HOOK_QUEUE_RELATIVE,
   CODEX_HOOK_RUNNER_RELATIVE,
@@ -16,6 +17,8 @@ export interface CodexHookMeta {
   workspaceRoot: string;
   runner: string;
   queueFile: string;
+  transport?: "command" | "mcp_tool";
+  mcpServer?: string;
   stdinTimeoutMs?: number;
   hookTimeouts?: Record<string, number>;
 }
@@ -23,6 +26,8 @@ export interface CodexHookMeta {
 export interface CodexHookCommandInspection {
   hookCommands: string[];
   usesLightweightRunner: boolean;
+  usesMcpHook: boolean;
+  mcpServers: string[];
   usesLegacyForgeCli: boolean;
   maxHookTimeout?: number;
   legacyCommands: string[];
@@ -69,6 +74,8 @@ export function inspectCodexHookCommands(workspaceRoot: string): CodexHookComman
   const empty: CodexHookCommandInspection = {
     hookCommands: [],
     usesLightweightRunner: false,
+    usesMcpHook: false,
+    mcpServers: [],
     usesLegacyForgeCli: false,
     legacyCommands: [],
   };
@@ -77,10 +84,11 @@ export function inspectCodexHookCommands(workspaceRoot: string): CodexHookComman
   }
   try {
     const parsed = JSON.parse(readFileSync(hooksPath, "utf8")) as {
-      hooks?: Record<string, Array<{ hooks?: Array<{ command?: string; timeout?: number }> }>>;
+      hooks?: Record<string, Array<{ hooks?: Array<{ type?: string; command?: string; server?: string; tool?: string; timeout?: number }> }>>;
     };
     const commands: string[] = [];
     const legacyCommands: string[] = [];
+    const mcpServers = new Set<string>();
     let maxHookTimeout: number | undefined;
     for (const groups of Object.values(parsed.hooks ?? {})) {
       for (const group of groups ?? []) {
@@ -90,6 +98,9 @@ export function inspectCodexHookCommands(workspaceRoot: string): CodexHookComman
             if (/forge\s+agent\s+ingest/i.test(hook.command)) {
               legacyCommands.push(hook.command);
             }
+          }
+          if (hook.type === "mcp_tool" && hook.tool === CODEX_MCP_HOOK_TOOL && typeof hook.server === "string") {
+            mcpServers.add(hook.server);
           }
           if (typeof hook.timeout === "number") {
             maxHookTimeout = maxHookTimeout === undefined ? hook.timeout : Math.max(maxHookTimeout, hook.timeout);
@@ -102,6 +113,8 @@ export function inspectCodexHookCommands(workspaceRoot: string): CodexHookComman
     return {
       hookCommands: commands,
       usesLightweightRunner,
+      usesMcpHook: mcpServers.size > 0,
+      mcpServers: [...mcpServers],
       usesLegacyForgeCli,
       maxHookTimeout,
       legacyCommands,

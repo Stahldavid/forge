@@ -413,6 +413,7 @@ forge agent hooks smoke --target codex --json
 forge agent timeline --json
 forge agent timeline --target codex --json
 forge agent install codex --dry-run --json
+forge agent install codex --mcp-server forge_fabric_local --force --json
 forge agent install claude-code --dry-run --json
 forge agent install cursor --dry-run --json
 forge mcp serve

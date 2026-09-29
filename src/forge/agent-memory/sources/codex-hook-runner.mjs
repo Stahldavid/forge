@@ -78,6 +78,7 @@ async function main() {
     forgeHookQueueV1: true,
     queueEventId: randomUUID(),
     source: "codex",
+    integration: raw.forgeMcpHook === true ? "mcp" : "native-hook",
     eventName,
     workspaceRoot,
     enqueuedAt: new Date().toISOString(),
@@ -268,6 +269,11 @@ function sanitizePayload(raw, hookEventName) {
     payload.commandStored = false;
     payload.commandSummary = summarizeCommand(command);
     payload.commandKind = classifyCommand(stringField(raw, "tool_name") ?? stringField(raw, "toolName"), command);
+  } else if (typeof raw.commandHash === "string" && /^[a-f0-9]{64}$/u.test(raw.commandHash) && raw.forgeMcpHook === true) {
+    payload.commandHash = raw.commandHash;
+    payload.commandStored = false;
+    payload.commandSummary = raw.commandSummary === "[command redacted]" || /^forge (?:status|changed|check|verify|run|agent|fabric|generate|inspect|test)$/u.test(raw.commandSummary)
+      ? raw.commandSummary : "[command redacted]";
   }
 
   const exitCode = numberField(toolResponse, "exitCode") ?? numberField(toolResponse, "exit_code") ??
@@ -281,7 +287,7 @@ function sanitizePayload(raw, hookEventName) {
       payload.resultStatus = status;
     }
   }
-  if (toolResponse) {
+  if (toolResponse && raw.forgeMcpHook !== true) {
     payload.responseHash = hashStable(JSON.stringify(toolResponse));
     payload.responseStored = false;
   }

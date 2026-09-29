@@ -1,10 +1,13 @@
-import { readFileSync, realpathSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { isAbsolute, join, relative, sep } from "node:path";
 import { DeltaStore } from "../delta/store.ts";
 import { ingestEnvelope, runAgentMemoryCommand } from "./bridge.ts";
 import { normalizeAgentEvent } from "./normalize.ts";
 import { requestLocalTask } from "../agent-fabric/local-task-server.ts";
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
+import { CODEX_EVENTS, CODEX_HOOK_RUNNER_RELATIVE, CODEX_MCP_HOOK_TOOL } from "./sources/codex.ts";
 
 interface JsonRpcRequest {
   jsonrpc?: "2.0";
@@ -78,6 +81,16 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
               required: ["changeId"], additionalProperties: false },
           },
           {
+            name: CODEX_MCP_HOOK_TOOL,
+            description: "Receive a Codex lifecycle hook and enqueue its redacted metadata. Called by reviewed Codex hooks; agents should not call this tool directly.",
+            inputSchema: {
+              type: "object",
+              properties: { eventName: { type: "string", enum: CODEX_EVENTS }, payload: { type: "object" } },
+              required: ["eventName", "payload"],
+              additionalProperties: false,
+            },
+          },
+          {
             name: "agent_context",
             description: "Read the ForgeOS Agent Memory context pack for the current work or a runtime entry.",
             inputSchema: {
@@ -124,7 +137,9 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
         ? params.arguments as Record<string, unknown>
         : {};
       const result = await runTool(workspaceRoot, name, args);
-      await logMcpToolCall(workspaceRoot, name, args, "completed").catch(() => undefined);
+      if (name !== CODEX_MCP_HOOK_TOOL) {
+        await logMcpToolCall(workspaceRoot, name, args, "completed").catch(() => undefined);
+      }
       return response(request.id, {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         ...(result && typeof result === "object" && "ok" in result && result.ok === false ? { isError: true } : {}),
@@ -165,6 +180,46 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
 }
 
 async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>): Promise<unknown> {
+  if (name === CODEX_MCP_HOOK_TOOL) {
+    if (Object.keys(args).sort().join(",") !== "eventName,payload" ||
+        typeof args.eventName !== "string" || !CODEX_EVENTS.includes(args.eventName) ||
+        !args.payload || typeof args.payload !== "object" || Array.isArray(args.payload)) {
+      throw new Error("agent_hook_ingest requires a supported eventName and object payload");
+    }
+    const hookCwd = (args.payload as Record<string, unknown>).cwd;
+    if (typeof hookCwd !== "string") throw new Error("Codex hook cwd is required");
+    const relativeCwd = relative(realpathSync(workspaceRoot), realpathSync(hookCwd));
+    if (relativeCwd === ".." || relativeCwd.startsWith(`..${sep}`) || isAbsolute(relativeCwd)) {
+      throw new Error("Codex hook cwd is outside the MCP server workspace");
+    }
+    const payload: Record<string, unknown> = {
+      ...(args.payload as Record<string, unknown>),
+      hook_event_name: args.eventName,
+      cwd: workspaceRoot,
+      forgeMcpHook: true,
+    };
+    let serialized = JSON.stringify(payload);
+    if (Buffer.byteLength(serialized, "utf8") > 256 * 1024) {
+      const toolInput = payload.tool_input;
+      if (toolInput && typeof toolInput === "object" && !Array.isArray(toolInput)) {
+        const command = (toolInput as Record<string, unknown>).command;
+        if (typeof command === "string") {
+          payload.commandHash = createHash("sha256").update(command).digest("hex");
+          const match = /^\s*(forge)\s+(status|changed|check|verify|run|agent|fabric|generate|inspect|test)\b/u.exec(command);
+          payload.commandSummary = match ? match.slice(1).join(" ") : "[command redacted]";
+        }
+        delete payload.tool_input;
+        serialized = JSON.stringify(payload);
+      }
+    }
+    if (Buffer.byteLength(serialized, "utf8") > 256 * 1024) {
+      throw new Error("Codex hook payload exceeds 256 KiB");
+    }
+    const runner = join(workspaceRoot, CODEX_HOOK_RUNNER_RELATIVE);
+    if (!existsSync(runner)) throw new Error("Codex hook runner is not installed");
+    await enqueueCodexHook(runner, workspaceRoot, args.eventName, serialized);
+    return { ok: true, queued: true };
+  }
   if (name === "fabric_capabilities") {
     if (Object.keys(args).length !== 0) throw new Error("fabric_capabilities accepts no arguments");
     return {
@@ -259,6 +314,23 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
     return readInspectAll(workspaceRoot);
   }
   throw new Error(`unknown ForgeOS MCP tool: ${name}`);
+}
+
+function enqueueCodexHook(runner: string, workspaceRoot: string, eventName: string, payload: string): Promise<void> {
+  return new Promise((resolveEnqueue, rejectEnqueue) => {
+    const child = spawn(process.execPath, [runner, eventName], {
+      cwd: workspaceRoot,
+      windowsHide: true,
+      stdio: ["pipe", "ignore", "ignore"],
+      timeout: 2_000,
+    });
+    child.once("error", () => rejectEnqueue(new Error("Codex hook queue runner could not start")));
+    child.once("close", (code) => code === 0
+      ? resolveEnqueue()
+      : rejectEnqueue(new Error("Codex hook queue runner failed")));
+    child.stdin.on("error", () => undefined);
+    child.stdin.end(payload);
+  });
 }
 
 async function logMcpToolCall(workspaceRoot: string, toolName: string, args: Record<string, unknown>, status: string): Promise<void> {

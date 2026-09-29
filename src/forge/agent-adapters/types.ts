@@ -27,6 +27,7 @@ export interface AgentCommandOptions {
   target: AgentAdapterTarget;
   dryRun: boolean;
   force: boolean;
+  mcpServer?: string;
   preserveUserSections: boolean;
   skills: boolean;
   rules: boolean;

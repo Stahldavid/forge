@@ -1387,8 +1387,9 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
     : undefined;
   const usesLegacyForgeCli = codexHookInspection?.usesLegacyForgeCli === true;
   const usesLightweightRunner = codexHookInspection?.usesLightweightRunner === true;
-  const hookCommandHealthy = installTarget !== "codex" || (usesLightweightRunner && !usesLegacyForgeCli);
-  const hookVersionHealthy = installTarget !== "codex" || !usesLightweightRunner || codexVersionMatch?.matches === true;
+  const usesMcpHook = codexHookInspection?.usesMcpHook === true;
+  const hookCommandHealthy = installTarget !== "codex" || ((usesLightweightRunner || usesMcpHook) && !usesLegacyForgeCli);
+  const hookVersionHealthy = installTarget !== "codex" || (!usesLightweightRunner && !usesMcpHook) || codexVersionMatch?.matches === true;
   const ok = installed && bridgeWritable && deltaWritable && visibleHookSignals && usefulSignals > 0 && !approvalRequired && hookCommandHealthy && hookVersionHealthy;
   const nextActions = ok
     ? uniqueCommands([
@@ -1405,7 +1406,7 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
         ...(visibleHookSignals && usefulSignals === 0 ? [`forge agent ingest ${source} --event PostToolUse --json`] : []),
         ...(!deltaWritable ? ["forge delta status --json", "forge delta repair --dry-run --json"] : []),
         ...(queuedEvents > 0 ? [`forge agent ingest ${source} --file .forge/agent/events.ndjson --json`] : []),
-        ...(usesLightweightRunner ? [`forge agent ingest ${source} --watch --file .forge/agent/events.ndjson --json`] : []),
+        ...(usesLightweightRunner || usesMcpHook ? [`forge agent ingest ${source} --watch --file .forge/agent/events.ndjson --json`] : []),
       ]);
 
   return {
@@ -1516,6 +1517,8 @@ async function readAgentHookStatus(options: AgentCommandOptions): Promise<AgentH
               ok: hookCommandHealthy,
               message: usesLegacyForgeCli
                 ? "Codex hooks still call full forge agent ingest; reinstall with forge agent install codex --force"
+                : usesMcpHook
+                  ? `Codex hooks enqueue through MCP server ${codexHookInspection?.mcpServers.join(", ")}`
                 : usesLightweightRunner
                   ? "Codex hooks use the lightweight workspace runner (.forge/agent/codex-hook.mjs)"
                   : "Codex hook command mode is unknown; reinstall hooks",
@@ -2302,6 +2305,7 @@ async function runAgentCommandRaw(options: AgentCommandOptions): Promise<AgentCo
       current: options.current,
       dryRun: options.dryRun,
       force: options.force,
+      mcpServer: options.mcpServer,
       limit: options.limit,
       watch: options.watch,
       file: options.file,
