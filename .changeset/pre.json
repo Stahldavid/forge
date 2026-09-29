@@ -12,6 +12,7 @@
     "agent-fabric-local-coding-pilot",
     "agent-fabric-local-owner-mcp",
     "agent-fabric-p0a",
-    "agent-fabric-p0b-a"
+    "agent-fabric-p0b-a",
+    "agent-memory-ingestion"
   ]
 }

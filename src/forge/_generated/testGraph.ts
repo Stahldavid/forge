@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=2dafa1c78e9927f05c35c750d0dc6af4b39b254fab86ae923a28a1f6fd252617
+// @forge-generated generator=0.1.0-alpha.67 input=2dc11ae4fcaef4dfc0d05d4b3ca83648da1b99e5202fd8001032014aaa6e9342 content=8381d9285e6ad5420493b0a96067a46118590b4cf3237f429e652d415ec6e73e
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.66",
-  "inputHash": "57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859",
+  "generatorVersion": "0.1.0-alpha.67",
+  "inputHash": "2dc11ae4fcaef4dfc0d05d4b3ca83648da1b99e5202fd8001032014aaa6e9342",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1772,7 +1772,7 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
-      "file": "tests/db/sql-compiler.test.ts",
+      "file": "tests/db/pglite-lock-safety.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1790,7 +1790,65 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/db/sql-compiler.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/delta-broker.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/delta/delta-store.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/queue-status.test.ts",
       "kind": "unknown",
       "reasons": []
     },
