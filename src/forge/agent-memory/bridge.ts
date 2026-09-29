@@ -1,9 +1,10 @@
-import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
+import { appendFileSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readSync, renameSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
 import { createDeltaId } from "../delta/ids.ts";
 import { DeltaStore, DeltaStoreBusyError, describeDeltaStoreBusy, summarizeDeltaStoreBusy } from "../delta/store.ts";
+import { pidWasReused } from "../delta/process-identity.ts";
 import { extractAgentEventBindings, normalizeAgentEvent, summarizeAgentEvent } from "./normalize.ts";
 import { redactAgentPayload } from "./redaction.ts";
 import { buildAgentMemoryContext } from "./context-pack.ts";
@@ -18,6 +19,7 @@ import type {
   AgentMemoryUnavailableResult,
   AgentMemoryContextPack,
   AgentMemoryEventRecord,
+  AgentMemoryFreshness,
   AgentMemorySourceName,
 } from "./types.ts";
 
@@ -47,7 +49,7 @@ export type AgentMemoryCommandResult =
   | AgentIngestResult
   | AgentIngestWatchResult
   | AgentMemoryContextPack
-  | { ok: true; events: AgentMemoryEventRecord[]; exitCode: 0 }
+  | { ok: true; events: AgentMemoryEventRecord[]; freshness: AgentMemoryFreshness; exitCode: 0 }
   | AgentMemoryUnavailableResult;
 
 export interface AgentMemoryQueueInspectionResult {
@@ -250,7 +252,8 @@ function mergeAgentMemoryEvents(
   limit: number | undefined,
 ): AgentMemoryEventRecord[] {
   const seen = new Set<string>();
-  const merged = [...primary, ...fallback]
+  const primaryEnvelopes = new Set(primary.map((event) => JSON.stringify(event.data.envelope)).filter((value) => value !== undefined));
+  const merged = [...primary, ...fallback.filter((event) => !primaryEnvelopes.has(JSON.stringify(event.data.envelope)))]
     .filter((event) => {
       if (seen.has(event.id)) {
         return false;
@@ -322,6 +325,7 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
   }
   if (options.subcommand === "context") {
     try {
+      const freshness = await refreshAgentMemory(options.workspaceRoot);
       return await buildAgentMemoryContext({
         workspaceRoot: options.workspaceRoot,
         entry: options.entry,
@@ -329,11 +333,13 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
         proof: options.proof,
         handoff: options.handoff,
         limit: options.limit,
+        freshness,
       });
     } catch (error) {
       return memoryUnavailable(error, options.workspaceRoot);
     }
   }
+  const freshness = await refreshAgentMemory(options.workspaceRoot);
   const events = await listAgentMemoryEventsWithSchemaRepair(options.workspaceRoot, options.entry, options.limit);
   if (!Array.isArray(events)) {
     return events;
@@ -341,8 +347,50 @@ export async function runAgentMemoryCommand(options: AgentMemoryCommandOptions):
   return {
     ok: true,
     events,
+    freshness: { ...freshness, ...(events.at(-1)?.capturedAt ? { latestMatchingEventAt: events.at(-1)!.capturedAt } : {}) },
     exitCode: 0,
   };
+}
+
+/** Drain a short batch before reads; the broker continues draining in the background. */
+export async function refreshAgentMemory(workspaceRoot: string): Promise<AgentMemoryFreshness> {
+  const watchFile = join(workspaceRoot, ".forge", "agent", "events.ndjson");
+  if (!existsSync(watchFile)) {
+    return { status: "current", pendingBytes: 0, queuedEvents: 0, inspectedEventsTruncated: false };
+  }
+  let drainError: string | undefined;
+  try {
+    const drained = await drainAgentMemoryQueueFile({
+      workspaceRoot,
+      watchFile,
+      source: "codex",
+      maxEvents: 128,
+      maxDurationMs: 1_000,
+    });
+    drainError = drained.busy ? "Agent Memory store is busy" : drained.errors[0];
+  } catch (error) {
+    drainError = error instanceof Error ? error.message : String(error);
+  }
+  try {
+    const queue = inspectAgentMemoryQueueFile({ workspaceRoot, watchFile, source: "codex" });
+    const pendingBytes = Math.max(0, statSync(watchFile).size - queue.bytesRead);
+    return {
+      status: drainError ? "unavailable" : pendingBytes > 0 ? "pending" : "current",
+      pendingBytes,
+      queuedEvents: queue.events,
+      inspectedEventsTruncated: queue.truncated === true,
+      ...(queue.latestEventAt ? { lastQueuedAt: queue.latestEventAt } : {}),
+      ...(drainError ? { error: drainError } : {}),
+    };
+  } catch (error) {
+    return {
+      status: "unavailable",
+      pendingBytes: 0,
+      queuedEvents: 0,
+      inspectedEventsTruncated: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 export async function ingestEnvelope(workspaceRoot: string, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {
@@ -379,11 +427,12 @@ export async function ingestEnvelope(workspaceRoot: string, envelope: AgentEvent
   }
 }
 
-async function recordAgentMemoryEnvelope(store: DeltaStore, envelope: AgentEventEnvelope): Promise<AgentIngestResult> {
+async function recordAgentMemoryEnvelope(store: DeltaStore, envelope: AgentEventEnvelope, idempotencyKey?: string): Promise<AgentIngestResult> {
   const event = await store.recordAgentMemoryEvent({
     envelope,
     summary: summarizeAgentEvent(envelope),
     bindings: extractAgentEventBindings(envelope),
+    ...(idempotencyKey ? { idempotencyKey } : {}),
   });
   return { ok: true, event, envelope, exitCode: 0 };
 }
@@ -476,6 +525,10 @@ function queueAppendLockPath(watchFile: string): string {
   return `${watchFile}.append-lock.json`;
 }
 
+function queueDrainLockPath(watchFile: string): string {
+  return `${watchFile}.drain-lock.json`;
+}
+
 function queueLockHolderAlive(pid: unknown): boolean {
   if (typeof pid !== "number" || !Number.isInteger(pid) || pid <= 0) {
     return false;
@@ -491,9 +544,13 @@ function queueLockHolderAlive(pid: unknown): boolean {
 function clearStaleQueueAppendLock(lockPath: string): void {
   try {
     const stat = statSync(lockPath);
-    const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: unknown };
+    const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: unknown; createdAt?: unknown };
     const ageMs = Date.now() - stat.mtimeMs;
-    if (ageMs < 2_000 || (ageMs < 30_000 && queueLockHolderAlive(holder.pid))) {
+    // A large queue can take longer than 30 seconds to compact. Reclaiming a
+    // live writer's lock by age would let a hook append to the old queue just
+    // before the atomic replacement and silently drop that event.
+    if (ageMs < 2_000 || (queueLockHolderAlive(holder.pid) &&
+        !(typeof holder.pid === "number" && pidWasReused(holder.pid, holder.createdAt)))) {
       return;
     }
     unlinkSync(lockPath);
@@ -502,8 +559,7 @@ function clearStaleQueueAppendLock(lockPath: string): void {
   }
 }
 
-async function acquireQueueAppendLock(watchFile: string, waitMs = 500): Promise<string | null> {
-  const lockPath = queueAppendLockPath(watchFile);
+async function acquireQueueFileLock(lockPath: string, waitMs: number): Promise<string | null> {
   const token = randomUUID();
   const started = Date.now();
   for (;;) {
@@ -528,8 +584,11 @@ async function acquireQueueAppendLock(watchFile: string, waitMs = 500): Promise<
   }
 }
 
-function releaseQueueAppendLock(watchFile: string, token: string): void {
-  const lockPath = queueAppendLockPath(watchFile);
+async function acquireQueueAppendLock(watchFile: string, waitMs = 500): Promise<string | null> {
+  return acquireQueueFileLock(queueAppendLockPath(watchFile), waitMs);
+}
+
+function releaseQueueFileLock(lockPath: string, token: string): void {
   try {
     const holder = JSON.parse(readFileSync(lockPath, "utf8")) as { token?: unknown };
     if (holder.token === token) {
@@ -540,6 +599,10 @@ function releaseQueueAppendLock(watchFile: string, token: string): void {
   }
 }
 
+function releaseQueueAppendLock(watchFile: string, token: string): void {
+  releaseQueueFileLock(queueAppendLockPath(watchFile), token);
+}
+
 function readQueueCheckpoint(watchFile: string, fileSize: number): number {
   const checkpointFile = queueCheckpointPath(watchFile);
   if (!existsSync(checkpointFile)) {
@@ -547,10 +610,16 @@ function readQueueCheckpoint(watchFile: string, fileSize: number): number {
   }
   try {
     const parsed = JSON.parse(readFileSync(checkpointFile, "utf8")) as unknown;
-    const offset = parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as { offset?: unknown }).offset
+    const checkpoint = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as { offset?: unknown; generation?: unknown }
       : undefined;
+    const offset = checkpoint?.offset;
     if (typeof offset !== "number" || !Number.isFinite(offset) || offset < 0) {
+      return 0;
+    }
+    // An atomic queue replacement can land before its checkpoint reset. The
+    // generation mismatch makes the new tail replay from byte zero.
+    if ((typeof checkpoint?.generation === "string" ? checkpoint.generation : undefined) !== readQueueGeneration(watchFile)) {
       return 0;
     }
     return offset > fileSize ? 0 : Math.floor(offset);
@@ -559,19 +628,61 @@ function readQueueCheckpoint(watchFile: string, fileSize: number): number {
   }
 }
 
-function writeQueueCheckpoint(watchFile: string, offset: number): void {
+function readQueueGeneration(watchFile: string): string | undefined {
+  if (!existsSync(watchFile)) return undefined;
+  const fd = openSync(watchFile, "r");
+  try {
+    const prefix = Buffer.alloc(256);
+    const bytes = readSync(fd, prefix, 0, prefix.length, 0);
+    const newline = prefix.subarray(0, bytes).indexOf(10);
+    if (newline < 0) return undefined;
+    const value = JSON.parse(prefix.subarray(0, newline).toString("utf8")) as unknown;
+    if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+    const generation = (value as { forgeHookQueueGeneration?: unknown }).forgeHookQueueGeneration;
+    return typeof generation === "string" && /^[0-9a-f-]{36}$/iu.test(generation) ? generation : undefined;
+  } catch {
+    return undefined;
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function writeQueueCheckpoint(watchFile: string, offset: number, generation = readQueueGeneration(watchFile)): void {
   const checkpointFile = queueCheckpointPath(watchFile);
   mkdirSync(dirname(checkpointFile), { recursive: true });
-  writeFileSync(
-    checkpointFile,
-    `${JSON.stringify({
+  const temporary = `${checkpointFile}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    const fd = openSync(temporary, "wx");
+    try {
+      writeFileSync(fd,
+      `${JSON.stringify({
       schema: "forge.agent-hook-queue-checkpoint.v1",
       file: watchFile,
       offset,
+      ...(generation ? { generation } : {}),
       updatedAt: new Date().toISOString(),
-    }, null, 2)}\n`,
-    "utf8",
-  );
+      }, null, 2)}\n`,
+      "utf8",
+      );
+      fsyncSync(fd);
+    } finally {
+      closeSync(fd);
+    }
+    renameSync(temporary, checkpointFile);
+    syncParentDirectory(checkpointFile);
+  } finally {
+    if (existsSync(temporary)) unlinkSync(temporary);
+  }
+}
+
+function syncParentDirectory(path: string): void {
+  try {
+    const fd = openSync(dirname(path), "r");
+    try { fsyncSync(fd); } finally { closeSync(fd); }
+  } catch {
+    // Windows cannot fsync a directory through Node. The file itself was
+    // fsynced before rename, and generation checks recover either rename state.
+  }
 }
 
 const DEFAULT_QUEUE_COMPACT_AFTER_BYTES = 256 * 1024;
@@ -613,8 +724,26 @@ async function compactAgentMemoryQueueFile(options: {
       historyFile,
       trimBufferStart(Buffer.concat([existingHistory, redactedConsumedHistory]), options.historyMaxBytes),
     );
-    writeFileSync(options.watchFile, currentBuffer.subarray(options.consumedOffset));
-    writeQueueCheckpoint(options.watchFile, 0);
+    const generation = randomUUID();
+    const marker = Buffer.from(`${JSON.stringify({ forgeHookQueueGeneration: generation })}\n`, "utf8");
+    const tail = currentBuffer.subarray(options.consumedOffset);
+    const temporary = `${options.watchFile}.${process.pid}.${generation}.tmp`;
+    try {
+      const fd = openSync(temporary, "wx");
+      try {
+        writeFileSync(fd, Buffer.concat([marker, tail]));
+        fsyncSync(fd);
+      } finally {
+        closeSync(fd);
+      }
+      // The old queue remains intact until this atomic replacement. If the
+      // process stops before checkpoint reset, generation mismatch replays tail.
+      renameSync(temporary, options.watchFile);
+      syncParentDirectory(options.watchFile);
+    } finally {
+      if (existsSync(temporary)) unlinkSync(temporary);
+    }
+    writeQueueCheckpoint(options.watchFile, marker.length, generation);
     return { compacted: true, historyFile };
   } finally {
     releaseQueueAppendLock(options.watchFile, lock);
@@ -735,7 +864,7 @@ function shouldSkipQueuedHookEnvelope(
   );
 }
 
-export async function drainAgentMemoryQueueFile(options: {
+export interface AgentMemoryQueueDrainOptions {
   workspaceRoot: string;
   watchFile: string;
   source: string;
@@ -743,7 +872,13 @@ export async function drainAgentMemoryQueueFile(options: {
   startOffset?: number;
   compactAfterBytes?: number;
   historyMaxBytes?: number;
-}): Promise<{
+  maxEvents?: number;
+  maxDurationMs?: number;
+  /** The owner broker can pass its already-open store to avoid a second PGlite. */
+  store?: DeltaStore;
+}
+
+export interface AgentMemoryQueueDrainResult {
   eventsIngested: number;
   errors: string[];
   bytesRead: number;
@@ -752,7 +887,32 @@ export async function drainAgentMemoryQueueFile(options: {
   compacted: boolean;
   historyFile: string;
   busy?: AgentMemoryUnavailableResult["busy"];
-}> {
+}
+
+export async function drainAgentMemoryQueueFile(options: AgentMemoryQueueDrainOptions): Promise<AgentMemoryQueueDrainResult> {
+  const lockPath = queueDrainLockPath(options.watchFile);
+  const lock = await acquireQueueFileLock(lockPath, options.store ? 0 : options.maxDurationMs ? 1_000 : 30_000);
+  if (!lock) {
+    const fileSize = existsSync(options.watchFile) ? statSync(options.watchFile).size : 0;
+    const checkpoint = readQueueCheckpoint(options.watchFile, fileSize);
+    return {
+      eventsIngested: 0,
+      errors: [],
+      bytesRead: checkpoint,
+      pendingBytes: Math.max(0, fileSize - checkpoint),
+      checkpointFile: queueCheckpointPath(options.watchFile),
+      compacted: false,
+      historyFile: queueHistoryPath(options.watchFile),
+    };
+  }
+  try {
+    return await drainAgentMemoryQueueFileUnlocked(options);
+  } finally {
+    releaseQueueFileLock(lockPath, lock);
+  }
+}
+
+async function drainAgentMemoryQueueFileUnlocked(options: AgentMemoryQueueDrainOptions): Promise<AgentMemoryQueueDrainResult> {
   const historyFile = queueHistoryPath(options.watchFile);
   if (!existsSync(options.watchFile)) {
     return {
@@ -782,7 +942,7 @@ export async function drainAgentMemoryQueueFile(options: {
     };
   }
 
-  const opened = await openMemoryStore(options.workspaceRoot, "write");
+  const opened = options.store ?? await openMemoryStore(options.workspaceRoot, "write");
   if (isMemoryUnavailable(opened)) {
     return {
       eventsIngested: 0,
@@ -800,30 +960,68 @@ export async function drainAgentMemoryQueueFile(options: {
   try {
     fileBuffer = readFileSync(options.watchFile);
   } catch (error) {
-    await opened.close();
+    if (!options.store) await opened.close();
     throw error;
   }
   let bytesRead = options.startOffset ?? readQueueCheckpoint(options.watchFile, fileBuffer.length);
   if (bytesRead > fileBuffer.length) {
     bytesRead = 0;
   }
-  const { complete, pendingBytes } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));
+  const { complete } = splitCompleteJsonLines(fileBuffer.subarray(bytesRead));
+  const queueGeneration = readQueueGeneration(options.watchFile);
   let eventsIngested = 0;
   const errors: string[] = [];
   let consumedOffset = bytesRead;
+  let linesProcessed = 0;
+  const startedAt = Date.now();
   const store = opened;
 
   try {
     for (const line of complete) {
+      if ((options.maxEvents && linesProcessed >= options.maxEvents) ||
+          (options.maxDurationMs && linesProcessed > 0 && Date.now() - startedAt >= options.maxDurationMs)) {
+        break;
+      }
+      linesProcessed += 1;
       if (!line.raw.trim()) {
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset);
+        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
       const parsed = normalizeRawInput(line.raw);
       if (!parsed) {
-        errors.push(`could not parse queued hook line at byte ${bytesRead + line.endOffset}`);
-        break;
+        quarantineQueuedLine(options.watchFile, line.raw, bytesRead + line.endOffset, "invalid-json-object");
+        consumedOffset = bytesRead + line.endOffset;
+        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
+        continue;
+      }
+      if (typeof parsed.forgeHookQueueGeneration === "string") {
+        consumedOffset = bytesRead + line.endOffset;
+        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
+        continue;
+      }
+      if (isAgentMemoryEventRecord(parsed)) {
+        const legacyEnvelope = legacyFallbackEnvelope(parsed);
+        if (!legacyEnvelope) {
+          quarantineQueuedLine(options.watchFile, line.raw, bytesRead + line.endOffset, "invalid-legacy-memory-record");
+          consumedOffset = bytesRead + line.endOffset;
+          writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
+          continue;
+        }
+        if (!workspaceRootsMatch(legacyEnvelope.workspace.root, options.workspaceRoot)) {
+          consumedOffset = bytesRead + line.endOffset;
+          writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
+          continue;
+        }
+        const migrated = await recordAgentMemoryEnvelope(store, legacyEnvelope, `fallback:${parsed.id}`);
+        if (!migrated.ok) {
+          errors.push(migrated.error ?? "legacy Agent Memory migration failed");
+          break;
+        }
+        eventsIngested += 1;
+        consumedOffset = bytesRead + line.endOffset;
+        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
+        continue;
       }
       const queued = parseQueuedHookLine(parsed);
       const payload = queued?.payload ?? parsed;
@@ -838,20 +1036,23 @@ export async function drainAgentMemoryQueueFile(options: {
       });
       if (shouldSkipQueuedHookEnvelope(envelope, { source: options.source, workspaceRoot: options.workspaceRoot })) {
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset);
+        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
         continue;
       }
-      const result = await recordAgentMemoryEnvelope(store, envelope);
+      const queueEventId = typeof parsed.queueEventId === "string" && /^[0-9a-f-]{36}$/iu.test(parsed.queueEventId)
+        ? parsed.queueEventId
+        : createHash("sha256").update(`${queueGeneration ?? "legacy"}:${bytesRead + line.endOffset}:${line.raw}`).digest("hex");
+      const result = await recordAgentMemoryEnvelope(store, envelope, `hook:${ingestSource}:${queueEventId}`);
       if (result.ok) {
         eventsIngested += 1;
         consumedOffset = bytesRead + line.endOffset;
-        writeQueueCheckpoint(options.watchFile, consumedOffset);
+        writeQueueCheckpoint(options.watchFile, consumedOffset, queueGeneration);
       } else if (isDeltaBusyIngestResult(result)) {
         return {
           eventsIngested,
           errors,
           bytesRead,
-          pendingBytes,
+          pendingBytes: Math.max(0, fileBuffer.length - consumedOffset),
           checkpointFile: queueCheckpointPath(options.watchFile),
           compacted: false,
           historyFile,
@@ -872,20 +1073,49 @@ export async function drainAgentMemoryQueueFile(options: {
           historyMaxBytes: options.historyMaxBytes ?? DEFAULT_QUEUE_HISTORY_MAX_BYTES,
         })
       : { compacted: false, historyFile };
-    const bytesAfterRetention = retention.compacted ? 0 : consumedOffset;
+    const bytesAfterRetention = retention.compacted
+      ? readQueueCheckpoint(options.watchFile, statSync(options.watchFile).size)
+      : consumedOffset;
 
     return {
       eventsIngested,
       errors,
       bytesRead: bytesAfterRetention,
-      pendingBytes,
+      pendingBytes: Math.max(0, statSync(options.watchFile).size - bytesAfterRetention),
       checkpointFile: queueCheckpointPath(options.watchFile),
       compacted: retention.compacted,
       historyFile: retention.historyFile,
     };
   } finally {
-    await store.close();
+    if (!options.store) await store.close();
   }
+}
+
+function quarantineQueuedLine(watchFile: string, raw: string, offset: number, reason: string): void {
+  // Preserve only a digest and position. Legacy queue lines may contain private
+  // fields, so a rejection log must never copy their raw text.
+  appendFileSync(`${watchFile}.rejects.ndjson`, `${JSON.stringify({
+    schema: "forge.agent-hook-rejection.v1",
+    offset,
+    hash: createHash("sha256").update(raw).digest("hex"),
+    reason,
+    rejectedAt: new Date().toISOString(),
+  })}\n`, "utf8");
+}
+
+function legacyFallbackEnvelope(record: AgentMemoryEventRecord): AgentEventEnvelope | undefined {
+  const data = record.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return undefined;
+  const envelope = data.envelope;
+  if (!envelope || typeof envelope !== "object" || Array.isArray(envelope)) return undefined;
+  const candidate = envelope as Partial<AgentEventEnvelope>;
+  if (candidate.schema !== "forge.agent-event.v1" ||
+      typeof candidate.source?.agent !== "string" || typeof candidate.source.integration !== "string" ||
+      typeof candidate.workspace?.root !== "string" || typeof candidate.event?.kind !== "string" ||
+      typeof candidate.event.timestamp !== "string" || typeof candidate.capture?.trustLevel !== "string" ||
+      typeof candidate.capture.confidence !== "number" || !candidate.payload ||
+      typeof candidate.payload !== "object" || Array.isArray(candidate.payload)) return undefined;
+  return candidate as AgentEventEnvelope;
 }
 
 function queuedEventHasUsefulSignal(envelope: AgentEventEnvelope): boolean {
@@ -944,14 +1174,14 @@ export function inspectAgentMemoryQueueFile(options: {
   const fileBuffer = readFileSync(options.watchFile);
   const bytesRead = readQueueCheckpoint(options.watchFile, fileBuffer.length);
   const inspected = inspectionBufferFromCheckpoint(fileBuffer, bytesRead, DEFAULT_QUEUE_INSPECT_MAX_BYTES);
-  const { complete, pendingBytes } = splitCompleteJsonLines(inspected.buffer);
+  const { complete } = splitCompleteJsonLines(inspected.buffer);
   const result: AgentMemoryQueueInspectionResult = {
     ...base,
     bytesRead,
     inspectedBytes: inspected.buffer.length,
     skippedBytes: inspected.skippedBytes,
     truncated: inspected.truncated,
-    pendingBytes,
+    pendingBytes: Math.max(0, fileBuffer.length - bytesRead),
   };
   for (const line of complete) {
     if (!line.raw.trim()) {
@@ -962,6 +1192,7 @@ export function inspectAgentMemoryQueueFile(options: {
       result.errors.push(`could not parse queued hook line at byte ${inspected.offset + line.endOffset}`);
       continue;
     }
+    if (typeof parsed.forgeHookQueueGeneration === "string" || isAgentMemoryEventRecord(parsed)) continue;
     const queued = parseQueuedHookLine(parsed);
     const payload = queued?.payload ?? parsed;
     const source = queued?.source ?? options.source;
@@ -1083,15 +1314,29 @@ async function watchAgentMemoryIngest(options: AgentMemoryCommandOptions): Promi
 
   await ingestNewContent();
   return await new Promise<AgentIngestWatchResult>((resolve) => {
-    const watcher = watch(watchFile, { persistent: true }, () => {
+    const scheduleIngest = () => {
       pendingIngest = pendingIngest.then(ingestNewContent, ingestNewContent);
-    });
+    };
+    // File notifications can be coalesced or lost during queue compaction and
+    // on Windows. Polling also resumes after a transient Delta busy result.
+    const pollTimer = setInterval(scheduleIngest, Math.max(250, options.pollIntervalMs ?? 2_000));
+    let watcher: ReturnType<typeof watch> | undefined;
+    try {
+      watcher = watch(watchFile, { persistent: true }, scheduleIngest);
+      watcher.on("error", () => {
+        watcher?.close();
+        watcher = undefined;
+      });
+    } catch {
+      // The polling timer keeps draining when fs.watch is unavailable.
+    }
     const shutdown = () => {
       if (retryTimer) {
         clearTimeout(retryTimer);
         retryTimer = undefined;
       }
-      watcher.close();
+      clearInterval(pollTimer);
+      watcher?.close();
       void pendingIngest.finally(() => {
         resolve({
           ok: errors.length === 0,
@@ -1206,7 +1451,14 @@ export function formatAgentMemoryHuman(result: AgentMemoryCommandResult): string
       ...(nextActions.length > 0 ? ["", "Next:", ...nextActions.map((action) => `  ${action}`)] : []),
     ].join("\n") + "\n";
   }
-  return formatAgentMemoryEventsHuman("events" in result ? result.events : []);
+  const events = formatAgentMemoryEventsHuman("events" in result ? result.events : []);
+  return "freshness" in result && result.freshness
+    ? `${events.trimEnd()}\n${formatFreshnessHuman(result.freshness)}\n`
+    : events;
+}
+
+function formatFreshnessHuman(freshness: AgentMemoryFreshness): string {
+  return `freshness: ${freshness.status} (${freshness.pendingBytes} queued bytes${freshness.inspectedEventsTruncated ? ", recent queue sample only" : ""})`;
 }
 
 function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {
@@ -1222,6 +1474,7 @@ function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {
     `entries: ${summary.entries}`,
     `proofs: ${summary.proofs}`,
     ...(summary.latestEventAt ? [`latest: ${summary.latestEventAt}`] : []),
+    ...(result.freshness ? [formatFreshnessHuman(result.freshness)] : []),
   ];
   if (Object.keys(result.currentState).length > 0) {
     lines.push("", "Current:");

@@ -1,5 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import type { DbAdapter, DbQueryResult, DbTransaction } from "./adapter.ts";
 
@@ -213,7 +213,30 @@ export async function repairLocalPgliteStore(dataDir: string): Promise<PgliteSto
     };
   }
 
+  if (before.lockFiles.includes("postmaster.pid")) {
+    const ownerPid = readPglitePostmasterPid(dataDir);
+    if (!Number.isInteger(ownerPid) || ownerPid <= 0 || isProcessAlive(ownerPid)) {
+      return {
+        ok: false, repaired: false, dataDir, backupPath: null, before, after: before,
+        message: "PGlite lock ownership is unknown; stop the owner and inspect the store before repair.",
+        nextActions: ["forge doctor pglite --json"],
+      };
+    }
+  }
+
   const backupPath = archivePgliteStore(dataDir, before.state);
+  if (!backupPath) {
+    return {
+      ok: false,
+      repaired: false,
+      dataDir,
+      backupPath: null,
+      before,
+      after: before,
+      message: "Could not back up the PGlite store; no lock files were changed.",
+      nextActions: ["stop the process using the store", "forge doctor pglite --json"],
+    };
+  }
   const after = await inspectPgliteStore(dataDir);
   const ok = after.state === "missing" || after.state === "healthy";
   return {
@@ -237,17 +260,17 @@ export function isPgliteAbortMessage(message: string): boolean {
     (/pglite/i.test(message) && /abort/i.test(message));
 }
 
-function repairStalePgliteStore(dataDir: string): void {
+export function repairStalePgliteStore(dataDir: string): void {
   const pidPath = join(dataDir, "postmaster.pid");
   if (!existsSync(pidPath)) {
     return;
   }
 
   const pid = readPglitePostmasterPid(dataDir);
-  const stale =
-    !Number.isInteger(pid) ||
-    pid <= 0 ||
-    !isProcessAlive(pid);
+  // PGlite uses nonpositive postmaster values (for example -42) while a
+  // different process can still own the data directory. Absence of a live OS
+  // PID is evidence only when the file contains a positive PID.
+  const stale = Number.isInteger(pid) && pid > 0 && !isProcessAlive(pid);
 
   if (!stale) {
     return;
@@ -292,14 +315,13 @@ export function archivePgliteStore(dataDir: string, reason = "repair"): string |
 
   try {
     renameSync(dataDir, backupPath);
-    mkdirSync(dataDir, { recursive: true });
-    return backupPath;
   } catch {
-    rmSync(join(dataDir, "postmaster.pid"), { force: true });
-    rmSync(join(dataDir, ".s.PGSQL.5432.lock"), { force: true });
-    rmSync(join(dataDir, ".s.PGSQL.5432.lock.out"), { force: true });
+    // A failed archive can mean another process owns the directory. Keep every
+    // lock in place so the caller can report the failure without changing data.
     return null;
   }
+  mkdirSync(dataDir, { recursive: true });
+  return backupPath;
 }
 
 function isProcessAlive(pid: number): boolean {

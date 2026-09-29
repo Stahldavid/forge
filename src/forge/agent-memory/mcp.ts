@@ -1,8 +1,7 @@
 import { readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
 import { DeltaStore } from "../delta/store.ts";
-import { buildAgentMemoryContext } from "./context-pack.ts";
-import { ingestEnvelope } from "./bridge.ts";
+import { ingestEnvelope, runAgentMemoryCommand } from "./bridge.ts";
 import { normalizeAgentEvent } from "./normalize.ts";
 import { requestLocalTask } from "../agent-fabric/local-task-server.ts";
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
@@ -128,6 +127,7 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
       await logMcpToolCall(workspaceRoot, name, args, "completed").catch(() => undefined);
       return response(request.id, {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        ...(result && typeof result === "object" && "ok" in result && result.ok === false ? { isError: true } : {}),
       });
     }
     return response(request.id, null, { code: -32601, message: `unknown MCP method: ${request.method}` });
@@ -221,24 +221,21 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
     }
   }
   if (name === "agent_context") {
-    return buildAgentMemoryContext({
+    return runAgentMemoryCommand({
+      subcommand: "context",
       workspaceRoot,
+      json: true,
       entry: typeof args.entry === "string" ? args.entry : undefined,
     });
   }
   if (name === "agent_memory") {
-    const store = await DeltaStore.open(workspaceRoot, { access: "read" });
-    try {
-      return {
-        ok: true,
-        events: await store.listAgentMemoryEvents({
-          target: typeof args.target === "string" ? args.target : undefined,
-          limit: typeof args.limit === "number" ? args.limit : undefined,
-        }),
-      };
-    } finally {
-      await store.close();
-    }
+    return runAgentMemoryCommand({
+      subcommand: "memory",
+      workspaceRoot,
+      json: true,
+      entry: typeof args.target === "string" ? args.target : undefined,
+      limit: typeof args.limit === "number" ? args.limit : undefined,
+    });
   }
   if (name === "timeline") {
     const target = typeof args.target === "string" ? args.target : undefined;

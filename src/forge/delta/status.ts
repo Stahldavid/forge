@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { createDiagnostic } from "../compiler/diagnostics/create.ts";
@@ -14,17 +14,20 @@ import {
   type DeltaStatusDetails,
   type DeltaStoreBusyInfo,
 } from "./store.ts";
-import { DELTA_SCHEMA_VERSION } from "./schema.ts";
 import { redactDeltaPayload } from "./redaction.ts";
 import { normalizeForgeCliCommandsInValue } from "../workspace/forge-cli.ts";
+import { inspectDeltaAgentQueue, type DeltaAgentQueueSnapshot } from "./queue-status.ts";
+import { probeDeltaBroker } from "./broker.ts";
 
 export type DeltaStatusResult =
-  | (DeltaStatus & { details?: DeltaStatusDetails; exitCode: 0 })
+  | (DeltaStatus & { queue: DeltaAgentQueueSnapshot; details?: DeltaStatusDetails; exitCode: 0 })
   | {
       ok: false;
       recording: false;
       store: string;
       busy?: DeltaStoreBusyInfo;
+      queue: DeltaAgentQueueSnapshot;
+      broker: { active: boolean; pid?: number; error?: string };
       diagnostics: ReturnType<typeof createDiagnostic>[];
       nextActions: string[];
       exitCode: 1;
@@ -156,15 +159,6 @@ async function openDeltaStoreForStatus(
   workspaceRoot: string,
 ): Promise<{ store: DeltaStore | null; openError?: unknown }> {
   let openError: unknown;
-  let cleanedOrphanedPgliteLock = false;
-  const preflightBusy = probeDeltaStoreBusy(workspaceRoot);
-  if (preflightBusy) {
-    const busyInfo = describeDeltaStoreBusy(preflightBusy, workspaceRoot);
-    if (busyInfo.relativeLockPath.endsWith("postmaster.pid") && busyInfo.processAlive === false) {
-      rmSync(busyInfo.lockPath, { force: true });
-      cleanedOrphanedPgliteLock = true;
-    }
-  }
   for (let attempt = 0; attempt < 5; attempt += 1) {
     openError = undefined;
     const store = await DeltaStore.open(workspaceRoot, { access: "read" }).catch((error: unknown) => {
@@ -182,12 +176,6 @@ async function openDeltaStoreForStatus(
     const orphanedPgliteLock =
       busyInfo.relativeLockPath.endsWith("postmaster.pid") &&
       busyInfo.processAlive === false;
-    if (orphanedPgliteLock && !cleanedOrphanedPgliteLock && attempt >= 2) {
-      rmSync(busyInfo.lockPath, { force: true });
-      cleanedOrphanedPgliteLock = true;
-      await sleep(100);
-      continue;
-    }
     const transientPgliteLock =
       orphanedPgliteLock &&
       typeof busyInfo.ageMs === "number" &&
@@ -200,118 +188,22 @@ async function openDeltaStoreForStatus(
   return { store: null, openError };
 }
 
-function pgliteStatusDetails(workspaceRoot: string, storePath: string): DeltaStatusDetails {
-  const lockPath = join(workspaceRoot, ".forge", "delta", "delta.lock");
-  const postmasterPath = join(workspaceRoot, ".forge", "delta", "delta.db", "postmaster.pid");
-  return {
-    schema: {
-      expectedVersion: DELTA_SCHEMA_VERSION,
-    },
-    paths: {
-      store: storePath,
-      lock: normalizePath(relative(workspaceRoot, lockPath)),
-      postmaster: normalizePath(relative(workspaceRoot, postmasterPath)),
-    },
-    locks: {
-      forgeLockPresent: existsSync(lockPath),
-      postmasterPresent: existsSync(postmasterPath),
-    },
-    counts: {
-      sessions: 0,
-      operations: 0,
-      fileChanges: 0,
-      commandRuns: 0,
-      runtimeCalls: 0,
-      proofs: 0,
-      artifacts: 0,
-      workSessions: 0,
-      agentMemoryEvents: 0,
-      semanticEvents: 0,
-    },
-    operational: {
-      storeExists: existsSync(join(workspaceRoot, storePath)),
-      queuePath: ".forge/agent/events.ndjson",
-      queueExists: existsSync(join(workspaceRoot, ".forge", "agent", "events.ndjson")),
-      queueSizeBytes: existsSync(join(workspaceRoot, ".forge", "agent", "events.ndjson"))
-        ? statSync(join(workspaceRoot, ".forge", "agent", "events.ndjson")).size
-        : 0,
-      queuePendingEvents: 0,
-      queueRedaction: "unknown",
-      queueHistoryPath: ".forge/agent/events.ndjson.history",
-      queueHistoryExists: existsSync(join(workspaceRoot, ".forge", "agent", "events.ndjson.history")),
-      queueHistorySizeBytes: existsSync(join(workspaceRoot, ".forge", "agent", "events.ndjson.history"))
-        ? statSync(join(workspaceRoot, ".forge", "agent", "events.ndjson.history")).size
-        : 0,
-      queueHistoryLines: 0,
-      estimatedOverhead: "low",
-    },
-    health: {
-      status: "ok",
-      checks: [
-        { name: "schema", status: "ok", message: `schema expected ${DELTA_SCHEMA_VERSION}` },
-        { name: "locks", status: "ok", message: "PGlite postmaster indicates an active local runtime" },
-        { name: "queue-redaction", status: "ok", message: "queue redaction is checked by the active writer" },
-      ],
-    },
-  };
-}
-
-function pgliteActiveStatus(workspaceRoot: string, storePath: string, options: DeltaStatusOptions = {}): DeltaStatusResult | null {
-  const postmasterPath = join(workspaceRoot, ".forge", "delta", "delta.db", "postmaster.pid");
-  const forgeLockPath = join(workspaceRoot, ".forge", "delta", "delta.lock");
-  if (!existsSync(postmasterPath) || existsSync(forgeLockPath)) {
-    return null;
-  }
-  return {
-    ok: true,
-    recording: true,
-    store: storePath,
-    external: {
-      kind: "pglite-active",
-      reason: "DeltaDB is open in another local Forge/PGlite process; status is treated as active for Studio observer flows.",
-    },
-    recentOperations: [],
-    ...(options.verbose ? { details: pgliteStatusDetails(workspaceRoot, storePath) } : {}),
-    exitCode: 0,
-  };
-}
-
-async function runDeltaStatusRaw(workspaceRoot: string, options: DeltaStatusOptions = {}): Promise<DeltaStatusResult> {
-  const storePath = normalizePath(relative(workspaceRoot, getDeltaStorePath(workspaceRoot)));
-  const { store, openError } = await openDeltaStoreForStatus(workspaceRoot);
-  if (!store) {
+async function unavailableDeltaStatus(workspaceRoot: string, storePath: string, openError: unknown): Promise<DeltaStatusResult> {
     const errorMessage = openError instanceof Error ? openError.message : "unknown open error";
     const busyError = openError instanceof DeltaStoreBusyError ? openError : undefined;
     const busy = Boolean(busyError);
     const busyInfo = busyError ? describeDeltaStoreBusy(busyError, workspaceRoot) : undefined;
-    if (
-      busyInfo?.relativeLockPath.endsWith("postmaster.pid") &&
-      busyInfo.processAlive === false &&
-      !existsSync(join(workspaceRoot, ".forge", "delta", "delta.lock"))
-    ) {
-      return pgliteActiveStatus(workspaceRoot, storePath, options) ?? {
-        ok: true,
-        recording: true,
-        store: storePath,
-        external: {
-          kind: "pglite-active",
-          reason: "DeltaDB is open in another local Forge/PGlite process; status is treated as active for Studio observer flows.",
-        },
-        recentOperations: [],
-        ...(options.verbose ? { details: pgliteStatusDetails(workspaceRoot, storePath) } : {}),
-        exitCode: 0,
-      };
-    }
-    const activePglite = pgliteActiveStatus(workspaceRoot, storePath, options);
-    if (activePglite) {
-      return activePglite;
-    }
     const busySummary = busyInfo ? summarizeDeltaStoreBusy(busyInfo) : undefined;
     return {
       ok: false,
       recording: false,
       store: storePath,
       ...(busyInfo ? { busy: busyInfo } : {}),
+      queue: inspectDeltaAgentQueue(workspaceRoot),
+      broker: await probeDeltaBroker(workspaceRoot).catch((error: unknown) => ({
+        active: false,
+        error: error instanceof Error ? error.message : "Delta broker could not be probed",
+      })),
       diagnostics: [
         createDiagnostic({
           severity: "error",
@@ -324,12 +216,11 @@ async function runDeltaStatusRaw(workspaceRoot: string, options: DeltaStatusOpti
             ? busyInfo?.processAlive
               ? `Wait for pid ${busyInfo.pid ?? "shown in the lock file"} to finish, then retry.`
               : `If no Forge/agent process is still running, inspect ${busyInfo?.relativeLockPath ?? ".forge/delta/delta.lock"} and retry.`
-            : "Close running Forge/agent processes. If the store remains unavailable, back it up and let ForgeOS recreate local Delta memory.",
+            : "Inspect the original open error and preserve the Delta store before considering a repair.",
           suggestedCommands: [
             "forge delta status --json",
             "forge agent timeline --json",
             "forge delta repair --dry-run --json",
-            "forge delta repair --yes --json",
           ],
         }),
       ],
@@ -341,21 +232,31 @@ async function runDeltaStatusRaw(workspaceRoot: string, options: DeltaStatusOpti
           : "Close any running forge dev or external agent process using .forge/delta/delta.db",
         "forge agent timeline --json",
         "forge delta repair --dry-run --json",
-        "forge delta repair --yes --json",
         "forge delta status --json",
       ],
       exitCode: 1,
     };
+}
+
+async function runDeltaStatusRaw(workspaceRoot: string, options: DeltaStatusOptions = {}): Promise<DeltaStatusResult> {
+  const storePath = normalizePath(relative(workspaceRoot, getDeltaStorePath(workspaceRoot)));
+  const { store, openError } = await openDeltaStoreForStatus(workspaceRoot);
+  if (!store) {
+    return unavailableDeltaStatus(workspaceRoot, storePath, openError);
   }
   try {
     const status = await store.status();
+    const details = options.verbose ? await store.statusDetails() : undefined;
     return {
       ...status,
-      ...(options.verbose ? { details: await store.statusDetails() } : {}),
+      queue: inspectDeltaAgentQueue(workspaceRoot),
+      ...(details ? { details } : {}),
       exitCode: 0,
     };
+  } catch (error) {
+    return unavailableDeltaStatus(workspaceRoot, storePath, error);
   } finally {
-    await store.close();
+    await store.close().catch(() => undefined);
   }
 }
 
@@ -509,6 +410,51 @@ export async function runDeltaRepair(options: DeltaRepairOptions): Promise<Delta
   return normalizeDeltaCliCommandHints(options.workspaceRoot, await runDeltaRepairRaw(options));
 }
 
+export function deltaQueueDrainCheck(queue: DeltaAgentQueueSnapshot): DeltaDoctorCheck {
+  const pendingEvents = queue.pendingEvents;
+  const hasPartialTail = typeof queue.incompleteLineBytes === "number" && queue.incompleteLineBytes > 0;
+  const agedPending = typeof queue.oldestPendingAgeMs === "number" && queue.oldestPendingAgeMs >= 5 * 60_000 &&
+    ((pendingEvents !== null && pendingEvents > 0) || hasPartialTail);
+  const age = typeof queue.oldestPendingAgeMs === "number"
+    ? `; pending for at least ${Math.floor(queue.oldestPendingAgeMs / 1_000)}s (${queue.ageSource})`
+    : "";
+  return {
+    name: "queue-drain",
+    ok: queue.freshness === "fresh",
+    severity: queue.error || agedPending || (queue.freshness === "unknown" && !hasPartialTail) ? "error" : "warning",
+    message: hasPartialTail && pendingEvents === 0
+      ? `agent queue has ${queue.incompleteLineBytes} incomplete trailing byte${queue.incompleteLineBytes === 1 ? "" : "s"}${age}`
+      : queue.freshness === "unknown"
+      ? `agent queue backlog is unknown${queue.generationMismatch ? ": checkpoint belongs to a different queue generation" : queue.error ? `: ${queue.error}` : ""}`
+      : pendingEvents === 0
+        ? "agent queue has no complete pending events"
+        : `agent queue has ${pendingEvents} pending event${pendingEvents === 1 ? "" : "s"}${
+          hasPartialTail ? ` and ${queue.incompleteLineBytes} incomplete trailing bytes` : ""
+        }${age}`,
+    evidence: {
+      queuePath: queue.queuePath,
+      pendingEvents,
+      pendingBytes: queue.pendingBytes,
+      incompleteLineBytes: queue.incompleteLineBytes,
+      queueSizeBytes: queue.queueSizeBytes,
+      checkpointPath: queue.checkpointPath,
+      checkpointOffset: queue.checkpointOffset,
+      effectiveOffset: queue.effectiveOffset,
+      checkpointUpdatedAt: queue.checkpointUpdatedAt,
+      checkpointGeneration: queue.checkpointGeneration,
+      queueGeneration: queue.queueGeneration,
+      generationMismatch: queue.generationMismatch,
+      freshness: queue.freshness,
+      oldestPendingAt: queue.oldestPendingAt,
+      oldestPendingAgeMs: queue.oldestPendingAgeMs,
+      ageSource: queue.ageSource,
+    },
+    suggestedCommands: queue.freshness !== "fresh"
+      ? ["forge agent ingest codex --file .forge/agent/events.ndjson --json"]
+      : undefined,
+  };
+}
+
 async function runDeltaDoctorRaw(workspaceRoot: string): Promise<DeltaDoctorResult> {
   const status = await runDeltaStatus(workspaceRoot, { verbose: true });
   const details = status.exitCode === 0 ? status.details : undefined;
@@ -518,7 +464,10 @@ async function runDeltaDoctorRaw(workspaceRoot: string): Promise<DeltaDoctorResu
       ok: status.exitCode === 0,
       severity: "error",
       message: status.exitCode === 0 ? "DeltaDB status is readable" : "DeltaDB status is unavailable",
-      evidence: { store: status.store },
+      evidence: {
+        store: status.store,
+        ...(status.exitCode === 1 ? { broker: status.broker } : {}),
+      },
       suggestedCommands: status.exitCode === 0 ? undefined : status.nextActions,
     },
   ];
@@ -587,25 +536,7 @@ async function runDeltaDoctorRaw(workspaceRoot: string): Promise<DeltaDoctorResu
     suggestedCommands: schemaOk ? undefined : ["forge delta repair --dry-run --json"],
   });
 
-  const pendingEvents = details?.operational.queuePendingEvents ?? 0;
-  checks.push({
-    name: "queue-drain",
-    ok: Boolean(details) && pendingEvents === 0,
-    severity: "warning",
-    message: details
-      ? pendingEvents === 0
-        ? "agent queue has no pending events"
-        : `agent queue has ${pendingEvents} pending event${pendingEvents === 1 ? "" : "s"}`
-      : "queue details unavailable",
-    evidence: details
-      ? {
-          queuePath: details.operational.queuePath,
-          pendingEvents,
-          queueSizeBytes: details.operational.queueSizeBytes,
-        }
-      : undefined,
-    suggestedCommands: pendingEvents > 0 ? ["forge agent ingest codex --file .forge/agent/events.ndjson --json"] : undefined,
-  });
+  checks.push(deltaQueueDrainCheck(status.queue));
 
   const redaction = details?.operational.queueRedaction ?? "unknown";
   checks.push({
@@ -1012,6 +943,10 @@ export function formatDeltaStatusHuman(result: DeltaStatusResult): string {
     lines.push("Status:");
     lines.push("  unavailable");
     lines.push(`  local store: ${result.store}`);
+    lines.push(`  local broker: ${result.broker.active ? `responding (pid ${result.broker.pid ?? "unknown"})` : "not responding"}`);
+    lines.push(`  agent queue: ${result.queue.freshness} (${result.queue.pendingEvents ?? "unknown"} complete pending events, ${result.queue.pendingBytes ?? "unknown"} pending bytes)`);
+    lines.push(`  checkpoint: ${result.queue.checkpointOffset ?? "unknown"} at ${result.queue.checkpointPath}`);
+    if (result.queue.generationMismatch) lines.push("  checkpoint generation differs from the current queue; backlog is inspected from the new queue start");
     lines.push("");
     lines.push("Diagnostics:");
     for (const diagnostic of result.diagnostics) {
@@ -1082,6 +1017,8 @@ export function formatDeltaStatusHuman(result: DeltaStatusResult): string {
     lines.push("  operational:");
     lines.push(`    queue: ${result.details.operational.queueExists ? `${result.details.operational.queueSizeBytes} bytes` : "absent"} at ${result.details.operational.queuePath}`);
     lines.push(`    pending events: ${result.details.operational.queuePendingEvents}`);
+    lines.push(`    queue freshness: ${result.queue.freshness}; incomplete trailing bytes: ${result.queue.incompleteLineBytes ?? "unknown"}`);
+    if (result.queue.generationMismatch) lines.push("    checkpoint generation differs from the current queue");
     lines.push(`    queue redaction: ${result.details.operational.queueRedaction}`);
     lines.push(`    queue history: ${result.details.operational.queueHistoryExists ? `${result.details.operational.queueHistorySizeBytes} bytes, ${result.details.operational.queueHistoryLines} lines` : "absent"} at ${result.details.operational.queueHistoryPath}`);
     if (result.details.operational.lastCompactionAt) {

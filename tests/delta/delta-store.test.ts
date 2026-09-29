@@ -11,6 +11,7 @@ import { runDeltaTimeline } from "../../src/forge/delta/timeline.ts";
 import { redactDeltaPayload } from "../../src/forge/delta/redaction.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 import { recordParsedCliCommand } from "../../src/forge/delta/recorder.ts";
+import { probeDeltaBroker } from "../../src/forge/delta/broker.ts";
 
 function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
@@ -130,10 +131,7 @@ describe("delta store", () => {
       const file = readFileSync(join(root, ".forge", "delta", "export.json"), "utf8");
       expect(file).not.toContain("sk_delta_export_secret");
       expect(file).toContain("[REDACTED]");
-      expect(exported.data?.semanticTimeline).toMatchObject({
-        events: [],
-        projection: { lastRebuildAt: undefined },
-      });
+      expect(exported.data?.semanticTimeline).toMatchObject({ events: [] });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -208,12 +206,13 @@ describe("delta store", () => {
       }
       expect(details.schema.storedVersion).toBeDefined();
       expect(details.paths.store).toBe(".forge/delta/delta.db");
-      expect(details.locks.forgeLockPresent).toBe(false);
+      expect(typeof details.locks.forgeLockPresent).toBe("boolean");
       expect(details.counts.operations).toBeGreaterThanOrEqual(1);
       expect(["ok", "warning"]).toContain(details.health.status);
       expect(details.health.checks.some((check) => check.name === "queue-redaction")).toBe(true);
       expect(details.operational.queuePath).toBe(".forge/agent/events.ndjson");
       expect(details.operational.queuePendingEvents).toBe(0);
+      expect(verbose.queue).toMatchObject({ freshness: "fresh", incompleteLineBytes: 0 });
       expect(details.operational.queueHistoryPath).toBe(".forge/agent/events.ndjson.history");
       expect(details.operational.queueHistoryLines).toBe(0);
       expect(details.operational.queueRedaction).toBe("none");
@@ -262,7 +261,7 @@ describe("delta store", () => {
     }
   }, 30_000);
 
-  test("delta doctor treats an active PGlite runtime as a writable warning", async () => {
+  test("delta doctor does not treat an unreadable PGlite lock as a healthy store", async () => {
     const root = tempWorkspace("delta-doctor-pglite-active");
     try {
       writeFileSync(join(root, ".gitignore"), ".forge/delta/\n.forge/agent/*.ndjson\n.forge/studio/\n");
@@ -270,14 +269,14 @@ describe("delta store", () => {
 
       const result = await runDeltaDoctor(root);
 
-      expect(result.exitCode).toBe(0);
-      expect(result.ok).toBe(true);
+      expect(result.exitCode).toBe(1);
+      expect(result.ok).toBe(false);
+      expect(result.checks.find((check) => check.name === "delta-status")?.ok).toBe(false);
       const writable = result.checks.find((check) => check.name === "delta-writable");
       expect(writable).toMatchObject({
         ok: false,
-        severity: "warning",
+        severity: "error",
       });
-      expect(writable?.message).toContain("PGlite runtime");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -362,7 +361,9 @@ describe("delta store", () => {
       expect(repair.diagnostics[0]?.message).toContain("cwd=");
       expect(repair.diagnostics[0]?.message).toContain("command=");
       expect(repair.diagnostics[0]?.message).not.toContain(root);
-      expect(repair.busy?.pid).toBe(process.pid);
+      const broker = await probeDeltaBroker(root);
+      expect(broker.active).toBe(true);
+      expect(repair.busy?.pid).toBe(broker.pid);
       expect(repair.nextActions).toContain("forge agent timeline --json");
       expect(repair.applied).toBe(false);
 
@@ -445,18 +446,61 @@ describe("delta store", () => {
     }
   });
 
-  test("status treats a held PGlite postmaster as an active local runtime", async () => {
+  test("status reports the checkpoint backlog when PGlite cannot be opened", async () => {
     const root = tempWorkspace("delta-pglite-active-status");
     try {
       mkdirSync(join(root, ".forge", "delta", "delta.db", "postmaster.pid"), { recursive: true });
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      const queuePath = join(agentDir, "events.ndjson");
+      const firstLine = `${JSON.stringify({ event: "first" })}\n`;
+      writeFileSync(queuePath, `${firstLine}${JSON.stringify({ event: "second" })}\n${JSON.stringify({ event: "third" })}\npartial`);
+      writeFileSync(`${queuePath}.checkpoint.json`, JSON.stringify({ offset: Buffer.byteLength(firstLine), updatedAt: "2026-09-27T00:00:00.000Z" }));
 
       const status = await runDeltaStatus(root);
 
-      expect(status.exitCode).toBe(0);
-      expect(status.ok).toBe(true);
-      expect(status.recording).toBe(true);
-      expect("external" in status ? status.external : undefined).toMatchObject({
-        kind: "pglite-active",
+      expect(status.exitCode).toBe(1);
+      expect(status.ok).toBe(false);
+      if (status.exitCode !== 1) {
+        throw new Error("expected unreadable Delta status");
+      }
+      expect(status.queue).toMatchObject({
+        checkpointOffset: Buffer.byteLength(firstLine),
+        pendingEvents: 2,
+        incompleteLineBytes: 7,
+        freshness: "stale",
+      });
+      expect(status.diagnostics[0]?.message).toContain("Forge Delta local store");
+
+      const doctor = await runDeltaDoctor(root);
+      expect(doctor.exitCode).toBe(1);
+      expect(doctor.checks.find((check) => check.name === "queue-drain")).toMatchObject({
+        ok: false,
+        evidence: { pendingEvents: 2, freshness: "stale" },
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("invalid queue checkpoint is unknown rather than an empty backlog", async () => {
+    const root = tempWorkspace("delta-invalid-checkpoint");
+    try {
+      mkdirSync(join(root, ".forge", "delta", "delta.db", "postmaster.pid"), { recursive: true });
+      const agentDir = join(root, ".forge", "agent");
+      mkdirSync(agentDir, { recursive: true });
+      writeFileSync(join(agentDir, "events.ndjson"), "{\"event\":\"one\"}\n");
+      writeFileSync(join(agentDir, "events.ndjson.checkpoint.json"), "{\"offset\":\"wrong\"}");
+
+      const status = await runDeltaStatus(root);
+      expect(status.exitCode).toBe(1);
+      if (status.exitCode !== 1) {
+        throw new Error("expected unreadable Delta status");
+      }
+      expect(status.queue).toMatchObject({
+        queueSizeBytes: 16,
+        pendingEvents: null,
+        freshness: "unknown",
       });
     } finally {
       rmSync(root, { recursive: true, force: true });

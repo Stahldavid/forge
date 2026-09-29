@@ -422,11 +422,11 @@ forge agent export --target codex
 forge agent export --target claude
 ```
 
-`forge agent context` and `forge agent memory` use compact human-readable summaries by default. Add `--json` for machine-readable context and detailed memory audit events. Agent memory read commands should not block on the DeltaDB writer lock; write commands such as ingest, hook smoke, repair, timeline rebuild, and session mutations may fail fast with `FORGE_DELTA_BUSY`.
+`forge agent context` and `forge agent memory` use compact human-readable summaries by default. Add `--json` for machine-readable context and detailed memory audit events. The local Delta owner shares one PGlite instance across CLI and MCP clients. Agent Memory reports `freshness.status` (`current`, `pending`, or `unavailable`), pending bytes, and the latest matching event time so delayed ingestion cannot be mistaken for an empty or current memory.
 
 Codex Desktop has an additional trust boundary for newly installed hooks. `forge agent hooks smoke --target codex --json` writes a ForgeOS canary and proves that Agent Memory can read it. `forge agent hooks status --target codex --json` reports `approvalStatus`, `approvalRequired`, `nativeTrustStatus`, `nativeSignals`, and `canarySignals`; `waiting-for-user-trust` means no canary, useful hook event, or native signal has appeared yet, while `approvalStatus: "accepted"` with `nativeTrustStatus: "waiting-for-native-signal"` is sufficient for local editing but still lacks native Codex provenance proof.
 
-`forge agent ingest <source> --watch --file <path>` is explicit and opt-in. It tails JSON or NDJSON hook/export files and records normalized Agent Memory events until interrupted.
+Codex hooks enqueue redacted events without opening Delta. The local Delta owner drains the queue automatically and resumes at the last committed checkpoint after restart. `forge agent ingest <source> --watch --file <path>` remains available for explicit import and debugging; it tails JSON or NDJSON hook/export files and records normalized Agent Memory events until interrupted.
 
 `forge doctor runtime --json` and `forge doctor pglite --json` include a
 `dbGuide` block. It tells agents whether the current local DB state is best

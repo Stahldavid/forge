@@ -58,6 +58,7 @@ export function codexHookMetaContent(workspaceRoot: string): string {
     workspaceRoot,
     runner: CODEX_HOOK_RUNNER_RELATIVE,
     queueFile: CODEX_HOOK_QUEUE_RELATIVE,
+    brokerRunnerPath: fileURLToPath(new URL("../../delta/broker-runner.mjs", import.meta.url)),
     stdinTimeoutMs: 750,
     hookTimeouts: Object.fromEntries(CODEX_EVENTS.map((event) => [event, codexHookTimeout(event)])),
   };
@@ -102,7 +103,7 @@ export function codexInstallResult(filesWritten: string[], filesPlanned: string[
     privacy: privacyDefaults(),
     warnings: [
       "Codex memories and transcripts are not imported automatically.",
-      "Hooks enqueue to .forge/agent/events.ndjson; run forge agent ingest codex --watch to drain into Agent Memory.",
+      "Hooks enqueue to .forge/agent/events.ndjson; Agent Memory drains the queue automatically when read.",
     ],
     exitCode: 0,
   };
