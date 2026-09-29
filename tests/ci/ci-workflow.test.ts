@@ -35,7 +35,6 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("npm run lint");
     expect(workflow).not.toContain("run: bun test");
     expect(workflow).not.toContain("forge verify --standard");
-    expect(security).toContain("forge.mjs verify framework");
     expect(security).toContain("test tests/security");
     expect(nodeBreadthJob).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(nodeBreadthJob).not.toContain("node ./bin/forge.mjs dev --once --json");

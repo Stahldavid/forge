@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
 import { parseCli } from "../../src/forge/cli/parse.ts";
@@ -647,6 +647,78 @@ describe("H48 agent memory bridge", () => {
     const planned = codexInstallFiles().map((file) => file.path);
     expect(planned).toEqual([".codex/hooks.json", ".forge/agent/codex-hook.mjs"]);
   });
+
+  test("Codex MCP hooks enqueue redacted events without command hooks", async () => {
+    const root = tempWorkspace("h48-codex-mcp-hook");
+    try {
+      const installed = await runAgentMemoryCommand({
+        subcommand: "install", workspaceRoot: root, json: true,
+        target: "codex", mcpServer: "forge_fabric_local",
+      });
+      expect(installed.exitCode).toBe(0);
+      const hooks = JSON.parse(readFileSync(join(root, ".codex", "hooks.json"), "utf8"));
+      const preToolUse = hooks.hooks.PreToolUse[0].hooks[0];
+      expect(preToolUse).toMatchObject({
+        type: "mcp_tool", server: "forge_fabric_local", tool: "agent_hook_ingest",
+      });
+      expect(preToolUse.command).toBeUndefined();
+      expect(preToolUse.input.payload).toMatchObject({
+        turn_id: "${turn_id}", tool_use_id: "${tool_use_id}",
+      });
+      const postToolUse = hooks.hooks.PostToolUse[0].hooks[0];
+      expect(postToolUse.input.payload.tool_response).toMatchObject({ status: "${tool_response.status}" });
+      expect(JSON.stringify(postToolUse.input)).not.toContain('"tool_response":"${tool_response}"');
+      await runAgentMemoryCommand({
+        subcommand: "install", workspaceRoot: root, json: true, target: "codex", force: true,
+      });
+      const reinstalled = JSON.parse(readFileSync(join(root, ".codex", "hooks.json"), "utf8"));
+      expect(reinstalled.hooks.PreToolUse[0].hooks[0].type).toBe("mcp_tool");
+
+      // Keep this focused on the MCP ingress; no background broker is needed.
+      rmSync(join(root, ".forge", "agent", "codex-hook.meta.json"));
+      const response = await handleMcpRequest(root, {
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: { name: "agent_hook_ingest", arguments: {
+          eventName: "PreToolUse",
+          payload: { cwd: root, session_id: "codex-mcp-test", turn_id: "turn-1", tool_use_id: "tool-1", tool_name: "Bash", tool_input: { command: "echo TOPSECRET" } },
+        } },
+      });
+      const resultText = (response?.result as { content: Array<{ text: string }> }).content[0]?.text;
+      expect(JSON.parse(resultText ?? "null")).toEqual({ ok: true, queued: true });
+      const queued = readFileSync(join(root, ".forge", "agent", "events.ndjson"), "utf8");
+      expect(queued).toContain('"payloadRedacted":true');
+      expect(queued).toContain('"commandHash":');
+      expect(queued).toContain('"integration":"mcp"');
+      expect(queued).toContain('"turn_id":"turn-1"');
+      expect(queued).toContain('"tool_use_id":"tool-1"');
+      expect(queued).not.toContain("TOPSECRET");
+      const inspected = inspectAgentMemoryQueueFile({
+        workspaceRoot: root, watchFile: join(root, ".forge", "agent", "events.ndjson"), source: "codex",
+      });
+      expect(inspected.nativeSignals).toBe(0);
+      const largeCommand = `echo ${"X".repeat(300_000)}`;
+      const largeResponse = await handleMcpRequest(root, {
+        jsonrpc: "2.0", id: 3, method: "tools/call",
+        params: { name: "agent_hook_ingest", arguments: {
+          eventName: "PreToolUse",
+          payload: { cwd: root, session_id: "codex-mcp-test", tool_name: "Bash", tool_input: { command: largeCommand } },
+        } },
+      });
+      expect(JSON.stringify(largeResponse)).toContain("queued");
+      const queueAfterLarge = readFileSync(join(root, ".forge", "agent", "events.ndjson"), "utf8");
+      expect(queueAfterLarge).toContain(createHash("sha256").update(largeCommand).digest("hex"));
+      expect(queueAfterLarge).not.toContain("XXXXXX");
+      const rejected = await handleMcpRequest(root, {
+        jsonrpc: "2.0", id: 2, method: "tools/call",
+        params: { name: "agent_hook_ingest", arguments: {
+          eventName: "PreToolUse", payload: { cwd: dirname(root), session_id: "wrong-workspace" },
+        } },
+      });
+      expect(JSON.stringify(rejected)).toContain("outside the MCP server workspace");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test("codex hook runner probe fails when open stdin requires external timeout", async () => {
     const root = tempWorkspace("h48-codex-hook-hang");
@@ -1470,6 +1542,10 @@ describe("H48 agent memory bridge", () => {
   }, 30_000);
 
   test("parses H48 public commands", () => {
+    expect(parseCli(["agent", "install", "codex", "--mcp-server", "forge_fabric_local", "--json"]).command).toMatchObject({
+      kind: "agent",
+      options: { subcommand: "install", target: "codex", mcpServer: "forge_fabric_local" },
+    });
     expect(parseCli(["agent", "install", "codex", "--json"]).command).toMatchObject({
       kind: "agent",
       options: { subcommand: "install", target: "codex", json: true },
