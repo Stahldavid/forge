@@ -1,5 +1,14 @@
 # forgeos
 
+## 0.1.0-alpha.67
+
+### Patch Changes
+
+- [#68](https://github.com/Stahldavid/forge/pull/68) [`444d89a`](https://github.com/Stahldavid/forge/commit/444d89a1041f0005663ffa3f37611a0f2821022a) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Keep Codex hook events available to Agent Memory through a local Delta owner.
+  Automatically resume the redacted hook queue, deduplicate events after a crash,
+  report queue freshness in CLI and MCP results, and distinguish real database
+  errors from an unverified PGlite lock file.
+
 ## 0.1.0-alpha.66
 
 ### Patch Changes
