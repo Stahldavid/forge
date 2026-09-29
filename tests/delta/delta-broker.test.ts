@@ -44,6 +44,15 @@ describe("Delta broker", () => {
       const endpoint = JSON.parse(endpointBytes.toString("utf8")) as {
         pipe: string; token: string; pid: number;
       };
+      await Promise.all(Array.from({ length: 8 }, (_, index) => new Promise<void>((resolveDisconnect) => {
+        const abandoned = connect(endpoint.pipe);
+        abandoned.once("error", () => resolveDisconnect());
+        abandoned.once("connect", () => {
+          abandoned.write(`${JSON.stringify({ token: endpoint.token, method: "status", args: [] })}\n`);
+          setTimeout(() => { abandoned.destroy(); resolveDisconnect(); }, index + 1);
+        });
+      })));
+      expect((await probeDeltaBroker(root)).active).toBe(true);
       const unicodeSummary = "ação 😀 do Codex";
       const frame = Buffer.from(`${JSON.stringify({
         token: endpoint.token, method: "appendOperation", args: [{ kind: "broker.unicode", summary: unicodeSummary }],
