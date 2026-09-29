@@ -272,6 +272,9 @@ export async function runDeltaBroker(workspaceRoot: string | undefined): Promise
     server = createServer((socket) => {
       sockets.add(socket);
       socket.once("close", () => sockets.delete(socket));
+      // A caller can time out after its request was accepted. A deferred
+      // response may then raise EPIPE; the sole PGlite owner must survive.
+      socket.on("error", () => { /* disconnected caller handles its own timeout */ });
       const chunks: Buffer[] = [];
       let size = 0;
       socket.setTimeout(REQUEST_TIMEOUT_MS + 5_000, () => socket.destroy());
