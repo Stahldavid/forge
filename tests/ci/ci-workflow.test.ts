@@ -1,8 +1,44 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
 
 describe("CI workflow breadth", () => {
+  test("actual CI classifier skips unrelated templates and falls back safely without history", () => {
+    const workflow = readFileSync(".github/workflows/ci.yml", "utf8").replaceAll("\r\n", "\n");
+    const script = workflow.split("node --input-type=module <<'NODE'\n")[1]!.split("          NODE")[0]!
+      .split("\n").map(line => line.replace(/^          /, "")).join("\n");
+    const fixture = mkdtempSync(join(tmpdir(), "forge-ci-paths-"));
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: fixture, encoding: "utf8", windowsHide: true }).trim();
+    try {
+      git("init", "-q"); git("config", "user.name", "CI Fixture"); git("config", "user.email", "ci@example.invalid");
+      writeFileSync(join(fixture, "baseline.txt"), "base"); git("add", "."); git("commit", "-qm", "base");
+      const base = git("rev-parse", "HEAD");
+      const classify = (paths: string | string[], expected: string) => {
+        for (const path of typeof paths === "string" ? [paths] : paths) {
+          mkdirSync(join(fixture, path, ".."), { recursive: true }); writeFileSync(join(fixture, path), "change");
+        }
+        git("add", "."); git("commit", "-qm", "change");
+        const head = git("rev-parse", "HEAD"); const output = join(fixture, "ci-output"); writeFileSync(output, "");
+        execFileSync(process.execPath, ["--input-type=module", "-e", script], {
+          cwd: fixture, windowsHide: true, env: { ...process.env, BASE_SHA: base, HEAD_SHA: head, GITHUB_OUTPUT: output },
+        });
+        expect(readFileSync(output, "utf8")).toBe(expected);
+        git("reset", "--hard", base);
+      };
+      classify("docs/a spaced file.md", "templates=false\npackage=false\nruntime=false\n");
+      classify("src/forge/agent-fabric/module.ts", "templates=false\npackage=true\nruntime=true\n");
+      classify(["src/forge/agent-fabric/module.ts", "src/forge/_generated/buildInfo.ts"], "templates=false\npackage=true\nruntime=true\n");
+      classify(["src/forge/runtime.ts", "src/forge/_generated/buildInfo.ts"], "templates=true\npackage=true\nruntime=true\n");
+      classify("templates/nuxt-web/package.json", "templates=true\npackage=true\nruntime=false\n");
+      const output = join(fixture, "ci-output"); writeFileSync(output, "");
+      execFileSync(process.execPath, ["--input-type=module", "-e", script], {
+        cwd: fixture, windowsHide: true, env: { ...process.env, BASE_SHA: "0".repeat(40), HEAD_SHA: base, GITHUB_OUTPUT: output },
+      });
+      expect(readFileSync(output, "utf8")).toBe("templates=true\npackage=true\nruntime=true\n");
+    } finally { rmSync(fixture, { recursive: true, force: true }); }
+  });
   test("covers Node smoke across OS and supported Node majors", () => {
     const workflow = readFileSync(join(process.cwd(), ".github", "workflows", "ci.yml"), "utf8");
     const security = readFileSync(join(process.cwd(), ".github", "workflows", "security-assurance.yml"), "utf8");
@@ -30,8 +66,8 @@ describe("CI workflow breadth", () => {
     expect(workflow).toContain("node ./bin/forge.mjs generate --check");
     expect(workflow.indexOf("run: node ./bin/forge.mjs generate\n"))
       .toBeLessThan(workflow.indexOf("run: node ./bin/forge.mjs generate --check"));
-    expect(security.indexOf("run: node ./bin/forge.mjs generate\n"))
-      .toBeLessThan(security.indexOf("run: node ./bin/forge.mjs generate --check"));
+    expect(security).toContain("run: node ./bin/forge.mjs generate");
+    expect(security).not.toContain("run: node ./bin/forge.mjs generate --check");
     expect(workflow).toContain("npm run lint");
     expect(workflow).not.toContain("run: bun test");
     expect(workflow).not.toContain("forge verify --standard");
@@ -42,5 +78,11 @@ describe("CI workflow breadth", () => {
     expect(npmrc).toContain("legacy-peer-deps=true");
     expect(npmrc).toContain("package-lock=false");
     expect(workflow).toContain("npm install --ignore-scripts --package-lock=false");
+    const verifyJob = workflow.split("  packed-package:")[0]?.split("  verify:")[1] ?? "";
+    expect(verifyJob).not.toContain("npm run release:smoke");
+    expect(workflow).toContain("  packed-package:");
+    expect(workflow).toContain("if: needs.changes.outputs.templates == 'true'");
+    expect(workflow).toContain("if: needs.changes.outputs.package == 'true'");
+    expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
   });
 });

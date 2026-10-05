@@ -4,6 +4,98 @@ Forge Agent Fabric is an experimental protocol-oriented execution layer for dyna
 
 ## Implementation status
 
+The Codex-accompanied task mode now records acceptance criteria, scoped source snapshots,
+independent review and checks in a persistent local task. Its dynamic workflow scheduler
+supports dependencies, decisions, joins, bounded retries, replanning and crash reconciliation.
+Codex executes the steps with its native tools; the scheduler does not start models or
+continue execution when the host is closed. The
+[detailed implementation and operation plan](./architecture/agent-fabric/CODEX_DYNAMIC_WORKFLOWS.md)
+documents both contracts, evidence provenance and the remaining acceptance work.
+The project skill is `.agents/skills/forge-agent-fabric/SKILL.md`.
+
+```bash
+node bin/forge.mjs fabric capabilities --json
+node bin/forge.mjs fabric serve --json
+node bin/forge.mjs fabric attached-context --task-id <task-id> --json
+```
+
+Accompanied CLI and MCP operations share the running owner. Successful workflow results
+name the source snapshot actually observed; old evidence cannot complete a changed task.
+The older protocol kernel and local Ollama pilot retain their separate contracts below.
+
+### Managed Codex SDK execution
+
+Managed runs are now implemented separately from accompanied tasks. The native Codex
+chat remains the user interface: prepare JSON and call the source CLI, or use the
+`fabric_run_*` tools if this MCP is already registered. This delivery does not register
+MCP or change global settings. `run-start` starts processes and can consume configured
+Codex credits; it is more than a proposal. Capabilities distinguish these effects by mode.
+
+```bash
+node bin/forge.mjs fabric run-start --file run.json --json
+node bin/forge.mjs fabric run-status --run-id <run-id> --json
+node bin/forge.mjs fabric run-wait --file wait.json --json
+node bin/forge.mjs fabric run-pause --file pause.json --json
+```
+
+The [complete request example and operating plan](./architecture/agent-fabric/CODEX_DYNAMIC_WORKFLOWS.md)
+includes a command-only smoke and a coding DAG. Start requires requestId, goal, scope,
+workflow nodes and one executor per node. Executors are `codex` or `command`; Codex roles
+are implementer, reviewer, investigator and decision. Implementers declare writeScope.
+The owner persists attempts before dispatch and runs workers in isolated Git clones,
+composing dependency artifacts. Clones do not copy the root's node_modules. Automatic
+environment preparation installs from the clone's manifest and lockfile or copies a
+verified cache. Scripts are ignored by default; dependencies are isolated, not shared
+through a mutable folder. The optional environment object accepts mode auto/none,
+ignoreScripts, timeoutMs (100..1800000) and an HTTPS registry without credentials, query
+or fragment. Reviewers and commands are read-only after environment preparation.
+
+Controls are run-steer/pause/resume/cancel/reconcile. Mutations require
+`{runId,requestId,expectedVersion}` and complete `--file` bodies. Reuse requestId only for
+the identical body; after a version conflict read status and choose a new requestId.
+Status reads use `--run-id`; wait uses `{runId,cursor?,waitMs?}`, with at most 30000 ms.
+Responses expose events and cursorExpired so clients can recover a missed event window.
+MCP status accepts `{runId}`; all other managed tools accept `{request: BODY}`.
+
+Steer queues an instruction and pauses future dispatch; active workers may finish.
+Resume can replan with expectedRevision, nodes, executors, reason and evidenceRefs.
+Cancel requests interruption, but unknown effects require explicit reconciliation.
+Interrupted attempts accept only resolution `failed` with attemptId and reason;
+caller-fabricated success is rejected. A fresh isolated attempt may resume its saved SDK
+thread. Uncertain publication accepts `publication: "confirm"` only when the owner observes
+the expected root files.
+Publication retry requires the observed complete original baseline, clears the intent,
+pauses the run and requires explicit resume; partial divergent writes remain blocked.
+State provenance is executor_observed; model report contents
+remain agent_reported. Required evidence labels accept only `executor-observed`.
+
+When implementers exist and publish is not false, local publication requires a required
+Codex review and command check downstream of every writer, approved review, successful
+checks and completed workflow. Publication applies scoped diffs to a compatible root;
+it does not commit, push or deploy. publish false retains isolated artifacts instead.
+Use only the user's existing authorization for effects and cost.
+
+Both managed and accompanied operations require one live owner and have no direct-store
+fallback. There is no automatic wakeup, installed background service or promise of
+running after the App closes. Restarted active attempts become uncertain. Implemented
+transport and real command tests alone do not establish the real SDK pilot; the separate
+real pilot is recorded in section 14 of the detailed plan. The accompanied validation results below are historical and do
+not certify subsequently added managed code. Interactive App Server integration, native
+hook acceptance and an EasyGrow pilot remain separate proposed work.
+
+### Faster CI, unchanged publication gates
+
+The main CI classifies changed paths before optional template, package and runtime smokes.
+Package smoke runs as an independent parallel job instead of extending the compiler
+verification job. Unrelated agent modules skip template setup; Nuxt smoke excludes agent
+modules too. Missing Git history conservatively runs every optional check. New pushes
+cancel obsolete CI runs. Security Assurance uses its aggregate proof for guardrails,
+auth, secrets and RLS instead of repeating those commands, while retaining the broader
+security test suite and evidence artifacts. Publication keeps its complete release gates.
+The previous observed CI was about 170 seconds, including a 64-second final package smoke;
+the parallel design shortens that critical path, but the next hosted run must measure
+the actual improvement.
+
 The deterministic P0a protocol kernel and the bounded P0b-A model adapter are implemented.
 P0b-A invokes one real model through the existing P0a permit and result boundary. Its
 accepted scope and exact adoption evidence are recorded in

@@ -7,12 +7,10 @@ describe("security assurance workflow", () => {
   test("runs the public security gate and stores evidence", () => {
     expect(workflow).toContain("name: Security Assurance");
     expect(workflow).toContain("postgres:16");
-    expect(workflow).toContain("node ./bin/forge.mjs generate --check");
-    expect(workflow).toContain("node ./bin/forge.mjs check --json");
-    expect(workflow).toContain("node ./bin/forge.mjs auth check --json");
-    expect(workflow).toContain("node ./bin/forge.mjs secrets check --json");
-    expect(workflow).toContain("node ./bin/forge.mjs rls test --db postgres --json");
-    expect(workflow).toContain("node ./bin/forge.mjs rls mutate-test --json");
+    expect(workflow).not.toContain("node ./bin/forge.mjs generate --check");
+    for (const redundant of ["check --json", "auth check --json", "secrets check --json", "rls test --db postgres --json", "rls mutate-test --json"]) {
+      expect(workflow).not.toContain(`node ./bin/forge.mjs ${redundant}`);
+    }
     expect(workflow).toContain("node ./bin/forge.mjs security prove --db postgres --full --json");
     expect(workflow).toContain("npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest");
     expect(workflow).toContain("npm run release:evidence -- security/evidence/latest");

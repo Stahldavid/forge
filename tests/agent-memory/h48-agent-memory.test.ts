@@ -12,11 +12,54 @@ import { codexInstallFiles } from "../../src/forge/agent-memory/sources/codex.ts
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { DeltaStore } from "../../src/forge/delta/store.ts";
-import { shutdownDeltaBroker } from "../../src/forge/delta/broker.ts";
+import { probeDeltaBroker, shutdownDeltaBroker } from "../../src/forge/delta/broker.ts";
+import { pidWasReused, processStartTimeMs } from "../../src/forge/delta/process-identity.ts";
 import { createAmbientDeltaRecorder } from "../../src/forge/delta/recorder.ts";
 
 function tempWorkspace(name: string): string {
   return mkdtempSync(join(tmpdir(), `forge-${name}-`));
+}
+
+async function waitForOwnedFixtureBroker(root: string) {
+  // Hooks dispatch the owner asynchronously. Do not delete its root while it
+  // is still starting, before a verified endpoint can be observed.
+  const deadline = Date.now() + 10_000;
+  let owner = await probeDeltaBroker(root);
+  while (!owner.active && Date.now() < deadline) {
+    await new Promise(done => setTimeout(done, 200));
+    owner = await probeDeltaBroker(root);
+  }
+  if (!owner.active) throw new Error(`Fixture broker did not become observable before cleanup: ${root}`);
+  return owner;
+}
+
+async function stopOwnedFixtureBroker(root: string, waitForStartup = true): Promise<void> {
+  const owner = waitForStartup ? await waitForOwnedFixtureBroker(root) : await probeDeltaBroker(root);
+  if (!owner.active) return;
+  const pid = owner.pid;
+  const endpoint = pid ? JSON.parse(readFileSync(join(root, ".forge", "delta", "broker-endpoint.json"), "utf8")) as {
+    pid: number; root: string; createdAt: string;
+  } : undefined;
+  if (endpoint && (endpoint.pid !== pid || endpoint.root !== root)) throw new Error("Fixture broker endpoint changed before cleanup");
+  const started = pid ? processStartTimeMs(pid) : null;
+  await shutdownDeltaBroker(root);
+  if (!pid) return;
+  const alive = () => { try { process.kill(pid, 0); return true; } catch { return false; } };
+  const waitForExit = async () => {
+    for (let attempt = 0; attempt < 20 && alive(); attempt += 1) {
+      await new Promise(done => setTimeout(done, 100));
+    }
+    return !alive();
+  };
+  if (await waitForExit()) return;
+  // Bun can retain a pending background drain after the authenticated stop has
+  // closed PGlite. This fixture owns the verified process; never kill an unknown
+  // identity, a reused PID, another fixture or the test runner itself.
+  if (pid === process.pid || !endpoint || started === null || pidWasReused(pid, endpoint.createdAt) || processStartTimeMs(pid) !== started) {
+    throw new Error(`Fixture broker identity changed before cleanup: ${root}`);
+  }
+  process.kill(pid, process.platform === "win32" ? "SIGTERM" : "SIGKILL");
+  if (!(await waitForExit())) throw new Error(`Fixture broker did not exit: ${root}`);
 }
 
 function markFrameworkCheckout(root: string): void {
@@ -519,6 +562,7 @@ describe("H48 agent memory bridge", () => {
       if (store) {
         await store.close();
       }
+      await stopOwnedFixtureBroker(root);
       rmSync(root, { recursive: true, force: true });
     }
   }, 90_000);
@@ -1054,6 +1098,8 @@ describe("H48 agent memory bridge", () => {
 
   test("hook append waits for queue compaction lock", async () => {
     const root = tempWorkspace("h48-codex-hook-append-lock");
+    const previousBackgroundDrain = process.env.FORGE_DELTA_BACKGROUND_DRAIN;
+    process.env.FORGE_DELTA_BACKGROUND_DRAIN = "0";
     try {
       const installed = await runAgentMemoryCommand({ subcommand: "install", workspaceRoot: root, json: true, target: "codex" });
       expect(installed.exitCode).toBe(0);
@@ -1068,6 +1114,8 @@ describe("H48 agent memory bridge", () => {
         cwd: root,
         stdio: ["pipe", "ignore", "pipe"],
         windowsHide: true,
+        // This case owns the manual drain; keep the broker from consuming it first.
+        env: { ...process.env, FORGE_DELTA_BACKGROUND_DRAIN: "0" },
       });
       const closePromise = new Promise<number | null>((resolveExit) => child.on("close", resolveExit));
       child.stdin.end(JSON.stringify({ session_id: "codex-append-lock", cwd: root }));
@@ -1088,7 +1136,16 @@ describe("H48 agent memory bridge", () => {
       expect(drain.compacted).toBe(false);
       expect(readFileSync(queueFile, "utf8")).toContain("codex-append-lock");
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      try {
+        // This case intentionally disables asynchronous owner startup.
+        const lockFile = join(root, ".forge", "agent", "events.ndjson.append-lock.json");
+        if (existsSync(lockFile)) unlinkSync(lockFile);
+        await stopOwnedFixtureBroker(root, false);
+        rmSync(root, { recursive: true, force: true });
+      } finally {
+        if (previousBackgroundDrain === undefined) delete process.env.FORGE_DELTA_BACKGROUND_DRAIN;
+        else process.env.FORGE_DELTA_BACKGROUND_DRAIN = previousBackgroundDrain;
+      }
     }
   }, 45_000);
 
@@ -1156,7 +1213,7 @@ describe("H48 agent memory bridge", () => {
       expect(drained.eventsIngested).toBe(1);
       expect(readFileSync(`${queueFile}.rejects.ndjson`, "utf8")).not.toContain("sensitive_partial_123");
     } finally {
-      await shutdownDeltaBroker(root).catch(() => undefined);
+      await stopOwnedFixtureBroker(root);
       rmSync(root, { recursive: true, force: true });
     }
   }, 30_000);

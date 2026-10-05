@@ -2,6 +2,8 @@ name: Security Assurance
 
 on:
   pull_request:
+    paths-ignore:
+      - "docs/**"
   push:
     branches: [main, master]
     paths-ignore:
@@ -10,7 +12,7 @@ on:
 
 concurrency:
   group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   security-gate:
@@ -50,7 +52,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: bun install --ignore-scripts
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Prepare evidence directory
         run: mkdir -p security/evidence/latest
@@ -58,24 +60,8 @@ jobs:
       - name: Generate derived compiler output
         run: node ./bin/forge.mjs generate
 
-      - name: Generate stability check
-        run: node ./bin/forge.mjs generate --check | tee security/evidence/latest/generate-check.txt
-
-      - name: Forge guardrails
-        run: node ./bin/forge.mjs check --json | tee security/evidence/latest/forge-check.json
-
-      - name: Auth config check
-        run: node ./bin/forge.mjs auth check --json | tee security/evidence/latest/auth-check.json
-
-      - name: Secret registry check
-        run: node ./bin/forge.mjs secrets check --json | tee security/evidence/latest/secrets-check.json
-
-      - name: RLS adversarial proof
-        run: node ./bin/forge.mjs rls test --db postgres --json | tee security/evidence/latest/rls-test.json
-
-      - name: RLS mutation proof
-        run: node ./bin/forge.mjs rls mutate-test --json | tee security/evidence/latest/rls-mutation.json
-
+      # security prove aggregates guardrails, auth, secrets, Postgres RLS,
+      # structural mutations and invariant tests; do not execute each twice.
       - name: Aggregate security proof
         run: node ./bin/forge.mjs security prove --db postgres --full --json | tee security/evidence/latest/security-proof.json
 
@@ -88,6 +74,8 @@ jobs:
       - name: Dependency vulnerability evidence
         run: npm run security:deps -- security/evidence/latest/dependency-audit.json
 
+      # Aggregate proof runs its selected invariant files; preserve the broader
+      # security suite for tests outside that selection.
       - name: Security assurance tests
         run: node ./bin/forge-bun.mjs test tests/security --timeout 120000 | tee security/evidence/latest/security-tests.txt
 

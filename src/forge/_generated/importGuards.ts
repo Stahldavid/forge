@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=f3c99d1ce89d3c8e3ed4fb8492ba07cbbe087691cf50f01fab73c0b267e12906
+// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=64cc6c9773b9d03b02113523d5e59140ed20ecbdc89241572ae89e20a9272d72
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -141,6 +141,40 @@ export const importGuards = {
     {
       "packageName": "@electric-sql/pglite",
       "alias": "@electric-sql/pglite",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "@openai/codex-sdk",
+      "alias": "@openai/codex-sdk",
       "compatible": [
         "server",
         "action",

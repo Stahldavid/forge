@@ -5,9 +5,54 @@ import { isAbsolute, join, relative, sep } from "node:path";
 import { DeltaStore } from "../delta/store.ts";
 import { ingestEnvelope, runAgentMemoryCommand } from "./bridge.ts";
 import { normalizeAgentEvent } from "./normalize.ts";
-import { requestLocalTask } from "../agent-fabric/local-task-server.ts";
+import { MANAGED_RUN_ACTIONS, requestManagedRun, ATTACHED_TASK_ACTIONS, isAttachedTaskRead, requestAttachedTask, requestLocalTask } from "../agent-fabric/local-task-server.ts";
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 import { CODEX_EVENTS, CODEX_HOOK_RUNNER_RELATIVE, CODEX_MCP_HOOK_TOOL } from "./sources/codex.ts";
+
+
+const managedCommon = { runId: { type: "string" }, requestId: { type: "string" }, expectedVersion: { type: "integer", minimum: 1 } };
+const managedStrings = { type: "array", items: { type: "string" }, uniqueItems: true };
+const managedNodeSchema = { type: "object", properties: {
+  nodeId: { type: "string" }, kind: { type: "string", enum: ["activity", "verification", "join", "decision"] },
+  dependsOn: managedStrings, inputDigest: { type: "string", pattern: "^(?:sha256:)?[a-f0-9]{64}$" }, required: { type: "boolean" },
+  inputRefs: managedStrings, contextRefs: managedStrings, decisionId: { type: "string" },
+  outputContract: { type: "object", properties: { requiredEvidenceKinds: managedStrings }, required: ["requiredEvidenceKinds"], additionalProperties: false },
+}, required: ["nodeId", "kind", "dependsOn", "inputDigest", "required"], additionalProperties: false };
+const managedExecutorSchema = { type: "object", properties: {
+  nodeId: { type: "string" }, type: { type: "string", enum: ["codex", "command"] },
+  role: { type: "string", enum: ["implementer", "reviewer", "investigator", "decision"] },
+  prompt: { type: "string", maxLength: 12000 }, writeScope: { ...managedStrings, minItems: 1, maxItems: 100 },
+  model: { type: "string", maxLength: 100 }, argv: { type: "array", minItems: 1, maxItems: 40, items: { type: "string", maxLength: 4096 } },
+  timeoutMs: { type: "integer", minimum: 100, maximum: 1800000 },
+}, required: ["nodeId", "type"], additionalProperties: false };
+const managedNodes = { type: "array", minItems: 1, maxItems: 32, items: managedNodeSchema };
+const managedExecutors = { type: "array", minItems: 1, maxItems: 32, items: managedExecutorSchema };
+const managedEnvironmentSchema = { type: "object", properties: {
+  mode: { type: "string", enum: ["auto", "none"] }, ignoreScripts: { type: "boolean" },
+  registry: { type: "string", maxLength: 2048, format: "uri", pattern: "^https://" },
+  timeoutMs: { type: "integer", minimum: 100, maximum: 1800000 },
+}, additionalProperties: false };
+function managedRunSchema(action: typeof MANAGED_RUN_ACTIONS[number]): Record<string, unknown> {
+  if (action === "run-status") return { type: "object", properties: { runId: { type: "string" } }, required: ["runId"], additionalProperties: false };
+  const properties = action === "run-start" ? {
+    requestId: { type: "string" }, goal: { type: "string" }, scope: { ...managedStrings, minItems: 1, maxItems: 100 },
+    workflow: { type: "object", properties: { workflowId: { type: "string" }, nodes: managedNodes,
+      limits: { type: "object", properties: { maxConcurrency: { type: "integer", minimum: 1, maximum: 4 },
+        maxAttempts: { type: "integer", minimum: 1 }, maxRevisions: { type: "integer", minimum: 1, maximum: 20 },
+        maxTotalAttempts: { type: "integer", minimum: 1, maximum: 100 } }, additionalProperties: false } },
+      required: ["workflowId", "nodes"], additionalProperties: false },
+    executors: managedExecutors, publish: { type: "boolean" }, environment: managedEnvironmentSchema,
+  } : action === "run-wait" ? { runId: { type: "string" }, cursor: { type: "integer", minimum: 0 }, waitMs: { type: "integer", minimum: 0, maximum: 30000 } }
+    : { ...managedCommon, ...(action === "run-steer" ? { instruction: { type: "string" } }
+      : action === "run-resume" ? { expectedRevision: { type: "integer", minimum: 1 }, nodes: managedNodes,
+          executors: managedExecutors, environment: managedEnvironmentSchema, reason: { type: "string" }, evidenceRefs: managedStrings }
+      : action === "run-reconcile" ? { attemptId: { type: "string" }, resolution: { type: "string", enum: ["failed"] }, reason: { type: "string" }, publication: { type: "string", enum: ["confirm", "retry"] } } : {}) };
+  const required = action === "run-start" ? ["requestId", "goal", "scope", "workflow", "executors"]
+    : action === "run-wait" ? ["runId"] : ["runId", "requestId", "expectedVersion", ...(action === "run-steer" ? ["instruction"] : [])];
+  return { type: "object", properties: { request: { type: "object", properties, required, additionalProperties: false,
+    ...(action === "run-reconcile" ? { anyOf: [{ required: ["attemptId", "resolution", "reason"] }, { required: ["publication"] }] } : {}) } },
+    required: ["request"], additionalProperties: false };
+}
 
 interface JsonRpcRequest {
   jsonrpc?: "2.0";
@@ -31,6 +76,24 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
     if (request.method === "tools/list") {
       return response(request.id, {
         tools: [
+          ...MANAGED_RUN_ACTIONS.map((action) => ({
+            name: `fabric_${action.replaceAll("-", "_")}`,
+            description: action === "run-start"
+              ? "Start managed workflow worker processes through the owner. Codex workers may consume credits; command workers execute their explicit argv."
+              : action === "run-status" || action === "run-wait"
+                ? "Read managed workflow execution status or wait for durable events with a maximum 30-second wait."
+                : "Control managed execution through its single owner: steer, pause, resume, cancel or reconcile recorded work.",
+            inputSchema: managedRunSchema(action),
+          })),
+          ...ATTACHED_TASK_ACTIONS.map((action) => ({
+            name: `fabric_${action.replaceAll("-", "_")}`,
+            description: isAttachedTaskRead(action)
+              ? "Read accompanied Codex task or caller-driven workflow state from its running owner."
+              : "Record accompanied task or caller-driven workflow data. Does not dispatch agents, execute commands, approve effects or start a model.",
+            inputSchema: isAttachedTaskRead(action)
+              ? { type: "object", properties: { taskId: { type: "string" } }, required: ["taskId"], additionalProperties: false }
+              : { type: "object", properties: { request: { type: "object" } }, required: ["request"], additionalProperties: false },
+          })),
           {
             name: "fabric_capabilities",
             description: "Read the current Agent Fabric coding-task capability boundary.",
@@ -180,6 +243,26 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
 }
 
 async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>): Promise<unknown> {
+  const managedAction = MANAGED_RUN_ACTIONS.find((action) => name === `fabric_${action.replaceAll("-", "_")}`);
+  if (managedAction) {
+    const read = managedAction === "run-status";
+    if (Object.keys(args).join(",") !== (read ? "runId" : "request") ||
+        (read ? typeof args.runId !== "string" : !args.request || typeof args.request !== "object" || Array.isArray(args.request))) {
+      throw new Error(`${name} requires only ${read ? "runId" : "an object request"}`);
+    }
+    return { ok: true, status: await requestManagedRun(realpathSync(workspaceRoot), managedAction,
+      read ? args : args.request as Record<string, unknown>) };
+  }
+  const attachedAction = ATTACHED_TASK_ACTIONS.find((action) => name === `fabric_${action.replaceAll("-", "_")}`);
+  if (attachedAction) {
+    const read = isAttachedTaskRead(attachedAction);
+    if (Object.keys(args).join(",") !== (read ? "taskId" : "request") ||
+        (read ? typeof args.taskId !== "string" : !args.request || typeof args.request !== "object" || Array.isArray(args.request))) {
+      throw new Error(`${name} requires only ${read ? "taskId" : "an object request"}`);
+    }
+    return { ok: true, status: await requestAttachedTask(realpathSync(workspaceRoot), attachedAction,
+      read ? args : args.request as Record<string, unknown>) };
+  }
   if (name === CODEX_MCP_HOOK_TOOL) {
     if (Object.keys(args).sort().join(",") !== "eventName,payload" ||
         typeof args.eventName !== "string" || !CODEX_EVENTS.includes(args.eventName) ||
@@ -228,9 +311,23 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
       codingTaskControl: "local_owner_service_required",
-      ownerApproval: "local_popup_cli_only",
-      cancellation: "owner_cli_only_best_effort",
-      taskMutationTools: ["fabric_propose"],
+      managedExecution: { supported: true, runningOwnerRequired: true, scheduler: "owner_managed",
+        executors: ["codex", "command"], startDispatchesWork: true, boundedEventWaitMs: 30_000,
+        codexMayConsumeCredits: true, controls: ["steer", "pause", "resume", "cancel", "reconcile"],
+        environment: { automaticPreparation: true, isolatedDependencies: true, cacheReuse: "verified_copy", ignoreScriptsDefault: true },
+        tools: MANAGED_RUN_ACTIONS.map((action) => `fabric_${action.replaceAll("-", "_")}`) },
+      accompaniedTasks: { supported: true, runningOwnerRequired: true, nativeSessionAssociation: true,
+        evidenceProvenance: "agent_reported", automaticDispatch: false, managedWorkers: false, workflowExecution: "caller_driven",
+        tools: ATTACHED_TASK_ACTIONS.map((action) => `fabric_${action.replaceAll("-", "_")}`) },
+      consequentialEffects: true,
+      effectsByMode: { legacy: "owner_reviewed_local_pilot", accompanied: "caller_driven_records",
+        managed: "process_execution_and_optional_local_publication" },
+      mcpDispatch: { legacy: "proposal_only", accompanied: "caller_driven_records", managed: "run_start_dispatches_work" },
+      ownerApproval: "legacy_local_popup_cli_only",
+      cancellation: { legacy: "owner_cli_only_best_effort", managed: "fabric_run_cancel_best_effort" },
+      taskMutationTools: ["fabric_propose",
+        ...ATTACHED_TASK_ACTIONS.filter(action => !isAttachedTaskRead(action)).map(action => `fabric_${action.replaceAll("-", "_")}`),
+        ...MANAGED_RUN_ACTIONS.filter(action => action !== "run-status" && action !== "run-wait").map(action => `fabric_${action.replaceAll("-", "_")}`)],
       taskReadTools: ["fabric_status", "fabric_evidence"],
       changeMutationTools: ["fabric_change_propose"],
       changeReadTools: ["fabric_change_status", "fabric_change_evidence"],

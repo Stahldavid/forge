@@ -2,6 +2,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
+import { advisoryIds, isExpired, resolveAuditWaiver } from "./dependency-audit-policy.mjs";
 
 const SEVERITY_RANK = {
   info: 0,
@@ -133,41 +134,6 @@ function readWaivers(path) {
   }
 }
 
-function advisoryIds(vulnerability) {
-  return (Array.isArray(vulnerability.via) ? vulnerability.via : [])
-    .filter((via) => via && typeof via === "object")
-    .flatMap((via) => [via.source, via.url, via.title])
-    .filter((value) => value !== undefined && value !== null)
-    .map(String)
-    .sort();
-}
-
-function isExpired(waiver) {
-  if (!waiver.expires) {
-    return false;
-  }
-  return String(waiver.expires) < new Date().toISOString().slice(0, 10);
-}
-
-function matchesWaiver(waiver, targetName, packageName, vulnerability) {
-  if (isExpired(waiver)) {
-    return false;
-  }
-  if (waiver.target && waiver.target !== targetName && waiver.target !== "all") {
-    return false;
-  }
-  if (waiver.package && waiver.package !== packageName) {
-    return false;
-  }
-  if (waiver.severity && waiver.severity !== vulnerability.severity) {
-    return false;
-  }
-  if (waiver.advisory) {
-    return advisoryIds(vulnerability).includes(String(waiver.advisory));
-  }
-  return true;
-}
-
 function summarizeAudit(targetName, audit, waivers, threshold) {
   const vulnerabilities = audit.vulnerabilities ?? {};
   const failures = [];
@@ -175,7 +141,7 @@ function summarizeAudit(targetName, audit, waivers, threshold) {
     .map(([packageName, vulnerability]) => {
       const severity = vulnerability.severity ?? "info";
       const failsThreshold = (SEVERITY_RANK[severity] ?? 0) >= SEVERITY_RANK[threshold];
-      const waiver = waivers.find((candidate) => matchesWaiver(candidate, targetName, packageName, vulnerability));
+      const waiver = resolveAuditWaiver(targetName, packageName, vulnerabilities, waivers);
       const item = {
         package: packageName,
         severity,
@@ -185,6 +151,8 @@ function summarizeAudit(targetName, audit, waivers, threshold) {
         advisoryIds: advisoryIds(vulnerability),
         waived: Boolean(waiver),
         waiverReason: waiver?.reason ?? null,
+        waiverAdvisories: waiver?.advisories ?? [],
+        waiverExpires: waiver?.expires ?? null,
       };
       if (failsThreshold && !waiver) {
         failures.push(item);
@@ -304,7 +272,7 @@ try {
     waiverFile: args.waivers,
     waivers: {
       total: waivers.length,
-      expired: waivers.filter(isExpired).length,
+      expired: waivers.filter(waiver => isExpired(waiver)).length,
     },
     summary: {
       ok: failures.length === 0,

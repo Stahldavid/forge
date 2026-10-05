@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { handleMcpRequest } from "../../src/forge/agent-memory/mcp.ts";
 import { parseCli } from "../../src/forge/cli/parse.ts";
 
-test("MCP exposes proposals and status only through the local owner", async () => {
+test("MCP distinguishes legacy proposals from accompanied records and managed dispatch", async () => {
   const workspace = mkdtempSync(join(tmpdir(), "forge-fabric-mcp-"));
   try {
     const listed = await handleMcpRequest(workspace, {
@@ -30,13 +30,23 @@ test("MCP exposes proposals and status only through the local owner", async () =
     });
     const payload = JSON.parse((called?.result as { content: { text: string }[] }).content[0]?.text ?? "null");
     expect(payload).toMatchObject({
-      ok: true, codingTaskControl: "local_owner_service_required", ownerApproval: "local_popup_cli_only",
-      taskMutationTools: ["fabric_propose"],
+      ok: true, codingTaskControl: "local_owner_service_required", ownerApproval: "legacy_local_popup_cli_only",
+      consequentialEffects: true,
+      mcpDispatch: { legacy: "proposal_only", accompanied: "caller_driven_records", managed: "run_start_dispatches_work" },
+      accompaniedTasks: { automaticDispatch: false, evidenceProvenance: "agent_reported" },
+      managedExecution: { startDispatchesWork: true, codexMayConsumeCredits: true, runningOwnerRequired: true },
       taskReadTools: ["fabric_status", "fabric_evidence"],
       changeMutationTools: ["fabric_change_propose"],
       changeReadTools: ["fabric_change_status", "fabric_change_evidence"],
       changeReviewDispatch: "owner_cli_only",
     });
+    expect(payload.taskMutationTools).toContain("fabric_propose");
+    expect(payload.taskMutationTools).toContain("fabric_attached_propose");
+    expect(payload.taskMutationTools).toContain("fabric_run_start");
+    expect(payload.taskMutationTools).not.toContain("fabric_run_status");
+    expect(payload.taskMutationTools).not.toContain("fabric_run_wait");
+    expect(names).toContain("fabric_run_start");
+    expect(names).toContain("fabric_run_cancel");
     const invalid = await handleMcpRequest(workspace, {
       jsonrpc: "2.0", id: 3, method: "tools/call",
       params: { name: "fabric_capabilities", arguments: { authorize: true } },

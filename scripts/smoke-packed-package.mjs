@@ -1,10 +1,51 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { createConnection } from "node:net";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join, resolve, sep } from "node:path";
+import { basename, delimiter, dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 
+async function stopSmokeBroker(root) {
+  const { register } = await import("tsx/esm/api");
+  register();
+  const { shutdownDeltaBroker } = await import("../src/forge/delta/broker.ts");
+  await shutdownDeltaBroker(root); // Verified existing endpoint only; never starts an owner.
+}
+
+export async function cleanupOwnedSmokeTemp(root, {
+  shutdown = stopSmokeBroker, remove = rmSync,
+  sleep = (ms) => new Promise((done) => setTimeout(done, ms)),
+} = {}) {
+  const target = resolve(root);
+  if (!isAbsolute(root) || dirname(target) !== resolve(tmpdir()) || !/^forgeos-pack-smoke-[A-Za-z0-9]+$/.test(basename(target))) {
+    throw new Error("packed smoke cleanup path is not an owned temporary directory");
+  }
+  if (!existsSync(target)) return;
+  if (lstatSync(target).isSymbolicLink() || dirname(realpathSync(target)) !== realpathSync(tmpdir())) {
+    throw new Error("packed smoke cleanup path escaped the temp directory");
+  }
+  // CLI scaffolding can open a broker at its cwd before creating the app.
+  // Stop every workspace used by this smoke, including the temporary parent.
+  await shutdown(target);
+  for (const name of ["smoke-app", "create-smoke-app"]) {
+    const app = join(target, name);
+    if (existsSync(app)) {
+      if (lstatSync(app).isSymbolicLink() || !realpathSync(app).startsWith(`${realpathSync(target)}${sep}`)) {
+        throw new Error("packed smoke broker path escaped its owned temporary directory");
+      }
+      await shutdown(app);
+    }
+  }
+  for (let attempt = 0; ; attempt += 1) {
+    try { remove(target, { recursive: true, force: true, maxRetries: 0 }); return; }
+    catch (error) {
+      if (attempt >= 5 || !["EPERM", "EBUSY", "ENOTEMPTY", "EACCES"].includes(error?.code)) throw error;
+      await sleep(200 * (attempt + 1));
+    }
+  }
+}
+
+async function main() {
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tempRoot = mkdtempSync(join(tmpdir(), "forgeos-pack-smoke-"));
 const npmCommand = "npm";
@@ -16,6 +57,8 @@ const reportPath = process.env.SMOKE_PACKED_PACKAGE_REPORT
   : defaultReportPath;
 const commandTimeoutMs = Number(process.env.SMOKE_PACKED_PACKAGE_STEP_TIMEOUT_MS ?? 180_000);
 let tarballPath = "";
+let smokeFailure;
+let cleanupFailure;
 const evidence = {
   schemaVersion: "0.1.0",
   kind: "release-packed-package-smoke",
@@ -181,7 +224,7 @@ try {
     evidence.ok = true;
     evidence.artifacts.plannedCommands = plannedCommands;
     writeEvidence();
-    rmSync(tempRoot, { recursive: true, force: true });
+    await cleanupOwnedSmokeTemp(tempRoot);
     process.exit(0);
   }
 
@@ -328,23 +371,25 @@ try {
   ], { cwd: tempRoot, env: smokeEnv, step: "create-forge-app no-install smoke" });
   evidence.ok = true;
 } catch (error) {
+  smokeFailure = error;
   evidence.error = error instanceof Error ? error.message : String(error);
-  throw error;
 } finally {
-  if (tarballPath) {
-    rmSync(tarballPath, { force: true });
-  }
   evidence.cleanup.previewPortClosed = !(await portReachable(previewPort));
   try {
-    if (!resolve(tempRoot).startsWith(`${resolve(tmpdir())}${sep}`)) {
-      throw new Error("packed smoke cleanup path escaped the temp directory");
+    await cleanupOwnedSmokeTemp(tempRoot);
+    if (tarballPath) {
+      rmSync(tarballPath, { force: true });
     }
-    rmSync(tempRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });
   } catch (cleanupError) {
+    cleanupFailure = cleanupError;
     evidence.ok = false;
+    evidence.cleanup.error = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
     evidence.error ??= cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
-    writeEvidence();
-    throw cleanupError;
   }
   writeEvidence();
 }
+if (smokeFailure) throw smokeFailure;
+if (cleanupFailure) throw cleanupFailure;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await main();

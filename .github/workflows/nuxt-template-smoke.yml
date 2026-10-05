@@ -12,6 +12,10 @@ on:
       - ".github/workflows/nuxt-template-smoke.yml"
       - "bin/**"
       - "src/**"
+      - "!src/forge/agent-fabric/**"
+      - "!src/forge/agent-memory/**"
+      - "!src/forge/adaptive/**"
+      - "!src/forge/_generated/**"
       - "templates/nuxt-web/**"
       - "package.json"
       - "bun.lock"
@@ -23,10 +27,18 @@ on:
       - ".github/workflows/nuxt-template-smoke.yml"
       - "bin/**"
       - "src/**"
+      - "!src/forge/agent-fabric/**"
+      - "!src/forge/agent-memory/**"
+      - "!src/forge/adaptive/**"
+      - "!src/forge/_generated/**"
       - "templates/nuxt-web/**"
       - "package.json"
       - "bun.lock"
       - "scripts/field-test-forgeos.mjs"
+
+concurrency:
+  group: nuxt-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   nuxt-template-smoke:

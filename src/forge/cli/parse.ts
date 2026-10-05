@@ -1,3 +1,4 @@
+import { isManagedRunAction, type ManagedRunAction, isAttachedTaskAction, isAttachedTaskRead, type AttachedTaskAction } from "../agent-fabric/local-task-server.ts";
 import type { AddOptions, InspectTarget, VerifyOptions } from "../compiler/types/cli.ts";
 import type { SandboxBackend } from "../compiler/types/runtime.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
@@ -277,7 +278,7 @@ export type ForgeCommand =
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
-  | { kind: "fabric"; subcommand: "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "adaptive-propose" | "adaptive-review" | "adaptive-run" | "adaptive-status" | "change-propose" | "change-status" | "change-review" | "change-evidence"; workspaceRoot: string; json: boolean; file?: string; taskId?: string; channel?: "canary" | "stable" }
+  | { kind: "fabric"; subcommand: ManagedRunAction | AttachedTaskAction | "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "adaptive-propose" | "adaptive-review" | "adaptive-run" | "adaptive-status" | "change-propose" | "change-status" | "change-review" | "change-evidence"; workspaceRoot: string; json: boolean; file?: string; taskId?: string; runId?: string; channel?: "canary" | "stable" }
   | ({ kind: "evolution" } & EvolutionCliOptions)
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
@@ -1273,16 +1274,36 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "fabric": {
       const subcommand = rest[0];
-      if (subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "cancel" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "recover-verification" && subcommand !== "review-result" && subcommand !== "serve" && subcommand !== "memory-add" && subcommand !== "memory-list" && subcommand !== "memory-delete" && subcommand !== "adaptive-propose" && subcommand !== "adaptive-review" && subcommand !== "adaptive-run" && subcommand !== "adaptive-status" && subcommand !== "change-propose" && subcommand !== "change-status" && subcommand !== "change-review" && subcommand !== "change-evidence") {
+      if (!isManagedRunAction(subcommand) && !isAttachedTaskAction(subcommand) && subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "cancel" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "recover-verification" && subcommand !== "review-result" && subcommand !== "serve" && subcommand !== "memory-add" && subcommand !== "memory-list" && subcommand !== "memory-delete" && subcommand !== "adaptive-propose" && subcommand !== "adaptive-review" && subcommand !== "adaptive-run" && subcommand !== "adaptive-status" && subcommand !== "change-propose" && subcommand !== "change-status" && subcommand !== "change-review" && subcommand !== "change-evidence") {
         errors.push("forge fabric requires a supported task or memory subcommand");
         return { command: null, workspaceRoot, errors };
       }
       const file = parseOptionValue(argv, "--file");
+      const runId = parseOptionValue(argv, "--run-id");
       const adaptiveChannel = parseOptionValue(argv, "--channel");
       if (adaptiveChannel && (subcommand !== "adaptive-propose" || (adaptiveChannel !== "canary" && adaptiveChannel !== "stable"))) errors.push("--channel requires adaptive-propose and canary or stable");
       const isChangeReadOrReview = subcommand === "change-status" || subcommand === "change-review" || subcommand === "change-evidence";
-      const taskId = isChangeReadOrReview ? parseOptionValue(argv, "--task-id")
+      const taskId = (isAttachedTaskAction(subcommand) && isAttachedTaskRead(subcommand)) || isChangeReadOrReview ? parseOptionValue(argv, "--task-id")
         : subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "cancel" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "recover-verification" || subcommand === "review-result" || subcommand === "memory-delete" || subcommand === "adaptive-review" || subcommand === "adaptive-run" || subcommand === "adaptive-status" ? rest[1] : undefined;
+      if (isManagedRunAction(subcommand)) {
+        if (subcommand === "run-status") {
+          if (!runId || runId.startsWith("--")) errors.push("forge fabric run-status requires --run-id <run-id>");
+          if (file) errors.push("forge fabric run-status does not accept --file");
+        } else {
+          if (!file || file.startsWith("--")) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);
+          if (runId) errors.push(`forge fabric ${subcommand} requires runId in the request file`);
+        }
+        if (parseOptionValue(argv, "--task-id")) errors.push("Managed execution uses runId, not taskId");
+      } else if (runId) errors.push("--run-id is only supported by fabric run-status");
+      if (isAttachedTaskAction(subcommand)) {
+        if (isAttachedTaskRead(subcommand)) {
+          if (!taskId || taskId.startsWith("--")) errors.push(`forge fabric ${subcommand} requires --task-id <task-id>`);
+          if (file) errors.push(`forge fabric ${subcommand} does not accept --file`);
+        } else {
+          if (!file || file.startsWith("--")) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);
+          if (parseOptionValue(argv, "--task-id")) errors.push(`forge fabric ${subcommand} requires taskId in the request file`);
+        }
+      }
       if (subcommand === "propose" && (!file || file.startsWith("--"))) errors.push("forge fabric propose requires --file <proposal.json>");
       if (subcommand === "change-propose" && (!file || file.startsWith("--"))) errors.push("forge fabric change-propose requires --file <request.json>");
       if (isChangeReadOrReview && (!taskId || taskId.startsWith("--"))) errors.push(`forge fabric ${subcommand} requires --task-id <change-id>`);
@@ -1293,7 +1314,7 @@ export function parseCli(argv: string[]): ParsedCli {
       return {
         command: errors.length === 0 ? {
           kind: "fabric", subcommand, workspaceRoot, json: parseFlag(argv, "--json"),
-          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}),
+          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}), ...(runId ? { runId } : {}),
           ...(adaptiveChannel === "canary" || adaptiveChannel === "stable" ? { channel: adaptiveChannel } : {}),
         } : null,
         workspaceRoot,
@@ -3340,6 +3361,8 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--step",
     "--sink",
     "--file",
+    "--task-id",
+    "--run-id",
     "--manifest",
     "--channel",
     "--telemetry",
@@ -3498,6 +3521,8 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--step" ||
         arg === "--sink" ||
         arg === "--file" ||
+        arg === "--task-id" ||
+        arg === "--run-id" ||
         arg === "--manifest" ||
         arg === "--channel" ||
         arg === "--write-report" ||

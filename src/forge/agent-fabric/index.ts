@@ -20,3 +20,22 @@ export { createEmptyControlState } from "./reducer.ts";
 export * from "./resource-ledger.ts";
 export * from "./validation.ts";
 export type * from "./types.ts";
+export { AttachedTaskService } from "./attached-task-service.ts";
+export { AttachedTaskStore } from "./attached-task-store.ts";
+export { captureAttachedSnapshot } from "./attached-snapshot.ts";
+export { attachedReadiness } from "./readiness.ts";
+export type { AttachedTaskState, AttachedSnapshot, AttachedAssignment, AttachedAttempt, AttachedReview } from "./attached-task-contract.ts";
+export {
+  createWorkflow, nextWorkflow, claimWorkflow, completeWorkflow,
+  reconcileWorkflow, replanWorkflow, recoverWorkflow, validateWorkflowState,
+} from "./workflow-engine.ts";
+export type { WorkflowState, WorkflowLimits, WorkflowResult, WorkflowPacket, WorkflowRun,
+  WorkflowNode as DynamicWorkflowNode } from "./workflow-engine.ts";
+export { createChangeReviewWorkflow, createInvestigationWorkflow } from "./workflow-templates.ts";
+export { ManagedRunService } from "./managed-run-service.ts";
+export { ManagedRunStore } from "./managed-run-store.ts";
+export { MANAGED_RUN_ACTIONS, ManagedRunError, validateManagedSpec } from "./managed-run-contract.ts";
+export type { ManagedRunState, ManagedRunSpec, ManagedExecutorSpec, ManagedEvent, ManagedStep } from "./managed-run-contract.ts";
+export { runCodexWorker, CodexWorkerError } from "./codex-sdk-worker.ts";
+export { prepareManagedEnvironment, verifyManagedEnvironment } from "./managed-environment.ts";
+export type { ManagedEnvironment, ManagedEnvironmentOptions } from "./managed-environment.ts";

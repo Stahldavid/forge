@@ -66,19 +66,22 @@ export function assertVersioningPreMode(rootDir = ".") {
 
   const preStatePath = resolve(rootDir, ".changeset", "pre.json");
   const preState = readJson(preStatePath, "Changesets prerelease state");
-  if (preState.mode !== "pre" || preState.tag !== versionTag) {
+  if (!preState || typeof preState !== "object" || Array.isArray(preState) || preState.mode !== "pre" || preState.tag !== versionTag) {
     throw new Error(
       `${pkg.name}@${pkg.version} is on the ${versionTag} prerelease line, but ${preStatePath} ` +
       `must have mode=pre and tag=${versionTag} before running changeset version`,
     );
   }
-  if (!Array.isArray(preState.changesets)) {
+  // Changesets v3 archives consumed files under .changeset/pre and stores only
+  // mode/tag. Validate the complete legacy bookkeeping when it is still present.
+  const legacyState = "changesets" in preState || "initialVersions" in preState;
+  if (legacyState && !Array.isArray(preState.changesets)) {
     throw new Error(`${preStatePath} must contain a changesets array`);
   }
   if (
-    preState.initialVersions === null ||
+    legacyState && (preState.initialVersions === null ||
     typeof preState.initialVersions !== "object" ||
-    typeof preState.initialVersions[pkg.name] !== "string"
+    typeof preState.initialVersions[pkg.name] !== "string")
   ) {
     throw new Error(`${preStatePath} must record an initial version for ${pkg.name}`);
   }

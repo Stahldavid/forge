@@ -50,10 +50,9 @@ describe("release channel guard", () => {
     expect(pkg.publishConfig?.tag).toBe("alpha");
     expect(pre.mode).toBe("pre");
     expect(pre.tag).toBe("alpha");
-    expect(pre.initialVersions?.forgeos).toBe("0.1.0-alpha.63");
-    expect(pre.initialVersions?.["create-forgeos-app"]).toBe("0.1.0-alpha.5");
-    expect(pre.initialVersions?.["eslint-plugin-forge"]).toBe("0.0.0");
-    expect(Array.isArray(pre.changesets)).toBe(true);
+    expect(pre.initialVersions).toBeUndefined();
+    expect(pre.changesets).toBeUndefined();
+    expect(existsSync(join(process.cwd(), ".changeset", "pre", "codex-managed-workflows.md"))).toBe(true);
 
     const versionGuard = runGuard("version", process.cwd());
     expect(versionGuard.status, `${versionGuard.stdout}\n${versionGuard.stderr}`).toBe(0);
@@ -86,6 +85,19 @@ describe("release channel guard", () => {
     const result = runGuard("version", root);
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Unable to read Changesets prerelease state");
+  });
+
+  test("v3 prerelease state preserves channel checks and incomplete legacy state is rejected", () => {
+    const root = temporaryRoot(); mkdirSync(join(root, ".changeset"));
+    writeJson(join(root, "package.json"), { name: "forgeos", version: "0.1.0-alpha.67", publishConfig: { tag: "alpha" } });
+    const prePath = join(root, ".changeset", "pre.json");
+    writeJson(prePath, { mode: "pre", tag: "alpha" }); expect(runGuard("version", root).status).toBe(0);
+    for (const pre of [{ mode: "exit", tag: "alpha" }, { mode: "pre", tag: "beta" },
+      { mode: "pre", tag: "alpha", changesets: [] }, { mode: "pre", tag: "alpha", initialVersions: { forgeos: "0.1.0-alpha.63" } }]) {
+      writeJson(prePath, pre); expect(runGuard("version", root).status).toBe(1);
+    }
+    writeJson(prePath, { mode: "pre", tag: "alpha", changesets: [], initialVersions: { forgeos: "0.1.0-alpha.63" } });
+    expect(runGuard("version", root).status).toBe(0);
   });
 
   test("Changesets workspace versioning advances alpha.63 to alpha.64 in pre mode", () => {
@@ -164,6 +176,11 @@ describe("release channel guard", () => {
     };
     expect(nextPre.mode).toBe("pre");
     expect(nextPre.tag).toBe("alpha");
-    expect(nextPre.changesets).toContain("alpha-bump");
+    expect(nextPre.changesets).toBeUndefined();
+    expect(existsSync(join(changesetDir, "pre", "alpha-bump.md"))).toBe(true);
+    expect(existsSync(join(changesetDir, "alpha-bump.md"))).toBe(false);
+    const replay = spawnSync(process.execPath, [changesetCli, "version"], { cwd: root, encoding: "utf8", windowsHide: true });
+    expect(replay.status, `${replay.stdout}\n${replay.stderr}`).toBe(0);
+    expect(JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version).toBe("0.1.0-alpha.64");
   });
 });
