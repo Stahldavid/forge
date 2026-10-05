@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { chmodSync, statSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
@@ -1159,12 +1159,17 @@ describe("H48 agent memory bridge", () => {
       const deltaDir = join(root, ".forge", "delta");
       mkdirSync(deltaDir, { recursive: true });
       const endpointId = createHash("sha256").update(root).digest("hex").slice(0, 24);
-      writeFileSync(join(deltaDir, "broker-endpoint.json"), JSON.stringify({
+      const staleEndpoint = join(deltaDir, "broker-endpoint.json");
+      writeFileSync(staleEndpoint, JSON.stringify({
         version: 1, root, pid: process.pid, createdAt: "2020-01-01T00:00:00.000Z",
         pipe: process.platform === "win32" ? `\\\\.\\pipe\\forge-delta-${endpointId}`
           : join(tmpdir(), `forge-delta-${process.getuid?.() ?? "user"}-${endpointId}.sock`),
         token: "0".repeat(64),
-      }));
+      }), { mode: 0o600 });
+      if (process.platform !== "win32") {
+        chmodSync(staleEndpoint, 0o600);
+        expect(statSync(staleEndpoint).mode & 0o777).toBe(0o600);
+      }
       const runner = join(root, ".forge", "agent", "codex-hook.mjs");
       // Match the installed Codex command's Node runtime, including the owner
       // it launches, rather than inheriting Bun's test-runner executable.

@@ -91,6 +91,9 @@ jobs:
       - name: Workflow contract tests
         run: bun test tests/ci --timeout 120000
 
+      - name: Native hook owner startup regression
+        run: bun test tests/agent-memory/h48-agent-memory.test.ts --test-name-pattern "hook alone starts local owner" --timeout 120000
+
       - name: Setup basic example
         if: needs.changes.outputs.templates == 'true'
         run: node scripts/setup-example.mjs
