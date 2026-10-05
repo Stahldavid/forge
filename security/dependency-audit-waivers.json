@@ -1,4 +1,21 @@
 {
   "schemaVersion": "0.1.0",
-  "waivers": []
+  "waivers": [
+    {
+      "target": "template:nuxt-web-web",
+      "package": "braces",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "expires": "2026-10-18",
+      "reason": "Repository owner approved a 14-day exception on 2026-10-05 for the Nuxt template only. No upstream patched version is available. All other advisories, targets and higher severities remain blocking."
+    },
+    {
+      "target": "template:nuxt-web-web",
+      "package": "node-forge",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
+      "expires": "2026-10-18",
+      "reason": "Repository owner approved a 14-day exception on 2026-10-05 for the Nuxt template only. No upstream patched version is available. All other advisories, targets and higher severities remain blocking."
+    }
+  ]
 }
