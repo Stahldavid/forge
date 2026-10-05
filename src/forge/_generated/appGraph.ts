@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=3b2f9c7d2a3c7d85475c48ca9e9d2637154bc09bd7d9779f10cdacb5db6d6f57
+// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=613fe79010bcd2b27015d4187d2027237d8fa11491611834f1bd1ab609cf454c
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
@@ -39374,7 +39374,7 @@ export const appGraph = {
     }
   ],
   "generatorVersion": "0.1.0-alpha.67",
-  "inputHash": "080f6487168b3a4222997c6182258f128deca1da934c30b35628f22af816ed8d",
+  "inputHash": "b19122d7b5d701aef60d390becee2d995bcfb7063e646a6f70d6b492b159f480",
   "moduleGraph": {
     "nodes": [
       {
@@ -107861,14 +107861,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "e4534c5e0b6eba1d2b854dfafcce6ceff3927ba0c6d8c3ce6d2563d42ad4aeeb",
+        "fileContentHash": "698e44a0e1ec31d1028343db75bce99a07ea2e78948153dc50181491bf6086a5",
         "sourceSlice": "function pidWasReused(pid: number, ownerCreatedAt: unknown): boolean {\n  const ownerTime = typeof ownerCreatedAt === \"string\" ? Date.parse(ownerCreatedAt) : NaN;\n  if (!Number.isFinite(ownerTime)) return false;\n  const observedStart = processStartTimeMs(pid);\n  return observedStart !== null && observedStart > ownerTime + 1_000;\n}"
       },
       "name": "pidWasReused",
       "qualifiedName": "pidWasReused",
       "span": {
-        "end": 1336,
-        "start": 1005
+        "end": 1603,
+        "start": 1272
       }
     },
     {
@@ -109062,19 +109062,19 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "30eba710b405aafb3872eb6965cb6d3b9409c963c33fcc5e94810e4094523d5a",
+      "contentHash": "63b0cfaba9b2630d9204c77c6c99b8fe93236c4310e91e2681dfd9d72b84ee37",
       "file": "src/forge/delta/process-identity.ts",
       "id": "dbafbfec5893e39df732c77bb995550916c32bb625ff68d23188494f6b8c8c8b",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "e4534c5e0b6eba1d2b854dfafcce6ceff3927ba0c6d8c3ce6d2563d42ad4aeeb",
-        "sourceSlice": "function processStartTimeMs(pid: number): number | null {\n  if (!Number.isSafeInteger(pid) || pid <= 0) return null;\n  try {\n    const output = process.platform === \"win32\"\n      ? execFileSync(\"powershell.exe\", [\n          \"-NoProfile\", \"-NonInteractive\", \"-Command\",\n          `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`,\n        ], { encoding: \"utf8\", timeout: 3_000, windowsHide: true, stdio: [\"ignore\", \"pipe\", \"ignore\"] })\n      : execFileSync(\"ps\", [\"-p\", String(pid), \"-o\", \"lstart=\"], {\n          encoding: \"utf8\", timeout: 3_000, stdio: [\"ignore\", \"pipe\", \"ignore\"],\n        });\n    const time = Date.parse(output.trim());\n    return Number.isFinite(time) ? time : null;\n  } catch {\n    return null;\n  }\n}"
+        "fileContentHash": "698e44a0e1ec31d1028343db75bce99a07ea2e78948153dc50181491bf6086a5",
+        "sourceSlice": "function processStartTimeMs(pid: number): number | null {\n  if (!Number.isSafeInteger(pid) || pid <= 0) return null;\n  try {\n    const output = process.platform === \"win32\"\n      ? execFileSync(\"powershell.exe\", [\n          \"-NoProfile\", \"-NonInteractive\", \"-Command\",\n          `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`,\n        ], { encoding: \"utf8\", timeout: 3_000, windowsHide: true, stdio: [\"ignore\", \"pipe\", \"ignore\"] })\n      : execFileSync(\"ps\", [\"-p\", String(pid), \"-o\", \"lstart=\"], {\n          encoding: \"utf8\", timeout: 3_000, stdio: [\"ignore\", \"pipe\", \"ignore\"],\n          env: { ...process.env, TZ: \"UTC\", LC_ALL: \"C\" },\n        });\n    // ps emits a timezone-free local date. Runtime and OS timezones can differ\n    // (Bun test defaults to UTC), so request and parse UTC explicitly.\n    const time = Date.parse(process.platform === \"win32\" ? output.trim() : `${output.trim()} UTC`);\n    return Number.isFinite(time) ? time : null;\n  } catch {\n    return null;\n  }\n}"
       },
       "name": "processStartTimeMs",
       "qualifiedName": "processStartTimeMs",
       "span": {
-        "end": 907,
+        "end": 1174,
         "start": 149
       }
     },

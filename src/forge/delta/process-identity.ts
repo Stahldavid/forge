@@ -11,8 +11,11 @@ export function processStartTimeMs(pid: number): number | null {
         ], { encoding: "utf8", timeout: 3_000, windowsHide: true, stdio: ["ignore", "pipe", "ignore"] })
       : execFileSync("ps", ["-p", String(pid), "-o", "lstart="], {
           encoding: "utf8", timeout: 3_000, stdio: ["ignore", "pipe", "ignore"],
+          env: { ...process.env, TZ: "UTC", LC_ALL: "C" },
         });
-    const time = Date.parse(output.trim());
+    // ps emits a timezone-free local date. Runtime and OS timezones can differ
+    // (Bun test defaults to UTC), so request and parse UTC explicitly.
+    const time = Date.parse(process.platform === "win32" ? output.trim() : `${output.trim()} UTC`);
     return Number.isFinite(time) ? time : null;
   } catch {
     return null;
