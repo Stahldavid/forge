@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=540a13e48caff6d5d20bc6f73964ce6c9801635a85ba7104896092026525c29a
+// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=540a13e48caff6d5d20bc6f73964ce6c9801635a85ba7104896092026525c29a
 export const aiModels = {
   "models": [
     {

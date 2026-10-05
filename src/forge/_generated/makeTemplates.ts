@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=5239d21f9c87bfad8b8ab8128df724fa0ea0030add19884c47d4f9fbb16a7cb0
+// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=5239d21f9c87bfad8b8ab8128df724fa0ea0030add19884c47d4f9fbb16a7cb0
 export const makeTemplates = {
   "schemaVersion": "0.1.0",
   "templates": [
