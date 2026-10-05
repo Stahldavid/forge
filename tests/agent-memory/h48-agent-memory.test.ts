@@ -1166,12 +1166,14 @@ describe("H48 agent memory bridge", () => {
         token: "0".repeat(64),
       }));
       const runner = join(root, ".forge", "agent", "codex-hook.mjs");
-      const result = spawnSync(process.execPath, [runner, "SessionStart"], {
+      // Match the installed Codex command's Node runtime, including the owner
+      // it launches, rather than inheriting Bun's test-runner executable.
+      const result = spawnSync("node", [runner, "SessionStart"], {
         cwd: root, input: JSON.stringify({ session_id: "hook-autostart", cwd: root }),
         encoding: "utf8", windowsHide: true,
         env: { ...process.env, FORGE_DELTA_BACKGROUND_DRAIN: "1" },
       });
-      expect(result.status).toBe(0);
+      expect(result.status, result.error?.message ?? result.stderr).toBe(0);
       const queueFile = join(root, ".forge", "agent", "events.ndjson");
       const checkpoint = `${queueFile}.checkpoint.json`;
       let consumed = false;
@@ -1182,14 +1184,15 @@ describe("H48 agent memory bridge", () => {
         }
         await new Promise((resolveDelay) => setTimeout(resolveDelay, 100));
       }
-      expect(consumed).toBe(true);
+      const owner = await probeDeltaBroker(root);
+      expect(consumed, JSON.stringify({ owner, hookStderr: result.stderr, queueExists: existsSync(queueFile), checkpointExists: existsSync(checkpoint) })).toBe(true);
       const store = await DeltaStore.open(root, { access: "read" });
       try {
         const events = await store.listAgentMemoryEvents({ target: "codex" });
         expect(events.some((event) => event.externalSessionId === "hook-autostart")).toBe(true);
       } finally { await store.close(); }
     } finally {
-      await shutdownDeltaBroker(root).catch(() => undefined);
+      await stopOwnedFixtureBroker(root, false);
       rmSync(root, { recursive: true, force: true });
     }
   }, 30_000);

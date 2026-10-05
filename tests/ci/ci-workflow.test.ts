@@ -69,7 +69,7 @@ describe("CI workflow breadth", () => {
     expect(security).toContain("run: node ./bin/forge.mjs generate");
     expect(security).not.toContain("run: node ./bin/forge.mjs generate --check");
     expect(workflow).toContain("npm run lint");
-    expect(workflow).not.toContain("run: bun test");
+    expect(workflow).toContain("run: bun test tests/ci --timeout 120000");
     expect(workflow).not.toContain("forge verify --standard");
     expect(security).toContain("test tests/security");
     expect(nodeBreadthJob).toContain("node ./bin/forge.mjs inspect capabilities --json");
