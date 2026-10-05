@@ -19,6 +19,12 @@ export interface CairCommandOptions {
   dryRun?: boolean;
   plan?: boolean;
   allowGenerated?: boolean;
+  /** Required when resolving repository snapshot-local handles. */
+  snapshotId?: string;
+  manifestPath?: string;
+  cacheRoot?: string;
+  root?: string;
+  projectId?: string;
 }
 
 export interface CairProjectRef {
@@ -109,6 +115,7 @@ export interface CairSnapshotLimits {
 }
 
 export interface CairSnapshot {
+  provider?: "forge-application" | "repository";
   schemaVersion: typeof CAIR_SCHEMA_VERSION;
   kind: "cair.snapshot";
   snapshotId: string;

@@ -1,4 +1,5 @@
 import type { FabricCliOptions } from "./fabric.ts";
+import type { RepositoryCliOptions } from "./repository.ts";
 import { isManagedRunAction, isAttachedTaskAction, isAttachedTaskRead } from "../agent-fabric/local-task-server.ts";
 import type { AddOptions, InspectTarget, VerifyOptions } from "../compiler/types/cli.ts";
 import type { SandboxBackend } from "../compiler/types/runtime.ts";
@@ -285,6 +286,7 @@ export type ForgeCommand =
   | { kind: "review"; options: ReviewCommandOptions }
   | { kind: "ui"; options: UiCommandOptions }
   | { kind: "manifest"; subcommand: "validate" | "import"; path: string; json: boolean; workspaceRoot: string }
+  | { kind: "repository"; options: RepositoryCliOptions }
   | { kind: "import"; options: BrownfieldImportCommandOptions }
   | {
       kind: "delta";
@@ -538,6 +540,7 @@ export const TOP_LEVEL_COMMANDS = [
   "timeline",
   "explain",
   "manifest",
+  "repository",
   "import",
   "status",
   "changed",
@@ -964,6 +967,32 @@ export function parseCli(argv: string[]): ParsedCli {
   const errors: string[] = [];
   const positional = argv.filter((arg) => !arg.startsWith("-"));
   const workspaceRoot = process.cwd().replace(/\\/g, "/");
+
+  if (argv[0] === "repository" || (argv[0] === "manifest" && argv[1] === "discover")) {
+    const action = argv[0] === "manifest" ? "discover" : argv[1];
+    if (!["discover", "analyze", "context"].includes(action ?? "")) errors.push("repository requires discover, analyze or context");
+    const values = ["--root", "--project-id", "--manifest", "--cache-root", "--query", "--snapshot-id", "--limit", "--max-chars", "--cursor", "--output"];
+    const flags = ["--json", "--write", "--no-delta"];
+    for (let i = 2; i < argv.length; i++) {
+      if (values.includes(argv[i]!)) {
+        if (!argv[i + 1] || argv[i + 1]!.startsWith("--")) errors.push(`${argv[i]} requires a value`); else i++;
+      } else if (!flags.includes(argv[i]!)) errors.push(`Unexpected repository argument ${argv[i]}`);
+    }
+    const numeric = (flag: string, min: number, max: number) => { const raw = parseOptionValue(argv, flag); if (raw === undefined) return undefined; const number = Number(raw); if (!Number.isSafeInteger(number) || number < min || number > max) errors.push(`${flag} must be an integer ${min}..${max}`); return number; };
+    const limit = numeric("--limit", 1, 100), maxChars = numeric("--max-chars", 2048, 50000);
+    for (const [flag, max] of [["--query", 2000], ["--snapshot-id", 2000], ["--cursor", 1000]] as const) {
+      if ((parseOptionValue(argv, flag)?.length ?? 0) > max) errors.push(`${flag} exceeds ${max} characters`);
+    }
+    const write = parseFlag(argv, "--write");
+    if (action === "context" && write) errors.push("context is read-only");
+    if (action !== "discover" && parseOptionValue(argv, "--output")) errors.push("--output only supported for discovery");
+    return { workspaceRoot, errors, command: errors.length ? null : { kind: "repository", options: {
+      action: action as RepositoryCliOptions["action"], cwd: workspaceRoot, write, json: parseFlag(argv, "--json"),
+      root: parseOptionValue(argv, "--root"), projectId: parseOptionValue(argv, "--project-id"), manifestPath: parseOptionValue(argv, "--manifest"),
+      cacheRoot: parseOptionValue(argv, "--cache-root"), query: parseOptionValue(argv, "--query"), snapshotId: parseOptionValue(argv, "--snapshot-id"),
+      limit, maxChars, cursor: parseOptionValue(argv, "--cursor"), output: parseOptionValue(argv, "--output"),
+    } } };
+  }
 
   if (parseFlag(argv, "--version") || parseFlag(argv, "-v")) {
     return {
@@ -2226,26 +2255,15 @@ export function parseCli(argv: string[]): ParsedCli {
       if (formatRaw !== undefined && formatRaw !== "text" && formatRaw !== "json") {
         errors.push("--format must be text or json");
       }
-      const query = subcommand === "query" ? rest.slice(1).join(" ").trim() : undefined;
+      const cairValues = ["--root", "--project-id", "--manifest", "--cache-root", "--snapshot-id", "--format", "--input"];
+      for (let i = 2; i < argv.length; i++) if (cairValues.includes(argv[i]!) && (!argv[i + 1] || argv[i + 1]!.startsWith("--"))) errors.push(`${argv[i]} requires a value`);
+      const cairText = argv.slice(2).filter((part, index, parts) => !part.startsWith("--") && !cairValues.includes(parts[index - 1] ?? ""));
+      const query = subcommand === "query" ? cairText.join(" ").trim() : undefined;
       if (subcommand === "query" && !query) {
         errors.push("forge cair query requires a CAIR query, for example: forge cair query \"Q STATUS\"");
       }
       const inputPath = parseOptionValue(argv, "--input");
-      const action = subcommand === "action"
-        ? rest.slice(1).filter((part, index, parts) => {
-          const previous = parts[index - 1];
-          if (part === "--dry-run" || part === "--plan" || part === "--json" || part === "--include-generated") {
-            return false;
-          }
-          if (part === "--format" || part === "--input") {
-            return false;
-          }
-          if (previous === "--format" || previous === "--input") {
-            return false;
-          }
-          return true;
-        }).join(" ").trim()
-        : undefined;
+      const action = subcommand === "action" ? cairText.join(" ").trim() : undefined;
       if (subcommand === "action" && !action && !inputPath) {
         errors.push("forge cair action requires a CAIR action, for example: forge cair action \"A CREATE.FILE path=src/example.ts\"");
       }
@@ -2263,6 +2281,11 @@ export function parseCli(argv: string[]): ParsedCli {
             dryRun: parseFlag(argv, "--dry-run"),
             plan: parseFlag(argv, "--plan"),
             allowGenerated: parseFlag(argv, "--include-generated"),
+            snapshotId: parseOptionValue(argv, "--snapshot-id"),
+            manifestPath: parseOptionValue(argv, "--manifest"),
+            cacheRoot: parseOptionValue(argv, "--cache-root"),
+            root: parseOptionValue(argv, "--root"),
+            projectId: parseOptionValue(argv, "--project-id"),
           },
         },
         workspaceRoot,
@@ -3203,6 +3226,12 @@ export function parseCli(argv: string[]): ParsedCli {
 
 export function hasUnknownOption(argv: string[]): string | null {
   const known = new Set([
+    "--root",
+    "--cache-root",
+    "--snapshot-id",
+    "--max-chars",
+    "--cursor",
+    "--query",
     "--version",
     "--check",
     "--json",

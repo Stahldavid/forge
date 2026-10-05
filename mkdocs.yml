@@ -69,6 +69,7 @@ nav:
   - Agent Memory: agent-memory.md
   - CAIR Protocol: cair-protocol.md
   - Brownfield Import: brownfield-import.md
+  - Repository Analysis: repository-analysis.md
   - CLI: cli.md
   - CLI Reference: cli-reference.md
   - Runtime Model: runtime-model.md

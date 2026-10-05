@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=51948475cc157a52bb7022ccc90fd144d9a3dc2b33438cb636ed03a7cd64451f
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=3bf49762848cb209fd297508f71099b526c07278d599a393edd7b981768cd4cd
 export const capabilityMap = {
   "diagnostics": [],
   "entries": [],
-  "generatorVersion": "0.1.0-alpha.68",
+  "generatorVersion": "0.1.0-alpha.69",
   "project": {
     "name": "forgeos",
     "type": "forgeos-app"

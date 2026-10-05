@@ -1,6 +1,6 @@
 ---
 name: forge-agent-fabric
-description: Conduct or resume a Forge Agent Fabric coding task with persistent workflow steps, independent Codex review, and source-bound evidence when the user requests this workflow.
+description: Conduct or resume Forge Agent Fabric tasks and prepare repository manifests, analysis maps and source-bound context in existing projects, including Vue, Java and Docker.
 ---
 
 # Forge Agent Fabric
@@ -37,6 +37,26 @@ Do not open the legacy PGlite database independently or kill an unrelated owner.
 Native MCP tools are `fabric_attached_*`, `fabric_workflow_*` and `fabric_run_*`. If unavailable, the CLI
 offers the same operations. State which transport you actually demonstrated.
 Do not register MCP or change global configuration as a side effect of using this skill.
+
+## Analyze an existing repository
+
+When asked to prepare a project for Forge maps, read
+[repository analysis](references/repository-analysis.md). Use the shared runtime through
+`scripts/repository.mjs --project <target-directory> manifest|repository|cair <operation>`.
+This helper does not require Git; managed Fabric execution still requires Git with HEAD.
+Discovery returns a proposal. Inspect it against project instructions and code, then prepare
+`forge.manifest.json` only when edits are authorized. Preserve an existing service manifest.
+Validate the repository manifest before analyzing. Maps describe static evidence and
+coverage gaps, not runtime availability or executed test coverage. Checks are suggestions;
+never execute them just because the manifesto contains them. Do not start containers,
+build Java, execute configuration scripts or install hooks/MCP during static analysis.
+Use repository queries to give each task compact context with snapshotId. Refresh analysis
+when sources change, and never reuse source snippets or handles from a stale snapshot.
+For manifests stored outside the project, keep passing the same explicit `--manifest`
+to analysis and CAIR queries; the helper binds their root from `--project`.
+Managed SDK workers receive analysis from their own prepared clone when it contains a
+valid repository manifest. This context supplements acceptance checks and does not
+change publication or review requirements.
 
 Read [managed request fields and examples](references/managed-workflows.md) before
 preparing run-start. The references travel with this skill and require no Forge checkout.

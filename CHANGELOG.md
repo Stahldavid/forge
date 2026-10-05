@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0-alpha.69
+
+### Patch Changes
+
+- Add repository manifests and static Vue, Java, and Docker maps for existing projects, with snapshot-bound CAIR queries and clone-specific Agent Fabric context. Preserve service manifests and keep discovery, validation, and context reads free of implicit project execution or local recorder writes.
+
 ## 0.1.0-alpha.68
 
 ### Patch Changes

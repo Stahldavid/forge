@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=8c2052b427d11b806490a59ef256bbb8e8816bc90db57525b0f68a0596e1e7c4
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=8c2052b427d11b806490a59ef256bbb8e8816bc90db57525b0f68a0596e1e7c4
 export const frontendGraph = {
   "bridgeFiles": [],
   "clientBindings": [],

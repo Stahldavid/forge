@@ -46,6 +46,14 @@ npm run release:smoke
 npm run release:publish-alpha
 ```
 
+For an explicitly authorized local release that does not depend on GitHub Actions, run
+the local verification and packed-package smoke first, push the reviewed release commit,
+then use `npm run release:publish-local-alpha -- --yes`. The staging copy preserves npm's
+`files` exclusions and contains independent files. npm login and browser 2FA confirmation
+may be required; keep the publishing process alive while confirming. Verify the exact
+published version and `alpha` dist-tag afterwards. Local publishing does not produce OIDC
+provenance and does not promote `latest`.
+
 The package uses the `alpha` dist-tag while the project is in private/public MVP hardening.
 
 `latest` promotion is a separate maintainer decision. Trusted Publishing can publish `forgeos@alpha` through OIDC without an npm token, but moving `latest` requires npm write authentication. Configure `NPM_TOKEN` only when maintainers intentionally want the publish workflow to run `npm dist-tag add forgeos@<version> latest`; otherwise the workflow skips that step and leaves `latest` unchanged.

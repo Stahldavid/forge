@@ -255,6 +255,26 @@ try {
   assert(version && /^0\.\d+\.\d+/.test(version), `unexpected forge --version output: ${version ?? ""}`);
   evidence.version = version;
 
+  // Exercise maps from the installed tarball in an external repository with no Forge runtime.
+  const repositoryRoot = join(tempRoot, "repository-pilot");
+  mkdirSync(join(repositoryRoot, "web"), { recursive: true });
+  mkdirSync(join(repositoryRoot, "api"), { recursive: true });
+  writeFileSync(join(repositoryRoot, "web", "package.json"), JSON.stringify({ name: "map-web", dependencies: { vue: "3" } }));
+  writeFileSync(join(repositoryRoot, "web", "App.vue"), '<script setup lang="tsx">const view = () => <div>Items</div>; async function load() { return fetch("/api/items"); }</script><template><button @click="load">Load</button></template>');
+  writeFileSync(join(repositoryRoot, "api", "pom.xml"), '<project><artifactId>map-api</artifactId></project>');
+  writeFileSync(join(repositoryRoot, "api", "Api.java"), '@RestController @RequestMapping("/api") class Api { @GetMapping("/items") public String items() { return "ok"; } }');
+  writeFileSync(join(repositoryRoot, "api", "Dockerfile"), 'FROM eclipse-temurin:21-jre\nCOPY target/api.jar /app.jar\n');
+  writeFileSync(join(repositoryRoot, "compose.yaml"), 'services:\n  api:\n    build: ./api\n');
+  const discovered = runJson(globalForge, ["manifest", "discover", "--write", "--json"], { cwd: repositoryRoot, env: smokeEnv, step: "repository manifest discovery" });
+  assert(discovered.manifest?.kind === "repository", "installed tarball did not discover repository manifest");
+  runJson(globalForge, ["manifest", "validate", "forge.manifest.json", "--json"], { cwd: repositoryRoot, env: smokeEnv, step: "repository manifest validation" });
+  const mapped = runJson(globalForge, ["repository", "analyze", "--write", "--json"], { cwd: repositoryRoot, env: smokeEnv, step: "repository analysis" });
+  const routes = runJson(globalForge, ["repository", "context", "--query", "routes", "--json"], { cwd: repositoryRoot, env: smokeEnv, step: "repository route context" });
+  assert(mapped.ok && routes.ok && routes.items.some(item => item.kind === "endpoint"), "installed package repository map failed");
+  assert(mapped.snapshot.nodes.some(node => node.kind === "build-stage"), "Java component Dockerfile missing from installed map");
+  assert(!existsSync(join(repositoryRoot, ".forge", "delta")) && !existsSync(join(repositoryRoot, ".gitignore")), "map commands wrote recorder or gitignore side effects");
+  evidence.artifacts.repository = { ok: true, snapshotId: mapped.snapshotId, nodes: mapped.snapshot.nodes.length, edges: mapped.snapshot.edges.length, routeItems: routes.total };
+
   run(globalForge, [
     "new",
     "smoke-app",

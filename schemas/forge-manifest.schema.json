@@ -2,56 +2,314 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://forgeos.dev/schemas/forge-manifest.schema.json",
   "title": "Forge external runtime manifest",
-  "type": "object",
-  "required": ["forgeProtocol", "language", "service", "entries"],
-  "properties": {
-    "forgeProtocol": { "const": "1.0" },
-    "language": { "type": "string", "minLength": 1 },
-    "framework": { "type": "string", "minLength": 1 },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/service"
+    },
+    {
+      "$ref": "#/$defs/repository"
+    }
+  ],
+  "$defs": {
     "service": {
       "type": "object",
-      "required": ["name", "transport"],
+      "required": [
+        "forgeProtocol",
+        "language",
+        "service",
+        "entries"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "transport": { "enum": ["http", "grpc", "stdio"] },
-        "baseUrl": { "type": "string", "minLength": 1 },
-        "command": { "type": "string", "minLength": 1 },
-        "health": { "type": "string", "minLength": 1 }
+        "forgeProtocol": {
+          "const": "1.0"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "framework": {
+          "type": "string",
+          "minLength": 1
+        },
+        "service": {
+          "type": "object",
+          "required": [
+            "name",
+            "transport"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "transport": {
+              "enum": [
+                "http",
+                "grpc",
+                "stdio"
+              ]
+            },
+            "baseUrl": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "health": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commandArgs": {
+              "type": "array",
+              "minItems": 1,
+              "prefixItems": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "command",
+                  "query"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "method": {
+                "enum": [
+                  "GET",
+                  "POST"
+                ]
+              },
+              "inputSchema": {},
+              "outputSchema": {},
+              "policy": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tenantScoped": {
+                "type": "boolean"
+              },
+              "transaction": {
+                "enum": [
+                  "read-only",
+                  "external-managed",
+                  "forge-managed",
+                  "saga"
+                ]
+              },
+              "risk": {
+                "enum": [
+                  "read",
+                  "write",
+                  "destructive",
+                  "external"
+                ]
+              },
+              "needsApproval": {
+                "type": "boolean"
+              },
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "schemas": {
+          "type": "object",
+          "additionalProperties": true
+        }
       },
       "additionalProperties": false
     },
-    "entries": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["name", "kind"],
-        "properties": {
-          "name": { "type": "string", "minLength": 1 },
-          "kind": { "enum": ["command", "query"] },
-          "description": { "type": "string" },
-          "path": { "type": "string", "minLength": 1 },
-          "method": { "enum": ["GET", "POST"] },
-          "inputSchema": {},
-          "outputSchema": {},
-          "policy": { "type": "string", "minLength": 1 },
-          "tenantScoped": { "type": "boolean" },
-          "transaction": {
-            "enum": ["read-only", "external-managed", "forge-managed", "saga"]
-          },
-          "risk": { "enum": ["read", "write", "destructive", "external"] },
-          "needsApproval": { "type": "boolean" },
-          "effects": {
-            "type": "array",
-            "items": { "type": "string" }
+    "repository": {
+      "type": "object",
+      "required": [
+        "forgeProtocol",
+        "kind",
+        "components"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "forgeProtocol": {
+          "const": "2.0"
+        },
+        "kind": {
+          "const": "repository"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "root",
+              "adapters"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$"
+              },
+              "root": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "pattern": "^(?!/)(?!.*[:\\u0000-\\u001f])(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+              },
+              "adapters": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "typescript",
+                    "javascript",
+                    "vue",
+                    "nuxt",
+                    "java",
+                    "spring",
+                    "maven",
+                    "gradle",
+                    "docker"
+                  ]
+                }
+              },
+              "files": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096,
+                  "pattern": "^(?!/)(?!.*[:\\u0000-\\u001f])(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+                }
+              }
+            }
           }
         },
-        "additionalProperties": false
+        "exclude": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^(?!/)(?!.*[:\\u0000-\\u001f])(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          }
+        },
+        "services": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^(?!/)(?!.*[:\\u0000-\\u001f])(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          }
+        },
+        "checks": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "component",
+              "argv"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$"
+              },
+              "component": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$"
+              },
+              "argv": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1000,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                }
+              }
+            }
+          }
+        },
+        "scenario": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$"
+            },
+            "mode": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$"
+            },
+            "profiles": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            },
+            "composeFiles": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "pattern": "^(?!/)(?!.*[:\\u0000-\\u001f])(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+              }
+            }
+          }
+        }
       }
-    },
-    "schemas": {
-      "type": "object",
-      "additionalProperties": true
     }
-  },
-  "additionalProperties": false
+  }
 }

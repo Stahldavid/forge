@@ -5,10 +5,14 @@ import { executeCommand } from "./commands.ts";
 import { hasUnknownOption, parseCli } from "./parse.ts";
 import { formatJsonResult } from "./output.ts";
 import { recordParsedCliCommand } from "../delta/index.ts";
+import { readRepositoryManifest } from "../repository-manifest/index.ts";
 
 function formatHelp(): string {
   return [
     "ForgeOS",
+    "  forge manifest discover --root <path> --json  Propose a repository manifest without writing",
+    "  forge repository analyze --write --json  Analyze Vue/Java/Docker and save a coherent local map",
+    "  forge repository context --query routes --json  Read snapshot-bound repository context",
     "",
     "Start with one of these:",
     "  forge status --json       Compact project health, handoff state, and next actions",
@@ -249,6 +253,10 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
   const startedAt = Date.now();
   const exitCode = await executeCommand(parsed.command);
+  const repositoryRead = parsed.command.kind === "repository" ||
+    (parsed.command.kind === "manifest" && parsed.command.subcommand === "validate") ||
+    (parsed.command.kind === "cair" && (() => { const repository = readRepositoryManifest(parsed.command.options.workspaceRoot, { manifestPath: parsed.command.options.manifestPath }); return !!repository.manifest || repository.diagnostics.length > 0; })());
+  if (repositoryRead) return exitCode;
   await recordParsedCliCommand({
     command: parsed.command,
     argv,

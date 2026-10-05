@@ -34,7 +34,7 @@ async function safePath(root: string, path: string): Promise<string> {
   return absolute;
 }
 async function git(root: string, args: string[]) { return (await runFile("git", ["-C", root, ...args], { windowsHide: true, maxBuffer: 16 * 1024 * 1024 })).stdout.trim(); }
-const contextNames = ["package.json", "package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "yarn.lock", ".yarnrc.yml", "bun.lock", "bun.lockb", "bunfig.toml"];
+const contextNames = ["package.json", "package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "yarn.lock", ".yarnrc.yml", "bun.lock", "bun.lockb", "bunfig.toml", "forge.manifest.json"];
 async function readonlyContextPaths(root: string, scope: string[]): Promise<string[]> {
   const tracked = (await git(root, ["ls-files", "-z"])).split("\0").filter(Boolean);
   const result = new Set(tracked.filter(path => contextNames.includes(path.split("/").at(-1)!) && !withinScope(path, scope)));

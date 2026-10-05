@@ -23,6 +23,7 @@ export interface ManagedStep {
   usage?: { input_tokens: number; cached_input_tokens: number; output_tokens: number };
   artifact?: import("./managed-workspace.ts").ManagedArtifact;
   environment?: import("./managed-environment.ts").ManagedEnvironment;
+  repositoryContext?: import("./repository-context.ts").FabricRepositoryContextMetadata;
 }
 export interface ManagedRunState {
   schemaVersion: 1; runId: string; repositoryRoot: string; ownerPid: number; version: number;

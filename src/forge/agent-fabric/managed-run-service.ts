@@ -9,6 +9,7 @@ import {
 import { ManagedRunStore } from "./managed-run-store.ts";
 import { runCodexWorker, type CodexWorkerInput, type CodexWorkerOutput, codexWorkerEnvironment } from "./codex-sdk-worker.ts";
 import { prepareManagedEnvironment } from "./managed-environment.ts";
+import { prepareFabricRepositoryContext } from "./repository-context.ts";
 import {
   captureManagedBase, prepareManagedWorkspace, captureManagedArtifact, publishManagedArtifacts,
   previewManagedArtifacts, confirmManagedPublication, confirmManagedBaseline, type ManagedArtifact,
@@ -298,9 +299,17 @@ export class ManagedRunService {
       if (this.closed || controller.signal.aborted) managedFail("AF_RUN_ABORTED", "Worker canceled during environment preparation");
       let report: ManagedStep["report"], usage: ManagedStep["usage"], threadId: string | undefined, outputDigest: string;
       if (executor.type === "codex") {
+        const repository = await prepareFabricRepositoryContext(state.repositoryRoot, prepared.directory, executor.prompt ?? state.spec.goal, executor.writeScope ?? state.spec.scope);
+        if (this.closed || controller.signal.aborted) managedFail("AF_RUN_ABORTED", "Worker canceled during repository analysis");
+        if (repository) await this.update(runId, current => {
+          const step = current.steps.find(item => item.attemptId === attemptId)!;
+          if (this.closed || controller.signal.aborted || step.status !== "running") return;
+          step.repositoryContext = repository.metadata;
+          event(current, "repository.context", `Repository maps ${repository.metadata.status} for prepared clone`, { nodeId, attemptId });
+        });
         const previous = [...state.steps].reverse().find(step => step.nodeId === nodeId && step.threadId);
         const output = await (this.options.worker ?? runCodexWorker)({ cwd: prepared.directory, role: executor.role!, model: executor.model, threadId: previous?.threadId, signal: controller.signal,
-          prompt: `${executor.prompt}\n\nTask goal: ${state.spec.goal}\nYour current checkout: ${prepared.directory}\nActual input snapshot: ${prepared.inputDigest}\nWrite scope: ${JSON.stringify(executor.writeScope ?? [])}. Do not change files outside it. Do not commit, publish, deploy, install packages or send external messages. Dependencies already applied to this checkout. Reports from dependencies: ${JSON.stringify(applicableSteps(state).filter(step => state.workflow.nodes.find(node => node.nodeId === nodeId)!.dependsOn.includes(step.nodeId)).map(step => ({ nodeId: step.nodeId, summary: step.summary, report: step.report })))}\nCoordinator instructions for this attempt: ${state.instructions.join("\n")}`,
+          prompt: `${executor.prompt}\n\nTask goal: ${state.spec.goal}\nYour current checkout: ${prepared.directory}\nActual input snapshot: ${prepared.inputDigest}\nWrite scope: ${JSON.stringify(executor.writeScope ?? [])}. Do not change files outside it. Do not commit, publish, deploy, install packages or send external messages. Dependencies already applied to this checkout. Reports from dependencies: ${JSON.stringify(applicableSteps(state).filter(step => state.workflow.nodes.find(node => node.nodeId === nodeId)!.dependsOn.includes(step.nodeId)).map(step => ({ nodeId: step.nodeId, summary: step.summary, report: step.report })))}\nCoordinator instructions for this attempt: ${state.instructions.join("\n")}${repository ? `\n\n${repository.prompt}` : ""}`,
           onEvent: async notification => {
             if (this.closed || controller.signal.aborted) return;
             await this.update(runId, current => {

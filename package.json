@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.68",
+  "version": "0.1.0-alpha.69",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "license": "MIT",
@@ -16,6 +16,8 @@
     "docs/cair-protocol.md",
     "docs/forge-protocol.md",
     "docs/agent-fabric.md",
+    "docs/repository-analysis.md",
+    "docs/architecture/agent-fabric/REPOSITORY_MANIFEST_PLAN.md",
     "docs/architecture/agent-fabric/PORTABLE_PROJECTS_PLAN.md",
     "examples/go-billing/",
     "examples/java-billing/",
@@ -53,7 +55,8 @@
     "./vue": "./src/forge/vue/index.ts",
     "./server": "./src/forge/server.ts",
     "./policy": "./src/forge/policy.ts",
-    "./agent-fabric": "./src/forge/agent-fabric/index.ts"
+    "./agent-fabric": "./src/forge/agent-fabric/index.ts",
+    "./repository-analysis": "./src/forge/repository-analysis/index.ts"
   },
   "scripts": {
     "test": "node ./bin/forge-bun.mjs test --timeout 120000",
@@ -111,6 +114,7 @@
     "@electric-sql/pglite": "^0.2.17",
     "@openai/codex-sdk": "0.160.0",
     "@types/react": "^19.2.17",
+    "@vue/compiler-sfc": "3.5.38",
     "ai": "^6.0.205",
     "jose": "^6.2.3",
     "postgres": "^3.4.5",
@@ -120,6 +124,7 @@
     "tsx": "^4.20.6",
     "typescript": "^5.7.3",
     "vue": "^3.5.38",
+    "yaml": "2.9.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -133,6 +138,10 @@
     "react-test-renderer": "^19.2.7"
   },
   "overrides": {
+    "@ai-sdk/provider-utils": "4.0.33",
+    "fast-uri": "3.1.8",
+    "nanoid": "3.3.18",
+    "postcss": "8.5.29",
     "read-yaml-file": "^3.0.0"
   }
 }

@@ -76,6 +76,8 @@ import {
   formatCairJson,
   runCairCommand,
 } from "../cair/index.ts";
+import { runRepositoryCommand } from "./repository.ts";
+import { readRepositoryManifest, resolveRepositoryRoot } from "../repository-manifest/index.ts";
 import { uniqueNextActions } from "./next-actions.ts";
 import {
   formatRunJson,
@@ -1602,6 +1604,8 @@ function runManifestCommand(command: Extract<ForgeCommand, { kind: "manifest" }>
   exitCode: number;
 } {
   if (command.subcommand === "validate") {
+    const checked = readRepositoryManifest(command.workspaceRoot, { manifestPath: command.path });
+    if (checked.manifest || checked.diagnostics.length) return { subcommand: "validate", path: command.path, diagnostics: checked.diagnostics.map(message => createDiagnostic({ severity: "error", code: "FORGE_REPOSITORY_MANIFEST", message })), exitCode: checked.manifest ? 0 : 1 };
     const result = readExternalManifestFile(command.path);
     const hasErrors = result.diagnostics.some((diagnostic) => diagnostic.severity === "error");
     return {
@@ -2304,6 +2308,16 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       return result.exitCode;
     }
     case "cair": {
+      let root: string;
+      try { root = await resolveRepositoryRoot({ cwd: command.options.workspaceRoot, root: command.options.root, projectId: command.options.projectId, manifestPath: command.options.manifestPath }); }
+      catch (error) {
+        const diagnostic = createDiagnostic({ severity: "error", code: "FORGE_REPOSITORY_ROOT", message: (error as Error).message });
+        if (command.options.json || command.options.format === "json") process.stdout.write(formatJsonResult({ ok: false, diagnostics: [diagnostic], exitCode: 1 }));
+        else console.error(`error ${diagnostic.code}: ${diagnostic.message}`);
+        return 1;
+      }
+      const repository = readRepositoryManifest(root, { manifestPath: command.options.manifestPath });
+      if (repository.manifest || repository.diagnostics.length || command.options.root || command.options.projectId) command.options.workspaceRoot = root;
       const result = runCairCommand(command.options);
       process.stdout.write(
         command.options.json || command.options.format === "json"
@@ -2475,6 +2489,11 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       } else {
         process.stdout.write(formatManifestHuman(result));
       }
+      return result.exitCode;
+    }
+    case "repository": {
+      const result = await runRepositoryCommand(command.options);
+      process.stdout.write(`${JSON.stringify(result, null, command.options.json ? 2 : 2)}\n`);
       return result.exitCode;
     }
     case "import": {

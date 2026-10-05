@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=64cc6c9773b9d03b02113523d5e59140ed20ecbdc89241572ae89e20a9272d72
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=b71523d98d35cba1499ac4e3300a5f466d153637691182a21ff237abab357bfb
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -330,6 +330,40 @@ export const importGuards = {
       "rationale": {
         "shared": "insufficient signals to prove shared-safe purity",
         "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "@vue/compiler-sfc",
+      "alias": "@vue/compiler-sfc",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "node builtins/process not allowed in client",
         "server": "server-side context allows IO capabilities",
         "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
         "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
@@ -738,6 +772,40 @@ export const importGuards = {
       "rationale": {
         "shared": "insufficient signals to prove shared-safe purity",
         "client": "insufficient signals for client compatibility",
+        "server": "server-side context allows IO capabilities",
+        "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "command": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
+        "action": "server-side context allows IO capabilities",
+        "workflow": "server-side context allows IO capabilities",
+        "endpoint": "server-side context allows IO capabilities",
+        "edge": "edge-compatible by heuristic",
+        "test": "test/build contexts allow broad compatibility",
+        "build": "test/build contexts allow broad compatibility"
+      }
+    },
+    {
+      "packageName": "yaml",
+      "alias": "yaml",
+      "compatible": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "incompatible": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "rationale": {
+        "shared": "insufficient signals to prove shared-safe purity",
+        "client": "node builtins/process not allowed in client",
         "server": "server-side context allows IO capabilities",
         "query": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
         "liveQuery": "capability is `unknown`; cannot prove determinism (static analysis cannot prove absence of network/fs)",
