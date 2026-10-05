@@ -1,5 +1,11 @@
 # forgeos
 
+## 0.1.0-alpha.68
+
+### Patch Changes
+
+- [`3d41af7`](https://github.com/Stahldavid/forge/commit/3d41af7b4580cd86618a7c76a3ac33b41e495e43) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Make Agent Fabric reusable across Git repositories from the original Codex chat. Distribute a portable personal skill and installer, discover and reuse per-project owners, route MCP calls by registered project identity, and apply optional project environment and concurrency defaults. Harden Windows lock reads and owner startup failures, and exercise isolated execution outside the Forge checkout.
+
 ## 0.1.0-alpha.67
 
 ### Patch Changes
