@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=476b5a378622880ae70affb126928148d05fc539ea393bb8a9f0005881647cc2
+// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=fd6ea9111da59b78490382a3319b2268814d04edb878ce62c9bf70a1263cd26e
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
@@ -1274,7 +1274,7 @@ export const testGraph = {
     },
     {
       "confidence": "weak",
-      "cost": "fast",
+      "cost": "slow",
       "covers": {
         "actions": [],
         "commands": [],

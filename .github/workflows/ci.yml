@@ -88,6 +88,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Workflow contract tests
+        run: bun test tests/ci --timeout 120000
+
       - name: Setup basic example
         if: needs.changes.outputs.templates == 'true'
         run: node scripts/setup-example.mjs

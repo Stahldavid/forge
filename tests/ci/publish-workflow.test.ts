@@ -55,8 +55,12 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("node-version: \"24\"");
     expect(workflow).not.toContain("registry-url: \"https://registry.npmjs.org\"");
-    expect(workflow).toContain("uses: changesets/action@v1");
+    expect(workflow).toContain("uses: changesets/action@v2.1.2");
     expect(workflow).toContain("Create Release PR");
+    expect(workflow).toContain("version-script: npm run version-packages");
+    expect(workflow).toContain('commit-message: "chore(release): version packages"');
+    expect(workflow).toContain('pr-title: "chore(release): version packages"');
+    expect(workflow).not.toContain("outputs.hasChangesets");
     expect(workflow).not.toContain("publish: npm run release");
     expect(workflow).toContain("Publish ForgeOS package");
     expect(workflow).toContain("id: forgeos-package");
@@ -115,7 +119,7 @@ describe("npm publish workflow", () => {
       const start = workflow.indexOf(`name: ${name}`, changesetsStart);
       const end = workflow.indexOf("\n      - name:", start + 1);
       expect(start).toBeGreaterThan(changesetsStart);
-      expect(workflow.slice(start, end)).toContain("if: steps.changesets.outputs.hasChangesets == 'false'");
+      expect(workflow.slice(start, end)).toContain("if: steps.changesets.outputs['has-changesets'] == 'false'");
     }
     expect(forgeosPublishBlock).toContain("steps.release-gates.outputs.passed == 'true'");
     expect(forgeosPublishBlock).not.toContain("NPM_TOKEN");

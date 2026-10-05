@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -21,8 +21,17 @@ import type { AgentContract } from "../../src/forge/compiler/agent-contract/type
 import { ingestEnvelope, runAgentMemoryCommand } from "../../src/forge/agent-memory/bridge.ts";
 import { normalizeAgentEvent } from "../../src/forge/agent-memory/normalize.ts";
 import { cleanupWorkspace, scaffoldGenerateWorkspace } from "../orchestrator/helpers.ts";
+import { shutdownDeltaBroker } from "../../src/forge/delta/broker.ts";
 
 const roots: string[] = [];
+let previousBackgroundDrain: string | undefined;
+
+beforeEach(() => {
+  previousBackgroundDrain = process.env.FORGE_DELTA_BACKGROUND_DRAIN;
+  // These fixtures inspect queued versus stored signals at exact checkpoints.
+  // Production background ingestion is exercised by H48's autonomous hook test.
+  process.env.FORGE_DELTA_BACKGROUND_DRAIN = "0";
+});
 
 function contract(): AgentContract {
   return {
@@ -383,9 +392,15 @@ function recordQueuedNativeCodexSignal(root: string) {
   );
 }
 
-afterEach(() => {
-  for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
+afterEach(async () => {
+  try {
+    for (const root of roots.splice(0)) {
+      await shutdownDeltaBroker(root);
+      rmSync(root, { recursive: true, force: true });
+    }
+  } finally {
+    if (previousBackgroundDrain === undefined) delete process.env.FORGE_DELTA_BACKGROUND_DRAIN;
+    else process.env.FORGE_DELTA_BACKGROUND_DRAIN = previousBackgroundDrain;
   }
 });
 
@@ -601,6 +616,11 @@ describe("H30 agent adapter export", () => {
     expect(waiting.approvalStatus).toBe("waiting-for-user-trust");
 
     recordQueuedNativeCodexSignal(root);
+    // Memory reads normally drain the queue. Hold the real drain lease to
+    // exercise readiness while ingestion is legitimately still pending.
+    writeFileSync(join(root, ".forge", "agent", "events.ndjson.drain-lock.json"), JSON.stringify({
+      pid: process.pid, token: "queued-status-fixture", createdAt: new Date().toISOString(),
+    }));
 
     const status = await runAgentHooksStatus({ ...options(root, "codex"), subcommand: "hooks", hookAction: "status" });
     expect(status.ok).toBe(true);
@@ -736,6 +756,12 @@ describe("H30 agent adapter export", () => {
       expect(smoke.trustedNativeReady).toBe(false);
       expect(smoke.readinessLevel).toBe("canary");
 
+      // The smoke's open-stdin probe can also store a non-useful anonymous
+      // event. Count the observed memory baseline and require exactly one
+      // additional native event, keeping trust/signal counts exact below.
+      const smokeMemoryEvents = smoke.canary!.memoryEventsChecked;
+      expect(smokeMemoryEvents).toBeGreaterThan(0);
+
       const needsNativeSignal = await runAgentDoctor({ ...options(root, "codex"), subcommand: "doctor" });
       expect(needsNativeSignal.ok).toBe(false);
       expect(needsNativeSignal.summary).toMatchObject({
@@ -744,7 +770,7 @@ describe("H30 agent adapter export", () => {
         approvalRequired: true,
         approvalStatus: "unverified",
         nativeTrustStatus: "waiting-for-native-signal",
-        recentEvents: 1,
+        recentEvents: smokeMemoryEvents,
         usefulSignals: 1,
         nativeSignals: 0,
         canarySignals: 1,
@@ -760,7 +786,7 @@ describe("H30 agent adapter export", () => {
         hookBridge: "ready",
         approvalRequired: false,
         approvalStatus: "trusted",
-        recentEvents: 2,
+        recentEvents: smokeMemoryEvents + 1,
         usefulSignals: 2,
         nativeSignals: 1,
         canarySignals: 1,
