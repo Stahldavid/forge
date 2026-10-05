@@ -1,23 +1,55 @@
 import { readFileSync, realpathSync, statSync } from "node:fs";
+import { execFile } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 import { LOCAL_CODING_MODEL, LOCAL_CODING_TARGET } from "../agent-fabric/local-task-contract.ts";
 import { isManagedRunAction, requestManagedRun, type ManagedRunAction, isAttachedTaskAction, isAttachedTaskRead, requestAttachedTask, type AttachedTaskAction, requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
 import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
+import { listFabricProjects, registerFabricProject, resolveFabricRoot } from "../agent-fabric/project-registry.ts";
+import { ensureFabricOwner, fabricProjectDoctor } from "../agent-fabric/project-runtime.ts";
 
 export interface FabricCliOptions {
-  subcommand: ManagedRunAction | AttachedTaskAction | "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "change-propose" | "change-status" | "change-review" | "change-evidence" | AdaptiveCliOptions["subcommand"];
+  subcommand: ManagedRunAction | AttachedTaskAction | "install-skill" | "doctor" | "ensure-owner" | "project-register" | "project-list" | "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "change-propose" | "change-status" | "change-review" | "change-evidence" | AdaptiveCliOptions["subcommand"];
   workspaceRoot: string;
   json: boolean;
   file?: string;
   taskId?: string;
   runId?: string;
+  projectId?: string;
+  dryRun?: boolean;
   channel?: "canary" | "stable";
 }
 
 export async function runFabricCommand(options: FabricCliOptions): Promise<number> {
   if (options.subcommand.startsWith("adaptive-")) return runAdaptiveCommand(options as AdaptiveCliOptions);
+  if (options.subcommand === "install-skill") {
+    try {
+      const installer = fileURLToPath(new URL("../../../scripts/install-agent-fabric-skill.mjs", import.meta.url));
+      const { stdout } = await promisify(execFile)(process.execPath, [installer, ...(options.dryRun ? ["--dry-run"] : [])], { windowsHide: true, timeout: 30_000 });
+      process.stdout.write(stdout);
+      return 0;
+    } catch (error) {
+      process.stdout.write(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Skill installation failed" })}\n`);
+      return 1;
+    }
+  }
+  if (["doctor", "ensure-owner", "project-register", "project-list"].includes(options.subcommand)) {
+    try {
+      const status = options.subcommand === "project-list" ? await listFabricProjects()
+        : options.subcommand === "project-register" ? await registerFabricProject(options.workspaceRoot, { id: options.projectId })
+        : options.subcommand === "doctor" ? await fabricProjectDoctor(options.workspaceRoot)
+        : await ensureFabricOwner(options.workspaceRoot);
+      const ok = !(options.subcommand === "doctor" && "ok" in status && !status.ok);
+      process.stdout.write(`${JSON.stringify({ ok, status }, null, 2)}\n`);
+      return ok ? 0 : 1;
+    } catch (error) {
+      process.stdout.write(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Agent Fabric project operation failed" })}\n`);
+      return 1;
+    }
+  }
   if (options.subcommand === "capabilities") {
     const result = {
       ok: true, schemaVersion: 1, runtime: "local-pilot",
@@ -34,6 +66,7 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
         executors: ["codex", "command"], startDispatchesWork: true, boundedEventWaitMs: 30_000,
         codexMayConsumeCredits: true, controls: ["steer", "pause", "resume", "cancel", "reconcile"],
         environment: { automaticPreparation: true, isolatedDependencies: true, cacheReuse: "verified_copy", ignoreScriptsDefault: true } },
+      portableProjects: { supported: true, rootResolution: "git_toplevel", ownerPerRepository: true, optionalProfile: ".forge/fabric.json", mcpProjectRouting: "registered_project_id" },
       consequentialEffects: true,
       effectsByMode: { legacy: "owner_reviewed_local_pilot", accompanied: "caller_driven_records",
         managed: "process_execution_and_optional_local_publication" },
@@ -54,7 +87,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
   let service: LocalTaskService | undefined;
   let changeService: LocalChangeReviewService | undefined;
   try {
-    const repositoryRoot = realpathSync(options.workspaceRoot);
+    const repositoryRoot = isManagedRunAction(options.subcommand) || isAttachedTaskAction(options.subcommand) || options.subcommand === "serve"
+      ? await resolveFabricRoot(options.workspaceRoot) : realpathSync(options.workspaceRoot);
     if (isManagedRunAction(options.subcommand)) {
       let body: Record<string, unknown>;
       if (options.subcommand === "run-status") body = { runId: options.runId ?? "" };

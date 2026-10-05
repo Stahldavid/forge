@@ -8,6 +8,7 @@ import { normalizeAgentEvent } from "./normalize.ts";
 import { MANAGED_RUN_ACTIONS, requestManagedRun, ATTACHED_TASK_ACTIONS, isAttachedTaskRead, requestAttachedTask, requestLocalTask } from "../agent-fabric/local-task-server.ts";
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 import { CODEX_EVENTS, CODEX_HOOK_RUNNER_RELATIVE, CODEX_MCP_HOOK_TOOL } from "./sources/codex.ts";
+import { listFabricProjects, registerFabricProject, resolveFabricProject } from "../agent-fabric/project-registry.ts";
 
 
 const managedCommon = { runId: { type: "string" }, requestId: { type: "string" }, expectedVersion: { type: "integer", minimum: 1 } };
@@ -61,7 +62,14 @@ interface JsonRpcRequest {
   params?: Record<string, unknown>;
 }
 
-export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRequest): Promise<Record<string, unknown> | null> {
+export interface FabricMcpOptions { registryDirectory?: string }
+
+function projectAwareSchema(schema: Record<string, unknown>): Record<string, unknown> {
+  return { ...schema, properties: { ...(schema.properties as Record<string, unknown>),
+    projectId: { type: "string", minLength: 1, description: "Registered project identifier. Omit to use the MCP server's original workspace." } } };
+}
+
+export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRequest, options: FabricMcpOptions = {}): Promise<Record<string, unknown> | null> {
   if (request.method.startsWith("notifications/")) {
     return null;
   }
@@ -76,6 +84,14 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
     if (request.method === "tools/list") {
       return response(request.id, {
         tools: [
+          { name: "fabric_project_register", description: "Explicitly register a Git project root for isolated Agent Fabric routing. Does not start workers.",
+            inputSchema: { type: "object", properties: { root: { type: "string", minLength: 1, description: "Absolute path to the Git project or one of its subdirectories." }, id: { type: "string", minLength: 1 } }, required: ["root"], additionalProperties: false } },
+          { name: "fabric_project_list", description: "List registered Agent Fabric projects and their canonical roots.",
+            inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+          { name: "fabric_project_doctor", description: "Diagnose the selected project's runtime and owner without starting workers.",
+            inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+          { name: "fabric_owner_start", description: "Ensure the selected project's isolated owner is running. Does not start a workflow or model.",
+            inputSchema: { type: "object", properties: {}, additionalProperties: false } },
           ...MANAGED_RUN_ACTIONS.map((action) => ({
             name: `fabric_${action.replaceAll("-", "_")}`,
             description: action === "run-start"
@@ -190,7 +206,8 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
               additionalProperties: false,
             },
           },
-        ],
+        ].map((tool) => tool.name.startsWith("fabric_") && tool.name !== "fabric_project_register" && tool.name !== "fabric_project_list"
+          ? { ...tool, inputSchema: projectAwareSchema(tool.inputSchema) } : tool),
       });
     }
     if (request.method === "tools/call") {
@@ -199,9 +216,18 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
       const args = params.arguments && typeof params.arguments === "object" && !Array.isArray(params.arguments)
         ? params.arguments as Record<string, unknown>
         : {};
-      const result = await runTool(workspaceRoot, name, args);
+      let toolRoot = workspaceRoot;
+      const toolArgs = { ...args };
+      if (name.startsWith("fabric_") && name !== "fabric_project_register" && name !== "fabric_project_list" && "projectId" in toolArgs) {
+        if (typeof toolArgs.projectId !== "string" || !toolArgs.projectId.trim()) throw new Error("projectId must be a non-empty registered project identifier");
+        toolRoot = await resolveFabricProject(toolArgs.projectId, options);
+        delete toolArgs.projectId;
+      }
+      const toolResult = await runTool(toolRoot, name, toolArgs, options);
+      const result = typeof args.projectId === "string" && name.startsWith("fabric_") && toolResult && typeof toolResult === "object"
+        ? { ...toolResult, projectContext: { id: args.projectId, root: toolRoot } } : toolResult;
       if (name !== CODEX_MCP_HOOK_TOOL) {
-        await logMcpToolCall(workspaceRoot, name, args, "completed").catch(() => undefined);
+        await logMcpToolCall(toolRoot, name, args, "completed").catch(() => undefined);
       }
       return response(request.id, {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -242,7 +268,25 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
   return 0;
 }
 
-async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>): Promise<unknown> {
+async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>, options: FabricMcpOptions): Promise<unknown> {
+  if (name === "fabric_project_register") {
+    if (Object.keys(args).some(key => key !== "root" && key !== "id") || typeof args.root !== "string" || !isAbsolute(args.root) ||
+        ("id" in args && (typeof args.id !== "string" || !args.id.trim()))) throw new Error("fabric_project_register requires an absolute root and optional id");
+    return { ok: true, project: await registerFabricProject(args.root, { ...options, ...(typeof args.id === "string" ? { id: args.id } : {}) }) };
+  }
+  if (name === "fabric_project_list") {
+    if (Object.keys(args).length) throw new Error("fabric_project_list accepts no arguments");
+    return { ok: true, projects: await listFabricProjects(options) };
+  }
+  if (name === "fabric_project_doctor" || name === "fabric_owner_start") {
+    if (Object.keys(args).length) throw new Error(`${name} accepts only optional projectId`);
+    const { ensureFabricOwner, fabricProjectDoctor } = await import("../agent-fabric/project-runtime.ts");
+    if (name === "fabric_project_doctor") {
+      const diagnostics = await fabricProjectDoctor(workspaceRoot);
+      return { ok: diagnostics.ok, diagnostics };
+    }
+    return { ok: true, owner: await ensureFabricOwner(workspaceRoot) };
+  }
   const managedAction = MANAGED_RUN_ACTIONS.find((action) => name === `fabric_${action.replaceAll("-", "_")}`);
   if (managedAction) {
     const read = managedAction === "run-status";
@@ -311,6 +355,8 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
       codingTaskControl: "local_owner_service_required",
+      projectRouting: { supported: true, registrationRequired: true, defaultWorkspace: realpathSync(workspaceRoot),
+        ownerIsolation: "per_project", hooks: "server_workspace_only", tools: ["fabric_project_register", "fabric_project_list", "fabric_project_doctor", "fabric_owner_start"] },
       managedExecution: { supported: true, runningOwnerRequired: true, scheduler: "owner_managed",
         executors: ["codex", "command"], startDispatchesWork: true, boundedEventWaitMs: 30_000,
         codexMayConsumeCredits: true, controls: ["steer", "pause", "resume", "cancel", "reconcile"],

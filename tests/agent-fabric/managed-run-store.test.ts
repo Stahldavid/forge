@@ -59,3 +59,20 @@ test("transient Windows replacement errors retry the same temp without deleting 
     expect(attempts).toBe(4); expect(new Set(attemptedSources).size).toBe(1); expect((await store.read("run"))!.version).toBe(2);
   } finally { renameSpy?.mockRestore(); await rm(root, { recursive: true, force: true }); }
 });
+
+test("transient Windows lock reader errors do not block a committed run or weaken ownership", async () => {
+  const root = await mkdtemp(join(tmpdir(), "forge-managed-store-test-")); let readSpy: ReturnType<typeof spyOn> | undefined;
+  try {
+    const store = await ManagedRunStore.open(root);
+    const originalRead = fsPromises.readFile; let failures = 0;
+    readSpy = spyOn(fsPromises, "readFile").mockImplementation((async (path: Parameters<typeof originalRead>[0], options: unknown) => {
+      if (String(path).endsWith(".json.lock") && failures < 3) {
+        failures++;
+        throw Object.assign(new Error("temporary Windows reader handle"), { code: ["EPERM", "EACCES", "EBUSY"][failures - 1] });
+      }
+      return originalRead(path, options as "utf8");
+    }) as typeof originalRead);
+    await store.transact("run", {}, () => state(store.root, "run"));
+    expect(failures).toBe(3); expect((await store.read("run"))!.version).toBe(1);
+  } finally { readSpy?.mockRestore(); await rm(root, { recursive: true, force: true }); }
+});

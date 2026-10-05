@@ -1,6 +1,6 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=8f128ef43f152534fe019fe94a5be801503539b7e82af7d240c99eedd7431208
+// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=4c5cd42962a8ff910e5dd80bbceaab91d43ebd59a187e2cecc5e923b85004fb8
 export const telemetrySinks = {
-  "generatorVersion": "0.1.0-alpha.67",
+  "generatorVersion": "0.1.0-alpha.68",
   "schemaVersion": "1.0.0",
   "sinks": [
     {

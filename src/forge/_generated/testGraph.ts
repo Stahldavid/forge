@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=5aca3c4b253de02c76a9dc8c5f018cc45dc4216c7f393b2699a778e985ecb3d0
+// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=a2dac5e8148875c765e827ccdcddd5cca00427ddb11beaee31c207d93da91070
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.67",
-  "inputHash": "cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61",
+  "generatorVersion": "0.1.0-alpha.68",
+  "inputHash": "eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -648,6 +648,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/multiproject-mcp.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-fabric/p0a.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -667,6 +685,42 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-fabric/p0b-model-adapter.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/portable-projects.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/portable-skill.test.ts",
       "kind": "unknown",
       "reasons": []
     },

@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=6c372cb6f11eb4910ca7f917cbf6ac32d2a9102d0e1ec36a5fcd23fe1c7feeeb
+// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=6c372cb6f11eb4910ca7f917cbf6ac32d2a9102d0e1ec36a5fcd23fe1c7feeeb
 export * from "./actionSubscriptions";
 export * from "./agentAdapterManifest";
 export * from "./agentContract";

@@ -51,10 +51,12 @@ test("packed smoke preserves primary failure and separately records cleanup fail
       .replaceAll("await cleanupOwnedSmokeTemp(tempRoot);", 'throw new Error("secondary-cleanup-regression");');
     const fixtureScript = join(root, "smoke.mjs"); const report = join(root, "report.json");
     writeFileSync(fixtureScript, injected);
-    const result = spawnSync(process.execPath, [fixtureScript], {
+    // The production smoke entrypoint is a Node script; the test runner may be Bun.
+    const result = spawnSync("node", [fixtureScript], {
       encoding: "utf8", windowsHide: true, timeout: 10000,
       env: { ...process.env, SMOKE_PACKED_PACKAGE_DRY_RUN: "0", SMOKE_PACKED_PACKAGE_REPORT: report },
     });
+    expect(result.error).toBeUndefined();
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("primary-smoke-regression");
     expect(result.stderr).not.toContain("Error: secondary-cleanup-regression");

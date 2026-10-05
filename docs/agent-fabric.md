@@ -11,7 +11,15 @@ Codex executes the steps with its native tools; the scheduler does not start mod
 continue execution when the host is closed. The
 [detailed implementation and operation plan](./architecture/agent-fabric/CODEX_DYNAMIC_WORKFLOWS.md)
 documents both contracts, evidence provenance and the remaining acceptance work.
-The project skill is `.agents/skills/forge-agent-fabric/SKILL.md`.
+The portable skill is `.agents/skills/forge-agent-fabric/SKILL.md`. Install it once
+with `forge fabric install-skill --json` (or `node bin/forge.mjs fabric install-skill --json`
+in the framework checkout). It then operates in other Git repositories through a shared
+runtime, with one owner per repository and no Forge application dependency.
+Use `fabric doctor`, `fabric ensure-owner`, and optionally `fabric project-register`
+for explicit MCP routing by projectId. Hooks are optional. A project may declare
+environment/concurrency defaults and suggested checks in `.forge/fabric.json`.
+The [portable project plan](./architecture/agent-fabric/PORTABLE_PROJECTS_PLAN.md)
+describes isolation, installation, recovery and validation.
 
 ```bash
 node bin/forge.mjs fabric capabilities --json

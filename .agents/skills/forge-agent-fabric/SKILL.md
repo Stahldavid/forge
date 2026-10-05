@@ -12,21 +12,39 @@ messages. Use subagents for implementation/review when authorized by the user or
 
 ## Locate and connect
 
-Use the framework source CLI `node bin/forge.mjs fabric` in this checkout. Use
-`fabric capabilities --json` to distinguish accompanied tasks, managed SDK runs and the
-legacy Ollama pilot. Both new modes need one running `fabric serve` owner. Prefer an
-existing owner; if none exists, start one with a tool-managed process and record its session.
+Resolve the current project's Git root and read its AGENTS.md. Execute with that root
+as cwd, even when the runtime is installed elsewhere. Windows and WSL copies are distinct
+projects. This workflow does not require a Forge application or project dependency.
+
+Use the absolute path to this skill's `scripts/fabric.mjs` helper:
+`node <skill-directory>/scripts/fabric.mjs --project <target-git-root> <operation> --json`.
+It reads installer-generated runtime.json or FORGE_FABRIC_CLI and falls back to an installed
+Forge runtime on PATH. Never switch to the runtime's checkout to conduct work.
+
+Run `doctor --json` and `ensure-owner --json` through that helper. Register projects with
+`project-register --project-id <stable-id> --json`; inspect registrations with `project-list --json`.
+Registration is needed for multiproject MCP routing, not for ordinary cwd-bound CLI work.
+Optional project preparation, verification and limits live in `.forge/fabric.json`;
+inspect doctor and respect the current project's profile rather than inventing config fields.
+
+Forward `capabilities --json` through the helper to distinguish accompanied tasks,
+managed SDK runs and the legacy Ollama pilot. When the user asks Fabric to execute a
+workflow or run Codex workers, select managed execution below. Choose accompanied mode
+when the task is to record work performed by the native session. Both modes need one
+owner; `ensure-owner` reuses or starts it without dispatching workers.
 Do not open the legacy PGlite database independently or kill an unrelated owner.
 
 Native MCP tools are `fabric_attached_*`, `fabric_workflow_*` and `fabric_run_*`. If unavailable, the CLI
 offers the same operations. State which transport you actually demonstrated.
 Do not register MCP or change global configuration as a side effect of using this skill.
 
-Read [the protocol and delivery plan](../../../docs/architecture/agent-fabric/CODEX_DYNAMIC_WORKFLOWS.md)
-for model fields and behavior. Resolve this path from the repository root if the skill
-loader's relative reference resolver does not handle repository links.
+Read [managed request fields and examples](references/managed-workflows.md) before
+preparing run-start. The references travel with this skill and require no Forge checkout.
+For MCP, inspect tool schemas and select the registered target project explicitly through
+projectId when supported. A fixed-root MCP server is usable only when its root matches
+the target. Never assume a global MCP configuration follows the chat cwd.
 
-## Conduct work
+## Accompanied work
 
 1. Create an `attached-propose` with explicit acceptance criteria, relevant file scope and
    checks. Mutations use a complete `--file` JSON request; reads use `--task-id`.
@@ -81,7 +99,7 @@ Starting Codex workers can consume configured credits; local publication can cha
 files. Use the user's existing scope and authorization, including any cost constraints.
 Do not treat the legacy proposal-only MCP contract as a limit on fabric_run_start.
 
-1. Read capabilities and the managed request example in the linked plan. Prepare
+1. Read capabilities and the managed request example in the bundled reference. Prepare
    run-start with requestId, goal, scope, workflow and one executor per node. Codex roles
    are implementer/reviewer/investigator/decision; commands use explicit argv. Choose
    relevant limits, deadlines and scope. inputDigest identifies the declared node contract;
@@ -114,6 +132,6 @@ Do not treat the legacy proposal-only MCP contract as a limit on fabric_run_star
    clears the intent and pauses. Resume explicitly; preserve partial divergent writes.
 
 Distinguish implementation, command-fixture tests and actual SDK execution in the delivery
-report. The detailed plan records a real SDK pilot separately from fixture tests; do not
-extend its acceptance to a new environment or task without observed evidence. Keep the owner session
+report. Do not extend a past pilot's acceptance to a new environment or task without
+observed evidence. SDK workers are separate runs, not new chats in the sidebar. Keep the owner session
 visible in task context; do not promise App-closed execution or create a scheduler implicitly.
