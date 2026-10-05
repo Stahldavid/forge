@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=a2dac5e8148875c765e827ccdcddd5cca00427ddb11beaee31c207d93da91070
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=2e8300711fd85189eee0679e2316c7eb2da699bb606328e09f80c6416c777fbb
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.68",
-  "inputHash": "eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391",
+  "generatorVersion": "0.1.0-alpha.69",
+  "inputHash": "1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -1577,7 +1577,8 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
-          "postgres"
+          "postgres",
+          "yaml"
         ],
         "policies": [],
         "queries": [],
@@ -1587,7 +1588,8 @@ export const testGraph = {
       "file": "tests/cli/deploy.test.ts",
       "kind": "unknown",
       "reasons": [
-        "probable: packages postgres"
+        "probable: packages postgres",
+        "probable: packages yaml"
       ]
     },
     {
@@ -2412,7 +2414,8 @@ export const testGraph = {
         "liveQueries": [],
         "packages": [
           "ai",
-          "postgres"
+          "postgres",
+          "yaml"
         ],
         "policies": [],
         "queries": [],
@@ -2423,7 +2426,8 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "probable: packages ai",
-        "probable: packages postgres"
+        "probable: packages postgres",
+        "probable: packages yaml"
       ]
     },
     {
@@ -3283,14 +3287,16 @@ export const testGraph = {
       ]
     },
     {
-      "confidence": "weak",
+      "confidence": "probable",
       "cost": "fast",
       "covers": {
         "actions": [],
         "commands": [],
         "components": [],
         "liveQueries": [],
-        "packages": [],
+        "packages": [
+          "yaml"
+        ],
         "policies": [],
         "queries": [],
         "tables": [],
@@ -3298,7 +3304,9 @@ export const testGraph = {
       },
       "file": "tests/package-manager/detect.test.ts",
       "kind": "unknown",
-      "reasons": []
+      "reasons": [
+        "probable: packages yaml"
+      ]
     },
     {
       "confidence": "weak",
@@ -3952,6 +3960,24 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/release/local-publish-staging.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/release/packed-smoke-cleanup.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -4058,6 +4084,128 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "confirmed: packages ai"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "postgres",
+          "tsx",
+          "typescript",
+          "vue",
+          "yaml"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/analyzers.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages vue",
+        "probable: packages postgres",
+        "probable: packages tsx",
+        "probable: packages typescript",
+        "probable: packages yaml"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "vue",
+          "yaml"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/cli-mcp.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages vue",
+        "probable: packages yaml"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/context.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/fabric.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ajv",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/manifest.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages ajv",
+        "probable: packages vue"
       ]
     },
     {
@@ -4975,7 +5123,8 @@ export const testGraph = {
         "packages": [
           "@types/react",
           "react",
-          "tsx"
+          "tsx",
+          "yaml"
         ],
         "policies": [],
         "queries": [],
@@ -4987,7 +5136,8 @@ export const testGraph = {
       "reasons": [
         "probable: packages @types/react",
         "probable: packages react",
-        "probable: packages tsx"
+        "probable: packages tsx",
+        "probable: packages yaml"
       ]
     },
     {
@@ -5068,7 +5218,8 @@ export const testGraph = {
         "liveQueries": [],
         "packages": [
           "react",
-          "tsx"
+          "tsx",
+          "yaml"
         ],
         "policies": [],
         "queries": [],
@@ -5079,7 +5230,8 @@ export const testGraph = {
       "kind": "unknown",
       "reasons": [
         "confirmed: packages react",
-        "probable: packages tsx"
+        "probable: packages tsx",
+        "probable: packages yaml"
       ]
     },
     {

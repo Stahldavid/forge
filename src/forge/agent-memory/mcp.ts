@@ -9,6 +9,7 @@ import { MANAGED_RUN_ACTIONS, requestManagedRun, ATTACHED_TASK_ACTIONS, isAttach
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 import { CODEX_EVENTS, CODEX_HOOK_RUNNER_RELATIVE, CODEX_MCP_HOOK_TOOL } from "./sources/codex.ts";
 import { listFabricProjects, registerFabricProject, resolveFabricProject } from "../agent-fabric/project-registry.ts";
+import { runRepositoryCommand } from "../cli/repository.ts";
 
 
 const managedCommon = { runId: { type: "string" }, requestId: { type: "string" }, expectedVersion: { type: "integer", minimum: 1 } };
@@ -84,6 +85,9 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
     if (request.method === "tools/list") {
       return response(request.id, {
         tools: [
+          { name: "fabric_repository_discover", description: "Propose a repository analysis manifest without writing files or executing project tools.", inputSchema: { type: "object", properties: {}, additionalProperties: false } },
+          { name: "fabric_repository_analyze", description: "Analyze repository sources statically. write=true explicitly saves local map artifacts; never starts models, builds or containers.", inputSchema: { type: "object", properties: { write: { type: "boolean", default: false } }, additionalProperties: false } },
+          { name: "fabric_repository_context", description: "Read bounded snapshot-bound repository maps and evidence. Requires previously saved analysis.", inputSchema: { type: "object", properties: { query: { type: "string", maxLength: 2000 }, snapshotId: { type: "string", maxLength: 2000 }, limit: { type: "integer", minimum: 1, maximum: 100 }, maxChars: { type: "integer", minimum: 2048, maximum: 50000 }, cursor: { type: "string", maxLength: 1000 } }, additionalProperties: false } },
           { name: "fabric_project_register", description: "Explicitly register a Git project root for isolated Agent Fabric routing. Does not start workers.",
             inputSchema: { type: "object", properties: { root: { type: "string", minLength: 1, description: "Absolute path to the Git project or one of its subdirectories." }, id: { type: "string", minLength: 1 } }, required: ["root"], additionalProperties: false } },
           { name: "fabric_project_list", description: "List registered Agent Fabric projects and their canonical roots.",
@@ -226,7 +230,7 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
       const toolResult = await runTool(toolRoot, name, toolArgs, options);
       const result = typeof args.projectId === "string" && name.startsWith("fabric_") && toolResult && typeof toolResult === "object"
         ? { ...toolResult, projectContext: { id: args.projectId, root: toolRoot } } : toolResult;
-      if (name !== CODEX_MCP_HOOK_TOOL) {
+      if (name !== CODEX_MCP_HOOK_TOOL && !name.startsWith("fabric_repository_")) {
         await logMcpToolCall(toolRoot, name, args, "completed").catch(() => undefined);
       }
       return response(request.id, {
@@ -269,6 +273,26 @@ export async function runMcpServe(workspaceRoot: string): Promise<number> {
 }
 
 async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>, options: FabricMcpOptions): Promise<unknown> {
+  if (name.startsWith("fabric_repository_")) {
+    const action = name.slice("fabric_repository_".length);
+    if (!["discover", "analyze", "context"].includes(action)) throw new Error("Unknown repository operation");
+    const allowed = action === "context" ? ["query", "snapshotId", "limit", "maxChars", "cursor"] : action === "analyze" ? ["write"] : [];
+    if (Object.keys(args).some(key => !allowed.includes(key))) throw new Error("Unknown repository argument");
+    for (const [key, max] of [["query", 2000], ["snapshotId", 2000], ["cursor", 1000]] as const) if (key in args && (typeof args[key] !== "string" || (args[key] as string).length > max)) throw new Error(`Invalid ${key}`);
+    for (const [key, min, max] of [["limit", 1, 100], ["maxChars", 2048, 50000]] as const) if (key in args && (!Number.isSafeInteger(args[key]) || (args[key] as number) < min || (args[key] as number) > max)) throw new Error(`Invalid ${key}`);
+    if ("write" in args && typeof args.write !== "boolean") throw new Error("write must be boolean");
+    const result = await runRepositoryCommand({ action: action as "discover" | "analyze" | "context", cwd: workspaceRoot, root: workspaceRoot,
+      json: true, write: args.write === true, query: args.query as string | undefined, snapshotId: args.snapshotId as string | undefined,
+      limit: args.limit as number | undefined, maxChars: args.maxChars as number | undefined, cursor: args.cursor as string | undefined });
+    const { snapshot, ...compact } = result;
+    if (snapshot) {
+      const coverage = (snapshot as import("../repository-analysis/types.ts").RepositorySnapshot).coverage;
+      return { ...compact, coverage: { ...coverage, diagnostics: coverage.diagnostics.slice(0, 20), ignoredPaths: coverage.ignoredPaths.slice(0, 20), limitations: coverage.limitations.slice(0, 20),
+        omitted: { diagnostics: Math.max(0, coverage.diagnostics.length - 20), ignoredPaths: Math.max(0, coverage.ignoredPaths.length - 20), limitations: Math.max(0, coverage.limitations.length - 20) } },
+        nextAction: args.write === true ? "fabric_repository_context" : "fabric_repository_analyze with write=true explicitly saves this analysis for later queries" };
+    }
+    return compact;
+  }
   if (name === "fabric_project_register") {
     if (Object.keys(args).some(key => key !== "root" && key !== "id") || typeof args.root !== "string" || !isAbsolute(args.root) ||
         ("id" in args && (typeof args.id !== "string" || !args.id.trim()))) throw new Error("fabric_project_register requires an absolute root and optional id");

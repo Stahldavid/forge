@@ -142,6 +142,15 @@ The scheduled/manual `Field Tests` workflow expands that coverage across Linux, 
 
 ## External Runtimes And Adapters
 
+For agent maps in an existing Vue, Java/Spring, TypeScript, or Docker/Compose repository,
+use the shared CLI without migrating the app to Forge. `forge manifest discover --json`
+proposes a repository manifest; after reviewing and saving it, run
+`forge repository analyze --write --json` and `forge repository context --query routes --json`.
+The same maps are available through CAIR and feed prepared Agent Fabric clones.
+Discovery and queries do not start project tools; maps report static coverage and unresolved relations.
+See [Repository Analysis](docs/repository-analysis.md) for the versioned manifest,
+host-local cache options, snapshot-bound queries and language limitations.
+
 ForgeOS can import services written outside TypeScript through the Forge Protocol.
 External runtimes publish a `forge.manifest.json` that describes commands, queries,
 transport, policies, risk metadata, tenant scope, and schemas. Forge then emits

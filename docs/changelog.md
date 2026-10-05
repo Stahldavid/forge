@@ -4,6 +4,21 @@ Release history for the `forgeos` npm package.
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## 0.1.0-alpha.69
+
+- Repository manifests and static maps for existing TypeScript/JavaScript, Vue/Nuxt,
+  Java/Spring/Maven/Gradle and Docker/Compose projects without adopting the Forge runtime.
+- Snapshot-bound CAIR queries, incremental parsing, bounded project-routed MCP context
+  and validated cache identity/source provenance.
+- Agent Fabric workers receive the map of their own prepared clone; the shared personal
+  skill also supports analysis in projects without Git.
+- Static local TypeScript configuration inheritance, Vue conditional branches and
+  multiline Dockerfile instructions; ambiguous and dynamic behavior remains explicit.
+- Local release staging preserves npm exclusions; the installed-package smoke checks
+  external Vue + Spring + Compose maps in addition to the application quickstart.
+- Patched transitive dependency resolutions for provider utilities, PostCSS, Nano ID
+  and URI parsing remove the advisories reported by the checked-in lockfile audit.
+
 ## 0.1.0-alpha.63
 
 - `forge status` now verifies generated output deterministically instead of

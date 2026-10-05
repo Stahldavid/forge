@@ -1,7 +1,7 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=628d6fb5e180190330fc5173c1929d115f631e7640d5e739197e3c64428bef65
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=b6dd48b2ee89accc3e39f1962d6775d620797bda8d74df84cb53dded8ba03e3a
 export const sourceMapManifest = {
   "diagnostics": [],
-  "releaseId": "forgeos@0.1.0-alpha.68+unknown",
+  "releaseId": "forgeos@0.1.0-alpha.69+unknown",
   "schemaVersion": "0.1.0",
   "sourceMaps": []
 } as const;

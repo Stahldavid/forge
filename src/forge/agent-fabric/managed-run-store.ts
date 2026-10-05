@@ -48,6 +48,14 @@ function validateState(state: ManagedRunState, root: string, runId: string) {
     managedId(step.attemptId, "attemptId"); managedId(step.nodeId, "nodeId");
     assert(["running", "succeeded", "failed", "uncertain"].includes(step.status) && state.workflow.runs.some(run => run.attemptId === step.attemptId && run.nodeId === step.nodeId && run.status === step.status), "Step attempt mismatch");
     assert(step.directory === undefined || (isAbsolute(step.directory) && resolve(step.directory) === step.directory), "Invalid workspace directory");
+    if (step.repositoryContext !== undefined) {
+      const context = step.repositoryContext;
+      assert(context && Object.keys(context).every(key => ["provider", "phase", "status", "sourceRoot", "cloneRoot", "snapshotId", "diagnostics"].includes(key)), "Invalid repository context fields");
+      assert(context.provider === "repository" && context.phase === "prepared-input" && ["ready", "unavailable"].includes(context.status) && context.sourceRoot === root && context.cloneRoot === step.directory, "Repository context belongs to another checkout");
+      assert(Array.isArray(context.diagnostics) && context.diagnostics.length <= 20 && context.diagnostics.every(message => typeof message === "string" && message.length <= 512), "Invalid repository context diagnostics");
+      assert(context.snapshotId === undefined || (typeof context.snapshotId === "string" && context.snapshotId.length <= 256 && context.snapshotId.length > 0), "Invalid repository context snapshot");
+      assert(context.status !== "ready" || context.snapshotId !== undefined, "Ready repository context requires a snapshot");
+    }
   }
   assert(Number.isSafeInteger(state.cursor) && state.cursor >= 0 && Array.isArray(state.events) && state.events.length <= 10000, "Invalid event history");
   let cursor = 0; for (const event of state.events) { assert(Number.isSafeInteger(event.cursor) && event.cursor > cursor && event.cursor <= state.cursor && typeof event.summary === "string" && typeof event.type === "string" && Number.isFinite(Date.parse(event.at)), "Invalid event"); cursor = event.cursor; }

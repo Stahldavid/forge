@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { containedRepositoryPath, validateRepositoryManifest } from "../../repository-manifest/index.ts";
 import { dirname, join, resolve } from "node:path";
 import { createDiagnostic } from "../diagnostics/create.ts";
 import { hashStable } from "../primitives/hash.ts";
@@ -126,10 +127,21 @@ export function loadExternalManifestRegistry(
 
   const rootPath = rootManifestPath(workspaceRoot);
   if (existsSync(rootPath)) {
-    const result = readExternalManifestFile(rootPath);
-    diagnostics.push(...result.diagnostics);
-    if (result.manifest) {
-      manifests.push(result.manifest);
+    const parsed = parseJsonFile(rootPath);
+    if (parsed.value && typeof parsed.value === "object" && (parsed.value as { kind?: unknown }).kind === "repository") {
+      const result = validateRepositoryManifest(parsed.value);
+      diagnostics.push(...result.diagnostics.map(message => createDiagnostic({ severity: "error", code: "FORGE_REPOSITORY_MANIFEST", message, file: rootPath })));
+      for (const servicePath of result.manifest?.services ?? []) {
+        try {
+          const referenced = readExternalManifestFile(containedRepositoryPath(workspaceRoot, servicePath));
+          diagnostics.push(...referenced.diagnostics);
+          if (referenced.manifest) manifests.push(referenced.manifest);
+        } catch (error) { diagnostics.push(createDiagnostic({ severity: "error", code: "FORGE_REPOSITORY_SERVICE_PATH", message: (error as Error).message, file: rootPath })); }
+      }
+    } else {
+      const result = readExternalManifestFile(rootPath);
+      diagnostics.push(...result.diagnostics);
+      if (result.manifest) manifests.push(result.manifest);
     }
   }
 

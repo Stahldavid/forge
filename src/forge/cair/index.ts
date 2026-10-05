@@ -4,6 +4,8 @@ import { runCairActionScript, statActionInput } from "./actions.ts";
 import { buildCairSnapshot } from "./snapshot.ts";
 import { runCairQuery } from "./query.ts";
 import type { CairCommandOptions, CairCommandResult, CairSnapshotLimits } from "./types.ts";
+import { readRepositoryManifest } from "../repository-manifest/index.ts";
+import { readRepositorySnapshot, runRepositoryCairCommand, unavailableRepositoryCairCommand } from "../repository-analysis/context.ts";
 
 export {
   CAIR_SCHEMA_VERSION,
@@ -25,6 +27,16 @@ const QUERY_LIMITS: CairSnapshotLimits = {
 };
 
 export function runCairCommand(options: CairCommandOptions): CairCommandResult {
+  const repository = readRepositoryManifest(options.workspaceRoot, { manifestPath: options.manifestPath });
+  if (repository.manifest || repository.diagnostics.length > 0) {
+    try {
+      const repositorySnapshot = readRepositorySnapshot(options.workspaceRoot, { cacheRoot: options.cacheRoot });
+      if (repositorySnapshot && repository.diagnostics.length === 0) return runRepositoryCairCommand(options, repositorySnapshot);
+      return unavailableRepositoryCairCommand(options, repository.diagnostics.join("; ") || "Repository snapshot is unavailable; run forge repository analyze first.");
+    } catch (error) {
+      return unavailableRepositoryCairCommand(options, error instanceof Error ? error.message : String(error));
+    }
+  }
   const snapshot = buildCairSnapshot(
     options.workspaceRoot,
     options.subcommand === "query" || options.subcommand === "action" ? QUERY_LIMITS : undefined,

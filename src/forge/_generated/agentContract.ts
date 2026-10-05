@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=621a77b58c5dc67327ed6ac380f17692ea15c28cc5e7162a7af35d4b41d26f3e
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=0539a2366582483bfb3f49f844581977aacc49e93abcbaadda8501aaacfdc5ad
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -1063,6 +1063,132 @@ export const agentContract = {
       "runtimeTypeMismatches": [],
       "source": "static",
       "version": "19.1.0"
+    },
+    {
+      "entrypoints": [
+        {
+          "dtsPath": "node_modules/@vue/compiler-sfc/dist/compiler-sfc.d.ts",
+          "exportCount": 48,
+          "exports": [
+            "AssetURLOptions",
+            "AssetURLTagConfig",
+            "BindingMetadata",
+            "CompilerError",
+            "CompilerOptions",
+            "MagicString",
+            "SFCAsyncStyleCompileOptions",
+            "SFCBlock",
+            "SFCDescriptor",
+            "SFCParseOptions",
+            "SFCParseResult",
+            "SFCScriptBlock",
+            "SFCScriptCompileOptions",
+            "SFCStyleBlock",
+            "SFCStyleCompileOptions",
+            "SFCStyleCompileResults",
+            "SFCTemplateBlock",
+            "SFCTemplateCompileOptions",
+            "SFCTemplateCompileResults",
+            "ScriptCompileContext",
+            "SimpleTypeResolveContext",
+            "SimpleTypeResolveOptions",
+            "TemplateCompiler",
+            "TypeResolveContext",
+            "babelParse",
+            "compileScript",
+            "compileStyle",
+            "compileStyleAsync",
+            "compileTemplate",
+            "errorMessages",
+            "extractIdentifiers",
+            "extractRuntimeEmits",
+            "extractRuntimeProps",
+            "generateCodeFrame",
+            "inferRuntimeType",
+            "invalidateTypeCache",
+            "isInDestructureAssignment",
+            "isStaticProperty",
+            "parse",
+            "parseCache",
+            "registerTS",
+            "resolveTypeElements",
+            "rewriteDefault",
+            "rewriteDefaultAST",
+            "shouldTransformRef",
+            "version",
+            "walk",
+            "walkIdentifiers"
+          ],
+          "subpath": "."
+        },
+        {
+          "dtsPath": "node_modules/@vue/compiler-sfc/dist/compiler-sfc.d.ts",
+          "exportCount": 48,
+          "exports": [
+            "AssetURLOptions",
+            "AssetURLTagConfig",
+            "BindingMetadata",
+            "CompilerError",
+            "CompilerOptions",
+            "MagicString",
+            "SFCAsyncStyleCompileOptions",
+            "SFCBlock",
+            "SFCDescriptor",
+            "SFCParseOptions",
+            "SFCParseResult",
+            "SFCScriptBlock",
+            "SFCScriptCompileOptions",
+            "SFCStyleBlock",
+            "SFCStyleCompileOptions",
+            "SFCStyleCompileResults",
+            "SFCTemplateBlock",
+            "SFCTemplateCompileOptions",
+            "SFCTemplateCompileResults",
+            "ScriptCompileContext",
+            "SimpleTypeResolveContext",
+            "SimpleTypeResolveOptions",
+            "TemplateCompiler",
+            "TypeResolveContext",
+            "babelParse",
+            "compileScript",
+            "compileStyle",
+            "compileStyleAsync",
+            "compileTemplate",
+            "errorMessages",
+            "extractIdentifiers",
+            "extractRuntimeEmits",
+            "extractRuntimeProps",
+            "generateCodeFrame",
+            "inferRuntimeType",
+            "invalidateTypeCache",
+            "isInDestructureAssignment",
+            "isStaticProperty",
+            "parse",
+            "parseCache",
+            "registerTS",
+            "resolveTypeElements",
+            "rewriteDefault",
+            "rewriteDefaultAST",
+            "shouldTransformRef",
+            "version",
+            "walk",
+            "walkIdentifiers"
+          ],
+          "subpath": "./dist/compiler-sfc.d.ts"
+        }
+      ],
+      "package": "@vue/compiler-sfc",
+      "runtimeCompatibility": {
+        "browser": "unknown",
+        "bun": "compatible",
+        "edge": "unknown",
+        "node": "compatible",
+        "reasons": [],
+        "risks": []
+      },
+      "runtimeTypeMismatches": [],
+      "source": "static",
+      "version": "3.5.38"
     },
     {
       "entrypoints": [
@@ -4873,6 +4999,111 @@ export const agentContract = {
     {
       "entrypoints": [
         {
+          "dtsPath": "node_modules/yaml/dist/index.d.ts",
+          "exportCount": 50,
+          "exports": [
+            "Alias",
+            "CST",
+            "CollectionTag",
+            "Composer",
+            "CreateNodeOptions",
+            "Document",
+            "DocumentOptions",
+            "EmptyStream",
+            "ErrorCode",
+            "Lexer",
+            "LineCounter",
+            "Node",
+            "Pair",
+            "ParseOptions",
+            "ParsedNode",
+            "Parser",
+            "Range",
+            "Scalar",
+            "ScalarTag",
+            "Schema",
+            "SchemaOptions",
+            "TagId",
+            "Tags",
+            "ToJSOptions",
+            "ToStringOptions",
+            "YAMLError",
+            "YAMLMap",
+            "YAMLOMap",
+            "YAMLParseError",
+            "YAMLSeq",
+            "YAMLSet",
+            "YAMLWarning",
+            "asyncVisitor",
+            "asyncVisitorFn",
+            "isAlias",
+            "isCollection",
+            "isDocument",
+            "isMap",
+            "isNode",
+            "isPair",
+            "isScalar",
+            "isSeq",
+            "parse",
+            "parseAllDocuments",
+            "parseDocument",
+            "stringify",
+            "visit",
+            "visitAsync",
+            "visitor",
+            "visitorFn"
+          ],
+          "subpath": "."
+        },
+        {
+          "dtsPath": null,
+          "exportCount": 0,
+          "exports": [],
+          "subpath": "./package.json"
+        },
+        {
+          "dtsPath": "node_modules/yaml/dist/util.d.ts",
+          "exportCount": 17,
+          "exports": [
+            "CreateNodeContext",
+            "FoldOptions",
+            "LogLevelId",
+            "StringifyContext",
+            "ToJSContext",
+            "createNode",
+            "createPair",
+            "debug",
+            "findPair",
+            "foldFlowLines",
+            "mapTag",
+            "seqTag",
+            "stringTag",
+            "stringifyNumber",
+            "stringifyString",
+            "toJS",
+            "warn"
+          ],
+          "subpath": "./util"
+        }
+      ],
+      "package": "yaml",
+      "runtimeCompatibility": {
+        "browser": "unknown",
+        "bun": "compatible",
+        "edge": "unknown",
+        "node": "compatible",
+        "reasons": [
+          "package declares node engine >= 14.6"
+        ],
+        "risks": []
+      },
+      "runtimeTypeMismatches": [],
+      "source": "static",
+      "version": "2.9.1"
+    },
+    {
+      "entrypoints": [
+        {
           "dtsPath": "node_modules/zod/index.d.cts",
           "exportCount": 250,
           "exports": [
@@ -7308,7 +7539,7 @@ export const agentContract = {
       }
     }
   },
-  "generatorVersion": "0.1.0-alpha.68",
+  "generatorVersion": "0.1.0-alpha.69",
   "integrations": [
     {
       "alias": "ai-gateway",
@@ -7616,6 +7847,26 @@ export const agentContract = {
         "action",
         "workflow",
         "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "@vue/compiler-sfc",
+      "version": "3.5.38"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
         "test",
         "build"
       ],
@@ -7849,6 +8100,26 @@ export const agentContract = {
       ],
       "name": "vue",
       "version": "3.5.38"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "yaml",
+      "version": "2.9.1"
     },
     {
       "allowedContexts": [

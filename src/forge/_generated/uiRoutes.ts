@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.68 input=eb85ce79777e8854119a312edd29262099578bdd5f8be82c03b5f0caae80f391 content=4ced4073bc3f7f08c3794c880f820a5ef036a697698fd9db92fade96ed283bc2
+// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=4ced4073bc3f7f08c3794c880f820a5ef036a697698fd9db92fade96ed283bc2
 export const uiRoutes = {
   "routes": [
     {
