@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=c21bf03d38071959646b569a7561f8c2e6f0e6d7d27996ed2c9dda5a0cd8ac17
+// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=3f4e825c8bb011c6f8237798ba7c2ee0db78f84b433b67fc6e243b22a7752481
 export const agentContract = {
   "actions": [],
   "agentProtocols": [
@@ -371,7 +371,7 @@ export const agentContract = {
     {
       "entrypoints": [
         {
-          "dtsPath": "node_modules/@changesets/changelog-github/dist/changesets-changelog-github.cjs.d.ts",
+          "dtsPath": "node_modules/@changesets/changelog-github/dist/index.d.mts",
           "exportCount": 1,
           "exports": [
             "default"
@@ -391,17 +391,20 @@ export const agentContract = {
         "bun": "compatible",
         "edge": "unknown",
         "node": "compatible",
-        "reasons": [],
+        "reasons": [
+          "package declares ESM via package.json type=module",
+          "package declares node engine ^22.11 || ^24 || >=26"
+        ],
         "risks": []
       },
       "runtimeTypeMismatches": [],
       "source": "static",
-      "version": "0.7.0"
+      "version": "1.0.1"
     },
     {
       "entrypoints": [
         {
-          "dtsPath": "node_modules/@changesets/cli/dist/changesets-cli.cjs.d.ts",
+          "dtsPath": "node_modules/@changesets/cli/dist/index.d.mts",
           "exportCount": 0,
           "exports": [],
           "subpath": "."
@@ -413,7 +416,7 @@ export const agentContract = {
           "subpath": "./bin.js"
         },
         {
-          "dtsPath": "node_modules/@changesets/cli/changelog/dist/changesets-cli-changelog.cjs.d.ts",
+          "dtsPath": "node_modules/@changesets/cli/dist/changelog.d.mts",
           "exportCount": 1,
           "exports": [
             "default"
@@ -421,7 +424,7 @@ export const agentContract = {
           "subpath": "./changelog"
         },
         {
-          "dtsPath": "node_modules/@changesets/cli/commit/dist/changesets-cli-commit.cjs.d.ts",
+          "dtsPath": "node_modules/@changesets/cli/dist/commit/index.d.mts",
           "exportCount": 1,
           "exports": [
             "default"
@@ -441,12 +444,15 @@ export const agentContract = {
         "bun": "compatible",
         "edge": "unknown",
         "node": "compatible",
-        "reasons": [],
+        "reasons": [
+          "package declares ESM via package.json type=module",
+          "package declares node engine ^22.11 || ^24 || >=26"
+        ],
         "risks": []
       },
       "runtimeTypeMismatches": [],
       "source": "static",
-      "version": "2.31.0"
+      "version": "3.0.3"
     },
     {
       "entrypoints": [
@@ -596,6 +602,65 @@ export const agentContract = {
       "runtimeTypeMismatches": [],
       "source": "static",
       "version": "0.2.17"
+    },
+    {
+      "entrypoints": [
+        {
+          "dtsPath": "node_modules/@openai/codex-sdk/dist/index.d.ts",
+          "exportCount": 33,
+          "exports": [
+            "AgentMessageItem",
+            "ApprovalMode",
+            "Codex",
+            "CodexOptions",
+            "CommandExecutionItem",
+            "ErrorItem",
+            "FileChangeItem",
+            "Input",
+            "ItemCompletedEvent",
+            "ItemStartedEvent",
+            "ItemUpdatedEvent",
+            "McpToolCallItem",
+            "ModelReasoningEffort",
+            "ReasoningItem",
+            "RunResult",
+            "RunStreamedResult",
+            "SandboxMode",
+            "Thread",
+            "ThreadError",
+            "ThreadErrorEvent",
+            "ThreadEvent",
+            "ThreadItem",
+            "ThreadOptions",
+            "ThreadStartedEvent",
+            "TodoListItem",
+            "TurnCompletedEvent",
+            "TurnFailedEvent",
+            "TurnOptions",
+            "TurnStartedEvent",
+            "Usage",
+            "UserInput",
+            "WebSearchItem",
+            "WebSearchMode"
+          ],
+          "subpath": "."
+        }
+      ],
+      "package": "@openai/codex-sdk",
+      "runtimeCompatibility": {
+        "browser": "unknown",
+        "bun": "compatible",
+        "edge": "unknown",
+        "node": "compatible",
+        "reasons": [
+          "package declares ESM via package.json type=module",
+          "package declares node engine >=18"
+        ],
+        "risks": []
+      },
+      "runtimeTypeMismatches": [],
+      "source": "static",
+      "version": "0.160.0"
     },
     {
       "entrypoints": [
@@ -7243,7 +7308,7 @@ export const agentContract = {
       }
     }
   },
-  "generatorVersion": "0.1.0-alpha.66",
+  "generatorVersion": "0.1.0-alpha.67",
   "integrations": [
     {
       "alias": "ai-gateway",
@@ -7403,7 +7468,7 @@ export const agentContract = {
         "command"
       ],
       "name": "@changesets/changelog-github",
-      "version": "0.7.0"
+      "version": "1.0.1"
     },
     {
       "allowedContexts": [
@@ -7423,7 +7488,7 @@ export const agentContract = {
         "command"
       ],
       "name": "@changesets/cli",
-      "version": "2.31.0"
+      "version": "3.0.3"
     },
     {
       "allowedContexts": [
@@ -7444,6 +7509,26 @@ export const agentContract = {
       ],
       "name": "@electric-sql/pglite",
       "version": "0.2.17"
+    },
+    {
+      "allowedContexts": [
+        "server",
+        "action",
+        "workflow",
+        "endpoint",
+        "edge",
+        "test",
+        "build"
+      ],
+      "deniedContexts": [
+        "shared",
+        "client",
+        "query",
+        "liveQuery",
+        "command"
+      ],
+      "name": "@openai/codex-sdk",
+      "version": "0.160.0"
     },
     {
       "allowedContexts": [

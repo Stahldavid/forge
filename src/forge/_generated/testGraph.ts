@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.66 input=57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859 content=2dafa1c78e9927f05c35c750d0dc6af4b39b254fab86ae923a28a1f6fd252617
+// @forge-generated generator=0.1.0-alpha.67 input=38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19 content=419c5e9d8cc63008601c0bea84b807e4b00bc94a3992788dfc17d7fa1717dde3
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.66",
-  "inputHash": "57341432921f2c43eddb033a05cc7ad25dabd9813fcf2fd64c67f74ae5f61859",
+  "generatorVersion": "0.1.0-alpha.67",
+  "inputHash": "38da8c5c03d84214b14dc14a394d242e2dd8b8789e72edd7a1b94ea7d1002f19",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -104,6 +104,42 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/attached-task-service.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/attached-transport.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-fabric/authority-budget-hardening.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -143,6 +179,28 @@ export const testGraph = {
       "file": "tests/agent-fabric/codex-adversarial-review.test.ts",
       "kind": "unknown",
       "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "@openai/codex-sdk"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/codex-sdk-worker.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages @openai/codex-sdk"
+      ]
     },
     {
       "confidence": "weak",
@@ -482,6 +540,96 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/agent-fabric/managed-environment.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/managed-run-service.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/managed-run-store.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/managed-transport.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/managed-workspace.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/agent-fabric/mcp-discovery.test.ts",
       "kind": "unknown",
       "reasons": []
@@ -636,6 +784,42 @@ export const testGraph = {
     },
     {
       "confidence": "weak",
+      "cost": "standard",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/workflow-engine.test.ts",
+      "kind": "integration",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "standard",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/workflow-task-actions.test.ts",
+      "kind": "integration",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
       "cost": "fast",
       "covers": {
         "actions": [],
@@ -649,6 +833,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-memory/h48-agent-memory.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-memory/hook-runner-diagnostics.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1772,7 +1974,7 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
-      "file": "tests/db/sql-compiler.test.ts",
+      "file": "tests/db/pglite-lock-safety.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -1790,7 +1992,65 @@ export const testGraph = {
         "tables": [],
         "workflows": []
       },
+      "file": "tests/db/sql-compiler.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "tsx"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/delta-broker.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages tsx"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
       "file": "tests/delta/delta-store.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/delta/queue-status.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -3585,6 +3845,24 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/release/h23-release.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/release/packed-smoke-cleanup.test.ts",
       "kind": "unknown",
       "reasons": []
     },

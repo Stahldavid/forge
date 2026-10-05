@@ -191,12 +191,12 @@ export async function probeCodexHookRunner(
   });
 
   const startedAt = Date.now();
-  const result = spawnSync(process.execPath, [runnerPath, "SessionStart"], {
+  // Use the same bounded asynchronous process path as the open-stdin probe.
+  // Bun on Windows can report a synchronous timeout before its deadline.
+  const result = await spawnNodeHook(runnerPath, ["SessionStart"], {
     cwd: workspaceRoot,
     input: payload,
-    encoding: "utf8",
-    timeout: maxDurationMs + 1000,
-    windowsHide: true,
+    timeoutMs: maxDurationMs + 1000,
   });
   const durationMs = Date.now() - startedAt;
 
@@ -212,9 +212,9 @@ export async function probeCodexHookRunner(
   const stdinHangDurationMs = Date.now() - hangStartedAt;
   const stdinHangSafe = !hangResult.timedOut && hangResult.exitCode === 0 && stdinHangDurationMs <= stdinHangBudgetMs;
 
-  const exitCode = result.status;
+  const exitCode = result.exitCode;
   const ok = exitCode === 0 && durationMs <= maxDurationMs && queued && stdinHangSafe;
-  const stderr = typeof result.stderr === "string" ? result.stderr.trim() : "";
+  const stderr = result.stderr?.trim() ?? "";
   return {
     ok,
     durationMs,
@@ -223,12 +223,15 @@ export async function probeCodexHookRunner(
     stdinHangSafe,
     stdinHangDurationMs,
     ...(ok ? {} : {
-      error: stderr ||
-        (!stdinHangSafe ? `hook runner did not exit safely with open stdin within ${stdinHangBudgetMs}ms` : undefined) ||
-        (exitCode !== 0 ? `hook runner exited with code ${exitCode ?? "unknown"}` : undefined) ||
-        (!queued ? "hook runner did not append NDJSON queue entry" : undefined) ||
-        (durationMs > maxDurationMs ? `hook runner took ${durationMs}ms (budget ${maxDurationMs}ms)` : undefined) ||
-        "hook probe failed",
+      error: [
+        stderr,
+        !stdinHangSafe ? `hook runner did not exit safely with open stdin within ${stdinHangBudgetMs}ms` : undefined,
+        result.error,
+        result.signal ? `hook runner terminated by signal ${result.signal}` : undefined,
+        exitCode !== 0 && !result.error && !result.signal ? `hook runner exited with code ${exitCode ?? "unknown"}` : undefined,
+        !queued ? "hook runner did not append NDJSON queue entry" : undefined,
+        durationMs > maxDurationMs ? `hook runner took ${durationMs}ms (budget ${maxDurationMs}ms)` : undefined,
+      ].filter(Boolean).join("; ") || "hook probe failed",
     }),
   };
 }
@@ -277,17 +280,20 @@ function spawnNodeHook(
     keepStdinOpen?: boolean;
     timeoutMs: number;
   },
-): Promise<{ exitCode: number | null; timedOut: boolean; error?: string }> {
+): Promise<{ exitCode: number | null; timedOut: boolean; error?: string; signal?: NodeJS.Signals | null; stderr?: string }> {
   return new Promise((resolvePromise) => {
     const child = spawn(process.execPath, [runnerPath, ...args], {
       cwd: options.cwd,
-      stdio: ["pipe", "ignore", "ignore"],
+      stdio: ["pipe", "ignore", "pipe"],
       windowsHide: true,
     });
     let settled = false;
     let timedOut = false;
+    let stderr = "";
+    child.stderr?.on("data", (chunk: Buffer) => { if (stderr.length < 32768) stderr = (stderr + chunk.toString("utf8")).slice(0, 32768); });
+    child.stdin?.on("error", () => { /* close/error events carry the subprocess result */ });
     let killGraceTimer: ReturnType<typeof setTimeout> | undefined;
-    const finish = (value: { exitCode: number | null; timedOut: boolean; error?: string }) => {
+    const finish = (value: { exitCode: number | null; timedOut: boolean; error?: string; signal?: NodeJS.Signals | null }) => {
       if (settled) {
         return;
       }
@@ -296,7 +302,7 @@ function spawnNodeHook(
       if (killGraceTimer) {
         clearTimeout(killGraceTimer);
       }
-      resolvePromise(value);
+      resolvePromise({ ...value, stderr });
     };
     const timer = setTimeout(() => {
       timedOut = true;
@@ -309,8 +315,8 @@ function spawnNodeHook(
     child.on("error", (error) => {
       finish({ exitCode: null, timedOut, error: error.message });
     });
-    child.on("close", (code) => {
-      finish({ exitCode: code, timedOut });
+    child.on("close", (code, signal) => {
+      finish({ exitCode: code, timedOut, signal, ...(timedOut ? { error: "hook runner timed out" } : {}) });
     });
 
     if (options.keepStdinOpen) {

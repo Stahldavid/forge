@@ -1,5 +1,17 @@
 # forgeos
 
+## 0.1.0-alpha.67
+
+### Patch Changes
+
+- [#68](https://github.com/Stahldavid/forge/pull/68) [`444d89a`](https://github.com/Stahldavid/forge/commit/444d89a1041f0005663ffa3f37611a0f2821022a) Thanks [@Stahldavid](https://github.com/Stahldavid)! - Keep Codex hook events available to Agent Memory through a local Delta owner.
+  Automatically resume the redacted hook queue, deduplicate events after a crash,
+  report queue freshness in CLI and MCP results, and distinguish real database
+  errors from an unverified PGlite lock file.
+
+- Add durable Codex SDK dynamic workflows driven from the original Codex chat, with isolated workers, dependency preparation, independent review, scoped artifact publication and explicit interruption recovery. Reduce duplicate CI checks and parallelize package validation while preserving release gates. Fix Windows hook subprocess diagnostics and managed execution races.
+  Upgrade Changesets to v3 with compatible prerelease checks, update the Next.js template to 16.3.8, and close temporary Delta owners before packed-package smoke cleanup on Windows.
+
 ## 0.1.0-alpha.66
 
 ### Patch Changes

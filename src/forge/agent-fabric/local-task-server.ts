@@ -3,6 +3,10 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, unlinkSyn
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { dirname } from "node:path";
+import { MANAGED_RUN_ACTIONS, ManagedRunError, type ManagedRunAction } from "./managed-run-contract.ts";
+import type { ManagedRunService } from "./managed-run-service.ts";
+import { AttachedTaskService } from "./attached-task-service.ts";
+import { AttachedTaskError } from "./attached-task-contract.ts";
 import { AgentFabricError, isAgentFabricError } from "./errors.ts";
 import { LocalTaskService, type LocalTaskStatus } from "./local-task-service.ts";
 import type { LocalMemoryEntry } from "./local-intelligence.ts";
@@ -10,6 +14,20 @@ import { localFabricPath } from "./local-paths.ts";
 
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
+
+export { MANAGED_RUN_ACTIONS, type ManagedRunAction };
+export function isManagedRunAction(action: unknown): action is ManagedRunAction {
+  return typeof action === "string" && (MANAGED_RUN_ACTIONS as readonly string[]).includes(action);
+}
+
+export const ATTACHED_TASK_ACTIONS = ["attached-propose", "attached-status", "attached-context", "attached-attach", "attached-assign", "attached-attempt", "attached-prepare-review", "attached-submit-review", "attached-record-verification", "attached-cover", "workflow-plan", "workflow-next", "workflow-claim", "workflow-result", "workflow-replan", "workflow-reconcile", "workflow-recover"] as const;
+export type AttachedTaskAction = typeof ATTACHED_TASK_ACTIONS[number];
+export function isAttachedTaskAction(action: unknown): action is AttachedTaskAction {
+  return typeof action === "string" && (ATTACHED_TASK_ACTIONS as readonly string[]).includes(action);
+}
+export function isAttachedTaskRead(action: AttachedTaskAction): boolean {
+  return action === "attached-status" || action === "attached-context" || action === "workflow-next";
+}
 
 export type LocalTaskAction = "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result";
 export type LocalMemoryAction = "memory-add" | "memory-list" | "memory-delete";
@@ -143,10 +161,15 @@ export async function serveLocalTasks(
   const path = endpointPath(root);
   let listener: ReturnType<typeof createServer> | undefined;
   let published: OwnerEndpoint | undefined;
+  let attachedService: AttachedTaskService | undefined;
+  let managedService: ManagedRunService | undefined;
   try {
     if (readEndpoint(root)) {
       throw new AgentFabricError("AF_CONFLICT", "A local Agent Fabric owner is already running");
     }
+    attachedService = await AttachedTaskService.open(root);
+    const { ManagedRunService: ManagedService } = await import("./managed-run-service.ts");
+    managedService = await ManagedService.open(root);
     const token = randomBytes(32).toString("hex");
     listener = createServer((request, response: ServerResponse) => {
       response.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -155,20 +178,22 @@ export async function serveLocalTasks(
         response.writeHead(403).end(JSON.stringify({ ok: false, error: "unauthorized" }));
         return;
       }
-      const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction;
+      const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction | AttachedTaskAction | ManagedRunAction;
       if (request.method !== "POST" || !request.url?.startsWith("/v1/") ||
-          !["propose", "status", "evidence", "review", "run", "cancel", "reconcile", "verify", "recover-verification", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action)) {
+          (!isAttachedTaskAction(action) && !isManagedRunAction(action) && !["propose", "status", "evidence", "review", "run", "cancel", "reconcile", "verify", "recover-verification", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action))) {
         response.writeHead(404).end(JSON.stringify({ ok: false, error: "unknown_action" }));
         return;
       }
       void readBody(request).then(async (body) => {
+        if (isManagedRunAction(action)) return { status: await managedService!.execute(action, body) };
+        if (isAttachedTaskAction(action)) return { status: await attachedService!.execute(action as Parameters<AttachedTaskService["execute"]>[0], body) };
         if (action.startsWith("memory-")) return { memory: dispatchMemory(service, action as LocalMemoryAction, body) };
         return { status: await dispatch(service, action as LocalTaskAction, body) };
       }).then((result) => {
         if (!response.destroyed) response.writeHead(200).end(JSON.stringify({ ok: true, ...result }));
       }).catch((error: unknown) => {
-        if (!response.destroyed) response.writeHead(isAgentFabricError(error) ? 400 : 500).end(JSON.stringify({
-          ok: false, code: isAgentFabricError(error) ? error.code : "AF_INVALID_STATE",
+        if (!response.destroyed) response.writeHead(isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? 400 : 500).end(JSON.stringify({
+          ok: false, code: isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? error.code : "AF_INVALID_STATE",
           error: error instanceof Error ? error.message : "Local owner request failed",
         }));
       });
@@ -187,14 +212,22 @@ export async function serveLocalTasks(
       async close() {
         if (closed) return;
         closed = true;
-        await new Promise<void>((resolve) => listener!.close(() => resolve()));
-        if (existsSync(path) && readFileSync(path, "utf8") === JSON.stringify(published)) unlinkSync(path);
-        if (!suppliedService) await service.close();
+        try { await managedService?.close(); }
+        finally {
+          await new Promise<void>((resolve) => listener!.close(() => resolve()));
+          if (existsSync(path) && readFileSync(path, "utf8") === JSON.stringify(published)) unlinkSync(path);
+          try { await attachedService?.close(); }
+          finally { if (!suppliedService) await service.close(); }
+        }
       },
     };
   } catch (error) {
-    if (listener?.listening) await new Promise<void>((resolve) => listener!.close(() => resolve()));
-    if (!suppliedService) await service.close();
+    try { await managedService?.close(); }
+    finally {
+      if (listener?.listening) await new Promise<void>((resolve) => listener!.close(() => resolve()));
+      try { await attachedService?.close(); }
+      finally { if (!suppliedService) await service.close(); }
+    }
     throw error;
   }
 }
@@ -245,5 +278,47 @@ export async function requestLocalTask(
   }
   const result = await response.json() as { ok?: boolean; status?: LocalTaskStatus };
   if (!result.ok || !result.status) throw new AgentFabricError("AF_INVALID_STATE", "Local owner returned no task status");
+  return result.status;
+}
+
+/** Accompanied tasks always share the running owner; there is no direct-store fallback. */
+export async function requestAttachedTask(repositoryRoot: string, action: AttachedTaskAction,
+  body: Record<string, unknown>): Promise<unknown> {
+  if (!isAttachedTaskAction(action)) throw new AgentFabricError("AF_INVALID_STATE", "Unknown accompanied task action");
+  const endpoint = readEndpoint(realpathSync(repositoryRoot));
+  if (!endpoint) throw new AgentFabricError("AF_INVALID_STATE", "Agent Fabric local owner is not running; start forge fabric serve");
+  let response: Response;
+  try {
+    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {
+      method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body), redirect: "manual", signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new AgentFabricError("AF_INVALID_STATE", "Local Agent Fabric owner is unreachable; restart it before retrying");
+  }
+  const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };
+  if (!response.ok || !result.ok) throw new AttachedTaskError(result.code ?? "AF_INVALID_STATE", result.error ?? "Accompanied task request failed");
+  if (result.status === undefined) throw new AgentFabricError("AF_INVALID_STATE", "Local owner returned no accompanied task result");
+  return result.status;
+}
+
+/** Managed runs always use the single authenticated owner, including bounded event waits. */
+export async function requestManagedRun(repositoryRoot: string, action: ManagedRunAction,
+  body: Record<string, unknown>): Promise<unknown> {
+  if (!isManagedRunAction(action)) throw new AgentFabricError("AF_INVALID_STATE", "Unknown managed run action");
+  const endpoint = readEndpoint(realpathSync(repositoryRoot));
+  if (!endpoint) throw new AgentFabricError("AF_INVALID_STATE", "Agent Fabric local owner is not running; start forge fabric serve");
+  let response: Response;
+  try {
+    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {
+      method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body), redirect: "manual", signal: AbortSignal.timeout(action === "run-wait" ? 35_000 : 30_000),
+    });
+  } catch {
+    throw new AgentFabricError("AF_INVALID_STATE", "Local Agent Fabric owner is unreachable; restart it before retrying");
+  }
+  const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };
+  if (!response.ok || !result.ok) throw new ManagedRunError(result.code ?? "AF_INVALID_STATE", result.error ?? "Managed run request failed");
+  if (result.status === undefined) throw new AgentFabricError("AF_INVALID_STATE", "Local owner returned no managed run result");
   return result.status;
 }
