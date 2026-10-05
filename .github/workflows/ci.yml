@@ -136,7 +136,7 @@ jobs:
 
   node-breadth:
     needs: changes
-    if: needs.changes.outputs.runtime == 'true'
+    # Keep matrix check names present even when runtime smoke is unnecessary.
     name: Node smoke (${{ matrix.os }}, Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -148,22 +148,26 @@ jobs:
         include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]') }}
     steps:
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.runtime == 'true'
 
       - uses: actions/setup-node@v4
+        if: needs.changes.outputs.runtime == 'true'
         with:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies with npm
+        if: needs.changes.outputs.runtime == 'true'
         run: npm install --ignore-scripts --package-lock=false
 
       - name: Node CLI smoke
+        if: needs.changes.outputs.runtime == 'true'
         shell: bash
         run: |
           node ./bin/forge.mjs inspect framework --json
           node ./bin/forge.mjs inspect capabilities --json
 
       - name: Windows native diagnostics
-        if: runner.os == 'Windows'
+        if: needs.changes.outputs.runtime == 'true' && runner.os == 'Windows'
         run: node .\bin\forge.mjs doctor windows --json
 
   external-quickstart:
