@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=daf795ae227ed96a5a48dcce1408f13d5834495e0093c48cf0a73295122054a0
+// @forge-generated generator=0.1.0-alpha.67 input=eb277051b18f4b495658e3c98c326be25c673d51ed84f4988587e46c8969587d content=daf795ae227ed96a5a48dcce1408f13d5834495e0093c48cf0a73295122054a0
 export const testPlanRegistry = {
   "commands": [
     "forge impact --changed --json",

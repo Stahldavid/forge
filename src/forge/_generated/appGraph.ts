@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=613fe79010bcd2b27015d4187d2027237d8fa11491611834f1bd1ab609cf454c
+// @forge-generated generator=0.1.0-alpha.67 input=eb277051b18f4b495658e3c98c326be25c673d51ed84f4988587e46c8969587d content=596f2546b8f5bc6af80cb7101989f5d170ded1e9f7f85bb2f6598f5548bec438
 export const appGraph = {
   "analyzerVersion": "0.1.0+schema:1.0.0+grammar:0.23.2+classifier:0.1.3+tsconfig:cf43f6b549fcf7237fb443bad615d451ac2124e3021e50e7a8a5eb06549cad73",
   "edges": [
@@ -91,6 +91,11 @@ export const appGraph = {
       "from": "004d6d451ce52b8ef759dd03d467e207cac0a475a87db97558380b427ca00e2f",
       "kind": "imports",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "0050c4f998e60a8732d49bedf04802c6196741940b73bc847d39b22f8028cd8b",
+      "kind": "registers",
+      "to": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
     },
     {
       "from": "0053ba5e7cb3aba652207a0b8d05d92e2fb6280f7e332c34e1c212ea3788b167",
@@ -2005,7 +2010,17 @@ export const appGraph = {
     {
       "from": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f",
       "kind": "imports",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
+      "from": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f",
+      "kind": "imports",
       "to": "7244da3157524ddc96aca3f320340339cadd9f5e5c16a12197078b42f20e4f4c"
+    },
+    {
+      "from": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f",
+      "kind": "imports",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
     },
     {
       "from": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f",
@@ -2106,6 +2121,11 @@ export const appGraph = {
       "from": "0b5780f0776a4c69aa679b132f5d1099f85546b920644fb95fa1628f18675b26",
       "kind": "registers",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "0b67ee62af40af44a7fff3ad0d6ff5c68a61d2eb396a2bf521e8601c5ce8dd72",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "0b722609bbdc8d23162fc65110fb6c6a9cd355c4ad4e328a5f8a2a8af468e3f7",
@@ -2793,6 +2813,11 @@ export const appGraph = {
       "to": "d8079c70db0816d83e6f26db4ba0b9f59302730bde71f28f592e454f881a8a02"
     },
     {
+      "from": "104ce5eed8ceee74fe378896314ed83c2ef869ead5a44bf5b31e9b49517e9a1c",
+      "kind": "registers",
+      "to": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
+    },
+    {
       "from": "1059e184ebe9141f53e3347e6fa6e504627080671fdf1d0ad60942b5a420012d",
       "kind": "registers",
       "to": "22690cfe80ecc89956d8af28f571b2a5b7e235d43e4e112bf9be5027a8ab11c1"
@@ -2901,6 +2926,11 @@ export const appGraph = {
       "from": "10dc26951504cb8ca8a7a87d4777c9e8e77485661612f0087d1815f032149585",
       "kind": "registers",
       "to": "54389b6c1713a65df898447b3275bf81f33b29fb354df46566045a296dee70a9"
+    },
+    {
+      "from": "10e877ec0eb8b329a8280dc9a9bd488cafc96852e89e384cbba822ba6c12c2bb",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "10fae7dad8b3369b992264a9278228f4bd882957986e08e8c5919e63b876dd04",
@@ -4586,6 +4616,11 @@ export const appGraph = {
       "from": "19b7fcdb1519e2ad51473d171d00994ed4ffe2d807806bebf7706a57ede68230",
       "kind": "registers",
       "to": "fd9d19c9299dce2fb392631475e90e20ccaee1c2e1f7070a8e00b2baceaa1dba"
+    },
+    {
+      "from": "19bed315872d549c4bc103a8916a4dae07b97a1aeb837701da6e422d38e07828",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "19c123b395ecc663a55ee07f030f2f623d2d3f920dad44251b09c77ff8cdcb7d",
@@ -7283,6 +7318,11 @@ export const appGraph = {
       "to": "22690cfe80ecc89956d8af28f571b2a5b7e235d43e4e112bf9be5027a8ab11c1"
     },
     {
+      "from": "2cb04fb97068cd5b98c4cbc39e1f3f8ec41950abe066011e6f463c4ed087adad",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "2cc7993ab2778a41589768bd731425f5e1c73ba385c13d9045b67ed2163ce1b7",
       "kind": "registers",
       "to": "6af7de2024e0cbf2cd309a69bb6aeb9de725be2e5b33f211ac1e48ad7b81d9b3"
@@ -7626,6 +7666,11 @@ export const appGraph = {
       "from": "2f071c416718fda27aab73b9d4ebeeb32c319223e70c99918ecdab33d7de6bde",
       "kind": "registers",
       "to": "9fcc5c60ca023a723eea43e12cbb14e75aba03a7a662565186ae0e2b59f26c94"
+    },
+    {
+      "from": "2f076892033ec72cfe280cce3792194558dd370f294137585c47e1c137f4b26f",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "2f2191a0dbb6b531a7b9d163a8df2f39e2613f69c02b109612070ba98f22e9c8",
@@ -8103,6 +8148,11 @@ export const appGraph = {
       "to": "9cf6203b137fc2db48781b1329e243b5d9285d2af4685680559cb40cad6190c5"
     },
     {
+      "from": "32029514c48b1b10592bb549be3865ced84719357024c02b38b4c969377c59de",
+      "kind": "registers",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
+    },
+    {
       "from": "320916bf3d1f69e9e7838c343901e293b689f75026e0d821a5b1b485e6d83c23",
       "kind": "registers",
       "to": "bbe52e6349d8633a39ed19483b17f2dcd2c3e86dff6a2c3de3637ab776573d1b"
@@ -8256,6 +8306,11 @@ export const appGraph = {
       "from": "32e405c12520af26d1f14d39601992d8302a05677ce9155eeec564b59000f9a2",
       "kind": "registers",
       "to": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb"
+    },
+    {
+      "from": "32e92b1b333cb2a77ea69da860ecf8a155d6ecf7d2946b43a1946968ca95a24b",
+      "kind": "registers",
+      "to": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732"
     },
     {
       "from": "32ea197b4bde0ddab5485a7f4ceb93478660336b95e550be1ab35a992358c8bd",
@@ -13328,6 +13383,11 @@ export const appGraph = {
       "to": "830f97bfc0ceffdb444e0a5521b46fd33df891cc09a6278357e196cde1057222"
     },
     {
+      "from": "5630de48536293723ba91c06aa0b666b4baedc832b4cf0b30d0aa673ee844ec4",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "563b7bda945a69419b4648be43711dc0ba37b16e773fdee6de0cbe72ad9d9a5e",
       "kind": "registers",
       "to": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
@@ -16838,6 +16898,11 @@ export const appGraph = {
       "to": "070a10abdc72c2b6beba1cc613751bccdfd577bee475fa9e69a8d1c6364101bb"
     },
     {
+      "from": "6d7285946e28b2a4ccffc29f6413f683c1a90f1b422dfd3804557f6424c72ade",
+      "kind": "registers",
+      "to": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
+    },
+    {
       "from": "6d79ef62a2d6a7078200d68ed2f15ea896421ce3ccb170758eb8b43261fa37cb",
       "kind": "registers",
       "to": "0367db6b7b4067486594589d32e8d025b3a68cdde571768bfe98717a5ab1c3cf"
@@ -18513,6 +18578,11 @@ export const appGraph = {
       "to": "55a2cc7662c0d8c7300545c3afb4fafb88af515bd046025555446debba90ec12"
     },
     {
+      "from": "79507ea6e8f14b8df726a472dcaccf2c95e1d7a4a7d4764720de96bab79875f0",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "7951a87d91a00cd9f11fe13399a34265df9685840035f065bd147adc397f29b3",
       "kind": "registers",
       "to": "39fb45c8506e1c614b9fb5008b34bba27cdc873ee6401b350bfc571b74643399"
@@ -19533,6 +19603,11 @@ export const appGraph = {
       "to": "2e8016a71f629c253758be466638ee4d019c6a79ab6527307742a8847eb637b1"
     },
     {
+      "from": "80f430e277fe49e3674809beb1ec70cfc817133bc9e7105409e8e30a51830ac2",
+      "kind": "registers",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
+    },
+    {
       "from": "80f83196766c33c942b1289095deb7827db5779ab4c971c19320bb33cebda8bb",
       "kind": "registers",
       "to": "ac7a7c18d005a629861c9e66bcf8b42bf6faf83c51f2ca7c91bec65cc3fc0595"
@@ -20423,6 +20498,11 @@ export const appGraph = {
       "to": "ff0e431f9a8d416fa892dd2f7cf3889f11d0c07bbaa198a15167f1c45d70f7a1"
     },
     {
+      "from": "85b2de9fef269246ee8dad0c446a4c278e4d6ec0f7469f4c132bbcc603350c8d",
+      "kind": "registers",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
+    },
+    {
       "from": "85b3e90c0f58cbd05674c529c7bf5ed72d67dab646ae6baa1dafae3ff936aad4",
       "kind": "registers",
       "to": "826c2c1f7e26e2eef43146835899ee4769bc1813e2c9abdf95b4718dda9404fb"
@@ -20686,6 +20766,11 @@ export const appGraph = {
       "from": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb",
       "kind": "imports",
       "to": "03258c51e7e6ecff733c2f9062122c5ac2db48ad7a3ceafeb3db13cd69db15b8"
+    },
+    {
+      "from": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb",
+      "kind": "imports",
+      "to": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f"
     },
     {
       "from": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb",
@@ -21481,6 +21566,11 @@ export const appGraph = {
       "from": "8b1a57a8cf20fbdb540f30a9c292fac2028b0e088bcf8cb11c3c10474c2fd976",
       "kind": "registers",
       "to": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
+    },
+    {
+      "from": "8b38c797f41c8d9f0832640cafd6071b626c13083240a78366e5e1a83881e75e",
+      "kind": "registers",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
     },
     {
       "from": "8b3b7dc2e7eb26ab6d6e429e2abaef5e246141596726e6a0ab2b46b3f2717367",
@@ -23261,6 +23351,11 @@ export const appGraph = {
       "from": "98a88726248fa36102829491735d5f02f60ce7928c04520644903115c4839607",
       "kind": "registers",
       "to": "8459534edc99ccfab1f47d3d35527230492432ee758ed81b4219ace6f9183b72"
+    },
+    {
+      "from": "98b8d8802c91fecb8f7391ad0fd124332563b2c1c18850f2756c96716c0446b1",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "98e3dd7204c3782afaeebc7843d384e254e48d212f82fefebec7a13d843f048b",
@@ -26248,6 +26343,26 @@ export const appGraph = {
       "to": "1135122cccd3b8ece1e6505a3967be0cb47f4d2b892c127a6871037570e6b927"
     },
     {
+      "from": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a",
+      "kind": "imports",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
+      "from": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a",
+      "kind": "imports",
+      "to": "37e1cdfe8ce2590355bb7b7485c6af9678262fa06d3b327d0d8340868bfa6c2c"
+    },
+    {
+      "from": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a",
+      "kind": "imports",
+      "to": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
+    },
+    {
+      "from": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a",
+      "kind": "imports",
+      "to": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68"
+    },
+    {
       "from": "ab3f31b22003341d362292f2af8fdd0fe67a0810ee7f7ac673167023729efcdf",
       "kind": "registers",
       "to": "3c6a3adab0cd3d2be7ad6d22e94bc140bbc46e7f5a6cefacc1b7bd7948958635"
@@ -26681,6 +26796,11 @@ export const appGraph = {
       "from": "ade91b617db2c5e623ea2728604b197af6fc21b4b6726f1e79b7c636b75882bb",
       "kind": "imports",
       "to": "fe0194ee40373a643300da8754646ad45284360feb2d18927fc6a04202663de0"
+    },
+    {
+      "from": "adf477b6ec2ef2d865bc71078642f375b9f8edc89b85645a52712e7beca8224a",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "ae00edc7231ca5bc2c856111b9e43e5860492414eed70d66b43deb50e425ffe5",
@@ -27258,6 +27378,11 @@ export const appGraph = {
       "to": "5698587314e57f8a09fb6e50fa057b7e0531a8a248f22a41cd0095e59e4e05ae"
     },
     {
+      "from": "b1b8ecfbe8d34f7b32b396164d0be735ef6eb41b0d9dfeb9effdd4c8c1abf41b",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "b1c1f1aff3d5b85cd9ce08c4a63eeaa229cad39ac04eb4e44004813153aa3e51",
       "kind": "registers",
       "to": "a63baf5af7fe5338cc9136b8c45207c71c1a7c09d2ae67731ac0b7d4063a942a"
@@ -27306,6 +27431,11 @@ export const appGraph = {
       "from": "b232a7eed5ffb0c4c9c97d62b9623bac234ffe947a0de4d140d11fdfeb8fb891",
       "kind": "registers",
       "to": "b0bbc5f43fd6a9af1126a8cbcb1f3aed783916952d34d36bd8aa70322c361bf7"
+    },
+    {
+      "from": "b23b0fa9dbb5ed40982a26279ce9e49a477e05a4068711fc6d74fbbefeb82810",
+      "kind": "registers",
+      "to": "cb9a014f4cd50b9d038ec7fe7f89de7b3ec62f61639991a10dfc4576d2dd569b"
     },
     {
       "from": "b247991850690b10d921cd1b4aecf3bb0e5828f1689c57a2e4ca8b58a5807d74",
@@ -28383,6 +28513,11 @@ export const appGraph = {
       "to": "bde2ce165af50cb4cbec4712b3b44d5e84d128a57134de8f6630c93e9dad9299"
     },
     {
+      "from": "b8c2a931cd762fae1093f35392517f81fd0fcf43ddfdc17040f1a36418b276e8",
+      "kind": "registers",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
+    },
+    {
       "from": "b8c3f0e7fc7860b44693911dabd726f364522761383e635bb1868521af2b101c",
       "kind": "registers",
       "to": "22690cfe80ecc89956d8af28f571b2a5b7e235d43e4e112bf9be5027a8ab11c1"
@@ -28526,6 +28661,16 @@ export const appGraph = {
       "from": "ba15dd4bb1e7b925f5125e6345c93c94a208052f496424d8a36f004a3fbd60a4",
       "kind": "registers",
       "to": "821bf24b2a7e798a78b4d65779e448f46bbcc59252fe07918b15811c62a50a4f"
+    },
+    {
+      "from": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094",
+      "kind": "imports",
+      "to": "37e1cdfe8ce2590355bb7b7485c6af9678262fa06d3b327d0d8340868bfa6c2c"
+    },
+    {
+      "from": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094",
+      "kind": "imports",
+      "to": "983b527b5f7d852c6fbd15703dad0959a2242cb58f409dfda337955dc0736553"
     },
     {
       "from": "ba22f6628cd3a4b5df71541c122320680a90fe4530755d4dc406bf4bd95c761b",
@@ -28838,6 +28983,11 @@ export const appGraph = {
       "to": "ddd838d3c1c2acdd791cff807324e7b73fc6e007ec646b8c1446a4ef7c01b72f"
     },
     {
+      "from": "bc2ca74e5202cd66774569c16866af75382ce40d2f72b404df97e8790f7cf28c",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "bc2deb5c1b64898c8d54c0b9aca8d52fe11bd7c1ed0441953c3a50ced77ff9ff",
       "kind": "registers",
       "to": "4550dc72cebcc757a16f20cf831d6337e506cbebb6141fd62d6ef0afc66d555e"
@@ -28921,6 +29071,11 @@ export const appGraph = {
       "from": "bc9ceb3064cae0ca907e839d369b510c096c25b78ca315731581454dd787e8e6",
       "kind": "registers",
       "to": "c6e76effdf2c076df00834c2b31e0d4b5e2c11f9d991271f372b40e1d280b4d5"
+    },
+    {
+      "from": "bca16efcbe6fcf453227af2e6c2698d96fcb55b557eb46eeda735e4bacb57456",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "bca29e227edd463f34e0d408bace578f8440ef2dcbe4f47a6589938638056d25",
@@ -30860,6 +31015,11 @@ export const appGraph = {
     {
       "from": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732",
       "kind": "imports",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
+      "from": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732",
+      "kind": "imports",
       "to": "2905e5f33007b98c524d27755a21f09523720f86b1dc3a6ff5ef3ac853534e5f"
     },
     {
@@ -30871,6 +31031,11 @@ export const appGraph = {
       "from": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732",
       "kind": "imports",
       "to": "7cb2a45a4bed83a4afcaf270fbc7ea65b7eb08c691db98542ee9128a479ecb55"
+    },
+    {
+      "from": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732",
+      "kind": "imports",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
     },
     {
       "from": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732",
@@ -31838,6 +32003,11 @@ export const appGraph = {
       "to": "99f5e68a0c2ef78d26bec9179cc788a37916d60e19d67d6788883170872aabe8"
     },
     {
+      "from": "cfdf5b60a5ad6ef21131133b5c3be3cfed53022397e344f50e128cdb44f96fea",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "cff415ba5c854f0ab9d93e36fb69e08347e99814f19bdccc4c85d9753ca25899",
       "kind": "registers",
       "to": "10089508816590796e512aa663bfa0c9aec767a336e2c166005f0794e74d5a58"
@@ -32121,6 +32291,11 @@ export const appGraph = {
       "from": "d1fca1c6f8729a823a5be594a62d821923b9899f14d8349561d0a2dd1460e9f8",
       "kind": "registers",
       "to": "0beb59db0203c5b24ea713d41b20d72d31f9a360d2a04e1e3dd0c26c0482f0e6"
+    },
+    {
+      "from": "d2032fcd1abad9c5363800a271830843ab4b8024f15558b1089ccd0e414b3374",
+      "kind": "registers",
+      "to": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68"
     },
     {
       "from": "d20b25b954af9ca741ba5a1252dfde4d7ee7d8ba594f7e46dd320089dc28959e",
@@ -33251,6 +33426,11 @@ export const appGraph = {
       "from": "d9af36b01d51ca7dd3baffec7fd0a106a8f5dc4755329265bffb716c20234b23",
       "kind": "registers",
       "to": "e1fc85be49eb7783b976792764acfce6b3f490ef04b283c427ecf7f65c0dc7a5"
+    },
+    {
+      "from": "d9afa877d5a39c734ca116dc721b1d074b281fe89702fb6e40d593e43d91e817",
+      "kind": "registers",
+      "to": "c8df0b95aa73ef9a740230502c45e7272fb091bb4932b0fd23a6ac00bd56a732"
     },
     {
       "from": "d9afae36e28eb5cc9d83c0d4a4267bcf79bcd416c3736640176839a67338d104",
@@ -35168,6 +35348,11 @@ export const appGraph = {
       "to": "62c8e8068c3bc2147a1b2a61255b16756c6d16c7f125bda81c7512fae41d553e"
     },
     {
+      "from": "e320ee6e90d50e78a58303c5e12f055c3e2a0964f21c2e2736570c2edaf8214d",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+    },
+    {
       "from": "e32fe5d1f9672c2b8918ac40668c788ca5c696cf54d1482d937d73c702e191d9",
       "kind": "registers",
       "to": "a85c5c895811a9d70892e5a061f554311e66eb596adf724681639fae40f5d0dd"
@@ -36743,6 +36928,11 @@ export const appGraph = {
       "to": "14c261d3b68bc28bdd9d5c833a0e9a9560883509474d87d06893c69b3aeca17a"
     },
     {
+      "from": "eeeba302b92b7c7e3a516dc830c809fcb8522608dce2e7448e721b204b9558ed",
+      "kind": "registers",
+      "to": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
+    },
+    {
       "from": "eef167b23abaac2990eabd90eb2d6e7c472e25fad0dbe46d517ed8e502e248f6",
       "kind": "registers",
       "to": "a098f2339ec8c37ba1f899fc19186ba6d1ef3ab19642168120c277d823313a63"
@@ -37051,6 +37241,11 @@ export const appGraph = {
       "from": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68",
       "kind": "imports",
       "to": "983b527b5f7d852c6fbd15703dad0959a2242cb58f409dfda337955dc0736553"
+    },
+    {
+      "from": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68",
+      "kind": "imports",
+      "to": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
     },
     {
       "from": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68",
@@ -37626,6 +37821,11 @@ export const appGraph = {
       "from": "f46d865b8c4774638e449cd18a7a29f39153e054548002fb90f1c902228ba726",
       "kind": "registers",
       "to": "10a9380e57d1dfbc5c0db5d3606c4a097bd83401e9a1735cf4566c7ec5a7d747"
+    },
+    {
+      "from": "f47a5d927282452f385912e7d2490a0e30e85a82805beecdb2dab323c20febe8",
+      "kind": "registers",
+      "to": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
     },
     {
       "from": "f48c790e7783d11dbcaaa0ceeb1f94fb78854146d2b3edafb2256e92073d3884",
@@ -39374,7 +39574,7 @@ export const appGraph = {
     }
   ],
   "generatorVersion": "0.1.0-alpha.67",
-  "inputHash": "b19122d7b5d701aef60d390becee2d995bcfb7063e646a6f70d6b492b159f480",
+  "inputHash": "5707d69367c296b2e06285954c94d9ef40fa5fee5f0d88d3ef7fe17cee9b3935",
   "moduleGraph": {
     "nodes": [
       {
@@ -40805,38 +41005,52 @@ export const appGraph = {
         "localImports": [
           {
             "span": {
-              "end": 197,
-              "start": 158
+              "end": 324,
+              "start": 285
             },
             "toModuleId": "d6d187d261db9028cb1d2eb6eee9ce793f59fa6655e59d0db3d86e2a4d3d3bf5"
           },
           {
             "span": {
-              "end": 289,
-              "start": 241
+              "end": 416,
+              "start": 368
             },
             "toModuleId": "074ab20fedcf75120753bfa56ac970cf597c797fda1e94991a34567e317b81e6"
           },
           {
             "span": {
-              "end": 388,
-              "start": 348
+              "end": 515,
+              "start": 475
             },
             "toModuleId": "7244da3157524ddc96aca3f320340339cadd9f5e5c16a12197078b42f20e4f4c"
           },
           {
             "span": {
-              "end": 695,
-              "start": 657
+              "end": 822,
+              "start": 784
             },
             "toModuleId": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68"
           },
           {
             "span": {
-              "end": 773,
-              "start": 758
+              "end": 900,
+              "start": 885
             },
             "toModuleId": "092199cc0b8bed3188999fe6afd4df1cb7c98953f2d35c84845e5c569f6dd620"
+          },
+          {
+            "span": {
+              "end": 1016,
+              "start": 979
+            },
+            "toModuleId": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+          },
+          {
+            "span": {
+              "end": 1109,
+              "start": 1073
+            },
+            "toModuleId": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
           }
         ]
       },
@@ -42607,6 +42821,14 @@ export const appGraph = {
         "effectiveContexts": [],
         "file": "src/forge/compiler/integration/templates/index.ts",
         "id": "19e4a11b54c29fff9426ed197c055969da3f697c2cbd0df605cf3eaaf982d349",
+        "localImports": []
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/project-registry.ts",
+        "id": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d",
         "localImports": []
       },
       {
@@ -49755,36 +49977,43 @@ export const appGraph = {
         "localImports": [
           {
             "span": {
-              "end": 163,
-              "start": 125
+              "end": 51,
+              "start": 38
+            },
+            "toModuleId": "0a89d17c26e62ef5dd3a5935cb88b189a4bfb85048b500e8cab9f48591f45b0f"
+          },
+          {
+            "span": {
+              "end": 168,
+              "start": 130
             },
             "toModuleId": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68"
           },
           {
             "span": {
-              "end": 254,
-              "start": 228
+              "end": 258,
+              "start": 232
             },
             "toModuleId": "35c0c542a638be063bff3277164cf8fd35966935a5d3be1a3ae8e606b5543c51"
           },
           {
             "span": {
-              "end": 323,
-              "start": 293
+              "end": 326,
+              "start": 296
             },
             "toModuleId": "6dc6787f86d30a143cb816e58742d08166d5daf685c2af2233e776ca293e1ab8"
           },
           {
             "span": {
-              "end": 387,
-              "start": 361
+              "end": 389,
+              "start": 363
             },
             "toModuleId": "402469cb9347dab4920016fba636e93b4303c3469a31564560bfb9da8df39205"
           },
           {
             "span": {
-              "end": 433,
-              "start": 424
+              "end": 434,
+              "start": 425
             },
             "toModuleId": "bde2ce165af50cb4cbec4712b3b44d5e84d128a57134de8f6630c93e9dad9299"
           },
@@ -49797,274 +50026,274 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 545,
-              "start": 530
+              "end": 544,
+              "start": 529
             },
             "toModuleId": "dad6fae4970fa2b04ee659c9d5ef68742033980a47c886d1499d9b3d0bbfbd5c"
           },
           {
             "span": {
-              "end": 605,
-              "start": 589
+              "end": 603,
+              "start": 587
             },
             "toModuleId": "119a5f170ce50375ef50ab0ed0c9c1ca20f1a04490dddba264b22f02a580a455"
           },
           {
             "span": {
-              "end": 659,
-              "start": 646
+              "end": 656,
+              "start": 643
             },
             "toModuleId": "3d24067a2be1a95c3d3df9dc44c3ccb3855f7bd7c298fe4187e3489fff0e6199"
           },
           {
             "span": {
-              "end": 715,
-              "start": 701
+              "end": 711,
+              "start": 697
             },
             "toModuleId": "ff3f46f01c461e3cffd8ae00ed2ce9aa0dda58d3c6978891694317156cd529c9"
           },
           {
             "span": {
-              "end": 767,
-              "start": 753
+              "end": 762,
+              "start": 748
             },
             "toModuleId": "ff3f46f01c461e3cffd8ae00ed2ce9aa0dda58d3c6978891694317156cd529c9"
           },
           {
             "span": {
-              "end": 813,
-              "start": 804
+              "end": 807,
+              "start": 798
             },
             "toModuleId": "f26fd3c882388a6c64955ae46270336d64bfa202a441ad9c0fe7d5b6ad233380"
           },
           {
             "span": {
-              "end": 865,
-              "start": 853
+              "end": 858,
+              "start": 846
             },
             "toModuleId": "9a4ddb5a6cc116b1a18d2f14dc77ecb01c2915d46a15cd6712a55f22435108b2"
           },
           {
             "span": {
-              "end": 915,
-              "start": 904
+              "end": 907,
+              "start": 896
             },
             "toModuleId": "3fe52c3e22858aa259c5c5107efba290904b11240d7376d60cea1269bf504640"
           },
           {
             "span": {
-              "end": 979,
-              "start": 955
+              "end": 970,
+              "start": 946
             },
             "toModuleId": "f7c6e70bb767d8ff1cd0604de48eace0b046fb550bcf67f02151bfc0357619e6"
           },
           {
             "span": {
-              "end": 1048,
-              "start": 1038
+              "end": 1038,
+              "start": 1028
             },
             "toModuleId": "4b98df43b6f2e925f5188c398f7a6b93aaa3b06004918a53a4686555da05b0e8"
           },
           {
             "span": {
-              "end": 1107,
-              "start": 1091
+              "end": 1096,
+              "start": 1080
             },
             "toModuleId": "15966efdf6e146d85490341fb6add1ca37846642bf29ab6b2b190f55e724ed28"
           },
           {
             "span": {
-              "end": 1157,
-              "start": 1146
+              "end": 1145,
+              "start": 1134
             },
             "toModuleId": "ea59f3190fc14bde6b92c9dd3620c026c28bf7034ddca77c49a4be96596a4ffa"
           },
           {
             "span": {
-              "end": 1226,
-              "start": 1205
+              "end": 1213,
+              "start": 1192
             },
             "toModuleId": "bd228c2d27bf80c65dcf2b3a08a1d309b64a9383381896f098fd091140eb1a02"
           },
           {
             "span": {
-              "end": 1276,
-              "start": 1265
+              "end": 1262,
+              "start": 1251
             },
             "toModuleId": "dc4c4bebfaa6a59ec52c4a212c977d17b9633558c325b58952af0d2155aa1efe"
           },
           {
             "span": {
-              "end": 1334,
-              "start": 1319
+              "end": 1319,
+              "start": 1304
             },
             "toModuleId": "801c76ef3b4547a28f28ba022cbdbdbfae36d70991e9f00717e09246a4faaaf0"
           },
           {
             "span": {
-              "end": 1388,
-              "start": 1375
+              "end": 1372,
+              "start": 1359
             },
             "toModuleId": "ff0e431f9a8d416fa892dd2f7cf3889f11d0c07bbaa198a15167f1c45d70f7a1"
           },
           {
             "span": {
-              "end": 1459,
-              "start": 1446
+              "end": 1442,
+              "start": 1429
             },
             "toModuleId": "22690cfe80ecc89956d8af28f571b2a5b7e235d43e4e112bf9be5027a8ab11c1"
           },
           {
             "span": {
-              "end": 1527,
-              "start": 1514
+              "end": 1509,
+              "start": 1496
             },
             "toModuleId": "10a9380e57d1dfbc5c0db5d3606c4a097bd83401e9a1735cf4566c7ec5a7d747"
           },
           {
             "span": {
-              "end": 1588,
-              "start": 1571
+              "end": 1569,
+              "start": 1552
             },
             "toModuleId": "62c8f0e8388a61e07e37c970a6a3e768039704fdfcc2f60e90e9cb7aff5e27a0"
           },
           {
             "span": {
-              "end": 1651,
-              "start": 1633
+              "end": 1631,
+              "start": 1613
             },
             "toModuleId": "bc8244299fd6860b904454630b1cf8e88e578948c03d8f8a4e35ffd527072825"
           },
           {
             "span": {
-              "end": 1701,
-              "start": 1690
+              "end": 1680,
+              "start": 1669
             },
             "toModuleId": "6c7e168781679d72fa2b8715220013d2c08795301ca13a1f501080d7612800dd"
           },
           {
             "span": {
-              "end": 1749,
-              "start": 1739
+              "end": 1727,
+              "start": 1717
             },
             "toModuleId": "830f97bfc0ceffdb444e0a5521b46fd33df891cc09a6278357e196cde1057222"
           },
           {
             "span": {
-              "end": 1807,
-              "start": 1792
+              "end": 1784,
+              "start": 1769
             },
             "toModuleId": "44d6217623ddbcdbae9b402cf7c0bdd7370f159cdd8a594b9a448e0fe46be2b6"
           },
           {
             "span": {
-              "end": 1857,
-              "start": 1846
+              "end": 1833,
+              "start": 1822
             },
             "toModuleId": "4429f23081e1f99f3e0011b2ccd73a7d4b9818891cb42cfd66f110c55c229571"
           },
           {
             "span": {
-              "end": 1922,
-              "start": 1908
+              "end": 1897,
+              "start": 1883
             },
             "toModuleId": "14c261d3b68bc28bdd9d5c833a0e9a9560883509474d87d06893c69b3aeca17a"
           },
           {
             "span": {
-              "end": 1998,
-              "start": 1980
+              "end": 1972,
+              "start": 1954
             },
             "toModuleId": "d9059ee2a34c418d3ad7c8bfa6b39a44ab3fa0a33de9e952c062db7e9e4216c7"
           },
           {
             "span": {
-              "end": 2080,
-              "start": 2059
+              "end": 2053,
+              "start": 2032
             },
             "toModuleId": "7393007f646f84bdbf9d77e109f2fd1ff83ae051e11b637b99e0273a4dfef98a"
           },
           {
             "span": {
-              "end": 2179,
-              "start": 2157
+              "end": 2151,
+              "start": 2129
             },
             "toModuleId": "40802b6f7a0f98d5b189f4b862627fff58904a7fbe0f78fd3b4fddd3c15fe7fc"
           },
           {
             "span": {
-              "end": 2280,
-              "start": 2260
+              "end": 2251,
+              "start": 2231
             },
             "toModuleId": "a36f2dd97da72185e095cb806593a49c3221dcc9e2f187ea4efdbfc742167c60"
           },
           {
             "span": {
-              "end": 2346,
-              "start": 2313
+              "end": 2316,
+              "start": 2283
             },
             "toModuleId": "61ecc97466750465fa1571fba5a6400881d869c65f5fb0783e5bd8942976ccbd"
           },
           {
             "span": {
-              "end": 2429,
-              "start": 2409
+              "end": 2398,
+              "start": 2378
             },
             "toModuleId": "1f15f635930f6d16244228f349f2f4a58b710386cc833b276de750707dd0058b"
           },
           {
             "span": {
-              "end": 2549,
-              "start": 2521
+              "end": 2513,
+              "start": 2485
             },
             "toModuleId": "de50e46cbf64fec4434ded5ce0cf5721586138999900ae0ca5d4c62f3ccc17ad"
           },
           {
             "span": {
-              "end": 2698,
-              "start": 2678
+              "end": 2655,
+              "start": 2635
             },
             "toModuleId": "ddd838d3c1c2acdd791cff807324e7b73fc6e007ec646b8c1446a4ef7c01b72f"
           },
           {
             "span": {
-              "end": 2848,
-              "start": 2832
+              "end": 2797,
+              "start": 2781
             },
             "toModuleId": "c40cd6bb9995b52489bd34f0ac129e6f489445edc40cc1f46ab775032364f661"
           },
           {
             "span": {
-              "end": 2907,
-              "start": 2887
+              "end": 2855,
+              "start": 2835
             },
             "toModuleId": "eba6eaff12a2aa78abb7293ae064acc27dada60e46efb090b8f3bb4d07cecac9"
           },
           {
             "span": {
-              "end": 2981,
-              "start": 2968
+              "end": 2928,
+              "start": 2915
             },
             "toModuleId": "43b1d62e0b2f14737834bb0ce94f03683808f87fcdf8735d23b7d2757b767688"
           },
           {
             "span": {
-              "end": 3067,
-              "start": 3036
+              "end": 3013,
+              "start": 2982
             },
             "toModuleId": "9ca7f50ce7dc7dd56c8b443c7dbd27afb84e12328bfe009ad4778dca7efe6cba"
           },
           {
             "span": {
-              "end": 3144,
-              "start": 3126
+              "end": 3089,
+              "start": 3071
             },
             "toModuleId": "f13f944710f2d0506aa6f1e7fd716154e64ed89420f345b8798b1c111d30ce16"
           },
           {
             "span": {
-              "end": 3204,
-              "start": 3188
+              "end": 3148,
+              "start": 3132
             },
             "toModuleId": "03258c51e7e6ecff733c2f9062122c5ac2db48ad7a3ceafeb3db13cd69db15b8"
           }
@@ -53027,6 +53256,54 @@ export const appGraph = {
       },
       {
         "declaredContexts": [],
+        "directPackageImports": [
+          {
+            "importKind": "dynamic",
+            "packageName": "@openai/codex-sdk",
+            "span": {
+              "end": 1208,
+              "start": 1189
+            },
+            "specifier": "@openai/codex-sdk",
+            "subpath": ""
+          }
+        ],
+        "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/project-runtime.ts",
+        "id": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a",
+        "localImports": [
+          {
+            "span": {
+              "end": 269,
+              "start": 251
+            },
+            "toModuleId": "37e1cdfe8ce2590355bb7b7485c6af9678262fa06d3b327d0d8340868bfa6c2c"
+          },
+          {
+            "span": {
+              "end": 327,
+              "start": 303
+            },
+            "toModuleId": "f11fa5b1ab756219d65585183ffb1635a5efe25f044d0cee4fd30740d5fe7a68"
+          },
+          {
+            "span": {
+              "end": 405,
+              "start": 382
+            },
+            "toModuleId": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+          },
+          {
+            "span": {
+              "end": 463,
+              "start": 441
+            },
+            "toModuleId": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
         "file": "src/forge/compiler/integration/render.ts",
@@ -54139,6 +54416,29 @@ export const appGraph = {
         "declaredContexts": [],
         "directPackageImports": [],
         "effectiveContexts": [],
+        "file": "src/forge/agent-fabric/project-profile.ts",
+        "id": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094",
+        "localImports": [
+          {
+            "span": {
+              "end": 136,
+              "start": 118
+            },
+            "toModuleId": "37e1cdfe8ce2590355bb7b7485c6af9678262fa06d3b327d0d8340868bfa6c2c"
+          },
+          {
+            "span": {
+              "end": 201,
+              "start": 174
+            },
+            "toModuleId": "983b527b5f7d852c6fbd15703dad0959a2242cb58f409dfda337955dc0736553"
+          }
+        ]
+      },
+      {
+        "declaredContexts": [],
+        "directPackageImports": [],
+        "effectiveContexts": [],
         "file": "src/forge/brownfield-import/index.ts",
         "id": "ba31460ec89f05d06c0210c560129e289935b3d35f0ec299b4079320dd6e3d61",
         "localImports": [
@@ -54211,43 +54511,43 @@ export const appGraph = {
         "localImports": [
           {
             "span": {
-              "end": 88,
-              "start": 53
+              "end": 87,
+              "start": 52
             },
             "toModuleId": "9a96d0a75d47bd0b41f72df36e55066eeaf3b22457e8f95d773b8eb9bd15d6b9"
           },
           {
             "span": {
-              "end": 143,
-              "start": 120
+              "end": 141,
+              "start": 118
             },
             "toModuleId": "838685bcf38acf4a44e9ce7b602ea851365f67ff4ced360ec54629939aed6aee"
           },
           {
             "span": {
-              "end": 192,
-              "start": 177
+              "end": 189,
+              "start": 174
             },
             "toModuleId": "054003d90d83bcec53c9c183aeb1cc7f31aa142e257c26ae3f1d0456b6ade08e"
           },
           {
             "span": {
-              "end": 250,
-              "start": 238
+              "end": 246,
+              "start": 234
             },
             "toModuleId": "872412b4ab48b529cd742a3421bc52da622a19f58d384f84cb4fe06fa5cf73cb"
           },
           {
             "span": {
-              "end": 299,
-              "start": 286
+              "end": 294,
+              "start": 281
             },
             "toModuleId": "89aae10e0c338a9eb43bd1e97a645e7986cb5ca4964a7abeeac8c152db79a47d"
           },
           {
             "span": {
-              "end": 360,
-              "start": 341
+              "end": 354,
+              "start": 335
             },
             "toModuleId": "6ecdd46d579d2fdc6851cd254c146268a893f13cd697b6c8ed54335145ebcb01"
           }
@@ -55373,6 +55673,20 @@ export const appGraph = {
               "start": 739
             },
             "toModuleId": "2905e5f33007b98c524d27755a21f09523720f86b1dc3a6ff5ef3ac853534e5f"
+          },
+          {
+            "span": {
+              "end": 878,
+              "start": 841
+            },
+            "toModuleId": "1aee5ba465288e662948aca5d440a6412fa6372daa51d2ddaa980c8efa55853d"
+          },
+          {
+            "span": {
+              "end": 17729,
+              "start": 17693
+            },
+            "toModuleId": "ab32a74f5f8b3517da4ceaae901e18eb2fef0925fa96f5c421d8770fe568477a"
           }
         ]
       },
@@ -58198,8 +58512,15 @@ export const appGraph = {
           },
           {
             "span": {
-              "end": 8666,
-              "start": 8640
+              "end": 981,
+              "start": 959
+            },
+            "toModuleId": "ba1e3721541bbd9f0696c1cf2e97a63e6ced8417ecd7c52e9ec5185330107094"
+          },
+          {
+            "span": {
+              "end": 10338,
+              "start": 10312
             },
             "toModuleId": "0ee1667a28761b422fff8df66eb75fbe4e2835ee48121de464999df79406317b"
           }
@@ -59949,20 +60270,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "577d377225e8b7d492be19e809260b2cae4b4b2588d229c6748be1bf0f2e47b1",
+      "contentHash": "3ae56f35d7fda7e06b771a00e3f7778b114e8e84eec1d6059795d58eeb185a9c",
       "file": "src/forge/agent-fabric/managed-run-store.ts",
       "id": "d3b8593b034ecd5d7c148bc6212db8eecbc5304ba526164fd5c740ad99947911",
       "kind": "code.class",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
-        "sourceSlice": "class ManagedRunStore {\n  private constructor(readonly root: string, readonly directory: string) {}\n  static async open(root: string): Promise<ManagedRunStore> {\n    root = await realpath(root); const directory = join(root, \".forge\", \"local\", \"agent-fabric\", \"managed-runs\");\n    await assertAttachedSafePath(root, directory); await mkdir(directory, { recursive: true }); await assertAttachedSafePath(root, directory);\n    return new ManagedRunStore(root, directory);\n  }\n  private path(runId: string) { managedId(runId, \"runId\"); return join(this.directory, `${managedDigest(runId).slice(7)}.json`); }\n  async read(runId: string): Promise<ManagedRunState | undefined> { const record = await this.load(runId); return record ? structuredClone(record.state) : undefined; }\n  async list(): Promise<string[]> {\n    await assertAttachedSafePath(this.root, this.directory); const ids: string[] = [];\n    for (const name of (await readdir(this.directory)).filter(name => /^[a-f0-9]{64}\\.json$/.test(name))) {\n      const path = join(this.directory, name); await assertAttachedSafePath(this.root, path);\n      assert((await lstat(path)).size <= MAX_RECORD, \"Run record exceeds size limit\");\n      const envelope = JSON.parse(await readFile(path, \"utf8\")); const runId = managedId(envelope?.record?.state?.runId, \"stored runId\");\n      assert(this.path(runId) === path, \"Run filename mismatch\"); await this.load(runId); ids.push(runId);\n    }\n    return ids.sort();\n  }\n  private async load(runId: string): Promise<RecordFile | undefined> {\n    const path = this.path(runId); await assertAttachedSafePath(this.root, path);\n    try {\n      assert((await lstat(path)).isFile() && (await lstat(path)).size <= MAX_RECORD, \"Unsupported or excessive run record\");\n      const envelope = JSON.parse(await readFile(path, \"utf8\"));\n      assert(envelope && Object.keys(envelope).length === 2 && envelope.record && envelope.digest === managedDigest(stableStringify(envelope.record)), \"Run integrity check failed\");\n      const record = envelope.record as RecordFile; assert(Object.keys(record).every(key => [\"state\", \"receipts\"].includes(key)) && Array.isArray(record.receipts) && record.receipts.length <= 10000, \"Invalid run record\");\n      validateState(record.state, this.root, runId); const ids = new Set<string>();\n      for (const receipt of record.receipts) {\n        managedId(receipt.requestId, \"requestId\"); assert(!ids.has(receipt.requestId) && /^(?:sha256:)?[a-f0-9]{64}$/.test(receipt.fingerprint), \"Invalid request receipt\"); ids.add(receipt.requestId);\n        assert(receipt.ack.runId === runId && Number.isSafeInteger(receipt.ack.version) && receipt.ack.version > 0 && receipt.ack.version <= record.state.version && statuses.includes(receipt.ack.status), \"Invalid acknowledgment\");\n      }\n      return record;\n    } catch (error) { if (missing(error)) return undefined; if (error instanceof SyntaxError) managedFail(\"AF_RUN_STORE\", \"Malformed run JSON\"); throw error; }\n  }\n  private async lock(runId: string): Promise<() => Promise<void>> {\n    const lock = `${this.path(runId)}.lock`, token = randomUUID(), candidate = `${lock}.${token}.candidate`, claim = `${lock}.reclaim`;\n    const ownerBytes = JSON.stringify({ pid: process.pid, token }), deadline = Date.now() + 10000;\n    await assertAttachedSafePath(this.root, candidate); const handle = await open(candidate, \"wx\", 0o600);\n    try { await handle.writeFile(ownerBytes); await handle.sync(); } finally { await handle.close(); }\n    try {\n      while (true) {\n        await assertAttachedSafePath(this.root, lock);\n        try { await link(candidate, lock); return async () => { await assertAttachedSafePath(this.root, lock); if (await readFile(lock, \"utf8\") !== ownerBytes) managedFail(\"AF_RUN_LOCK\", \"Lock ownership changed\"); await unlink(lock); }; }\n        catch (error) { if ((error as NodeJS.ErrnoException).code !== \"EEXIST\") throw error; }\n        try {\n          assert((await lstat(lock)).isFile(), \"Unsupported lock\"); const raw = await readFile(lock, \"utf8\"), previous = JSON.parse(raw);\n          if (Number.isSafeInteger(previous.pid) && previous.pid > 0 && !alive(previous.pid)) {\n            await assertAttachedSafePath(this.root, claim); reclaimDeadGuard(claim); let claimed = false;\n            try { await link(candidate, claim); claimed = true; if (readFileSync(lock, \"utf8\") === raw) unlinkSync(lock); }\n            catch (error) { if (!missing(error) && (error as NodeJS.ErrnoException).code !== \"EEXIST\") throw error; }\n            finally { if (claimed) await unlink(claim).catch(() => {}); }\n          }\n        } catch (error) { if (!missing(error) && !(error instanceof SyntaxError)) throw error; }\n        if (Date.now() >= deadline) managedFail(\"AF_RUN_LOCK_BUSY\", \"Run is locked by another process\");\n        await new Promise(resolve => setTimeout(resolve, 20));\n      }\n    } finally { await unlink(candidate).catch(() => {}); }\n  }\n  async transact(runId: string, options: ManagedTransactionOptions, apply: (current?: ManagedRunState) => ManagedRunState): Promise<{ state: ManagedRunState; ack: Ack; replayed: boolean }> {\n    managedId(runId, \"runId\"); assert(options && Object.keys(options).every(key => [\"requestId\", \"fingerprint\", \"expectedVersion\"].includes(key)), \"Invalid transaction options\");\n    if (options.requestId !== undefined) { managedId(options.requestId, \"requestId\"); assert(typeof options.fingerprint === \"string\" && /^(?:sha256:)?[a-f0-9]{64}$/.test(options.fingerprint), \"Request fingerprint required\"); }\n    else assert(options.fingerprint === undefined, \"Fingerprint without requestId\");\n    assert(options.expectedVersion === undefined || (Number.isSafeInteger(options.expectedVersion) && options.expectedVersion >= 0), \"Invalid expectedVersion\");\n    const release = await this.lock(runId);\n    try {\n      const old = await this.load(runId), receipt = old?.receipts.find(item => item.requestId === options.requestId);\n      if (receipt) { if (receipt.fingerprint !== options.fingerprint) managedFail(\"AF_RUN_REQUEST_CONFLICT\", \"requestId already used with different input\"); return { state: structuredClone(old!.state), ack: structuredClone(receipt.ack), replayed: true }; }\n      if (options.expectedVersion !== undefined && options.expectedVersion !== (old?.state.version ?? 0)) managedFail(\"AF_RUN_VERSION_CONFLICT\", `Expected version ${old?.state.version ?? 0}`);\n      const state = structuredClone(apply(old ? structuredClone(old.state) : undefined));\n      state.version = (old?.state.version ?? 0) + 1; state.updatedAt = new Date().toISOString(); validateState(state, this.root, runId);\n      const ack: Ack = { runId, version: state.version, status: state.status };\n      const record: RecordFile = { state, receipts: [...(old?.receipts ?? []), ...(options.requestId ? [{ requestId: options.requestId, fingerprint: options.fingerprint!, ack }] : [])] };\n      const data = stableStringify({ record, digest: managedDigest(stableStringify(record)) }); assert(Buffer.byteLength(data) <= MAX_RECORD && record.receipts.length <= 10000, \"Run record limit exceeded\");\n      const temp = `${this.path(runId)}.${randomUUID()}.tmp`; await assertAttachedSafePath(this.root, temp); const handle = await open(temp, \"wx\", 0o600);\n      try { await handle.writeFile(data); await handle.sync(); } finally { await handle.close(); }\n      try { await assertAttachedSafePath(this.root, this.path(runId)); await replaceRecord(temp, this.path(runId)); } finally { await unlink(temp).catch(() => {}); }\n      return { state: structuredClone(state), ack: structuredClone(ack), replayed: false };\n    } finally { await release(); }\n  }\n}"
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
+        "sourceSlice": "class ManagedRunStore {\n  private constructor(readonly root: string, readonly directory: string) {}\n  static async open(root: string): Promise<ManagedRunStore> {\n    root = await realpath(root); const directory = join(root, \".forge\", \"local\", \"agent-fabric\", \"managed-runs\");\n    await assertAttachedSafePath(root, directory); await mkdir(directory, { recursive: true }); await assertAttachedSafePath(root, directory);\n    return new ManagedRunStore(root, directory);\n  }\n  private path(runId: string) { managedId(runId, \"runId\"); return join(this.directory, `${managedDigest(runId).slice(7)}.json`); }\n  async read(runId: string): Promise<ManagedRunState | undefined> { const record = await this.load(runId); return record ? structuredClone(record.state) : undefined; }\n  async list(): Promise<string[]> {\n    await assertAttachedSafePath(this.root, this.directory); const ids: string[] = [];\n    for (const name of (await readdir(this.directory)).filter(name => /^[a-f0-9]{64}\\.json$/.test(name))) {\n      const path = join(this.directory, name); await assertAttachedSafePath(this.root, path);\n      assert((await lstat(path)).size <= MAX_RECORD, \"Run record exceeds size limit\");\n      const envelope = JSON.parse(await readFile(path, \"utf8\")); const runId = managedId(envelope?.record?.state?.runId, \"stored runId\");\n      assert(this.path(runId) === path, \"Run filename mismatch\"); await this.load(runId); ids.push(runId);\n    }\n    return ids.sort();\n  }\n  private async load(runId: string): Promise<RecordFile | undefined> {\n    const path = this.path(runId); await assertAttachedSafePath(this.root, path);\n    try {\n      assert((await lstat(path)).isFile() && (await lstat(path)).size <= MAX_RECORD, \"Unsupported or excessive run record\");\n      const envelope = JSON.parse(await readFile(path, \"utf8\"));\n      assert(envelope && Object.keys(envelope).length === 2 && envelope.record && envelope.digest === managedDigest(stableStringify(envelope.record)), \"Run integrity check failed\");\n      const record = envelope.record as RecordFile; assert(Object.keys(record).every(key => [\"state\", \"receipts\"].includes(key)) && Array.isArray(record.receipts) && record.receipts.length <= 10000, \"Invalid run record\");\n      validateState(record.state, this.root, runId); const ids = new Set<string>();\n      for (const receipt of record.receipts) {\n        managedId(receipt.requestId, \"requestId\"); assert(!ids.has(receipt.requestId) && /^(?:sha256:)?[a-f0-9]{64}$/.test(receipt.fingerprint), \"Invalid request receipt\"); ids.add(receipt.requestId);\n        assert(receipt.ack.runId === runId && Number.isSafeInteger(receipt.ack.version) && receipt.ack.version > 0 && receipt.ack.version <= record.state.version && statuses.includes(receipt.ack.status), \"Invalid acknowledgment\");\n      }\n      return record;\n    } catch (error) { if (missing(error)) return undefined; if (error instanceof SyntaxError) managedFail(\"AF_RUN_STORE\", \"Malformed run JSON\"); throw error; }\n  }\n  private async lock(runId: string): Promise<() => Promise<void>> {\n    const lock = `${this.path(runId)}.lock`, token = randomUUID(), candidate = `${lock}.${token}.candidate`, claim = `${lock}.reclaim`;\n    const ownerBytes = JSON.stringify({ pid: process.pid, token }), deadline = Date.now() + 10000;\n    await assertAttachedSafePath(this.root, candidate); const handle = await open(candidate, \"wx\", 0o600);\n    try { await handle.writeFile(ownerBytes); await handle.sync(); } finally { await handle.close(); }\n    try {\n      while (true) {\n        await assertAttachedSafePath(this.root, lock);\n        try { await link(candidate, lock); return async () => { await assertAttachedSafePath(this.root, lock); if (await readLock(lock) !== ownerBytes) managedFail(\"AF_RUN_LOCK\", \"Lock ownership changed\"); await unlink(lock); }; }\n        catch (error) { if (![\"EEXIST\", \"EPERM\", \"EACCES\", \"EBUSY\"].includes((error as NodeJS.ErrnoException).code ?? \"\")) throw error; }\n        try {\n          assert((await lstat(lock)).isFile(), \"Unsupported lock\"); const raw = await readLock(lock), previous = JSON.parse(raw);\n          if (Number.isSafeInteger(previous.pid) && previous.pid > 0 && !alive(previous.pid)) {\n            await assertAttachedSafePath(this.root, claim); reclaimDeadGuard(claim); let claimed = false;\n            try { await link(candidate, claim); claimed = true; if (readFileSync(lock, \"utf8\") === raw) unlinkSync(lock); }\n            catch (error) { if (!missing(error) && (error as NodeJS.ErrnoException).code !== \"EEXIST\") throw error; }\n            finally { if (claimed) await unlink(claim).catch(() => {}); }\n          }\n        } catch (error) { if (!missing(error) && !(error instanceof SyntaxError)) throw error; }\n        if (Date.now() >= deadline) managedFail(\"AF_RUN_LOCK_BUSY\", \"Run is locked by another process\");\n        await new Promise(resolve => setTimeout(resolve, 20));\n      }\n    } finally { await unlink(candidate).catch(() => {}); }\n  }\n  async transact(runId: string, options: ManagedTransactionOptions, apply: (current?: ManagedRunState) => ManagedRunState): Promise<{ state: ManagedRunState; ack: Ack; replayed: boolean }> {\n    managedId(runId, \"runId\"); assert(options && Object.keys(options).every(key => [\"requestId\", \"fingerprint\", \"expectedVersion\"].includes(key)), \"Invalid transaction options\");\n    if (options.requestId !== undefined) { managedId(options.requestId, \"requestId\"); assert(typeof options.fingerprint === \"string\" && /^(?:sha256:)?[a-f0-9]{64}$/.test(options.fingerprint), \"Request fingerprint required\"); }\n    else assert(options.fingerprint === undefined, \"Fingerprint without requestId\");\n    assert(options.expectedVersion === undefined || (Number.isSafeInteger(options.expectedVersion) && options.expectedVersion >= 0), \"Invalid expectedVersion\");\n    const release = await this.lock(runId);\n    try {\n      const old = await this.load(runId), receipt = old?.receipts.find(item => item.requestId === options.requestId);\n      if (receipt) { if (receipt.fingerprint !== options.fingerprint) managedFail(\"AF_RUN_REQUEST_CONFLICT\", \"requestId already used with different input\"); return { state: structuredClone(old!.state), ack: structuredClone(receipt.ack), replayed: true }; }\n      if (options.expectedVersion !== undefined && options.expectedVersion !== (old?.state.version ?? 0)) managedFail(\"AF_RUN_VERSION_CONFLICT\", `Expected version ${old?.state.version ?? 0}`);\n      const state = structuredClone(apply(old ? structuredClone(old.state) : undefined));\n      state.version = (old?.state.version ?? 0) + 1; state.updatedAt = new Date().toISOString(); validateState(state, this.root, runId);\n      const ack: Ack = { runId, version: state.version, status: state.status };\n      const record: RecordFile = { state, receipts: [...(old?.receipts ?? []), ...(options.requestId ? [{ requestId: options.requestId, fingerprint: options.fingerprint!, ack }] : [])] };\n      const data = stableStringify({ record, digest: managedDigest(stableStringify(record)) }); assert(Buffer.byteLength(data) <= MAX_RECORD && record.receipts.length <= 10000, \"Run record limit exceeded\");\n      const temp = `${this.path(runId)}.${randomUUID()}.tmp`; await assertAttachedSafePath(this.root, temp); const handle = await open(temp, \"wx\", 0o600);\n      try { await handle.writeFile(data); await handle.sync(); } finally { await handle.close(); }\n      try { await assertAttachedSafePath(this.root, this.path(runId)); await replaceRecord(temp, this.path(runId)); } finally { await unlink(temp).catch(() => {}); }\n      return { state: structuredClone(state), ack: structuredClone(ack), replayed: false };\n    } finally { await release(); }\n  }\n}"
       },
       "name": "ManagedRunStore",
       "qualifiedName": "ManagedRunStore",
       "span": {
-        "end": 12801,
-        "start": 5157
+        "end": 13212,
+        "start": 5541
       }
     },
     {
@@ -60346,14 +60667,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [\r\n  \"generate\",\r\n  \"check\",\r\n  \"print\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "AGENT_CONTRACT_SUBCOMMANDS: AgentContractSubcommand[] = [\n  \"generate\",\n  \"check\",\n  \"print\",\n]"
       },
       "name": "AGENT_CONTRACT_SUBCOMMANDS",
       "qualifiedName": "AGENT_CONTRACT_SUBCOMMANDS",
       "span": {
-        "end": 18199,
-        "start": 18100
+        "end": 17073,
+        "start": 16978
       }
     },
     {
@@ -60397,14 +60718,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "AGENT_SUBCOMMANDS: AgentSubcommand[] = [\r\n  \"list-targets\",\r\n  \"export\",\r\n  \"check\",\r\n  \"doctor\",\r\n  \"onboard\",\r\n  \"print-context\",\r\n  \"clean\",\r\n  \"prepare\",\r\n  \"hooks\",\r\n  \"install\",\r\n  \"ingest\",\r\n  \"context\",\r\n  \"memory\",\r\n  \"timeline\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "AGENT_SUBCOMMANDS: AgentSubcommand[] = [\n  \"list-targets\",\n  \"export\",\n  \"check\",\n  \"doctor\",\n  \"onboard\",\n  \"print-context\",\n  \"clean\",\n  \"prepare\",\n  \"hooks\",\n  \"install\",\n  \"ingest\",\n  \"context\",\n  \"memory\",\n  \"timeline\",\n]"
       },
       "name": "AGENT_SUBCOMMANDS",
       "qualifiedName": "AGENT_SUBCOMMANDS",
       "span": {
-        "end": 20867,
-        "start": 20626
+        "end": 19621,
+        "start": 19395
       }
     },
     {
@@ -60567,14 +60888,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "AI_SUBCOMMANDS: AiSubcommand[] = [\r\n  \"providers\",\r\n  \"check\",\r\n  \"test\",\r\n  \"models\",\r\n  \"tools\",\r\n  \"agents\",\r\n  \"redteam\",\r\n  \"trace\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "AI_SUBCOMMANDS: AiSubcommand[] = [\n  \"providers\",\n  \"check\",\n  \"test\",\n  \"models\",\n  \"tools\",\n  \"agents\",\n  \"redteam\",\n  \"trace\",\n]"
       },
       "name": "AI_SUBCOMMANDS",
       "qualifiedName": "AI_SUBCOMMANDS",
       "span": {
-        "end": 21932,
-        "start": 21792
+        "end": 20644,
+        "start": 20513
       }
     },
     {
@@ -60686,14 +61007,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "ATTACHED_TASK_ACTIONS = [\"attached-propose\", \"attached-status\", \"attached-context\", \"attached-attach\", \"attached-assign\", \"attached-attempt\", \"attached-prepare-review\", \"attached-submit-review\", \"attached-record-verification\", \"attached-cover\", \"workflow-plan\", \"workflow-next\", \"workflow-claim\", \"workflow-result\", \"workflow-replan\", \"workflow-reconcile\", \"workflow-recover\"] as const"
       },
       "name": "ATTACHED_TASK_ACTIONS",
       "qualifiedName": "ATTACHED_TASK_ACTIONS",
       "span": {
-        "end": 1660,
-        "start": 1275
+        "end": 1718,
+        "start": 1333
       }
     },
     {
@@ -60720,14 +61041,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "AUTHMD_SUBCOMMANDS: AuthMdSubcommand[] = [\"generate\", \"check\"]"
       },
       "name": "AUTHMD_SUBCOMMANDS",
       "qualifiedName": "AUTHMD_SUBCOMMANDS",
       "span": {
-        "end": 18485,
-        "start": 18423
+        "end": 17348,
+        "start": 17286
       }
     },
     {
@@ -60822,14 +61143,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "AUTH_SUBCOMMANDS: AuthSubcommand[] = [\r\n  \"check\",\r\n  \"config\",\r\n  \"decode\",\r\n  \"test-token\",\r\n  \"jwks\",\r\n  \"prove\",\r\n  \"status\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "AUTH_SUBCOMMANDS: AuthSubcommand[] = [\n  \"check\",\n  \"config\",\n  \"decode\",\n  \"test-token\",\n  \"jwks\",\n  \"prove\",\n  \"status\",\n]"
       },
       "name": "AUTH_SUBCOMMANDS",
       "qualifiedName": "AUTH_SUBCOMMANDS",
       "span": {
-        "end": 18340,
-        "start": 18208
+        "end": 17205,
+        "start": 17081
       }
     },
     {
@@ -60873,14 +61194,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "BASELINE_SUBCOMMANDS: BaselineSubcommand[] = [\"create\", \"status\"]"
       },
       "name": "BASELINE_SUBCOMMANDS",
       "qualifiedName": "BASELINE_SUBCOMMANDS",
       "span": {
-        "end": 18414,
-        "start": 18349
+        "end": 17278,
+        "start": 17213
       }
     },
     {
@@ -60890,14 +61211,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "BENCH_SUBCOMMANDS: BenchSubcommand[] = [\"compiler\"]"
       },
       "name": "BENCH_SUBCOMMANDS",
       "qualifiedName": "BENCH_SUBCOMMANDS",
       "span": {
-        "end": 21992,
-        "start": 21941
+        "end": 20703,
+        "start": 20652
       }
     },
     {
@@ -60941,14 +61262,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "CAIR_SUBCOMMANDS: CairSubcommand[] = [\"snapshot\", \"query\", \"action\"]"
       },
       "name": "CAIR_SUBCOMMANDS",
       "qualifiedName": "CAIR_SUBCOMMANDS",
       "span": {
-        "end": 22069,
-        "start": 22001
+        "end": 20779,
+        "start": 20711
       }
     },
     {
@@ -62148,14 +62469,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "DEPLOY_SUBCOMMANDS: DeploySubcommand[] = [\"plan\", \"init\", \"check\", \"readiness\", \"render\", \"package\", \"verify\"]"
       },
       "name": "DEPLOY_SUBCOMMANDS",
       "qualifiedName": "DEPLOY_SUBCOMMANDS",
       "span": {
-        "end": 18799,
-        "start": 18689
+        "end": 17659,
+        "start": 17549
       }
     },
     {
@@ -62165,14 +62486,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "DEPS_SUBCOMMANDS: DepsSubcommand[] = [\r\n  \"outdated\",\r\n  \"inspect\",\r\n  \"api\",\r\n  \"trace\",\r\n  \"runtime-compat\",\r\n  \"diff\",\r\n  \"upgrade-plan\",\r\n  \"upgrade-apply\",\r\n  \"upgrade-check\",\r\n  \"upgrade-rollback\",\r\n  \"risk\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "DEPS_SUBCOMMANDS: DepsSubcommand[] = [\n  \"outdated\",\n  \"inspect\",\n  \"api\",\n  \"trace\",\n  \"runtime-compat\",\n  \"diff\",\n  \"upgrade-plan\",\n  \"upgrade-apply\",\n  \"upgrade-check\",\n  \"upgrade-rollback\",\n  \"risk\",\n]"
       },
       "name": "DEPS_SUBCOMMANDS",
       "qualifiedName": "DEPS_SUBCOMMANDS",
       "span": {
-        "end": 19346,
-        "start": 19129
+        "end": 18189,
+        "start": 17984
       }
     },
     {
@@ -62522,14 +62843,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "ENDPOINT_FILENAME = \"owner-endpoint.json\""
       },
       "name": "ENDPOINT_FILENAME",
       "qualifiedName": "ENDPOINT_FILENAME",
       "span": {
-        "end": 1012,
-        "start": 971
+        "end": 1070,
+        "start": 1029
       }
     },
     {
@@ -62726,14 +63047,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "FEATURE_ACTIONS: FeatureAction[] = [\r\n  \"validate\",\r\n  \"plan\",\r\n  \"diff\",\r\n  \"apply\",\r\n  \"list\",\r\n  \"inspect\",\r\n  \"rollback\",\r\n  \"examples\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "FEATURE_ACTIONS: FeatureAction[] = [\n  \"validate\",\n  \"plan\",\n  \"diff\",\n  \"apply\",\n  \"list\",\n  \"inspect\",\n  \"rollback\",\n  \"examples\",\n]"
       },
       "name": "FEATURE_ACTIONS",
       "qualifiedName": "FEATURE_ACTIONS",
       "span": {
-        "end": 19919,
-        "start": 19776
+        "end": 18724,
+        "start": 18590
       }
     },
     {
@@ -62811,14 +63132,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "FIELD_TEST_SUBCOMMANDS: FieldTestSubcommand[] = [\"create\", \"run\", \"report\"]"
       },
       "name": "FIELD_TEST_SUBCOMMANDS",
       "qualifiedName": "FIELD_TEST_SUBCOMMANDS",
       "span": {
-        "end": 18960,
-        "start": 18885
+        "end": 17818,
+        "start": 17743
       }
     },
     {
@@ -67758,14 +68079,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "GOLDEN_PATH_SUBCOMMANDS: GoldenPathSubcommand[] = [\"plan\", \"status\"]"
       },
       "name": "GOLDEN_PATH_SUBCOMMANDS",
       "qualifiedName": "GOLDEN_PATH_SUBCOMMANDS",
       "span": {
-        "end": 18876,
-        "start": 18808
+        "end": 17735,
+        "start": 17667
       }
     },
     {
@@ -67911,14 +68232,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "INSPECT_TARGETS: InspectTarget[] = [\r\n  \"app\",\r\n  \"packages\",\r\n  \"capabilities\",\r\n  \"runtime-matrix\",\r\n  \"data\",\r\n  \"runtime\",\r\n  \"dev\",\r\n  \"subscriptions\",\r\n  \"workflows\",\r\n  \"telemetry\",\r\n  \"policies\",\r\n  \"secrets\",\r\n  \"env\",\r\n  \"ai\",\r\n  \"queries\",\r\n  \"api\",\r\n  \"external\",\r\n  \"client\",\r\n  \"frontend\",\r\n  \"auth\",\r\n  \"rls\",\r\n  \"db-security\",\r\n  \"release\",\r\n  \"artifacts\",\r\n  \"sourcemaps\",\r\n  \"live-production\",\r\n  \"live-protocol\",\r\n  \"live-transport\",\r\n  \"make\",\r\n  \"test-graph\",\r\n  \"test-plans\",\r\n  \"agent-contract\",\r\n  \"agent-tools\",\r\n  \"agent-adapters\",\r\n  \"capability-map\",\r\n  \"summary\",\r\n  \"schema\",\r\n  \"drift\",\r\n  \"handoff\",\r\n  \"framework\",\r\n  \"imported\",\r\n  \"ui\",\r\n  \"ui-scenarios\",\r\n  \"ui-routes\",\r\n  \"all\",\r\n  \"rules\",\r\n  \"map\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "INSPECT_TARGETS: InspectTarget[] = [\n  \"app\",\n  \"packages\",\n  \"capabilities\",\n  \"runtime-matrix\",\n  \"data\",\n  \"runtime\",\n  \"dev\",\n  \"subscriptions\",\n  \"workflows\",\n  \"telemetry\",\n  \"policies\",\n  \"secrets\",\n  \"env\",\n  \"ai\",\n  \"queries\",\n  \"api\",\n  \"external\",\n  \"client\",\n  \"frontend\",\n  \"auth\",\n  \"rls\",\n  \"db-security\",\n  \"release\",\n  \"artifacts\",\n  \"sourcemaps\",\n  \"live-production\",\n  \"live-protocol\",\n  \"live-transport\",\n  \"make\",\n  \"test-graph\",\n  \"test-plans\",\n  \"agent-contract\",\n  \"agent-tools\",\n  \"agent-adapters\",\n  \"capability-map\",\n  \"summary\",\n  \"schema\",\n  \"drift\",\n  \"handoff\",\n  \"framework\",\n  \"imported\",\n  \"ui\",\n  \"ui-scenarios\",\n  \"ui-routes\",\n  \"all\",\n  \"rules\",\n  \"map\",\n]"
       },
       "name": "INSPECT_TARGETS",
       "qualifiedName": "INSPECT_TARGETS",
       "span": {
-        "end": 17790,
-        "start": 17049
+        "end": 16673,
+        "start": 15980
       }
     },
     {
@@ -68166,14 +68487,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "LIVE_SUBCOMMANDS: LiveSubcommand[] = [\r\n  \"list\",\r\n  \"subscribe\",\r\n  \"status\",\r\n  \"debug\",\r\n  \"invalidations\",\r\n  \"test\",\r\n  \"load-test\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "LIVE_SUBCOMMANDS: LiveSubcommand[] = [\n  \"list\",\n  \"subscribe\",\n  \"status\",\n  \"debug\",\n  \"invalidations\",\n  \"test\",\n  \"load-test\",\n]"
       },
       "name": "LIVE_SUBCOMMANDS",
       "qualifiedName": "LIVE_SUBCOMMANDS",
       "span": {
-        "end": 19495,
-        "start": 19355
+        "end": 18329,
+        "start": 18197
       }
     },
     {
@@ -68353,14 +68674,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "MAKE_PRIMITIVES: MakePrimitive[] = [\r\n  \"list\",\r\n  \"explain\",\r\n  \"table\",\r\n  \"field\",\r\n  \"policy\",\r\n  \"command\",\r\n  \"query\",\r\n  \"livequery\",\r\n  \"action\",\r\n  \"workflow\",\r\n  \"component\",\r\n  \"page\",\r\n  \"ui\",\r\n  \"ai-chat\",\r\n  \"resource\",\r\n  \"apply\",\r\n  \"rollback\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "MAKE_PRIMITIVES: MakePrimitive[] = [\n  \"list\",\n  \"explain\",\n  \"table\",\n  \"field\",\n  \"policy\",\n  \"command\",\n  \"query\",\n  \"livequery\",\n  \"action\",\n  \"workflow\",\n  \"component\",\n  \"page\",\n  \"ui\",\n  \"ai-chat\",\n  \"resource\",\n  \"apply\",\n  \"rollback\",\n]"
       },
       "name": "MAKE_PRIMITIVES",
       "qualifiedName": "MAKE_PRIMITIVES",
       "span": {
-        "end": 19767,
-        "start": 19504
+        "end": 18582,
+        "start": 18337
       }
     },
     {
@@ -68846,7 +69167,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "MAX_RECORD = 32 * 1024 * 1024"
       },
       "name": "MAX_RECORD",
@@ -68863,14 +69184,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "MAX_REQUEST_BYTES = 40 * 1024"
       },
       "name": "MAX_REQUEST_BYTES",
       "qualifiedName": "MAX_REQUEST_BYTES",
       "span": {
-        "end": 962,
-        "start": 933
+        "end": 1020,
+        "start": 991
       }
     },
     {
@@ -69169,14 +69490,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "NEW_PACKAGE_MANAGERS: NewPackageManager[] = [\"bun\", \"npm\", \"pnpm\", \"yarn\"]"
       },
       "name": "NEW_PACKAGE_MANAGERS",
       "qualifiedName": "NEW_PACKAGE_MANAGERS",
       "span": {
-        "end": 18000,
-        "start": 17926
+        "end": 16880,
+        "start": 16806
       }
     },
     {
@@ -69186,14 +69507,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "NEW_TEMPLATES: NewTemplateName[] = [\"agent-workroom\", \"b2b-support-web\", \"minimal-web\", \"nuxt-web\", \"vendor-access\"]"
       },
       "name": "NEW_TEMPLATES",
       "qualifiedName": "NEW_TEMPLATES",
       "span": {
-        "end": 17917,
-        "start": 17801
+        "end": 16798,
+        "start": 16682
       }
     },
     {
@@ -69713,14 +70034,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "REFACTOR_ACTIONS: RefactorAction[] = [\r\n  \"plan\",\r\n  \"apply\",\r\n  \"diff\",\r\n  \"rollback\",\r\n  \"list\",\r\n  \"rename\",\r\n  \"move\",\r\n  \"extract-action\",\r\n  \"replace-process-env\",\r\n  \"replace-import\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "REFACTOR_ACTIONS: RefactorAction[] = [\n  \"plan\",\n  \"apply\",\n  \"diff\",\n  \"rollback\",\n  \"list\",\n  \"rename\",\n  \"move\",\n  \"extract-action\",\n  \"replace-process-env\",\n  \"replace-import\",\n]"
       },
       "name": "REFACTOR_ACTIONS",
       "qualifiedName": "REFACTOR_ACTIONS",
       "span": {
-        "end": 20121,
-        "start": 19928
+        "end": 18914,
+        "start": 18732
       }
     },
     {
@@ -69798,14 +70119,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "RENAME_TARGETS: RenameTarget[] = [\r\n  \"table\",\r\n  \"field\",\r\n  \"policy\",\r\n  \"command\",\r\n  \"query\",\r\n  \"livequery\",\r\n  \"action\",\r\n  \"workflow\",\r\n  \"event\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "RENAME_TARGETS: RenameTarget[] = [\n  \"table\",\n  \"field\",\n  \"policy\",\n  \"command\",\n  \"query\",\n  \"livequery\",\n  \"action\",\n  \"workflow\",\n  \"event\",\n]"
       },
       "name": "RENAME_TARGETS",
       "qualifiedName": "RENAME_TARGETS",
       "span": {
-        "end": 20286,
-        "start": 20130
+        "end": 19068,
+        "start": 18922
       }
     },
     {
@@ -69832,14 +70153,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "REPAIR_SUBCOMMANDS: RepairSubcommand[] = [\r\n  \"diagnose\",\r\n  \"explain\",\r\n  \"plan\",\r\n  \"apply\",\r\n  \"run\",\r\n  \"list\",\r\n  \"inspect\",\r\n  \"rollback\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "REPAIR_SUBCOMMANDS: RepairSubcommand[] = [\n  \"diagnose\",\n  \"explain\",\n  \"plan\",\n  \"apply\",\n  \"run\",\n  \"list\",\n  \"inspect\",\n  \"rollback\",\n]"
       },
       "name": "REPAIR_SUBCOMMANDS",
       "qualifiedName": "REPAIR_SUBCOMMANDS",
       "span": {
-        "end": 20617,
-        "start": 20470
+        "end": 19387,
+        "start": 19249
       }
     },
     {
@@ -69968,14 +70289,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "REVIEW_CATEGORIES: ReviewFindingCategory[] = [\r\n  \"runtime\",\r\n  \"data\",\r\n  \"policy\",\r\n  \"secrets\",\r\n  \"package\",\r\n  \"workflow\",\r\n  \"livequery\",\r\n  \"frontend\",\r\n  \"test\",\r\n  \"deploy\",\r\n  \"release\",\r\n  \"agent\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "REVIEW_CATEGORIES: ReviewFindingCategory[] = [\n  \"runtime\",\n  \"data\",\n  \"policy\",\n  \"secrets\",\n  \"package\",\n  \"workflow\",\n  \"livequery\",\n  \"frontend\",\n  \"test\",\n  \"deploy\",\n  \"release\",\n  \"agent\",\n]"
       },
       "name": "REVIEW_CATEGORIES",
       "qualifiedName": "REVIEW_CATEGORIES",
       "span": {
-        "end": 21317,
-        "start": 21106
+        "end": 20054,
+        "start": 19856
       }
     },
     {
@@ -70019,14 +70340,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "REVIEW_FAIL_ON: ReviewFailOn[] = [\"warning\", \"error\", \"blocking\"]"
       },
       "name": "REVIEW_FAIL_ON",
       "qualifiedName": "REVIEW_FAIL_ON",
       "span": {
-        "end": 21097,
-        "start": 21032
+        "end": 19848,
+        "start": 19783
       }
     },
     {
@@ -70036,14 +70357,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "REVIEW_MODES: ReviewMode[] = [\"quick\", \"standard\", \"strict\"]"
       },
       "name": "REVIEW_MODES",
       "qualifiedName": "REVIEW_MODES",
       "span": {
-        "end": 21023,
-        "start": 20963
+        "end": 19775,
+        "start": 19715
       }
     },
     {
@@ -70053,14 +70374,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "REVIEW_SUBCOMMANDS: ReviewSubcommand[] = [\"run\", \"inspect\", \"list\", \"explain\"]"
       },
       "name": "REVIEW_SUBCOMMANDS",
       "qualifiedName": "REVIEW_SUBCOMMANDS",
       "span": {
-        "end": 20954,
-        "start": 20876
+        "end": 19707,
+        "start": 19629
       }
     },
     {
@@ -70121,14 +70442,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "RLS_SUBCOMMANDS: RlsSubcommand[] = [\"generate\", \"check\", \"apply\", \"test\", \"mutate-test\"]"
       },
       "name": "RLS_SUBCOMMANDS",
       "qualifiedName": "RLS_SUBCOMMANDS",
       "span": {
-        "end": 19120,
-        "start": 19032
+        "end": 17976,
+        "start": 17888
       }
     },
     {
@@ -70546,14 +70867,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "SECURITY_SUBCOMMANDS: SecuritySubcommand[] = [\"prove\"]"
       },
       "name": "SECURITY_SUBCOMMANDS",
       "qualifiedName": "SECURITY_SUBCOMMANDS",
       "span": {
-        "end": 19023,
-        "start": 18969
+        "end": 17880,
+        "start": 17826
       }
     },
     {
@@ -70563,14 +70884,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "SELF_HOST_SUBCOMMANDS: SelfHostSubcommand[] = [\"compose\", \"env\", \"check\", \"clean\"]"
       },
       "name": "SELF_HOST_SUBCOMMANDS",
       "qualifiedName": "SELF_HOST_SUBCOMMANDS",
       "span": {
-        "end": 18091,
-        "start": 18009
+        "end": 16970,
+        "start": 16888
       }
     },
     {
@@ -71345,14 +71666,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "TEST_COSTS: TestCost[] = [\"instant\", \"fast\", \"standard\", \"slow\", \"docker\", \"browser\"]"
       },
       "name": "TEST_COSTS",
       "qualifiedName": "TEST_COSTS",
       "span": {
-        "end": 20461,
-        "start": 20376
+        "end": 19241,
+        "start": 19156
       }
     },
     {
@@ -71447,14 +71768,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "TEST_SUBCOMMANDS: TestSubcommand[] = [\"plan\", \"run\", \"explain\", \"authz\"]"
       },
       "name": "TEST_SUBCOMMANDS",
       "qualifiedName": "TEST_SUBCOMMANDS",
       "span": {
-        "end": 20367,
-        "start": 20295
+        "end": 19148,
+        "start": 19076
       }
     },
     {
@@ -71532,14 +71853,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "TOP_LEVEL_COMMANDS = [\r\n  \"version\",\r\n  \"last\",\r\n  \"baseline\",\r\n  \"new\",\r\n  \"build\",\r\n  \"serve\",\r\n  \"worker\",\r\n  \"self-host\",\r\n  \"docs\",\r\n  \"agent-contract\",\r\n  \"agent\",\r\n  \"fabric\",\r\n  \"evolution\",\r\n  \"mcp\",\r\n  \"review\",\r\n  \"ui\",\r\n  \"doctor\",\r\n  \"setup\",\r\n  \"security\",\r\n  \"auth\",\r\n  \"authmd\",\r\n  \"workos\",\r\n  \"deploy\",\r\n  \"golden-path\",\r\n  \"field-test\",\r\n  \"seed\",\r\n  \"rls\",\r\n  \"deps\",\r\n  \"release\",\r\n  \"make\",\r\n  \"feature\",\r\n  \"refactor\",\r\n  \"impact\",\r\n  \"test\",\r\n  \"repair\",\r\n  \"do\",\r\n  \"bench\",\r\n  \"cair\",\r\n  \"delta\",\r\n  \"session\",\r\n  \"timeline\",\r\n  \"explain\",\r\n  \"manifest\",\r\n  \"import\",\r\n  \"status\",\r\n  \"changed\",\r\n  \"diff\",\r\n  \"handoff\",\r\n  \"studio\",\r\n  \"generate\",\r\n  \"add\",\r\n  \"inspect\",\r\n  \"check\",\r\n  \"verify\",\r\n  \"run\",\r\n  \"query\",\r\n  \"live\",\r\n  \"dev\",\r\n  \"db\",\r\n  \"workflow\",\r\n  \"outbox\",\r\n  \"telemetry\",\r\n  \"policy\",\r\n  \"secrets\",\r\n  \"env\",\r\n  \"ai\",\r\n] as const"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "TOP_LEVEL_COMMANDS = [\n  \"version\",\n  \"last\",\n  \"baseline\",\n  \"new\",\n  \"build\",\n  \"serve\",\n  \"worker\",\n  \"self-host\",\n  \"docs\",\n  \"agent-contract\",\n  \"agent\",\n  \"fabric\",\n  \"evolution\",\n  \"mcp\",\n  \"review\",\n  \"ui\",\n  \"doctor\",\n  \"setup\",\n  \"security\",\n  \"auth\",\n  \"authmd\",\n  \"workos\",\n  \"deploy\",\n  \"golden-path\",\n  \"field-test\",\n  \"seed\",\n  \"rls\",\n  \"deps\",\n  \"release\",\n  \"make\",\n  \"feature\",\n  \"refactor\",\n  \"impact\",\n  \"test\",\n  \"repair\",\n  \"do\",\n  \"bench\",\n  \"cair\",\n  \"delta\",\n  \"session\",\n  \"timeline\",\n  \"explain\",\n  \"manifest\",\n  \"import\",\n  \"status\",\n  \"changed\",\n  \"diff\",\n  \"handoff\",\n  \"studio\",\n  \"generate\",\n  \"add\",\n  \"inspect\",\n  \"check\",\n  \"verify\",\n  \"run\",\n  \"query\",\n  \"live\",\n  \"dev\",\n  \"db\",\n  \"workflow\",\n  \"outbox\",\n  \"telemetry\",\n  \"policy\",\n  \"secrets\",\n  \"env\",\n  \"ai\",\n] as const"
       },
       "name": "TOP_LEVEL_COMMANDS",
       "qualifiedName": "TOP_LEVEL_COMMANDS",
       "span": {
-        "end": 17031,
-        "start": 16155
+        "end": 15964,
+        "start": 15155
       }
     },
     {
@@ -71617,14 +71938,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "UI_BROWSERS: UiBrowserName[] = [\"chromium\", \"firefox\", \"webkit\"]"
       },
       "name": "UI_BROWSERS",
       "qualifiedName": "UI_BROWSERS",
       "span": {
-        "end": 21550,
-        "start": 21486
+        "end": 20275,
+        "start": 20211
       }
     },
     {
@@ -71668,14 +71989,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "UI_SCREENSHOT_MODES: UiScreenshotMode[] = [\"on\", \"off\", \"only-on-failure\"]"
       },
       "name": "UI_SCREENSHOT_MODES",
       "qualifiedName": "UI_SCREENSHOT_MODES",
       "span": {
-        "end": 21708,
-        "start": 21634
+        "end": 20431,
+        "start": 20357
       }
     },
     {
@@ -71685,14 +72006,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "UI_SUBCOMMANDS: UiSubcommand[] = [\r\n  \"audit\",\r\n  \"smoke\",\r\n  \"test\",\r\n  \"scenario\",\r\n  \"route\",\r\n  \"snapshot\",\r\n  \"report\",\r\n  \"doctor\",\r\n  \"list\",\r\n]"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "UI_SUBCOMMANDS: UiSubcommand[] = [\n  \"audit\",\n  \"smoke\",\n  \"test\",\n  \"scenario\",\n  \"route\",\n  \"snapshot\",\n  \"report\",\n  \"doctor\",\n  \"list\",\n]"
       },
       "name": "UI_SUBCOMMANDS",
       "qualifiedName": "UI_SUBCOMMANDS",
       "span": {
-        "end": 21477,
-        "start": 21326
+        "end": 20203,
+        "start": 20062
       }
     },
     {
@@ -71702,14 +72023,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "UI_TRACE_MODES: UiTraceMode[] = [\"on\", \"off\", \"retain-on-failure\"]"
       },
       "name": "UI_TRACE_MODES",
       "qualifiedName": "UI_TRACE_MODES",
       "span": {
-        "end": 21625,
-        "start": 21559
+        "end": 20349,
+        "start": 20283
       }
     },
     {
@@ -71719,14 +72040,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "UI_VIDEO_MODES: UiVideoMode[] = [\"on\", \"off\", \"retain-on-failure\"]"
       },
       "name": "UI_VIDEO_MODES",
       "qualifiedName": "UI_VIDEO_MODES",
       "span": {
-        "end": 21783,
-        "start": 21717
+        "end": 20505,
+        "start": 20439
       }
     },
     {
@@ -71906,14 +72227,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "WORKOS_FGA_ACTIONS: WorkOSFgaAction[] = [\"plan\", \"sync\", \"prove\", \"doctor\"]"
       },
       "name": "WORKOS_FGA_ACTIONS",
       "qualifiedName": "WORKOS_FGA_ACTIONS",
       "span": {
-        "end": 18680,
-        "start": 18605
+        "end": 17541,
+        "start": 17466
       }
     },
     {
@@ -72025,14 +72346,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
         "sourceSlice": "WORKOS_SUBCOMMANDS: WorkOSSubcommand[] = [\"install\", \"doctor\", \"seed\", \"setup\", \"prove\", \"env\", \"fga\"]"
       },
       "name": "WORKOS_SUBCOMMANDS",
       "qualifiedName": "WORKOS_SUBCOMMANDS",
       "span": {
-        "end": 18596,
-        "start": 18494
+        "end": 17458,
+        "start": 17356
       }
     },
     {
@@ -72118,6 +72439,23 @@ export const appGraph = {
       "span": {
         "end": 1147,
         "start": 1068
+      }
+    },
+    {
+      "contentHash": "0c5ea4ca5a12d2bfa775b5bf62565d80a9f5435317e832a75c65a294f8916d15",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "bc2ca74e5202cd66774569c16866af75382ce40d2f72b404df97e8790f7cf28c",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "absent = (error: unknown) => (error as NodeJS.ErrnoException).code === \"ENOENT\""
+      },
+      "name": "absent",
+      "qualifiedName": "absent",
+      "span": {
+        "end": 782,
+        "start": 703
       }
     },
     {
@@ -72257,6 +72595,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "c7ccca5bdbab005b358c9d38d577848c8a5cf9388abe1d90fcdc570ec426b11d",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "98b8d8802c91fecb8f7391ad0fd124332563b2c1c18850f2756c96716c0446b1",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "busy = (error: unknown) => [\"EEXIST\", \"EPERM\", \"EACCES\"].includes((error as NodeJS.ErrnoException).code ?? \"\")"
+      },
+      "name": "busy",
+      "qualifiedName": "busy",
+      "span": {
+        "end": 900,
+        "start": 790
+      }
+    },
+    {
       "contentHash": "73969df4750cdbef6aa1128252a28d505b966b4c68642eaa29ce0a858e6bacf7",
       "file": "src/forge/cli/codex-app-server.ts",
       "id": "cddfa97297f103c37e10fc0c484d0c015ac2e717ee93b8bb65f56cf11f3509b3",
@@ -72322,6 +72677,23 @@ export const appGraph = {
       "span": {
         "end": 2936,
         "start": 2891
+      }
+    },
+    {
+      "contentHash": "010d02f8d305eb9b15b3215f9a56679d9c5b73d0bc8b8eb1fbf418b054972baf",
+      "file": "src/forge/agent-fabric/project-runtime.ts",
+      "id": "32029514c48b1b10592bb549be3865ced84719357024c02b38b4c969377c59de",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7acaf1231201f6f3db7db8077c857e00d9d5e217c930ebd6ed930e8a73e79891",
+        "sourceSlice": "cliPath = fileURLToPath(new URL(\"../../../bin/forge.mjs\", import.meta.url))"
+      },
+      "name": "cliPath",
+      "qualifiedName": "cliPath",
+      "span": {
+        "end": 584,
+        "start": 509
       }
     },
     {
@@ -72461,6 +72833,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "65318864d8baf79c12deeb1eed5ce99d63ed63490e299dcac5bc1d211d8f703f",
+      "file": "src/forge/agent-fabric/project-runtime.ts",
+      "id": "eeeba302b92b7c7e3a516dc830c809fcb8522608dce2e7448e721b204b9558ed",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7acaf1231201f6f3db7db8077c857e00d9d5e217c930ebd6ed930e8a73e79891",
+        "sourceSlice": "delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))"
+      },
+      "name": "delay",
+      "qualifiedName": "delay",
+      "span": {
+        "end": 772,
+        "start": 701
+      }
+    },
+    {
       "contentHash": "f4217ee974d668e39b74b4e6f92c971e92ee8fc6af5f4565c20bffb1e6a82979",
       "file": "src/forge/delta/store.ts",
       "id": "3432867b25e86043c88d55bf4129f811ce2e7a47c43ec74c7cff42a88f1bacce",
@@ -72580,6 +72969,40 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "a8dc95884daea1c72f69dee433942ebf44f989fa08d07dd6305d1f4f1a87ec21",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "f47a5d927282452f385912e7d2490a0e30e85a82805beecdb2dab323c20febe8",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "execute = promisify(execFile)"
+      },
+      "name": "execute",
+      "qualifiedName": "execute",
+      "span": {
+        "end": 381,
+        "start": 352
+      }
+    },
+    {
+      "contentHash": "a8dc95884daea1c72f69dee433942ebf44f989fa08d07dd6305d1f4f1a87ec21",
+      "file": "src/forge/agent-fabric/project-runtime.ts",
+      "id": "80f430e277fe49e3674809beb1ec70cfc817133bc9e7105409e8e30a51830ac2",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "7acaf1231201f6f3db7db8077c857e00d9d5e217c930ebd6ed930e8a73e79891",
+        "sourceSlice": "execute = promisify(execFile)"
+      },
+      "name": "execute",
+      "qualifiedName": "execute",
+      "span": {
+        "end": 501,
+        "start": 472
+      }
+    },
+    {
       "contentHash": "4b7f498269eb59d7731308ad9dc343afbb2ecb5917674b48d8da76a5a3ffe39c",
       "file": "src/forge/agent-fabric/local-verification.ts",
       "id": "44d71e287fba098c289d5e7725beff60045b2976c72080d93e786fdcfb656fcd",
@@ -72645,6 +73068,23 @@ export const appGraph = {
       "span": {
         "end": 1515,
         "start": 1418
+      }
+    },
+    {
+      "contentHash": "a32e205369510a6caec2490a51dc85fdd6c69c426bbda0629a1ac5c88380074b",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "bca16efcbe6fcf453227af2e6c2698d96fcb55b557eb46eeda735e4bacb57456",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "identity = (root: string) => process.platform === \"win32\" ? root.toLowerCase() : root"
+      },
+      "name": "identity",
+      "qualifiedName": "identity",
+      "span": {
+        "end": 695,
+        "start": 610
       }
     },
     {
@@ -72722,14 +73162,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedCommon = { runId: { type: \"string\" }, requestId: { type: \"string\" }, expectedVersion: { type: \"integer\", minimum: 1 } }"
       },
       "name": "managedCommon",
       "qualifiedName": "managedCommon",
       "span": {
-        "end": 898,
-        "start": 772
+        "end": 1016,
+        "start": 890
       }
     },
     {
@@ -72756,14 +73196,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedEnvironmentSchema = { type: \"object\", properties: {\n  mode: { type: \"string\", enum: [\"auto\", \"none\"] }, ignoreScripts: { type: \"boolean\" },\n  registry: { type: \"string\", maxLength: 2048, format: \"uri\", pattern: \"^https://\" },\n  timeoutMs: { type: \"integer\", minimum: 100, maximum: 1800000 },\n}, additionalProperties: false }"
       },
       "name": "managedEnvironmentSchema",
       "qualifiedName": "managedEnvironmentSchema",
       "span": {
-        "end": 2809,
-        "start": 2478
+        "end": 2927,
+        "start": 2596
       }
     },
     {
@@ -72773,14 +73213,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedExecutorSchema = { type: \"object\", properties: {\r\n  nodeId: { type: \"string\" }, type: { type: \"string\", enum: [\"codex\", \"command\"] },\r\n  role: { type: \"string\", enum: [\"implementer\", \"reviewer\", \"investigator\", \"decision\"] },\r\n  prompt: { type: \"string\", maxLength: 12000 }, writeScope: { ...managedStrings, minItems: 1, maxItems: 100 },\r\n  model: { type: \"string\", maxLength: 100 }, argv: { type: \"array\", minItems: 1, maxItems: 40, items: { type: \"string\", maxLength: 4096 } },\r\n  timeoutMs: { type: \"integer\", minimum: 100, maximum: 1800000 },\r\n}, required: [\"nodeId\", \"type\"], additionalProperties: false }"
       },
       "name": "managedExecutorSchema",
       "qualifiedName": "managedExecutorSchema",
       "span": {
-        "end": 2274,
-        "start": 1657
+        "end": 2392,
+        "start": 1775
       }
     },
     {
@@ -72790,14 +73230,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedExecutors = { type: \"array\", minItems: 1, maxItems: 32, items: managedExecutorSchema }"
       },
       "name": "managedExecutors",
       "qualifiedName": "managedExecutors",
       "span": {
-        "end": 2470,
-        "start": 2377
+        "end": 2588,
+        "start": 2495
       }
     },
     {
@@ -72807,14 +73247,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedNodeSchema = { type: \"object\", properties: {\r\n  nodeId: { type: \"string\" }, kind: { type: \"string\", enum: [\"activity\", \"verification\", \"join\", \"decision\"] },\r\n  dependsOn: managedStrings, inputDigest: { type: \"string\", pattern: \"^(?:sha256:)?[a-f0-9]{64}$\" }, required: { type: \"boolean\" },\r\n  inputRefs: managedStrings, contextRefs: managedStrings, decisionId: { type: \"string\" },\r\n  outputContract: { type: \"object\", properties: { requiredEvidenceKinds: managedStrings }, required: [\"requiredEvidenceKinds\"], additionalProperties: false },\r\n}, required: [\"nodeId\", \"kind\", \"dependsOn\", \"inputDigest\", \"required\"], additionalProperties: false }"
       },
       "name": "managedNodeSchema",
       "qualifiedName": "managedNodeSchema",
       "span": {
-        "end": 1648,
-        "start": 996
+        "end": 1766,
+        "start": 1114
       }
     },
     {
@@ -72824,14 +73264,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedNodes = { type: \"array\", minItems: 1, maxItems: 32, items: managedNodeSchema }"
       },
       "name": "managedNodes",
       "qualifiedName": "managedNodes",
       "span": {
-        "end": 2368,
-        "start": 2283
+        "end": 2486,
+        "start": 2401
       }
     },
     {
@@ -72841,14 +73281,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "managedStrings = { type: \"array\", items: { type: \"string\" }, uniqueItems: true }"
       },
       "name": "managedStrings",
       "qualifiedName": "managedStrings",
       "span": {
-        "end": 987,
-        "start": 907
+        "end": 1105,
+        "start": 1025
       }
     },
     {
@@ -72875,7 +73315,7 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "missing = (error: unknown) => (error as NodeJS.ErrnoException).code === \"ENOENT\""
       },
       "name": "missing",
@@ -73249,14 +73689,14 @@ export const appGraph = {
       "kind": "code.const",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "statuses = [\"preparing\", \"running\", \"paused\", \"blocked\", \"canceling\", \"canceled\", \"publishing\", \"completed\", \"failed\"]"
       },
       "name": "statuses",
       "qualifiedName": "statuses",
       "span": {
-        "end": 1157,
-        "start": 1039
+        "end": 1541,
+        "start": 1423
       }
     },
     {
@@ -73342,6 +73782,23 @@ export const appGraph = {
       "span": {
         "end": 658,
         "start": 634
+      }
+    },
+    {
+      "contentHash": "b019ee388c3eb737dcad73911ed863ff4b85b9fab50ebd63d132531ea12cea65",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "19bed315872d549c4bc103a8916a4dae07b97a1aeb837701da6e422d38e07828",
+      "kind": "code.const",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "validId = (id: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(id)"
+      },
+      "name": "validId",
+      "qualifiedName": "validId",
+      "span": {
+        "end": 602,
+        "start": 532
       }
     },
     {
@@ -74303,14 +74760,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "function alive(pid: number): boolean { try { process.kill(pid, 0); return true; } catch (error) { return (error as NodeJS.ErrnoException).code !== \"ESRCH\"; } }"
       },
       "name": "alive",
       "qualifiedName": "alive",
       "span": {
-        "end": 1831,
-        "start": 1672
+        "end": 2215,
+        "start": 2056
       }
     },
     {
@@ -74702,6 +75159,23 @@ export const appGraph = {
       "span": {
         "end": 9651,
         "start": 8587
+      }
+    },
+    {
+      "contentHash": "91c2c576cf76f2a6d4fab9df23235653278feafcb16f49726656821136fc7033",
+      "file": "src/forge/agent-fabric/project-profile.ts",
+      "id": "0050c4f998e60a8732d49bedf04802c6196741940b73bc847d39b22f8028cd8b",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "b8a84bd4f98bef2b0bab5047c053323996af19a40aa20e6b6bd8b6264a70294d",
+        "sourceSlice": "async function applyFabricProfile(root: string, spec: Record<string, unknown>): Promise<Record<string, unknown>> {\n  const profile = await readFabricProfile(root);\n  if (!profile) return spec;\n  const result = structuredClone(spec);\n  if (profile.environment && (result.environment === undefined || (result.environment && typeof result.environment === \"object\" && !Array.isArray(result.environment)))) result.environment = { ...profile.environment, ...(result.environment as object ?? {}) };\n  if (profile.maxConcurrency && result.workflow && typeof result.workflow === \"object\" && !Array.isArray(result.workflow)) {\n    const workflow = result.workflow as Record<string, unknown>;\n    if (workflow.limits === undefined || (workflow.limits && typeof workflow.limits === \"object\" && !Array.isArray(workflow.limits))) workflow.limits = { maxConcurrency: profile.maxConcurrency, ...(workflow.limits as object ?? {}) };\n  }\n  return result;\n}"
+      },
+      "name": "applyFabricProfile",
+      "qualifiedName": "applyFabricProfile",
+      "span": {
+        "end": 4005,
+        "start": 3067
       }
     },
     {
@@ -75323,14 +75797,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "function assert(value: unknown, message: string): asserts value { if (!value) managedFail(\"AF_RUN_STORE\", message); }"
       },
       "name": "assert",
       "qualifiedName": "assert",
       "span": {
-        "end": 1949,
-        "start": 1832
+        "end": 2333,
+        "start": 2216
       }
     },
     {
@@ -76190,14 +76664,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function authorized(request: IncomingMessage, endpoint: OwnerEndpoint): boolean {\r\n  const supplied = request.headers.authorization;\r\n  const expected = `Bearer ${endpoint.token}`;\r\n  return request.headers.origin === undefined &&\r\n    request.headers.host === `127.0.0.1:${endpoint.port}` &&\r\n    typeof supplied === \"string\" && supplied.length === expected.length &&\r\n    timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));\r\n}"
       },
       "name": "authorized",
       "qualifiedName": "authorized",
       "span": {
-        "end": 4755,
-        "start": 4316
+        "end": 4844,
+        "start": 4405
       }
     },
     {
@@ -80635,6 +81109,23 @@ export const appGraph = {
       "span": {
         "end": 6377,
         "start": 5708
+      }
+    },
+    {
+      "contentHash": "18c3dacfc540325d47261b9ed269493fa00df8b1440b4acb60e24395a35c2163",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "10e877ec0eb8b329a8280dc9a9bd488cafc96852e89e384cbba822ba6c12c2bb",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function checkPath(path: string): Promise<void> {\n  const parent = dirname(path);\n  if (parent !== path) await checkPath(parent);\n  const stat = await lstat(path).catch(error => { if (absent(error)) return undefined; throw error; });\n  if (stat?.isSymbolicLink()) throw new Error(\"Agent Fabric registry cannot traverse symbolic links\");\n}"
+      },
+      "name": "checkPath",
+      "qualifiedName": "checkPath",
+      "span": {
+        "end": 3579,
+        "start": 3235
       }
     },
     {
@@ -87002,14 +87493,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "async function dispatch(service: LocalTaskService, action: LocalTaskAction, request: Record<string, unknown>): Promise<LocalTaskStatus> {\r\n  const keys = Object.keys(request).sort().join(\",\");\r\n  if (action === \"propose\") {\r\n    if (keys !== \"proposal\") throw new AgentFabricError(\"AF_INVALID_STATE\", \"Proposal request has unexpected fields\");\r\n    return service.propose(request.proposal);\r\n  }\r\n  if (keys !== \"taskId\" || typeof request.taskId !== \"string\") {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Task request requires only taskId\");\r\n  }\r\n  if (action === \"status\") return service.status(request.taskId);\r\n  if (action === \"evidence\") return service.evidence(request.taskId);\r\n  if (action === \"review\") return service.review(request.taskId);\r\n  if (action === \"run\") return service.run(request.taskId);\r\n  if (action === \"cancel\") return service.cancel(request.taskId);\r\n  if (action === \"reconcile\") return service.reconcile(request.taskId);\r\n  if (action === \"verify\") return service.verify(request.taskId);\r\n  if (action === \"recover-verification\") return service.recoverVerification(request.taskId);\r\n  return service.reviewResult(request.taskId);\r\n}"
       },
       "name": "dispatch",
       "qualifiedName": "dispatch",
       "span": {
-        "end": 6958,
-        "start": 5784
+        "end": 7047,
+        "start": 5873
       }
     },
     {
@@ -87036,14 +87527,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function dispatchMemory(service: LocalTaskService, action: LocalMemoryAction, request: Record<string, unknown>): LocalMemoryResult {\r\n  if (action === \"memory-add\") return service.rememberMemory(request);\r\n  if (action === \"memory-list\") return service.listMemory(request);\r\n  if (Object.keys(request).join(\",\") !== \"id\") {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Memory deletion requires only id\");\r\n  }\r\n  return { deleted: service.forgetMemory(request.id) };\r\n}"
       },
       "name": "dispatchMemory",
       "qualifiedName": "dispatchMemory",
       "span": {
-        "end": 7439,
-        "start": 6962
+        "end": 7528,
+        "start": 7051
       }
     },
     {
@@ -87699,14 +88190,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function endpointPath(repositoryRoot: string): string {\r\n  return localFabricPath(repositoryRoot, ENDPOINT_FILENAME);\r\n}"
       },
       "name": "endpointPath",
       "qualifiedName": "endpointPath",
       "span": {
-        "end": 2713,
-        "start": 2593
+        "end": 2771,
+        "start": 2651
       }
     },
     {
@@ -87733,14 +88224,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "function enqueueCodexHook(runner: string, workspaceRoot: string, eventName: string, payload: string): Promise<void> {\r\n  return new Promise((resolveEnqueue, rejectEnqueue) => {\r\n    const child = spawn(process.execPath, [runner, eventName], {\r\n      cwd: workspaceRoot,\r\n      windowsHide: true,\r\n      stdio: [\"pipe\", \"ignore\", \"ignore\"],\r\n      timeout: 2_000,\r\n    });\r\n    child.once(\"error\", () => rejectEnqueue(new Error(\"Codex hook queue runner could not start\")));\r\n    child.once(\"close\", (code) => code === 0\r\n      ? resolveEnqueue()\r\n      : rejectEnqueue(new Error(\"Codex hook queue runner failed\")));\r\n    child.stdin.on(\"error\", () => undefined);\r\n    child.stdin.end(payload);\r\n  });\r\n}"
       },
       "name": "enqueueCodexHook",
       "qualifiedName": "enqueueCodexHook",
       "span": {
-        "end": 24071,
-        "start": 23369
+        "end": 28195,
+        "start": 27493
       }
     },
     {
@@ -87826,6 +88317,23 @@ export const appGraph = {
       "span": {
         "end": 9308,
         "start": 6352
+      }
+    },
+    {
+      "contentHash": "6fc76a7010e8fe905954599fe26b852ef6ebfe6990e0da67c2222fe1151c93f4",
+      "file": "src/forge/agent-fabric/project-runtime.ts",
+      "id": "85b2de9fef269246ee8dad0c446a4c278e4d6ec0f7469f4c132bbcc603350c8d",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7acaf1231201f6f3db7db8077c857e00d9d5e217c930ebd6ed930e8a73e79891",
+        "sourceSlice": "async function ensureFabricOwner(directory: string, options: FabricOwnerOptions = {}): Promise<{ repositoryRoot: string; pid: number; port: number; started: boolean }> {\n  const root = await resolveFabricRoot(directory);\n  const existing = await probeLocalOwner(root);\n  if (existing) return { ...existing, started: false };\n  const state = localFabricPath(root);\n  await mkdir(state, { recursive: true, mode: 0o700 });\n  const lock = localFabricPath(root, \"owner-start.lock\");\n  const deadline = Date.now() + (options.startupTimeoutMs ?? 30_000);\n  for (;;) {\n    try { await writeFile(lock, JSON.stringify({ pid: process.pid }), { flag: \"wx\", mode: 0o600 }); break; }\n    catch (error) {\n      if (![\"EEXIST\", \"EPERM\", \"EACCES\"].includes((error as NodeJS.ErrnoException).code ?? \"\")) throw error;\n      const peer = await probeLocalOwner(root); if (peer) return { ...peer, started: false };\n      // Never recover a live or unverified process's lock solely on a timer.\n      if (Date.now() >= deadline) throw new Error(\"Agent Fabric owner startup is busy; inspect owner-start.lock and owner-start.lock.recovery after their processes exit\");\n      if (await recoverFabricLock(lock)) continue;\n      await delay(100);\n    }\n  }\n  try {\n    const peer = await probeLocalOwner(root); if (peer) return { ...peer, started: false };\n    const logPath = localFabricPath(root, \"owner.log\");\n    const stat = await lstat(logPath).catch(error => { if ((error as NodeJS.ErrnoException).code === \"ENOENT\") return undefined; throw error; });\n    if (stat && !stat.isFile()) throw new Error(\"Agent Fabric owner log is not a regular file\");\n    let node = options.nodeExecutable ?? process.execPath;\n    if (!options.nodeExecutable && process.versions.bun) node = (await execute(\"node\", [\"-p\", \"process.execPath\"], { windowsHide: true, timeout: 5000 })).stdout.trim();\n    const log = await open(logPath, \"a\", 0o600);\n    let child: ReturnType<typeof spawn>;\n    let failure: string | undefined;\n    try {\n      child = spawn(node, [options.cliPath ?? cliPath, \"fabric\", \"serve\", \"--json\"], {\n        cwd: root, detached: true, windowsHide: true, stdio: [\"ignore\", log.fd, log.fd],\n      });\n      child.once(\"error\", error => { failure = error.message; });\n      child.once(\"exit\", (code, signal) => { failure = `owner exited (${code ?? signal})`; });\n    } finally { await log.close(); }\n    child.unref();\n    try {\n      while (Date.now() < deadline) {\n        const owner = await probeLocalOwner(root);\n        if (owner) {\n          if (owner.pid !== child.pid) child.kill();\n          return { ...owner, started: owner.pid === child.pid };\n        }\n        if (failure) throw new Error(`Agent Fabric ${failure}; inspect ${logPath}`);\n        await delay(100);\n      }\n      throw new Error(`Agent Fabric owner startup timed out; inspect ${logPath}`);\n    } catch (error) {\n      // Only this exact spawned child is ours to stop if startup did not complete.\n      child.kill();\n      throw error;\n    }\n  } finally {\n    const contents = await readFile(lock, \"utf8\");\n    if (contents === JSON.stringify({ pid: process.pid })) await unlink(lock);\n  }\n}"
+      },
+      "name": "ensureFabricOwner",
+      "qualifiedName": "ensureFabricOwner",
+      "span": {
+        "end": 5192,
+        "start": 2047
       }
     },
     {
@@ -89492,6 +90000,40 @@ export const appGraph = {
       "span": {
         "end": 13355,
         "start": 12661
+      }
+    },
+    {
+      "contentHash": "f88a3aadb131cb51048da50e76c5eaeff775179e38697c97eda3252e74446b4c",
+      "file": "src/forge/agent-fabric/project-runtime.ts",
+      "id": "b8c2a931cd762fae1093f35392517f81fd0fcf43ddfdc17040f1a36418b276e8",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7acaf1231201f6f3db7db8077c857e00d9d5e217c930ebd6ed930e8a73e79891",
+        "sourceSlice": "async function fabricProjectDoctor(directory: string) {\n  const root = await resolveFabricRoot(directory);\n  const profile = await readFabricProfile(root);\n  const owner = await probeLocalOwner(root).then(value => ({ running: value !== null, ...(value ?? {}) })).catch(error => ({ running: false, error: error instanceof Error ? error.message : \"Owner probe failed\" }));\n  const sdkAvailable = await import(\"@openai/codex-sdk\").then(module => typeof module.Codex === \"function\").catch(() => false);\n  const auth = await execute(\"codex\", [\"login\", \"status\"], { windowsHide: true, timeout: 5000, maxBuffer: 8192 }).then(() => \"authenticated\" as const).catch(() => \"not_verified\" as const);\n  return { ok: sdkAvailable && !(\"error\" in owner), repositoryRoot: root,\n    runtime: { cliPath, nodeExecutable: process.execPath, sdkAvailable }, owner, profile,\n    codexAuthentication: auth, managedExecution: true, hooksRequired: false,\n    nextActions: [...(!sdkAvailable ? [\"Install the selected Forge runtime's dependencies\"] : []), ...(!owner.running ? [\"forge fabric ensure-owner --json\"] : []), ...(auth !== \"authenticated\" ? [\"codex login status\"] : [])] };\n}"
+      },
+      "name": "fabricProjectDoctor",
+      "qualifiedName": "fabricProjectDoctor",
+      "span": {
+        "end": 1940,
+        "start": 782
+      }
+    },
+    {
+      "contentHash": "c3883ffaf7ed45144e1e764e9b47cf8f9d8848a8e03513e41b6d48e51de4c865",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "0b67ee62af40af44a7fff3ad0d6ff5c68a61d2eb396a2bf521e8601c5ce8dd72",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "function fabricRegistryDirectory(options: FabricRegistryOptions = {}): string {\n  return resolve(options.registryDirectory ?? join(homedir(), \".forge\", \"agent-fabric\"));\n}"
+      },
+      "name": "fabricRegistryDirectory",
+      "qualifiedName": "fabricRegistryDirectory",
+      "span": {
+        "end": 3233,
+        "start": 3062
       }
     },
     {
@@ -91949,14 +92491,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "c8b64be62789b5766469a87f5046db2ef7436e2d37c860c149483b5745225bad",
-        "sourceSlice": "function formatDevHelp(): string {\r\n  return [\r\n    \"ForgeOS dev\",\r\n    \"\",\r\n    \"Usage:\",\r\n    \"  forge dev [status|stop] [options]\",\r\n    \"\",\r\n    \"Options:\",\r\n    \"  --db memory|pglite|postgres|none  Choose the development database adapter\",\r\n    \"  --port <port>                     API runtime port; use 0 for an ephemeral port\",\r\n    \"  --web-port <port>                 Web dev server port; use 0 for an ephemeral port\",\r\n    \"  --public-api-url <url>            Browser-facing API URL injected into web env, useful for tunnels\",\r\n    \"  --host <host>                     Bind host, default 127.0.0.1\",\r\n    \"  --no-web                          Start API/runtime only\",\r\n    \"  --api-only                        Start API/runtime only\",\r\n    \"  --web-only                        Start web server only, expecting an API runtime\",\r\n    \"  --no-worker                       Disable local worker\",\r\n    \"  --no-watch                        Disable file watching\",\r\n    \"  --seed                            Run the discovered seed command after the API runtime starts\",\r\n    \"  --seed-command <name>              Select a specific seed command for --seed\",\r\n    \"  --all-tenants                     With --seed, seed every discovered local tenant/persona\",\r\n    \"  --once --json                     Run one-shot diagnostics without starting servers\",\r\n    \"  --detach --json                   Start dev in the background with .forge/dev/dev.pid and .forge/dev/dev.log\",\r\n    \"\",\r\n    \"Examples:\",\r\n    \"  forge dev --db memory --port 3777 --web-port 5174\",\r\n    \"  forge dev --public-api-url http://localhost:3765\",\r\n    \"  forge dev --db memory --port 0 --web-port 0\",\r\n    \"  forge dev --seed --db pglite\",\r\n    \"  forge dev --seed --all-tenants --db pglite\",\r\n    \"  forge dev --db pglite --once --json\",\r\n    \"  forge dev --detach --db memory --port 0 --json\",\r\n    \"  forge dev status --json\",\r\n    \"  forge dev stop --json\",\r\n    \"\",\r\n  ].join(\"\\n\");\r\n}"
+        "fileContentHash": "2c88124ea6233ce22c16b491a4ca570c82cc63248acd200656957b987c6b1d1b",
+        "sourceSlice": "function formatDevHelp(): string {\n  return [\n    \"ForgeOS dev\",\n    \"\",\n    \"Usage:\",\n    \"  forge dev [status|stop] [options]\",\n    \"\",\n    \"Options:\",\n    \"  --db memory|pglite|postgres|none  Choose the development database adapter\",\n    \"  --port <port>                     API runtime port; use 0 for an ephemeral port\",\n    \"  --web-port <port>                 Web dev server port; use 0 for an ephemeral port\",\n    \"  --public-api-url <url>            Browser-facing API URL injected into web env, useful for tunnels\",\n    \"  --host <host>                     Bind host, default 127.0.0.1\",\n    \"  --no-web                          Start API/runtime only\",\n    \"  --api-only                        Start API/runtime only\",\n    \"  --web-only                        Start web server only, expecting an API runtime\",\n    \"  --no-worker                       Disable local worker\",\n    \"  --no-watch                        Disable file watching\",\n    \"  --seed                            Run the discovered seed command after the API runtime starts\",\n    \"  --seed-command <name>              Select a specific seed command for --seed\",\n    \"  --all-tenants                     With --seed, seed every discovered local tenant/persona\",\n    \"  --once --json                     Run one-shot diagnostics without starting servers\",\n    \"  --detach --json                   Start dev in the background with .forge/dev/dev.pid and .forge/dev/dev.log\",\n    \"\",\n    \"Examples:\",\n    \"  forge dev --db memory --port 3777 --web-port 5174\",\n    \"  forge dev --public-api-url http://localhost:3765\",\n    \"  forge dev --db memory --port 0 --web-port 0\",\n    \"  forge dev --seed --db pglite\",\n    \"  forge dev --seed --all-tenants --db pglite\",\n    \"  forge dev --db pglite --once --json\",\n    \"  forge dev --detach --db memory --port 0 --json\",\n    \"  forge dev status --json\",\n    \"  forge dev stop --json\",\n    \"\",\n  ].join(\"\\n\");\n}"
       },
       "name": "formatDevHelp",
       "qualifiedName": "formatDevHelp",
       "span": {
-        "end": 14947,
-        "start": 12986
+        "end": 15248,
+        "start": 13323
       }
     },
     {
@@ -92300,20 +92842,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "34a94e3a93548e48d5c6f323df7775eb7776ce2db20bc9b5b6b9f048f981a282",
+      "contentHash": "07289705e9e1907ba75da5a4f8b33efc73dbed68bcf2fe2d9f48ce890f7c4816",
       "file": "src/forge/cli/main.ts",
       "id": "cdb3e06cb8ae8d9f972808147303417be2f375543ab5ca27c99f24401221b497",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "c8b64be62789b5766469a87f5046db2ef7436e2d37c860c149483b5745225bad",
-        "sourceSlice": "function formatHelp(): string {\r\n  return [\r\n    \"ForgeOS\",\r\n    \"\",\r\n    \"Start with one of these:\",\r\n    \"  forge status --json       Compact project health, handoff state, and next actions\",\r\n    \"  forge changed --json      Group changed files into human, generated, and risk buckets\",\r\n    \"  forge changed --authored --json  Show only authored changed files, excluding generated artifacts\",\r\n    \"  forge changed --review --json  Show review-focused app/config/docs changes, excluding local agent/browser artifacts\",\r\n    \"  forge changed --commit-ready --json  Show files suitable for git add, excluding generated and operational artifacts\",\r\n    \"  forge new my-app --template vendor-access --field-test  Create an installed WorkOS/auth.md field-test app\",\r\n    \"  forge golden-path plan --auth workos --target docker --forge-spec npm:forgeos@alpha --json  Print the official create -> auth -> field-test -> deploy path\",\r\n    \"  forge golden-path status --real --production --client-id client_... --json  Read current app evidence and return the next blocking command\",\r\n    \"  forge field-test create vendor-access --auth workos --install --git --json  Create a real field-test app\",\r\n    \"  forge field-test run --realistic --templates vendor-access --package-managers npm --json\",\r\n    \"  forge field-test report --json  Summarize the machine-readable field-test report\",\r\n    \"  forge deploy init --target docker --json  Generate Docker production files, env template, and deploy README\",\r\n    \"  forge deploy readiness --production --json  Answer whether the app can publish, what blocks it, and the next command\",\r\n    \"  forge env doctor --target production --json  Show production env sources, missing keys, auth mode, database, and provider\",\r\n    \"  forge seed status --json  Discover app seed commands from the generated runtime graph\",\r\n    \"  forge seed dev --json     Run the app seed command against the local Forge dev runtime\",\r\n    \"  forge seed dev --all-tenants --json  Seed every discovered local tenant/persona profile\",\r\n    \"  forge seed reset --json   Run the seed command with args.reset=true against the local dev runtime\",\r\n    \"  forge diff authored       Run the authored-only git diff pathspec\",\r\n    \"  forge handoff --json      Compact work handoff for the next external code agent\",\r\n    \"  forge agent onboard --target codex --json  Prepare adapter, hooks, memory, and dev snapshot\",\r\n    \"  forge doctor agent --target codex --json  Check adapter, hooks, and Agent Memory readiness\",\r\n    \"  forge doctor delta --json  Check DeltaDB writability, queue drain, redaction, and gitignore posture\",\r\n    \"  forge doctor runtime --json  Check generated freshness, local dev lifecycle, and PGlite posture\",\r\n    \"  forge agent ingest codex --watch --file .forge/agent/events.ndjson --json  Explicit queue watcher for debugging\",\r\n    \"  forge fabric capabilities --json  Report the connected Agent Fabric local capabilities\",\r\n    \"  forge fabric propose --file task.json --json  Record an untrusted coding task proposal\",\r\n    \"  forge fabric memory-add --file note.json --json  Retain a bounded private note for a source snapshot\",\r\n    \"  forge fabric memory-list --file paths.json --json  List current notes for a source snapshot\",\r\n    \"  forge fabric memory-delete <memory-id> --json  Delete a private note\",\r\n    \"  forge fabric status <task-id> --json  Read durable task control state\",\r\n    \"  forge fabric evidence <task-id> --json  Read bounded task provenance and result digests\",\r\n    \"  forge fabric change-propose --file request.json --json  Register a change request for independent review\",\r\n    \"  forge fabric change-status --task-id <change-id> --json  Read pinned change review state\",\r\n    \"  forge fabric change-evidence --task-id <change-id> --json  Read exact-diff review evidence\",\r\n    \"  forge fabric change-review --task-id <change-id> --json  Run the owner-invoked Codex CLI reviewer (uses Codex credits)\",\r\n    \"  forge fabric review <task-id> --json  Open the local owner review window\",\r\n    \"  forge fabric run <task-id> --json  Run one approved local Ollama attempt\",\r\n    \"  forge fabric cancel <task-id> --json  Request best-effort task cancellation\",\r\n    \"  forge fabric reconcile <task-id> --json  Read back an uncertain patch effect without rerunning it\",\r\n    \"  forge fabric verify <task-id> --json  Run owner-approved local checks in Docker Desktop\",\r\n    \"  forge fabric recover-verification <task-id> --json  Ask owner to clear a pre-container verification intent\",\r\n    \"  forge fabric review-result <task-id> --json  Review and record a local diff decision\",\r\n    \"  forge fabric attached-propose --file request.json --json  Register a Codex accompanied task (owner required)\",\r\n    \"  forge fabric attached-status --task-id <task-id> --json  Read snapshot-bound readiness\",\r\n    \"  forge fabric attached-context --task-id <task-id> --json  Recover accompanied task context\",\r\n    \"  forge fabric attached-<mutation> --file request.json --json  Record sessions, attempts, reviews and evidence\",\r\n    \"  forge fabric workflow-next --task-id <task-id> --json  Read eligible caller-driven workflow nodes\",\r\n    \"  forge fabric workflow-<mutation> --file request.json --json  Plan, claim, result, replan, reconcile or recover\",\r\n    \"  forge fabric run-start --file run.json --json  Start managed workflow workers (Codex can consume credits)\",\r\n    \"  forge fabric run-status --run-id <run-id> --json  Read durable managed execution state\",\r\n    \"  forge fabric run-wait --file wait.json --json  Wait for managed events up to 30 seconds\",\r\n    \"  forge fabric run-<control> --file request.json --json  Steer, pause, resume, cancel or reconcile managed work\",\r\n    \"  forge fabric serve --json  Start the single local task owner for CLI and MCP clients\",\r\n    \"  forge fabric adaptive-propose --file input.json [--channel canary|stable] --json  Propose two bounded data-only workers\",\r\n    \"  forge fabric adaptive-review <run-id> --json  Open the local owner approval window\",\r\n    \"  forge fabric adaptive-run <run-id> --json  Run two permitted processes and join once\",\r\n    \"  forge fabric adaptive-status <run-id> --json  Read durable result after restart\",\r\n    \"  forge evolution register --manifest extension.json --json  Pin local extension bytes as an immutable candidate\",\r\n    \"  forge evolution evaluate <version-id> --json  Run the fixed local integrity suite\",\r\n    \"  forge evolution status <version-id> --json  Read bounded version and decision status\",\r\n    \"  forge evolution review canary|promote|rollback|revoke <version-id> --json  Open owner decision window\",\r\n    \"  forge evolution load <extension-key> --channel canary|stable --json  Verify selected loadability\",\r\n    \"  forge docs check --json  Check public docs, ReadTheDocs config, links, and local MkDocs tooling\",\r\n    \"  forge docs check --build --install-venv --json  Build docs strictly in a local RTD-style venv\",\r\n    \"  forge release doctor --json  Check npm publish readiness plus separate production deploy readiness\",\r\n    \"  forge authmd generate       Write public/auth.md from the generated agent/auth contract\",\r\n    \"  forge auth check --production --json  Fail unless auth is jwt/oidc production-ready\",\r\n    \"  forge auth prove --provider workos --real --client-id client_... --file workos-seed.yml --json  Prove real WorkOS auth/setup evidence without opening the dashboard\",\r\n    \"  forge authmd check --json   Check public/auth.md drift for CI and agent-ready apps\",\r\n    \"  forge workos install --yes --json  Delegate AuthKit setup to npx --yes workos@latest install\",\r\n    \"  forge workos doctor --json  Check WorkOS AuthKit/RBAC files, claims, seed, webhook, and tenant guards\",\r\n    \"  forge workos doctor --yes --json  Run local checks, then delegate to npx --yes workos@latest doctor\",\r\n    \"  forge workos env --client-id client_... --write --json  Create/update .env.local and web/.env.local for real WorkOS AuthKit proof\",\r\n    \"  forge workos seed --file workos-seed.yml --dry-run --json  Validate WorkOS seed without hosted changes\",\r\n    \"  forge workos prove --file workos-seed.yml --json  Prove local WorkOS/AuthKit/RBAC/seed readiness without dashboard changes\",\r\n    \"  forge workos setup --real --file workos-seed.yml --json  Apply redirect/CORS/homepage config and seed WorkOS without dashboard\",\r\n    \"  forge add auth workos --with-fga  Add optional WorkOS FGA resource-level authorization helpers\",\r\n    \"  forge workos fga plan --json  Derive the WorkOS FGA resource graph and proof scenarios from the app\",\r\n    \"  forge workos fga plan --write --json  Write .forge/workos-fga-setup.md for hosted FGA resource type setup\",\r\n    \"  forge workos fga sync --json  Record an idempotent local FGA graph state for deploy gates\",\r\n    \"  forge workos fga prove --json  Prove local FGA graph, cross-tenant denials, and state freshness\",\r\n    \"  forge deploy plan --target docker --json  Explain production deploy gates and commands\",\r\n    \"  forge deploy check --production --json  Gate auth, DB, metadata, generated artifacts, and liveQuery readiness\",\r\n    \"  forge deploy package --target docker  Write Docker production deploy files under deploy/\",\r\n    \"  forge deploy verify --production --url https://app.example.com --json  Probe health, public auth metadata, and optional runtime endpoints\",\r\n    \"  forge release check --allow-missing-local-release --json  Gate release readiness without failing on unprepared local artifacts\",\r\n    \"  forge self-host check --prepared-only --json  Report compose readiness without creating deploy files\",\r\n    \"  forge delta status --verbose --json  Include Delta schema, lock, and aggregate count details\",\r\n    \"  forge delta compact --json  Compact redacted local agent queue history\",\r\n    \"  forge delta prune --older-than 30d --dry-run --json  Plan local Delta operational retention\",\r\n    \"  forge delta export --redacted --json  Export redacted Delta status, timeline, and agent memory\",\r\n    \"  forge studio open <app-path> --preview-port 5174 --target codex --json\",\r\n    \"  forge studio snapshot <app-path> --preview-port 5174 --target codex --probe-codex-server --json\",\r\n    \"  forge studio bridge <app-path> --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --probe-codex-server --json\",\r\n    \"  forge studio doctor <app-path> --preview-port 5174 --target codex --json\",\r\n    \"  forge studio codex-server <app-path> --probe --json\",\r\n    \"  forge studio watch <app-path> --preview-port 5174 --target codex --json\",\r\n    \"  forge dev                 Run API, DB/worker, watch, and web app when present\",\r\n    \"  forge dev --once --json   One-shot health/diagnostic loop for agents and CI\",\r\n    \"  forge do \\\"fix\\\" --json     Ask ForgeOS for the right workflow and commands\",\r\n    \"  forge cair snapshot         Compact CAIR project snapshot for agents\",\r\n    \"  forge cair query \\\"Q REFS S#1\\\"  Run a semantic CAIR query\",\r\n    \"  forge cair action --plan \\\"A RN t=S#1 nn=renamed\\\"  Plan a guarded semantic edit\",\r\n    \"  forge cair action \\\"A APPLY plan=<P#|path>\\\"  Apply a guarded CAIR plan\",\r\n    \"  forge agent print-context --json  Read the generated agent context pack\",\r\n    \"  forge inspect all --brief --json  Read the smallest aggregate project contract\",\r\n    \"  forge inspect all --json  Read the compact generated machine contract\",\r\n    \"  forge mcp serve          Serve ForgeOS Agent Memory tools over MCP stdio\",\r\n    \"  forge agent context --current --json  Read the Agent Memory context pack\",\r\n    \"  forge agent timeline --json  Read external-agent hook activity as a compact timeline\",\r\n    \"  forge doctor windows --json  Diagnose native Windows setup and Bun shims\",\r\n    \"  forge bench compiler --json  Measure public compiler phase timings\",\r\n    \"  forge manifest validate ./forge.manifest.json --json  Validate an external runtime manifest\",\r\n    \"\",\r\n    \"Useful next commands:\",\r\n    \"  forge generate\",\r\n    \"  forge check --json\",\r\n    \"  forge verify              App-level default verification for the current project\",\r\n    \"  forge verify --standard\",\r\n    \"  forge verify quick        Alias for smoke/fast local checks\",\r\n    \"  forge verify agent        Alias for standard agent-loop verification\",\r\n    \"  forge verify release      Alias for strict app release verification\",\r\n    \"  forge verify framework    Maintainer-only ForgeOS framework test gate\",\r\n    \"  forge verify --strict --typechecker native --test-jobs 6\",\r\n    \"  forge verify framework --test-plan --json\",\r\n    \"\",\r\n  ].join(\"\\n\");\r\n}"
+        "fileContentHash": "2c88124ea6233ce22c16b491a4ca570c82cc63248acd200656957b987c6b1d1b",
+        "sourceSlice": "function formatHelp(): string {\n  return [\n    \"ForgeOS\",\n    \"\",\n    \"Start with one of these:\",\n    \"  forge status --json       Compact project health, handoff state, and next actions\",\n    \"  forge changed --json      Group changed files into human, generated, and risk buckets\",\n    \"  forge changed --authored --json  Show only authored changed files, excluding generated artifacts\",\n    \"  forge changed --review --json  Show review-focused app/config/docs changes, excluding local agent/browser artifacts\",\n    \"  forge changed --commit-ready --json  Show files suitable for git add, excluding generated and operational artifacts\",\n    \"  forge new my-app --template vendor-access --field-test  Create an installed WorkOS/auth.md field-test app\",\n    \"  forge golden-path plan --auth workos --target docker --forge-spec npm:forgeos@alpha --json  Print the official create -> auth -> field-test -> deploy path\",\n    \"  forge golden-path status --real --production --client-id client_... --json  Read current app evidence and return the next blocking command\",\n    \"  forge field-test create vendor-access --auth workos --install --git --json  Create a real field-test app\",\n    \"  forge field-test run --realistic --templates vendor-access --package-managers npm --json\",\n    \"  forge field-test report --json  Summarize the machine-readable field-test report\",\n    \"  forge deploy init --target docker --json  Generate Docker production files, env template, and deploy README\",\n    \"  forge deploy readiness --production --json  Answer whether the app can publish, what blocks it, and the next command\",\n    \"  forge env doctor --target production --json  Show production env sources, missing keys, auth mode, database, and provider\",\n    \"  forge seed status --json  Discover app seed commands from the generated runtime graph\",\n    \"  forge seed dev --json     Run the app seed command against the local Forge dev runtime\",\n    \"  forge seed dev --all-tenants --json  Seed every discovered local tenant/persona profile\",\n    \"  forge seed reset --json   Run the seed command with args.reset=true against the local dev runtime\",\n    \"  forge diff authored       Run the authored-only git diff pathspec\",\n    \"  forge handoff --json      Compact work handoff for the next external code agent\",\n    \"  forge agent onboard --target codex --json  Prepare adapter, hooks, memory, and dev snapshot\",\n    \"  forge doctor agent --target codex --json  Check adapter, hooks, and Agent Memory readiness\",\n    \"  forge doctor delta --json  Check DeltaDB writability, queue drain, redaction, and gitignore posture\",\n    \"  forge doctor runtime --json  Check generated freshness, local dev lifecycle, and PGlite posture\",\n    \"  forge agent ingest codex --watch --file .forge/agent/events.ndjson --json  Explicit queue watcher for debugging\",\n    \"  forge fabric install-skill [--dry-run] --json  Install the portable personal skill for this runtime\",\n    \"  forge fabric doctor --json  Diagnose the current Git project and its owner without starting workers\",\n    \"  forge fabric ensure-owner --json  Reuse or start the current Git project owner\",\n    \"  forge fabric project-register [--project-id <id>] --json  Register this Git root for MCP routing\",\n    \"  forge fabric project-list --json  List registered projects\",\n    \"  forge fabric capabilities --json  Report the connected Agent Fabric local capabilities\",\n    \"  forge fabric propose --file task.json --json  Record an untrusted coding task proposal\",\n    \"  forge fabric memory-add --file note.json --json  Retain a bounded private note for a source snapshot\",\n    \"  forge fabric memory-list --file paths.json --json  List current notes for a source snapshot\",\n    \"  forge fabric memory-delete <memory-id> --json  Delete a private note\",\n    \"  forge fabric status <task-id> --json  Read durable task control state\",\n    \"  forge fabric evidence <task-id> --json  Read bounded task provenance and result digests\",\n    \"  forge fabric change-propose --file request.json --json  Register a change request for independent review\",\n    \"  forge fabric change-status --task-id <change-id> --json  Read pinned change review state\",\n    \"  forge fabric change-evidence --task-id <change-id> --json  Read exact-diff review evidence\",\n    \"  forge fabric change-review --task-id <change-id> --json  Run the owner-invoked Codex CLI reviewer (uses Codex credits)\",\n    \"  forge fabric review <task-id> --json  Open the local owner review window\",\n    \"  forge fabric run <task-id> --json  Run one approved local Ollama attempt\",\n    \"  forge fabric cancel <task-id> --json  Request best-effort task cancellation\",\n    \"  forge fabric reconcile <task-id> --json  Read back an uncertain patch effect without rerunning it\",\n    \"  forge fabric verify <task-id> --json  Run owner-approved local checks in Docker Desktop\",\n    \"  forge fabric recover-verification <task-id> --json  Ask owner to clear a pre-container verification intent\",\n    \"  forge fabric review-result <task-id> --json  Review and record a local diff decision\",\n    \"  forge fabric attached-propose --file request.json --json  Register a Codex accompanied task (owner required)\",\n    \"  forge fabric attached-status --task-id <task-id> --json  Read snapshot-bound readiness\",\n    \"  forge fabric attached-context --task-id <task-id> --json  Recover accompanied task context\",\n    \"  forge fabric attached-<mutation> --file request.json --json  Record sessions, attempts, reviews and evidence\",\n    \"  forge fabric workflow-next --task-id <task-id> --json  Read eligible caller-driven workflow nodes\",\n    \"  forge fabric workflow-<mutation> --file request.json --json  Plan, claim, result, replan, reconcile or recover\",\n    \"  forge fabric run-start --file run.json --json  Start managed workflow workers (Codex can consume credits)\",\n    \"  forge fabric run-status --run-id <run-id> --json  Read durable managed execution state\",\n    \"  forge fabric run-wait --file wait.json --json  Wait for managed events up to 30 seconds\",\n    \"  forge fabric run-<control> --file request.json --json  Steer, pause, resume, cancel or reconcile managed work\",\n    \"  forge fabric serve --json  Start the single local task owner for CLI and MCP clients\",\n    \"  forge fabric adaptive-propose --file input.json [--channel canary|stable] --json  Propose two bounded data-only workers\",\n    \"  forge fabric adaptive-review <run-id> --json  Open the local owner approval window\",\n    \"  forge fabric adaptive-run <run-id> --json  Run two permitted processes and join once\",\n    \"  forge fabric adaptive-status <run-id> --json  Read durable result after restart\",\n    \"  forge evolution register --manifest extension.json --json  Pin local extension bytes as an immutable candidate\",\n    \"  forge evolution evaluate <version-id> --json  Run the fixed local integrity suite\",\n    \"  forge evolution status <version-id> --json  Read bounded version and decision status\",\n    \"  forge evolution review canary|promote|rollback|revoke <version-id> --json  Open owner decision window\",\n    \"  forge evolution load <extension-key> --channel canary|stable --json  Verify selected loadability\",\n    \"  forge docs check --json  Check public docs, ReadTheDocs config, links, and local MkDocs tooling\",\n    \"  forge docs check --build --install-venv --json  Build docs strictly in a local RTD-style venv\",\n    \"  forge release doctor --json  Check npm publish readiness plus separate production deploy readiness\",\n    \"  forge authmd generate       Write public/auth.md from the generated agent/auth contract\",\n    \"  forge auth check --production --json  Fail unless auth is jwt/oidc production-ready\",\n    \"  forge auth prove --provider workos --real --client-id client_... --file workos-seed.yml --json  Prove real WorkOS auth/setup evidence without opening the dashboard\",\n    \"  forge authmd check --json   Check public/auth.md drift for CI and agent-ready apps\",\n    \"  forge workos install --yes --json  Delegate AuthKit setup to npx --yes workos@latest install\",\n    \"  forge workos doctor --json  Check WorkOS AuthKit/RBAC files, claims, seed, webhook, and tenant guards\",\n    \"  forge workos doctor --yes --json  Run local checks, then delegate to npx --yes workos@latest doctor\",\n    \"  forge workos env --client-id client_... --write --json  Create/update .env.local and web/.env.local for real WorkOS AuthKit proof\",\n    \"  forge workos seed --file workos-seed.yml --dry-run --json  Validate WorkOS seed without hosted changes\",\n    \"  forge workos prove --file workos-seed.yml --json  Prove local WorkOS/AuthKit/RBAC/seed readiness without dashboard changes\",\n    \"  forge workos setup --real --file workos-seed.yml --json  Apply redirect/CORS/homepage config and seed WorkOS without dashboard\",\n    \"  forge add auth workos --with-fga  Add optional WorkOS FGA resource-level authorization helpers\",\n    \"  forge workos fga plan --json  Derive the WorkOS FGA resource graph and proof scenarios from the app\",\n    \"  forge workos fga plan --write --json  Write .forge/workos-fga-setup.md for hosted FGA resource type setup\",\n    \"  forge workos fga sync --json  Record an idempotent local FGA graph state for deploy gates\",\n    \"  forge workos fga prove --json  Prove local FGA graph, cross-tenant denials, and state freshness\",\n    \"  forge deploy plan --target docker --json  Explain production deploy gates and commands\",\n    \"  forge deploy check --production --json  Gate auth, DB, metadata, generated artifacts, and liveQuery readiness\",\n    \"  forge deploy package --target docker  Write Docker production deploy files under deploy/\",\n    \"  forge deploy verify --production --url https://app.example.com --json  Probe health, public auth metadata, and optional runtime endpoints\",\n    \"  forge release check --allow-missing-local-release --json  Gate release readiness without failing on unprepared local artifacts\",\n    \"  forge self-host check --prepared-only --json  Report compose readiness without creating deploy files\",\n    \"  forge delta status --verbose --json  Include Delta schema, lock, and aggregate count details\",\n    \"  forge delta compact --json  Compact redacted local agent queue history\",\n    \"  forge delta prune --older-than 30d --dry-run --json  Plan local Delta operational retention\",\n    \"  forge delta export --redacted --json  Export redacted Delta status, timeline, and agent memory\",\n    \"  forge studio open <app-path> --preview-port 5174 --target codex --json\",\n    \"  forge studio snapshot <app-path> --preview-port 5174 --target codex --probe-codex-server --json\",\n    \"  forge studio bridge <app-path> --preview-port 5174 --target codex --studio-url http://127.0.0.1:3765 --probe-codex-server --json\",\n    \"  forge studio doctor <app-path> --preview-port 5174 --target codex --json\",\n    \"  forge studio codex-server <app-path> --probe --json\",\n    \"  forge studio watch <app-path> --preview-port 5174 --target codex --json\",\n    \"  forge dev                 Run API, DB/worker, watch, and web app when present\",\n    \"  forge dev --once --json   One-shot health/diagnostic loop for agents and CI\",\n    \"  forge do \\\"fix\\\" --json     Ask ForgeOS for the right workflow and commands\",\n    \"  forge cair snapshot         Compact CAIR project snapshot for agents\",\n    \"  forge cair query \\\"Q REFS S#1\\\"  Run a semantic CAIR query\",\n    \"  forge cair action --plan \\\"A RN t=S#1 nn=renamed\\\"  Plan a guarded semantic edit\",\n    \"  forge cair action \\\"A APPLY plan=<P#|path>\\\"  Apply a guarded CAIR plan\",\n    \"  forge agent print-context --json  Read the generated agent context pack\",\n    \"  forge inspect all --brief --json  Read the smallest aggregate project contract\",\n    \"  forge inspect all --json  Read the compact generated machine contract\",\n    \"  forge mcp serve          Serve ForgeOS Agent Memory tools over MCP stdio\",\n    \"  forge agent context --current --json  Read the Agent Memory context pack\",\n    \"  forge agent timeline --json  Read external-agent hook activity as a compact timeline\",\n    \"  forge doctor windows --json  Diagnose native Windows setup and Bun shims\",\n    \"  forge bench compiler --json  Measure public compiler phase timings\",\n    \"  forge manifest validate ./forge.manifest.json --json  Validate an external runtime manifest\",\n    \"\",\n    \"Useful next commands:\",\n    \"  forge generate\",\n    \"  forge check --json\",\n    \"  forge verify              App-level default verification for the current project\",\n    \"  forge verify --standard\",\n    \"  forge verify quick        Alias for smoke/fast local checks\",\n    \"  forge verify agent        Alias for standard agent-loop verification\",\n    \"  forge verify release      Alias for strict app release verification\",\n    \"  forge verify framework    Maintainer-only ForgeOS framework test gate\",\n    \"  forge verify --strict --typechecker native --test-jobs 6\",\n    \"  forge verify framework --test-plan --json\",\n    \"\",\n  ].join(\"\\n\");\n}"
       },
       "name": "formatHelp",
       "qualifiedName": "formatHelp",
       "span": {
-        "end": 12982,
-        "start": 365
+        "end": 13321,
+        "start": 357
       }
     },
     {
@@ -94731,20 +95273,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "2930e3042d91d3851897bea1e0367c6f3a9bcfbf58ad11025d8a0669cf3ce11d",
+      "contentHash": "9a33194b73f4ecdf37f102166e37eef157dfb94299bb71de527520faa731b496",
       "file": "src/forge/agent-memory/mcp.ts",
       "id": "146621965ec0a97d47cdc32404b4b80b5634ab79ce565e129f48d7db9a1e351a",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
-        "sourceSlice": "async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRequest): Promise<Record<string, unknown> | null> {\r\n  if (request.method.startsWith(\"notifications/\")) {\r\n    return null;\r\n  }\r\n  try {\r\n    if (request.method === \"initialize\") {\r\n      return response(request.id, {\r\n        protocolVersion: \"2024-11-05\",\r\n        capabilities: { tools: {} },\r\n        serverInfo: { name: \"forgeos-agent-memory\", version: \"0.1.0\" },\r\n      });\r\n    }\r\n    if (request.method === \"tools/list\") {\r\n      return response(request.id, {\r\n        tools: [\r\n          ...MANAGED_RUN_ACTIONS.map((action) => ({\r\n            name: `fabric_${action.replaceAll(\"-\", \"_\")}`,\r\n            description: action === \"run-start\"\r\n              ? \"Start managed workflow worker processes through the owner. Codex workers may consume credits; command workers execute their explicit argv.\"\r\n              : action === \"run-status\" || action === \"run-wait\"\r\n                ? \"Read managed workflow execution status or wait for durable events with a maximum 30-second wait.\"\r\n                : \"Control managed execution through its single owner: steer, pause, resume, cancel or reconcile recorded work.\",\r\n            inputSchema: managedRunSchema(action),\r\n          })),\r\n          ...ATTACHED_TASK_ACTIONS.map((action) => ({\r\n            name: `fabric_${action.replaceAll(\"-\", \"_\")}`,\r\n            description: isAttachedTaskRead(action)\r\n              ? \"Read accompanied Codex task or caller-driven workflow state from its running owner.\"\r\n              : \"Record accompanied task or caller-driven workflow data. Does not dispatch agents, execute commands, approve effects or start a model.\",\r\n            inputSchema: isAttachedTaskRead(action)\r\n              ? { type: \"object\", properties: { taskId: { type: \"string\" } }, required: [\"taskId\"], additionalProperties: false }\r\n              : { type: \"object\", properties: { request: { type: \"object\" } }, required: [\"request\"], additionalProperties: false },\r\n          })),\r\n          {\r\n            name: \"fabric_capabilities\",\r\n            description: \"Read the current Agent Fabric coding-task capability boundary.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: {},\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"fabric_propose\",\r\n            description: \"Submit an untrusted local coding task proposal to the running Agent Fabric owner. This does not approve or run it.\",\r\n            inputSchema: { type: \"object\", properties: { proposal: { type: \"object\" } },\r\n              required: [\"proposal\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_status\",\r\n            description: \"Read status and bounded evidence for a local coding task from the running Agent Fabric owner.\",\r\n            inputSchema: { type: \"object\", properties: { taskId: { type: \"string\" } },\r\n              required: [\"taskId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_evidence\",\r\n            description: \"Read digest-bound task provenance without raw model output or diff content.\",\r\n            inputSchema: { type: \"object\", properties: { taskId: { type: \"string\" } },\r\n              required: [\"taskId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_change_propose\",\r\n            description: \"Register a change request for independent review. The exact diff is pinned when the owner runs the reviewer; this tool does not start a paid reviewer or approve the change.\",\r\n            inputSchema: { type: \"object\", properties: { request: {\r\n              type: \"object\",\r\n              properties: { objective: { type: \"string\" }, acceptanceCriteria: { type: \"array\", items: { type: \"string\" } },\r\n                implementer: { type: \"string\" } },\r\n              required: [\"objective\", \"acceptanceCriteria\", \"implementer\"], additionalProperties: false,\r\n            } }, required: [\"request\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_change_status\",\r\n            description: \"Read the current state of a pinned change review without starting a reviewer.\",\r\n            inputSchema: { type: \"object\", properties: { changeId: { type: \"string\" } },\r\n              required: [\"changeId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_change_evidence\",\r\n            description: \"Read exact-diff and review evidence for a pinned change without starting a reviewer.\",\r\n            inputSchema: { type: \"object\", properties: { changeId: { type: \"string\" } },\r\n              required: [\"changeId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: CODEX_MCP_HOOK_TOOL,\r\n            description: \"Receive a Codex lifecycle hook and enqueue its redacted metadata. Called by reviewed Codex hooks; agents should not call this tool directly.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { eventName: { type: \"string\", enum: CODEX_EVENTS }, payload: { type: \"object\" } },\r\n              required: [\"eventName\", \"payload\"],\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"agent_context\",\r\n            description: \"Read the ForgeOS Agent Memory context pack for the current work or a runtime entry.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { entry: { type: \"string\" } },\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"agent_memory\",\r\n            description: \"List recent redacted agent memory events.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { target: { type: \"string\" }, limit: { type: \"number\" } },\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"timeline\",\r\n            description: \"Read the semantic timeline for an entry, file, policy, service, tool, or agent.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { target: { type: \"string\" }, limit: { type: \"number\" } },\r\n              required: [\"target\"],\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"inspect_all\",\r\n            description: \"Read the generated ForgeOS machine contract artifacts that are safe for agents.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: {},\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n        ],\r\n      });\r\n    }\r\n    if (request.method === \"tools/call\") {\r\n      const params = request.params ?? {};\r\n      const name = typeof params.name === \"string\" ? params.name : \"\";\r\n      const args = params.arguments && typeof params.arguments === \"object\" && !Array.isArray(params.arguments)\r\n        ? params.arguments as Record<string, unknown>\r\n        : {};\r\n      const result = await runTool(workspaceRoot, name, args);\r\n      if (name !== CODEX_MCP_HOOK_TOOL) {\r\n        await logMcpToolCall(workspaceRoot, name, args, \"completed\").catch(() => undefined);\r\n      }\r\n      return response(request.id, {\r\n        content: [{ type: \"text\", text: JSON.stringify(result, null, 2) }],\r\n        ...(result && typeof result === \"object\" && \"ok\" in result && result.ok === false ? { isError: true } : {}),\r\n      });\r\n    }\r\n    return response(request.id, null, { code: -32601, message: `unknown MCP method: ${request.method}` });\r\n  } catch (error) {\r\n    const message = error instanceof Error ? error.message : String(error);\r\n    return response(request.id, null, { code: -32000, message });\r\n  }\r\n}"
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
+        "sourceSlice": "async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRequest, options: FabricMcpOptions = {}): Promise<Record<string, unknown> | null> {\n  if (request.method.startsWith(\"notifications/\")) {\r\n    return null;\r\n  }\r\n  try {\r\n    if (request.method === \"initialize\") {\r\n      return response(request.id, {\r\n        protocolVersion: \"2024-11-05\",\r\n        capabilities: { tools: {} },\r\n        serverInfo: { name: \"forgeos-agent-memory\", version: \"0.1.0\" },\r\n      });\r\n    }\r\n    if (request.method === \"tools/list\") {\r\n      return response(request.id, {\r\n        tools: [\n          { name: \"fabric_project_register\", description: \"Explicitly register a Git project root for isolated Agent Fabric routing. Does not start workers.\",\n            inputSchema: { type: \"object\", properties: { root: { type: \"string\", minLength: 1, description: \"Absolute path to the Git project or one of its subdirectories.\" }, id: { type: \"string\", minLength: 1 } }, required: [\"root\"], additionalProperties: false } },\n          { name: \"fabric_project_list\", description: \"List registered Agent Fabric projects and their canonical roots.\",\n            inputSchema: { type: \"object\", properties: {}, additionalProperties: false } },\n          { name: \"fabric_project_doctor\", description: \"Diagnose the selected project's runtime and owner without starting workers.\",\n            inputSchema: { type: \"object\", properties: {}, additionalProperties: false } },\n          { name: \"fabric_owner_start\", description: \"Ensure the selected project's isolated owner is running. Does not start a workflow or model.\",\n            inputSchema: { type: \"object\", properties: {}, additionalProperties: false } },\n          ...MANAGED_RUN_ACTIONS.map((action) => ({\r\n            name: `fabric_${action.replaceAll(\"-\", \"_\")}`,\r\n            description: action === \"run-start\"\r\n              ? \"Start managed workflow worker processes through the owner. Codex workers may consume credits; command workers execute their explicit argv.\"\r\n              : action === \"run-status\" || action === \"run-wait\"\r\n                ? \"Read managed workflow execution status or wait for durable events with a maximum 30-second wait.\"\r\n                : \"Control managed execution through its single owner: steer, pause, resume, cancel or reconcile recorded work.\",\r\n            inputSchema: managedRunSchema(action),\r\n          })),\r\n          ...ATTACHED_TASK_ACTIONS.map((action) => ({\r\n            name: `fabric_${action.replaceAll(\"-\", \"_\")}`,\r\n            description: isAttachedTaskRead(action)\r\n              ? \"Read accompanied Codex task or caller-driven workflow state from its running owner.\"\r\n              : \"Record accompanied task or caller-driven workflow data. Does not dispatch agents, execute commands, approve effects or start a model.\",\r\n            inputSchema: isAttachedTaskRead(action)\r\n              ? { type: \"object\", properties: { taskId: { type: \"string\" } }, required: [\"taskId\"], additionalProperties: false }\r\n              : { type: \"object\", properties: { request: { type: \"object\" } }, required: [\"request\"], additionalProperties: false },\r\n          })),\r\n          {\r\n            name: \"fabric_capabilities\",\r\n            description: \"Read the current Agent Fabric coding-task capability boundary.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: {},\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"fabric_propose\",\r\n            description: \"Submit an untrusted local coding task proposal to the running Agent Fabric owner. This does not approve or run it.\",\r\n            inputSchema: { type: \"object\", properties: { proposal: { type: \"object\" } },\r\n              required: [\"proposal\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_status\",\r\n            description: \"Read status and bounded evidence for a local coding task from the running Agent Fabric owner.\",\r\n            inputSchema: { type: \"object\", properties: { taskId: { type: \"string\" } },\r\n              required: [\"taskId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_evidence\",\r\n            description: \"Read digest-bound task provenance without raw model output or diff content.\",\r\n            inputSchema: { type: \"object\", properties: { taskId: { type: \"string\" } },\r\n              required: [\"taskId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_change_propose\",\r\n            description: \"Register a change request for independent review. The exact diff is pinned when the owner runs the reviewer; this tool does not start a paid reviewer or approve the change.\",\r\n            inputSchema: { type: \"object\", properties: { request: {\r\n              type: \"object\",\r\n              properties: { objective: { type: \"string\" }, acceptanceCriteria: { type: \"array\", items: { type: \"string\" } },\r\n                implementer: { type: \"string\" } },\r\n              required: [\"objective\", \"acceptanceCriteria\", \"implementer\"], additionalProperties: false,\r\n            } }, required: [\"request\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_change_status\",\r\n            description: \"Read the current state of a pinned change review without starting a reviewer.\",\r\n            inputSchema: { type: \"object\", properties: { changeId: { type: \"string\" } },\r\n              required: [\"changeId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: \"fabric_change_evidence\",\r\n            description: \"Read exact-diff and review evidence for a pinned change without starting a reviewer.\",\r\n            inputSchema: { type: \"object\", properties: { changeId: { type: \"string\" } },\r\n              required: [\"changeId\"], additionalProperties: false },\r\n          },\r\n          {\r\n            name: CODEX_MCP_HOOK_TOOL,\r\n            description: \"Receive a Codex lifecycle hook and enqueue its redacted metadata. Called by reviewed Codex hooks; agents should not call this tool directly.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { eventName: { type: \"string\", enum: CODEX_EVENTS }, payload: { type: \"object\" } },\r\n              required: [\"eventName\", \"payload\"],\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"agent_context\",\r\n            description: \"Read the ForgeOS Agent Memory context pack for the current work or a runtime entry.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { entry: { type: \"string\" } },\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"agent_memory\",\r\n            description: \"List recent redacted agent memory events.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { target: { type: \"string\" }, limit: { type: \"number\" } },\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"timeline\",\r\n            description: \"Read the semantic timeline for an entry, file, policy, service, tool, or agent.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: { target: { type: \"string\" }, limit: { type: \"number\" } },\r\n              required: [\"target\"],\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n          {\r\n            name: \"inspect_all\",\r\n            description: \"Read the generated ForgeOS machine contract artifacts that are safe for agents.\",\r\n            inputSchema: {\r\n              type: \"object\",\r\n              properties: {},\r\n              additionalProperties: false,\r\n            },\r\n          },\r\n        ].map((tool) => tool.name.startsWith(\"fabric_\") && tool.name !== \"fabric_project_register\" && tool.name !== \"fabric_project_list\"\n          ? { ...tool, inputSchema: projectAwareSchema(tool.inputSchema) } : tool),\n      });\r\n    }\r\n    if (request.method === \"tools/call\") {\r\n      const params = request.params ?? {};\r\n      const name = typeof params.name === \"string\" ? params.name : \"\";\r\n      const args = params.arguments && typeof params.arguments === \"object\" && !Array.isArray(params.arguments)\r\n        ? params.arguments as Record<string, unknown>\r\n        : {};\r\n      let toolRoot = workspaceRoot;\n      const toolArgs = { ...args };\n      if (name.startsWith(\"fabric_\") && name !== \"fabric_project_register\" && name !== \"fabric_project_list\" && \"projectId\" in toolArgs) {\n        if (typeof toolArgs.projectId !== \"string\" || !toolArgs.projectId.trim()) throw new Error(\"projectId must be a non-empty registered project identifier\");\n        toolRoot = await resolveFabricProject(toolArgs.projectId, options);\n        delete toolArgs.projectId;\n      }\n      const toolResult = await runTool(toolRoot, name, toolArgs, options);\n      const result = typeof args.projectId === \"string\" && name.startsWith(\"fabric_\") && toolResult && typeof toolResult === \"object\"\n        ? { ...toolResult, projectContext: { id: args.projectId, root: toolRoot } } : toolResult;\n      if (name !== CODEX_MCP_HOOK_TOOL) {\n        await logMcpToolCall(toolRoot, name, args, \"completed\").catch(() => undefined);\n      }\r\n      return response(request.id, {\r\n        content: [{ type: \"text\", text: JSON.stringify(result, null, 2) }],\r\n        ...(result && typeof result === \"object\" && \"ok\" in result && result.ok === false ? { isError: true } : {}),\r\n      });\r\n    }\r\n    return response(request.id, null, { code: -32601, message: `unknown MCP method: ${request.method}` });\r\n  } catch (error) {\r\n    const message = error instanceof Error ? error.message : String(error);\r\n    return response(request.id, null, { code: -32000, message });\r\n  }\r\n}"
       },
       "name": "handleMcpRequest",
       "qualifiedName": "handleMcpRequest",
       "span": {
-        "end": 13099,
-        "start": 5269
+        "end": 15685,
+        "start": 5777
       }
     },
     {
@@ -95479,20 +96021,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "98e4afe9bd669ba1ee62c7a5babc9d6f246d78a7c61d955dddf08ebe279afabe",
+      "contentHash": "08e88ebdf1d3ccc9b0c6fc096c82a7f55492b3c8764d058294abd917c2594f35",
       "file": "src/forge/cli/parse.ts",
       "id": "a3c3075d786e21ea9209e86dbe96ccb87f9f27c3761b2715f92992376cbec752",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function hasUnknownOption(argv: string[]): string | null {\r\n  const known = new Set([\r\n    \"--version\",\r\n    \"--check\",\r\n    \"--json\",\r\n    \"--human\",\r\n    \"--for-agent\",\r\n    \"--causal\",\r\n    \"--stale-proofs\",\r\n    \"--dry-run\",\r\n    \"--plan\",\r\n    \"--staged\",\r\n    \"--since\",\r\n    \"--feature\",\r\n    \"--refactor\",\r\n    \"--upgrade\",\r\n    \"--include-generated\",\r\n    \"--exclude-tests\",\r\n    \"--risk-threshold\",\r\n    \"--max-cost\",\r\n    \"--include-docker\",\r\n    \"--include-browser\",\r\n    \"--bail\",\r\n    \"--report\",\r\n    \"--from-last-test-run\",\r\n    \"--from-last-ui-run\",\r\n    \"--from\",\r\n    \"--trace\",\r\n    \"--workflow-run\",\r\n    \"--outbox-delivery\",\r\n    \"--diagnostic\",\r\n    \"--repair\",\r\n    \"--allow-medium-confidence\",\r\n    \"--max-attempts\",\r\n    \"--commit-friendly\",\r\n    \"--fast\",\r\n    \"--smoke\",\r\n    \"--standard\",\r\n    \"--script-timeout-ms\",\r\n    \"--test-plan\",\r\n    \"--typechecker\",\r\n    \"--timeout-ms\",\r\n    \"--apply\",\r\n    \"--runtime-inspect\",\r\n    \"--allow-scripts\",\r\n    \"--frontend\",\r\n    \"--backend\",\r\n    \"--yes\",\r\n    \"--force\",\r\n    \"--no-generate\",\r\n    \"--no-verify\",\r\n    \"--keep-failed\",\r\n    \"--keep\",\r\n    \"--runtime-probes\",\r\n    \"--auth-probes\",\r\n    \"--ui-probes\",\r\n    \"--realistic\",\r\n    \"--real\",\r\n    \"--write-report\",\r\n    \"--tenant-scoped\",\r\n    \"--field\",\r\n    \"--fields\",\r\n    \"--type\",\r\n    \"--values\",\r\n    \"--default\",\r\n    \"--index\",\r\n    \"--roles\",\r\n    \"--table\",\r\n    \"--policy\",\r\n    \"--emit\",\r\n    \"--event\",\r\n    \"--entry\",\r\n    \"--change\",\r\n    \"--proof\",\r\n    \"--handoff\",\r\n    \"--current\",\r\n    \"--trigger\",\r\n    \"--component\",\r\n    \"--command\",\r\n    \"--framework\",\r\n    \"--package\",\r\n    \"--action\",\r\n    \"--with-ai\",\r\n    \"--with-crud\",\r\n    \"--with-livequery\",\r\n    \"--with-react\",\r\n    \"--with-ui\",\r\n    \"--with-fga\",\r\n    \"--with-tests\",\r\n    \"--with-create-form\",\r\n    \"--write\",\r\n    \"--md\",\r\n    \"--sarif\",\r\n    \"--fail-on\",\r\n    \"--mode\",\r\n    \"--include\",\r\n    \"--exclude\",\r\n    \"--base\",\r\n    \"--headed\",\r\n    \"--browser\",\r\n    \"--trace\",\r\n    \"--screenshot\",\r\n    \"--video\",\r\n    \"--base-url\",\r\n    \"--runtime-url\",\r\n    \"--workspace\",\r\n    \"--reuse-servers\",\r\n    \"--start-servers\",\r\n    \"--scenario\",\r\n    \"--all\",\r\n    \"--ci\",\r\n    \"--timeout\",\r\n    \"--name\",\r\n    \"--auth-token\",\r\n    \"--auth\",\r\n    \"--update\",\r\n    \"--allow-high-risk\",\r\n    \"--to\",\r\n    \"--changed\",\r\n    \"--authored\",\r\n    \"--review\",\r\n    \"--env\",\r\n    \"--input\",\r\n    \"--provider\",\r\n    \"--target\",\r\n    \"--release\",\r\n    \"--allow-dirty\",\r\n    \"--allow-public-sourcemaps\",\r\n    \"--allow-missing-local-release\",\r\n    \"--prepared-only\",\r\n    \"--build\",\r\n    \"--install-venv\",\r\n    \"--with-release\",\r\n    \"--concurrency\",\r\n    \"--iterations\",\r\n    \"--warmups\",\r\n    \"--sandbox-backend\",\r\n    \"--skip-tests\",\r\n    \"--test-jobs\",\r\n    \"--skip-typecheck\",\r\n    \"--skip-eslint\",\r\n    \"--mock\",\r\n    \"--list\",\r\n    \"--port\",\r\n    \"--host\",\r\n    \"--watch\",\r\n    \"--no-watch\",\r\n    \"--db\",\r\n    \"--adapter\",\r\n    \"--local\",\r\n    \"--database-url\",\r\n    \"--worker\",\r\n    \"--no-worker\",\r\n    \"--no-start\",\r\n    \"--no-bridge\",\r\n    \"--probe\",\r\n    \"--probe-codex-server\",\r\n    \"--once\",\r\n    \"--limit\",\r\n    \"--kind\",\r\n    \"--session\",\r\n    \"--input\",\r\n    \"--args\",\r\n    \"--step\",\r\n    \"--sink\",\r\n    \"--file\",\r\n    \"--task-id\",\r\n    \"--run-id\",\r\n    \"--manifest\",\r\n    \"--channel\",\r\n    \"--telemetry\",\r\n    \"--user-id\",\r\n    \"--tenant-id\",\r\n    \"--tenant\",\r\n    \"--client-id\",\r\n    \"--workos-client-id\",\r\n    \"--other-tenant\",\r\n    \"--role\",\r\n    \"--permissions\",\r\n    \"--strict-policies\",\r\n    \"--strict\",\r\n    \"--strict-secrets\",\r\n    \"--internal\",\r\n    \"--env-file\",\r\n    \"--skip-startup-console\",\r\n    \"--redacted\",\r\n    \"--older-than\",\r\n    \"--output\",\r\n    \"--mock-ai\",\r\n    \"--ai\",\r\n    \"--provider\",\r\n    \"--model\",\r\n    \"--prompt\",\r\n    \"--url\",\r\n    \"--template\",\r\n    \"--templates\",\r\n    \"--package-manager\",\r\n    \"--package-managers\",\r\n    \"--forge-spec\",\r\n    \"--local-forge\",\r\n    \"--install\",\r\n    \"--no-install\",\r\n    \"--git\",\r\n    \"--no-git\",\r\n    \"--field-test\",\r\n    \"--commit-ready\",\r\n    \"--detach\",\r\n    \"--seed\",\r\n    \"--seed-command\",\r\n    \"--all-tenants\",\r\n    \"--ergonomics\",\r\n    \"--with-web\",\r\n    \"--no-web\",\r\n    \"--api-only\",\r\n    \"--web-only\",\r\n    \"--open\",\r\n    \"--postgres-version\",\r\n    \"--runtime-port\",\r\n    \"--web-port\",\r\n    \"--public-api-url\",\r\n    \"--preview-port\",\r\n    \"--preview-url\",\r\n    \"--studio-url\",\r\n    \"--interval-ms\",\r\n    \"--workspace-id\",\r\n    \"--poll-interval\",\r\n    \"--mcp-server\",\r\n    \"--allow-dev-auth\",\r\n    \"--token\",\r\n    \"--prod\",\r\n    \"--production\",\r\n    \"--scenario\",\r\n    \"--reason\",\r\n    \"--no-preserve-user-sections\",\r\n    \"--no-skills\",\r\n    \"--no-rules\",\r\n    \"--full\",\r\n    \"--brief\",\r\n    \"--verbose\",\r\n    \"--run-tests\",\r\n    \"--model-level\",\r\n    \"--live\",\r\n    \"--no-delta\",\r\n    \"--format\",\r\n  ]);\r\n\r\n  for (let index = 0; index < argv.length; index++) {\r\n    const arg = argv[index];\r\n    if (!arg.startsWith(\"--\")) {\r\n      continue;\r\n    }\r\n    if (known.has(arg)) {\r\n      if (\r\n        arg === \"--concurrency\" ||\r\n        arg === \"--iterations\" ||\r\n        arg === \"--warmups\" ||\r\n        arg === \"--field\" ||\r\n        arg === \"--fields\" ||\r\n        arg === \"--type\" ||\r\n        arg === \"--values\" ||\r\n        arg === \"--default\" ||\r\n        arg === \"--roles\" ||\r\n        arg === \"--table\" ||\r\n        arg === \"--policy\" ||\r\n        arg === \"--emit\" ||\r\n        arg === \"--event\" ||\r\n        arg === \"--entry\" ||\r\n        arg === \"--change\" ||\r\n        arg === \"--proof\" ||\r\n        arg === \"--trigger\" ||\r\n        arg === \"--component\" ||\r\n        arg === \"--command\" ||\r\n        arg === \"--package\" ||\r\n        arg === \"--action\" ||\r\n        arg === \"--since\" ||\r\n        arg === \"--feature\" ||\r\n        arg === \"--refactor\" ||\r\n        arg === \"--upgrade\" ||\r\n        arg === \"--risk-threshold\" ||\r\n        arg === \"--max-cost\" ||\r\n        arg === \"--report\" ||\r\n        arg === \"--from\" ||\r\n        arg === \"--trace\" ||\r\n        arg === \"--workflow-run\" ||\r\n        arg === \"--outbox-delivery\" ||\r\n        arg === \"--diagnostic\" ||\r\n        arg === \"--repair\" ||\r\n        arg === \"--max-attempts\" ||\r\n        arg === \"--write\" ||\r\n        arg === \"--fail-on\" ||\r\n        arg === \"--mode\" ||\r\n        arg === \"--include\" ||\r\n        arg === \"--exclude\" ||\r\n        arg === \"--base\" ||\r\n        arg === \"--browser\" ||\r\n        arg === \"--trace\" ||\r\n        arg === \"--screenshot\" ||\r\n        arg === \"--video\" ||\r\n        arg === \"--base-url\" ||\r\n        arg === \"--runtime-url\" ||\r\n        arg === \"--workspace\" ||\r\n        arg === \"--scenario\" ||\r\n        arg === \"--timeout\" ||\r\n        arg === \"--timeout-ms\" ||\r\n        arg === \"--test-jobs\" ||\r\n        arg === \"--typechecker\" ||\r\n        arg === \"--name\" ||\r\n        arg === \"--reason\" ||\r\n        arg === \"--auth-token\" ||\r\n        arg === \"--auth\" ||\r\n        arg === \"--sandbox-backend\" ||\r\n        arg === \"--port\" ||\r\n        arg === \"--host\" ||\r\n        arg === \"--db\" ||\r\n        arg === \"--adapter\" ||\r\n        arg === \"--database-url\" ||\r\n        arg === \"--limit\" ||\r\n        arg === \"--older-than\" ||\r\n        arg === \"--output\" ||\r\n        arg === \"--kind\" ||\r\n        arg === \"--session\" ||\r\n        arg === \"--input\" ||\r\n        arg === \"--args\" ||\r\n        arg === \"--step\" ||\r\n        arg === \"--sink\" ||\r\n        arg === \"--file\" ||\r\n        arg === \"--task-id\" ||\r\n        arg === \"--run-id\" ||\r\n        arg === \"--manifest\" ||\r\n        arg === \"--channel\" ||\r\n        arg === \"--write-report\" ||\r\n        arg === \"--telemetry\" ||\r\n        arg === \"--user-id\" ||\r\n        arg === \"--tenant\" ||\r\n        arg === \"--other-tenant\" ||\r\n        arg === \"--tenant-id\" ||\r\n        arg === \"--role\" ||\r\n        arg === \"--permissions\" ||\r\n        arg === \"--strict-policies\" ||\r\n        arg === \"--env-file\" ||\r\n        arg === \"--ai\" ||\r\n        arg === \"--provider\" ||\r\n        arg === \"--model\" ||\r\n        arg === \"--prompt\" ||\r\n        arg === \"--format\" ||\r\n        arg === \"--url\" ||\r\n        arg === \"--template\" ||\r\n        arg === \"--package-manager\" ||\r\n        arg === \"--forge-spec\" ||\r\n        arg === \"--postgres-version\" ||\r\n        arg === \"--runtime-port\" ||\r\n        arg === \"--web-port\" ||\r\n        arg === \"--public-api-url\" ||\r\n        arg === \"--preview-port\" ||\r\n        arg === \"--preview-url\" ||\r\n        arg === \"--studio-url\" ||\r\n        arg === \"--interval-ms\" ||\r\n        arg === \"--workspace-id\" ||\r\n        arg === \"--poll-interval\" ||\r\n        arg === \"--mcp-server\" ||\r\n        arg === \"--token\"\r\n        || arg === \"--to\" ||\r\n        arg === \"--env\" ||\r\n        arg === \"--input\" ||\r\n        arg === \"--provider\" ||\r\n        arg === \"--target\" ||\r\n        arg === \"--release\"\r\n      ) {\r\n        index += 1;\r\n      }\r\n      continue;\r\n    }\r\n    return arg;\r\n  }\r\n\r\n  return null;\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function hasUnknownOption(argv: string[]): string | null {\n  const known = new Set([\n    \"--version\",\n    \"--check\",\n    \"--json\",\n    \"--human\",\n    \"--for-agent\",\n    \"--causal\",\n    \"--stale-proofs\",\n    \"--dry-run\",\n    \"--plan\",\n    \"--staged\",\n    \"--since\",\n    \"--feature\",\n    \"--refactor\",\n    \"--upgrade\",\n    \"--include-generated\",\n    \"--exclude-tests\",\n    \"--risk-threshold\",\n    \"--max-cost\",\n    \"--include-docker\",\n    \"--include-browser\",\n    \"--bail\",\n    \"--report\",\n    \"--from-last-test-run\",\n    \"--from-last-ui-run\",\n    \"--from\",\n    \"--trace\",\n    \"--workflow-run\",\n    \"--outbox-delivery\",\n    \"--diagnostic\",\n    \"--repair\",\n    \"--allow-medium-confidence\",\n    \"--max-attempts\",\n    \"--commit-friendly\",\n    \"--fast\",\n    \"--smoke\",\n    \"--standard\",\n    \"--script-timeout-ms\",\n    \"--test-plan\",\n    \"--typechecker\",\n    \"--timeout-ms\",\n    \"--apply\",\n    \"--runtime-inspect\",\n    \"--allow-scripts\",\n    \"--frontend\",\n    \"--backend\",\n    \"--yes\",\n    \"--force\",\n    \"--no-generate\",\n    \"--no-verify\",\n    \"--keep-failed\",\n    \"--keep\",\n    \"--runtime-probes\",\n    \"--auth-probes\",\n    \"--ui-probes\",\n    \"--realistic\",\n    \"--real\",\n    \"--write-report\",\n    \"--tenant-scoped\",\n    \"--field\",\n    \"--fields\",\n    \"--type\",\n    \"--values\",\n    \"--default\",\n    \"--index\",\n    \"--roles\",\n    \"--table\",\n    \"--policy\",\n    \"--emit\",\n    \"--event\",\n    \"--entry\",\n    \"--change\",\n    \"--proof\",\n    \"--handoff\",\n    \"--current\",\n    \"--trigger\",\n    \"--component\",\n    \"--command\",\n    \"--framework\",\n    \"--package\",\n    \"--action\",\n    \"--with-ai\",\n    \"--with-crud\",\n    \"--with-livequery\",\n    \"--with-react\",\n    \"--with-ui\",\n    \"--with-fga\",\n    \"--with-tests\",\n    \"--with-create-form\",\n    \"--write\",\n    \"--md\",\n    \"--sarif\",\n    \"--fail-on\",\n    \"--mode\",\n    \"--include\",\n    \"--exclude\",\n    \"--base\",\n    \"--headed\",\n    \"--browser\",\n    \"--trace\",\n    \"--screenshot\",\n    \"--video\",\n    \"--base-url\",\n    \"--runtime-url\",\n    \"--workspace\",\n    \"--reuse-servers\",\n    \"--start-servers\",\n    \"--scenario\",\n    \"--all\",\n    \"--ci\",\n    \"--timeout\",\n    \"--name\",\n    \"--auth-token\",\n    \"--auth\",\n    \"--update\",\n    \"--allow-high-risk\",\n    \"--to\",\n    \"--changed\",\n    \"--authored\",\n    \"--review\",\n    \"--env\",\n    \"--input\",\n    \"--provider\",\n    \"--target\",\n    \"--release\",\n    \"--allow-dirty\",\n    \"--allow-public-sourcemaps\",\n    \"--allow-missing-local-release\",\n    \"--prepared-only\",\n    \"--build\",\n    \"--install-venv\",\n    \"--with-release\",\n    \"--concurrency\",\n    \"--iterations\",\n    \"--warmups\",\n    \"--sandbox-backend\",\n    \"--skip-tests\",\n    \"--test-jobs\",\n    \"--skip-typecheck\",\n    \"--skip-eslint\",\n    \"--mock\",\n    \"--list\",\n    \"--port\",\n    \"--host\",\n    \"--watch\",\n    \"--no-watch\",\n    \"--db\",\n    \"--adapter\",\n    \"--local\",\n    \"--database-url\",\n    \"--worker\",\n    \"--no-worker\",\n    \"--no-start\",\n    \"--no-bridge\",\n    \"--probe\",\n    \"--probe-codex-server\",\n    \"--once\",\n    \"--limit\",\n    \"--kind\",\n    \"--session\",\n    \"--input\",\n    \"--args\",\n    \"--step\",\n    \"--sink\",\n    \"--file\",\n    \"--task-id\",\n    \"--run-id\",\n    \"--project-id\",\n    \"--manifest\",\n    \"--channel\",\n    \"--telemetry\",\n    \"--user-id\",\n    \"--tenant-id\",\n    \"--tenant\",\n    \"--client-id\",\n    \"--workos-client-id\",\n    \"--other-tenant\",\n    \"--role\",\n    \"--permissions\",\n    \"--strict-policies\",\n    \"--strict\",\n    \"--strict-secrets\",\n    \"--internal\",\n    \"--env-file\",\n    \"--skip-startup-console\",\n    \"--redacted\",\n    \"--older-than\",\n    \"--output\",\n    \"--mock-ai\",\n    \"--ai\",\n    \"--provider\",\n    \"--model\",\n    \"--prompt\",\n    \"--url\",\n    \"--template\",\n    \"--templates\",\n    \"--package-manager\",\n    \"--package-managers\",\n    \"--forge-spec\",\n    \"--local-forge\",\n    \"--install\",\n    \"--no-install\",\n    \"--git\",\n    \"--no-git\",\n    \"--field-test\",\n    \"--commit-ready\",\n    \"--detach\",\n    \"--seed\",\n    \"--seed-command\",\n    \"--all-tenants\",\n    \"--ergonomics\",\n    \"--with-web\",\n    \"--no-web\",\n    \"--api-only\",\n    \"--web-only\",\n    \"--open\",\n    \"--postgres-version\",\n    \"--runtime-port\",\n    \"--web-port\",\n    \"--public-api-url\",\n    \"--preview-port\",\n    \"--preview-url\",\n    \"--studio-url\",\n    \"--interval-ms\",\n    \"--workspace-id\",\n    \"--poll-interval\",\n    \"--mcp-server\",\n    \"--allow-dev-auth\",\n    \"--token\",\n    \"--prod\",\n    \"--production\",\n    \"--scenario\",\n    \"--reason\",\n    \"--no-preserve-user-sections\",\n    \"--no-skills\",\n    \"--no-rules\",\n    \"--full\",\n    \"--brief\",\n    \"--verbose\",\n    \"--run-tests\",\n    \"--model-level\",\n    \"--live\",\n    \"--no-delta\",\n    \"--format\",\n  ]);\n\n  for (let index = 0; index < argv.length; index++) {\n    const arg = argv[index];\n    if (!arg.startsWith(\"--\")) {\n      continue;\n    }\n    if (known.has(arg)) {\n      if (\n        arg === \"--concurrency\" ||\n        arg === \"--iterations\" ||\n        arg === \"--warmups\" ||\n        arg === \"--field\" ||\n        arg === \"--fields\" ||\n        arg === \"--type\" ||\n        arg === \"--values\" ||\n        arg === \"--default\" ||\n        arg === \"--roles\" ||\n        arg === \"--table\" ||\n        arg === \"--policy\" ||\n        arg === \"--emit\" ||\n        arg === \"--event\" ||\n        arg === \"--entry\" ||\n        arg === \"--change\" ||\n        arg === \"--proof\" ||\n        arg === \"--trigger\" ||\n        arg === \"--component\" ||\n        arg === \"--command\" ||\n        arg === \"--package\" ||\n        arg === \"--action\" ||\n        arg === \"--since\" ||\n        arg === \"--feature\" ||\n        arg === \"--refactor\" ||\n        arg === \"--upgrade\" ||\n        arg === \"--risk-threshold\" ||\n        arg === \"--max-cost\" ||\n        arg === \"--report\" ||\n        arg === \"--from\" ||\n        arg === \"--trace\" ||\n        arg === \"--workflow-run\" ||\n        arg === \"--outbox-delivery\" ||\n        arg === \"--diagnostic\" ||\n        arg === \"--repair\" ||\n        arg === \"--max-attempts\" ||\n        arg === \"--write\" ||\n        arg === \"--fail-on\" ||\n        arg === \"--mode\" ||\n        arg === \"--include\" ||\n        arg === \"--exclude\" ||\n        arg === \"--base\" ||\n        arg === \"--browser\" ||\n        arg === \"--trace\" ||\n        arg === \"--screenshot\" ||\n        arg === \"--video\" ||\n        arg === \"--base-url\" ||\n        arg === \"--runtime-url\" ||\n        arg === \"--workspace\" ||\n        arg === \"--scenario\" ||\n        arg === \"--timeout\" ||\n        arg === \"--timeout-ms\" ||\n        arg === \"--test-jobs\" ||\n        arg === \"--typechecker\" ||\n        arg === \"--name\" ||\n        arg === \"--reason\" ||\n        arg === \"--auth-token\" ||\n        arg === \"--auth\" ||\n        arg === \"--sandbox-backend\" ||\n        arg === \"--port\" ||\n        arg === \"--host\" ||\n        arg === \"--db\" ||\n        arg === \"--adapter\" ||\n        arg === \"--database-url\" ||\n        arg === \"--limit\" ||\n        arg === \"--older-than\" ||\n        arg === \"--output\" ||\n        arg === \"--kind\" ||\n        arg === \"--session\" ||\n        arg === \"--input\" ||\n        arg === \"--args\" ||\n        arg === \"--step\" ||\n        arg === \"--sink\" ||\n        arg === \"--file\" ||\n        arg === \"--task-id\" ||\n        arg === \"--run-id\" ||\n        arg === \"--project-id\" ||\n        arg === \"--manifest\" ||\n        arg === \"--channel\" ||\n        arg === \"--write-report\" ||\n        arg === \"--telemetry\" ||\n        arg === \"--user-id\" ||\n        arg === \"--tenant\" ||\n        arg === \"--other-tenant\" ||\n        arg === \"--tenant-id\" ||\n        arg === \"--role\" ||\n        arg === \"--permissions\" ||\n        arg === \"--strict-policies\" ||\n        arg === \"--env-file\" ||\n        arg === \"--ai\" ||\n        arg === \"--provider\" ||\n        arg === \"--model\" ||\n        arg === \"--prompt\" ||\n        arg === \"--format\" ||\n        arg === \"--url\" ||\n        arg === \"--template\" ||\n        arg === \"--package-manager\" ||\n        arg === \"--forge-spec\" ||\n        arg === \"--postgres-version\" ||\n        arg === \"--runtime-port\" ||\n        arg === \"--web-port\" ||\n        arg === \"--public-api-url\" ||\n        arg === \"--preview-port\" ||\n        arg === \"--preview-url\" ||\n        arg === \"--studio-url\" ||\n        arg === \"--interval-ms\" ||\n        arg === \"--workspace-id\" ||\n        arg === \"--poll-interval\" ||\n        arg === \"--mcp-server\" ||\n        arg === \"--token\"\n        || arg === \"--to\" ||\n        arg === \"--env\" ||\n        arg === \"--input\" ||\n        arg === \"--provider\" ||\n        arg === \"--target\" ||\n        arg === \"--release\"\n      ) {\n        index += 1;\n      }\n      continue;\n    }\n    return arg;\n  }\n\n  return null;\n}"
       },
       "name": "hasUnknownOption",
       "qualifiedName": "hasUnknownOption",
       "span": {
-        "end": 128313,
-        "start": 119521
+        "end": 125208,
+        "start": 116738
       }
     },
     {
@@ -97831,14 +98373,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function isAttachedTaskAction(action: unknown): action is AttachedTaskAction {\r\n  return typeof action === \"string\" && (ATTACHED_TASK_ACTIONS as readonly string[]).includes(action);\r\n}"
       },
       "name": "isAttachedTaskAction",
       "qualifiedName": "isAttachedTaskAction",
       "span": {
-        "end": 1926,
-        "start": 1742
+        "end": 1984,
+        "start": 1800
       }
     },
     {
@@ -97848,14 +98390,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function isAttachedTaskRead(action: AttachedTaskAction): boolean {\r\n  return action === \"attached-status\" || action === \"attached-context\" || action === \"workflow-next\";\r\n}"
       },
       "name": "isAttachedTaskRead",
       "qualifiedName": "isAttachedTaskRead",
       "span": {
-        "end": 2107,
-        "start": 1935
+        "end": 2165,
+        "start": 1993
       }
     },
     {
@@ -98409,14 +98951,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function isManagedRunAction(action: unknown): action is ManagedRunAction {\r\n  return typeof action === \"string\" && (MANAGED_RUN_ACTIONS as readonly string[]).includes(action);\r\n}"
       },
       "name": "isManagedRunAction",
       "qualifiedName": "isManagedRunAction",
       "span": {
-        "end": 1258,
-        "start": 1080
+        "end": 1316,
+        "start": 1138
       }
     },
     {
@@ -100052,6 +100594,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "8b0f2319f9e55e34aee558425f33e28c43692fca97e0664049b948bb44d66242",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "2cb04fb97068cd5b98c4cbc39e1f3f8ec41950abe066011e6f463c4ed087adad",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function listFabricProjects(options: FabricRegistryOptions = {}): Promise<FabricProject[]> {\n  return readRegistry(fabricRegistryDirectory(options));\n}"
+      },
+      "name": "listFabricProjects",
+      "qualifiedName": "listFabricProjects",
+      "span": {
+        "end": 4960,
+        "start": 4803
+      }
+    },
+    {
       "contentHash": "c9357fabced8304f084bdbb2ec5fdc99eaa141a42a952b7b955c93b834fda746",
       "file": "src/forge/runtime/release/runtime.ts",
       "id": "1b64d543525239a972caad5056c1d0b7d6a034d70ad19fa1efe2e1400768379c",
@@ -101639,14 +102198,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "async function logMcpToolCall(workspaceRoot: string, toolName: string, args: Record<string, unknown>, status: string): Promise<void> {\r\n  const envelope = normalizeAgentEvent({\r\n    workspaceRoot,\r\n    source: \"generic\",\r\n    integration: \"mcp\",\r\n    eventName: \"tool.call\",\r\n    raw: {\r\n      toolName,\r\n      args,\r\n      status,\r\n      timestamp: new Date().toISOString(),\r\n    },\r\n  });\r\n  await ingestEnvelope(workspaceRoot, envelope);\r\n}"
       },
       "name": "logMcpToolCall",
       "qualifiedName": "logMcpToolCall",
       "span": {
-        "end": 24518,
-        "start": 24075
+        "end": 28642,
+        "start": 28199
       }
     },
     {
@@ -101724,14 +102283,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "c8b64be62789b5766469a87f5046db2ef7436e2d37c860c149483b5745225bad",
-        "sourceSlice": "async function main(argv: string[] = process.argv.slice(2)): Promise<number> {\r\n  if (argv[0] === \"dev\" && (argv.includes(\"--help\") || argv.includes(\"-h\"))) {\r\n    process.stdout.write(formatDevHelp());\r\n    return 0;\r\n  }\r\n\r\n  if (argv.length === 0 || argv.includes(\"--help\") || argv.includes(\"-h\")) {\r\n    process.stdout.write(formatHelp());\r\n    return 0;\r\n  }\r\n\r\n  const unknown = hasUnknownOption(argv);\r\n  if (unknown) {\r\n    const diagnostic = createDiagnostic({\r\n      severity: \"error\",\r\n      code: \"FORGE_CLI_USAGE\",\r\n      message: `unrecognized option '${unknown}'`,\r\n    });\r\n\r\n    if (argv.includes(\"--json\")) {\r\n      process.stdout.write(\r\n        formatJsonResult({\r\n          errors: [diagnostic],\r\n          exitCode: 1,\r\n          failureKind: \"usage\",\r\n        }),\r\n      );\r\n    } else {\r\n      console.error(`error ${diagnostic.code}: ${diagnostic.message}`);\r\n    }\r\n    return 1;\r\n  }\r\n\r\n  const parsed = parseCli(argv);\r\n  if (parsed.errors.length > 0) {\r\n    const errors = parsed.errors.map((message) =>\r\n      createDiagnostic({\r\n        severity: \"error\",\r\n        code: \"FORGE_CLI_USAGE\",\r\n        message,\r\n      }),\r\n    );\r\n\r\n    if (argv.includes(\"--json\")) {\r\n      process.stdout.write(\r\n        formatJsonResult({\r\n          errors,\r\n          exitCode: 1,\r\n          failureKind: \"usage\",\r\n        }),\r\n      );\r\n    } else {\r\n      for (const error of errors) {\r\n        console.error(`error ${error.code}: ${error.message}`);\r\n      }\r\n    }\r\n    return 1;\r\n  }\r\n\r\n  if (parsed.command === null) {\r\n    return 1;\r\n  }\r\n\r\n  const startedAt = Date.now();\r\n  const exitCode = await executeCommand(parsed.command);\r\n  await recordParsedCliCommand({\r\n    command: parsed.command,\r\n    argv,\r\n    exitCode,\r\n    durationMs: Date.now() - startedAt,\r\n  });\r\n  return exitCode;\r\n}"
+        "fileContentHash": "2c88124ea6233ce22c16b491a4ca570c82cc63248acd200656957b987c6b1d1b",
+        "sourceSlice": "async function main(argv: string[] = process.argv.slice(2)): Promise<number> {\n  if (argv[0] === \"dev\" && (argv.includes(\"--help\") || argv.includes(\"-h\"))) {\n    process.stdout.write(formatDevHelp());\n    return 0;\n  }\n\n  if (argv.length === 0 || argv.includes(\"--help\") || argv.includes(\"-h\")) {\n    process.stdout.write(formatHelp());\n    return 0;\n  }\n\n  const unknown = hasUnknownOption(argv);\n  if (unknown) {\n    const diagnostic = createDiagnostic({\n      severity: \"error\",\n      code: \"FORGE_CLI_USAGE\",\n      message: `unrecognized option '${unknown}'`,\n    });\n\n    if (argv.includes(\"--json\")) {\n      process.stdout.write(\n        formatJsonResult({\n          errors: [diagnostic],\n          exitCode: 1,\n          failureKind: \"usage\",\n        }),\n      );\n    } else {\n      console.error(`error ${diagnostic.code}: ${diagnostic.message}`);\n    }\n    return 1;\n  }\n\n  const parsed = parseCli(argv);\n  if (parsed.errors.length > 0) {\n    const errors = parsed.errors.map((message) =>\n      createDiagnostic({\n        severity: \"error\",\n        code: \"FORGE_CLI_USAGE\",\n        message,\n      }),\n    );\n\n    if (argv.includes(\"--json\")) {\n      process.stdout.write(\n        formatJsonResult({\n          errors,\n          exitCode: 1,\n          failureKind: \"usage\",\n        }),\n      );\n    } else {\n      for (const error of errors) {\n        console.error(`error ${error.code}: ${error.message}`);\n      }\n    }\n    return 1;\n  }\n\n  if (parsed.command === null) {\n    return 1;\n  }\n\n  const startedAt = Date.now();\n  const exitCode = await executeCommand(parsed.command);\n  await recordParsedCliCommand({\n    command: parsed.command,\n    argv,\n    exitCode,\n    durationMs: Date.now() - startedAt,\n  });\n  return exitCode;\n}"
       },
       "name": "main",
       "qualifiedName": "main",
       "span": {
-        "end": 16771,
-        "start": 14958
+        "end": 16998,
+        "start": 15257
       }
     },
     {
@@ -101962,14 +102521,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "function managedRunSchema(action: typeof MANAGED_RUN_ACTIONS[number]): Record<string, unknown> {\r\n  if (action === \"run-status\") return { type: \"object\", properties: { runId: { type: \"string\" } }, required: [\"runId\"], additionalProperties: false };\r\n  const properties = action === \"run-start\" ? {\r\n    requestId: { type: \"string\" }, goal: { type: \"string\" }, scope: { ...managedStrings, minItems: 1, maxItems: 100 },\r\n    workflow: { type: \"object\", properties: { workflowId: { type: \"string\" }, nodes: managedNodes,\r\n      limits: { type: \"object\", properties: { maxConcurrency: { type: \"integer\", minimum: 1, maximum: 4 },\r\n        maxAttempts: { type: \"integer\", minimum: 1 }, maxRevisions: { type: \"integer\", minimum: 1, maximum: 20 },\r\n        maxTotalAttempts: { type: \"integer\", minimum: 1, maximum: 100 } }, additionalProperties: false } },\r\n      required: [\"workflowId\", \"nodes\"], additionalProperties: false },\r\n    executors: managedExecutors, publish: { type: \"boolean\" }, environment: managedEnvironmentSchema,\n  } : action === \"run-wait\" ? { runId: { type: \"string\" }, cursor: { type: \"integer\", minimum: 0 }, waitMs: { type: \"integer\", minimum: 0, maximum: 30000 } }\r\n    : { ...managedCommon, ...(action === \"run-steer\" ? { instruction: { type: \"string\" } }\r\n      : action === \"run-resume\" ? { expectedRevision: { type: \"integer\", minimum: 1 }, nodes: managedNodes,\r\n          executors: managedExecutors, environment: managedEnvironmentSchema, reason: { type: \"string\" }, evidenceRefs: managedStrings }\n      : action === \"run-reconcile\" ? { attemptId: { type: \"string\" }, resolution: { type: \"string\", enum: [\"failed\"] }, reason: { type: \"string\" }, publication: { type: \"string\", enum: [\"confirm\", \"retry\"] } } : {}) };\n  const required = action === \"run-start\" ? [\"requestId\", \"goal\", \"scope\", \"workflow\", \"executors\"]\r\n    : action === \"run-wait\" ? [\"runId\"] : [\"runId\", \"requestId\", \"expectedVersion\", ...(action === \"run-steer\" ? [\"instruction\"] : [])];\r\n  return { type: \"object\", properties: { request: { type: \"object\", properties, required, additionalProperties: false,\r\n    ...(action === \"run-reconcile\" ? { anyOf: [{ required: [\"attemptId\", \"resolution\", \"reason\"] }, { required: [\"publication\"] }] } : {}) } },\r\n    required: [\"request\"], additionalProperties: false };\r\n}"
       },
       "name": "managedRunSchema",
       "qualifiedName": "managedRunSchema",
       "span": {
-        "end": 5117,
-        "start": 2811
+        "end": 5235,
+        "start": 2929
       }
     },
     {
@@ -105311,14 +105870,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseAdapterKind(value: string | undefined): DbAdapterKind {\r\n  if (value === \"postgres\" || value === \"memory\") {\r\n    return value;\r\n  }\r\n  return \"pglite\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseAdapterKind(value: string | undefined): DbAdapterKind {\n  if (value === \"postgres\" || value === \"memory\") {\n    return value;\n  }\n  return \"pglite\";\n}"
       },
       "name": "parseAdapterKind",
       "qualifiedName": "parseAdapterKind",
       "span": {
-        "end": 23444,
-        "start": 23275
+        "end": 22108,
+        "start": 21944
       }
     },
     {
@@ -105328,14 +105887,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseAddOptions(\r\n  args: string[],\r\n  workspaceRoot: string,\r\n  mode: AddOptions[\"mode\"] = \"auto\",\r\n): AddOptions & { workspaceRoot: string } {\r\n  const frontend = parseFlag(args, \"--frontend\");\r\n  const backend = parseFlag(args, \"--backend\");\r\n  return {\r\n    workspaceRoot,\r\n    json: parseFlag(args, \"--json\"),\r\n    dryRun: parseFlag(args, \"--dry-run\"),\r\n    runtimeInspect: parseFlag(args, \"--runtime-inspect\"),\r\n    sandboxBackend: parseSandboxBackend(\r\n      parseOptionValue(args, \"--sandbox-backend\"),\r\n    ),\r\n    allowScripts: parseFlag(args, \"--allow-scripts\"),\r\n    withFga: parseFlag(args, \"--with-fga\"),\r\n    mode,\r\n    installWorkspace: parseOptionValue(args, \"--workspace\"),\r\n    packageTarget: frontend && !backend ? \"frontend\" : backend ? \"backend\" : undefined,\r\n  };\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseAddOptions(\n  args: string[],\n  workspaceRoot: string,\n  mode: AddOptions[\"mode\"] = \"auto\",\n): AddOptions & { workspaceRoot: string } {\n  const frontend = parseFlag(args, \"--frontend\");\n  const backend = parseFlag(args, \"--backend\");\n  return {\n    workspaceRoot,\n    json: parseFlag(args, \"--json\"),\n    dryRun: parseFlag(args, \"--dry-run\"),\n    runtimeInspect: parseFlag(args, \"--runtime-inspect\"),\n    sandboxBackend: parseSandboxBackend(\n      parseOptionValue(args, \"--sandbox-backend\"),\n    ),\n    allowScripts: parseFlag(args, \"--allow-scripts\"),\n    withFga: parseFlag(args, \"--with-fga\"),\n    mode,\n    installWorkspace: parseOptionValue(args, \"--workspace\"),\n    packageTarget: frontend && !backend ? \"frontend\" : backend ? \"backend\" : undefined,\n  };\n}"
       },
       "name": "parseAddOptions",
       "qualifiedName": "parseAddOptions",
       "span": {
-        "end": 24438,
-        "start": 23640
+        "end": 23072,
+        "start": 22295
       }
     },
     {
@@ -105543,20 +106102,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "c0afde314a2f01118fd471c0a017a8af27690fbf4e64fbfe062f7db2d689d0d0",
+      "contentHash": "bdfa6d1f96f74f3b26d85fb6484d64c0797116a96d0fddb5578174e6b5d44406",
       "file": "src/forge/cli/parse.ts",
       "id": "f72221338061f250a463030f5de370c867273e1064d08542659114268c8a206b",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseCli(argv: string[]): ParsedCli {\r\n  const errors: string[] = [];\r\n  const positional = argv.filter((arg) => !arg.startsWith(\"-\"));\r\n  const workspaceRoot = process.cwd().replace(/\\\\/g, \"/\");\r\n\r\n  if (parseFlag(argv, \"--version\") || parseFlag(argv, \"-v\")) {\r\n    return {\r\n      command: { kind: \"version\", json: parseFlag(argv, \"--json\") },\r\n      workspaceRoot,\r\n      errors,\r\n    };\r\n  }\r\n\r\n  if (positional.length === 0) {\r\n    errors.push(\r\n      `missing command; expected ${TOP_LEVEL_COMMANDS.join(\", \")}`,\r\n    );\r\n    return { command: null, workspaceRoot, errors };\r\n  }\r\n\r\n  const [commandName, ...rest] = positional;\r\n\r\n  switch (commandName) {\r\n    case \"version\":\r\n      return {\r\n        command: { kind: \"version\", json: parseFlag(argv, \"--json\") },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"last\":\r\n      return {\r\n        command: { kind: \"last\", json: parseFlag(argv, \"--json\"), workspaceRoot },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"baseline\": {\r\n      const subcommand = (rest[0] ?? \"status\") as BaselineSubcommand;\r\n      if (!BASELINE_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge baseline requires subcommand: create or status\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"baseline\",\r\n          subcommand,\r\n          reason: parseOptionValue(argv, \"--reason\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"new\": {\r\n      const name = rest[0];\r\n      if (!name) {\r\n        errors.push(\"forge new requires a project name\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const templateRaw = parseOptionValue(argv, \"--template\");\r\n      if (templateRaw && !NEW_TEMPLATES.includes(templateRaw as NewTemplateName)) {\r\n        errors.push(`unsupported template '${templateRaw}'; supported: ${NEW_TEMPLATES.join(\", \")}`);\r\n      }\r\n      const packageManagerRaw = parseOptionValue(argv, \"--package-manager\");\r\n      const forgePackageSpec = parseOptionValue(argv, \"--forge-spec\");\r\n      const localForge = parseFlag(argv, \"--local-forge\");\r\n      const install = parseFlag(argv, \"--install\");\r\n      const noInstall = parseFlag(argv, \"--no-install\");\r\n      if (\r\n        packageManagerRaw &&\r\n        !NEW_PACKAGE_MANAGERS.includes(packageManagerRaw as NewPackageManager)\r\n      ) {\r\n        errors.push(\r\n          `unsupported package manager '${packageManagerRaw}'; supported: ${NEW_PACKAGE_MANAGERS.join(\", \")}`,\r\n        );\r\n      }\r\n      if (forgePackageSpec && localForge) {\r\n        errors.push(\"use either --forge-spec or --local-forge, not both\");\r\n      }\r\n      if (install && noInstall) {\r\n        errors.push(\"use either --install or --no-install, not both\");\r\n      }\r\n      if (parseFlag(argv, \"--field-test\") && noInstall) {\r\n        errors.push(\"forge new --field-test requires installation; remove --no-install\");\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"new\",\r\n          name,\r\n          template: parseNewTemplate(templateRaw),\r\n          packageManager: parseNewPackageManager(packageManagerRaw),\r\n          install: install || !noInstall,\r\n          git: !parseFlag(argv, \"--no-git\"),\r\n          forgePackageSpec,\r\n          localForge,\r\n          json: parseFlag(argv, \"--json\"),\r\n          fieldTest: parseFlag(argv, \"--field-test\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"build\":\r\n      return {\r\n        command: {\r\n          kind: \"build\",\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"serve\": {\r\n      const portRaw = parseOptionValue(argv, \"--port\");\r\n      const port = portRaw ? Number(portRaw) : undefined;\r\n      if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {\r\n        errors.push(\"--port must be a number >= 0\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"serve\",\r\n          host: parseOptionValue(argv, \"--host\"),\r\n          port,\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          envFile: parseOptionValue(argv, \"--env-file\"),\r\n          allowDevAuth: parseFlag(argv, \"--allow-dev-auth\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"worker\": {\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const limit = limitRaw ? Number(limitRaw) : 10;\r\n      if (!Number.isFinite(limit) || limit < 1) {\r\n        errors.push(\"--limit must be a number >= 1\");\r\n      }\r\n      const pollRaw = parseOptionValue(argv, \"--poll-interval\");\r\n      const pollIntervalMs = pollRaw ? Number(pollRaw) : 1_000;\r\n      if (!Number.isFinite(pollIntervalMs) || pollIntervalMs < 1) {\r\n        errors.push(\"--poll-interval must be a number >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"worker\",\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          once: parseFlag(argv, \"--once\"),\r\n          pollIntervalMs,\r\n          limit: Math.floor(limit),\r\n          mock: parseFlag(argv, \"--mock\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"self-host\": {\r\n      const subcommand = rest[0] as SelfHostSubcommand | undefined;\r\n      if (!subcommand || !SELF_HOST_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge self-host requires subcommand: compose, env, check, or clean\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const runtimePortRaw = parseOptionValue(argv, \"--runtime-port\");\r\n      const runtimePort = runtimePortRaw ? Number(runtimePortRaw) : 3765;\r\n      if (!Number.isFinite(runtimePort) || runtimePort < 1) {\r\n        errors.push(\"--runtime-port must be a number >= 1\");\r\n      }\r\n      const webPortRaw = parseOptionValue(argv, \"--web-port\");\r\n      const webPort = webPortRaw ? Number(webPortRaw) : 3000;\r\n      if (!Number.isFinite(webPort) || webPort < 1) {\r\n        errors.push(\"--web-port must be a number >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"self-host\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          withWeb: !parseFlag(argv, \"--no-web\"),\r\n          postgresVersion: parseOptionValue(argv, \"--postgres-version\") ?? \"16\",\r\n          runtimePort: Math.floor(runtimePort),\r\n          webPort: Math.floor(webPort),\r\n          preparedOnly: parseFlag(argv, \"--prepared-only\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"docs\": {\r\n      const subcommand = rest[0] as DocsSubcommand | undefined;\r\n      if (subcommand !== \"check\") {\r\n        errors.push(\"forge docs requires subcommand: check\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"docs\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          build: parseFlag(argv, \"--build\"),\r\n          installVenv: parseFlag(argv, \"--install-venv\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"agent-contract\": {\r\n      const subcommand = rest[0] as AgentContractSubcommand | undefined;\r\n      if (!subcommand || !AGENT_CONTRACT_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge agent-contract requires subcommand: generate, check, or print\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"agent-contract\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"agent\": {\r\n      const subcommand = rest[0] as AgentSubcommand | undefined;\r\n      if (!subcommand || !AGENT_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge agent requires subcommand: list-targets, export, check, doctor, onboard, print-context, clean, prepare, hooks, install, ingest, context, memory, or timeline\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const inputRaw = parseOptionValue(argv, \"--input\");\r\n      let input: unknown;\r\n      if (inputRaw !== undefined) {\r\n        try {\r\n          input = JSON.parse(inputRaw);\r\n        } catch {\r\n          errors.push(\"--input must be valid JSON\");\r\n        }\r\n      }\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const limit = limitRaw ? Number(limitRaw) : undefined;\r\n      const pollIntervalRaw = parseOptionValue(argv, \"--poll-interval\");\r\n      const pollIntervalMs = pollIntervalRaw ? Number(pollIntervalRaw) : undefined;\r\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\r\n        errors.push(\"--limit must be a number >= 1\");\r\n      }\r\n      if (\r\n        pollIntervalRaw !== undefined &&\r\n        (!Number.isFinite(pollIntervalMs) || pollIntervalMs! < 100)\r\n      ) {\r\n        errors.push(\"--poll-interval must be a number >= 100\");\r\n      }\r\n      const target =\r\n        (parseOptionValue(argv, \"--target\") as AgentAdapterTarget | undefined) ??\r\n        (subcommand === \"install\" || subcommand === \"ingest\" ? rest[1] : undefined) ??\r\n        (subcommand === \"hooks\" ? rest[2] : undefined) ??\r\n        (subcommand === \"timeline\" ? rest[1] : undefined) ??\r\n        (subcommand === \"timeline\" ? \"all\" : undefined) ??\r\n        (subcommand === \"hooks\" || subcommand === \"onboard\" ? \"codex\" : \"generic\");\r\n      const contextOptionValues = new Set(\r\n        [\r\n          parseOptionValue(argv, \"--entry\"),\r\n          parseOptionValue(argv, \"--change\"),\r\n          parseOptionValue(argv, \"--proof\"),\r\n          parseOptionValue(argv, \"--event\"),\r\n          parseOptionValue(argv, \"--input\"),\r\n          parseOptionValue(argv, \"--target\"),\r\n          parseOptionValue(argv, \"--file\"),\r\n          limitRaw,\r\n          pollIntervalRaw,\r\n        ].filter((value): value is string => typeof value === \"string\"),\r\n      );\r\n      const contextEntry = subcommand === \"context\"\r\n        ? rest.slice(1).find((part) => !part.startsWith(\"--\") && !contextOptionValues.has(part))\r\n        : undefined;\r\n      return {\r\n        command: {\r\n          kind: \"agent\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            target,\r\n            dryRun: parseFlag(argv, \"--dry-run\"),\r\n            force: parseFlag(argv, \"--force\"),\r\n            mcpServer: parseOptionValue(argv, \"--mcp-server\"),\r\n            preserveUserSections: !parseFlag(argv, \"--no-preserve-user-sections\"),\r\n            skills: !parseFlag(argv, \"--no-skills\"),\r\n            rules: !parseFlag(argv, \"--no-rules\"),\r\n            eventName: parseOptionValue(argv, \"--event\"),\r\n            hookAction: subcommand === \"hooks\" ? rest[1] : undefined,\r\n            input,\r\n            entry: parseOptionValue(argv, \"--entry\") ?? contextEntry,\r\n            change: parseOptionValue(argv, \"--change\"),\r\n            proof: parseOptionValue(argv, \"--proof\"),\r\n            handoff: parseFlag(argv, \"--handoff\"),\r\n            current: parseFlag(argv, \"--current\"),\r\n            limit: limit ? Math.floor(limit) : undefined,\r\n            watch: parseFlag(argv, \"--watch\"),\r\n            file: parseOptionValue(argv, \"--file\"),\r\n            pollIntervalMs: pollIntervalMs ? Math.floor(pollIntervalMs) : undefined,\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"fabric\": {\r\n      const subcommand = rest[0];\r\n      if (!isManagedRunAction(subcommand) && !isAttachedTaskAction(subcommand) && subcommand !== \"capabilities\" && subcommand !== \"propose\" && subcommand !== \"status\" && subcommand !== \"evidence\" && subcommand !== \"review\" && subcommand !== \"run\" && subcommand !== \"cancel\" && subcommand !== \"reconcile\" && subcommand !== \"verify\" && subcommand !== \"recover-verification\" && subcommand !== \"review-result\" && subcommand !== \"serve\" && subcommand !== \"memory-add\" && subcommand !== \"memory-list\" && subcommand !== \"memory-delete\" && subcommand !== \"adaptive-propose\" && subcommand !== \"adaptive-review\" && subcommand !== \"adaptive-run\" && subcommand !== \"adaptive-status\" && subcommand !== \"change-propose\" && subcommand !== \"change-status\" && subcommand !== \"change-review\" && subcommand !== \"change-evidence\") {\r\n        errors.push(\"forge fabric requires a supported task or memory subcommand\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const file = parseOptionValue(argv, \"--file\");\r\n      const runId = parseOptionValue(argv, \"--run-id\");\r\n      const adaptiveChannel = parseOptionValue(argv, \"--channel\");\r\n      if (adaptiveChannel && (subcommand !== \"adaptive-propose\" || (adaptiveChannel !== \"canary\" && adaptiveChannel !== \"stable\"))) errors.push(\"--channel requires adaptive-propose and canary or stable\");\r\n      const isChangeReadOrReview = subcommand === \"change-status\" || subcommand === \"change-review\" || subcommand === \"change-evidence\";\r\n      const taskId = (isAttachedTaskAction(subcommand) && isAttachedTaskRead(subcommand)) || isChangeReadOrReview ? parseOptionValue(argv, \"--task-id\")\r\n        : subcommand === \"status\" || subcommand === \"evidence\" || subcommand === \"review\" || subcommand === \"run\" || subcommand === \"cancel\" || subcommand === \"reconcile\" || subcommand === \"verify\" || subcommand === \"recover-verification\" || subcommand === \"review-result\" || subcommand === \"memory-delete\" || subcommand === \"adaptive-review\" || subcommand === \"adaptive-run\" || subcommand === \"adaptive-status\" ? rest[1] : undefined;\r\n      if (isManagedRunAction(subcommand)) {\r\n        if (subcommand === \"run-status\") {\r\n          if (!runId || runId.startsWith(\"--\")) errors.push(\"forge fabric run-status requires --run-id <run-id>\");\r\n          if (file) errors.push(\"forge fabric run-status does not accept --file\");\r\n        } else {\r\n          if (!file || file.startsWith(\"--\")) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);\r\n          if (runId) errors.push(`forge fabric ${subcommand} requires runId in the request file`);\r\n        }\r\n        if (parseOptionValue(argv, \"--task-id\")) errors.push(\"Managed execution uses runId, not taskId\");\r\n      } else if (runId) errors.push(\"--run-id is only supported by fabric run-status\");\r\n      if (isAttachedTaskAction(subcommand)) {\r\n        if (isAttachedTaskRead(subcommand)) {\r\n          if (!taskId || taskId.startsWith(\"--\")) errors.push(`forge fabric ${subcommand} requires --task-id <task-id>`);\r\n          if (file) errors.push(`forge fabric ${subcommand} does not accept --file`);\r\n        } else {\r\n          if (!file || file.startsWith(\"--\")) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);\r\n          if (parseOptionValue(argv, \"--task-id\")) errors.push(`forge fabric ${subcommand} requires taskId in the request file`);\r\n        }\r\n      }\r\n      if (subcommand === \"propose\" && (!file || file.startsWith(\"--\"))) errors.push(\"forge fabric propose requires --file <proposal.json>\");\r\n      if (subcommand === \"change-propose\" && (!file || file.startsWith(\"--\"))) errors.push(\"forge fabric change-propose requires --file <request.json>\");\r\n      if (isChangeReadOrReview && (!taskId || taskId.startsWith(\"--\"))) errors.push(`forge fabric ${subcommand} requires --task-id <change-id>`);\r\n      if (subcommand === \"adaptive-propose\" && (!file || file.startsWith(\"--\"))) errors.push(\"forge fabric adaptive-propose requires --file <input.json>\");\r\n      if ((subcommand === \"memory-add\" || subcommand === \"memory-list\") && (!file || file.startsWith(\"--\"))) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);\r\n      if ((subcommand === \"status\" || subcommand === \"evidence\" || subcommand === \"review\" || subcommand === \"run\" || subcommand === \"cancel\" || subcommand === \"reconcile\" || subcommand === \"verify\" || subcommand === \"recover-verification\" || subcommand === \"review-result\" || subcommand === \"memory-delete\") && !taskId) errors.push(`forge fabric ${subcommand} requires an id`);\r\n      if ((subcommand === \"adaptive-review\" || subcommand === \"adaptive-run\" || subcommand === \"adaptive-status\") && !taskId) errors.push(`forge fabric ${subcommand} requires an id`);\r\n      return {\r\n        command: errors.length === 0 ? {\r\n          kind: \"fabric\", subcommand, workspaceRoot, json: parseFlag(argv, \"--json\"),\r\n          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}), ...(runId ? { runId } : {}),\r\n          ...(adaptiveChannel === \"canary\" || adaptiveChannel === \"stable\" ? { channel: adaptiveChannel } : {}),\r\n        } : null,\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"evolution\": {\r\n      const subcommand = rest[0];\r\n      if (subcommand !== \"register\" && subcommand !== \"evaluate\" && subcommand !== \"status\" &&\r\n          subcommand !== \"review\" && subcommand !== \"load\") {\r\n        errors.push(\"forge evolution requires register, evaluate, status, review, or load\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const manifest = parseOptionValue(argv, \"--manifest\");\r\n      const channel = parseOptionValue(argv, \"--channel\");\r\n      const action = rest[1];\r\n      const versionId = subcommand === \"review\" ? rest[2] : rest[1];\r\n      const extensionKey = rest[1];\r\n      if (subcommand === \"register\" && !manifest) errors.push(\"forge evolution register requires --manifest <file>\");\r\n      if ((subcommand === \"evaluate\" || subcommand === \"status\" || subcommand === \"review\") &&\r\n          !versionId) errors.push(`forge evolution ${subcommand} requires a version id`);\r\n      if (subcommand === \"review\" && ![\"canary\", \"promote\", \"rollback\", \"revoke\"].includes(action ?? \"\"))\r\n        errors.push(\"forge evolution review requires canary, promote, rollback, or revoke\");\r\n      if (subcommand === \"load\" && (!extensionKey || (channel !== \"canary\" && channel !== \"stable\")))\r\n        errors.push(\"forge evolution load requires <extension-key> --channel canary|stable\");\r\n      return { command: errors.length === 0 ? {\r\n        kind: \"evolution\", subcommand, workspaceRoot, json: parseFlag(argv, \"--json\"),\r\n        ...(manifest ? { manifest } : {}),\r\n        ...(subcommand === \"review\" || subcommand === \"evaluate\" || subcommand === \"status\" ? { versionId } : {}),\r\n        ...(subcommand === \"review\" ? { action: action as \"canary\" | \"promote\" | \"rollback\" | \"revoke\" } : {}),\r\n        ...(subcommand === \"load\" ? { extensionKey, channel: channel as \"canary\" | \"stable\" } : {}),\r\n      } : null, workspaceRoot, errors };\r\n    }\r\n    case \"mcp\": {\r\n      const subcommand = rest[0];\r\n      if (subcommand !== \"serve\") {\r\n        errors.push(\"forge mcp requires subcommand: serve\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"mcp\",\r\n          subcommand,\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"review\": {\r\n      const requested = rest[0] as ReviewSubcommand | undefined;\r\n      const subcommand =\r\n        requested && REVIEW_SUBCOMMANDS.includes(requested) ? requested : \"run\";\r\n      const positionalWrite = rest[0] === \"write\";\r\n      const noSourceFlag =\r\n        !parseFlag(argv, \"--changed\") &&\r\n        !parseFlag(argv, \"--staged\") &&\r\n        !parseOptionValue(argv, \"--base\") &&\r\n        !parseOptionValue(argv, \"--feature\") &&\r\n        !parseOptionValue(argv, \"--refactor\") &&\r\n        !parseOptionValue(argv, \"--upgrade\") &&\r\n        !parseOptionValue(argv, \"--release\");\r\n      return {\r\n        command: {\r\n          kind: \"review\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            md: parseFlag(argv, \"--md\"),\r\n            sarif: parseFlag(argv, \"--sarif\"),\r\n            full: parseFlag(argv, \"--full\"),\r\n            write: positionalWrite || parseFlag(argv, \"--write\"),\r\n            changed: parseFlag(argv, \"--changed\") || noSourceFlag,\r\n            staged: parseFlag(argv, \"--staged\"),\r\n            base: parseOptionValue(argv, \"--base\"),\r\n            featureId: parseOptionValue(argv, \"--feature\"),\r\n            refactorId: parseOptionValue(argv, \"--refactor\"),\r\n            upgradeId: parseOptionValue(argv, \"--upgrade\"),\r\n            releaseId: parseOptionValue(argv, \"--release\"),\r\n            failOn: parseReviewFailOn(parseOptionValue(argv, \"--fail-on\")),\r\n            mode: parseReviewMode(parseOptionValue(argv, \"--mode\")),\r\n            include: parseReviewCategories(parseOptionValue(argv, \"--include\")),\r\n            exclude: parseReviewCategories(parseOptionValue(argv, \"--exclude\")),\r\n            reviewId: subcommand === \"inspect\" ? rest[1] : undefined,\r\n            ruleId: subcommand === \"explain\" ? rest[1] : undefined,\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"ui\": {\r\n      const subcommand = (rest[0] ?? \"smoke\") as UiSubcommand;\r\n      if (!UI_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge ui requires subcommand: audit, smoke, test, scenario, route, snapshot, report, doctor, or list\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const timeoutRaw = parseOptionValue(argv, \"--timeout\");\r\n      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 30_000;\r\n      if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {\r\n        errors.push(\"--timeout must be a number >= 1\");\r\n      }\r\n      const scenarioName =\r\n        parseOptionValue(argv, \"--scenario\") ??\r\n        (subcommand === \"scenario\" ? rest[1] : undefined);\r\n      const routePath =\r\n        subcommand === \"route\" || subcommand === \"snapshot\"\r\n          ? rest[1] ?? \"/\"\r\n          : undefined;\r\n      return {\r\n        command: {\r\n          kind: \"ui\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            headed: parseFlag(argv, \"--headed\"),\r\n            browser: parseUiBrowser(parseOptionValue(argv, \"--browser\")),\r\n            trace: parseUiTrace(parseOptionValue(argv, \"--trace\")),\r\n            screenshot: parseUiScreenshot(parseOptionValue(argv, \"--screenshot\")),\r\n            video: parseUiVideo(parseOptionValue(argv, \"--video\")),\r\n            baseUrl: parseOptionValue(argv, \"--base-url\") ?? \"http://127.0.0.1:3000\",\r\n            runtimeUrl: parseOptionValue(argv, \"--runtime-url\") ?? \"http://127.0.0.1:3765\",\r\n            reuseServers: parseFlag(argv, \"--reuse-servers\"),\r\n            startServers: parseFlag(argv, \"--start-servers\"),\r\n            scenarioName,\r\n            routePath,\r\n            snapshotName: parseOptionValue(argv, \"--name\"),\r\n            reportId: subcommand === \"report\" ? rest[1] ?? \"last\" : undefined,\r\n            all: parseFlag(argv, \"--all\"),\r\n            changed: parseFlag(argv, \"--changed\"),\r\n            ci: parseFlag(argv, \"--ci\"),\r\n            timeoutMs: Math.floor(timeoutMs),\r\n            authToken: parseOptionValue(argv, \"--auth-token\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"doctor\":\r\n      if (rest[0] && rest[0] !== \"windows\" && rest[0] !== \"agent\" && rest[0] !== \"delta\" && rest[0] !== \"pglite\" && rest[0] !== \"runtime\") {\r\n        errors.push(\"forge doctor supports subcommand: windows, agent, delta, pglite, or runtime\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"doctor\",\r\n          target: rest[0] === \"windows\"\r\n            ? \"windows\"\r\n            : rest[0] === \"agent\"\r\n              ? \"agent\"\r\n              : rest[0] === \"delta\"\r\n                ? \"delta\"\r\n                : rest[0] === \"pglite\"\r\n                  ? \"pglite\"\r\n                  : rest[0] === \"runtime\"\r\n                    ? \"runtime\"\r\n                  : \"project\",\r\n          agentTarget: rest[0] === \"agent\"\r\n            ? (parseOptionValue(argv, \"--target\") as AgentAdapterTarget | undefined) ?? (rest[1] as AgentAdapterTarget | undefined) ?? \"codex\"\r\n            : undefined,\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"setup\": {\r\n      const target = rest[0];\r\n      if (target !== \"windows\") {\r\n        errors.push(\"forge setup requires subcommand: windows\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"setup\",\r\n          target,\r\n          json: parseFlag(argv, \"--json\"),\r\n          yes: parseFlag(argv, \"--yes\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"security\": {\r\n      const subcommand = rest[0] as SecuritySubcommand | undefined;\r\n      if (!subcommand || !SECURITY_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge security requires subcommand: prove\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"security\",\r\n          subcommand,\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          runTests: parseFlag(argv, \"--full\") || parseFlag(argv, \"--run-tests\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"auth\": {\r\n      const subcommand = rest[0] as AuthSubcommand | undefined;\r\n      if (!subcommand || !AUTH_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge auth requires subcommand: check, config, decode, test-token, jwks, prove, or status\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const providerValue = parseOptionValue(argv, \"--provider\");\r\n      if (providerValue && providerValue !== \"workos\") {\r\n        errors.push(\"forge auth --provider supports: workos\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const provider = providerValue === \"workos\" ? \"workos\" : undefined;\r\n      return {\r\n        command: {\r\n          kind: \"auth\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          token: parseOptionValue(argv, \"--token\"),\r\n          prod: parseFlag(argv, \"--prod\") || parseFlag(argv, \"--production\"),\r\n          scenario: parseOptionValue(argv, \"--scenario\"),\r\n          provider,\r\n          real: parseFlag(argv, \"--real\"),\r\n          file: parseOptionValue(argv, \"--file\"),\r\n          clientId: parseOptionValue(argv, \"--client-id\") ?? parseOptionValue(argv, \"--workos-client-id\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"authmd\": {\r\n      const subcommand = rest[0] as AuthMdSubcommand | undefined;\r\n      if (!subcommand || !AUTHMD_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge authmd requires subcommand: generate or check\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"authmd\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          output: parseOptionValue(argv, \"--output\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"workos\": {\r\n      const subcommand = rest[0] as WorkOSSubcommand | undefined;\r\n      if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge workos requires subcommand: install, doctor, seed, setup, prove, env, or fga\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const fgaAction = subcommand === \"fga\" ? rest[1] as WorkOSFgaAction | undefined : undefined;\r\n      if (subcommand === \"fga\" && (!fgaAction || !WORKOS_FGA_ACTIONS.includes(fgaAction))) {\r\n        errors.push(\"forge workos fga requires action: plan, sync, prove, or doctor\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const workOSWritePath = parseOptionalOptionValue(argv, \"--write\");\r\n      return {\r\n        command: {\r\n          kind: \"workos\",\r\n          subcommand,\r\n          ...(fgaAction ? { fgaAction } : {}),\r\n          json: parseFlag(argv, \"--json\"),\r\n          file: parseOptionValue(argv, \"--file\"),\r\n          yes: parseFlag(argv, \"--yes\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          real: parseFlag(argv, \"--real\"),\r\n          write: parseFlag(argv, \"--write\"),\r\n          ...(workOSWritePath ? { writePath: workOSWritePath } : {}),\r\n          clientId: parseOptionValue(argv, \"--client-id\") ?? parseOptionValue(argv, \"--workos-client-id\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"deploy\": {\r\n      const subcommand = rest[0] as DeploySubcommand | undefined;\r\n      if (!subcommand || !DEPLOY_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge deploy requires subcommand: plan, init, check, readiness, render, package, or verify\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const targetRaw = parseOptionValue(argv, \"--target\") ?? (subcommand === \"init\" || subcommand === \"render\" || subcommand === \"package\" ? rest[1] : undefined) ?? \"docker\";\r\n      if (targetRaw !== \"docker\" && targetRaw !== \"forge-cloud\") {\r\n        errors.push(\"forge deploy --target must be docker or forge-cloud\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"deploy\",\r\n          subcommand,\r\n          target: targetRaw as DeployTarget,\r\n          production: parseFlag(argv, \"--production\") || parseFlag(argv, \"--prod\"),\r\n          url: parseOptionValue(argv, \"--url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"golden-path\": {\r\n      const maybeSubcommand = rest[0];\r\n      if (maybeSubcommand && !maybeSubcommand.startsWith(\"--\") && !GOLDEN_PATH_SUBCOMMANDS.includes(maybeSubcommand as GoldenPathSubcommand)) {\r\n        errors.push(\"forge golden-path requires subcommand: plan or status\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const subcommand = (maybeSubcommand && GOLDEN_PATH_SUBCOMMANDS.includes(maybeSubcommand as GoldenPathSubcommand)\r\n        ? maybeSubcommand\r\n        : \"plan\") as GoldenPathSubcommand;\r\n      const authRaw = parseOptionValue(argv, \"--auth\") ?? \"workos\";\r\n      if (authRaw !== \"none\" && authRaw !== \"workos\") {\r\n        errors.push(\"forge golden-path --auth must be none or workos\");\r\n      }\r\n      const targetRaw = parseOptionValue(argv, \"--target\") ?? \"docker\";\r\n      if (targetRaw !== \"docker\" && targetRaw !== \"forge-cloud\") {\r\n        errors.push(\"forge golden-path --target must be docker or forge-cloud\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"golden-path\",\r\n          subcommand,\r\n          name: parseOptionValue(argv, \"--name\") ?? \"vendor-access\",\r\n          template: parseNewTemplate(parseOptionValue(argv, \"--template\") ?? \"vendor-access\"),\r\n          packageManager: parseNewPackageManager(parseOptionValue(argv, \"--package-manager\") ?? \"npm\"),\r\n          forgeSpec: parseOptionValue(argv, \"--forge-spec\"),\r\n          auth: authRaw as \"none\" | \"workos\",\r\n          target: targetRaw as DeployTarget,\r\n          production: parseFlag(argv, \"--production\") || parseFlag(argv, \"--prod\") || subcommand === \"status\",\r\n          real: parseFlag(argv, \"--real\"),\r\n          clientId: parseOptionValue(argv, \"--client-id\") ?? parseOptionValue(argv, \"--workos-client-id\"),\r\n          url: parseOptionValue(argv, \"--url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"field-test\": {\r\n      const subcommand = rest[0] as FieldTestSubcommand | undefined;\r\n      if (!subcommand || !FIELD_TEST_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge field-test requires subcommand: create, run, or report\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const timeoutRaw = parseOptionValue(argv, \"--timeout-ms\");\r\n      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 180_000;\r\n      if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {\r\n        errors.push(\"--timeout-ms must be a positive integer\");\r\n      }\r\n      const realistic = parseFlag(argv, \"--realistic\");\r\n      const authRaw = parseOptionValue(argv, \"--auth\") ?? (realistic ? \"workos\" : \"none\");\r\n      if (authRaw !== \"none\" && authRaw !== \"workos\") {\r\n        errors.push(\"forge field-test --auth must be none or workos\");\r\n      }\r\n      const templates = parseTemplateList(parseOptionValue(argv, \"--templates\"), errors, \"--templates\");\r\n      const packageManagers = parsePackageManagerList(parseOptionValue(argv, \"--package-managers\"), errors, \"--package-managers\");\r\n      return {\r\n        command: {\r\n          kind: \"field-test\",\r\n          subcommand,\r\n          name: subcommand === \"create\" ? rest[1] : undefined,\r\n          template: parseNewTemplate(parseOptionValue(argv, \"--template\") ?? (realistic || authRaw === \"workos\" ? \"vendor-access\" : \"minimal-web\")),\r\n          templates,\r\n          packageManager: parseNewPackageManager(parseOptionValue(argv, \"--package-manager\") ?? \"npm\"),\r\n          packageManagers,\r\n          forgeSpec: parseOptionValue(argv, \"--forge-spec\"),\r\n          auth: authRaw as \"none\" | \"workos\",\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          keep: parseFlag(argv, \"--keep\"),\r\n          runtimeProbes: parseFlag(argv, \"--runtime-probes\") || realistic,\r\n          authProbes: parseFlag(argv, \"--auth-probes\") || realistic,\r\n          uiProbes: parseFlag(argv, \"--ui-probes\") || realistic,\r\n          realistic,\r\n          timeoutMs: Math.floor(timeoutMs),\r\n          writeReport: parseOptionValue(argv, \"--write-report\") ?? parseOptionValue(argv, \"--file\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"seed\": {\r\n      const subcommandRaw = (rest[0] ?? \"status\") as SeedSubcommand;\r\n      if (![\"status\", \"dev\", \"reset\"].includes(subcommandRaw)) {\r\n        errors.push(\"forge seed requires subcommand: status, dev, or reset\");\r\n      }\r\n      const argsRaw = parseOptionValue(argv, \"--args\");\r\n      let args: unknown = {};\r\n      if (argsRaw !== undefined) {\r\n        try {\r\n          args = JSON.parse(argsRaw);\r\n        } catch {\r\n          errors.push(\"--args must be valid JSON\");\r\n        }\r\n      }\r\n      const permissionsRaw = parseOptionValue(argv, \"--permissions\");\r\n      return {\r\n        command: {\r\n          kind: \"seed\",\r\n          subcommand: subcommandRaw,\r\n          command: parseOptionValue(argv, \"--command\"),\r\n          args,\r\n          url: parseOptionValue(argv, \"--url\"),\r\n          userId: parseOptionValue(argv, \"--user-id\"),\r\n          tenantId: parseOptionValue(argv, \"--tenant-id\") ?? parseOptionValue(argv, \"--tenant\"),\r\n          role: parseOptionValue(argv, \"--role\"),\r\n          permissions: permissionsRaw\r\n            ?.split(\",\")\r\n            .map((permission) => permission.trim())\r\n            .filter(Boolean),\r\n          allTenants: parseFlag(argv, \"--all-tenants\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"rls\": {\r\n      const subcommand = rest[0] as RlsSubcommand | undefined;\r\n      if (!subcommand || !RLS_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge rls requires subcommand: generate, check, apply, test, or mutate-test\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"rls\",\r\n          subcommand,\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"deps\": {\r\n      const subcommand = rest[0] as DepsSubcommand | undefined;\r\n      if (!subcommand || !DEPS_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge deps requires subcommand: outdated, inspect, api, trace, runtime-compat, diff, upgrade-plan, upgrade-apply, upgrade-check, upgrade-rollback, or risk\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const packageName =\r\n        subcommand === \"outdated\" || subcommand === \"upgrade-check\" ? undefined : rest[1];\r\n      const symbolName = subcommand === \"api\" ? rest[2] : undefined;\r\n      const planPath =\r\n        subcommand === \"upgrade-apply\" || subcommand === \"upgrade-rollback\"\r\n          ? rest[1]\r\n          : undefined;\r\n      return {\r\n        command: {\r\n          kind: \"deps\",\r\n          subcommand,\r\n          packageName,\r\n          symbolName,\r\n          planPath,\r\n          target: parseOptionValue(argv, \"--to\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          yes: parseFlag(argv, \"--yes\"),\r\n          allowScripts: parseFlag(argv, \"--allow-scripts\"),\r\n          skipTests: parseFlag(argv, \"--skip-tests\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          changed: parseFlag(argv, \"--changed\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"release\": {\r\n      const first = rest[0] ?? \"prepare\";\r\n      const area =\r\n        first === \"artifacts\" || first === \"sourcemaps\"\r\n          ? (first as ReleaseArea)\r\n          : \"release\";\r\n      const action = (area === \"release\" ? first : rest[1]) as ReleaseAction;\r\n      const releaseId =\r\n        area === \"release\" && action === \"inspect\"\r\n          ? rest[1]\r\n          : parseOptionValue(argv, \"--release\");\r\n      return {\r\n        command: {\r\n          kind: \"release\",\r\n          area,\r\n          action,\r\n          releaseId,\r\n          input: parseOptionValue(argv, \"--input\"),\r\n          provider: parseOptionValue(argv, \"--provider\"),\r\n          target: parseOptionValue(argv, \"--target\"),\r\n          env: parseOptionValue(argv, \"--env\") ?? \"production\",\r\n          json: parseFlag(argv, \"--json\"),\r\n          allowDirty: parseFlag(argv, \"--allow-dirty\"),\r\n          allowPublicSourcemaps: parseFlag(argv, \"--allow-public-sourcemaps\"),\r\n          allowMissingLocalRelease: parseFlag(argv, \"--allow-missing-local-release\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"make\": {\r\n      const primitive = rest[0] as MakePrimitive | undefined;\r\n      if (!primitive || !MAKE_PRIMITIVES.includes(primitive)) {\r\n        errors.push(`forge make requires primitive: ${MAKE_PRIMITIVES.join(\", \")}`);\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const name =\r\n        primitive === \"explain\"\r\n          ? undefined\r\n          : primitive === \"list\"\r\n            ? undefined\r\n            : primitive === \"ui\"\r\n              ? rest[1] ?? \"ui\"\r\n              : primitive === \"ai-chat\"\r\n                ? rest[1] ?? \"support\"\r\n              : rest[1];\r\n      const explainPrimitive =\r\n        primitive === \"explain\" ? (rest[1] as MakePrimitive | undefined) : undefined;\r\n      if (\r\n        primitive === \"explain\" &&\r\n        (!explainPrimitive || !MAKE_PRIMITIVES.includes(explainPrimitive))\r\n      ) {\r\n        errors.push(\"forge make explain requires a known primitive\");\r\n      }\r\n      if (\r\n        ![\"list\", \"explain\", \"ui\", \"ai-chat\"].includes(primitive) &&\r\n        !name\r\n      ) {\r\n        errors.push(`forge make ${primitive} requires a name or plan id`);\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"make\",\r\n          options: {\r\n            primitive,\r\n            name,\r\n            explainPrimitive,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            dryRun: parseFlag(argv, \"--dry-run\"),\r\n            plan: parseFlag(argv, \"--plan\"),\r\n            apply:\r\n              primitive === \"apply\" ||\r\n              parseFlag(argv, \"--apply\") ||\r\n              parseFlag(argv, \"--yes\"),\r\n            yes: parseFlag(argv, \"--yes\"),\r\n            force: parseFlag(argv, \"--force\"),\r\n            noGenerate: parseFlag(argv, \"--no-generate\"),\r\n            noVerify: parseFlag(argv, \"--no-verify\"),\r\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\r\n            tenantScoped: parseFlag(argv, \"--tenant-scoped\"),\r\n            fieldSpecs: parseOptionValues(argv, \"--field\"),\r\n            fieldsRaw: parseOptionValue(argv, \"--fields\"),\r\n            type: parseOptionValue(argv, \"--type\"),\r\n            values: parseOptionValue(argv, \"--values\"),\r\n            defaultValue: parseOptionValue(argv, \"--default\"),\r\n            index: parseFlag(argv, \"--index\"),\r\n            roles: parseOptionValue(argv, \"--roles\"),\r\n            table: parseOptionValue(argv, \"--table\"),\r\n            policy: parseOptionValue(argv, \"--policy\"),\r\n            emit: parseOptionValue(argv, \"--emit\"),\r\n            event: parseOptionValue(argv, \"--event\"),\r\n            trigger: parseOptionValue(argv, \"--trigger\"),\r\n            component: parseOptionValue(argv, \"--component\"),\r\n            framework: parseOptionValue(argv, \"--framework\") as \"vite\" | \"next\" | \"nuxt\" | undefined,\r\n            withAi: parseFlag(argv, \"--with-ai\"),\r\n            withCrud: parseFlag(argv, \"--with-crud\"),\r\n            withLiveQuery: parseFlag(argv, \"--with-livequery\"),\r\n            withReact: parseFlag(argv, \"--with-react\") || parseFlag(argv, \"--with-ui\"),\r\n            withUi: parseFlag(argv, \"--with-ui\"),\r\n            withTests: parseFlag(argv, \"--with-tests\"),\r\n            withCreateForm: parseFlag(argv, \"--with-create-form\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"feature\": {\r\n      const action = rest[0] as FeatureAction | undefined;\r\n      if (!action || !FEATURE_ACTIONS.includes(action)) {\r\n        errors.push(`forge feature requires action: ${FEATURE_ACTIONS.join(\", \")}`);\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const blueprintPath =\r\n        [\"validate\", \"plan\", \"diff\", \"apply\"].includes(action) ? rest[1] : undefined;\r\n      const featureId =\r\n        [\"inspect\", \"rollback\"].includes(action) ? rest[1] : undefined;\r\n      const exampleName = action === \"examples\" ? rest[1] : undefined;\r\n      if ([\"validate\", \"plan\", \"diff\", \"apply\"].includes(action) && !blueprintPath) {\r\n        errors.push(`forge feature ${action} requires a blueprint path`);\r\n      }\r\n      if ([\"inspect\", \"rollback\"].includes(action) && !featureId) {\r\n        errors.push(`forge feature ${action} requires a feature id`);\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"feature\",\r\n          options: {\r\n            action,\r\n            blueprintPath,\r\n            featureId,\r\n            exampleName,\r\n            writePath: parseOptionValue(argv, \"--write\"),\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            dryRun: parseFlag(argv, \"--dry-run\"),\r\n            yes: parseFlag(argv, \"--yes\"),\r\n            noGenerate: parseFlag(argv, \"--no-generate\"),\r\n            noVerify: parseFlag(argv, \"--no-verify\"),\r\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\r\n            update: parseFlag(argv, \"--update\"),\r\n            allowHighRisk: parseFlag(argv, \"--allow-high-risk\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"refactor\": {\r\n      const action = rest[0] as RefactorAction | undefined;\r\n      if (!action || !REFACTOR_ACTIONS.includes(action)) {\r\n        errors.push(`forge refactor requires action: ${REFACTOR_ACTIONS.join(\", \")}`);\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      let renameTarget: RenameTarget | undefined;\r\n      let from: string | undefined;\r\n      let to: string | undefined;\r\n      let planId: string | undefined;\r\n      let componentName: string | undefined;\r\n\r\n      if (action === \"rename\") {\r\n        renameTarget = rest[1] as RenameTarget | undefined;\r\n        if (!renameTarget || !RENAME_TARGETS.includes(renameTarget)) {\r\n          errors.push(`forge refactor rename requires target: ${RENAME_TARGETS.join(\", \")}`);\r\n        }\r\n        from = rest[2];\r\n        to = rest[3];\r\n        if (!from || !to) {\r\n          errors.push(\"forge refactor rename requires <from> <to>\");\r\n        }\r\n      } else if (action === \"move\") {\r\n        renameTarget = rest[1] as RenameTarget | undefined;\r\n        if (renameTarget !== \"field\" && rest[1] !== \"component\") {\r\n          errors.push(\"forge refactor move requires target: component\");\r\n        }\r\n        componentName = rest[2];\r\n        to = rest[3];\r\n        if (!componentName || !to) {\r\n          errors.push(\"forge refactor move component requires <name> <path>\");\r\n        }\r\n      } else if (action === \"extract-action\") {\r\n        from = rest[1];\r\n        if (!from) {\r\n          errors.push(\"forge refactor extract-action requires a command name\");\r\n        }\r\n      } else if (action === \"replace-process-env\") {\r\n        from = rest[1];\r\n        if (!from) {\r\n          errors.push(\"forge refactor replace-process-env requires an env var\");\r\n        }\r\n      } else if (action === \"replace-import\") {\r\n        from = rest[1];\r\n        to = rest[2];\r\n        if (!from || !to) {\r\n          errors.push(\"forge refactor replace-import requires <from> <to>\");\r\n        }\r\n      } else if (action === \"apply\" || action === \"diff\" || action === \"rollback\") {\r\n        planId = rest[1];\r\n        if (!planId) {\r\n          errors.push(`forge refactor ${action} requires a plan id`);\r\n        }\r\n      } else if (action === \"plan\") {\r\n        const nestedAction = rest[1] as RefactorAction | undefined;\r\n        if (nestedAction === \"rename\") {\r\n          renameTarget = rest[2] as RenameTarget | undefined;\r\n          from = rest[3];\r\n          to = rest[4];\r\n        } else {\r\n          errors.push(\"forge refactor plan currently supports: rename <target> <from> <to>\");\r\n        }\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"refactor\",\r\n          options: {\r\n            action: action === \"plan\" && rest[1] === \"rename\" ? \"rename\" : action,\r\n            renameTarget,\r\n            from,\r\n            to,\r\n            planId,\r\n            componentName,\r\n            packageName: parseOptionValue(argv, \"--package\"),\r\n            eventName: parseOptionValue(argv, \"--event\"),\r\n            actionName: parseOptionValue(argv, \"--action\"),\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            dryRun: parseFlag(argv, \"--dry-run\"),\r\n            plan: action === \"plan\" || parseFlag(argv, \"--plan\"),\r\n            yes: parseFlag(argv, \"--yes\"),\r\n            force: parseFlag(argv, \"--force\"),\r\n            allowHighRisk: parseFlag(argv, \"--allow-high-risk\"),\r\n            noGenerate: parseFlag(argv, \"--no-generate\"),\r\n            noVerify: parseFlag(argv, \"--no-verify\"),\r\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"impact\": {\r\n      return {\r\n        command: {\r\n          kind: \"impact\",\r\n          options: {\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            write: parseFlag(argv, \"--write\"),\r\n            changed: parseFlag(argv, \"--changed\") || (!parseFlag(argv, \"--staged\") && !parseOptionValue(argv, \"--since\") && !parseOptionValue(argv, \"--feature\") && !parseOptionValue(argv, \"--refactor\") && !parseOptionValue(argv, \"--upgrade\")),\r\n            staged: parseFlag(argv, \"--staged\"),\r\n            since: parseOptionValue(argv, \"--since\"),\r\n            featureId: parseOptionValue(argv, \"--feature\"),\r\n            refactorId: parseOptionValue(argv, \"--refactor\"),\r\n            upgradeId: parseOptionValue(argv, \"--upgrade\"),\r\n            includeGenerated: parseFlag(argv, \"--include-generated\"),\r\n            excludeTests: parseFlag(argv, \"--exclude-tests\"),\r\n            riskThreshold: parseOptionValue(argv, \"--risk-threshold\") as ImpactCommandOptions[\"riskThreshold\"],\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"test\": {\r\n      const subcommand = rest[0] as TestSubcommand | undefined;\r\n      if (!subcommand || !TEST_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge test requires subcommand: plan, run, explain, or authz\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const timeoutRaw = parseOptionValue(argv, \"--timeout-ms\");\r\n      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : undefined;\r\n      if (\r\n        timeoutRaw !== undefined &&\r\n        (!Number.isFinite(timeoutMs) || timeoutMs! < 1)\r\n      ) {\r\n        errors.push(\"--timeout-ms must be a number >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"test\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            write: parseFlag(argv, \"--write\"),\r\n            changed: parseFlag(argv, \"--changed\") || (!parseFlag(argv, \"--staged\") && !parseOptionValue(argv, \"--since\") && !parseOptionValue(argv, \"--feature\") && !parseOptionValue(argv, \"--refactor\") && !parseOptionValue(argv, \"--upgrade\") && !parseOptionValue(argv, \"--plan\") && subcommand !== \"explain\" && subcommand !== \"authz\"),\r\n            staged: parseFlag(argv, \"--staged\"),\r\n            since: parseOptionValue(argv, \"--since\"),\r\n            featureId: parseOptionValue(argv, \"--feature\"),\r\n            refactorId: parseOptionValue(argv, \"--refactor\"),\r\n            upgradeId: parseOptionValue(argv, \"--upgrade\"),\r\n            planPath: parseOptionValue(argv, \"--plan\"),\r\n            testFile: subcommand === \"explain\" ? rest[1] : undefined,\r\n            maxCost: parseTestCost(parseOptionValue(argv, \"--max-cost\")),\r\n            includeDocker: parseFlag(argv, \"--include-docker\"),\r\n            includeBrowser: parseFlag(argv, \"--include-browser\"),\r\n            bail: parseFlag(argv, \"--bail\"),\r\n            report: parseOptionValue(argv, \"--report\"),\r\n            timeoutMs: timeoutMs ? Math.floor(timeoutMs) : undefined,\r\n            tenant: parseOptionValue(argv, \"--tenant\") ?? \"acme\",\r\n            otherTenant: parseOptionValue(argv, \"--other-tenant\") ?? \"globex\",\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"repair\": {\r\n      const subcommand = rest[0] as RepairSubcommand | undefined;\r\n      if (!subcommand || !REPAIR_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge repair requires subcommand: diagnose, explain, plan, apply, run, list, inspect, or rollback\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const positionalId =\r\n        subcommand === \"explain\" ||\r\n        subcommand === \"apply\" ||\r\n        subcommand === \"inspect\" ||\r\n        subcommand === \"rollback\"\r\n          ? rest[1]\r\n          : undefined;\r\n      const attemptsRaw = parseOptionValue(argv, \"--max-attempts\");\r\n      const maxAttempts = attemptsRaw ? Number(attemptsRaw) : 1;\r\n      if (!Number.isFinite(maxAttempts) || maxAttempts < 1) {\r\n        errors.push(\"--max-attempts must be a number >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"repair\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            fromLastTestRun: parseFlag(argv, \"--from-last-test-run\"),\r\n            fromLastUiRun: parseFlag(argv, \"--from-last-ui-run\"),\r\n            from: parseOptionValue(argv, \"--from\"),\r\n            traceId: parseOptionValue(argv, \"--trace\"),\r\n            workflowRunId: parseOptionValue(argv, \"--workflow-run\"),\r\n            outboxDeliveryId: parseOptionValue(argv, \"--outbox-delivery\"),\r\n            diagnosticCode:\r\n              parseOptionValue(argv, \"--diagnostic\") ??\r\n              (subcommand === \"explain\" ? positionalId : undefined),\r\n            repairId:\r\n              subcommand === \"apply\" || subcommand === \"inspect\" || subcommand === \"rollback\"\r\n                ? positionalId\r\n                : undefined,\r\n            selectedRepair: parseOptionValue(argv, \"--repair\"),\r\n            write: parseFlag(argv, \"--write\"),\r\n            yes: parseFlag(argv, \"--yes\"),\r\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\r\n            allowMediumConfidence: parseFlag(argv, \"--allow-medium-confidence\"),\r\n            maxAttempts: Math.floor(maxAttempts),\r\n            commitFriendly: parseFlag(argv, \"--commit-friendly\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"do\": {\r\n      const objective = parseDoObjective(rest, argv);\r\n      return {\r\n        command: {\r\n          kind: \"do\",\r\n          options: {\r\n            workspaceRoot,\r\n            objective,\r\n            json: parseFlag(argv, \"--json\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"bench\": {\r\n      const subcommand = rest[0] as BenchSubcommand | undefined;\r\n      if (!subcommand || !BENCH_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge bench requires subcommand: compiler\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const iterationsRaw = parseOptionValue(argv, \"--iterations\");\r\n      const warmupsRaw = parseOptionValue(argv, \"--warmups\");\r\n      const concurrencyRaw = parseOptionValue(argv, \"--concurrency\");\r\n      const iterations = iterationsRaw !== undefined ? Number(iterationsRaw) : 5;\r\n      const warmups = warmupsRaw !== undefined ? Number(warmupsRaw) : 1;\r\n      const concurrency = concurrencyRaw !== undefined ? Number(concurrencyRaw) : 4;\r\n      if (!Number.isFinite(iterations) || iterations < 1) {\r\n        errors.push(\"--iterations must be a number >= 1\");\r\n      }\r\n      if (!Number.isFinite(warmups) || warmups < 0) {\r\n        errors.push(\"--warmups must be a number >= 0\");\r\n      }\r\n      if (!Number.isFinite(concurrency) || concurrency < 1) {\r\n        errors.push(\"--concurrency must be a number >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"bench\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            iterations: Math.floor(iterations),\r\n            warmups: Math.floor(warmups),\r\n            concurrency: Math.floor(concurrency),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"cair\": {\r\n      const subcommand = rest[0] as CairSubcommand | undefined;\r\n      if (!subcommand || !CAIR_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge cair requires subcommand: snapshot, query, or action\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const formatRaw = parseOptionValue(argv, \"--format\");\r\n      if (formatRaw !== undefined && formatRaw !== \"text\" && formatRaw !== \"json\") {\r\n        errors.push(\"--format must be text or json\");\r\n      }\r\n      const query = subcommand === \"query\" ? rest.slice(1).join(\" \").trim() : undefined;\r\n      if (subcommand === \"query\" && !query) {\r\n        errors.push(\"forge cair query requires a CAIR query, for example: forge cair query \\\"Q STATUS\\\"\");\r\n      }\r\n      const inputPath = parseOptionValue(argv, \"--input\");\r\n      const action = subcommand === \"action\"\r\n        ? rest.slice(1).filter((part, index, parts) => {\r\n          const previous = parts[index - 1];\r\n          if (part === \"--dry-run\" || part === \"--plan\" || part === \"--json\" || part === \"--include-generated\") {\r\n            return false;\r\n          }\r\n          if (part === \"--format\" || part === \"--input\") {\r\n            return false;\r\n          }\r\n          if (previous === \"--format\" || previous === \"--input\") {\r\n            return false;\r\n          }\r\n          return true;\r\n        }).join(\" \").trim()\r\n        : undefined;\r\n      if (subcommand === \"action\" && !action && !inputPath) {\r\n        errors.push(\"forge cair action requires a CAIR action, for example: forge cair action \\\"A CREATE.FILE path=src/example.ts\\\"\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"cair\",\r\n          options: {\r\n            subcommand,\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            format: formatRaw === \"json\" ? \"json\" : \"text\",\r\n            ...(query ? { query } : {}),\r\n            ...(action ? { action } : {}),\r\n            ...(inputPath ? { inputPath } : {}),\r\n            dryRun: parseFlag(argv, \"--dry-run\"),\r\n            plan: parseFlag(argv, \"--plan\"),\r\n            allowGenerated: parseFlag(argv, \"--include-generated\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"status\":\r\n      return {\r\n        command: {\r\n          kind: \"status\",\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"changed\":\r\n      return {\r\n        command: {\r\n          kind: \"changed\",\r\n          json: parseFlag(argv, \"--json\"),\r\n          authoredOnly: parseFlag(argv, \"--authored\"),\r\n          reviewOnly: parseFlag(argv, \"--review\"),\r\n          commitReady: parseFlag(argv, \"--commit-ready\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"diff\": {\r\n      const target = (rest[0] ?? \"authored\") as \"authored\" | \"generated\" | \"full\";\r\n      if (![\"authored\", \"generated\", \"full\"].includes(target)) {\r\n        errors.push(\"forge diff requires target: authored, generated, or full\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"diff\",\r\n          target,\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"handoff\":\r\n      return {\r\n        command: {\r\n          kind: \"handoff\",\r\n          json: parseFlag(argv, \"--json\"),\r\n          commitReady: parseFlag(argv, \"--commit-ready\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"studio\": {\r\n      const subcommand = rest[0];\r\n      if (\r\n        subcommand !== \"attach\" &&\r\n        subcommand !== \"snapshot\" &&\r\n        subcommand !== \"watch\" &&\r\n        subcommand !== \"open\" &&\r\n        subcommand !== \"doctor\" &&\r\n        subcommand !== \"bridge\" &&\r\n        subcommand !== \"codex-server\"\r\n      ) {\r\n        errors.push(\"forge studio requires subcommand: attach, snapshot, watch, open, doctor, bridge, or codex-server\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const previewPortRaw = parseOptionValue(argv, \"--preview-port\");\r\n      const previewPort = previewPortRaw !== undefined ? Number(previewPortRaw) : undefined;\r\n      if (\r\n        previewPortRaw !== undefined &&\r\n        (!Number.isInteger(previewPort) || previewPort! < 1)\r\n      ) {\r\n        errors.push(\"--preview-port must be an integer >= 1\");\r\n      }\r\n      const intervalRaw = parseOptionValue(argv, \"--interval-ms\");\r\n      const intervalMs = intervalRaw !== undefined ? Number(intervalRaw) : undefined;\r\n      if (intervalRaw !== undefined && (!Number.isFinite(intervalMs) || intervalMs! < 1000)) {\r\n        errors.push(\"--interval-ms must be a number >= 1000\");\r\n      }\r\n      const targets = parseOptionValues(argv, \"--target\");\r\n      const ignoredOptionValues = new Set(\r\n        [\r\n          ...targets,\r\n          parseOptionValue(argv, \"--preview-url\"),\r\n          parseOptionValue(argv, \"--studio-url\"),\r\n          parseOptionValue(argv, \"--workspace-id\"),\r\n          parseOptionValue(argv, \"--tenant-id\"),\r\n          parseOptionValue(argv, \"--user-id\"),\r\n          parseOptionValue(argv, \"--role\"),\r\n          previewPortRaw,\r\n          intervalRaw,\r\n        ].filter((value): value is string => typeof value === \"string\"),\r\n      );\r\n      const studioPath = rest.slice(1).find((item) => !ignoredOptionValues.has(item));\r\n      return {\r\n        command: {\r\n          kind: \"studio\",\r\n          subcommand,\r\n          path: studioPath,\r\n          previewUrl: parseOptionValue(argv, \"--preview-url\"),\r\n          previewPort: previewPort ? Math.floor(previewPort) : undefined,\r\n          studioUrl: parseOptionValue(argv, \"--studio-url\"),\r\n          intervalMs: intervalMs ? Math.floor(intervalMs) : undefined,\r\n          once: parseFlag(argv, \"--once\"),\r\n          workspaceId: parseOptionValue(argv, \"--workspace-id\"),\r\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\r\n          userId: parseOptionValue(argv, \"--user-id\"),\r\n          role: parseOptionValue(argv, \"--role\"),\r\n          targets: targets.length > 0 ? targets : [\"codex\"],\r\n          install: parseFlag(argv, \"--install\"),\r\n          start: !parseFlag(argv, \"--no-start\"),\r\n          bridge: !parseFlag(argv, \"--no-bridge\"),\r\n          writeSchemas: parseFlag(argv, \"--write\"),\r\n          probeAppServer: parseFlag(argv, \"--probe\") || parseFlag(argv, \"--probe-codex-server\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          force: parseFlag(argv, \"--force\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"generate\": {\r\n      const concurrencyRaw = parseOptionValue(argv, \"--concurrency\");\r\n      const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;\r\n      if (!Number.isFinite(concurrency) || concurrency < 1) {\r\n        errors.push(\"--concurrency must be an integer >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"generate\",\r\n          check: parseFlag(argv, \"--check\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          concurrency: Math.max(1, Math.floor(concurrency || 4)),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"delta\": {\r\n      const subcommand = rest[0];\r\n      if (subcommand !== \"status\" && subcommand !== \"repair\" && subcommand !== \"compact\" && subcommand !== \"prune\" && subcommand !== \"export\") {\r\n        errors.push(\"forge delta requires subcommand: status, repair, compact, prune, or export\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const limit = limitRaw ? Number(limitRaw) : undefined;\r\n      return {\r\n        command: {\r\n          kind: \"delta\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          yes: parseFlag(argv, \"--yes\"),\r\n          verbose: parseFlag(argv, \"--verbose\"),\r\n          olderThan: parseOptionValue(argv, \"--older-than\"),\r\n          output: parseOptionValue(argv, \"--output\"),\r\n          limit: Number.isFinite(limit) ? limit : undefined,\r\n          redacted: parseFlag(argv, \"--redacted\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"session\": {\r\n      const subcommand = rest[0];\r\n      if (subcommand !== \"list\" && subcommand !== \"show\" && subcommand !== \"rename\" && subcommand !== \"merge\" && subcommand !== \"split\" && subcommand !== \"detach\") {\r\n        errors.push(\"forge session requires subcommand: list, show, rename, merge, split, or detach\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const limit = limitRaw ? Number(limitRaw) : undefined;\r\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\r\n        errors.push(\"--limit must be a number >= 1\");\r\n      }\r\n      const sessionId = rest[1];\r\n      return {\r\n        command: {\r\n          kind: \"session\",\r\n          subcommand,\r\n          sessionId: subcommand === \"detach\" ? undefined : sessionId,\r\n          sourceSessionId: subcommand === \"merge\" ? rest[2] : undefined,\r\n          operationId: subcommand === \"split\" ? rest[2] : subcommand === \"detach\" ? rest[1] : undefined,\r\n          title: subcommand === \"rename\" ? rest.slice(2).join(\" \") : undefined,\r\n          limit: limit ? Math.floor(limit) : undefined,\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"timeline\": {\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const kindFilter = parseOptionValue(argv, \"--kind\");\r\n      const sessionId = parseOptionValue(argv, \"--session\");\r\n      const rebuild = rest[0] === \"rebuild\";\r\n      const optionValues = new Set([limitRaw, kindFilter, sessionId].filter((value): value is string => typeof value === \"string\"));\r\n      const target = rebuild\r\n        ? undefined\r\n        : rest.find((item) => !item.startsWith(\"--\") && !optionValues.has(item));\r\n      const limit = limitRaw ? Number(limitRaw) : undefined;\r\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\r\n        errors.push(\"--limit must be a number >= 1\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"timeline\",\r\n          target,\r\n            kindFilter,\r\n            sessionId,\r\n            limit: limit ? Math.floor(limit) : undefined,\r\n            json: parseFlag(argv, \"--json\"),\r\n            rebuild,\r\n            forAgent: parseFlag(argv, \"--for-agent\"),\r\n            causal: parseFlag(argv, \"--causal\"),\r\n            staleProofs: parseFlag(argv, \"--stale-proofs\"),\r\n            workspaceRoot,\r\n          },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"explain\": {\r\n      const thing = rest[0] === \"session\" ? `session:${rest[1] ?? \"current\"}` : rest[0];\r\n      if (!thing) {\r\n        errors.push(\"forge explain requires a target\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"explain\",\r\n          thing,\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"manifest\": {\r\n      const subcommand = rest[0];\r\n      const path = rest[1];\r\n      if (subcommand !== \"validate\" && subcommand !== \"import\") {\r\n        errors.push(\"forge manifest requires subcommand validate or import\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      if (!path) {\r\n        errors.push(`forge manifest ${subcommand} requires a manifest file path`);\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"manifest\",\r\n          subcommand,\r\n          path,\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"import\": {\r\n      const subcommand = rest[0];\r\n      if (subcommand !== \"analyze\" && subcommand !== \"inspect\") {\r\n        errors.push(\"forge import requires subcommand analyze or inspect\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"import\",\r\n          options: {\r\n            subcommand,\r\n            json: parseFlag(argv, \"--json\"),\r\n            dryRun: parseFlag(argv, \"--dry-run\"),\r\n            workspaceRoot,\r\n            entry: parseOptionValue(argv, \"--entry\"),\r\n            target: parseOptionValue(argv, \"--target\"),\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"add\": {\r\n      const subcommand = rest[0];\r\n      const explicitMode =\r\n        subcommand === \"package\"\r\n          ? \"package\"\r\n          : subcommand === \"integration\" || subcommand === \"auth\"\r\n            ? \"integration\"\r\n            : \"auto\";\r\n      const alias = explicitMode === \"auto\" ? rest[0] : rest[1];\r\n      if (!alias) {\r\n        errors.push(\r\n          explicitMode === \"auto\"\r\n            ? \"forge add requires a package name or integration alias\"\r\n            : `forge add ${subcommand} requires a target`,\r\n        );\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"add\",\r\n          alias,\r\n          options: parseAddOptions(argv, workspaceRoot, explicitMode),\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"inspect\": {\r\n      const target = (rest[0] as InspectTarget | undefined) ?? \"summary\";\r\n      if (!INSPECT_TARGETS.includes(target)) {\r\n        errors.push(\r\n          `unsupported inspect target; supported: ${INSPECT_TARGETS.join(\", \")}`,\r\n        );\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"inspect\",\r\n          target,\r\n          json: parseFlag(argv, \"--json\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          full: parseFlag(argv, \"--full\"),\r\n          brief: parseFlag(argv, \"--brief\"),\r\n          ergonomics: parseFlag(argv, \"--ergonomics\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"check\":\r\n      return {\r\n        command: {\r\n          kind: \"check\",\r\n          json: parseFlag(argv, \"--json\"),\r\n          dryRun: parseFlag(argv, \"--dry-run\"),\r\n          strictSecrets: parseFlag(argv, \"--strict-secrets\"),\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    case \"verify\":\r\n      {\r\n        const scriptTimeoutRaw = parseOptionValue(argv, \"--script-timeout-ms\");\r\n        const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;\r\n        const testJobsRaw = parseOptionValue(argv, \"--test-jobs\");\r\n        const testJobs = testJobsRaw ? Number(testJobsRaw) : undefined;\r\n        const typechecker = parseOptionValue(argv, \"--typechecker\");\r\n        const verifyOptionValues = new Set(\r\n          [scriptTimeoutRaw, testJobsRaw, typechecker]\r\n            .filter((value): value is string => typeof value === \"string\"),\r\n        );\r\n        const profileAlias = rest.find((item) => !verifyOptionValues.has(item));\r\n        const verifyProfiles = new Set([\r\n          \"quick\",\r\n          \"smoke\",\r\n          \"agent\",\r\n          \"standard\",\r\n          \"release\",\r\n          \"strict\",\r\n          \"changed\",\r\n          \"framework\",\r\n          \"internal\",\r\n          \"maintainer\",\r\n        ]);\r\n        if (profileAlias && !verifyProfiles.has(profileAlias)) {\r\n          errors.push(\r\n            `unknown forge verify profile '${profileAlias}'; expected quick, smoke, agent, standard, release, strict, changed, framework, internal, or maintainer`,\r\n          );\r\n        }\r\n        const internal =\r\n          parseFlag(argv, \"--internal\") ||\r\n          profileAlias === \"framework\" ||\r\n          profileAlias === \"internal\" ||\r\n          profileAlias === \"maintainer\";\r\n        if (\r\n          scriptTimeoutRaw !== undefined &&\r\n          (!Number.isFinite(scriptTimeoutMs) || scriptTimeoutMs! < 1)\r\n        ) {\r\n          errors.push(\"--script-timeout-ms must be a number >= 1\");\r\n        }\r\n        if (\r\n          testJobsRaw !== undefined &&\r\n          (!Number.isInteger(testJobs) || testJobs! < 1)\r\n        ) {\r\n          errors.push(\"--test-jobs must be an integer >= 1\");\r\n        }\r\n        if (\r\n          typechecker !== undefined &&\r\n          typechecker !== \"tsc\" &&\r\n          typechecker !== \"native\" &&\r\n          typechecker !== \"ts7\" &&\r\n          typechecker !== \"tsgo\" &&\r\n          typechecker !== \"auto\"\r\n        ) {\r\n          errors.push(\"--typechecker must be one of: tsc, native, ts7, tsgo, auto\");\r\n        }\r\n      return {\r\n        command: {\r\n          kind: \"verify\",\r\n          options: {\r\n            workspaceRoot,\r\n            json: parseFlag(argv, \"--json\"),\r\n            skipTests: parseFlag(argv, \"--skip-tests\"),\r\n            skipTypecheck: parseFlag(argv, \"--skip-typecheck\"),\r\n            skipEslint: parseFlag(argv, \"--skip-eslint\"),\r\n            strict: internal || parseFlag(argv, \"--strict\") || profileAlias === \"release\" || profileAlias === \"strict\",\r\n            changed: parseFlag(argv, \"--changed\") || profileAlias === \"changed\",\r\n            fast: parseFlag(argv, \"--fast\") || profileAlias === \"quick\",\r\n            smoke: parseFlag(argv, \"--smoke\") || profileAlias === \"smoke\",\r\n            standard: parseFlag(argv, \"--standard\") || profileAlias === \"agent\" || profileAlias === \"standard\",\r\n            scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,\r\n            testJobs: testJobs ? Math.floor(testJobs) : undefined,\r\n            typechecker: typechecker as \"tsc\" | \"native\" | \"ts7\" | \"tsgo\" | \"auto\" | undefined,\r\n            fullTests: parseFlag(argv, \"--full\"),\r\n            testPlan: parseFlag(argv, \"--test-plan\"),\r\n            internal,\r\n          },\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n      }\r\n    case \"run\": {\r\n      if (rest[0] === \"query\") {\r\n        const queryName = rest[1];\r\n        if (!queryName) {\r\n          errors.push(\"forge run query requires a query name\");\r\n        }\r\n        const argsRaw = parseOptionValue(argv, \"--args\");\r\n        let args: unknown = {};\r\n        if (argsRaw !== undefined) {\r\n          try {\r\n            args = JSON.parse(argsRaw);\r\n          } catch {\r\n            errors.push(\"--args must be valid JSON\");\r\n          }\r\n        }\r\n        return {\r\n          command: {\r\n            kind: \"run\",\r\n            name: queryName,\r\n            list: false,\r\n            json: parseFlag(argv, \"--json\"),\r\n            mock: parseFlag(argv, \"--mock\"),\r\n            userId: parseOptionValue(argv, \"--user-id\"),\r\n            tenantId: parseOptionValue(argv, \"--tenant-id\"),\r\n            role: parseOptionValue(argv, \"--role\"),\r\n            envFile: parseOptionValue(argv, \"--env-file\"),\r\n            workspaceRoot,\r\n            queryMode: true,\r\n            args,\r\n          },\r\n          workspaceRoot,\r\n          errors,\r\n        };\r\n      }\r\n\r\n      const name = rest[0];\r\n      const list = parseFlag(argv, \"--list\") || !name;\r\n      const argsRaw = parseOptionValue(argv, \"--args\");\r\n      let args: unknown = {};\r\n      if (argsRaw !== undefined) {\r\n        try {\r\n          args = JSON.parse(argsRaw);\r\n        } catch {\r\n          errors.push(\"--args must be valid JSON\");\r\n        }\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"run\",\r\n          name,\r\n          list,\r\n          json: parseFlag(argv, \"--json\"),\r\n          mock: parseFlag(argv, \"--mock\"),\r\n          userId: parseOptionValue(argv, \"--user-id\"),\r\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\r\n          role: parseOptionValue(argv, \"--role\"),\r\n          envFile: parseOptionValue(argv, \"--env-file\"),\r\n          workspaceRoot,\r\n          args,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"query\": {\r\n      const requested = rest[0] as QuerySubcommand | undefined;\r\n      const subcommand =\r\n        !requested\r\n          ? \"list\"\r\n          : [\"list\", \"run\"].includes(requested)\r\n            ? requested\r\n            : \"run\";\r\n      if (![\"list\", \"run\"].includes(subcommand)) {\r\n        errors.push(\"forge query requires subcommand: list or run\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      const queryName = subcommand === \"run\"\r\n        ? requested === \"run\"\r\n          ? rest[1]\r\n          : rest[0]\r\n        : undefined;\r\n      if (subcommand === \"run\" && !queryName) {\r\n        errors.push(\"forge query run requires a query name\");\r\n      }\r\n\r\n      const argsRaw = parseOptionValue(argv, \"--args\");\r\n      let args: unknown = {};\r\n      if (argsRaw !== undefined) {\r\n        try {\r\n          args = JSON.parse(argsRaw);\r\n        } catch {\r\n          errors.push(\"--args must be valid JSON\");\r\n        }\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"query\",\r\n          subcommand,\r\n          name: queryName,\r\n          args,\r\n          json: parseFlag(argv, \"--json\"),\r\n          userId: parseOptionValue(argv, \"--user-id\"),\r\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\r\n          role: parseOptionValue(argv, \"--role\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"live\": {\r\n      const requested = rest[0] as LiveSubcommand | undefined;\r\n      const subcommand =\r\n        !requested\r\n          ? \"list\"\r\n          : LIVE_SUBCOMMANDS.includes(requested)\r\n            ? requested\r\n            : \"subscribe\";\r\n      const name =\r\n        subcommand === \"subscribe\"\r\n          ? rest[0]\r\n          : subcommand === \"debug\"\r\n            ? rest[1]\r\n            : undefined;\r\n      const argsRaw = parseOptionValue(argv, \"--args\");\r\n      let args: unknown = {};\r\n      if (argsRaw !== undefined) {\r\n        try {\r\n          args = JSON.parse(argsRaw);\r\n        } catch {\r\n          errors.push(\"--args must be valid JSON\");\r\n        }\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"live\",\r\n          subcommand,\r\n          name,\r\n          args,\r\n          json: parseFlag(argv, \"--json\"),\r\n          userId: parseOptionValue(argv, \"--user-id\"),\r\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\r\n          role: parseOptionValue(argv, \"--role\"),\r\n          url: parseOptionValue(argv, \"--url\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"dev\": {\r\n      const lifecycle = rest[0] === \"status\" || rest[0] === \"stop\" ? rest[0] : undefined;\r\n      const portRaw = parseOptionValue(argv, \"--port\");\r\n      const port = portRaw !== undefined ? Number(portRaw) : undefined;\r\n      if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {\r\n        errors.push(\"--port must be a non-negative integer\");\r\n      }\r\n      const webPortRaw = parseOptionValue(argv, \"--web-port\");\r\n      const webPort = webPortRaw !== undefined ? Number(webPortRaw) : undefined;\r\n      if (webPortRaw !== undefined && (!Number.isFinite(webPort) || webPort! < 0)) {\r\n        errors.push(\"--web-port must be a non-negative integer\");\r\n      }\r\n      const aiMode = parseOptionValue(argv, \"--ai\");\r\n      const mockAi =\r\n        parseFlag(argv, \"--mock-ai\") || aiMode === \"mock\" || process.env.FORGE_MOCK_AI === \"1\";\r\n      const seed = parseFlag(argv, \"--seed\");\r\n      if (seed && parseFlag(argv, \"--once\")) {\r\n        errors.push(\"forge dev --seed cannot be combined with --once; use forge dev --seed or forge seed dev\");\r\n      }\r\n      if (seed && parseFlag(argv, \"--web-only\")) {\r\n        errors.push(\"forge dev --seed cannot be combined with --web-only because seeding requires the API runtime\");\r\n      }\r\n      if (parseFlag(argv, \"--all-tenants\") && !seed) {\r\n        errors.push(\"forge dev --all-tenants requires --seed; use forge dev --seed --all-tenants\");\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"dev\",\r\n          host: parseOptionValue(argv, \"--host\"),\r\n          port,\r\n          mock: parseFlag(argv, \"--mock\"),\r\n          mockAi,\r\n          once: parseFlag(argv, \"--once\"),\r\n          watch: !parseFlag(argv, \"--no-watch\") || parseFlag(argv, \"--watch\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          db: parseDbKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          worker: !parseFlag(argv, \"--no-worker\") || parseFlag(argv, \"--worker\"),\r\n          withWeb: !parseFlag(argv, \"--no-web\") && !parseFlag(argv, \"--api-only\"),\r\n          apiOnly: parseFlag(argv, \"--api-only\"),\r\n          webOnly: parseFlag(argv, \"--web-only\"),\r\n          open: parseFlag(argv, \"--open\"),\r\n          webPort,\r\n          publicApiUrl: parseOptionValue(argv, \"--public-api-url\"),\r\n          telemetry: (parseOptionValue(argv, \"--telemetry\") ?? \"local\")\r\n            .split(\",\")\r\n            .map((value) => value.trim())\r\n            .filter(Boolean),\r\n          envFile: parseOptionValue(argv, \"--env-file\"),\r\n          skipStartupConsole: parseFlag(argv, \"--skip-startup-console\"),\r\n          detach: parseFlag(argv, \"--detach\"),\r\n          seed,\r\n          seedCommand: parseOptionValue(argv, \"--seed-command\"),\r\n          seedAllTenants: parseFlag(argv, \"--all-tenants\"),\r\n          lifecycle,\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"db\": {\r\n      const subcommand = rest[0] as DbSubcommand | undefined;\r\n      if (!subcommand || ![\"diff\", \"migrate\", \"reset\", \"status\", \"doctor\", \"repair\", \"rls-check\"].includes(subcommand)) {\r\n        errors.push(\"forge db requires subcommand: diff, migrate, reset, status, doctor, repair, or rls-check\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      return {\r\n        command: {\r\n          kind: \"db\",\r\n          subcommand,\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--adapter\") ?? parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          local: parseFlag(argv, \"--local\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"workflow\": {\r\n      const subcommand = rest[0] as WorkflowSubcommand | undefined;\r\n      if (\r\n        !subcommand ||\r\n        ![\"list\", \"run\", \"inspect\", \"process\", \"retry\", \"cancel\"].includes(subcommand)\r\n      ) {\r\n        errors.push(\r\n          \"forge workflow requires subcommand: list, run, inspect, process, retry, or cancel\",\r\n        );\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;\r\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\r\n        errors.push(\"--limit must be an integer >= 1\");\r\n      }\r\n\r\n      const inputRaw = parseOptionValue(argv, \"--input\");\r\n      let input: unknown;\r\n      if (inputRaw !== undefined) {\r\n        try {\r\n          input = JSON.parse(inputRaw);\r\n        } catch {\r\n          errors.push(\"--input must be valid JSON\");\r\n        }\r\n      }\r\n\r\n      const stepName = parseOptionValue(argv, \"--step\");\r\n      let runId: number | undefined;\r\n      let workflowName: string | undefined;\r\n\r\n      if (subcommand === \"run\") {\r\n        workflowName = rest[1];\r\n        if (!workflowName) {\r\n          errors.push(\"forge workflow run requires a workflow name\");\r\n        }\r\n      } else if ([\"inspect\", \"retry\", \"cancel\"].includes(subcommand)) {\r\n        const runIdRaw = rest[1];\r\n        runId = runIdRaw !== undefined ? Number(runIdRaw) : undefined;\r\n        if (runIdRaw !== undefined && !Number.isFinite(runId)) {\r\n          errors.push(\"run id must be a number\");\r\n        }\r\n        if (!runIdRaw) {\r\n          errors.push(`forge workflow ${subcommand} requires a run id`);\r\n        }\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"workflow\",\r\n          subcommand,\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          once: parseFlag(argv, \"--once\"),\r\n          watch: parseFlag(argv, \"--watch\"),\r\n          limit,\r\n          workflowName,\r\n          runId,\r\n          stepName,\r\n          input,\r\n          mock: parseFlag(argv, \"--mock\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"outbox\": {\r\n      const subcommand = rest[0] as OutboxSubcommand | undefined;\r\n      if (\r\n        !subcommand ||\r\n        ![\"list\", \"process\", \"retry\", \"dead\", \"clear\"].includes(subcommand)\r\n      ) {\r\n        errors.push(\r\n          \"forge outbox requires subcommand: list, process, retry, dead, or clear\",\r\n        );\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      const limitRaw = parseOptionValue(argv, \"--limit\");\r\n      const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;\r\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\r\n        errors.push(\"--limit must be an integer >= 1\");\r\n      }\r\n\r\n      const deliveryIdRaw = subcommand === \"retry\" ? rest[1] : undefined;\r\n      const deliveryId =\r\n        deliveryIdRaw !== undefined ? Number(deliveryIdRaw) : undefined;\r\n      if (deliveryIdRaw !== undefined && !Number.isFinite(deliveryId)) {\r\n        errors.push(\"delivery id must be a number\");\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"outbox\",\r\n          subcommand,\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          once: parseFlag(argv, \"--once\"),\r\n          watch: parseFlag(argv, \"--watch\"),\r\n          limit,\r\n          deliveryId,\r\n          mock: parseFlag(argv, \"--mock\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"telemetry\": {\r\n      const subcommand = rest[0] as TelemetrySubcommand | undefined;\r\n      if (\r\n        !subcommand ||\r\n        ![\"list\", \"inspect\", \"symbolicate\", \"flush\", \"tail\", \"clear\"].includes(subcommand)\r\n      ) {\r\n        errors.push(\r\n          \"forge telemetry requires subcommand: list, inspect, symbolicate, flush, tail, or clear\",\r\n        );\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      let traceId: string | undefined;\r\n      if (subcommand === \"inspect\" || subcommand === \"symbolicate\") {\r\n        traceId = rest[1];\r\n        if (!traceId) {\r\n          errors.push(\"forge telemetry inspect requires a trace id\");\r\n        }\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"telemetry\",\r\n          subcommand,\r\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          json: parseFlag(argv, \"--json\"),\r\n          traceId,\r\n          sink: parseOptionValue(argv, \"--sink\"),\r\n          file: parseOptionValue(argv, \"--file\") as \"events\" | \"exceptions\" | \"spans\" | undefined,\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"policy\": {\r\n      const subcommand = rest[0] as PolicySubcommand | undefined;\r\n      if (!subcommand || ![\"list\", \"matrix\", \"simulate\", \"check\"].includes(subcommand)) {\r\n        errors.push(\"forge policy requires subcommand: list, matrix, simulate, or check\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      let policyName: string | undefined;\r\n      if (subcommand === \"simulate\") {\r\n        policyName = rest[1];\r\n        if (!policyName) {\r\n          errors.push(\"forge policy simulate requires a policy name\");\r\n        }\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"policy\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          policy: policyName,\r\n          role: parseOptionValue(argv, \"--role\"),\r\n          strictPolicies: parseFlag(argv, \"--strict-policies\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"secrets\": {\r\n      const subcommand = rest[0] as SecretsSubcommand | undefined;\r\n      if (\r\n        !subcommand ||\r\n        ![\"list\", \"check\", \"print\", \"set\", \"unset\", \"prove\"].includes(subcommand)\r\n      ) {\r\n        errors.push(\r\n          \"forge secrets requires subcommand: list, check, print, set, unset, or prove\",\r\n        );\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"secrets\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          redacted: parseFlag(argv, \"--redacted\"),\r\n          name: subcommand === \"set\" || subcommand === \"unset\" ? rest[1] : undefined,\r\n          value: subcommand === \"set\" ? rest[2] : undefined,\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"env\": {\r\n      const subcommand = rest[0] as EnvSubcommand | undefined;\r\n      if (!subcommand || ![\"list\", \"check\", \"print\", \"doctor\"].includes(subcommand)) {\r\n        errors.push(\"forge env requires subcommand: list, check, print, or doctor\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n      const targetRaw = parseOptionValue(argv, \"--target\") ?? \"local\";\r\n      if (![\"local\", \"staging\", \"production\"].includes(targetRaw)) {\r\n        errors.push(\"forge env --target must be local, staging, or production\");\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"env\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          redacted: parseFlag(argv, \"--redacted\"),\r\n          target: targetRaw as \"local\" | \"staging\" | \"production\",\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    case \"ai\": {\r\n      const subcommand = rest[0] as AiSubcommand | undefined;\r\n      if (!subcommand || !AI_SUBCOMMANDS.includes(subcommand)) {\r\n        errors.push(\"forge ai requires subcommand: providers, check, test, models, tools, agents, redteam, or trace\");\r\n        return { command: null, workspaceRoot, errors };\r\n      }\r\n\r\n      const providerRaw = parseOptionValue(argv, \"--provider\");\r\n      const provider = providerRaw as ForgeAiProvider | undefined;\r\n      const traceId = subcommand === \"trace\" ? rest[1] ?? parseOptionValue(argv, \"--trace\") : undefined;\r\n      if (subcommand === \"trace\" && !traceId) {\r\n        errors.push(\"forge ai trace requires a trace id\");\r\n      }\r\n\r\n      return {\r\n        command: {\r\n          kind: \"ai\",\r\n          subcommand,\r\n          json: parseFlag(argv, \"--json\"),\r\n          provider,\r\n          model: parseOptionValue(argv, \"--model\"),\r\n          prompt: parseOptionValue(argv, \"--prompt\"),\r\n          mock: parseFlag(argv, \"--mock\"),\r\n          modelLevel: parseFlag(argv, \"--model-level\"),\r\n          live: parseFlag(argv, \"--live\"),\r\n          traceId,\r\n          db: parsePersistentDbKind(parseOptionValue(argv, \"--db\")),\r\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\r\n          workspaceRoot,\r\n        },\r\n        workspaceRoot,\r\n        errors,\r\n      };\r\n    }\r\n    default:\r\n      errors.push(`unrecognized command '${commandName}'`);\r\n      return { command: null, workspaceRoot, errors };\r\n  }\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseCli(argv: string[]): ParsedCli {\n  const errors: string[] = [];\n  const positional = argv.filter((arg) => !arg.startsWith(\"-\"));\n  const workspaceRoot = process.cwd().replace(/\\\\/g, \"/\");\n\n  if (parseFlag(argv, \"--version\") || parseFlag(argv, \"-v\")) {\n    return {\n      command: { kind: \"version\", json: parseFlag(argv, \"--json\") },\n      workspaceRoot,\n      errors,\n    };\n  }\n\n  if (positional.length === 0) {\n    errors.push(\n      `missing command; expected ${TOP_LEVEL_COMMANDS.join(\", \")}`,\n    );\n    return { command: null, workspaceRoot, errors };\n  }\n\n  const [commandName, ...rest] = positional;\n\n  switch (commandName) {\n    case \"version\":\n      return {\n        command: { kind: \"version\", json: parseFlag(argv, \"--json\") },\n        workspaceRoot,\n        errors,\n      };\n    case \"last\":\n      return {\n        command: { kind: \"last\", json: parseFlag(argv, \"--json\"), workspaceRoot },\n        workspaceRoot,\n        errors,\n      };\n    case \"baseline\": {\n      const subcommand = (rest[0] ?? \"status\") as BaselineSubcommand;\n      if (!BASELINE_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge baseline requires subcommand: create or status\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"baseline\",\n          subcommand,\n          reason: parseOptionValue(argv, \"--reason\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"new\": {\n      const name = rest[0];\n      if (!name) {\n        errors.push(\"forge new requires a project name\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const templateRaw = parseOptionValue(argv, \"--template\");\n      if (templateRaw && !NEW_TEMPLATES.includes(templateRaw as NewTemplateName)) {\n        errors.push(`unsupported template '${templateRaw}'; supported: ${NEW_TEMPLATES.join(\", \")}`);\n      }\n      const packageManagerRaw = parseOptionValue(argv, \"--package-manager\");\n      const forgePackageSpec = parseOptionValue(argv, \"--forge-spec\");\n      const localForge = parseFlag(argv, \"--local-forge\");\n      const install = parseFlag(argv, \"--install\");\n      const noInstall = parseFlag(argv, \"--no-install\");\n      if (\n        packageManagerRaw &&\n        !NEW_PACKAGE_MANAGERS.includes(packageManagerRaw as NewPackageManager)\n      ) {\n        errors.push(\n          `unsupported package manager '${packageManagerRaw}'; supported: ${NEW_PACKAGE_MANAGERS.join(\", \")}`,\n        );\n      }\n      if (forgePackageSpec && localForge) {\n        errors.push(\"use either --forge-spec or --local-forge, not both\");\n      }\n      if (install && noInstall) {\n        errors.push(\"use either --install or --no-install, not both\");\n      }\n      if (parseFlag(argv, \"--field-test\") && noInstall) {\n        errors.push(\"forge new --field-test requires installation; remove --no-install\");\n      }\n\n      return {\n        command: {\n          kind: \"new\",\n          name,\n          template: parseNewTemplate(templateRaw),\n          packageManager: parseNewPackageManager(packageManagerRaw),\n          install: install || !noInstall,\n          git: !parseFlag(argv, \"--no-git\"),\n          forgePackageSpec,\n          localForge,\n          json: parseFlag(argv, \"--json\"),\n          fieldTest: parseFlag(argv, \"--field-test\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"build\":\n      return {\n        command: {\n          kind: \"build\",\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    case \"serve\": {\n      const portRaw = parseOptionValue(argv, \"--port\");\n      const port = portRaw ? Number(portRaw) : undefined;\n      if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {\n        errors.push(\"--port must be a number >= 0\");\n      }\n      return {\n        command: {\n          kind: \"serve\",\n          host: parseOptionValue(argv, \"--host\"),\n          port,\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          envFile: parseOptionValue(argv, \"--env-file\"),\n          allowDevAuth: parseFlag(argv, \"--allow-dev-auth\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"worker\": {\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const limit = limitRaw ? Number(limitRaw) : 10;\n      if (!Number.isFinite(limit) || limit < 1) {\n        errors.push(\"--limit must be a number >= 1\");\n      }\n      const pollRaw = parseOptionValue(argv, \"--poll-interval\");\n      const pollIntervalMs = pollRaw ? Number(pollRaw) : 1_000;\n      if (!Number.isFinite(pollIntervalMs) || pollIntervalMs < 1) {\n        errors.push(\"--poll-interval must be a number >= 1\");\n      }\n      return {\n        command: {\n          kind: \"worker\",\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          once: parseFlag(argv, \"--once\"),\n          pollIntervalMs,\n          limit: Math.floor(limit),\n          mock: parseFlag(argv, \"--mock\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"self-host\": {\n      const subcommand = rest[0] as SelfHostSubcommand | undefined;\n      if (!subcommand || !SELF_HOST_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge self-host requires subcommand: compose, env, check, or clean\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const runtimePortRaw = parseOptionValue(argv, \"--runtime-port\");\n      const runtimePort = runtimePortRaw ? Number(runtimePortRaw) : 3765;\n      if (!Number.isFinite(runtimePort) || runtimePort < 1) {\n        errors.push(\"--runtime-port must be a number >= 1\");\n      }\n      const webPortRaw = parseOptionValue(argv, \"--web-port\");\n      const webPort = webPortRaw ? Number(webPortRaw) : 3000;\n      if (!Number.isFinite(webPort) || webPort < 1) {\n        errors.push(\"--web-port must be a number >= 1\");\n      }\n      return {\n        command: {\n          kind: \"self-host\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          withWeb: !parseFlag(argv, \"--no-web\"),\n          postgresVersion: parseOptionValue(argv, \"--postgres-version\") ?? \"16\",\n          runtimePort: Math.floor(runtimePort),\n          webPort: Math.floor(webPort),\n          preparedOnly: parseFlag(argv, \"--prepared-only\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"docs\": {\n      const subcommand = rest[0] as DocsSubcommand | undefined;\n      if (subcommand !== \"check\") {\n        errors.push(\"forge docs requires subcommand: check\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"docs\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          build: parseFlag(argv, \"--build\"),\n          installVenv: parseFlag(argv, \"--install-venv\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"agent-contract\": {\n      const subcommand = rest[0] as AgentContractSubcommand | undefined;\n      if (!subcommand || !AGENT_CONTRACT_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge agent-contract requires subcommand: generate, check, or print\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"agent-contract\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"agent\": {\n      const subcommand = rest[0] as AgentSubcommand | undefined;\n      if (!subcommand || !AGENT_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge agent requires subcommand: list-targets, export, check, doctor, onboard, print-context, clean, prepare, hooks, install, ingest, context, memory, or timeline\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const inputRaw = parseOptionValue(argv, \"--input\");\n      let input: unknown;\n      if (inputRaw !== undefined) {\n        try {\n          input = JSON.parse(inputRaw);\n        } catch {\n          errors.push(\"--input must be valid JSON\");\n        }\n      }\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const limit = limitRaw ? Number(limitRaw) : undefined;\n      const pollIntervalRaw = parseOptionValue(argv, \"--poll-interval\");\n      const pollIntervalMs = pollIntervalRaw ? Number(pollIntervalRaw) : undefined;\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\n        errors.push(\"--limit must be a number >= 1\");\n      }\n      if (\n        pollIntervalRaw !== undefined &&\n        (!Number.isFinite(pollIntervalMs) || pollIntervalMs! < 100)\n      ) {\n        errors.push(\"--poll-interval must be a number >= 100\");\n      }\n      const target =\n        (parseOptionValue(argv, \"--target\") as AgentAdapterTarget | undefined) ??\n        (subcommand === \"install\" || subcommand === \"ingest\" ? rest[1] : undefined) ??\n        (subcommand === \"hooks\" ? rest[2] : undefined) ??\n        (subcommand === \"timeline\" ? rest[1] : undefined) ??\n        (subcommand === \"timeline\" ? \"all\" : undefined) ??\n        (subcommand === \"hooks\" || subcommand === \"onboard\" ? \"codex\" : \"generic\");\n      const contextOptionValues = new Set(\n        [\n          parseOptionValue(argv, \"--entry\"),\n          parseOptionValue(argv, \"--change\"),\n          parseOptionValue(argv, \"--proof\"),\n          parseOptionValue(argv, \"--event\"),\n          parseOptionValue(argv, \"--input\"),\n          parseOptionValue(argv, \"--target\"),\n          parseOptionValue(argv, \"--file\"),\n          limitRaw,\n          pollIntervalRaw,\n        ].filter((value): value is string => typeof value === \"string\"),\n      );\n      const contextEntry = subcommand === \"context\"\n        ? rest.slice(1).find((part) => !part.startsWith(\"--\") && !contextOptionValues.has(part))\n        : undefined;\n      return {\n        command: {\n          kind: \"agent\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            target,\n            dryRun: parseFlag(argv, \"--dry-run\"),\n            force: parseFlag(argv, \"--force\"),\n            mcpServer: parseOptionValue(argv, \"--mcp-server\"),\n            preserveUserSections: !parseFlag(argv, \"--no-preserve-user-sections\"),\n            skills: !parseFlag(argv, \"--no-skills\"),\n            rules: !parseFlag(argv, \"--no-rules\"),\n            eventName: parseOptionValue(argv, \"--event\"),\n            hookAction: subcommand === \"hooks\" ? rest[1] : undefined,\n            input,\n            entry: parseOptionValue(argv, \"--entry\") ?? contextEntry,\n            change: parseOptionValue(argv, \"--change\"),\n            proof: parseOptionValue(argv, \"--proof\"),\n            handoff: parseFlag(argv, \"--handoff\"),\n            current: parseFlag(argv, \"--current\"),\n            limit: limit ? Math.floor(limit) : undefined,\n            watch: parseFlag(argv, \"--watch\"),\n            file: parseOptionValue(argv, \"--file\"),\n            pollIntervalMs: pollIntervalMs ? Math.floor(pollIntervalMs) : undefined,\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"fabric\": {\n      const subcommand = rest[0];\n      if (!isManagedRunAction(subcommand) && !isAttachedTaskAction(subcommand) && subcommand !== \"install-skill\" && subcommand !== \"doctor\" && subcommand !== \"ensure-owner\" && subcommand !== \"project-register\" && subcommand !== \"project-list\" && subcommand !== \"capabilities\" && subcommand !== \"propose\" && subcommand !== \"status\" && subcommand !== \"evidence\" && subcommand !== \"review\" && subcommand !== \"run\" && subcommand !== \"cancel\" && subcommand !== \"reconcile\" && subcommand !== \"verify\" && subcommand !== \"recover-verification\" && subcommand !== \"review-result\" && subcommand !== \"serve\" && subcommand !== \"memory-add\" && subcommand !== \"memory-list\" && subcommand !== \"memory-delete\" && subcommand !== \"adaptive-propose\" && subcommand !== \"adaptive-review\" && subcommand !== \"adaptive-run\" && subcommand !== \"adaptive-status\" && subcommand !== \"change-propose\" && subcommand !== \"change-status\" && subcommand !== \"change-review\" && subcommand !== \"change-evidence\") {\n        errors.push(\"forge fabric requires a supported task or memory subcommand\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const file = parseOptionValue(argv, \"--file\");\n      const runId = parseOptionValue(argv, \"--run-id\");\n      const projectId = parseOptionValue(argv, \"--project-id\");\n      if (projectId && subcommand !== \"project-register\") errors.push(\"--project-id is only supported by fabric project-register; MCP routes by registered projectId\");\n      if ([\"install-skill\", \"doctor\", \"ensure-owner\", \"project-register\", \"project-list\"].includes(subcommand) && (file || parseOptionValue(argv, \"--task-id\"))) errors.push(\"Project lifecycle commands do not accept task request files or task ids\");\n      if (parseFlag(argv, \"--dry-run\") && subcommand !== \"install-skill\") errors.push(\"fabric --dry-run is only supported by install-skill\");\n      const adaptiveChannel = parseOptionValue(argv, \"--channel\");\n      if (adaptiveChannel && (subcommand !== \"adaptive-propose\" || (adaptiveChannel !== \"canary\" && adaptiveChannel !== \"stable\"))) errors.push(\"--channel requires adaptive-propose and canary or stable\");\n      const isChangeReadOrReview = subcommand === \"change-status\" || subcommand === \"change-review\" || subcommand === \"change-evidence\";\n      const taskId = (isAttachedTaskAction(subcommand) && isAttachedTaskRead(subcommand)) || isChangeReadOrReview ? parseOptionValue(argv, \"--task-id\")\n        : subcommand === \"status\" || subcommand === \"evidence\" || subcommand === \"review\" || subcommand === \"run\" || subcommand === \"cancel\" || subcommand === \"reconcile\" || subcommand === \"verify\" || subcommand === \"recover-verification\" || subcommand === \"review-result\" || subcommand === \"memory-delete\" || subcommand === \"adaptive-review\" || subcommand === \"adaptive-run\" || subcommand === \"adaptive-status\" ? rest[1] : undefined;\n      if (isManagedRunAction(subcommand)) {\n        if (subcommand === \"run-status\") {\n          if (!runId || runId.startsWith(\"--\")) errors.push(\"forge fabric run-status requires --run-id <run-id>\");\n          if (file) errors.push(\"forge fabric run-status does not accept --file\");\n        } else {\n          if (!file || file.startsWith(\"--\")) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);\n          if (runId) errors.push(`forge fabric ${subcommand} requires runId in the request file`);\n        }\n        if (parseOptionValue(argv, \"--task-id\")) errors.push(\"Managed execution uses runId, not taskId\");\n      } else if (runId) errors.push(\"--run-id is only supported by fabric run-status\");\n      if (isAttachedTaskAction(subcommand)) {\n        if (isAttachedTaskRead(subcommand)) {\n          if (!taskId || taskId.startsWith(\"--\")) errors.push(`forge fabric ${subcommand} requires --task-id <task-id>`);\n          if (file) errors.push(`forge fabric ${subcommand} does not accept --file`);\n        } else {\n          if (!file || file.startsWith(\"--\")) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);\n          if (parseOptionValue(argv, \"--task-id\")) errors.push(`forge fabric ${subcommand} requires taskId in the request file`);\n        }\n      }\n      if (subcommand === \"propose\" && (!file || file.startsWith(\"--\"))) errors.push(\"forge fabric propose requires --file <proposal.json>\");\n      if (subcommand === \"change-propose\" && (!file || file.startsWith(\"--\"))) errors.push(\"forge fabric change-propose requires --file <request.json>\");\n      if (isChangeReadOrReview && (!taskId || taskId.startsWith(\"--\"))) errors.push(`forge fabric ${subcommand} requires --task-id <change-id>`);\n      if (subcommand === \"adaptive-propose\" && (!file || file.startsWith(\"--\"))) errors.push(\"forge fabric adaptive-propose requires --file <input.json>\");\n      if ((subcommand === \"memory-add\" || subcommand === \"memory-list\") && (!file || file.startsWith(\"--\"))) errors.push(`forge fabric ${subcommand} requires --file <request.json>`);\n      if ((subcommand === \"status\" || subcommand === \"evidence\" || subcommand === \"review\" || subcommand === \"run\" || subcommand === \"cancel\" || subcommand === \"reconcile\" || subcommand === \"verify\" || subcommand === \"recover-verification\" || subcommand === \"review-result\" || subcommand === \"memory-delete\") && !taskId) errors.push(`forge fabric ${subcommand} requires an id`);\n      if ((subcommand === \"adaptive-review\" || subcommand === \"adaptive-run\" || subcommand === \"adaptive-status\") && !taskId) errors.push(`forge fabric ${subcommand} requires an id`);\n      return {\n        command: errors.length === 0 ? {\n          kind: \"fabric\", subcommand, workspaceRoot, json: parseFlag(argv, \"--json\"),\n          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}), ...(runId ? { runId } : {}), ...(projectId ? { projectId } : {}),\n          ...(subcommand === \"install-skill\" ? { dryRun: parseFlag(argv, \"--dry-run\") } : {}),\n          ...(adaptiveChannel === \"canary\" || adaptiveChannel === \"stable\" ? { channel: adaptiveChannel } : {}),\n        } : null,\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"evolution\": {\n      const subcommand = rest[0];\n      if (subcommand !== \"register\" && subcommand !== \"evaluate\" && subcommand !== \"status\" &&\n          subcommand !== \"review\" && subcommand !== \"load\") {\n        errors.push(\"forge evolution requires register, evaluate, status, review, or load\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const manifest = parseOptionValue(argv, \"--manifest\");\n      const channel = parseOptionValue(argv, \"--channel\");\n      const action = rest[1];\n      const versionId = subcommand === \"review\" ? rest[2] : rest[1];\n      const extensionKey = rest[1];\n      if (subcommand === \"register\" && !manifest) errors.push(\"forge evolution register requires --manifest <file>\");\n      if ((subcommand === \"evaluate\" || subcommand === \"status\" || subcommand === \"review\") &&\n          !versionId) errors.push(`forge evolution ${subcommand} requires a version id`);\n      if (subcommand === \"review\" && ![\"canary\", \"promote\", \"rollback\", \"revoke\"].includes(action ?? \"\"))\n        errors.push(\"forge evolution review requires canary, promote, rollback, or revoke\");\n      if (subcommand === \"load\" && (!extensionKey || (channel !== \"canary\" && channel !== \"stable\")))\n        errors.push(\"forge evolution load requires <extension-key> --channel canary|stable\");\n      return { command: errors.length === 0 ? {\n        kind: \"evolution\", subcommand, workspaceRoot, json: parseFlag(argv, \"--json\"),\n        ...(manifest ? { manifest } : {}),\n        ...(subcommand === \"review\" || subcommand === \"evaluate\" || subcommand === \"status\" ? { versionId } : {}),\n        ...(subcommand === \"review\" ? { action: action as \"canary\" | \"promote\" | \"rollback\" | \"revoke\" } : {}),\n        ...(subcommand === \"load\" ? { extensionKey, channel: channel as \"canary\" | \"stable\" } : {}),\n      } : null, workspaceRoot, errors };\n    }\n    case \"mcp\": {\n      const subcommand = rest[0];\n      if (subcommand !== \"serve\") {\n        errors.push(\"forge mcp requires subcommand: serve\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"mcp\",\n          subcommand,\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"review\": {\n      const requested = rest[0] as ReviewSubcommand | undefined;\n      const subcommand =\n        requested && REVIEW_SUBCOMMANDS.includes(requested) ? requested : \"run\";\n      const positionalWrite = rest[0] === \"write\";\n      const noSourceFlag =\n        !parseFlag(argv, \"--changed\") &&\n        !parseFlag(argv, \"--staged\") &&\n        !parseOptionValue(argv, \"--base\") &&\n        !parseOptionValue(argv, \"--feature\") &&\n        !parseOptionValue(argv, \"--refactor\") &&\n        !parseOptionValue(argv, \"--upgrade\") &&\n        !parseOptionValue(argv, \"--release\");\n      return {\n        command: {\n          kind: \"review\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            md: parseFlag(argv, \"--md\"),\n            sarif: parseFlag(argv, \"--sarif\"),\n            full: parseFlag(argv, \"--full\"),\n            write: positionalWrite || parseFlag(argv, \"--write\"),\n            changed: parseFlag(argv, \"--changed\") || noSourceFlag,\n            staged: parseFlag(argv, \"--staged\"),\n            base: parseOptionValue(argv, \"--base\"),\n            featureId: parseOptionValue(argv, \"--feature\"),\n            refactorId: parseOptionValue(argv, \"--refactor\"),\n            upgradeId: parseOptionValue(argv, \"--upgrade\"),\n            releaseId: parseOptionValue(argv, \"--release\"),\n            failOn: parseReviewFailOn(parseOptionValue(argv, \"--fail-on\")),\n            mode: parseReviewMode(parseOptionValue(argv, \"--mode\")),\n            include: parseReviewCategories(parseOptionValue(argv, \"--include\")),\n            exclude: parseReviewCategories(parseOptionValue(argv, \"--exclude\")),\n            reviewId: subcommand === \"inspect\" ? rest[1] : undefined,\n            ruleId: subcommand === \"explain\" ? rest[1] : undefined,\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"ui\": {\n      const subcommand = (rest[0] ?? \"smoke\") as UiSubcommand;\n      if (!UI_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge ui requires subcommand: audit, smoke, test, scenario, route, snapshot, report, doctor, or list\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const timeoutRaw = parseOptionValue(argv, \"--timeout\");\n      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 30_000;\n      if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {\n        errors.push(\"--timeout must be a number >= 1\");\n      }\n      const scenarioName =\n        parseOptionValue(argv, \"--scenario\") ??\n        (subcommand === \"scenario\" ? rest[1] : undefined);\n      const routePath =\n        subcommand === \"route\" || subcommand === \"snapshot\"\n          ? rest[1] ?? \"/\"\n          : undefined;\n      return {\n        command: {\n          kind: \"ui\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            headed: parseFlag(argv, \"--headed\"),\n            browser: parseUiBrowser(parseOptionValue(argv, \"--browser\")),\n            trace: parseUiTrace(parseOptionValue(argv, \"--trace\")),\n            screenshot: parseUiScreenshot(parseOptionValue(argv, \"--screenshot\")),\n            video: parseUiVideo(parseOptionValue(argv, \"--video\")),\n            baseUrl: parseOptionValue(argv, \"--base-url\") ?? \"http://127.0.0.1:3000\",\n            runtimeUrl: parseOptionValue(argv, \"--runtime-url\") ?? \"http://127.0.0.1:3765\",\n            reuseServers: parseFlag(argv, \"--reuse-servers\"),\n            startServers: parseFlag(argv, \"--start-servers\"),\n            scenarioName,\n            routePath,\n            snapshotName: parseOptionValue(argv, \"--name\"),\n            reportId: subcommand === \"report\" ? rest[1] ?? \"last\" : undefined,\n            all: parseFlag(argv, \"--all\"),\n            changed: parseFlag(argv, \"--changed\"),\n            ci: parseFlag(argv, \"--ci\"),\n            timeoutMs: Math.floor(timeoutMs),\n            authToken: parseOptionValue(argv, \"--auth-token\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"doctor\":\n      if (rest[0] && rest[0] !== \"windows\" && rest[0] !== \"agent\" && rest[0] !== \"delta\" && rest[0] !== \"pglite\" && rest[0] !== \"runtime\") {\n        errors.push(\"forge doctor supports subcommand: windows, agent, delta, pglite, or runtime\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"doctor\",\n          target: rest[0] === \"windows\"\n            ? \"windows\"\n            : rest[0] === \"agent\"\n              ? \"agent\"\n              : rest[0] === \"delta\"\n                ? \"delta\"\n                : rest[0] === \"pglite\"\n                  ? \"pglite\"\n                  : rest[0] === \"runtime\"\n                    ? \"runtime\"\n                  : \"project\",\n          agentTarget: rest[0] === \"agent\"\n            ? (parseOptionValue(argv, \"--target\") as AgentAdapterTarget | undefined) ?? (rest[1] as AgentAdapterTarget | undefined) ?? \"codex\"\n            : undefined,\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    case \"setup\": {\n      const target = rest[0];\n      if (target !== \"windows\") {\n        errors.push(\"forge setup requires subcommand: windows\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"setup\",\n          target,\n          json: parseFlag(argv, \"--json\"),\n          yes: parseFlag(argv, \"--yes\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"security\": {\n      const subcommand = rest[0] as SecuritySubcommand | undefined;\n      if (!subcommand || !SECURITY_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge security requires subcommand: prove\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"security\",\n          subcommand,\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          runTests: parseFlag(argv, \"--full\") || parseFlag(argv, \"--run-tests\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"auth\": {\n      const subcommand = rest[0] as AuthSubcommand | undefined;\n      if (!subcommand || !AUTH_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge auth requires subcommand: check, config, decode, test-token, jwks, prove, or status\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const providerValue = parseOptionValue(argv, \"--provider\");\n      if (providerValue && providerValue !== \"workos\") {\n        errors.push(\"forge auth --provider supports: workos\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const provider = providerValue === \"workos\" ? \"workos\" : undefined;\n      return {\n        command: {\n          kind: \"auth\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          token: parseOptionValue(argv, \"--token\"),\n          prod: parseFlag(argv, \"--prod\") || parseFlag(argv, \"--production\"),\n          scenario: parseOptionValue(argv, \"--scenario\"),\n          provider,\n          real: parseFlag(argv, \"--real\"),\n          file: parseOptionValue(argv, \"--file\"),\n          clientId: parseOptionValue(argv, \"--client-id\") ?? parseOptionValue(argv, \"--workos-client-id\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"authmd\": {\n      const subcommand = rest[0] as AuthMdSubcommand | undefined;\n      if (!subcommand || !AUTHMD_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge authmd requires subcommand: generate or check\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"authmd\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          output: parseOptionValue(argv, \"--output\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"workos\": {\n      const subcommand = rest[0] as WorkOSSubcommand | undefined;\n      if (!subcommand || !WORKOS_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge workos requires subcommand: install, doctor, seed, setup, prove, env, or fga\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const fgaAction = subcommand === \"fga\" ? rest[1] as WorkOSFgaAction | undefined : undefined;\n      if (subcommand === \"fga\" && (!fgaAction || !WORKOS_FGA_ACTIONS.includes(fgaAction))) {\n        errors.push(\"forge workos fga requires action: plan, sync, prove, or doctor\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const workOSWritePath = parseOptionalOptionValue(argv, \"--write\");\n      return {\n        command: {\n          kind: \"workos\",\n          subcommand,\n          ...(fgaAction ? { fgaAction } : {}),\n          json: parseFlag(argv, \"--json\"),\n          file: parseOptionValue(argv, \"--file\"),\n          yes: parseFlag(argv, \"--yes\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          real: parseFlag(argv, \"--real\"),\n          write: parseFlag(argv, \"--write\"),\n          ...(workOSWritePath ? { writePath: workOSWritePath } : {}),\n          clientId: parseOptionValue(argv, \"--client-id\") ?? parseOptionValue(argv, \"--workos-client-id\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"deploy\": {\n      const subcommand = rest[0] as DeploySubcommand | undefined;\n      if (!subcommand || !DEPLOY_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge deploy requires subcommand: plan, init, check, readiness, render, package, or verify\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const targetRaw = parseOptionValue(argv, \"--target\") ?? (subcommand === \"init\" || subcommand === \"render\" || subcommand === \"package\" ? rest[1] : undefined) ?? \"docker\";\n      if (targetRaw !== \"docker\" && targetRaw !== \"forge-cloud\") {\n        errors.push(\"forge deploy --target must be docker or forge-cloud\");\n      }\n      return {\n        command: {\n          kind: \"deploy\",\n          subcommand,\n          target: targetRaw as DeployTarget,\n          production: parseFlag(argv, \"--production\") || parseFlag(argv, \"--prod\"),\n          url: parseOptionValue(argv, \"--url\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"golden-path\": {\n      const maybeSubcommand = rest[0];\n      if (maybeSubcommand && !maybeSubcommand.startsWith(\"--\") && !GOLDEN_PATH_SUBCOMMANDS.includes(maybeSubcommand as GoldenPathSubcommand)) {\n        errors.push(\"forge golden-path requires subcommand: plan or status\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const subcommand = (maybeSubcommand && GOLDEN_PATH_SUBCOMMANDS.includes(maybeSubcommand as GoldenPathSubcommand)\n        ? maybeSubcommand\n        : \"plan\") as GoldenPathSubcommand;\n      const authRaw = parseOptionValue(argv, \"--auth\") ?? \"workos\";\n      if (authRaw !== \"none\" && authRaw !== \"workos\") {\n        errors.push(\"forge golden-path --auth must be none or workos\");\n      }\n      const targetRaw = parseOptionValue(argv, \"--target\") ?? \"docker\";\n      if (targetRaw !== \"docker\" && targetRaw !== \"forge-cloud\") {\n        errors.push(\"forge golden-path --target must be docker or forge-cloud\");\n      }\n      return {\n        command: {\n          kind: \"golden-path\",\n          subcommand,\n          name: parseOptionValue(argv, \"--name\") ?? \"vendor-access\",\n          template: parseNewTemplate(parseOptionValue(argv, \"--template\") ?? \"vendor-access\"),\n          packageManager: parseNewPackageManager(parseOptionValue(argv, \"--package-manager\") ?? \"npm\"),\n          forgeSpec: parseOptionValue(argv, \"--forge-spec\"),\n          auth: authRaw as \"none\" | \"workos\",\n          target: targetRaw as DeployTarget,\n          production: parseFlag(argv, \"--production\") || parseFlag(argv, \"--prod\") || subcommand === \"status\",\n          real: parseFlag(argv, \"--real\"),\n          clientId: parseOptionValue(argv, \"--client-id\") ?? parseOptionValue(argv, \"--workos-client-id\"),\n          url: parseOptionValue(argv, \"--url\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"field-test\": {\n      const subcommand = rest[0] as FieldTestSubcommand | undefined;\n      if (!subcommand || !FIELD_TEST_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge field-test requires subcommand: create, run, or report\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const timeoutRaw = parseOptionValue(argv, \"--timeout-ms\");\n      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 180_000;\n      if (!Number.isFinite(timeoutMs) || timeoutMs < 1) {\n        errors.push(\"--timeout-ms must be a positive integer\");\n      }\n      const realistic = parseFlag(argv, \"--realistic\");\n      const authRaw = parseOptionValue(argv, \"--auth\") ?? (realistic ? \"workos\" : \"none\");\n      if (authRaw !== \"none\" && authRaw !== \"workos\") {\n        errors.push(\"forge field-test --auth must be none or workos\");\n      }\n      const templates = parseTemplateList(parseOptionValue(argv, \"--templates\"), errors, \"--templates\");\n      const packageManagers = parsePackageManagerList(parseOptionValue(argv, \"--package-managers\"), errors, \"--package-managers\");\n      return {\n        command: {\n          kind: \"field-test\",\n          subcommand,\n          name: subcommand === \"create\" ? rest[1] : undefined,\n          template: parseNewTemplate(parseOptionValue(argv, \"--template\") ?? (realistic || authRaw === \"workos\" ? \"vendor-access\" : \"minimal-web\")),\n          templates,\n          packageManager: parseNewPackageManager(parseOptionValue(argv, \"--package-manager\") ?? \"npm\"),\n          packageManagers,\n          forgeSpec: parseOptionValue(argv, \"--forge-spec\"),\n          auth: authRaw as \"none\" | \"workos\",\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          keep: parseFlag(argv, \"--keep\"),\n          runtimeProbes: parseFlag(argv, \"--runtime-probes\") || realistic,\n          authProbes: parseFlag(argv, \"--auth-probes\") || realistic,\n          uiProbes: parseFlag(argv, \"--ui-probes\") || realistic,\n          realistic,\n          timeoutMs: Math.floor(timeoutMs),\n          writeReport: parseOptionValue(argv, \"--write-report\") ?? parseOptionValue(argv, \"--file\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"seed\": {\n      const subcommandRaw = (rest[0] ?? \"status\") as SeedSubcommand;\n      if (![\"status\", \"dev\", \"reset\"].includes(subcommandRaw)) {\n        errors.push(\"forge seed requires subcommand: status, dev, or reset\");\n      }\n      const argsRaw = parseOptionValue(argv, \"--args\");\n      let args: unknown = {};\n      if (argsRaw !== undefined) {\n        try {\n          args = JSON.parse(argsRaw);\n        } catch {\n          errors.push(\"--args must be valid JSON\");\n        }\n      }\n      const permissionsRaw = parseOptionValue(argv, \"--permissions\");\n      return {\n        command: {\n          kind: \"seed\",\n          subcommand: subcommandRaw,\n          command: parseOptionValue(argv, \"--command\"),\n          args,\n          url: parseOptionValue(argv, \"--url\"),\n          userId: parseOptionValue(argv, \"--user-id\"),\n          tenantId: parseOptionValue(argv, \"--tenant-id\") ?? parseOptionValue(argv, \"--tenant\"),\n          role: parseOptionValue(argv, \"--role\"),\n          permissions: permissionsRaw\n            ?.split(\",\")\n            .map((permission) => permission.trim())\n            .filter(Boolean),\n          allTenants: parseFlag(argv, \"--all-tenants\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"rls\": {\n      const subcommand = rest[0] as RlsSubcommand | undefined;\n      if (!subcommand || !RLS_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge rls requires subcommand: generate, check, apply, test, or mutate-test\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"rls\",\n          subcommand,\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"deps\": {\n      const subcommand = rest[0] as DepsSubcommand | undefined;\n      if (!subcommand || !DEPS_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge deps requires subcommand: outdated, inspect, api, trace, runtime-compat, diff, upgrade-plan, upgrade-apply, upgrade-check, upgrade-rollback, or risk\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const packageName =\n        subcommand === \"outdated\" || subcommand === \"upgrade-check\" ? undefined : rest[1];\n      const symbolName = subcommand === \"api\" ? rest[2] : undefined;\n      const planPath =\n        subcommand === \"upgrade-apply\" || subcommand === \"upgrade-rollback\"\n          ? rest[1]\n          : undefined;\n      return {\n        command: {\n          kind: \"deps\",\n          subcommand,\n          packageName,\n          symbolName,\n          planPath,\n          target: parseOptionValue(argv, \"--to\"),\n          json: parseFlag(argv, \"--json\"),\n          yes: parseFlag(argv, \"--yes\"),\n          allowScripts: parseFlag(argv, \"--allow-scripts\"),\n          skipTests: parseFlag(argv, \"--skip-tests\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          changed: parseFlag(argv, \"--changed\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"release\": {\n      const first = rest[0] ?? \"prepare\";\n      const area =\n        first === \"artifacts\" || first === \"sourcemaps\"\n          ? (first as ReleaseArea)\n          : \"release\";\n      const action = (area === \"release\" ? first : rest[1]) as ReleaseAction;\n      const releaseId =\n        area === \"release\" && action === \"inspect\"\n          ? rest[1]\n          : parseOptionValue(argv, \"--release\");\n      return {\n        command: {\n          kind: \"release\",\n          area,\n          action,\n          releaseId,\n          input: parseOptionValue(argv, \"--input\"),\n          provider: parseOptionValue(argv, \"--provider\"),\n          target: parseOptionValue(argv, \"--target\"),\n          env: parseOptionValue(argv, \"--env\") ?? \"production\",\n          json: parseFlag(argv, \"--json\"),\n          allowDirty: parseFlag(argv, \"--allow-dirty\"),\n          allowPublicSourcemaps: parseFlag(argv, \"--allow-public-sourcemaps\"),\n          allowMissingLocalRelease: parseFlag(argv, \"--allow-missing-local-release\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"make\": {\n      const primitive = rest[0] as MakePrimitive | undefined;\n      if (!primitive || !MAKE_PRIMITIVES.includes(primitive)) {\n        errors.push(`forge make requires primitive: ${MAKE_PRIMITIVES.join(\", \")}`);\n        return { command: null, workspaceRoot, errors };\n      }\n      const name =\n        primitive === \"explain\"\n          ? undefined\n          : primitive === \"list\"\n            ? undefined\n            : primitive === \"ui\"\n              ? rest[1] ?? \"ui\"\n              : primitive === \"ai-chat\"\n                ? rest[1] ?? \"support\"\n              : rest[1];\n      const explainPrimitive =\n        primitive === \"explain\" ? (rest[1] as MakePrimitive | undefined) : undefined;\n      if (\n        primitive === \"explain\" &&\n        (!explainPrimitive || !MAKE_PRIMITIVES.includes(explainPrimitive))\n      ) {\n        errors.push(\"forge make explain requires a known primitive\");\n      }\n      if (\n        ![\"list\", \"explain\", \"ui\", \"ai-chat\"].includes(primitive) &&\n        !name\n      ) {\n        errors.push(`forge make ${primitive} requires a name or plan id`);\n      }\n\n      return {\n        command: {\n          kind: \"make\",\n          options: {\n            primitive,\n            name,\n            explainPrimitive,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            dryRun: parseFlag(argv, \"--dry-run\"),\n            plan: parseFlag(argv, \"--plan\"),\n            apply:\n              primitive === \"apply\" ||\n              parseFlag(argv, \"--apply\") ||\n              parseFlag(argv, \"--yes\"),\n            yes: parseFlag(argv, \"--yes\"),\n            force: parseFlag(argv, \"--force\"),\n            noGenerate: parseFlag(argv, \"--no-generate\"),\n            noVerify: parseFlag(argv, \"--no-verify\"),\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\n            tenantScoped: parseFlag(argv, \"--tenant-scoped\"),\n            fieldSpecs: parseOptionValues(argv, \"--field\"),\n            fieldsRaw: parseOptionValue(argv, \"--fields\"),\n            type: parseOptionValue(argv, \"--type\"),\n            values: parseOptionValue(argv, \"--values\"),\n            defaultValue: parseOptionValue(argv, \"--default\"),\n            index: parseFlag(argv, \"--index\"),\n            roles: parseOptionValue(argv, \"--roles\"),\n            table: parseOptionValue(argv, \"--table\"),\n            policy: parseOptionValue(argv, \"--policy\"),\n            emit: parseOptionValue(argv, \"--emit\"),\n            event: parseOptionValue(argv, \"--event\"),\n            trigger: parseOptionValue(argv, \"--trigger\"),\n            component: parseOptionValue(argv, \"--component\"),\n            framework: parseOptionValue(argv, \"--framework\") as \"vite\" | \"next\" | \"nuxt\" | undefined,\n            withAi: parseFlag(argv, \"--with-ai\"),\n            withCrud: parseFlag(argv, \"--with-crud\"),\n            withLiveQuery: parseFlag(argv, \"--with-livequery\"),\n            withReact: parseFlag(argv, \"--with-react\") || parseFlag(argv, \"--with-ui\"),\n            withUi: parseFlag(argv, \"--with-ui\"),\n            withTests: parseFlag(argv, \"--with-tests\"),\n            withCreateForm: parseFlag(argv, \"--with-create-form\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"feature\": {\n      const action = rest[0] as FeatureAction | undefined;\n      if (!action || !FEATURE_ACTIONS.includes(action)) {\n        errors.push(`forge feature requires action: ${FEATURE_ACTIONS.join(\", \")}`);\n        return { command: null, workspaceRoot, errors };\n      }\n      const blueprintPath =\n        [\"validate\", \"plan\", \"diff\", \"apply\"].includes(action) ? rest[1] : undefined;\n      const featureId =\n        [\"inspect\", \"rollback\"].includes(action) ? rest[1] : undefined;\n      const exampleName = action === \"examples\" ? rest[1] : undefined;\n      if ([\"validate\", \"plan\", \"diff\", \"apply\"].includes(action) && !blueprintPath) {\n        errors.push(`forge feature ${action} requires a blueprint path`);\n      }\n      if ([\"inspect\", \"rollback\"].includes(action) && !featureId) {\n        errors.push(`forge feature ${action} requires a feature id`);\n      }\n      return {\n        command: {\n          kind: \"feature\",\n          options: {\n            action,\n            blueprintPath,\n            featureId,\n            exampleName,\n            writePath: parseOptionValue(argv, \"--write\"),\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            dryRun: parseFlag(argv, \"--dry-run\"),\n            yes: parseFlag(argv, \"--yes\"),\n            noGenerate: parseFlag(argv, \"--no-generate\"),\n            noVerify: parseFlag(argv, \"--no-verify\"),\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\n            update: parseFlag(argv, \"--update\"),\n            allowHighRisk: parseFlag(argv, \"--allow-high-risk\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"refactor\": {\n      const action = rest[0] as RefactorAction | undefined;\n      if (!action || !REFACTOR_ACTIONS.includes(action)) {\n        errors.push(`forge refactor requires action: ${REFACTOR_ACTIONS.join(\", \")}`);\n        return { command: null, workspaceRoot, errors };\n      }\n      let renameTarget: RenameTarget | undefined;\n      let from: string | undefined;\n      let to: string | undefined;\n      let planId: string | undefined;\n      let componentName: string | undefined;\n\n      if (action === \"rename\") {\n        renameTarget = rest[1] as RenameTarget | undefined;\n        if (!renameTarget || !RENAME_TARGETS.includes(renameTarget)) {\n          errors.push(`forge refactor rename requires target: ${RENAME_TARGETS.join(\", \")}`);\n        }\n        from = rest[2];\n        to = rest[3];\n        if (!from || !to) {\n          errors.push(\"forge refactor rename requires <from> <to>\");\n        }\n      } else if (action === \"move\") {\n        renameTarget = rest[1] as RenameTarget | undefined;\n        if (renameTarget !== \"field\" && rest[1] !== \"component\") {\n          errors.push(\"forge refactor move requires target: component\");\n        }\n        componentName = rest[2];\n        to = rest[3];\n        if (!componentName || !to) {\n          errors.push(\"forge refactor move component requires <name> <path>\");\n        }\n      } else if (action === \"extract-action\") {\n        from = rest[1];\n        if (!from) {\n          errors.push(\"forge refactor extract-action requires a command name\");\n        }\n      } else if (action === \"replace-process-env\") {\n        from = rest[1];\n        if (!from) {\n          errors.push(\"forge refactor replace-process-env requires an env var\");\n        }\n      } else if (action === \"replace-import\") {\n        from = rest[1];\n        to = rest[2];\n        if (!from || !to) {\n          errors.push(\"forge refactor replace-import requires <from> <to>\");\n        }\n      } else if (action === \"apply\" || action === \"diff\" || action === \"rollback\") {\n        planId = rest[1];\n        if (!planId) {\n          errors.push(`forge refactor ${action} requires a plan id`);\n        }\n      } else if (action === \"plan\") {\n        const nestedAction = rest[1] as RefactorAction | undefined;\n        if (nestedAction === \"rename\") {\n          renameTarget = rest[2] as RenameTarget | undefined;\n          from = rest[3];\n          to = rest[4];\n        } else {\n          errors.push(\"forge refactor plan currently supports: rename <target> <from> <to>\");\n        }\n      }\n\n      return {\n        command: {\n          kind: \"refactor\",\n          options: {\n            action: action === \"plan\" && rest[1] === \"rename\" ? \"rename\" : action,\n            renameTarget,\n            from,\n            to,\n            planId,\n            componentName,\n            packageName: parseOptionValue(argv, \"--package\"),\n            eventName: parseOptionValue(argv, \"--event\"),\n            actionName: parseOptionValue(argv, \"--action\"),\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            dryRun: parseFlag(argv, \"--dry-run\"),\n            plan: action === \"plan\" || parseFlag(argv, \"--plan\"),\n            yes: parseFlag(argv, \"--yes\"),\n            force: parseFlag(argv, \"--force\"),\n            allowHighRisk: parseFlag(argv, \"--allow-high-risk\"),\n            noGenerate: parseFlag(argv, \"--no-generate\"),\n            noVerify: parseFlag(argv, \"--no-verify\"),\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"impact\": {\n      return {\n        command: {\n          kind: \"impact\",\n          options: {\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            write: parseFlag(argv, \"--write\"),\n            changed: parseFlag(argv, \"--changed\") || (!parseFlag(argv, \"--staged\") && !parseOptionValue(argv, \"--since\") && !parseOptionValue(argv, \"--feature\") && !parseOptionValue(argv, \"--refactor\") && !parseOptionValue(argv, \"--upgrade\")),\n            staged: parseFlag(argv, \"--staged\"),\n            since: parseOptionValue(argv, \"--since\"),\n            featureId: parseOptionValue(argv, \"--feature\"),\n            refactorId: parseOptionValue(argv, \"--refactor\"),\n            upgradeId: parseOptionValue(argv, \"--upgrade\"),\n            includeGenerated: parseFlag(argv, \"--include-generated\"),\n            excludeTests: parseFlag(argv, \"--exclude-tests\"),\n            riskThreshold: parseOptionValue(argv, \"--risk-threshold\") as ImpactCommandOptions[\"riskThreshold\"],\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"test\": {\n      const subcommand = rest[0] as TestSubcommand | undefined;\n      if (!subcommand || !TEST_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge test requires subcommand: plan, run, explain, or authz\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const timeoutRaw = parseOptionValue(argv, \"--timeout-ms\");\n      const timeoutMs = timeoutRaw ? Number(timeoutRaw) : undefined;\n      if (\n        timeoutRaw !== undefined &&\n        (!Number.isFinite(timeoutMs) || timeoutMs! < 1)\n      ) {\n        errors.push(\"--timeout-ms must be a number >= 1\");\n      }\n      return {\n        command: {\n          kind: \"test\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            write: parseFlag(argv, \"--write\"),\n            changed: parseFlag(argv, \"--changed\") || (!parseFlag(argv, \"--staged\") && !parseOptionValue(argv, \"--since\") && !parseOptionValue(argv, \"--feature\") && !parseOptionValue(argv, \"--refactor\") && !parseOptionValue(argv, \"--upgrade\") && !parseOptionValue(argv, \"--plan\") && subcommand !== \"explain\" && subcommand !== \"authz\"),\n            staged: parseFlag(argv, \"--staged\"),\n            since: parseOptionValue(argv, \"--since\"),\n            featureId: parseOptionValue(argv, \"--feature\"),\n            refactorId: parseOptionValue(argv, \"--refactor\"),\n            upgradeId: parseOptionValue(argv, \"--upgrade\"),\n            planPath: parseOptionValue(argv, \"--plan\"),\n            testFile: subcommand === \"explain\" ? rest[1] : undefined,\n            maxCost: parseTestCost(parseOptionValue(argv, \"--max-cost\")),\n            includeDocker: parseFlag(argv, \"--include-docker\"),\n            includeBrowser: parseFlag(argv, \"--include-browser\"),\n            bail: parseFlag(argv, \"--bail\"),\n            report: parseOptionValue(argv, \"--report\"),\n            timeoutMs: timeoutMs ? Math.floor(timeoutMs) : undefined,\n            tenant: parseOptionValue(argv, \"--tenant\") ?? \"acme\",\n            otherTenant: parseOptionValue(argv, \"--other-tenant\") ?? \"globex\",\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"repair\": {\n      const subcommand = rest[0] as RepairSubcommand | undefined;\n      if (!subcommand || !REPAIR_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge repair requires subcommand: diagnose, explain, plan, apply, run, list, inspect, or rollback\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const positionalId =\n        subcommand === \"explain\" ||\n        subcommand === \"apply\" ||\n        subcommand === \"inspect\" ||\n        subcommand === \"rollback\"\n          ? rest[1]\n          : undefined;\n      const attemptsRaw = parseOptionValue(argv, \"--max-attempts\");\n      const maxAttempts = attemptsRaw ? Number(attemptsRaw) : 1;\n      if (!Number.isFinite(maxAttempts) || maxAttempts < 1) {\n        errors.push(\"--max-attempts must be a number >= 1\");\n      }\n      return {\n        command: {\n          kind: \"repair\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            fromLastTestRun: parseFlag(argv, \"--from-last-test-run\"),\n            fromLastUiRun: parseFlag(argv, \"--from-last-ui-run\"),\n            from: parseOptionValue(argv, \"--from\"),\n            traceId: parseOptionValue(argv, \"--trace\"),\n            workflowRunId: parseOptionValue(argv, \"--workflow-run\"),\n            outboxDeliveryId: parseOptionValue(argv, \"--outbox-delivery\"),\n            diagnosticCode:\n              parseOptionValue(argv, \"--diagnostic\") ??\n              (subcommand === \"explain\" ? positionalId : undefined),\n            repairId:\n              subcommand === \"apply\" || subcommand === \"inspect\" || subcommand === \"rollback\"\n                ? positionalId\n                : undefined,\n            selectedRepair: parseOptionValue(argv, \"--repair\"),\n            write: parseFlag(argv, \"--write\"),\n            yes: parseFlag(argv, \"--yes\"),\n            keepFailed: parseFlag(argv, \"--keep-failed\"),\n            allowMediumConfidence: parseFlag(argv, \"--allow-medium-confidence\"),\n            maxAttempts: Math.floor(maxAttempts),\n            commitFriendly: parseFlag(argv, \"--commit-friendly\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"do\": {\n      const objective = parseDoObjective(rest, argv);\n      return {\n        command: {\n          kind: \"do\",\n          options: {\n            workspaceRoot,\n            objective,\n            json: parseFlag(argv, \"--json\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"bench\": {\n      const subcommand = rest[0] as BenchSubcommand | undefined;\n      if (!subcommand || !BENCH_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge bench requires subcommand: compiler\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const iterationsRaw = parseOptionValue(argv, \"--iterations\");\n      const warmupsRaw = parseOptionValue(argv, \"--warmups\");\n      const concurrencyRaw = parseOptionValue(argv, \"--concurrency\");\n      const iterations = iterationsRaw !== undefined ? Number(iterationsRaw) : 5;\n      const warmups = warmupsRaw !== undefined ? Number(warmupsRaw) : 1;\n      const concurrency = concurrencyRaw !== undefined ? Number(concurrencyRaw) : 4;\n      if (!Number.isFinite(iterations) || iterations < 1) {\n        errors.push(\"--iterations must be a number >= 1\");\n      }\n      if (!Number.isFinite(warmups) || warmups < 0) {\n        errors.push(\"--warmups must be a number >= 0\");\n      }\n      if (!Number.isFinite(concurrency) || concurrency < 1) {\n        errors.push(\"--concurrency must be a number >= 1\");\n      }\n      return {\n        command: {\n          kind: \"bench\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            iterations: Math.floor(iterations),\n            warmups: Math.floor(warmups),\n            concurrency: Math.floor(concurrency),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"cair\": {\n      const subcommand = rest[0] as CairSubcommand | undefined;\n      if (!subcommand || !CAIR_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge cair requires subcommand: snapshot, query, or action\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const formatRaw = parseOptionValue(argv, \"--format\");\n      if (formatRaw !== undefined && formatRaw !== \"text\" && formatRaw !== \"json\") {\n        errors.push(\"--format must be text or json\");\n      }\n      const query = subcommand === \"query\" ? rest.slice(1).join(\" \").trim() : undefined;\n      if (subcommand === \"query\" && !query) {\n        errors.push(\"forge cair query requires a CAIR query, for example: forge cair query \\\"Q STATUS\\\"\");\n      }\n      const inputPath = parseOptionValue(argv, \"--input\");\n      const action = subcommand === \"action\"\n        ? rest.slice(1).filter((part, index, parts) => {\n          const previous = parts[index - 1];\n          if (part === \"--dry-run\" || part === \"--plan\" || part === \"--json\" || part === \"--include-generated\") {\n            return false;\n          }\n          if (part === \"--format\" || part === \"--input\") {\n            return false;\n          }\n          if (previous === \"--format\" || previous === \"--input\") {\n            return false;\n          }\n          return true;\n        }).join(\" \").trim()\n        : undefined;\n      if (subcommand === \"action\" && !action && !inputPath) {\n        errors.push(\"forge cair action requires a CAIR action, for example: forge cair action \\\"A CREATE.FILE path=src/example.ts\\\"\");\n      }\n      return {\n        command: {\n          kind: \"cair\",\n          options: {\n            subcommand,\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            format: formatRaw === \"json\" ? \"json\" : \"text\",\n            ...(query ? { query } : {}),\n            ...(action ? { action } : {}),\n            ...(inputPath ? { inputPath } : {}),\n            dryRun: parseFlag(argv, \"--dry-run\"),\n            plan: parseFlag(argv, \"--plan\"),\n            allowGenerated: parseFlag(argv, \"--include-generated\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"status\":\n      return {\n        command: {\n          kind: \"status\",\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    case \"changed\":\n      return {\n        command: {\n          kind: \"changed\",\n          json: parseFlag(argv, \"--json\"),\n          authoredOnly: parseFlag(argv, \"--authored\"),\n          reviewOnly: parseFlag(argv, \"--review\"),\n          commitReady: parseFlag(argv, \"--commit-ready\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    case \"diff\": {\n      const target = (rest[0] ?? \"authored\") as \"authored\" | \"generated\" | \"full\";\n      if (![\"authored\", \"generated\", \"full\"].includes(target)) {\n        errors.push(\"forge diff requires target: authored, generated, or full\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"diff\",\n          target,\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"handoff\":\n      return {\n        command: {\n          kind: \"handoff\",\n          json: parseFlag(argv, \"--json\"),\n          commitReady: parseFlag(argv, \"--commit-ready\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    case \"studio\": {\n      const subcommand = rest[0];\n      if (\n        subcommand !== \"attach\" &&\n        subcommand !== \"snapshot\" &&\n        subcommand !== \"watch\" &&\n        subcommand !== \"open\" &&\n        subcommand !== \"doctor\" &&\n        subcommand !== \"bridge\" &&\n        subcommand !== \"codex-server\"\n      ) {\n        errors.push(\"forge studio requires subcommand: attach, snapshot, watch, open, doctor, bridge, or codex-server\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const previewPortRaw = parseOptionValue(argv, \"--preview-port\");\n      const previewPort = previewPortRaw !== undefined ? Number(previewPortRaw) : undefined;\n      if (\n        previewPortRaw !== undefined &&\n        (!Number.isInteger(previewPort) || previewPort! < 1)\n      ) {\n        errors.push(\"--preview-port must be an integer >= 1\");\n      }\n      const intervalRaw = parseOptionValue(argv, \"--interval-ms\");\n      const intervalMs = intervalRaw !== undefined ? Number(intervalRaw) : undefined;\n      if (intervalRaw !== undefined && (!Number.isFinite(intervalMs) || intervalMs! < 1000)) {\n        errors.push(\"--interval-ms must be a number >= 1000\");\n      }\n      const targets = parseOptionValues(argv, \"--target\");\n      const ignoredOptionValues = new Set(\n        [\n          ...targets,\n          parseOptionValue(argv, \"--preview-url\"),\n          parseOptionValue(argv, \"--studio-url\"),\n          parseOptionValue(argv, \"--workspace-id\"),\n          parseOptionValue(argv, \"--tenant-id\"),\n          parseOptionValue(argv, \"--user-id\"),\n          parseOptionValue(argv, \"--role\"),\n          previewPortRaw,\n          intervalRaw,\n        ].filter((value): value is string => typeof value === \"string\"),\n      );\n      const studioPath = rest.slice(1).find((item) => !ignoredOptionValues.has(item));\n      return {\n        command: {\n          kind: \"studio\",\n          subcommand,\n          path: studioPath,\n          previewUrl: parseOptionValue(argv, \"--preview-url\"),\n          previewPort: previewPort ? Math.floor(previewPort) : undefined,\n          studioUrl: parseOptionValue(argv, \"--studio-url\"),\n          intervalMs: intervalMs ? Math.floor(intervalMs) : undefined,\n          once: parseFlag(argv, \"--once\"),\n          workspaceId: parseOptionValue(argv, \"--workspace-id\"),\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\n          userId: parseOptionValue(argv, \"--user-id\"),\n          role: parseOptionValue(argv, \"--role\"),\n          targets: targets.length > 0 ? targets : [\"codex\"],\n          install: parseFlag(argv, \"--install\"),\n          start: !parseFlag(argv, \"--no-start\"),\n          bridge: !parseFlag(argv, \"--no-bridge\"),\n          writeSchemas: parseFlag(argv, \"--write\"),\n          probeAppServer: parseFlag(argv, \"--probe\") || parseFlag(argv, \"--probe-codex-server\"),\n          json: parseFlag(argv, \"--json\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          force: parseFlag(argv, \"--force\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"generate\": {\n      const concurrencyRaw = parseOptionValue(argv, \"--concurrency\");\n      const concurrency = concurrencyRaw ? Number(concurrencyRaw) : 4;\n      if (!Number.isFinite(concurrency) || concurrency < 1) {\n        errors.push(\"--concurrency must be an integer >= 1\");\n      }\n      return {\n        command: {\n          kind: \"generate\",\n          check: parseFlag(argv, \"--check\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          json: parseFlag(argv, \"--json\"),\n          concurrency: Math.max(1, Math.floor(concurrency || 4)),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"delta\": {\n      const subcommand = rest[0];\n      if (subcommand !== \"status\" && subcommand !== \"repair\" && subcommand !== \"compact\" && subcommand !== \"prune\" && subcommand !== \"export\") {\n        errors.push(\"forge delta requires subcommand: status, repair, compact, prune, or export\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const limit = limitRaw ? Number(limitRaw) : undefined;\n      return {\n        command: {\n          kind: \"delta\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          yes: parseFlag(argv, \"--yes\"),\n          verbose: parseFlag(argv, \"--verbose\"),\n          olderThan: parseOptionValue(argv, \"--older-than\"),\n          output: parseOptionValue(argv, \"--output\"),\n          limit: Number.isFinite(limit) ? limit : undefined,\n          redacted: parseFlag(argv, \"--redacted\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"session\": {\n      const subcommand = rest[0];\n      if (subcommand !== \"list\" && subcommand !== \"show\" && subcommand !== \"rename\" && subcommand !== \"merge\" && subcommand !== \"split\" && subcommand !== \"detach\") {\n        errors.push(\"forge session requires subcommand: list, show, rename, merge, split, or detach\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const limit = limitRaw ? Number(limitRaw) : undefined;\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\n        errors.push(\"--limit must be a number >= 1\");\n      }\n      const sessionId = rest[1];\n      return {\n        command: {\n          kind: \"session\",\n          subcommand,\n          sessionId: subcommand === \"detach\" ? undefined : sessionId,\n          sourceSessionId: subcommand === \"merge\" ? rest[2] : undefined,\n          operationId: subcommand === \"split\" ? rest[2] : subcommand === \"detach\" ? rest[1] : undefined,\n          title: subcommand === \"rename\" ? rest.slice(2).join(\" \") : undefined,\n          limit: limit ? Math.floor(limit) : undefined,\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"timeline\": {\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const kindFilter = parseOptionValue(argv, \"--kind\");\n      const sessionId = parseOptionValue(argv, \"--session\");\n      const rebuild = rest[0] === \"rebuild\";\n      const optionValues = new Set([limitRaw, kindFilter, sessionId].filter((value): value is string => typeof value === \"string\"));\n      const target = rebuild\n        ? undefined\n        : rest.find((item) => !item.startsWith(\"--\") && !optionValues.has(item));\n      const limit = limitRaw ? Number(limitRaw) : undefined;\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\n        errors.push(\"--limit must be a number >= 1\");\n      }\n      return {\n        command: {\n          kind: \"timeline\",\n          target,\n            kindFilter,\n            sessionId,\n            limit: limit ? Math.floor(limit) : undefined,\n            json: parseFlag(argv, \"--json\"),\n            rebuild,\n            forAgent: parseFlag(argv, \"--for-agent\"),\n            causal: parseFlag(argv, \"--causal\"),\n            staleProofs: parseFlag(argv, \"--stale-proofs\"),\n            workspaceRoot,\n          },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"explain\": {\n      const thing = rest[0] === \"session\" ? `session:${rest[1] ?? \"current\"}` : rest[0];\n      if (!thing) {\n        errors.push(\"forge explain requires a target\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"explain\",\n          thing,\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"manifest\": {\n      const subcommand = rest[0];\n      const path = rest[1];\n      if (subcommand !== \"validate\" && subcommand !== \"import\") {\n        errors.push(\"forge manifest requires subcommand validate or import\");\n        return { command: null, workspaceRoot, errors };\n      }\n      if (!path) {\n        errors.push(`forge manifest ${subcommand} requires a manifest file path`);\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"manifest\",\n          subcommand,\n          path,\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"import\": {\n      const subcommand = rest[0];\n      if (subcommand !== \"analyze\" && subcommand !== \"inspect\") {\n        errors.push(\"forge import requires subcommand analyze or inspect\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"import\",\n          options: {\n            subcommand,\n            json: parseFlag(argv, \"--json\"),\n            dryRun: parseFlag(argv, \"--dry-run\"),\n            workspaceRoot,\n            entry: parseOptionValue(argv, \"--entry\"),\n            target: parseOptionValue(argv, \"--target\"),\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"add\": {\n      const subcommand = rest[0];\n      const explicitMode =\n        subcommand === \"package\"\n          ? \"package\"\n          : subcommand === \"integration\" || subcommand === \"auth\"\n            ? \"integration\"\n            : \"auto\";\n      const alias = explicitMode === \"auto\" ? rest[0] : rest[1];\n      if (!alias) {\n        errors.push(\n          explicitMode === \"auto\"\n            ? \"forge add requires a package name or integration alias\"\n            : `forge add ${subcommand} requires a target`,\n        );\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"add\",\n          alias,\n          options: parseAddOptions(argv, workspaceRoot, explicitMode),\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"inspect\": {\n      const target = (rest[0] as InspectTarget | undefined) ?? \"summary\";\n      if (!INSPECT_TARGETS.includes(target)) {\n        errors.push(\n          `unsupported inspect target; supported: ${INSPECT_TARGETS.join(\", \")}`,\n        );\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"inspect\",\n          target,\n          json: parseFlag(argv, \"--json\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          full: parseFlag(argv, \"--full\"),\n          brief: parseFlag(argv, \"--brief\"),\n          ergonomics: parseFlag(argv, \"--ergonomics\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"check\":\n      return {\n        command: {\n          kind: \"check\",\n          json: parseFlag(argv, \"--json\"),\n          dryRun: parseFlag(argv, \"--dry-run\"),\n          strictSecrets: parseFlag(argv, \"--strict-secrets\"),\n        },\n        workspaceRoot,\n        errors,\n      };\n    case \"verify\":\n      {\n        const scriptTimeoutRaw = parseOptionValue(argv, \"--script-timeout-ms\");\n        const scriptTimeoutMs = scriptTimeoutRaw ? Number(scriptTimeoutRaw) : undefined;\n        const testJobsRaw = parseOptionValue(argv, \"--test-jobs\");\n        const testJobs = testJobsRaw ? Number(testJobsRaw) : undefined;\n        const typechecker = parseOptionValue(argv, \"--typechecker\");\n        const verifyOptionValues = new Set(\n          [scriptTimeoutRaw, testJobsRaw, typechecker]\n            .filter((value): value is string => typeof value === \"string\"),\n        );\n        const profileAlias = rest.find((item) => !verifyOptionValues.has(item));\n        const verifyProfiles = new Set([\n          \"quick\",\n          \"smoke\",\n          \"agent\",\n          \"standard\",\n          \"release\",\n          \"strict\",\n          \"changed\",\n          \"framework\",\n          \"internal\",\n          \"maintainer\",\n        ]);\n        if (profileAlias && !verifyProfiles.has(profileAlias)) {\n          errors.push(\n            `unknown forge verify profile '${profileAlias}'; expected quick, smoke, agent, standard, release, strict, changed, framework, internal, or maintainer`,\n          );\n        }\n        const internal =\n          parseFlag(argv, \"--internal\") ||\n          profileAlias === \"framework\" ||\n          profileAlias === \"internal\" ||\n          profileAlias === \"maintainer\";\n        if (\n          scriptTimeoutRaw !== undefined &&\n          (!Number.isFinite(scriptTimeoutMs) || scriptTimeoutMs! < 1)\n        ) {\n          errors.push(\"--script-timeout-ms must be a number >= 1\");\n        }\n        if (\n          testJobsRaw !== undefined &&\n          (!Number.isInteger(testJobs) || testJobs! < 1)\n        ) {\n          errors.push(\"--test-jobs must be an integer >= 1\");\n        }\n        if (\n          typechecker !== undefined &&\n          typechecker !== \"tsc\" &&\n          typechecker !== \"native\" &&\n          typechecker !== \"ts7\" &&\n          typechecker !== \"tsgo\" &&\n          typechecker !== \"auto\"\n        ) {\n          errors.push(\"--typechecker must be one of: tsc, native, ts7, tsgo, auto\");\n        }\n      return {\n        command: {\n          kind: \"verify\",\n          options: {\n            workspaceRoot,\n            json: parseFlag(argv, \"--json\"),\n            skipTests: parseFlag(argv, \"--skip-tests\"),\n            skipTypecheck: parseFlag(argv, \"--skip-typecheck\"),\n            skipEslint: parseFlag(argv, \"--skip-eslint\"),\n            strict: internal || parseFlag(argv, \"--strict\") || profileAlias === \"release\" || profileAlias === \"strict\",\n            changed: parseFlag(argv, \"--changed\") || profileAlias === \"changed\",\n            fast: parseFlag(argv, \"--fast\") || profileAlias === \"quick\",\n            smoke: parseFlag(argv, \"--smoke\") || profileAlias === \"smoke\",\n            standard: parseFlag(argv, \"--standard\") || profileAlias === \"agent\" || profileAlias === \"standard\",\n            scriptTimeoutMs: scriptTimeoutMs ? Math.floor(scriptTimeoutMs) : undefined,\n            testJobs: testJobs ? Math.floor(testJobs) : undefined,\n            typechecker: typechecker as \"tsc\" | \"native\" | \"ts7\" | \"tsgo\" | \"auto\" | undefined,\n            fullTests: parseFlag(argv, \"--full\"),\n            testPlan: parseFlag(argv, \"--test-plan\"),\n            internal,\n          },\n        },\n        workspaceRoot,\n        errors,\n      };\n      }\n    case \"run\": {\n      if (rest[0] === \"query\") {\n        const queryName = rest[1];\n        if (!queryName) {\n          errors.push(\"forge run query requires a query name\");\n        }\n        const argsRaw = parseOptionValue(argv, \"--args\");\n        let args: unknown = {};\n        if (argsRaw !== undefined) {\n          try {\n            args = JSON.parse(argsRaw);\n          } catch {\n            errors.push(\"--args must be valid JSON\");\n          }\n        }\n        return {\n          command: {\n            kind: \"run\",\n            name: queryName,\n            list: false,\n            json: parseFlag(argv, \"--json\"),\n            mock: parseFlag(argv, \"--mock\"),\n            userId: parseOptionValue(argv, \"--user-id\"),\n            tenantId: parseOptionValue(argv, \"--tenant-id\"),\n            role: parseOptionValue(argv, \"--role\"),\n            envFile: parseOptionValue(argv, \"--env-file\"),\n            workspaceRoot,\n            queryMode: true,\n            args,\n          },\n          workspaceRoot,\n          errors,\n        };\n      }\n\n      const name = rest[0];\n      const list = parseFlag(argv, \"--list\") || !name;\n      const argsRaw = parseOptionValue(argv, \"--args\");\n      let args: unknown = {};\n      if (argsRaw !== undefined) {\n        try {\n          args = JSON.parse(argsRaw);\n        } catch {\n          errors.push(\"--args must be valid JSON\");\n        }\n      }\n      return {\n        command: {\n          kind: \"run\",\n          name,\n          list,\n          json: parseFlag(argv, \"--json\"),\n          mock: parseFlag(argv, \"--mock\"),\n          userId: parseOptionValue(argv, \"--user-id\"),\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\n          role: parseOptionValue(argv, \"--role\"),\n          envFile: parseOptionValue(argv, \"--env-file\"),\n          workspaceRoot,\n          args,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"query\": {\n      const requested = rest[0] as QuerySubcommand | undefined;\n      const subcommand =\n        !requested\n          ? \"list\"\n          : [\"list\", \"run\"].includes(requested)\n            ? requested\n            : \"run\";\n      if (![\"list\", \"run\"].includes(subcommand)) {\n        errors.push(\"forge query requires subcommand: list or run\");\n        return { command: null, workspaceRoot, errors };\n      }\n\n      const queryName = subcommand === \"run\"\n        ? requested === \"run\"\n          ? rest[1]\n          : rest[0]\n        : undefined;\n      if (subcommand === \"run\" && !queryName) {\n        errors.push(\"forge query run requires a query name\");\n      }\n\n      const argsRaw = parseOptionValue(argv, \"--args\");\n      let args: unknown = {};\n      if (argsRaw !== undefined) {\n        try {\n          args = JSON.parse(argsRaw);\n        } catch {\n          errors.push(\"--args must be valid JSON\");\n        }\n      }\n\n      return {\n        command: {\n          kind: \"query\",\n          subcommand,\n          name: queryName,\n          args,\n          json: parseFlag(argv, \"--json\"),\n          userId: parseOptionValue(argv, \"--user-id\"),\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\n          role: parseOptionValue(argv, \"--role\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"live\": {\n      const requested = rest[0] as LiveSubcommand | undefined;\n      const subcommand =\n        !requested\n          ? \"list\"\n          : LIVE_SUBCOMMANDS.includes(requested)\n            ? requested\n            : \"subscribe\";\n      const name =\n        subcommand === \"subscribe\"\n          ? rest[0]\n          : subcommand === \"debug\"\n            ? rest[1]\n            : undefined;\n      const argsRaw = parseOptionValue(argv, \"--args\");\n      let args: unknown = {};\n      if (argsRaw !== undefined) {\n        try {\n          args = JSON.parse(argsRaw);\n        } catch {\n          errors.push(\"--args must be valid JSON\");\n        }\n      }\n\n      return {\n        command: {\n          kind: \"live\",\n          subcommand,\n          name,\n          args,\n          json: parseFlag(argv, \"--json\"),\n          userId: parseOptionValue(argv, \"--user-id\"),\n          tenantId: parseOptionValue(argv, \"--tenant-id\"),\n          role: parseOptionValue(argv, \"--role\"),\n          url: parseOptionValue(argv, \"--url\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"dev\": {\n      const lifecycle = rest[0] === \"status\" || rest[0] === \"stop\" ? rest[0] : undefined;\n      const portRaw = parseOptionValue(argv, \"--port\");\n      const port = portRaw !== undefined ? Number(portRaw) : undefined;\n      if (portRaw !== undefined && (!Number.isFinite(port) || port! < 0)) {\n        errors.push(\"--port must be a non-negative integer\");\n      }\n      const webPortRaw = parseOptionValue(argv, \"--web-port\");\n      const webPort = webPortRaw !== undefined ? Number(webPortRaw) : undefined;\n      if (webPortRaw !== undefined && (!Number.isFinite(webPort) || webPort! < 0)) {\n        errors.push(\"--web-port must be a non-negative integer\");\n      }\n      const aiMode = parseOptionValue(argv, \"--ai\");\n      const mockAi =\n        parseFlag(argv, \"--mock-ai\") || aiMode === \"mock\" || process.env.FORGE_MOCK_AI === \"1\";\n      const seed = parseFlag(argv, \"--seed\");\n      if (seed && parseFlag(argv, \"--once\")) {\n        errors.push(\"forge dev --seed cannot be combined with --once; use forge dev --seed or forge seed dev\");\n      }\n      if (seed && parseFlag(argv, \"--web-only\")) {\n        errors.push(\"forge dev --seed cannot be combined with --web-only because seeding requires the API runtime\");\n      }\n      if (parseFlag(argv, \"--all-tenants\") && !seed) {\n        errors.push(\"forge dev --all-tenants requires --seed; use forge dev --seed --all-tenants\");\n      }\n      return {\n        command: {\n          kind: \"dev\",\n          host: parseOptionValue(argv, \"--host\"),\n          port,\n          mock: parseFlag(argv, \"--mock\"),\n          mockAi,\n          once: parseFlag(argv, \"--once\"),\n          watch: !parseFlag(argv, \"--no-watch\") || parseFlag(argv, \"--watch\"),\n          json: parseFlag(argv, \"--json\"),\n          db: parseDbKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          worker: !parseFlag(argv, \"--no-worker\") || parseFlag(argv, \"--worker\"),\n          withWeb: !parseFlag(argv, \"--no-web\") && !parseFlag(argv, \"--api-only\"),\n          apiOnly: parseFlag(argv, \"--api-only\"),\n          webOnly: parseFlag(argv, \"--web-only\"),\n          open: parseFlag(argv, \"--open\"),\n          webPort,\n          publicApiUrl: parseOptionValue(argv, \"--public-api-url\"),\n          telemetry: (parseOptionValue(argv, \"--telemetry\") ?? \"local\")\n            .split(\",\")\n            .map((value) => value.trim())\n            .filter(Boolean),\n          envFile: parseOptionValue(argv, \"--env-file\"),\n          skipStartupConsole: parseFlag(argv, \"--skip-startup-console\"),\n          detach: parseFlag(argv, \"--detach\"),\n          seed,\n          seedCommand: parseOptionValue(argv, \"--seed-command\"),\n          seedAllTenants: parseFlag(argv, \"--all-tenants\"),\n          lifecycle,\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"db\": {\n      const subcommand = rest[0] as DbSubcommand | undefined;\n      if (!subcommand || ![\"diff\", \"migrate\", \"reset\", \"status\", \"doctor\", \"repair\", \"rls-check\"].includes(subcommand)) {\n        errors.push(\"forge db requires subcommand: diff, migrate, reset, status, doctor, repair, or rls-check\");\n        return { command: null, workspaceRoot, errors };\n      }\n      return {\n        command: {\n          kind: \"db\",\n          subcommand,\n          db: parseAdapterKind(parseOptionValue(argv, \"--adapter\") ?? parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          local: parseFlag(argv, \"--local\"),\n          json: parseFlag(argv, \"--json\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"workflow\": {\n      const subcommand = rest[0] as WorkflowSubcommand | undefined;\n      if (\n        !subcommand ||\n        ![\"list\", \"run\", \"inspect\", \"process\", \"retry\", \"cancel\"].includes(subcommand)\n      ) {\n        errors.push(\n          \"forge workflow requires subcommand: list, run, inspect, process, retry, or cancel\",\n        );\n        return { command: null, workspaceRoot, errors };\n      }\n\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\n        errors.push(\"--limit must be an integer >= 1\");\n      }\n\n      const inputRaw = parseOptionValue(argv, \"--input\");\n      let input: unknown;\n      if (inputRaw !== undefined) {\n        try {\n          input = JSON.parse(inputRaw);\n        } catch {\n          errors.push(\"--input must be valid JSON\");\n        }\n      }\n\n      const stepName = parseOptionValue(argv, \"--step\");\n      let runId: number | undefined;\n      let workflowName: string | undefined;\n\n      if (subcommand === \"run\") {\n        workflowName = rest[1];\n        if (!workflowName) {\n          errors.push(\"forge workflow run requires a workflow name\");\n        }\n      } else if ([\"inspect\", \"retry\", \"cancel\"].includes(subcommand)) {\n        const runIdRaw = rest[1];\n        runId = runIdRaw !== undefined ? Number(runIdRaw) : undefined;\n        if (runIdRaw !== undefined && !Number.isFinite(runId)) {\n          errors.push(\"run id must be a number\");\n        }\n        if (!runIdRaw) {\n          errors.push(`forge workflow ${subcommand} requires a run id`);\n        }\n      }\n\n      return {\n        command: {\n          kind: \"workflow\",\n          subcommand,\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          once: parseFlag(argv, \"--once\"),\n          watch: parseFlag(argv, \"--watch\"),\n          limit,\n          workflowName,\n          runId,\n          stepName,\n          input,\n          mock: parseFlag(argv, \"--mock\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"outbox\": {\n      const subcommand = rest[0] as OutboxSubcommand | undefined;\n      if (\n        !subcommand ||\n        ![\"list\", \"process\", \"retry\", \"dead\", \"clear\"].includes(subcommand)\n      ) {\n        errors.push(\n          \"forge outbox requires subcommand: list, process, retry, dead, or clear\",\n        );\n        return { command: null, workspaceRoot, errors };\n      }\n\n      const limitRaw = parseOptionValue(argv, \"--limit\");\n      const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;\n      if (limitRaw !== undefined && (!Number.isFinite(limit) || limit! < 1)) {\n        errors.push(\"--limit must be an integer >= 1\");\n      }\n\n      const deliveryIdRaw = subcommand === \"retry\" ? rest[1] : undefined;\n      const deliveryId =\n        deliveryIdRaw !== undefined ? Number(deliveryIdRaw) : undefined;\n      if (deliveryIdRaw !== undefined && !Number.isFinite(deliveryId)) {\n        errors.push(\"delivery id must be a number\");\n      }\n\n      return {\n        command: {\n          kind: \"outbox\",\n          subcommand,\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          once: parseFlag(argv, \"--once\"),\n          watch: parseFlag(argv, \"--watch\"),\n          limit,\n          deliveryId,\n          mock: parseFlag(argv, \"--mock\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"telemetry\": {\n      const subcommand = rest[0] as TelemetrySubcommand | undefined;\n      if (\n        !subcommand ||\n        ![\"list\", \"inspect\", \"symbolicate\", \"flush\", \"tail\", \"clear\"].includes(subcommand)\n      ) {\n        errors.push(\n          \"forge telemetry requires subcommand: list, inspect, symbolicate, flush, tail, or clear\",\n        );\n        return { command: null, workspaceRoot, errors };\n      }\n\n      let traceId: string | undefined;\n      if (subcommand === \"inspect\" || subcommand === \"symbolicate\") {\n        traceId = rest[1];\n        if (!traceId) {\n          errors.push(\"forge telemetry inspect requires a trace id\");\n        }\n      }\n\n      return {\n        command: {\n          kind: \"telemetry\",\n          subcommand,\n          db: parseAdapterKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          json: parseFlag(argv, \"--json\"),\n          traceId,\n          sink: parseOptionValue(argv, \"--sink\"),\n          file: parseOptionValue(argv, \"--file\") as \"events\" | \"exceptions\" | \"spans\" | undefined,\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"policy\": {\n      const subcommand = rest[0] as PolicySubcommand | undefined;\n      if (!subcommand || ![\"list\", \"matrix\", \"simulate\", \"check\"].includes(subcommand)) {\n        errors.push(\"forge policy requires subcommand: list, matrix, simulate, or check\");\n        return { command: null, workspaceRoot, errors };\n      }\n\n      let policyName: string | undefined;\n      if (subcommand === \"simulate\") {\n        policyName = rest[1];\n        if (!policyName) {\n          errors.push(\"forge policy simulate requires a policy name\");\n        }\n      }\n\n      return {\n        command: {\n          kind: \"policy\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          policy: policyName,\n          role: parseOptionValue(argv, \"--role\"),\n          strictPolicies: parseFlag(argv, \"--strict-policies\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"secrets\": {\n      const subcommand = rest[0] as SecretsSubcommand | undefined;\n      if (\n        !subcommand ||\n        ![\"list\", \"check\", \"print\", \"set\", \"unset\", \"prove\"].includes(subcommand)\n      ) {\n        errors.push(\n          \"forge secrets requires subcommand: list, check, print, set, unset, or prove\",\n        );\n        return { command: null, workspaceRoot, errors };\n      }\n\n      return {\n        command: {\n          kind: \"secrets\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          redacted: parseFlag(argv, \"--redacted\"),\n          name: subcommand === \"set\" || subcommand === \"unset\" ? rest[1] : undefined,\n          value: subcommand === \"set\" ? rest[2] : undefined,\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"env\": {\n      const subcommand = rest[0] as EnvSubcommand | undefined;\n      if (!subcommand || ![\"list\", \"check\", \"print\", \"doctor\"].includes(subcommand)) {\n        errors.push(\"forge env requires subcommand: list, check, print, or doctor\");\n        return { command: null, workspaceRoot, errors };\n      }\n      const targetRaw = parseOptionValue(argv, \"--target\") ?? \"local\";\n      if (![\"local\", \"staging\", \"production\"].includes(targetRaw)) {\n        errors.push(\"forge env --target must be local, staging, or production\");\n      }\n\n      return {\n        command: {\n          kind: \"env\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          redacted: parseFlag(argv, \"--redacted\"),\n          target: targetRaw as \"local\" | \"staging\" | \"production\",\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    case \"ai\": {\n      const subcommand = rest[0] as AiSubcommand | undefined;\n      if (!subcommand || !AI_SUBCOMMANDS.includes(subcommand)) {\n        errors.push(\"forge ai requires subcommand: providers, check, test, models, tools, agents, redteam, or trace\");\n        return { command: null, workspaceRoot, errors };\n      }\n\n      const providerRaw = parseOptionValue(argv, \"--provider\");\n      const provider = providerRaw as ForgeAiProvider | undefined;\n      const traceId = subcommand === \"trace\" ? rest[1] ?? parseOptionValue(argv, \"--trace\") : undefined;\n      if (subcommand === \"trace\" && !traceId) {\n        errors.push(\"forge ai trace requires a trace id\");\n      }\n\n      return {\n        command: {\n          kind: \"ai\",\n          subcommand,\n          json: parseFlag(argv, \"--json\"),\n          provider,\n          model: parseOptionValue(argv, \"--model\"),\n          prompt: parseOptionValue(argv, \"--prompt\"),\n          mock: parseFlag(argv, \"--mock\"),\n          modelLevel: parseFlag(argv, \"--model-level\"),\n          live: parseFlag(argv, \"--live\"),\n          traceId,\n          db: parsePersistentDbKind(parseOptionValue(argv, \"--db\")),\n          databaseUrl: parseOptionValue(argv, \"--database-url\"),\n          workspaceRoot,\n        },\n        workspaceRoot,\n        errors,\n      };\n    }\n    default:\n      errors.push(`unrecognized command '${commandName}'`);\n      return { command: null, workspaceRoot, errors };\n  }\n}"
       },
       "name": "parseCli",
       "qualifiedName": "parseCli",
       "span": {
-        "end": 119510,
-        "start": 28414
+        "end": 116729,
+        "start": 26948
       }
     },
     {
@@ -105600,14 +106159,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseCommaList(value: string | undefined): string[] {\r\n  return String(value ?? \"\")\r\n    .split(\",\")\r\n    .map((item) => item.trim())\r\n    .filter(Boolean);\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseCommaList(value: string | undefined): string[] {\n  return String(value ?? \"\")\n    .split(\",\")\n    .map((item) => item.trim())\n    .filter(Boolean);\n}"
       },
       "name": "parseCommaList",
       "qualifiedName": "parseCommaList",
       "span": {
-        "end": 26523,
-        "start": 26355
+        "end": 25102,
+        "start": 24939
       }
     },
     {
@@ -105634,14 +106193,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseDbKind(value: string | undefined): \"memory\" | \"pglite\" | \"postgres\" | \"none\" {\r\n  if (value === \"memory\" || value === \"postgres\" || value === \"none\") {\r\n    return value;\r\n  }\r\n  return \"pglite\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseDbKind(value: string | undefined): \"memory\" | \"pglite\" | \"postgres\" | \"none\" {\n  if (value === \"memory\" || value === \"postgres\" || value === \"none\") {\n    return value;\n  }\n  return \"pglite\";\n}"
       },
       "name": "parseDbKind",
       "qualifiedName": "parseDbKind",
       "span": {
-        "end": 23121,
-        "start": 22909
+        "end": 21796,
+        "start": 21589
       }
     },
     {
@@ -105702,14 +106261,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseDoObjective(rest: string[], argv: string[]): string {\r\n  const [action, name, ...tail] = rest;\r\n  if (action === \"add-resource\") {\r\n    return [\r\n      \"add\",\r\n      \"resource\",\r\n      name ?? \"<name>\",\r\n      parseFlag(argv, \"--with-ui\") ? \"with ui\" : \"\",\r\n      tail.join(\" \"),\r\n    ]\r\n      .filter(Boolean)\r\n      .join(\" \")\r\n      .trim();\r\n  }\r\n  if (action === \"understand\") {\r\n    return tail.length > 0 ? [\"understand\", ...tail].join(\" \").trim() : \"understand project\";\r\n  }\r\n  if (action === \"connect-ui\") {\r\n    return [\"connect\", \"ui\", name, ...tail].filter(Boolean).join(\" \").trim();\r\n  }\r\n  return rest.join(\" \").trim() || \"inspect project\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseDoObjective(rest: string[], argv: string[]): string {\n  const [action, name, ...tail] = rest;\n  if (action === \"add-resource\") {\n    return [\n      \"add\",\n      \"resource\",\n      name ?? \"<name>\",\n      parseFlag(argv, \"--with-ui\") ? \"with ui\" : \"\",\n      tail.join(\" \"),\n    ]\n      .filter(Boolean)\n      .join(\" \")\n      .trim();\n  }\n  if (action === \"understand\") {\n    return tail.length > 0 ? [\"understand\", ...tail].join(\" \").trim() : \"understand project\";\n  }\n  if (action === \"connect-ui\") {\n    return [\"connect\", \"ui\", name, ...tail].filter(Boolean).join(\" \").trim();\n  }\n  return rest.join(\" \").trim() || \"inspect project\";\n}"
       },
       "name": "parseDoObjective",
       "qualifiedName": "parseDoObjective",
       "span": {
-        "end": 28403,
-        "start": 27731
+        "end": 26939,
+        "start": 26288
       }
     },
     {
@@ -106025,14 +106584,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseFlag(args: string[], flag: string): boolean {\r\n  return args.includes(flag);\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseFlag(args: string[], flag: string): boolean {\n  return args.includes(flag);\n}"
       },
       "name": "parseFlag",
       "qualifiedName": "parseFlag",
       "span": {
-        "end": 22167,
-        "start": 22074
+        "end": 20873,
+        "start": 20782
       }
     },
     {
@@ -106331,14 +106890,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "function parseMcpFrames(raw: Buffer): { requests: JsonRpcRequest[]; remainder: Buffer } {\r\n  const messages: JsonRpcRequest[] = [];\r\n  let cursor = 0;\r\n  while (cursor < raw.length) {\r\n    const headerEnd = raw.indexOf(Buffer.from(\"\\r\\n\\r\\n\"), cursor);\r\n    if (headerEnd === -1) {\r\n      break;\r\n    }\r\n    const header = raw.subarray(cursor, headerEnd).toString(\"ascii\");\r\n    const match = /Content-Length:\\s*(\\d+)/i.exec(header);\r\n    if (!match) {\r\n      break;\r\n    }\r\n    const length = Number(match[1]);\r\n    const bodyStart = headerEnd + 4;\r\n    if (!Number.isSafeInteger(length) || length < 0 || length > 1024 * 1024) {\r\n      throw new Error(\"Invalid MCP Content-Length\");\r\n    }\r\n    if (raw.length - bodyStart < length) break;\r\n    const body = raw.subarray(bodyStart, bodyStart + length).toString(\"utf8\");\r\n    messages.push(JSON.parse(body) as JsonRpcRequest);\r\n    cursor = bodyStart + length;\r\n  }\r\n  return { requests: messages, remainder: raw.subarray(cursor) };\r\n}"
       },
       "name": "parseMcpFrames",
       "qualifiedName": "parseMcpFrames",
       "span": {
-        "end": 26287,
-        "start": 25303
+        "end": 30411,
+        "start": 29427
       }
     },
     {
@@ -106365,14 +106924,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseNewPackageManager(value: string | undefined): NewPackageManager {\r\n  return NEW_PACKAGE_MANAGERS.includes(value as NewPackageManager)\r\n    ? (value as NewPackageManager)\r\n    : \"bun\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseNewPackageManager(value: string | undefined): NewPackageManager {\n  return NEW_PACKAGE_MANAGERS.includes(value as NewPackageManager)\n    ? (value as NewPackageManager)\n    : \"bun\";\n}"
       },
       "name": "parseNewPackageManager",
       "qualifiedName": "parseNewPackageManager",
       "span": {
-        "end": 26351,
-        "start": 26151
+        "end": 24937,
+        "start": 24741
       }
     },
     {
@@ -106382,14 +106941,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseNewTemplate(value: string | undefined): NewTemplateName {\r\n  return NEW_TEMPLATES.includes(value as NewTemplateName)\r\n    ? (value as NewTemplateName)\r\n    : \"b2b-support-web\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseNewTemplate(value: string | undefined): NewTemplateName {\n  return NEW_TEMPLATES.includes(value as NewTemplateName)\n    ? (value as NewTemplateName)\n    : \"b2b-support-web\";\n}"
       },
       "name": "parseNewTemplate",
       "qualifiedName": "parseNewTemplate",
       "span": {
-        "end": 26147,
-        "start": 25954
+        "end": 24739,
+        "start": 24550
       }
     },
     {
@@ -106484,14 +107043,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseOptionValue(args: string[], flag: string): string | undefined {\r\n  const index = args.indexOf(flag);\r\n  if (index === -1 || index + 1 >= args.length) {\r\n    return undefined;\r\n  }\r\n  return args[index + 1];\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseOptionValue(args: string[], flag: string): string | undefined {\n  const index = args.indexOf(flag);\n  if (index === -1 || index + 1 >= args.length) {\n    return undefined;\n  }\n  return args[index + 1];\n}"
       },
       "name": "parseOptionValue",
       "qualifiedName": "parseOptionValue",
       "span": {
-        "end": 22394,
-        "start": 22171
+        "end": 21092,
+        "start": 20875
       }
     },
     {
@@ -106501,14 +107060,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseOptionValues(args: string[], flag: string): string[] {\r\n  const values: string[] = [];\r\n  for (let index = 0; index < args.length; index++) {\r\n    if (args[index] === flag && index + 1 < args.length) {\r\n      values.push(args[index + 1]);\r\n      index += 1;\r\n    }\r\n  }\r\n  return values;\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseOptionValues(args: string[], flag: string): string[] {\n  const values: string[] = [];\n  for (let index = 0; index < args.length; index++) {\n    if (args[index] === flag && index + 1 < args.length) {\n      values.push(args[index + 1]);\n      index += 1;\n    }\n  }\n  return values;\n}"
       },
       "name": "parseOptionValues",
       "qualifiedName": "parseOptionValues",
       "span": {
-        "end": 22905,
-        "start": 22601
+        "end": 21587,
+        "start": 21292
       }
     },
     {
@@ -106518,14 +107077,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseOptionalOptionValue(args: string[], flag: string): string | undefined {\r\n  const value = parseOptionValue(args, flag);\r\n  return value && !value.startsWith(\"--\") ? value : undefined;\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseOptionalOptionValue(args: string[], flag: string): string | undefined {\n  const value = parseOptionValue(args, flag);\n  return value && !value.startsWith(\"--\") ? value : undefined;\n}"
       },
       "name": "parseOptionalOptionValue",
       "qualifiedName": "parseOptionalOptionValue",
       "span": {
-        "end": 22597,
-        "start": 22398
+        "end": 21290,
+        "start": 21094
       }
     },
     {
@@ -106552,14 +107111,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parsePackageManagerList(value: string | undefined, errors: string[], optionName: string): NewPackageManager[] | undefined {\r\n  if (!value) return undefined;\r\n  const values = parseCommaList(value);\r\n  const unsupported = values.filter((item) => !NEW_PACKAGE_MANAGERS.includes(item as NewPackageManager));\r\n  if (unsupported.length > 0) {\r\n    errors.push(`${optionName} contains unsupported package manager(s): ${unsupported.join(\", \")}; supported: ${NEW_PACKAGE_MANAGERS.join(\", \")}`);\r\n  }\r\n  return values.filter((item) => NEW_PACKAGE_MANAGERS.includes(item as NewPackageManager)) as NewPackageManager[];\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parsePackageManagerList(value: string | undefined, errors: string[], optionName: string): NewPackageManager[] | undefined {\n  if (!value) return undefined;\n  const values = parseCommaList(value);\n  const unsupported = values.filter((item) => !NEW_PACKAGE_MANAGERS.includes(item as NewPackageManager));\n  if (unsupported.length > 0) {\n    errors.push(`${optionName} contains unsupported package manager(s): ${unsupported.join(\", \")}; supported: ${NEW_PACKAGE_MANAGERS.join(\", \")}`);\n  }\n  return values.filter((item) => NEW_PACKAGE_MANAGERS.includes(item as NewPackageManager)) as NewPackageManager[];\n}"
       },
       "name": "parsePackageManagerList",
       "qualifiedName": "parsePackageManagerList",
       "span": {
-        "end": 27727,
-        "start": 27108
+        "end": 26286,
+        "start": 25675
       }
     },
     {
@@ -106637,14 +107196,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parsePersistentDbKind(value: string | undefined): DbAdapterKind {\r\n  return parseDbKind(value) === \"postgres\" ? \"postgres\" : \"pglite\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parsePersistentDbKind(value: string | undefined): DbAdapterKind {\n  return parseDbKind(value) === \"postgres\" ? \"postgres\" : \"pglite\";\n}"
       },
       "name": "parsePersistentDbKind",
       "qualifiedName": "parsePersistentDbKind",
       "span": {
-        "end": 23271,
-        "start": 23125
+        "end": 21942,
+        "start": 21798
       }
     },
     {
@@ -106790,14 +107349,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseReviewCategories(value: string | undefined): ReviewFindingCategory[] {\r\n  if (!value) return [];\r\n  return value\r\n    .split(\",\")\r\n    .map((item) => item.trim())\r\n    .filter((item): item is ReviewFindingCategory => REVIEW_CATEGORIES.includes(item as ReviewFindingCategory));\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseReviewCategories(value: string | undefined): ReviewFindingCategory[] {\n  if (!value) return [];\n  return value\n    .split(\",\")\n    .map((item) => item.trim())\n    .filter((item): item is ReviewFindingCategory => REVIEW_CATEGORIES.includes(item as ReviewFindingCategory));\n}"
       },
       "name": "parseReviewCategories",
       "qualifiedName": "parseReviewCategories",
       "span": {
-        "end": 25235,
-        "start": 24942
+        "end": 23849,
+        "start": 23562
       }
     },
     {
@@ -106807,14 +107366,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseReviewFailOn(value: string | undefined): ReviewFailOn | undefined {\r\n  return REVIEW_FAIL_ON.includes(value as ReviewFailOn) ? (value as ReviewFailOn) : undefined;\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseReviewFailOn(value: string | undefined): ReviewFailOn | undefined {\n  return REVIEW_FAIL_ON.includes(value as ReviewFailOn) ? (value as ReviewFailOn) : undefined;\n}"
       },
       "name": "parseReviewFailOn",
       "qualifiedName": "parseReviewFailOn",
       "span": {
-        "end": 24938,
-        "start": 24758
+        "end": 23560,
+        "start": 23382
       }
     },
     {
@@ -106824,14 +107383,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseReviewMode(value: string | undefined): ReviewMode {\r\n  return REVIEW_MODES.includes(value as ReviewMode) ? (value as ReviewMode) : \"standard\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseReviewMode(value: string | undefined): ReviewMode {\n  return REVIEW_MODES.includes(value as ReviewMode) ? (value as ReviewMode) : \"standard\";\n}"
       },
       "name": "parseReviewMode",
       "qualifiedName": "parseReviewMode",
       "span": {
-        "end": 24754,
-        "start": 24595
+        "end": 23380,
+        "start": 23223
       }
     },
     {
@@ -106892,14 +107451,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseSandboxBackend(value: string | undefined): SandboxBackend {\r\n  if (value === \"child\" || value === \"docker\" || value === \"none\") {\r\n    return value;\r\n  }\r\n  return \"none\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseSandboxBackend(value: string | undefined): SandboxBackend {\n  if (value === \"child\" || value === \"docker\" || value === \"none\") {\n    return value;\n  }\n  return \"none\";\n}"
       },
       "name": "parseSandboxBackend",
       "qualifiedName": "parseSandboxBackend",
       "span": {
-        "end": 23636,
-        "start": 23448
+        "end": 22293,
+        "start": 22110
       }
     },
     {
@@ -107130,14 +107689,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseTemplateList(value: string | undefined, errors: string[], optionName: string): NewTemplateName[] | undefined {\r\n  if (!value) return undefined;\r\n  const values = parseCommaList(value);\r\n  const unsupported = values.filter((item) => !NEW_TEMPLATES.includes(item as NewTemplateName));\r\n  if (unsupported.length > 0) {\r\n    errors.push(`${optionName} contains unsupported template(s): ${unsupported.join(\", \")}; supported: ${NEW_TEMPLATES.join(\", \")}`);\r\n  }\r\n  return values.filter((item) => NEW_TEMPLATES.includes(item as NewTemplateName)) as NewTemplateName[];\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseTemplateList(value: string | undefined, errors: string[], optionName: string): NewTemplateName[] | undefined {\n  if (!value) return undefined;\n  const values = parseCommaList(value);\n  const unsupported = values.filter((item) => !NEW_TEMPLATES.includes(item as NewTemplateName));\n  if (unsupported.length > 0) {\n    errors.push(`${optionName} contains unsupported template(s): ${unsupported.join(\", \")}; supported: ${NEW_TEMPLATES.join(\", \")}`);\n  }\n  return values.filter((item) => NEW_TEMPLATES.includes(item as NewTemplateName)) as NewTemplateName[];\n}"
       },
       "name": "parseTemplateList",
       "qualifiedName": "parseTemplateList",
       "span": {
-        "end": 27104,
-        "start": 26527
+        "end": 25673,
+        "start": 25104
       }
     },
     {
@@ -107147,14 +107706,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseTestCost(value: string | undefined): TestCost {\r\n  return TEST_COSTS.includes(value as TestCost) ? (value as TestCost) : \"standard\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseTestCost(value: string | undefined): TestCost {\n  return TEST_COSTS.includes(value as TestCost) ? (value as TestCost) : \"standard\";\n}"
       },
       "name": "parseTestCost",
       "qualifiedName": "parseTestCost",
       "span": {
-        "end": 24591,
-        "start": 24442
+        "end": 23221,
+        "start": 23074
       }
     },
     {
@@ -107232,14 +107791,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseUiBrowser(value: string | undefined): UiBrowserName {\r\n  return UI_BROWSERS.includes(value as UiBrowserName) ? (value as UiBrowserName) : \"chromium\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseUiBrowser(value: string | undefined): UiBrowserName {\n  return UI_BROWSERS.includes(value as UiBrowserName) ? (value as UiBrowserName) : \"chromium\";\n}"
       },
       "name": "parseUiBrowser",
       "qualifiedName": "parseUiBrowser",
       "span": {
-        "end": 25405,
-        "start": 25239
+        "end": 24015,
+        "start": 23851
       }
     },
     {
@@ -107249,14 +107808,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseUiScreenshot(value: string | undefined): UiScreenshotMode {\r\n  return UI_SCREENSHOT_MODES.includes(value as UiScreenshotMode) ? (value as UiScreenshotMode) : \"only-on-failure\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseUiScreenshot(value: string | undefined): UiScreenshotMode {\n  return UI_SCREENSHOT_MODES.includes(value as UiScreenshotMode) ? (value as UiScreenshotMode) : \"only-on-failure\";\n}"
       },
       "name": "parseUiScreenshot",
       "qualifiedName": "parseUiScreenshot",
       "span": {
-        "end": 25776,
-        "start": 25583
+        "end": 24378,
+        "start": 24187
       }
     },
     {
@@ -107266,14 +107825,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseUiTrace(value: string | undefined): UiTraceMode {\r\n  return UI_TRACE_MODES.includes(value as UiTraceMode) ? (value as UiTraceMode) : \"retain-on-failure\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseUiTrace(value: string | undefined): UiTraceMode {\n  return UI_TRACE_MODES.includes(value as UiTraceMode) ? (value as UiTraceMode) : \"retain-on-failure\";\n}"
       },
       "name": "parseUiTrace",
       "qualifiedName": "parseUiTrace",
       "span": {
-        "end": 25579,
-        "start": 25409
+        "end": 24185,
+        "start": 24017
       }
     },
     {
@@ -107283,14 +107842,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "function parseUiVideo(value: string | undefined): UiVideoMode {\r\n  return UI_VIDEO_MODES.includes(value as UiVideoMode) ? (value as UiVideoMode) : \"retain-on-failure\";\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "function parseUiVideo(value: string | undefined): UiVideoMode {\n  return UI_VIDEO_MODES.includes(value as UiVideoMode) ? (value as UiVideoMode) : \"retain-on-failure\";\n}"
       },
       "name": "parseUiVideo",
       "qualifiedName": "parseUiVideo",
       "span": {
-        "end": 25950,
-        "start": 25780
+        "end": 24548,
+        "start": 24380
       }
     },
     {
@@ -108926,6 +109485,23 @@ export const appGraph = {
       }
     },
     {
+      "contentHash": "131178c8e6f0bbfdada9d8f0565419fa1dbbd9a07d308936c7fbcde03b67af77",
+      "file": "src/forge/agent-fabric/local-task-server.ts",
+      "id": "d2032fcd1abad9c5363800a271830843ab4b8024f15558b1089ccd0e414b3374",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
+        "sourceSlice": "async function probeLocalOwner(repositoryRoot: string): Promise<{ repositoryRoot: string; pid: number; port: number } | null> {\n  const endpoint = readEndpoint(realpathSync(repositoryRoot), false);\n  if (!endpoint) return null;\n  const request = (action: string, body: object) => fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {\n    method: \"POST\", headers: { Authorization: `Bearer ${endpoint.token}`, \"Content-Type\": \"application/json\" },\n    body: JSON.stringify(body), redirect: \"manual\", signal: AbortSignal.timeout(2000),\n  });\n  const response = await request(\"owner-health\", {});\n  if (response.ok) {\n    const health = await response.json() as { ok?: boolean; repositoryRoot?: string; pid?: number };\n    if (!health.ok || health.repositoryRoot !== endpoint.repositoryRoot || health.pid !== endpoint.pid) throw new Error(\"Agent Fabric owner identity does not match its endpoint\");\n  } else {\n    // Owners started before portable integration already expose this read-only action.\n    if (response.status !== 404) throw new Error(\"Agent Fabric owner health check failed\");\n    const legacy = await request(\"run-status\", { runId: \"fabric-owner-health-probe\" });\n    const value = await legacy.json() as { code?: string };\n    if (legacy.status !== 400 || value.code !== \"AF_RUN_NOT_FOUND\") throw new Error(\"Agent Fabric owner cannot be authenticated; inspect it before restarting\");\n  }\n  return { repositoryRoot: endpoint.repositoryRoot, pid: endpoint.pid, port: endpoint.port };\n}"
+      },
+      "name": "probeLocalOwner",
+      "qualifiedName": "probeLocalOwner",
+      "span": {
+        "end": 9229,
+        "start": 7731
+      }
+    },
+    {
       "contentHash": "8e8647be77aa316944ea7f2359cad745960584e253679c14b09ed08de7b2a4a4",
       "file": "src/forge/cli/studio.ts",
       "id": "97214c5df5e20257a0b9c573f798db45c0c9fa8bc16f2d73a9dd59a1317ba477",
@@ -109000,14 +109576,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "function processIsAlive(pid: number): boolean {\r\n  try { process.kill(pid, 0); return true; } catch (error) {\r\n    return (error as NodeJS.ErrnoException).code === \"EPERM\";\r\n  }\r\n}"
       },
       "name": "processIsAlive",
       "qualifiedName": "processIsAlive",
       "span": {
-        "end": 2897,
-        "start": 2717
+        "end": 2955,
+        "start": 2775
       }
     },
     {
@@ -109178,6 +109754,23 @@ export const appGraph = {
       "span": {
         "end": 2575,
         "start": 2287
+      }
+    },
+    {
+      "contentHash": "adff9b751a726a49ddfa13435776f5394feca48460d85600f370a7f1cc66b72d",
+      "file": "src/forge/agent-memory/mcp.ts",
+      "id": "32e92b1b333cb2a77ea69da860ecf8a155d6ecf7d2946b43a1946968ca95a24b",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
+        "sourceSlice": "function projectAwareSchema(schema: Record<string, unknown>): Record<string, unknown> {\n  return { ...schema, properties: { ...(schema.properties as Record<string, unknown>),\n    projectId: { type: \"string\", minLength: 1, description: \"Registered project identifier. Omit to use the MCP server's original workspace.\" } } };\n}"
+      },
+      "name": "projectAwareSchema",
+      "qualifiedName": "projectAwareSchema",
+      "span": {
+        "end": 5768,
+        "start": 5443
       }
     },
     {
@@ -109952,14 +110545,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "async function readBody(request: IncomingMessage): Promise<Record<string, unknown>> {\r\n  if (request.headers[\"content-type\"] !== \"application/json\") {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner request must be JSON\");\r\n  }\r\n  let bytes = 0;\r\n  const chunks: Buffer[] = [];\r\n  for await (const chunk of request) {\r\n    const part = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk));\r\n    bytes += part.length;\r\n    if (bytes > MAX_REQUEST_BYTES) {\r\n      throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner request exceeds 40 KiB\");\r\n    }\r\n    chunks.push(part);\r\n  }\r\n  let value: unknown;\r\n  try { value = JSON.parse(Buffer.concat(chunks).toString(\"utf8\")); } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner request is invalid JSON\");\r\n  }\r\n  if (!value || typeof value !== \"object\" || Array.isArray(value)) {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner request is not an object\");\r\n  }\r\n  return value as Record<string, unknown>;\r\n}"
       },
       "name": "readBody",
       "qualifiedName": "readBody",
       "span": {
-        "end": 5780,
-        "start": 4759
+        "end": 5869,
+        "start": 4848
       }
     },
     {
@@ -110116,20 +110709,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "68d929dfd38fc5bb0f3c9d1bc723d4f2854185ca7d96b01b72c6663bfaaeec84",
+      "contentHash": "45d90f0ec67b09d17616de38e66d0815b49bbf91c49724114a5d7b4a4f18a55e",
       "file": "src/forge/agent-fabric/local-task-server.ts",
       "id": "1dc4e091a30b643728c6a30be80ccf43c99509fa4ada9b276e66194ed320c2bb",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
-        "sourceSlice": "function readEndpoint(repositoryRoot: string): OwnerEndpoint | null {\r\n  const path = endpointPath(repositoryRoot);\r\n  if (!existsSync(path)) return null;\r\n  if (lstatSync(path).isSymbolicLink()) {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is a symbolic link\");\r\n  }\r\n  const bytes = readFileSync(path);\r\n  if (bytes.length > 2_048) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is oversized\");\r\n  let value: unknown;\r\n  try { value = JSON.parse(bytes.toString(\"utf8\")); } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is invalid JSON\");\r\n  }\r\n  const item = value as Partial<OwnerEndpoint>;\r\n  if (!item || item.schemaVersion !== 1 || item.repositoryRoot !== repositoryRoot ||\r\n      !Number.isSafeInteger(item.pid) || (item.pid ?? 0) <= 0 ||\r\n      !Number.isSafeInteger(item.port) || (item.port ?? 0) < 1 || (item.port ?? 0) > 65535 ||\r\n      typeof item.token !== \"string\" || !/^[0-9a-f]{64}$/u.test(item.token)) {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is inconsistent\");\r\n  }\r\n  if (!processIsAlive(item.pid!)) {\r\n    // A killed owner cannot hold PGlite. Remove only the exact endpoint bytes\r\n    // read above; a replacement means another owner is starting.\r\n    if (readFileSync(path).equals(bytes)) unlinkSync(path);\r\n    return null;\r\n  }\r\n  return item as OwnerEndpoint;\r\n}"
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
+        "sourceSlice": "function readEndpoint(repositoryRoot: string, pruneStale = true): OwnerEndpoint | null {\n  const path = endpointPath(repositoryRoot);\r\n  if (!existsSync(path)) return null;\r\n  if (lstatSync(path).isSymbolicLink()) {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is a symbolic link\");\r\n  }\r\n  const bytes = readFileSync(path);\r\n  if (bytes.length > 2_048) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is oversized\");\r\n  let value: unknown;\r\n  try { value = JSON.parse(bytes.toString(\"utf8\")); } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is invalid JSON\");\r\n  }\r\n  const item = value as Partial<OwnerEndpoint>;\r\n  if (!item || item.schemaVersion !== 1 || item.repositoryRoot !== repositoryRoot ||\r\n      !Number.isSafeInteger(item.pid) || (item.pid ?? 0) <= 0 ||\r\n      !Number.isSafeInteger(item.port) || (item.port ?? 0) < 1 || (item.port ?? 0) > 65535 ||\r\n      typeof item.token !== \"string\" || !/^[0-9a-f]{64}$/u.test(item.token)) {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner endpoint is inconsistent\");\r\n  }\r\n  if (!processIsAlive(item.pid!)) {\r\n    // A killed owner cannot hold PGlite. Remove only the exact endpoint bytes\r\n    // read above; a replacement means another owner is starting.\r\n    if (pruneStale && readFileSync(path).equals(bytes)) unlinkSync(path);\n    return null;\r\n  }\r\n  return item as OwnerEndpoint;\r\n}"
       },
       "name": "readEndpoint",
       "qualifiedName": "readEndpoint",
       "span": {
-        "end": 4312,
-        "start": 2901
+        "end": 4401,
+        "start": 2959
       }
     },
     {
@@ -110181,6 +110774,23 @@ export const appGraph = {
       "span": {
         "end": 3975,
         "start": 3527
+      }
+    },
+    {
+      "contentHash": "d61c80189e97acd80517aa42db2198bf8a7783770c80224a596064023fd8277c",
+      "file": "src/forge/agent-fabric/project-profile.ts",
+      "id": "6d7285946e28b2a4ccffc29f6413f683c1a90f1b422dfd3804557f6424c72ade",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "b8a84bd4f98bef2b0bab5047c053323996af19a40aa20e6b6bd8b6264a70294d",
+        "sourceSlice": "async function readFabricProfile(root: string): Promise<FabricProjectProfile | null> {\n  localFabricPath(root);\n  const path = join(root, \".forge\", \"fabric.json\");\n  let stat;\n  try { stat = await lstat(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === \"ENOENT\") return null; throw error; }\n  if (stat.isSymbolicLink() || !stat.isFile() || stat.size > 16 * 1024) throw new Error(\"Invalid Agent Fabric project profile file\");\n  const value = JSON.parse(await readFile(path, \"utf8\")) as FabricProjectProfile;\n  if (!value || typeof value !== \"object\" || Array.isArray(value) || value.schemaVersion !== 1 || Object.keys(value).some(key => ![\"schemaVersion\", \"maxConcurrency\", \"environment\", \"verificationCommands\"].includes(key))) throw new Error(\"Invalid Agent Fabric project profile\");\n  if (value.maxConcurrency !== undefined && (!Number.isSafeInteger(value.maxConcurrency) || value.maxConcurrency < 1 || value.maxConcurrency > 4)) throw new Error(\"Profile maxConcurrency must be between 1 and 4\");\n  const env = value.environment;\n  if (env !== undefined) {\n    if (!env || typeof env !== \"object\" || Array.isArray(env) || Object.keys(env).some(key => ![\"mode\", \"ignoreScripts\", \"registry\", \"timeoutMs\"].includes(key))) throw new Error(\"Invalid profile environment\");\n    if (env.mode !== undefined && ![\"auto\", \"none\"].includes(env.mode)) throw new Error(\"Invalid profile environment mode\");\n    if (env.ignoreScripts !== undefined && typeof env.ignoreScripts !== \"boolean\") throw new Error(\"Invalid profile ignoreScripts\");\n    if (env.timeoutMs !== undefined && (!Number.isSafeInteger(env.timeoutMs) || env.timeoutMs < 100 || env.timeoutMs > 1800000)) throw new Error(\"Invalid profile environment deadline\");\n    if (env.registry !== undefined) {\n      if (typeof env.registry !== \"string\") throw new Error(\"Invalid profile registry\");\n      const url = new URL(env.registry);\n      if (url.protocol !== \"https:\" || url.username || url.password || url.search || url.hash) throw new Error(\"Profile registry requires HTTPS without embedded credentials\");\n    }\n  }\n  if (value.verificationCommands !== undefined && (!Array.isArray(value.verificationCommands) || value.verificationCommands.length > 20 || value.verificationCommands.some(argv => !Array.isArray(argv) || !argv.length || argv.length > 40 || argv.some(arg => typeof arg !== \"string\" || !arg || arg.length > 4096 || arg.includes(\"\\0\"))))) throw new Error(\"Invalid profile verification commands\");\n  return value;\n}"
+      },
+      "name": "readFabricProfile",
+      "qualifiedName": "readFabricProfile",
+      "span": {
+        "end": 2967,
+        "start": 469
       }
     },
     {
@@ -110819,14 +111429,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "function readInspectAll(workspaceRoot: string): Record<string, unknown> {\r\n  const generated = join(workspaceRoot, \"src\", \"forge\", \"_generated\");\r\n  const read = (name: string) => {\r\n    try {\r\n      return JSON.parse(readFileSync(join(generated, name), \"utf8\")) as unknown;\r\n    } catch {\r\n      return null;\r\n    }\r\n  };\r\n  return {\r\n    ok: true,\r\n    agentContract: read(\"agentContract.json\"),\r\n    agentTools: read(\"agentTools.json\"),\r\n    runtimeGraph: read(\"runtimeGraph.json\"),\r\n    policyRegistry: read(\"policyRegistry.json\"),\r\n  };\r\n}"
       },
       "name": "readInspectAll",
       "qualifiedName": "readInspectAll",
       "span": {
-        "end": 25066,
-        "start": 24522
+        "end": 29190,
+        "start": 28646
       }
     },
     {
@@ -111133,6 +111743,23 @@ export const appGraph = {
       "span": {
         "end": 6488,
         "start": 5967
+      }
+    },
+    {
+      "contentHash": "eb754a81ee0e55552b494d4d9b5da2dac4f9e9e551a5c96bd89f8b37c570d8d5",
+      "file": "src/forge/agent-fabric/managed-run-store.ts",
+      "id": "b23b0fa9dbb5ed40982a26279ce9e49a477e05a4068711fc6d74fbbefeb82810",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
+        "sourceSlice": "async function readLock(path: string): Promise<string> {\n  const deadline = Date.now() + 1000;\n  for (;;) {\n    try { return await readFile(path, \"utf8\"); }\n    catch (error) {\n      if (![\"EPERM\", \"EACCES\", \"EBUSY\"].includes((error as NodeJS.ErrnoException).code ?? \"\") || Date.now() >= deadline) throw error;\n      await new Promise(resolve => setTimeout(resolve, 20));\n    }\n  }\n}"
+      },
+      "name": "readLock",
+      "qualifiedName": "readLock",
+      "span": {
+        "end": 1416,
+        "start": 1033
       }
     },
     {
@@ -111745,6 +112372,23 @@ export const appGraph = {
       "span": {
         "end": 64251,
         "start": 63852
+      }
+    },
+    {
+      "contentHash": "52ba24ac1a0668a9a40c03310b3f89167d1d4271eb39581d9b48111761fdfa58",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "79507ea6e8f14b8df726a472dcaccf2c95e1d7a4a7d4764720de96bab79875f0",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function readRegistry(directory: string): Promise<FabricProject[]> {\n  const path = join(directory, \"projects.json\");\n  await checkPath(path);\n  let data: Buffer;\n  try { const stat = await lstat(path); if (!stat.isFile() || stat.size > 256 * 1024) throw new Error(\"Invalid Agent Fabric registry file\"); data = await readFile(path); }\n  catch (error) { if (absent(error)) return []; throw error; }\n  const value = JSON.parse(data.toString(\"utf8\")) as { schemaVersion?: unknown; projects?: unknown };\n  if (!value || value.schemaVersion !== 1 || !Array.isArray(value.projects) || value.projects.length > 1000) throw new Error(\"Invalid Agent Fabric project registry\");\n  const entries = value.projects as FabricProject[];\n  const ids = new Set<string>(), roots = new Set<string>();\n  for (const entry of entries) {\n    if (!entry || Object.keys(entry).sort().join(\",\") !== \"id,root\" || typeof entry.id !== \"string\" || !validId(entry.id) || typeof entry.root !== \"string\" || !isAbsolute(entry.root) || ids.has(entry.id) || roots.has(identity(entry.root))) throw new Error(\"Invalid or duplicate Agent Fabric project registration\");\n    ids.add(entry.id); roots.add(identity(entry.root));\n  }\n  return entries;\n}"
+      },
+      "name": "readRegistry",
+      "qualifiedName": "readRegistry",
+      "span": {
+        "end": 4794,
+        "start": 3581
       }
     },
     {
@@ -112383,14 +113027,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "function reclaimDeadGuard(path: string) {\n  try {\n    if (!lstatSync(path).isFile()) managedFail(\"AF_RUN_LOCK\", \"Unsupported reclaim guard\");\n    const raw = readFileSync(path, \"utf8\"), owner = JSON.parse(raw);\n    if (Number.isSafeInteger(owner.pid) && owner.pid > 0 && !alive(owner.pid) && readFileSync(path, \"utf8\") === raw) unlinkSync(path);\n  } catch (error) { if (!missing(error) && !(error instanceof SyntaxError)) throw error; }\n}"
       },
       "name": "reclaimDeadGuard",
       "qualifiedName": "reclaimDeadGuard",
       "span": {
-        "end": 5062,
-        "start": 4624
+        "end": 5446,
+        "start": 5008
       }
     },
     {
@@ -112697,6 +113341,23 @@ export const appGraph = {
       "span": {
         "end": 954,
         "start": 660
+      }
+    },
+    {
+      "contentHash": "864368bd410db35a59fcdfaee8869afa39fd6715772d4676047759d58dca2b6d",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "adf477b6ec2ef2d865bc71078642f375b9f8edc89b85645a52712e7beca8224a",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function recoverFabricLock(path: string): Promise<boolean> {\n  const recovery = `${path}.recovery`;\n  await checkPath(recovery);\n  try { await writeFile(recovery, JSON.stringify({ pid: process.pid }), { flag: \"wx\", mode: 0o600 }); }\n  catch (error) { if (busy(error)) return false; throw error; }\n  try {\n    let contents: string;\n    try {\n      const stat = await lstat(path);\n      if (stat.isSymbolicLink() || !stat.isFile() || stat.size > 1024) throw new Error(\"Invalid Agent Fabric startup lock\");\n      contents = await readFile(path, \"utf8\");\n    } catch (error) { if (absent(error)) return true; if (busy(error)) return false; throw error; }\n    if (!contents) return false; // Another process may still be completing exclusive creation.\n    let pid: unknown;\n    try { pid = (JSON.parse(contents) as { pid?: unknown })?.pid; } catch { throw new Error(\"Invalid Agent Fabric startup lock\"); }\n    if (!Number.isSafeInteger(pid) || (pid as number) <= 0) throw new Error(\"Invalid Agent Fabric startup lock pid\");\n    try { process.kill(pid as number, 0); return false; }\n    catch (error) { if ((error as NodeJS.ErrnoException).code !== \"ESRCH\") return false; }\n    // Locks are only replaced after removal. Compare bytes before deleting our observed lock.\n    try { if (await readFile(path, \"utf8\") !== contents) return false; await unlink(path); return true; }\n    catch (error) { if (absent(error)) return true; throw error; }\n  } finally { await unlink(recovery); }\n}"
+      },
+      "name": "recoverFabricLock",
+      "qualifiedName": "recoverFabricLock",
+      "span": {
+        "end": 2483,
+        "start": 1000
       }
     },
     {
@@ -113020,6 +113681,23 @@ export const appGraph = {
       "span": {
         "end": 10136,
         "start": 9958
+      }
+    },
+    {
+      "contentHash": "004afacad252eacc44f9f8b6684a3cf6a78728bd1ef7d0de4954cb9b98958b44",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "5630de48536293723ba91c06aa0b666b4baedc832b4cf0b30d0aa673ee844ec4",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function registerFabricProject(directory: string, options: FabricRegistryOptions = {}): Promise<FabricProject> {\n  const root = await resolveFabricRoot(directory);\n  const registry = fabricRegistryDirectory(options);\n  const id = options.id ?? `${basename(root).replace(/[^a-zA-Z0-9._-]/g, \"-\").replace(/^[^a-zA-Z0-9]+/, \"\").slice(0, 48) || \"project\"}-${createHash(\"sha256\").update(identity(root)).digest(\"hex\").slice(0, 12)}`;\n  if (!validId(id)) throw new Error(\"Invalid Agent Fabric project id\");\n  await checkPath(registry); await mkdir(registry, { recursive: true, mode: 0o700 });\n  const lock = join(registry, \"projects.lock\");\n  const deadline = Date.now() + 5000;\n  for (;;) {\n    await checkPath(lock);\n    try { await writeFile(lock, JSON.stringify({ pid: process.pid }), { flag: \"wx\", mode: 0o600 }); break; }\n    catch (error) { if (!busy(error)) throw error; if (Date.now() >= deadline) throw new Error(\"Agent Fabric project registry is busy; retry or inspect projects.lock and projects.lock.recovery after their owners exit\"); if (await recoverFabricLock(lock)) continue; await new Promise(resolve => setTimeout(resolve, 30)); }\n  }\n  const stage = join(registry, `projects-${randomUUID()}.tmp`);\n  try {\n    const entries = await readRegistry(registry);\n    const sameRoot = entries.find(entry => identity(entry.root) === identity(root));\n    if (sameRoot) { if (options.id && sameRoot.id !== options.id) throw new Error(\"Project already registered with another id\"); return sameRoot; }\n    if (entries.some(entry => entry.id === id)) throw new Error(\"Project id already belongs to another repository\");\n    if (entries.length >= 1000) throw new Error(\"Agent Fabric project registry is full\");\n    const project = { id, root }; entries.push(project); entries.sort((a, b) => a.id.localeCompare(b.id));\n    await writeFile(stage, `${JSON.stringify({ schemaVersion: 1, projects: entries }, null, 2)}\\n`, { flag: \"wx\", mode: 0o600 });\n    await rename(stage, join(registry, \"projects.json\"));\n    return project;\n  } finally {\n    try { await unlink(stage).catch(error => { if (!absent(error)) throw error; }); }\n    finally { if (await readFile(lock, \"utf8\") === JSON.stringify({ pid: process.pid })) await unlink(lock); }\n  }\n}"
+      },
+      "name": "registerFabricProject",
+      "qualifiedName": "registerFabricProject",
+      "span": {
+        "end": 7215,
+        "start": 4969
       }
     },
     {
@@ -116429,14 +117107,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "async function replaceRecord(temp: string, destination: string): Promise<void> {\n  const deadline = Date.now() + 1000;\n  while (true) {\n    try { await rename(temp, destination); return; }\n    catch (error) {\n      if (![\"EPERM\", \"EACCES\", \"EBUSY\"].includes((error as NodeJS.ErrnoException).code ?? \"\") || Date.now() >= deadline) throw error;\n      await new Promise(resolve => setTimeout(resolve, 20));\n    }\n  }\n}"
       },
       "name": "replaceRecord",
       "qualifiedName": "replaceRecord",
       "span": {
-        "end": 1671,
-        "start": 1256
+        "end": 2055,
+        "start": 1640
       }
     },
     {
@@ -116565,14 +117243,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "async function requestAttachedTask(repositoryRoot: string, action: AttachedTaskAction,\r\n  body: Record<string, unknown>): Promise<unknown> {\r\n  if (!isAttachedTaskAction(action)) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Unknown accompanied task action\");\r\n  const endpoint = readEndpoint(realpathSync(repositoryRoot));\r\n  if (!endpoint) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Agent Fabric local owner is not running; start forge fabric serve\");\r\n  let response: Response;\r\n  try {\r\n    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {\r\n      method: \"POST\", headers: { Authorization: `Bearer ${endpoint.token}`, \"Content-Type\": \"application/json\" },\r\n      body: JSON.stringify(body), redirect: \"manual\", signal: AbortSignal.timeout(30_000),\r\n    });\r\n  } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local Agent Fabric owner is unreachable; restart it before retrying\");\r\n  }\r\n  const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };\r\n  if (!response.ok || !result.ok) throw new AttachedTaskError(result.code ?? \"AF_INVALID_STATE\", result.error ?? \"Accompanied task request failed\");\r\n  if (result.status === undefined) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner returned no accompanied task result\");\r\n  return result.status;\r\n}"
       },
       "name": "requestAttachedTask",
       "qualifiedName": "requestAttachedTask",
       "span": {
-        "end": 16283,
-        "start": 14926
+        "end": 18160,
+        "start": 16803
       }
     },
     {
@@ -116633,14 +117311,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "async function requestLocalMemory(repositoryRoot: string, action: LocalMemoryAction,\r\n  body: Record<string, unknown>): Promise<LocalMemoryResult | null> {\r\n  const endpoint = readEndpoint(repositoryRoot);\r\n  if (!endpoint) return null;\r\n  let response: Response;\r\n  try {\r\n    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {\r\n      method: \"POST\", headers: { Authorization: `Bearer ${endpoint.token}`, \"Content-Type\": \"application/json\" },\r\n      body: JSON.stringify(body), redirect: \"manual\", signal: AbortSignal.timeout(10_000),\r\n    });\r\n  } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local Agent Fabric owner is unreachable; restart it before retrying\");\r\n  }\r\n  if (response.status >= 300) {\r\n    const result = await response.json().catch(() => ({})) as { error?: string };\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", result.error ?? \"Local memory request failed\");\r\n  }\r\n  const result = await response.json() as { ok?: boolean; memory?: LocalMemoryResult };\r\n  if (!result.ok || result.memory === undefined) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner returned no memory result\");\r\n  return result.memory;\r\n}"
       },
       "name": "requestLocalMemory",
       "qualifiedName": "requestLocalMemory",
       "span": {
-        "end": 13447,
-        "start": 12260
+        "end": 15324,
+        "start": 14137
       }
     },
     {
@@ -116667,14 +117345,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "async function requestLocalTask(\r\n  repositoryRoot: string,\r\n  action: LocalTaskAction,\r\n  body: Record<string, unknown>,\r\n): Promise<LocalTaskStatus | null> {\r\n  const endpoint = readEndpoint(repositoryRoot);\r\n  if (!endpoint) return null;\r\n  let response: Response;\r\n  try {\r\n    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {\r\n      method: \"POST\", headers: { Authorization: `Bearer ${endpoint.token}`, \"Content-Type\": \"application/json\" },\r\n      body: JSON.stringify(body), redirect: \"manual\",\r\n      signal: AbortSignal.timeout(action === \"run\" ? 130_000 : action === \"verify\" ? 250_000 :\r\n        action === \"review\" || action === \"review-result\" || action === \"recover-verification\" ? 310_000 : 10_000),\r\n    });\r\n  } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local Agent Fabric owner is unreachable; restart it before retrying\");\r\n  }\r\n  if (response.status >= 300) {\r\n    const result = await response.json().catch(() => ({})) as { code?: string; error?: string };\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", result.error ?? \"Local owner request failed\");\r\n  }\r\n  const result = await response.json() as { ok?: boolean; status?: LocalTaskStatus };\r\n  if (!result.ok || !result.status) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner returned no task status\");\r\n  return result.status;\r\n}"
       },
       "name": "requestLocalTask",
       "qualifiedName": "requestLocalTask",
       "span": {
-        "end": 14822,
-        "start": 13458
+        "end": 16699,
+        "start": 15335
       }
     },
     {
@@ -116695,20 +117373,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "7e45ffe7a6208faca1d1e9f1ac497261819da1004f168dde808baf798864a7c8",
+      "contentHash": "3396fa07936eca60e1b6c2da17dcbf227fa0abd549a8f501e1f70c4003d3dabf",
       "file": "src/forge/agent-fabric/local-task-server.ts",
       "id": "b13253fc83031e0c82303efacb0852f46275723e10e1e23d6d38297c0e599a51",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
-        "sourceSlice": "async function requestManagedRun(repositoryRoot: string, action: ManagedRunAction,\r\n  body: Record<string, unknown>): Promise<unknown> {\r\n  if (!isManagedRunAction(action)) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Unknown managed run action\");\r\n  const endpoint = readEndpoint(realpathSync(repositoryRoot));\r\n  if (!endpoint) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Agent Fabric local owner is not running; start forge fabric serve\");\r\n  let response: Response;\r\n  try {\r\n    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {\r\n      method: \"POST\", headers: { Authorization: `Bearer ${endpoint.token}`, \"Content-Type\": \"application/json\" },\r\n      body: JSON.stringify(body), redirect: \"manual\", signal: AbortSignal.timeout(action === \"run-wait\" ? 35_000 : 30_000),\r\n    });\r\n  } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local Agent Fabric owner is unreachable; restart it before retrying\");\r\n  }\r\n  const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };\r\n  if (!response.ok || !result.ok) throw new ManagedRunError(result.code ?? \"AF_INVALID_STATE\", result.error ?? \"Managed run request failed\");\r\n  if (result.status === undefined) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner returned no managed run result\");\r\n  return result.status;\r\n}"
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
+        "sourceSlice": "async function requestManagedRun(repositoryRoot: string, action: ManagedRunAction,\n  body: Record<string, unknown>): Promise<unknown> {\n  if (!isManagedRunAction(action)) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Unknown managed run action\");\n  if (action === \"run-start\") body = await applyFabricProfile(repositoryRoot, body);\n  const endpoint = readEndpoint(realpathSync(repositoryRoot));\r\n  if (!endpoint) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Agent Fabric local owner is not running; start forge fabric serve\");\r\n  let response: Response;\r\n  try {\r\n    response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {\r\n      method: \"POST\", headers: { Authorization: `Bearer ${endpoint.token}`, \"Content-Type\": \"application/json\" },\r\n      body: JSON.stringify(body), redirect: \"manual\", signal: AbortSignal.timeout(action === \"run-wait\" ? 35_000 : 30_000),\r\n    });\r\n  } catch {\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local Agent Fabric owner is unreachable; restart it before retrying\");\r\n  }\r\n  const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };\r\n  if (!response.ok || !result.ok) throw new ManagedRunError(result.code ?? \"AF_INVALID_STATE\", result.error ?? \"Managed run request failed\");\r\n  if (result.status === undefined) throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner returned no managed run result\");\r\n  return result.status;\r\n}"
       },
       "name": "requestManagedRun",
       "qualifiedName": "requestManagedRun",
       "span": {
-        "end": 17756,
-        "start": 16389
+        "end": 19715,
+        "start": 18266
       }
     },
     {
@@ -117287,6 +117965,40 @@ export const appGraph = {
       "span": {
         "end": 4324,
         "start": 3743
+      }
+    },
+    {
+      "contentHash": "7c8163f258ce78b50bb69514178aae8502ccc32256b9e3c3011cdf37270341ad",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "e320ee6e90d50e78a58303c5e12f055c3e2a0964f21c2e2736570c2edaf8214d",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function resolveFabricProject(id: string, options: FabricRegistryOptions = {}): Promise<string> {\n  if (!validId(id)) throw new Error(\"Invalid Agent Fabric project id\");\n  const project = (await listFabricProjects(options)).find(entry => entry.id === id);\n  if (!project) throw new Error(\"Agent Fabric project is not registered\");\n  const root = await resolveFabricRoot(project.root);\n  if (identity(root) !== identity(project.root)) throw new Error(\"Agent Fabric registered repository root changed; register its new location explicitly\");\n  return root;\n}"
+      },
+      "name": "resolveFabricProject",
+      "qualifiedName": "resolveFabricProject",
+      "span": {
+        "end": 7877,
+        "start": 7315
+      }
+    },
+    {
+      "contentHash": "ce6987d03ec5fcd38ebac4729d8d836d180d3f3ec6b6484baa1b437c2f41f501",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "b1b8ecfbe8d34f7b32b396164d0be735ef6eb41b0d9dfeb9effdd4c8c1abf41b",
+      "kind": "code.function",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "async function resolveFabricRoot(directory: string): Promise<string> {\n  const cwd = await realpath(resolve(directory));\n  const { stdout } = await execute(\"git\", [\"rev-parse\", \"--show-toplevel\"], { cwd, encoding: \"utf8\", windowsHide: true, timeout: 10_000, maxBuffer: 16_384 });\n  const root = await realpath(stdout.trim());\n  await execute(\"git\", [\"rev-parse\", \"--verify\", \"HEAD\"], { cwd: root, windowsHide: true, timeout: 10_000, maxBuffer: 16_384 });\n  return root;\n}"
+      },
+      "name": "resolveFabricRoot",
+      "qualifiedName": "resolveFabricRoot",
+      "span": {
+        "end": 3053,
+        "start": 2582
       }
     },
     {
@@ -118095,14 +118807,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "function response(id: JsonRpcRequest[\"id\"], result: unknown, error?: Record<string, unknown>): Record<string, unknown> {\r\n  return error ? { jsonrpc: \"2.0\", id: id ?? null, error } : { jsonrpc: \"2.0\", id: id ?? null, result };\r\n}"
       },
       "name": "response",
       "qualifiedName": "response",
       "span": {
-        "end": 25299,
-        "start": 25070
+        "end": 29423,
+        "start": 29194
       }
     },
     {
@@ -120299,20 +121011,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "f3a819d93374e91f36343b3ce2ab4856609b05363f279fd70e8ad4480af2baa6",
+      "contentHash": "ed18e5ee691f201a9fd9755644487a2f861a88bb74a3e415d5b5f335ca4aaa66",
       "file": "src/forge/cli/fabric.ts",
       "id": "1ca21f762d4ede1e19a57b631eab24e59a64980ab0026ae1fe79f8af4afacc92",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "893bdfbdaccf13bdbe9c52eb3d7f5c804094c5f3a5190f7ec7d3c9d1b3a71924",
-        "sourceSlice": "async function runFabricCommand(options: FabricCliOptions): Promise<number> {\r\n  if (options.subcommand.startsWith(\"adaptive-\")) return runAdaptiveCommand(options as AdaptiveCliOptions);\r\n  if (options.subcommand === \"capabilities\") {\r\n    const result = {\r\n      ok: true, schemaVersion: 1, runtime: \"local-pilot\",\r\n      proposal: true, ownerReview: true, durableStatus: true,\r\n      codingWorker: true, ownerServer: true,\r\n      codingWorkerModel: { targetId: LOCAL_CODING_TARGET, modelId: LOCAL_CODING_MODEL,\r\n        proposalField: \"requestedModelId\" },\r\n      sandboxVerification: { supported: true, localReadiness: \"not_checked\" },\r\n      cancellation: { supported: true, concurrentRequestsRequireOwnerServer: true,\r\n        activeModelStopIsBestEffort: true },\r\n      accompaniedTasks: { supported: true, runningOwnerRequired: true, nativeSessionAssociation: true,\r\n        evidenceProvenance: \"agent_reported\", automaticDispatch: false, managedWorkers: false, workflowExecution: \"caller_driven\" },\r\n      managedExecution: { supported: true, runningOwnerRequired: true, scheduler: \"owner_managed\",\r\n        executors: [\"codex\", \"command\"], startDispatchesWork: true, boundedEventWaitMs: 30_000,\r\n        codexMayConsumeCredits: true, controls: [\"steer\", \"pause\", \"resume\", \"cancel\", \"reconcile\"],\n        environment: { automaticPreparation: true, isolatedDependencies: true, cacheReuse: \"verified_copy\", ignoreScriptsDefault: true } },\n      consequentialEffects: true,\r\n      effectsByMode: { legacy: \"owner_reviewed_local_pilot\", accompanied: \"caller_driven_records\",\r\n        managed: \"process_execution_and_optional_local_publication\" },\r\n      privateMemory: \"owner_cli_only\",\r\n      adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,\r\n        selectedDataProfile: \"optional_canary_or_stable\" },\r\n      adversarialChangeReview: { propose: true, status: true, evidence: true,\r\n        reviewer: \"codex_cli_owner_command_only\", automaticPaidReview: false },\r\n      mcpTaskMutation: \"mode_specific\", mcpDispatch: { legacy: \"proposal_only\",\r\n        accompanied: \"caller_driven_records\", managed: \"run_start_dispatches_work\" }, mcpEvidence: true,\r\n      nativeCodexHookProofRequired: true,\r\n    };\r\n    process.stdout.write(options.json ? `${JSON.stringify(result, null, 2)}\\n` :\r\n      \"Agent Fabric local pilot: proposal, owner review, bounded Ollama coding, and durable status are available.\\n\");\r\n    return 0;\r\n  }\r\n\r\n  let service: LocalTaskService | undefined;\r\n  let changeService: LocalChangeReviewService | undefined;\r\n  try {\r\n    const repositoryRoot = realpathSync(options.workspaceRoot);\r\n    if (isManagedRunAction(options.subcommand)) {\r\n      let body: Record<string, unknown>;\r\n      if (options.subcommand === \"run-status\") body = { runId: options.runId ?? \"\" };\r\n      else {\r\n        if (!options.file) throw new Error(\"A request file is required\");\r\n        const file = realpathSync(resolve(repositoryRoot, options.file));\r\n        const relation = relative(repositoryRoot, file);\r\n        if (!relation || relation.startsWith(\"..\") || isAbsolute(relation)) throw new Error(\"Request file must be inside the current repository\");\r\n        if (statSync(file).size > 40 * 1024) throw new Error(\"Request file exceeds 40 KiB\");\r\n        const value: unknown = JSON.parse(readFileSync(file, \"utf8\"));\r\n        if (!value || typeof value !== \"object\" || Array.isArray(value)) throw new Error(\"Request file must contain an object\");\r\n        body = value as Record<string, unknown>;\r\n      }\r\n      const status = await requestManagedRun(repositoryRoot, options.subcommand, body);\r\n      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    if (isAttachedTaskAction(options.subcommand)) {\r\n      let body: Record<string, unknown>;\r\n      if (isAttachedTaskRead(options.subcommand)) body = { taskId: options.taskId ?? \"\" };\r\n      else {\r\n        if (!options.file) throw new Error(\"A request file is required\");\r\n        const file = realpathSync(resolve(repositoryRoot, options.file));\r\n        const relation = relative(repositoryRoot, file);\r\n        if (!relation || relation.startsWith(\"..\") || isAbsolute(relation)) throw new Error(\"Request file must be inside the current repository\");\r\n        if (statSync(file).size > 40 * 1024) throw new Error(\"Request file exceeds 40 KiB\");\r\n        const value: unknown = JSON.parse(readFileSync(file, \"utf8\"));\r\n        if (!value || typeof value !== \"object\" || Array.isArray(value)) throw new Error(\"Request file must contain an object\");\r\n        body = value as Record<string, unknown>;\r\n      }\r\n      const status = await requestAttachedTask(repositoryRoot, options.subcommand, body);\r\n      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    if (options.subcommand === \"serve\") {\r\n      const owner = await serveLocalTasks(repositoryRoot);\r\n      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, repositoryRoot: owner.repositoryRoot, port: owner.port, pid: process.pid })}\\n` :\r\n        `Agent Fabric owner running for ${owner.repositoryRoot} on local port ${owner.port}. Press Ctrl+C to stop.\\n`);\r\n      try {\r\n        await new Promise<void>((resolve) => {\r\n          process.once(\"SIGINT\", resolve);\r\n          process.once(\"SIGTERM\", resolve);\r\n        });\r\n      } finally {\r\n        await owner.close();\r\n      }\r\n      return 0;\r\n    }\r\n    if (options.subcommand === \"change-propose\" || options.subcommand === \"change-status\" ||\r\n        options.subcommand === \"change-review\" || options.subcommand === \"change-evidence\") {\r\n      let request: unknown;\r\n      if (options.subcommand === \"change-propose\") {\r\n        if (!options.file) throw new Error(\"A change request file is required\");\r\n        const file = realpathSync(resolve(repositoryRoot, options.file));\r\n        const relation = relative(repositoryRoot, file);\r\n        if (!relation || relation.startsWith(\"..\") || isAbsolute(relation)) {\r\n          throw new Error(\"Change request file must be inside the current repository\");\r\n        }\r\n        if (statSync(file).size > 32 * 1024) throw new Error(\"Change request file exceeds byte limit\");\r\n        request = JSON.parse(readFileSync(file, \"utf8\")) as unknown;\r\n      }\r\n      changeService = await LocalChangeReviewService.open(repositoryRoot);\r\n      const changeId = options.taskId ?? \"\";\r\n      const status = options.subcommand === \"change-propose\"\r\n        ? await changeService.propose(request as Parameters<LocalChangeReviewService[\"propose\"]>[0])\r\n        : options.subcommand === \"change-status\"\r\n          ? await changeService.status(changeId)\r\n          : options.subcommand === \"change-evidence\"\r\n            ? await changeService.evidence(changeId)\r\n            : await changeService.review(changeId);\r\n      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    let proposal: unknown;\r\n    if (options.subcommand === \"propose\" || options.subcommand === \"memory-add\" || options.subcommand === \"memory-list\") {\r\n      if (!options.file) throw new Error(\"A request file is required\");\r\n      const file = realpathSync(resolve(repositoryRoot, options.file));\r\n      const relation = relative(repositoryRoot, file);\r\n      if (options.subcommand === \"propose\" && (!relation || relation.startsWith(\"..\") || isAbsolute(relation))) {\r\n        throw new Error(\"Proposal file must be inside the current repository\");\r\n      }\r\n      if (statSync(file).size > (options.subcommand === \"propose\" ? 32 * 1024 : 4 * 1024)) throw new Error(\"Request file exceeds byte limit\");\r\n      proposal = JSON.parse(readFileSync(file, \"utf8\")) as unknown;\r\n    }\r\n    if (options.subcommand.startsWith(\"memory-\")) {\r\n      const action = options.subcommand as LocalMemoryAction;\r\n      const body = action === \"memory-delete\" ? { id: options.taskId ?? \"\" } : proposal as Record<string, unknown>;\r\n      const remote = await requestLocalMemory(repositoryRoot, action, body);\r\n      if (remote === null) {\r\n        service = await LocalTaskService.open(repositoryRoot);\r\n      }\r\n      const memory = remote ?? (action === \"memory-add\" ? service!.rememberMemory(body)\r\n        : action === \"memory-list\" ? service!.listMemory(body)\r\n          : { deleted: service!.forgetMemory(body.id) });\r\n      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, memory }, null, 2)}\\n` :\r\n        `${JSON.stringify(memory, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    const action = options.subcommand as LocalTaskAction;\r\n    const body = action === \"propose\" ? { proposal } : { taskId: options.taskId ?? \"\" };\r\n    const remote = await requestLocalTask(repositoryRoot, action, body);\r\n    if (remote) {\r\n      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, status: remote }, null, 2)}\\n` :\r\n        `${remote.taskId}: ${remote.state}; execution ${remote.canStart ? \"available\" : \"not available\"}\\n`);\r\n      return 0;\r\n    }\r\n    try { service = await LocalTaskService.open(repositoryRoot); }\r\n    catch (error) {\r\n      if (options.subcommand === \"cancel\") {\r\n        throw new Error(\"Cannot reach the active local task owner. Start forge fabric serve before run to cancel an in-flight model call\", { cause: error });\r\n      }\r\n      throw error;\r\n    }\r\n    if (options.subcommand === \"cancel\" &&\r\n        (await service.status(options.taskId ?? \"\")).state === \"model_uncertain\") {\r\n      throw new Error(\"An in-flight model call can only be cancelled through its running forge fabric serve owner\");\r\n    }\r\n    const status = options.subcommand === \"propose\"\r\n      ? await service.propose(proposal)\r\n      : options.subcommand === \"evidence\"\r\n        ? await service.evidence(options.taskId ?? \"\")\r\n      : options.subcommand === \"review\"\r\n        ? await service.review(options.taskId ?? \"\")\r\n        : options.subcommand === \"run\"\r\n          ? await service.run(options.taskId ?? \"\")\r\n          : options.subcommand === \"cancel\"\r\n            ? await service.cancel(options.taskId ?? \"\")\r\n          : options.subcommand === \"reconcile\"\r\n            ? await service.reconcile(options.taskId ?? \"\")\r\n          : options.subcommand === \"verify\"\r\n            ? await service.verify(options.taskId ?? \"\")\r\n          : options.subcommand === \"recover-verification\"\r\n            ? await service.recoverVerification(options.taskId ?? \"\")\r\n          : options.subcommand === \"review-result\"\r\n            ? await service.reviewResult(options.taskId ?? \"\")\r\n          : await service.status(options.taskId ?? \"\");\r\n    process.stdout.write(options.json ? `${JSON.stringify({ ok: true, status }, null, 2)}\\n` :\r\n      `${status.taskId}: ${status.state}; execution ${status.canStart ? \"available\" : \"not available\"}\\n`);\r\n    return 0;\r\n  } catch (error) {\r\n    const message = error instanceof Error ? error.message : String(error);\r\n    process.stdout.write(options.json ? `${JSON.stringify({ ok: false, error: message }, null, 2)}\\n` : `error: ${message}\\n`);\r\n    return 1;\r\n  } finally {\r\n    await service?.close();\r\n    await changeService?.close();\r\n  }\r\n}"
+        "fileContentHash": "862e58cc4b399e5604d242486013fdba613d8d877f695b007f366b210775d1f2",
+        "sourceSlice": "async function runFabricCommand(options: FabricCliOptions): Promise<number> {\n  if (options.subcommand.startsWith(\"adaptive-\")) return runAdaptiveCommand(options as AdaptiveCliOptions);\n  if (options.subcommand === \"install-skill\") {\n    try {\n      const installer = fileURLToPath(new URL(\"../../../scripts/install-agent-fabric-skill.mjs\", import.meta.url));\n      const { stdout } = await promisify(execFile)(process.execPath, [installer, ...(options.dryRun ? [\"--dry-run\"] : [])], { windowsHide: true, timeout: 30_000 });\n      process.stdout.write(stdout);\n      return 0;\n    } catch (error) {\n      process.stdout.write(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : \"Skill installation failed\" })}\\n`);\n      return 1;\n    }\n  }\n  if ([\"doctor\", \"ensure-owner\", \"project-register\", \"project-list\"].includes(options.subcommand)) {\n    try {\n      const status = options.subcommand === \"project-list\" ? await listFabricProjects()\n        : options.subcommand === \"project-register\" ? await registerFabricProject(options.workspaceRoot, { id: options.projectId })\n        : options.subcommand === \"doctor\" ? await fabricProjectDoctor(options.workspaceRoot)\n        : await ensureFabricOwner(options.workspaceRoot);\n      const ok = !(options.subcommand === \"doctor\" && \"ok\" in status && !status.ok);\n      process.stdout.write(`${JSON.stringify({ ok, status }, null, 2)}\\n`);\n      return ok ? 0 : 1;\n    } catch (error) {\n      process.stdout.write(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : \"Agent Fabric project operation failed\" })}\\n`);\n      return 1;\n    }\n  }\n  if (options.subcommand === \"capabilities\") {\r\n    const result = {\r\n      ok: true, schemaVersion: 1, runtime: \"local-pilot\",\r\n      proposal: true, ownerReview: true, durableStatus: true,\r\n      codingWorker: true, ownerServer: true,\r\n      codingWorkerModel: { targetId: LOCAL_CODING_TARGET, modelId: LOCAL_CODING_MODEL,\r\n        proposalField: \"requestedModelId\" },\r\n      sandboxVerification: { supported: true, localReadiness: \"not_checked\" },\r\n      cancellation: { supported: true, concurrentRequestsRequireOwnerServer: true,\r\n        activeModelStopIsBestEffort: true },\r\n      accompaniedTasks: { supported: true, runningOwnerRequired: true, nativeSessionAssociation: true,\r\n        evidenceProvenance: \"agent_reported\", automaticDispatch: false, managedWorkers: false, workflowExecution: \"caller_driven\" },\r\n      managedExecution: { supported: true, runningOwnerRequired: true, scheduler: \"owner_managed\",\n        executors: [\"codex\", \"command\"], startDispatchesWork: true, boundedEventWaitMs: 30_000,\r\n        codexMayConsumeCredits: true, controls: [\"steer\", \"pause\", \"resume\", \"cancel\", \"reconcile\"],\n        environment: { automaticPreparation: true, isolatedDependencies: true, cacheReuse: \"verified_copy\", ignoreScriptsDefault: true } },\n      portableProjects: { supported: true, rootResolution: \"git_toplevel\", ownerPerRepository: true, optionalProfile: \".forge/fabric.json\", mcpProjectRouting: \"registered_project_id\" },\n      consequentialEffects: true,\r\n      effectsByMode: { legacy: \"owner_reviewed_local_pilot\", accompanied: \"caller_driven_records\",\r\n        managed: \"process_execution_and_optional_local_publication\" },\r\n      privateMemory: \"owner_cli_only\",\r\n      adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,\r\n        selectedDataProfile: \"optional_canary_or_stable\" },\r\n      adversarialChangeReview: { propose: true, status: true, evidence: true,\r\n        reviewer: \"codex_cli_owner_command_only\", automaticPaidReview: false },\r\n      mcpTaskMutation: \"mode_specific\", mcpDispatch: { legacy: \"proposal_only\",\r\n        accompanied: \"caller_driven_records\", managed: \"run_start_dispatches_work\" }, mcpEvidence: true,\r\n      nativeCodexHookProofRequired: true,\r\n    };\r\n    process.stdout.write(options.json ? `${JSON.stringify(result, null, 2)}\\n` :\r\n      \"Agent Fabric local pilot: proposal, owner review, bounded Ollama coding, and durable status are available.\\n\");\r\n    return 0;\r\n  }\r\n\r\n  let service: LocalTaskService | undefined;\r\n  let changeService: LocalChangeReviewService | undefined;\r\n  try {\r\n    const repositoryRoot = isManagedRunAction(options.subcommand) || isAttachedTaskAction(options.subcommand) || options.subcommand === \"serve\"\n      ? await resolveFabricRoot(options.workspaceRoot) : realpathSync(options.workspaceRoot);\n    if (isManagedRunAction(options.subcommand)) {\r\n      let body: Record<string, unknown>;\r\n      if (options.subcommand === \"run-status\") body = { runId: options.runId ?? \"\" };\r\n      else {\r\n        if (!options.file) throw new Error(\"A request file is required\");\r\n        const file = realpathSync(resolve(repositoryRoot, options.file));\r\n        const relation = relative(repositoryRoot, file);\r\n        if (!relation || relation.startsWith(\"..\") || isAbsolute(relation)) throw new Error(\"Request file must be inside the current repository\");\r\n        if (statSync(file).size > 40 * 1024) throw new Error(\"Request file exceeds 40 KiB\");\r\n        const value: unknown = JSON.parse(readFileSync(file, \"utf8\"));\r\n        if (!value || typeof value !== \"object\" || Array.isArray(value)) throw new Error(\"Request file must contain an object\");\r\n        body = value as Record<string, unknown>;\r\n      }\r\n      const status = await requestManagedRun(repositoryRoot, options.subcommand, body);\r\n      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    if (isAttachedTaskAction(options.subcommand)) {\r\n      let body: Record<string, unknown>;\r\n      if (isAttachedTaskRead(options.subcommand)) body = { taskId: options.taskId ?? \"\" };\r\n      else {\r\n        if (!options.file) throw new Error(\"A request file is required\");\r\n        const file = realpathSync(resolve(repositoryRoot, options.file));\r\n        const relation = relative(repositoryRoot, file);\r\n        if (!relation || relation.startsWith(\"..\") || isAbsolute(relation)) throw new Error(\"Request file must be inside the current repository\");\r\n        if (statSync(file).size > 40 * 1024) throw new Error(\"Request file exceeds 40 KiB\");\r\n        const value: unknown = JSON.parse(readFileSync(file, \"utf8\"));\r\n        if (!value || typeof value !== \"object\" || Array.isArray(value)) throw new Error(\"Request file must contain an object\");\r\n        body = value as Record<string, unknown>;\r\n      }\r\n      const status = await requestAttachedTask(repositoryRoot, options.subcommand, body);\r\n      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    if (options.subcommand === \"serve\") {\r\n      const owner = await serveLocalTasks(repositoryRoot);\r\n      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, repositoryRoot: owner.repositoryRoot, port: owner.port, pid: process.pid })}\\n` :\r\n        `Agent Fabric owner running for ${owner.repositoryRoot} on local port ${owner.port}. Press Ctrl+C to stop.\\n`);\r\n      try {\r\n        await new Promise<void>((resolve) => {\r\n          process.once(\"SIGINT\", resolve);\r\n          process.once(\"SIGTERM\", resolve);\r\n        });\r\n      } finally {\r\n        await owner.close();\r\n      }\r\n      return 0;\r\n    }\r\n    if (options.subcommand === \"change-propose\" || options.subcommand === \"change-status\" ||\r\n        options.subcommand === \"change-review\" || options.subcommand === \"change-evidence\") {\r\n      let request: unknown;\r\n      if (options.subcommand === \"change-propose\") {\r\n        if (!options.file) throw new Error(\"A change request file is required\");\r\n        const file = realpathSync(resolve(repositoryRoot, options.file));\r\n        const relation = relative(repositoryRoot, file);\r\n        if (!relation || relation.startsWith(\"..\") || isAbsolute(relation)) {\r\n          throw new Error(\"Change request file must be inside the current repository\");\r\n        }\r\n        if (statSync(file).size > 32 * 1024) throw new Error(\"Change request file exceeds byte limit\");\r\n        request = JSON.parse(readFileSync(file, \"utf8\")) as unknown;\r\n      }\r\n      changeService = await LocalChangeReviewService.open(repositoryRoot);\r\n      const changeId = options.taskId ?? \"\";\r\n      const status = options.subcommand === \"change-propose\"\r\n        ? await changeService.propose(request as Parameters<LocalChangeReviewService[\"propose\"]>[0])\r\n        : options.subcommand === \"change-status\"\r\n          ? await changeService.status(changeId)\r\n          : options.subcommand === \"change-evidence\"\r\n            ? await changeService.evidence(changeId)\r\n            : await changeService.review(changeId);\r\n      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    let proposal: unknown;\r\n    if (options.subcommand === \"propose\" || options.subcommand === \"memory-add\" || options.subcommand === \"memory-list\") {\r\n      if (!options.file) throw new Error(\"A request file is required\");\r\n      const file = realpathSync(resolve(repositoryRoot, options.file));\r\n      const relation = relative(repositoryRoot, file);\r\n      if (options.subcommand === \"propose\" && (!relation || relation.startsWith(\"..\") || isAbsolute(relation))) {\r\n        throw new Error(\"Proposal file must be inside the current repository\");\r\n      }\r\n      if (statSync(file).size > (options.subcommand === \"propose\" ? 32 * 1024 : 4 * 1024)) throw new Error(\"Request file exceeds byte limit\");\r\n      proposal = JSON.parse(readFileSync(file, \"utf8\")) as unknown;\r\n    }\r\n    if (options.subcommand.startsWith(\"memory-\")) {\r\n      const action = options.subcommand as LocalMemoryAction;\r\n      const body = action === \"memory-delete\" ? { id: options.taskId ?? \"\" } : proposal as Record<string, unknown>;\r\n      const remote = await requestLocalMemory(repositoryRoot, action, body);\r\n      if (remote === null) {\r\n        service = await LocalTaskService.open(repositoryRoot);\r\n      }\r\n      const memory = remote ?? (action === \"memory-add\" ? service!.rememberMemory(body)\r\n        : action === \"memory-list\" ? service!.listMemory(body)\r\n          : { deleted: service!.forgetMemory(body.id) });\r\n      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, memory }, null, 2)}\\n` :\r\n        `${JSON.stringify(memory, null, 2)}\\n`);\r\n      return 0;\r\n    }\r\n    const action = options.subcommand as LocalTaskAction;\r\n    const body = action === \"propose\" ? { proposal } : { taskId: options.taskId ?? \"\" };\r\n    const remote = await requestLocalTask(repositoryRoot, action, body);\r\n    if (remote) {\r\n      process.stdout.write(options.json ? `${JSON.stringify({ ok: true, status: remote }, null, 2)}\\n` :\r\n        `${remote.taskId}: ${remote.state}; execution ${remote.canStart ? \"available\" : \"not available\"}\\n`);\r\n      return 0;\r\n    }\r\n    try { service = await LocalTaskService.open(repositoryRoot); }\r\n    catch (error) {\r\n      if (options.subcommand === \"cancel\") {\r\n        throw new Error(\"Cannot reach the active local task owner. Start forge fabric serve before run to cancel an in-flight model call\", { cause: error });\r\n      }\r\n      throw error;\r\n    }\r\n    if (options.subcommand === \"cancel\" &&\r\n        (await service.status(options.taskId ?? \"\")).state === \"model_uncertain\") {\r\n      throw new Error(\"An in-flight model call can only be cancelled through its running forge fabric serve owner\");\r\n    }\r\n    const status = options.subcommand === \"propose\"\r\n      ? await service.propose(proposal)\r\n      : options.subcommand === \"evidence\"\r\n        ? await service.evidence(options.taskId ?? \"\")\r\n      : options.subcommand === \"review\"\r\n        ? await service.review(options.taskId ?? \"\")\r\n        : options.subcommand === \"run\"\r\n          ? await service.run(options.taskId ?? \"\")\r\n          : options.subcommand === \"cancel\"\r\n            ? await service.cancel(options.taskId ?? \"\")\r\n          : options.subcommand === \"reconcile\"\r\n            ? await service.reconcile(options.taskId ?? \"\")\r\n          : options.subcommand === \"verify\"\r\n            ? await service.verify(options.taskId ?? \"\")\r\n          : options.subcommand === \"recover-verification\"\r\n            ? await service.recoverVerification(options.taskId ?? \"\")\r\n          : options.subcommand === \"review-result\"\r\n            ? await service.reviewResult(options.taskId ?? \"\")\r\n          : await service.status(options.taskId ?? \"\");\r\n    process.stdout.write(options.json ? `${JSON.stringify({ ok: true, status }, null, 2)}\\n` :\r\n      `${status.taskId}: ${status.state}; execution ${status.canStart ? \"available\" : \"not available\"}\\n`);\r\n    return 0;\r\n  } catch (error) {\r\n    const message = error instanceof Error ? error.message : String(error);\r\n    process.stdout.write(options.json ? `${JSON.stringify({ ok: false, error: message }, null, 2)}\\n` : `error: ${message}\\n`);\r\n    return 1;\r\n  } finally {\r\n    await service?.close();\r\n    await changeService?.close();\r\n  }\r\n}"
       },
       "name": "runFabricCommand",
       "qualifiedName": "runFabricCommand",
       "span": {
-        "end": 12515,
-        "start": 1336
+        "end": 14783,
+        "start": 1795
       }
     },
     {
@@ -120815,14 +121527,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "async function runMcpServe(workspaceRoot: string): Promise<number> {\r\n  let buffer: Buffer = Buffer.alloc(0);\r\n  let sawFramedMessage = false;\r\n  for await (const chunk of process.stdin) {\r\n    buffer = Buffer.concat([buffer, Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))]);\r\n    const parsed = parseMcpFrames(buffer);\r\n    buffer = parsed.remainder;\r\n    if (parsed.requests.length > 0) {\r\n      sawFramedMessage = true;\r\n    }\r\n    for (const request of parsed.requests) {\r\n      const result = await handleMcpRequest(workspaceRoot, request);\r\n      if (result) {\r\n        writeMcpMessage(result);\r\n      }\r\n    }\r\n  }\r\n  const leftover = buffer.toString(\"utf8\").trim();\r\n  if (!sawFramedMessage && leftover.startsWith(\"{\")) {\r\n    const result = await handleMcpRequest(workspaceRoot, JSON.parse(leftover) as JsonRpcRequest);\r\n    if (result) {\r\n      writeMcpMessage(result);\r\n    }\r\n  }\r\n  return 0;\r\n}"
       },
       "name": "runMcpServe",
       "qualifiedName": "runMcpServe",
       "span": {
-        "end": 14030,
-        "start": 13110
+        "end": 16616,
+        "start": 15696
       }
     },
     {
@@ -121778,20 +122490,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "788eaeedd87b7da8c16943d7264587dba2ce5ff06fa519d6b6bca31a2cb188eb",
+      "contentHash": "cb28a4a1f7c0a89157ae8e9c7d5e3ad9c2739166226505f128a656a349509b12",
       "file": "src/forge/agent-memory/mcp.ts",
       "id": "c71655b0c261aa33bd97ac0723866c97d309875abd9c92bb2b54f0a423738fd3",
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
-        "sourceSlice": "async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>): Promise<unknown> {\r\n  const managedAction = MANAGED_RUN_ACTIONS.find((action) => name === `fabric_${action.replaceAll(\"-\", \"_\")}`);\r\n  if (managedAction) {\r\n    const read = managedAction === \"run-status\";\r\n    if (Object.keys(args).join(\",\") !== (read ? \"runId\" : \"request\") ||\r\n        (read ? typeof args.runId !== \"string\" : !args.request || typeof args.request !== \"object\" || Array.isArray(args.request))) {\r\n      throw new Error(`${name} requires only ${read ? \"runId\" : \"an object request\"}`);\r\n    }\r\n    return { ok: true, status: await requestManagedRun(realpathSync(workspaceRoot), managedAction,\r\n      read ? args : args.request as Record<string, unknown>) };\r\n  }\r\n  const attachedAction = ATTACHED_TASK_ACTIONS.find((action) => name === `fabric_${action.replaceAll(\"-\", \"_\")}`);\r\n  if (attachedAction) {\r\n    const read = isAttachedTaskRead(attachedAction);\r\n    if (Object.keys(args).join(\",\") !== (read ? \"taskId\" : \"request\") ||\r\n        (read ? typeof args.taskId !== \"string\" : !args.request || typeof args.request !== \"object\" || Array.isArray(args.request))) {\r\n      throw new Error(`${name} requires only ${read ? \"taskId\" : \"an object request\"}`);\r\n    }\r\n    return { ok: true, status: await requestAttachedTask(realpathSync(workspaceRoot), attachedAction,\r\n      read ? args : args.request as Record<string, unknown>) };\r\n  }\r\n  if (name === CODEX_MCP_HOOK_TOOL) {\r\n    if (Object.keys(args).sort().join(\",\") !== \"eventName,payload\" ||\r\n        typeof args.eventName !== \"string\" || !CODEX_EVENTS.includes(args.eventName) ||\r\n        !args.payload || typeof args.payload !== \"object\" || Array.isArray(args.payload)) {\r\n      throw new Error(\"agent_hook_ingest requires a supported eventName and object payload\");\r\n    }\r\n    const hookCwd = (args.payload as Record<string, unknown>).cwd;\r\n    if (typeof hookCwd !== \"string\") throw new Error(\"Codex hook cwd is required\");\r\n    const relativeCwd = relative(realpathSync(workspaceRoot), realpathSync(hookCwd));\r\n    if (relativeCwd === \"..\" || relativeCwd.startsWith(`..${sep}`) || isAbsolute(relativeCwd)) {\r\n      throw new Error(\"Codex hook cwd is outside the MCP server workspace\");\r\n    }\r\n    const payload: Record<string, unknown> = {\r\n      ...(args.payload as Record<string, unknown>),\r\n      hook_event_name: args.eventName,\r\n      cwd: workspaceRoot,\r\n      forgeMcpHook: true,\r\n    };\r\n    let serialized = JSON.stringify(payload);\r\n    if (Buffer.byteLength(serialized, \"utf8\") > 256 * 1024) {\r\n      const toolInput = payload.tool_input;\r\n      if (toolInput && typeof toolInput === \"object\" && !Array.isArray(toolInput)) {\r\n        const command = (toolInput as Record<string, unknown>).command;\r\n        if (typeof command === \"string\") {\r\n          payload.commandHash = createHash(\"sha256\").update(command).digest(\"hex\");\r\n          const match = /^\\s*(forge)\\s+(status|changed|check|verify|run|agent|fabric|generate|inspect|test)\\b/u.exec(command);\r\n          payload.commandSummary = match ? match.slice(1).join(\" \") : \"[command redacted]\";\r\n        }\r\n        delete payload.tool_input;\r\n        serialized = JSON.stringify(payload);\r\n      }\r\n    }\r\n    if (Buffer.byteLength(serialized, \"utf8\") > 256 * 1024) {\r\n      throw new Error(\"Codex hook payload exceeds 256 KiB\");\r\n    }\r\n    const runner = join(workspaceRoot, CODEX_HOOK_RUNNER_RELATIVE);\r\n    if (!existsSync(runner)) throw new Error(\"Codex hook runner is not installed\");\r\n    await enqueueCodexHook(runner, workspaceRoot, args.eventName, serialized);\r\n    return { ok: true, queued: true };\r\n  }\r\n  if (name === \"fabric_capabilities\") {\r\n    if (Object.keys(args).length !== 0) throw new Error(\"fabric_capabilities accepts no arguments\");\r\n    return {\r\n      ok: true,\r\n      schemaVersion: 1,\r\n      protocolKernel: \"p0a_available\",\r\n      boundedModelAdapter: \"p0b_a_available\",\r\n      codingTaskControl: \"local_owner_service_required\",\r\n      managedExecution: { supported: true, runningOwnerRequired: true, scheduler: \"owner_managed\",\r\n        executors: [\"codex\", \"command\"], startDispatchesWork: true, boundedEventWaitMs: 30_000,\r\n        codexMayConsumeCredits: true, controls: [\"steer\", \"pause\", \"resume\", \"cancel\", \"reconcile\"],\n        environment: { automaticPreparation: true, isolatedDependencies: true, cacheReuse: \"verified_copy\", ignoreScriptsDefault: true },\n        tools: MANAGED_RUN_ACTIONS.map((action) => `fabric_${action.replaceAll(\"-\", \"_\")}`) },\r\n      accompaniedTasks: { supported: true, runningOwnerRequired: true, nativeSessionAssociation: true,\r\n        evidenceProvenance: \"agent_reported\", automaticDispatch: false, managedWorkers: false, workflowExecution: \"caller_driven\",\r\n        tools: ATTACHED_TASK_ACTIONS.map((action) => `fabric_${action.replaceAll(\"-\", \"_\")}`) },\r\n      consequentialEffects: true,\r\n      effectsByMode: { legacy: \"owner_reviewed_local_pilot\", accompanied: \"caller_driven_records\",\r\n        managed: \"process_execution_and_optional_local_publication\" },\r\n      mcpDispatch: { legacy: \"proposal_only\", accompanied: \"caller_driven_records\", managed: \"run_start_dispatches_work\" },\r\n      ownerApproval: \"legacy_local_popup_cli_only\",\r\n      cancellation: { legacy: \"owner_cli_only_best_effort\", managed: \"fabric_run_cancel_best_effort\" },\r\n      taskMutationTools: [\"fabric_propose\",\r\n        ...ATTACHED_TASK_ACTIONS.filter(action => !isAttachedTaskRead(action)).map(action => `fabric_${action.replaceAll(\"-\", \"_\")}`),\r\n        ...MANAGED_RUN_ACTIONS.filter(action => action !== \"run-status\" && action !== \"run-wait\").map(action => `fabric_${action.replaceAll(\"-\", \"_\")}`)],\r\n      taskReadTools: [\"fabric_status\", \"fabric_evidence\"],\r\n      changeMutationTools: [\"fabric_change_propose\"],\r\n      changeReadTools: [\"fabric_change_status\", \"fabric_change_evidence\"],\r\n      changeReviewDispatch: \"owner_cli_only\",\r\n      cli: \"forge fabric capabilities --json\",\r\n    };\r\n  }\r\n  if (name === \"fabric_propose\" || name === \"fabric_status\" || name === \"fabric_evidence\") {\r\n    const keys = Object.keys(args).sort().join(\",\");\r\n    if (name === \"fabric_propose\" && keys !== \"proposal\") throw new Error(\"fabric_propose requires only proposal\");\r\n    if ((name === \"fabric_status\" || name === \"fabric_evidence\") &&\r\n        (keys !== \"taskId\" || typeof args.taskId !== \"string\")) {\r\n      throw new Error(`${name} requires only taskId`);\r\n    }\r\n    const status = await requestLocalTask(realpathSync(workspaceRoot),\r\n      name === \"fabric_propose\" ? \"propose\" : name === \"fabric_evidence\" ? \"evidence\" : \"status\", args);\r\n    if (!status) throw new Error(\"Agent Fabric local owner is not running; start forge fabric serve\");\r\n    if (name === \"fabric_evidence\") {\r\n      return { ok: true, taskId: status.taskId, state: status.state, provenance: status.provenance };\r\n    }\r\n    return { ok: true, status };\r\n  }\r\n  if (name === \"fabric_change_propose\" || name === \"fabric_change_status\" || name === \"fabric_change_evidence\") {\r\n    const keys = Object.keys(args).sort().join(\",\");\r\n    if (name === \"fabric_change_propose\" &&\r\n        (keys !== \"request\" || !args.request || typeof args.request !== \"object\" || Array.isArray(args.request))) {\r\n      throw new Error(\"fabric_change_propose requires only request\");\r\n    }\r\n    if (name !== \"fabric_change_propose\" &&\r\n        (keys !== \"changeId\" || typeof args.changeId !== \"string\" || args.changeId.length === 0)) {\r\n      throw new Error(`${name} requires only changeId`);\r\n    }\r\n    const service = await LocalChangeReviewService.open(realpathSync(workspaceRoot));\r\n    try {\r\n      const result = name === \"fabric_change_propose\"\r\n        ? await service.propose(args.request as Parameters<LocalChangeReviewService[\"propose\"]>[0])\r\n        : name === \"fabric_change_status\"\r\n          ? await service.status(args.changeId as string)\r\n          : await service.evidence(args.changeId as string);\r\n      return { ok: true, ...(name === \"fabric_change_evidence\" ? { evidence: result } : { status: result }) };\r\n    } finally {\r\n      await service.close();\r\n    }\r\n  }\r\n  if (name === \"agent_context\") {\r\n    return runAgentMemoryCommand({\r\n      subcommand: \"context\",\r\n      workspaceRoot,\r\n      json: true,\r\n      entry: typeof args.entry === \"string\" ? args.entry : undefined,\r\n    });\r\n  }\r\n  if (name === \"agent_memory\") {\r\n    return runAgentMemoryCommand({\r\n      subcommand: \"memory\",\r\n      workspaceRoot,\r\n      json: true,\r\n      entry: typeof args.target === \"string\" ? args.target : undefined,\r\n      limit: typeof args.limit === \"number\" ? args.limit : undefined,\r\n    });\r\n  }\r\n  if (name === \"timeline\") {\r\n    const target = typeof args.target === \"string\" ? args.target : undefined;\r\n    if (!target) {\r\n      throw new Error(\"timeline requires target\");\r\n    }\r\n    const store = await DeltaStore.open(workspaceRoot, { access: \"read\" });\r\n    try {\r\n      return {\r\n        ok: true,\r\n        timeline: await store.semanticTimeline({\r\n          target,\r\n          limit: typeof args.limit === \"number\" ? args.limit : undefined,\r\n        }),\r\n      };\r\n    } finally {\r\n      await store.close();\r\n    }\r\n  }\r\n  if (name === \"inspect_all\") {\r\n    return readInspectAll(workspaceRoot);\r\n  }\r\n  throw new Error(`unknown ForgeOS MCP tool: ${name}`);\r\n}"
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
+        "sourceSlice": "async function runTool(workspaceRoot: string, name: string, args: Record<string, unknown>, options: FabricMcpOptions): Promise<unknown> {\n  if (name === \"fabric_project_register\") {\n    if (Object.keys(args).some(key => key !== \"root\" && key !== \"id\") || typeof args.root !== \"string\" || !isAbsolute(args.root) ||\n        (\"id\" in args && (typeof args.id !== \"string\" || !args.id.trim()))) throw new Error(\"fabric_project_register requires an absolute root and optional id\");\n    return { ok: true, project: await registerFabricProject(args.root, { ...options, ...(typeof args.id === \"string\" ? { id: args.id } : {}) }) };\n  }\n  if (name === \"fabric_project_list\") {\n    if (Object.keys(args).length) throw new Error(\"fabric_project_list accepts no arguments\");\n    return { ok: true, projects: await listFabricProjects(options) };\n  }\n  if (name === \"fabric_project_doctor\" || name === \"fabric_owner_start\") {\n    if (Object.keys(args).length) throw new Error(`${name} accepts only optional projectId`);\n    const { ensureFabricOwner, fabricProjectDoctor } = await import(\"../agent-fabric/project-runtime.ts\");\n    if (name === \"fabric_project_doctor\") {\n      const diagnostics = await fabricProjectDoctor(workspaceRoot);\n      return { ok: diagnostics.ok, diagnostics };\n    }\n    return { ok: true, owner: await ensureFabricOwner(workspaceRoot) };\n  }\n  const managedAction = MANAGED_RUN_ACTIONS.find((action) => name === `fabric_${action.replaceAll(\"-\", \"_\")}`);\r\n  if (managedAction) {\r\n    const read = managedAction === \"run-status\";\r\n    if (Object.keys(args).join(\",\") !== (read ? \"runId\" : \"request\") ||\r\n        (read ? typeof args.runId !== \"string\" : !args.request || typeof args.request !== \"object\" || Array.isArray(args.request))) {\r\n      throw new Error(`${name} requires only ${read ? \"runId\" : \"an object request\"}`);\r\n    }\r\n    return { ok: true, status: await requestManagedRun(realpathSync(workspaceRoot), managedAction,\r\n      read ? args : args.request as Record<string, unknown>) };\r\n  }\r\n  const attachedAction = ATTACHED_TASK_ACTIONS.find((action) => name === `fabric_${action.replaceAll(\"-\", \"_\")}`);\r\n  if (attachedAction) {\r\n    const read = isAttachedTaskRead(attachedAction);\r\n    if (Object.keys(args).join(\",\") !== (read ? \"taskId\" : \"request\") ||\r\n        (read ? typeof args.taskId !== \"string\" : !args.request || typeof args.request !== \"object\" || Array.isArray(args.request))) {\r\n      throw new Error(`${name} requires only ${read ? \"taskId\" : \"an object request\"}`);\r\n    }\r\n    return { ok: true, status: await requestAttachedTask(realpathSync(workspaceRoot), attachedAction,\r\n      read ? args : args.request as Record<string, unknown>) };\r\n  }\r\n  if (name === CODEX_MCP_HOOK_TOOL) {\r\n    if (Object.keys(args).sort().join(\",\") !== \"eventName,payload\" ||\r\n        typeof args.eventName !== \"string\" || !CODEX_EVENTS.includes(args.eventName) ||\r\n        !args.payload || typeof args.payload !== \"object\" || Array.isArray(args.payload)) {\r\n      throw new Error(\"agent_hook_ingest requires a supported eventName and object payload\");\r\n    }\r\n    const hookCwd = (args.payload as Record<string, unknown>).cwd;\r\n    if (typeof hookCwd !== \"string\") throw new Error(\"Codex hook cwd is required\");\r\n    const relativeCwd = relative(realpathSync(workspaceRoot), realpathSync(hookCwd));\r\n    if (relativeCwd === \"..\" || relativeCwd.startsWith(`..${sep}`) || isAbsolute(relativeCwd)) {\r\n      throw new Error(\"Codex hook cwd is outside the MCP server workspace\");\r\n    }\r\n    const payload: Record<string, unknown> = {\r\n      ...(args.payload as Record<string, unknown>),\r\n      hook_event_name: args.eventName,\r\n      cwd: workspaceRoot,\r\n      forgeMcpHook: true,\r\n    };\r\n    let serialized = JSON.stringify(payload);\r\n    if (Buffer.byteLength(serialized, \"utf8\") > 256 * 1024) {\r\n      const toolInput = payload.tool_input;\r\n      if (toolInput && typeof toolInput === \"object\" && !Array.isArray(toolInput)) {\r\n        const command = (toolInput as Record<string, unknown>).command;\r\n        if (typeof command === \"string\") {\r\n          payload.commandHash = createHash(\"sha256\").update(command).digest(\"hex\");\r\n          const match = /^\\s*(forge)\\s+(status|changed|check|verify|run|agent|fabric|generate|inspect|test)\\b/u.exec(command);\r\n          payload.commandSummary = match ? match.slice(1).join(\" \") : \"[command redacted]\";\r\n        }\r\n        delete payload.tool_input;\r\n        serialized = JSON.stringify(payload);\r\n      }\r\n    }\r\n    if (Buffer.byteLength(serialized, \"utf8\") > 256 * 1024) {\r\n      throw new Error(\"Codex hook payload exceeds 256 KiB\");\r\n    }\r\n    const runner = join(workspaceRoot, CODEX_HOOK_RUNNER_RELATIVE);\r\n    if (!existsSync(runner)) throw new Error(\"Codex hook runner is not installed\");\r\n    await enqueueCodexHook(runner, workspaceRoot, args.eventName, serialized);\r\n    return { ok: true, queued: true };\r\n  }\r\n  if (name === \"fabric_capabilities\") {\r\n    if (Object.keys(args).length !== 0) throw new Error(\"fabric_capabilities accepts no arguments\");\r\n    return {\r\n      ok: true,\r\n      schemaVersion: 1,\r\n      protocolKernel: \"p0a_available\",\r\n      boundedModelAdapter: \"p0b_a_available\",\r\n      codingTaskControl: \"local_owner_service_required\",\n      projectRouting: { supported: true, registrationRequired: true, defaultWorkspace: realpathSync(workspaceRoot),\n        ownerIsolation: \"per_project\", hooks: \"server_workspace_only\", tools: [\"fabric_project_register\", \"fabric_project_list\", \"fabric_project_doctor\", \"fabric_owner_start\"] },\n      managedExecution: { supported: true, runningOwnerRequired: true, scheduler: \"owner_managed\",\r\n        executors: [\"codex\", \"command\"], startDispatchesWork: true, boundedEventWaitMs: 30_000,\r\n        codexMayConsumeCredits: true, controls: [\"steer\", \"pause\", \"resume\", \"cancel\", \"reconcile\"],\n        environment: { automaticPreparation: true, isolatedDependencies: true, cacheReuse: \"verified_copy\", ignoreScriptsDefault: true },\n        tools: MANAGED_RUN_ACTIONS.map((action) => `fabric_${action.replaceAll(\"-\", \"_\")}`) },\r\n      accompaniedTasks: { supported: true, runningOwnerRequired: true, nativeSessionAssociation: true,\r\n        evidenceProvenance: \"agent_reported\", automaticDispatch: false, managedWorkers: false, workflowExecution: \"caller_driven\",\r\n        tools: ATTACHED_TASK_ACTIONS.map((action) => `fabric_${action.replaceAll(\"-\", \"_\")}`) },\r\n      consequentialEffects: true,\r\n      effectsByMode: { legacy: \"owner_reviewed_local_pilot\", accompanied: \"caller_driven_records\",\r\n        managed: \"process_execution_and_optional_local_publication\" },\r\n      mcpDispatch: { legacy: \"proposal_only\", accompanied: \"caller_driven_records\", managed: \"run_start_dispatches_work\" },\r\n      ownerApproval: \"legacy_local_popup_cli_only\",\r\n      cancellation: { legacy: \"owner_cli_only_best_effort\", managed: \"fabric_run_cancel_best_effort\" },\r\n      taskMutationTools: [\"fabric_propose\",\r\n        ...ATTACHED_TASK_ACTIONS.filter(action => !isAttachedTaskRead(action)).map(action => `fabric_${action.replaceAll(\"-\", \"_\")}`),\r\n        ...MANAGED_RUN_ACTIONS.filter(action => action !== \"run-status\" && action !== \"run-wait\").map(action => `fabric_${action.replaceAll(\"-\", \"_\")}`)],\r\n      taskReadTools: [\"fabric_status\", \"fabric_evidence\"],\r\n      changeMutationTools: [\"fabric_change_propose\"],\r\n      changeReadTools: [\"fabric_change_status\", \"fabric_change_evidence\"],\r\n      changeReviewDispatch: \"owner_cli_only\",\r\n      cli: \"forge fabric capabilities --json\",\r\n    };\r\n  }\r\n  if (name === \"fabric_propose\" || name === \"fabric_status\" || name === \"fabric_evidence\") {\r\n    const keys = Object.keys(args).sort().join(\",\");\r\n    if (name === \"fabric_propose\" && keys !== \"proposal\") throw new Error(\"fabric_propose requires only proposal\");\r\n    if ((name === \"fabric_status\" || name === \"fabric_evidence\") &&\r\n        (keys !== \"taskId\" || typeof args.taskId !== \"string\")) {\r\n      throw new Error(`${name} requires only taskId`);\r\n    }\r\n    const status = await requestLocalTask(realpathSync(workspaceRoot),\r\n      name === \"fabric_propose\" ? \"propose\" : name === \"fabric_evidence\" ? \"evidence\" : \"status\", args);\r\n    if (!status) throw new Error(\"Agent Fabric local owner is not running; start forge fabric serve\");\r\n    if (name === \"fabric_evidence\") {\r\n      return { ok: true, taskId: status.taskId, state: status.state, provenance: status.provenance };\r\n    }\r\n    return { ok: true, status };\r\n  }\r\n  if (name === \"fabric_change_propose\" || name === \"fabric_change_status\" || name === \"fabric_change_evidence\") {\r\n    const keys = Object.keys(args).sort().join(\",\");\r\n    if (name === \"fabric_change_propose\" &&\r\n        (keys !== \"request\" || !args.request || typeof args.request !== \"object\" || Array.isArray(args.request))) {\r\n      throw new Error(\"fabric_change_propose requires only request\");\r\n    }\r\n    if (name !== \"fabric_change_propose\" &&\r\n        (keys !== \"changeId\" || typeof args.changeId !== \"string\" || args.changeId.length === 0)) {\r\n      throw new Error(`${name} requires only changeId`);\r\n    }\r\n    const service = await LocalChangeReviewService.open(realpathSync(workspaceRoot));\r\n    try {\r\n      const result = name === \"fabric_change_propose\"\r\n        ? await service.propose(args.request as Parameters<LocalChangeReviewService[\"propose\"]>[0])\r\n        : name === \"fabric_change_status\"\r\n          ? await service.status(args.changeId as string)\r\n          : await service.evidence(args.changeId as string);\r\n      return { ok: true, ...(name === \"fabric_change_evidence\" ? { evidence: result } : { status: result }) };\r\n    } finally {\r\n      await service.close();\r\n    }\r\n  }\r\n  if (name === \"agent_context\") {\r\n    return runAgentMemoryCommand({\r\n      subcommand: \"context\",\r\n      workspaceRoot,\r\n      json: true,\r\n      entry: typeof args.entry === \"string\" ? args.entry : undefined,\r\n    });\r\n  }\r\n  if (name === \"agent_memory\") {\r\n    return runAgentMemoryCommand({\r\n      subcommand: \"memory\",\r\n      workspaceRoot,\r\n      json: true,\r\n      entry: typeof args.target === \"string\" ? args.target : undefined,\r\n      limit: typeof args.limit === \"number\" ? args.limit : undefined,\r\n    });\r\n  }\r\n  if (name === \"timeline\") {\r\n    const target = typeof args.target === \"string\" ? args.target : undefined;\r\n    if (!target) {\r\n      throw new Error(\"timeline requires target\");\r\n    }\r\n    const store = await DeltaStore.open(workspaceRoot, { access: \"read\" });\r\n    try {\r\n      return {\r\n        ok: true,\r\n        timeline: await store.semanticTimeline({\r\n          target,\r\n          limit: typeof args.limit === \"number\" ? args.limit : undefined,\r\n        }),\r\n      };\r\n    } finally {\r\n      await store.close();\r\n    }\r\n  }\r\n  if (name === \"inspect_all\") {\r\n    return readInspectAll(workspaceRoot);\r\n  }\r\n  throw new Error(`unknown ForgeOS MCP tool: ${name}`);\r\n}"
       },
       "name": "runTool",
       "qualifiedName": "runTool",
       "span": {
-        "end": 23365,
-        "start": 14034
+        "end": 27489,
+        "start": 16620
       }
     },
     {
@@ -126164,20 +126876,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "4f5ec5a428005f1069ca4733ae82a620dc6aa29d18a02eb1eb67b336fba3283f",
+      "contentHash": "9224c823ce9ed17c4b4f618d97980ad26d1a9277d6ec6f2cb9a765b4b6dd01b7",
       "file": "src/forge/agent-fabric/local-task-server.ts",
       "id": "ec27cfeab0d4f9c6681d67d60980c39fdddd10f3f6cded3851a570e2ac23391c",
       "kind": "code.function",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
-        "sourceSlice": "async function serveLocalTasks(\r\n  repositoryRoot: string,\r\n  suppliedService?: LocalTaskService,\r\n): Promise<LocalTaskOwnerServer> {\r\n  const service = suppliedService ?? await LocalTaskService.open(repositoryRoot);\r\n  const root = service.repositoryRoot;\r\n  if (root !== realpathSync(repositoryRoot)) {\r\n    if (!suppliedService) await service.close();\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner service belongs to another repository\");\r\n  }\r\n  const path = endpointPath(root);\r\n  let listener: ReturnType<typeof createServer> | undefined;\r\n  let published: OwnerEndpoint | undefined;\r\n  let attachedService: AttachedTaskService | undefined;\r\n  let managedService: ManagedRunService | undefined;\r\n  try {\r\n    if (readEndpoint(root)) {\r\n      throw new AgentFabricError(\"AF_CONFLICT\", \"A local Agent Fabric owner is already running\");\r\n    }\r\n    attachedService = await AttachedTaskService.open(root);\r\n    const { ManagedRunService: ManagedService } = await import(\"./managed-run-service.ts\");\r\n    managedService = await ManagedService.open(root);\r\n    const token = randomBytes(32).toString(\"hex\");\r\n    listener = createServer((request, response: ServerResponse) => {\r\n      response.setHeader(\"Content-Type\", \"application/json; charset=utf-8\");\r\n      response.setHeader(\"Cache-Control\", \"no-store\");\r\n      if (!published || !authorized(request, published)) {\r\n        response.writeHead(403).end(JSON.stringify({ ok: false, error: \"unauthorized\" }));\r\n        return;\r\n      }\r\n      const action = request.url?.slice(\"/v1/\".length) as LocalTaskAction | LocalMemoryAction | AttachedTaskAction | ManagedRunAction;\r\n      if (request.method !== \"POST\" || !request.url?.startsWith(\"/v1/\") ||\r\n          (!isAttachedTaskAction(action) && !isManagedRunAction(action) && ![\"propose\", \"status\", \"evidence\", \"review\", \"run\", \"cancel\", \"reconcile\", \"verify\", \"recover-verification\", \"review-result\", \"memory-add\", \"memory-list\", \"memory-delete\"].includes(action))) {\r\n        response.writeHead(404).end(JSON.stringify({ ok: false, error: \"unknown_action\" }));\r\n        return;\r\n      }\r\n      void readBody(request).then(async (body) => {\r\n        if (isManagedRunAction(action)) return { status: await managedService!.execute(action, body) };\r\n        if (isAttachedTaskAction(action)) return { status: await attachedService!.execute(action as Parameters<AttachedTaskService[\"execute\"]>[0], body) };\r\n        if (action.startsWith(\"memory-\")) return { memory: dispatchMemory(service, action as LocalMemoryAction, body) };\r\n        return { status: await dispatch(service, action as LocalTaskAction, body) };\r\n      }).then((result) => {\r\n        if (!response.destroyed) response.writeHead(200).end(JSON.stringify({ ok: true, ...result }));\r\n      }).catch((error: unknown) => {\r\n        if (!response.destroyed) response.writeHead(isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? 400 : 500).end(JSON.stringify({\r\n          ok: false, code: isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? error.code : \"AF_INVALID_STATE\",\r\n          error: error instanceof Error ? error.message : \"Local owner request failed\",\r\n        }));\r\n      });\r\n    });\r\n    await new Promise<void>((resolve, reject) => {\r\n      listener!.once(\"error\", reject);\r\n      listener!.listen(0, \"127.0.0.1\", resolve);\r\n    });\r\n    const port = (listener.address() as AddressInfo).port;\r\n    published = { schemaVersion: 1, repositoryRoot: root, pid: process.pid, port, token };\r\n    mkdirSync(dirname(path), { recursive: true });\r\n    writeFileSync(path, JSON.stringify(published), { flag: \"wx\", mode: 0o600 });\r\n    let closed = false;\r\n    return {\r\n      repositoryRoot: root, port,\r\n      async close() {\r\n        if (closed) return;\r\n        closed = true;\r\n        try { await managedService?.close(); }\r\n        finally {\r\n          await new Promise<void>((resolve) => listener!.close(() => resolve()));\r\n          if (existsSync(path) && readFileSync(path, \"utf8\") === JSON.stringify(published)) unlinkSync(path);\r\n          try { await attachedService?.close(); }\r\n          finally { if (!suppliedService) await service.close(); }\r\n        }\r\n      },\r\n    };\r\n  } catch (error) {\r\n    try { await managedService?.close(); }\r\n    finally {\r\n      if (listener?.listening) await new Promise<void>((resolve) => listener!.close(() => resolve()));\r\n      try { await attachedService?.close(); }\r\n      finally { if (!suppliedService) await service.close(); }\r\n    }\r\n    throw error;\r\n  }\r\n}"
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
+        "sourceSlice": "async function serveLocalTasks(\r\n  repositoryRoot: string,\r\n  suppliedService?: LocalTaskService,\r\n): Promise<LocalTaskOwnerServer> {\r\n  const service = suppliedService ?? await LocalTaskService.open(repositoryRoot);\r\n  const root = service.repositoryRoot;\r\n  if (root !== realpathSync(repositoryRoot)) {\r\n    if (!suppliedService) await service.close();\r\n    throw new AgentFabricError(\"AF_INVALID_STATE\", \"Local owner service belongs to another repository\");\r\n  }\r\n  const path = endpointPath(root);\r\n  let listener: ReturnType<typeof createServer> | undefined;\r\n  let published: OwnerEndpoint | undefined;\r\n  let attachedService: AttachedTaskService | undefined;\r\n  let managedService: ManagedRunService | undefined;\r\n  try {\r\n    if (readEndpoint(root)) {\r\n      throw new AgentFabricError(\"AF_CONFLICT\", \"A local Agent Fabric owner is already running\");\r\n    }\r\n    attachedService = await AttachedTaskService.open(root);\r\n    const { ManagedRunService: ManagedService } = await import(\"./managed-run-service.ts\");\r\n    managedService = await ManagedService.open(root);\r\n    const token = randomBytes(32).toString(\"hex\");\r\n    listener = createServer((request, response: ServerResponse) => {\r\n      response.setHeader(\"Content-Type\", \"application/json; charset=utf-8\");\r\n      response.setHeader(\"Cache-Control\", \"no-store\");\r\n      if (!published || !authorized(request, published)) {\n        response.writeHead(403).end(JSON.stringify({ ok: false, error: \"unauthorized\" }));\r\n        return;\n      }\n      if (request.method === \"POST\" && request.url === \"/v1/owner-health\") {\n        response.writeHead(200).end(JSON.stringify({ ok: true, repositoryRoot: root, pid: process.pid }));\n        return;\n      }\n      const action = request.url?.slice(\"/v1/\".length) as LocalTaskAction | LocalMemoryAction | AttachedTaskAction | ManagedRunAction;\r\n      if (request.method !== \"POST\" || !request.url?.startsWith(\"/v1/\") ||\r\n          (!isAttachedTaskAction(action) && !isManagedRunAction(action) && ![\"propose\", \"status\", \"evidence\", \"review\", \"run\", \"cancel\", \"reconcile\", \"verify\", \"recover-verification\", \"review-result\", \"memory-add\", \"memory-list\", \"memory-delete\"].includes(action))) {\r\n        response.writeHead(404).end(JSON.stringify({ ok: false, error: \"unknown_action\" }));\r\n        return;\r\n      }\r\n      void readBody(request).then(async (body) => {\r\n        if (isManagedRunAction(action)) return { status: await managedService!.execute(action, body) };\r\n        if (isAttachedTaskAction(action)) return { status: await attachedService!.execute(action as Parameters<AttachedTaskService[\"execute\"]>[0], body) };\r\n        if (action.startsWith(\"memory-\")) return { memory: dispatchMemory(service, action as LocalMemoryAction, body) };\r\n        return { status: await dispatch(service, action as LocalTaskAction, body) };\r\n      }).then((result) => {\r\n        if (!response.destroyed) response.writeHead(200).end(JSON.stringify({ ok: true, ...result }));\r\n      }).catch((error: unknown) => {\r\n        if (!response.destroyed) response.writeHead(isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? 400 : 500).end(JSON.stringify({\r\n          ok: false, code: isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? error.code : \"AF_INVALID_STATE\",\r\n          error: error instanceof Error ? error.message : \"Local owner request failed\",\r\n        }));\r\n      });\r\n    });\r\n    await new Promise<void>((resolve, reject) => {\r\n      listener!.once(\"error\", reject);\r\n      listener!.listen(0, \"127.0.0.1\", resolve);\r\n    });\r\n    const port = (listener.address() as AddressInfo).port;\r\n    published = { schemaVersion: 1, repositoryRoot: root, pid: process.pid, port, token };\r\n    mkdirSync(dirname(path), { recursive: true });\r\n    writeFileSync(path, JSON.stringify(published), { flag: \"wx\", mode: 0o600 });\r\n    let closed = false;\r\n    return {\r\n      repositoryRoot: root, port,\r\n      async close() {\r\n        if (closed) return;\r\n        closed = true;\r\n        try { await managedService?.close(); }\r\n        finally {\r\n          await new Promise<void>((resolve) => listener!.close(() => resolve()));\r\n          if (existsSync(path) && readFileSync(path, \"utf8\") === JSON.stringify(published)) unlinkSync(path);\r\n          try { await attachedService?.close(); }\r\n          finally { if (!suppliedService) await service.close(); }\r\n        }\r\n      },\r\n    };\r\n  } catch (error) {\r\n    try { await managedService?.close(); }\r\n    finally {\r\n      if (listener?.listening) await new Promise<void>((resolve) => listener!.close(() => resolve()));\r\n      try { await attachedService?.close(); }\r\n      finally { if (!suppliedService) await service.close(); }\r\n    }\r\n    throw error;\r\n  }\r\n}"
       },
       "name": "serveLocalTasks",
       "qualifiedName": "serveLocalTasks",
       "span": {
-        "end": 12249,
-        "start": 7649
+        "end": 14126,
+        "start": 9321
       }
     },
     {
@@ -132341,14 +133053,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "function validateState(state: ManagedRunState, root: string, runId: string) {\n  assert(state && Object.keys(state).every(key => [\"schemaVersion\", \"runId\", \"repositoryRoot\", \"ownerPid\", \"version\", \"spec\", \"workflow\", \"base\", \"status\", \"steps\", \"events\", \"cursor\", \"instructions\", \"createdAt\", \"updatedAt\", \"published\", \"publicationIntent\", \"error\"].includes(key)), \"Invalid run fields\");\n  assert(state.schemaVersion === 1 && state.runId === runId && state.repositoryRoot === root, \"Invalid run identity\");\n  assert(Number.isSafeInteger(state.version) && state.version > 0 && Number.isSafeInteger(state.ownerPid) && state.ownerPid > 0 && statuses.includes(state.status), \"Invalid run version, owner or status\");\n  validateManagedSpec(state.spec); validateWorkflowState(state.workflow);\n  assert(state.workflow.workflowId === state.spec.workflow.workflowId, \"Workflow identity mismatch\");\n  assert(Array.isArray(state.steps) && state.steps.length <= 100 && new Set(state.steps.map(step => step.attemptId)).size === state.steps.length, \"Invalid steps\");\n  for (const step of state.steps) {\n    managedId(step.attemptId, \"attemptId\"); managedId(step.nodeId, \"nodeId\");\n    assert([\"running\", \"succeeded\", \"failed\", \"uncertain\"].includes(step.status) && state.workflow.runs.some(run => run.attemptId === step.attemptId && run.nodeId === step.nodeId && run.status === step.status), \"Step attempt mismatch\");\n    assert(step.directory === undefined || (isAbsolute(step.directory) && resolve(step.directory) === step.directory), \"Invalid workspace directory\");\n  }\n  assert(Number.isSafeInteger(state.cursor) && state.cursor >= 0 && Array.isArray(state.events) && state.events.length <= 10000, \"Invalid event history\");\n  let cursor = 0; for (const event of state.events) { assert(Number.isSafeInteger(event.cursor) && event.cursor > cursor && event.cursor <= state.cursor && typeof event.summary === \"string\" && typeof event.type === \"string\" && Number.isFinite(Date.parse(event.at)), \"Invalid event\"); cursor = event.cursor; }\n  assert(Array.isArray(state.instructions) && state.instructions.length <= 1000 && state.instructions.every(item => typeof item === \"string\" && item.length <= 12000), \"Invalid instructions\");\n  assert(Number.isFinite(Date.parse(state.createdAt)) && Number.isFinite(Date.parse(state.updatedAt)), \"Invalid timestamps\");\n  if (state.base) assert(state.base.root === root && state.base.runId === runId && isAbsolute(state.base.baselineDirectory) && /^sha256:[a-f0-9]{64}$/.test(state.base.digest) && /^[a-f0-9]{40,64}$/.test(state.base.head) && stableStringify(state.base.scope) === stableStringify([...state.spec.scope].sort()), \"Invalid managed base\");\n}"
       },
       "name": "validateState",
       "qualifiedName": "validateState",
       "span": {
-        "end": 4623,
-        "start": 1950
+        "end": 5007,
+        "start": 2334
       }
     },
     {
@@ -134075,14 +134787,14 @@ export const appGraph = {
       "kind": "code.function",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
         "sourceSlice": "function writeMcpMessage(message: Record<string, unknown>): void {\r\n  const body = JSON.stringify(message);\r\n  process.stdout.write(`Content-Length: ${Buffer.byteLength(body, \"utf8\")}\\r\\n\\r\\n${body}`);\r\n}"
       },
       "name": "writeMcpMessage",
       "qualifiedName": "writeMcpMessage",
       "span": {
-        "end": 26495,
-        "start": 26291
+        "end": 30619,
+        "start": 30415
       }
     },
     {
@@ -134534,7 +135246,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "interface Ack { runId: string; version: number; status: ManagedRunState[\"status\"] }"
       },
       "name": "Ack",
@@ -141175,20 +141887,105 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "eb3d57c61997fe1bd99e6391fa9bd43f01c3267ee75e9f17368023082f374d63",
+      "contentHash": "a377f8e1e4cb5655b18a799670e5b2acb8b3db6fd51ed68e05e32c1067f8806d",
       "file": "src/forge/cli/fabric.ts",
       "id": "7e989cc0c9acdca67aa99cad82c676cfa6f30b3af09aaacc797bb68f204b36fa",
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "893bdfbdaccf13bdbe9c52eb3d7f5c804094c5f3a5190f7ec7d3c9d1b3a71924",
-        "sourceSlice": "interface FabricCliOptions {\r\n  subcommand: ManagedRunAction | AttachedTaskAction | \"capabilities\" | \"propose\" | \"status\" | \"evidence\" | \"review\" | \"run\" | \"cancel\" | \"reconcile\" | \"verify\" | \"recover-verification\" | \"review-result\" | \"serve\" | \"memory-add\" | \"memory-list\" | \"memory-delete\" | \"change-propose\" | \"change-status\" | \"change-review\" | \"change-evidence\" | AdaptiveCliOptions[\"subcommand\"];\r\n  workspaceRoot: string;\r\n  json: boolean;\r\n  file?: string;\r\n  taskId?: string;\r\n  runId?: string;\r\n  channel?: \"canary\" | \"stable\";\r\n}"
+        "fileContentHash": "862e58cc4b399e5604d242486013fdba613d8d877f695b007f366b210775d1f2",
+        "sourceSlice": "interface FabricCliOptions {\r\n  subcommand: ManagedRunAction | AttachedTaskAction | \"install-skill\" | \"doctor\" | \"ensure-owner\" | \"project-register\" | \"project-list\" | \"capabilities\" | \"propose\" | \"status\" | \"evidence\" | \"review\" | \"run\" | \"cancel\" | \"reconcile\" | \"verify\" | \"recover-verification\" | \"review-result\" | \"serve\" | \"memory-add\" | \"memory-list\" | \"memory-delete\" | \"change-propose\" | \"change-status\" | \"change-review\" | \"change-evidence\" | AdaptiveCliOptions[\"subcommand\"];\n  workspaceRoot: string;\r\n  json: boolean;\r\n  file?: string;\r\n  taskId?: string;\r\n  runId?: string;\n  projectId?: string;\n  dryRun?: boolean;\n  channel?: \"canary\" | \"stable\";\r\n}"
       },
       "name": "FabricCliOptions",
       "qualifiedName": "FabricCliOptions",
       "span": {
-        "end": 1325,
-        "start": 785
+        "end": 1784,
+        "start": 1120
+      }
+    },
+    {
+      "contentHash": "1a13546b05cd3bb93e24fd1cfddaa1aa300ec65871b8c5eb445118e1529cf0d8",
+      "file": "src/forge/agent-memory/mcp.ts",
+      "id": "d9afa877d5a39c734ca116dc721b1d074b281fe89702fb6e40d593e43d91e817",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
+        "sourceSlice": "interface FabricMcpOptions { registryDirectory?: string }"
+      },
+      "name": "FabricMcpOptions",
+      "qualifiedName": "FabricMcpOptions",
+      "span": {
+        "end": 5441,
+        "start": 5384
+      }
+    },
+    {
+      "contentHash": "92f05d0498f89eb7de23a305bbf6870afa0e609cf6ebddd62c23618172e10ce2",
+      "file": "src/forge/agent-fabric/project-runtime.ts",
+      "id": "8b38c797f41c8d9f0832640cafd6071b626c13083240a78366e5e1a83881e75e",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "7acaf1231201f6f3db7db8077c857e00d9d5e217c930ebd6ed930e8a73e79891",
+        "sourceSlice": "interface FabricOwnerOptions { cliPath?: string; nodeExecutable?: string; startupTimeoutMs?: number }"
+      },
+      "name": "FabricOwnerOptions",
+      "qualifiedName": "FabricOwnerOptions",
+      "span": {
+        "end": 694,
+        "start": 593
+      }
+    },
+    {
+      "contentHash": "7ec5d4e556a4d8e00bc88bede85eb53d36b41eefdb461497146da95782286edc",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "2f076892033ec72cfe280cce3792194558dd370f294137585c47e1c137f4b26f",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "interface FabricProject { id: string; root: string }"
+      },
+      "name": "FabricProject",
+      "qualifiedName": "FabricProject",
+      "span": {
+        "end": 442,
+        "start": 390
+      }
+    },
+    {
+      "contentHash": "e7ed061632b13bd8a7f397d2ee993edd4430a7a8bf1854d2236976cc369be74c",
+      "file": "src/forge/agent-fabric/project-profile.ts",
+      "id": "104ce5eed8ceee74fe378896314ed83c2ef869ead5a44bf5b31e9b49517e9a1c",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "b8a84bd4f98bef2b0bab5047c053323996af19a40aa20e6b6bd8b6264a70294d",
+        "sourceSlice": "interface FabricProjectProfile {\n  schemaVersion: 1;\n  maxConcurrency?: number;\n  environment?: ManagedRunSpec[\"environment\"];\n  verificationCommands?: string[][];\n}"
+      },
+      "name": "FabricProjectProfile",
+      "qualifiedName": "FabricProjectProfile",
+      "span": {
+        "end": 376,
+        "start": 211
+      }
+    },
+    {
+      "contentHash": "768b8aa819b22fb6f54d0503ff297f031033c41e03609c8f897a3e5198fcb708",
+      "file": "src/forge/agent-fabric/project-registry.ts",
+      "id": "cfdf5b60a5ad6ef21131133b5c3be3cfed53022397e344f50e128cdb44f96fea",
+      "kind": "code.interface",
+      "meta": {
+        "exportPath": "export",
+        "fileContentHash": "eba8a0b1ea01fb0f7d47d1a53cff217589954e01d581c4439d8162922dd108a2",
+        "sourceSlice": "interface FabricRegistryOptions { registryDirectory?: string; id?: string }"
+      },
+      "name": "FabricRegistryOptions",
+      "qualifiedName": "FabricRegistryOptions",
+      "span": {
+        "end": 525,
+        "start": 450
       }
     },
     {
@@ -143085,14 +143882,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "83c9a00a0dbe366baccf65057b531060f7bffe0a403eb38bd743614d4af633c0",
-        "sourceSlice": "interface JsonRpcRequest {\r\n  jsonrpc?: \"2.0\";\r\n  id?: string | number | null;\r\n  method: string;\r\n  params?: Record<string, unknown>;\r\n}"
+        "fileContentHash": "ae2e53aa9bdc559294128ed7fed965f64e2bf0b68150c9b0f77fa43fbf679401",
+        "sourceSlice": "interface JsonRpcRequest {\n  jsonrpc?: \"2.0\";\r\n  id?: string | number | null;\r\n  method: string;\r\n  params?: Record<string, unknown>;\r\n}"
       },
       "name": "JsonRpcRequest",
       "qualifiedName": "JsonRpcRequest",
       "span": {
-        "end": 5258,
-        "start": 5121
+        "end": 5375,
+        "start": 5239
       }
     },
     {
@@ -143850,14 +144647,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
-        "sourceSlice": "interface LocalTaskOwnerServer {\r\n  repositoryRoot: string;\r\n  port: number;\r\n  close(): Promise<void>;\r\n}"
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
+        "sourceSlice": "interface LocalTaskOwnerServer {\n  repositoryRoot: string;\r\n  port: number;\r\n  close(): Promise<void>;\r\n}"
       },
       "name": "LocalTaskOwnerServer",
       "qualifiedName": "LocalTaskOwnerServer",
       "span": {
-        "end": 7556,
-        "start": 7450
+        "end": 7644,
+        "start": 7539
       }
     },
     {
@@ -144360,7 +145157,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "interface ManagedTransactionOptions { requestId?: string; fingerprint?: string; expectedVersion?: number }"
       },
       "name": "ManagedTransactionOptions",
@@ -145023,14 +145820,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "interface OwnerEndpoint {\r\n  schemaVersion: 1;\r\n  repositoryRoot: string;\r\n  pid: number;\r\n  port: number;\r\n  token: string;\r\n}"
       },
       "name": "OwnerEndpoint",
       "qualifiedName": "OwnerEndpoint",
       "span": {
-        "end": 2589,
-        "start": 2462
+        "end": 2647,
+        "start": 2520
       }
     },
     {
@@ -145465,14 +146262,14 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "interface ParsedCli {\r\n  command: ForgeCommand | null;\r\n  workspaceRoot: string;\r\n  errors: string[];\r\n}"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "interface ParsedCli {\n  command: ForgeCommand | null;\n  workspaceRoot: string;\n  errors: string[];\n}"
       },
       "name": "ParsedCli",
       "qualifiedName": "ParsedCli",
       "span": {
-        "end": 16138,
-        "start": 16034
+        "end": 15140,
+        "start": 15040
       }
     },
     {
@@ -146264,7 +147061,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "interface Receipt { requestId: string; fingerprint: string; ack: Ack }"
       },
       "name": "Receipt",
@@ -146298,7 +147095,7 @@ export const appGraph = {
       "kind": "code.interface",
       "meta": {
         "exportPath": "",
-        "fileContentHash": "3f736a4584ddd1485d1c1f527f0a09550a2a9aa120f61f9ed2c3b37bcf7699bb",
+        "fileContentHash": "e45b7b21566d896478d384613054dbf0542ac6b023f5b7c690c9cf504901c088",
         "sourceSlice": "interface RecordFile { state: ManagedRunState; receipts: Receipt[] }"
       },
       "name": "RecordFile",
@@ -151279,14 +152076,14 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "type AttachedTaskAction = typeof ATTACHED_TASK_ACTIONS[number];"
       },
       "name": "AttachedTaskAction",
       "qualifiedName": "AttachedTaskAction",
       "span": {
-        "end": 1733,
-        "start": 1670
+        "end": 1791,
+        "start": 1728
       }
     },
     {
@@ -152582,20 +153379,20 @@ export const appGraph = {
       }
     },
     {
-      "contentHash": "f622f4c0d66b7f25b0b17daefeb701c2ea6dc522d91f05479bef70a2b8ac13ca",
+      "contentHash": "2930e4fc221693400e8ed08da39ab904bf8ead0412781972ff16a960f864d3cd",
       "file": "src/forge/cli/parse.ts",
       "id": "8d6d6a38754d32605efc5a07b79ea378bf3e5443c7943d99603a9e396e0d556b",
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "24649480a845ba49cb6ffd99d8c9470d236cc964a07ce318a0d8ec235bc6eb12",
-        "sourceSlice": "type ForgeCommand =\r\n  | { kind: \"version\"; json: boolean }\r\n  | { kind: \"last\"; json: boolean; workspaceRoot: string }\r\n  | { kind: \"baseline\"; subcommand: BaselineSubcommand; json: boolean; reason?: string; workspaceRoot: string }\r\n  | {\r\n      kind: \"new\";\r\n      name: string;\r\n      template: NewTemplateName;\r\n      packageManager: NewPackageManager;\r\n      install: boolean;\r\n      git: boolean;\r\n      forgePackageSpec?: string;\r\n      localForge: boolean;\r\n      json: boolean;\r\n      fieldTest: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | { kind: \"build\"; json: boolean; workspaceRoot: string }\r\n  | {\r\n      kind: \"serve\";\r\n      host?: string;\r\n      port?: number;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      envFile?: string;\r\n      allowDevAuth: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"worker\";\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      once: boolean;\r\n      pollIntervalMs: number;\r\n      limit: number;\r\n      mock: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"self-host\";\r\n      subcommand: SelfHostSubcommand;\r\n      json: boolean;\r\n      withWeb: boolean;\r\n      postgresVersion: string;\r\n      runtimePort: number;\r\n      webPort: number;\r\n      preparedOnly?: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"docs\";\r\n      subcommand: DocsSubcommand;\r\n      json: boolean;\r\n      build: boolean;\r\n      installVenv: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"agent-contract\";\r\n      subcommand: AgentContractSubcommand;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | { kind: \"doctor\"; target?: \"project\" | \"windows\" | \"agent\" | \"delta\" | \"pglite\" | \"runtime\"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }\r\n  | { kind: \"setup\"; target: \"windows\"; json: boolean; yes: boolean; workspaceRoot: string }\r\n  | {\r\n      kind: \"security\";\r\n      subcommand: SecuritySubcommand;\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      runTests: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"auth\";\r\n      subcommand: AuthSubcommand;\r\n      json: boolean;\r\n      token?: string;\r\n      prod?: boolean;\r\n      scenario?: string;\r\n      provider?: \"workos\";\r\n      real?: boolean;\r\n      file?: string;\r\n      clientId?: string;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"authmd\";\r\n      subcommand: AuthMdSubcommand;\r\n      json: boolean;\r\n      output?: string;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"workos\";\r\n      subcommand: WorkOSSubcommand;\r\n      fgaAction?: WorkOSFgaAction;\r\n      json: boolean;\r\n      file?: string;\r\n      yes: boolean;\r\n      dryRun: boolean;\r\n      real?: boolean;\r\n      write?: boolean;\r\n      writePath?: string;\r\n      clientId?: string;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"deploy\";\r\n      subcommand: DeploySubcommand;\r\n      target: DeployTarget;\r\n      production: boolean;\r\n      url?: string;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"golden-path\";\r\n      subcommand: GoldenPathSubcommand;\r\n      name: string;\r\n      template: NewTemplateName;\r\n      packageManager: NewPackageManager;\r\n      forgeSpec?: string;\r\n      auth: \"none\" | \"workos\";\r\n      target: DeployTarget;\r\n      production: boolean;\r\n      real: boolean;\r\n      clientId?: string;\r\n      url?: string;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"field-test\";\r\n      subcommand: FieldTestSubcommand;\r\n      name?: string;\r\n      template: NewTemplateName;\r\n      templates?: NewTemplateName[];\r\n      packageManager: NewPackageManager;\r\n      packageManagers?: NewPackageManager[];\r\n      forgeSpec?: string;\r\n      auth?: \"none\" | \"workos\";\r\n      dryRun: boolean;\r\n      keep: boolean;\r\n      runtimeProbes: boolean;\r\n      authProbes: boolean;\r\n      uiProbes: boolean;\r\n      realistic: boolean;\r\n      timeoutMs: number;\r\n      writeReport?: string;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"seed\";\r\n      subcommand: SeedSubcommand;\r\n      command?: string;\r\n      args: unknown;\r\n      url?: string;\r\n      userId?: string;\r\n      tenantId?: string;\r\n      role?: string;\r\n      permissions?: string[];\r\n      allTenants?: boolean;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"rls\";\r\n      subcommand: RlsSubcommand;\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"deps\";\r\n      subcommand: DepsSubcommand;\r\n      packageName?: string;\r\n      symbolName?: string;\r\n      planPath?: string;\r\n      target?: string;\r\n      json: boolean;\r\n      yes: boolean;\r\n      allowScripts: boolean;\r\n      skipTests: boolean;\r\n      dryRun: boolean;\r\n      changed: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"release\";\r\n      area: ReleaseArea;\r\n      action: ReleaseAction;\r\n      releaseId?: string;\r\n      input?: string;\r\n      provider?: string;\r\n      target?: string;\r\n      env: string;\r\n      json: boolean;\r\n      allowDirty: boolean;\r\n      allowPublicSourcemaps: boolean;\r\n      allowMissingLocalRelease?: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | { kind: \"make\"; options: MakeCommandOptions }\r\n  | { kind: \"feature\"; options: FeatureCommandOptions }\r\n  | { kind: \"refactor\"; options: RefactorCommandOptions }\r\n  | { kind: \"impact\"; options: ImpactCommandOptions }\r\n  | { kind: \"test\"; options: TestCommandOptions }\r\n  | { kind: \"repair\"; options: RepairCommandOptions }\r\n  | { kind: \"do\"; options: ForgeDoOptions }\r\n  | { kind: \"bench\"; options: BenchCommandOptions }\r\n  | { kind: \"cair\"; options: CairCommandOptions }\r\n  | { kind: \"agent\"; options: AgentCommandOptions }\r\n  | { kind: \"fabric\"; subcommand: ManagedRunAction | AttachedTaskAction | \"capabilities\" | \"propose\" | \"status\" | \"evidence\" | \"review\" | \"run\" | \"cancel\" | \"reconcile\" | \"verify\" | \"recover-verification\" | \"review-result\" | \"serve\" | \"memory-add\" | \"memory-list\" | \"memory-delete\" | \"adaptive-propose\" | \"adaptive-review\" | \"adaptive-run\" | \"adaptive-status\" | \"change-propose\" | \"change-status\" | \"change-review\" | \"change-evidence\"; workspaceRoot: string; json: boolean; file?: string; taskId?: string; runId?: string; channel?: \"canary\" | \"stable\" }\r\n  | ({ kind: \"evolution\" } & EvolutionCliOptions)\r\n  | { kind: \"mcp\"; subcommand: \"serve\"; workspaceRoot: string }\r\n  | { kind: \"review\"; options: ReviewCommandOptions }\r\n  | { kind: \"ui\"; options: UiCommandOptions }\r\n  | { kind: \"manifest\"; subcommand: \"validate\" | \"import\"; path: string; json: boolean; workspaceRoot: string }\r\n  | { kind: \"import\"; options: BrownfieldImportCommandOptions }\r\n  | {\r\n      kind: \"delta\";\r\n      subcommand: \"status\" | \"repair\" | \"compact\" | \"prune\" | \"export\";\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n      dryRun: boolean;\r\n      yes: boolean;\r\n      verbose: boolean;\r\n      olderThan?: string;\r\n      output?: string;\r\n      limit?: number;\r\n      redacted: boolean;\r\n    }\r\n  | { kind: \"status\"; json: boolean; workspaceRoot: string }\r\n  | { kind: \"changed\"; json: boolean; authoredOnly: boolean; reviewOnly: boolean; commitReady: boolean; workspaceRoot: string }\r\n  | { kind: \"diff\"; target: \"authored\" | \"generated\" | \"full\"; json: boolean; workspaceRoot: string }\r\n  | { kind: \"handoff\"; json: boolean; commitReady: boolean; workspaceRoot: string }\r\n  | {\r\n      kind: \"studio\";\r\n      subcommand: \"attach\" | \"snapshot\" | \"watch\" | \"open\" | \"doctor\" | \"bridge\" | \"codex-server\";\r\n      path?: string;\r\n      previewUrl?: string;\r\n      previewPort?: number;\r\n      studioUrl?: string;\r\n      intervalMs?: number;\r\n      once: boolean;\r\n      workspaceId?: string;\r\n      tenantId?: string;\r\n      userId?: string;\r\n      role?: string;\r\n      targets: string[];\r\n      install?: boolean;\r\n      start?: boolean;\r\n      bridge?: boolean;\r\n      writeSchemas?: boolean;\r\n      probeAppServer?: boolean;\r\n      json: boolean;\r\n      dryRun: boolean;\r\n      force: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | { kind: \"timeline\"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; causal: boolean; staleProofs: boolean; workspaceRoot: string }\r\n  | { kind: \"explain\"; thing: string; json: boolean; workspaceRoot: string }\r\n  | {\r\n      kind: \"session\";\r\n      subcommand: \"list\" | \"show\" | \"rename\" | \"merge\" | \"split\" | \"detach\";\r\n      sessionId?: string;\r\n      sourceSessionId?: string;\r\n      operationId?: string;\r\n      title?: string;\r\n      limit?: number;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | { kind: \"generate\"; check: boolean; dryRun: boolean; json: boolean; concurrency: number; workspaceRoot: string }\r\n  | { kind: \"add\"; alias: string; options: AddOptions & { workspaceRoot: string } }\r\n  | { kind: \"inspect\"; target: InspectTarget; json: boolean; dryRun: boolean; full: boolean; brief: boolean; ergonomics: boolean; workspaceRoot: string }\r\n  | { kind: \"check\"; json: boolean; dryRun: boolean; strictSecrets: boolean }\r\n  | { kind: \"verify\"; options: VerifyOptions }\r\n  | { kind: \"run\"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string; queryMode?: boolean; args?: unknown }\r\n  | {\r\n      kind: \"dev\";\r\n      host?: string;\r\n      port?: number;\r\n      mock: boolean;\r\n      mockAi: boolean;\r\n      once: boolean;\r\n      watch: boolean;\r\n      json: boolean;\r\n      db: \"memory\" | \"pglite\" | \"postgres\" | \"none\";\r\n      databaseUrl?: string;\r\n      worker: boolean;\r\n      withWeb: boolean;\r\n      apiOnly: boolean;\r\n      webOnly: boolean;\r\n      open: boolean;\r\n      webPort?: number;\r\n      publicApiUrl?: string;\r\n      telemetry: string[];\r\n      envFile?: string;\r\n      skipStartupConsole: boolean;\r\n      detach: boolean;\r\n      seed: boolean;\r\n      seedCommand?: string;\r\n      seedAllTenants?: boolean;\r\n      lifecycle?: \"status\" | \"stop\";\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"db\";\r\n      subcommand: DbSubcommand;\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      local?: boolean;\r\n      json: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"outbox\";\r\n      subcommand: OutboxSubcommand;\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      once: boolean;\r\n      watch: boolean;\r\n      limit?: number;\r\n      deliveryId?: number;\r\n      mock: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"workflow\";\r\n      subcommand: WorkflowSubcommand;\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      once: boolean;\r\n      watch: boolean;\r\n      limit?: number;\r\n      workflowName?: string;\r\n      runId?: number;\r\n      stepName?: string;\r\n      input?: unknown;\r\n      mock: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"telemetry\";\r\n      subcommand: TelemetrySubcommand;\r\n      db: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      json: boolean;\r\n      traceId?: string;\r\n      sink?: string;\r\n      file?: \"events\" | \"exceptions\" | \"spans\";\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"policy\";\r\n      subcommand: PolicySubcommand;\r\n      json: boolean;\r\n      policy?: string;\r\n      role?: string;\r\n      strictPolicies: boolean;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"secrets\";\r\n      subcommand: SecretsSubcommand;\r\n      json: boolean;\r\n      redacted: boolean;\r\n      name?: string;\r\n      value?: string;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"env\";\r\n      subcommand: EnvSubcommand;\r\n      json: boolean;\r\n      redacted: boolean;\r\n      target?: \"local\" | \"staging\" | \"production\";\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"query\";\r\n      subcommand: QuerySubcommand;\r\n      name?: string;\r\n      args?: unknown;\r\n      json: boolean;\r\n      userId?: string;\r\n      tenantId?: string;\r\n      role?: string;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"live\";\r\n      subcommand: LiveSubcommand;\r\n      name?: string;\r\n      args?: unknown;\r\n      json: boolean;\r\n      userId?: string;\r\n      tenantId?: string;\r\n      role?: string;\r\n      url?: string;\r\n      workspaceRoot: string;\r\n    }\r\n  | {\r\n      kind: \"ai\";\r\n      subcommand: AiSubcommand;\r\n      json: boolean;\r\n      provider?: ForgeAiProvider;\r\n      model?: string;\r\n      prompt?: string;\r\n      mock: boolean;\r\n      modelLevel: boolean;\r\n      live: boolean;\r\n      traceId?: string;\r\n      db?: DbAdapterKind;\r\n      databaseUrl?: string;\r\n      workspaceRoot: string;\r\n    };"
+        "fileContentHash": "279fa7dc8b78d886d786a66d2ed3071e6ffd53e05387c0b3a59d079c7ba6c663",
+        "sourceSlice": "type ForgeCommand =\n  | { kind: \"version\"; json: boolean }\n  | { kind: \"last\"; json: boolean; workspaceRoot: string }\n  | { kind: \"baseline\"; subcommand: BaselineSubcommand; json: boolean; reason?: string; workspaceRoot: string }\n  | {\n      kind: \"new\";\n      name: string;\n      template: NewTemplateName;\n      packageManager: NewPackageManager;\n      install: boolean;\n      git: boolean;\n      forgePackageSpec?: string;\n      localForge: boolean;\n      json: boolean;\n      fieldTest: boolean;\n      workspaceRoot: string;\n    }\n  | { kind: \"build\"; json: boolean; workspaceRoot: string }\n  | {\n      kind: \"serve\";\n      host?: string;\n      port?: number;\n      databaseUrl?: string;\n      json: boolean;\n      envFile?: string;\n      allowDevAuth: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"worker\";\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      json: boolean;\n      once: boolean;\n      pollIntervalMs: number;\n      limit: number;\n      mock: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"self-host\";\n      subcommand: SelfHostSubcommand;\n      json: boolean;\n      withWeb: boolean;\n      postgresVersion: string;\n      runtimePort: number;\n      webPort: number;\n      preparedOnly?: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"docs\";\n      subcommand: DocsSubcommand;\n      json: boolean;\n      build: boolean;\n      installVenv: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"agent-contract\";\n      subcommand: AgentContractSubcommand;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | { kind: \"doctor\"; target?: \"project\" | \"windows\" | \"agent\" | \"delta\" | \"pglite\" | \"runtime\"; agentTarget?: AgentAdapterTarget; json: boolean; workspaceRoot: string }\n  | { kind: \"setup\"; target: \"windows\"; json: boolean; yes: boolean; workspaceRoot: string }\n  | {\n      kind: \"security\";\n      subcommand: SecuritySubcommand;\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      json: boolean;\n      runTests: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"auth\";\n      subcommand: AuthSubcommand;\n      json: boolean;\n      token?: string;\n      prod?: boolean;\n      scenario?: string;\n      provider?: \"workos\";\n      real?: boolean;\n      file?: string;\n      clientId?: string;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"authmd\";\n      subcommand: AuthMdSubcommand;\n      json: boolean;\n      output?: string;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"workos\";\n      subcommand: WorkOSSubcommand;\n      fgaAction?: WorkOSFgaAction;\n      json: boolean;\n      file?: string;\n      yes: boolean;\n      dryRun: boolean;\n      real?: boolean;\n      write?: boolean;\n      writePath?: string;\n      clientId?: string;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"deploy\";\n      subcommand: DeploySubcommand;\n      target: DeployTarget;\n      production: boolean;\n      url?: string;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"golden-path\";\n      subcommand: GoldenPathSubcommand;\n      name: string;\n      template: NewTemplateName;\n      packageManager: NewPackageManager;\n      forgeSpec?: string;\n      auth: \"none\" | \"workos\";\n      target: DeployTarget;\n      production: boolean;\n      real: boolean;\n      clientId?: string;\n      url?: string;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"field-test\";\n      subcommand: FieldTestSubcommand;\n      name?: string;\n      template: NewTemplateName;\n      templates?: NewTemplateName[];\n      packageManager: NewPackageManager;\n      packageManagers?: NewPackageManager[];\n      forgeSpec?: string;\n      auth?: \"none\" | \"workos\";\n      dryRun: boolean;\n      keep: boolean;\n      runtimeProbes: boolean;\n      authProbes: boolean;\n      uiProbes: boolean;\n      realistic: boolean;\n      timeoutMs: number;\n      writeReport?: string;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"seed\";\n      subcommand: SeedSubcommand;\n      command?: string;\n      args: unknown;\n      url?: string;\n      userId?: string;\n      tenantId?: string;\n      role?: string;\n      permissions?: string[];\n      allTenants?: boolean;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"rls\";\n      subcommand: RlsSubcommand;\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"deps\";\n      subcommand: DepsSubcommand;\n      packageName?: string;\n      symbolName?: string;\n      planPath?: string;\n      target?: string;\n      json: boolean;\n      yes: boolean;\n      allowScripts: boolean;\n      skipTests: boolean;\n      dryRun: boolean;\n      changed: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"release\";\n      area: ReleaseArea;\n      action: ReleaseAction;\n      releaseId?: string;\n      input?: string;\n      provider?: string;\n      target?: string;\n      env: string;\n      json: boolean;\n      allowDirty: boolean;\n      allowPublicSourcemaps: boolean;\n      allowMissingLocalRelease?: boolean;\n      workspaceRoot: string;\n    }\n  | { kind: \"make\"; options: MakeCommandOptions }\n  | { kind: \"feature\"; options: FeatureCommandOptions }\n  | { kind: \"refactor\"; options: RefactorCommandOptions }\n  | { kind: \"impact\"; options: ImpactCommandOptions }\n  | { kind: \"test\"; options: TestCommandOptions }\n  | { kind: \"repair\"; options: RepairCommandOptions }\n  | { kind: \"do\"; options: ForgeDoOptions }\n  | { kind: \"bench\"; options: BenchCommandOptions }\n  | { kind: \"cair\"; options: CairCommandOptions }\n  | { kind: \"agent\"; options: AgentCommandOptions }\n  | ({ kind: \"fabric\" } & FabricCliOptions)\n  | ({ kind: \"evolution\" } & EvolutionCliOptions)\n  | { kind: \"mcp\"; subcommand: \"serve\"; workspaceRoot: string }\n  | { kind: \"review\"; options: ReviewCommandOptions }\n  | { kind: \"ui\"; options: UiCommandOptions }\n  | { kind: \"manifest\"; subcommand: \"validate\" | \"import\"; path: string; json: boolean; workspaceRoot: string }\n  | { kind: \"import\"; options: BrownfieldImportCommandOptions }\n  | {\n      kind: \"delta\";\n      subcommand: \"status\" | \"repair\" | \"compact\" | \"prune\" | \"export\";\n      json: boolean;\n      workspaceRoot: string;\n      dryRun: boolean;\n      yes: boolean;\n      verbose: boolean;\n      olderThan?: string;\n      output?: string;\n      limit?: number;\n      redacted: boolean;\n    }\n  | { kind: \"status\"; json: boolean; workspaceRoot: string }\n  | { kind: \"changed\"; json: boolean; authoredOnly: boolean; reviewOnly: boolean; commitReady: boolean; workspaceRoot: string }\n  | { kind: \"diff\"; target: \"authored\" | \"generated\" | \"full\"; json: boolean; workspaceRoot: string }\n  | { kind: \"handoff\"; json: boolean; commitReady: boolean; workspaceRoot: string }\n  | {\n      kind: \"studio\";\n      subcommand: \"attach\" | \"snapshot\" | \"watch\" | \"open\" | \"doctor\" | \"bridge\" | \"codex-server\";\n      path?: string;\n      previewUrl?: string;\n      previewPort?: number;\n      studioUrl?: string;\n      intervalMs?: number;\n      once: boolean;\n      workspaceId?: string;\n      tenantId?: string;\n      userId?: string;\n      role?: string;\n      targets: string[];\n      install?: boolean;\n      start?: boolean;\n      bridge?: boolean;\n      writeSchemas?: boolean;\n      probeAppServer?: boolean;\n      json: boolean;\n      dryRun: boolean;\n      force: boolean;\n      workspaceRoot: string;\n    }\n  | { kind: \"timeline\"; target?: string; kindFilter?: string; sessionId?: string; limit?: number; json: boolean; rebuild: boolean; forAgent: boolean; causal: boolean; staleProofs: boolean; workspaceRoot: string }\n  | { kind: \"explain\"; thing: string; json: boolean; workspaceRoot: string }\n  | {\n      kind: \"session\";\n      subcommand: \"list\" | \"show\" | \"rename\" | \"merge\" | \"split\" | \"detach\";\n      sessionId?: string;\n      sourceSessionId?: string;\n      operationId?: string;\n      title?: string;\n      limit?: number;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | { kind: \"generate\"; check: boolean; dryRun: boolean; json: boolean; concurrency: number; workspaceRoot: string }\n  | { kind: \"add\"; alias: string; options: AddOptions & { workspaceRoot: string } }\n  | { kind: \"inspect\"; target: InspectTarget; json: boolean; dryRun: boolean; full: boolean; brief: boolean; ergonomics: boolean; workspaceRoot: string }\n  | { kind: \"check\"; json: boolean; dryRun: boolean; strictSecrets: boolean }\n  | { kind: \"verify\"; options: VerifyOptions }\n  | { kind: \"run\"; name?: string; list: boolean; json: boolean; mock: boolean; userId?: string; tenantId?: string; role?: string; envFile?: string; workspaceRoot: string; queryMode?: boolean; args?: unknown }\n  | {\n      kind: \"dev\";\n      host?: string;\n      port?: number;\n      mock: boolean;\n      mockAi: boolean;\n      once: boolean;\n      watch: boolean;\n      json: boolean;\n      db: \"memory\" | \"pglite\" | \"postgres\" | \"none\";\n      databaseUrl?: string;\n      worker: boolean;\n      withWeb: boolean;\n      apiOnly: boolean;\n      webOnly: boolean;\n      open: boolean;\n      webPort?: number;\n      publicApiUrl?: string;\n      telemetry: string[];\n      envFile?: string;\n      skipStartupConsole: boolean;\n      detach: boolean;\n      seed: boolean;\n      seedCommand?: string;\n      seedAllTenants?: boolean;\n      lifecycle?: \"status\" | \"stop\";\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"db\";\n      subcommand: DbSubcommand;\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      local?: boolean;\n      json: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"outbox\";\n      subcommand: OutboxSubcommand;\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      json: boolean;\n      once: boolean;\n      watch: boolean;\n      limit?: number;\n      deliveryId?: number;\n      mock: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"workflow\";\n      subcommand: WorkflowSubcommand;\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      json: boolean;\n      once: boolean;\n      watch: boolean;\n      limit?: number;\n      workflowName?: string;\n      runId?: number;\n      stepName?: string;\n      input?: unknown;\n      mock: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"telemetry\";\n      subcommand: TelemetrySubcommand;\n      db: DbAdapterKind;\n      databaseUrl?: string;\n      json: boolean;\n      traceId?: string;\n      sink?: string;\n      file?: \"events\" | \"exceptions\" | \"spans\";\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"policy\";\n      subcommand: PolicySubcommand;\n      json: boolean;\n      policy?: string;\n      role?: string;\n      strictPolicies: boolean;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"secrets\";\n      subcommand: SecretsSubcommand;\n      json: boolean;\n      redacted: boolean;\n      name?: string;\n      value?: string;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"env\";\n      subcommand: EnvSubcommand;\n      json: boolean;\n      redacted: boolean;\n      target?: \"local\" | \"staging\" | \"production\";\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"query\";\n      subcommand: QuerySubcommand;\n      name?: string;\n      args?: unknown;\n      json: boolean;\n      userId?: string;\n      tenantId?: string;\n      role?: string;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"live\";\n      subcommand: LiveSubcommand;\n      name?: string;\n      args?: unknown;\n      json: boolean;\n      userId?: string;\n      tenantId?: string;\n      role?: string;\n      url?: string;\n      workspaceRoot: string;\n    }\n  | {\n      kind: \"ai\";\n      subcommand: AiSubcommand;\n      json: boolean;\n      provider?: ForgeAiProvider;\n      model?: string;\n      prompt?: string;\n      mock: boolean;\n      modelLevel: boolean;\n      live: boolean;\n      traceId?: string;\n      db?: DbAdapterKind;\n      databaseUrl?: string;\n      workspaceRoot: string;\n    };"
       },
       "name": "ForgeCommand",
       "qualifiedName": "ForgeCommand",
       "span": {
-        "end": 16023,
-        "start": 3216
+        "end": 15031,
+        "start": 3158
       }
     },
     {
@@ -153676,14 +154473,14 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "type LocalMemoryAction = \"memory-add\" | \"memory-list\" | \"memory-delete\";"
       },
       "name": "LocalMemoryAction",
       "qualifiedName": "LocalMemoryAction",
       "span": {
-        "end": 2354,
-        "start": 2282
+        "end": 2412,
+        "start": 2340
       }
     },
     {
@@ -153693,14 +154490,14 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "type LocalMemoryResult = LocalMemoryEntry | readonly LocalMemoryEntry[] | { deleted: boolean };"
       },
       "name": "LocalMemoryResult",
       "qualifiedName": "LocalMemoryResult",
       "span": {
-        "end": 2458,
-        "start": 2363
+        "end": 2516,
+        "start": 2421
       }
     },
     {
@@ -153710,14 +154507,14 @@ export const appGraph = {
       "kind": "code.type",
       "meta": {
         "exportPath": "export",
-        "fileContentHash": "d98addb1d4f9662e2d22f9d59e231dac70636f0b2644398e01223f108eb6ca4a",
+        "fileContentHash": "15cca63fd98126c1dc9cfb8ccfdc46ede821c3523a58aec34b67a4aca32195fe",
         "sourceSlice": "type LocalTaskAction = \"propose\" | \"status\" | \"evidence\" | \"review\" | \"run\" | \"cancel\" | \"reconcile\" | \"verify\" | \"recover-verification\" | \"review-result\";"
       },
       "name": "LocalTaskAction",
       "qualifiedName": "LocalTaskAction",
       "span": {
-        "end": 2273,
-        "start": 2118
+        "end": 2331,
+        "start": 2176
       }
     },
     {

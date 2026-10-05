@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=9f058eb2077646e169007bbff7911b3113ef95d12a5c7001db88e378557732d6
+// @forge-generated generator=0.1.0-alpha.67 input=eb277051b18f4b495658e3c98c326be25c673d51ed84f4988587e46c8969587d content=9f058eb2077646e169007bbff7911b3113ef95d12a5c7001db88e378557732d6
 export const uiScenarios = {
   "scenarios": [
     {

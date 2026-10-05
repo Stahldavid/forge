@@ -11,6 +11,7 @@ import { AgentFabricError, isAgentFabricError } from "./errors.ts";
 import { LocalTaskService, type LocalTaskStatus } from "./local-task-service.ts";
 import type { LocalMemoryEntry } from "./local-intelligence.ts";
 import { localFabricPath } from "./local-paths.ts";
+import { applyFabricProfile } from "./project-profile.ts";
 
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
@@ -51,7 +52,7 @@ function processIsAlive(pid: number): boolean {
   }
 }
 
-function readEndpoint(repositoryRoot: string): OwnerEndpoint | null {
+function readEndpoint(repositoryRoot: string, pruneStale = true): OwnerEndpoint | null {
   const path = endpointPath(repositoryRoot);
   if (!existsSync(path)) return null;
   if (lstatSync(path).isSymbolicLink()) {
@@ -73,7 +74,7 @@ function readEndpoint(repositoryRoot: string): OwnerEndpoint | null {
   if (!processIsAlive(item.pid!)) {
     // A killed owner cannot hold PGlite. Remove only the exact endpoint bytes
     // read above; a replacement means another owner is starting.
-    if (readFileSync(path).equals(bytes)) unlinkSync(path);
+    if (pruneStale && readFileSync(path).equals(bytes)) unlinkSync(path);
     return null;
   }
   return item as OwnerEndpoint;
@@ -147,6 +148,28 @@ export interface LocalTaskOwnerServer {
   close(): Promise<void>;
 }
 
+/** Authenticated and read-only. Endpoint secrets never leave this module. */
+export async function probeLocalOwner(repositoryRoot: string): Promise<{ repositoryRoot: string; pid: number; port: number } | null> {
+  const endpoint = readEndpoint(realpathSync(repositoryRoot), false);
+  if (!endpoint) return null;
+  const request = (action: string, body: object) => fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, {
+    method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body), redirect: "manual", signal: AbortSignal.timeout(2000),
+  });
+  const response = await request("owner-health", {});
+  if (response.ok) {
+    const health = await response.json() as { ok?: boolean; repositoryRoot?: string; pid?: number };
+    if (!health.ok || health.repositoryRoot !== endpoint.repositoryRoot || health.pid !== endpoint.pid) throw new Error("Agent Fabric owner identity does not match its endpoint");
+  } else {
+    // Owners started before portable integration already expose this read-only action.
+    if (response.status !== 404) throw new Error("Agent Fabric owner health check failed");
+    const legacy = await request("run-status", { runId: "fabric-owner-health-probe" });
+    const value = await legacy.json() as { code?: string };
+    if (legacy.status !== 400 || value.code !== "AF_RUN_NOT_FOUND") throw new Error("Agent Fabric owner cannot be authenticated; inspect it before restarting");
+  }
+  return { repositoryRoot: endpoint.repositoryRoot, pid: endpoint.pid, port: endpoint.port };
+}
+
 /** One PGlite owner shared by CLI clients and the read/proposal MCP adapter. */
 export async function serveLocalTasks(
   repositoryRoot: string,
@@ -176,6 +199,10 @@ export async function serveLocalTasks(
       response.setHeader("Cache-Control", "no-store");
       if (!published || !authorized(request, published)) {
         response.writeHead(403).end(JSON.stringify({ ok: false, error: "unauthorized" }));
+        return;
+      }
+      if (request.method === "POST" && request.url === "/v1/owner-health") {
+        response.writeHead(200).end(JSON.stringify({ ok: true, repositoryRoot: root, pid: process.pid }));
         return;
       }
       const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction | AttachedTaskAction | ManagedRunAction;
@@ -306,6 +333,7 @@ export async function requestAttachedTask(repositoryRoot: string, action: Attach
 export async function requestManagedRun(repositoryRoot: string, action: ManagedRunAction,
   body: Record<string, unknown>): Promise<unknown> {
   if (!isManagedRunAction(action)) throw new AgentFabricError("AF_INVALID_STATE", "Unknown managed run action");
+  if (action === "run-start") body = await applyFabricProfile(repositoryRoot, body);
   const endpoint = readEndpoint(realpathSync(repositoryRoot));
   if (!endpoint) throw new AgentFabricError("AF_INVALID_STATE", "Agent Fabric local owner is not running; start forge fabric serve");
   let response: Response;

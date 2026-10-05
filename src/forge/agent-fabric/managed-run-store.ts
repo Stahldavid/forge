@@ -13,6 +13,16 @@ interface RecordFile { state: ManagedRunState; receipts: Receipt[] }
 export interface ManagedTransactionOptions { requestId?: string; fingerprint?: string; expectedVersion?: number }
 const MAX_RECORD = 32 * 1024 * 1024;
 const missing = (error: unknown) => (error as NodeJS.ErrnoException).code === "ENOENT";
+async function readLock(path: string): Promise<string> {
+  const deadline = Date.now() + 1000;
+  for (;;) {
+    try { return await readFile(path, "utf8"); }
+    catch (error) {
+      if (!["EPERM", "EACCES", "EBUSY"].includes((error as NodeJS.ErrnoException).code ?? "") || Date.now() >= deadline) throw error;
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+  }
+}
 const statuses = ["preparing", "running", "paused", "blocked", "canceling", "canceled", "publishing", "completed", "failed"];
 /** Windows readers/AV may briefly hold the destination; never unlink its atomic predecessor. */
 async function replaceRecord(temp: string, destination: string): Promise<void> {
@@ -95,10 +105,10 @@ export class ManagedRunStore {
     try {
       while (true) {
         await assertAttachedSafePath(this.root, lock);
-        try { await link(candidate, lock); return async () => { await assertAttachedSafePath(this.root, lock); if (await readFile(lock, "utf8") !== ownerBytes) managedFail("AF_RUN_LOCK", "Lock ownership changed"); await unlink(lock); }; }
-        catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+        try { await link(candidate, lock); return async () => { await assertAttachedSafePath(this.root, lock); if (await readLock(lock) !== ownerBytes) managedFail("AF_RUN_LOCK", "Lock ownership changed"); await unlink(lock); }; }
+        catch (error) { if (!["EEXIST", "EPERM", "EACCES", "EBUSY"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error; }
         try {
-          assert((await lstat(lock)).isFile(), "Unsupported lock"); const raw = await readFile(lock, "utf8"), previous = JSON.parse(raw);
+          assert((await lstat(lock)).isFile(), "Unsupported lock"); const raw = await readLock(lock), previous = JSON.parse(raw);
           if (Number.isSafeInteger(previous.pid) && previous.pid > 0 && !alive(previous.pid)) {
             await assertAttachedSafePath(this.root, claim); reclaimDeadGuard(claim); let claimed = false;
             try { await link(candidate, claim); claimed = true; if (readFileSync(lock, "utf8") === raw) unlinkSync(lock); }

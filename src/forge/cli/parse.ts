@@ -1,4 +1,5 @@
-import { isManagedRunAction, type ManagedRunAction, isAttachedTaskAction, isAttachedTaskRead, type AttachedTaskAction } from "../agent-fabric/local-task-server.ts";
+import type { FabricCliOptions } from "./fabric.ts";
+import { isManagedRunAction, isAttachedTaskAction, isAttachedTaskRead } from "../agent-fabric/local-task-server.ts";
 import type { AddOptions, InspectTarget, VerifyOptions } from "../compiler/types/cli.ts";
 import type { SandboxBackend } from "../compiler/types/runtime.ts";
 import type { DbAdapterKind } from "../runtime/db/adapter.ts";
@@ -278,7 +279,7 @@ export type ForgeCommand =
   | { kind: "bench"; options: BenchCommandOptions }
   | { kind: "cair"; options: CairCommandOptions }
   | { kind: "agent"; options: AgentCommandOptions }
-  | { kind: "fabric"; subcommand: ManagedRunAction | AttachedTaskAction | "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "adaptive-propose" | "adaptive-review" | "adaptive-run" | "adaptive-status" | "change-propose" | "change-status" | "change-review" | "change-evidence"; workspaceRoot: string; json: boolean; file?: string; taskId?: string; runId?: string; channel?: "canary" | "stable" }
+  | ({ kind: "fabric" } & FabricCliOptions)
   | ({ kind: "evolution" } & EvolutionCliOptions)
   | { kind: "mcp"; subcommand: "serve"; workspaceRoot: string }
   | { kind: "review"; options: ReviewCommandOptions }
@@ -1274,12 +1275,16 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     case "fabric": {
       const subcommand = rest[0];
-      if (!isManagedRunAction(subcommand) && !isAttachedTaskAction(subcommand) && subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "cancel" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "recover-verification" && subcommand !== "review-result" && subcommand !== "serve" && subcommand !== "memory-add" && subcommand !== "memory-list" && subcommand !== "memory-delete" && subcommand !== "adaptive-propose" && subcommand !== "adaptive-review" && subcommand !== "adaptive-run" && subcommand !== "adaptive-status" && subcommand !== "change-propose" && subcommand !== "change-status" && subcommand !== "change-review" && subcommand !== "change-evidence") {
+      if (!isManagedRunAction(subcommand) && !isAttachedTaskAction(subcommand) && subcommand !== "install-skill" && subcommand !== "doctor" && subcommand !== "ensure-owner" && subcommand !== "project-register" && subcommand !== "project-list" && subcommand !== "capabilities" && subcommand !== "propose" && subcommand !== "status" && subcommand !== "evidence" && subcommand !== "review" && subcommand !== "run" && subcommand !== "cancel" && subcommand !== "reconcile" && subcommand !== "verify" && subcommand !== "recover-verification" && subcommand !== "review-result" && subcommand !== "serve" && subcommand !== "memory-add" && subcommand !== "memory-list" && subcommand !== "memory-delete" && subcommand !== "adaptive-propose" && subcommand !== "adaptive-review" && subcommand !== "adaptive-run" && subcommand !== "adaptive-status" && subcommand !== "change-propose" && subcommand !== "change-status" && subcommand !== "change-review" && subcommand !== "change-evidence") {
         errors.push("forge fabric requires a supported task or memory subcommand");
         return { command: null, workspaceRoot, errors };
       }
       const file = parseOptionValue(argv, "--file");
       const runId = parseOptionValue(argv, "--run-id");
+      const projectId = parseOptionValue(argv, "--project-id");
+      if (projectId && subcommand !== "project-register") errors.push("--project-id is only supported by fabric project-register; MCP routes by registered projectId");
+      if (["install-skill", "doctor", "ensure-owner", "project-register", "project-list"].includes(subcommand) && (file || parseOptionValue(argv, "--task-id"))) errors.push("Project lifecycle commands do not accept task request files or task ids");
+      if (parseFlag(argv, "--dry-run") && subcommand !== "install-skill") errors.push("fabric --dry-run is only supported by install-skill");
       const adaptiveChannel = parseOptionValue(argv, "--channel");
       if (adaptiveChannel && (subcommand !== "adaptive-propose" || (adaptiveChannel !== "canary" && adaptiveChannel !== "stable"))) errors.push("--channel requires adaptive-propose and canary or stable");
       const isChangeReadOrReview = subcommand === "change-status" || subcommand === "change-review" || subcommand === "change-evidence";
@@ -1314,7 +1319,8 @@ export function parseCli(argv: string[]): ParsedCli {
       return {
         command: errors.length === 0 ? {
           kind: "fabric", subcommand, workspaceRoot, json: parseFlag(argv, "--json"),
-          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}), ...(runId ? { runId } : {}),
+          ...(file ? { file } : {}), ...(taskId ? { taskId } : {}), ...(runId ? { runId } : {}), ...(projectId ? { projectId } : {}),
+          ...(subcommand === "install-skill" ? { dryRun: parseFlag(argv, "--dry-run") } : {}),
           ...(adaptiveChannel === "canary" || adaptiveChannel === "stable" ? { channel: adaptiveChannel } : {}),
         } : null,
         workspaceRoot,
@@ -3363,6 +3369,7 @@ export function hasUnknownOption(argv: string[]): string | null {
     "--file",
     "--task-id",
     "--run-id",
+    "--project-id",
     "--manifest",
     "--channel",
     "--telemetry",
@@ -3523,6 +3530,7 @@ export function hasUnknownOption(argv: string[]): string | null {
         arg === "--file" ||
         arg === "--task-id" ||
         arg === "--run-id" ||
+        arg === "--project-id" ||
         arg === "--manifest" ||
         arg === "--channel" ||
         arg === "--write-report" ||

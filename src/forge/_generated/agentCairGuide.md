@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.67 input=cad72fb61cedf1a3702763e37d3d5706a149a8719284ec9090a960aa3a4e1e61 content=0a26d1c5851c6223a7730cef1e94266b03560225d393d19355fd70e12bd90c84
+// @forge-generated generator=0.1.0-alpha.67 input=eb277051b18f4b495658e3c98c326be25c673d51ed84f4988587e46c8969587d content=0a26d1c5851c6223a7730cef1e94266b03560225d393d19355fd70e12bd90c84
 # CAIR Agent Guide
 
 Project: forgeos
