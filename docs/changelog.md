@@ -4,6 +4,23 @@ Release history for the `forgeos` npm package.
 
 The canonical source file in the repository is `CHANGELOG.md`.
 
+## Unreleased
+
+- Explicit repository runtime plans, isolated-copy command execution and bounded Nuxt,
+  Spring, Docker and HTTP artifact context, with current-source/manifest/scenario binding
+  and expiration. CLI and MCP share execution opt-in; prepared Fabric workers consume
+  matching saved observations without starting exporters.
+
+- Lazy large-map hydration, compatible streaming fingerprints, automatic retained
+  cache cleanup and source-bound paired agent benchmark planning/reporting. The
+  benchmark evaluates supplied evidence without implicit model/check execution.
+
+- Deterministic scoped repository retrieval, precise case-level test associations,
+  static Nuxt/HTTP resolution, declared client mappings and informative check requirements.
+- Validated partitions for large maps and root-neutral facts, prepared-clone parse
+  reuse and the read-only `repository quality --cases` benchmark. Static quality remains
+  partial; suggested checks and models are not executed by analysis.
+
 ## 0.1.0-alpha.69
 
 - Repository manifests and static maps for existing TypeScript/JavaScript, Vue/Nuxt,

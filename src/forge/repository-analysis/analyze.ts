@@ -7,12 +7,16 @@ import { validateRepositoryManifest } from "../repository-manifest/index.ts";
 import { componentRootPath, hashRepositoryFile, normalizeRepositoryPath, repositoryGlobMatches, scanRepository } from "./scanner.ts";
 import { REPOSITORY_ANALYZER_VERSION } from "./types.ts";
 import type { AdapterResult, AnalysisSource, RepositorySnapshot } from "./types.ts";
-import { emptyResult, evidence, httpPathMatches, makeEdge, makeNode, nodeId } from "./adapters/common.ts";
+import { emptyResult, evidence, makeEdge, makeNode, nodeId } from "./adapters/common.ts";
 import { analyzeTypeScript } from "./adapters/typescript.ts";
 import { analyzeVue } from "./adapters/vue.ts";
 import { analyzeJava, analyzeJavaBuild } from "./adapters/java.ts";
 import { analyzeComposeScenario, analyzeDockerfile, parseCompose } from "./adapters/docker.ts";
 import { repositoryScenarioHash, repositorySnapshotId, sameRepositoryPath } from "./identity.ts";
+import { connectRepositoryTests } from "./test-associations.ts";
+import { readStoredRepositoryFacts, writeStoredRepositoryFacts, writeStoredRepositorySnapshot } from "./storage.ts";
+import { createNuxtImportResolver, enrichNuxtRepository } from "./nuxt-resolution.ts";
+import { enrichHttpRepository } from "./http-resolution.ts";
 
 function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical);
@@ -24,9 +28,26 @@ export function repositoryManifestHash(manifest: RepositoryManifest): string {
   return hashRepositoryFile(JSON.stringify(canonical(manifest)));
 }
 
-interface CachedFacts { schemaVersion: 1; version: string; manifestHash: string; files: Record<string, { hash: string; resultHash: string; result: AdapterResult }> }
+interface CachedFacts { schemaVersion: 1; version: string; manifestHash: string; files: Record<string, { hash: string; adapter: string; component: string; resultHash: string; result: AdapterResult }> }
 
-export interface AnalyzeRepositoryOptions { write?: boolean; cacheRoot?: string }
+export interface AnalyzeRepositoryOptions { write?: boolean; cacheRoot?: string; factsCacheRoot?: string; partitionCache?: boolean; cacheCleanup?: boolean }
+
+// Keep identical published generations stable. Apart from avoiding needless
+// writes, this lets conservative cache-retention windows mature on warm runs.
+function unchangedCacheHeader(current: string, temporary: string, snapshot: boolean): boolean {
+  try {
+    const stat = lstatSync(current);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 128 * 1024 * 1024) return false;
+    const previous = readFileSync(current, "utf8"), next = readFileSync(temporary, "utf8");
+    if (!snapshot) return previous === next;
+    const a = JSON.parse(previous), b = JSON.parse(next);
+    const previousCreatedAt = a.kind === "repository-snapshot-index" ? a.header?.createdAt : a.createdAt;
+    if (typeof previousCreatedAt !== "string" || previousCreatedAt.length > 64) return false;
+    if (a.kind === "repository-snapshot-index") delete a.header.createdAt; else delete a.createdAt;
+    if (b.kind === "repository-snapshot-index") delete b.header.createdAt; else delete b.createdAt;
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch { return false; }
+}
 
 function analyzePackage(source: AnalysisSource): AdapterResult {
   const result = emptyResult();
@@ -202,6 +223,25 @@ function connectFacts(snapshot: RepositorySnapshot, sources: AnalysisSource[]): 
   const fileNodes = new Map(snapshot.nodes.filter((node) => node.kind === "file").map((node) => [node.file!, node]));
   const importTargets = new Map<string, string>();
   const configurations = new Map<string, CompilerConfiguration | undefined>();
+  const nuxtImport = createNuxtImportResolver(sources, snapshot.manifest);
+  // Resolve candidates through indexes: repeatedly scanning the full graph for
+  // every Java import/call makes real multi-module repositories quadratic.
+  const symbolsByQualifiedName = new Map<string, RepositorySnapshot["nodes"]>();
+  const symbolsByFile = new Map<string, RepositorySnapshot["nodes"]>();
+  const methodsByFileAndName = new Map<string, RepositorySnapshot["nodes"]>();
+  const uiByFile = new Map<string, RepositorySnapshot["nodes"][number]>();
+  const nodesByFile = new Map<string, RepositorySnapshot["nodes"]>();
+  const renderEdgesByTarget = new Map<string, RepositorySnapshot["edges"]>();
+  const append = <T>(index: Map<string, T[]>, key: string, value: T) => { const values = index.get(key); if (values) values.push(value); else index.set(key, [value]); };
+  for (const node of snapshot.nodes) {
+    if (node.file) append(nodesByFile, node.file, node);
+    if (node.kind === "ui-component" && node.file && !uiByFile.has(node.file)) uiByFile.set(node.file, node);
+    if (node.kind !== "symbol") continue;
+    if (typeof node.metadata.qualifiedName === "string") append(symbolsByQualifiedName, node.metadata.qualifiedName, node);
+    if (node.file) append(symbolsByFile, node.file, node);
+    if (node.metadata.symbolKind === "method") append(methodsByFileAndName, `${node.file}\0${node.name}`, node);
+  }
+  for (const edge of snapshot.edges) if (["renders", "routes-to"].includes(edge.kind)) append(renderEdgesByTarget, edge.to, edge);
   for (const source of sources.filter((source) => source.adapter === "configuration")) {
     const raw = ts.parseConfigFileTextToJson(source.path, source.text).config as StaticCompilerConfig | undefined;
     if (typeof raw?.extends === "string" && raw.extends.startsWith(".") && !localConfigurationPath(source, raw.extends, byPath)) snapshot.coverage.diagnostics.push({ code: "REPOSITORY_CONFIG_EXTENDS_UNRESOLVED", severity: "warning", file: source.path, message: "Local compiler base configuration is missing, excluded or outside the scanned repository" });
@@ -209,52 +249,51 @@ function connectFacts(snapshot: RepositorySnapshot, sources: AnalysisSource[]): 
   for (const imported of snapshot.nodes.filter((node) => node.kind === "import")) {
     const source = byPath.get(imported.file!)!;
     if (!configurations.has(source.path)) configurations.set(source.path, selectedCompilerConfiguration(source, byPath));
-    const path = resolveImport(String(imported.metadata.specifier), source, byPath, configurations.get(source.path));
+    const compilerPath = resolveImport(String(imported.metadata.specifier), source, byPath, configurations.get(source.path));
+    const nuxt = compilerPath ? undefined : nuxtImport(source, String(imported.metadata.specifier));
+    const path = compilerPath ?? nuxt?.file;
     if (path) {
       importTargets.set(imported.id, path);
       imported.metadata.resolvedFile = path;
+      imported.metadata.resolutionProvider = compilerPath ? "static-compiler-or-relative" : "static-component-alias";
       snapshot.edges.push(makeEdge(fileNodes.get(source.path)!, fileNodes.get(path)!, "imports", evidence(source, "resolved", "complete")));
-      for (const edge of snapshot.edges.filter((edge) => edge.to === imported.id && ["renders", "routes-to"].includes(edge.kind))) {
-        const ui = snapshot.nodes.find((node) => node.file === path && node.kind === "ui-component");
+      for (const edge of renderEdgesByTarget.get(imported.id) ?? []) {
+        const ui = uiByFile.get(path);
         if (ui) snapshot.edges.push(makeEdge(edge.from, ui, edge.kind, evidence(source, "resolved", "complete")));
       }
     } else {
       imported.evidence.resolution = "unresolved";
+      imported.metadata.resolutionClassification = nuxt?.classification ?? "unresolved";
+      if (nuxt?.alias) imported.metadata.resolutionAlias = nuxt.alias;
       snapshot.coverage.diagnostics.push({ code: "REPOSITORY_IMPORT_UNRESOLVED", severity: "info", file: source.path, message: `Import '${imported.name}' is external, excluded or unresolved` });
     }
   }
   for (const reference of snapshot.nodes.filter((node) => node.kind === "import-reference")) {
     const path = importTargets.get(String(reference.metadata.importId));
     if (!path) continue;
-    const targets = snapshot.nodes.filter((node) => node.file === path && node.kind === "symbol" && (reference.metadata.imported === "default" ? node.metadata.defaultExport : node.name === reference.metadata.imported && node.metadata.exported));
+    const targets = (symbolsByFile.get(path) ?? []).filter((node) => reference.metadata.imported === "default" ? node.metadata.defaultExport : node.name === reference.metadata.imported && node.metadata.exported);
     if (targets.length === 1) snapshot.edges.push(makeEdge(String(reference.metadata.owner ?? fileNodes.get(reference.file!)!.id), targets[0], reference.metadata.call ? "calls" : "references", evidence(byPath.get(reference.file!)!, "resolved", "complete"), { binding: "static-import", offset: reference.location?.start }));
   }
-  // Tests import implementation: static association, never a claim of executed coverage.
-  for (const source of sources.filter((source) => /(?:^|\/)(?:tests?|__tests__)\/|\.(?:test|spec)\.[jt]sx?$/.test(source.path))) {
-    let tests = snapshot.nodes.filter((node) => node.file === source.path && node.kind === "test");
-    if (!tests.length) {
-      const test = makeNode(source, "test", basename(source.path), 0, 0, { observedCoverage: false, convention: true }); test.evidence = evidence(source, "inferred"); snapshot.nodes.push(test); tests = [test];
-    }
-    for (const imported of snapshot.nodes.filter((node) => node.file === source.path && node.kind === "import")) {
-      const target = importTargets.get(imported.id); if (!target) continue;
-      for (const test of tests) snapshot.edges.push(makeEdge(test, fileNodes.get(target)!, "tests", evidence(source, "syntactic"), { observedCoverage: false, association: "static-import" }));
-    }
-  }
+  connectRepositoryTests(snapshot, sources, importTargets);
   // Java imports bind named types; method calls remain syntactic candidates, not semantic references.
   for (const imported of snapshot.nodes.filter((node) => node.kind === "java-import")) {
-    const targets = snapshot.nodes.filter((node) => node.kind === "symbol" && node.metadata.qualifiedName === imported.metadata.qualifiedName);
+    const targets = symbolsByQualifiedName.get(String(imported.metadata.qualifiedName)) ?? [];
     if (targets.length === 1) snapshot.edges.push(makeEdge(fileNodes.get(imported.file!)!, targets[0], "imports", evidence(byPath.get(imported.file!)!, "syntactic", "partial")));
   }
   for (const call of snapshot.nodes.filter((node) => node.kind === "java-call")) {
-    const targets = snapshot.nodes.filter((node) => node.kind === "symbol" && node.metadata.symbolKind === "method" && node.name === call.name && node.file === call.file);
+    const targets = methodsByFileAndName.get(`${call.file}\0${call.name}`) ?? [];
     if (targets.length === 1 && !call.metadata.qualifier) snapshot.edges.push(makeEdge(String(call.metadata.owner), targets[0], "calls", evidence(byPath.get(call.file!)!, "syntactic", "partial"), { binding: "same-file-candidate", semantic: false }));
   }
-  for (const call of snapshot.nodes.filter((node) => node.kind === "http-call" && typeof node.metadata.path === "string")) {
-    const candidates = snapshot.nodes.filter((node) => node.kind === "endpoint" && [call.metadata.method, "ANY"].includes(String(node.metadata.method)) && httpPathMatches(String(node.metadata.path), String(call.metadata.path)));
-    // Absolute URL host/proxy routing not resolved: cross-technology route match is only a candidate.
-    if (candidates.length === 1 && !call.metadata.origin) snapshot.edges.push(makeEdge(call, candidates[0], "calls", evidence(byPath.get(call.file!)!, "inferred", "partial"), { association: "unique-method-path", runtimeRoutingVerified: false }));
-    else if (candidates.length > 1) snapshot.coverage.diagnostics.push({ code: "REPOSITORY_HTTP_AMBIGUOUS", severity: "warning", file: call.file, message: `${call.name} matches ${candidates.length} endpoints; no target selected` });
-  }
+  const nuxt = enrichNuxtRepository(snapshot, sources);
+  const resolvedUi = new Set(nuxt.nodes.filter(node => node.kind === "ui-reference").map(node => `${node.file}\0${node.name}`));
+  snapshot.coverage.diagnostics = snapshot.coverage.diagnostics.filter(item => item.code !== "REPOSITORY_VUE_COMPONENT_UNRESOLVED"
+    || ![...resolvedUi].some(key => { const [file, name] = key.split("\0"); return item.file === file && item.message.startsWith(`Component '${name}'`); }));
+  snapshot.nodes.push(...nuxt.nodes); snapshot.edges.push(...nuxt.edges); snapshot.coverage.diagnostics.push(...nuxt.diagnostics); snapshot.coverage.limitations.push(...nuxt.limitations);
+  // Enrichment updates share IDs with parsed references; consumers see the current
+  // resolution while immutable cached per-file facts stay unchanged.
+  snapshot.nodes = [...new Map(snapshot.nodes.map(node => [node.id, node])).values()];
+  const http = enrichHttpRepository(snapshot, sources);
+  snapshot.nodes.push(...http.nodes); snapshot.edges.push(...http.edges); snapshot.coverage.diagnostics.push(...http.diagnostics); snapshot.coverage.limitations.push(...http.limitations);
   for (const service of snapshot.nodes.filter((node) => node.kind === "container-service" && node.metadata.build && typeof node.metadata.build === "object")) {
     const build = service.metadata.build as { context?: unknown; dockerfile?: unknown };
     if (typeof build.context !== "string" || /\$\{|^(?:https?:|git:)/.test(build.context)) continue;
@@ -289,8 +328,8 @@ function safeCacheDirectory(root: string, cacheRoot?: string): string {
 function readCache(path: string): CachedFacts | undefined {
   try {
     const stat = lstatSync(path);
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 32 * 1024 * 1024) return undefined;
-    const value: unknown = JSON.parse(readFileSync(path, "utf8"));
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 128 * 1024 * 1024) return undefined;
+    const value: unknown = readStoredRepositoryFacts(path);
     if (!value || typeof value !== "object") return undefined;
     const cache = value as CachedFacts;
     return cache.schemaVersion === 1 && cache.version === REPOSITORY_ANALYZER_VERSION && cache.files && typeof cache.files === "object" ? cache : undefined;
@@ -298,7 +337,7 @@ function readCache(path: string): CachedFacts | undefined {
 }
 
 function validCachedFacts(cached: CachedFacts["files"][string] | undefined, source: AnalysisSource): cached is CachedFacts["files"][string] {
-  if (!cached || cached.hash !== source.hash || typeof cached.resultHash !== "string" || !cached.result || !Array.isArray(cached.result.nodes) || !Array.isArray(cached.result.edges) || !Array.isArray(cached.result.diagnostics) || !Array.isArray(cached.result.limitations)) return false;
+  if (!cached || cached.hash !== source.hash || cached.adapter !== source.adapter || cached.component !== source.component || typeof cached.resultHash !== "string" || !cached.result || !Array.isArray(cached.result.nodes) || !Array.isArray(cached.result.edges) || !Array.isArray(cached.result.diagnostics) || !Array.isArray(cached.result.limitations)) return false;
   if (hashRepositoryFile(JSON.stringify(canonical(cached.result))) !== cached.resultHash) return false;
   const ids = new Set<string>([nodeId("file", source.path, source.path)]);
   for (const node of cached.result.nodes) {
@@ -320,21 +359,25 @@ export async function analyzeRepository(rootInput: string, manifest: RepositoryM
   const cacheRoot = safeCacheDirectory(root, options.cacheRoot);
   const manifestHash = repositoryManifestHash(manifest);
   const scenarioHash = repositoryScenarioHash(manifest);
-  const previous = readCache(resolve(cacheRoot, "facts.json"));
-  const cache: CachedFacts = { schemaVersion: 1, version: REPOSITORY_ANALYZER_VERSION, manifestHash, files: {} };
+  const previous = readCache(resolve(options.factsCacheRoot ? safeCacheDirectory(root, options.factsCacheRoot) : cacheRoot, "facts.json"));
+  const cache: CachedFacts = { schemaVersion: 1, version: REPOSITORY_ANALYZER_VERSION, manifestHash, files: Object.create(null) };
   const snapshot: RepositorySnapshot = { schemaVersion: 1, provider: "repository", snapshotId: "", root, manifestHash, scenarioHash, createdAt: new Date().toISOString(), files: {}, nodes: [], edges: [], manifest, coverage: { found: scan.sources.length, analyzed: 0, ignored: scan.ignored.length, unsupported: 0, errors: 0, reused: 0, limitations: [], diagnostics: [...scan.diagnostics], ignoredPaths: scan.ignored } };
   for (const component of manifest.components) snapshot.nodes.push({ id: nodeId("component", root, component.id), kind: "component", name: component.id, component: component.id, evidence: { assurance: "declared", resolution: "complete", adapter: "manifest", version: REPOSITORY_ANALYZER_VERSION }, metadata: { root: component.root, adapters: component.adapters } });
   for (const source of scan.sources) {
     const file = makeNode(source, "file", source.path, 0, 0, { adapter: source.adapter }); file.evidence = evidence(source, "resolved", "complete"); snapshot.nodes.push(file);
     snapshot.edges.push(makeEdge(nodeId("component", root, source.component), file, "contains", evidence(source, "declared", "complete")));
     let facts: AdapterResult;
-    const cached = previous?.manifestHash === manifestHash ? previous.files[source.path] : undefined;
-    if (validCachedFacts(cached, source)) { facts = structuredClone(cached.result); snapshot.coverage.reused++; }
+    // Per-file facts are content/path/adapter/component bound; cross-file resolution
+    // is always rebuilt for this clone and its current manifest/scenario.
+    let cached: CachedFacts["files"][string] | undefined;
+    try { cached = previous?.files[source.path]; } catch { /* Corrupt/missing partitions are reparsed from current source. */ }
+    const reusable = validCachedFacts(cached, source);
+    if (reusable) { facts = cached!.result; snapshot.coverage.reused++; }
     else {
       try { facts = parseSource(source); }
       catch { facts = emptyResult(); facts.diagnostics.push({ code: "REPOSITORY_ADAPTER_ERROR", severity: "error", file: source.path, message: `Static ${source.adapter} analyzer failed; source omitted from facts` }); }
     }
-    cache.files[source.path] = { hash: source.hash, resultHash: hashRepositoryFile(JSON.stringify(canonical(facts))), result: facts };
+    cache.files[source.path] = { hash: source.hash, adapter: source.adapter, component: source.component, resultHash: reusable ? cached!.resultHash : hashRepositoryFile(JSON.stringify(canonical(facts))), result: facts };
     snapshot.nodes.push(...structuredClone(facts.nodes)); snapshot.edges.push(...structuredClone(facts.edges)); snapshot.coverage.diagnostics.push(...facts.diagnostics); snapshot.coverage.limitations.push(...facts.limitations);
     const status = source.adapter === "unsupported" ? "unsupported" : facts.diagnostics.some((diagnostic) => diagnostic.severity === "error") ? "error" : "analyzed";
     snapshot.files[source.path] = { hash: source.hash, size: Buffer.byteLength(source.text), component: source.component, adapter: source.adapter, status };
@@ -372,12 +415,19 @@ export async function analyzeRepository(rootInput: string, manifest: RepositoryM
       writeFileSync(lockFd, JSON.stringify({ pid: process.pid, token }));
       const finalScan = scanRepository(root, manifest);
       if (!sameInventory(scan.sources, finalScan.sources)) throw new Error("Repository changed before snapshot publication; retry analysis");
-      writeFileSync(temporaryFacts, JSON.stringify(cache)); writeFileSync(temporarySnapshot, JSON.stringify(snapshot, null, 2));
-      renameSync(temporaryFacts, resolve(cacheRoot, "facts.json"));
-      renameSync(temporarySnapshot, resolve(cacheRoot, "snapshot.json"));
+      // Large polyglot graphs fit the reader's bounded cache budget in compact
+      // JSON; pretty-printing can otherwise make a valid snapshot unreadable.
+      writeStoredRepositoryFacts(cache, cacheRoot, temporaryFacts, { partition: options.partitionCache });
+      writeStoredRepositorySnapshot(snapshot, cacheRoot, temporarySnapshot, { partition: options.partitionCache });
+      if (!unchangedCacheHeader(resolve(cacheRoot, "facts.json"), temporaryFacts, false)) renameSync(temporaryFacts, resolve(cacheRoot, "facts.json"));
+      if (!unchangedCacheHeader(resolve(cacheRoot, "snapshot.json"), temporarySnapshot, true)) renameSync(temporarySnapshot, resolve(cacheRoot, "snapshot.json"));
     } finally {
       const { closeSync } = await import("node:fs"); closeSync(lockFd);
       for (const path of [temporaryFacts, temporarySnapshot, lock]) if (existsSync(path)) unlinkSync(path);
+    }
+    if (options.cacheCleanup !== false) {
+      try { const { collectRepositoryCache } = await import("./cache-gc.ts"); collectRepositoryCache(root, { cacheRoot, apply: true }); }
+      catch { snapshot.coverage.diagnostics.push({ code: "REPOSITORY_CACHE_CLEANUP_DEFERRED", severity: "warning", message: "Cache cleanup was deferred; published analysis remains available. Inspect repository cache-gc for details." }); }
     }
   }
   return snapshot;

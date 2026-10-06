@@ -1,5 +1,15 @@
 # forgeos
 
+## Unreleased
+
+- Add opt-in repository runtime observation with independent temporary source copies, bounded Nuxt/Spring/Docker/HTTP artifact collectors, input-bound expiring reports and shared CLI/MCP plan/observe/context operations. Fabric consumes only compatible saved observations, without implicit project execution.
+- Recover once from a premature Bun/Windows process-identity timeout while retaining unknown identity on repeated failures; protect existing lock ownership semantics.
+
+- Complete large-map query storage with lazy hydration and streaming fingerprints; preserve legacy caches, cap resident partitions and avoid relation-ranking read amplification. Maintain retained orphan chunks automatically and expose cache-gc previews. Add source-bound paired agent benchmark planning/reporting without implicit model execution.
+
+- Improve repository task context with deterministic scoped retrieval, case-level test associations, local Nuxt resolution and explicit HTTP client mappings. Expose static quality and informative check requirements without executing project commands.
+- Store large maps and root-neutral parse facts in validated partitions, reuse matching facts in prepared Fabric clones, and add a read-only `repository quality --cases` benchmark for reviewed expectations.
+
 ## 0.1.0-alpha.69
 
 ### Patch Changes

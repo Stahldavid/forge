@@ -161,9 +161,12 @@ export function discoverRepository(root: string): RepositoryManifest {
   if (rootAdapters.size || scan.sources.some((source) => ![...groups.keys()].some((directory) => directory !== "." && source.path.startsWith(`${directory}/`)))) groups.set(".", rootAdapters.size ? rootAdapters : allAdapters);
   const used = new Set<string>();
   const components = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([path, adapters]) => {
-    const base = path === "." ? "repository" : path.replace(/[^a-zA-Z0-9_-]/g, "-");
+    const readable = path === "." ? "repository" : path.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/^[^a-zA-Z0-9]+/, "") || "component";
+    // Hidden package roots (e.g. .github/actions) and deeply nested packages must
+    // still produce IDs accepted by the manifest's 80-character identifier rule.
+    const base = readable.length <= 80 ? readable : `${readable.slice(0, 67)}-${hashRepositoryFile(path).slice(0, 12)}`;
     let id = base; let suffix = 2;
-    while (used.has(id)) id = `${base}-${suffix++}`;
+    while (used.has(id)) { const ending = `-${suffix++}`; id = `${base.slice(0, 80 - ending.length)}${ending}`; }
     used.add(id);
     return { id, root: path, adapters: adapters.size ? [...adapters].sort() : ["typescript"] };
   });

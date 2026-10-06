@@ -1,6 +1,13 @@
 import { readRepositoryManifest } from "../repository-manifest/index.ts";
 import { analyzeRepository } from "../repository-analysis/analyze.ts";
 import { repositoryContext } from "../repository-analysis/context.ts";
+import { readRepositorySnapshot } from "../repository-analysis/context.ts";
+import { existsSync } from "node:fs";
+import { readRuntimeObservation, runtimeSourceDigest, selectRuntimeObservation } from "../repository-analysis/runtime-observation.ts";
+import { join } from "node:path";
+import { selectRepositoryContext } from "../repository-analysis/retrieval.ts";
+import { selectRepositoryChecks } from "../repository-analysis/check-selection.ts";
+import { repositoryQualitySummary, type RepositoryQualitySummary } from "../repository-analysis/quality.ts";
 
 export interface FabricRepositoryContextMetadata {
   provider: "repository";
@@ -10,6 +17,8 @@ export interface FabricRepositoryContextMetadata {
   cloneRoot: string;
   snapshotId?: string;
   diagnostics: string[];
+  quality?: RepositoryQualitySummary;
+  runtime?: { reportId: string; environmentId: string; phase: "source-observed-matching-input" };
 }
 
 /** Optional static maps, taken from the clone after upstream composition and preparation.
@@ -27,45 +36,47 @@ export async function prepareFabricRepositoryContext(sourceRoot: string, cloneRo
   const metadata: FabricRepositoryContextMetadata = { provider: "repository", phase: "prepared-input", status: "unavailable", sourceRoot, cloneRoot, diagnostics: diagnostics.length ? ["Repository manifest missing, invalid or unsafe"] : [] };
   if (!manifest) return { metadata, prompt: "Repository maps unavailable: invalid manifest. Inspect the code directly; no analysis result is claimed." };
   try {
-    const snapshot = await analyzeRepository(cloneRoot, manifest, { write: false });
+    const snapshot = await analyzeRepository(cloneRoot, manifest, { write: false, factsCacheRoot: join(sourceRoot, ".forge", "repository") });
     // Executor prompts are natural-language instructions, not CAIR query programs.
     const context = await repositoryContext(cloneRoot, snapshot, `locate ${query.slice(0, 1000)}`, { snapshotId: snapshot.snapshotId, maxChars: 12000, limit: 20, includeSource: false });
     metadata.snapshotId = snapshot.snapshotId;
     metadata.diagnostics = context.diagnostics.slice(0, 20).map(item => item.slice(0, 512));
     if (!context.ok) return { metadata, prompt: "Repository maps unavailable or stale. Inspect current clone files directly; do not reuse source-checkout analysis." };
-    metadata.status = "ready";
-    const checks = (manifest.checks ?? []).slice(0, 20).map(check => ({ id: check.id, component: check.component }));
-    const scoped = snapshot.nodes.filter(node => node.file && scope.some(path => node.file === path || node.file!.startsWith(`${path}/`)));
-    const matches = new Set(context.items.map(item => item.id));
-    const candidates = scoped.length ? scoped : snapshot.nodes.filter(node => ["component", "package", "endpoint", "page"].includes(node.kind));
-    const rank = (node: typeof snapshot.nodes[number]) => matches.has(node.id) ? 0 : ["symbol", "endpoint", "ui-component", "page", "test"].includes(node.kind) ? 1 : node.kind === "file" ? 3 : 2;
-    const selected = [...candidates].sort((a, b) => rank(a) - rank(b) || a.id.localeCompare(b.id)).slice(0, 20);
-    const ids = new Set(selected.map(node => node.id));
-    const connected = snapshot.edges.filter(edge => ids.has(edge.from) || ids.has(edge.to));
-    const nodeById = new Map(snapshot.nodes.map(node => [node.id, node]));
-    const nodes = [...selected];
-    const edges: typeof snapshot.edges = [];
-    for (const edge of connected) {
-      const additions = [...new Set([edge.from, edge.to])].filter(id => !ids.has(id));
-      if (edges.length >= 20 || nodes.length + additions.length > 30 || additions.some(id => !nodeById.has(id))) continue;
-      for (const id of additions) { nodes.push(nodeById.get(id)!); ids.add(id); }
-      edges.push(edge);
+    metadata.quality = repositoryQualitySummary(snapshot);
+    const selection = selectRepositoryContext(snapshot, query, { writeScope: scope, maxChars: 10000, maxNodes: 30, maxEdges: 30 });
+    const checks = selectRepositoryChecks(snapshot, { scope, nodeIds: selection.nodes.map(node => node.id) }).checks.slice(0, 10);
+    // An observation is supplementary evidence about the source input, never an
+    // assertion that the SDK worker ran the application. Upstream composition or
+    // another manifest/scenario must invalidate reuse even when task files match.
+    let runtime: unknown;
+    if (existsSync(join(sourceRoot, ".forge/repository/runtime-observation.json"))) {
+      try {
+        const sourceSnapshot = readRepositorySnapshot(sourceRoot);
+        if (sourceSnapshot) {
+          const report = readRuntimeObservation(sourceRoot, sourceSnapshot);
+          if (report.binding.manifestHash === snapshot.manifestHash && report.binding.scenarioHash === snapshot.scenarioHash
+            && runtimeSourceDigest(cloneRoot, manifest) === report.binding.inputDigest) {
+            runtime = selectRuntimeObservation(report, { query, scope: [...new Set(selection.nodes.map(node => node.component))], maxChars: 4000 });
+            metadata.runtime = { reportId: report.reportId, environmentId: report.environmentId, phase: "source-observed-matching-input" };
+          }
+        }
+      } catch { /* Missing/stale observations cannot downgrade valid static maps. */ }
     }
-    const compact = nodes.map(({ id, kind, name, file, location, evidence }) => ({ id, kind, name, file, location, evidence }));
-    // The entire packet has a hard bound in addition to the query's own item budget.
-    // If the structured result cannot fit, omit it rather than truncate JSON evidence.
-    const packet = { snapshotId: snapshot.snapshotId, cloneRoot, nodes: compact, edges: edges.map(({ id, from, to, kind, evidence }) => ({ id, from, to, kind, evidence })), truncated: candidates.length > selected.length || connected.length > edges.length || context.truncated > 0, coverage: { found: snapshot.coverage.found, analyzed: snapshot.coverage.analyzed, unsupported: snapshot.coverage.unsupported, errors: snapshot.coverage.errors, limitations: snapshot.coverage.limitations.slice(0, 10) }, suggestedCheckIds: checks };
-    while (JSON.stringify(packet).length > 16000 && packet.nodes.length) {
-      packet.truncated = true;
-      const removed = packet.nodes.pop()!;
-      packet.edges = packet.edges.filter(edge => edge.from !== removed.id && edge.to !== removed.id);
-    }
+    const packet = { ...selection, cloneRoot, quality: metadata.quality, coverage: { found: snapshot.coverage.found, analyzed: snapshot.coverage.analyzed,
+      unsupported: snapshot.coverage.unsupported, errors: snapshot.coverage.errors, limitations: snapshot.coverage.limitations.slice(0, 10) },
+      suggestedCheckIds: checks.map(check => ({ id: check.id, component: check.component })), suggestedChecks: checks, runtime };
+    if (JSON.stringify(packet).length > 16000 && runtime) { delete packet.runtime; delete metadata.runtime; packet.truncated = true; }
+    while (JSON.stringify(packet).length > 16000 && packet.suggestedChecks.length) { packet.suggestedChecks.pop(); packet.suggestedCheckIds.pop(); packet.truncated = true; }
     const serialized = JSON.stringify(packet);
     const text = serialized.length <= 16000 ? serialized : JSON.stringify({ snapshotId: snapshot.snapshotId, cloneRoot, truncated: true, reason: "Context packet exceeded budget; inspect clone directly" });
-    return { metadata, prompt: `Repository analysis of THIS prepared clone (static evidence, not executed coverage). Source project identity: ${sourceRoot}. Snapshot handles apply only to this snapshot. Suggested checks are informational; only authorized workflow executors run checks. Maps do not replace required review, verification or file scope.\n${text}` };
+    metadata.status = "ready";
+    return { metadata, prompt: `Repository analysis of THIS prepared clone (static evidence, not executed coverage). Optional runtime evidence was observed in an independent source copy with matching input, not executed in this worker clone; it describes only its recorded scenario and time. Source project identity: ${sourceRoot}. Ready means input prepared, not semantic completeness. Snapshot handles apply only to this snapshot. Read-only neighbors never extend write scope. Suggested checks are informational; only authorized workflow executors run checks. Maps do not replace required review, verification or file scope.\n${text}` };
   } catch {
     // Analysis is an optional aid. Do not expose parser exceptions or claim a fallback
     // graph from the source checkout; the existing worker and publication gates remain.
+    metadata.status = "unavailable";
+    delete metadata.quality;
+    delete metadata.runtime;
     metadata.diagnostics = ["Repository analysis unavailable in this prepared clone"];
     return { metadata, prompt: "Repository analysis failed in this clone. Inspect the current files directly; no map evidence is available." };
   }

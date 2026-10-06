@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { stableStringify } from "./canonical.ts";
@@ -10,12 +10,15 @@ import { verifyManagedEnvironment, type ManagedEnvironment } from "./managed-env
 export interface ManagedBase { root: string; runId: string; head: string; scope: string[]; digest: string; baselineDirectory: string; contextScope?: string[]; contextDigest?: string }
 export interface ManagedFile { path: string; beforeDigest: string | null; contentBase64: string | null; mode?: number }
 export interface ManagedArtifact { digest: string; files: ManagedFile[] }
-interface Entry { path: string; digest: string; mode: number; contentBase64: string }
+interface Entry { path: string; digest: string; mode: number; contentBase64?: string; readonlySize?: number }
 interface Inventory { files: Entry[]; digest: string }
 interface WorkspaceMetadata { baseDigest: string; runId: string; attemptId: string; directory: string; input: Inventory }
 const runFile = promisify(execFile);
 // Baselines include generated Forge graphs (~10MiB); output artifacts retain the smaller bound.
 const MAX_FILES = 20_000, MAX_BYTES = 128 * 1024 * 1024, MAX_SNAPSHOT_FILE_BYTES = 16 * 1024 * 1024, MAX_ARTIFACT_FILE_BYTES = 8 * 1024 * 1024;
+// Large assets outside the editable/context scope stay in Git clones. Only their
+// streaming fingerprints enter inventories; editable snapshots retain their limits.
+const MAX_READONLY_ASSET_BYTES = 512 * 1024 * 1024, MAX_READONLY_BYTES = 1024 * 1024 * 1024;
 const hash = (data: string | Uint8Array) => `sha256:${createHash("sha256").update(data).digest("hex")}`;
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(`managed workspace: ${message}`); }
 function pathName(value: string): string {
@@ -44,8 +47,28 @@ async function readonlyContextPaths(root: string, scope: string[]): Promise<stri
 async function currentContextMatches(base: ManagedBase): Promise<boolean> {
   return base.contextScope === undefined || (await inventory(base.root, base.contextScope)).digest === base.contextDigest;
 }
-async function inventory(root: string, scope?: string[], excluded: string[] = []): Promise<Inventory> {
-  const files: Entry[] = []; let bytes = 0;
+function inventoryDigest(files: Entry[]): string {
+  return hash(JSON.stringify(files.map(({ path, digest, mode, readonlySize }) => ({ path, digest, mode, ...(readonlySize === undefined ? {} : { readonlySize }) }))));
+}
+function entryContent(file: Entry): string { assert(typeof file.contentBase64 === "string" && file.readonlySize === undefined, "read-only asset cannot be materialized or published"); return file.contentBase64; }
+async function readonlyAssetDigest(absolute: string, size: number): Promise<string> {
+  const handle = await open(absolute, "r");
+  try {
+    const before = await handle.stat();
+    assert(before.isFile() && before.size === size, "asset changed before hashing");
+    const digest = createHash("sha256"); let bytes = 0;
+    for await (const chunk of handle.createReadStream({ autoClose: false, highWaterMark: 256 * 1024 })) {
+      bytes += chunk.length; assert(bytes <= size && bytes <= MAX_READONLY_ASSET_BYTES, "asset changed or size bound exceeded"); digest.update(chunk);
+    }
+    const after = await handle.stat(), current = await lstat(absolute);
+    assert(bytes === size && after.size === before.size && after.mtimeMs === before.mtimeMs && after.ctimeMs === before.ctimeMs
+      && current.isFile() && !current.isSymbolicLink() && current.ino === before.ino && current.size === before.size
+      && current.mtimeMs === before.mtimeMs && current.ctimeMs === before.ctimeMs, "asset changed during hashing");
+    return `sha256:${digest.digest("hex")}`;
+  } finally { await handle.close(); }
+}
+async function inventory(root: string, scope?: string[], excluded: string[] = [], boundedScope: string[] = []): Promise<Inventory> {
+  const files: Entry[] = []; let bytes = 0, readonlyBytes = 0;
   const visit = async (directory: string, prefix: string) => {
     for (const name of (await readdir(directory)).sort()) {
       if (!prefix && name.toLowerCase() === ".git") continue;
@@ -56,7 +79,14 @@ async function inventory(root: string, scope?: string[], excluded: string[] = []
       assert(!stat.isSymbolicLink(), "symlink rejected");
       if (stat.isDirectory()) await visit(absolute, path);
       else {
-        assert(stat.isFile(), "special file rejected"); assert(stat.size <= MAX_SNAPSHOT_FILE_BYTES, "file size bound exceeded");
+        assert(stat.isFile(), "special file rejected"); assert(files.length < MAX_FILES, "snapshot bound exceeded");
+        if (stat.size > MAX_SNAPSHOT_FILE_BYTES && !scope && !withinScope(path, boundedScope)) {
+          readonlyBytes += stat.size;
+          assert(stat.size <= MAX_READONLY_ASSET_BYTES && readonlyBytes <= MAX_READONLY_BYTES, "read-only asset size bound exceeded");
+          files.push({ path, digest: await readonlyAssetDigest(absolute, stat.size), mode: stat.mode & 0o111 ? 0o755 : 0o644, readonlySize: stat.size });
+          continue;
+        }
+        assert(stat.size <= MAX_SNAPSHOT_FILE_BYTES, "file size bound exceeded");
         const content = await readFile(absolute); bytes += content.length;
         assert(bytes <= MAX_BYTES && files.length < MAX_FILES, "snapshot bound exceeded");
         files.push({ path, digest: hash(content), mode: stat.mode & 0o111 ? 0o755 : 0o644, contentBase64: content.toString("base64") });
@@ -65,11 +95,15 @@ async function inventory(root: string, scope?: string[], excluded: string[] = []
   };
   await visit(resolve(root), ""); files.sort((a, b) => a.path.localeCompare(b.path));
   assert(new Set(files.map(file => file.path.toLowerCase())).size === files.length, "case-colliding paths rejected");
-  return { files, digest: hash(JSON.stringify(files.map(({ path, digest, mode }) => ({ path, digest, mode })))) };
+  return { files, digest: inventoryDigest(files) };
 }
-async function setFile(root: string, file: { path: string; contentBase64: string | null; mode?: number }) {
+function workspaceInventory(base: ManagedBase, directory: string, excluded: string[] = []): Promise<Inventory> {
+  return inventory(directory, undefined, excluded, [...base.scope, ...(base.contextScope ?? [])]);
+}
+async function setFile(root: string, file: { path: string; contentBase64?: string | null; mode?: number }) {
   const absolute = await safePath(root, file.path);
   if (file.contentBase64 === null) { try { const stat = await lstat(absolute); assert(stat.isFile(), "delete target is not a regular file"); await rm(absolute); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; } return; }
+  assert(typeof file.contentBase64 === "string", "read-only asset cannot be materialized or published");
   await mkdir(dirname(absolute), { recursive: true }); await writeFile(absolute, Buffer.from(file.contentBase64, "base64")); await chmod(absolute, file.mode ?? 0o644);
 }
 async function clone(root: string, prefix: string): Promise<string> {
@@ -96,6 +130,7 @@ function applyEntries(input: Entry[], artifacts: ManagedArtifact[], scope: strin
   const map = new Map(input.map(file => [file.path, { ...file }]));
   for (const artifact of artifacts) { validateArtifact(artifact, scope); for (const file of artifact.files) {
     const before = map.get(file.path); assert((before?.digest ?? null) === file.beforeDigest, `conflicting beforeimage: ${file.path}`);
+    assert(before?.readonlySize === undefined, "read-only asset cannot be changed by artifacts");
     if (file.contentBase64 === null) { assert(before, "deletion of missing file"); map.delete(file.path); }
     else map.set(file.path, { path: file.path, digest: hash(Buffer.from(file.contentBase64, "base64")), mode: file.mode ?? before?.mode ?? 0o644, contentBase64: file.contentBase64 });
   } }
@@ -110,7 +145,7 @@ async function validateBase(base: ManagedBase) {
   assert(stableStringify(marker) === stableStringify(base), "base identity mismatch");
   if (base.contextScope !== undefined) { assert(Array.isArray(base.contextScope) && base.contextScope.length <= 1000 && /^sha256:[a-f0-9]{64}$/.test(base.contextDigest ?? ""), "invalid context metadata"); for (const path of base.contextScope) pathName(path); }
   const baselineDigest = await readFile(join(base.baselineDirectory, ".git", "forge-managed-baseline-digest"), "utf8");
-  assert((await inventory(base.baselineDirectory)).digest === baselineDigest && (await inventory(base.baselineDirectory, base.scope)).digest === base.digest, "immutable baseline modified");
+  assert((await workspaceInventory(base, base.baselineDirectory)).digest === baselineDigest && (await inventory(base.baselineDirectory, base.scope)).digest === base.digest, "immutable baseline modified");
 }
 export async function captureManagedBase(root: string, runId: string, scope: string[]): Promise<ManagedBase> {
   root = resolve(root); assert(typeof runId === "string" && runId.trim().length > 0, "runId required"); scope = scopes(scope);
@@ -124,17 +159,17 @@ export async function captureManagedBase(root: string, runId: string, scope: str
   assert((await inventory(root, scope)).digest === snapshot.digest && (await inventory(root, contextScope)).digest === context.digest && await git(root, ["rev-parse", "HEAD"]) === head, "source changed during capture");
   const base: ManagedBase = { root, runId, head, scope, digest: snapshot.digest, baselineDirectory, ...(contextScope.length ? { contextScope, contextDigest: context.digest } : {}) };
   await writeFile(join(baselineDirectory, ".git", "forge-managed-base.json"), JSON.stringify(base));
-  await writeFile(join(baselineDirectory, ".git", "forge-managed-baseline-digest"), (await inventory(baselineDirectory)).digest); return base;
+  await writeFile(join(baselineDirectory, ".git", "forge-managed-baseline-digest"), (await workspaceInventory(base, baselineDirectory)).digest); return base;
 }
 export async function prepareManagedWorkspace(base: ManagedBase, attemptId: string, dependencies: ManagedArtifact[]): Promise<{ directory: string; inputDigest: string }> {
   await validateBase(base); assert(typeof attemptId === "string" && attemptId.trim().length > 0, "attemptId required");
-  const baseline = await inventory(base.baselineDirectory), desired = applyEntries(baseline.files, dependencies, base.scope), directory = await clone(base.baselineDirectory, "forge-managed-attempt-");
+  const baseline = await workspaceInventory(base, base.baselineDirectory), desired = applyEntries(baseline.files, dependencies, base.scope), directory = await clone(base.baselineDirectory, "forge-managed-attempt-");
   await git(directory, ["checkout", "--quiet", "--detach", base.head]);
-  const initial = await inventory(directory);
+  const initial = await workspaceInventory(base, directory);
   const desiredByPath = new Map(desired.map(file => [file.path, file])), initialByPath = new Map(initial.files.map(file => [file.path, file]));
   for (const file of initial.files) if (!desiredByPath.has(file.path)) await setFile(directory, { path: file.path, contentBase64: null });
   for (const file of desired) if (initialByPath.get(file.path)?.digest !== file.digest || initialByPath.get(file.path)?.mode !== file.mode) await setFile(directory, file);
-  const input = await inventory(directory), metadata: WorkspaceMetadata = { baseDigest: base.digest, runId: base.runId, attemptId, directory, input };
+  const input = await workspaceInventory(base, directory), metadata: WorkspaceMetadata = { baseDigest: base.digest, runId: base.runId, attemptId, directory, input };
   await writeFile(join(directory, ".git", "forge-managed-input.json"), JSON.stringify(metadata)); return { directory, inputDigest: input.digest };
 }
 export async function captureManagedArtifact(base: ManagedBase, workspaceDirectory: string, writeScope: string[], expectedInputDigest: string, environment?: ManagedEnvironment): Promise<ManagedArtifact> {
@@ -142,14 +177,17 @@ export async function captureManagedArtifact(base: ManagedBase, workspaceDirecto
   workspaceDirectory = resolve(workspaceDirectory);
   const metadata = JSON.parse(await readFile(join(workspaceDirectory, ".git", "forge-managed-input.json"), "utf8")) as WorkspaceMetadata;
   assert(metadata.directory === workspaceDirectory && metadata.baseDigest === base.digest && metadata.runId === base.runId, "workspace identity mismatch");
-  assert(/^sha256:[a-f0-9]{64}$/.test(expectedInputDigest) && metadata.input.digest === expectedInputDigest && metadata.input.digest === hash(JSON.stringify(metadata.input.files.map(({ path, digest, mode }) => ({ path, digest, mode })))) && metadata.input.files.every(file => hash(Buffer.from(file.contentBase64, "base64")) === file.digest), "input inventory corrupted or coordinator digest mismatch");
+  assert(/^sha256:[a-f0-9]{64}$/.test(expectedInputDigest) && metadata.input.digest === expectedInputDigest && metadata.input.digest === inventoryDigest(metadata.input.files)
+    && metadata.input.files.every(file => file.readonlySize === undefined ? typeof file.contentBase64 === "string" && hash(Buffer.from(file.contentBase64, "base64")) === file.digest
+      : file.contentBase64 === undefined && Number.isSafeInteger(file.readonlySize) && file.readonlySize > MAX_SNAPSHOT_FILE_BYTES && file.readonlySize <= MAX_READONLY_ASSET_BYTES
+        && !withinScope(file.path, [...base.scope, ...(base.contextScope ?? [])]) && /^sha256:[a-f0-9]{64}$/.test(file.digest)), "input inventory corrupted or coordinator digest mismatch");
   if (environment) { assert(environment.directory === workspaceDirectory, "environment belongs to another checkout"); await verifyManagedEnvironment(environment); assert(!metadata.input.files.some(file => environment.derivedPaths.some(path => file.path === path || file.path.startsWith(`${path}/`))), "derived environment would conceal captured source"); }
-  const current = await inventory(workspaceDirectory, undefined, environment?.derivedPaths ?? []), prior = new Map(metadata.input.files.map(file => [file.path, file])), after = new Map(current.files.map(file => [file.path, file]));
+  const current = await workspaceInventory(base, workspaceDirectory, environment?.derivedPaths ?? []), prior = new Map(metadata.input.files.map(file => [file.path, file])), after = new Map(current.files.map(file => [file.path, file]));
   const files: ManagedFile[] = [];
   for (const path of [...new Set([...prior.keys(), ...after.keys()])].sort()) {
     const before = prior.get(path), next = after.get(path); if (before?.digest === next?.digest && before?.mode === next?.mode) continue;
     assert(withinScope(path, writeScope), `unauthorized change: ${path}`);
-    files.push({ path, beforeDigest: before?.digest ?? null, contentBase64: next?.contentBase64 ?? null, ...(next ? { mode: next.mode } : {}) });
+    files.push({ path, beforeDigest: before?.digest ?? null, contentBase64: next ? entryContent(next) : null, ...(next ? { mode: next.mode } : {}) });
   }
   const artifact = { digest: artifactDigest(files), files }; validateArtifact(artifact, writeScope); return artifact;
 }
@@ -165,7 +203,7 @@ export async function publishManagedArtifacts(base: ManagedBase, artifacts: Mana
   const stageParent = await safePath(base.root, ".forge/local/agent-fabric/publication-staging");
   await mkdir(stageParent, { recursive: true }); await safePath(base.root, ".forge/local/agent-fabric/publication-staging");
   const stage = await mkdtemp(join(stageParent, "publication-"));
-  for (let index = 0; index < changedFiles.length; index++) { const file = desired.get(changedFiles[index]); if (file) await writeFile(join(stage, `${index}`), Buffer.from(file.contentBase64, "base64")); }
+  for (let index = 0; index < changedFiles.length; index++) { const file = desired.get(changedFiles[index]); if (file) await writeFile(join(stage, `${index}`), Buffer.from(entryContent(file), "base64")); }
   assert((await inventory(base.root, base.scope)).digest === before.digest && await currentContextMatches(base), "source or context changed before publication");
   const applied: { path: string; writtenDigest: string | null; writtenMode: number | null }[] = [];
   try {
@@ -202,7 +240,7 @@ export async function publishManagedArtifacts(base: ManagedBase, artifacts: Mana
 export async function previewManagedArtifacts(base: ManagedBase, artifacts: ManagedArtifact[]): Promise<{ digest: string; changedFiles: string[] }> {
   await validateBase(base); const before = await inventory(base.baselineDirectory, base.scope), after = applyEntries(before.files, artifacts, base.scope);
   const old = new Map(before.files.map(file => [file.path, file])), desired = new Map(after.map(file => [file.path, file]));
-  return { digest: hash(JSON.stringify(after.map(({ path, digest, mode }) => ({ path, digest, mode })))), changedFiles: [...new Set([...old.keys(), ...desired.keys()])].filter(path => old.get(path)?.digest !== desired.get(path)?.digest || old.get(path)?.mode !== desired.get(path)?.mode).sort() };
+  return { digest: inventoryDigest(after), changedFiles: [...new Set([...old.keys(), ...desired.keys()])].filter(path => old.get(path)?.digest !== desired.get(path)?.digest || old.get(path)?.mode !== desired.get(path)?.mode).sort() };
 }
 /** Crash recovery confirms only a completely materialized publication. It never writes. */
 export async function confirmManagedPublication(base: ManagedBase, artifacts: ManagedArtifact[]): Promise<boolean> {

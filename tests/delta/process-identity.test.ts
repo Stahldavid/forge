@@ -1,4 +1,5 @@
-import { expect, test } from "bun:test";
+import { expect, test, spyOn } from "bun:test";
+import * as childProcess from "node:child_process";
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
@@ -10,6 +11,27 @@ test("current live process is not mistaken for a reused PID", () => {
   expect(start).not.toBeNull(); expect(start!).toBeLessThanOrEqual(Date.now() + 1000);
   expect(pidWasReused(process.pid, new Date().toISOString())).toBe(false);
   expect(pidWasReused(process.pid, "2000-01-01T00:00:00Z")).toBe(true);
+});
+
+test.skipIf(process.platform !== "win32")("a premature Windows identity timeout recovers once without inventing a start time", () => {
+  const stamp = "2026-01-02T03:04:05.000Z";
+  const probe = spyOn(childProcess, "execFileSync")
+    .mockImplementationOnce(() => { throw Object.assign(new Error("premature spawn timeout"), { code: "ETIMEDOUT" }); })
+    .mockReturnValueOnce(stamp as any);
+  try { expect(processStartTimeMs(process.pid)).toBe(Date.parse(stamp)); expect(probe).toHaveBeenCalledTimes(2); }
+  finally { probe.mockRestore(); }
+});
+
+test.skipIf(process.platform !== "win32")("repeated identity timeouts retain uncertainty and never authorize PID reuse", () => {
+  const probe = spyOn(childProcess, "execFileSync").mockImplementation(() => { throw Object.assign(new Error("timeout"), { code: "ETIMEDOUT" }); });
+  try { expect(processStartTimeMs(process.pid)).toBeNull(); expect(probe).toHaveBeenCalledTimes(2); expect(pidWasReused(process.pid, "2000-01-01T00:00:00Z")).toBe(false); expect(probe).toHaveBeenCalledTimes(4); }
+  finally { probe.mockRestore(); }
+});
+
+test.skipIf(process.platform !== "win32")("non-timeout identity failures remain unknown without retry", () => {
+  const probe = spyOn(childProcess, "execFileSync").mockImplementation(() => { throw Object.assign(new Error("process absent"), { code: "ESRCH" }); });
+  try { expect(processStartTimeMs(process.pid)).toBeNull(); expect(probe).toHaveBeenCalledTimes(1); }
+  finally { probe.mockRestore(); }
 });
 
 test.skipIf(process.platform === "win32")("POSIX process identity survives different ps and Bun test timezones", () => {

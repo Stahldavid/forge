@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=94691ea509d451ef65ae7140dca5cb1ef8fd16a26970ec06d6ae649538540768
+// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=94691ea509d451ef65ae7140dca5cb1ef8fd16a26970ec06d6ae649538540768
 import { api } from "./api.ts";
 import type {
   ForgeAuthProvider,

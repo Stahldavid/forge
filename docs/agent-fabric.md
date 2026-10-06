@@ -1,5 +1,10 @@
 # Forge Agent Fabric
 
+Existing repositories can attach optional [runtime observations](repository-runtime-observation.md)
+to their maps. Worker preparation reads compatible saved evidence without executing
+exporters; changes composed into a clone invalidate reuse. A runtime observation does
+not satisfy verification gates or extend worker write scope.
+
 Forge Agent Fabric is an experimental protocol-oriented execution layer for dynamically materialized agents and workflows. It extends Forge's existing compiler, outbox, actions, workflows, policy, and agent runtime rather than replacing them.
 
 ## Implementation status
@@ -57,6 +62,14 @@ verified cache. Scripts are ignored by default; dependencies are isolated, not s
 through a mutable folder. The optional environment object accepts mode auto/none,
 ignoreScripts, timeoutMs (100..1800000) and an HTTPS registry without credentials, query
 or fragment. Reviewers and commands are read-only after environment preparation.
+
+Tracked assets larger than 16 MiB outside the task's editable and captured configuration
+scope remain in Git clones as read-only inputs. Inventories record their SHA-256 by
+streaming 256 KiB blocks, without embedding asset bytes in worker metadata. Fingerprints
+include asset sizes; baseline and out-of-scope changes are still rejected. These assets
+are bounded to 512 MiB each and 1 GiB in aggregate. Editable snapshots retain their
+16 MiB per-file / 128 MiB aggregate limits, and changed artifacts retain the 8 MiB
+per-file limit. Declaring a large asset as editable does not bypass those bounds.
 
 Controls are run-steer/pause/resume/cancel/reconcile. Mutations require
 `{runId,requestId,expectedVersion}` and complete `--file` bodies. Reuse requestId only for

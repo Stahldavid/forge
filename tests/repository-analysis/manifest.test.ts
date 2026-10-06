@@ -74,6 +74,24 @@ test("discovery refuses to save invalid unsupported proposals", async () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test("discovery produces valid deterministic IDs for hidden, long and colliding package roots", async () => {
+  const root = mkdtempSync(join(tmpdir(), "forge-repository-package-ids-"));
+  try {
+    const longRoot = `packages/${"a".repeat(72)}/nested`;
+    const paths = [".github/actions/upload-artifact-quota", "a.b", "a-b", "_hidden", "hidden", longRoot, `${longRoot}-other`];
+    for (const path of paths) {
+      mkdirSync(join(root, path), { recursive: true });
+      writeFileSync(join(root, path, "package.json"), JSON.stringify({ name: path }));
+    }
+    const options = { action: "discover" as const, cwd: root, root, write: false, json: true };
+    const first = await runRepositoryCommand(options);
+    expect(first.ok).toBe(true);
+    expect(validateRepositoryManifest(first.manifest).diagnostics).toEqual([]);
+    expect((await runRepositoryCommand(options)).manifest).toEqual(first.manifest);
+    expect(existsSync(join(root, "forge.manifest.json"))).toBe(false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test("relative roots use the supplied cwd and manifest paths reject control characters and streams", async () => {
   const root = mkdtempSync(join(tmpdir(), "forge-repository-relative-"));
   try {

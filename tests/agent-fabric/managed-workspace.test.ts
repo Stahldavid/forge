@@ -1,10 +1,10 @@
 import { test, expect, spyOn } from "bun:test";
 import * as fsPromises from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { mkdtemp, writeFile, readFile, rm, mkdir, symlink } from "node:fs/promises";
+import { mkdtemp, writeFile, readFile, rm, mkdir, symlink, open } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import { stableStringify } from "../../src/forge/agent-fabric/canonical.ts";
 import { captureManagedArtifact, captureManagedBase, prepareManagedWorkspace, publishManagedArtifacts, previewManagedArtifacts, confirmManagedPublication } from "../../src/forge/agent-fabric/managed-workspace.ts";
 async function fixture() {
@@ -63,6 +63,58 @@ test("generated graph-sized baseline files are allowed while changed artifacts r
     await expect(captureManagedArtifact(base, workspace.directory, ["src"], workspace.inputDigest)).rejects.toThrow("excessive base64");
   } finally { await rm(root, { recursive: true, force: true }); }
 }, 60_000);
+
+test("large readonly Git assets stay fingerprinted, compose scoped changes and reject tampering without inflating metadata", async () => {
+  const { root, git } = await fixture(); const clones: string[] = [];
+  const size = 17 * 1024 * 1024;
+  const changeFirstByte = async (path: string, value: number) => { const handle = await open(path, "r+"); try { await handle.write(Buffer.from([value]), 0, 1, 0); } finally { await handle.close(); } };
+  try {
+    await mkdir(join(root, "assets"));
+    // Total immutable assets exceed the editable 128 MiB budget, while each
+    // individual asset exceeds the old 16 MiB file limit.
+    const bytes = Buffer.alloc(size, 65);
+    for (let i = 0; i < 8; i++) await writeFile(join(root, "assets", `asset-${i}.bin`), bytes);
+    git("add", "assets"); git("commit", "-qm", "large readonly assets");
+    const digest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+    const base = await captureManagedBase(root, "large-readonly", ["src"]); clones.push(base.baselineDirectory);
+    const first = await prepareManagedWorkspace(base, "first", []); clones.push(first.directory);
+    const metadataPath = join(first.directory, ".git", "forge-managed-input.json");
+    const metadataText = await readFile(metadataPath, "utf8"), metadata = JSON.parse(metadataText);
+    const assets = metadata.input.files.filter((file: { path: string }) => file.path.startsWith("assets/"));
+    expect(assets).toHaveLength(8); expect(metadataText.length).toBeLessThan(20_000);
+    expect(assets.every((file: { readonlySize?: number; contentBase64?: string; digest: string }) => file.readonlySize === size && file.contentBase64 === undefined && file.digest === digest)).toBe(true);
+    expect((await captureManagedArtifact(base, first.directory, [], first.inputDigest)).files).toEqual([]);
+
+    await writeFile(join(first.directory, "src", "a.txt"), "scoped result");
+    const artifact = await captureManagedArtifact(base, first.directory, ["src"], first.inputDigest);
+    expect(artifact.files.map(file => file.path)).toEqual(["src/a.txt"]);
+    const second = await prepareManagedWorkspace(base, "second", [artifact]); clones.push(second.directory);
+    expect(await readFile(join(second.directory, "src", "a.txt"), "utf8")).toBe("scoped result");
+    expect(createHash("sha256").update(await readFile(join(second.directory, "assets", "asset-0.bin"))).digest("hex")).toBe(digest.slice(7));
+    expect((await publishManagedArtifacts(base, [artifact])).changedFiles).toEqual(["src/a.txt"]);
+    expect(createHash("sha256").update(await readFile(join(root, "assets", "asset-0.bin"))).digest("hex")).toBe(digest.slice(7));
+
+    metadata.input.files.find((file: { path: string }) => file.path === "assets/asset-0.bin").readonlySize++;
+    await writeFile(metadataPath, JSON.stringify(metadata));
+    await expect(captureManagedArtifact(base, first.directory, ["src"], first.inputDigest)).rejects.toThrow("coordinator digest");
+    await writeFile(metadataPath, metadataText);
+    await changeFirstByte(join(first.directory, "assets", "asset-0.bin"), 66);
+    await expect(captureManagedArtifact(base, first.directory, ["src"], first.inputDigest)).rejects.toThrow("unauthorized change: assets/asset-0.bin");
+    await changeFirstByte(join(first.directory, "assets", "asset-0.bin"), 65);
+    await writeFile(join(first.directory, "src", "new-large.bin"), bytes);
+    await expect(captureManagedArtifact(base, first.directory, ["src"], first.inputDigest)).rejects.toThrow("file size bound");
+    await expect(captureManagedBase(root, "editable-large", ["assets/asset-0.bin"])).rejects.toThrow("file size bound");
+    await changeFirstByte(join(base.baselineDirectory, "assets", "asset-0.bin"), 66);
+    await expect(prepareManagedWorkspace(base, "tampered", [])).rejects.toThrow("immutable baseline modified");
+  } finally {
+    for (const directory of clones) {
+      const target = resolve(dirname(directory));
+      if (!target.startsWith(`${resolve(tmpdir())}${sep}`) || !/^forge-managed-(?:base|attempt)-/.test(basename(target))) throw new Error("Unsafe owned clone cleanup");
+      await rm(target, { recursive: true, force: true });
+    }
+    await rm(root, { recursive: true, force: true });
+  }
+}, 120_000);
 test("rejects conflicting parallel writers and changed root before any publication", async () => {
   const { root } = await fixture(); try {
     const base = await captureManagedBase(root, "run", ["src"]), one = await prepareManagedWorkspace(base, "one", []), two = await prepareManagedWorkspace(base, "two", []);

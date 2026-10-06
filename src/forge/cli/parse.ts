@@ -970,9 +970,9 @@ export function parseCli(argv: string[]): ParsedCli {
 
   if (argv[0] === "repository" || (argv[0] === "manifest" && argv[1] === "discover")) {
     const action = argv[0] === "manifest" ? "discover" : argv[1];
-    if (!["discover", "analyze", "context"].includes(action ?? "")) errors.push("repository requires discover, analyze or context");
-    const values = ["--root", "--project-id", "--manifest", "--cache-root", "--query", "--snapshot-id", "--limit", "--max-chars", "--cursor", "--output"];
-    const flags = ["--json", "--write", "--no-delta"];
+    if (!["discover", "analyze", "context", "quality", "cache-gc", "benchmark-plan", "benchmark-report", "runtime-plan", "runtime-observe", "runtime-context"].includes(action ?? "")) errors.push("Unsupported repository action");
+    const values = ["--root", "--project-id", "--manifest", "--cache-root", "--query", "--snapshot-id", "--limit", "--max-chars", "--cursor", "--output", "--cases", "--model-config", "--repetitions", "--plan", "--observations", "--grace-hours", "--environment-id", "--observation-id"];
+    const flags = ["--json", "--write", "--no-delta", "--execute"];
     for (let i = 2; i < argv.length; i++) {
       if (values.includes(argv[i]!)) {
         if (!argv[i + 1] || argv[i + 1]!.startsWith("--")) errors.push(`${argv[i]} requires a value`); else i++;
@@ -980,17 +980,40 @@ export function parseCli(argv: string[]): ParsedCli {
     }
     const numeric = (flag: string, min: number, max: number) => { const raw = parseOptionValue(argv, flag); if (raw === undefined) return undefined; const number = Number(raw); if (!Number.isSafeInteger(number) || number < min || number > max) errors.push(`${flag} must be an integer ${min}..${max}`); return number; };
     const limit = numeric("--limit", 1, 100), maxChars = numeric("--max-chars", 2048, 50000);
+    const repetitions = numeric("--repetitions", 1, 10), graceHours = numeric("--grace-hours", 1, 720);
     for (const [flag, max] of [["--query", 2000], ["--snapshot-id", 2000], ["--cursor", 1000]] as const) {
       if ((parseOptionValue(argv, flag)?.length ?? 0) > max) errors.push(`${flag} exceeds ${max} characters`);
     }
     const write = parseFlag(argv, "--write");
-    if (action === "context" && write) errors.push("context is read-only");
+    const runtime = action?.startsWith("runtime-");
+    const execute = parseFlag(argv, "--execute"), environmentId = parseOptionValue(argv, "--environment-id"), observationId = parseOptionValue(argv, "--observation-id");
+    if (!runtime && (execute || environmentId !== undefined || observationId !== undefined)) errors.push("Runtime options require a runtime action");
+    if (execute && action !== "runtime-observe") errors.push("--execute requires runtime-observe");
+    if (["runtime-plan", "runtime-observe"].includes(action ?? "") && !environmentId) errors.push("Runtime plan/observe requires --environment-id");
+    if (action === "runtime-observe" && !execute) errors.push("runtime-observe requires explicit --execute after reviewing runtime-plan");
+    if (["runtime-plan", "runtime-context"].includes(action ?? "") && write) errors.push("Runtime plan/context is read-only");
+    if (runtime && (parseOptionValue(argv, "--cache-root") || parseOptionValue(argv, "--cursor"))) errors.push("Runtime actions do not support --cache-root/--cursor");
+    if (runtime && maxChars !== undefined && maxChars > 16000) errors.push("Runtime context is bounded to 16000 characters");
+    if (runtime && limit !== undefined) errors.push("Runtime actions do not support --limit");
+    if (runtime && action !== "runtime-context" && parseOptionValue(argv, "--query") !== undefined) errors.push("Runtime --query requires runtime-context");
+    if (action === "runtime-context" && observationId) errors.push("--observation-id requires runtime-plan/observe");
+    for (const label of [environmentId, observationId]) if (label !== undefined && !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(label)) errors.push("Invalid runtime label");
+    if (["context", "quality", "benchmark-plan", "benchmark-report"].includes(action ?? "") && write) errors.push("context/quality/benchmark is read-only");
+    if (["quality", "benchmark-plan"].includes(action ?? "") && !parseOptionValue(argv, "--cases")) errors.push("quality/benchmark-plan requires --cases <file>");
+    if (!["quality", "benchmark-plan"].includes(action ?? "") && parseOptionValue(argv, "--cases")) errors.push("--cases only supported for quality/benchmark-plan");
+    if (action === "benchmark-plan" && !parseOptionValue(argv, "--model-config")) errors.push("benchmark-plan requires --model-config <file>");
+    if (action !== "benchmark-plan" && (parseOptionValue(argv, "--model-config") || repetitions !== undefined)) errors.push("Model options require benchmark-plan");
+    if (action === "benchmark-report" && (!parseOptionValue(argv, "--plan") || !parseOptionValue(argv, "--observations"))) errors.push("benchmark-report requires --plan and --observations");
+    if (action !== "benchmark-report" && (parseOptionValue(argv, "--plan") || parseOptionValue(argv, "--observations"))) errors.push("--plan/--observations require benchmark-report");
+    if (action !== "cache-gc" && graceHours !== undefined) errors.push("--grace-hours requires cache-gc");
+    if (action === "cache-gc" && ["--query", "--snapshot-id", "--limit", "--max-chars", "--cursor"].some(flag => argv.includes(flag))) errors.push("cache-gc does not support context or snapshot guard options");
     if (action !== "discover" && parseOptionValue(argv, "--output")) errors.push("--output only supported for discovery");
     return { workspaceRoot, errors, command: errors.length ? null : { kind: "repository", options: {
       action: action as RepositoryCliOptions["action"], cwd: workspaceRoot, write, json: parseFlag(argv, "--json"),
       root: parseOptionValue(argv, "--root"), projectId: parseOptionValue(argv, "--project-id"), manifestPath: parseOptionValue(argv, "--manifest"),
       cacheRoot: parseOptionValue(argv, "--cache-root"), query: parseOptionValue(argv, "--query"), snapshotId: parseOptionValue(argv, "--snapshot-id"),
-      limit, maxChars, cursor: parseOptionValue(argv, "--cursor"), output: parseOptionValue(argv, "--output"),
+      limit, maxChars, cursor: parseOptionValue(argv, "--cursor"), output: parseOptionValue(argv, "--output"), cases: parseOptionValue(argv, "--cases"),
+      modelConfig: parseOptionValue(argv, "--model-config"), repetitions, plan: parseOptionValue(argv, "--plan"), observations: parseOptionValue(argv, "--observations"), graceHours, execute, environmentId, observationId,
     } } };
   }
 
@@ -3226,6 +3249,8 @@ export function parseCli(argv: string[]): ParsedCli {
 
 export function hasUnknownOption(argv: string[]): string | null {
   const known = new Set([
+    "--cases",
+    "--model-config", "--repetitions", "--observations", "--grace-hours", "--environment-id", "--observation-id", "--execute",
     "--root",
     "--cache-root",
     "--snapshot-id",

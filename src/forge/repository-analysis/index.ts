@@ -5,3 +5,14 @@ export type { RepositorySnapshot, RepositoryNode, RepositoryEdge, RepositoryEvid
 export type { RepositoryQueryOptions, RepositoryQueryResult } from "./context.ts";
 export { readRepositoryManifest, validateRepositoryManifest, resolveRepositoryRoot } from "../repository-manifest/index.ts";
 export type { RepositoryManifest } from "../repository-manifest/types.ts";
+export { selectRepositoryContext, rankRepositoryCandidates, groupRepositoryJavaCalls } from "./retrieval.ts";
+export { selectRepositoryChecks } from "./check-selection.ts";
+export { repositoryQualitySummary, evaluateRepositoryQuality } from "./quality.ts";
+export type { RepositoryQualityCase, RepositoryQualitySummary } from "./quality.ts";
+export { collectRepositoryCache } from "./cache-gc.ts";
+export type { RepositoryCacheCleanupOptions, RepositoryCacheCleanupReport } from "./cache-gc.ts";
+export { createRepositoryAgentBenchmarkPlan, evaluateRepositoryAgentBenchmark, repositoryAgentBenchmarkBinding } from "./benchmark.ts";
+export type { RepositoryAgentBenchmarkPlan, RepositoryBenchmarkModel, RepositoryBenchmarkObservation } from "./benchmark.ts";
+export { repositoryStorageMetrics } from "./storage.ts";
+export { planRepositoryRuntime, observeRepositoryRuntime, readRuntimeObservation, selectRuntimeObservation, runtimeSourceDigest } from "./runtime-observation.ts";
+export { collectRuntimeArtifact } from "./runtime-artifacts.ts";
