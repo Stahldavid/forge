@@ -1343,7 +1343,7 @@ export function parseCli(argv: string[]): ParsedCli {
       const taskId = (isAttachedTaskAction(subcommand) && isAttachedTaskRead(subcommand)) || isChangeReadOrReview ? parseOptionValue(argv, "--task-id")
         : subcommand === "status" || subcommand === "evidence" || subcommand === "review" || subcommand === "run" || subcommand === "cancel" || subcommand === "reconcile" || subcommand === "verify" || subcommand === "recover-verification" || subcommand === "review-result" || subcommand === "memory-delete" || subcommand === "adaptive-review" || subcommand === "adaptive-run" || subcommand === "adaptive-status" ? rest[1] : undefined;
       if (isManagedRunAction(subcommand) || isProgramRunAction(subcommand)) {
-        if (subcommand === "run-status" || subcommand === "program-status") {
+        if (["run-status", "program-status", "program-history", "program-explain"].includes(subcommand ?? "")) {
           if (!runId || runId.startsWith("--")) errors.push("forge fabric run-status requires --run-id <run-id>");
           if (file) errors.push("forge fabric run-status does not accept --file");
         } else {

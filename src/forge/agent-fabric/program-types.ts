@@ -1,7 +1,9 @@
-import { programAssert, programDigest, registryEntry, validateProgramData, type ProgramOperation, type ProgramRegistry, type ProgramSchema, type WorkflowProgramV2 } from "./program-contract.ts";
+import { programBlock } from "./program-structure.ts";
+import { programAssert, programDigest, registryEntry, validateProgramData, type ProgramOperation, type ProgramRegistry, type ProgramSchema, type ProgramLexicalContext, type WorkflowProgramV2 } from "./program-contract.ts";
 
 /** Conservative finite inference: unknown schemas retain runtime validation. No JS evaluation. */
-export function validateProgramTypes(program: WorkflowProgramV2, registry: ProgramRegistry): void {
+export function validateProgramTypes(program: WorkflowProgramV2, registry: ProgramRegistry, lexical: ProgramLexicalContext = {}, depth = 0): void {
+  programAssert(depth <= 32, "Subworkflow type context depth exceeded");
   type Shape = ProgramSchema;
   interface Scope { steps: ProgramOperation[]; input: Shape; parent?: Scope; item?: Shape; state?: Shape }
   const cache = new Map<ProgramOperation, Shape>();
@@ -36,7 +38,7 @@ export function validateProgramTypes(program: WorkflowProgramV2, registry: Progr
     const name = String(record.$expr), args = record.args as unknown[];
     if (name === "literal") return constant(args[0]);
     if (name === "workflowInput") return scope.input;
-    if (name === "item") return scope.item ?? {};
+    if (name === "item") { programAssert(scope.item, "item requires map context"); return scope.item; }
     if (name === "loopState") return scope.state ?? {};
     if (name === "output") return reference(String(args[0]), scope);
     if (["outputCandidate", "acceptedCandidate", "candidateFromBaseline"].includes(name)) return candidate;
@@ -66,33 +68,43 @@ export function validateProgramTypes(program: WorkflowProgramV2, registry: Progr
     const cached = cache.get(step); if (cached) return cached;
     const options = step.options; let shape: Shape = {};
     if (step.kind === "value") shape = infer(options.value, scope);
-    if (step.kind === "agent" || step.kind === "command") shape = registryEntry(registry.schemas, registryEntry(registry.executors, options.executor as never).schema);
+    if (step.kind === "agent" || step.kind === "command") {
+      const executor = registryEntry(registry.executors, options.executor as never);
+      if (executor.inputSchema) compatible(infer(options.input ?? {}, scope), registryEntry(registry.schemas, executor.inputSchema), `activity ${step.id} input`);
+      shape = registryEntry(registry.schemas, executor.schema);
+    }
     if (step.kind === "waitEvent") shape = registryEntry(registry.schemas, options.schema as never);
     if (step.kind === "subworkflow") {
       const child = registryEntry(registry.programs ?? {}, options.program as never);
       compatible(infer(options.input, scope), registryEntry(registry.schemas, child.inputSchema), `child ${step.id} input`);
+      validateProgramTypes(child, registry, { item: scope.item, state: scope.state }, depth + 1);
       shape = registryEntry(registry.schemas, child.outputSchema);
     }
     if (step.kind === "branch") {
       compatible(infer(options.condition, scope), { type: "boolean" }, `branch ${step.id} condition`);
-      const arms = ["then", "else"].map(arm => { const steps = options[arm] as ProgramOperation[], child = { ...scope, steps, parent: scope }; for (const entry of steps) operationShape(entry, child); return steps.length ? operationShape(steps.at(-1)!, child) : { type: "null" }; });
+      const arms = ["then", "else"].map(arm => { const block = programBlock(options[arm]), steps = block.steps, child = { ...scope, steps, parent: scope }; for (const entry of steps) operationShape(entry, child); return infer(block.result, child); });
       const left = types(arms[0]), right = types(arms[1]);
       programAssert(!left.length || !right.length || programDigest(left) === programDigest(right), `Incompatible branch merge ${step.id}`);
       shape = { anyOf: arms, ...(left.length && right.length ? { type: left } : {}) };
     }
     if (step.kind === "map" || step.kind === "loop") {
-      const steps = Array.isArray(options.body) ? options.body as ProgramOperation[] : [options.body as ProgramOperation];
+      const steps = programBlock(options.body).steps;
       const items = step.kind === "map" ? infer(options.items, scope) : {}, state = step.kind === "loop" ? infer(options.initialState, scope) : {};
       if (step.kind === "map") compatible(items, { type: "array" }, `map ${step.id} items`);
-      const child = { ...scope, steps, parent: scope, item: items.items ?? {}, state };
+      const child = { ...scope, steps, parent: scope, item: step.kind === "map" ? items.items ?? {} : scope.item, state: step.kind === "loop" ? state : scope.state };
       for (const entry of steps) operationShape(entry, child);
+      infer(programBlock(options.body).result, child);
       if (step.kind === "loop") { compatible(infer(options.next, child), { type: state.type }, `loop ${step.id} state`); compatible(infer(options.until, child), { type: "boolean" }, `loop ${step.id} condition`); }
-      shape = { type: "object" };
+      shape = step.kind === "loop" ? state : { type: "object" };
+    }
+    if (["sequence", "parallel"].includes(step.kind)) {
+      const block = programBlock(options), child = { ...scope, steps: block.steps, parent: scope };
+      for (const entry of block.steps) operationShape(entry, child); shape = infer(block.result, child);
     }
     if (["repair", "compose", "gate"].includes(step.kind)) shape = { type: "object" };
     cache.set(step, shape); return shape;
   }
-  const scope: Scope = { steps: program.steps, input: registryEntry(registry.schemas, program.inputSchema) };
+  const scope: Scope = { ...lexical, steps: program.steps, input: registryEntry(registry.schemas, program.inputSchema) };
   for (const step of program.steps) operationShape(step, scope);
   compatible(infer(program.result, scope), registryEntry(registry.schemas, program.outputSchema), "program result");
 }

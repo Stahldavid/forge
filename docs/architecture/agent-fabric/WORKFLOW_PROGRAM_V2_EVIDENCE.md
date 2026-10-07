@@ -1,109 +1,49 @@
-# Workflow program v2 verification evidence
+# Evidências: Agent Fabric workflows R2.1
 
-Date: 2026-10-07. Baseline: c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c.
-Release target: forgeos 0.1.0-alpha.70. The release workflow binds its exact pushed SHA.
+Data: 2026-10-07. Base do trabalho: 083077bdc9aee74e81d941a67c3c38bd31d8e2d0, forgeos 0.1.0-alpha.70. Implementação de desenvolvimento; não é uma publicação npm. O usuário dispensou compatibilidade legada e proibiu testes reais com LLM. Nenhum piloto SDK/modelo foi executado nesta implementação; relatos de pilotos anteriores não são evidência da revisão atual.
 
-## Scope established locally
+> Registro da implementação R2.1. A revisão posterior R2.2 corrige herança de subworkflow/locks/capturas e muda o formato de persistência; consulte WORKFLOW_PROGRAM_V2_CORRECTIONS.md e WORKFLOW_PROGRAM_V2_CORRECTIONS_EVIDENCE.md. Os números abaixo são históricos desta rodada R2.1.
 
-Focused suites cover finite AST lowering and schema constraints, typed references,
-80-item coverage/seals, owner-issued receipts, acceptance/candidate linkage, bounded
-repair and restart, event targeting, barriers/generations, data-only completion,
-immutable history, byte budgets and uncertain publication. Actual command-process
-fixtures cover two independent files, three successive same-file deltas, diamond
-composition, independently identical conflicting patches, authenticated owner
-transport and concurrent apply idempotency. Existing v1 SDK tests are retained.
+## Núcleo entregue
 
-The initial strict framework TestGraph completed all 277 files/71 chunks with test
-status pass. The overall verify invocation failed on stale generic/codex adapter
-exports, which were then regenerated. Final release gates must be read from their
-actual local/CI outcomes; that initial adapter failure is not represented as a pass.
+DSL/IR operatorVersion 2 com cinquenta construtores de autoria e quinze controles. Grafo com dependências de dados/after, sequence/parallel e Blocks explícitos. Quotas de atividades em owner/run/scopes, reserva/debit/queue persistidos, owner exclusivo, waiting e deadlines, completed íntegro reutilizado antes de prepare, replan seletivo e incerteza conservadora. Contratos owner por item/final, evidência binária imutável, review/checks/capturas ligados ao candidato, ledger local, compose, aceitação final integral e aprovação humana separada de apply. Catálogo API e exemplo atuais em docs/agent-fabric-programs.md e examples/agent-fabric-v2/ui-audit.workflow.ts. Skill distribuída atualizada.
 
-## Independent implementation review
+## Verificações focadas
 
-A read-only subagent independently reproduced and verified fixes for forged receipts,
-input/result contracts, persistent counters, late worker outcomes, old additive gates,
-failed repairs masked by trailing values, omitted item contributions, retired branch
-ledgers and static-binding byte expansion. It ran 50 tests, then 6 focused delta tests,
-with zero failures. No remaining reproduced blocker was identified in that scope.
-This is implementation review of a bounded alpha, not complete plan/product acceptance.
+Uma execução focada completou 93 testes em cinco arquivos, zero falhas e 311 assertions: program-v2, program-v2-process, program-workflows, program-ui-fixture e codex-sdk-worker. SDK usa factories simuladas. Checks adicionais cobrem tipos/results dentro de Blocks/map e callbacks tardios de SDK: o owner antigo não altera o sucessor. O typecheck passou, incluindo o mesmo exemplo TS compilado/lowered e uma prova negativa de refs nominais. Testes de commands/apply executam processos Node determinísticos e Git temporário, não modelos.
 
-## Real Codex SDK pilot
+A verificação ampla inicial encontrou exports de adapters stale, uma expectativa de teste que assumia ordem de receipts com IDs aleatórios e um timeout isolado na fixture antiga de limpeza de pacote. Exports foram regenerados; expectativa passou a localizar conteúdo/candidato sem assumir ordem; a fixture antiga passou isoladamente sem alteração. Um teste novo de deadline foi ajustado para estabelecer primeiro reservas incertas com prazo normal e só então exercitar a fila bloqueada com prazo curto; assim não assume throughput do host durante a admissão. A execução ampla final passou: onze gates, 279 arquivos/71 chunks, 1667 testes e zero falhas; nenhum gate pulado. O callback tardio recebeu adicionalmente 43 testes focados e typecheck após sua alteração; outputs de geração/adapters foram reconferidos no fechamento. O primeiro resultado não é representado como sucesso.
 
-Started 2026-10-07T13:01:42.961Z; completed 13:02:22.229Z.
-Model gpt-6.1-sol, one attempt, outcome completed, status completed.
-Thread 01a11674-ab47-7b81-88b7-d5137124d19e.
-A typed readonly activity returned the exact fixture answer fabric-v2-pilot; the source
-input was unchanged. The reviewer inspected the persisted record, result artifact,
-source and nine transitions without spending a second model call.
-This does not establish SDK migration/review/application, production or App-closed
-operation. Reproduction is explicitly opt-in:
+## P2: fixture UI
 
-    node --import tsx scripts/pilot-fabric-program-sdk.mjs --yes --model MODEL --output REPORT
+Vinte páginas HTML locais com três defeitos conhecidos, executores command determinísticos e owner inventory: exatamente três implementações, 43 capturas (20 iniciais + 3 após correção + 20 finais), 20 capturas frescas finais e 21 obrigações finais satisfeitas. Destino preservado porque o exemplo não chama apply. Uma fixture separada usou Edge headless sobre uma página HTML local e produziu três screenshots reais (baseline, candidato corrigido e final), uma implementação, duas obrigações finais e zero LLM. Nenhuma prova de qualidade visual/modelo é inferida dessas fixtures.
 
-## Bounded recovery benchmark
+## P3: profiling determinístico
 
-Three deterministic local runs: 80 items, concurrency four, two observed infrastructure
-failures, owner close/reopen/resume. Every run produced 80 results in 82 adapter calls,
-retaining 78 successful outputs. The pure fixture adapter explicitly attests reusable
-inputs. A procedural reference also completed in 82 calls; it has no equivalent disk
-journal, worker clones or models. The harness does not run Claude Code.
+Script reproduzível: scripts/benchmark-fabric-workflows.ts. Dataset congelado: doze itens, delay simulado 3 ms, uma falha em item-7, concorrência permitida quatro, três repetições com owner close/reopen/resume. Digest sha256:58c9295b62663693d909726bfef8e2ae3779d20507caabfd9161b705f46e3412.
 
-| Observed mean | Fabric | Procedural reference |
-| --- | ---: | ---: |
-| Full elapsed | 49.276 s | 0.164 s |
-| Recovery elapsed | 29.333 s | not equivalent |
-| Retained disk | about 58.7 MB | no durable journal |
+| Repetição | Inicial ms | Recuperação ms | Attempts | Calls na recuperação | Calls intactos repetidos | Disk bytes |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 1389 | 1124 | 13 | 1 | 0 | 2141322 |
+| 2 | 1343 | 1224 | 13 | 1 | 0 | 2141031 |
+| 3 | 1374 | 1147 | 13 | 1 | 0 | 2141472 |
 
-There were 81 materialized operations and 897 transitions per Fabric run. These results
-show significant persistence overhead and bounded recovery correctness, not speed
-superiority, actual token/cost savings or maximum-scale acceptance.
-Reproduction: node --import tsx scripts/benchmark-fabric-programs.mjs --output REPORT.
+As tarefas simuladas de 3 ms apresentaram pico observado um devido à persistência; não se confunde limite quatro com overlap efetivo. Métricas incluem transações/tempo/bytes por owner e retained disk. Serialização por run resolveu contenção; validação de definitions é memoizada por digest, mantendo checks de envelope/artifact. Não há comparação de velocidade com datasets antigos diferentes, benchmark Claude, custo/token real ou superioridade de produto comprovada.
 
-## Remaining acceptance
+## Rastreabilidade da matriz
 
-Independent live branch scheduling, semantic inventory, extensible recipe registries,
-SDK output reuse, automatic GC, filesystem power-loss durability, maximum-scale tests,
-full SDK coding workflow and comparison against actual Claude Code remain unestablished.
-EasyGrow, production, human acceptance and native hook completion retain their earlier
-separate gates. The release includes the executable example and contract documentation.
+| Cenários | Evidência técnica |
+|---|---|
+| T01–T09, T11–T16 | program-workflows + program-v2: grafo/controle/scopes, eventos/deadlines, reprise, falhas/reservas, artefatos e replan |
+| T10 | aprovação/declínio vinculados a candidato; owner gate rejeita receipt fabricado; nenhuma autorização por dado de worker |
+| T17, T22, T34, T42 | intent/debits persistidos, repair limitado/restart, outputs sem observação, gap de parent commit, SDK stub e fuse real-factory |
+| T18–T23, T26, T36–T37 | UI fixtures: imagem inválida/ambiente errado/cobertura incompleta/check omitido/final completo/regressão final, zero-edits quando correto |
+| T24–T25, T27–T29 | commands reais em Git temporário: conflitos, diamond/beforeimages, gate/candidate, apply idempotente/uncertain, readonly sem autoridade |
+| T30–T31 | finite AST, tipos/schema, IDs/ciclos, import/callback/I/O rejeitados, bounded expansion |
+| T32 | sandbox/capabilities e defaults SDK verificados com factory simulada; isolamento command cooperativo declarado, sem promessa de controle de agentes internos |
+| T33 | revogação live bloqueia novo dispatch; histórico completado continua legível; apply revalida owner |
+| T38–T40 | quorum explícito/settled, collect-all diagnóstico, NFC/encoding/order e user data separada de outcome |
+| T41 | owner exclusivo, restart incerto e reconstrução/liberação de reservas; filesystem power-loss e todos os interleavings não são alegados |
+| T35, T43 | Fora do núcleo: não existe GC/resolução automática; nenhuma extensão foi ativada |
 
-## Final local release gates
-
-After regenerating the stale adapters, verify framework passed all 11 steps, with the
-entire 277-file/71-chunk TestGraph, no skipped gates and elapsed 508.643 s. The warning
-about PGlite RLS being structural is retained; Postgres authoritative proof belongs to
-release CI. Focused v2+SDK suites passed 63 tests/210 expectations. After the separate
-template dependency adjustment, template/audit policy suites passed 8 tests/47 expectations.
-
-The eight-target dependency gate passed after overriding the Nuxt template's devtools
-to 4.0.0-beta.4, removing its vulnerable simple-git dependency. An attempted simple-git
-4.0.2 override passed audit but failed actual template typechecking because the old
-consumer imported its removed default export; that attempt was discarded. The accepted
-devtools adjustment passed real npm installation, generation, dev-once and smoke verification
-including typechecking in a fresh Nuxt template. Existing two scoped, expiring high-severity
-advisory exceptions were preserved, with no new exception. This is not a claim of zero
-advisories across the generated Nuxt dependency graph.
-
-The first packed-package smoke passed installation, CLI, repository maps, app generation/
-verification, native hook runner smoke, studio open and wrapper scaffold. A second run
-adds actual installed v2 DSL/example validation; its outcome and exact release CI SHA
-are recorded in the user-facing delivery report after execution.
-
-The final packed smoke passed, including importing the installed v2 authoring module
-and lowering/validating the shipped five-step example against its registry. The local
-package reported version 0.1.0-alpha.70. This smoke ran from an actual npm tarball,
-not a dry-run or a source-only import.
-
-## CI correction before publication
-
-The first exact-SHA release run 37630439335 was blocked before publication: 1797 tests
-passed, five platform/opt-in tests were skipped, and the pre-existing POSIX exporter
-cleanup test failed. SIGKILL had been requested without waiting for group termination.
-The fix observes the owned detached process group with signal zero until ESRCH, bounded
-at five seconds; unknown cleanup remains an error and preserves its scratch directory.
-A deterministic regression fixture models two still-live observations after the signal.
-Linux/WSL runtime suites passed 17 tests/74 expectations; Windows runtime suites passed
-16 tests/72 expectations, with the new POSIX-only case separately skipped on Windows.
-The independent reviewer approved the code/error-path delta (SHA256
-563B878677FDE2BC82539AEB5020D84F72DCECE0FDB6AB19B94F0EE69D476997).
-This is cooperative process-group cleanup, not universal process-tree containment.
+Limites: sem cache cross-run, distributed execution, live fencing local, race/streaming ilimitado, GC/resolução automática ou múltiplos harnesses completos. Durabilidade é local com owner vivo; nem qualidade LLM, produção, App fechado ou superioridade sobre Claude DW foram verificados. Testes de modelos dependem de autorização futura e não são gates desta entrega.

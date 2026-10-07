@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { stableStringify } from "./canonical.ts";
+import { programGraph } from "./program-structure.ts";
+import { validateVisualPopulation } from "./program-evidence.ts";
 import { validateProgramTypes } from "./program-types.ts";
 
 export type ProgramValue = null | boolean | number | string | ProgramValue[] | { [key: string]: ProgramValue };
@@ -7,7 +9,8 @@ export interface ProgramRef { id: string; version: string }
 export interface ProgramExpr { $expr: string; args: unknown[] }
 export interface ProgramOperation { kind: string; id: string; options: Record<string, unknown> }
 export interface WorkflowProgramV2 {
-  operatorVersion?: 1;
+  operatorVersion?: 2;
+  mode?: "data" | "candidate";
   schemaVersion: 2; id: string; version: number; inputSchema: ProgramRef; outputSchema: ProgramRef;
   acceptance: ProgramRef; population?: ProgramRef; policy: ProgramRef; steps: ProgramOperation[]; result: unknown;
 }
@@ -15,12 +18,14 @@ export type ProgramSchema = { type?: string | string[]; enum?: ProgramValue[]; c
   properties?: Record<string, ProgramSchema>; required?: string[]; additionalProperties?: boolean;
   items?: ProgramSchema; minItems?: number; maxItems?: number; minLength?: number; maxLength?: number;
   minimum?: number; maximum?: number; anyOf?: ProgramSchema[] };
+export interface ProgramLexicalContext { item?: ProgramSchema; state?: ProgramSchema }
 export interface ProgramExecutor {
   id: string; version: string; kind: "command" | "codex"; effect: "read" | "isolated-write" | "idempotent-effect" | "non-idempotent-effect";
   argv?: string[]; prompt?: string; role?: "implementer" | "reviewer" | "investigator" | "decision";
   model?: string; timeoutMs: number; writeScope: string[]; allowedGeneratedPaths?: string[];
   network: "disabled" | "host"; isolation: "cooperative" | "sandbox"; schema: ProgramRef;
   allowedExitCodes?: number[]; environment?: Record<string, string>;
+  inputSchema?: ProgramRef;
   dependencies?: "none" | "auto";
   cache?: "none" | "workspace";
 }
@@ -34,8 +39,15 @@ export interface ProgramPolicy {
 export interface ProgramAcceptance {
   id: string; version: string; criteria: string[]; writeScope: string[];
   requiredChecks: string[]; requireReview: boolean; allowNoWork: boolean;
+  requiredChecksByScope?: { item: string[]; final: string[] };
+  assessmentBindings?: Record<string, "item" | "final">;
+  obligations?: { id: string; scope: "item" | "final"; criteria: string[]; requiredEvidence?: string[] }[];
+  allowPartial?: boolean;
+  requireHumanApproval?: boolean;
 }
+export interface ProgramVisualCase { itemKey: string; route: string; viewport: string; state: string; width: number; height: number }
 export interface ProgramPopulation {
+  visualCases?: ProgramVisualCase[];
   inventoryRoots?: string[]; extensions?: string[];
   id: string; version: string; members: string[]; exclusions: { id: string; reason: string }[];
   baselineDigest: string; evidence: string; allowNoWork: boolean;
@@ -48,6 +60,8 @@ export interface ProgramRegistry {
 export interface ProgramAssessment {
   receiptId?: string; generation?: number; operationId?: string;
   semanticDigest?: string; inputDigest?: string;
+  phase?: "item" | "final"; obligationIds?: string[]; satisfiedObligationIds?: string[]; unsatisfiedObligationIds?: string[];
+  environmentRef?: string; evidenceRefs?: string[]; contractDigest?: string;
   candidateDigest: string; verdict: "approved" | "changes_requested" | "inconclusive";
   findings: unknown[]; checks: { id: string; passed: boolean }[]; attemptIds: string[];
 }
@@ -63,6 +77,7 @@ export interface ProgramAttempt {
   executorDigest: string; startedAt: string; completedAt?: string;
   outcome: "running" | "completed" | "infrastructure_failed" | "invalid_output" | "uncertain" | "canceled_confirmed";
   outputRef?: string; threadId?: string; reason?: string;
+  reservation?: { scopes: { id: string; limit: number }[]; status: "held" | "released"; ownerEpoch: string };
   usage?: unknown;
 }
 export interface ProgramOperationRecord {
@@ -70,12 +85,12 @@ export interface ProgramOperationRecord {
   retired?: boolean;
   dependencies?: string[];
   id: string; semanticDigest: string; inputDigest: string; generation: number;
-  status: "running" | "completed" | "skipped" | "needs-attention" | "uncertain";
+  status: "declared" | "ready" | "running" | "waiting" | "completed" | "skipped" | "needs-attention" | "uncertain";
   outputRef?: string; attempts: string[]; reason?: string; reusedFromGeneration?: number;
 }
 export interface ProgramSignal {
   id: string; target: string; generation: number; type: string; correlation: string;
-  payloadRef: string; expiresAt?: string; status: "pending" | "consumed" | "pending-after-apply" | "stale";
+  payloadRef: string; authorization?: string; subjectDigest?: string; expiresAt?: string; status: "pending" | "consumed" | "pending-after-apply" | "stale";
 }
 export interface ProgramApplyIntent {
   requestId: string; requestDigest: string;
@@ -88,17 +103,36 @@ export interface ProgramRunV2 {
   program: WorkflowProgramV2; registry: ProgramRegistry; programDigest: string; registryDigest: string;
   inputRef: string; baselineDigest: string; baseRef?: string; createdAt: string; deadlineAt: string;
   version: number; semanticVersion: number; revision: number; planRevision: number;
-  status: "executing" | "paused" | "needs-attention" | "completed" | "acceptance-ready" | "applying" | "applied" | "apply-uncertain" | "canceled";
+  status: "executing" | "waiting" | "paused" | "needs-attention" | "completed" | "acceptance-ready" | "applying" | "applied" | "apply-uncertain" | "canceled";
   operations: Record<string, ProgramOperationRecord>; attempts: Record<string, ProgramAttempt>;
   seals: Record<string, string>; signals: ProgramSignal[]; candidates: Record<string, ProgramCandidate>;
   assessments: Record<string, ProgramAssessment>; coverageReceipts: Record<string, { populationDigest: string; baselineDigest: string; ids: string[]; status: string }>;
   deltas: Record<string, { artifactRef: string; inputCandidateDigest: string; outputCandidateDigest: string; producerAttemptId: string }>;
   waits: Record<string, { generation: number; deadlineAt?: string; signalId?: string; outputRef?: string }>;
-  repairs: Record<string, { semanticDigest: string; inputDigest: string; candidate: ProgramCandidate; rounds: number; assessments: number; infrastructure: number; unchanged: number; repeated: number; priorFindings: string; feedback: unknown; phase: "implement" | "assess" | "assessment-active" | "decide" | "accepted" | "exhausted" | "stalled"; assessment?: ProgramAssessment }>;
+  repairs: Record<string, { semanticDigest: string; inputDigest: string; candidate: ProgramCandidate; rounds: number; assessments: number; infrastructure: number; unchanged: number; repeated: number; priorFindings: string; feedback: unknown; phase: "implement" | "implementation-active" | "assess" | "assessment-active" | "decide" | "accepted" | "exhausted" | "stalled"; assessment?: ProgramAssessment }>;
   collections: Record<string, { seal: string; coverageReceiptId: string | null; generation: number; ids: string[]; acceptedAssessmentIds: string[]; acceptedCandidateIds: string[]; obligationsSatisfied: boolean }>;
   resultRef?: string; gateRef?: string; intent?: ProgramApplyIntent; receiptRef?: string;
   acceptedCandidate?: ProgramCandidate;
+  scopeResults?: Record<string, { outcomes: { id: string; status: string; reason?: string }[]; status: "completed" | "waiting" | "failed"; resultRef?: string }>;
+  artifactRecords?: Record<string, ProgramCaptureReceipt>;
+  queue?: { id: string; generation: number; at: string }[];
   totalAttempts: number; reason?: string;
+}
+export interface ProgramAssessmentContext {
+  visualCases?: ProgramVisualCase[];
+  runId: string; invocationId: string; assessmentId: string; phase: "item" | "final";
+  candidateRef: ProgramCandidate; obligationIds: string[]; itemKey?: string;
+  environmentRef: string; evidenceRefs: string[]; input: unknown;
+}
+export type ProgramCollectionItem = { key: string; outcome: "completed"; value: unknown } | { key: string; outcome: "failed" | "waiting"; reason?: string };
+export interface ProgramCollectionResult {
+  items: ProgramCollectionItem[]; results: unknown[]; failures: { id: string; reason: string }[];
+  seal: string; coverage: unknown; status: "completed" | "partial" | "no-work";
+}
+export interface ProgramCaptureReceipt {
+  receiptId: string; artifactRef: string; candidateDigest: string; environmentRef: string;
+  itemKey: string; buildDigest: string; mime: string; width: number; height: number;
+  route: string; viewport: string; state: string; producerAttemptId: string;
 }
 export class ProgramError extends Error {
   constructor(readonly code: string, message: string) { super(message); this.name = "ProgramError"; }
@@ -158,9 +192,10 @@ export function programPath(path: string): void {
   programAssert(path !== ".git" && !path.startsWith(".git/") && !path.startsWith(".forge/local/"), "Protected path");
 }
 export function programWithin(path: string, scope: string[]): boolean { return scope.some(prefix => path === prefix || path.startsWith(`${prefix}/`)); }
-export function validateWorkflowProgram(program: WorkflowProgramV2, registry: ProgramRegistry, ancestry: Set<string> = new Set()): void {
+export function validateWorkflowProgram(program: WorkflowProgramV2, registry: ProgramRegistry, ancestry: Set<string> = new Set(), lexical: ProgramLexicalContext = {}): void {
   programAssert(program?.schemaVersion === 2 && typeof program.id === "string" && program.id.length > 0 && Number.isSafeInteger(program.version) && program.version > 0, "Program v2 required");
-  programAssert(program.operatorVersion === undefined || program.operatorVersion === 1, "Unsupported operator version");
+  programAssert(program.operatorVersion === undefined || program.operatorVersion === 2, "Unsupported operator version");
+  programAssert(program.mode === undefined || ["data", "candidate"].includes(program.mode), "Invalid workflow mode");
   programValueBytes(program, 4 * 1024 * 1024); programValueBytes(registry, 4 * 1024 * 1024);
   const identity = programDigest(program); programAssert(!ancestry.has(identity), "Recursive subworkflow cycle"); ancestry = new Set([...ancestry, identity]); programAssert(ancestry.size <= 32, "Subworkflow depth exceeded");
   const schemaKeys = new Set(["type", "enum", "const", "properties", "required", "additionalProperties", "items", "minItems", "maxItems", "minLength", "maxLength", "minimum", "maximum", "anyOf"]);
@@ -179,11 +214,9 @@ export function validateWorkflowProgram(program: WorkflowProgramV2, registry: Pr
   programAssert(policy.concurrency <= 32 && policy.maxDepth <= 32 && policy.maxItems <= 10000 && policy.maxAttempts <= 10000 && policy.maxOperations <= 20000 && policy.maxOutputBytes <= 4 * 1024 * 1024, "Physical limits exceeded");
   for (const path of [...policy.writeScope, ...acceptance.writeScope, ...(policy.captureScope ?? [])]) programPath(path);
   programAssert(acceptance.criteria.length > 0 && new Set(acceptance.criteria).size === acceptance.criteria.length, "Acceptance criteria required and unique");
-  if (program.population) { const population = registryEntry(registry.populations, program.population); programAssert(population.members.length <= policy.maxItems && new Set(population.members).size === population.members.length && population.evidence.length > 0, "Population inventory invalid"); }
+  if (program.population) { const population = registryEntry(registry.populations, program.population); programAssert(population.members.length <= policy.maxItems && new Set(population.members).size === population.members.length && population.evidence.length > 0, "Population inventory invalid"); validateVisualPopulation(population); }
   const kinds = new Set(["agent", "command", "map", "branch", "loop", "compose", "gate", "repair", "subworkflow", "waitEvent", "value"]);
-  let count = 0;
   const expressions: Record<string, [number, number]> = { workflowInput: [0, 0], item: [0, 0], loopState: [0, 0], output: [1, 1], field: [2, 2], literal: [1, 1], object: [1, 1], array: [0, 10000], eq: [2, 2], and: [1, 100], or: [1, 100], not: [1, 1], concat: [1, 100], filter: [3, 3], unique: [2, 2], sort: [2, 2], take: [2, 2], length: [1, 1], population: [0, 0], acceptance: [0, 0], acceptedCandidate: [1, 1], acceptedCandidates: [1, 1], outputCandidate: [1, 1], candidateFromBaseline: [0, 1], coverageFor: [2, 2], coverageReceipt: [1, 1], acceptanceWriteScope: [1, 1], approvedChecksFor: [1, 1], acceptanceChecks: [1, 1] };
-  const graph = new Map<string, Set<string>>();
   function inspect(value: unknown, resolve: (id: string) => string | undefined, dependencies: Set<string>, depth = 0): void {
     programAssert(depth <= 32, "Expression nesting exceeded");
     if (!value || typeof value !== "object") return;
@@ -197,33 +230,54 @@ export function validateWorkflowProgram(program: WorkflowProgramV2, registry: Pr
     }
     for (const entry of Object.values(object)) inspect(entry, resolve, dependencies, depth + 1);
   }
-  const options: Record<string, string[]> = { value: ["value"], agent: ["executor", "input", "candidate", "writeScope"], command: ["executor", "input", "candidate", "writeScope"], map: ["items", "key", "coverage", "concurrency", "completion", "quorum", "body"], branch: ["condition", "then", "else"], loop: ["initialState", "maxRounds", "body", "next", "until"], repair: ["recipe", "entryMode", "initialCandidate", "writeScope", "implement", "review", "checks", "maxRepairRounds", "maxAssessmentAttempts", "maxInfrastructureAttempts", "progressPolicy", "onExhausted", "onUncertain", "preserveCandidateHistory"], compose: ["candidates", "onConflict"], gate: ["candidate", "obligations", "coverage"], subworkflow: ["program", "input"], waitEvent: ["schema", "type", "correlation", "timeoutMs", "onTimeout"] };
-  function walk(steps: ProgramOperation[], depth: number, prefix = "", parentResolve?: (id: string) => string | undefined): void {
-    programAssert(Array.isArray(steps) && depth <= policy.maxDepth, "Invalid template depth"); const ids = new Set<string>();
-    const resolve = (id: string): string | undefined => steps.some(step => step.id === id) ? `${prefix}${id}` : parentResolve?.(id);
-    for (const step of steps) {
-      programAssert(step && kinds.has(step.kind) && /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(step.id) && !ids.has(step.id) && step.options && typeof step.options === "object", "Invalid/duplicate operation"); ids.add(step.id);
-      programAssert(Object.keys(step.options).every(key => options[step.kind].includes(key)), `Unknown ${step.kind} option`);
-      programAssert(++count <= policy.maxOperations, "Template limit exceeded");
-      const dependencies = new Set<string>(); graph.set(`${prefix}${step.id}`, dependencies);
-      inspect(Object.fromEntries(Object.entries(step.options).filter(([key]) => !["body", "then", "else", "next", "until"].includes(key))), resolve, dependencies);
-      if (step.kind === "map" || step.kind === "loop") { const body = Array.isArray(step.options.body) ? step.options.body as ProgramOperation[] : [step.options.body as ProgramOperation]; const childPrefix = `${prefix}${step.id}/body/`; walk(body, depth + 1, childPrefix, resolve); for (const child of body) dependencies.add(`${childPrefix}${child.id}`); const childResolve = (id: string) => body.some(step => step.id === id) ? `${childPrefix}${id}` : resolve(id); if (step.kind === "loop") { inspect(step.options.next, childResolve, dependencies); inspect(step.options.until, childResolve, dependencies); } }
-      if (step.kind === "map") programAssert(["all-required", "partial", "quorum"].includes(String(step.options.completion)), "Explicit map completion required");
-      if (step.kind === "branch") { walk(step.options.then as ProgramOperation[], depth + 1, `${prefix}${step.id}/then/`, resolve); walk(step.options.else as ProgramOperation[], depth + 1, `${prefix}${step.id}/else/`, resolve); for (const arm of ["then", "else"]) for (const child of step.options[arm] as ProgramOperation[]) dependencies.add(`${prefix}${step.id}/${arm}/${child.id}`); }
-      if (["agent", "command"].includes(step.kind)) registryEntry(registry.executors, step.options.executor as ProgramRef);
-      if (step.kind === "repair") { registryEntry(registry.executors, step.options.implement as ProgramRef); registryEntry(registry.executors, step.options.review as ProgramRef); programAssert(["implement-first", "assess-first"].includes(String(step.options.entryMode)), "Repair entryMode required"); programAssert((step.options.recipe as ProgramRef)?.id === "repair" && (step.options.recipe as ProgramRef)?.version === "v1", "Unsupported repair recipe"); }
-      if (step.kind === "repair") { programAssert(step.options.onExhausted === undefined || step.options.onExhausted === "needs-attention", "Unsupported exhaustion policy"); programAssert(step.options.onUncertain === undefined || step.options.onUncertain === "reconcile", "Unsupported uncertainty policy"); programAssert(step.options.preserveCandidateHistory === undefined || step.options.preserveCandidateHistory === true, "Candidate history is always preserved"); }
-      if (step.kind === "compose") programAssert(step.options.onConflict === undefined || step.options.onConflict === "needs-resolution", "Unsupported composition conflict policy");
-      if (step.kind === "waitEvent") programAssert(step.options.onTimeout === undefined || step.options.onTimeout === "needs-attention", "Unsupported timeout policy");
-      if (step.kind === "waitEvent") registryEntry(registry.schemas, step.options.schema as ProgramRef);
-      if (step.kind === "subworkflow") { const child = registryEntry(registry.programs ?? {}, step.options.program as ProgramRef); programAssert(programDigest(child.policy) === programDigest(program.policy) && programDigest(child.acceptance) === programDigest(program.acceptance), "Child cannot replace inherited policy/acceptance"); validateWorkflowProgram(child, registry, ancestry); }
+  const options: Record<string, string[]> = {
+    value: ["value"], agent: ["executor", "input", "candidate", "writeScope"], command: ["executor", "input", "candidate", "writeScope"],
+    map: ["items", "key", "coverage", "concurrency", "completion", "quorum", "body", "order"],
+    branch: ["condition", "then", "else"], loop: ["initialState", "maxRounds", "body", "next", "until"],
+    repair: ["recipe", "entryMode", "initialCandidate", "writeScope", "implement", "review", "checks", "input", "assessmentScope", "evidence", "maxRepairRounds", "maxAssessmentAttempts", "maxInfrastructureAttempts", "progressPolicy"],
+    compose: ["candidates", "onConflict"], gate: ["candidate", "coverage", "authorization"], subworkflow: ["program", "input"],
+    waitEvent: ["schema", "type", "correlation", "subject", "timeoutMs"], sequence: ["steps", "result"], parallel: ["steps", "result", "onFailure"],
+  };
+  kinds.add("sequence"); kinds.add("parallel");
+  const entries = programGraph(program);
+  programAssert(entries.length <= policy.maxOperations, "Template limit exceeded");
+  for (const entry of entries) {
+    const step = entry.step;
+    programAssert(step && kinds.has(step.kind) && /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(step.id) && step.options && typeof step.options === "object", "Invalid operation");
+    programAssert(Object.keys(step.options).every(key => [...options[step.kind], "after", "label"].includes(key)), `Unknown ${step.kind} option`);
+    programAssert(entries.filter(other => other.id === entry.id).length === 1, "Duplicate operation ID");
+    inspect(Object.fromEntries(Object.entries(step.options).filter(([key]) => !["body", "steps", "result", "then", "else", "next", "until"].includes(key))), id => id, new Set());
+    programAssert(entry.id.split("/").length <= policy.maxDepth * 3 + 1, "Template depth exceeded");
+    if (step.kind === "map") {
+      programAssert(["all-required", "partial", "quorum"].includes(String(step.options.completion)), "Explicit map completion required");
+      programAssert(step.options.order === undefined || ["key", "input"].includes(String(step.options.order)), "Invalid map order");
+      if (step.options.completion !== "all-required") programAssert(acceptance.allowPartial, "Partial/quorum requires owner acceptance permission");
+      if (step.options.completion === "quorum") programAssert(step.options.quorum && typeof step.options.quorum === "object" && Number.isSafeInteger((step.options.quorum as { minAccepted: number }).minAccepted) && (step.options.quorum as { minAccepted: number }).minAccepted > 0, "Quorum minAccepted required");
+      else programAssert(step.options.quorum === undefined, "Quorum only applies to quorum completion");
     }
+    if (["agent", "command"].includes(step.kind)) { const executor = registryEntry(registry.executors, step.options.executor as ProgramRef); if (executor.inputSchema) registryEntry(registry.schemas, executor.inputSchema); }
+    if (step.kind === "repair") {
+      registryEntry(registry.executors, step.options.implement as ProgramRef); registryEntry(registry.executors, step.options.review as ProgramRef);
+      programAssert(["implement-first", "assess-first"].includes(String(step.options.entryMode)), "Repair entryMode required");
+      programAssert((step.options.recipe as ProgramRef)?.id === "repair" && (step.options.recipe as ProgramRef)?.version === "v2", "Unsupported repair recipe");
+      const phase = step.options.assessmentScope as "item" | "final" | undefined;
+      programAssert(phase === undefined || phase === "item" || phase === "final", "Invalid assessment scope");
+      if (acceptance.requiredChecksByScope) {
+        programAssert(phase && acceptance.assessmentBindings?.[step.id] === phase, "Assessment scope must match owner operation binding");
+        if (phase === "item") programAssert(lexical.item || entries.some(ancestor => ancestor.step.kind === "map" && entry.id.startsWith(`${ancestor.id}/body/`)), "Item assessment requires a map context");
+      }
+      const required = phase && acceptance.requiredChecksByScope ? acceptance.requiredChecksByScope[phase] : acceptance.requiredChecks;
+      programAssert(Array.isArray(step.options.checks) && required.every(check => (step.options.checks as unknown[]).includes(check)), "Repair cannot omit required checks");
+      for (const ref of (step.options.evidence ?? []) as ProgramRef[]) programAssert(registryEntry(registry.executors, ref).effect === "read", "Evidence executor must be readonly");
+    }
+    if (step.kind === "parallel") programAssert(["collect-all", "cancel-siblings"].includes(String(step.options.onFailure)), "Parallel failure policy required");
+    if (step.kind === "compose") programAssert(step.options.onConflict === undefined || step.options.onConflict === "needs-resolution", "Unsupported conflict policy");
+    if (step.kind === "waitEvent") registryEntry(registry.schemas, step.options.schema as ProgramRef);
+    if (step.kind === "subworkflow") { const child = registryEntry(registry.programs ?? {}, step.options.program as ProgramRef); programAssert(programDigest(child.policy) === programDigest(program.policy) && programDigest(child.acceptance) === programDigest(program.acceptance), "Child cannot replace inherited policy/acceptance"); programAssert(!child.population || program.population && programDigest(child.population) === programDigest(program.population), "Child cannot replace inherited population"); validateWorkflowProgram(child, registry, ancestry, { ...lexical, ...(entries.some(ancestor => ancestor.step.kind === "map" && entry.id.startsWith(`${ancestor.id}/body/`)) ? { item: {} } : {}), ...(entries.some(ancestor => ancestor.step.kind === "loop" && entry.id.startsWith(`${ancestor.id}/body/`)) ? { state: {} } : {}) }); }
   }
-  walk(program.steps, 0); programAssert(Object.hasOwn(program, "result"), "Explicit program result required");
+  programAssert(Object.hasOwn(program, "result"), "Explicit program result required");
   inspect(program.result, id => program.steps.some(step => step.id === id) ? id : undefined, new Set());
-  const visiting = new Set<string>(), visited = new Set<string>();
-  function visit(id: string): void { programAssert(!visiting.has(id), `Dependency cycle ${id}`); if (visited.has(id)) return; visiting.add(id); for (const dependency of graph.get(id) ?? []) visit(dependency); visiting.delete(id); visited.add(id); }
-  for (const id of graph.keys()) visit(id);
-  validateProgramTypes(program, registry);
+  if (acceptance.requiredChecksByScope) programAssert(acceptance.obligations?.length && new Set(acceptance.obligations.map(obligation => obligation.id)).size === acceptance.obligations.length, "Scoped acceptance requires unique owner obligations");
+  validateProgramTypes(program, registry, lexical);
   programDigest(program); programDigest(registry);
 }

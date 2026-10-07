@@ -1,168 +1,151 @@
-# Agent Fabric program workflows v2
+# Agent Fabric program workflows
 
-Program workflows are an opt-in interpreter hosted by the existing authenticated local
-project owner. Version-1 managed runs and accompanied task records retain their original
-commands, persistence and meaning. No existing run is automatically converted.
+Current dev architecture: finite typed TypeScript → JSON IR (schemaVersion 2/operatorVersion 2) → exclusive local owner → activity scheduler → candidates/evidence → final assessment → gate → separate apply. There is no legacy interpreter or migration requirement. Start new runs after semantic upgrades. Normative architecture: `architecture/agent-fabric/WORKFLOW_PROGRAM_V2_ADR.md`; requirements and evidence are adjacent documents.
 
-Author a `WorkflowProgramV2` JSON value, or supply finite TypeScript source with named
-imports from `forgeos/agent-fabric/workflows`. The static lowerer accepts const data,
-literal arrays/objects, constructors and spreads of already lowered const data objects.
-It rejects arbitrary imports, loops, closures, accessors, computed properties, array
-spreads, runtime I/O and malformed syntax. Workflow source is never executed.
+## R2.2 correction contract
 
-The shipped example is `examples/agent-fabric-v2/`. Its file-conversion reviewers are
-deterministic command fixtures; configure a real distinct reviewer and project checks
-for coding acceptance. See the architecture ADR for normative boundaries.
+Correction plan: `architecture/agent-fabric/WORKFLOW_PROGRAM_V2_CORRECTIONS.md`. Subworkflows inherit activity scopes, cancellation, dependencies, item identity and lexical loop state. Their `workflowInput()` is the explicit child input. Policy/acceptance cannot change; population is inherited and cannot be replaced. Prefer passing item data explicitly for portable child programs; static schemas remain authoritative.
 
-## Owner configuration and commands
+The owner/store share one PID/token hardlink lease protocol, including recovery of dead reclaim guards. A live guard is never removed. Unknown process liveness stays conservative. No exactly-once external guarantee is added.
 
-The owner reads `.forge/fabric-programs.json`, with versioned `schemas`, `executors`,
-`policies`, `acceptance`, `populations` and optional child `programs` registries.
-Requests cannot replace that registry. Each run pins its registry and external contracts.
-An author chooses registered references, not weaker review, coverage or effect authority.
+`ProgramExecutor.inputSchema` optionally validates activity input before preparation/dispatch, alongside conservative preflight inference. Output schemas remain mandatory. Typed author refs support `executorRef<Input,Output>` and `programRef<Input,Output>`; `schemaRef<Output>` types events. `output(operation)` retains output types, `field` checks typed keys, and typed map bodies retain collection result item types. `output("id")` remains schema-validated at preflight/runtime. Generics are author annotations, not inferred from registry files and not authority to weaken a schema. `WorkflowExpression`, `WorkflowValue`, `WorkflowResolved`, `WorkflowBody`, `WorkflowCollection`, `WorkflowActivityOptions` are exported type helpers. No second interpreter is introduced.
 
-Keep `forge fabric serve` alive. Every mutation uses a unique `requestId`; subsequent
-mutations also require `runId` and `expectedVersion`. A repeated identical request is
-idempotent; changed contents under that request ID conflict. After a version conflict,
-read current status and use a new request ID for a changed decision.
+```ts
+const inspect = agent("inspect", {
+  executor: executorRef<{path:string},{ok:boolean}>("inspect", "v2"),
+  input: {path: "src/a.ts"}
+});
+const ok = field(output(inspect), "ok"); // WorkflowExpression<boolean>
+```
 
-| CLI action | Meaning |
-| --- | --- |
-| `program-validate --file request.json` | Lower and validate without dispatch |
-| `program-start --file request.json` | Persist baseline, input and program before scheduling |
-| `program-status --run-id ID` | Read authoritative state |
-| `program-wait --file request.json` | Bounded wait using `{runId,cursor,waitMs}` |
-| `program-pause`, `program-resume` | Stop new dispatch / explicitly resume settled work |
-| `program-signal` | Persist an authorized event with target, generation, type and correlation |
-| `program-replan` | New program with barrier/additive/fenced modes |
-| `program-cancel` | Request cancellation; unobserved effects stay uncertain |
-| `program-reconcile` | Record observed failure or reconcile publication |
-| `program-apply` | Apply a gated candidate to local scoped files |
+### Visual population
 
-Use `--file request.json --json` for mutations. Start accepts `{requestId,source,input}`
-or `{requestId,program,input}`. MCP exposes the same actions as
-`fabric_program_*`, using `{request: BODY}` for mutations and `{runId}` for status.
-Both transports use the same owner, state store and capability boundaries.
-The shared authenticated HTTP owner limits each request body to 40 KiB. Keep source and
-input below that transport bound; the offline lowerer's separate source cap is 256 KiB.
+An owner population may declare `visualCases`, exactly one case per member:
 
-## Operators and contracts
+```json
+{"itemKey":"checkout-mobile-error","route":"/checkout","viewport":"mobile","state":"error","width":390,"height":844}
+```
 
-`value`, `agent`, `command`, `map`, `branch`, `loop`, `repair`, `compose`, `gate`,
-`subworkflow` and `waitEvent` are finite primitives. Explicit output references infer
-dependencies; parent/body cycles are rejected before dispatch. Branches mark the other
-arm skipped. Child programs inherit policy/acceptance and global attempt/deadline limits.
-Loops require bounded rounds and a progress/termination decision. Each materialized
-operation has a stable invocation ID, generation and input/semantic digests.
+Route/viewport/state tuples and member keys must be unique; excluded members remain cataloged but are not assessed. Every observed capture must match its owner tuple and dimensions. AssessmentContext carries the current expected cases to capture/review workers. Final capture requirements recapture every active case. Item capture requirements come only from item obligations; final-only obligations do not force local screenshots. Without visualCases, coverage is per member, not an inferred matrix. Receipt metadata and valid image headers do not prove that the pixels depict the declared route/state. The WebP header parser currently accepts VP8X only.
 
-Schemas use a bounded JSON Schema subset: types, enum/const, properties, required,
-additionalProperties, items, array/string/numeric bounds and anyOf. Unsupported keywords
-are rejected. Conservative static inference checks known field, child-input, branch-merge
-and result types. Unknown shapes still require runtime validation. A completed process
-does not imply a valid output or approval: review payloads distinguish approved,
-changes_requested and inconclusive from operational failure.
+Capture blobs commit before result; all receipts of one attempt commit atomically with the observed attempt result. Invalid batches leave no accepted partial receipts. Orphan blobs may remain until explicit maintenance; no GC is implied.
 
-`repair@v1` is a built-in deterministic recipe. `implement-first` edits before assessment;
-`assess-first` can approve with zero edits. Every assessment reviews/checks the same
-candidate, with a distinct readonly reviewer and registered command checks. Candidate,
-feedback, phase, implementation/assessment/infrastructure counters and measured progress
-are checkpointed. Resume cannot replenish exhausted budgets. Nonaccepted recipes keep
-diagnostic output and stop their consumers; later values cannot mask rejection.
+### Storage and inspection
 
-`map` requires finite unique NFC keys, bounded concurrency, a seal and explicit completion:
-all-required, partial or quorum. All-required discovery must match the owner population.
-Coverage alone does not prove work was accepted: a separate closed collection ledger
-binds each item's accepted assessment and candidate contribution. Population gates require
-that ledger and retain every item's deltas/producers in the final candidate. Empty work
-requires explicit allowNoWork in both population and acceptance contracts.
+New runs use `.forge/local/agent-fabric/program-runs-v3`. Format 3 envelopes contain snapshot/journal pointers and CAS receipts, not duplicate full snapshots/history arrays. Each immutable journal node links its predecessor; history verifies the chain and historical snapshot identities. Snapshot and journal commit before atomic envelope publication. Old directories are preserved but unused; no checkpoint migration. Identical internal mutations do not write another checkpoint; authenticated request receipts still commit. Dispatch keeps a 24 MiB snapshot reserve and 90,000-transition reserve for recovery.
 
-The initial inventory adapter enumerates files under captured `inventoryRoots` and optional
-extensions. It is a concrete file inventory, not a semantic proof that a glob found all
-components. Semantic populations require owner-supplied evidence and exact baseline pinning.
-Exclusions require an inventory member and a reason. Population changes require a successor
-run with a new captured contract; current replan cannot replace external contracts.
+`program-explain.graph` returns `nodes`, observed `instances`, `mermaid`, and graph semantics. The diagram shows static dependencies, including control completion edges; dynamic map/loop expansions are separate instances. Mermaid labels are escaped. Storage metrics split actual written bytes into snapshot/journal/envelope/artifact categories, including temp files; full state snapshots still grow with the run. Profiling does not establish model speed or quality.
 
-## Candidate acceptance and application
+Reusable examples: `examples/agent-fabric-v2/map-child.workflow.ts`, `item-child.workflow.ts`, and `visual-population.json` (owner baseline digest required).
 
-Candidates are immutable snapshot identities with ordered producer-specific deltas and
-parents. A shared ancestor is composed once; equal patches from independent producers
-are not silently deduplicated. Independent overlaps require resolution. Beforeimages,
-captured environment context, source types and scopes are checked before local writes.
+## Start and inspect
 
-`completed` means a data program reached its typed result without a final acceptance gate.
-It is a re-openable computation checkpoint; it does not authorize application. Replan and
-resume are explicit owner decisions and the earlier state remains in immutable history.
-`acceptance-ready` requires an owner-issued gate and `acceptedCandidate`. A declared
-accepted result cannot bypass that gate or point to another candidate. Uncertain/active
-attempts block completion and application. `applied` and `canceled` require explicit successor
-runs for new work. No lifecycle state asserts human or production acceptance.
+The owner reads `.forge/fabric-programs.json`: versioned schemas, executors, policies, acceptance, populations and optional child programs. Authors select references; requests cannot substitute a weaker owner registry. Keep `forge fabric serve` alive. New dispatch/apply checks current owner authorization; immutable historical facts retain their pinned definitions.
 
-`program-apply` requires current version, gate and authorization provenance. The owner
-commits ApplyIntent with candidate/program/contract digests, semantic version, seals and
-expected files before the first write. Signals received during application stay
-pending-after-apply. Publication checks each beforeimage, checks cancellation before each
-write, and stores observed completion. Multiple files are not one filesystem transaction.
-An interrupted/partial/divergent publication becomes apply-uncertain; it never silently retries.
+`forge fabric program-validate --file request.json --json` accepts `{source}` or `{program}`. Start adds `{requestId,input}`. CLI mutations use request files and `{runId,requestId,expectedVersion,...}`. The HTTP owner bounds requests at 40 KiB; offline source lowering caps at 256 KiB. Every control uses CAS and idempotency; use a new requestId when changing a decision after a conflict.
 
-Publication reconciliation accepts `publication: true` only after observing all expected
-files. `publication: "retry"` requires authorization and the complete original baseline;
-it clears the old intent and pauses for explicit resume/revalidation. Partial or divergent
-files are preserved. Worker reconciliation requires attemptId, `resolution: "failed"`
-and an observed reason; parent uncertainty is reconciled after its worker attempts.
+| Action | Request/meaning |
+|---|---|
+| program-validate | source/program, no dispatch |
+| program-start | requestId, source/program, input |
+| program-status | --run-id ID, authoritative state |
+| program-wait | runId, cursor, waitMs; bounded long poll |
+| program-pause | stop new dispatch; active work is observed |
+| program-resume | continue settled work without replenishing budgets |
+| program-signal | signalId, target, generation, type, correlation, payload, authorization, optional subject/expiresAt |
+| program-replan | source/program, mode barrier/additive/fenced |
+| program-cancel | request cancellation; unknown effects remain uncertain |
+| program-reconcile | attemptId or operationId, resolution failed, observed reason; publication reconciliation is separate |
+| program-apply | current gated result and authorization; scoped local files |
+| program-history | --run-id ID, journal/stateRefs |
+| program-explain | --run-id ID, scopes/queue/scheduler/storage/guarantees |
+| program-artifact-get | runId, ref; optional binary:true/maxBytes; bounded reachable artifact only |
+| program-diff | runId and proposed source/program, graph changes |
 
-## Durability, replan, effects and reuse
+MCP exposes the same 15 actions as `fabric_program_*`. Status/history/explain accept `{runId}`; other actions use `{request:BODY}`. Both use the same authenticated owner and store. Apply is not automatic.
 
-Each run has one checksummed authoritative atomic record in
-`.forge/local/agent-fabric/program-runs`. Immutable artifacts and full stateRefs are fsynced
-before referencing transitions. Every historical transition points to the exact state,
-including prior programs, generations, decisions and counters. Store.history and artifact
-get APIs inspect that history. Locks use linked complete owner files and guarded dead-owner
-reclamation. Recovery marks incomplete dispatch/application uncertain and does not start work.
-Process-crash/replay behavior is tested. Directory fsync/power-loss durability across every
-filesystem is not asserted. Archive/GC is manual; preserving evidence consumes disk.
+## Complete author API: 50 constructors
 
-Barrier replan requires settled work. Additive replan preserves all existing templates;
-after the previous scheduler cycle settles, controls and final gates are recomputed for
-the new semantic version. Fenced replan is owner opt-in: affected operations/dependents
-receive monotonic generations; running attempts become uncertain and receive abort requests.
-It currently uses a **global scheduling barrier**. Unaffected running work may finish, but
-resume waits for the scheduler to settle and uncertainty to be reconciled. Removed historical
-operations are retired/skipped after observation; history is retained. This is not arbitrary
-live replacement with independent branch schedulers.
+Import from `forgeos/agent-fabric/workflows`. Functions create finite IR data; they do not dispatch during authoring. `WorkflowDefinition`, `WorkflowOptions`, `WorkflowRef`, `WorkflowOperation` are exported author types. Normal TS compilation and static lowerer both support `as const`/`satisfies`; lowerer never evaluates callbacks, arbitrary imports or runtime I/O. JSON authors get identical owner validation.
 
-Commands use explicit argv, resolved/hashed actual executables, scrubbed environment,
-frozen clone inputs and optional locked dependencies with scripts ignored. They are
-cooperative OS processes, not a network/filesystem sandbox. Strong disabled-network claims
-are refused for commands. Codex workers use readonly/workspace-write sandbox, disabled
-network and inherited MCP isolation. captureScope is distinct from write authority, allowing
-readonly programs without granting source writes. Generated paths cannot conceal captured
-source; external scratch is separate from candidate files. Cancellation does not prove a
-process tree stopped; unknown outcomes require observation.
+`defineWorkflow({id,version,operatorVersion:2,mode,inputSchema,outputSchema,policy,acceptance,population?,steps,result})` defines the root. Mode data returns typed data; candidate mode requires a gate for acceptance-ready. Schema subset supports bounded objects/arrays/scalars, properties/required/additionalProperties, enum/const, numeric/string/array bounds and anyOf; unsupported keywords reject.
 
-Outputs are not reused by default. `cache: "workspace"` is an owner declaration for command
-executors whose complete relevant inputs are their captured workspace/data, observed binary,
-dependency tree and environment. External/network/time/global filesystem inputs invalidate
-that declaration unless separately closed by an adapter. Compatible completed outputs receive
-explicit reuse receipts. SDK output reuse is disabled because effective global instructions,
-plugins and model inputs are not yet fully attested. Prompt caching is a separate provider feature.
+Seven reference constructors share `(id,version)` and have separate nominal kinds: `schemaRef`, `executorRef`, `policyRef`, `acceptanceRef`, `populationRef`, `recipeRef`, `programRef`.
 
-Recommended initial concurrency is four. Hard caps: concurrency32, depth32, items10000,
-attempts10000, operations20000, output4MiB, state32MiB and20 plan revisions. Expression/DSL
-expansion is bounded before concatenation/cloning. A dispatch reserve leaves record space
-for recovery. These are limits, not measured performance claims at maximum scale.
+All 13 operators use `(id,options)`, with optional common `after:string[]` and label. `after` is control dependency, not an operator. Reference dependencies are also inferred; independent roots run concurrently. IDs are lexical and cycles reject before dispatch. Multi-step Blocks require `{steps,result}`; a single operation is shorthand.
 
-## Verification and remaining scope
+| Operator | Main options and result |
+|---|---|
+| value | value; pure data |
+| agent | executor, input?, candidate?, writeScope?; typed worker data |
+| command | same activity contract; registered command executor |
+| map | items,key,body,completion,coverage?,quorum?,concurrency?,order?; sealed collection with item outcomes |
+| branch | condition,then,else Blocks; selected result, unused arm skipped |
+| loop | initialState,maxRounds,body,next,until; final state, bounded progress |
+| repair | recipe,implement,review,checks,evidence?,assessmentScope?,entryMode,initialCandidate,writeScope,maxRepairRounds,maxAssessmentAttempts,maxInfrastructureAttempts,progressPolicy; accepted or explicit nonacceptance result |
+| compose | candidates,onConflict:needs-resolution; integrated candidate; conflicts block |
+| gate | candidate,coverage?,authorization?; owner-issued current receipt |
+| subworkflow | program,input; child result under inherited limits/contracts |
+| waitEvent | type,correlation,schema,subject?,timeoutMs?; one authorized event payload |
+| sequence | steps,result; serial required children |
+| parallel | steps,result,onFailure:collect-all/cancel-siblings; required children with diagnostics |
 
-Tests cover finite lowering, output/generation/counter contracts, 80-item coverage, fabricated
-receipts, no-work, events, cache attestation, recovery, additive/fenced races, real commands,
-two-file composition, three same-file corrections, diamond ancestry, identical independent
-patch conflicts, application idempotency, beforeimage preservation and authenticated transport.
-The opt-in SDK pilot script performs a real readonly typed activity and records its bounded
-evidence separately. It is excluded from normal CI to avoid account/model usage.
+All 29 expressions:
 
-This alpha implements the bounded v2 foundation and conservative online controls. It does
-not establish complete F6/F7 product acceptance, semantic inventory adapters, extensible recipe
-registries, external effects exactly-once, streaming discovery, automatic GC, SDK output cache,
-high-concurrency scale, a live independent-branch scheduler or Claude product superiority.
-The benchmark harness labels its procedural comparison as a reference model, never as a
-measured Claude run. Production/EasyGrow/native-hook/App-closed acceptance remains separate.
+| Expression | Meaning |
+|---|---|
+| workflowInput() | typed input |
+| item() | current map item, including nested loop |
+| loopState() | current loop state |
+| output(id) | data result of lexical invocation; activity envelope is unwrapped |
+| field(value,key) | bounded object field |
+| literal(value) | literal data, no nested expression interpretation |
+| object(record) | evaluate object entries |
+| array(...values) | evaluate array entries |
+| eq(a,b) | canonical data equality |
+| and(...values) | boolean conjunction |
+| or(...values) | boolean disjunction |
+| not(value) | boolean negation |
+| concat(...arrays) | bounded concatenation |
+| filter(values,key,equals) | field equality selection |
+| unique(values,key) | first unique field values |
+| sort(values,key) | UTF-8 field ordering |
+| take(values,count) | bounded prefix |
+| length(value) | collection/string length |
+| population() | owner population contract |
+| acceptance() | owner acceptance contract |
+| candidateFromBaseline(entry?) | owner baseline candidate; entry bounds item context |
+| outputCandidate(id) | candidate from completed activity/composition |
+| acceptedCandidate(id) | accepted repair candidate with owner receipt |
+| acceptedCandidates(id) | accepted candidate collection |
+| coverageFor(contract,discovered) | validate discovered items against owner catalog; issue receipt |
+| coverageReceipt(id) | collection coverage receipt |
+| acceptanceWriteScope(id) | inherited acceptance write scope |
+| approvedChecksFor(entry) | owner-approved checks for work entry |
+| acceptanceChecks(id) | checks inherited from the acceptance contract |
+
+## Recovery and scopes
+
+Owner activity capacity is four; run and ancestor map quotas can narrow it. Parent controls do not hold activity slots. Queue admission shares the absolute run deadline. Completed intact same-run outputs are reused before workspace/adapter preparation, including mocked/real SDK output records. This is distinct from cross-run cache, which is absent. Corrupt artifacts block and do not trigger silent redispatch.
+
+Waiting is its own state. Independent siblings continue and survive resume. Events persist before consumption; target/generation/type/correlation/subject/schema/expiry bind their use. A live owner wakes on authorized event or deadline. After restart use explicit resume. Paused stays paused. Completed data is not acceptance-ready. Unobserved cancellation/dispatch stays uncertain and retains reservations through restart until observation/reconciliation. Exactly-once external effects are not promised.
+
+Barrier replan recomputes changed branches and dependents, preserving compatible intact facts. Additive keeps existing templates. Fenced replacement requires owner opt-in and a global barrier; this is not independent live local fencing. Repair persists intent/counters before dispatch and never refunds exhausted budgets on resume.
+
+## UI and candidate acceptance
+
+Owner contracts declare `requiredChecksByScope:{item,final}`, `assessmentBindings` and obligations `{id,scope,criteria,requiredEvidence?}`. Review/check/capture receive AssessmentContext with candidateRef, obligationIds, environmentRef, itemKey and evidenceRefs. Evidence files are readonly inputs. Registered capture commands return JSON `evidenceArtifacts:[{path,itemKey,buildDigest,environmentRef,mime,width,height,route,viewport,state}]`; path must be in bounded scratch storage. Owner stores immutable bytes and issues capture receipts. Invalid/missing/stale evidence blocks; it does not become a UI defect requiring implementation.
+
+Assess-first means a correct UI produces zero edits. Review approval alone is insufficient: findings must be empty, checks passed, all obligations covered, current candidate/env/evidence bound and distinct observed reviewer attempt. Final assessment after compose recaptures the complete population and can reject an item previously approved locally. Conflicts need resolution; no automatic resolution recipe is implemented.
+
+Map keys normalize NFC before uniqueness, encode path segments once and order by UTF-8. Completion is all-required/partial/quorum; quorum is `{minAccepted:K}`, explicit and only closes when outcomes settle. Owner must authorize partial/quorum; such a result cannot alone satisfy all-required final obligations. Envelope item outcome is distinct from arbitrary user data (including a user field named status).
+
+If `requireHumanApproval:true`, add a wait subject `{candidate: acceptedCandidate(finalId), contract: acceptance()}` and give `output(waitId)` as gate authorization. The authenticated host supplies provenance and approved payload, not a worker. A declined/expired/fabricated approval does not authorize gate/apply.
+
+Apply commits an immutable intent before the first write, pins candidate/contract/semantic version/seals and checks beforeimages. Multiple files are not an atomic filesystem transaction. Divergent/partial writes become apply-uncertain. Reconciliation with `publication:true` requires observed complete files; retry requires authorization and complete original baseline, then explicit resume/revalidation. Source files remain untouched until apply.
+
+## Runnable examples and no-LLM verification
+
+`examples/agent-fabric-v2/ui-audit.workflow.ts` is the complete UI plan. `run-ui-fixture.ts` builds 20 local HTML pages with three known defects and registered deterministic discover/capture/review/implement/local/global-check commands. Test evidence: exactly three implementations, 43 captures including 20 fresh final captures, 21 final obligations, no apply and zero LLM calls. PNG fixtures verify transport/binding. Optional explicit browser path renders local HTML in headless Chromium/Edge; visual quality is still not model-evaluated.
+
+Run `FORGE_FABRIC_TEST_MODE=1` using the shell's environment syntax, then `node bin/forge-bun.mjs run examples/agent-fabric-v2/run-ui-fixture.ts`. The test fuse refuses default real Codex factories; stubs remain supported. Runtime profiling: `node bin/forge-bun.mjs run scripts/benchmark-fabric-workflows.ts report.json`, fixed fan-out/fault/restart, no provider. Neither is a Claude/model-quality benchmark. Future extensions (cross-run cache, distributed owner, automatic GC/resolution, unlimited streaming/race, additional harnesses) remain out of this implementation.

@@ -46,6 +46,7 @@ jobs:
       id-token: write
     env:
       FORGE_MOCK_AI: "1"
+      FORGE_FABRIC_TEST_MODE: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -231,6 +232,7 @@ jobs:
       id-token: write
     env:
       FORGE_MOCK_AI: "1"
+      FORGE_FABRIC_TEST_MODE: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

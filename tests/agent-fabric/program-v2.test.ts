@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ProgramRunService } from "../../src/forge/agent-fabric/program-service.ts";
 import { programDigest, validateProgramData, validateWorkflowProgram, type ProgramRegistry, type ProgramRunV2, type WorkflowProgramV2 } from "../../src/forge/agent-fabric/program-contract.ts";
-import { lowerWorkflowSource, defineWorkflow, schemaRef, policyRef, acceptanceRef, populationRef, executorRef, recipeRef, value, literal, output, object, item, field, map, population, coverageFor, repair, candidateFromBaseline, acceptedCandidate, gate, branch, subworkflow, workflowInput, waitEvent, loop, loopState, eq } from "../../src/forge/agent-fabric/program-dsl.ts";
+import { lowerWorkflowSource, defineWorkflow, schemaRef, programRef, policyRef, acceptanceRef, populationRef, executorRef, recipeRef, value, literal, output, object, item, field, map, population, coverageFor, repair, candidateFromBaseline, acceptedCandidate, gate, branch, subworkflow, workflowInput, waitEvent, loop, loopState, eq } from "../../src/forge/agent-fabric/program-dsl.ts";
 import { validateProgramCapabilities, type ProgramWorkerAdapter, type ProgramWorkerInput, type ProgramWorkerResult } from "../../src/forge/agent-fabric/program-worker.ts";
 
 const roots: string[] = [], services: ProgramRunService[] = [];
@@ -14,7 +14,7 @@ function registry(root: string, members: string[] = []): ProgramRegistry {
   return { schemas: { "any@v1": {}, "object@v1": { type: "object" }, "number@v1": { type: "number" } },
     executors: { "implement@v1": executor("implement", "isolated-write", "implementer"), "review@v1": executor("review", "read", "reviewer"), "check@v1": executor("check", "read", "investigator"), "read@v1": executor("read", "read", "investigator") },
     policies: { "local@v1": { id: "local", version: "v1", maxItems: 100, concurrency: 4, maxAttempts: 1000, maxOperations: 2000, maxDepth: 8, deadlineMs: 120000, maxOutputBytes: 4 * 1024 * 1024, writeScope: ["src"], executors: ["implement@v1", "review@v1", "check@v1", "read@v1"], allowCooperativeCommands: true, allowNetwork: true } },
-    acceptance: { "goal@v1": { id: "goal", version: "v1", criteria: ["behavior-preserved"], writeScope: ["src"], requiredChecks: ["check@v1"], requireReview: true, allowNoWork: false } },
+    acceptance: { "goal@v1": { id: "goal", version: "v1", criteria: ["behavior-preserved"], writeScope: ["src"], requiredChecks: ["check@v1"], requireReview: true, allowNoWork: false, allowPartial: true } },
     populations: { "components@v1": { id: "components", version: "v1", members, exclusions: [], baselineDigest: programDigest({ root }), evidence: "Owner-enumerated fixture inventory", allowNoWork: false } } };
 }
 function program(steps: WorkflowProgramV2["steps"], result: unknown): WorkflowProgramV2 {
@@ -32,16 +32,23 @@ async function finish(service: ProgramRunService, runId: string): Promise<Progra
   const deadline = Date.now() + 30000;
   for (;;) { const state = await service.execute("program-status", { runId }) as ProgramRunV2; if (state.status !== "executing") return state; if (Date.now() > deadline) throw new Error("Fixture did not finish"); await new Promise(resolve => setTimeout(resolve, 10)); }
 }
+async function control(service: ProgramRunService, action: Parameters<ProgramRunService["execute"]>[0], request: Record<string, unknown>): Promise<unknown> {
+  for (let retry = 0; retry < 30; retry++) {
+    const state = await service.execute("program-status", { runId: request.runId }) as ProgramRunV2;
+    try { return await service.execute(action, { ...request, expectedVersion: state.version }); }
+    catch (error) { if ((error as {code?: string}).code !== "AF_PROGRAM_CONFLICT") throw error; }
+  } throw new Error("Control CAS did not settle");
+}
 async function start(service: ProgramRunService, workflow: WorkflowProgramV2, input: unknown = {}, requestId = "start") {
   const state = await service.execute("program-start", { requestId, program: workflow, input }) as ProgramRunV2; return finish(service, state.runId);
 }
-function repairStep(entryMode = "assess-first") {
-  return repair("repair", { recipe: recipeRef("repair", "v1"), entryMode, initialCandidate: candidateFromBaseline(item()), writeScope: ["src"], implement: executorRef("implement", "v1"), review: executorRef("review", "v1"), checks: ["check@v1"], maxRepairRounds: 3, maxAssessmentAttempts: 5, maxInfrastructureAttempts: 2, progressPolicy: { unchangedCandidateRounds: 2, repeatedFindingsRounds: 2 } });
+function repairStep(entryMode: "assess-first" | "implement-first" = "assess-first") {
+  return repair("repair", { recipe: recipeRef("repair", "v2"), entryMode, initialCandidate: candidateFromBaseline(item()), writeScope: ["src"], implement: executorRef("implement", "v1"), review: executorRef("review", "v1"), checks: ["check@v1"], maxRepairRounds: 3, maxAssessmentAttempts: 5, maxInfrastructureAttempts: 2, progressPolicy: { unchangedCandidateRounds: 2, repeatedFindingsRounds: 2 } });
 }
 
 describe("program v2 authored source and contracts", () => {
   test("lowers finite constructors without executing source", () => {
-    const source = `import { defineWorkflow, schemaRef, policyRef, acceptanceRef, value, literal, output } from "forgeos/agent-fabric/workflows";
+    const source = `import { defineWorkflow, schemaRef, programRef, policyRef, acceptanceRef, value, literal, output } from "forgeos/agent-fabric/workflows";
       const label = "hello";
       export default defineWorkflow({ id: "demo", version: 1, inputSchema: schemaRef("any", "v1"), outputSchema: schemaRef("any", "v1"), acceptance: acceptanceRef("goal", "v1"), policy: policyRef("local", "v1"), steps: [value("greeting", {value: literal(label)})], result: output("greeting") });`;
     const lowered = lowerWorkflowSource(source); expect(lowered.steps[0].kind).toBe("value"); validateWorkflowProgram(lowered, registry("fixture"));
@@ -70,7 +77,7 @@ describe("program v2 authored source and contracts", () => {
 describe("program v2 durable execution", () => {
   test("typed values, branch selection and explicit result", async () => {
     const f = await fixture();
-    const state = await start(f.service, program([branch("select", { condition: true, then: [value("chosen", { value: literal({ ok: true }) })], else: [value("ignored", { value: literal({ ok: false }) })] })], output("select")));
+    const state = await start(f.service, program([branch("select", { condition: true, then: value("chosen", { value: literal({ ok: true }) }), else: value("ignored", { value: literal({ ok: false }) }) })], output("select")));
     expect(state.status).toBe("completed"); expect(state.operations["select/else/ignored"].status).toBe("skipped"); expect(await f.service.store.get<{ ok: boolean }>(state.resultRef!)).toEqual({ ok: true });
   });
   test("80 stable items use a closed owner-validated collection", async () => {
@@ -110,23 +117,22 @@ describe("program v2 durable execution", () => {
     const f = await fixture(() => { throw new Error("lost after launch"); });
     const workflow = program([{ kind: "agent", id: "read", options: { executor: executorRef("read", "v1"), input: literal({}) } }], output("read")), state = await start(f.service, workflow);
     expect(state.status).toBe("needs-attention"); expect(Object.values(state.attempts)[0].outcome).toBe("uncertain");
-    await expect(f.service.execute("program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version })).rejects.toThrow("reconciliation");
+    await expect(control(f.service, "program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version })).rejects.toThrow("reconciliation");
   });
   test("subworkflow validates and receives child input", async () => {
     const f = await fixture(), child = program([value("echo", { value: workflowInput() })], output("echo")); child.inputSchema = schemaRef("number", "v1"); f.catalog.programs = { "child@v1": child };
-    const state = await start(f.service, program([subworkflow("child", { program: { id: "child", version: "v1" }, input: literal(42) })], output("child")), { root: "different" });
+    const state = await start(f.service, program([subworkflow("child", { program: programRef("child", "v1"), input: literal(42) })], output("child")), { root: "different" });
     expect(state.status).toBe("completed"); expect(await f.service.store.get<number>(state.resultRef!)).toBe(42);
-    await expect(start(f.service, program([subworkflow("child", { program: { id: "child", version: "v1" }, input: literal("wrong") })], output("child")), {}, "bad-child")).rejects.toThrow("Expected number");
+    await expect(start(f.service, program([subworkflow("child", { program: programRef("child", "v1"), input: literal("wrong") })], output("child")), {}, "bad-child")).rejects.toThrow("Expected number");
   });
   test("loop state terminates or exhausts without silent acceptance", async () => {
     const f = await fixture(), workflow = program([loop("bounded", { initialState: 0, maxRounds: 3, body: value("next", { value: literal(1) }), next: output("next"), until: eq(loopState(), literal(1)) })], output("bounded"));
-    const state = await start(f.service, workflow); expect(state.status).toBe("completed"); expect(await f.service.store.get<{ status: string; state: number; rounds: number }>(state.resultRef!)).toEqual({ status: "completed", state: 1, rounds: 1 });
+    const state = await start(f.service, workflow); expect(state.status).toBe("completed"); expect(await f.service.store.get<number>(state.resultRef!)).toBe(1);
   });
   test("human event matches generation/correlation and is consumed once", async () => {
     const f = await fixture(), workflow = program([waitEvent("approval", { schema: schemaRef("number", "v1"), type: "choice", correlation: "request-1" })], output("approval"));
-    let state = await start(f.service, workflow); expect(state.status).toBe("needs-attention");
-    state = await f.service.execute("program-signal", { runId: state.runId, requestId: "signal", expectedVersion: state.version, signalId: "human-1", target: "approval", generation: 1, type: "choice", correlation: "request-1", payload: 7, authorization: "fixture-host-human" }) as ProgramRunV2;
-    state = await f.service.execute("program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }) as ProgramRunV2;
+    let state = await start(f.service, workflow); expect(state.status).toBe("waiting");
+    state = await control(f.service, "program-signal", { runId: state.runId, requestId: "signal", expectedVersion: state.version, signalId: "human-1", target: "approval", generation: 1, type: "choice", correlation: "request-1", payload: 7, authorization: "fixture-host-human" }) as ProgramRunV2;
     state = await finish(f.service, state.runId); expect(state.status).toBe("completed"); expect(state.signals[0].status).toBe("consumed"); expect(await f.service.store.get<number>(state.resultRef!)).toBe(7);
   });
   test("same start request is idempotent, changed body conflicts", async () => {
@@ -138,23 +144,23 @@ describe("program v2 durable execution", () => {
   test("artifacts and journal reject corruption", async () => {
     const f = await fixture(), state = await start(f.service, program([value("a", { value: literal(1) })], output("a")));
     const artifactPath = join(f.service.store.directory, "artifacts", `${state.resultRef!.slice(7)}.json`); await writeFile(artifactPath, "2"); await expect(f.service.store.get(state.resultRef!)).rejects.toThrow("integrity");
-    const recordPath = join(f.service.store.directory, `${programDigest(state.runId).slice(7)}.json`), envelope = JSON.parse(await readFile(recordPath, "utf8")); envelope.record.state.version++; await writeFile(recordPath, JSON.stringify(envelope));
+    const recordPath = join(f.service.store.directory, `${programDigest(state.runId).slice(7)}.json`), envelope = JSON.parse(await readFile(recordPath, "utf8")); envelope.record.version++; await writeFile(recordPath, JSON.stringify(envelope));
     await expect(f.service.store.read(state.runId)).rejects.toThrow("integrity");
   });
   test("compiler rejects branch merges, result types, parent-body cycles and recursive children before dispatch", async () => {
-    const f = await fixture(), bad = program([branch("choice", { condition: true, then: [value("yes", { value: 1 })], else: [value("no", { value: "wrong" })] })], output("choice"));
+    const f = await fixture(), bad = program([branch("choice", { condition: true, then: value("yes", { value: 1 }), else: value("no", { value: "wrong" }) })], output("choice"));
     expect(() => validateWorkflowProgram(bad, f.catalog)).toThrow("merge");
     const result = program([value("text", { value: "wrong" })], output("text")); result.outputSchema = schemaRef("number", "v1");
     expect(() => validateWorkflowProgram(result, f.catalog)).toThrow();
     const cycle = program([map("cycle", { items: [], key: field(item(), "id"), completion: "partial", body: value("copy", { value: output("cycle") }) })], output("cycle"));
     expect(() => validateWorkflowProgram(cycle, f.catalog)).toThrow("cycle");
-    const recursive = program([subworkflow("child", { program: { id: "self", version: "v1" }, input: {} })], output("child")); f.catalog.programs = { "self@v1": recursive };
+    const recursive = program([subworkflow("child", { program: programRef("self", "v1"), input: {} })], output("child")); f.catalog.programs = { "self@v1": recursive };
     expect(() => validateWorkflowProgram(recursive, f.catalog)).toThrow("cycle"); expect(f.calls).toHaveLength(0);
   });
   test("map inside a child preserves child input rather than root input", async () => {
     const f = await fixture(), child = program([map("each", { items: [{ id: "a" }], key: field(item(), "id"), completion: "partial", body: value("echo", { value: workflowInput() }) })], output("each"));
     child.inputSchema = schemaRef("number", "v1"); f.catalog.programs = { "child@v1": child };
-    const state = await start(f.service, program([subworkflow("child", { program: { id: "child", version: "v1" }, input: 42 })], output("child")), { root: "different" });
+    const state = await start(f.service, program([subworkflow("child", { program: programRef("child", "v1"), input: 42 })], output("child")), { root: "different" });
     expect(state.status).toBe("completed"); expect((await f.service.store.get<{ results: number[] }>(state.resultRef!)).results).toEqual([42]);
   });
   test("repair receives each work item and preserves its authorized scope and criteria", async () => {
@@ -169,14 +175,15 @@ describe("program v2 durable execution", () => {
     const f = await fixture(); f.catalog.policies["local@v1"].allowFencedReplan = true;
     const workflow = program([waitEvent("decision", { schema: schemaRef("number", "v1"), type: "choice", correlation: "old" })], output("decision"));
     let state = await start(f.service, workflow);
-    state = await f.service.execute("program-signal", { runId: state.runId, requestId: "old-event", expectedVersion: state.version, signalId: "old", target: "decision", generation: 1, type: "choice", correlation: "new", payload: 9, authorization: "host" }) as ProgramRunV2;
+    state = await control(f.service, "program-pause", { runId: state.runId, requestId: "pause-old" }) as ProgramRunV2;
+    state = await control(f.service, "program-signal", { runId: state.runId, requestId: "old-event", expectedVersion: state.version, signalId: "old", target: "decision", generation: 1, type: "choice", correlation: "new", payload: 9, authorization: "host" }) as ProgramRunV2;
     const replacement = program([waitEvent("decision", { schema: schemaRef("number", "v1"), type: "choice", correlation: "new" })], output("decision"));
-    state = await f.service.execute("program-replan", { runId: state.runId, requestId: "replace", expectedVersion: state.version, mode: "fenced", program: replacement }) as ProgramRunV2;
+    state = await control(f.service, "program-replan", { runId: state.runId, requestId: "replace", expectedVersion: state.version, mode: "fenced", program: replacement }) as ProgramRunV2;
     expect(state.operations.decision.generation).toBe(2);
-    await f.service.execute("program-resume", { runId: state.runId, requestId: "resume-old", expectedVersion: state.version }); state = await finish(f.service, state.runId);
-    expect(state.status).toBe("needs-attention"); expect(state.signals[0].status).toBe("pending"); expect(state.waits.decision.generation).toBe(2);
-    state = await f.service.execute("program-signal", { runId: state.runId, requestId: "new-event", expectedVersion: state.version, signalId: "new", target: "decision", generation: 2, type: "choice", correlation: "new", payload: 7, authorization: "host" }) as ProgramRunV2;
-    await f.service.execute("program-resume", { runId: state.runId, requestId: "resume-new", expectedVersion: state.version }); state = await finish(f.service, state.runId);
+    await control(f.service, "program-resume", { runId: state.runId, requestId: "resume-old", expectedVersion: state.version }); state = await finish(f.service, state.runId);
+    expect(state.status).toBe("waiting"); expect(state.signals[0].status).toBe("pending"); expect(state.waits.decision.generation).toBe(2);
+    state = await control(f.service, "program-signal", { runId: state.runId, requestId: "new-event", expectedVersion: state.version, signalId: "new", target: "decision", generation: 2, type: "choice", correlation: "new", payload: 7, authorization: "host" }) as ProgramRunV2;
+    state = await finish(f.service, state.runId);
     expect(state.status).toBe("completed"); expect(await f.service.store.get<number>(state.resultRef!)).toBe(7);
   });
   test("fenced active worker's late success cannot complete the replacement", async () => {
@@ -186,7 +193,7 @@ describe("program v2 durable execution", () => {
     const started = await f.service.execute("program-start", { requestId: "start", program: workflow, input: {} }) as ProgramRunV2;
     while (!f.calls.length) await new Promise(resolve => setTimeout(resolve, 10));
     let state = await f.service.store.read(started.runId); const replacement = structuredClone(workflow); replacement.steps[0].options.input = { version: 2 };
-    state = await f.service.execute("program-replan", { runId: started.runId, requestId: "fence", expectedVersion: state!.version, mode: "fenced", program: replacement }) as ProgramRunV2;
+    state = await control(f.service, "program-replan", { runId: started.runId, requestId: "fence", expectedVersion: state!.version, mode: "fenced", program: replacement }) as ProgramRunV2;
     complete(); await f.service.close(); state = (await f.service.store.read(started.runId))!;
     expect(state.status).toBe("paused"); expect(state.operations.work.status).toBe("uncertain"); expect(Object.values(state.attempts)[0].outcome).toBe("uncertain"); expect(state.resultRef).toBeUndefined();
   });
@@ -197,25 +204,25 @@ describe("program v2 durable execution", () => {
     expect(run.status).toBe("needs-attention"); expect(run.attempts.lost.outcome).toBe("uncertain"); expect(f.calls).toHaveLength(0);
     await expect(recovered.execute("program-resume", { runId: run.runId, requestId: "unsafe", expectedVersion: run.version })).rejects.toThrow("reconciliation");
   });
-  test("completed workers get explicit selective reuse receipts after barrier replan", async () => {
+  test("barrier replan preserves intact completed invocation generations", async () => {
     const f = await fixture(), workflow = program([{ kind: "agent", id: "read", options: { executor: executorRef("read", "v1"), input: { same: true } } }, value("changed", { value: 1 })], output("changed"));
     let state = await start(f.service, workflow), replacement = structuredClone(workflow); replacement.steps[1].options.value = 2;
-    state = await f.service.execute("program-replan", { runId: state.runId, requestId: "replan", expectedVersion: state.version, program: replacement }) as ProgramRunV2;
-    await f.service.execute("program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
-    expect(state.status).toBe("completed"); expect(f.calls).toHaveLength(1); expect(state.operations.read.reusedFromGeneration).toBe(1); expect(state.operations.read.generation).toBe(2); expect(await f.service.store.get<number>(state.resultRef!)).toBe(2);
+    state = await control(f.service, "program-replan", { runId: state.runId, requestId: "replan", expectedVersion: state.version, program: replacement }) as ProgramRunV2;
+    await control(f.service, "program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
+    expect(state.status).toBe("completed"); expect(f.calls).toHaveLength(1); expect(state.operations.read.generation).toBe(1); expect(await f.service.store.get<number>(state.resultRef!)).toBe(2);
   });
   test("authorized empty inventory is explicit no-work; normalized duplicate keys are rejected", async () => {
     const f = await fixture(); f.catalog.populations["components@v1"].allowNoWork = true; f.catalog.acceptance["goal@v1"].allowNoWork = true;
     const workflow = program([map("empty", { items: [], key: field(item(), "id"), coverage: coverageFor(population(), { items: [] }), completion: "all-required", body: value("copy", { value: item() }) })], output("empty")); workflow.population = populationRef("components", "v1");
     const state = await start(f.service, workflow); expect(state.status).toBe("completed"); expect((await f.service.store.get<{ status: string }>(state.resultRef!)).status).toBe("no-work");
-    const bad = program([map("keys", { items: [{ id: "é" }, { id: "e\u0301" }], key: field(item(), "id"), completion: "partial", body: value("copy", { value: item() }) })], output("keys"));
+    const bad = program([map("keys", { items: [{ id: "\u00e9" }, { id: "e\u0301" }], key: field(item(), "id"), completion: "partial", body: value("copy", { value: item() }) })], output("keys"));
     expect((await start(f.service, bad, {}, "bad-keys")).status).toBe("needs-attention");
   });
   test("resume cannot replenish an exhausted recipe's infrastructure budget", async () => {
     const f = await fixture(() => ({ outcome: "infrastructure_failed", reason: "observed failure" }));
     let state = await start(f.service, program([repairStep(), gate("final", { candidate: acceptedCandidate("repair") })], output("final")));
     expect(state.status).toBe("needs-attention"); expect(state.totalAttempts).toBe(2); expect(state.repairs.repair.infrastructure).toBe(2);
-    await f.service.execute("program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
+    await control(f.service, "program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
     expect(state.status).toBe("needs-attention"); expect(state.totalAttempts).toBe(2); expect(f.calls).toHaveLength(2); expect(state.repairs.repair.phase).toBe("exhausted");
   });
   test("additive extension recomputes the final gate for the new semantic version", async () => {
@@ -225,7 +232,7 @@ describe("program v2 durable execution", () => {
     const started = await f.service.execute("program-start", { requestId: "start", program: workflow, input: {} }) as ProgramRunV2;
     while (!f.calls.some(call => call.executor.id === "read")) await new Promise(resolve => setTimeout(resolve, 10));
     let state = (await f.service.store.read(started.runId))!; const oldGate = state.gateRef, replacement = structuredClone(workflow); replacement.steps.push(value("new", { value: 1 }));
-    state = await f.service.execute("program-replan", { runId: state.runId, requestId: "extend", expectedVersion: state.version, mode: "additive", program: replacement }) as ProgramRunV2;
+    state = await control(f.service, "program-replan", { runId: state.runId, requestId: "extend", expectedVersion: state.version, mode: "additive", program: replacement }) as ProgramRunV2;
     complete(); state = await finish(f.service, state.runId); expect(state.reason).toBeUndefined(); expect(state.status).toBe("acceptance-ready"); expect(state.gateRef).toBeDefined(); expect(state.gateRef).not.toBe(oldGate);
     expect((await f.service.store.get<{ semanticVersion: number }>(state.gateRef!)).semanticVersion).toBe(state.semanticVersion); expect(f.calls.filter(call => call.executor.id === "read")).toHaveLength(1);
   });
@@ -244,15 +251,15 @@ describe("program v2 durable execution", () => {
     const workflow = program([value("keep", { value: 1 }), value("remove", { value: 2 })], output("keep")); let state = await start(f.service, workflow);
     const previousVersion = state.version, history = await f.service.store.history(state.runId); expect((await f.service.store.get<ProgramRunV2>(history.at(-1)!.stateRef)).program.steps).toHaveLength(2);
     const replacement = program([value("keep", { value: 1 })], output("keep"));
-    state = await f.service.execute("program-replan", { runId: state.runId, requestId: "remove", expectedVersion: state.version, mode: "fenced", program: replacement }) as ProgramRunV2;
+    state = await control(f.service, "program-replan", { runId: state.runId, requestId: "remove", expectedVersion: state.version, mode: "fenced", program: replacement }) as ProgramRunV2;
     expect(state.operations.remove.status).toBe("skipped"); expect(state.operations.remove.retired).toBe(true);
-    await f.service.execute("program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
+    await control(f.service, "program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
     expect(state.status).toBe("completed"); const prior = (await f.service.store.history(state.runId)).find(entry => entry.version === previousVersion)!;
     expect((await f.service.store.get<ProgramRunV2>(prior.stateRef)).program.steps).toHaveLength(2); expect(state.program.steps).toHaveLength(1);
   });
   test("a trailing value cannot mask rejected item repair, and late uncertainty blocks an early gate", async () => {
     const f = await fixture(input => input.executor.id === "review" ? { outcome: "completed", data: { verdict: "changes_requested", findings: ["not migrated"] } } : { outcome: "completed", data: { passed: false } }, ["a"]);
-    const workflow = program([map("items", { items: [{ id: "a" }], key: field(item(), "id"), coverage: coverageFor(population(), { items: [{ id: "a" }] }), completion: "all-required", body: [repairStep(), value("ignored", { value: 1 })] })], output("items")); workflow.population = populationRef("components", "v1");
+    const workflow = program([map("items", { items: [{ id: "a" }], key: field(item(), "id"), coverage: coverageFor(population(), { items: [{ id: "a" }] }), completion: "all-required", body: { steps: [repairStep(), value("ignored", { value: 1 })], result: output("ignored") } })], output("items")); workflow.population = populationRef("components", "v1");
     const state = await start(f.service, workflow); expect(state.status).toBe("needs-attention"); expect(state.gateRef).toBeUndefined();
     const late = await fixture(input => input.executor.id === "read" ? { outcome: "uncertain", reason: "lost process" } : { outcome: "completed", data: input.executor.id === "review" ? { verdict: "approved", findings: [] } : { passed: true } });
     const lateState = await start(late.service, program([repairStep(), gate("early", { candidate: acceptedCandidate("repair") }), { kind: "agent", id: "late", options: { executor: executorRef("read", "v1"), input: {} } }], output("early")));
@@ -261,6 +268,6 @@ describe("program v2 durable execution", () => {
   });
   test("the shipped authoring example lowers and validates against its owner registry", async () => {
     const source = await readFile(join(process.cwd(), "examples/agent-fabric-v2/migrate.workflow.ts"), "utf8"), catalog = JSON.parse(await readFile(join(process.cwd(), "examples/agent-fabric-v2/registry.example.json"), "utf8"));
-    const lowered = lowerWorkflowSource(source); expect(() => validateWorkflowProgram(lowered, catalog)).not.toThrow(); expect(lowered.steps[1].options.body).toMatchObject({ kind: "repair", options: { recipe: { id: "repair", version: "v1" }, entryMode: "implement-first" } });
+    const lowered = lowerWorkflowSource(source); expect(() => validateWorkflowProgram(lowered, catalog)).not.toThrow(); expect(lowered.steps[1].options.body).toMatchObject({ kind: "repair", options: { recipe: { id: "repair", version: "v2" }, entryMode: "implement-first" } });
   });
 });

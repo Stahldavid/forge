@@ -1,5 +1,8 @@
 # Agent Fabric: tarefas Codex e workflows dinâmicos
 
+> Atualização de desenvolvimento em 07/10/2026: o núcleo de workflows R2.1 e as correções R2.2 (WORKFLOW_PROGRAM_V2_CORRECTIONS.md) foram implementados diretamente com operatorVersion 2, sem requisito de compatibilidade legada. O inventário atual está em [API de workflows](../../agent-fabric-programs.md), [ADR](WORKFLOW_PROGRAM_V2_ADR.md) e [evidências atuais](WORKFLOW_PROGRAM_V2_EVIDENCE.md). Os baselines/pilotos e limites descritos nas seções históricas abaixo não substituem esses contratos. A implementação atual foi validada sem chamadas reais a LLM; superioridade de produto sobre Claude DW não foi medida.
+
+
 Data: 2026-10-05. Baseline: `78b01d9ddee751047184d828fd66c0ae0361823b`.
 Este documento detalha a implementação solicitada pelo usuário e seus critérios de aceite.
 O plano anterior `CODEX_APP_IMPLEMENTATION_PLAN.md` permanece como contexto histórico.

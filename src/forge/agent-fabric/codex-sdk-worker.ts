@@ -165,6 +165,7 @@ async function runCodexWorkerInternal(input: CodexWorkerInput, factory: CodexWor
 }
 
 export async function runCodexWorker(input: CodexWorkerInput, factory?: CodexWorkerFactory): Promise<CodexWorkerOutput> {
+  if (process.env.FORGE_FABRIC_TEST_MODE === "1" && !factory) fail("AF_CODEX_TEST_MODE", "Real LLM calls forbidden; provide a simulated SDK factory");
   try { return await runCodexWorkerInternal(input, factory ?? ((options) => isolatedCodexClient(options, input.cwd, input.signal))); }
   catch (error) {
     if (error instanceof CodexWorkerError) throw error;
@@ -196,6 +197,7 @@ async function runTypedCodexWorkerInternal(input: CodexWorkerInput & { outputSch
   return { threadId, data, ...(observedUsage ? { usage: observedUsage } : {}) };
 }
 export async function runTypedCodexWorker(input: CodexWorkerInput & { outputSchema: unknown; validateOutput: (data: unknown) => void }, factory?: CodexWorkerFactory): Promise<{ threadId: string; data: unknown; usage?: CodexWorkerUsage }> {
+  if (process.env.FORGE_FABRIC_TEST_MODE === "1" && !factory) fail("AF_CODEX_TEST_MODE", "Real LLM calls forbidden; provide a simulated SDK factory");
   try { return await runTypedCodexWorkerInternal(input, factory); }
   catch (error) { if (error instanceof CodexWorkerError) throw error; fail("AF_CODEX_EXECUTION", "Typed SDK or persistence failed; reconcile before retry"); }
 }

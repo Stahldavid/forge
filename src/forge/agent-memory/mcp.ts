@@ -113,7 +113,7 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
             description: action === "program-start" ? "Start opt-in v2 templates through the owner registry. Codex can consume credits; process workers have explicit capabilities."
               : action === "program-apply" ? "Apply the exact candidate approved by owner-issued gate/coverage receipts, using existing scoped authorization."
               : "Validate, read or control durable v2 program state through the same owner; registries cannot be supplied by workers.",
-            inputSchema: action === "program-status" ? { type: "object", properties: { runId: { type: "string" } }, required: ["runId"], additionalProperties: false }
+            inputSchema: ["program-status", "program-history", "program-explain"].includes(action) ? { type: "object", properties: { runId: { type: "string" } }, required: ["runId"], additionalProperties: false }
               : { type: "object", properties: { request: { type: "object" } }, required: ["request"], additionalProperties: false } })),
           ...ATTACHED_TASK_ACTIONS.map((action) => ({
             name: `fabric_${action.replaceAll("-", "_")}`,
@@ -334,7 +334,7 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
   const managedAction = MANAGED_RUN_ACTIONS.find((action) => name === `fabric_${action.replaceAll("-", "_")}`);
   const programAction = PROGRAM_RUN_ACTIONS.find(action => name === `fabric_${action.replaceAll("-", "_")}`);
   if (programAction) {
-    const read = programAction === "program-status";
+    const read = ["program-status", "program-history", "program-explain"].includes(programAction);
     if (Object.keys(args).join(",") !== (read ? "runId" : "request") || (read ? typeof args.runId !== "string" : !args.request || typeof args.request !== "object" || Array.isArray(args.request))) throw new Error(`${name} requires only ${read ? "runId" : "an object request"}`);
     return { ok: true, status: await requestProgramRun(realpathSync(workspaceRoot), programAction, read ? args : args.request as Record<string, unknown>) };
   }
@@ -405,7 +405,7 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
       codingTaskControl: "local_owner_service_required",
-      programWorkflows: { supported: true, schemaVersion: 2, optIn: true, ownerRequired: true, registry: ".forge/fabric-programs.json", staticDSL: true, replan: ["barrier", "additive", "fenced-global-barrier"], sdkOutputReuse: false, tools: PROGRAM_RUN_ACTIONS.map(action => `fabric_${action.replaceAll("-", "_")}`) },
+      programWorkflows: { supported: true, schemaVersion: 2, operatorVersion: 2, optIn: true, ownerRequired: true, registry: ".forge/fabric-programs.json", staticDSL: true, replan: ["barrier", "additive", "fenced-global-barrier"], sdkOutputReuse: "same-run-completed", tools: PROGRAM_RUN_ACTIONS.map(action => `fabric_${action.replaceAll("-", "_")}`) },
       projectRouting: { supported: true, registrationRequired: true, defaultWorkspace: realpathSync(workspaceRoot),
         ownerIsolation: "per_project", hooks: "server_workspace_only", tools: ["fabric_project_register", "fabric_project_list", "fabric_project_doctor", "fabric_owner_start"] },
       managedExecution: { supported: true, runningOwnerRequired: true, scheduler: "owner_managed",

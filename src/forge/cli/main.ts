@@ -80,6 +80,8 @@ function formatHelp(): string {
     "  forge fabric program-validate --file request.json --json  Lower/validate opt-in static workflow DSL against owner registry",
     "  forge fabric program-start --file request.json --json  Start a durable v2 program (Codex can consume credits)",
     "  forge fabric program-status --run-id <id> --json  Inspect v2 templates, attempts, candidates and gates",
+    "  forge fabric program-history|program-explain --run-id <id> --json  Inspect journal, scopes and admission",
+    "  forge fabric program-artifact-get|program-diff --file request.json --json  Read artifacts or inspect plan changes",
     "  forge fabric program-<control> --file request.json --json  Pause, resume, signal, replan, reconcile, cancel or apply v2 work",
     "  forge fabric run-status --run-id <run-id> --json  Read durable managed execution state",
     "  forge fabric run-wait --file wait.json --json  Wait for managed events up to 30 seconds",

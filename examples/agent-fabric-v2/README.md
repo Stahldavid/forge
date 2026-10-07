@@ -52,3 +52,19 @@ The owner registry is project configuration, not workflow input. `cache: none` i
 default. Only commands declared to depend entirely on their captured workspace inputs
 may opt into `cache: workspace`; the owner must account for external inputs. SDK output
 reuse is disabled until its effective instruction closure can be attested.
+
+## Current workflow runtime and UI example
+
+`ui-audit.workflow.ts` uses the current operatorVersion 2 architecture directly. `run-ui-fixture.ts` is a disposable local integration example: twenty HTML pages, three known defects, command-only agents, item and final checks, capture receipts, compose and gate. Run `node bin/forge-bun.mjs run examples/agent-fabric-v2/run-ui-fixture.ts` from the Forge checkout. It sets the no-LLM fuse and never applies to a user project.
+
+`runUiFixture(count, defects, browserPath?)` also accepts an explicit Chromium/Edge executable for real local headless screenshots; the default uses valid PNG fixtures. Both reviewers are deterministic checks of fixture attributes, not visual AI evaluation. The worker's cooperative process capability must be owner-authorized.
+
+The static lowerer and TS author API share the same example including `as const`, `satisfies`, typed refs and scoped checks. Arbitrary TS execution is unsupported. Legacy file-conversion example remains a separate usage example, not a compatibility interpreter. See docs/agent-fabric-programs.md for all fifty author constructors and fifteen controls.
+
+## Typed reusable subworkflow and visual cases
+
+`item-child.workflow.ts` is a finite typed inspection program. Lower it and register its IR as `inspect-item@v2`; the root `map-child.workflow.ts` calls it with explicit input and a map quota of one. Supply owner schemas `path@v2` (object path:string), `inspection@v2` (object ok:boolean), `any@v2`, policy `local@v2`, acceptance `data@v2`, and executor `inspect@v2` with inputSchema path@v2/output schema inspection@v2. These are templates, not automatically installed executors. Child quotas/cancellation inherit from the root; keep the same policy/acceptance.
+
+`visual-population.json` demonstrates separate desktop/ready and mobile/error cases for one route. Replace the baseline placeholder with the owner-captured digest and enumerate all required scenarios. Matching itemKey alone cannot close a visual case when route, viewport, state or dimensions differ. Image header validation is not proof of visual correctness.
+
+Use program-explain to retrieve the template graph, observed expansions and a Mermaid diagram. Format 3 runs live in program-runs-v3; older checkpoint directories are preserved and not loaded.

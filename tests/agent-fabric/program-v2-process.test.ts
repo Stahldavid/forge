@@ -24,7 +24,7 @@ async function project(names = ["a.txt"]) {
     acceptance: { "goal@v1": { id: "goal", version: "v1", criteria: ["migrated"], writeScope: ["src"], requireReview: true, requiredChecks: ["check@v1"], allowNoWork: false } },
     populations: { "files@v1": { id: "files", version: "v1", members: [], exclusions: [], baselineDigest: "capture", inventoryRoots: ["src"], extensions: [".txt"], evidence: "owner inventory", allowNoWork: false } } };
   await writeFile(join(root, ".forge/fabric-programs.json"), JSON.stringify(registry));
-  const recipe = { recipe: recipeRef("repair", "v1"), implement: executorRef("implement", "v1"), review: executorRef("review", "v1"), checks: ["check@v1"], maxRepairRounds: 3, maxAssessmentAttempts: 6, maxInfrastructureAttempts: 2, progressPolicy: { unchangedCandidateRounds: 2, repeatedFindingsRounds: 2 } };
+  const recipe = { recipe: recipeRef("repair", "v2"), implement: executorRef("implement", "v1"), review: executorRef("review", "v1"), checks: ["check@v1"], maxRepairRounds: 3, maxAssessmentAttempts: 6, maxInfrastructureAttempts: 2, progressPolicy: { unchangedCandidateRounds: 2, repeatedFindingsRounds: 2 } };
   const program = defineWorkflow({ id: "migrate", version: 1, inputSchema: schemaRef("any", "v1"), outputSchema: schemaRef("any", "v1"), acceptance: acceptanceRef("goal", "v1"), population: populationRef("files", "v1"), policy: policyRef("local", "v1"), steps: [
     agent("discover", { executor: executorRef("discover", "v1"), input: {} }),
     map("migrate", { items: field(output("discover"), "items"), key: field(item(), "id"), coverage: coverageFor(population(), output("discover")), completion: "all-required", concurrency: 4,
@@ -86,7 +86,7 @@ test("three repair deltas preserve successive beforeimages of the same file", as
   f.registry.executors["implement@v1"].argv = [process.execPath, "-e", `const fs=require('fs');fs.writeFileSync('src/a.txt',fs.readFileSync('src/a.txt','utf8')+'x');console.log(JSON.stringify({summary:'next'}));`];
   f.registry.executors["review@v1"].argv = [process.execPath, "-e", `const ok=require('fs').readFileSync('src/a.txt','utf8')==='oldxxx'; console.log(JSON.stringify({verdict:ok?'approved':'changes_requested',findings:ok?[]:['one more x']}));`];
   f.registry.executors["check@v1"].argv = [process.execPath, "-e", `console.log(JSON.stringify({passed:require('fs').readFileSync('src/a.txt','utf8')==='oldxxx'}));`];
-  const options = (f.program.steps[1].options.body as { options: Record<string, unknown> }).options;
+  const options = (f.program.steps[1].options.body as { options: import("../../src/forge/agent-fabric/program-api.ts").WorkflowOptions["repair"] }).options;
   const program = { ...f.program, steps: [repair("three", { ...options, writeScope: ["src/a.txt"] }), gate("final", { candidate: acceptedCandidate("three") })], result: output("final") }; delete program.population;
   const service = await ProgramRunService.open(f.root, f.registry); services.push(service);
   const started = await service.execute("program-start", { requestId: "three", program, input: {} }) as ProgramRunV2, run = await finish(() => service.execute("program-status", { runId: started.runId }));
@@ -95,7 +95,7 @@ test("three repair deltas preserve successive beforeimages of the same file", as
   expect(applied.status).toBe("applied"); expect(await readFile(join(f.root, "src/a.txt"), "utf8")).toBe("oldxxx");
 }, 120000);
 test("diamond composition applies the shared ancestor once", async () => {
-  const f = await project(["a.txt", "b.txt", "c.txt"]), options = (f.program.steps[1].options.body as { options: Record<string, unknown> }).options;
+  const f = await project(["a.txt", "b.txt", "c.txt"]), options = (f.program.steps[1].options.body as { options: import("../../src/forge/agent-fabric/program-api.ts").WorkflowOptions["repair"] }).options;
   const edit = (id: string, path: string, candidate?: unknown) => agent(id, { executor: executorRef("implement", "v1"), input: { workItem: { id: path } }, writeScope: [path], ...(candidate ? { candidate } : {}) });
   const program = { ...f.program, steps: [edit("ancestor", "src/a.txt"), edit("left", "src/b.txt", outputCandidate("ancestor")), edit("right", "src/c.txt", outputCandidate("ancestor")), compose("diamond", { candidates: [outputCandidate("left"), outputCandidate("right")] }), repair("integration", { ...options, entryMode: "assess-first", initialCandidate: outputCandidate("diamond"), writeScope: ["src"] }), gate("final", { candidate: acceptedCandidate("integration") })], result: output("final") }; delete program.population;
   const service = await ProgramRunService.open(f.root, f.registry); services.push(service);

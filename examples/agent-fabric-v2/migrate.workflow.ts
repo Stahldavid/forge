@@ -1,7 +1,7 @@
 import { defineWorkflow, schemaRef, policyRef, acceptanceRef, populationRef, executorRef, recipeRef, agent, map, field, item, output, population, coverageFor, repair, candidateFromBaseline, compose, acceptedCandidates, outputCandidate, acceptedCandidate, gate, coverageReceipt } from "forgeos/agent-fabric/workflows";
 
 const recipe = {
-  recipe: recipeRef("repair", "v1"),
+  recipe: recipeRef("repair", "v2"),
   implement: executorRef("migrate", "v1"), review: executorRef("review", "v1"),
   checks: ["check@v1"], maxRepairRounds: 3, maxAssessmentAttempts: 6,
   maxInfrastructureAttempts: 2,

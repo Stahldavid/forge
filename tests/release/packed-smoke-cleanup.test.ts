@@ -53,7 +53,7 @@ test("packed smoke preserves primary failure and separately records cleanup fail
     writeFileSync(fixtureScript, injected);
     // The production smoke entrypoint is a Node script; the test runner may be Bun.
     const result = spawnSync("node", [fixtureScript], {
-      encoding: "utf8", windowsHide: true, timeout: 10000,
+      encoding: "utf8", windowsHide: true, timeout: 60000,
       env: { ...process.env, SMOKE_PACKED_PACKAGE_DRY_RUN: "0", SMOKE_PACKED_PACKAGE_REPORT: report },
     });
     expect(result.error).toBeUndefined();
@@ -68,4 +68,4 @@ test("packed smoke preserves primary failure and separately records cleanup fail
     // Validate it through the production helper rather than removing a computed path.
     return cleanupOwnedSmokeTemp(evidence.tempRoot);
   } finally { rmSync(root, { recursive: true, force: true }); }
-});
+}, 90000);

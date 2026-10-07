@@ -9,12 +9,10 @@ Forge Agent Fabric is an experimental protocol-oriented execution layer for dyna
 
 ## Implementation status
 
-Status checked against local source `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c` on
-2026-10-07. The [current status summary](./architecture/agent-fabric/CODEX_DYNAMIC_WORKFLOWS.md#estado-atual-verificado-em-2026-10-07)
-distinguishes implemented accompanied/managed modes, recorded pilot evidence and
-remaining acceptance work. Historical plans and their original checklists are not
-the current capability inventory. This refresh did not rerun the SDK pilot or establish
-publication of the inspected revision.
+Workflow corrections R2.2: inherited subworkflow quotas/cancellation, shared recoverable leases, owner visual case catalogs, typed connections, compact linked journal and graph inspection. See [correction plan](architecture/agent-fabric/WORKFLOW_PROGRAM_V2_CORRECTIONS.md).
+
+Current development workflow runtime adopts operatorVersion 2 directly, without a legacy interpreter or migration requirement. See [workflow API](./agent-fabric-programs.md), [normative architecture](./architecture/agent-fabric/WORKFLOW_PROGRAM_V2_ADR.md) and [current implementation evidence](./architecture/agent-fabric/WORKFLOW_PROGRAM_V2_EVIDENCE.md). This revision adds activity quotas, durable waiting/continuation, scoped item/final obligations and immutable capture evidence. Historical plans and SDK pilots are not proof of current model quality. This implementation was validated without real LLM calls.
+
 
 The Codex-accompanied task mode now records acceptance criteria, scoped source snapshots,
 independent review and checks in a persistent local task. Its dynamic workflow scheduler
