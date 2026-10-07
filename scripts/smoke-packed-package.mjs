@@ -267,7 +267,7 @@ try {
     'const program = dsl.lowerWorkflowSource(source); validateWorkflowProgram(program,registry);',
     'console.log(JSON.stringify({ok:true,version:pkg.version,steps:program.steps.length}));',
   ].join("\n"));
-  evidence.artifacts.programWorkflow = JSON.parse(run(process.execPath, [programProbe, join(globalPrefix, "node_modules", "forgeos")], { capture: true, env: smokeEnv, step: "packed program DSL and example" }).stdout);
+  evidence.artifacts.programWorkflow = JSON.parse(run(process.execPath, [programProbe, dirname(dirname(realpathSync(globalForge)))], { capture: true, env: smokeEnv, step: "packed program DSL and example" }).stdout);
 
   const version = run(globalForge, ["--version"], { capture: true, env: smokeEnv, step: "forge version" }).stdout?.trim();
   assert(version && /^0\.\d+\.\d+/.test(version), `unexpected forge --version output: ${version ?? ""}`);
