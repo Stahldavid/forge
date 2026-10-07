@@ -9,6 +9,13 @@ Forge Agent Fabric is an experimental protocol-oriented execution layer for dyna
 
 ## Implementation status
 
+Status checked against local source `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c` on
+2026-10-07. The [current status summary](./architecture/agent-fabric/CODEX_DYNAMIC_WORKFLOWS.md#estado-atual-verificado-em-2026-10-07)
+distinguishes implemented accompanied/managed modes, recorded pilot evidence and
+remaining acceptance work. Historical plans and their original checklists are not
+the current capability inventory. This refresh did not rerun the SDK pilot or establish
+publication of the inspected revision.
+
 The Codex-accompanied task mode now records acceptance criteria, scoped source snapshots,
 independent review and checks in a persistent local task. Its dynamic workflow scheduler
 supports dependencies, decisions, joins, bounded retries, replanning and crash reconciliation.
@@ -566,3 +573,12 @@ evaluation, revocation, and digest checks. This registry does not import or
 execute those bytes or grant them side effects. Its review window is a
 cooperative human checkpoint; same-account shell or browser automation is
 outside its protection boundary. No hosted model or API key is used.
+
+## Opt-in program workflows v2 (alpha.70)
+
+For finite TypeScript/JSON program workflows, read
+[the executable v2 contract](agent-fabric-programs.md) and the shipped
+`examples/agent-fabric-v2/` example. This adds durable typed operators, repair,
+owner coverage/acceptance and reconciled local application alongside v1 runs.
+Fenced replan currently uses a global scheduling barrier; full product acceptance
+and an actual Claude benchmark are recorded separately in the architecture evidence.

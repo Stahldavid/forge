@@ -10,9 +10,10 @@ import { isManagedRunAction, requestManagedRun, type ManagedRunAction, isAttache
 import { runAdaptiveCommand, type AdaptiveCliOptions } from "./adaptive.ts";
 import { listFabricProjects, registerFabricProject, resolveFabricRoot } from "../agent-fabric/project-registry.ts";
 import { ensureFabricOwner, fabricProjectDoctor } from "../agent-fabric/project-runtime.ts";
+import { isProgramRunAction, requestProgramRun, type ProgramRunAction } from "../agent-fabric/local-task-server.ts";
 
 export interface FabricCliOptions {
-  subcommand: ManagedRunAction | AttachedTaskAction | "install-skill" | "doctor" | "ensure-owner" | "project-register" | "project-list" | "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "change-propose" | "change-status" | "change-review" | "change-evidence" | AdaptiveCliOptions["subcommand"];
+  subcommand: ProgramRunAction | ManagedRunAction | AttachedTaskAction | "install-skill" | "doctor" | "ensure-owner" | "project-register" | "project-list" | "capabilities" | "propose" | "status" | "evidence" | "review" | "run" | "cancel" | "reconcile" | "verify" | "recover-verification" | "review-result" | "serve" | "memory-add" | "memory-list" | "memory-delete" | "change-propose" | "change-status" | "change-review" | "change-evidence" | AdaptiveCliOptions["subcommand"];
   workspaceRoot: string;
   json: boolean;
   file?: string;
@@ -71,6 +72,7 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       effectsByMode: { legacy: "owner_reviewed_local_pilot", accompanied: "caller_driven_records",
         managed: "process_execution_and_optional_local_publication" },
       privateMemory: "owner_cli_only",
+      programWorkflows: { supported: true, schemaVersion: 2, optIn: true, registry: ".forge/fabric-programs.json", staticDSL: true, operators: ["agent", "command", "map", "branch", "loop", "repair", "compose", "gate", "subworkflow", "waitEvent"], replan: ["barrier", "additive", "fenced-global-barrier"], sdkOutputReuse: false, ownerRequired: true },
       adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,
         selectedDataProfile: "optional_canary_or_stable" },
       adversarialChangeReview: { propose: true, status: true, evidence: true,
@@ -87,6 +89,18 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
   let service: LocalTaskService | undefined;
   let changeService: LocalChangeReviewService | undefined;
   try {
+    if (isProgramRunAction(options.subcommand)) {
+      let body: Record<string, unknown>;
+      if (options.subcommand === "program-status") body = { runId: options.runId ?? "" };
+      else {
+        if (!options.file) throw new Error("A program request file is required");
+        const root = await resolveFabricRoot(options.workspaceRoot), file = realpathSync(resolve(root, options.file)), relation = relative(root, file);
+        if (!relation || relation.startsWith("..") || isAbsolute(relation) || statSync(file).size > 40 * 1024) throw new Error("Program request must be a bounded file inside the project");
+        body = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
+      }
+      const status = await requestProgramRun(await resolveFabricRoot(options.workspaceRoot), options.subcommand, body);
+      process.stdout.write(`${JSON.stringify({ ok: true, status }, null, 2)}\n`); return 0;
+    }
     const repositoryRoot = isManagedRunAction(options.subcommand) || isAttachedTaskAction(options.subcommand) || options.subcommand === "serve"
       ? await resolveFabricRoot(options.workspaceRoot) : realpathSync(options.workspaceRoot);
     if (isManagedRunAction(options.subcommand)) {

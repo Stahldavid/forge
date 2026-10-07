@@ -10,6 +10,7 @@ import { LocalChangeReviewService } from "../agent-fabric/local-change-review-se
 import { CODEX_EVENTS, CODEX_HOOK_RUNNER_RELATIVE, CODEX_MCP_HOOK_TOOL } from "./sources/codex.ts";
 import { listFabricProjects, registerFabricProject, resolveFabricProject } from "../agent-fabric/project-registry.ts";
 import { runRepositoryCommand } from "../cli/repository.ts";
+import { PROGRAM_RUN_ACTIONS, requestProgramRun } from "../agent-fabric/local-task-server.ts";
 
 
 const managedCommon = { runId: { type: "string" }, requestId: { type: "string" }, expectedVersion: { type: "integer", minimum: 1 } };
@@ -108,6 +109,12 @@ export async function handleMcpRequest(workspaceRoot: string, request: JsonRpcRe
                 : "Control managed execution through its single owner: steer, pause, resume, cancel or reconcile recorded work.",
             inputSchema: managedRunSchema(action),
           })),
+          ...PROGRAM_RUN_ACTIONS.map(action => ({ name: `fabric_${action.replaceAll("-", "_")}`,
+            description: action === "program-start" ? "Start opt-in v2 templates through the owner registry. Codex can consume credits; process workers have explicit capabilities."
+              : action === "program-apply" ? "Apply the exact candidate approved by owner-issued gate/coverage receipts, using existing scoped authorization."
+              : "Validate, read or control durable v2 program state through the same owner; registries cannot be supplied by workers.",
+            inputSchema: action === "program-status" ? { type: "object", properties: { runId: { type: "string" } }, required: ["runId"], additionalProperties: false }
+              : { type: "object", properties: { request: { type: "object" } }, required: ["request"], additionalProperties: false } })),
           ...ATTACHED_TASK_ACTIONS.map((action) => ({
             name: `fabric_${action.replaceAll("-", "_")}`,
             description: isAttachedTaskRead(action)
@@ -325,6 +332,12 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
     return { ok: true, owner: await ensureFabricOwner(workspaceRoot) };
   }
   const managedAction = MANAGED_RUN_ACTIONS.find((action) => name === `fabric_${action.replaceAll("-", "_")}`);
+  const programAction = PROGRAM_RUN_ACTIONS.find(action => name === `fabric_${action.replaceAll("-", "_")}`);
+  if (programAction) {
+    const read = programAction === "program-status";
+    if (Object.keys(args).join(",") !== (read ? "runId" : "request") || (read ? typeof args.runId !== "string" : !args.request || typeof args.request !== "object" || Array.isArray(args.request))) throw new Error(`${name} requires only ${read ? "runId" : "an object request"}`);
+    return { ok: true, status: await requestProgramRun(realpathSync(workspaceRoot), programAction, read ? args : args.request as Record<string, unknown>) };
+  }
   if (managedAction) {
     const read = managedAction === "run-status";
     if (Object.keys(args).join(",") !== (read ? "runId" : "request") ||
@@ -392,6 +405,7 @@ async function runTool(workspaceRoot: string, name: string, args: Record<string,
       protocolKernel: "p0a_available",
       boundedModelAdapter: "p0b_a_available",
       codingTaskControl: "local_owner_service_required",
+      programWorkflows: { supported: true, schemaVersion: 2, optIn: true, ownerRequired: true, registry: ".forge/fabric-programs.json", staticDSL: true, replan: ["barrier", "additive", "fenced-global-barrier"], sdkOutputReuse: false, tools: PROGRAM_RUN_ACTIONS.map(action => `fabric_${action.replaceAll("-", "_")}`) },
       projectRouting: { supported: true, registrationRequired: true, defaultWorkspace: realpathSync(workspaceRoot),
         ownerIsolation: "per_project", hooks: "server_workspace_only", tools: ["fabric_project_register", "fabric_project_list", "fabric_project_doctor", "fabric_owner_start"] },
       managedExecution: { supported: true, runningOwnerRequired: true, scheduler: "owner_managed",

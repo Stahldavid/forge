@@ -251,6 +251,24 @@ try {
   assert(existsSync(globalForge), `global forge binary was not installed at ${globalForge}`);
   evidence.artifacts.globalForge = globalForge;
 
+  const programProbe = join(tempRoot, "program-workflow-probe.mjs");
+  writeFileSync(programProbe, [
+    'import {createRequire} from "node:module";',
+    'import {readFileSync} from "node:fs";',
+    'import {join} from "node:path";',
+    'import {pathToFileURL} from "node:url";',
+    'const root = process.argv[2], require = createRequire(join(root,"package.json"));',
+    'const {register} = await import(pathToFileURL(require.resolve("tsx/esm/api")).href); register();',
+    'const pkg = JSON.parse(readFileSync(join(root,"package.json"),"utf8"));',
+    'const dsl = await import(pathToFileURL(join(root,pkg.exports["./agent-fabric/workflows"])).href);',
+    'const {validateWorkflowProgram} = await import(pathToFileURL(join(root,"src/forge/agent-fabric/program-contract.ts")).href);',
+    'const source = readFileSync(join(root,"examples/agent-fabric-v2/migrate.workflow.ts"),"utf8");',
+    'const registry = JSON.parse(readFileSync(join(root,"examples/agent-fabric-v2/registry.example.json"),"utf8"));',
+    'const program = dsl.lowerWorkflowSource(source); validateWorkflowProgram(program,registry);',
+    'console.log(JSON.stringify({ok:true,version:pkg.version,steps:program.steps.length}));',
+  ].join("\n"));
+  evidence.artifacts.programWorkflow = JSON.parse(run(process.execPath, [programProbe, join(globalPrefix, "node_modules", "forgeos")], { capture: true, env: smokeEnv, step: "packed program DSL and example" }).stdout);
+
   const version = run(globalForge, ["--version"], { capture: true, env: smokeEnv, step: "forge version" }).stdout?.trim();
   assert(version && /^0\.\d+\.\d+/.test(version), `unexpected forge --version output: ${version ?? ""}`);
   evidence.version = version;

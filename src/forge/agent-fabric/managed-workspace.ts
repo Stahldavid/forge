@@ -172,7 +172,7 @@ export async function prepareManagedWorkspace(base: ManagedBase, attemptId: stri
   const input = await workspaceInventory(base, directory), metadata: WorkspaceMetadata = { baseDigest: base.digest, runId: base.runId, attemptId, directory, input };
   await writeFile(join(directory, ".git", "forge-managed-input.json"), JSON.stringify(metadata)); return { directory, inputDigest: input.digest };
 }
-export async function captureManagedArtifact(base: ManagedBase, workspaceDirectory: string, writeScope: string[], expectedInputDigest: string, environment?: ManagedEnvironment): Promise<ManagedArtifact> {
+export async function captureManagedArtifact(base: ManagedBase, workspaceDirectory: string, writeScope: string[], expectedInputDigest: string, environment?: ManagedEnvironment, generatedPaths: string[] = []): Promise<ManagedArtifact> {
   await validateBase(base); assert(Array.isArray(writeScope), "write scope must be an array"); writeScope = writeScope.length ? scopes(writeScope) : []; assert(writeScope.every(path => withinScope(path, base.scope)), "write scope exceeds base");
   workspaceDirectory = resolve(workspaceDirectory);
   const metadata = JSON.parse(await readFile(join(workspaceDirectory, ".git", "forge-managed-input.json"), "utf8")) as WorkspaceMetadata;
@@ -182,7 +182,8 @@ export async function captureManagedArtifact(base: ManagedBase, workspaceDirecto
       : file.contentBase64 === undefined && Number.isSafeInteger(file.readonlySize) && file.readonlySize > MAX_SNAPSHOT_FILE_BYTES && file.readonlySize <= MAX_READONLY_ASSET_BYTES
         && !withinScope(file.path, [...base.scope, ...(base.contextScope ?? [])]) && /^sha256:[a-f0-9]{64}$/.test(file.digest)), "input inventory corrupted or coordinator digest mismatch");
   if (environment) { assert(environment.directory === workspaceDirectory, "environment belongs to another checkout"); await verifyManagedEnvironment(environment); assert(!metadata.input.files.some(file => environment.derivedPaths.some(path => file.path === path || file.path.startsWith(`${path}/`))), "derived environment would conceal captured source"); }
-  const current = await workspaceInventory(base, workspaceDirectory, environment?.derivedPaths ?? []), prior = new Map(metadata.input.files.map(file => [file.path, file])), after = new Map(current.files.map(file => [file.path, file]));
+  if (generatedPaths.length) { scopes(generatedPaths); assert(!generatedPaths.some(path => withinScope(path, base.scope) || base.scope.some(scope => withinScope(scope, [path]))) && !metadata.input.files.some(file => withinScope(file.path, generatedPaths)), "generated paths would conceal candidate/source"); }
+  const current = await workspaceInventory(base, workspaceDirectory, [...(environment?.derivedPaths ?? []), ...generatedPaths]), prior = new Map(metadata.input.files.map(file => [file.path, file])), after = new Map(current.files.map(file => [file.path, file]));
   const files: ManagedFile[] = [];
   for (const path of [...new Set([...prior.keys(), ...after.keys()])].sort()) {
     const before = prior.get(path), next = after.get(path); if (before?.digest === next?.digest && before?.mode === next?.mode) continue;
@@ -191,7 +192,7 @@ export async function captureManagedArtifact(base: ManagedBase, workspaceDirecto
   }
   const artifact = { digest: artifactDigest(files), files }; validateArtifact(artifact, writeScope); return artifact;
 }
-export async function publishManagedArtifacts(base: ManagedBase, artifacts: ManagedArtifact[]): Promise<{ digest: string; changedFiles: string[] }> {
+export async function publishManagedArtifacts(base: ManagedBase, artifacts: ManagedArtifact[], controls?: { beforeWrite?: () => Promise<void> }): Promise<{ digest: string; changedFiles: string[] }> {
   await validateBase(base); const before = await inventory(base.root, base.scope);
   assert(before.digest === base.digest && await currentContextMatches(base) && await git(base.root, ["rev-parse", "HEAD"]) === base.head, "source changed since capture (including readonly environment context)");
   const after = applyEntries(before.files, artifacts, base.scope), old = new Map(before.files.map(file => [file.path, file])), desired = new Map(after.map(file => [file.path, file]));
@@ -208,6 +209,7 @@ export async function publishManagedArtifacts(base: ManagedBase, artifacts: Mana
   const applied: { path: string; writtenDigest: string | null; writtenMode: number | null }[] = [];
   try {
     for (let index = 0; index < changedFiles.length; index++) {
+      await controls?.beforeWrite?.();
       const path = changedFiles[index], file = desired.get(path), target = await safePath(base.root, path);
       let currentDigest: string | null = null, currentMode: number | null = null;
       try { const stat = await lstat(target); assert(stat.isFile(), "publication target changed type"); currentDigest = hash(await readFile(target)); currentMode = stat.mode & 0o111 ? 0o755 : 0o644; } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
@@ -235,7 +237,6 @@ export async function publishManagedArtifacts(base: ManagedBase, artifacts: Mana
   }
   await rm(stage, { recursive: true }); return { digest: (await inventory(base.root, base.scope)).digest, changedFiles };
 }
-
 /** Compute publication outcome from captured source without changing the user's checkout. */
 export async function previewManagedArtifacts(base: ManagedBase, artifacts: ManagedArtifact[]): Promise<{ digest: string; changedFiles: string[] }> {
   await validateBase(base); const before = await inventory(base.baselineDirectory, base.scope), after = applyEntries(before.files, artifacts, base.scope);

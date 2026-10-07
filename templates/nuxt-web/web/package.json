@@ -15,5 +15,8 @@
     "@nuxt/kit": "^4.0.0",
     "typescript": "^5.7.3",
     "vue-tsc": "^3.3.5"
+  },
+  "overrides": {
+    "@nuxt/devtools": "4.0.0-beta.4"
   }
 }

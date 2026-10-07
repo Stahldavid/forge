@@ -103,6 +103,7 @@ function normalizeDependencies(pkg) {
   return {
     dependencies: normalizeEntries(pkg.dependencies),
     devDependencies: normalizeEntries(pkg.devDependencies),
+    ...(pkg.overrides ? { overrides: structuredClone(pkg.overrides) } : {}),
   };
 }
 

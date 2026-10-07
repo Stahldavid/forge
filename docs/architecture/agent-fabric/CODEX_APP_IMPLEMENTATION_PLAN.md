@@ -1,5 +1,16 @@
 # Agent Fabric — plano de implementação centrado no Codex App
 
+> **Registro histórico; estado atualizado em 2026-10-07.** O checkout
+> `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c` já implementa tarefas acompanhadas,
+> workflows dinâmicos e workers Codex SDK/comandos. Consulte
+> [estado atual, contratos e evidências](./CODEX_DYNAMIC_WORKFLOWS.md#estado-atual-verificado-em-2026-10-07).
+> As tabelas de baseline, propostas de nomes e checklists abaixo foram preservados
+> para rastreabilidade; não são um inventário das capacidades atuais. A implementação
+> usa `attached-*`, `workflow-*` e `run-*`. O piloto SDK local está registrado na
+> seção 14 do documento atual, sem reprodução nesta atualização. EasyGrow, hooks
+> nativos completos, App Server interativo e wakeup continuam pendentes separados;
+> a implementação não declara o aceite integral de E0–E7 nem altera freezes antigos.
+
 Data: 2026-09-29. Estado: plano de entrega; não é declaração de implementação ou aceite.
 Baseline inspecionado: `78b01d9ddee751047184d828fd66c0ae0361823b` em `Stahldavid/forge`.
 Público: agente de programação que continuará o trabalho, inclusive um modelo de menor custo.
@@ -228,7 +239,10 @@ o revisor a somente ler não equivale a sandbox do sistema operacional; declarar
 real do host. Detectar alterações no snapshot e no checkout durante a rodada; relatório de
 uma versão anterior permanece histórico e nunca torna a versão nova `ready`.
 
-### 6.2 Superfície proposta — ainda não implementada
+### 6.2 Superfície proposta no baseline histórico
+
+Os nomes desta seção eram propostas. Para a superfície implementada posteriormente,
+use `attached-*`, `workflow-*` e `run-*` no documento atual indicado acima.
 
 Preferir ampliar o grupo `fabric change-*`, preservando os comandos existentes. Os nomes a
 seguir são proposta para reduzir decisões do executor; ajustar por convenções encontradas,

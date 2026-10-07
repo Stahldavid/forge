@@ -2,7 +2,19 @@
 
 Data: 2026-10-06
 
-Status: proposta revisada por subagent independente; ajustes incorporados em 2026-10-06. Nenhum comando ou campo proposto neste documento implica suporte atual.
+Status histórico: proposta revisada por subagent independente; ajustes incorporados em 2026-10-06.
+
+> **Atualização de estado em 2026-10-07.** O checkout
+> `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c` já contém análise de repositórios,
+> manifesto, mapas, consultas, contexto para workers e observações explícitas de runtime.
+> Para comandos, schemas e limites executáveis, use
+> [`../../repository-analysis.md`](../../repository-analysis.md),
+> [`../../repository-context-quality.md`](../../repository-context-quality.md) e
+> [`../../repository-runtime-observation.md`](../../repository-runtime-observation.md).
+> Este plano conserva alternativas e requisitos do desenho original; nem todo campo
+> proposto corresponde à API entregue, e não há declaração de cumprimento integral
+> de todos os gates. Análise estática não executa builds/containers/checks implicitamente;
+> observações de runtime são operações separadas e não substituem verificação ou aceite.
 
 ## 1. Objetivo
 

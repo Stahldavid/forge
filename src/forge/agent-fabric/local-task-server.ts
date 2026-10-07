@@ -12,11 +12,17 @@ import { LocalTaskService, type LocalTaskStatus } from "./local-task-service.ts"
 import type { LocalMemoryEntry } from "./local-intelligence.ts";
 import { localFabricPath } from "./local-paths.ts";
 import { applyFabricProfile } from "./project-profile.ts";
+import { ProgramRunService, PROGRAM_RUN_ACTIONS, type ProgramRunAction } from "./program-service.ts";
+import { ProgramError } from "./program-contract.ts";
 
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
 
 export { MANAGED_RUN_ACTIONS, type ManagedRunAction };
+export { PROGRAM_RUN_ACTIONS, type ProgramRunAction };
+export function isProgramRunAction(action: unknown): action is ProgramRunAction {
+  return typeof action === "string" && (PROGRAM_RUN_ACTIONS as readonly string[]).includes(action);
+}
 export function isManagedRunAction(action: unknown): action is ManagedRunAction {
   return typeof action === "string" && (MANAGED_RUN_ACTIONS as readonly string[]).includes(action);
 }
@@ -186,6 +192,7 @@ export async function serveLocalTasks(
   let published: OwnerEndpoint | undefined;
   let attachedService: AttachedTaskService | undefined;
   let managedService: ManagedRunService | undefined;
+  let programService: ProgramRunService | undefined;
   try {
     if (readEndpoint(root)) {
       throw new AgentFabricError("AF_CONFLICT", "A local Agent Fabric owner is already running");
@@ -193,6 +200,7 @@ export async function serveLocalTasks(
     attachedService = await AttachedTaskService.open(root);
     const { ManagedRunService: ManagedService } = await import("./managed-run-service.ts");
     managedService = await ManagedService.open(root);
+    programService = await ProgramRunService.open(root);
     const token = randomBytes(32).toString("hex");
     listener = createServer((request, response: ServerResponse) => {
       response.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -205,13 +213,14 @@ export async function serveLocalTasks(
         response.writeHead(200).end(JSON.stringify({ ok: true, repositoryRoot: root, pid: process.pid }));
         return;
       }
-      const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction | AttachedTaskAction | ManagedRunAction;
+      const action = request.url?.slice("/v1/".length) as LocalTaskAction | LocalMemoryAction | AttachedTaskAction | ManagedRunAction | ProgramRunAction;
       if (request.method !== "POST" || !request.url?.startsWith("/v1/") ||
-          (!isAttachedTaskAction(action) && !isManagedRunAction(action) && !["propose", "status", "evidence", "review", "run", "cancel", "reconcile", "verify", "recover-verification", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action))) {
+          (!isProgramRunAction(action) && !isAttachedTaskAction(action) && !isManagedRunAction(action) && !["propose", "status", "evidence", "review", "run", "cancel", "reconcile", "verify", "recover-verification", "review-result", "memory-add", "memory-list", "memory-delete"].includes(action))) {
         response.writeHead(404).end(JSON.stringify({ ok: false, error: "unknown_action" }));
         return;
       }
       void readBody(request).then(async (body) => {
+        if (isProgramRunAction(action)) return { status: await programService!.execute(action, body) };
         if (isManagedRunAction(action)) return { status: await managedService!.execute(action, body) };
         if (isAttachedTaskAction(action)) return { status: await attachedService!.execute(action as Parameters<AttachedTaskService["execute"]>[0], body) };
         if (action.startsWith("memory-")) return { memory: dispatchMemory(service, action as LocalMemoryAction, body) };
@@ -219,8 +228,8 @@ export async function serveLocalTasks(
       }).then((result) => {
         if (!response.destroyed) response.writeHead(200).end(JSON.stringify({ ok: true, ...result }));
       }).catch((error: unknown) => {
-        if (!response.destroyed) response.writeHead(isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? 400 : 500).end(JSON.stringify({
-          ok: false, code: isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError ? error.code : "AF_INVALID_STATE",
+        if (!response.destroyed) response.writeHead(isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError || error instanceof ProgramError ? 400 : 500).end(JSON.stringify({
+          ok: false, code: isAgentFabricError(error) || error instanceof AttachedTaskError || error instanceof ManagedRunError || error instanceof ProgramError ? error.code : "AF_INVALID_STATE",
           error: error instanceof Error ? error.message : "Local owner request failed",
         }));
       });
@@ -239,6 +248,7 @@ export async function serveLocalTasks(
       async close() {
         if (closed) return;
         closed = true;
+        await programService?.close();
         try { await managedService?.close(); }
         finally {
           await new Promise<void>((resolve) => listener!.close(() => resolve()));
@@ -249,6 +259,7 @@ export async function serveLocalTasks(
       },
     };
   } catch (error) {
+    await programService?.close();
     try { await managedService?.close(); }
     finally {
       if (listener?.listening) await new Promise<void>((resolve) => listener!.close(() => resolve()));
@@ -348,5 +359,16 @@ export async function requestManagedRun(repositoryRoot: string, action: ManagedR
   const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };
   if (!response.ok || !result.ok) throw new ManagedRunError(result.code ?? "AF_INVALID_STATE", result.error ?? "Managed run request failed");
   if (result.status === undefined) throw new AgentFabricError("AF_INVALID_STATE", "Local owner returned no managed run result");
+  return result.status;
+}
+
+/** V2 shares the authenticated owner; no direct-store fallback or worker-side registry changes. */
+export async function requestProgramRun(repositoryRoot: string, action: ProgramRunAction, body: Record<string, unknown>): Promise<unknown> {
+  if (!isProgramRunAction(action)) throw new ProgramError("AF_PROGRAM_INVALID", "Unknown program action");
+  const endpoint = readEndpoint(realpathSync(repositoryRoot));
+  if (!endpoint) throw new ProgramError("AF_PROGRAM_OWNER", "Start forge fabric ensure-owner before using program workflows");
+  const response = await fetch(`http://127.0.0.1:${endpoint.port}/v1/${action}`, { method: "POST", headers: { Authorization: `Bearer ${endpoint.token}`, "Content-Type": "application/json" }, body: JSON.stringify(body), redirect: "manual", signal: AbortSignal.timeout(action === "program-wait" ? 35000 : 120000) });
+  const result = await response.json() as { ok?: boolean; code?: string; error?: string; status?: unknown };
+  if (!response.ok || !result.ok) throw new ProgramError(result.code ?? "AF_PROGRAM_OWNER", result.error ?? "Program request failed");
   return result.status;
 }

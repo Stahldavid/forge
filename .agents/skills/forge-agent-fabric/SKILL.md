@@ -155,3 +155,15 @@ Distinguish implementation, command-fixture tests and actual SDK execution in th
 report. Do not extend a past pilot's acceptance to a new environment or task without
 observed evidence. SDK workers are separate runs, not new chats in the sidebar. Keep the owner session
 visible in task context; do not promise App-closed execution or create a scheduler implicitly.
+
+## Program workflows v2
+
+For new finite typed workflows use the installed `docs/agent-fabric-programs.md` and
+`examples/agent-fabric-v2/`. The authoring module is `forgeos/agent-fabric/workflows`.
+`program-validate`, `program-start`, `program-status`, `program-wait` and subsequent
+`program-*` mutations use the existing owner; MCP exposes `fabric_program_*`.
+Validate source against the owner registry before dispatch. Every mutation needs a unique
+requestId; subsequent mutations pin expectedVersion. Never treat data-only completed as
+acceptance-ready or infer authority to apply from a worker's report. Preserve uncertain
+outcomes and reconcile observed effects before resume. Fenced replan uses a global barrier;
+SDK output caching is disabled. Publication still requires the user's task authorization.

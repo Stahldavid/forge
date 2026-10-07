@@ -39,3 +39,10 @@ export type { ManagedRunState, ManagedRunSpec, ManagedExecutorSpec, ManagedEvent
 export { runCodexWorker, CodexWorkerError } from "./codex-sdk-worker.ts";
 export { prepareManagedEnvironment, verifyManagedEnvironment } from "./managed-environment.ts";
 export type { ManagedEnvironment, ManagedEnvironmentOptions } from "./managed-environment.ts";
+export * from "./program-contract.ts";
+export { lowerWorkflowSource, PROGRAM_DSL_VERSION } from "./program-dsl.ts";
+export { ProgramRunService, PROGRAM_RUN_ACTIONS } from "./program-service.ts";
+export type { ProgramRunAction } from "./program-service.ts";
+export { ProgramRunStore } from "./program-store.ts";
+export { validateProgramCapabilities } from "./program-worker.ts";
+export type { ProgramWorkerAdapter, ProgramWorkerInput, ProgramWorkerResult } from "./program-worker.ts";
