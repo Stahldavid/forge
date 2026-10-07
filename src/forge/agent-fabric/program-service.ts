@@ -86,14 +86,21 @@ export class ProgramRunService {
     if (this.active.has(id)) { this.wakeRequests.add(id); return; }
     if (this.timers.has(id)) { clearTimeout(this.timers.get(id)!); this.timers.delete(id); }
     const task = this.run(id).finally(async () => {
-      this.active.delete(id); for (const key of this.jobs.keys()) if (key.startsWith(`${id}:`)) this.jobs.delete(key);
-      const state = await this.state(id);
-      if (!this.closed && this.wakeRequests.delete(id) && ["waiting", "executing"].includes(state.status)) {
-        if (state.status === "waiting") await this.store.transact(id, "event-wakeup", current => { if (current!.status === "waiting") current!.status = "executing"; return current!; }); this.schedule(id);
-      } else if (!this.closed && state.status === "waiting") {
-        const next = Math.min(Date.parse(state.deadlineAt), ...Object.values(state.waits).filter(wait => !wait.outputRef && wait.deadlineAt).map(wait => Date.parse(wait.deadlineAt!)));
-        this.timers.set(id, setTimeout(() => { void this.store.transact(id, "wait-deadline-wakeup", current => { if (current!.status === "waiting") current!.status = "executing"; return current!; }).then(current => { if (current.status === "executing") this.schedule(id); }).catch(() => {}); }, Math.max(1, Math.min(2147483647, next - Date.now()))));
+      let wake = false;
+      try {
+        const state = await this.state(id);
+        if (!this.closed && this.wakeRequests.delete(id) && ["waiting", "executing"].includes(state.status)) {
+          if (state.status === "waiting") await this.store.transact(id, "event-wakeup", current => { if (current!.status === "waiting") current!.status = "executing"; return current!; }); wake = true;
+        } else if (!this.closed && state.status === "waiting") {
+          const next = Math.min(Date.parse(state.deadlineAt), ...Object.values(state.waits).filter(wait => !wait.outputRef && wait.deadlineAt).map(wait => Date.parse(wait.deadlineAt!)));
+          this.timers.set(id, setTimeout(() => { void this.store.transact(id, "wait-deadline-wakeup", current => { if (current!.status === "waiting") current!.status = "executing"; return current!; }).then(current => { if (current.status === "executing") this.schedule(id); }).catch(() => {}); }, Math.max(1, Math.min(2147483647, next - Date.now()))));
+        }
+      } finally {
+        // close must retain and await the cycle until its asynchronous finalizer
+        // finishes reading/writing durable state, before releasing the owner.
+        this.active.delete(id); for (const key of this.jobs.keys()) if (key.startsWith(`${id}:`)) this.jobs.delete(key);
       }
+      if (wake && !this.closed) this.schedule(id);
     }); this.active.set(id, task);
   }
   private async block(runId: string, block: ProgramBlock, context: Context, scopeId: string, sequential = false, cancelSiblings = false): Promise<unknown> {
@@ -101,17 +108,17 @@ export class ProgramRunService {
     const abort = () => controller.abort(); context.signal?.addEventListener("abort", abort, { once: true });
     if (context.signal?.aborted) controller.abort();
     const child = { ...context, steps: block.steps, signal: controller.signal };
-    const outcomes: { id: string; status: string; reason?: string }[] = [];
+    const outcomes: { id: string; status: string; reason?: string; code?: string }[] = [];
     const execute = async (step: ProgramOperation): Promise<void> => {
       try { await this.ensure(runId, step, child); outcomes.push({ id: `${child.prefix}${step.id}`, status: "completed" }); }
-      catch (error) { const waiting = (error as ProgramError).code === "AF_PROGRAM_WAITING"; outcomes.push({ id: `${child.prefix}${step.id}`, status: waiting ? "waiting" : "failed", reason: (error as Error).message }); if (!waiting && cancelSiblings) controller.abort(); }
+      catch (error) { const code = (error as ProgramError).code, waiting = code === "AF_PROGRAM_WAITING"; outcomes.push({ id: `${child.prefix}${step.id}`, status: waiting ? "waiting" : "failed", reason: (error as Error).message, ...(code ? { code } : {}) }); if (!waiting && code !== "AF_PROGRAM_REVISED" && cancelSiblings) controller.abort(); }
     };
     try {
       if (sequential) { for (const step of block.steps) { await execute(step); if (outcomes.at(-1)?.status !== "completed") break; } }
       else await Promise.all(block.steps.map(execute));
       const failed = outcomes.some(outcome => outcome.status === "failed"), waiting = outcomes.some(outcome => outcome.status === "waiting");
       await this.store.transact(runId, "scope-join", current => { (current!.scopeResults ??= {})[scopeId] = { outcomes, status: failed ? "failed" : waiting ? "waiting" : "completed" }; return current!; });
-      if (failed) throw new ProgramError("AF_PROGRAM_SCOPE_FAILED", outcomes.find(outcome => outcome.status === "failed")!.reason!);
+      if (failed) { const failure = outcomes.find(outcome => outcome.status === "failed" && outcome.code !== "AF_PROGRAM_REVISED") ?? outcomes.find(outcome => outcome.status === "failed")!; throw new ProgramError(failure.code === "AF_PROGRAM_REVISED" ? failure.code : "AF_PROGRAM_SCOPE_FAILED", failure.reason!); }
       if (waiting) throw new ProgramError("AF_PROGRAM_WAITING", `Scope ${scopeId} is waiting`);
       return this.evaluate(runId, block.result, child);
     } finally { context.signal?.removeEventListener("abort", abort); }
@@ -253,7 +260,14 @@ export class ProgramRunService {
       let state: ProgramRunV2, context: Context;
       for (;;) {
         state = await this.state(runId); context = { prefix: "", steps: state.program.steps, program: state.program, inputRef: state.inputRef, depth: 0, chain: new Set() };
-        await this.block(runId, { steps: context.steps, result: state.program.result }, { ...context, signal: controller.signal }, "$root");
+        try { await this.block(runId, { steps: context.steps, result: state.program.result }, { ...context, signal: controller.signal }, "$root"); }
+        catch (error) {
+          const revised = await this.state(runId);
+          // A concurrent additive replan may invalidate a gate while its receipt is
+          // being persisted. All roots have settled before block propagates this
+          // control-only invalidation; genuine sibling failures still stop the run.
+          if ((error as ProgramError).code !== "AF_PROGRAM_REVISED" || revised.status !== "executing" || revised.programDigest === state.programDigest) throw error;
+        }
         if ((await this.state(runId)).programDigest === state.programDigest) break;
         // All roots of the previous cycle have settled. Recompute controls/gates for the new
         // semantic version; activity preparation may then issue explicit compatible reuse receipts.
@@ -738,7 +752,7 @@ export class ProgramRunService {
     const receipt = { authorizationSignalId, requiredObligations, gateId: id, candidateDigest: candidate.digest, semanticVersion: run.semanticVersion, programDigest: run.programDigest,
       acceptanceDigest: programDigest(acceptance), policyDigest: programDigest(policy), populationDigest: run.program.population ? programDigest(registryEntry(run.registry.populations, run.program.population)) : programDigest(null), seals: run.seals, criteria: acceptance.criteria, assessment: assessment ?? null, coverage: input.coverage ?? null };
     const gateRef = await this.store.put(receipt);
-    await this.store.transact(runId, "gate-receipt", current => { programAssert(current!.semanticVersion === run.semanticVersion && current!.programDigest === run.programDigest, "Gate inputs changed"); current!.gateRef = gateRef; current!.acceptedCandidate = candidate; return current!; }); return { passed: true, gateRef, candidate };
+    await this.store.transact(runId, "gate-receipt", current => { programAssert(current!.semanticVersion === run.semanticVersion && current!.programDigest === run.programDigest, "Gate inputs changed", "AF_PROGRAM_REVISED"); current!.gateRef = gateRef; current!.acceptedCandidate = candidate; return current!; }); return { passed: true, gateRef, candidate };
   }
   private async apply(runId: string, request: Record<string, unknown>): Promise<unknown> {
     const run = await this.state(runId);

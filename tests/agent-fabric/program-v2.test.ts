@@ -225,21 +225,48 @@ describe("program v2 durable execution", () => {
     await control(f.service, "program-resume", { runId: state.runId, requestId: "resume", expectedVersion: state.version }); state = await finish(f.service, state.runId);
     expect(state.status).toBe("needs-attention"); expect(state.totalAttempts).toBe(2); expect(f.calls).toHaveLength(2); expect(state.repairs.repair.phase).toBe("exhausted");
   });
-  test("additive extension recomputes the final gate for the new semantic version", async () => {
+  test.each([false, true])("additive extension handles an in-flight gate without masking sibling failure (%s)", async failSibling => {
     let complete!: () => void; const held = new Promise<void>(resolve => { complete = resolve; });
-    const f = await fixture(async input => input.executor.id === "read" ? (await held, { outcome: "completed", data: {} }) : { outcome: "completed", data: input.executor.id === "review" ? { verdict: "approved", findings: [] } : { passed: true } });
+    const f = await fixture(async input => input.executor.id === "read" ? (await held, failSibling ? { outcome: "infrastructure_failed", reason: "expected sibling failure" } : { outcome: "completed", data: {} }) : { outcome: "completed", data: input.executor.id === "review" ? { verdict: "approved", findings: [] } : { passed: true } });
+    let gateReached!: () => void, releaseGate!: () => void;
+    const reached = new Promise<void>(resolve => { gateReached = resolve; }), gateHeld = new Promise<void>(resolve => { releaseGate = resolve; });
+    const transact = f.service.store.transact.bind(f.service.store); let intercept = true;
+    f.service.store.transact = async (...args: Parameters<typeof transact>) => {
+      if (args[1] === "gate-receipt" && intercept) { intercept = false; gateReached(); await gateHeld; }
+      return transact(...args);
+    };
     const workflow = program([repairStep(), gate("final", { candidate: acceptedCandidate("repair") }), { kind: "agent", id: "hold", options: { executor: executorRef("read", "v1"), input: {} } }], output("final"));
     const started = await f.service.execute("program-start", { requestId: "start", program: workflow, input: {} }) as ProgramRunV2;
     while (!f.calls.some(call => call.executor.id === "read")) await new Promise(resolve => setTimeout(resolve, 10));
+    await reached;
     let state = (await f.service.store.read(started.runId))!; const oldGate = state.gateRef, replacement = structuredClone(workflow); replacement.steps.push(value("new", { value: 1 }));
     state = await control(f.service, "program-replan", { runId: state.runId, requestId: "extend", expectedVersion: state.version, mode: "additive", program: replacement }) as ProgramRunV2;
-    complete(); state = await finish(f.service, state.runId); expect(state.reason).toBeUndefined(); expect(state.status).toBe("acceptance-ready"); expect(state.gateRef).toBeDefined(); expect(state.gateRef).not.toBe(oldGate);
+    releaseGate(); complete(); state = await finish(f.service, state.runId);
+    if (failSibling) { expect(state.status).toBe("needs-attention"); expect(state.reason).toContain("expected sibling failure"); expect(state.gateRef).toBeUndefined(); return; }
+    expect(state.reason).toBeUndefined(); expect(state.status).toBe("acceptance-ready"); expect(state.gateRef).toBeDefined(); expect(state.gateRef).not.toBe(oldGate);
     expect((await f.service.store.get<{ semanticVersion: number }>(state.gateRef!)).semanticVersion).toBe(state.semanticVersion); expect(f.calls.filter(call => call.executor.id === "read")).toHaveLength(1);
   });
   test("data completion and a forged accepted result cannot bypass acceptance", async () => {
     const f = await fixture(), data = await start(f.service, program([value("data", { value: 1 })], output("data")));
     expect(data.status).toBe("completed"); expect(data.gateRef).toBeUndefined();
     const forged = await start(f.service, program([], literal({ status: "accepted" })), {}, "forge-accepted"); expect(forged.status).toBe("needs-attention");
+  });
+  test("close retains the active cycle until its durable finalizer read settles", async () => {
+    const f = await fixture(); let entered!: () => void, release!: () => void;
+    const reached = new Promise<void>(resolve => { entered = resolve; }), held = new Promise<void>(resolve => { release = resolve; });
+    const read = f.service.store.read.bind(f.service.store); let intercept = true;
+    f.service.store.read = async id => {
+      const state = await read(id);
+      if (intercept && state?.status === "completed") { intercept = false; entered(); await held; }
+      return state;
+    };
+    const started = await f.service.execute("program-start", { requestId: "finalizer", program: program([value("done", { value: 1 })], output("done")), input: {} }) as ProgramRunV2;
+    await reached;
+    const active = (f.service as unknown as { active: Map<string, Promise<void>> }).active;
+    const closing = f.service.close();
+    try { expect(active.has(started.runId)).toBe(true); }
+    finally { release(); await closing; }
+    expect(active.has(started.runId)).toBe(false);
   });
   test("expression expansion stops at byte/item bounds before concat allocation", async () => {
     const f = await fixture(); f.catalog.policies["local@v1"].maxOutputBytes = 4096;

@@ -40,4 +40,14 @@ Run: program-ec04371b16d7e8f844054d5b11ed011e. Thread Codex: 01a117e1-0e51-7261-
 
 ## Limites da evidência
 
+## Gate de publicação Linux e correção concorrente
+
+A primeira tentativa de publicação da alpha.71 (GitHub Actions 37676855215, commit bf77032f) foi bloqueada: 1.841 testes passaram, 5 tiveram skip condicional e um falhou. A corrida ocorria quando um replanejamento aditivo invalidava a versão semântica durante a persistência do gate; o erro "Gate inputs changed" interrompia o programa antes do recálculo. Não houve publicação dessa tentativa.
+
+O runtime agora distingue a invalidação AF_PROGRAM_REVISED de falhas de execução, aguarda os irmãos e recalcula controles somente enquanto o programa segue executando com um plano diferente. Uma falha real de irmão tem prioridade e continua bloqueando conclusão. O teste usa barreira explícita antes do commit do gate e cobre ambos os casos, sem dependência de timing ou chamadas LLM.
+
+## Limites do runtime
+
+A validação direcionada também expôs uma corrida de shutdown: o ciclo era removido de active antes de terminar a leitura assíncrona do finalizador. close agora aguarda esse finalizador antes de liberar o owner, e um teste com barreira mantém a leitura pendente para verificar a retenção do ciclo. Nenhuma dessas correções usa chamadas LLM.
+
 Snapshots completos ainda dominam armazenamento e custo computacional; a otimização remove duplicação/journal acumulado e writes sem mudança, mas não torna o custo linear. Tempos são locais sob carga e não comparam Claude DW. Não há medida de qualidade/custo/produtividade dos modelos. Catálogo visual delimita casos exigidos; header e metadata não comprovam pixels/estado reais. WebP continua limitado a VP8X. Commands são cooperativos; não há sandbox forte geral. Durabilidade continua local, sem exactly-once externo, GC automático ou serviço distribuído.
