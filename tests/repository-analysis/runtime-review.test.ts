@@ -68,6 +68,26 @@ test("a naturally exiting exporter leaves no owned unref'd child alive", async (
   expect(alive).toBe(false);
 }, 30000);
 
+test.skipIf(process.platform === "win32")("export completion waits for an observed group exit after the signal request", async () => {
+  const { root, manifest } = fixture();
+  writeFileSync(join(root, "emit.mjs"), [
+    "import { writeFileSync } from 'node:fs'; import { spawn } from 'node:child_process';",
+    "const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'}); child.unref();",
+    "writeFileSync('runtime.json',JSON.stringify({facts:[{kind:'runtime-resource',name:'child'+child.pid,details:{type:'FixtureChild'}}]}));",
+  ].join("\n"));
+  const originalKill = process.kill; let group: number | undefined, observations = 0;
+  process.kill = (pid, signal) => {
+    if (pid < 0 && signal === "SIGKILL") group = pid;
+    // Model the real kernel race: a successful signal request precedes observed exit.
+    if (pid === group && signal === 0 && observations++ < 2) return true;
+    return originalKill(pid, signal);
+  };
+  try {
+    const report = await observeRepositoryRuntime(root, manifest, { environmentId: "fixture", write: false });
+    expect(report.observations[0]?.status).toBe("completed"); expect(observations).toBeGreaterThanOrEqual(3);
+  } finally { process.kill = originalKill; }
+}, 30000);
+
 test("runtime collectors discard export credentials, traffic contents and unrelated metadata", () => {
   const credential = "unrelated-confidential-value-123";
   const http = collectRuntimeArtifact("http-trace", JSON.stringify({ log: { entries: [{ request: { method: "GET", url: `https://user:${credential}@test.example/api/orders/123?token=${credential}`, headers: [{ name: "Authorization", value: credential }], postData: { text: credential } }, response: { status: 200, content: { text: credential } } }] } }), "web");

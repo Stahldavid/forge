@@ -93,3 +93,17 @@ The final packed smoke passed, including importing the installed v2 authoring mo
 and lowering/validating the shipped five-step example against its registry. The local
 package reported version 0.1.0-alpha.70. This smoke ran from an actual npm tarball,
 not a dry-run or a source-only import.
+
+## CI correction before publication
+
+The first exact-SHA release run 37630439335 was blocked before publication: 1797 tests
+passed, five platform/opt-in tests were skipped, and the pre-existing POSIX exporter
+cleanup test failed. SIGKILL had been requested without waiting for group termination.
+The fix observes the owned detached process group with signal zero until ESRCH, bounded
+at five seconds; unknown cleanup remains an error and preserves its scratch directory.
+A deterministic regression fixture models two still-live observations after the signal.
+Linux/WSL runtime suites passed 17 tests/74 expectations; Windows runtime suites passed
+16 tests/72 expectations, with the new POSIX-only case separately skipped on Windows.
+The independent reviewer approved the code/error-path delta (SHA256
+563B878677FDE2BC82539AEB5020D84F72DCECE0FDB6AB19B94F0EE69D476997).
+This is cooperative process-group cleanup, not universal process-tree containment.

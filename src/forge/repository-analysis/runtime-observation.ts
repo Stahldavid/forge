@@ -113,6 +113,15 @@ function commandEnvironment(scratch: string): NodeJS.ProcessEnv {
 
 async function stopOwnedGroup(pid: number): Promise<void> {
   try { process.kill(-pid, "SIGKILL"); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error; }
+  // Sending a signal does not wait for descendants to stop or be reaped. Observe the
+  // owned process group before reporting completion or removing its scratch files.
+  const deadline = Date.now() + 5000;
+  for (;;) {
+    try { process.kill(-pid, 0); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code === "ESRCH") return; throw error; }
+    if (Date.now() >= deadline) throw new Error("Runtime process group termination was not observed");
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
 }
 
 // A suspended process cannot create descendants before assignment to its job.

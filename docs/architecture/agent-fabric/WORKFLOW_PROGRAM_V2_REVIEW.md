@@ -31,3 +31,11 @@ SHA256 of reviewed implementation files:
 This review supports the documented opt-in foundation. It does not certify full F6/F7,
 independent live branch scheduling, semantic inventory, extensible recipes, maximum
 scale, filesystem power-loss durability or production/human acceptance.
+
+Release CI exposed a pre-existing POSIX runtime exporter cleanup race. The independent
+reviewer approved the bounded observation fix in runtime-observation.ts, SHA256
+563B878677FDE2BC82539AEB5020D84F72DCECE0FDB6AB19B94F0EE69D476997. Signal zero
+polling requires observed ESRCH before completion; errors and timeout preserve scratch.
+Only the owned detached group receives the initial SIGKILL. Descendants escaping the
+group remain outside containment; zombies can cause conservative timeout. The reviewer
+did not repeat the implementer's platform tests or execute another model.

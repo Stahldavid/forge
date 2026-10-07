@@ -9,6 +9,7 @@
   fenced generation changes and reconciled application. Ship an executable command
   example, SDK pilot and bounded recovery benchmark; preserve existing v1 workflows.
 - Pin the Nuxt template's devtools to 4.0.0-beta.4, which removes its vulnerable simple-git dependency; retain existing audit exceptions without extending them. Validate installation and typechecking against the Nuxt template before release.
+- Observe POSIX exporter process-group termination after sending SIGKILL before reporting completion or deleting its temporary workspace; preserve unknown cleanup outcomes.
 
 - Add opt-in repository runtime observation with independent temporary source copies, bounded Nuxt/Spring/Docker/HTTP artifact collectors, input-bound expiring reports and shared CLI/MCP plan/observe/context operations. Fabric consumes only compatible saved observations, without implicit project execution.
 - Recover once from a premature Bun/Windows process-identity timeout while retaining unknown identity on repeated failures; protect existing lock ownership semantics.
