@@ -388,7 +388,13 @@ jobs:
 
       - name: Verify published public alpha
         if: steps.npm-version.outputs.exists != 'true'
+        env:
+          SKIP_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.skip-smoke == true && 'true' || 'false' }}
         run: |
+          if [ "$SKIP_SMOKE" = "true" ]; then
+            npm view "forgeos@$(node -p "require('./package.json').version")" version dist.integrity --json --prefer-online
+            exit 0
+          fi
           if [[ "${{ steps.create-wrapper.outputs.skipped }}" == "true" ]]; then
             npm run release:verify-public-alpha -- --skip-create
           else
