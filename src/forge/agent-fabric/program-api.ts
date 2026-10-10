@@ -26,7 +26,7 @@ export interface WorkflowOptions {
   branch: Common & { condition: boolean | ProgramExpr; then: Body; else: Body };
   loop: Common & { initialState: Data; maxRounds: number; body: Body; next: Data; until: boolean | ProgramExpr };
   repair: Common & { recipe: WorkflowRef<"recipe">; implement: WorkflowRef<"executor">; review: WorkflowRef<"executor">; checks: Data; input?: Data; evidence?: WorkflowRef<"executor">[]; assessmentScope?: "item" | "final"; entryMode: "implement-first" | "assess-first"; initialCandidate: Data; writeScope: Data; maxRepairRounds: number; maxAssessmentAttempts: number; maxInfrastructureAttempts: number; progressPolicy: { unchangedCandidateRounds: number; repeatedFindingsRounds: number } };
-  compose: Common & { candidates: Data; onConflict?: "needs-resolution" };
+  compose: Common & { candidates: Data; onConflict?: "needs-resolution"; resolver?: WorkflowRef<"executor">; resolverInput?: Data; resolverWriteScope?: Data };
   gate: Common & { candidate: Data; coverage?: Data; authorization?: Data };
   subworkflow: Common & { program: WorkflowRef<"program">; input: Data };
   waitEvent: Common & { type: string; correlation: Data; schema: WorkflowRef<"schema">; subject?: Data; timeoutMs?: number };

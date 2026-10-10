@@ -1,4 +1,4 @@
-import { Codex, type CodexOptions, type ThreadOptions, type TurnOptions, type ThreadEvent } from "@openai/codex-sdk";
+import { Codex, type CodexOptions, type ThreadOptions, type TurnOptions, type ThreadEvent, type Input } from "@openai/codex-sdk";
 import { realpath, stat, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
@@ -13,6 +13,7 @@ export interface CodexWorkerEvent { type: string; threadId?: string; summary?: s
 export interface CodexWorkerInput {
   cwd: string; prompt: string; role: "implementer" | "reviewer" | "investigator" | "decision";
   model?: string; threadId?: string; signal: AbortSignal;
+  images?: { path: string }[];
   onEvent: (event: CodexWorkerEvent) => Promise<void> | void;
 }
 export interface CodexWorkerOutput {
@@ -22,7 +23,7 @@ export interface CodexWorkerOutput {
 }
 export interface CodexWorkerThread {
   readonly id: string | null;
-  runStreamed(prompt: string, options: TurnOptions): Promise<{ events: AsyncIterable<ThreadEvent> }>;
+  runStreamed(prompt: Input, options: TurnOptions): Promise<{ events: AsyncIterable<ThreadEvent> }>;
 }
 export interface CodexWorkerClient {
   startThread(options: ThreadOptions): CodexWorkerThread;
@@ -183,14 +184,19 @@ async function runTypedCodexWorkerInternal(input: CodexWorkerInput & { outputSch
   const threadOptions: ThreadOptions = { workingDirectory: cwd, sandboxMode: input.role === "implementer" ? "workspace-write" : "read-only", networkAccessEnabled: false, webSearchMode: "disabled", approvalPolicy: "never", ...(input.model ? { model: input.model } : {}) };
   const thread = input.threadId ? client.resumeThread(input.threadId, threadOptions) : client.startThread(threadOptions);
   let threadId = input.threadId ?? thread.id ?? "", finalMessage: string | undefined, completed = false, count = 0, observedUsage: CodexWorkerUsage | undefined;
-  const stream = await thread.runStreamed(`${input.prompt}\nReturn only data matching the requested output schema. Never include credentials.`, { outputSchema: input.outputSchema, signal: input.signal });
+  const prompt = `${input.prompt}\nReturn only data matching the requested output schema. Never include credentials.`;
+  if (input.images && (input.images.length > 100 || input.images.some(image => !text(image.path, 4096)))) fail("AF_CODEX_INPUT", "Invalid image inputs");
+  const content: Input = input.images?.length ? [{ type: "text", text: prompt }, ...input.images.map(image => ({ type: "local_image" as const, path: image.path }))] : prompt;
+  const stream = await thread.runStreamed(content, { outputSchema: input.outputSchema, signal: input.signal });
+  if (input.images?.length) await input.onEvent({ type: "input.images.delivered", summary: `${input.images.length} images supplied through SDK local_image; understanding is not attested` });
   for await (const event of stream.events) {
     checkAbort(input.signal); if (++count > 10000) fail("AF_CODEX_EVENT_LIMIT", "Typed worker event budget exceeded");
     if (!["thread.started", "turn.started", "item.completed", "item.started", "item.updated", "turn.completed", "turn.failed", "error"].includes(event.type)) fail("AF_CODEX_EVENT", "Unknown typed event");
     if (event.type === "thread.started") { if (!text(event.thread_id, 128) || !/^[A-Za-z0-9][A-Za-z0-9_.:-]*$/u.test(event.thread_id) || threadId && threadId !== event.thread_id) fail("AF_CODEX_EVENT", "Thread identity changed"); threadId = event.thread_id; await input.onEvent({ type: event.type, threadId }); }
     else if (event.type === "item.completed" && event.item.type === "agent_message") { if (completed || !text(event.item.text, 4 * 1024 * 1024)) fail("AF_CODEX_REPORT", "Invalid typed message"); finalMessage = event.item.text; }
     else if (event.type === "turn.completed") { if (completed) fail("AF_CODEX_EVENT", "Duplicate completion"); completed = true; observedUsage = usage(event.usage); await input.onEvent({ type: event.type, usage: observedUsage }); }
-    else if (event.type === "turn.failed" || event.type === "error") fail("AF_CODEX_TURN_FAILED", "Typed worker failed; reconcile before retry");
+    else if (event.type === "turn.failed" || event.type === "error") { await input.onEvent({ type: event.type, summary: "Typed worker failed; reconcile before retry" }); fail("AF_CODEX_TURN_FAILED", "Typed worker failed; reconcile before retry"); }
+    else await input.onEvent({ type: event.type, summary: "Typed SDK activity observed" });
   }
   checkAbort(input.signal); if (!completed || !threadId || !finalMessage) fail("AF_CODEX_INCOMPLETE", "Typed worker completion not observed");
   let data: unknown; try { data = JSON.parse(finalMessage); input.validateOutput(data); } catch { fail("AF_CODEX_REPORT", "Typed worker output schema invalid"); }

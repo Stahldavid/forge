@@ -3,6 +3,7 @@ import { stableStringify } from "./canonical.ts";
 import { programGraph } from "./program-structure.ts";
 import { validateVisualPopulation } from "./program-evidence.ts";
 import { validateProgramTypes } from "./program-types.ts";
+import type { ProgramWorkerObservation, ProgramUsageSummary } from "./program-observation.ts";
 
 export type ProgramValue = null | boolean | number | string | ProgramValue[] | { [key: string]: ProgramValue };
 export interface ProgramRef { id: string; version: string }
@@ -20,16 +21,18 @@ export type ProgramSchema = { type?: string | string[]; enum?: ProgramValue[]; c
   minimum?: number; maximum?: number; anyOf?: ProgramSchema[] };
 export interface ProgramLexicalContext { item?: ProgramSchema; state?: ProgramSchema }
 export interface ProgramExecutor {
-  id: string; version: string; kind: "command" | "codex"; effect: "read" | "isolated-write" | "idempotent-effect" | "non-idempotent-effect";
+  id: string; version: string; kind: "command" | "codex" | "claude"; effect: "read" | "isolated-write" | "idempotent-effect" | "non-idempotent-effect";
   argv?: string[]; prompt?: string; role?: "implementer" | "reviewer" | "investigator" | "decision";
   model?: string; timeoutMs: number; writeScope: string[]; allowedGeneratedPaths?: string[];
   network: "disabled" | "host"; isolation: "cooperative" | "sandbox"; schema: ProgramRef;
   allowedExitCodes?: number[]; environment?: Record<string, string>;
+  tokenAccounting?: "none" | "provider";
   inputSchema?: ProgramRef;
   dependencies?: "none" | "auto";
   cache?: "none" | "workspace";
 }
 export interface ProgramPolicy {
+  resources?: { maxTokens: number; reserveTokensPerAttempt: number; finalReserveTokens?: number; unknownUsage: "block" | "allow" };
   allowFencedReplan?: boolean;
   captureScope?: string[];
   id: string; version: string; maxItems: number; concurrency: number; maxAttempts: number;
@@ -58,6 +61,7 @@ export interface ProgramRegistry {
   populations: Record<string, ProgramPopulation>; programs?: Record<string, WorkflowProgramV2>;
 }
 export interface ProgramAssessment {
+  resolutionReceiptIds?: string[];
   receiptId?: string; generation?: number; operationId?: string;
   semanticDigest?: string; inputDigest?: string;
   phase?: "item" | "final"; obligationIds?: string[]; satisfiedObligationIds?: string[]; unsatisfiedObligationIds?: string[];
@@ -78,6 +82,11 @@ export interface ProgramAttempt {
   outcome: "running" | "completed" | "infrastructure_failed" | "invalid_output" | "uncertain" | "canceled_confirmed";
   outputRef?: string; threadId?: string; reason?: string;
   reservation?: { scopes: { id: string; limit: number }[]; status: "held" | "released"; ownerEpoch: string };
+  observations?: Record<string, ProgramWorkerObservation>;
+  usageApplicability?: "not-applicable" | "provider";
+  usageSummary?: ProgramUsageSummary;
+  resourceReservation?: { tokens: number; status: "held" | "released"; phase?: "work" | "final" };
+  recovery?: { directory: string; inputDigest: string; workspaceDigest: string; threadId?: string; terminationObserved?: boolean; generationCompatible?: boolean };
   usage?: unknown;
 }
 export interface ProgramOperationRecord {
@@ -111,6 +120,7 @@ export interface ProgramRunV2 {
   waits: Record<string, { generation: number; deadlineAt?: string; signalId?: string; outputRef?: string }>;
   repairs: Record<string, { semanticDigest: string; inputDigest: string; candidate: ProgramCandidate; rounds: number; assessments: number; infrastructure: number; unchanged: number; repeated: number; priorFindings: string; feedback: unknown; phase: "implement" | "implementation-active" | "assess" | "assessment-active" | "decide" | "accepted" | "exhausted" | "stalled"; assessment?: ProgramAssessment }>;
   collections: Record<string, { seal: string; coverageReceiptId: string | null; generation: number; ids: string[]; acceptedAssessmentIds: string[]; acceptedCandidateIds: string[]; obligationsSatisfied: boolean }>;
+  compositionResolutions?: Record<string, { receiptId: string; candidateId: string; candidateDigest: string; originalCandidateIds: string[]; attemptId: string; operationId: string; generation: number; semanticDigest: string; inputDigest: string; populationDigest: string; acceptanceDigest: string }>;
   resultRef?: string; gateRef?: string; intent?: ProgramApplyIntent; receiptRef?: string;
   acceptedCandidate?: ProgramCandidate;
   scopeResults?: Record<string, { outcomes: { id: string; status: string; reason?: string }[]; status: "completed" | "waiting" | "failed"; resultRef?: string }>;
@@ -212,6 +222,11 @@ export function validateWorkflowProgram(program: WorkflowProgramV2, registry: Pr
   const policy = registryEntry(registry.policies, program.policy), acceptance = registryEntry(registry.acceptance, program.acceptance);
   for (const field of ["maxItems", "concurrency", "maxAttempts", "maxOperations", "maxDepth", "deadlineMs", "maxOutputBytes"] as const) programAssert(Number.isSafeInteger(policy[field]) && policy[field] > 0, `Invalid limit ${field}`);
   programAssert(policy.concurrency <= 32 && policy.maxDepth <= 32 && policy.maxItems <= 10000 && policy.maxAttempts <= 10000 && policy.maxOperations <= 20000 && policy.maxOutputBytes <= 4 * 1024 * 1024, "Physical limits exceeded");
+  if (policy.resources) {
+    const budget = policy.resources;
+    for (const value of [budget.maxTokens, budget.reserveTokensPerAttempt, budget.finalReserveTokens ?? 0]) programAssert(Number.isSafeInteger(value) && value >= 0, "Invalid resource budget");
+    programAssert(budget.maxTokens > 0 && budget.reserveTokensPerAttempt > 0 && (budget.finalReserveTokens ?? 0) <= budget.maxTokens && ["block", "allow"].includes(budget.unknownUsage), "Invalid resource policy");
+  }
   for (const path of [...policy.writeScope, ...acceptance.writeScope, ...(policy.captureScope ?? [])]) programPath(path);
   programAssert(acceptance.criteria.length > 0 && new Set(acceptance.criteria).size === acceptance.criteria.length, "Acceptance criteria required and unique");
   if (program.population) { const population = registryEntry(registry.populations, program.population); programAssert(population.members.length <= policy.maxItems && new Set(population.members).size === population.members.length && population.evidence.length > 0, "Population inventory invalid"); validateVisualPopulation(population); }
@@ -235,7 +250,7 @@ export function validateWorkflowProgram(program: WorkflowProgramV2, registry: Pr
     map: ["items", "key", "coverage", "concurrency", "completion", "quorum", "body", "order"],
     branch: ["condition", "then", "else"], loop: ["initialState", "maxRounds", "body", "next", "until"],
     repair: ["recipe", "entryMode", "initialCandidate", "writeScope", "implement", "review", "checks", "input", "assessmentScope", "evidence", "maxRepairRounds", "maxAssessmentAttempts", "maxInfrastructureAttempts", "progressPolicy"],
-    compose: ["candidates", "onConflict"], gate: ["candidate", "coverage", "authorization"], subworkflow: ["program", "input"],
+    compose: ["candidates", "onConflict", "resolver", "resolverInput", "resolverWriteScope"], gate: ["candidate", "coverage", "authorization"], subworkflow: ["program", "input"],
     waitEvent: ["schema", "type", "correlation", "subject", "timeoutMs"], sequence: ["steps", "result"], parallel: ["steps", "result", "onFailure"],
   };
   kinds.add("sequence"); kinds.add("parallel");
@@ -255,7 +270,8 @@ export function validateWorkflowProgram(program: WorkflowProgramV2, registry: Pr
       if (step.options.completion === "quorum") programAssert(step.options.quorum && typeof step.options.quorum === "object" && Number.isSafeInteger((step.options.quorum as { minAccepted: number }).minAccepted) && (step.options.quorum as { minAccepted: number }).minAccepted > 0, "Quorum minAccepted required");
       else programAssert(step.options.quorum === undefined, "Quorum only applies to quorum completion");
     }
-    if (["agent", "command"].includes(step.kind)) { const executor = registryEntry(registry.executors, step.options.executor as ProgramRef); if (executor.inputSchema) registryEntry(registry.schemas, executor.inputSchema); }
+    if (["agent", "command"].includes(step.kind)) { const executor = registryEntry(registry.executors, step.options.executor as ProgramRef); programAssert(executor.tokenAccounting === undefined || executor.tokenAccounting === "provider" || executor.tokenAccounting === "none" && executor.kind === "command", "Token accounting exemption only applies to owner-declared nonprovider commands"); if (executor.inputSchema) registryEntry(registry.schemas, executor.inputSchema); }
+    if (step.kind === "compose" && step.options.resolver) programAssert(registryEntry(registry.executors, step.options.resolver as ProgramRef).effect === "isolated-write", "Conflict resolver must produce an isolated candidate");
     if (step.kind === "repair") {
       registryEntry(registry.executors, step.options.implement as ProgramRef); registryEntry(registry.executors, step.options.review as ProgramRef);
       programAssert(["implement-first", "assess-first"].includes(String(step.options.entryMode)), "Repair entryMode required");

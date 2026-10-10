@@ -11,6 +11,16 @@ on:
       - "docs/**"
   workflow_dispatch:
     inputs:
+      skip-smoke:
+        description: "Skip packed-package smoke for this explicitly authorized manual release"
+        type: boolean
+        required: false
+        default: false
+      focused-fabric-tests:
+        description: "Run critical Fabric regression tests instead of the complete test suite"
+        type: boolean
+        required: false
+        default: false
       allow-create-first-publish:
         description: "Allow first publish of create-forgeos-app if it does not exist yet"
         required: false
@@ -314,7 +324,14 @@ jobs:
 
       - name: Test
         if: steps.npm-version.outputs.exists != 'true'
-        run: npm test
+        env:
+          FOCUSED_FABRIC_TESTS: ${{ github.event_name == 'workflow_dispatch' && inputs.focused-fabric-tests == true && 'true' || 'false' }}
+        run: |
+          if [ "$FOCUSED_FABRIC_TESTS" = "true" ]; then
+            node scripts/run-fabric-ci.mjs
+          else
+            npm test
+          fi
 
       - name: Restore workspace after tests
         if: steps.npm-version.outputs.exists != 'true'
@@ -327,7 +344,7 @@ jobs:
         run: npm run forge -- generate
 
       - name: Smoke packed package
-        if: steps.npm-version.outputs.exists != 'true'
+        if: steps.npm-version.outputs.exists != 'true' && !(github.event_name == 'workflow_dispatch' && inputs.skip-smoke == true)
         run: npm run release:smoke
 
       - name: Publish to npm

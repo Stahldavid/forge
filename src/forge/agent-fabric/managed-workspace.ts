@@ -192,6 +192,10 @@ export async function captureManagedArtifact(base: ManagedBase, workspaceDirecto
   }
   const artifact = { digest: artifactDigest(files), files }; validateArtifact(artifact, writeScope); return artifact;
 }
+/** A bounded observation of the complete managed source delta, never a termination attestation. */
+export async function observeManagedWorkspace(base: ManagedBase, directory: string, inputDigest: string, environment?: ManagedEnvironment, generatedPaths: string[] = []): Promise<string> {
+  return (await captureManagedArtifact(base, directory, base.scope, inputDigest, environment, generatedPaths)).digest;
+}
 export async function publishManagedArtifacts(base: ManagedBase, artifacts: ManagedArtifact[], controls?: { beforeWrite?: () => Promise<void> }): Promise<{ digest: string; changedFiles: string[] }> {
   await validateBase(base); const before = await inventory(base.root, base.scope);
   assert(before.digest === base.digest && await currentContextMatches(base) && await git(base.root, ["rev-parse", "HEAD"]) === base.head, "source changed since capture (including readonly environment context)");

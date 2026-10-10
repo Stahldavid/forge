@@ -1,15 +1,29 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=35262169e2a0810ce8af0d93bcd8e987462f268b53dc949779f86450d9c9636d
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=44b39367785ff00aedc408794edf4ac99878eca9b348ce5a6ac3e209c33f6106
 export const devManifest = {
   "analyzerVersion": "0.1.0",
   "diagnostics": [],
-  "entries": [],
-  "generatorVersion": "0.1.0-alpha.69",
-  "inputHash": "96b4c110e9959e6737bdc87b3ec617941bb4544e87372833ed169166fc0f2567",
+  "entries": [
+    {
+      "invokePath": "/run/__forge_15_32",
+      "kind": "action",
+      "name": "__forge_15_32",
+      "semanticPath": "/actions/__forge_15_32"
+    }
+  ],
+  "generatorVersion": "0.1.0-alpha.72",
+  "inputHash": "6fcf93cb62417e26b8d1b87f1c8a38ac768439533a13965abd6dec0eaa919c6f",
   "routes": [
     {
       "method": "GET",
       "path": "/",
       "purpose": "home"
+    },
+    {
+      "entryKind": "action",
+      "entryName": "__forge_15_32",
+      "method": "POST",
+      "path": "/actions/__forge_15_32",
+      "purpose": "invoke"
     },
     {
       "method": "POST",
@@ -40,6 +54,13 @@ export const devManifest = {
       "method": "GET",
       "path": "/queries",
       "purpose": "queries"
+    },
+    {
+      "entryKind": "action",
+      "entryName": "__forge_15_32",
+      "method": "POST",
+      "path": "/run/__forge_15_32",
+      "purpose": "invoke"
     },
     {
       "method": "GET",

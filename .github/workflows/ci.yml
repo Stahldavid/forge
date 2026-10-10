@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, master]
     paths-ignore:
@@ -21,6 +22,7 @@ jobs:
       templates: ${{ steps.paths.outputs.templates }}
       package: ${{ steps.paths.outputs.package }}
       runtime: ${{ steps.paths.outputs.runtime }}
+      fabric_only: ${{ steps.paths.outputs.fabric_only }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,7 +45,11 @@ jobs:
           const templates = paths.some(path => common.test(path) || /^(templates\/|examples\/|packages\/|scripts\/|schemas\/|adapters\/)/.test(path) || (path.startsWith('src/') && !/^src\/forge\/(agent-fabric|agent-memory|adaptive|_generated)\//.test(path)));
           const runtime = paths.some(path => common.test(path) || /^(src\/|adapters\/|schemas\/|packages\/)/.test(path));
           const packaging = paths.some(path => common.test(path) || /^(src\/|adapters\/|schemas\/|templates\/|packages\/|scripts\/|README\.md|LICENSE|CHANGELOG\.md|AGENTS\.md|\.npmignore)/.test(path));
-          appendFileSync(process.env.GITHUB_OUTPUT, `templates=${templates}\npackage=${packaging}\nruntime=${runtime}\n`);
+          const fabricPath = /^(src\/forge\/agent-fabric\/(program-(authoring|templates|benchmark|observation|view)|claude-program-worker)\.ts$|tests\/agent-fabric\/program-(authoring|author-template|adapters|runtime-competitive)\.test\.ts$|examples\/agent-fabric-v2\/templates\/)/;
+          const safeCompanion = /^(docs\/|src\/forge\/_generated\/)/;
+          // Core owner/store/workspace/services and unknown/shared paths retain full regressions.
+          const fabricOnly = paths.some(path => fabricPath.test(path)) && paths.every(path => fabricPath.test(path) || safeCompanion.test(path));
+          appendFileSync(process.env.GITHUB_OUTPUT, `templates=${templates}\npackage=${packaging}\nruntime=${runtime}\nfabric_only=${fabricOnly}\n`);
           NODE
 
   verify:
@@ -90,6 +96,14 @@ jobs:
 
       - name: Workflow contract tests
         run: bun test tests/ci --timeout 120000
+
+      - name: Agent Fabric critical regressions (Fabric-only PR)
+        if: github.event_name == 'pull_request' && needs.changes.outputs.fabric_only == 'true'
+        run: node scripts/run-fabric-ci.mjs
+
+      - name: Agent Fabric full regressions (main or mixed changes)
+        if: github.event_name != 'pull_request' || needs.changes.outputs.fabric_only != 'true'
+        run: bun test tests/agent-fabric --timeout 120000
 
       - name: Native hook owner startup regression
         run: bun test tests/agent-memory/h48-agent-memory.test.ts --test-name-pattern "hook alone starts local owner" --timeout 120000
@@ -147,11 +161,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      # PRs exercise Node 22 on Linux and Windows. Main also checks Node 24 on
-      # Linux and Node 22 on macOS. Template/package-manager scaffolding runs
+      # Verify already covers Ubuntu/Node 22. PRs add Windows 22; main adds
+      # Ubuntu 24. Template/package-manager scaffolding runs
       # once in verify, not on every matrix runner.
       matrix:
-        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]') }}
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]' || github.event_name == 'pull_request' && '[{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22}]') }}
     steps:
       - uses: actions/checkout@v4
         if: needs.changes.outputs.runtime == 'true'

@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=0a26d1c5851c6223a7730cef1e94266b03560225d393d19355fd70e12bd90c84
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=b552fe70bd34c158e68126ee352d029605ad4db383b3665ad440868a097199e1
 # CAIR Agent Guide
 
 Project: forgeos
 CAIR version: 0.5.0
-Surface: commands=0 queries=0 liveQueries=0 actions=0 workflows=0 tables=0
+Surface: commands=0 queries=0 liveQueries=0 actions=1 workflows=0 tables=0
 
 CAIR is the compact agent protocol for reading and changing this Forge workspace. Use it before opening whole files when symbol, module, dependency, test, or impact context is enough.
 

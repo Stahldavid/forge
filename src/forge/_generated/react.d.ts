@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=b14b01ab7439b232a3bbe5907b8247e9a74f9e9f4728756a9dbf8fe5a1b31863
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=b14b01ab7439b232a3bbe5907b8247e9a74f9e9f4728756a9dbf8fe5a1b31863
 export type {
   ForgeProviderProps,
   ForgeDevAuthConfig,

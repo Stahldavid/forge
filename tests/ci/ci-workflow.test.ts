@@ -17,26 +17,29 @@ describe("CI workflow breadth", () => {
       const base = git("rev-parse", "HEAD");
       const classify = (paths: string | string[], expected: string) => {
         for (const path of typeof paths === "string" ? [paths] : paths) {
-          mkdirSync(join(fixture, path, ".."), { recursive: true }); writeFileSync(join(fixture, path), "change");
+          mkdirSync(join(fixture, path, ".."), { recursive: true }); writeFileSync(join(fixture, path), path === "package.json" ? "{}" : "change");
         }
         git("add", "."); git("commit", "-qm", "change");
-        const head = git("rev-parse", "HEAD"); const output = join(fixture, "ci-output"); writeFileSync(output, "");
+        const head = git("rev-parse", "HEAD"); const output = join(fixture, ".git", "ci-output"); writeFileSync(output, "");
         execFileSync(process.execPath, ["--input-type=module", "-e", script], {
           cwd: fixture, windowsHide: true, env: { ...process.env, BASE_SHA: base, HEAD_SHA: head, GITHUB_OUTPUT: output },
         });
         expect(readFileSync(output, "utf8")).toBe(expected);
         git("reset", "--hard", base);
       };
-      classify("docs/a spaced file.md", "templates=false\npackage=false\nruntime=false\n");
-      classify("src/forge/agent-fabric/module.ts", "templates=false\npackage=true\nruntime=true\n");
-      classify(["src/forge/agent-fabric/module.ts", "src/forge/_generated/buildInfo.ts"], "templates=false\npackage=true\nruntime=true\n");
-      classify(["src/forge/runtime.ts", "src/forge/_generated/buildInfo.ts"], "templates=true\npackage=true\nruntime=true\n");
-      classify("templates/nuxt-web/package.json", "templates=true\npackage=true\nruntime=false\n");
-      const output = join(fixture, "ci-output"); writeFileSync(output, "");
+      classify("docs/a spaced file.md", "templates=false\npackage=false\nruntime=false\nfabric_only=false\n");
+      classify("src/forge/agent-fabric/program-authoring.ts", "templates=false\npackage=true\nruntime=true\nfabric_only=true\n");
+      classify(["src/forge/agent-fabric/program-authoring.ts", "src/forge/_generated/buildInfo.ts"], "templates=false\npackage=true\nruntime=true\nfabric_only=true\n");
+      for (const core of ["module", "program-owner", "program-store", "program-worker", "program-service", "managed-workspace", "local-task-server"]) classify(`src/forge/agent-fabric/${core}.ts`, "templates=false\npackage=true\nruntime=true\nfabric_only=false\n");
+      classify(["src/forge/runtime.ts", "src/forge/_generated/buildInfo.ts"], "templates=true\npackage=true\nruntime=true\nfabric_only=false\n");
+      classify("templates/nuxt-web/package.json", "templates=true\npackage=true\nruntime=false\nfabric_only=false\n");
+      classify(["src/forge/agent-fabric/module.ts", "unknown-control.txt"], "templates=false\npackage=true\nruntime=true\nfabric_only=false\n");
+      classify(["src/forge/agent-fabric/module.ts", "package.json"], "templates=true\npackage=true\nruntime=true\nfabric_only=false\n");
+      const output = join(fixture, ".git", "ci-output"); writeFileSync(output, "");
       execFileSync(process.execPath, ["--input-type=module", "-e", script], {
         cwd: fixture, windowsHide: true, env: { ...process.env, BASE_SHA: "0".repeat(40), HEAD_SHA: base, GITHUB_OUTPUT: output },
       });
-      expect(readFileSync(output, "utf8")).toBe("templates=true\npackage=true\nruntime=true\n");
+      expect(readFileSync(output, "utf8")).toBe("templates=true\npackage=true\nruntime=true\nfabric_only=false\n");
     } finally { rmSync(fixture, { recursive: true, force: true }); }
   });
   test("covers Node smoke across OS and supported Node majors", () => {
@@ -53,6 +56,8 @@ describe("CI workflow breadth", () => {
     expect(nodeBreadthJob).toContain('"os":"windows-latest","node-version":22');
     expect(nodeBreadthJob).toContain('"os":"ubuntu-latest","node-version":24');
     expect(nodeBreadthJob).toContain('"os":"macos-latest","node-version":22');
+    expect(nodeBreadthJob).toContain("github.event_name == 'workflow_dispatch'");
+    expect(nodeBreadthJob).not.toContain('"os":"ubuntu-latest","node-version":22');
     expect(workflow).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(workflow).toContain("node .\\bin\\forge.mjs doctor windows --json");
     expect(workflow).toContain("package manager template smoke");
@@ -70,6 +75,9 @@ describe("CI workflow breadth", () => {
     expect(security).not.toContain("run: node ./bin/forge.mjs generate --check");
     expect(workflow).toContain("npm run lint");
     expect(workflow).toContain("run: bun test tests/ci --timeout 120000");
+    expect(workflow).toContain("run: node scripts/run-fabric-ci.mjs");
+    expect(workflow).toContain("run: bun test tests/agent-fabric --timeout 120000");
+    expect(workflow).toContain("needs.changes.outputs.fabric_only == 'true'");
     expect(workflow).not.toContain("forge verify --standard");
     expect(security).toContain("test tests/security");
     expect(nodeBreadthJob).toContain("node ./bin/forge.mjs inspect capabilities --json");

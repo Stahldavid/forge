@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=b71523d98d35cba1499ac4e3300a5f466d153637691182a21ff237abab357bfb
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=c89556c308906b84c38405ae17010f79bfc92c34da2670af39f91a4c73fc4ab5
 export const importGuards = {
   "schemaVersion": "1",
   "entries": [
@@ -852,5 +852,84 @@ export const importGuards = {
       }
     }
   ],
-  "moduleContexts": []
+  "moduleContexts": [
+    {
+      "file": "src/forge/agent-fabric/attached-snapshot.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/attached-task-contract.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/canonical.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/errors.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-contract.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-evidence.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-lock.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-observation.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-store.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-structure.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/program-types.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/types.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    },
+    {
+      "file": "src/forge/agent-fabric/workflow-engine.ts",
+      "effectiveContexts": [
+        "action"
+      ]
+    }
+  ]
 } as const;

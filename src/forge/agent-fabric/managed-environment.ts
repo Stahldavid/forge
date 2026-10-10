@@ -8,7 +8,8 @@ import { tmpdir } from "node:os";
 import { stableStringify } from "./canonical.ts";
 
 type Manager = "npm" | "pnpm" | "yarn" | "bun" | "none";
-export interface ManagedEnvironmentOptions { mode?: "auto" | "none"; ignoreScripts?: boolean; registry?: string; timeoutMs?: number; cacheDirectory?: string; signal?: AbortSignal }
+export interface ManagedEnvironmentOptions { mode?: "auto" | "none"; ignoreScripts?: boolean; registry?: string; timeoutMs?: number; cacheDirectory?: string; signal?: AbortSignal;
+  onTiming?: (measurement: { phase: "cache.verify" | "cache.copy" | "dependencies.install"; elapsedMs: number }) => Promise<void> | void }
 export interface ManagedEnvironment { schemaVersion: 1; directory: string; manager: Manager; lockDigest: string; dependencyDigest: string; derivedPaths: string[]; cacheHit: boolean }
 const execute = promisify(execFile);
 const hash = (value: string | Uint8Array) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
@@ -134,6 +135,11 @@ export async function verifyManagedEnvironment(environment: ManagedEnvironment):
   assert(await dependencyDigest(environment.directory, environment.derivedPaths) === environment.dependencyDigest, "prepared dependencies were modified; result is invalid");
 }
 export async function prepareManagedEnvironment(directory: string, options: ManagedEnvironmentOptions = {}): Promise<ManagedEnvironment> {
+  const timed = async <T>(phase: "cache.verify" | "cache.copy" | "dependencies.install", operation: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    try { return await operation(); }
+    finally { await options.onTiming?.({ phase, elapsedMs: performance.now() - start }); }
+  };
   directory = resolve(directory); aborted(options.signal);
   assert(!(await lstat(directory)).isSymbolicLink(), "workspace root cannot be a symlink");
   const none = (): ManagedEnvironment => ({ schemaVersion: 1, directory, manager: "none", lockDigest: hash("none"), dependencyDigest: hash(stableStringify([])), derivedPaths: [], cacheHit: false });
@@ -160,9 +166,9 @@ export async function prepareManagedEnvironment(directory: string, options: Mana
   const cache = join(cacheRoot, lockDigest.slice(7)), marker = join(cache, "environment.json");
   if (await exists(marker)) {
     const cached = JSON.parse(await readFile(marker, "utf8")) as ManagedEnvironment;
-    assert(cached.lockDigest === lockDigest && cached.dependencyDigest === await dependencyDigest(join(cache, "tree"), cached.derivedPaths, options.signal), "dependency cache integrity failed");
-    await copyDependencyPaths(join(cache, "tree"), directory, cached.derivedPaths, options.signal);
-    const environment = { ...cached, directory, cacheHit: true }; await verifyManagedEnvironment(environment); return environment;
+    await timed("cache.verify", async () => { assert(cached.lockDigest === lockDigest && cached.dependencyDigest === await dependencyDigest(join(cache, "tree"), cached.derivedPaths, options.signal), "dependency cache integrity failed"); });
+    await timed("cache.copy", () => copyDependencyPaths(join(cache, "tree"), directory, cached.derivedPaths, options.signal));
+    const environment = { ...cached, directory, cacheHit: true }; await timed("cache.verify", () => verifyManagedEnvironment(environment)); return environment;
   }
   const configBackups: { path: string; bytes?: Buffer }[] = [];
   try {
@@ -178,7 +184,7 @@ export async function prepareManagedEnvironment(directory: string, options: Mana
       : Number.parseInt(version) >= 2 ? ["install", "--immutable", ...(ignore ? ["--mode=skip-builds"] : [])] : ["install", "--frozen-lockfile", "--non-interactive", `--registry=${registry}`, ...(ignore ? ["--ignore-scripts"] : [])];
     env.YARN_NODE_LINKER = "node-modules"; env.YARN_NM_MODE = "classic"; env.YARN_ENABLE_GLOBAL_CACHE = "false"; env.YARN_NPM_REGISTRY_SERVER = registry; env.YARN_ENABLE_SCRIPTS = ignore ? "false" : "true";
     env.NPM_CONFIG_CACHE = join(cacheRoot, "download-cache"); env.BUN_INSTALL_CACHE_DIR = join(cacheRoot, "bun-download-cache"); env.COREPACK_HOME = join(cacheRoot, "corepack-cache");
-    await execute(command.executable, [...command.prefix, ...args], { cwd: directory, env, windowsHide: true, timeout, signal: options.signal, maxBuffer: 1024 * 1024 });
+    await timed("dependencies.install", () => execute(command.executable, [...command.prefix, ...args], { cwd: directory, env, windowsHide: true, timeout, signal: options.signal, maxBuffer: 1024 * 1024 }));
   } catch (error) { if (options.signal?.aborted) throw new Error("managed environment: preparation canceled"); throw new Error(`managed environment: frozen ${manager} install failed: ${(error as Error).message.slice(0, 2000)}`); }
   finally { for (const config of configBackups) await writeFile(config.path, config.bytes!); }
   aborted(options.signal); const derivedPaths = await derivePaths(directory);
@@ -186,12 +192,12 @@ export async function prepareManagedEnvironment(directory: string, options: Mana
   derivedPaths.sort(); await portableLinks(directory, derivedPaths); const dependency = await dependencyDigest(directory, derivedPaths, options.signal);
   const environment: ManagedEnvironment = { schemaVersion: 1, directory, manager, lockDigest, dependencyDigest: dependency, derivedPaths, cacheHit: false };
   stage = join(cacheRoot, `${lockDigest.slice(7)}-${randomUUID()}.stage`); await mkdir(join(stage, "tree"), { recursive: true });
-  await copyDependencyPaths(directory, join(stage, "tree"), derivedPaths, options.signal);
-  assert(await dependencyDigest(join(stage, "tree"), derivedPaths, options.signal) === dependency, "cache copy integrity failed");
+  await timed("cache.copy", () => copyDependencyPaths(directory, join(stage!, "tree"), derivedPaths, options.signal));
+  await timed("cache.verify", async () => { assert(await dependencyDigest(join(stage!, "tree"), derivedPaths, options.signal) === dependency, "cache copy integrity failed"); });
   try {
     await rename(stage, cache); uncommittedCache = cache;
     await rebaseCacheJunctions(join(cache, "tree"), join(stage, "tree"), derivedPaths);
-    assert(await dependencyDigest(join(cache, "tree"), derivedPaths, options.signal) === dependency, "published cache integrity failed");
+    await timed("cache.verify", async () => { assert(await dependencyDigest(join(cache, "tree"), derivedPaths, options.signal) === dependency, "published cache integrity failed"); });
     const markerTemp = join(cache, "environment.json.tmp");
     await writeFile(markerTemp, stableStringify(environment)); await rename(markerTemp, join(cache, "environment.json")); uncommittedCache = undefined;
   } catch (error) { if (uncommittedCache || !["EEXIST", "ENOTEMPTY", "EPERM"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error; }

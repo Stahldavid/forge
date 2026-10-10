@@ -1,0 +1,12 @@
+{
+  "kind": "bugfix",
+  "options": {
+    "id": "bugfix-workflow",
+    "inputSchema": { "id": "input", "version": "v1" },
+    "outputSchema": { "id": "gate", "version": "v1" },
+    "policy": { "id": "local", "version": "v1" },
+    "acceptance": { "id": "migration", "version": "v1" },
+    "implement": { "id": "migrate", "version": "v1" },
+    "review": { "id": "review", "version": "v1" }
+  }
+}

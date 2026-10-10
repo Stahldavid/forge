@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=7aeff47a93a78a4713ba01405a41681c466d0a0145579996e8ad71054d4d822d
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=7aeff47a93a78a4713ba01405a41681c466d0a0145579996e8ad71054d4d822d
 export const externalServices = {
   "diagnostics": [],
   "inputHash": "85c3c58e20a742fa7b446ed1f6f1adcc8f8b5571145599328e5c170e066a9bca",

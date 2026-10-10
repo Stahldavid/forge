@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=280e8f869cd1e87368f9aa75e1e0d0fee309c81bc8c38ed8cea673df4bd333f2
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=ce57191683a11edb28ce802599f665d83c77ff3380b51f60fa9c8d78d48430e3
 # App Map
 
 ## Data
@@ -10,6 +10,9 @@
 ## Live Queries
 
 ## Actions
+
+### __forge_15_32
+File: src/forge/agent-fabric/program-store.ts
 
 ## Workflows
 

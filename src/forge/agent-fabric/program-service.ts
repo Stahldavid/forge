@@ -1,4 +1,7 @@
-import { programVisualization } from "./program-view.ts";
+import { proposeWorkflowTemplate, generateRegistryAuthorTypes } from "./program-authoring.ts";
+import type { ProgramTemplateKind, ProgramTemplateOptions } from "./program-templates.ts";
+import { recordProgramObservation, summarizeProgramUsage, programResourceLiability, type ProgramWorkerObservation } from "./program-observation.ts";
+import { programVisualization, programDiagnostics } from "./program-view.ts";
 import { programBlock, programGraph, canonicalItemKey, compareProgramKeys, programSegment, type ProgramBlock } from "./program-structure.ts";
 import { ProgramActivityScheduler, type ActivityScope } from "./program-scheduler.ts";
 import { ProgramOwnerLease } from "./program-owner.ts";
@@ -15,8 +18,9 @@ import { programAssert, programDigest, programValueBytes, programWithin, program
   type WorkflowProgramV2, type ProgramRegistry, type ProgramOperation, type ProgramExpr, type ProgramRef,
   type ProgramValue, type ProgramRunV2, type ProgramCandidate, type ProgramAssessment, type ProgramAssessmentContext, type ProgramRepairResult } from "./program-contract.ts";
 
-export const PROGRAM_RUN_ACTIONS = ["program-validate", "program-start", "program-status", "program-wait", "program-pause", "program-resume", "program-signal", "program-replan", "program-cancel", "program-reconcile", "program-apply", "program-history", "program-artifact-get", "program-explain", "program-diff"] as const;
+export const PROGRAM_RUN_ACTIONS = ["program-author", "program-author-types", "program-validate", "program-start", "program-status", "program-wait", "program-pause", "program-resume", "program-signal", "program-replan", "program-cancel", "program-reconcile", "program-apply", "program-history", "program-artifact-get", "program-explain", "program-diff"] as const;
 export type ProgramRunAction = typeof PROGRAM_RUN_ACTIONS[number];
+export interface ProgramRuntimeOptions { ownerCapacity?: number; ownerMaxTokens?: number }
 interface Context { prefix: string; steps: ProgramOperation[]; program: WorkflowProgramV2; inputRef?: string; parent?: Context; item?: unknown; itemKey?: string; state?: unknown; depth: number; chain: Set<string>; dependencies?: Set<string>; activityScopes?: ActivityScope[]; signal?: AbortSignal }
 interface ActivityOutput { data: unknown; candidate: ProgramCandidate; attemptId: string; evidenceRefs?: string[] }
 const asRecord = (value: unknown): Record<string, unknown> => { programAssert(value && typeof value === "object" && !Array.isArray(value), "Object required"); return value as Record<string, unknown>; };
@@ -30,13 +34,16 @@ export class ProgramRunService {
   private controllers = new Map<string, AbortController>();
   private attemptControllers = new Map<string, AbortController>();
   private jobs = new Map<string, Promise<unknown>>();
-  private scheduler = new ProgramActivityScheduler(4);
+  private scheduler: ProgramActivityScheduler;
+  private admissionTail: Promise<unknown> = Promise.resolve();
   private reservations = new Map<string, () => void>();
   private timers = new Map<string, ReturnType<typeof setTimeout>>();
   private wakeRequests = new Set<string>();
   private closed = false;
-  private constructor(readonly store: ProgramRunStore, private registry: ProgramRegistry, private adapter: ProgramWorkerAdapter, private owner: ProgramOwnerLease, private registryFile: boolean) {}
-  static async open(root: string, registry?: ProgramRegistry, adapter: ProgramWorkerAdapter = prepareProgramWorker): Promise<ProgramRunService> {
+  private constructor(readonly store: ProgramRunStore, private registry: ProgramRegistry, private adapter: ProgramWorkerAdapter, private owner: ProgramOwnerLease, private registryFile: boolean, private runtime: ProgramRuntimeOptions) { this.scheduler = new ProgramActivityScheduler(runtime.ownerCapacity ?? 4); }
+  static async open(root: string, registry?: ProgramRegistry, adapter: ProgramWorkerAdapter = prepareProgramWorker, runtime: ProgramRuntimeOptions = {}): Promise<ProgramRunService> {
+    programAssert(runtime.ownerCapacity === undefined || Number.isSafeInteger(runtime.ownerCapacity) && runtime.ownerCapacity > 0 && runtime.ownerCapacity <= 32, "Invalid owner capacity");
+    programAssert(runtime.ownerMaxTokens === undefined || Number.isSafeInteger(runtime.ownerMaxTokens) && runtime.ownerMaxTokens > 0, "Invalid owner token budget");
     const store = await ProgramRunStore.open(root);
     const registryFile = !registry;
     if (!registry) {
@@ -44,7 +51,7 @@ export class ProgramRunService {
       catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; registry = { schemas: {}, executors: {}, policies: {}, acceptance: {}, populations: {} }; }
     }
     const owner = await ProgramOwnerLease.acquire(store.directory);
-    const service = new ProgramRunService(store, registry, adapter, owner, registryFile);
+    const service = new ProgramRunService(store, registry, adapter, owner, registryFile, runtime);
     try {
     for (const id of await store.list()) {
       const run = (await store.read(id))!;
@@ -65,6 +72,29 @@ export class ProgramRunService {
     } catch (error) { await owner.close(); throw error; }
   }
   async close(): Promise<void> { if (this.closed) return; this.closed = true; for (const timer of this.timers.values()) clearTimeout(timer); for (const controller of this.controllers.values()) controller.abort(); await Promise.allSettled([...this.active.values(), ...this.applications.values()]); await this.owner.close(); }
+  /** Trusted host API: resizing changes future admission, never cancels admitted work. */
+  async updateRuntimeOptions(options: ProgramRuntimeOptions): Promise<void> {
+    await this.owner.assert(); programAssert(!this.closed, "Owner is closed");
+    const next = { ...this.runtime, ...options };
+    programAssert(next.ownerCapacity === undefined || Number.isSafeInteger(next.ownerCapacity) && next.ownerCapacity > 0 && next.ownerCapacity <= 32, "Invalid owner capacity");
+    programAssert(next.ownerMaxTokens === undefined || Number.isSafeInteger(next.ownerMaxTokens) && next.ownerMaxTokens > 0, "Invalid owner token budget");
+    await this.admit(async () => { this.runtime = next; this.scheduler.setOwnerCapacity(next.ownerCapacity ?? 4); });
+  }
+  private async resourceSummary(): Promise<{ ownerMaxTokens: number | null; liabilityTokens: number; finalReservedTokens: number; runs: { runId: string; tokens: number; finalReservedTokens: number; unknownAttempts: number }[] }> {
+    const runs = [];
+    for (const runId of await this.store.list()) {
+      const state = await this.state(runId), attempts = Object.values(state.attempts);
+      const finalFloor = registryEntry(state.registry.policies, state.program.policy).resources?.finalReserveTokens ?? 0;
+      const finalSpent = attempts.filter(attempt => attempt.resourceReservation?.phase === "final").reduce((sum, attempt) => sum + programResourceLiability(attempt), 0);
+      runs.push({ runId, tokens: attempts.reduce((sum, attempt) => sum + programResourceLiability(attempt), 0), finalReservedTokens: ["completed", "acceptance-ready", "applied", "canceled"].includes(state.status) ? 0 : Math.max(0, finalFloor - finalSpent), unknownAttempts: attempts.filter(attempt => attempt.resourceReservation?.status !== "held" && summarizeProgramUsage(attempt).certainty === "unknown").length });
+    }
+    return { ownerMaxTokens: this.runtime.ownerMaxTokens ?? null, liabilityTokens: runs.reduce((sum, run) => sum + run.tokens, 0), finalReservedTokens: runs.reduce((sum, run) => sum + run.finalReservedTokens, 0), runs };
+  }
+  private async admit<T>(action: () => Promise<T>): Promise<T> {
+    const task = this.admissionTail.then(action);
+    this.admissionTail = task.catch(() => {});
+    return task;
+  }
   private async authorize(run: ProgramRunV2, executorRef?: ProgramRef): Promise<void> {
     await this.owner.assert(); programAssert(!this.closed, "Owner is closed");
     const live = this.registryFile ? JSON.parse(await readFile(join(this.store.root, ".forge/fabric-programs.json"), "utf8")) as ProgramRegistry : this.registry;
@@ -124,9 +154,17 @@ export class ProgramRunService {
     } finally { context.signal?.removeEventListener("abort", abort); }
   }
   async execute(action: ProgramRunAction, request: Record<string, unknown>): Promise<unknown> {
+    programAssert(!Object.hasOwn(request, "registry"), "Registry is owner-controlled project configuration, never request data");
+    if (action === "program-author" || action === "program-author-types") {
+      await this.owner.assert(); programAssert(!this.closed, "Owner is closed");
+      const registry = this.registryFile ? JSON.parse(await readFile(join(this.store.root, ".forge/fabric-programs.json"), "utf8")) as ProgramRegistry : this.registry;
+      if (action === "program-author-types") return { source: generateRegistryAuthorTypes(registry), registryDigest: programDigest(registry) };
+      programAssert(["review", "bugfix", "migration"].includes(String(request.kind)), "Unknown workflow template");
+      programValueBytes(request.options, 40000, 128);
+      return proposeWorkflowTemplate(request.kind as ProgramTemplateKind, asRecord(request.options) as unknown as ProgramTemplateOptions, registry);
+    }
     await this.owner.assert();
     programAssert((PROGRAM_RUN_ACTIONS as readonly string[]).includes(action), "Unsupported program action");
-    programAssert(!Object.hasOwn(request, "registry"), "Registry is owner-controlled project configuration, never request data");
     if (action === "program-validate" || action === "program-start") {
       const program = request.source ? lowerWorkflowSource(String(request.source)) : request.program as WorkflowProgramV2;
       validateWorkflowProgram(program, this.registry);
@@ -156,16 +194,25 @@ export class ProgramRunService {
       }
       const inputRef = await this.store.put(request.input, policy.maxOutputBytes), baseRef = base ? await this.store.put(base) : undefined;
       const now = new Date();
-      const run = await this.store.transact(runId, "start", () => ({ schemaVersion: 2, runId, requestId, requestDigest: fingerprint,
+      const run = await this.admit(async () => {
+        const duplicate = await this.store.read(runId);
+        if (duplicate) { programAssert(duplicate.requestDigest === fingerprint, "Start requestId changed", "AF_PROGRAM_CONFLICT"); return duplicate; }
+        if (this.runtime.ownerMaxTokens !== undefined) {
+          programAssert(policy.resources, "Owner budget requires per-run reservation policy", "AF_PROGRAM_BUDGET");
+          const resources = await this.resourceSummary();
+          programAssert(resources.liabilityTokens + resources.finalReservedTokens + (policy.resources.finalReserveTokens ?? 0) <= this.runtime.ownerMaxTokens, "Owner cannot reserve final evaluation budget", "AF_PROGRAM_BUDGET");
+        }
+        return this.store.transact(runId, "start", () => ({ schemaVersion: 2, runId, requestId, requestDigest: fingerprint,
         program, registry, programDigest: programDigest(program), registryDigest: programDigest(registry),
         inputRef, baselineDigest, ...(baseRef ? { baseRef } : {}), createdAt: now.toISOString(), deadlineAt: new Date(now.getTime() + policy.deadlineMs).toISOString(),
         version: 0, semanticVersion: 1, revision: 1, planRevision: 1, status: "executing", operations: {}, attempts: {}, seals: {}, signals: [], candidates: {}, assessments: {}, coverageReceipts: {}, deltas: {}, waits: {}, repairs: {}, collections: {}, totalAttempts: 0 }), { requestId, fingerprint, expectedVersion: 0 });
+      });
       this.schedule(runId); return run;
     }
     const runId = idText(request.runId);
     if (action === "program-status") return this.state(runId);
     if (action === "program-history") return this.store.history(runId);
-    if (action === "program-explain") { const state = await this.state(runId); return { runId, graph: programVisualization(state.program, state.operations), status: state.status, reason: state.reason ?? null, operations: state.operations, scopes: state.scopeResults ?? {}, queue: state.queue ?? [], waits: state.waits, assessments: state.assessments, scheduler: this.scheduler.snapshot(), storage: this.store.metrics, guarantees: { attemptsUnit: "owner-visible-dispatch", providerCalls: "adapter-dependent", crossRunCache: false } }; }
+    if (action === "program-explain") { const state = await this.state(runId); return { runId, graph: programVisualization(state.program, state.operations), diagnostics: programDiagnostics(state), status: state.status, reason: state.reason ?? null, operations: state.operations, scopes: state.scopeResults ?? {}, queue: state.queue ?? [], waits: state.waits, assessments: state.assessments, scheduler: this.scheduler.snapshot(), storage: this.store.metrics, resources: await this.resourceSummary(), guarantees: { attemptsUnit: "owner-visible-dispatch", providerCalls: "adapter-dependent", crossRunCache: false, resourceEnforcement: "admission-only", ownerTokenLimit: this.runtime.ownerMaxTokens ?? null } }; }
     if (action === "program-artifact-get") {
       const state = await this.state(runId), ref = String(request.ref); programAssert(/^sha256:[a-f0-9]{64}$/.test(ref) && JSON.stringify(state).includes(ref), "Artifact reference is not reachable from this run");
       if (request.binary === true) { programAssert(Object.values(state.artifactRecords ?? {}).some(record => record.artifactRef === ref), "Binary artifact not registered for this run"); return { ref, base64: (await this.store.getBinary(ref, Math.min(8 * 1024 * 1024, Number(request.maxBytes ?? 8 * 1024 * 1024)))).toString("base64") }; } return this.store.get(ref);
@@ -188,7 +235,7 @@ export class ProgramRunService {
     if (action === "program-reconcile" && (request.publication === true || request.publication === "retry")) return this.reconcileApply(runId, request);
     const state = await this.store.transact(runId, action, current => {
       programAssert(current, "Run not found");
-      programAssert(current.status !== "applied" && (current.status !== "canceled" || action === "program-reconcile"), "Terminal runs require an explicit successor");
+      programAssert((current.status !== "applied" || action === "program-reconcile" && request.resolution === "usage") && (current.status !== "canceled" || action === "program-reconcile"), "Terminal runs require an explicit successor");
       if (current.status === "applying" || current.status === "apply-uncertain") {
         programAssert(action === "program-signal" || action === "program-cancel", "Apply intent frozen; reconcile before changing execution");
       }
@@ -236,13 +283,26 @@ export class ProgramRunService {
         current.program = program; current.programDigest = programDigest(program); current.planRevision++; current.semanticVersion++;
         delete current.gateRef; delete current.acceptedCandidate; delete current.resultRef;
       } else if (action === "program-reconcile") {
-        programAssert(request.resolution === "failed" && typeof request.reason === "string" && request.reason.length > 0, "Reconciliation requires observed failure/effect evidence");
+        programAssert(["failed", "usage"].includes(String(request.resolution)) && typeof request.reason === "string" && request.reason.length > 0, "Reconciliation requires observed failure/effect evidence");
+        if (request.resolution === "usage") {
+          const attempt = current.attempts[idText(request.attemptId)];
+          programAssert(attempt && attempt.outcome !== "running" && summarizeProgramUsage(attempt).certainty === "unknown" && typeof request.authorization === "string" && request.authorization.length > 0, "Usage reconciliation requires unknown consumption, stopped attempt and authorized evidence");
+          const usage = asRecord(request.usage) as unknown as NonNullable<ProgramWorkerObservation["usage"]>;
+          programAssert(Number.isSafeInteger(usage.input_tokens) && Number.isSafeInteger(usage.output_tokens), "Observed usage counters required");
+          recordProgramObservation(attempt, { id: `reconcile:${idText(request.requestId)}`, type: "usage.reconciled", source: "owner-evidence", at: new Date().toISOString(), usage, metadata: { reason: String(request.reason), authorization: request.authorization } });
+          return current;
+        }
         if (request.operationId) {
           const operation = current.operations[idText(request.operationId)]; programAssert(operation?.status === "uncertain" && !Object.values(current.attempts).some(attempt => (attempt.operationId === operation.id || attempt.operationId.startsWith(`${operation.id}/`)) && (attempt.outcome === "running" || attempt.outcome === "uncertain")), "Observe/reconcile worker attempts first");
           operation.status = operation.retired ? "skipped" : "needs-attention"; operation.reason = String(request.reason); return current;
         }
         const attempt = current.attempts[idText(request.attemptId)]; programAssert(attempt?.outcome === "uncertain", "Only uncertain attempts can be reconciled");
-        attempt.outcome = "infrastructure_failed"; attempt.reason = String(request.reason); if (attempt.reservation) attempt.reservation.status = "released";
+        if (request.resumeThread === true) {
+          const observation = asRecord(request.observation);
+          programAssert(observation.terminated === true && typeof observation.workspaceDigest === "string" && /^sha256:[a-f0-9]{64}$/.test(observation.workspaceDigest) && attempt.threadId && attempt.recovery && current.operations[attempt.operationId]?.generation === attempt.generation && !current.operations[attempt.operationId]?.retired, "Resume requires observed termination, matching generation and workspace identity");
+          attempt.recovery = { ...attempt.recovery, threadId: attempt.threadId, workspaceDigest: observation.workspaceDigest, terminationObserved: true, generationCompatible: true };
+        }
+        attempt.outcome = "infrastructure_failed"; attempt.reason = String(request.reason); if (attempt.resourceReservation) attempt.resourceReservation.status = "released"; if (attempt.reservation) attempt.reservation.status = "released";
         const operation = current.operations[attempt.operationId]; if (operation) { operation.status = operation.retired ? "skipped" : "needs-attention"; operation.reason = String(request.reason); }
       }
       return current;
@@ -251,7 +311,7 @@ export class ProgramRunService {
     if (action === "program-replan" && request.mode === "fenced") for (const attempt of Object.values(state.attempts)) if (attempt.outcome === "uncertain") this.attemptControllers.get(attempt.attemptId)?.abort();
     if (action === "program-reconcile") for (const attempt of Object.values(state.attempts)) if (attempt.reservation?.status === "released") { this.reservations.get(attempt.attemptId)?.(); this.reservations.delete(attempt.attemptId); }
     if (action === "program-resume") this.schedule(runId);
-    if (action === "program-signal" && ["waiting", "executing"].includes(state.status)) { await this.store.transact(runId, "signal-wakeup", current => { if (current!.status === "waiting") current!.status = "executing"; return current!; }); this.schedule(runId); }
+    if (action === "program-signal" && ["waiting", "executing"].includes(state.status)) { await this.store.transact(runId, "signal-wakeup", current => { if (current!.status === "waiting") { current!.status = "executing"; delete current!.reason; } return current!; }); this.schedule(runId); }
     return state;
   }
   private async run(runId: string): Promise<void> {
@@ -280,7 +340,7 @@ export class ProgramRunService {
       if (data?.status === "accepted") programAssert(final.gateRef && final.acceptedCandidate, "Accepted result requires current owner gate");
       if (final.gateRef && (data?.candidate || data?.acceptedCandidate)) programAssert(this.resolveCandidate(final, data.candidate ?? data.acceptedCandidate).digest === final.acceptedCandidate?.digest, "Result candidate differs from the owner acceptance gate");
       const resultRef = await this.store.put(result, registryEntry(state.registry.policies, state.program.policy).maxOutputBytes);
-      await this.store.transact(runId, "program-result", current => { programAssert(current?.status === "executing" && current.programDigest === state.programDigest && current.semanticVersion === state.semanticVersion, "Execution paused, canceled or revised"); current.resultRef = resultRef; current.status = current.gateRef ? "acceptance-ready" : "completed"; return current; });
+      await this.store.transact(runId, "program-result", current => { programAssert(current?.status === "executing" && current.programDigest === state.programDigest && current.semanticVersion === state.semanticVersion, "Execution paused, canceled or revised"); current.resultRef = resultRef; current.status = current.gateRef ? "acceptance-ready" : "completed"; delete current.reason; return current; });
     } catch (error) {
       await this.store.transact(runId, "execution-stopped", current => {
         const state = current!;
@@ -418,7 +478,7 @@ export class ProgramRunService {
     const run = await this.state(runId); this.resolveCandidate(run, candidate);
     const artifacts: ManagedArtifact[] = []; for (const ref of candidate.deltas) { const delta = run.deltas[ref]; programAssert(delta, "Delta does not belong to this run"); artifacts.push(await this.store.get<ManagedArtifact>(delta.artifactRef)); } return artifacts;
   }
-  private async activity(runId: string, id: string, ref: ProgramRef, data: unknown, candidate: ProgramCandidate, requestedScope: string[], context?: Context): Promise<ActivityOutput> {
+  private async activity(runId: string, id: string, ref: ProgramRef, data: unknown, candidate: ProgramCandidate, requestedScope: string[], context?: Context, finalAssessment = false): Promise<ActivityOutput> {
     const run = await this.checkRunning(runId), executor = registryEntry(run.registry.executors, ref), policy = registryEntry(run.registry.policies, run.program.policy), acceptance = registryEntry(run.registry.acceptance, run.program.acceptance);
     if (executor.inputSchema) validateProgramData(data, registryEntry(run.registry.schemas, executor.inputSchema));
     candidate = this.resolveCandidate(run, candidate);
@@ -445,6 +505,13 @@ export class ProgramRunService {
     finally { clearTimeout(admissionDeadline); parentSignal.removeEventListener("abort", abortAdmission); }
     this.reservations.set(attemptId, release);
     let completionObserved = false;
+    const pendingObservations: ProgramWorkerObservation[] = [];
+    let dispatched = false;
+    const onObservation = async (observation: ProgramWorkerObservation) => {
+      if (!dispatched) { programAssert(pendingObservations.length < 1024, "Preparation observation budget exceeded"); pendingObservations.push(observation); return; }
+      await this.owner.assert();
+      await this.store.transact(runId, "worker-observation", current => { const attempt = current!.attempts[attemptId]; programAssert(attempt?.outcome === "running" && attempt.reservation?.ownerEpoch === this.owner.epoch && attempt.generation === current!.operations[id].generation, "Fenced worker observation"); recordProgramObservation(attempt, observation); return current!; });
+    };
     let timeout: ReturnType<typeof setTimeout> | undefined, removeAbort: (() => void) | undefined;
     try {
       await this.checkRunning(runId);
@@ -455,8 +522,9 @@ export class ProgramRunService {
       const base = run.baseRef ? await this.store.get<ManagedBase>(run.baseRef) : undefined;
       const evidence = [];
       for (const ref of (data as { assessmentContext?: ProgramAssessmentContext })?.assessmentContext?.evidenceRefs ?? []) { const capture = run.artifactRecords?.[ref]; programAssert(capture && capture.candidateDigest === candidate.digest, "Evidence ref outside current candidate"); evidence.push({ receiptId: ref, bytes: await this.store.getBinary(capture.artifactRef), mime: capture.mime, itemKey: capture.itemKey }); }
-      const preparation = await this.cancellable(this.adapter({ executor, data, candidate, artifacts: await this.artifacts(runId, candidate), base, attemptId, scope, signal: controller.signal, registry: run.registry, evidence,
-        onThread: async threadId => { await this.owner.assert(); await this.store.transact(runId, "worker-thread", current => { const attempt = current!.attempts[attemptId]; programAssert(attempt?.outcome === "running" && attempt.reservation?.ownerEpoch === this.owner.epoch, "Fenced worker callback"); attempt.threadId = threadId; return current!; }); } }), controller.signal, () => { throw new ProgramError("AF_PROGRAM_STOPPED", "Preparation canceled before dispatch"); });
+      const recovery = (() => { const prior = [...(completed?.attempts ?? [])].reverse().map(attempt => run.attempts[attempt]).find(attempt => attempt?.recovery?.terminationObserved && attempt.recovery.generationCompatible && attempt.inputDigest === inputDigest && attempt.executorDigest === programDigest(executor) && attempt.generation === completed?.generation); return prior?.recovery as Parameters<ProgramWorkerAdapter>[0]["recovery"]; })();
+      const preparation = await this.cancellable(this.adapter({ executor, data, candidate, artifacts: await this.artifacts(runId, candidate), base, attemptId, scope, signal: controller.signal, registry: run.registry, evidence, onObservation, recovery,
+        onThread: async threadId => { await this.owner.assert(); await this.store.transact(runId, "worker-thread", current => { const attempt = current!.attempts[attemptId]; programAssert(attempt?.outcome === "running" && attempt.reservation?.ownerEpoch === this.owner.epoch && attempt.generation === current!.operations[id].generation, "Fenced worker callback"); attempt.threadId = threadId; return current!; }); } }), controller.signal, () => { throw new ProgramError("AF_PROGRAM_STOPPED", "Preparation canceled before dispatch"); });
 
       await this.store.transact(runId, "activity-materialize", current => {
         programAssert(current?.status === "executing" && !controller.signal.aborted, "Preparation stopped before dispatch");
@@ -465,14 +533,31 @@ export class ProgramRunService {
         current!.operations[id] = { id, kind: old?.kind ?? "activity", semanticDigest: programDigest(executor), inputDigest, generation: Math.max(old?.generation ?? 0, parentGeneration), status: "running", attempts: old?.attempts ?? [], ...(old?.dependencies ? { dependencies: old.dependencies } : {}) }; return current!;
       });
       await this.authorize(run, ref);
+      await this.admit(async () => {
+      const currentState = await this.state(runId), resourcePolicy = policy.resources;
+      programAssert(this.runtime.ownerMaxTokens === undefined || resourcePolicy, "Owner budget requires per-run reservation policy", "AF_PROGRAM_BUDGET");
+      const reservationTokens = executor.tokenAccounting === "none" ? 0 : resourcePolicy?.reserveTokensPerAttempt ?? 0;
+      const ownAttempts = Object.values(currentState.attempts);
+      const spent = ownAttempts.reduce((sum, attempt) => sum + programResourceLiability(attempt), 0);
+      if (resourcePolicy) {
+        programAssert(resourcePolicy.unknownUsage === "allow" || !ownAttempts.some(attempt => attempt.resourceReservation?.status !== "held" && summarizeProgramUsage(attempt).certainty === "unknown"), "Unknown usage requires explicit policy allowance", "AF_PROGRAM_BUDGET");
+        const finalSpent = ownAttempts.filter(attempt => attempt.resourceReservation?.phase === "final").reduce((sum, attempt) => sum + programResourceLiability(attempt), 0);
+        const finalReserve = Math.max(0, (resourcePolicy.finalReserveTokens ?? 0) - finalSpent - (finalAssessment ? reservationTokens : 0));
+        programAssert(spent + reservationTokens + finalReserve <= resourcePolicy.maxTokens, "Run admission token budget exhausted", "AF_PROGRAM_BUDGET");
+      }
+      if (this.runtime.ownerMaxTokens !== undefined) { const ownerResources = await this.resourceSummary(); programAssert(resourcePolicy?.unknownUsage === "allow" || !ownerResources.runs.some(run => run.unknownAttempts > 0), "Owner consumption includes unknown attempts", "AF_PROGRAM_BUDGET"); programAssert(ownerResources.liabilityTokens + ownerResources.finalReservedTokens + reservationTokens - (finalAssessment ? Math.min(reservationTokens, ownerResources.runs.find(run => run.runId === runId)?.finalReservedTokens ?? 0) : 0) <= this.runtime.ownerMaxTokens, "Owner admission token budget exhausted", "AF_PROGRAM_BUDGET"); }
       await this.store.transact(runId, "attempt-dispatch-intent", current => {
         programAssert(current?.status === "executing" && current.totalAttempts < policy.maxAttempts, "Attempt budget exhausted or run stopped");
-        current.totalAttempts++; current.attempts[attemptId] = { attemptId, operationId: id, generation: current.operations[id].generation, inputDigest, executorDigest: programDigest(executor), outcome: "running", startedAt: new Date().toISOString(), reservation: { scopes, status: "held", ownerEpoch: this.owner.epoch } };
+        current.totalAttempts++; current.attempts[attemptId] = { attemptId, operationId: id, generation: current.operations[id].generation, inputDigest, executorDigest: programDigest(executor), outcome: "running", startedAt: new Date().toISOString(), ...(recovery?.threadId ? { threadId: recovery.threadId } : {}), usageApplicability: executor.tokenAccounting === "none" ? "not-applicable" : "provider", reservation: { scopes, status: "held", ownerEpoch: this.owner.epoch }, ...(policy.resources ? { resourceReservation: { tokens: reservationTokens, status: "held" as const, phase: finalAssessment ? "final" as const : "work" as const } } : {}), ...(preparation.recovery ? { recovery: preparation.recovery } : {}) };
         current.operations[id].attempts.push(attemptId); current.queue = current.queue?.filter(entry => entry.id !== id); return current;
       });
+      });
+      dispatched = true;
+      for (const observation of pendingObservations) await onObservation(observation);
       const result = await this.cancellable(preparation.execute(), controller.signal, () => ({ outcome: "uncertain" as const, reason: "Worker did not confirm cancellation; reservation retained" }), 1000); await this.owner.assert(); completionObserved = result.outcome === "completed"; clearTimeout(timeout); parentSignal.removeEventListener("abort", abort);
+      if (result.usage !== undefined) await this.store.transact(runId, "worker-final-usage", current => { const attempt = current!.attempts[attemptId]; programAssert(attempt?.outcome === "running" && attempt.generation === current!.operations[id].generation, "Fenced usage result"); attempt.usage = result.usage; const usage = result.usage as { input_tokens?: number; cached_input_tokens?: number; output_tokens?: number }; if (summarizeProgramUsage(attempt).certainty === "unknown" && Number.isSafeInteger(usage.input_tokens) && Number.isSafeInteger(usage.output_tokens)) recordProgramObservation(attempt, { id: `${attemptId}:final-usage`, type: "usage", source: "adapter-result", at: new Date().toISOString(), usage: usage as NonNullable<ProgramWorkerObservation["usage"]> }); attempt.usageSummary = summarizeProgramUsage(attempt); return current!; });
       if (result.outcome !== "completed") {
-        await this.store.transact(runId, "attempt-failed", current => { const attempt = current!.attempts[attemptId]; if (attempt.outcome === "running" && attempt.generation === current!.operations[id].generation) { attempt.outcome = result.outcome; attempt.completedAt = new Date().toISOString(); attempt.reason = result.reason ?? result.outcome; if (attempt.reservation && result.outcome !== "uncertain") attempt.reservation.status = "released"; } return current!; });
+        await this.store.transact(runId, "attempt-failed", current => { const attempt = current!.attempts[attemptId]; if (attempt.outcome === "running" && attempt.generation === current!.operations[id].generation) { attempt.outcome = result.outcome; attempt.completedAt = new Date().toISOString(); attempt.reason = result.reason ?? result.outcome; if (result.outcome !== "uncertain") { if (attempt.reservation) attempt.reservation.status = "released"; if (attempt.resourceReservation) attempt.resourceReservation.status = "released"; } } return current!; });
         throw new ProgramError("AF_PROGRAM_ACTIVITY", result.reason ?? result.outcome);
       }
       validateProgramData(result.data, registryEntry(run.registry.schemas, executor.schema));
@@ -502,7 +587,7 @@ export class ProgramRunService {
       }
       const output: ActivityOutput = { data: result.data, candidate: next, attemptId, ...(evidenceRefs.length ? { evidenceRefs } : {}) }, outputRef = await this.store.put(output, policy.maxOutputBytes);
       await this.store.transact(runId, "attempt-result", current => {
-        const attempt = current!.attempts[attemptId]; programAssert(attempt.outcome === "running" && attempt.generation === current!.operations[id].generation, "Fenced attempt result"); attempt.outcome = "completed"; attempt.completedAt = new Date().toISOString(); attempt.outputRef = outputRef; if (attempt.reservation) attempt.reservation.status = "released";
+        const attempt = current!.attempts[attemptId]; programAssert(attempt.outcome === "running" && attempt.generation === current!.operations[id].generation, "Fenced attempt result"); attempt.outcome = "completed"; attempt.completedAt = new Date().toISOString(); attempt.outputRef = outputRef; if (attempt.reservation) attempt.reservation.status = "released"; if (attempt.resourceReservation) attempt.resourceReservation.status = "released";
         Object.assign(current!.artifactRecords ??= {}, captureRecords);
         if (deltaId && deltaRecord) current!.deltas[deltaId] = deltaRecord;
         if (result.usage !== undefined) attempt.usage = result.usage;
@@ -510,7 +595,7 @@ export class ProgramRunService {
         const operation = current!.operations[id]; operation.status = "completed"; operation.outputRef = outputRef; return current!;
       }); return output;
     } catch (error) {
-      await this.store.transact(runId, "dispatch-uncertainty", current => { const attempt = current!.attempts[attemptId]; if (attempt?.outcome === "running") { attempt.outcome = completionObserved ? "invalid_output" : "uncertain"; attempt.reason = (error as Error).message.slice(0, 1000); current!.operations[id].status = completionObserved ? "needs-attention" : "uncertain"; if (completionObserved && attempt.reservation) attempt.reservation.status = "released"; } return current!; }); throw error;
+      await this.store.transact(runId, "dispatch-uncertainty", current => { const attempt = current!.attempts[attemptId]; if (attempt?.outcome === "running") { attempt.outcome = completionObserved ? "invalid_output" : "uncertain"; attempt.reason = (error as Error).message.slice(0, 1000); current!.operations[id].status = completionObserved ? "needs-attention" : "uncertain"; if (completionObserved) { if (attempt.reservation) attempt.reservation.status = "released"; if (attempt.resourceReservation) attempt.resourceReservation.status = "released"; } } return current!; }); throw error;
     } finally { if (timeout) clearTimeout(timeout); removeAbort?.(); this.attemptControllers.delete(attemptId); const observed = (await this.state(runId)).attempts[attemptId];
       if (!observed || observed.outcome !== "uncertain") { release(); this.reservations.delete(attemptId); } }
   }
@@ -591,11 +676,47 @@ export class ProgramRunService {
         programAssert(candidate.baselineDigest === run.baselineDigest && run.candidates[candidate.candidateId]?.digest === candidate.digest, "Candidate ancestry/baseline mismatch");
         for (const ref of candidate.deltas) if (!seen.has(ref)) { seen.add(ref); refs.push(ref); }
       }
-      const artifacts = await Promise.all(refs.map(ref => { programAssert(run.deltas[ref], "Composition delta missing"); return this.store.get<ManagedArtifact>(run.deltas[ref].artifactRef); })), writers = new Map<string, string>();
+      const artifacts = await Promise.all(refs.map(ref => { programAssert(run.deltas[ref], "Composition delta missing"); return this.store.get<ManagedArtifact>(run.deltas[ref].artifactRef); })), writers = new Map<string, string>(), conflicts = new Set<string>();
+      interface WriterNode { records: { path: string; prior: string }[]; children: Map<string, WriterNode> }
+      const root: WriterNode = { records: [], children: new Map() };
       for (let index = 0; index < artifacts.length; index++) for (const file of artifacts[index].files) {
-        const prior = writers.get(file.path);
-        if (prior) programAssert(candidates.some(candidate => candidate.deltas.includes(prior) && candidate.deltas.includes(refs[index]) && candidate.deltas.indexOf(prior) < candidate.deltas.indexOf(refs[index])), `Independent writers conflict at ${file.path}`);
+        const compare = ({ path, prior }: { path: string; prior: string }) => {
+          if (prior === refs[index] || candidates.some(candidate => candidate.deltas.includes(prior) && candidate.deltas.includes(refs[index]) && candidate.deltas.indexOf(prior) < candidate.deltas.indexOf(refs[index]))) return;
+          conflicts.add(path); conflicts.add(file.path);
+        };
+        let node = root;
+        for (const segment of file.path.toLowerCase().split("/")) {
+          for (const record of node.records) compare(record);
+          if (!node.children.has(segment)) node.children.set(segment, { records: [], children: new Map() });
+          node = node.children.get(segment)!;
+        }
+        const descendants = [node];
+        while (descendants.length) { const next = descendants.pop()!; for (const record of next.records) compare(record); descendants.push(...next.children.values()); }
+        node.records.push({ path: file.path, prior: refs[index] });
         writers.set(file.path, refs[index]);
+      }
+      if (conflicts.size) {
+        const acceptance = registryEntry(run.registry.acceptance, run.program.acceptance);
+        programAssert(input.resolver, `Independent writers conflict at ${[...conflicts].join(", ")}`);
+        const resolver = registryEntry(run.registry.executors, input.resolver as ProgramRef);
+        programAssert(resolver.effect === "isolated-write" && resolver.role === "implementer", "Resolver must produce an isolated candidate");
+        const scope = (input.resolverWriteScope ?? [...writers.keys()]) as string[];
+        programAssert([...writers.keys()].every(path => programWithin(path, scope)), "Resolution scope must cover all proposed files");
+        programValueBytes({ artifacts, candidates }, policy.maxOutputBytes, policy.maxItems);
+        const baseline = await this.initialCandidate(runId);
+        const resolution = await this.activity(runId, `${id}/resolution`, input.resolver as ProgramRef, { input: input.resolverInput ?? {}, conflicts: [...conflicts], candidates, artifacts, instruction: "Resolve all proposed changes against the baseline; this output requires fresh final assessment." }, baseline, scope, context);
+        programAssert(resolution.candidate.digest !== baseline.digest || acceptance.allowNoWork, "Conflict resolution produced no changes outside allowNoWork contract");
+        if (resolution.candidate.digest === baseline.digest) {
+          resolution.candidate = { ...baseline, candidateId: `candidate-resolution-${resolution.attemptId}`, parents: [baseline.candidateId], producerAttempts: [resolution.attemptId] };
+          await this.store.transact(runId, "composition-no-work-candidate", current => { current!.candidates[resolution.candidate.candidateId] = resolution.candidate; return current!; });
+        }
+        await this.store.transact(runId, "composition-resolution", current => {
+          const operation = current!.operations[id], receiptId = `resolution-${resolution.attemptId}`;
+          programAssert(operation && current!.attempts[resolution.attemptId]?.outcome === "completed", "Unobserved conflict resolution");
+          (current!.compositionResolutions ??= {})[receiptId] = { receiptId, candidateId: resolution.candidate.candidateId, candidateDigest: resolution.candidate.digest, originalCandidateIds: candidates.map(candidate => candidate.candidateId), attemptId: resolution.attemptId, operationId: id, generation: operation.generation, semanticDigest: operation.semanticDigest, inputDigest: operation.inputDigest, populationDigest: run.program.population ? programDigest(registryEntry(run.registry.populations, run.program.population)) : programDigest(null), acceptanceDigest: programDigest(acceptance) };
+          return current!;
+        });
+        return { candidate: resolution.candidate, resolution: { attemptId: resolution.attemptId, conflictingPaths: [...conflicts], requiresFinalAssessment: true } };
       }
       const base = run.baseRef ? await this.store.get<ManagedBase>(run.baseRef) : undefined, digest = base ? (await previewManagedArtifacts(base, artifacts)).digest : programDigest({ candidates: candidates.map(candidate => candidate.digest), refs });
       const parents = candidates.map(candidate => candidate.candidateId), producerAttempts = [...new Set(candidates.flatMap(candidate => candidate.producerAttempts))];
@@ -660,28 +781,32 @@ export class ProgramRunService {
     const environmentRef = programDigest({ baseline: run.baselineDigest, inputRef: run.inputRef, policy: run.program.policy });
     const assess = async (): Promise<ProgramAssessment> => {
       const candidate = checkpoint.candidate;
-      const assessmentContext: ProgramAssessmentContext = { runId, invocationId: id, assessmentId: `${id}/assessment-${checkpoint.assessments}`, phase, candidateRef: candidate, obligationIds, ...(itemKey ? { itemKey } : {}), environmentRef, evidenceRefs: [], input: input.input ?? null, ...(population?.visualCases ? { visualCases: population.visualCases.filter(entry => expectedMembers.includes(canonicalItemKey(entry.itemKey)) && (phase === "final" || canonicalItemKey(entry.itemKey) === itemKey)) } : {}) };
+      const candidateResolutions = phase === "final" ? this.compositionResolutions(await this.state(runId), candidate) : [];
+      const resolutionObligations = candidateResolutions.flatMap(receipt => expectedMembers.map(key => `${receipt.receiptId}/${programSegment(key)}`));
+      const assessedObligations = [...new Set([...obligationIds, ...resolutionObligations])];
+      const assessmentContext: ProgramAssessmentContext = { runId, invocationId: id, assessmentId: `${id}/assessment-${checkpoint.assessments}`, phase, candidateRef: candidate, obligationIds: assessedObligations, ...(itemKey ? { itemKey } : {}), environmentRef, evidenceRefs: [], input: input.input ?? null, ...(population?.visualCases ? { visualCases: population.visualCases.filter(entry => expectedMembers.includes(canonicalItemKey(entry.itemKey)) && (phase === "final" || canonicalItemKey(entry.itemKey) === itemKey)) } : {}) };
       const evidenceAttempts: string[] = [];
       for (const [index, executor] of ((input.evidence ?? []) as ProgramRef[]).entries()) {
-        const evidence = await this.activity(runId, `${id}/assessment-${checkpoint.assessments}/evidence-${index}`, executor, { ...activityInputs, assessmentContext, candidateDigest: candidate.digest }, candidate, [], context);
+        const evidence = await this.activity(runId, `${id}/assessment-${checkpoint.assessments}/evidence-${index}`, executor, { ...activityInputs, assessmentContext, candidateDigest: candidate.digest }, candidate, [], context, phase === "final");
         assessmentContext.evidenceRefs.push(...(evidence.evidenceRefs ?? [])); evidenceAttempts.push(evidence.attemptId);
       }
       const observed = await this.state(runId);
       const requiredCaptureKeys = captureKeys(acceptance, phase, expectedMembers, itemKey);
       for (const key of requiredCaptureKeys) programAssert(assessmentContext.evidenceRefs.some(ref => { const capture = observed.artifactRecords?.[ref]; return capture?.itemKey === key && capture.candidateDigest === candidate.digest && capture.environmentRef === environmentRef && observed.attempts[capture.producerAttemptId]?.outcome === "completed"; }), `Missing current capture for ${key}`);
-      const review = await this.activity(runId, `${id}/assessment-${checkpoint.assessments}/review`, input.review as ProgramRef, { ...activityInputs, assessmentContext, candidateDigest: candidate.digest, feedback: checkpoint.feedback }, candidate, [], context), report = asRecord(review.data);
+      const review = await this.activity(runId, `${id}/assessment-${checkpoint.assessments}/review`, input.review as ProgramRef, { ...activityInputs, assessmentContext, candidateDigest: candidate.digest, feedback: checkpoint.feedback }, candidate, [], context, phase === "final"), report = asRecord(review.data);
       programAssert(["approved", "changes_requested", "inconclusive"].includes(String(report.verdict)) && Array.isArray(report.findings), "Review verdict/findings required");
       const outcomes: { id: string; passed: boolean }[] = [], attemptIds = [...evidenceAttempts, review.attemptId];
-      for (const check of checks) {
+      const assessmentChecks = [...new Set([...checks, ...(candidateResolutions.length ? acceptance.requiredChecksByScope?.item ?? acceptance.requiredChecks : [])])];
+      for (const check of assessmentChecks) {
         programAssert(check.includes("@"), "Check must be versioned executor reference"); const split = check.lastIndexOf("@"), reference = { id: check.slice(0, split), version: check.slice(split + 1) }, checker = registryEntry(run.registry.executors, reference);
         programAssert(checker.kind === "command" && checker.effect === "read" && programDigest(checker) !== programDigest(reviewer), "Checks require distinct observed command executors");
-        const output = await this.activity(runId, `${id}/assessment-${checkpoint.assessments}/check-${encodeURIComponent(check)}`, reference, { ...activityInputs, assessmentContext, candidateDigest: candidate.digest }, candidate, [], context);
+        const output = await this.activity(runId, `${id}/assessment-${checkpoint.assessments}/check-${encodeURIComponent(check)}`, reference, { ...activityInputs, assessmentContext, candidateDigest: candidate.digest }, candidate, [], context, phase === "final");
         outcomes.push({ id: check, passed: asRecord(output.data).passed === true }); attemptIds.push(output.attemptId);
       }
       const covered = Array.isArray(report.coveredObligationIds) ? report.coveredObligationIds as string[] : [];
       if (obligationIds.some(obligation => !covered.includes(obligation))) { report.verdict = "inconclusive"; report.findings = []; }
-      const satisfied = report.verdict === "approved" && !(report.findings as unknown[]).length && outcomes.every(outcome => outcome.passed) ? obligationIds.filter(obligation => covered.includes(obligation)) : [];
-      const assessment: ProgramAssessment = { phase, obligationIds, satisfiedObligationIds: satisfied, unsatisfiedObligationIds: obligationIds.filter(obligation => !satisfied.includes(obligation)), environmentRef, evidenceRefs: assessmentContext.evidenceRefs, contractDigest: programDigest(acceptance), receiptId: `assessment-${randomUUID()}`, operationId: id, generation: origin.generation, semanticDigest: origin.semanticDigest, inputDigest: origin.inputDigest, candidateDigest: candidate.digest, verdict: report.verdict as ProgramAssessment["verdict"], findings: report.findings as unknown[], checks: outcomes, attemptIds };
+      const satisfied = report.verdict === "approved" && !(report.findings as unknown[]).length && outcomes.every(outcome => outcome.passed) ? assessedObligations.filter(obligation => covered.includes(obligation)) : [];
+      const assessment: ProgramAssessment = { phase, resolutionReceiptIds: candidateResolutions.map(receipt => receipt.receiptId), obligationIds: assessedObligations, satisfiedObligationIds: satisfied, unsatisfiedObligationIds: assessedObligations.filter(obligation => !satisfied.includes(obligation)), environmentRef, evidenceRefs: assessmentContext.evidenceRefs, contractDigest: programDigest(acceptance), receiptId: `assessment-${randomUUID()}`, operationId: id, generation: origin.generation, semanticDigest: origin.semanticDigest, inputDigest: origin.inputDigest, candidateDigest: candidate.digest, verdict: report.verdict as ProgramAssessment["verdict"], findings: report.findings as unknown[], checks: outcomes, attemptIds };
       await this.store.put(assessment);
       checkpoint.assessment = assessment; checkpoint.phase = "decide";
       await this.store.transact(runId, "assessment-receipt-and-recipe", current => { programAssert(current!.operations[id].generation === origin.generation && current!.operations[id].semanticDigest === origin.semanticDigest && attemptIds.every(attemptId => current!.attempts[attemptId]?.outcome === "completed") && !candidate.producerAttempts.includes(review.attemptId), "Assessment lacks current distinct observed attempts"); current!.assessments[assessment.receiptId!] = assessment; current!.repairs[id] = structuredClone(checkpoint); return current!; });
@@ -721,25 +846,37 @@ export class ProgramRunService {
       }
     }
   }
+  private compositionResolutions(run: ProgramRunV2, candidate: ProgramCandidate) {
+    return Object.values(run.compositionResolutions ?? {}).filter(receipt => {
+      const resolved = run.candidates[receipt.candidateId];
+      return resolved && resolved.deltas.every(delta => candidate.deltas.includes(delta)) && resolved.producerAttempts.every(attempt => candidate.producerAttempts.includes(attempt));
+    });
+  }
   private async gate(runId: string, id: string, input: Record<string, unknown>): Promise<unknown> {
     const run = await this.state(runId), candidate = this.resolveCandidate(run, input.candidate), acceptance = registryEntry(run.registry.acceptance, run.program.acceptance), policy = registryEntry(run.registry.policies, run.program.policy);
     programAssert(run.candidates[candidate.candidateId]?.digest === candidate.digest, "Unregistered candidate");
     programAssert(input.obligations === undefined || programDigest(input.obligations) === programDigest(acceptance), "Gate cannot replace owner acceptance obligations");
     programAssert(!Object.values(run.attempts).some(attempt => attempt.outcome === "uncertain"), "Uncertain effects block gate");
     programAssert(run.program.mode !== "data", "Data profile cannot grant candidate publication");
-    const requiredChecks = acceptance.requiredChecksByScope?.final ?? acceptance.requiredChecks;
+    const resolutions = this.compositionResolutions(run, candidate);
+    for (const receipt of resolutions) {
+      const origin = run.operations[receipt.operationId], attempt = run.attempts[receipt.attemptId];
+      programAssert(origin?.status === "completed" && !origin.retired && origin.generation === receipt.generation && origin.semanticDigest === receipt.semanticDigest && origin.inputDigest === receipt.inputDigest && attempt?.outcome === "completed" && run.candidates[receipt.candidateId]?.digest === receipt.candidateDigest && receipt.acceptanceDigest === programDigest(acceptance) && receipt.populationDigest === (run.program.population ? programDigest(registryEntry(run.registry.populations, run.program.population)) : programDigest(null)), "Composition resolution receipt is stale");
+    }
+    const requiredChecks = [...new Set([...(acceptance.requiredChecksByScope?.final ?? acceptance.requiredChecks), ...(resolutions.length ? acceptance.requiredChecksByScope?.item ?? acceptance.requiredChecks : [])])];
     const expectedMembers = run.program.population ? registryEntry(run.registry.populations, run.program.population).members.filter(key => !registryEntry(run.registry.populations, run.program.population!).exclusions.some(exclusion => exclusion.id === key)).map(canonicalItemKey) : [];
     const requiredObligations = (acceptance.obligations ?? []).flatMap(obligation => obligation.scope === "final" ? [obligation.id] : expectedMembers.map(key => `${obligation.id}/${programSegment(key)}`));
+    requiredObligations.push(...resolutions.flatMap(receipt => expectedMembers.map(key => `${receipt.receiptId}/${programSegment(key)}`)));
     const assessment = Object.values(run.assessments).find(assessment => {
       const origin = assessment.operationId ? run.operations[assessment.operationId] : undefined;
-      return origin && origin.status === "completed" && origin.generation === assessment.generation && origin.semanticDigest === assessment.semanticDigest && origin.inputDigest === assessment.inputDigest && assessment.candidateDigest === candidate.digest && assessment.verdict === "approved" && !assessment.findings.length && assessment.attemptIds.every(attemptId => run.attempts[attemptId]?.outcome === "completed") && (!acceptance.requiredChecksByScope || assessment.phase === "final") && requiredObligations.every(obligation => assessment.satisfiedObligationIds?.includes(obligation)) && requiredChecks.every(check => assessment.checks.some(outcome => outcome.id === check && outcome.passed));
+      return origin && origin.status === "completed" && origin.generation === assessment.generation && origin.semanticDigest === assessment.semanticDigest && origin.inputDigest === assessment.inputDigest && assessment.candidateDigest === candidate.digest && resolutions.every(receipt => assessment.resolutionReceiptIds?.includes(receipt.receiptId)) && assessment.verdict === "approved" && !assessment.findings.length && assessment.attemptIds.every(attemptId => run.attempts[attemptId]?.outcome === "completed") && (!acceptance.requiredChecksByScope && !resolutions.length || assessment.phase === "final") && requiredObligations.every(obligation => assessment.satisfiedObligationIds?.includes(obligation)) && requiredChecks.every(check => assessment.checks.some(outcome => outcome.id === check && outcome.passed));
     });
-    programAssert(!acceptance.requireReview || assessment, "Applicable distinct review/checks missing");
+    programAssert(!acceptance.requireReview && !resolutions.length || assessment, "Applicable distinct review/checks missing");
     programAssert(assessment || requiredChecks.length === 0, "Required checks missing");
     if (run.program.population) {
       const coverage = asRecord(input.coverage), registered = run.coverageReceipts[String(coverage.receiptId)];
       programAssert(registered && programDigest(Object.fromEntries(Object.entries(coverage).filter(([key]) => key !== "receiptId"))) === programDigest(registered) && registered.populationDigest === programDigest(registryEntry(run.registry.populations, run.program.population)), "Owner coverage receipt missing/mismatched");
-      programAssert(Object.entries(run.collections).some(([operationId, collection]) => collection.coverageReceiptId === coverage.receiptId && collection.obligationsSatisfied && collection.seal === run.seals[operationId] && run.operations[operationId]?.status === "completed" && run.operations[operationId]?.generation === collection.generation && programDigest(collection.ids) === programDigest(registered.ids) && collection.acceptedCandidateIds.every(candidateId => { const accepted = run.candidates[candidateId]; return accepted && accepted.deltas.every(delta => candidate.deltas.includes(delta)) && accepted.producerAttempts.every(attempt => candidate.producerAttempts.includes(attempt)); }) && collection.acceptedAssessmentIds.every(receiptId => {
+      programAssert(Object.entries(run.collections).some(([operationId, collection]) => collection.coverageReceiptId === coverage.receiptId && collection.obligationsSatisfied && collection.seal === run.seals[operationId] && run.operations[operationId]?.status === "completed" && run.operations[operationId]?.generation === collection.generation && programDigest(collection.ids) === programDigest(registered.ids) && collection.acceptedCandidateIds.every(candidateId => { const accepted = run.candidates[candidateId]; return accepted && (accepted.deltas.every(delta => candidate.deltas.includes(delta)) && accepted.producerAttempts.every(attempt => candidate.producerAttempts.includes(attempt)) || !!assessment && resolutions.some(receipt => receipt.originalCandidateIds.some(originalId => { const original = run.candidates[originalId]; return original && accepted.deltas.every(delta => original.deltas.includes(delta)) && accepted.producerAttempts.every(attempt => original.producerAttempts.includes(attempt)); }))); }) && collection.acceptedAssessmentIds.every(receiptId => {
         const receipt = run.assessments[receiptId], origin = receipt?.operationId ? run.operations[receipt.operationId] : undefined;
         return origin?.status === "completed" && origin.generation === receipt.generation && receipt.verdict === "approved" && !receipt.findings.length && receipt.attemptIds.every(attemptId => run.attempts[attemptId]?.outcome === "completed") && (acceptance.requiredChecksByScope?.item ?? acceptance.requiredChecks).every(check => receipt.checks.some(outcome => outcome.id === check && outcome.passed));
       })), "Population gate requires closed item acceptance, not discovery coverage alone");

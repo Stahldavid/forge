@@ -1,6 +1,31 @@
-// @forge-generated generator=0.1.0-alpha.69 input=a62f6d9631d76e83840b1f77cac5b6c6e1f6da1acab63d41614e2fe47b9d5ca7 content=0539a2366582483bfb3f49f844581977aacc49e93abcbaadda8501aaacfdc5ad
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=1ec401878ef303768af7a3643217a109cf5c88edbd6c6f3ee21469f8980b13d3
 export const agentContract = {
-  "actions": [],
+  "actions": [
+    {
+      "allowedCapabilities": [
+        "network",
+        "secrets",
+        "ai",
+        "db"
+      ],
+      "allowedPackages": [],
+      "file": "src/forge/agent-fabric/program-store.ts",
+      "forbiddenCapabilities": [],
+      "frontend": {
+        "components": [],
+        "hook": "no generated React hook; invoke from server/action code",
+        "routes": []
+      },
+      "http": {
+        "exampleBody": {
+          "args": {}
+        },
+        "method": "POST",
+        "path": "/actions/__forge_15_32"
+      },
+      "name": "__forge_15_32"
+    }
+  ],
   "agentProtocols": [
     {
       "commands": [
@@ -7539,7 +7564,7 @@ export const agentContract = {
       }
     }
   },
-  "generatorVersion": "0.1.0-alpha.69",
+  "generatorVersion": "0.1.0-alpha.72",
   "integrations": [
     {
       "alias": "ai-gateway",

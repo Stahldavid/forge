@@ -17,7 +17,7 @@ async function retrySharing<T>(action: () => Promise<T>): Promise<T> {
 }
 /** One authoritative atomic record per run; artifacts commit before referring transitions. */
 export class ProgramRunStore {
-  readonly metrics = { transactions: 0, transactionMs: 0, bytesWritten: 0, snapshotBytes: 0, journalBytes: 0, envelopeBytes: 0, artifactBytes: 0, artifactReads: 0 };
+  readonly metrics = { transactions: 0, transactionMs: 0, bytesWritten: 0, snapshotBytes: 0, journalBytes: 0, envelopeBytes: 0, artifactBytes: 0, artifactReads: 0, deduplicatedWrites: 0, deduplicatedBytes: 0 };
   private tails = new Map<string, Promise<unknown>>();
   private definitions = new Set<string>();
   private validate(state: ProgramRunV2): void {
@@ -34,6 +34,10 @@ export class ProgramRunStore {
   async put(value: unknown, maxBytes = 4 * 1024 * 1024, category: "snapshotBytes" | "journalBytes" | "artifactBytes" = "artifactBytes"): Promise<string> {
     const bytes = stableStringify(value), digest = programDigest(value); programAssert(Buffer.byteLength(bytes) <= maxBytes, "Artifact too large");
     const path = join(this.directory, "artifacts", `${digest.slice(7)}.json`); await assertAttachedSafePath(this.root, path);
+    try {
+      programAssert(await readFile(path, "utf8") === bytes, "Immutable artifact corrupted");
+      this.metrics.deduplicatedWrites++; this.metrics.deduplicatedBytes += Buffer.byteLength(bytes); return digest;
+    } catch (error) { if (!absent(error)) throw error; }
     const temp = `${path}.${randomUUID()}.tmp`, handle = await open(temp, "wx", 0o600);
     try { await handle.writeFile(bytes); await handle.sync(); this.metrics.bytesWritten += Buffer.byteLength(bytes); this.metrics[category] += Buffer.byteLength(bytes); } finally { await handle.close(); }
     try {
@@ -53,6 +57,10 @@ export class ProgramRunStore {
     programAssert(bytes.byteLength <= maxBytes, "Binary artifact exceeds byte budget");
     const digest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`, path = join(this.directory, "artifacts", `${digest.slice(7)}.blob`);
     await assertAttachedSafePath(this.root, path);
+    try {
+      programAssert((await readFile(path)).equals(Buffer.from(bytes)), "Immutable binary corrupted");
+      this.metrics.deduplicatedWrites++; this.metrics.deduplicatedBytes += bytes.byteLength; return digest;
+    } catch (error) { if (!absent(error)) throw error; }
     const temp = `${path}.${randomUUID()}.tmp`, handle = await open(temp, "wx", 0o600);
     try { await handle.writeFile(bytes); await handle.sync(); this.metrics.bytesWritten += bytes.byteLength; this.metrics.artifactBytes += bytes.byteLength; } finally { await handle.close(); }
     try { try { programAssert((await readFile(path)).equals(Buffer.from(bytes)), "Immutable binary corrupted"); } catch (error) { if (!absent(error)) throw error; await retrySharing(() => rename(temp, path)); } }

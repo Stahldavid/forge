@@ -78,6 +78,8 @@ function formatHelp(): string {
     "  forge fabric workflow-<mutation> --file request.json --json  Plan, claim, result, replan, reconcile or recover",
     "  forge fabric run-start --file run.json --json  Start managed workflow workers (Codex can consume credits)",
     "  forge fabric program-validate --file request.json --json  Lower/validate opt-in static workflow DSL against owner registry",
+    "  forge fabric program-author --file request.json --json  Propose review, bugfix or migration using owner registry refs",
+    "  forge fabric program-author-types --json  Read typed authoring declarations from the owner registry",
     "  forge fabric program-start --file request.json --json  Start a durable v2 program (Codex can consume credits)",
     "  forge fabric program-status --run-id <id> --json  Inspect v2 templates, attempts, candidates and gates",
     "  forge fabric program-history|program-explain --run-id <id> --json  Inspect journal, scopes and admission",

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { isAbsolute, relative, resolve } from "node:path";
 import { LocalTaskService } from "../agent-fabric/local-task-service.ts";
+import { programWorkflowExtensions } from "../agent-fabric/program-capabilities.ts";
 import { LocalChangeReviewService } from "../agent-fabric/local-change-review-service.ts";
 import { LOCAL_CODING_MODEL, LOCAL_CODING_TARGET } from "../agent-fabric/local-task-contract.ts";
 import { isManagedRunAction, requestManagedRun, type ManagedRunAction, isAttachedTaskAction, isAttachedTaskRead, requestAttachedTask, type AttachedTaskAction, requestLocalMemory, requestLocalTask, serveLocalTasks, type LocalMemoryAction, type LocalTaskAction } from "../agent-fabric/local-task-server.ts";
@@ -72,7 +73,7 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
       effectsByMode: { legacy: "owner_reviewed_local_pilot", accompanied: "caller_driven_records",
         managed: "process_execution_and_optional_local_publication" },
       privateMemory: "owner_cli_only",
-      programWorkflows: { supported: true, schemaVersion: 2, operatorVersion: 2, optIn: true, registry: ".forge/fabric-programs.json", staticDSL: true, operators: ["agent", "command", "map", "branch", "loop", "repair", "compose", "gate", "subworkflow", "waitEvent", "value", "sequence", "parallel"], replan: ["barrier", "additive", "fenced-global-barrier"], sdkOutputReuse: "same-run-completed", ownerRequired: true },
+      programWorkflows: { ...programWorkflowExtensions, supported: true, schemaVersion: 2, operatorVersion: 2, optIn: true, registry: ".forge/fabric-programs.json", staticDSL: true, operators: ["agent", "command", "map", "branch", "loop", "repair", "compose", "gate", "subworkflow", "waitEvent", "value", "sequence", "parallel"], replan: ["barrier", "additive", "fenced-global-barrier"], sdkOutputReuse: "same-run-completed", ownerRequired: true },
       adaptiveHarness: { twoProcessDataOnly: true, ownerReview: true, durableReadback: true,
         selectedDataProfile: "optional_canary_or_stable" },
       adversarialChangeReview: { propose: true, status: true, evidence: true,
@@ -91,7 +92,8 @@ export async function runFabricCommand(options: FabricCliOptions): Promise<numbe
   try {
     if (isProgramRunAction(options.subcommand)) {
       let body: Record<string, unknown>;
-      if (["program-status", "program-history", "program-explain"].includes(options.subcommand)) body = { runId: options.runId ?? "" };
+      if (options.subcommand === "program-author-types") body = {};
+      else if (["program-status", "program-history", "program-explain"].includes(options.subcommand)) body = { runId: options.runId ?? "" };
       else {
         if (!options.file) throw new Error("A program request file is required");
         const root = await resolveFabricRoot(options.workspaceRoot), file = realpathSync(resolve(root, options.file)), relation = relative(root, file);

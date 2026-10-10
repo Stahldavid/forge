@@ -1,1 +1,1 @@
-{"actions":{},"commands":{},"external":{"commands":{},"queries":{},"services":{}},"generatorVersion":"0.1.0-alpha.69","inputHash":"af13c1b32ae76fe623bb2daa75eb60196112d8d25c2c7802fe9e3412552a9808","liveQueries":{},"queries":{},"schemaVersion":"1.0.0","workflows":{}}
+{"actions":{"__forge_15_32":"__forge_15_32"},"commands":{},"external":{"commands":{},"queries":{},"services":{}},"generatorVersion":"0.1.0-alpha.72","inputHash":"f8912cce7d23a7874eb79f7a83926bf2c96b64df1f598a27ab7e2810b2ad97a1","liveQueries":{},"queries":{},"schemaVersion":"1.0.0","workflows":{}}
