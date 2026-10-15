@@ -22,35 +22,61 @@ function matches(waiver, target, name, vulnerability, today) {
 }
 
 /** A propagated npm finding is waived only when every underlying advisory is waived.
- * Missing edges, cycles, new advisories and higher severities remain blocking.
+ * Cycles must be anchored in approved advisories; missing edges, advisory-free
+ * components, new advisories and higher severities remain blocking.
  */
 export function resolveAuditWaiver(target, name, vulnerabilities, waivers, today = new Date().toISOString().slice(0, 10)) {
-  const visit = (packageName, seen) => {
+  const nodes = new Map();
+  const collect = (packageName) => {
+    if (nodes.has(packageName)) return true;
     const vulnerability = vulnerabilities[packageName];
-    if (!vulnerability || seen.has(packageName)) return null;
+    if (!vulnerability) return false;
+    const node = { vulnerability, dependencies: [], approvals: new Set() };
+    nodes.set(packageName, node);
     const explicit = waivers.find(waiver => !waiver.advisory && matches(waiver, target, packageName, vulnerability, today));
-    if (explicit) return [explicit]; // Preserve existing explicit whole-package exceptions.
-    if (!Array.isArray(vulnerability.via) || vulnerability.via.length === 0) return null;
-    const path = new Set([...seen, packageName]);
-    const approvals = [];
+    if (explicit) {
+      node.approvals.add(explicit); // Preserve existing explicit whole-package exceptions.
+      return true;
+    }
+    if (!Array.isArray(vulnerability.via) || vulnerability.via.length === 0) return false;
     for (const via of vulnerability.via) {
       if (typeof via === "string") {
-        const inherited = visit(via, path);
-        if (!inherited || inherited.some(waiver => waiver.severity && waiver.severity !== vulnerability.severity)) return null;
-        approvals.push(...inherited);
+        node.dependencies.push(via);
+        if (!collect(via)) return false;
       } else if (via && typeof via === "object") {
         // Each advisory needs its own matching approval, even on the same package.
         const waiver = waivers.find(candidate =>
           matches(candidate, target, packageName, vulnerability, today) &&
           matches(candidate, target, packageName, { ...vulnerability, severity: via.severity ?? vulnerability.severity, via: [via] }, today));
-        if (!waiver) return null;
-        approvals.push(waiver);
-      } else return null;
+        if (!waiver) return false;
+        node.approvals.add(waiver);
+      } else return false;
     }
-    return approvals;
+    return true;
   };
-  const approved = visit(name, new Set());
-  if (!approved?.length) return null;
+  if (!collect(name)) return null;
+
+  // Propagate concrete approvals to a fixed point. A back edge contributes no
+  // approval by itself, and a separate unanchored cycle stays empty and blocks.
+  let changed;
+  do {
+    changed = false;
+    for (const node of nodes.values()) {
+      for (const dependency of node.dependencies) {
+        for (const waiver of nodes.get(dependency).approvals) {
+          if (!node.approvals.has(waiver)) {
+            node.approvals.add(waiver);
+            changed = true;
+          }
+        }
+      }
+    }
+  } while (changed);
+  for (const node of nodes.values()) {
+    if (!node.approvals.size || [...node.approvals].some(waiver =>
+      waiver.severity && waiver.severity !== node.vulnerability.severity)) return null;
+  }
+  const approved = [...nodes.get(name).approvals];
   return {
     reason: [...new Set(approved.map(waiver => waiver.reason).filter(Boolean))].join("; "),
     advisories: [...new Set(approved.map(waiver => waiver.advisory).filter(Boolean))].sort(),

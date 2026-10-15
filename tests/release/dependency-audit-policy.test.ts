@@ -53,3 +53,58 @@ test("missing edges, empty reports and cycles cannot manufacture inherited appro
   graph.nuxt.via = ["nuxt"]; expect(approved("nuxt", graph)).toBeNull();
   graph.nuxt.via = []; expect(approved("nuxt", graph)).toBeNull();
 });
+
+const cyclicFixture = () => ({
+  "node-forge": { severity: "high", via: [forgeAdvisory] },
+  listhen: { severity: "high", via: ["node-forge"] },
+  nitropack: { severity: "high", via: ["listhen"] },
+  "@nuxt/devtools": { severity: "high", via: ["nitropack"] },
+  "@nuxt/nitro-server": { severity: "high", via: ["nitropack", "nuxt"] },
+  "@nuxt/vite-builder": { severity: "high", via: ["nuxt"] },
+  "@nuxt/vite-server": { severity: "high", via: ["nuxt"] },
+  nuxt: { severity: "high", via: ["@nuxt/devtools", "@nuxt/nitro-server", "@nuxt/vite-builder", "@nuxt/vite-server"] },
+});
+
+test("npm dependency cycles anchored only in an approved advisory inherit its existing scope", () => {
+  for (const name of Object.keys(cyclicFixture())) {
+    const approval = approved(name, cyclicFixture());
+    expect(approval?.advisories).toEqual([forgeAdvisory.url]);
+    expect(approval?.expires).toBe("2026-10-18");
+  }
+});
+
+test("an approved branch cannot legitimize a separate advisory-free cycle", () => {
+  const graph: Record<string, any> = cyclicFixture();
+  graph.orphan = { severity: "high", via: ["orphan"] };
+  graph.nuxt.via.push("orphan");
+  expect(approved("nuxt", graph)).toBeNull();
+  graph.orphan.via = ["orphan-peer"];
+  graph["orphan-peer"] = { severity: "high", via: ["orphan"] };
+  expect(approved("nuxt", graph)).toBeNull();
+});
+
+test("every advisory reachable through a dependency cycle still requires approval", () => {
+  const graph: Record<string, any> = cyclicFixture();
+  graph["@nuxt/vite-server"].via.push({ url: "https://github.com/advisories/NEW-UNAPPROVED", severity: "high" });
+  for (const name of ["nuxt", "@nuxt/nitro-server", "@nuxt/vite-builder", "@nuxt/vite-server"]) {
+    expect(approved(name, graph)).toBeNull();
+  }
+});
+
+test("missing edges, higher severity, expiry and target scope still block anchored cycles", () => {
+  const graph: Record<string, any> = cyclicFixture();
+  graph["@nuxt/vite-server"].via.push("absent");
+  expect(approved("nuxt", graph)).toBeNull();
+  graph["@nuxt/vite-server"].via.pop();
+  graph["@nuxt/vite-server"].severity = "critical";
+  expect(approved("nuxt", graph)).toBeNull();
+  graph["@nuxt/vite-server"].severity = "high";
+  expect(approved("nuxt", graph, "2026-10-19")).toBeNull();
+  expect(approved("nuxt", graph, "2026-10-05", "framework")).toBeNull();
+});
+
+test("cyclic propagation does not suppress a new advisory on an approved leaf", () => {
+  const graph: Record<string, any> = cyclicFixture();
+  graph["node-forge"].via.push({ url: "https://github.com/advisories/NEW-UNAPPROVED", severity: "high" });
+  expect(approved("nuxt", graph)).toBeNull();
+});
