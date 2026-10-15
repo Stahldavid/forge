@@ -11,6 +11,8 @@ import { randomUUID } from "node:crypto";
 import { readFile, readdir, lstat } from "node:fs/promises";
 import { join } from "node:path";
 import { ProgramRunStore } from "./program-store.ts";
+import { TRACE_LIMITS, assertTraceIdentity, assertTraceRunKey, normalizeTraceIdentity, normalizeTraceRunKey, normalizeTraceManifest, normalizeTraceOrigin, normalizeTraceAnnotation, normalizeTraceExternalOrigin, normalizeTraceAgentMemoryRef, normalizeTraceProvenance, normalizeTraceGitBaseline, resolveTraceAgentMemory, traceObject, traceOpaque, traceRef, type TraceRunKey, type TraceRuntimeOptions, type TraceAnnotation } from "./trace-contract.ts";
+import type { TraceGitBaselineObservation } from "./trace-git.ts";
 import { lowerWorkflowSource } from "./program-dsl.ts";
 import { prepareProgramWorker, validateProgramCapabilities, type ProgramWorkerAdapter } from "./program-worker.ts";
 import { captureManagedBase, previewManagedArtifacts, publishManagedArtifacts, confirmManagedPublication, confirmManagedBaseline, type ManagedBase, type ManagedArtifact } from "./managed-workspace.ts";
@@ -18,9 +20,9 @@ import { programAssert, programDigest, programValueBytes, programWithin, program
   type WorkflowProgramV2, type ProgramRegistry, type ProgramOperation, type ProgramExpr, type ProgramRef,
   type ProgramValue, type ProgramRunV2, type ProgramCandidate, type ProgramAssessment, type ProgramAssessmentContext, type ProgramRepairResult } from "./program-contract.ts";
 
-export const PROGRAM_RUN_ACTIONS = ["program-author", "program-author-types", "program-validate", "program-start", "program-status", "program-wait", "program-pause", "program-resume", "program-signal", "program-replan", "program-cancel", "program-reconcile", "program-apply", "program-history", "program-artifact-get", "program-explain", "program-diff"] as const;
+export const PROGRAM_RUN_ACTIONS = ["program-author", "program-author-types", "program-validate", "program-start", "program-status", "program-wait", "program-pause", "program-resume", "program-signal", "program-replan", "program-cancel", "program-reconcile", "program-apply", "program-history", "program-artifact-get", "program-explain", "program-diff", "program-trace-annotate"] as const;
 export type ProgramRunAction = typeof PROGRAM_RUN_ACTIONS[number];
-export interface ProgramRuntimeOptions { ownerCapacity?: number; ownerMaxTokens?: number }
+export interface ProgramRuntimeOptions { ownerCapacity?: number; ownerMaxTokens?: number; trace?: TraceRuntimeOptions }
 interface Context { prefix: string; steps: ProgramOperation[]; program: WorkflowProgramV2; inputRef?: string; parent?: Context; item?: unknown; itemKey?: string; state?: unknown; depth: number; chain: Set<string>; dependencies?: Set<string>; activityScopes?: ActivityScope[]; signal?: AbortSignal }
 interface ActivityOutput { data: unknown; candidate: ProgramCandidate; attemptId: string; evidenceRefs?: string[] }
 const asRecord = (value: unknown): Record<string, unknown> => { programAssert(value && typeof value === "object" && !Array.isArray(value), "Object required"); return value as Record<string, unknown>; };
@@ -44,7 +46,8 @@ export class ProgramRunService {
   static async open(root: string, registry?: ProgramRegistry, adapter: ProgramWorkerAdapter = prepareProgramWorker, runtime: ProgramRuntimeOptions = {}): Promise<ProgramRunService> {
     programAssert(runtime.ownerCapacity === undefined || Number.isSafeInteger(runtime.ownerCapacity) && runtime.ownerCapacity > 0 && runtime.ownerCapacity <= 32, "Invalid owner capacity");
     programAssert(runtime.ownerMaxTokens === undefined || Number.isSafeInteger(runtime.ownerMaxTokens) && runtime.ownerMaxTokens > 0, "Invalid owner token budget");
-    const store = await ProgramRunStore.open(root);
+    if (runtime.trace) normalizeTraceIdentity(runtime.trace.identity);
+    const store = await ProgramRunStore.open(root, runtime.trace?.identity);
     const registryFile = !registry;
     if (!registry) {
       try { registry = JSON.parse(await readFile(join(store.root, ".forge/fabric-programs.json"), "utf8")) as ProgramRegistry; }
@@ -55,6 +58,7 @@ export class ProgramRunService {
     try {
     for (const id of await store.list()) {
       const run = (await store.read(id))!;
+      if (run.traceBindingsRef) programAssert(runtime.trace, "Trace owner identity configuration required", "TRACE_IDENTITY_MISMATCH");
       if (run.status === "applying" || Object.values(run.attempts).some(attempt => attempt.outcome === "running") || Object.values(run.operations).some(operation => operation.status === "running")) {
         await store.transact(id, "owner-recovery", state => {
           const current = state!; if (current.status === "applying") current.status = "apply-uncertain"; else current.status = "needs-attention";
@@ -76,6 +80,8 @@ export class ProgramRunService {
   async updateRuntimeOptions(options: ProgramRuntimeOptions): Promise<void> {
     await this.owner.assert(); programAssert(!this.closed, "Owner is closed");
     const next = { ...this.runtime, ...options };
+    if (this.runtime.trace && next.trace) assertTraceIdentity(next.trace.identity, this.runtime.trace.identity);
+    programAssert(!this.runtime.trace || next.trace, "Cannot remove trace owner identity", "TRACE_IDENTITY_MISMATCH");
     programAssert(next.ownerCapacity === undefined || Number.isSafeInteger(next.ownerCapacity) && next.ownerCapacity > 0 && next.ownerCapacity <= 32, "Invalid owner capacity");
     programAssert(next.ownerMaxTokens === undefined || Number.isSafeInteger(next.ownerMaxTokens) && next.ownerMaxTokens > 0, "Invalid owner token budget");
     await this.admit(async () => { this.runtime = next; this.scheduler.setOwnerCapacity(next.ownerCapacity ?? 4); });
@@ -111,6 +117,71 @@ export class ProgramRunService {
     })]); } finally { signal.removeEventListener("abort", abort); if (timer) clearTimeout(timer); }
   }
   private async state(id: string): Promise<ProgramRunV2> { const state = await this.store.read(id); programAssert(state, "Run not found"); return state; }
+  private async initialTrace(value: unknown, runId: string, gitBaseline?: TraceGitBaselineObservation): Promise<string> {
+    const runtime = this.runtime.trace; programAssert(runtime, "Trace owner identity is not configured", "TRACE_UNSUPPORTED");
+    const input = traceObject(value, ["origins"]), runKey: TraceRunKey = { ...normalizeTraceIdentity(runtime.identity), runId }, originRefs: string[] = [];
+    programAssert(Array.isArray(input.origins) && input.origins.length > 0 && input.origins.length <= TRACE_LIMITS.origins, "Trace origin limit exceeded", "TRACE_LIMIT_EXCEEDED");
+    for (const raw of input.origins) {
+      const originInput = traceObject(raw, ["schema", "repositoryId", "checkoutId", "fabricStoreId", "runId", "origin", "agentMemoryRefs", "provenance", "privacyProfile", "summary", "summaryProducer"]);
+      if (originInput.repositoryId !== undefined || originInput.checkoutId !== undefined || originInput.fabricStoreId !== undefined || originInput.runId !== undefined) assertTraceRunKey(normalizeTraceRunKey({ repositoryId: originInput.repositoryId, checkoutId: originInput.checkoutId, fabricStoreId: originInput.fabricStoreId, runId: originInput.runId }), runKey);
+      programAssert(originInput.schema === undefined || originInput.schema === "forge.trace-origin.v1", "Unsupported trace origin schema", "TRACE_UNSUPPORTED");
+      programAssert(originInput.privacyProfile === undefined || originInput.privacyProfile === "trace-metadata-v1", "Unsupported trace privacy profile", "TRACE_UNSUPPORTED");
+      if (originInput.provenance) { const provenance = normalizeTraceProvenance(originInput.provenance); programAssert(provenance.claimKind === "declared", "Origin requests are declarations", "TRACE_INVALID_REFERENCE"); }
+      const origin = normalizeTraceExternalOrigin(originInput.origin), references = originInput.agentMemoryRefs ?? [];
+      programAssert(Array.isArray(references) && references.length <= 8, "Trace event binding limit exceeded", "TRACE_LIMIT_EXCEEDED");
+      const agentMemoryRefs = references.map(normalizeTraceAgentMemoryRef), confirmedSlices = [];
+      for (const event of agentMemoryRefs) confirmedSlices.push({ event, slice: await resolveTraceAgentMemory(event, origin, runtime) });
+      const artifact = normalizeTraceOrigin({ schema: "forge.trace-origin.v1", ...runKey, origin, agentMemoryRefs, ...(confirmedSlices.length ? { confirmedSlices } : {}), ...(gitBaseline ? { gitBaseline } : {}), provenance: { capture: runtime.capture ?? "host-api", claimKind: "declared", authority: "none" }, privacyProfile: "trace-metadata-v1", ...(originInput.summary === undefined ? {} : { summary: originInput.summary, summaryProducer: originInput.summaryProducer }) }, runKey);
+      originRefs.push(await this.store.put(artifact, TRACE_LIMITS.annotationBytes));
+    }
+    const manifest = normalizeTraceManifest({ schema: "forge.trace-manifest.v1", runKey, originRefs, annotationRefs: [] }, runKey); return this.store.put(manifest, TRACE_LIMITS.manifestBytes);
+  }
+  private async annotateTrace(runId: string, request: Record<string, unknown>): Promise<ProgramRunV2> {
+    traceObject(request, ["runId", "requestId", "expectedVersion", "annotation"]);
+    const runtime = this.runtime.trace, initial = await this.state(runId);
+    await this.authorize(initial);
+    programAssert(initial.traceBindingsRef, "Legacy runs cannot be upgraded by annotation", "TRACE_UNSUPPORTED");
+    programAssert(runtime, "Trace owner identity is not configured", "TRACE_UNSUPPORTED");
+    const requestId = traceOpaque(request.requestId); programAssert(Number.isSafeInteger(request.expectedVersion) && Number(request.expectedVersion) > 0, "Trace expectedVersion required", "TRACE_VERSION_CONFLICT");
+    const runKey = { ...normalizeTraceIdentity(runtime.identity), runId }, manifest = normalizeTraceManifest(await this.store.get(initial.traceBindingsRef), runKey);
+    const input = traceObject(request.annotation, ["schema", "runKey", "provenance", "type", "originRef", "event", "confirmedSlice", "observation", "supersedesRef", "reason", "replacement"]);
+    if (input.runKey) assertTraceRunKey(normalizeTraceRunKey(input.runKey), runKey);
+    if (input.schema !== undefined) programAssert(input.schema === "forge.trace-annotation.v1", "Unsupported trace annotation schema", "TRACE_UNSUPPORTED");
+    if (input.provenance) normalizeTraceProvenance(input.provenance);
+    const fingerprint = programDigest(request), replay = await this.store.requestReplay(runId, requestId, fingerprint); if (replay) return replay;
+    programAssert(initial.version === request.expectedVersion, "Trace annotation version conflict", "TRACE_VERSION_CONFLICT");
+    programAssert(manifest.annotationRefs.length < TRACE_LIMITS.annotations, "Trace annotation limit exceeded", "TRACE_LIMIT_EXCEEDED");
+    let annotation: TraceAnnotation;
+    const base = { schema: "forge.trace-annotation.v1", runKey, annotationId: requestId, provenance: { capture: runtime.capture ?? "host-api", claimKind: "declared", authority: "none" } };
+    if (input.type === "origin-event-bound") {
+      traceObject(request.annotation, ["schema", "runKey", "provenance", "type", "originRef", "event", "confirmedSlice"]);
+      const originRef = traceRef(input.originRef); programAssert(manifest.originRefs.includes(originRef), "Origin does not belong to this run", "TRACE_INVALID_REFERENCE");
+      const origin = normalizeTraceOrigin(await this.store.get(originRef), runKey), event = normalizeTraceAgentMemoryRef(input.event), confirmedSlice = await resolveTraceAgentMemory(event, origin.origin, runtime);
+      if (input.confirmedSlice !== undefined) programAssert(programDigest(input.confirmedSlice) === programDigest(confirmedSlice), "Consumer slice differs from confirmed source", "TRACE_SOURCE_CONFLICT");
+      annotation = normalizeTraceAnnotation({ ...base, type: "origin-event-bound", originRef, event, confirmedSlice }, runKey);
+    } else if (input.type === "git-observation") {
+      traceObject(request.annotation, ["schema", "runKey", "provenance", "type", "observation"]);
+      const proposed = normalizeTraceAnnotation({ ...base, type: "git-observation", observation: input.observation }, runKey);
+      programAssert(proposed.type === "git-observation" && runtime.resolveGitObservation, "Verified Git source adapter unavailable", "TRACE_SOURCE_UNAVAILABLE");
+      let observed: Awaited<ReturnType<NonNullable<TraceRuntimeOptions["resolveGitObservation"]>>>;
+      try { observed = await runtime.resolveGitObservation(proposed.observation, initial); }
+      catch { throw new ProgramError("TRACE_SOURCE_UNAVAILABLE", "Verified Git source adapter unavailable"); }
+      programAssert(observed && programDigest(observed) === programDigest(proposed.observation), "Git observation differs from verified source", "TRACE_SOURCE_CONFLICT");
+      if (observed.apply) {
+        const cut = await this.store.confirmedCut(runId, observed.apply.sourceJournalRef), applied = await this.store.get<ProgramRunV2>(cut.stateRef);
+        programAssert(applied.status === "applied" && applied.receiptRef === observed.apply.receiptRef && applied.acceptedCandidate?.digest === observed.candidate.digest && applied.baselineDigest === observed.candidate.baselineDigest, "Git observation apply source mismatch", "TRACE_INVALID_REFERENCE");
+      }
+      annotation = normalizeTraceAnnotation({ ...base, provenance: { ...base.provenance, claimKind: "observed" }, type: "git-observation", observation: observed }, runKey);
+    } else {
+      traceObject(request.annotation, ["schema", "runKey", "provenance", "type", "supersedesRef", "reason", "replacement"]);
+      programAssert(input.type === "correction" && manifest.annotationRefs.includes(traceRef(input.supersedesRef)), "Correction must reference a prior annotation in this run", "TRACE_INVALID_REFERENCE");
+      annotation = normalizeTraceAnnotation({ ...base, type: "correction", supersedesRef: input.supersedesRef, reason: input.reason, replacement: input.replacement }, runKey);
+    }
+    const annotationRef = await this.store.put(annotation, TRACE_LIMITS.annotationBytes), traceBindingsRef = await this.store.put(normalizeTraceManifest({ ...manifest, annotationRefs: [...manifest.annotationRefs, annotationRef] }, runKey), TRACE_LIMITS.manifestBytes);
+    try {
+      return await this.store.transact(runId, "trace-annotate", state => { programAssert(state && state.traceBindingsRef === initial.traceBindingsRef, "Trace manifest changed", "TRACE_VERSION_CONFLICT"); return { ...state, traceBindingsRef }; }, { requestId, fingerprint, expectedVersion: Number(request.expectedVersion) });
+    } catch (error) { if ((error as { code?: string }).code === "AF_PROGRAM_CONFLICT") throw new ProgramError("TRACE_VERSION_CONFLICT", "Trace annotation changed concurrently"); throw error; }
+  }
   private schedule(id: string): void {
     if (this.closed) return;
     if (this.active.has(id)) { this.wakeRequests.add(id); return; }
@@ -174,8 +245,16 @@ export class ProgramRunService {
       validateProgramData(request.input, registryEntry(this.registry.schemas, program.inputSchema));
       const registry = structuredClone(this.registry), policy = registryEntry(registry.policies, program.policy), acceptance = registryEntry(registry.acceptance, program.acceptance);
       const scope = [...new Set([...(policy.captureScope ?? []), ...acceptance.writeScope.filter(path => programWithin(path, policy.writeScope)), ...policy.writeScope.filter(path => programWithin(path, acceptance.writeScope))])];
+      // Capture index/worktree cleanliness BEFORE baseline materialization or any worker dispatch.
+      let gitBaseline: TraceGitBaselineObservation | undefined;
+      if (request.trace !== undefined && this.runtime.trace?.observeGitBaseline) {
+        try { gitBaseline = normalizeTraceGitBaseline(await this.runtime.trace.observeGitBaseline()); }
+        catch { throw new ProgramError("TRACE_SOURCE_UNAVAILABLE", "Initial Git baseline observation unavailable"); }
+        assertTraceIdentity(gitBaseline, this.runtime.trace.identity);
+      }
       let base: ManagedBase | undefined;
       if (this.adapter === prepareProgramWorker) { programAssert(scope.length > 0, "Process program requires an owner-authorized capture scope"); base = await captureManagedBase(this.store.root, runId, scope); }
+      if (base && gitBaseline?.head) { programAssert(gitBaseline.head === base.head, "Git HEAD changed during initial baseline capture", "TRACE_SOURCE_CONFLICT"); gitBaseline = { ...gitBaseline, baselineDigest: base.digest }; }
       const baselineDigest = base?.digest ?? programDigest({ root: this.store.root });
       if (program.population) {
         const population = registryEntry(registry.populations, program.population);
@@ -193,6 +272,7 @@ export class ProgramRunService {
         programAssert(population.baselineDigest === baselineDigest, "Population inventory does not match captured baseline");
       }
       const inputRef = await this.store.put(request.input, policy.maxOutputBytes), baseRef = base ? await this.store.put(base) : undefined;
+      const traceBindingsRef = request.trace === undefined ? undefined : await this.initialTrace(request.trace, runId, gitBaseline);
       const now = new Date();
       const run = await this.admit(async () => {
         const duplicate = await this.store.read(runId);
@@ -204,12 +284,13 @@ export class ProgramRunService {
         }
         return this.store.transact(runId, "start", () => ({ schemaVersion: 2, runId, requestId, requestDigest: fingerprint,
         program, registry, programDigest: programDigest(program), registryDigest: programDigest(registry),
-        inputRef, baselineDigest, ...(baseRef ? { baseRef } : {}), createdAt: now.toISOString(), deadlineAt: new Date(now.getTime() + policy.deadlineMs).toISOString(),
+        inputRef, baselineDigest, ...(baseRef ? { baseRef } : {}), ...(traceBindingsRef ? { traceBindingsRef } : {}), createdAt: now.toISOString(), deadlineAt: new Date(now.getTime() + policy.deadlineMs).toISOString(),
         version: 0, semanticVersion: 1, revision: 1, planRevision: 1, status: "executing", operations: {}, attempts: {}, seals: {}, signals: [], candidates: {}, assessments: {}, coverageReceipts: {}, deltas: {}, waits: {}, repairs: {}, collections: {}, totalAttempts: 0 }), { requestId, fingerprint, expectedVersion: 0 });
       });
       this.schedule(runId); return run;
     }
     const runId = idText(request.runId);
+    if (action === "program-trace-annotate") return this.annotateTrace(runId, request);
     if (action === "program-status") return this.state(runId);
     if (action === "program-history") return this.store.history(runId);
     if (action === "program-explain") { const state = await this.state(runId); return { runId, graph: programVisualization(state.program, state.operations), diagnostics: programDiagnostics(state), status: state.status, reason: state.reason ?? null, operations: state.operations, scopes: state.scopeResults ?? {}, queue: state.queue ?? [], waits: state.waits, assessments: state.assessments, scheduler: this.scheduler.snapshot(), storage: this.store.metrics, resources: await this.resourceSummary(), guarantees: { attemptsUnit: "owner-visible-dispatch", providerCalls: "adapter-dependent", crossRunCache: false, resourceEnforcement: "admission-only", ownerTokenLimit: this.runtime.ownerMaxTokens ?? null } }; }

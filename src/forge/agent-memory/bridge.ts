@@ -1483,6 +1483,27 @@ function formatAgentMemoryContextHuman(result: AgentMemoryContextPack): string {
     ...(summary.latestEventAt ? [`latest: ${summary.latestEventAt}`] : []),
     ...(result.freshness ? [formatFreshnessHuman(result.freshness)] : []),
   ];
+  if (result.trace) {
+    const trace = result.trace;
+    lines.push("", `Trace history: ${trace.status}`,
+      `  mode: ${trace.mode}; authority: ${trace.authority}; approval for new task: ${trace.approvalForNewTask}`,
+      `  selection: ${trace.selection.basis}${trace.selection.paths.length ? ` (${trace.selection.paths.join(", ")})` : ""}; causality: ${trace.selection.causality}`);
+    if (trace.projection) lines.push(`  generation: ${trace.projection.generationId}; projection: ${trace.projection.status}`);
+    for (const item of trace.items.slice(0, 3)) {
+      lines.push(`  - run: ${item.runKey.runId}; generation: ${item.generationId}; cut: ${item.cut.version}; ${item.completeness}`,
+        `    origin: ${item.origin.status}; execution: ${item.execution.observedStatus}; sources: ${item.sources.length}/${item.sourcesTotal} (${item.sourcesOmitted} omitted; ${item.sourceCompleteness})`,
+        `    source availability: ${item.sourceAvailability}; source scope: ${item.sourceScope}`,
+        `    journal: ${item.cut.journalRef}; state: ${item.cut.stateRef}`,
+        `    Git: ${item.git.observation}; content: ${item.git.contentMatch}`);
+      for (const source of item.sources.slice(0, 2)) lines.push(`    source: ${source.sourceKey}; digest: ${source.digest}; version: ${source.version}`);
+      const evidenceToShow = [...item.evidence].sort((left, right) => Number(right.validity === "owner-gated-at-cut") - Number(left.validity === "owner-gated-at-cut"));
+      for (const evidence of evidenceToShow.slice(0, 4)) lines.push(`    ${evidence.kind}: ${evidence.validity}${evidence.result ? ` (${evidence.result})` : ""}`);
+      for (const correction of item.corrections.slice(0, 2)) lines.push(`    correction: ${correction.reason ?? "details unavailable"}; replacement: ${correction.replacement?.summary ?? "unavailable"}${correction.replacement?.producer ? ` (${correction.replacement.producer})` : ""}`);
+      if (item.gaps.length) lines.push(`    gaps: ${item.gaps.join(", ")}`);
+    }
+    if (trace.truncated) lines.push("  partial history: query limits reached");
+    if (trace.gaps.length) lines.push(`  gaps: ${trace.gaps.join(", ")}`);
+  }
   if (Object.keys(result.currentState).length > 0) {
     lines.push("", "Current:");
     for (const [key, value] of Object.entries(result.currentState)) {

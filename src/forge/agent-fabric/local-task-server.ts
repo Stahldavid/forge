@@ -15,6 +15,7 @@ import { applyFabricProfile } from "./project-profile.ts";
 import { ProgramRunService, PROGRAM_RUN_ACTIONS, type ProgramRunAction } from "./program-service.ts";
 import { ProgramError } from "./program-contract.ts";
 import { readProgramRuntimeOptions } from "./program-runtime-options.ts";
+import { readTraceOwnerConfiguration, createTraceRuntime } from "./trace-owner-runtime.ts";
 
 const MAX_REQUEST_BYTES = 40 * 1024;
 const ENDPOINT_FILENAME = "owner-endpoint.json";
@@ -201,7 +202,8 @@ export async function serveLocalTasks(
     attachedService = await AttachedTaskService.open(root);
     const { ManagedRunService: ManagedService } = await import("./managed-run-service.ts");
     managedService = await ManagedService.open(root);
-    programService = await ProgramRunService.open(root, undefined, undefined, readProgramRuntimeOptions(root));
+    const traceConfiguration = await readTraceOwnerConfiguration(root);
+    programService = await ProgramRunService.open(root, undefined, undefined, { ...readProgramRuntimeOptions(root), ...(traceConfiguration ? { trace: createTraceRuntime(root, traceConfiguration) } : {}) });
     const token = randomBytes(32).toString("hex");
     listener = createServer((request, response: ServerResponse) => {
       response.setHeader("Content-Type", "application/json; charset=utf-8");

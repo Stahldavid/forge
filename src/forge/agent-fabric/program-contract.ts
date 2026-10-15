@@ -111,6 +111,8 @@ export interface ProgramRunV2 {
   schemaVersion: 2; runId: string; requestId: string; requestDigest: string;
   program: WorkflowProgramV2; registry: ProgramRegistry; programDigest: string; registryDigest: string;
   inputRef: string; baselineDigest: string; baseRef?: string; createdAt: string; deadlineAt: string;
+  /** Present only in format-4 runs; immutable manifests are rooted by committed state. */
+  traceBindingsRef?: string;
   version: number; semanticVersion: number; revision: number; planRevision: number;
   status: "executing" | "waiting" | "paused" | "needs-attention" | "completed" | "acceptance-ready" | "applying" | "applied" | "apply-uncertain" | "canceled";
   operations: Record<string, ProgramOperationRecord>; attempts: Record<string, ProgramAttempt>;

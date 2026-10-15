@@ -1,4 +1,5 @@
 import type { FabricCliOptions } from "./fabric.ts";
+import type { TraceCliOptions } from "./trace.ts";
 import type { RepositoryCliOptions } from "./repository.ts";
 import { isProgramRunAction, isManagedRunAction, isAttachedTaskAction, isAttachedTaskRead } from "../agent-fabric/local-task-server.ts";
 import type { AddOptions, InspectTarget, VerifyOptions } from "../compiler/types/cli.ts";
@@ -64,6 +65,7 @@ import type { CairCommandOptions, CairSubcommand } from "../cair/types.ts";
 import type { EvolutionCliOptions } from "./evolution.ts";
 
 export type ForgeCommand =
+  | ({ kind: "trace" } & TraceCliOptions)
   | { kind: "version"; json: boolean }
   | { kind: "last"; json: boolean; workspaceRoot: string }
   | { kind: "baseline"; subcommand: BaselineSubcommand; json: boolean; reason?: string; workspaceRoot: string }
@@ -1324,6 +1326,12 @@ export function parseCli(argv: string[]): ParsedCli {
         workspaceRoot,
         errors,
       };
+    }
+    case "trace": {
+      const subcommand = rest[0], file = parseOptionValue(argv, "--file");
+      if (!["project", "rebuild", "explain", "status"].includes(subcommand ?? "")) errors.push("forge trace requires project, rebuild, explain, or status");
+      if (subcommand !== "status" && (!file || file.startsWith("--"))) errors.push("forge trace requires --file <request.json>");
+      return { command: errors.length ? null : { kind: "trace", subcommand: subcommand as TraceCliOptions["subcommand"], workspaceRoot, json: parseFlag(argv, "--json"), ...(file ? { file } : {}) }, workspaceRoot, errors };
     }
     case "fabric": {
       const subcommand = rest[0];

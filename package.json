@@ -18,6 +18,8 @@
     "docs/forge-protocol.md",
     "docs/agent-fabric.md",
     "docs/agent-fabric-programs.md",
+    "docs/agent-fabric-traceability.md",
+    "docs/traceability-pilot.md",
     "docs/repository-analysis.md",
     "docs/repository-context-quality.md",
     "docs/repository-agent-benchmark.md",

@@ -293,6 +293,7 @@ import {
 } from "../agent-adapters/index.ts";
 import { runMcpServe } from "../agent-memory/mcp.ts";
 import { runFabricCommand } from "./fabric.ts";
+import { runTraceCommand } from "./trace.ts";
 import { runEvolutionCommand } from "./evolution.ts";
 import {
   formatReviewHuman,
@@ -2421,6 +2422,9 @@ export async function executeCommand(command: ForgeCommand): Promise<number> {
       } finally {
         heartbeat?.stop();
       }
+    }
+    case "trace": {
+      return runTraceCommand(command);
     }
     case "fabric": {
       return runFabricCommand(command);
