@@ -83,3 +83,30 @@ export function resolveAuditWaiver(target, name, vulnerabilities, waivers, today
     expires: approved.every(waiver => waiver.expires) ? approved.map(waiver => waiver.expires).sort()[0] : null,
   };
 }
+
+/** Source evidence is produced only by installed-byte verification, never by a waiver file.
+ * Reuse the fail-closed graph traversal so every advisory and every cycle anchor
+ * needs its own exact, verified source fix. Unknown/empty evidence cannot approve.
+ */
+export function resolveAuditRemediation(target, name, vulnerabilities, proofs) {
+  const exact = proofs.filter(proof => proof.verified === true && proof.target === target &&
+    typeof proof.package === "string" && proof.package.length > 0 &&
+    typeof proof.advisory === "string" && proof.advisory.startsWith("https://github.com/advisories/") &&
+    proof.severity === "high" && typeof proof.integrity === "string" &&
+    proof.integrity.startsWith("sha512-") && Array.isArray(proof.instances) && proof.instances.length > 0 &&
+    Array.isArray(vulnerabilities[proof.package]?.nodes) && vulnerabilities[proof.package].nodes.length > 0 &&
+    vulnerabilities[proof.package].nodes.every(path => proof.instances.some(instance => instance.path === path)));
+  const resolved = resolveAuditWaiver(target, name, vulnerabilities, exact);
+  if (!resolved) return null;
+  return { kind: "verified-source-backport", advisories: resolved.advisories,
+    proofs: exact.filter(proof => resolved.advisories.includes(proof.advisory)) };
+}
+
+export function validateAuditReport(report, exitCode) {
+  if (![0, 1].includes(exitCode) || !report || report.error || report.auditReportVersion !== 2 ||
+    !report.vulnerabilities || typeof report.vulnerabilities !== "object" || Array.isArray(report.vulnerabilities) ||
+    !report.metadata?.vulnerabilities || typeof report.metadata.vulnerabilities !== "object") {
+    throw new Error("npm did not return a complete vulnerability report");
+  }
+  return report;
+}

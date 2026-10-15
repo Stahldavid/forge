@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const { resolveAuditWaiver, isExpired } = await import(pathToFileURL(resolve("scripts/dependency-audit-policy.mjs")).href);
-const waivers = JSON.parse(readFileSync("security/dependency-audit-waivers.json", "utf8")).waivers;
+const waivers = JSON.parse(readFileSync("tests/release/fixtures/dependency-audit-waivers-historical.json", "utf8")).waivers;
 const target = "template:nuxt-web-web";
 const bracesAdvisory = { url: "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm", severity: "high" };
 const forgeAdvisory = { url: "https://github.com/advisories/GHSA-86w9-cpqp-85rv", severity: "high" };
@@ -17,7 +17,7 @@ const fixture = () => ({
 });
 const approved = (name: string, graph: Record<string, unknown> = fixture(), date = "2026-10-05", scope = target) => resolveAuditWaiver(scope, name, graph, waivers, date);
 
-test("owner exception selects exactly the two Nuxt advisories and attributes propagated findings", () => {
+test("historical owner exception selects exactly the two Nuxt advisories and attributes propagated findings", () => {
   expect(waivers).toHaveLength(2);
   const approval = approved("nuxt");
   expect(approval.advisories).toEqual([forgeAdvisory.url, bracesAdvisory.url].sort());

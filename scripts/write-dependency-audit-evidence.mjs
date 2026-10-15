@@ -1,8 +1,10 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve, relative } from "node:path";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { advisoryIds, isExpired, resolveAuditWaiver } from "./dependency-audit-policy.mjs";
+import { advisoryIds, isExpired, resolveAuditWaiver, resolveAuditRemediation, validateAuditReport } from "./dependency-audit-policy.mjs";
+
+import { verifyInstalledNuxtBackports } from "./verify-nuxt-backports.mjs";
 
 const SEVERITY_RANK = {
   info: 0,
@@ -135,14 +137,15 @@ function readWaivers(path) {
   }
 }
 
-function summarizeAudit(targetName, audit, waivers, threshold) {
+function summarizeAudit(targetName, audit, waivers, threshold, proofs = []) {
   const vulnerabilities = audit.vulnerabilities ?? {};
   const failures = [];
   const vulnerabilityList = Object.entries(vulnerabilities)
     .map(([packageName, vulnerability]) => {
       const severity = vulnerability.severity ?? "info";
       const failsThreshold = (SEVERITY_RANK[severity] ?? 0) >= SEVERITY_RANK[threshold];
-      const waiver = resolveAuditWaiver(targetName, packageName, vulnerabilities, waivers);
+      const remediation = resolveAuditRemediation(targetName, packageName, vulnerabilities, proofs);
+      const waiver = remediation ? null : resolveAuditWaiver(targetName, packageName, vulnerabilities, waivers);
       const item = {
         package: packageName,
         severity,
@@ -150,12 +153,14 @@ function summarizeAudit(targetName, audit, waivers, threshold) {
         fixAvailable: vulnerability.fixAvailable ?? false,
         effects: Array.isArray(vulnerability.effects) ? [...vulnerability.effects].sort() : [],
         advisoryIds: advisoryIds(vulnerability),
+        remediated: Boolean(remediation),
+        remediation,
         waived: Boolean(waiver),
         waiverReason: waiver?.reason ?? null,
         waiverAdvisories: waiver?.advisories ?? [],
         waiverExpires: waiver?.expires ?? null,
       };
-      if (failsThreshold && !waiver) {
+      if (failsThreshold && !waiver && !remediation) {
         failures.push(item);
       }
       return item;
@@ -170,10 +175,48 @@ function summarizeAudit(targetName, audit, waivers, threshold) {
   };
 }
 
+function copyLocalArchives(value, sourceRoot, destinationRoot) {
+  if (typeof value === "string" && value.startsWith("file:")) {
+    const path = value.slice(5), source = resolve(sourceRoot, path);
+    const scoped = relative(sourceRoot, source);
+    if (scoped.startsWith("..") || !scoped.endsWith(".tgz")) throw new Error(`Unsupported local audit source: ${value}`);
+    const destination = resolve(destinationRoot, path);
+    mkdirSync(dirname(destination), { recursive: true });
+    copyFileSync(source, destination);
+  } else if (value && typeof value === "object") {
+    for (const item of Object.values(value)) copyLocalArchives(item, sourceRoot, destinationRoot);
+  }
+}
+
+function auditBackportIdentities(project, proofs, threshold) {
+  const identityRoot = join(project, "registry-identity-audit");
+  mkdirSync(identityRoot);
+  const source = JSON.parse(readFileSync("templates/nuxt-web/web/vendor/backports.json", "utf8"));
+  writeFileSync(join(identityRoot, "package.json"), JSON.stringify({ name: "forge-source-identity-audit", private: true,
+    dependencies: Object.fromEntries(source.packages.map(pkg => [pkg.name, pkg.version])) }));
+  const install = runNpm(["install", "--package-lock-only", "--ignore-scripts", "--legacy-peer-deps", "--audit=false", "--fund=false"], identityRoot);
+  if (install.status !== 0) throw new Error(`Identity audit resolution failed: ${install.stderr}`);
+  const result = runNpm(["audit", "--json", "--audit-level", threshold], identityRoot);
+  const report = validateAuditReport(JSON.parse(result.stdout), result.status);
+  const seen = new Set();
+  for (const [name, finding] of Object.entries(report.vulnerabilities)) {
+    for (const advisory of finding.via ?? []) {
+      if (!advisory || typeof advisory !== "object") continue;
+      const proof = proofs.find(item => item.package === name && item.advisory === advisory.url && item.severity === advisory.severity);
+      if (!proof && (SEVERITY_RANK[advisory.severity] ?? 0) >= SEVERITY_RANK[threshold])
+        throw new Error(`Unremediated registry identity advisory: ${name} ${advisory.url}`);
+      if (proof) seen.add(proof.advisory);
+    }
+  }
+  if (proofs.some(proof => !seen.has(proof.advisory))) throw new Error("Registry identity audit omitted a known advisory; cannot attest coverage");
+  return { npmAuditExitCode: result.status, report };
+}
+
 function auditTarget(target, tempRoot, waivers, threshold) {
   const tempProject = join(tempRoot, target.name.replace(/[^a-zA-Z0-9._-]/g, "-"));
   mkdirSync(tempProject, { recursive: true });
   const deps = normalizeDependencies(target.packageJson);
+  copyLocalArchives(deps, resolve(dirname(target.manifest)), tempProject);
   writeFileSync(
     join(tempProject, "package.json"),
     `${JSON.stringify({
@@ -212,10 +255,18 @@ function auditTarget(target, tempRoot, waivers, threshold) {
     };
   }
 
+  let proofs = [];
+  let registryIdentityAudit = null;
+  if (target.name === "template:nuxt-web-web") {
+    const materialize = runNpm(["install", "--ignore-scripts", "--legacy-peer-deps", "--audit=false", "--fund=false"], tempProject);
+    if (materialize.status !== 0) throw new Error(`Cannot materialize Nuxt backports: ${materialize.stderr}`);
+    proofs = verifyInstalledNuxtBackports(tempProject, target.name);
+    registryIdentityAudit = auditBackportIdentities(tempProject, proofs, threshold);
+  }
   const audit = runNpm(["audit", "--json", "--audit-level", threshold], tempProject);
   let parsed;
   try {
-    parsed = JSON.parse(audit.stdout || "{}");
+    parsed = validateAuditReport(JSON.parse(audit.stdout || "{}"), audit.status);
   } catch {
     return {
       name: target.name,
@@ -242,12 +293,14 @@ function auditTarget(target, tempRoot, waivers, threshold) {
     };
   }
 
-  const summary = summarizeAudit(target.name, parsed, waivers, threshold);
+  const summary = summarizeAudit(target.name, parsed, waivers, threshold, proofs);
   return {
     name: target.name,
     manifest: target.manifest,
     ok: summary.failures.length === 0,
     npmAuditExitCode: audit.status ?? 0,
+    sourceBackportProofs: proofs,
+    registryIdentityAudit,
     ...summary,
   };
 }
