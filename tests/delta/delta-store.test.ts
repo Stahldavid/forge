@@ -284,6 +284,8 @@ describe("delta store", () => {
 
   test("records CAIR activity as semantic timeline events", async () => {
     const root = tempWorkspace("delta-cair-recording");
+    const priorDelta = process.env.FORGE_DELTA;
+    process.env.FORGE_DELTA = "1";
     try {
       const argv = ["cair", "query", "Q", "ST"];
       const parsed = parseCli(argv);
@@ -318,6 +320,7 @@ describe("delta store", () => {
       expect(timeline.events.some((event) => event.entities.some((entity) => entity.kind === "cair"))).toBe(true);
       expect(JSON.stringify(timeline)).toContain("\"queryVerb\":\"Q ST\"");
     } finally {
+      if (priorDelta === undefined) delete process.env.FORGE_DELTA; else process.env.FORGE_DELTA = priorDelta;
       rmSync(root, { recursive: true, force: true });
     }
   }, 30_000);
@@ -572,6 +575,8 @@ describe("delta store", () => {
 
   test("enriches external runtime calls from generated service metadata", async () => {
     const root = tempWorkspace("delta-external-runtime");
+    const priorDelta = process.env.FORGE_DELTA;
+    process.env.FORGE_DELTA = "1";
     try {
       const generated = join(root, "src/forge/_generated");
       mkdirSync(generated, { recursive: true });
@@ -627,6 +632,7 @@ describe("delta store", () => {
         lastResult: "success",
       });
     } finally {
+      if (priorDelta === undefined) delete process.env.FORGE_DELTA; else process.env.FORGE_DELTA = priorDelta;
       rmSync(root, { recursive: true, force: true });
     }
   }, 30_000);
