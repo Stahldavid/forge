@@ -39,7 +39,7 @@ jobs:
           let paths;
           try {
             if (!process.env.BASE_SHA || /^0+$/.test(process.env.BASE_SHA)) throw new Error('initial push');
-            paths = execFileSync('git', ['diff', '--name-only', '-z', process.env.BASE_SHA, process.env.HEAD_SHA], { encoding: 'utf8' }).split('\0').filter(Boolean);
+            paths = execFileSync('git', ['diff', '--no-renames', '--name-only', '-z', process.env.BASE_SHA, process.env.HEAD_SHA], { encoding: 'utf8' }).split('\0').filter(Boolean);
           } catch { paths = ['package.json']; } // Missing history runs all optional checks.
           const common = /^(package\.json|bun\.lock|\.npmrc|tsconfig[^/]*|bin\/|\.github\/workflows\/ci\.yml)/;
           const templates = paths.some(path => common.test(path) || /^(templates\/|examples\/|packages\/|scripts\/|schemas\/|adapters\/)/.test(path) || (path.startsWith('src/') && !/^src\/forge\/(agent-fabric|agent-memory|adaptive|_generated)\//.test(path)));
@@ -56,6 +56,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      FORGE_FABRIC_TEST_MODE: "1"
+      FORGE_DELTA: "0"
     steps:
       - uses: actions/checkout@v4
 
@@ -101,8 +104,8 @@ jobs:
         if: github.event_name == 'pull_request' && needs.changes.outputs.fabric_only == 'true'
         run: node scripts/run-fabric-ci.mjs
 
-      - name: Agent Fabric full regressions (main or mixed changes)
-        if: github.event_name != 'pull_request' || needs.changes.outputs.fabric_only != 'true'
+      # The critical subset is additional evidence, never a replacement for full coverage.
+      - name: Agent Fabric full regressions
         run: bun test tests/agent-fabric --timeout 120000
 
       - name: Native hook owner startup regression
@@ -161,11 +164,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      # Verify already covers Ubuntu/Node 22. PRs add Windows 22; main adds
-      # Ubuntu 24. Template/package-manager scaffolding runs
-      # once in verify, not on every matrix runner.
+      # Keep npm resolution on Ubuntu/Node 22 distinct from Bun in verify.
+      # PRs cover Ubuntu/Windows 22; main and dispatch also cover Ubuntu 24 and macOS 22.
       matrix:
-        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]' || github.event_name == 'pull_request' && '[{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22}]') }}
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]' || github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","node-version":22},{"os":"windows-latest","node-version":22}]' || '[{"os":"ubuntu-latest","node-version":22},{"os":"ubuntu-latest","node-version":24},{"os":"windows-latest","node-version":22},{"os":"macos-latest","node-version":22}]') }}
     steps:
       - uses: actions/checkout@v4
         if: needs.changes.outputs.runtime == 'true'

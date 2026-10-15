@@ -131,7 +131,7 @@ test("T13 deleting the fixture primary event preserves the binding and reports s
     while (probeDeltaStoreBusy(expired.root)) { if (Date.now() > deadline) throw new Error("Fixture broker did not close"); await new Promise(resolve => setTimeout(resolve, 20)); }
     const adapterPath = new URL("../../src/forge/runtime/db/pglite-adapter.ts", import.meta.url).href;
     const script = `const {createPgliteAdapter}=await import(${JSON.stringify(adapterPath)});const db=await createPgliteAdapter(${JSON.stringify(expired.delta.storePath)});try{await db.query('DELETE FROM agent_memory_events WHERE id=$1',[${JSON.stringify(event.eventId)}])}finally{await db.close()}`;
-    execFileSync(process.env.FORGE_TRACE_NODE ?? process.execPath, ["--import", "tsx", "--input-type=module", "-e", script], { cwd: process.cwd(), env: process.env });
+    execFileSync(process.env.FORGE_TRACE_NODE ?? "node", ["--import", "tsx", "--input-type=module", "-e", script], { cwd: process.cwd(), env: process.env });
     reopened = await DeltaStore.open(expired.root, { access: "write" });
     const result = await explainFabricTrace(expired.root, { runKey: key }) as { agentMemory: { availability: string; bindings: { historicalBinding: string; primaryAvailability: string }[] }; origin: { transcriptStored: boolean } };
     expect(result.agentMemory.bindings[0].historicalBinding).toBe("preserved");
@@ -173,14 +173,13 @@ test("T17 confirmed apply without commit remains distinct from observed Git comm
   } finally { await late.close(); }
 }, 120000);
 test("T25 the preserved alpha72 reader rejects trace4 without changing its bytes", async () => {
-  const old = process.env.FORGE_TRACE_LEGACY_SOURCE;
-  if (!old) throw new Error("Set FORGE_TRACE_LEGACY_SOURCE to the preserved alpha72 source for this pilot");
+  const old = process.env.FORGE_TRACE_LEGACY_SOURCE ?? new URL("../fixtures/alpha72-program-store.ts", import.meta.url).href;
   const store = await fixture.store(), cut = (await store.cut(finalRun.runId))!;
   expect(cut.format).toBe(4);
   const record = join(store.directory, `${programDigest(finalRun.runId).slice(7)}.json`), before = await readFile(record);
   for (const operation of ["read", "list", "mutate"]) {
     const script = `const {ProgramRunStore}=await import(${JSON.stringify(old)});const s=await ProgramRunStore.open(${JSON.stringify(fixture.root)});try{${operation === "list" ? "await s.list()" : operation === "mutate" ? `await s.transact(${JSON.stringify(finalRun.runId)},'legacy-write',x=>x)` : `await s.read(${JSON.stringify(finalRun.runId)})`};process.exit(3)}catch{process.stdout.write('legacy-refused')}`;
-    const output = execFileSync(process.env.FORGE_TRACE_NODE ?? process.execPath, ["--import", "tsx", "--input-type=module", "-e", script], { cwd: process.cwd(), env: process.env, encoding: "utf8" });
+    const output = execFileSync(process.env.FORGE_TRACE_NODE ?? "node", ["--import", "tsx", "--input-type=module", "-e", script], { cwd: process.cwd(), env: process.env, encoding: "utf8" });
     expect(output).toBe("legacy-refused"); expect(await readFile(record)).toEqual(before);
   }
 }, 120000);

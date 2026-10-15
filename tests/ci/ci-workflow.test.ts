@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
+import { parse } from "yaml";
 
 describe("CI workflow breadth", () => {
   test("actual CI classifier skips unrelated templates and falls back safely without history", () => {
@@ -42,6 +43,62 @@ describe("CI workflow breadth", () => {
       expect(readFileSync(output, "utf8")).toBe("templates=true\npackage=true\nruntime=true\nfabric_only=false\n");
     } finally { rmSync(fixture, { recursive: true, force: true }); }
   });
+  for (const [source, destination, expected] of [
+    ["templates/minimal-web/probe.ts", "tests/fixtures/retired-probe.ts", "templates=true\npackage=true\nruntime=false\nfabric_only=false\n"],
+    ["src/forge/runtime-probe.ts", "tests/fixtures/retired-probe.ts", "templates=true\npackage=true\nruntime=true\nfabric_only=false\n"],
+    ["bin/probe.mjs", "tests/fixtures/retired-probe.ts", "templates=true\npackage=true\nruntime=true\nfabric_only=false\n"],
+    ["src/forge/agent-fabric/program-service.ts", "src/forge/agent-fabric/program-authoring.ts", "templates=false\npackage=true\nruntime=true\nfabric_only=false\n"],
+  ] as const) {
+    test(`preserves removed scope when renaming ${source}`, () => {
+      const workflow = readFileSync(".github/workflows/ci.yml", "utf8").replaceAll("\r\n", "\n");
+      const script = workflow.split("node --input-type=module <<'NODE'\n")[1]!.split("          NODE")[0]!
+        .split("\n").map(line => line.replace(/^          /, "")).join("\n");
+      const fixture = mkdtempSync(join(tmpdir(), "forge-ci-rename-"));
+      const git = (...args: string[]) => execFileSync("git", args, { cwd: fixture, encoding: "utf8", windowsHide: true }).trim();
+      try {
+        git("init", "-q"); git("config", "user.name", "CI Fixture"); git("config", "user.email", "ci@example.invalid");
+        git("config", "diff.renames", "true");
+        mkdirSync(join(fixture, source, ".."), { recursive: true });
+        writeFileSync(join(fixture, source), "unchanged content for exact rename\n");
+        git("add", source); git("commit", "-qm", "base");
+        const base = git("rev-parse", "HEAD");
+        mkdirSync(join(fixture, destination, ".."), { recursive: true });
+        git("mv", source, destination); git("commit", "-qm", "move across classifier scopes");
+        const output = join(fixture, ".git", "ci-output"); writeFileSync(output, "");
+        execFileSync(process.execPath, ["--input-type=module", "-e", script], {
+          cwd: fixture, windowsHide: true, env: { ...process.env, BASE_SHA: base, HEAD_SHA: git("rev-parse", "HEAD"), GITHUB_OUTPUT: output },
+        });
+        expect(readFileSync(output, "utf8")).toBe(expected);
+      } finally { rmSync(fixture, { recursive: true, force: true }); }
+    });
+  }
+  test("keeps full Fabric coverage and automatic npm/OS breadth", () => {
+    const workflow = parse(readFileSync(".github/workflows/ci.yml", "utf8"));
+    expect(workflow.jobs.verify.env.FORGE_FABRIC_TEST_MODE).toBe("1");
+    expect(workflow.jobs.verify.env.FORGE_DELTA).toBe("0");
+    const steps = workflow.jobs.verify.steps;
+    const full = steps.find((step: { name?: string }) => step.name === "Agent Fabric full regressions");
+    expect(full).toBeDefined();
+    expect(full.if).toBeUndefined();
+    expect(full.run).toBe("bun test tests/agent-fabric --timeout 120000");
+    const critical = steps.find((step: { name?: string }) => step.name === "Agent Fabric critical regressions (Fabric-only PR)");
+    expect(critical.run).toBe("node scripts/run-fabric-ci.mjs");
+    expect(critical.if).toContain("needs.changes.outputs.fabric_only == 'true'");
+    const matrix = workflow.jobs["node-breadth"].strategy.matrix.include as string;
+    const expression = matrix.slice("${{ fromJSON(".length, -") }}".length);
+    const evaluate = new Function("github", "fromJSON", `return fromJSON(${expression});`);
+    const expectedFull = [
+      { os: "ubuntu-latest", "node-version": 22 },
+      { os: "ubuntu-latest", "node-version": 24 },
+      { os: "windows-latest", "node-version": 22 },
+      { os: "macos-latest", "node-version": 22 },
+    ];
+    expect(evaluate({ event_name: "pull_request" }, JSON.parse)).toEqual([expectedFull[0], expectedFull[2]]);
+    expect(evaluate({ event_name: "push" }, JSON.parse)).toEqual(expectedFull);
+    expect(evaluate({ event_name: "workflow_dispatch" }, JSON.parse)).toEqual(expectedFull);
+    const install = workflow.jobs["node-breadth"].steps.find((step: { name?: string }) => step.name === "Install dependencies with npm");
+    expect(install.run).toBe("npm install --ignore-scripts --package-lock=false");
+  });
   test("covers Node smoke across OS and supported Node majors", () => {
     const workflow = readFileSync(join(process.cwd(), ".github", "workflows", "ci.yml"), "utf8");
     const security = readFileSync(join(process.cwd(), ".github", "workflows", "security-assurance.yml"), "utf8");
@@ -57,7 +114,7 @@ describe("CI workflow breadth", () => {
     expect(nodeBreadthJob).toContain('"os":"ubuntu-latest","node-version":24');
     expect(nodeBreadthJob).toContain('"os":"macos-latest","node-version":22');
     expect(nodeBreadthJob).toContain("github.event_name == 'workflow_dispatch'");
-    expect(nodeBreadthJob).not.toContain('"os":"ubuntu-latest","node-version":22');
+    expect(nodeBreadthJob).toContain('"os":"ubuntu-latest","node-version":22');
     expect(workflow).toContain("node ./bin/forge.mjs inspect capabilities --json");
     expect(workflow).toContain("node .\\bin\\forge.mjs doctor windows --json");
     expect(workflow).toContain("package manager template smoke");
