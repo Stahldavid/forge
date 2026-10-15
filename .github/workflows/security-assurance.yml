@@ -80,7 +80,7 @@ jobs:
       # Aggregate proof runs its selected invariant files; preserve the broader
       # security suite for tests outside that selection.
       - name: Security assurance tests
-        run: node ./bin/forge-bun.mjs test tests/security --timeout 120000 | tee security/evidence/latest/security-tests.txt
+        run: node ./bin/forge-bun.mjs test tests/security tests/release/dependency-audit-policy.test.ts tests/release/nuxt-backports.test.ts --timeout 120000 | tee security/evidence/latest/security-tests.txt
 
       - name: Upload security evidence
         if: always()

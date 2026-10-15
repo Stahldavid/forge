@@ -30,3 +30,12 @@ test("GitHub Packages excludes main pushes and has an explicit-event job guard",
   expect(mirrors.on).toHaveProperty("workflow_dispatch");
   expect(mirrors.jobs["publish-github-packages"].if).toBe("github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')");
 });
+
+test("hosted security gate preserves broad tests and verifies backport and audit rejection cases", () => {
+  const workflow = parse(readFileSync(".github/workflows/security-assurance.yml", "utf8"));
+  const job = workflow.jobs["security-gate"];
+  expect(job.defaults.run.shell).toBe("bash");
+  const step = job.steps.find((step: any) => step.name === "Security assurance tests");
+  expect(step.run).toContain("test tests/security tests/release/dependency-audit-policy.test.ts tests/release/nuxt-backports.test.ts --timeout 120000");
+  expect(step.run).toContain("| tee security/evidence/latest/security-tests.txt");
+});
