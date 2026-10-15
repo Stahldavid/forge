@@ -57,6 +57,9 @@ jobs:
       - name: Prepare evidence directory
         run: mkdir -p security/evidence/latest
 
+      - name: Audit locked Bun dependencies
+        run: bun audit --audit-level=high --json | tee security/evidence/latest/bun-audit.json
+
       - name: Generate derived compiler output
         run: node ./bin/forge.mjs generate
 
