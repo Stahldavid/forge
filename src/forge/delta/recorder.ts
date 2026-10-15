@@ -164,7 +164,9 @@ export async function recordParsedCliCommand(input: {
     input.command.kind === "delta" ||
     input.command.kind === "session" ||
     input.command.kind === "timeline" ||
-    input.command.kind === "explain"
+    input.command.kind === "explain" ||
+    // Trace reads must stay read-only through the complete CLI lifecycle, including failures.
+    (input.command.kind === "trace" && (input.command.subcommand === "status" || input.command.subcommand === "explain"))
   ) {
     return;
   }

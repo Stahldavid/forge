@@ -50,11 +50,23 @@ function validateState(state: ManagedRunState, root: string, runId: string) {
     assert(step.directory === undefined || (isAbsolute(step.directory) && resolve(step.directory) === step.directory), "Invalid workspace directory");
     if (step.repositoryContext !== undefined) {
       const context = step.repositoryContext;
-      assert(context && Object.keys(context).every(key => ["provider", "phase", "status", "sourceRoot", "cloneRoot", "snapshotId", "diagnostics"].includes(key)), "Invalid repository context fields");
+      assert(context && Object.keys(context).every(key => ["provider", "phase", "status", "sourceRoot", "cloneRoot", "snapshotId", "diagnostics", "quality", "runtime"].includes(key)), "Invalid repository context fields");
       assert(context.provider === "repository" && context.phase === "prepared-input" && ["ready", "unavailable"].includes(context.status) && context.sourceRoot === root && context.cloneRoot === step.directory, "Repository context belongs to another checkout");
       assert(Array.isArray(context.diagnostics) && context.diagnostics.length <= 20 && context.diagnostics.every(message => typeof message === "string" && message.length <= 512), "Invalid repository context diagnostics");
       assert(context.snapshotId === undefined || (typeof context.snapshotId === "string" && context.snapshotId.length <= 256 && context.snapshotId.length > 0), "Invalid repository context snapshot");
       assert(context.status !== "ready" || context.snapshotId !== undefined, "Ready repository context requires a snapshot");
+      if (context.runtime !== undefined) {
+        const runtime = context.runtime;
+        assert(runtime && Object.keys(runtime).every(key => ["reportId", "environmentId", "phase"].includes(key))
+          && context.status === "ready" && runtime.phase === "source-observed-matching-input"
+          && typeof runtime.reportId === "string" && runtime.reportId.length > 0 && runtime.reportId.length <= 128
+          && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(runtime.environmentId), "Invalid runtime repository evidence metadata");
+      }
+      if (context.quality !== undefined) {
+        const quality = context.quality, counts = ["factsReused", "unresolvedLocalImports", "unresolvedUiReferences", "dynamicHttpCalls", "httpEndpointLinks", "analysisErrors"] as const;
+        assert(quality && Object.keys(quality).every(key => ["completeness", "runtimeObserved", ...counts].includes(key))
+          && quality.completeness === "partial" && quality.runtimeObserved === false && counts.every(key => Number.isSafeInteger(quality[key]) && quality[key] >= 0 && quality[key] <= 1_000_000), "Invalid static repository quality");
+      }
     }
   }
   assert(Number.isSafeInteger(state.cursor) && state.cursor >= 0 && Array.isArray(state.events) && state.events.length <= 10000, "Invalid event history");

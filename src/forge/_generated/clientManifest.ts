@@ -1,8 +1,8 @@
-// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=b4bf2125d71ad76462621af00c5f5185bbc92c478180ea7f48bfec57efb078b8
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=b3839131cc60b5ad94f5f9631e953065e71fa2028b36e83ff7f51316555c878c
 export const clientManifest = {
   "schemaVersion": "1.0.0",
-  "generatorVersion": "0.1.0-alpha.69",
-  "inputHash": "e390d21b644c09126262fdedd4f76602008a64305c3474543d227625d2852ce4",
+  "generatorVersion": "0.1.0-alpha.72",
+  "inputHash": "0de6e00843418af3a9f647b6017c5d82a651ae09f4a0d1af4e4bd23d2ad666f6",
   "queries": [],
   "commands": [],
   "liveQueries": [],
@@ -36,7 +36,9 @@ export const clientManifest = {
     ]
   },
   "excluded": {
-    "actions": [],
+    "actions": [
+      "__forge_15_32"
+    ],
     "workflows": [],
     "serverAdapters": [
       "ai.anthropic.server.ts",

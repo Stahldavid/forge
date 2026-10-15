@@ -13,6 +13,8 @@ import { readDeltaGitSnapshot, type DeltaGitSnapshot } from "./git-observer.ts";
 import { inspectDeltaAgentQueue } from "./queue-status.ts";
 import { pidWasReused } from "./process-identity.ts";
 import type { AgentEventEnvelope, AgentMemoryEventRecord } from "../agent-memory/types.ts";
+import { createTraceGeneration, activateTraceGeneration, projectTraceBatch, readTraceProjectionStatus, explainTraceProjection, type TraceProjectionBatch, type TraceExplanationFilter, type TraceCut } from "./trace-projection.ts";
+import type { TraceRunKey } from "../agent-fabric/trace-contract.ts";
 
 let deltaBrokerOwnsProcess = false;
 /** Called only by the detached broker process before opening its physical PGlite store. */
@@ -592,6 +594,10 @@ export class DeltaStore {
           if (typeof property === "string" && DELTA_BROKER_METHODS.has(property)) {
             return async (...args: unknown[]) => {
               if (target.closed) throw new Error("Delta store handle is closed");
+              if (["traceExplain", "traceStatus", "traceReadAgentMemoryEvent"].includes(property)) {
+                const { requestExistingDeltaBroker } = await import("./broker.ts");
+                return requestExistingDeltaBroker(workspaceRoot, property, args);
+              }
               return requestDeltaBroker(workspaceRoot, property, args);
             };
           }
@@ -656,6 +662,38 @@ export class DeltaStore {
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at`,
       ["schemaVersion", DELTA_SCHEMA_VERSION, new Date().toISOString()],
     );
+  }
+
+  async traceCreateGeneration(input: { generationId: string; extractorVersion: string }): Promise<void> {
+    return createTraceGeneration(this.adapter, input);
+  }
+
+  async traceActivateGeneration(input: { generationId: string; cuts: { runKey: TraceRunKey; cut: TraceCut }[] }): Promise<void> {
+    return activateTraceGeneration(this.adapter, input);
+  }
+
+  async traceProjectBatch(input: TraceProjectionBatch) { return projectTraceBatch(this.adapter, input); }
+  async traceStatus(generationId?: string) { return readTraceProjectionStatus(this.adapter, generationId); }
+  async traceExplain(filter: TraceExplanationFilter) { return explainTraceProjection(this.adapter, filter); }
+
+  /** Exact committed row only; does not drain or search by approximate session identity. */
+  async traceReadAgentMemoryEvent(eventId: string): Promise<AgentMemoryEventRecord | null> {
+    if (!/^[A-Za-z0-9_.:@+~-]{1,256}$/u.test(eventId)) throw Object.assign(new Error("TRACE_INVALID_REFERENCE"), { code: "TRACE_INVALID_REFERENCE" });
+    const row = (await this.adapter.query(
+      `SELECT ame.*, e.external_session_id,e.external_turn_id,e.event_kind,e.captured_at,
+              s.source_name,s.integration_kind,s.trust_level
+       FROM agent_memory_events ame
+       JOIN external_agent_events e ON e.id=ame.external_event_id
+       JOIN agent_event_sources s ON s.id=e.source_id
+       WHERE ame.id=$1 LIMIT 1`, [eventId])).rows[0];
+    if (!row) return null;
+    return { id:String(row.id), externalEventId:String(row.external_event_id), sourceName:String(row.source_name),
+      integrationKind:String(row.integration_kind), trustLevel:String(row.trust_level),
+      externalSessionId:typeof row.external_session_id === "string" ? row.external_session_id : undefined,
+      externalTurnId:typeof row.external_turn_id === "string" ? row.external_turn_id : undefined,
+      eventKind:String(row.event_kind),normalizedKind:String(row.normalized_kind),summary:typeof row.summary === "string" ? row.summary : undefined,
+      confidence:Number(row.confidence??0),capturedAt:String(row.captured_at),operationId:typeof row.operation_id === "string" ? row.operation_id : undefined,
+      data:{} };
   }
 
   async ensureActor(kind: DeltaActorKind, name: string, metadata: Record<string, unknown> = {}): Promise<string> {

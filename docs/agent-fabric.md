@@ -1,8 +1,18 @@
 # Forge Agent Fabric
 
+Existing repositories can attach optional [runtime observations](repository-runtime-observation.md)
+to their maps. Worker preparation reads compatible saved evidence without executing
+exporters; changes composed into a clone invalidate reuse. A runtime observation does
+not satisfy verification gates or extend worker write scope.
+
 Forge Agent Fabric is an experimental protocol-oriented execution layer for dynamically materialized agents and workflows. It extends Forge's existing compiler, outbox, actions, workflows, policy, and agent runtime rather than replacing them.
 
 ## Implementation status
+
+Workflow corrections R2.2: inherited subworkflow quotas/cancellation, shared recoverable leases, owner visual case catalogs, typed connections, compact linked journal and graph inspection. See [correction plan](architecture/agent-fabric/WORKFLOW_PROGRAM_V2_CORRECTIONS.md).
+
+Current development workflow runtime adopts operatorVersion 2 directly, without a legacy interpreter or migration requirement. See [workflow API](./agent-fabric-programs.md), [normative architecture](./architecture/agent-fabric/WORKFLOW_PROGRAM_V2_ADR.md) and [current implementation evidence](./architecture/agent-fabric/WORKFLOW_PROGRAM_V2_EVIDENCE.md). This revision adds activity quotas, durable waiting/continuation, scoped item/final obligations and immutable capture evidence. Historical plans and SDK pilots are not proof of current model quality. This implementation was validated without real LLM calls.
+
 
 The Codex-accompanied task mode now records acceptance criteria, scoped source snapshots,
 independent review and checks in a persistent local task. Its dynamic workflow scheduler
@@ -57,6 +67,14 @@ verified cache. Scripts are ignored by default; dependencies are isolated, not s
 through a mutable folder. The optional environment object accepts mode auto/none,
 ignoreScripts, timeoutMs (100..1800000) and an HTTPS registry without credentials, query
 or fragment. Reviewers and commands are read-only after environment preparation.
+
+Tracked assets larger than 16 MiB outside the task's editable and captured configuration
+scope remain in Git clones as read-only inputs. Inventories record their SHA-256 by
+streaming 256 KiB blocks, without embedding asset bytes in worker metadata. Fingerprints
+include asset sizes; baseline and out-of-scope changes are still rejected. These assets
+are bounded to 512 MiB each and 1 GiB in aggregate. Editable snapshots retain their
+16 MiB per-file / 128 MiB aggregate limits, and changed artifacts retain the 8 MiB
+per-file limit. Declaring a large asset as editable does not bypass those bounds.
 
 Controls are run-steer/pause/resume/cancel/reconcile. Mutations require
 `{runId,requestId,expectedVersion}` and complete `--file` bodies. Reuse requestId only for
@@ -553,3 +571,12 @@ evaluation, revocation, and digest checks. This registry does not import or
 execute those bytes or grant them side effects. Its review window is a
 cooperative human checkpoint; same-account shell or browser automation is
 outside its protection boundary. No hosted model or API key is used.
+
+## Opt-in program workflows v2 (alpha.70)
+
+For finite TypeScript/JSON program workflows, read
+[the executable v2 contract](agent-fabric-programs.md) and the shipped
+`examples/agent-fabric-v2/` example. This adds durable typed operators, repair,
+owner coverage/acceptance and reconciled local application alongside v1 runs.
+Fenced replan currently uses a global scheduling barrier; full product acceptance
+and an actual Claude benchmark are recorded separately in the architecture evidence.

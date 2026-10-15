@@ -1,9 +1,74 @@
 # Agent Fabric: tarefas Codex e workflows dinâmicos
 
+> Atualização de desenvolvimento em 07/10/2026: o núcleo de workflows R2.1 e as correções R2.2 (WORKFLOW_PROGRAM_V2_CORRECTIONS.md) foram implementados diretamente com operatorVersion 2, sem requisito de compatibilidade legada. O inventário atual está em [API de workflows](../../agent-fabric-programs.md), [ADR](WORKFLOW_PROGRAM_V2_ADR.md) e [evidências atuais](WORKFLOW_PROGRAM_V2_EVIDENCE.md). Os baselines/pilotos e limites descritos nas seções históricas abaixo não substituem esses contratos. A implementação atual foi validada sem chamadas reais a LLM; superioridade de produto sobre Claude DW não foi medida.
+
+
 Data: 2026-10-05. Baseline: `78b01d9ddee751047184d828fd66c0ae0361823b`.
 Este documento detalha a implementação solicitada pelo usuário e seus critérios de aceite.
 O plano anterior `CODEX_APP_IMPLEMENTATION_PLAN.md` permanece como contexto histórico.
 Resultados de execução e limites observados ficam no registro de validação ao final.
+
+## Estado atual verificado em 2026-10-07
+
+Checkout consultado: `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c`.
+Esta atualização é uma conferência documental e de código; não reexecuta os pilotos,
+não declara publicação dessa revisão e não altera os aceites históricos P0a/P0b.
+
+| Capacidade | Estado e limite de evidência |
+| --- | --- |
+| Tarefas acompanhadas | `attached-*` implementado: contrato, persistência, snapshots, revisão distinta, checks, cobertura e prontidão. Relatos conservam proveniência `agent_reported`. |
+| Workflows dinâmicos | `workflow-*` implementado: DAG versionado, dependências, decisões, joins, tentativas limitadas, replanejamento e reconciliação. No modo acompanhado, o Codex executa as etapas. |
+| Workers gerenciados | `run-*` implementado: Codex SDK e comandos, clones Git isolados, composição de artefatos, preparo de dependências, eventos, controles e aplicação local com gates de revisão/verificação. |
+| Piloto SDK real | Registrado na seção 14 em 05/10/2026; execução demonstrada pela CLI. O registro não prova integração nativa MCP nesta conversa nem foi reproduzido nesta atualização. |
+| Repositórios existentes | Manifesto, mapas, consultas e contexto implementados; operação e limites em [`../../repository-analysis.md`](../../repository-analysis.md). Análise não exige aplicação Forge; runs gerenciados exigem Git com HEAD. |
+| Observações de runtime | Suporte opcional e explícito documentado em [`../../repository-runtime-observation.md`](../../repository-runtime-observation.md). Evidência observada não substitui gates de verificação. |
+| Trabalho pendente separado | Piloto EasyGrow, aceite completo de hooks nativos, controle interativo por App Server e wakeup/serviço de sistema. Não declarar E0–E7 integralmente aceitos. |
+
+Limites atuais dos runs gerenciados: 32 nós, concorrência 4, 100 tentativas totais,
+20 revisões e até 30 minutos por executor. O owner precisa permanecer vivo; não há
+garantia de execução com o App fechado. Revisões e checks precisam corresponder ao
+snapshot aplicável. No bridge acompanhado, a invalidação considera o escopo inteiro
+da tarefa, sem granularidade completa por `inputRefs`.
+
+Os planos `CODEX_APP_IMPLEMENTATION_PLAN.md`, `CODING_AGENT_DELIVERY_PLAN.md` e
+`REPOSITORY_MANIFEST_PLAN.md` preservam decisões e propostas dos seus baselines.
+Checklists antigos e a restrição `proposal_only` do MCP legado não descrevem todas
+as capacidades atuais: `fabric_run_start` despacha workers e pode consumir uso Codex.
+Use este resumo para localizar o estado atual e as seções seguintes para contratos,
+procedimentos e registros de validação; suporte no checkout não comprova versão
+publicada, implantação, execução contínua ou aceite em outro projeto.
+
+### Comparação com Claude Code Dynamic Workflows
+
+Comparação consultada em 2026-10-07. No Fabric, o plano é um DAG declarativo
+versionado; no Claude Code, um script JavaScript controla a orquestração. Ambos
+podem dividir trabalho, reunir resultados e compor revisão independente.
+
+| Dimensão | Fabric/Forge no checkout consultado | Claude Code Dynamic Workflows |
+| --- | --- | --- |
+| Próxima etapa | Scheduler e dependências; mudanças por revisão explícita do plano | Condições, loops e chamadas do script |
+| Resultado aplicável | Contratos de saída e snapshots; prontidão da tarefa acompanhada e gates de aplicação gerenciada | Resultados dos agentes reunidos pela lógica do script |
+| Recuperação | Tentativas incertas exigem reconciliação; replan preserva obrigações | Replay de resultados salvos; falha ou mudança de prompt pode reexecutar agentes posteriores |
+| Execução | Acompanhada pelo Codex ou gerenciada por SDK/comandos | Runtime de workflows integrado ao Claude Code |
+
+No Fabric, não confundir o scheduler acompanhado com despacho automático de workers.
+O modo gerenciado tem limites próprios e exige owner vivo. Revisões/checks vinculados
+ao snapshot não garantem correção do modelo ou aceite humano; registros acompanhados
+continuam cooperativos. O bridge acompanhado invalida conservadoramente pelo escopo
+inteiro, não somente por entradas individuais de cada nó.
+
+No Claude Code, o script coordena e os agentes acessam arquivos/comandos. A retomada
+depende da sessão e dos resultados salvos; execução em background tem condições próprias.
+Não afirmar que Claude não possui revisão, persistência ou recuperação. Também não
+inferir que o Fabric é superior em qualidade, custo ou velocidade sem avaliação pareada.
+Valores de limites, disponibilidade e comportamento do fornecedor devem ser atualizados
+nas fontes oficiais antes de orientar uma nova execução.
+
+Fontes do Claude: [documentação dos workflows](https://code.claude.com/docs/en/workflows)
+e [apresentação oficial](https://claude.com/resources/articles/introducing-dynamic-workflows-in-claude-code).
+Fonte do Fabric: contratos e serviços em `src/forge/agent-fabric`, incluindo
+`workflow-engine.ts`, `workflow-task-actions.ts`, `managed-run-contract.ts` e
+`managed-run-service.ts`; registros de validação nas seções 12 e 14 deste documento.
 
 ## 1. Experiência pretendida
 

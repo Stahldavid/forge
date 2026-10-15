@@ -1,4 +1,4 @@
-export const DELTA_SCHEMA_VERSION = "0.3.1";
+export const DELTA_SCHEMA_VERSION = "0.4.0";
 
 export const DELTA_SCHEMA_SQL = [
   `CREATE TABLE IF NOT EXISTS delta_meta (
@@ -237,4 +237,34 @@ export const DELTA_SCHEMA_SQL = [
   `CREATE INDEX IF NOT EXISTS external_agent_events_kind_idx ON external_agent_events(event_kind)`,
   `CREATE INDEX IF NOT EXISTS agent_memory_events_kind_idx ON agent_memory_events(normalized_kind)`,
   `CREATE INDEX IF NOT EXISTS agent_memory_events_operation_idx ON agent_memory_events(operation_id)`,
+  `CREATE TABLE IF NOT EXISTS trace_projection_generations (
+    id text PRIMARY KEY, extractor_version text NOT NULL, status text NOT NULL,
+    created_at text NOT NULL, cut_json text
+  )`,
+  `CREATE TABLE IF NOT EXISTS trace_projection_sources (
+    generation_id text NOT NULL, source_key text NOT NULL, run_key text NOT NULL,
+    journal_version integer NOT NULL, journal_ref text NOT NULL, state_ref text NOT NULL,
+    fact_kind text NOT NULL, fact_identity text NOT NULL, source_digest text NOT NULL, fact_json text NOT NULL,
+    PRIMARY KEY (generation_id, source_key),
+    UNIQUE (generation_id, run_key, journal_version, fact_kind, fact_identity)
+  )`,
+  `CREATE INDEX IF NOT EXISTS trace_projection_sources_run_idx ON trace_projection_sources(generation_id,run_key,journal_version)`,
+  `CREATE TABLE IF NOT EXISTS trace_projection_entities (
+    generation_id text NOT NULL, run_key text NOT NULL, entity_id text NOT NULL, kind text NOT NULL,
+    data_json text NOT NULL, journal_version integer NOT NULL, source_key text NOT NULL,
+    PRIMARY KEY (generation_id,run_key,entity_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS trace_projection_relations (
+    generation_id text NOT NULL, run_key text NOT NULL, semantic_key text NOT NULL,
+    source_key text NOT NULL, relation_json text NOT NULL,
+    PRIMARY KEY (generation_id,run_key,semantic_key,source_key)
+  )`,
+  `CREATE TABLE IF NOT EXISTS trace_projection_checkpoints (
+    generation_id text NOT NULL, run_key text NOT NULL, version integer NOT NULL,
+    journal_ref text NOT NULL, state_ref text NOT NULL, PRIMARY KEY (generation_id,run_key)
+  )`,
+  `CREATE TABLE IF NOT EXISTS trace_projection_issues (
+    id text PRIMARY KEY, generation_id text NOT NULL, run_key text NOT NULL,
+    code text NOT NULL, journal_version integer NOT NULL, created_at text NOT NULL
+  )`,
 ];

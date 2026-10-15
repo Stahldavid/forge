@@ -4,6 +4,22 @@ This directory is the governance record for the Forge Agent Fabric architecture 
 It is deliberately separate from `docs/agent-fabric.md`, which describes the executable
 P0a implementation surface.
 
+## Current Codex implementation (2026-10-07)
+
+The checkout at `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c` includes accompanied
+tasks, versioned dynamic workflows and managed Codex SDK/command runs. Read the
+[current status and evidence boundaries](./CODEX_DYNAMIC_WORKFLOWS.md#estado-atual-verificado-em-2026-10-07)
+before treating historical proposals or unchecked E6/E7 items as missing capabilities.
+The real local SDK pilot is recorded in section 14 of that document; this documentation
+refresh did not rerun it. The owner must remain alive. EasyGrow acceptance, complete
+native hooks, interactive App Server control and automatic wakeup remain separate work.
+
+Historical governance coordinates and acceptance records below retain their original
+scope. This index update does not adopt new protocol semantics or extend earlier gates.
+For existing-repository maps and explicit runtime observations, use
+[`../../repository-analysis.md`](../../repository-analysis.md) and
+[`../../repository-runtime-observation.md`](../../repository-runtime-observation.md).
+
 ## Governance package
 
 | Record | Purpose |
@@ -23,7 +39,10 @@ P0a implementation surface.
 | [`S1.3_FINAL_CLOSURE_RECORD.md`](./S1.3_FINAL_CLOSURE_RECORD.md) | Adopted final S1.3 closure supplement. It binds post-S1.3-A evidence/repairs while preserving historical GAP-002/GAP-008 limitations and establishes the boundary to P0b. |
 | [`P0B_SCOPE_AND_GATE.md`](./P0B_SCOPE_AND_GATE.md) | Adopted planning scope for the first bounded nondeterministic P0b vertical. Historical proposal wording in that record remains as authored. |
 | [`P0B_A_MODEL_ADAPTER.md`](./P0B_A_MODEL_ADAPTER.md), [`P0B_A_ADOPTION_RECORD.md`](./P0B_A_ADOPTION_RECORD.md) | P0b-A implementation description and exact reviewed-head adoption evidence, including the authorized keyless local Ollama smoke. |
-| [`CODING_AGENT_DELIVERY_PLAN.md`](./CODING_AGENT_DELIVERY_PLAN.md) | Proposed ordered local-first delivery plan for MCP clients and a keyless coding worker; it does not adopt a new runtime capability. |
+| [`CODING_AGENT_DELIVERY_PLAN.md`](./CODING_AGENT_DELIVERY_PLAN.md) | Historical ordered local-first plan for the keyless Ollama pilot; its provider/MCP boundaries do not describe the later Codex modes. It does not adopt a new runtime capability. |
+| [`CODEX_APP_IMPLEMENTATION_PLAN.md`](./CODEX_APP_IMPLEMENTATION_PLAN.md) | Historical Codex-centered E0–E7 plan. Original checklists are retained; consult the current implementation status before continuing work. |
+| [`CODEX_DYNAMIC_WORKFLOWS.md`](./CODEX_DYNAMIC_WORKFLOWS.md) | Current accompanied/managed contracts, dynamic workflows, operating procedures, validation records and remaining limits. |
+| [`REPOSITORY_MANIFEST_PLAN.md`](./REPOSITORY_MANIFEST_PLAN.md) | Historical repository-map design proposal; current executable behavior is documented in `docs/repository-analysis.md` and related guides. |
 | [`P0B_B_LOCAL_CODING_SCOPE.md`](./P0B_B_LOCAL_CODING_SCOPE.md) | Candidate scope and gates for a trusted-repository, single-owner MCP and local Ollama coding pilot; no runtime adoption claim. |
 
 ## Baseline coordinates
@@ -151,3 +170,11 @@ behind the existing P0a permit/result boundary. It excludes tools/plugins/delega
 consequential target mutation, production persistence/outbox, recovery epochs, adaptive
 routing, persistent governed memory and plugin/evolution promotion. P0b-B and those broader
 capabilities have no adoption claim in this record.
+
+## Program workflow v2 alpha foundation
+
+The reviewed R2.1 [design plan](WORKFLOW_PROGRAM_V2_PLAN.md) is implemented as an opt-in
+bounded foundation. Read the [decisions](WORKFLOW_PROGRAM_V2_ADR.md),
+[evidence and remaining acceptance](WORKFLOW_PROGRAM_V2_EVIDENCE.md) and
+[executable contract](../../agent-fabric-programs.md). This release does not retroactively
+expand historical acceptance records or claim complete F6/F7/product superiority.

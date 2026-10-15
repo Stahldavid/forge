@@ -9,6 +9,8 @@ import { isSensitiveRepositoryPath } from "./scanner.ts";
 import type { RepositoryManifest } from "../repository-manifest/types.ts";
 import { repositoryManifestHash, validateRepositorySnapshot } from "./analyze.ts";
 import { repositoryScenarioHash, repositorySnapshotId, sameRepositoryPath } from "./identity.ts";
+import { groupRepositoryJavaCalls, rankRepositoryCandidates } from "./retrieval.ts";
+import { readStoredRepositorySnapshot, repositoryNodeLookup } from "./storage.ts";
 
 export interface RepositoryQueryOptions {
   snapshotId?: string;
@@ -33,7 +35,7 @@ export interface RepositoryQueryResult {
   capabilities: { queries: string[]; actions: false };
 }
 
-const QUERIES = ["overview", "locate", "symbol", "references", "routes", "dependencies", "impact", "tests", "infrastructure", "coverage"];
+const QUERIES = ["overview", "locate", "symbol", "references", "calls", "routes", "dependencies", "impact", "tests", "infrastructure", "coverage"];
 const INFRASTRUCTURE = new Set(["container-service", "build-stage", "image", "volume", "network"]);
 const ALIASES: Record<string, string> = {
   st: "overview", status: "overview", s: "symbol", d: "symbol", def: "symbol", definition: "symbol",
@@ -92,18 +94,32 @@ export function validateRepositorySnapshotData(value: unknown): string[] {
     && (input.sourceHash === undefined || (hash(input.sourceHash) && sourceHashes.has(input.sourceHash)
       && (!file || (value.files as Record<string, { hash: string }>)[file]!.hash === input.sourceHash)));
   const ids = new Set<string>();
+  // Validate one item at a time rather than materializing partition-backed arrays.
+  let visited = 0;
+  const boundedMetadata = (input: unknown): boolean => {
+    const queue: Array<{ value: unknown; depth: number }> = [{ value: input, depth: 0 }];
+    while (queue.length) {
+      const item = queue.pop()!;
+      if (++visited > 5_000_000 || item.depth > 32) return false;
+      if (item.value && typeof item.value === "object") for (const child of Object.values(item.value)) queue.push({ value: child, depth: item.depth + 1 });
+    }
+    return true;
+  };
+  const { nodes: _nodes, edges: _edges, ...header } = value;
+  if (!boundedMetadata(header)) return invalid();
   for (const node of value.nodes) {
     if (!record(node) || !string(node.id, 256) || !node.id || ids.has(node.id) || !string(node.kind, 80)
       || !string(node.name, 32768) || !string(node.component, 80) || !components.has(node.component) || !record(node.metadata)
       || (node.file !== undefined && (!sourcePath(node.file) || !Object.hasOwn(value.files, node.file)))
-      || !location(node.location, node.file as string | undefined) || !evidence(node.evidence, node.file as string | undefined)) return invalid();
+      || !location(node.location, node.file as string | undefined) || !evidence(node.evidence, node.file as string | undefined)
+      || !boundedMetadata(node)) return invalid();
     ids.add(node.id);
   }
   const edgeIds = new Set<string>();
   for (const edge of value.edges) {
     if (!record(edge) || !string(edge.id, 256) || !edge.id || edgeIds.has(edge.id) || !string(edge.from, 256)
       || !ids.has(edge.from) || !string(edge.to, 256) || !ids.has(edge.to) || !string(edge.kind, 80)
-      || !record(edge.metadata) || !location(edge.location) || !evidence(edge.evidence)) return invalid();
+      || !record(edge.metadata) || !location(edge.location) || !evidence(edge.evidence) || !boundedMetadata(edge)) return invalid();
     edgeIds.add(edge.id);
   }
   const coverage = value.coverage;
@@ -115,14 +131,6 @@ export function validateRepositorySnapshotData(value: unknown): string[] {
     && string(item.code, 256) && string(item.message, 32768) && ["info", "warning", "error"].includes(item.severity as string)
     && (item.file === undefined || sourcePath(item.file))) || !coverage.ignoredPaths.every(item => record(item)
       && string(item.path) && string(item.reason, 256))) return invalid();
-  // Bound nested metadata before the shared recursive canonical serializer processes it.
-  const queue: Array<{ value: unknown; depth: number }> = [{ value, depth: 0 }];
-  let visited = 0;
-  while (queue.length) {
-    const item = queue.pop()!;
-    if (++visited > 5_000_000 || item.depth > 32) return invalid();
-    if (item.value && typeof item.value === "object") for (const child of Object.values(item.value)) queue.push({ value: child, depth: item.depth + 1 });
-  }
   if (repositorySnapshotId(value as unknown as RepositorySnapshot) !== value.snapshotId) return ["Repository snapshot fingerprint mismatch; run repository analyze again."];
   return [];
 }
@@ -138,8 +146,11 @@ export function readRepositorySnapshot(root: string, options: { cacheRoot?: stri
   const stat = lstatSync(cache);
   if (!stat.isFile() || stat.size > 128 * 1024 * 1024) throw new Error("Repository snapshot exceeds read limit or is not a regular file.");
   let value: unknown;
-  try { value = JSON.parse(readFileSync(cache, "utf8")); }
-  catch { throw new Error("Repository snapshot is not valid JSON"); }
+  try { value = readStoredRepositorySnapshot(cache, { lazy: true }); }
+  catch (error) {
+    if (error instanceof SyntaxError) throw new Error("Repository snapshot is not valid JSON");
+    throw new Error(error instanceof Error ? error.message.slice(0, 512) : "Repository snapshot cannot be read safely");
+  }
   if (!record(value) || !string(value.root, 32768) || !sameRepositoryPath(realpathSync(value.root), realpathSync(root))) {
     throw new Error("Repository snapshot is invalid or belongs to a different root; run repository analyze.");
   }
@@ -201,7 +212,7 @@ export function queryRepository(snapshot: RepositorySnapshot, query: string, opt
   const result = baseResult(snapshot, query);
   let items: Array<Record<string, unknown>> = [];
   const nodes = snapshot.nodes;
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const nodeById = repositoryNodeLookup(snapshot);
   const edgeItem = (edge: RepositorySnapshot["edges"][number]): Record<string, unknown> => ({
     ...edge, fromNode: nodeById.has(edge.from) ? compactNode(nodeById.get(edge.from)!) : undefined,
     toNode: nodeById.has(edge.to) ? compactNode(nodeById.get(edge.to)!) : undefined,
@@ -220,7 +231,17 @@ export function queryRepository(snapshot: RepositorySnapshot, query: string, opt
     result.summary = { ...result.summary, coverage: snapshot.coverage };
     items = Object.entries(snapshot.files).map(([file, value]) => ({ file, ...value })).filter((item) => !arg || item.file.includes(arg));
   } else if (parsed.verb === "locate") {
-    items = nodes.filter(matches).map((node) => compactNode(node, handles.get(node.id)));
+    const exactNode = nodes.find(node => node.id === arg);
+    const selected = exactNode ? [{ node: exactNode, score: 1000, selectionReasons: ["exact-node-id"], inWriteScope: false }] : rankRepositoryCandidates(snapshot, arg);
+    const callGroups = groupRepositoryJavaCalls(nodes);
+    const grouped = exactNode ? [] : rankRepositoryCandidates({ ...snapshot, nodes: callGroups }, arg);
+    items = [...selected, ...grouped].sort((a, b) => b.score - a.score || a.node.id.localeCompare(b.node.id))
+      .map(candidate => ({ ...compactNode(candidate.node, handles.get(candidate.node.id)),
+        score: candidate.score, selectionReasons: candidate.selectionReasons,
+        ...(candidate.node.kind === "java-call-group" ? { expandQuery: `Q calls ${candidate.node.id} snapshot=${snapshot.snapshotId}` } : {}) }));
+    result.summary = { ...result.summary, retrieval: "deterministic lexical ranking; no model or dispatch inference",
+      javaCallSitesGrouped: nodes.filter(node => node.kind === "java-call").length, javaCallGroups: callGroups.length,
+      unresolvedMatches: selected.filter(candidate => candidate.node.evidence.resolution !== "complete").length };
   } else if (parsed.verb === "symbol") {
     const found = sortedSymbols.filter((node) => !arg || (exactIds.size ? exactIds.has(node.id) : matches(node)));
     if (arg && found.length > 1) return failure(snapshot, query, `Ambiguous symbol '${arg}'; choose a node ID or snapshot-bound handle.`);
@@ -230,11 +251,20 @@ export function queryRepository(snapshot: RepositorySnapshot, query: string, opt
   } else if (parsed.verb === "infrastructure") {
     items = nodes.filter((node) => INFRASTRUCTURE.has(node.kind) && matches(node)).map((node) => compactNode(node));
   } else if (parsed.verb === "tests") {
-    const tests = nodes.filter((node) => node.kind === "test");
-    const associated = new Set(snapshot.edges.filter((edge) => edge.kind === "tests"
+    const tests = nodes.filter((node) => node.kind === "test" && node.metadata.suite !== true);
+    const associated = new Set(snapshot.edges.filter((edge) => ["tests", "test-references", "test-exercises", "test-file-depends-on"].includes(edge.kind)
       && (exactIds.has(edge.from) || exactIds.has(edge.to))).flatMap((edge) => [edge.from, edge.to]));
-    items = tests.filter((node) => !arg || matches(node) || associated.has(node.id)).map((node) => compactNode(node));
+    items = tests.filter((node) => !arg || (exactIds.size ? exactIds.has(node.id) || associated.has(node.id) : matches(node))).map((node) => compactNode(node));
     result.summary = { ...result.summary, observedCoverage: false, association: "static graph evidence only" };
+  } else if (parsed.verb === "calls") {
+    const callGroups = groupRepositoryJavaCalls(nodes);
+    const group = callGroups.find(node => node.id === arg);
+    if (group && !expected) return failure(snapshot, query, "Call group expansion requires snapshotId (or snapshot=<id>).");
+    items = group ? nodes.filter(node => node.kind === "java-call" && node.file === group.file
+      && node.metadata.owner === group.metadata.owner && node.metadata.qualifier === group.metadata.qualifier && node.name === group.name).map(node => compactNode(node))
+      : arg ? nodes.filter(node => node.kind === "java-call" && (node.id === arg || node.metadata.owner === arg)).map(node => compactNode(node))
+        : callGroups.map(node => ({ ...compactNode(node), expandQuery: `Q calls ${node.id} snapshot=${snapshot.snapshotId}` }));
+    result.summary = { ...result.summary, callSites: "syntactic only; dispatch remains unresolved" };
   } else if (parsed.verb === "impact") {
     if (!arg || exactIds.size === 0) return failure(snapshot, query, "Impact requires an exact node ID, symbol name or file.");
     const affected = new Set(exactIds);
@@ -243,7 +273,7 @@ export function queryRepository(snapshot: RepositorySnapshot, query: string, opt
       const next: string[] = [];
       const frontierIds = new Set(frontier);
       for (const edge of snapshot.edges) {
-        if (["references", "imports", "calls", "renders", "tests", "depends-on"].includes(edge.kind)
+        if (["references", "imports", "calls", "renders", "tests", "test-references", "test-exercises", "test-file-depends-on", "depends-on"].includes(edge.kind)
           && frontierIds.has(edge.to) && !affected.has(edge.from)) {
           affected.add(edge.from); next.push(edge.from);
         }

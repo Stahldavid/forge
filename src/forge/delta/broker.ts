@@ -21,6 +21,7 @@ export const DELTA_BROKER_METHODS = new Set([
   "rebuildSemanticTimeline", "explain", "recordFilePath", "currentWorkSession", "listWorkSessions",
   "getWorkSessionDetails", "renameWorkSession", "detachWorkSessionOperation", "mergeWorkSessions",
   "splitWorkSession",
+  "traceCreateGeneration", "traceActivateGeneration", "traceProjectBatch", "traceStatus", "traceExplain", "traceReadAgentMemoryEvent",
 ]);
 
 interface BrokerEndpoint {
@@ -51,7 +52,7 @@ function alive(pid: number): boolean {
 function unlinkUnchanged(path: string, bytes: Buffer): void {
   try { if (readFileSync(path).equals(bytes)) unlinkSync(path); } catch { /* replacement or already gone */ }
 }
-function readEndpoint(root: string): BrokerEndpoint | null {
+function readEndpoint(root: string, pruneStale = true): BrokerEndpoint | null {
   const path = endpointPath(root);
   let bytes: Buffer;
   try {
@@ -72,7 +73,7 @@ function readEndpoint(root: string): BrokerEndpoint | null {
     throw new Error("Delta broker endpoint is inconsistent");
   }
   if (!alive(value.pid!)) {
-    unlinkUnchanged(path, bytes); return null;
+    if (pruneStale) unlinkUnchanged(path, bytes); return null;
   }
   if (process.platform !== "win32" && (statSync(path).mode & 0o077) !== 0) {
     throw new Error("Delta broker endpoint permissions are too broad");
@@ -207,6 +208,17 @@ export async function requestDeltaBroker(workspaceRoot: string, method: string, 
   const endpoint = await ensureDeltaBroker(root);
   // A timed-out write may already have committed. Never replay it automatically.
   return send(endpoint, method, args);
+}
+
+/** Read through an already-authorized broker; never starts an owner or creates storage. */
+export async function requestExistingDeltaBroker(workspaceRoot: string, method: string, args: unknown[], timeoutMs = 15000): Promise<unknown> {
+  if (!["traceExplain", "traceStatus", "traceReadAgentMemoryEvent"].includes(method)) throw new Error("TRACE_UNSUPPORTED");
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15000) throw new Error("TRACE_LIMIT_EXCEEDED");
+  let endpoint: BrokerEndpoint | null;
+  try { endpoint = readEndpoint(realpathSync(workspaceRoot), false); }
+  catch { throw Object.assign(new Error("TRACE_SOURCE_UNAVAILABLE"), { code: "TRACE_SOURCE_UNAVAILABLE" }); }
+  if (!endpoint) throw Object.assign(new Error("TRACE_SOURCE_UNAVAILABLE"), { code: "TRACE_SOURCE_UNAVAILABLE" });
+  return send(endpoint, method, args, timeoutMs);
 }
 
 /** Stop this workspace's verified owner and release its PGlite files. */

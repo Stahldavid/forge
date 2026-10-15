@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { spawn } from "node:child_process";
 
 test("MCP stdio accepts split frames and UTF-8 byte lengths", async () => {
-  const child = spawn("node", ["bin/forge.mjs", "mcp", "serve"], {
+  const child = spawn("node", ["bin/forge.mjs", "mcp", "serve", "--no-delta"], {
     cwd: process.cwd(), stdio: ["pipe", "pipe", "pipe"], windowsHide: true,
   });
   let output = "";

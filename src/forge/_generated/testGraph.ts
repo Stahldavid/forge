@@ -1,9 +1,9 @@
-// @forge-generated generator=0.1.0-alpha.69 input=1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b content=2e8300711fd85189eee0679e2316c7eb2da699bb606328e09f80c6416c777fbb
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=1a714e2a61e2cb9f54266f148917e80f2e01977590bef57ef7c7fbb8d0867910
 export const testGraph = {
   "analyzerVersion": "test-graph-0.1.0",
   "diagnostics": [],
-  "generatorVersion": "0.1.0-alpha.69",
-  "inputHash": "1a757f8138dce62d02cf737305afc180007713aea8c06300609609a8e9aa669b",
+  "generatorVersion": "0.1.0-alpha.72",
+  "inputHash": "a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63",
   "schemaVersion": "0.1.0",
   "tests": [
     {
@@ -721,6 +721,196 @@ export const testGraph = {
         "workflows": []
       },
       "file": "tests/agent-fabric/portable-skill.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "@openai/codex-sdk",
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-adapters.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages @openai/codex-sdk",
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-author-template.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-authoring.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages typescript"
+      ]
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-public-integration.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-runtime-competitive.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-template-execution.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-ui-fixture.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-v2-process.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-v2.test.ts",
+      "kind": "unknown",
+      "reasons": []
+    },
+    {
+      "confidence": "weak",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/agent-fabric/program-workflows.test.ts",
       "kind": "unknown",
       "reasons": []
     },
@@ -4125,6 +4315,50 @@ export const testGraph = {
         "components": [],
         "liveQueries": [],
         "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/benchmark.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/cache-gc.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
           "vue",
           "yaml"
         ],
@@ -4138,6 +4372,28 @@ export const testGraph = {
       "reasons": [
         "probable: packages vue",
         "probable: packages yaml"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/completion-cli.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
       ]
     },
     {
@@ -4206,6 +4462,220 @@ export const testGraph = {
       "reasons": [
         "probable: packages ajv",
         "probable: packages vue"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/partition-reader.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/quality-adapters.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript",
+        "probable: packages vue"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/quality-integration.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript",
+        "probable: packages vue"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ajv",
+          "typescript",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/quality-manifest-checks.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages ajv",
+        "probable: packages typescript",
+        "probable: packages vue"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/quality-retrieval.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript",
+        "probable: packages vue"
+      ]
+    },
+    {
+      "confidence": "confirmed",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "ajv",
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/runtime-artifacts.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "confirmed: packages vue",
+        "probable: packages ajv"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "vue"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/runtime-cli.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages vue"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/runtime-observation.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript"
+      ]
+    },
+    {
+      "confidence": "probable",
+      "cost": "fast",
+      "covers": {
+        "actions": [],
+        "commands": [],
+        "components": [],
+        "liveQueries": [],
+        "packages": [
+          "typescript",
+          "vue",
+          "yaml"
+        ],
+        "policies": [],
+        "queries": [],
+        "tables": [],
+        "workflows": []
+      },
+      "file": "tests/repository-analysis/runtime-review.test.ts",
+      "kind": "unknown",
+      "reasons": [
+        "probable: packages typescript",
+        "probable: packages vue",
+        "probable: packages yaml"
       ]
     },
     {

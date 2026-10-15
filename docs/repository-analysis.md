@@ -1,5 +1,17 @@
 # Forge maps in existing repositories
 
+Optional [runtime observation](repository-runtime-observation.md) supplements static maps
+with explicitly executed, source-bound generated artifacts. Review `runtime-plan`, opt in
+with `runtime-observe --execute`, and read current evidence with `runtime-context`.
+Static analysis remains free of implicit project execution.
+
+Large snapshot storage uses canonical-order v2 partitions and on-demand graph
+hydration, with eager compatibility for v1. Published analysis performs conservative
+cache maintenance. Use `forge repository cache-gc --json` to preview it, and `--write`
+to apply after retention (24 hours by default). Checks/models remain unexecuted.
+See [context quality and cache contracts](repository-context-quality.md) and
+[paired agent benchmark](repository-agent-benchmark.md) for the detailed guarantees.
+
 Forge repository analysis produces static maps and compact agent context without migrating
 the application to Forge's runtime. Vue/Nuxt, Java/Spring, TypeScript/JavaScript and
 Docker/Compose can coexist in one repository manifest. Analysis is available without Git;
@@ -21,6 +33,7 @@ node <forge-runtime>/bin/forge.mjs repository analyze --write --json
 node <forge-runtime>/bin/forge.mjs repository context --query routes --json
 node <forge-runtime>/bin/forge.mjs repository context --query infrastructure --json
 node <forge-runtime>/bin/forge.mjs repository context --query coverage --json
+node <forge-runtime>/bin/forge.mjs repository quality --cases <absolute-reviewed-cases.json> --json
 ```
 
 Discovery without `--write` and validation are read-only. Analysis with `--write` explicitly produces local artifacts;
@@ -60,6 +73,11 @@ Spring endpoints and build declarations. Docker maps expose declared builds and 
 topology. None of these constitute observed runtime behavior: a port is not a health check,
 `depends_on` is not proof of traffic, and static test association is not executed coverage.
 Dynamic configuration, Java reflection and Vue autoimports can remain unresolved.
+Static Nuxt aliases, local autoimports and supported HTTP clients have additional
+resolution paths. Ambiguous candidates remain visible. Test associations are case-level;
+sharing a test file does not establish that all cases exercise an imported symbol.
+See [repository context quality](repository-context-quality.md) for the declaration
+schema, retrieval rules, cache limits and reviewed task benchmark.
 
 Local TypeScript/JavaScript config inheritance, project references, baseUrl and path aliases
 are read statically inside the selected repository. Package-provided executable configuration
@@ -102,10 +120,13 @@ No per-project runtime dependency, hook or MCP installation is required for maps
 When a managed SDK attempt contains a valid repository manifest, Fabric analyzes its
 prepared clone after composing upstream artifacts and preparing dependencies. A bounded
 packet contains scoped nodes and edges, coverage limitations, clone snapshot identity and
-suggested check IDs. The run status records source project and clone identities separately,
+suggested checks with argv/cwd, reasons and requirement status. Task neighbors are
+read-only unless already inside write scope. Static quality counters remain partial;
+`ready` means the packet was prepared. The run status records source project and clone identities separately,
 with phase `prepared-input`; it does not claim the same map describes subsequent worker edits.
 Reviewers receive a fresh snapshot of the combined upstream changes, not the map from the
-original checkout. Analysis writes no cache into managed clones.
+original checkout. Matching parse facts can be reused from the source cache while graph
+identity and connections are rebuilt for the clone. Analysis writes no cache into managed clones.
 
 A missing manifest leaves existing workflows unchanged. Invalid configuration or
 unavailable analysis is reported as unavailable; the worker must inspect current code

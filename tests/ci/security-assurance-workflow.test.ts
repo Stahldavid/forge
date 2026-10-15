@@ -11,6 +11,9 @@ describe("security assurance workflow", () => {
     for (const redundant of ["check --json", "auth check --json", "secrets check --json", "rls test --db postgres --json", "rls mutate-test --json"]) {
       expect(workflow).not.toContain(`node ./bin/forge.mjs ${redundant}`);
     }
+    expect(workflow).toContain("shell: bash");
+    expect(workflow).toContain("node scripts/audit-bun-lock.mjs | tee security/evidence/latest/bun-audit.json");
+    expect(workflow).toContain("npm run security:deps -- security/evidence/latest/dependency-audit.json");
     expect(workflow).toContain("node ./bin/forge.mjs security prove --db postgres --full --json");
     expect(workflow).toContain("npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest");
     expect(workflow).toContain("npm run release:evidence -- security/evidence/latest");

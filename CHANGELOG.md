@@ -1,5 +1,36 @@
 # forgeos
 
+## 0.1.0-alpha.72
+
+### Patch Changes
+
+- Add owner-bound workflow authoring templates, durable usage budgets, fair scheduling, compatible recovery, conflict resolution and optional Claude adapter. Harden approval, evidence, accounting, Unicode transport and MCP interfaces; add paired benchmark reporting and focused CI coverage. Real-provider smoke and competitive quality evaluation remain unperformed.
+
+## 0.1.0-alpha.71
+
+### Patch Changes
+
+- Complete Agent Fabric workflow R2.2 with typed authoring, inherited subworkflow quotas and cancellation, shared owner scheduling, crash-recoverable leases, compact durable history, scoped evidence and visual case validation. Ship workflow templates, graph explanations and deterministic coverage. Validate the real Codex adapter with one bounded read-only smoke; retain explicit limits on local durability and model cost.
+
+## 0.1.0-alpha.70
+
+### Patch Changes
+
+- Add opt-in typed Agent Fabric program workflows with static TypeScript lowering, durable
+  operator state, bounded repair, owner coverage and acceptance, candidate ancestry,
+  fenced generation changes and reconciled application. Ship an executable command
+  example, SDK pilot and bounded recovery benchmark; preserve existing v1 workflows.
+- Pin the Nuxt template's devtools to 4.0.0-beta.4, which removes its vulnerable simple-git dependency; retain existing audit exceptions without extending them. Validate installation and typechecking against the Nuxt template before release.
+- Observe POSIX exporter process-group termination after sending SIGKILL before reporting completion or deleting its temporary workspace; preserve unknown cleanup outcomes.
+
+- Add opt-in repository runtime observation with independent temporary source copies, bounded Nuxt/Spring/Docker/HTTP artifact collectors, input-bound expiring reports and shared CLI/MCP plan/observe/context operations. Fabric consumes only compatible saved observations, without implicit project execution.
+- Recover once from a premature Bun/Windows process-identity timeout while retaining unknown identity on repeated failures; protect existing lock ownership semantics.
+
+- Complete large-map query storage with lazy hydration and streaming fingerprints; preserve legacy caches, cap resident partitions and avoid relation-ranking read amplification. Maintain retained orphan chunks automatically and expose cache-gc previews. Add source-bound paired agent benchmark planning/reporting without implicit model execution.
+
+- Improve repository task context with deterministic scoped retrieval, case-level test associations, local Nuxt resolution and explicit HTTP client mappings. Expose static quality and informative check requirements without executing project commands.
+- Store large maps and root-neutral parse facts in validated partitions, reuse matching facts in prepared Fabric clones, and add a read-only `repository quality --cases` benchmark for reviewed expectations.
+
 ## 0.1.0-alpha.69
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "forgeos",
-  "version": "0.1.0-alpha.69",
+  "version": "0.1.0-alpha.72",
   "description": "Agent-native application framework and compiler for building Forge apps without a mandatory dashboard.",
   "type": "module",
   "license": "MIT",
@@ -12,14 +12,30 @@
     "bin/",
     "scripts/field-test-forgeos.mjs",
     "scripts/install-agent-fabric-skill.mjs",
+    "scripts/summarize-fabric-benchmark.mjs",
     ".agents/skills/forge-agent-fabric/",
     "docs/cair-protocol.md",
     "docs/forge-protocol.md",
     "docs/agent-fabric.md",
+    "docs/agent-fabric-programs.md",
+    "docs/agent-fabric-traceability.md",
+    "docs/traceability-pilot.md",
     "docs/repository-analysis.md",
+    "docs/repository-context-quality.md",
+    "docs/repository-agent-benchmark.md",
+    "docs/repository-runtime-observation.md",
     "docs/architecture/agent-fabric/REPOSITORY_MANIFEST_PLAN.md",
     "docs/architecture/agent-fabric/PORTABLE_PROJECTS_PLAN.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_V2_PLAN.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_V2_ADR.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_V2_EVIDENCE.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_V2_CORRECTIONS.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_V2_CORRECTIONS_EVIDENCE.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_COMPETITIVE_PLAN.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_COMPETITIVE_EVIDENCE.md",
+    "docs/architecture/agent-fabric/WORKFLOW_PROGRAM_COMPETITIVE_REVIEW.md",
     "examples/go-billing/",
+    "examples/agent-fabric-v2/",
     "examples/java-billing/",
     "!examples/**/target/**",
     "!examples/**/*.class",
@@ -56,6 +72,7 @@
     "./server": "./src/forge/server.ts",
     "./policy": "./src/forge/policy.ts",
     "./agent-fabric": "./src/forge/agent-fabric/index.ts",
+    "./agent-fabric/workflows": "./src/forge/agent-fabric/program-dsl.ts",
     "./repository-analysis": "./src/forge/repository-analysis/index.ts"
   },
   "scripts": {
@@ -114,7 +131,7 @@
     "@electric-sql/pglite": "^0.2.17",
     "@openai/codex-sdk": "0.160.0",
     "@types/react": "^19.2.17",
-    "@vue/compiler-sfc": "3.5.38",
+    "@vue/compiler-sfc": "3.5.42",
     "ai": "^6.0.205",
     "jose": "^6.2.3",
     "postgres": "^3.4.5",
@@ -123,7 +140,7 @@
     "tree-sitter-typescript": "^0.23.2",
     "tsx": "^4.20.6",
     "typescript": "^5.7.3",
-    "vue": "^3.5.38",
+    "vue": "3.5.42",
     "yaml": "2.9.1",
     "zod": "^3.25.76"
   },
@@ -138,10 +155,11 @@
     "react-test-renderer": "^19.2.7"
   },
   "overrides": {
-    "@ai-sdk/provider-utils": "4.0.33",
+    "@ai-sdk/provider-utils": "4.0.59",
     "fast-uri": "3.1.8",
     "nanoid": "3.3.18",
     "postcss": "8.5.29",
-    "read-yaml-file": "^3.0.0"
+    "read-yaml-file": "^3.0.0",
+    "source-map-js": "1.2.2"
   }
 }

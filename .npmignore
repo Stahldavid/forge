@@ -17,3 +17,6 @@ src/forge/_generated/**
 !src/forge/_generated/releaseManifest.ts
 *.tgz
 npm-debug.log*
+
+# Audited source backports are required by the shipped Nuxt template.
+!templates/nuxt-web/web/vendor/*.tgz

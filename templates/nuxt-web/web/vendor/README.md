@@ -1,0 +1,7 @@
+# Nuxt source security backports
+
+These local tarballs retain upstream package names and versions (braces 3.0.3, node-forge 1.4.0). They are modified distributions, not official fixed releases. Both upstream advisories still report no published patch. Registry integrity, pinned public patch provenance, archive integrity and every installed file hash are in backports.json. The exact source deltas and all original licenses are retained. Node-forge browser bundles and maps were rebuilt from the patched source; no stale bundles are shipped.
+
+Braces applies only the five library diffs from upstream PR72 at 28d440b5dd449dbf1fe6f3506cf94ecca4d02660. Ordinary brace/parenthesis behavior is retained, with nesting capped at100 for strings and direct ASTs. Node-forge applies only lib/rsa.js from PR1159 at db05494352dd3c9a5a07c5270333dcc78866cad2, rejecting non-canonical DigestInfo while accepting canonical encodings with empty NULL parameters or without parameters. The broader source branches were not copied.
+
+The maintained audit retains raw npm findings and exit codes. Local source remediation is counted only after verifying every resolved instance, every installed file and negative/positive security probes. Unchanged upstream versions can remain flagged by registry auditing; that is recorded rather than renamed away. These are code fixes, not new/extended waivers. New advisories, missing files, different sources or tampering must fail closed. Replace the backports with verified compatible official patches when available and rerun all gates.

@@ -1,5 +1,15 @@
 # Agent Fabric for coding agents — ordered delivery plan
 
+> **Historical Ollama-pilot plan; status clarification 2026-10-07.** Its statements
+> that Codex is only a client and MCP is proposal-only apply to the original pilot,
+> not to every current Fabric mode. Accompanied tasks, dynamic workflows and managed
+> Codex SDK/command workers are implemented in checkout
+> `c8dfdf0c0c3cd6610bab68b4872ab9dcf8d4214c`. Use the
+> [current implementation status](./CODEX_DYNAMIC_WORKFLOWS.md#estado-atual-verificado-em-2026-10-07)
+> and its separate SDK pilot record. Managed `run-start` dispatches processes and can
+> consume configured Codex usage. Original cost boundaries and acceptance obligations
+> below are preserved for their historical scope; they do not certify later runs.
+
 Status: delivery plan with local implementation in progress. This record does not
 adopt a new runtime capability or change the S1.0B1/S1.1 protocol. Each runtime
 slice needs its own reviewed scope, implementation, evidence, and adoption record.

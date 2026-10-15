@@ -5,11 +5,31 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { ManagedRunStore } from "../../src/forge/agent-fabric/managed-run-store.ts";
 import { managedDigest, type ManagedRunState } from "../../src/forge/agent-fabric/managed-run-contract.ts";
-import { createWorkflow } from "../../src/forge/agent-fabric/workflow-engine.ts";
+import { claimWorkflow, createWorkflow } from "../../src/forge/agent-fabric/workflow-engine.ts";
 function state(root: string, runId: string): ManagedRunState {
   const workflow = createWorkflow({ workflowId: "work", nodes: [{ nodeId: "check", kind: "verification", required: true, inputDigest: "a".repeat(64), dependsOn: [] }] });
   return { schemaVersion: 1, runId, repositoryRoot: root, ownerPid: process.pid, version: 0, spec: { requestId: "start", goal: "Check fixture", scope: ["source"], workflow: { workflowId: "work", nodes: workflow.nodes }, executors: [{ nodeId: "check", type: "command", argv: ["node", "--version"] }], publish: false }, workflow, status: "preparing", steps: [], events: [], cursor: 0, instructions: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
 }
+test("prepared repository context preserves legacy records and rejects runtime or foreign-checkout quality claims", async () => {
+  const root = await mkdtemp(join(tmpdir(), "forge-managed-store-test-"));
+  try {
+    const store = await ManagedRunStore.open(root), initial = state(store.root, "quality");
+    initial.workflow = claimWorkflow(initial.workflow, { nodeId: "check", attemptId: "attempt", executorId: "executor" });
+    initial.steps = [{ nodeId: "check", attemptId: "attempt", status: "running", directory: store.root,
+      repositoryContext: { provider: "repository", phase: "prepared-input", status: "ready", sourceRoot: store.root, cloneRoot: store.root, snapshotId: "repo:fixture", diagnostics: [] } }];
+    await store.transact("quality", {}, () => initial);
+    expect((await store.read("quality"))!.steps[0]!.repositoryContext!.quality).toBeUndefined();
+    const quality = { completeness: "partial" as const, runtimeObserved: false as const, factsReused: 3, unresolvedLocalImports: 1,
+      unresolvedUiReferences: 2, dynamicHttpCalls: 2, httpEndpointLinks: 1, analysisErrors: 0 };
+    await store.transact("quality", {}, current => { current!.steps[0]!.repositoryContext!.quality = quality; return current!; });
+    expect((await store.read("quality"))!.steps[0]!.repositoryContext!.quality).toEqual(quality);
+    for (const invalid of [{ runtimeObserved: true }, { factsReused: -1 }, { analysisErrors: 0.1 }, { extra: true }]) {
+      await expect(store.transact("quality", {}, current => { Object.assign(current!.steps[0]!.repositoryContext!.quality!, invalid); return current!; })).rejects.toMatchObject({ code: "AF_RUN_STORE" });
+    }
+    await expect(store.transact("quality", {}, current => { current!.steps[0]!.repositoryContext!.cloneRoot = join(store.root, "foreign"); return current!; })).rejects.toMatchObject({ code: "AF_RUN_STORE" });
+    expect((await store.read("quality"))!.steps[0]!.repositoryContext!.quality).toEqual(quality);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
 test("atomic state receipts replay original acknowledgment with latest state and reject CAS/fingerprint conflicts", async () => {
   const root = await mkdtemp(join(tmpdir(), "forge-managed-store-test-")); try {
     const store = await ManagedRunStore.open(root), options = { requestId: "start", fingerprint: managedDigest("start") };

@@ -1,3 +1,4 @@
+import type { TraceRunKey } from "../agent-fabric/trace-contract.ts";
 import type { Diagnostic } from "../compiler/types/diagnostic.ts";
 
 export const AGENT_EVENT_SCHEMA = "forge.agent-event.v1" as const;
@@ -105,6 +106,7 @@ export interface AgentMemoryContextPack {
   proof?: string;
   currentState: Record<string, unknown>;
   recommendedCommands: string[];
+  trace: AgentMemoryTraceContext;
   agentMemory: {
     summary: {
       events: number;
@@ -212,4 +214,48 @@ export interface AgentMemoryUnavailableResult {
   diagnostics: Diagnostic[];
   nextActions: string[];
   exitCode: 1;
+}
+
+
+/** Historical, bounded source context. No field grants permission to a new task. */
+export interface AgentMemoryTraceContext {
+  schema: "forge.agent-memory-trace-context.v1";
+  status: "disabled" | "available" | "partial" | "unavailable" | "no-relevant-history";
+  mode: "historical-context-only";
+  authority: "none";
+  approvalForNewTask: "not-evaluated";
+  selection: {
+    basis: "explicit-paths" | "workspace-observed-files" | "workspace-overview" | "unmapped-target";
+    relevance: "path-overlap" | "unknown";
+    paths: string[];
+    causality: "not-inferred";
+  };
+  projection?: { generationId: string; extractorVersion: string; status: string };
+  items: AgentMemoryTraceContextItem[];
+  limits: { maxRuns: number; maxPaths: number; maxFacts: number; maxBytes: number; maxRpcCalls: number; timeBudgetMs: number };
+  reads: { runsConsidered: number; factsRead: number; rpcCalls: number; bytesUsed: number; budgetExhausted: boolean };
+  gaps: string[];
+  truncated: boolean;
+}
+export interface AgentMemoryTraceContextItem {
+  runKey: TraceRunKey;
+  cut: { version: number; journalRef: string; stateRef: string };
+  generationId: string;
+  selection: { basis: "path-overlap" | "workspace-overview"; relevance: "path-overlap" | "unknown"; paths: string[] };
+  completeness: "complete-at-cut" | "partial";
+  sourceAvailability: "primary-source-unverified";
+  sourceScope: "run-source-set" | "run-source-subset";
+  sourceCompleteness: "complete" | "partial";
+  sourcesTotal: number;
+  sourcesOmitted: number;
+  authority: "none";
+  approvalForNewTask: "not-evaluated";
+  execution: { observedStatus: string };
+  origin: { status: string; refs: string[] };
+  candidates: Array<{ candidateId: string; candidateDigest?: string; paths: string[] }>;
+  evidence: Array<{ id: string; kind: string; validity: "owner-gated-at-cut" | "historical-or-unverified" | "superseded" | "unknown"; result?: string; refs: string[]; supersededBy?: string[] }>;
+  git: { observation: string; contentMatch: string; evidence: Array<{ annotationRef?: string; candidateDigest?: string; commitOid?: string; observation: string; contentMatch: string; paths: string[]; superseded: boolean }> };
+  corrections: Array<{ annotationRef: string; supersedesRef: string; reason?: string; replacement: { summary?: string; producer?: string }; superseded: boolean; authority: "none" }>;
+  sources: Array<{ sourceKey: string; digest: string; version: number; journalRef: string; stateRef: string; factKind: string; factIdentity: string }>;
+  gaps: string[];
 }

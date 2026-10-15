@@ -1,0 +1,13 @@
+{
+  "id": "checkout-cases",
+  "version": "v2",
+  "members": ["checkout-desktop-ready", "checkout-mobile-error"],
+  "exclusions": [],
+  "baselineDigest": "OWNER_MUST_SUPPLY_CAPTURED_BASELINE_DIGEST",
+  "evidence": "Owner catalog of required checkout scenarios; extend explicitly for every route, viewport and state",
+  "allowNoWork": false,
+  "visualCases": [
+    { "itemKey": "checkout-desktop-ready", "route": "/checkout", "viewport": "desktop", "state": "ready", "width": 1440, "height": 900 },
+    { "itemKey": "checkout-mobile-error", "route": "/checkout", "viewport": "mobile", "state": "error", "width": 390, "height": 844 }
+  ]
+}

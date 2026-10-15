@@ -1,3 +1,4 @@
+import { buildAgentMemoryTraceContext } from "./trace-context.ts";
 import { DeltaStore } from "../delta/store.ts";
 import type { AgentMemoryContextEvent, AgentMemoryContextPack, AgentMemoryEventRecord, AgentMemoryFreshness } from "./types.ts";
 
@@ -9,6 +10,7 @@ export async function buildAgentMemoryContext(input: {
   handoff?: boolean;
   limit?: number;
   freshness?: AgentMemoryFreshness;
+  tracePaths?: string[];
 }): Promise<AgentMemoryContextPack> {
   const store = await DeltaStore.open(input.workspaceRoot, { access: "read" });
   try {
@@ -46,6 +48,7 @@ export async function buildAgentMemoryContext(input: {
       .map((kind) => ({ kind }));
     const contextEventItems = contextEvents(events);
     const openQuestions = timeline?.openQuestions ?? [];
+    const trace = await buildAgentMemoryTraceContext({ workspaceRoot: input.workspaceRoot, scope, entry: input.entry, proof: input.proof, change: input.change, events: contextEventItems, ...(input.tracePaths ? { paths: input.tracePaths } : {}) });
     return {
       ok: true,
       ...(input.freshness ? {
@@ -61,6 +64,7 @@ export async function buildAgentMemoryContext(input: {
       proof: input.proof,
       currentState: current,
       recommendedCommands: recommendedCommands(scope, input, currentSession?.id),
+      trace,
       agentMemory: {
         summary: {
           events: contextEventItems.length,

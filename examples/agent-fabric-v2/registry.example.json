@@ -1,0 +1,256 @@
+{
+  "populations": {
+    "files@v1": {
+      "members": [],
+      "inventoryRoots": [
+        "src"
+      ],
+      "id": "files",
+      "allowNoWork": false,
+      "exclusions": [],
+      "version": "v1",
+      "evidence": "owner files inventory",
+      "extensions": [
+        ".txt"
+      ],
+      "baselineDigest": "owner-capture"
+    }
+  },
+  "schemas": {
+    "gate@v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passed",
+        "gateRef",
+        "candidate"
+      ],
+      "properties": {
+        "gateRef": {
+          "type": "string"
+        },
+        "candidate": {
+          "type": "object"
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "review@v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "findings"
+      ],
+      "properties": {
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "changes_requested",
+            "inconclusive"
+          ]
+        }
+      }
+    },
+    "check@v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passed"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "discovery@v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "allowedPaths"
+            ],
+            "properties": {
+              "allowedPaths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "implementation@v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string"
+        }
+      }
+    },
+    "input@v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {}
+    }
+  },
+  "policies": {
+    "local@v1": {
+      "maxOutputBytes": 4194304,
+      "maxAttempts": 1000,
+      "version": "v1",
+      "deadlineMs": 120000,
+      "executors": [
+        "discover@v1",
+        "migrate@v1",
+        "review@v1",
+        "check@v1"
+      ],
+      "maxDepth": 8,
+      "writeScope": [
+        "src"
+      ],
+      "allowFencedReplan": false,
+      "id": "local",
+      "allowNetwork": true,
+      "maxOperations": 2000,
+      "concurrency": 4,
+      "maxItems": 100,
+      "allowCooperativeCommands": true
+    }
+  },
+  "executors": {
+    "migrate@v1": {
+      "writeScope": [
+        "src"
+      ],
+      "version": "v1",
+      "effect": "isolated-write",
+      "schema": {
+        "id": "implementation",
+        "version": "v1"
+      },
+      "timeoutMs": 10000,
+      "isolation": "cooperative",
+      "network": "host",
+      "argv": [
+        "node",
+        "workers/migrate.mjs"
+      ],
+      "role": "implementer",
+      "id": "migrate",
+      "cache": "none",
+      "kind": "command",
+      "dependencies": "none"
+    },
+    "review@v1": {
+      "writeScope": [],
+      "version": "v1",
+      "effect": "read",
+      "schema": {
+        "id": "review",
+        "version": "v1"
+      },
+      "timeoutMs": 10000,
+      "isolation": "cooperative",
+      "network": "host",
+      "argv": [
+        "node",
+        "workers/review.mjs"
+      ],
+      "role": "reviewer",
+      "id": "review",
+      "cache": "none",
+      "kind": "command",
+      "dependencies": "none"
+    },
+    "discover@v1": {
+      "writeScope": [],
+      "version": "v1",
+      "effect": "read",
+      "schema": {
+        "id": "discovery",
+        "version": "v1"
+      },
+      "timeoutMs": 10000,
+      "isolation": "cooperative",
+      "network": "host",
+      "argv": [
+        "node",
+        "workers/discover.mjs"
+      ],
+      "role": "investigator",
+      "id": "discover",
+      "cache": "none",
+      "kind": "command",
+      "dependencies": "none"
+    },
+    "check@v1": {
+      "writeScope": [],
+      "version": "v1",
+      "effect": "read",
+      "schema": {
+        "id": "check",
+        "version": "v1"
+      },
+      "timeoutMs": 10000,
+      "isolation": "cooperative",
+      "network": "host",
+      "argv": [
+        "node",
+        "workers/check.mjs"
+      ],
+      "role": "investigator",
+      "id": "check",
+      "cache": "none",
+      "kind": "command",
+      "dependencies": "none"
+    }
+  },
+  "acceptance": {
+    "migration@v1": {
+      "allowNoWork": false,
+      "version": "v1",
+      "requiredChecks": [
+        "check@v1"
+      ],
+      "writeScope": [
+        "src"
+      ],
+      "requireReview": true,
+      "id": "migration",
+      "criteria": [
+        "Every inventoried text file has contents new"
+      ]
+    }
+  }
+}

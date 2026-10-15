@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { CodexOptions, ThreadOptions, TurnOptions, ThreadEvent } from "@openai/codex-sdk";
-import { runCodexWorker, codexWorkerEnvironment, codexWorkerMcpIsolation, type CodexWorkerFactory, type CodexWorkerEvent } from "../../src/forge/agent-fabric/codex-sdk-worker.ts";
+import { runCodexWorker, runTypedCodexWorker, codexWorkerEnvironment, codexWorkerMcpIsolation, type CodexWorkerFactory, type CodexWorkerEvent } from "../../src/forge/agent-fabric/codex-sdk-worker.ts";
 
 const report = { summary: "Implemented and verified fixture", verdict: null, findings: [], selectedNodeIds: [], replanProposal: null };
 const usage = { input_tokens: 10, cached_input_tokens: 2, output_tokens: 5, cache_write_input_tokens: 0, reasoning_output_tokens: 0 };
@@ -18,6 +18,18 @@ const success: ThreadEvent[] = [{ type: "thread.started", thread_id: "thread-fix
 function input(role: "implementer" | "reviewer" | "investigator" | "decision" = "implementer") { return { cwd: process.cwd(), prompt: "Execute a bounded fixture task", role, signal: new AbortController().signal, onEvent: (_event: CodexWorkerEvent) => {} }; }
 
 describe("managed Codex SDK worker", () => {
+  test("v2 separates typed data from the completion envelope and preserves sandbox/schema", async () => {
+    const schema = { type: "object", properties: { answer: { type: "string" } }, required: ["answer"], additionalProperties: false };
+    const output = await runTypedCodexWorker({ ...input("investigator"), outputSchema: schema, validateOutput: data => { expect(data).toEqual({ answer: "typed" }); } }, fixture([success[0]!, message({ answer: "typed" }), success[3]!], (_options, thread, turn) => { expect(thread.sandboxMode).toBe("read-only"); expect(turn.outputSchema).toEqual(schema); }));
+    expect(output.data).toEqual({ answer: "typed" }); expect(output.threadId).toBe("thread-fixture"); expect(output.usage?.input_tokens).toBe(10);
+  });
+  test("v2 rejects invalid data, missing completion, late errors and callback failures", async () => {
+    const typed = { ...input(), outputSchema: { type: "object" }, validateOutput: (_data: unknown) => {} };
+    await expect(runTypedCodexWorker(typed, fixture([success[0]!, message("not json"), success[3]!]))).rejects.toMatchObject({ code: "AF_CODEX_REPORT" });
+    await expect(runTypedCodexWorker(typed, fixture([success[0]!, message({ answer: "typed" })]))).rejects.toMatchObject({ code: "AF_CODEX_INCOMPLETE" });
+    await expect(runTypedCodexWorker(typed, fixture([success[0]!, message({}), success[3]!, { type: "error", message: "private" }]))).rejects.toMatchObject({ code: "AF_CODEX_TURN_FAILED" });
+    await expect(runTypedCodexWorker({ ...typed, onEvent: () => { throw new Error("private-secret"); } }, fixture(success))).rejects.toMatchObject({ code: "AF_CODEX_EXECUTION", message: "Typed SDK or persistence failed; reconcile before retry" });
+  });
   test("streams a real SDK-shaped turn with explicit sandbox, schema, minimal environment and redacted events", async () => {
     const events: CodexWorkerEvent[] = [];
     const withCommand: ThreadEvent[] = [success[0]!, { type: "item.completed", item: { id: "cmd", type: "command_execution", command: "echo SECRET_TOKEN", aggregated_output: "SECRET_OUTPUT", status: "completed", exit_code: 0 } }, ...success.slice(1)];
