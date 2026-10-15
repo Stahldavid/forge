@@ -1,4 +1,4 @@
-name: Publish to npm
+name: Release validation and explicit npm publish
 
 on:
   push:
@@ -148,63 +148,15 @@ jobs:
         if: steps.changesets.outputs['has-changesets'] == 'false' && steps.publish_target.outputs.needs_publish == 'true'
         run: echo "passed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Publish ForgeOS package
-        id: forgeos-package
-        if: steps.changesets.outputs['has-changesets'] == 'false' && steps.publish_target.outputs.needs_publish == 'true' && steps.release-gates.outputs.passed == 'true'
-        env:
-          NPM_CONFIG_PROVENANCE: "true"
-        run: node scripts/publish-npm-alpha-package.mjs .
-
-      - name: Promote ForgeOS latest tag
-        if: steps.forgeos-package.outputs.published == 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          PACKAGE_NAME="$(node -p "require('./package.json').name")"
-          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::notice::NPM_TOKEN is not configured; skipping latest dist-tag promotion. Run npm dist-tag add ${PACKAGE_NAME}@${PACKAGE_VERSION} latest after npm login, or configure NPM_TOKEN in GitHub Actions secrets."
-            exit 0
-          fi
-          npm dist-tag add "forgeos@$(node -p "require('./package.json').version")" latest
-          for attempt in {1..24}; do
-            ACTUAL="$(npm view "${PACKAGE_NAME}@latest" version 2>/dev/null || true)"
-            if [ "${ACTUAL}" = "${PACKAGE_VERSION}" ]; then
-              echo "${PACKAGE_NAME}@latest => ${ACTUAL}"
-              exit 0
-            fi
-            echo "${PACKAGE_NAME}@latest resolved to '${ACTUAL:-missing}', expected ${PACKAGE_VERSION}. Retrying registry lookup ${attempt}/24..."
-            sleep 5
-          done
-          echo "::error::${PACKAGE_NAME}@latest did not resolve to ${PACKAGE_VERSION} after promotion."
-          exit 1
-
-      - name: Publish create app wrapper
-        id: create-wrapper
-        if: steps.forgeos-package.outputs.published == 'true'
-        env:
-          NPM_CONFIG_PROVENANCE: "true"
-          FORGE_ALLOW_FIRST_NPM_PUBLISH: ${{ github.event.inputs.allow-create-first-publish == 'true' && '1' || '' }}
-        run: node scripts/publish-npm-alpha-package.mjs packages/create-forge-app
-
-      - name: Verify published public alpha
-        if: steps.forgeos-package.outputs.published == 'true'
-        run: |
-          if [[ "${{ steps.create-wrapper.outputs.skipped }}" == "true" ]]; then
-            npm run release:verify-public-alpha -- --skip-create
-          else
-            npm run release:verify-public-alpha
-          fi
-
-      - name: Summarize outcome
+      - name: Summarize validation outcome
         if: always()
         run: |
-          if [[ "${{ steps.forgeos-package.outputs.published }}" == "true" ]]; then
-            echo "::notice::Published forgeos package with npm Trusted Publisher/OIDC."
+          if [[ "${{ steps.release-gates.outputs.passed }}" == "true" ]]; then
+            echo "::notice::Release candidate validated. Publication requires an explicit version tag or manual dispatch."
           elif [[ "${{ steps.changesets.outputs['has-changesets'] }}" == "true" ]]; then
-            echo "::notice::Pending changesets: release PR opened or updated. Merge it to publish."
+            echo "::notice::Pending changesets: release PR opened or updated. Main pushes never publish packages."
           else
-            echo "::notice::No pending changesets and nothing to publish."
+            echo "::notice::No pending changesets or new version to validate. No publication attempted."
           fi
 
   manual-publish:

@@ -62,9 +62,6 @@ describe("npm publish workflow", () => {
     expect(workflow).toContain('pr-title: "chore(release): version packages"');
     expect(workflow).not.toContain("outputs.hasChangesets");
     expect(workflow).not.toContain("publish: npm run release");
-    expect(workflow).toContain("Publish ForgeOS package");
-    expect(workflow).toContain("id: forgeos-package");
-    expect(workflow).toContain("node scripts/publish-npm-alpha-package.mjs .");
     expect(workflow).toContain("bun install --frozen-lockfile --ignore-scripts");
     expect(workflow).toContain("Generate release artifacts");
     expect(workflow).toContain("Security proof");
@@ -106,9 +103,6 @@ describe("npm publish workflow", () => {
     const manualVersionCheckStart = workflow.indexOf("name: Check npm package version");
     expect(manualGuardStart).toBeGreaterThan(-1);
     expect(manualVersionCheckStart).toBeGreaterThan(manualGuardStart);
-    const forgeosPublishStart = workflow.indexOf("name: Publish ForgeOS package");
-    const forgeosLatestStart = workflow.indexOf("name: Promote ForgeOS latest tag");
-    const forgeosPublishBlock = workflow.slice(forgeosPublishStart, forgeosLatestStart);
     const changesetsStart = workflow.indexOf("name: Create Release PR");
     expect(changesetsStart).toBeLessThan(workflow.indexOf("name: Typecheck"));
     for (const name of [
@@ -121,9 +115,6 @@ describe("npm publish workflow", () => {
       expect(start).toBeGreaterThan(changesetsStart);
       expect(workflow.slice(start, end)).toContain("if: steps.changesets.outputs['has-changesets'] == 'false'");
     }
-    expect(forgeosPublishBlock).toContain("steps.release-gates.outputs.passed == 'true'");
-    expect(forgeosPublishBlock).not.toContain("NPM_TOKEN");
-    expect(forgeosPublishBlock).not.toContain("NODE_AUTH_TOKEN");
     expect(workflow).toContain("NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}");
     expect(workflow).toContain("NPM_TOKEN is not configured; skipping latest dist-tag promotion. Run npm dist-tag add ${PACKAGE_NAME}@${PACKAGE_VERSION} latest after npm login, or configure NPM_TOKEN in GitHub Actions secrets.");
     expect(workflow).toContain("npm dist-tag add \"forgeos@$(node -p \"require('./package.json').version\")\" latest");
@@ -155,6 +146,9 @@ describe("npm publish workflow", () => {
     expect(pack.files.some((file) => file.path === "src/forge/_generated/appGraph.json")).toBe(false);
     expect(pack.files.some((file) => file.path === "src/forge/_generated/runtimeMatrix.json")).toBe(false);
     expect(pack.files.some((file) => file.path === "LICENSE")).toBe(true);
+    for (const name of ["braces-3.0.3-security-backport.tgz", "node-forge-1.4.0-security-backport.tgz"]) {
+      expect(pack.files.some((file) => file.path === `templates/nuxt-web/web/vendor/${name}`)).toBe(true);
+    }
     expect(pack.files.some((file) => file.path.includes("/target/"))).toBe(false);
     expect(pack.files.some((file) => file.path.endsWith(".class"))).toBe(false);
     expect(pack.files.some((file) => file.path.endsWith(".jar"))).toBe(false);

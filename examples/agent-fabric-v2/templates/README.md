@@ -39,8 +39,5 @@ superiority over Claude or coding quality. Real evaluations are a separate expli
 
 ## CI scope
 
-PRs changing only explicitly covered authoring, observation, benchmark or adapter modules use a small critical suite. Missing critical files fail closed.
-Core owner/store/workspace/services, shared or unknown paths and main runs retain the full Agent Fabric suite. Workflow
-contracts, typecheck, compiler checks, lint and the separate security gate remain.
-Ubuntu/Node 22 CLI smoke runs once in verify; the matrix adds Windows 22 for PRs and
-Ubuntu 24 on main. Manual CI includes macOS.
+PRs changing only explicitly covered authoring, observation, benchmark or adapter modules add a small critical suite. Missing critical files fail closed. Every PR and main run retains the full Agent Fabric suite. Workflow contracts, typecheck, compiler checks, lint and the separate security gate remain.
+Ubuntu/Node22 CLI smoke runs in verify and in the npm-resolution matrix. PR matrix coverage is Ubuntu22 and Windows22; main and manual CI also include Ubuntu24 and macOS22. The matrix's npm install resolution is distinct from Bun verification.
