@@ -58,7 +58,7 @@ jobs:
         run: mkdir -p security/evidence/latest
 
       - name: Audit locked Bun dependencies
-        run: bun audit --audit-level=high --json | tee security/evidence/latest/bun-audit.json
+        run: node scripts/audit-bun-lock.mjs | tee security/evidence/latest/bun-audit.json
 
       - name: Generate derived compiler output
         run: node ./bin/forge.mjs generate

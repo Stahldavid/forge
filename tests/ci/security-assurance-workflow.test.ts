@@ -12,7 +12,7 @@ describe("security assurance workflow", () => {
       expect(workflow).not.toContain(`node ./bin/forge.mjs ${redundant}`);
     }
     expect(workflow).toContain("shell: bash");
-    expect(workflow).toContain("bun audit --audit-level=high --json | tee security/evidence/latest/bun-audit.json");
+    expect(workflow).toContain("node scripts/audit-bun-lock.mjs | tee security/evidence/latest/bun-audit.json");
     expect(workflow).toContain("npm run security:deps -- security/evidence/latest/dependency-audit.json");
     expect(workflow).toContain("node ./bin/forge.mjs security prove --db postgres --full --json");
     expect(workflow).toContain("npm run security:evidence -- security/evidence/latest/security-proof.json security/evidence/latest");
