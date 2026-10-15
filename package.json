@@ -131,7 +131,7 @@
     "@electric-sql/pglite": "^0.2.17",
     "@openai/codex-sdk": "0.160.0",
     "@types/react": "^19.2.17",
-    "@vue/compiler-sfc": "3.5.38",
+    "@vue/compiler-sfc": "3.5.42",
     "ai": "^6.0.205",
     "jose": "^6.2.3",
     "postgres": "^3.4.5",
@@ -140,7 +140,7 @@
     "tree-sitter-typescript": "^0.23.2",
     "tsx": "^4.20.6",
     "typescript": "^5.7.3",
-    "vue": "^3.5.38",
+    "vue": "3.5.42",
     "yaml": "2.9.1",
     "zod": "^3.25.76"
   },
@@ -155,10 +155,11 @@
     "react-test-renderer": "^19.2.7"
   },
   "overrides": {
-    "@ai-sdk/provider-utils": "4.0.33",
+    "@ai-sdk/provider-utils": "4.0.59",
     "fast-uri": "3.1.8",
     "nanoid": "3.3.18",
     "postcss": "8.5.29",
-    "read-yaml-file": "^3.0.0"
+    "read-yaml-file": "^3.0.0",
+    "source-map-js": "1.2.2"
   }
 }
