@@ -919,7 +919,9 @@ export class ProgramRunService {
         checkpoint.phase = checkpoint.unchanged >= Number(progress.unchangedCandidateRounds) || checkpoint.repeated >= Number(progress.repeatedFindingsRounds) ? "stalled" : assessment.verdict === "inconclusive" ? "assess" : "implement";
         await save("repair-decision");
       } catch (error) {
-        const current = await this.state(runId);
+        // Terminal owner/deadline signals must reach run settlement, never infrastructure retry.
+        if ((error as ProgramError | null | undefined)?.code === "AF_PROGRAM_STOPPED") throw error;
+        const current = await this.checkRunning(runId);
         if (current.status !== "executing" || current.operations[id].generation !== origin.generation) throw error;
         if (Object.values(current.attempts).some(attempt => attempt.operationId.startsWith(`${id}/`) && attempt.outcome === "uncertain")) return { status: "uncertain", lastCandidate: checkpoint.candidate, reason: (error as Error).message };
         checkpoint.infrastructure++; if (checkpoint.infrastructure >= maxInfrastructure) checkpoint.phase = "exhausted";

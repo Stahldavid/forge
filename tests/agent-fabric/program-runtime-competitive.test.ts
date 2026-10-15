@@ -1,4 +1,6 @@
 import { describe, test, expect } from "bun:test";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -192,4 +194,23 @@ describe("competitive runtime guarantees", () => {
       }
     } finally { await service?.close(); await rm(root, { recursive: true, force: true }); }
   });
+  for (const mode of ["close", "deadline"] as const) {
+    test(`repair propagates terminal ${mode} without unbounded infrastructure persistence`, async () => {
+      const root = await mkdtemp(join(tmpdir(), `forge-repair-stop-${mode}-`));
+      try {
+        const fixture = fileURLToPath(new URL("../fixtures/program-repair-termination.ts", import.meta.url));
+        const result = spawnSync(process.execPath, [fixture, mode, root], {
+          cwd: process.cwd(), encoding: "utf8", timeout: 7000,
+          env: { ...process.env, FORGE_DELTA: "0", FORGE_DELTA_BACKGROUND_DRAIN: "0" },
+        });
+        if (result.error || result.status !== 0) throw new Error(`Terminal repair fixture failed: ${result.error?.message ?? result.status}\n${result.stdout}\n${result.stderr}`);
+        const receipt = JSON.parse(result.stdout.trim());
+        expect(receipt.ok).toBe(true);
+        expect(receipt.mode).toBe(mode);
+        expect(receipt.status).toBe("needs-attention");
+        expect(receipt.infrastructure).toBeLessThanOrEqual(2);
+        expect(receipt.stableVersion).toBe(receipt.version);
+      } finally { await rm(root, { recursive: true, force: true }); }
+    });
+  }
 });
