@@ -345,6 +345,38 @@ Durable invalidations live in `_forge_live_invalidations`.
 
 <!-- user-notes:start -->
 
+## Current task routing
+
+This checkout is the ForgeOS framework/compiler (package `forgeos`). The generic
+application label in the generated Project section does not change that identity.
+Use the source CLI, `node bin/forge.mjs ...`, for authorized framework operations.
+Generated apps use their installed CLI from their own root; arbitrary repositories
+use root-bound repository analysis or the portable Fabric skill. See
+[CONTRIBUTING.md](CONTRIBUTING.md#choose-the-project-route) for routes and effects.
+
+Read the applicable instructions and observe the selected root, ref and dirty state
+before changing files. The current task and higher-priority instructions determine
+authorized effects. Valid authorization for the same task and effects persists across
+turns. For a task expressly limited to prose and static validation,
+use bounded source reads, diff/link/marker checks and report runtime checks as not
+run. The generated onboard/dev/generate/verify recipes are operational procedures;
+they do not expand that task into installation, generation, runtime or CI execution.
+
+Preserve human notes and concurrent work. Review generated changes as a scoped diff
+with their source owner; never discard the whole working tree to clean up an
+unrelated edit. Historical commands, environment paths, test counts and approvals
+below are retained context, not current instructions or authorization. Existing
+memory and evidence semantics remain in [Agent Memory](docs/agent-memory.md) and
+[Fabric traceability](docs/agent-fabric-traceability.md); this quotation adds no
+memory or authority mechanism.
+
+### Historical Cursor Cloud notes—preserved, non-operative
+
+The original marker interior follows verbatim. Its cleanup recipe must not be
+executed as a consequence of reading these notes.
+
+````text
+
 Project-specific notes can go here.
 
 ## Cursor Cloud specific instructions
@@ -365,5 +397,7 @@ Non-obvious gotchas:
 - The CLI runs under Node via `tsx` (`node ./bin/forge.mjs ...` or `npm run forge -- ...`); only the test runner needs Bun.
 - To run an actual Forge app end-to-end, scaffold one from a template and run the dev servers. From a temp dir: `node /workspace/bin/forge.mjs new notes-app --template minimal-web --package-manager npm --forge-spec "file:/workspace" --install --no-git`, then `cd notes-app && npm run dev`. `forge dev` starts the API runtime (pglite, default `http://127.0.0.1:3765`) and the Vite web app (default `http://127.0.0.1:5173`); use `forge dev --api-only` for backend only.
 - Hitting the runtime directly: POST `/commands/<name>` and `/queries/<name>` with body shaped as `{ "args": { ... } }`. In `dev-headers` auth mode pass `x-forge-user-id` and `x-forge-role` (e.g. `owner`) headers; `<ForgeProvider devAuth>` defaults to user `dev-user`, tenant `dev-tenant`, role `owner`.
+
+````
 
 <!-- user-notes:end -->
