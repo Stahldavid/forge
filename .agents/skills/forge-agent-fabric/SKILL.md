@@ -1,6 +1,6 @@
 ---
 name: forge-agent-fabric
-description: Conduct or resume Forge Agent Fabric tasks and prepare repository manifests, analysis maps and source-bound context in existing projects, including Vue, Java and Docker.
+description: Conduct or resume authorized Forge Agent Fabric work, or prepare source-bound repository manifests and maps in an existing project. Choose static analysis, accompanied recording or managed execution before runtime setup.
 ---
 
 # Forge Agent Fabric
@@ -9,6 +9,21 @@ Keep the user's conversation in Codex. Prepare protocol requests yourself; the u
 not need to write JSON or operate a second interface. Respect the user's task scope and
 existing authorization. This skill does not authorize publication, deployments or external
 messages. Use subagents for implementation/review when authorized by the user or project.
+
+## Select the task route
+
+First identify the target root and the user's requested effects. Reading documentation
+or inspecting source does not require runtime setup: read project instructions and
+bounded files directly, preserve current work, and report static evidence and gaps.
+Do not run doctor, ensure-owner, map generation or checks as a passive-read preflight.
+
+For authorized repository manifest/map preparation, use the bundled
+[repository analysis](references/repository-analysis.md) procedure below. Discovery
+proposes edits; manifest validation and map creation execute helpers and may write
+artifacts. A manifest's suggested checks are not permission to run them.
+For recording native-session work choose accompanied mode; for owner-dispatched
+workers choose managed mode. Continue to runtime setup only for that operational
+scope. This skill works in arbitrary repositories without requiring a Forge checkout.
 
 ## Locate and connect
 
@@ -21,9 +36,11 @@ Use the absolute path to this skill's `scripts/fabric.mjs` helper:
 It reads installer-generated runtime.json or FORGE_FABRIC_CLI and falls back to an installed
 Forge runtime on PATH. Never switch to the runtime's checkout to conduct work.
 
-Run `doctor --json` and `ensure-owner --json` through that helper. Register projects with
+For operational Fabric work, run `doctor --json` through that helper.
+`ensure-owner --json` reuses or starts a detached owner; use it within the task's
+authorized service scope. Register projects with
 `project-register --project-id <stable-id> --json`; inspect registrations with `project-list --json`.
-Registration is needed for multiproject MCP routing, not for ordinary cwd-bound CLI work.
+Registration writes state and is needed for multiproject MCP routing, not for ordinary cwd-bound CLI work.
 Optional project preparation, verification and limits live in `.forge/fabric.json`;
 inspect doctor and respect the current project's profile rather than inventing config fields.
 
@@ -36,7 +53,9 @@ Do not open the legacy PGlite database independently or kill an unrelated owner.
 
 Native MCP tools are `fabric_attached_*`, `fabric_workflow_*` and `fabric_run_*`. If unavailable, the CLI
 offers the same operations. State which transport you actually demonstrated.
-Do not register MCP or change global configuration as a side effect of using this skill.
+Do not install the skill, register MCP/hooks or change global configuration as a side effect
+of using this skill. Tool discovery depends on the actual consumer and installed schemas;
+files on disk do not prove that a native integration has been demonstrated.
 
 ## Analyze an existing repository
 
@@ -93,6 +112,16 @@ conflict read current state and reconcile; use a new requestId for a new operati
 responses are compact acknowledgements; status/context reads return current full state.
 
 ## Resume and adapt
+
+Use compact source references and observed root/ref/status, scope, authorized effects,
+evidence and open uncertainty when handing off. Keep projectId, schema, snapshot/review
+token and request/version fields from the actual contract. Historical source facts
+and approvals from another task do not expand the current scope; valid authorization
+for this task and its effects continues across turns. Where available, the existing
+`docs/agent-memory.md` and `docs/agent-fabric-traceability.md` describe
+`historical-context-only`, `authority: none` and source-cut validity; no new memory
+or approval mechanism is introduced here. These optional source references do not
+require the target repository to contain Forge documentation.
 
 Start with `attached-context` for the known taskId. Do not restart completed work from the
 conversation summary alone. After a host crash use `workflow-recover` for known interrupted

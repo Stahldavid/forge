@@ -12,39 +12,41 @@ For the short version, read [The Five-Minute ForgeOS Model](https://forgeos.read
 
 ## Agent-First Quickstart
 
+Choose the project route before running commands:
+
+| Work | Root and entrypoint | Start here |
+| --- | --- | --- |
+| Maintain the ForgeOS framework/compiler | This checkout; `node bin/forge.mjs ...` | [Contributor routes and command effects](CONTRIBUTING.md#choose-the-project-route) |
+| Build a generated Forge app | The app root; its installed `forge` CLI or package script | [Create a Test App](#create-a-test-app) and the app's AGENTS.md |
+| Analyze or conduct work in an existing repository | The target repository; root-bound maps or the portable Fabric skill | [Repository analysis](docs/repository-analysis.md) and [Forge Agent Fabric](docs/agent-fabric.md) |
+
+For documentation or static analysis, read the relevant sources first. Installation,
+generation, dev orchestration, owner startup and worker dispatch have effects; they
+are not prerequisites for reading documentation. Use the current task's authorized
+scope and [validation guidance](CONTRIBUTING.md#validate-the-current-task).
+
+For authorized framework development, Bun is the canonical package manager and test
+runner (`bun.lock`); the CLI/runtime also supports Node >=22.14. A typical source
+checkout setup and inspection sequence is:
+
 ```bash
 bun install --ignore-scripts
-bun run forge generate
-bun run forge do inspect --json
-bun run forge dev
-bun run forge dev --once --json
-bun run forge inspect all --json
-bun run forge inspect framework --json
-bun run forge doctor
-bun run forge verify --standard
-bun run forge verify --strict
+node bin/forge.mjs generate
+node bin/forge.mjs inspect framework --json
+node bin/forge.mjs dev --once --json
 ```
 
-Node is supported for the CLI/runtime path as well:
+Installation changes dependencies; generation writes derived contracts; the one-shot
+dev command runs diagnostics and orchestration. Select further checks for the change
+rather than treating this sequence as a universal preflight. The Node entrypoint is
+also available as `npm run forge:node -- <command>`; that does not replace the
+repository's Bun lockfile or test runner.
 
-```bash
-npm install
-npm run forge:node -- generate
-npm run forge:node -- dev --once --json
-npm run forge:node -- inspect framework --json
-```
-
-When working as an AI coder, read:
-
-```txt
-AGENTS.md
-src/forge/_generated/agentContract.json
-src/forge/_generated/runtimeRules.md
-src/forge/_generated/appMap.md
-src/forge/_generated/operationPlaybooks.md
-```
-
-These files describe the app surface, runtime rules, generated files, policies, secrets, workflows, UI routes, commands to run, and common repair/refactor playbooks.
+When working as an AI coder, read the root's `AGENTS.md`, then the relevant generated
+contract, runtime rules, app map or operation playbook if present. In Forge apps these
+live under `src/forge/_generated/`. Use focused queries or sections; an arbitrary
+repository does not need generated app contracts or a Forge dependency merely to
+use repository analysis/Fabric.
 
 ## Create a Test App
 
@@ -62,7 +64,7 @@ Equivalent lower-level command without installing ForgeOS globally:
 npm exec --package forgeos@alpha -- forge new notes-app --template minimal-web --package-manager npm
 ```
 
-If ForgeOS is already installed or you are inside this repository:
+If the ForgeOS CLI is already installed, run it from the intended parent directory:
 
 ```bash
 forge new notes-app --template minimal-web --package-manager npm
@@ -138,7 +140,7 @@ npm run field:test -- --dry-run --json
 npm run field:test -- --package-managers npm --templates minimal-web --forge-spec "file:." --install --json
 ```
 
-The scheduled/manual `Field Tests` workflow expands that coverage across Linux, macOS, Windows, Node 22, Node 24, and npm/pnpm/yarn/bun.
+The `Field Tests` workflow runs on manual dispatch and Mondays at 07:00 UTC (`0 7 * * 1`). Its app matrix covers Linux, macOS and Windows, Node 22/24, and npm/pnpm/yarn/bun. See [CI and release boundaries](CONTRIBUTING.md#ci-and-release-boundaries) for the separate PR/main matrix.
 
 ## External Runtimes And Adapters
 
@@ -177,7 +179,7 @@ forge query billing.listInvoices --args '{}' --user-id u1 --tenant-id tenant-a -
 
 For Java, see [`adapters/java`](adapters/java/README.md),
 [`adapters/java-spring-boot-starter`](adapters/java-spring-boot-starter/README.md),
-and [`examples/java-billing`](examples/java-billing/README.md).
+and [`examples/java-billing`](examples/java-billing/).
 
 See [`docs/forge-protocol.md`](docs/forge-protocol.md), [`schemas/forge-manifest.schema.json`](schemas/forge-manifest.schema.json),
 and [`adapters/go`](adapters/go/README.md).
@@ -293,10 +295,11 @@ Common command groups:
 | `forge check --json` | Validate guardrails and emit diagnostics with fix hints |
 | `forge verify --smoke` | Fast local gate: generated drift, Forge checks, typecheck when present, no tests/lint |
 | `forge verify --standard` | Agent development gate: generated drift, Forge/security checks, typecheck, and impact-selected tests |
-| `forge verify --strict` | Full handoff/CI gate: generated drift, Forge/security checks, typecheck, full TestGraph in bounded parallel/isolated chunks, lint |
+| `forge verify --strict` | App handoff/CI gate: generated drift, Forge/security checks, typecheck, app TestGraph in bounded parallel/isolated chunks, lint |
+| `node bin/forge.mjs verify framework` | Maintainer gate for this ForgeOS checkout; enables framework TestGraph that app-level strict verification skips here |
 | `forge verify --script-timeout-ms <ms>` | Run package scripts with a predictable timeout and machine-readable timeout diagnostics |
 | `forge verify --test-jobs <n>` | Tune strict TestGraph chunk parallelism; `FORGE_VERIFY_TEST_JOBS` is also supported |
-| `forge verify --strict --test-plan --json` | Print the strict TestGraph scheduler plan without running tests |
+| `forge verify --strict --test-plan --json` | Print the app TestGraph scheduler plan; framework maintainers use `node bin/forge.mjs verify framework --test-plan --json` |
 | `forge do "<objective>" --json` | Guided intent router: choose the right workflow, files, risks, and next action |
 | `forge inspect <target> --json` | Inspect generated app/data/runtime/policy/client/agent/UI surfaces |
 | `forge inspect framework --json` | Inspect ForgeOS framework modules, CLI commands, templates, examples, tests, and preferred entrypoints |
@@ -414,21 +417,21 @@ bun run typecheck
 bun run lint
 bun test tests/<area>
 bun run forge generate --check
-forge verify --changed
+node bin/forge.mjs verify --changed
 ```
 
-Full gate:
+For framework changes requiring the full local gate:
 
 ```bash
 bun test --timeout 120000
-bun run forge verify --strict
+node bin/forge.mjs verify framework --script-timeout-ms 120000
 ```
 
 UI bridge note: `forge ui` uses Playwright when installed. Without Playwright, `forge ui doctor --json` reports `FORGE_UI_PLAYWRIGHT_MISSING` with fix hints instead of silently failing.
 
 Frontend bridge note: `forge inspect frontend --json` and `forge dev --once --json` expose routes, components, `ForgeProvider`, generated client bindings, raw runtime fetch warnings, and fix hints. Agents should use this before editing UI wiring.
 
-CI note: the main GitHub Actions gate runs the full Bun-based verification path on Ubuntu. A separate Node breadth smoke matrix runs on Ubuntu, Windows, and macOS with Node 22 and 24, including template package-manager smoke for npm, pnpm, yarn, and Bun.
+CI note: the main GitHub Actions gate retains full Fabric coverage on Ubuntu; path classification selects additional runtime/template/package smoke jobs. PR breadth smoke uses Ubuntu/Windows with Node 22; main/dispatch also add Ubuntu Node 24 and macOS Node 22. Security Assurance is a separate workflow. The broader Field Tests matrix is scheduled/manual. Root README, AGENTS, CONTRIBUTING and skill changes are outside `docs/**`, so prose-only changes to them can still trigger normal CI. See [validation and release evidence](CONTRIBUTING.md#ci-and-release-boundaries); a local documentation review does not establish a new CI result.
 
 ## npm Release
 
@@ -449,14 +452,20 @@ npm run release:publish-local-alpha -- --dry-run
 npm run release:publish-alpha
 ```
 
-The normal path is:
+The release path separates validation from publication:
 
 ```txt
 merge feature PR with changeset
-  -> publish.yml opens/updates a version PR
+  -> main opens/updates a Changesets version PR
 merge version PR
-  -> publish.yml publishes through npm OIDC Trusted Publisher
+  -> main validates the new release candidate when applicable
+explicit workflow dispatch or matching v*/forgeos-v* tag
+  -> publish.yml publication job runs its gates and publishes through npm OIDC
 ```
+
+Main pushes never publish packages. GitHub Packages publication also requires an
+explicit dispatch or supported version tag. Merging a version PR alone authorizes
+neither publisher. See [release boundaries](CONTRIBUTING.md#ci-and-release-boundaries).
 
 Configure npm Trusted Publisher for package `forgeos`:
 
