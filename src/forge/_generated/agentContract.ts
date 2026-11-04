@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=1ec401878ef303768af7a3643217a109cf5c88edbd6c6f3ee21469f8980b13d3
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=edd951bc32ccfea12a492b2388954fea92bb779a00dd2c20ac7817f15c749968
 export const agentContract = {
   "actions": [
     {
@@ -189,20 +189,11 @@ export const agentContract = {
     "afterEditing": [
       "node bin/forge.mjs generate",
       "node bin/forge.mjs check",
-      "node bin/forge.mjs verify --standard",
-      "node bin/forge.mjs verify framework"
+      "node bin/forge.mjs verify --changed"
     ],
     "beforeEditing": [
-      "node bin/forge.mjs agent onboard --target codex --json",
       "node bin/forge.mjs status --json",
-      "node bin/forge.mjs changed --json",
-      "node bin/forge.mjs handoff --json",
-      "node bin/forge.mjs do inspect --json",
-      "node bin/forge.mjs cair snapshot",
-      "node bin/forge.mjs cair query \"Q ST\"",
-      "node bin/forge.mjs dev --once --json",
-      "node bin/forge.mjs agent print-context --json",
-      "node bin/forge.mjs check --json"
+      "node bin/forge.mjs changed --json"
     ],
     "dev": [
       "node bin/forge.mjs dev",
@@ -8182,7 +8173,7 @@ export const agentContract = {
         "Use ctx.db for transactional writes.",
         "Use ctx.emit for side effects.",
         "Run forge generate.",
-        "Run forge verify --strict."
+        "Run affected tests and forge verify --changed; use strict verification for release or an explicit comprehensive delivery gate."
       ],
       "title": "Add a command"
     },
@@ -8243,7 +8234,7 @@ export const agentContract = {
         "Include tenantId for tenant-scoped data.",
         "Run forge generate.",
         "Run forge db diff.",
-        "Run forge verify --strict."
+        "Run schema/policy and affected integration checks; use forge verify --strict for migration, changed access boundaries or an explicitly comprehensive delivery gate."
       ],
       "title": "Add a table"
     },
@@ -8253,7 +8244,7 @@ export const agentContract = {
         "Review the plan and diagnostics.",
         "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",
-        "Run forge verify --strict."
+        "Run affected generated-contract and integration checks; use forge verify --strict when the resource changes schema migrations or auth/security boundaries, or a comprehensive delivery gate requires it."
       ],
       "title": "Scaffold a resource"
     },
@@ -8264,7 +8255,7 @@ export const agentContract = {
         "Run forge feature plan <blueprint>.",
         "Review the plan, impact, and risk.",
         "Run forge feature apply <blueprint> --yes.",
-        "Run forge verify --strict."
+        "Run checks for the blueprint components changed; use forge verify --strict for migrations, auth/security boundary changes or an explicitly comprehensive delivery gate."
       ],
       "title": "Apply a feature blueprint"
     },
@@ -8278,7 +8269,7 @@ export const agentContract = {
         "Use --allow-high-risk only for intentional high-risk refactors.",
         "Apply with forge refactor rename field <table.field> <table.field> --yes.",
         "Run forge generate.",
-        "Run forge verify --strict."
+        "Run affected semantic/impact tests and forge verify --changed; use forge verify --strict for migration or auth/security boundary changes, cross-boundary risk or an explicitly comprehensive delivery gate."
       ],
       "title": "Safely refactor a feature"
     },
@@ -8288,7 +8279,7 @@ export const agentContract = {
         "Run forge test plan --changed --json.",
         "Run forge test run --changed --timeout-ms 120000 --json for targeted checks.",
         "Use forge verify --changed for the fast impact gate.",
-        "Run forge verify --strict before final handoff."
+        "Run forge verify --strict for release or an explicitly comprehensive delivery gate."
       ],
       "title": "Plan impact-based tests"
     },
@@ -8299,7 +8290,7 @@ export const agentContract = {
         "Review the failureKind, likelyCause, suggestedRepairs, and confidence.",
         "Apply only high-confidence repairs automatically.",
         "Run forge verify --changed.",
-        "Run forge verify --strict before final handoff."
+        "Run forge verify --strict for release or an explicitly comprehensive delivery gate."
       ],
       "title": "Repair a failing check"
     },
@@ -8320,7 +8311,7 @@ export const agentContract = {
         "Read .forge/upgrades/.../plan.md.",
         "If risk is high, inspect affected files and generated adapters before applying.",
         "Apply with forge deps upgrade-apply <plan>.",
-        "Finish with forge verify --strict."
+        "Run affected checks; use forge verify --strict for release or an explicitly comprehensive delivery gate."
       ],
       "title": "Upgrade a package"
     },

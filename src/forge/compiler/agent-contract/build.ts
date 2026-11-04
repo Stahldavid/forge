@@ -634,7 +634,7 @@ function playbooks(): AgentPlaybook[] {
         "Use ctx.db for transactional writes.",
         "Use ctx.emit for side effects.",
         "Run forge generate.",
-        "Run forge verify --strict.",
+        "Run affected tests and forge verify --changed; use strict verification for release or an explicit comprehensive delivery gate.",
       ],
     },
     {
@@ -695,7 +695,7 @@ function playbooks(): AgentPlaybook[] {
         "Include tenantId for tenant-scoped data.",
         "Run forge generate.",
         "Run forge db diff.",
-        "Run forge verify --strict.",
+        "Run schema/policy and affected integration checks; use forge verify --strict for migration, changed access boundaries or an explicitly comprehensive delivery gate.",
       ],
     },
     {
@@ -705,7 +705,7 @@ function playbooks(): AgentPlaybook[] {
         "Review the plan and diagnostics.",
         "Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.",
         "Run forge generate.",
-        "Run forge verify --strict.",
+        "Run affected generated-contract and integration checks; use forge verify --strict when the resource changes schema migrations or auth/security boundaries, or a comprehensive delivery gate requires it.",
       ],
     },
     {
@@ -716,7 +716,7 @@ function playbooks(): AgentPlaybook[] {
         "Run forge feature plan <blueprint>.",
         "Review the plan, impact, and risk.",
         "Run forge feature apply <blueprint> --yes.",
-        "Run forge verify --strict.",
+        "Run checks for the blueprint components changed; use forge verify --strict for migrations, auth/security boundary changes or an explicitly comprehensive delivery gate.",
       ],
     },
     {
@@ -730,7 +730,7 @@ function playbooks(): AgentPlaybook[] {
         "Use --allow-high-risk only for intentional high-risk refactors.",
         "Apply with forge refactor rename field <table.field> <table.field> --yes.",
         "Run forge generate.",
-        "Run forge verify --strict.",
+        "Run affected semantic/impact tests and forge verify --changed; use forge verify --strict for migration or auth/security boundary changes, cross-boundary risk or an explicitly comprehensive delivery gate.",
       ],
     },
     {
@@ -740,7 +740,7 @@ function playbooks(): AgentPlaybook[] {
       "Run forge test plan --changed --json.",
       "Run forge test run --changed --timeout-ms 120000 --json for targeted checks.",
       "Use forge verify --changed for the fast impact gate.",
-      "Run forge verify --strict before final handoff.",
+      "Run forge verify --strict for release or an explicitly comprehensive delivery gate.",
       ],
     },
     {
@@ -751,7 +751,7 @@ function playbooks(): AgentPlaybook[] {
         "Review the failureKind, likelyCause, suggestedRepairs, and confidence.",
         "Apply only high-confidence repairs automatically.",
         "Run forge verify --changed.",
-        "Run forge verify --strict before final handoff.",
+        "Run forge verify --strict for release or an explicitly comprehensive delivery gate.",
       ],
     },
     {
@@ -772,7 +772,7 @@ function playbooks(): AgentPlaybook[] {
         "Read .forge/upgrades/.../plan.md.",
         "If risk is high, inspect affected files and generated adapters before applying.",
         "Apply with forge deps upgrade-apply <plan>.",
-        "Finish with forge verify --strict.",
+        "Run affected checks; use forge verify --strict for release or an explicitly comprehensive delivery gate.",
       ],
     },
     {
@@ -1597,8 +1597,8 @@ export function buildAgentContractArtifacts(
     playbooks: playbooks(),
     agentProtocols: protocols,
     commandsToRun: {
-      beforeEditing: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge agent onboard --target codex --json", "forge status --json", "forge changed --json", "forge handoff --json", "forge do inspect --json", "forge cair snapshot", "forge cair query \"Q ST\"", "forge dev --once --json", "forge agent print-context --json", "forge check --json"]),
-      afterEditing: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge generate", "forge check", "forge verify --standard", finalVerifyCommand(input.workspaceRoot)]),
+      beforeEditing: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge status --json", "forge changed --json"]),
+      afterEditing: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge generate", "forge check", "forge verify --changed"]),
       dev: forgeCliCommandsForWorkspace(input.workspaceRoot, ["forge dev", "forge dev --once --json", "forge handoff --json", "forge do fix --json", "forge do verify --json", "forge dev --api-only", "forge dev --web-only"]),
     },
   };
@@ -1729,20 +1729,16 @@ This is a ForgeOS application named \`${contract.project.name}\`.
 
 ${cliEntrypoint}
 
-## Required workflow
+## Task scope and validation
 
-Before editing:
+Use the existing user request and authorization to complete the requested work. Resolve routine choices within scope; ask only when a missing decision changes the outcome or a new external effect needs authority. Define completion by the requested behavior and relevant checks, and continue through failures caused by the change.
 
-\`\`\`bash
-forge agent onboard --target codex --json
-forge status --json
-forge changed --json
-forge handoff --json
-forge do inspect --json
-forge dev --once --json
-forge agent print-context --json
-forge check --json
-\`\`\`
+- Read-only investigation or prose-only edits: inspect the relevant files and existing diff. Check Markdown links or formatting when affected; do not onboard, regenerate, start a runtime or run application suites for unchanged runtime behavior.
+- Authored runtime, schema, policy or generated-contract changes: inspect the relevant generated context, run \`forge generate\` and \`forge check\`, then affected tests or \`forge verify --changed\`. Preserve tenant/auth, transaction and effect boundaries.
+- Frontend/runtime diagnosis: use \`forge dev --once --json\`, targeted inspection or the requested runtime only when needed. Hooks/onboarding are setup operations, not prerequisites to every edit.
+- Release, broad migration or delivery with an explicit comprehensive gate: run \`${finalVerify}\` and the applicable integration checks. Do not repeat or broaden passing checks without new changes or evidence.
+
+Use \`forge status --json\`, \`forge changed --json\`, \`forge handoff --json\` or \`forge agent print-context --json\` when their information is needed. Select relevant context rather than running every command. Existing authorized local checks do not require approval at each step; publication, deployment and billable external work retain their own boundaries.
 
 ## CAIR first
 
@@ -1762,14 +1758,6 @@ Use \`src/forge/_generated/agentCairGuide.md\` for the full compact protocol. Pl
 \`\`\`bash
 forge cair action --plan "A RN t=S#1 nn=<newName>"
 forge cair action "A APPLY plan=<returned-plan-path>"
-\`\`\`
-
-After editing:
-
-\`\`\`bash
-forge generate
-forge check
-${finalVerify}
 \`\`\`
 
 ## Do not edit
@@ -1803,42 +1791,9 @@ Template apps may ignore \`src/forge/_generated/**\` and \`forge.lock\` in git t
 - Actions and workflows handle side effects after commit.
 - Do not rely on in-memory Pub/Sub as the source of truth for liveQuery invalidation.
 
-## Useful commands
+## Context by task
 
-\`\`\`bash
-forge do "<objective>" --json
-forge do fix --json
-forge do verify --json
-forge dev --once --json
-forge dev
-forge handoff --json
-forge inspect app --json
-forge inspect all --json
-forge inspect all --full --json
-forge inspect frontend --json
-forge inspect capabilities --json
-forge inspect agent-tools --json
-forge deps inspect <package> --json
-forge deps api <package> <symbol> --json
-forge deps trace <package> --json
-forge auth check --json
-forge inspect runtime-matrix --json
-forge inspect policies --json
-forge inspect client --json
-forge inspect live-production --json
-forge live status --json
-forge doctor
-forge doctor windows --json
-forge setup windows --json
-forge agent print-context --json
-forge agent doctor --target codex --json
-forge ai tools --json
-forge ai agents --json
-forge ai trace <traceId> --json
-forge verify --smoke
-forge verify --standard
-${finalVerify}
-\`\`\`
+Read only the generated context relevant to the question. \`src/forge/_generated/appMap.md\` describes entrypoints and boundaries; \`runtimeRules.md\` covers runtime invariants; \`operationPlaybooks.md\` covers schema, command, query, frontend, dependency and repair workflows. \`agentCairGuide.md\` contains the structure-aware protocol. Use \`agentQuickstart.md\` as a command catalog, not an itinerary. These files are recreated by generation when missing.
 
 ## Data
 
@@ -1897,168 +1852,11 @@ Rules:
 - Use \`useQuery\`/\`useCommand\`/\`useLiveQuery\` or \`useForgeQuery\`/\`useForgeCommand\`/\`useForgeLiveQuery\` instead of raw Forge endpoint fetches in components.
 - Keep frontend routes reflected in \`src/forge/_generated/frontendGraph.json\`.
 
-## Common tasks
+## Workflow details
 
-### Choose the right workflow
+Use \`src/forge/_generated/operationPlaybooks.md\` for the selected workflow. For a new command, declare auth, preserve transactional/no-network boundaries, generate and run affected checks. For schema/policy changes inspect migration and tenant impact before applying. Debug visible errors with their traceId; preserve it through frontend/runtime boundaries. Use broad verification when the affected risk or explicit delivery gate requires it.
 
-Use:
-
-\`\`\`bash
-forge do "<objective>" --json
-forge do fix --json
-forge do connect-ui --json
-forge do verify --json
-\`\`\`
-
-\`forge do\` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
-
-### Add a command
-
-1. Add file in \`src/commands\`.
-2. Declare \`auth: can("...")\`.
-3. Run \`forge generate\`.
-4. Run \`${finalVerify}\`.
-
-### Scaffold a resource
-
-Use:
-
-\`\`\`bash
-forge make resource <name> --fields title:text,status:enum=open+closed --dry-run --json
-forge make resource <name> --fields title:text,status:enum=open+closed --with-ui --yes
-forge make ui --framework vite --dry-run --json
-forge make ui --framework nuxt --dry-run --json
-forge make ai-chat support --dry-run --json
-\`\`\`
-
-Review the plan before applying when the resource touches schema or policies.
-
-### Check frontend wiring
-
-Use:
-
-\`\`\`bash
-forge dev --once --json
-forge dev
-forge inspect frontend --json
-forge inspect capabilities --json
-\`\`\`
-
-\`forge dev\` starts the API runtime and web app together when \`web/\` exists. \`forge dev --once --json\` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
-
-### Apply a feature blueprint
-
-Use:
-
-\`\`\`bash
-forge feature validate .forge/blueprints/<name>.json --json
-forge feature plan .forge/blueprints/<name>.json
-forge feature apply .forge/blueprints/<name>.json --yes
-\`\`\`
-
-Review high-risk plans before applying. Use \`--allow-high-risk\` only when intentional.
-
-### Safely refactor a feature
-
-Use:
-
-\`\`\`bash
-forge refactor rename field tickets.priority tickets.urgency --dry-run --json
-forge refactor rename field tickets.priority tickets.urgency --yes
-forge refactor rename command createTicket openTicket --dry-run --json
-forge refactor rename command createTicket openTicket --yes
-\`\`\`
-
-These codemods are AST-aware for \`extract-action\`, \`rename command\`, \`rename field\`, and \`rename table\`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so \`tickets.priority\` only rewrites references linked to \`tickets\`.
-
-Never edit \`src/forge/_generated/**\` directly. Review migration hints before applying command, field, or table renames.
-
-### Plan impact-based tests
-
-Use:
-
-\`\`\`bash
-forge impact --changed --json
-forge test plan --changed --json
-forge test run --changed --timeout-ms 120000 --json
-forge verify --standard
-\`\`\`
-
-Use \`forge verify --standard\` for the normal agent development loop. Finish handoffs with \`${finalVerify}\` when the change is ready.
-
-### Repair a failing check
-
-When a Forge check fails, do not guess. Use:
-
-\`\`\`bash
-forge repair diagnose --from-last-test-run --json
-forge repair plan --from-last-test-run --write
-\`\`\`
-
-Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
-
-### Add AI tools or agents
-
-Use:
-
-\`\`\`bash
-forge generate
-forge inspect ai --json
-forge agent print-context --json
-forge ai check --json
-forge ai trace <traceId> --json
-\`\`\`
-
-Define tools with \`aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })\` and agents with \`agent({ provider, model, instructions, tools, stopWhen })\`. Execute agents with \`ctx.agent.run\` or \`ctx.ai.runAgent\` only from actions, workflows, endpoints, or server code. In dev, POST \`/ai/agents/run\` returns JSON for automation and POST \`/ai/agents/chat\` returns an AI SDK UIMessage stream for React \`useChat\`; both accept \`agent: "<exportedAgentName>"\` and use generated auto-tools from \`agentTools.json\`.
-
-### Export agent adapters
-
-Use:
-
-\`\`\`bash
-forge agent export --target generic
-forge agent export --target codex
-forge agent export --target cursor
-forge agent export --target claude
-\`\`\`
-
-Adapter files are derived from \`agentContract.json\`, \`appMap.md\`, \`runtimeRules.md\`, \`operationPlaybooks.md\`, and this \`AGENTS.md\`. Do not treat Codex, Cursor, Claude, or custom adapter files as the source of truth.
-
-### Add a package
-
-Use:
-
-\`\`\`bash
-forge add <alias>
-\`\`\`
-
-Do not install packages manually unless intentional.
-
-### Upgrade a package
-
-Use:
-
-\`\`\`bash
-forge deps upgrade-plan <package> --to latest
-forge deps inspect <package> --json
-forge deps api <package> <symbol> --json
-forge deps upgrade-apply <plan>
-${finalVerify}
-\`\`\`
-
-Do not manually edit \`package.json\` for package upgrades unless necessary.
-
-### Debug liveQuery
-
-Use:
-
-\`\`\`bash
-forge live status --json
-forge live invalidations list --json
-forge live debug <subscriptionId> --json
-\`\`\`
-
-Durable invalidations live in \`_forge_live_invalidations\`.
+Adapters exported with \`forge agent export --target <target>\` are derived from the generated contract, maps and rules. Do not treat adapter files as source of truth or install hooks/skills as a side effect of ordinary editing.
 
 <!-- forge-generated:end -->
 
@@ -2433,7 +2231,7 @@ function renderAgentQuickstartMd(workspaceRoot: string): string {
   const finalVerify = finalVerifyCommand(workspaceRoot);
   return normalizeNewlines(localizeForgeCliMarkdown(workspaceRoot, `# Agent Quickstart
 
-Run:
+Choose commands relevant to the task; setup and runtime commands are not universal prerequisites:
 
 \`\`\`bash
 forge agent onboard --target codex --json
@@ -2463,7 +2261,7 @@ forge.lock
 
 If generated files are ignored by git, recreate them with \`forge generate\`.
 
-Always finish with:
+For authored contract changes, generate and run affected checks. Use the comprehensive command below only for release or explicitly comprehensive delivery:
 
 \`\`\`bash
 forge generate
@@ -2489,7 +2287,7 @@ Project: ${contract.project.name}
 CAIR version: ${cair?.version ?? CAIR_SCHEMA_VERSION}
 Surface: ${summary}
 
-CAIR is the compact agent protocol for reading and changing this Forge workspace. Use it before opening whole files when symbol, module, dependency, test, or impact context is enough.
+CAIR is the compact agent protocol for reading and changing this Forge workspace. Use it when symbol, module, dependency, test or impact context helps the task; direct targeted reads are appropriate for known files and exact text questions. Read-only questions do not require creating or refreshing a snapshot.
 
 ## First commands
 
@@ -2517,7 +2315,7 @@ forge cair query "Q T S#1"
 forge cair query "Q DEP.API package=<pkg> symbol=<export>"
 \`\`\`
 
-Only open source files after CAIR shows that the exact file or body is needed.
+Read the relevant source when needed to verify the result. CAIR results help focus that read; they do not replace source evidence or prove exhaustive coverage.
 
 ## Plan, apply, rollback
 
@@ -2606,19 +2404,13 @@ A RB  = A ROLLBACK
 
 ## Verification
 
-After CAIR edits, run the narrowest useful checks:
-
-\`\`\`bash
-forge check --json
-forge verify --standard
-${finalVerify}
-\`\`\`
+After a semantic CAIR edit, run \`forge check --json\` and the affected tests or \`forge verify --changed\`. Read-only CAIR queries require no application tests. Use \`forge verify --standard\` when broader affected behavior warrants it; use \`${finalVerify}\` for a migration, changed auth/security boundary or explicitly comprehensive delivery. Do not repeat passing checks without new changes or unresolved concerns.
 
 ## Constraints
 
 - Do not edit \`src/forge/_generated/**\` unless explicitly allowed.
 - Do not bypass \`--plan\` for semantic edits.
 - Do not use CAIR as blind text replacement when a semantic action exists.
-- Use TypeScript language service, ast-grep, ts-morph, or raw file reads only as implementation backends or fallbacks. CAIR is the agent-facing protocol.
+- Use compiler-aware tools when symbol resolution or complete references matter, and direct reads for known files. Preserve CAIR plan/apply guards whenever choosing its semantic mutation protocol.
 `));
 }

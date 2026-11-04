@@ -1,7 +1,7 @@
-// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=66f694c6d1f17562f52023a8aca0bb7ed88783bb1f249525132cdf6e7c4a1698
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=a55987d8159559bb358198341e5b09260ae279dc28dbcbd5f1ea19317a0c6d20
 # Agent Quickstart
 
-Run:
+Choose commands relevant to the task; setup and runtime commands are not universal prerequisites:
 
 ```bash
 node bin/forge.mjs agent onboard --target codex --json
@@ -31,7 +31,7 @@ forge.lock
 
 If generated files are ignored by git, recreate them with `node bin/forge.mjs generate`.
 
-Always finish with:
+For authored contract changes, generate and run affected checks. Use the comprehensive command below only for release or explicitly comprehensive delivery:
 
 ```bash
 node bin/forge.mjs generate

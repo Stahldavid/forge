@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.69 input=72e8e3b82e09b1b06df27f181214fb5d03a6134dcdf81d2a831bef61e0cc456f content=1b25c3e77131ce90e0a4fa37071131250e9d9c98a8d1ba77c81ac3d1b9014eba
+// @forge-generated generator=0.1.0-alpha.69 input=72e8e3b82e09b1b06df27f181214fb5d03a6134dcdf81d2a831bef61e0cc456f content=cf387d2332afad2dafbf354b7c2e044712cc328f7d397a98ee599d45c3455c7c
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -11,20 +11,16 @@ This is a ForgeOS application named `basic-forge-app`.
 
 Use the installed `forge` command for app workflows.
 
-## Required workflow
+## Task scope and validation
 
-Before editing:
+Use the existing user request and authorization to complete the requested work. Resolve routine choices within scope; ask only when a missing decision changes the outcome or a new external effect needs authority. Define completion by the requested behavior and relevant checks, and continue through failures caused by the change.
 
-```bash
-forge agent onboard --target codex --json
-forge status --json
-forge changed --json
-forge handoff --json
-forge do inspect --json
-forge dev --once --json
-forge agent print-context --json
-forge check --json
-```
+- Read-only investigation or prose-only edits: inspect the relevant files and existing diff. Check Markdown links or formatting when affected; do not onboard, regenerate, start a runtime or run application suites for unchanged runtime behavior.
+- Authored runtime, schema, policy or generated-contract changes: inspect the relevant generated context, run `forge generate` and `forge check`, then affected tests or `forge verify --changed`. Preserve tenant/auth, transaction and effect boundaries.
+- Frontend/runtime diagnosis: use `forge dev --once --json`, targeted inspection or the requested runtime only when needed. Hooks/onboarding are setup operations, not prerequisites to every edit.
+- Release, broad migration or delivery with an explicit comprehensive gate: run `forge verify --strict` and the applicable integration checks. Do not repeat or broaden passing checks without new changes or evidence.
+
+Use `forge status --json`, `forge changed --json`, `forge handoff --json` or `forge agent print-context --json` when their information is needed. Select relevant context rather than running every command. Existing authorized local checks do not require approval at each step; publication, deployment and billable external work retain their own boundaries.
 
 ## CAIR first
 
@@ -44,14 +40,6 @@ Use `src/forge/_generated/agentCairGuide.md` for the full compact protocol. Plan
 ```bash
 forge cair action --plan "A RN t=S#1 nn=<newName>"
 forge cair action "A APPLY plan=<returned-plan-path>"
-```
-
-After editing:
-
-```bash
-forge generate
-forge check
-forge verify --strict
 ```
 
 ## Do not edit
@@ -85,42 +73,9 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 - Actions and workflows handle side effects after commit.
 - Do not rely on in-memory Pub/Sub as the source of truth for liveQuery invalidation.
 
-## Useful commands
+## Context by task
 
-```bash
-forge do "<objective>" --json
-forge do fix --json
-forge do verify --json
-forge dev --once --json
-forge dev
-forge handoff --json
-forge inspect app --json
-forge inspect all --json
-forge inspect all --full --json
-forge inspect frontend --json
-forge inspect capabilities --json
-forge inspect agent-tools --json
-forge deps inspect <package> --json
-forge deps api <package> <symbol> --json
-forge deps trace <package> --json
-forge auth check --json
-forge inspect runtime-matrix --json
-forge inspect policies --json
-forge inspect client --json
-forge inspect live-production --json
-forge live status --json
-forge doctor
-forge doctor windows --json
-forge setup windows --json
-forge agent print-context --json
-forge agent doctor --target codex --json
-forge ai tools --json
-forge ai agents --json
-forge ai trace <traceId> --json
-forge verify --smoke
-forge verify --standard
-forge verify --strict
-```
+Read only the generated context relevant to the question. `src/forge/_generated/appMap.md` describes entrypoints and boundaries; `runtimeRules.md` covers runtime invariants; `operationPlaybooks.md` covers schema, command, query, frontend, dependency and repair workflows. `agentCairGuide.md` contains the structure-aware protocol. Use `agentQuickstart.md` as a command catalog, not an itinerary. These files are recreated by generation when missing.
 
 ## Data
 
@@ -181,168 +136,11 @@ Rules:
 - Use `useQuery`/`useCommand`/`useLiveQuery` or `useForgeQuery`/`useForgeCommand`/`useForgeLiveQuery` instead of raw Forge endpoint fetches in components.
 - Keep frontend routes reflected in `src/forge/_generated/frontendGraph.json`.
 
-## Common tasks
+## Workflow details
 
-### Choose the right workflow
+Use `src/forge/_generated/operationPlaybooks.md` for the selected workflow. For a new command, declare auth, preserve transactional/no-network boundaries, generate and run affected checks. For schema/policy changes inspect migration and tenant impact before applying. Debug visible errors with their traceId; preserve it through frontend/runtime boundaries. Use broad verification when the affected risk or explicit delivery gate requires it.
 
-Use:
-
-```bash
-forge do "<objective>" --json
-forge do fix --json
-forge do connect-ui --json
-forge do verify --json
-```
-
-`forge do` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
-
-### Add a command
-
-1. Add file in `src/commands`.
-2. Declare `auth: can("...")`.
-3. Run `forge generate`.
-4. Run `forge verify --strict`.
-
-### Scaffold a resource
-
-Use:
-
-```bash
-forge make resource <name> --fields title:text,status:enum=open+closed --dry-run --json
-forge make resource <name> --fields title:text,status:enum=open+closed --with-ui --yes
-forge make ui --framework vite --dry-run --json
-forge make ui --framework nuxt --dry-run --json
-forge make ai-chat support --dry-run --json
-```
-
-Review the plan before applying when the resource touches schema or policies.
-
-### Check frontend wiring
-
-Use:
-
-```bash
-forge dev --once --json
-forge dev
-forge inspect frontend --json
-forge inspect capabilities --json
-```
-
-`forge dev` starts the API runtime and web app together when `web/` exists. `forge dev --once --json` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
-
-### Apply a feature blueprint
-
-Use:
-
-```bash
-forge feature validate .forge/blueprints/<name>.json --json
-forge feature plan .forge/blueprints/<name>.json
-forge feature apply .forge/blueprints/<name>.json --yes
-```
-
-Review high-risk plans before applying. Use `--allow-high-risk` only when intentional.
-
-### Safely refactor a feature
-
-Use:
-
-```bash
-forge refactor rename field tickets.priority tickets.urgency --dry-run --json
-forge refactor rename field tickets.priority tickets.urgency --yes
-forge refactor rename command createTicket openTicket --dry-run --json
-forge refactor rename command createTicket openTicket --yes
-```
-
-These codemods are AST-aware for `extract-action`, `rename command`, `rename field`, and `rename table`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
-
-Never edit `src/forge/_generated/**` directly. Review migration hints before applying command, field, or table renames.
-
-### Plan impact-based tests
-
-Use:
-
-```bash
-forge impact --changed --json
-forge test plan --changed --json
-forge test run --changed --timeout-ms 120000 --json
-forge verify --standard
-```
-
-Use `forge verify --standard` for the normal agent development loop. Finish handoffs with `forge verify --strict` when the change is ready.
-
-### Repair a failing check
-
-When a Forge check fails, do not guess. Use:
-
-```bash
-forge repair diagnose --from-last-test-run --json
-forge repair plan --from-last-test-run --write
-```
-
-Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
-
-### Add AI tools or agents
-
-Use:
-
-```bash
-forge generate
-forge inspect ai --json
-forge agent print-context --json
-forge ai check --json
-forge ai trace <traceId> --json
-```
-
-Define tools with `aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })` and agents with `agent({ provider, model, instructions, tools, stopWhen })`. Execute agents with `ctx.agent.run` or `ctx.ai.runAgent` only from actions, workflows, endpoints, or server code. In dev, POST `/ai/agents/run` returns JSON for automation and POST `/ai/agents/chat` returns an AI SDK UIMessage stream for React `useChat`; both accept `agent: "<exportedAgentName>"` and use generated auto-tools from `agentTools.json`.
-
-### Export agent adapters
-
-Use:
-
-```bash
-forge agent export --target generic
-forge agent export --target codex
-forge agent export --target cursor
-forge agent export --target claude
-```
-
-Adapter files are derived from `agentContract.json`, `appMap.md`, `runtimeRules.md`, `operationPlaybooks.md`, and this `AGENTS.md`. Do not treat Codex, Cursor, Claude, or custom adapter files as the source of truth.
-
-### Add a package
-
-Use:
-
-```bash
-forge add <alias>
-```
-
-Do not install packages manually unless intentional.
-
-### Upgrade a package
-
-Use:
-
-```bash
-forge deps upgrade-plan <package> --to latest
-forge deps inspect <package> --json
-forge deps api <package> <symbol> --json
-forge deps upgrade-apply <plan>
-forge verify --strict
-```
-
-Do not manually edit `package.json` for package upgrades unless necessary.
-
-### Debug liveQuery
-
-Use:
-
-```bash
-forge live status --json
-forge live invalidations list --json
-forge live debug <subscriptionId> --json
-```
-
-Durable invalidations live in `_forge_live_invalidations`.
+Adapters exported with `forge agent export --target <target>` are derived from the generated contract, maps and rules. Do not treat adapter files as source of truth or install hooks/skills as a side effect of ordinary editing.
 
 <!-- forge-generated:end -->
 

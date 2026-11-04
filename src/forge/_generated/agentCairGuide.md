@@ -1,11 +1,11 @@
-// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=b552fe70bd34c158e68126ee352d029605ad4db383b3665ad440868a097199e1
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=8f8204bfae9b75050ec2f56655911b938e1af029a25e3028d6c8467b64ddd9e7
 # CAIR Agent Guide
 
 Project: forgeos
 CAIR version: 0.5.0
 Surface: commands=0 queries=0 liveQueries=0 actions=1 workflows=0 tables=0
 
-CAIR is the compact agent protocol for reading and changing this Forge workspace. Use it before opening whole files when symbol, module, dependency, test, or impact context is enough.
+CAIR is the compact agent protocol for reading and changing this Forge workspace. Use it when symbol, module, dependency, test or impact context helps the task; direct targeted reads are appropriate for known files and exact text questions. Read-only questions do not require creating or refreshing a snapshot.
 
 ## First commands
 
@@ -33,7 +33,7 @@ node bin/forge.mjs cair query "Q T S#1"
 node bin/forge.mjs cair query "Q DEP.API package=<pkg> symbol=<export>"
 ```
 
-Only open source files after CAIR shows that the exact file or body is needed.
+Read the relevant source when needed to verify the result. CAIR results help focus that read; they do not replace source evidence or prove exhaustive coverage.
 
 ## Plan, apply, rollback
 
@@ -122,17 +122,11 @@ A RB  = A ROLLBACK
 
 ## Verification
 
-After CAIR edits, run the narrowest useful checks:
-
-```bash
-node bin/forge.mjs check --json
-node bin/forge.mjs verify --standard
-node bin/forge.mjs verify framework
-```
+After a semantic CAIR edit, run `node bin/forge.mjs check --json` and the affected tests or `node bin/forge.mjs verify --changed`. Read-only CAIR queries require no application tests. Use `node bin/forge.mjs verify --standard` when broader affected behavior warrants it; use `node bin/forge.mjs verify framework` for a migration, changed auth/security boundary or explicitly comprehensive delivery. Do not repeat passing checks without new changes or unresolved concerns.
 
 ## Constraints
 
 - Do not edit `src/forge/_generated/**` unless explicitly allowed.
 - Do not bypass `--plan` for semantic edits.
 - Do not use CAIR as blind text replacement when a semantic action exists.
-- Use TypeScript language service, ast-grep, ts-morph, or raw file reads only as implementation backends or fallbacks. CAIR is the agent-facing protocol.
+- Use compiler-aware tools when symbol resolution or complete references matter, and direct reads for known files. Preserve CAIR plan/apply guards whenever choosing its semantic mutation protocol.

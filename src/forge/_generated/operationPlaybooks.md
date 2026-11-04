@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=8a956fa0e82d619924f0a376d55800f99935aef6e8df67d0047ce5488effce74
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=7004974a3b5fa7aa0c2c328435c2eb2c056b1758a88e47dbdf279aebdfa805ca
 # Operation Playbooks
 
 ## Choose the right workflow
@@ -14,7 +14,7 @@
 3. Use ctx.db for transactional writes.
 4. Use ctx.emit for side effects.
 5. Run forge generate.
-6. Run forge verify --strict.
+6. Run affected tests and forge verify --changed; use strict verification for release or an explicit comprehensive delivery gate.
 
 ## Add a query
 
@@ -63,7 +63,7 @@
 2. Include tenantId for tenant-scoped data.
 3. Run forge generate.
 4. Run forge db diff.
-5. Run forge verify --strict.
+5. Run schema/policy and affected integration checks; use forge verify --strict for migration, changed access boundaries or an explicitly comprehensive delivery gate.
 
 ## Scaffold a resource
 
@@ -71,7 +71,7 @@
 2. Review the plan and diagnostics.
 3. Run forge make resource <name> --fields name:type --with-ui --yes when the resource should be visible in the web app.
 4. Run forge generate.
-5. Run forge verify --strict.
+5. Run affected generated-contract and integration checks; use forge verify --strict when the resource changes schema migrations or auth/security boundaries, or a comprehensive delivery gate requires it.
 
 ## Apply a feature blueprint
 
@@ -80,7 +80,7 @@
 3. Run forge feature plan <blueprint>.
 4. Review the plan, impact, and risk.
 5. Run forge feature apply <blueprint> --yes.
-6. Run forge verify --strict.
+6. Run checks for the blueprint components changed; use forge verify --strict for migrations, auth/security boundary changes or an explicitly comprehensive delivery gate.
 
 ## Safely refactor a feature
 
@@ -92,7 +92,7 @@
 6. Use --allow-high-risk only for intentional high-risk refactors.
 7. Apply with forge refactor rename field <table.field> <table.field> --yes.
 8. Run forge generate.
-9. Run forge verify --strict.
+9. Run affected semantic/impact tests and forge verify --changed; use forge verify --strict for migration or auth/security boundary changes, cross-boundary risk or an explicitly comprehensive delivery gate.
 
 ## Plan impact-based tests
 
@@ -100,7 +100,7 @@
 2. Run forge test plan --changed --json.
 3. Run forge test run --changed --timeout-ms 120000 --json for targeted checks.
 4. Use forge verify --changed for the fast impact gate.
-5. Run forge verify --strict before final handoff.
+5. Run forge verify --strict for release or an explicitly comprehensive delivery gate.
 
 ## Repair a failing check
 
@@ -109,7 +109,7 @@
 3. Review the failureKind, likelyCause, suggestedRepairs, and confidence.
 4. Apply only high-confidence repairs automatically.
 5. Run forge verify --changed.
-6. Run forge verify --strict before final handoff.
+6. Run forge verify --strict for release or an explicitly comprehensive delivery gate.
 
 ## Add a package
 
@@ -126,7 +126,7 @@
 4. Read .forge/upgrades/.../plan.md.
 5. If risk is high, inspect affected files and generated adapters before applying.
 6. Apply with forge deps upgrade-apply <plan>.
-7. Finish with forge verify --strict.
+7. Run affected checks; use forge verify --strict for release or an explicitly comprehensive delivery gate.
 
 ## Debug a policy error
 

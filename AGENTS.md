@@ -1,4 +1,4 @@
-// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=721818a6f9a664aa898092d4aa5cd68cbbd8ad6e150c7d3ad3ef785a2e3fcf53
+// @forge-generated generator=0.1.0-alpha.72 input=a9884755157b13634a2b69e255d6418f0092af011d647161d0cfff332ffbbe63 content=6a79256a9f99f221866a893d3834747d21c5ac1f675db83b8c9f4dab50220155
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -11,20 +11,16 @@ This is a ForgeOS application named `forgeos`.
 
 This is the ForgeOS framework checkout. Use `node bin/forge.mjs ...` so maintainer commands run against this source tree; reserve the global `forge` command for installed-package smoke tests.
 
-## Required workflow
+## Task scope and validation
 
-Before editing:
+Use the existing user request and authorization to complete the requested work. Resolve routine choices within scope; ask only when a missing decision changes the outcome or a new external effect needs authority. Define completion by the requested behavior and relevant checks, and continue through failures caused by the change.
 
-```bash
-node bin/forge.mjs agent onboard --target codex --json
-node bin/forge.mjs status --json
-node bin/forge.mjs changed --json
-node bin/forge.mjs handoff --json
-node bin/forge.mjs do inspect --json
-node bin/forge.mjs dev --once --json
-node bin/forge.mjs agent print-context --json
-node bin/forge.mjs check --json
-```
+- Read-only investigation or prose-only edits: inspect the relevant files and existing diff. Check Markdown links or formatting when affected; do not onboard, regenerate, start a runtime or run application suites for unchanged runtime behavior.
+- Authored runtime, schema, policy or generated-contract changes: inspect the relevant generated context, run `node bin/forge.mjs generate` and `node bin/forge.mjs check`, then affected tests or `node bin/forge.mjs verify --changed`. Preserve tenant/auth, transaction and effect boundaries.
+- Frontend/runtime diagnosis: use `node bin/forge.mjs dev --once --json`, targeted inspection or the requested runtime only when needed. Hooks/onboarding are setup operations, not prerequisites to every edit.
+- Release, broad migration or delivery with an explicit comprehensive gate: run `node bin/forge.mjs verify framework` and the applicable integration checks. Do not repeat or broaden passing checks without new changes or evidence.
+
+Use `node bin/forge.mjs status --json`, `node bin/forge.mjs changed --json`, `node bin/forge.mjs handoff --json` or `node bin/forge.mjs agent print-context --json` when their information is needed. Select relevant context rather than running every command. Existing authorized local checks do not require approval at each step; publication, deployment and billable external work retain their own boundaries.
 
 ## CAIR first
 
@@ -44,14 +40,6 @@ Use `src/forge/_generated/agentCairGuide.md` for the full compact protocol. Plan
 ```bash
 node bin/forge.mjs cair action --plan "A RN t=S#1 nn=<newName>"
 node bin/forge.mjs cair action "A APPLY plan=<returned-plan-path>"
-```
-
-After editing:
-
-```bash
-node bin/forge.mjs generate
-node bin/forge.mjs check
-node bin/forge.mjs verify framework
 ```
 
 ## Do not edit
@@ -85,42 +73,9 @@ Template apps may ignore `src/forge/_generated/**` and `forge.lock` in git to re
 - Actions and workflows handle side effects after commit.
 - Do not rely on in-memory Pub/Sub as the source of truth for liveQuery invalidation.
 
-## Useful commands
+## Context by task
 
-```bash
-node bin/forge.mjs do "<objective>" --json
-node bin/forge.mjs do fix --json
-node bin/forge.mjs do verify --json
-node bin/forge.mjs dev --once --json
-node bin/forge.mjs dev
-node bin/forge.mjs handoff --json
-node bin/forge.mjs inspect app --json
-node bin/forge.mjs inspect all --json
-node bin/forge.mjs inspect all --full --json
-node bin/forge.mjs inspect frontend --json
-node bin/forge.mjs inspect capabilities --json
-node bin/forge.mjs inspect agent-tools --json
-node bin/forge.mjs deps inspect <package> --json
-node bin/forge.mjs deps api <package> <symbol> --json
-node bin/forge.mjs deps trace <package> --json
-node bin/forge.mjs auth check --json
-node bin/forge.mjs inspect runtime-matrix --json
-node bin/forge.mjs inspect policies --json
-node bin/forge.mjs inspect client --json
-node bin/forge.mjs inspect live-production --json
-node bin/forge.mjs live status --json
-node bin/forge.mjs doctor
-node bin/forge.mjs doctor windows --json
-node bin/forge.mjs setup windows --json
-node bin/forge.mjs agent print-context --json
-node bin/forge.mjs agent doctor --target codex --json
-node bin/forge.mjs ai tools --json
-node bin/forge.mjs ai agents --json
-node bin/forge.mjs ai trace <traceId> --json
-node bin/forge.mjs verify --smoke
-node bin/forge.mjs verify --standard
-node bin/forge.mjs verify framework
-```
+Read only the generated context relevant to the question. `src/forge/_generated/appMap.md` describes entrypoints and boundaries; `runtimeRules.md` covers runtime invariants; `operationPlaybooks.md` covers schema, command, query, frontend, dependency and repair workflows. `agentCairGuide.md` contains the structure-aware protocol. Use `agentQuickstart.md` as a command catalog, not an itinerary. These files are recreated by generation when missing.
 
 ## Data
 
@@ -178,168 +133,11 @@ Rules:
 - Use `useQuery`/`useCommand`/`useLiveQuery` or `useForgeQuery`/`useForgeCommand`/`useForgeLiveQuery` instead of raw Forge endpoint fetches in components.
 - Keep frontend routes reflected in `src/forge/_generated/frontendGraph.json`.
 
-## Common tasks
+## Workflow details
 
-### Choose the right workflow
+Use `src/forge/_generated/operationPlaybooks.md` for the selected workflow. For a new command, declare auth, preserve transactional/no-network boundaries, generate and run affected checks. For schema/policy changes inspect migration and tenant impact before applying. Debug visible errors with their traceId; preserve it through frontend/runtime boundaries. Use broad verification when the affected risk or explicit delivery gate requires it.
 
-Use:
-
-```bash
-node bin/forge.mjs do "<objective>" --json
-node bin/forge.mjs do fix --json
-node bin/forge.mjs do connect-ui --json
-node bin/forge.mjs do verify --json
-```
-
-`node bin/forge.mjs do` returns intent, plan, filesToInspect, filesToChange, risks, concrete commands, and nextAction. Prefer it before choosing lower-level CLI commands manually.
-
-### Add a command
-
-1. Add file in `src/commands`.
-2. Declare `auth: can("...")`.
-3. Run `node bin/forge.mjs generate`.
-4. Run `node bin/forge.mjs verify framework`.
-
-### Scaffold a resource
-
-Use:
-
-```bash
-node bin/forge.mjs make resource <name> --fields title:text,status:enum=open+closed --dry-run --json
-node bin/forge.mjs make resource <name> --fields title:text,status:enum=open+closed --with-ui --yes
-node bin/forge.mjs make ui --framework vite --dry-run --json
-node bin/forge.mjs make ui --framework nuxt --dry-run --json
-node bin/forge.mjs make ai-chat support --dry-run --json
-```
-
-Review the plan before applying when the resource touches schema or policies.
-
-### Check frontend wiring
-
-Use:
-
-```bash
-node bin/forge.mjs dev --once --json
-node bin/forge.mjs dev
-node bin/forge.mjs inspect frontend --json
-node bin/forge.mjs inspect capabilities --json
-```
-
-`node bin/forge.mjs dev` starts the API runtime and web app together when `web/` exists. `node bin/forge.mjs dev --once --json` reports routes, components, providers/plugins, bridge files, generated client bindings, direct runtime fetch warnings, capability-map parity warnings, and fix hints.
-
-### Apply a feature blueprint
-
-Use:
-
-```bash
-node bin/forge.mjs feature validate .forge/blueprints/<name>.json --json
-node bin/forge.mjs feature plan .forge/blueprints/<name>.json
-node bin/forge.mjs feature apply .forge/blueprints/<name>.json --yes
-```
-
-Review high-risk plans before applying. Use `--allow-high-risk` only when intentional.
-
-### Safely refactor a feature
-
-Use:
-
-```bash
-node bin/forge.mjs refactor rename field tickets.priority tickets.urgency --dry-run --json
-node bin/forge.mjs refactor rename field tickets.priority tickets.urgency --yes
-node bin/forge.mjs refactor rename command createTicket openTicket --dry-run --json
-node bin/forge.mjs refactor rename command createTicket openTicket --yes
-```
-
-These codemods are AST-aware for `extract-action`, `rename command`, `rename field`, and `rename table`. Command renames update runtime registries, generated client references, frontend hooks, tests, and string references where safe. Field renames are scoped to the target table, so `tickets.priority` only rewrites references linked to `tickets`.
-
-Never edit `src/forge/_generated/**` directly. Review migration hints before applying command, field, or table renames.
-
-### Plan impact-based tests
-
-Use:
-
-```bash
-node bin/forge.mjs impact --changed --json
-node bin/forge.mjs test plan --changed --json
-node bin/forge.mjs test run --changed --timeout-ms 120000 --json
-node bin/forge.mjs verify --standard
-```
-
-Use `node bin/forge.mjs verify --standard` for the normal agent development loop. Finish handoffs with `node bin/forge.mjs verify framework` when the change is ready.
-
-### Repair a failing check
-
-When a Forge check fails, do not guess. Use:
-
-```bash
-node bin/forge.mjs repair diagnose --from-last-test-run --json
-node bin/forge.mjs repair plan --from-last-test-run --write
-```
-
-Apply only high-confidence deterministic repairs automatically. Review medium or low confidence repairs before changing code.
-
-### Add AI tools or agents
-
-Use:
-
-```bash
-node bin/forge.mjs generate
-node bin/forge.mjs inspect ai --json
-node bin/forge.mjs agent print-context --json
-node bin/forge.mjs ai check --json
-node bin/forge.mjs ai trace <traceId> --json
-```
-
-Define tools with `aiTool({ inputSchema, outputSchema, risk, needsApproval, handler })` and agents with `agent({ provider, model, instructions, tools, stopWhen })`. Execute agents with `ctx.agent.run` or `ctx.ai.runAgent` only from actions, workflows, endpoints, or server code. In dev, POST `/ai/agents/run` returns JSON for automation and POST `/ai/agents/chat` returns an AI SDK UIMessage stream for React `useChat`; both accept `agent: "<exportedAgentName>"` and use generated auto-tools from `agentTools.json`.
-
-### Export agent adapters
-
-Use:
-
-```bash
-node bin/forge.mjs agent export --target generic
-node bin/forge.mjs agent export --target codex
-node bin/forge.mjs agent export --target cursor
-node bin/forge.mjs agent export --target claude
-```
-
-Adapter files are derived from `agentContract.json`, `appMap.md`, `runtimeRules.md`, `operationPlaybooks.md`, and this `AGENTS.md`. Do not treat Codex, Cursor, Claude, or custom adapter files as the source of truth.
-
-### Add a package
-
-Use:
-
-```bash
-node bin/forge.mjs add <alias>
-```
-
-Do not install packages manually unless intentional.
-
-### Upgrade a package
-
-Use:
-
-```bash
-node bin/forge.mjs deps upgrade-plan <package> --to latest
-node bin/forge.mjs deps inspect <package> --json
-node bin/forge.mjs deps api <package> <symbol> --json
-node bin/forge.mjs deps upgrade-apply <plan>
-node bin/forge.mjs verify framework
-```
-
-Do not manually edit `package.json` for package upgrades unless necessary.
-
-### Debug liveQuery
-
-Use:
-
-```bash
-node bin/forge.mjs live status --json
-node bin/forge.mjs live invalidations list --json
-node bin/forge.mjs live debug <subscriptionId> --json
-```
-
-Durable invalidations live in `_forge_live_invalidations`.
+Adapters exported with `node bin/forge.mjs agent export --target <target>` are derived from the generated contract, maps and rules. Do not treat adapter files as source of truth or install hooks/skills as a side effect of ordinary editing.
 
 <!-- forge-generated:end -->
 
@@ -361,7 +159,7 @@ Standard commands (see `package.json`, `CONTRIBUTING.md`, `.github/workflows/ci.
 
 Non-obvious gotchas:
 
-- `bun run forge generate` rewrites `src/forge/_generated/**`, `forge.lock`, and the `// @forge-generated` header `input=` hash in `AGENTS.md`. These regenerated diffs are environment-dependent and should NOT be committed (per "Do not edit" above). `forge verify` regenerates internally, so `generate-check` can pass even while `git status` shows these as dirty. Run `git checkout -- .` to discard them before committing unrelated work.
+- `bun run forge generate` rewrites `src/forge/_generated/**`, `forge.lock`, and the `// @forge-generated` header `input=` hash in `AGENTS.md`. These regenerated diffs are environment-dependent and should NOT be committed (per "Do not edit" above). `forge verify` regenerates internally, so `generate-check` can pass even while `git status` shows these as dirty. Preserve all pre-existing edits. Review generated-only paths against the task baseline and restore only explicitly selected, unchanged-since-generation artifacts when appropriate; never discard the whole working tree.
 - The CLI runs under Node via `tsx` (`node ./bin/forge.mjs ...` or `npm run forge -- ...`); only the test runner needs Bun.
 - To run an actual Forge app end-to-end, scaffold one from a template and run the dev servers. From a temp dir: `node /workspace/bin/forge.mjs new notes-app --template minimal-web --package-manager npm --forge-spec "file:/workspace" --install --no-git`, then `cd notes-app && npm run dev`. `forge dev` starts the API runtime (pglite, default `http://127.0.0.1:3765`) and the Vite web app (default `http://127.0.0.1:5173`); use `forge dev --api-only` for backend only.
 - Hitting the runtime directly: POST `/commands/<name>` and `/queries/<name>` with body shaped as `{ "args": { ... } }`. In `dev-headers` auth mode pass `x-forge-user-id` and `x-forge-role` (e.g. `owner`) headers; `<ForgeProvider devAuth>` defaults to user `dev-user`, tenant `dev-tenant`, role `owner`.

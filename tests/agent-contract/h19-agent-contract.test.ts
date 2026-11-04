@@ -85,8 +85,8 @@ describe("H19 agent contract", () => {
       expect(contract.commands[0]?.frontend?.hook).toContain("useCommand");
       expect(contract.queries[0]?.http?.path.startsWith("/queries/")).toBe(true);
       expect(contract.liveQueries[0]?.http?.method).toBe("GET");
-      expect(contract.commandsToRun.beforeEditing).toContain("forge handoff --json");
-      expect(contract.commandsToRun.beforeEditing).toContain("forge cair snapshot");
+      expect(contract.commandsToRun.beforeEditing).toEqual(["forge status --json", "forge changed --json"]);
+      expect(contract.agentProtocols[0]?.commands).toContain("forge cair snapshot");
       expect(contract.agentProtocols).toContainEqual(
         expect.objectContaining({
           id: "cair",
@@ -205,8 +205,8 @@ describe("H19 agent contract", () => {
         commandsToRun: { beforeEditing: string[]; afterEditing: string[]; dev: string[] };
         agentProtocols: Array<{ commands: string[] }>;
       }>(frameworkWorkspace, `${GENERATED}/agentContract.json`);
-      expect(frameworkContract.commandsToRun.beforeEditing).toContain("node bin/forge.mjs handoff --json");
-      expect(frameworkContract.commandsToRun.afterEditing).toContain("node bin/forge.mjs verify framework");
+      expect(frameworkContract.commandsToRun.beforeEditing).toEqual(["node bin/forge.mjs status --json", "node bin/forge.mjs changed --json"]);
+      expect(frameworkContract.commandsToRun.afterEditing).toContain("node bin/forge.mjs verify --changed");
       expect(frameworkContract.commandsToRun.dev).toContain("node bin/forge.mjs dev");
       expect(frameworkContract.agentProtocols[0]?.commands).toContain("node bin/forge.mjs cair snapshot");
     } finally {
