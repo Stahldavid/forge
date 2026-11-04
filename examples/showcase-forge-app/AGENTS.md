@@ -1,4 +1,4 @@
-// @forge-generated generator=0.0.0 input=219ea7f374e4f290890f7b468c21647187b05b8d10e11eb30d0b5207309cc615 content=4f2136319a711c1c6cfd5bb0d2dc610055ea6da11eebc5c1cc923b22adbbbe4b
+// @forge-generated generator=0.0.0 input=219ea7f374e4f290890f7b468c21647187b05b8d10e11eb30d0b5207309cc615 content=cb987df495c2e7dec5124b3b58e53de1aa35e1ff1d94e3386d569829bf7a533d
 # AGENTS.md
 
 <!-- forge-generated:start -->
@@ -7,22 +7,16 @@
 
 This is a ForgeOS application named `showcase-forge-app`.
 
-## Required workflow
+## Task scope and validation
 
-Before editing:
+Use the existing user request and authorization to complete the requested work. Resolve routine choices within scope; ask only when a missing decision changes the outcome or a new external effect needs authority. Define completion by the requested behavior and relevant checks, and continue through failures caused by the change.
 
-```bash
-forge inspect all --json
-forge check --json
-```
+- Read-only investigation or prose-only edits: inspect the relevant files and existing diff. Check Markdown links or formatting when affected; do not onboard, regenerate, start a runtime or run application suites for unchanged runtime behavior.
+- Authored runtime, schema, policy or generated-contract changes: inspect the relevant generated context, run `forge generate` and `forge check`, then affected tests or `forge verify --changed`. Preserve tenant/auth, transaction and effect boundaries.
+- Frontend/runtime diagnosis: use `forge dev --once --json`, targeted inspection or the requested runtime only when needed. Hooks/onboarding are setup operations, not prerequisites to every edit.
+- Release, broad migration or delivery with an explicit comprehensive gate: run `forge verify --strict` and the applicable integration checks. Do not repeat or broaden passing checks without new changes or evidence.
 
-After editing:
-
-```bash
-forge generate
-forge check
-forge verify --strict
-```
+Use `forge status --json`, `forge changed --json`, `forge handoff --json` or `forge agent print-context --json` when their information is needed. Select relevant context rather than running every command. Existing authorized local checks do not require approval at each step; publication, deployment and billable external work retain their own boundaries.
 
 ## Do not edit
 
@@ -49,17 +43,9 @@ Do not:
 - Commands must use `ctx.emit` for side effects.
 - Actions and workflows handle side effects after commit.
 
-## Useful commands
+## Context by task
 
-```bash
-forge inspect app --json
-forge inspect all --json
-forge inspect runtime-matrix --json
-forge inspect policies --json
-forge inspect client --json
-forge doctor
-forge verify --strict
-```
+Read only the generated context relevant to the question. `src/forge/_generated/appMap.md` describes entrypoints and boundaries; `runtimeRules.md` covers runtime invariants; `operationPlaybooks.md` covers schema, command, query, frontend, dependency and repair workflows. `agentCairGuide.md` contains the structure-aware protocol. Use `agentQuickstart.md` as a command catalog, not an itinerary. These files are recreated by generation when missing.
 
 ## Data
 
@@ -80,24 +66,11 @@ Tenant-scoped tables:
 
 - none
 
-## Common tasks
+## Workflow details
 
-### Add a command
+Use `src/forge/_generated/operationPlaybooks.md` for the selected workflow. For a new command, declare auth, preserve transactional/no-network boundaries, generate and run affected checks. For schema/policy changes inspect migration and tenant impact before applying. Debug visible errors with their traceId; preserve it through frontend/runtime boundaries. Use broad verification when the affected risk or explicit delivery gate requires it.
 
-1. Add file in `src/commands`.
-2. Declare `auth: can("...")`.
-3. Run `forge generate`.
-4. Run `forge verify --strict`.
-
-### Add a package
-
-Use:
-
-```bash
-forge add <alias>
-```
-
-Do not install packages manually unless intentional.
+Adapters exported with `forge agent export --target <target>` are derived from the generated contract, maps and rules. Do not treat adapter files as source of truth or install hooks/skills as a side effect of ordinary editing.
 
 <!-- forge-generated:end -->
 

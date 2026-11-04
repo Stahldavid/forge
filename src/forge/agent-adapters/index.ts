@@ -204,7 +204,7 @@ export function buildAgentContext(contract: AgentContract): AgentContext {
     secrets: sorted(contract.secrets.map((entry) => entry.name)),
     criticalCommands: {
       afterSourceChange: ["forge generate", "forge check"],
-      beforeCommit: ["forge verify --strict"],
+      beforeCommit: ["forge verify --changed"],
       targetedLoop: [
         "forge impact --changed --json",
         "forge test plan --changed --json",
@@ -228,7 +228,7 @@ export function buildAgentCommandsMap(): AgentCommandsMap {
     dev: ["forge dev"],
     generate: ["forge generate"],
     check: ["forge check"],
-    verify: ["forge verify --strict"],
+    verify: ["forge verify --changed"],
     impact: ["forge impact --changed --json"],
     testPlan: ["forge test plan --changed --json"],
     testRun: ["forge test run --changed --json"],
@@ -239,9 +239,9 @@ export function buildAgentCommandsMap(): AgentCommandsMap {
 export function buildAgentDoneCriteria(): AgentDoneCriteria {
   return {
     default: [
-      "forge generate --check passes",
-      "forge check passes",
-      "forge verify --strict passes",
+      "for generated-contract source changes, forge generate --check passes",
+      "for runtime or generated-contract source changes, forge check passes",
+      "checks relevant to the requested change pass; strict verification is required for release or an explicit comprehensive gate",
       "no edits under src/forge/_generated",
       "no direct process.env in app code",
       "no forbidden runtime imports",
@@ -271,12 +271,12 @@ function playbook(title: string, steps: string[]): string {
 function playbookFiles(): AgentExportFile[] {
   const books: Array<[string, string, string[]]> = [
     ["add-command.md", "Add Command", [
-      "Run `forge status --json`, `forge handoff --json`, and `forge agent print-context --json`.",
+      "Inspect the existing diff and relevant generated context; use status/handoff/context commands when their information is needed.",
       "Prefer `forge make command <resource.action> --table <table> --policy <policy>`.",
       "Commands may write through `ctx.db` and emit with `ctx.emit`.",
       "Commands must not import network packages, use `ctx.secrets`, or call `ctx.ai`.",
       "Run `forge generate`, `forge check`, and `forge verify --changed`.",
-      "Finish with `forge verify --strict`.",
+      "Use `forge verify --strict` for release or an explicitly comprehensive delivery gate.",
     ]],
     ["add-query.md", "Add Query", [
       "Run `forge inspect data --json` and `forge inspect policies --json`.",
@@ -294,7 +294,7 @@ function playbookFiles(): AgentExportFile[] {
       "Run `forge make resource <name> --fields name:string --dry-run --json`.",
       "Review planned schema, policies, commands, queries, and components.",
       "Apply with `forge make resource <name> --fields ... --yes`.",
-      "Run `forge generate` and `forge verify --strict`.",
+      "Run `forge generate`, `forge check`, and affected tests; use `forge verify --strict` when schema/access risk or the delivery gate requires it.",
     ]],
     ["refactor-field.md", "Refactor Field", [
       "Use `forge refactor rename field <from> <to> --plan` before manual edits.",
@@ -312,13 +312,13 @@ function playbookFiles(): AgentExportFile[] {
       "Run `forge repair diagnose --from-last-test-run --json`.",
       "If a network package is reachable from command/query/liveQuery, prefer `forge refactor extract-action <command> --package <package> --event <event>`.",
       "Run `forge generate`, `forge check`, and `forge verify --changed`.",
-      "Finish with `forge verify --strict`.",
+      "Use `forge verify --strict` for release or an explicitly comprehensive delivery gate.",
     ]],
     ["upgrade-package.md", "Upgrade Package", [
       "Run `forge deps upgrade-plan <package> --to latest --json`.",
       "Review runtime context, secret, and API risk.",
       "Apply only after reviewing the plan.",
-      "Run impacted tests and `forge verify --strict`.",
+      "Run impacted tests and `forge verify --changed`; use `forge verify --strict` for cross-cutting risk or the release gate.",
     ]],
     ["debug-trace.md", "Debug Trace", [
       "Capture the `traceId` from frontend or runtime output.",
@@ -335,7 +335,7 @@ function playbookFiles(): AgentExportFile[] {
     ["self-host-check.md", "Self-host Check", [
       "Run `forge self-host check`.",
       "Run `forge release artifacts verify` when deployment artifacts changed.",
-      "Run `forge verify --strict` before handoff.",
+      "Run checks relevant to the self-host change; use `forge verify --strict` when deployment artifacts or the release gate require it.",
     ]],
   ];
   return books.map(([name, title, steps]) => ({
@@ -358,7 +358,7 @@ function buildGenericSupportFiles(contract: AgentContract): AgentExportFile[] {
 }
 
 function skill(name: string, description: string, body: string): string {
-  return `---\nname: ${name}\ndescription: ${description}\n---\n\n# ${description}\n\n${body.trim()}\n`;
+  return `---\nname: ${name}\ndescription: ${description}\n---\n\n# ${description}\n\nResolve the \`forge\` examples through the applicable AGENTS.md entrypoint: use \`node bin/forge.mjs\` in the framework checkout and the installed CLI for generated apps.\n\n${body.trim()}\n`;
 }
 
 function codexAgentRole(name: string, description: string, developerInstructions: string): string {
@@ -386,15 +386,15 @@ Rules:
 - Commands must not use \`ctx.secrets\` or \`ctx.ai\`.
 
 Steps:
-1. Run \`forge status --json\`, \`forge handoff --json\`, and \`forge agent print-context --json\`.
+1. Inspect the existing diff and the relevant command, schema and policy context.
 2. Prefer \`forge make command <resource.action> --table <table> --policy <policy>\`.
 3. Run \`forge generate\`, \`forge check\`, and \`forge verify --changed\`.
-4. Finish with \`forge verify --strict\`.
+4. Use \`forge verify --strict\` for release or an explicitly comprehensive delivery gate; do not repeat passing affected checks without new evidence.
 `],
     ["forge-add-resource", "Use when adding a ForgeOS resource.", `
 Use \`forge make resource <name> --fields ... --dry-run --json\` first.
 Review generated table, policy, command, query, liveQuery, component, and page changes.
-Apply with \`--yes\`, then run \`forge generate\` and \`forge verify --strict\`.
+Apply with \`--yes\`, then run \`forge generate\`, \`forge check\` and affected tests. Use strict verification when the schema/policy risk or delivery gate requires it.
 `],
     ["forge-fix-guard-violation", "Use when ForgeOS reports FORGE_GUARD_VIOLATION.", `
 Run \`forge repair diagnose --from-last-test-run --json\`.
@@ -408,7 +408,7 @@ Prefer changing policies through \`forge make policy\`.
     ["forge-upgrade-package", "Use when upgrading a package in a ForgeOS app.", `
 Run \`forge deps upgrade-plan <package> --to latest --json\`.
 Review runtime, secret, and API risks before applying.
-Run impacted tests and \`forge verify --strict\`.
+Run impacted tests and \`forge verify --changed\`; use strict verification for release or an explicitly comprehensive delivery gate.
 `],
     ["forge-debug-trace", "Use when debugging a ForgeOS trace or failing runtime operation.", `
 Run \`forge telemetry inspect <traceId>\`.
@@ -435,7 +435,7 @@ Explain the app shape, key runtime entries, frontend bindings, policies, generat
     ["worker", "Implement ForgeOS app changes using generated contracts, playbooks, and verification commands.", `
 You are the ForgeOS worker role.
 
-Before editing, read the generated agent context and changed-file summary. Prefer ForgeOS primitives such as forge do, forge make, forge add, forge refactor, and forge repair when they fit. Keep authored changes separate from generated artifacts, never edit src/forge/_generated directly, and run forge generate plus focused checks after source changes.
+For code changes, inspect relevant generated context and the existing diff. For prose-only work, read and check the affected documents without onboarding or regenerating. Prefer ForgeOS primitives such as forge do, forge make, forge add, forge refactor, and forge repair when they fit. Keep authored changes separate from generated artifacts, never edit src/forge/_generated directly, and run forge generate plus focused checks after source changes.
 
 Return the implemented change, files touched, verification commands, and any remaining risks.
 `],
@@ -535,22 +535,11 @@ function buildClaudeFiles(_contract: AgentContract): AgentExportFile[] {
 
 This is a ForgeOS app.
 
-Start with:
+Use the current task and authorization to select relevant context and complete the requested work. For read-only investigation or prose edits, inspect the relevant files and diff without starting a runtime or regenerating unchanged artifacts.
 
-\`\`\`bash
-forge status --json
-forge handoff --json
-forge dev --once --json
-forge agent print-context --json
-forge check --json
-\`\`\`
+Use \`forge status --json\`, \`forge handoff --json\` or \`forge agent print-context --json\` when their information is needed. Run \`forge dev --once --json\` only for runtime diagnosis or setup within scope.
 
-After changes:
-
-\`\`\`bash
-forge generate
-forge verify --strict
-\`\`\`
+After runtime, schema, policy or generated-contract changes, run \`forge generate\`, \`forge check\` and affected tests or \`forge verify --changed\`. Preserve strict policy checks after access changes; use \`forge verify --strict\` for release, cross-cutting risk or an explicitly comprehensive delivery gate. Do not repeat passing checks without new changes or unresolved concerns.
 
 Critical rules:
 
